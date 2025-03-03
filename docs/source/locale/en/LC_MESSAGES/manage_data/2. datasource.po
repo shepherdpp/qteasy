@@ -1,0 +1,467 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_data/2. datasource.md:1
+msgid "本地数据源——DataSource对象"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:3
+msgid "本地数据源是`qteasy`数据管理功能的核心，所有的数据都必须首先下载并保存在本地数据源中，才能为`qteasy`所用。`qteasy`使用`DataSource`对象管理本地数据源，本地数据源类似于一个数据库，包含一系列预先定义的数据表，`DataSource`类提供了一系列API用于数据表中数据的管理，包括读取、更新、删除和查询其中的数据。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:5
+msgid "要创建一个新的`DataSource`对象，可以使用下面的命令："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:12
+msgid "通过打印`DataSource`对象，可以查看其最基本的属性："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:19
+msgid "从`DataSource`的打印字符串`file://csv@qt_root/data/`中，可以看出它的基本属性"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:21
+msgid "打印结果包含数据源对象的基本信息："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:22
+msgid ""
+"`file:` -- "
+"数据源的类型。`qteasy`支持两种类型的数据源：文件型和数据库型，`file`代表数据源中的所有数据表都是以文件的形式保存在磁盘上的，同样，数据也可以保存在`mysql`数据库中，此时数据源的类型代码为`db`。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:23
+msgid ""
+"`csv:` -- "
+"数据文件保存格式。`qteasy`可以将数据文件以不同的格式保存在磁盘上，最基本的格式为`csv`文件，但是用户同样可以将数据保存为`hdf`文件和`fth`文件（`feather`文件)，以满足不同的性能偏好。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:24
+msgid ""
+"`qt_root/data/:` -- "
+"数据文件的保存路径。其中`qt_root`表示`qteasy`的安装根路径，默认情况下所有数据文件都保存在根目录下的`/data/`子路径下"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:26
+msgid ""
+"同样，可以创建一个数据保存类型为数据库的数据源对象，并查看其基本属性: "
+"不过，创建类型为数据库的数据源时，需要指定需要连接的Mysql数据库的主机名、用户名、密码、（或者）数据库名称等信息:"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:35
+msgid "同样，打印结果中包含数据源的基本信息："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:36
+msgid "`db:mysql` -- 数据源的类型为mysql数据库，所有的数据表都保存在数据库中"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:37
+msgid "`localhost` -- 数据库的主机名"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:38
+msgid "`3306` -- 数据库连接端口"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:39
+msgid "`test_db` -- 数据库名称，如果不指定名称，默认数据库`qt_db`，不过这个数据库必须事先创建好"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:41
+msgid "不同的数据源对象，如果它们的存储方式不同，存储路径不同，那么它们所保存的数据没有关系，互不干扰，但如果两个数据源指向同一个路径，且文件类型相同时，那么它们所保存的数据就会重复。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:43
+msgid "要查看数据源的更多基本属性，可以调用数据源对象的几个属性查看："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:56
+msgid "默认数据源"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:58
+msgid "`qteasy`有一个内置默认的数据源，不需要用户手动创建，默认情况下，所有的数据都会保存到这个默认数据源，并从这个数据源读取。用户可以通过`qteasy`的配置文件配置该数据源的参数，确保该数据源指向正确的路径或使用正确的用户名登陆正确的数据库。通过下面的方法查看内置默认数据源的属性："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:65
+msgid "查看数据表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:67
+msgid "了解数据源对象的基本属性后，下一步可以进一步了解数据源中保存的数据。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:69
+msgid "数据源中的数据表都是事先定义好的，每一张数据表都保存一类不同的数据，这些数据涵盖沪深股市、期货市场的股票、指数、基金、期货、期权等各种不同投资产品的基本信息、K线行情、上市公司业绩报表、宏观经济数据等等大量的数据，完整的数据表清单介绍，请参见下一章节，这里主要介绍如何查看各种数据表的基本情况和数据。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:71
+msgid "数据源中的数据表清单可以通过数据源的`all_tables`属性获取，它会返回一个列表对象，包含数据源中已经预定义的所有数据表。不过，这里必须厘清一个概念，数据源中虽然已经定义好了很多数据表，但这些数据表仅仅是有了基本的定义，即表头信息，数据表的字段名称、每个字段的含义以及数据类型都定义好了，但是刚刚建立的新数据源，其数据表往往都是空的，还没有任何数据。如果要查看数据源中有哪些数据表已经有了数据，需要用`get_table_info()`函数来获取："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:79
+msgid "可见，目前版本的`qteasy`预定义了108张数据表，其中部分数据表的名称包括`stock_basic`等。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:81
+msgid "如果要查看当前数据源中某张数据表的详情，例如该数据表的定义，是否包含数据等信息，使用`get_table_info()`方法获取："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:112
+msgid "打印的信息包括数据表的名称、说明、数据表的字段定义以及数据类型。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:114
+msgid "值得说明的是，如果数据表中已经填充了数据，那么就会显示出数据表目前的大小，在上面的例子中，一些关键信息的解释如下："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:116
+msgid "`852KB/5K records on disc` -- 表示数据表占用磁盘空间大约852K字节，且数据量大约为5000行"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:117
+msgid ""
+"`primary keys` -- "
+"显示数据的主键列，这里表示`ts_code`列为数据表的主键，且该列大约有5396条不同的记录。如果数据表有多个主键，那么每个主键列都分别列出，同时会列出该字段数据的范围，例如上例中`ts_code`列数据范围就是从`000001.SZ`开始一直到`920128.BJ`为止，让我们知道股票基本信息表里包含了代码从000001一直到920128为止的共五千多只股票的信息"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:118
+msgid ""
+"`columns of table` -- "
+"这里显示数据表的字段定义，也就是数据表的`schema`。列出每一列的名称`columns`、数据类型`dtypes`以及说明信息`remarks`"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:120
+msgid "另外，`get_table_info()`方法返回一个`dict`，同样包含该数据表的信息,可以将这些信息打印出来，与上述格式化信息对照了解："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:127
+msgid "查看数据源的整体信息"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:129
+msgid "通过上面的方法，我们可以查看每一张数据表的具体定义和已经填充的数据信息。同样，通过`overview()`方法，我们可以检查所有的数据表，并汇总出整个数据源的整体信息："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:145
+msgid "查看整个数据源的总体信息，可能需要花费数分钟的时间，因为需要统计每张数据表的所有信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:147
+msgid "在统计过程中，`qteasy`会显示一根进度条显示统计的进度，最终统计分析完成后，`qteasy`会将数据源中所有数据表的信息以DataFrame的形式返回，并打印出关键的信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:150
+msgid "上面的信息显示了数据源中有3张数据表已经有了数据，包括`trade_calendar`、`stock_basic`和`stock_daily`，并显示了这些数据表的数据量、占用磁盘空间、数据的起始日期��结束日期等信息。如果想查看所有数据表的信息，可以将返回的`DataFrame`打印出来："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:185
+msgid "最重要的数据表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:187
+msgid "如果您是第一次使用`qteasy`，很可能数据源中的数据表都是空的，没有任何数据。通常这没有任何问题，因为`qteasy`的设计初衷就是极大地简化金融数据的获取和使用过程。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:189
+msgid "您可以非常容易地从网络数据提供商处获取最基本的数据。不过，虽然数据表中的数据可以是空的，但是有几张数据表却比其他的数据表更加重要，您应该优先将这几张数据表的数据填充完整，因为这几张数据表中的数据是很多其他数据表的基础，甚至是`qteasy`的运行基础："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:191
+msgid ""
+"`trade_calendar` -- "
+"交易日历表，包含了所有交易所的交易日历信息，包括交易日、交易所代码、交易所名称等信息。可以说这是`qteasy`运行的基础，如果缺了这张表，`qteasy`的很多功能都将无法运行或者将降低效率。"
+" "
+"`qteasy`使用这张表中的数据来判断交易日，如果要下载其他的数据表，通常也必须通过交易日数据表来确定下载的起止日期，因此，这是您应该**绝对优先**填充的数据表。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:192
+msgid ""
+"`stock_basic` -- "
+"股票基本信息表，包含了所有上市股票的基本信息，包括股票代码、股票名称、上市日期、退市日期、所属行业、地域等信息。这张表是很多其他数据表的基础，例如股票日K线数据表、股票财务数据表等，因此，这也是您应该**优先**填充的数据表。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:193
+msgid ""
+"`index_basic` -- "
+"指数基本信息表，包含了所有指数的基本信息，包括指数代码、指数名称、发布日期、退市日期等信息。这张表是很多其他数据表的基础，例如指数日K线数据表、指数成分股表等，因此，这也是您应该**优先**填充的数据表。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:194
+msgid ""
+"`fund_basic` -- "
+"基金基本信息表，包含了所有基金的基本信息，包括基金代码、基金名称、基金类型、基金规模等信息。这张表是很多其他数据表的基础，例如基金日K线数据表、基金净值数据表等，因此，这也是您应该**优先**填充的数据表。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:196
+msgid "基本上，如果您能够填充了上面这几张数据表的数据，那么您就可以开始比较顺畅使用`qteasy`的大部分数据相关的功能了。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:198
+msgid "另外，`qteasy`还在数据源中定义了几张系统数据表，这些表一共四张，用于存储跟实盘交易相关的信息："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:200
+msgid ""
+"`sys_op_live_accounts` -- "
+"实盘交易账户信息表，包含了所有实盘交易账户的基本信息，包括账户ID、账户名称、账户类型、账户状态等信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:201
+msgid ""
+"`sys_op_positions` -- "
+"实盘持仓信息表，包括所有实盘交易账户的持仓信息，包括账户ID、证券代码、证券名称、持仓数量、持仓成本等信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:202
+msgid ""
+"`sys_op_trade_orders` -- "
+"实盘交易委托表，包括所有实盘交易账户的交易委托信息，包括账户ID、委托时间、委托类型、证券代码、委托数量、委托价格等信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:203
+msgid ""
+"`sys_op_trade_results` -- "
+"实盘交易成交表，包括所有实盘交易账户的交易成交信息，包括账户ID、成交时间、证券代码、成交数量、成交价格等信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:205
+msgid "上面四张表是qteasy实盘交易功能的基础，这几张表中的数据不需要人为填充，而是系统自动生成，您不需要查看、填充或删除这些表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:207
+msgid "其他的数据表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:209
+msgid "除了上面提到的几张重要的数据表之外，数据源中还定义了大量的数据表，这些数据表包含了各种各样的金融数据，包括股票、指数、基金、期货、期权等各种金融产品的基本信息、日K线数据、财务数据、分红数据、业绩报表、宏观经济数据等等，主要分类如下："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:211
+msgid "行情数据表 -- 这类数据表包含了股票、基金、指数各个不同频率的K线行情数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:212
+msgid "基本信息表 -- 这类数据表包含了股票、基金、指数、期货、期权等各种金融产品的基本信息"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:213
+msgid "指标信息表 -- 这类数据表包含了各种指标的信息，例如技术指标、基本面指标、宏观经济指标等"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:214
+msgid "财务数据表 -- 这类数据表包含了上市公司的财务报表数据，包括资产负债表、利润表、现金流量表等"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:215
+msgid "业绩报表表 -- 这类数据表包含了上市公司的业绩报表数据，包括业绩快报、业绩预告、业绩预测等"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:216
+msgid "分红交易数据表 -- 这类数据表包含了上市公司的分红数据，以及股票大宗交易、股东交易等信息表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:217
+msgid "参考数据表 -- 这类数据表包含了各种参考数据，例如宏观经济数据、行业数据、交易所数据等"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:219
+msgid "这些数据表的具体定义和数据类型，可以通过`get_table_info()`方法查看，或者通过本文档的下一章节查询。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:221
+msgid "从数据表中获取数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:223
+msgid "如果数据表中已经填充了数据，那么现在就可以从中读取数据了。`DataSource`提供了`read_table_data()`方法，从数据源中直接读取某个数据表中的数据，同时，用户可以筛选数据的起止日期以及证券代码，同时不用考虑数据表的具体结构、存储方式、存储位置等具体的实现方式。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:225
+msgid "为了避免读取的数据量过大，建议在读取数据时一定要同时给出某些筛选条件。对于`read_table_data()`方法来说，用户总是可以通过证券代码和起止日期来筛选数据:"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:227
+msgid "***`shares`***: 给出一个证券代码或者逗号分隔的多个证券代码，如果数据表的主键中含有证券代码，那么根据该证券代码筛选输出的数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:228
+msgid ""
+"***`start`***: "
+"给出一个日期，格式为`“YYYYMMDD”`，如果数据表的主键包含时间或日期，那么根据筛选`start`与`end`之间的数据，`start/end`必须成对给出"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:229
+msgid ""
+"***`end`***: "
+"给出一个日期，格式为`“YYYYMMDD”`，如果数据表的主键包含时间或日期，那么根据筛选`start`与`end`之间的数据，`start/end`必须成对给出"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:231
+msgid "`DataSource`对象会根据输入的筛选条件自动筛选数据，例如："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:233
+msgid "从`stock_daily`表中读取一只股票（`000651.SZ`）从2024年1月1日到2024年1月15日之间的股票日K线数据："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:253
+msgid "`DataSource`对象会自动根据数据表的定义来进行正确的筛选，并忽略掉不必要的参数。例如，我们可以筛选出某两支股票的基本信息。对于股票基本信息来说，交易日期是个不必要的参数，此时`qteasy`会自动忽略掉`start`/`end`参数并给出提示信息。同样，`shares`参数也不一定只能匹配股票代码，对于基金、指数、甚至期货、期权，都可以同样匹配："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:269
+msgid "关于`read_table_data()`方法的更多信息，请参阅`DataSource`对象的参考信息。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:271
+msgid "向数据表中添加数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:273
+msgid "如果数据表中尚未填充数据，或者数据表中填充的数据不足以满足我们的需求，那么读取数据就会不成功。为了避免这种情况，我们需要向数据表中填充数据。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:275
+msgid "请注意："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:277
+msgid "这里介绍的仅仅是向数据表中手动添加数据的基本方法。`qteasy`还提供了全自动数据下载、数据清洗、数据填充等功能，可以帮助用户自动从网络数据源中下载数据，并将数据整理、清洗、更新到数据表中。这些功能将在后续章节中介绍。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:279
+msgid "向数据表中填充数据可以使用数据源的`update_table_data()`方法。使用这个API，用户可以将保存在一个`DataFrame`中的数据写入到相应的数据表中。这个API只需要给出三个参数："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:281
+msgid "***`table`***: 一个数据表的名称，需要写入数据的数据表"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:282
+msgid "***`df`***: 一个`DataFrame`，保存了需要写入数据表中的数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:283
+msgid "***`merge_type`***: 如果是`update`则更新数据表中已经存在的数据，如果是`ignore`则忽略重复的数据."
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:285
+msgid "使用`update_table_data()`方法，用户不需要保证写入的数据格式与数据表完全一致，只要数据格式与数据表大致一致，`qteasy`就会自动整理数据格式、删除重复数据，确保写入数据表中的数据符合要求。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:287
+msgid "下面将一些示例数据写入数据源(写入的数据仅为演示效果)"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:315
+msgid ""
+"上面的`DataFrame`中保存了一些示例数据，我们下面将把这个`DataFrame`的数据写入数据源中的`index_daily`数据表。 "
+"目前我们可以看到，`index_daily`数据表是空的，而且这个数据表的`schema`与上面的`DataFrame`并不完全相同："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:318
+msgid "`index_daily`数据表的数据定义中包含11列，而上面的数据只有6列，不过`DataFrame`中的所有列都包含在`index_daily`数据表的`schema`中"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:319
+msgid "`index_daily`数据表目前是空的，没有填充任何数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:348
+msgid "接下来我们可以将数据写入数据表，如果方法执行正确，它将返回写入数据表中的数据的行数，如下所示："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:354
+msgid "将数据写入数据表之后，我们可以尝试一下从数据表中读取数据，现在我们已经可以读出刚才写入的数据了。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:356
+msgid "请注意，读出来的数据有许多列都是`NaN`值，这表明这些列没有写入数据，原因就是我们写入的`df`并不包含这些数据，因此读出的数据为`NaN`值。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:376
+msgid "删除数据表 —— 请尽量小心，删除后无法恢复！！"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:378
+msgid "我们除了可以向数据表中写入数据，从数据表中读取数据之外，当然也可以删除数据，不过请注意，在`qteasy`中操作`DataSource`删除数据时，您务必非常小心：因为`qteasy`不支持从数据表中删除部分数据，您只能删除整张数据表。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:380
+msgid "这是因为`qteasy`的数据源被设计为高效地存储和读取数据，但它并不是一个通常的数据库，我们并不需要经常操作其中的数据，这个数据仓库的作用是为了存储巨量的数据，因此，它的重点在于保存和提取数据，而不是删除操作。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:382
+msgid ""
+"`qteasy`的`DataSource`对象提供了一个删除数据表的方法: "
+"`drop_table_data()`,这个方法将删除整个数据表，而且**删除后无法恢复**！"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:384
+msgid "为了避免在代码中误删除数据表，默认情况下`drop_table_data()`会导致错误，例如我们想删除之前写入临时数据的`index_daily`表："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:404
+msgid "这时候我们需要修改数据源的`allow_drop_table`属性，将其修改为`True`，这样就可以删除数据表了，请记住删除后将`allow_drop_table`改为`False`。"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:406
+msgid "下面代码删除了`index_daily`表，然后就会发现，无法从该表读取数据了："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:420
+msgid "总结"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:422
+msgid "至此，我们已经了解了`DataSource`对象，`qteasy`中金融历史数据管理的最重要的核心类的基本工作方式，了解了下面内容："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:424
+msgid "什么是`DataSource`，如何创建一个数据源"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:425
+msgid "如何从数据源中提取数据"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:426
+msgid "如何操作数据源"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:428
+msgid "在后面的章节中，您将会了解更多的内容："
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:430
+msgid "数据源中有哪些有用的金融数据？"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:431
+msgid "如何批量下载数据并填充到数据源中？"
+msgstr ""
+
+#: ../../source/manage_data/2. datasource.md:432
+msgid "如何从数据源中更有效地提取信息？"
+msgstr ""
+

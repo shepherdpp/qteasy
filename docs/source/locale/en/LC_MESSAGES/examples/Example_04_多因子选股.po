@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_04_多因子选股.md:1
+msgid "多因子选股策略"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:3
+msgid ""
+"本策略每隔1个月定时触发,根据Fama-French三因子模型对每只股票进行回归，得到其alpha值。 假设Fama-"
+"French三因子模型可以完全解释市场，则alpha为负表明市场低估该股，因此应该买入。"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:6
+msgid "策略思路："
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:8
+msgid ""
+"计算市场收益率、个股的账面市值比和市值,并对后两个进行了分类, 根据分类得到的组合分别计算其市值加权收益率、SMB和HML.  "
+"对各个股票进行回归(假设无风险收益率等于0)得到alpha值."
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:12
+msgid "选取alpha值小于0并为最小的10只股票进入标的池，平掉不在标的池的股票并等权买入在标的池的股票"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:14
+msgid "回测数据:SHSE.000300的成份股"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:16
+msgid "回测时间为:2019-05-01 到 2022-05-01"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:19
+msgid "定义策略"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:129
+msgid "运行策略"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:131
+msgid "设置回测参数，运行策略"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:151
+#: ../../source/examples/Example_04_多因子选股.md:245
+msgid "运行结果如下："
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:222
+msgid "![png](img/output_4_3.png)"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:222
+#: ../../source/examples/Example_04_多因子选股.md:311
+msgid "png"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:225
+msgid "设置另外的回测区间从2016-04-05到2021-02-01，运行策略，可以看到在不同的区间下该策略都是有效的"
+msgstr ""
+
+#: ../../source/examples/Example_04_多因子选股.md:311
+msgid "![png](img/output_4_4.png)"
+msgstr ""
+
