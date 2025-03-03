@@ -30,144 +30,144 @@ msgstr "Download and manage financial history data"
 
 #: ../../index.rst:110
 msgid "创建交易策略"
-msgstr "C"
+msgstr "Create trading strategies"
 
 #: ../../index.rst:120
 msgid "回测并评价交易策略"
-msgstr ""
+msgstr "Backtest and evaluate trading strategies"
 
 #: ../../index.rst:131
 msgid "优化交易策略"
-msgstr ""
+msgstr "Optimize trading strategies"
 
 #: ../../index.rst:141
 msgid "模拟实盘运行交易策略"
-msgstr ""
+msgstr "Simulate real-time operation of trading strategies"
 
 #: ../../index.rst:152
 msgid "自定义策略示例"
-msgstr ""
+msgstr "Example of custom strategy"
 
 #: ../../index.rst:161
 msgid "API参考"
-msgstr ""
+msgstr "API reference"
 
 #: ../../index.rst:177
 msgid "LICENSE"
-msgstr ""
+msgstr "LICENSE"
 
 #: ../../index.rst:183
 msgid "ABOUT 关于 ``qteasy``"
-msgstr ""
+msgstr "About``qteasy``"
 
 #: ../../index.rst:195
 msgid "FAQ 常见问题"
-msgstr ""
+msgstr "FAQ"
 
 #: ../../index.rst:7
 msgid "欢迎使用 ``QTEASY`` 文档!"
-msgstr ""
+msgstr "Welcome to the ``QTEASY`` documentation!"
 
 #: ../../index.rst:15
 msgid "目前 ``qteays`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
-msgstr ""
+msgstr "Currently, ``qteays`` is in the intensive development and testing stage. There are inevitably some vulnerabilities and bugs in the software. If you encounter problems during use, welcome to `report Issue`_ or submit `new feature requirements`_ to me, or you can enter the `discussion area`_ to participate in the discussion. Welcome to contribute code!"
 
 #: ../../index.rst:21
 msgid "Author: **Jackie PENG**"
-msgstr ""
+msgstr "Author: **Jackie PENG**"
 
 #: ../../index.rst:22
 msgid "email: *jackie_pengzhao@163.com*"
-msgstr ""
+msgstr "email: *jackie_pengzhao@163.com*"
 
 #: ../../index.rst:23
 msgid "Created: 2019, July, 16"
-msgstr ""
+msgstr "Created: 2019, July, 16"
 
 #: ../../index.rst:24
 msgid "Latest Version: `1.4.8`"
-msgstr ""
+msgstr "Latest Version: `1.4.8`"
 
 #: ../../index.rst:25
 msgid "License: BSD 3-Clause"
-msgstr ""
+msgstr "License: BSD 3-Clause"
 
 #: ../../index.rst:28
 msgid "简介"
-msgstr ""
+msgstr "Brief introduction"
 
 #: ../../index.rst:30
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
-msgstr ""
+msgstr "``QTEASY`` is a set of quantitative trading strategy development toolkits developed for quantitative trading personnel. The basic functions are as follows:"
 
 #: ../../index.rst:32
 msgid "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 ``Tushare`` 、 ``EastMoney`` 等"
-msgstr ""
+msgstr "Financial historical data acquisition, cleaning, sorting, visualization, local storage query and application; support multiple data storage methods, including local files, MySQL databases, etc., data sources include ``Tushare``, ``EastMoney``, etc."
 
 #: ../../index.rst:33
 msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
-msgstr ""
+msgstr "Investment trading strategy creation, backtesting, performance evaluation, and through the definition of adjustable parameters of the strategy, provide a variety of optimization algorithms to achieve parameter optimization of the trading strategy"
 
 #: ../../index.rst:34
 msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr ""
+msgstr "Trading strategy deployment, real-time operation, simulation of trading results, and tracking of trading logs, stock positions, account fund changes, etc."
 
 #: ../../index.rst:37
 msgid "``QTEASY`` 能做什么?"
-msgstr ""
+msgstr "What is ``QTEASY`` designed for?"
 
 #: ../../index.rst:40
 msgid "获取并管理金融历史数据"
-msgstr ""
+msgstr "Access and manage financial history data"
 
 #: ../../index.rst:42
 msgid "获取、清洗、本地存储大量金融历史数据"
-msgstr ""
+msgstr "Acquire, scrub, and locally store large amounts of financial historical data"
 
 #: ../../index.rst:43
 msgid "检索、处理、调用本地数据"
-msgstr ""
+msgstr "Search, process, and extract local data"
 
 #: ../../index.rst:49
 msgid "本地金融数据可视化"
-msgstr ""
+msgstr "Visualize local financial data"
 
 #: ../../index.rst:53
 msgid "创建交易策略，模拟自动化交易"
-msgstr ""
+msgstr "Create trading strategies, simulate automated trading"
 
 #: ../../index.rst:55
 msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
-msgstr ""
+msgstr "Build trading strategies quickly, use more than 70 built-in trading strategies or create trading strategies yourself"
 
 #: ../../index.rst:56
 msgid "获取实时市场数据，运行策略模拟自动化交易"
-msgstr ""
+msgstr "Acquire real-time market data, run strategy simulation automated trading"
 
 #: ../../index.rst:57
 msgid "跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr ""
+msgstr "Track and record trading logs, stock positions, account fund changes, etc."
 
 #: ../../index.rst:58
 msgid "通过多种用户界面查看并控制交易程序"
-msgstr ""
+msgstr "View and control trading programs through multiple user interfaces"
 
 #: ../../index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
-msgstr ""
+msgstr "In the future, access the real-time trading interface provided by the broker through the QMT interface to achieve automated trading"
 
 #: ../../index.rst:73
 msgid "回测、评价、优化交易策略"
-msgstr ""
+msgstr "Backtest, evaluate, and optimize trading strategies"
 
 #: ../../index.rst:75
 msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
-msgstr ""
+msgstr "Backtest trading strategies using historical data, generate a complete historical trading list, and generate trading results"
 
 #: ../../index.rst:76
 msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
-msgstr ""
+msgstr "Evaluate the trading results from multiple dimensions, generate trading reports and result charts"
 
 #: ../../index.rst:77
 msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
-msgstr ""
+msgstr "Optimize trading strategies using multiple optimization algorithms to search for the best strategy parameters and improve strategy performance"
