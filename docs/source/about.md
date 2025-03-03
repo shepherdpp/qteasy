@@ -1,8 +1,8 @@
 
-# About QTEASY
+# 关于 QTEASY
 
-- Author: **Jackie PENG**
+- 作者: **Jackie PENG**
 - Email: *jackie_pengzhao@163.com*
-- Created: 2019, July, 16
-- Latest Version: `1.4.8`
+- 创建日期: 2019, July, 16
+- 最新版本: `1.4.8`
 - License: BSD 3-Clause
