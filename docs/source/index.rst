@@ -18,10 +18,10 @@
 .. _新功能需求: https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request--功能需求.md&title=
 .. _讨论区: https://github.com/shepherdpp/qteasy/discussions
 
-- Author: **Jackie PENG**
+- 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
-- Created: 2019, July, 16
-- Latest Version: `1.4.8`
+- 创建日期: 2019, July, 16
+- 最新版本: `1.4.8`
 - License: BSD 3-Clause
 
 简介
@@ -181,7 +181,7 @@
 
 
 .. toctree::
-   :caption: ABOUT 关于 ``qteasy``
+   :caption: 关于 ``qteasy``
    :maxdepth: 1
    :glob:
 
@@ -193,7 +193,7 @@
    RELEASE_HISTORY
 
 .. toctree::
-   :caption: FAQ 常见问题
+   :caption: 常见问题
    :maxdepth: 1
    :glob:
 
