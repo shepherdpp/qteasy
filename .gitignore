@@ -76,3 +76,4 @@ qteasy/qteasy_backup.cfg
 /docs/_build/html
 /docs/_build
 /docs/_build/gettext
+/docs/source/locale
