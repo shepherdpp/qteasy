@@ -18,19 +18,19 @@ msgstr ""
 
 #: ../../index.rst:84
 msgid "``qteasy`` 快速入门"
-msgstr ""
+msgstr "``qteasy`` quick start"
 
 #: ../../index.rst:92
 msgid "``qteasy`` 使用教程"
-msgstr ""
+msgstr "``qteasy`` tutorial"
 
 #: ../../index.rst:101
 msgid "下载并管理金融历史数据"
-msgstr ""
+msgstr "Download and manage financial history data"
 
 #: ../../index.rst:110
 msgid "创建交易策略"
-msgstr ""
+msgstr "C"
 
 #: ../../index.rst:120
 msgid "回测并评价交易策略"
