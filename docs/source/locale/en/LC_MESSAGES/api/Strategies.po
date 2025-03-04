@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -21,5 +21,912 @@ msgstr ""
 
 #: ../../source/api/Strategies.rst:3
 msgid "交易策略类"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:1
+msgid "量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:4 qteasy.strategy.RuleIterator:7
+msgid "Properties"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:5
+msgid "pars: any"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:6
+msgid "策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:7
+msgid "opt_tag: int {0, 1}"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:8
+msgid "策略的优化标签，0表示不参与优化，1表示参与优化"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:9
+msgid "par_count: int"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:10
+msgid "策略可调参数的个数"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:11
+msgid "par_types: [list, str]"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:12
+msgid "策略可调参数的类型，可以是一个列表，也可以是一个字符串，如果是字符串，则表示所有参数的类型都相同"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:13
+msgid "par_range: [list, tuple]"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:14
+msgid "策略可调参数的取值范围，可以是一个列表，也可以是一个元组，如果是列表，则表示所有参数的取值范围都相同"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:15
+msgid "stg_type: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:16
+msgid "策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:17
+msgid "name: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:18
+msgid "策略名称，用户自定义，用于区分不同的策略"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:19
+msgid "description: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:20
+msgid "策略描述，用户自定义，用于描述策略的基本原理"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:24
+msgid "data_freq: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:22
+msgid "策略所使用的数据的频率，可以是以下几种类型： 'd'：日线数据 'w'：周线数据 'm'：月线数据"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:29
+msgid "sample_freq: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:27
+msgid "策略的采样频率，可以是以下几种类型： 'd'：日线数据 'w'：周线数据 'm'：月线数据"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:31
+msgid "window_length: int"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:32
+msgid "策略所使用的数据的长度，即策略所使用的数据的长度，例如策略所使用的均线的长度"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:33
+msgid "data_types: [str, list]"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:34
+msgid "策略所使用的数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:35
+msgid "reference_data_types: [str, list]"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:36
+msgid "策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:42
+msgid "bt_price_type: str"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:38
+msgid "策略回测时的价格类型，可以是以下几种类型： 'open'：开盘价 'high'：最高价 'low'：最低价 'close'：收盘价"
+msgstr ""
+
+#: of qteasy.strategy.BaseStrategy:46
+msgid "生成策略信号，该方法是策略的核心方法，所有的策略都必须实现该方法"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:1
+msgid "通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:3
+msgid ""
+"策略的实现 要创建一个通用交易策略，需要创建一个GeneralStg策略类，并重写realize()方法，在其中定义交易信号 "
+"的生成规则，并在策略属性中定义相关的数据类型和策略的运行参数。这样就可以将策略用于实盘或回测了。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:13 qteasy.strategy.GeneralStg:7
+msgid "推荐使用下面的方法创建策略类："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:9
+msgid "Class ExampleStrategy(GeneralStg):"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:17 qteasy.strategy.GeneralStg:11
+#: qteasy.strategy.RuleIterator:40
+msgid "def realize(self, h, r=None, t=None, pars=None):"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:13 qteasy.strategy.RuleIterator:42
+msgid "# 在这里编写信号生成逻辑 ... result = ... # result代表策略的输出"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:18 qteasy.strategy.RuleIterator:47
+msgid "return result"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:26 qteasy.strategy.GeneralStg:20
+#: qteasy.strategy.RuleIterator:49
+msgid "用下面的方法创建一个策略对象："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:32 qteasy.strategy.GeneralStg:26
+#: qteasy.strategy.RuleIterator:55
+msgid "example_strategy = ExampleStrategy(pars=<example pars>,"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:29 qteasy.strategy.GeneralStg:23
+#: qteasy.strategy.RuleIterator:52
+msgid ""
+"name='example', description='example strategy', "
+"strategy_data_types='close' ... )"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:34 qteasy.strategy.GeneralStg:28
+#: qteasy.strategy.RuleIterator:57
+msgid "在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:30
+msgid "GeneralStg通用策略的参数如下，更详细的参数说明、取值范围和含义请参见qteasy文档："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:32
+msgid ""
+"pars: tuple,            策略参数 opt_tag: int,           优化标记，策略是否参与参数优化 "
+"name: str,              策略名称 description: str,       策略简介 par_count: int,"
+"         策略参数个数 par_types: tuple/list,  策略参数类型 par_range:              "
+"策略参数取值范围 data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率 "
+"strategy_run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。 window_length:"
+"          历史数据视窗长度。即生成策略输出所需要的历史数据的数量 strategy_data_types:             "
+"静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成 strategy_run_timing:          "
+"策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种 reference_data_types:   "
+"参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:52 qteasy.strategy.GeneralStg:45
+msgid "生成，如指数、宏观经济数据等。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:70 qteasy.strategy.GeneralStg:47
+#: qteasy.strategy.RuleIterator:59
+msgid "编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:72 qteasy.strategy.GeneralStg:49
+#: qteasy.strategy.RuleIterator:61
+msgid "realize()的定义："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:79 qteasy.strategy.GeneralStg:54
+#: qteasy.strategy.RuleIterator:68
+msgid "def realize(self,"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:52
+msgid "h: np.ndarray, r: np.ndarray, t: np.ndarray):"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:81 qteasy.strategy.GeneralStg:56
+#: qteasy.strategy.RuleIterator:70
+msgid "realize()中获取策略参数："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:83 qteasy.strategy.FactorSorter:89
+#: qteasy.strategy.GeneralStg:58 qteasy.strategy.RuleIterator:72
+msgid "par_1, par_2, ..., par_n = self.pars"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:91 qteasy.strategy.GeneralStg:60
+#: qteasy.strategy.RuleIterator:152
+msgid "realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:93 qteasy.strategy.GeneralStg:62
+msgid "h(history): 历史数据片段，shape为(M, N, L)，即："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:64
+msgid "M层：   股票类型"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:66
+msgid "N行：   交易日期/时间轴"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:68
+msgid "L列：   历史数据类型轴"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:101 qteasy.strategy.GeneralStg:70
+msgid "在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子： 例如：设定："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:103 qteasy.strategy.GeneralStg:72
+msgid "asset_pool = \"000001.SZ, 000002.SZ, 600001.SH\""
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:104 qteasy.strategy.GeneralStg:73
+msgid "data_freq = 'd'"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:105 qteasy.strategy.GeneralStg:74
+msgid "window_length = 100"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:106 qteasy.strategy.GeneralStg:75
+msgid "strategy_data_types = \"open, high, low, close, pe\""
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:108 qteasy.strategy.GeneralStg:77
+msgid "以下例子都基于前面给出的参数设定 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:79
+msgid ""
+"close_last_day = h_seg[:, -1, 3] close_10_day = h_seg[:, -10, 3] rate_10 "
+"= (close_last_day / close_10_day) - 1"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:117 qteasy.strategy.GeneralStg:86
+#: qteasy.strategy.RuleIterator:92
+msgid "例2, 判断股票最近的收盘价是否大于10日内的最高价："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:84
+msgid ""
+"max_10_day = h_seg[:, -10:-1, 1].max(axis=1) close_last_day = h_seg[:, "
+"-1, 3] penetrate = close_last_day > max_10_day"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:121 qteasy.strategy.GeneralStg:90
+#: qteasy.strategy.RuleIterator:96
+msgid "例3, 获取股票最近10日市盈率的平均值"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:89
+msgid "pe_10_days = h_seg[:, -10:-1, 4] avg_pe = pe_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:127 qteasy.strategy.GeneralStg:96
+#: qteasy.strategy.RuleIterator:102
+msgid "例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:93
+msgid ""
+"close_10_days = h_seg[:, -10:-1, 3] close_50_days = h_seg[:, -50:-1, 3] "
+"ma_10 = close_10_days.mean(axis=1) ma_50 = close_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
+#: qteasy.strategy.RuleIterator:119
+msgid "r(reference):参考历史数据，默认为None，shape为(N, L)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:130 qteasy.strategy.GeneralStg:99
+#: qteasy.strategy.RuleIterator:105
+msgid "与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者 宏观经济数据等，"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:133 qteasy.strategy.GeneralStg:102
+#: qteasy.strategy.RuleIterator:108
+msgid "N行, 交易日期/时间轴"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:135 qteasy.strategy.GeneralStg:104
+#: qteasy.strategy.RuleIterator:110
+msgid "L列，参考数据类型轴"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
+#: qteasy.strategy.RuleIterator:119
+msgid "以下是获取参考数据的几个例子："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:139 qteasy.strategy.GeneralStg:108
+#: qteasy.strategy.RuleIterator:114
+msgid "设定："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:108 qteasy.strategy.RuleIterator:114
+msgid "reference_data_types = \"000300.SH.close, 000001.SH.close\""
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:141 qteasy.strategy.GeneralStg:110
+#: qteasy.strategy.RuleIterator:116
+msgid "例1: 获取最近一天的沪深300收盘价："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:142 qteasy.strategy.GeneralStg:111
+#: qteasy.strategy.RuleIterator:117
+msgid "close_300 = r[-1, 0]"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
+#: qteasy.strategy.RuleIterator:119
+msgid "例2: 获取五天前的上证指数收盘价:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
+#: qteasy.strategy.RuleIterator:119
+msgid "close_SH = r[-5, 1]"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:174 qteasy.strategy.GeneralStg:144
+#: qteasy.strategy.RuleIterator:149
+msgid "t(trade):交易历史数据，默认为None，shape为(N, 5)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:147 qteasy.strategy.GeneralStg:116
+#: qteasy.strategy.RuleIterator:122
+msgid "最近几次交易的结果数据，2D数据。包含N行5列数据 如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。 数据的结构如下"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:152 qteasy.strategy.GeneralStg:121
+#: qteasy.strategy.RuleIterator:127
+msgid "N行， 股票/证券类型轴"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:152 qteasy.strategy.GeneralStg:121
+#: qteasy.strategy.RuleIterator:127
+msgid "每一列代表一只个股或证券"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:159 qteasy.strategy.GeneralStg:128
+#: qteasy.strategy.RuleIterator:134
+msgid "5列,  交易数据类型轴"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:155 qteasy.strategy.GeneralStg:124
+#: qteasy.strategy.RuleIterator:130
+msgid "0, own_amounts:              当前持有每种股票的份额"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:156 qteasy.strategy.GeneralStg:125
+#: qteasy.strategy.RuleIterator:131
+msgid "1, available_amounts:        当前可用的每种股票的份额"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:126
+msgid "2, current_prices:           当前的股票价格"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:158 qteasy.strategy.GeneralStg:127
+#: qteasy.strategy.RuleIterator:133
+msgid "3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:159 qteasy.strategy.GeneralStg:128
+#: qteasy.strategy.RuleIterator:134
+msgid "4, recent_trade_prices:      最近一次成交价格"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:161 qteasy.strategy.GeneralStg:130
+#: qteasy.strategy.RuleIterator:136
+msgid "示例：以下是在策略中获取交易数据的几个例子："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:168 qteasy.strategy.GeneralStg:137
+#: qteasy.strategy.RuleIterator:143
+msgid "例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:164 qteasy.strategy.GeneralStg:133
+#: qteasy.strategy.RuleIterator:139
+msgid ""
+"volume = t[:, 3] trade_prices = t[:, 4] 或者: t = t.T volume = t[3] "
+"trade_prices = t[4]"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:174 qteasy.strategy.GeneralStg:144
+#: qteasy.strategy.RuleIterator:149
+msgid "例2: 获取当前持有股票数量:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:171 qteasy.strategy.GeneralStg:140
+#: qteasy.strategy.RuleIterator:146
+msgid "own_amounts = t[:, 0] 或者: t = t.T own_amounts = t[0]"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:146
+msgid ""
+"realize()方法的输出： realize()方法的输出就是交易信号(1D "
+"ndarray),shape为(M,)，M为股票的个数，dtype为float "
+"ndarray中每个元素代表相应股票的操作信号。在不同的信号类型时，交易信号的含义不同："
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:150 qteasy.strategy.RuleIterator:165
+msgid "signal type   |         PT           |            PS           |       VS"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:152 qteasy.strategy.RuleIterator:167
+msgid ""
+"sig > 1    |         N/A          |           N/A           | Buy in sig "
+"shares"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:153 qteasy.strategy.RuleIterator:168
+#, python-format
+msgid ""
+"1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in "
+"sig shares"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:154 qteasy.strategy.RuleIterator:169
+msgid ""
+"sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do "
+"Nothing"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:156 qteasy.strategy.RuleIterator:171
+#, python-format
+msgid ""
+"0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell "
+"sig shares"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:156 qteasy.strategy.RuleIterator:171
+msgid ""
+"sig < -1    |         N/A          |           N/A           |  Sell sig "
+"shares"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:158 qteasy.strategy.RuleIterator:173
+msgid "按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator 中，并产生交易信号了。"
+msgstr ""
+
+#: of qteasy.strategy.GeneralStg:161
+msgid "关于GeneralStg类的更详细说明，请参见qteasy的文档。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:2
+msgid "因子排序选股策略，根据用户定义的选股因子筛选排序后确定每个股票的选股权重(请注意，FactorSorter策略"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:2
+msgid "生成的交易信号在0到1之间，推荐设置signal_type为\"PT\")"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:4
+msgid ""
+"这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号 "
+"用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。 "
+"策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定数量的股票，最后根据它 们的因子值分配权重或信号值。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:9
+msgid ""
+"这些选股因子的排序和筛选条件，由6个选股参数来控制，因此用户只需要在策略属性中设置好相应的参数， "
+"策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写 因子的筛选排序取舍逻辑了。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:15
+msgid "Class ExampleStrategy(FactorSorter):"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:19
+msgid "# 在这里编写信号生成逻辑 ... factor = ... # factor代表策略输出的选股因子，用于进一步选股"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:24
+msgid "return factor"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:36
+msgid ""
+"与通用策略类不同，FactorSorter策略需要几个特殊属性用于确定选股行为（以下*者） "
+"策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:39
+msgid ""
+"pars:               tuple,  策略参数 opt_tag:            int,    "
+"优化标记，策略是否参与参数优化 name:               str,    策略名称 description:        str,"
+"    策略简介 par_count:          int,    策略参数个数 par_types:          tuple,  "
+"策略参数类型 par_range:          tuple,  策略参数取值范围 data_freq:          str:    "
+"数据频率，用于生成策略输出所需的历史数据的频率 strategy_run_freq:                "
+"策略运行采样频率，即相邻两次策略生成的间隔频率。 window_length:              "
+"历史数据视窗长度。即生成策略输出所需要的历史数据的数量 strategy_data_types:                 "
+"静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成 strategy_run_timing:              "
+"策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种 reference_data_types:       "
+"参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:53
+msgid ""
+"*max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票 "
+"*condition:         str ,   确定股票的筛选条件，默认值'any'"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:55
+msgid ""
+"'any'        :默认值，选择所有可用股票 'greater'    :筛选出因子大于ubound的股票 'less'       "
+":筛选出因子小于lbound的股票 'between'    :筛选出因子介于lbound与ubound之间的股票 "
+"'not_between':筛选出因子不在lbound与ubound之间的股票"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:60
+msgid ""
+"*lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf *ubound:            "
+"float,  执行条件筛选时的指标上界, 默认值np.inf *sort_ascending:    bool,   排序方法，默认值: "
+"False, True: 优先选择因子最小的股票, False, 优先选择因子最大的股票 *weighting:         str ,   "
+"确定如何分配选中股票的权重"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:64
+msgid ""
+"默认值: 'even' 'even'       :所有被选中的股票都获得同样的权重 'linear'     :权重根据因子排序线性分配 "
+"'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例 'proportion' :权重与股票的因子分值成正比"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:75 qteasy.strategy.RuleIterator:64
+msgid ""
+"h: np.ndarray, r: np.ndarray = None, t: np.ndarray = None, pars: tuple = "
+"None ):"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:89
+msgid "或者："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:86
+msgid "if pars is not None:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:87
+msgid "par_1, par_2, ..., par_n = pars"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:89
+msgid "else:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:95
+msgid "M层：   M种股票的数据"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:97
+msgid "N行：   历史数据时间跨度"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:99
+msgid "L列：   L种历史数据类型"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:110
+msgid ""
+"close_last_day = h[:, -1, 3] close_10_day = h[:, -10, 3] rate_10 = "
+"(close_last_day / close_10_day) - 1"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:115
+msgid ""
+"max_10_day = h[:, -10:-1, 1].max(axis=1) close_last_day = h[:, -1, 3] "
+"penetrate = close_last_day > max_10_day"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:120
+msgid "pe_10_days = h[:, -10:-1, 4] avg_pe = pe_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:124
+msgid ""
+"close_10_days = h[:, -10:-1, 3] close_50_days = h[:, -50:-1, 3] ma_10 = "
+"close_10_days.mean(axis=1) ma_50 = close_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:139
+msgid "reference_data_types = \"close-000300.SH, close-000001.SH\""
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:157 qteasy.strategy.RuleIterator:132
+msgid "2, current_prices:           当前的交易价格"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:176
+msgid ""
+"realize()方法的输出： FactorSorter交易策略的输出信号为1D "
+"ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子 "
+"自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:181
+msgid "output："
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:181
+msgid "np.array(arr), 如： np.array[0.1, 1.0, 10.0, 100.0]"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:190
+msgid "根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:187
+msgid "例如：当"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:185
+msgid "max_sel_count=0.5 condition='greater', ubound=0.5, weighting='even'"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:190
+msgid "时，上述因子的选股结果为:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:190
+msgid "np.array[0.0, 0.0, 0.5, 0.5]"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:192
+msgid "在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:194
+msgid "signal type   |         PT prefered type     |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:196
+msgid "sig > 1    |              N/A             |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:197
+msgid "1 >= sig > 0  |      Buy to sig position     |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:198
+msgid "sig = 0    |      Sell to hold 0 share    |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:199
+msgid "0 > sig >= -1 |             N/A              |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:200
+msgid "sig < -1    |             N/A              |"
+msgstr ""
+
+#: of qteasy.strategy.FactorSorter:201
+msgid "关于Strategy类的更详细说明，请参见qteasy的文档。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:1
+msgid "规则迭代策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时迭代应用到所有的股票上。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:3
+msgid ""
+"这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则， "
+"策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:8
+msgid "pars:               tuple,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:9
+msgid "策略参数"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:10
+msgid "opt_tag:            int,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:11
+msgid "优化标记，策略是否参与参数优化"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:12
+msgid "name:               str,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:13
+msgid "策略名称"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:14
+msgid "description:        str,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:15
+msgid "策略简介"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:16
+msgid "par_count:          int,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:17
+msgid "策略参数个数"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:18
+msgid "par_types:          tuple,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:19
+msgid "策略参数类型"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:20
+msgid "par_range:          tuple,"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:21
+msgid "策略参数取值范围"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:22
+msgid "data_freq:          str:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:23
+msgid "数据频率，用于生成策略输出所需的历史数据的频率"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:24
+msgid "strategy_run_freq:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:25
+msgid "策略运行采样频率，即相邻两次策略生成的间隔频率。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:26
+msgid "window_length:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:27
+msgid "历史数据视窗长度。即生成策略输出所需要的历史数据的数量"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:28
+msgid "strategy_data_types:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:29
+msgid "静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:30
+msgid "strategy_run_timing:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:31
+msgid "策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:34
+msgid "reference_data_types:"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:33
+msgid "参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有 的股票的信号生成，如指数、宏观经济数据等。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:37
+msgid "示例"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:38
+msgid "Class ExampleStrategy(RuleIterator):"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator
+msgid "input"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:102
+msgid "h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:77
+msgid "h 的shape为(N, L)，含义如下："
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:79
+msgid "N行：交易时间轴"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:80
+msgid "L列： 历史数据类型轴"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:102
+msgid "示例："
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:83
+msgid "以下例子都基于前面给出的参数设定 例1，计算最近的收盘价相对于10天前的涨跌幅："
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:85
+msgid ""
+"close_last_day = h_seg[-1, 3] close_10_day = h_seg[-10, 3] rate_10 = "
+"(close_last_day / close_10_day) - 1"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:90
+msgid ""
+"max_10_day = h_seg[-10:-1, 1].max(axis=1) close_last_day = h_seg[-1, 3] "
+"penetrate = close_last_day > max_10_day"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:95
+msgid "pe_10_days = h_seg[-10:-1, 4] avg_pe = pe_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:99
+msgid ""
+"close_10_days = h_seg[-10:-1, 3] close_50_days = h_seg[-50:-1, 3] ma_10 ="
+" close_10_days.mean(axis=1) ma_50 = close_10_days.mean(axis=1)"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:151
+msgid ":output signals: 一个代表交易信号的数字，dtype为float"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:154
+msgid "realize()方法的输出： realize()方法的输出就是交易信号，该交易信号是一个数字，策略会将其推广到整个投资组合："
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:157
+msgid "def realize(): -> int"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:161
+msgid "投资组合： [share1, share2, share3, share4]"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator
+msgid "|       |       |"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:161
+msgid ""
+"[ int1,    int2,   int3,   int4] -> np.array[ int1,    int2,   int3,   "
+"int4]"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:163
+msgid "在不同的信号类型下，信号的含义不同。"
+msgstr ""
+
+#: of qteasy.strategy.RuleIterator:176
+msgid "关于Strategy类的更详细说明，请参见qteasy的文档。 RuleIterator 策略类继承了交易策略基类"
 msgstr ""
 

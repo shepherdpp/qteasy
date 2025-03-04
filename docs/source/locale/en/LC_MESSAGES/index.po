@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -72,10 +72,17 @@ msgid "欢迎使用 ``QTEASY`` 文档!"
 msgstr "Welcome to ``QTEASY`` documentation!"
 
 #: ../../source/index.rst:15
+#, fuzzy
 msgid ""
-"目前 ``qteays`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
+"目前 ``qteasy`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
 "`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
-msgstr "Currently, ``qteasy`` is in the intensive development and testing stage, and there are inevitably some vulnerabilities and bugs in the software. If you encounter problems during use, welcome to `Report Issue`_ or submit `New Feature Request`_ to me, you can also enter the `Discussion Area`_ to participate in the discussion. Contributions are highly appreciated!"
+msgstr ""
+"Currently, ``qteasy`` is in the intensive development and testing stage, "
+"and there are inevitably some vulnerabilities and bugs in the software. "
+"If you encounter problems during use, welcome to `Report Issue`_ or "
+"submit `New Feature Request`_ to me, you can also enter the `Discussion "
+"Area`_ to participate in the discussion. Contributions are highly "
+"appreciated!"
 
 #: ../../source/index.rst:21
 msgid "作者: **Jackie PENG**"
@@ -103,21 +110,35 @@ msgstr "Brief Introduction"
 
 #: ../../source/index.rst:30
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
-msgstr "``QTEASY`` is a set of quantitative trading strategy development toolkits developed for quantitative trading personnel, with the following basic functions:"
+msgstr ""
+"``QTEASY`` is a set of quantitative trading strategy development toolkits"
+" developed for quantitative trading personnel, with the following basic "
+"functions:"
 
 #: ../../source/index.rst:32
 msgid ""
 "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
 "``Tushare`` 、 ``EastMoney`` 等"
-msgstr "Financial historical data acquisition, cleaning, sorting, visualization, local storage query and application; support multiple data storage methods, including local files, MySQL databases, etc., data sources include ``Tushare`` , ``EastMoney`` etc."
+msgstr ""
+"Financial historical data acquisition, cleaning, sorting, visualization, "
+"local storage query and application; support multiple data storage "
+"methods, including local files, MySQL databases, etc., data sources "
+"include ``Tushare`` , ``EastMoney`` etc."
 
 #: ../../source/index.rst:33
 msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
-msgstr "Investment trading strategy creation, backtesting, performance evaluation, and providing multiple optimization algorithms to achieve parameter optimization of trading strategies by defining the adjustable parameters of the strategy"
+msgstr ""
+"Investment trading strategy creation, backtesting, performance "
+"evaluation, and providing multiple optimization algorithms to achieve "
+"parameter optimization of trading strategies by defining the adjustable "
+"parameters of the strategy"
 
 #: ../../source/index.rst:34
 msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Trading strategy deployment, real-time operation, simulation of trading results, and tracking and recording of trading logs, stock positions, account fund changes, etc."
+msgstr ""
+"Trading strategy deployment, real-time operation, simulation of trading "
+"results, and tracking and recording of trading logs, stock positions, "
+"account fund changes, etc."
 
 #: ../../source/index.rst:37
 msgid "``QTEASY`` 能做什么?"
@@ -129,7 +150,9 @@ msgstr "Acquire and manage financial historical data"
 
 #: ../../source/index.rst:42
 msgid "获取、清洗、本地存储大量金融历史数据"
-msgstr "Acquire, clean, and locally store a large amount of financial historical data"
+msgstr ""
+"Acquire, clean, and locally store a large amount of financial historical "
+"data"
 
 #: ../../source/index.rst:43
 msgid "检索、处理、调用本地数据"
@@ -145,7 +168,9 @@ msgstr "Create trading strategy, simulate automated trading"
 
 #: ../../source/index.rst:55
 msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
-msgstr "Create trading strategy quickly, use more than 70 built-in trading strategies or create trading strategy by yourself"
+msgstr ""
+"Create trading strategy quickly, use more than 70 built-in trading "
+"strategies or create trading strategy by yourself"
 
 #: ../../source/index.rst:56
 msgid "获取实时市场数据，运行策略模拟自动化交易"
@@ -161,7 +186,9 @@ msgstr "Monitor and control trading programs through multiple user interfaces"
 
 #: ../../source/index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
-msgstr "In the future, it will access the real-time trading interface provided by the broker through the QMT interface to achieve automated trading"
+msgstr ""
+"In the future, it will access the real-time trading interface provided by"
+" the broker through the QMT interface to achieve automated trading"
 
 #: ../../source/index.rst:73
 msgid "回测、评价、优化交易策略"
@@ -169,13 +196,19 @@ msgstr "Backtest, evaluate, and optimize trading strategies"
 
 #: ../../source/index.rst:75
 msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
-msgstr "Backtest trading strategies using historical data, generate a complete historical trading list, and generate trading results"
+msgstr ""
+"Backtest trading strategies using historical data, generate a complete "
+"historical trading list, and generate trading results"
 
 #: ../../source/index.rst:76
 msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
-msgstr "Evaluate the trading results from multiple dimensions, generate trading reports and result charts"
+msgstr ""
+"Evaluate the trading results from multiple dimensions, generate trading "
+"reports and result charts"
 
 #: ../../source/index.rst:77
 msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
-msgstr "Optimize the strategy parameters with multiple optimization algorithms to improve the strategy performance"
+msgstr ""
+"Optimize the strategy parameters with multiple optimization algorithms to"
+" improve the strategy performance"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -72,10 +72,17 @@ msgid "欢迎使用 ``QTEASY`` 文档!"
 msgstr "Willkommen bei der „QTEASY“-Dokumentation!"
 
 #: ../../source/index.rst:15
+#, fuzzy
 msgid ""
-"目前 ``qteays`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
+"目前 ``qteasy`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
 "`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
-msgstr "Derzeit befindet sich ``qteasy`` in der intensiven Entwicklungs- und Testphase und die Software weist zwangsläufig einige Schwachstellen und Fehler auf. Wenn Sie während der Verwendung auf Probleme stoßen, können Sie mir gerne ein „Problem melden“ oder eine „Anforderung für eine neue Funktion“ senden. Sie können auch den „Diskussionsbereich“ aufrufen, um an der Diskussion teilzunehmen. Beiträge werden sehr geschätzt!"
+msgstr ""
+"Derzeit befindet sich ``qteasy`` in der intensiven Entwicklungs- und "
+"Testphase und die Software weist zwangsläufig einige Schwachstellen und "
+"Fehler auf. Wenn Sie während der Verwendung auf Probleme stoßen, können "
+"Sie mir gerne ein „Problem melden“ oder eine „Anforderung für eine neue "
+"Funktion“ senden. Sie können auch den „Diskussionsbereich“ aufrufen, um "
+"an der Diskussion teilzunehmen. Beiträge werden sehr geschätzt!"
 
 #: ../../source/index.rst:21
 msgid "作者: **Jackie PENG**"
@@ -103,21 +110,35 @@ msgstr "Kurze Einleitung"
 
 #: ../../source/index.rst:30
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
-msgstr "``QTEASY`` ist ein Satz von Toolkits zur Entwicklung quantitativer Handelsstrategien, die für quantitatives Handelspersonal entwickelt wurden und die folgenden Grundfunktionen aufweisen:"
+msgstr ""
+"``QTEASY`` ist ein Satz von Toolkits zur Entwicklung quantitativer "
+"Handelsstrategien, die für quantitatives Handelspersonal entwickelt "
+"wurden und die folgenden Grundfunktionen aufweisen:"
 
 #: ../../source/index.rst:32
 msgid ""
 "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
 "``Tushare`` 、 ``EastMoney`` 等"
-msgstr "Erfassung, Bereinigung, Sortierung und Visualisierung historischer Finanzdaten, Abfrage und Anwendung des lokalen Speichers; Unterstützung mehrerer Datenspeichermethoden, einschließlich lokaler Dateien, MySQL-Datenbanken usw., Datenquellen umfassen ``Tushare``, ``EastMoney`` usw."
+msgstr ""
+"Erfassung, Bereinigung, Sortierung und Visualisierung historischer "
+"Finanzdaten, Abfrage und Anwendung des lokalen Speichers; Unterstützung "
+"mehrerer Datenspeichermethoden, einschließlich lokaler Dateien, MySQL-"
+"Datenbanken usw., Datenquellen umfassen ``Tushare``, ``EastMoney`` usw."
 
 #: ../../source/index.rst:33
 msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
-msgstr "Erstellung von Investment-Trading-Strategien, Backtests, Leistungsbewertung und Bereitstellung mehrerer Optimierungsalgorithmen zur Parameteroptimierung von Trading-Strategien durch Definition der anpassbaren Parameter der Strategie"
+msgstr ""
+"Erstellung von Investment-Trading-Strategien, Backtests, "
+"Leistungsbewertung und Bereitstellung mehrerer Optimierungsalgorithmen "
+"zur Parameteroptimierung von Trading-Strategien durch Definition der "
+"anpassbaren Parameter der Strategie"
 
 #: ../../source/index.rst:34
 msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Bereitstellung von Handelsstrategien, Echtzeitbetrieb, Simulation von Handelsergebnissen sowie Verfolgung und Aufzeichnung von Handelsprotokollen, Aktienpositionen, Änderungen des Kontoguthabens usw."
+msgstr ""
+"Bereitstellung von Handelsstrategien, Echtzeitbetrieb, Simulation von "
+"Handelsergebnissen sowie Verfolgung und Aufzeichnung von "
+"Handelsprotokollen, Aktienpositionen, Änderungen des Kontoguthabens usw."
 
 #: ../../source/index.rst:37
 msgid "``QTEASY`` 能做什么?"
@@ -129,7 +150,9 @@ msgstr "Erfassung und Verwaltung historischer Finanzdaten"
 
 #: ../../source/index.rst:42
 msgid "获取、清洗、本地存储大量金融历史数据"
-msgstr "Erfassen, bereinigen und lokal speichern Sie eine große Menge historischer Finanzdaten."
+msgstr ""
+"Erfassen, bereinigen und lokal speichern Sie eine große Menge "
+"historischer Finanzdaten."
 
 #: ../../source/index.rst:43
 msgid "检索、处理、调用本地数据"
@@ -145,23 +168,34 @@ msgstr "Handelsstrategie erstellen, automatisierten Handel simulieren"
 
 #: ../../source/index.rst:55
 msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
-msgstr "Erstellen Sie schnell eine Handelsstrategie, verwenden Sie mehr als 70 integrierte Handelsstrategien oder erstellen Sie selbst eine Handelsstrategie"
+msgstr ""
+"Erstellen Sie schnell eine Handelsstrategie, verwenden Sie mehr als 70 "
+"integrierte Handelsstrategien oder erstellen Sie selbst eine "
+"Handelsstrategie"
 
 #: ../../source/index.rst:56
 msgid "获取实时市场数据，运行策略模拟自动化交易"
-msgstr "Erwerben Sie Marktdaten in Echtzeit, führen Sie Strategiesimulationen durch und betreiben Sie automatisierten Handel"
+msgstr ""
+"Erwerben Sie Marktdaten in Echtzeit, führen Sie Strategiesimulationen "
+"durch und betreiben Sie automatisierten Handel"
 
 #: ../../source/index.rst:57
 msgid "跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Verfolgen und Aufzeichnen von Handelsprotokollen, Aktienpositionen, Änderungen des Kontoguthabens usw."
+msgstr ""
+"Verfolgen und Aufzeichnen von Handelsprotokollen, Aktienpositionen, "
+"Änderungen des Kontoguthabens usw."
 
 #: ../../source/index.rst:58
 msgid "通过多种用户界面查看并控制交易程序"
-msgstr "Überwachen und steuern Sie Handelsprogramme über mehrere Benutzeroberflächen"
+msgstr ""
+"Überwachen und steuern Sie Handelsprogramme über mehrere "
+"Benutzeroberflächen"
 
 #: ../../source/index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
-msgstr "In Zukunft wird ``qteasy`` über QMT auf Handelsmakler zugreifen können, um automatisierten Handel zu realisieren"
+msgstr ""
+"In Zukunft wird ``qteasy`` über QMT auf Handelsmakler zugreifen können, "
+"um automatisierten Handel zu realisieren"
 
 #: ../../source/index.rst:73
 msgid "回测、评价、优化交易策略"
@@ -169,13 +203,20 @@ msgstr "Backtests, Evaluierungen und Optimierungen bei Handelsstrategien"
 
 #: ../../source/index.rst:75
 msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
-msgstr "Führen Sie Backtests für Handelsstrategien anhand historischer Daten durch, erstellen Sie eine vollständige Liste historischer Handelsgeschäfte und generieren Sie Handelsergebnisse"
+msgstr ""
+"Führen Sie Backtests für Handelsstrategien anhand historischer Daten "
+"durch, erstellen Sie eine vollständige Liste historischer "
+"Handelsgeschäfte und generieren Sie Handelsergebnisse"
 
 #: ../../source/index.rst:76
 msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
-msgstr "Bewerten Sie die Handelsergebnisse aus mehreren Dimensionen, erstellen Sie Handelsberichte und Ergebnisdiagramme"
+msgstr ""
+"Bewerten Sie die Handelsergebnisse aus mehreren Dimensionen, erstellen "
+"Sie Handelsberichte und Ergebnisdiagramme"
 
 #: ../../source/index.rst:77
 msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
-msgstr "Optimieren Sie die Strategieparameter mit mehreren Optimierungsalgorithmen, um die Strategieleistung zu verbessern"
+msgstr ""
+"Optimieren Sie die Strategieparameter mit mehreren "
+"Optimierungsalgorithmen, um die Strategieleistung zu verbessern"
 

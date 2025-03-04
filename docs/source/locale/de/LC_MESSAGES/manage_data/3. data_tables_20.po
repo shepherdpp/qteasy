@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -57,7 +57,7 @@ msgid "**SZSE** 深交所——深圳股票交易所"
 msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md:17
-msgid "**CFFEX** 中金所——中国黄金交易所"
+msgid "**CFFEX** 中金所——中国金融期货交易所"
 msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md:18
@@ -73,7 +73,7 @@ msgid "**DCE** 大商所——大连商品交易所"
 msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md:21
-msgid "**INE** 上能源——上海能源交易所"
+msgid "**INE** 上能源——上海国际能源交易中心"
 msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
@@ -1563,4 +1563,10 @@ msgstr ""
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "货币代码"
 msgstr ""
+
+#~ msgid "**CFFEX** 中金所——中国黄金交易所"
+#~ msgstr ""
+
+#~ msgid "**INE** 上能源——上海能源交易所"
+#~ msgstr ""
 

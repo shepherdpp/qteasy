@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -27,24 +27,242 @@ msgstr ""
 msgid "查看qteasy的当前系统配置信息:"
 msgstr ""
 
+#: of qteasy.configure.configuration:1
+msgid "显示qt当前的配置变量，"
+msgstr ""
+
+#: of qteasy.configure.configuration qteasy.configure.configure
+#: qteasy.configure.get_config qteasy.configure.get_configurations
+#: qteasy.configure.load_config qteasy.configure.remove_start_up_setting
+#: qteasy.configure.reset_config qteasy.configure.save_config
+#: qteasy.configure.set_config qteasy.configure.update_start_up_setting
+msgid "参数"
+msgstr ""
+
+#: of qteasy.configure.configuration:3 qteasy.configure.get_config:3
+#: qteasy.configure.get_configurations:3
+msgid ""
+"需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名 "
+"可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名 以下两种方式等价： 'local_data_source,"
+" local_data_file_type, local_data_file_path' ['local_data_source', "
+"'local_data_file_type', 'local_data_file_path']"
+msgstr ""
+
+#: of qteasy.configure.configuration:9 qteasy.configure.get_config:9
+#: qteasy.configure.get_configurations:9
+msgid "需要显示的配置变量的级别。 如果给出了config，则忽略此参数"
+msgstr ""
+
+#: of qteasy.configure.configuration:12 qteasy.configure.get_config:12
+#: qteasy.configure.get_configurations:12
+msgid ""
+"需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 "
+"会显示级别在0～2之间的所有配置变量 如果给出了config，则忽略此参数"
+msgstr ""
+
+#: of qteasy.configure.configuration:17 qteasy.configure.get_config:17
+#: qteasy.configure.get_configurations:17
+msgid "是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值"
+msgstr ""
+
+#: of qteasy.configure.configuration:19 qteasy.configure.get_config:19
+#: qteasy.configure.get_configurations:19
+msgid "是否显示完整说明信息，如果True，会同时显示配置变量的详细说明"
+msgstr ""
+
+#: of qteasy.configure.configuration qteasy.configure.configure
+#: qteasy.configure.get_config qteasy.configure.get_configurations
+#: qteasy.configure.load_config qteasy.configure.remove_start_up_setting
+#: qteasy.configure.reset_config qteasy.configure.save_config
+#: qteasy.configure.set_config qteasy.configure.start_up_settings
+#: qteasy.configure.update_start_up_setting
+msgid "返回类型"
+msgstr ""
+
+#: of qteasy.configure.configuration:25 qteasy.configure.configure:14
+#: qteasy.configure.reset_config:10
+msgid "备注"
+msgstr ""
+
+#: of qteasy.configure.configuration:26 qteasy.configure.get_configurations:26
+msgid "使用示例参见get_config()"
+msgstr ""
+
+#: of qteasy.configure.get_config:1 qteasy.configure.get_configurations:1
+msgid "显示qt当前的配置变量，与get_config / configuration 相同"
+msgstr ""
+
+#: of qteasy.configure.configure:18 qteasy.configure.get_config:25
+#: qteasy.configure.get_configurations:25
+#: qteasy.configure.remove_start_up_setting:11 qteasy.configure.set_config:14
+#: qteasy.configure.start_up_settings:6
+#: qteasy.configure.update_start_up_setting:10
+msgid "示例"
+msgstr ""
+
 #: ../../source/api/api_reference.rst:12
 msgid "修改qteasy的配置信息:"
+msgstr ""
+
+#: of qteasy.configure.configure:1
+msgid "配置qteasy的运行参数QT_CONFIG"
+msgstr ""
+
+#: of qteasy.configure.configure:3 qteasy.configure.set_config:3
+msgid "需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数"
+msgstr ""
+
+#: of qteasy.configure.configure:5 qteasy.configure.set_config:5
+msgid "默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值"
+msgstr ""
+
+#: of qteasy.configure.configure:7 qteasy.configure.set_config:7
+msgid "默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数"
+msgstr ""
+
+#: of qteasy.configure.configure:9 qteasy.configure.set_config:9
+msgid "需要设置的所有参数"
+msgstr ""
+
+#: of qteasy.configure.configure:15
+msgid "使用get_config()或configuration()查看当前的QT_CONFIG参数"
+msgstr ""
+
+#: of qteasy.configure.set_config:1
+msgid "配置qteasy的运行参数QT_CONFIG，等同于configure()"
+msgstr ""
+
+#: of qteasy.configure.set_config:15
+msgid "参见 configure()"
 msgstr ""
 
 #: ../../source/api/api_reference.rst:18
 msgid "查看、修改或删除qteasy的启动配置内容："
 msgstr ""
 
+#: of qteasy.configure.start_up_settings:1
+msgid "打印qteasy启动配置文件中存储的启动设置内容"
+msgstr ""
+
+#: of qteasy.configure.update_start_up_setting:1
+msgid "更新qteasy启动配置文件中存储的启动设置"
+msgstr ""
+
+#: of qteasy.configure.update_start_up_setting:3
+msgid "启动设置中可以包括系统定义配置参数以及用户自定义配置参数"
+msgstr ""
+
+#: of qteasy.configure.update_start_up_setting:5
+msgid "需要更新的配置参数"
+msgstr ""
+
+#: of qteasy.configure.remove_start_up_setting:1
+msgid "删除qteasy启动配置文件中存储的一项或者多项启动设置"
+msgstr ""
+
+#: of qteasy.configure.remove_start_up_setting:3
+msgid "必须给出需要删除的配置参数名称，可以同时删除多个配置参数"
+msgstr ""
+
+#: of qteasy.configure.remove_start_up_setting:5
+msgid "需要的配置参数名称清单"
+msgstr ""
+
 #: ../../source/api/api_reference.rst:26
 msgid "将所有的配置变量重置为默认值:"
+msgstr ""
+
+#: of qteasy.configure.reset_config:2
+msgid "重设config对象，将所有的参数都设置为默认值"
+msgstr ""
+
+#: of qteasy.configure.reset_config:2
+msgid "如果config为None，则重设qt.QT_CONFIG"
+msgstr ""
+
+#: of qteasy.configure.reset_config:4
+msgid "需要重设的config对象"
+msgstr ""
+
+#: of qteasy.configure.reset_config:11
+msgid "等同于调用configure(config, reset=True)"
 msgstr ""
 
 #: ../../source/api/api_reference.rst:30
 msgid "从文件中读取配置信息:"
 msgstr ""
 
+#: of qteasy.configure.load_config:2
+msgid "从文件file_name中读取相应的config参数，写入到config中，如果config为"
+msgstr ""
+
+#: of qteasy.configure.load_config:2
+msgid "None，则保存参数到QT_CONFIG中"
+msgstr ""
+
+#: of qteasy.configure.load_config:4
+msgid "一个config对象，默认None，如果不为None且为一个ConfigDict对象，则将读取的配置参数写入到config中"
+msgstr ""
+
+#: of qteasy.configure.load_config:6
+msgid "文件名，默认None，如果为None，文件名为saved_config.cfg"
+msgstr ""
+
+#: of qteasy.configure.load_config qteasy.configure.save_config
+msgid "返回"
+msgstr ""
+
+#: of qteasy.configure.load_config:9
+msgid "**config** -- 读取的配置参数"
+msgstr ""
+
+#: of qteasy.configure.load_config
+msgid "抛出"
+msgstr ""
+
+#: of qteasy.configure.load_config:12
+msgid "如果给定文件不存在，则报错。如果没有给定文件名，则当config/saved_config.cfg不存在时，报错"
+msgstr ""
+
 #: ../../source/api/api_reference.rst:34
 msgid "将配置信息写入文件:"
+msgstr ""
+
+#: of qteasy.configure.save_config:1
+msgid "将config保存为一个文件 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()"
+msgstr ""
+
+#: of qteasy.configure.save_config:4
+msgid "一个config对象或者包含配配置变量的dict，如果为None，则保存qt.QT_CONFIG"
+msgstr ""
+
+#: of qteasy.configure.save_config:6
+msgid "文件名，如果为None，文件名为\"saved_config.cfg\""
+msgstr ""
+
+#: of qteasy.configure.save_config:8
+msgid "默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错"
+msgstr ""
+
+#: of qteasy.configure.save_config:10
+msgid ""
+"保配置变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部配置变量了，则覆盖相配置变量 TODO: "
+"实现将配置变量写入qteasy.cfg初始配置文件的功能  "
+"由于目前使用pickle写入对象为二进制文件，而qteasy.cfg是文本文件，所以需要实现一个新的写入方式"
+msgstr ""
+
+#: of qteasy.configure.save_config:10
+msgid ""
+"保配置变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部配置变量了，则覆盖相配置变量 TODO: "
+"实现将配置变量写入qteasy.cfg初始配置文件的功能"
+msgstr ""
+
+#: of qteasy.configure.save_config:12
+msgid "由于目前使用pickle写入对象为二进制文件，而qteasy.cfg是文本文件，所以需要实现一个新的写入方式"
+msgstr ""
+
+#: of qteasy.configure.save_config:15
+msgid "**file_name** -- 保存的文件名"
 msgstr ""
 
 #: ../../source/api/api_reference.rst:39

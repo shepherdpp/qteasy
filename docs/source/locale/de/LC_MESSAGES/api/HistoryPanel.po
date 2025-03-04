@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -25,5 +25,1322 @@ msgstr ""
 
 #: ../../source/api/HistoryPanel.rst:4
 msgid "历史数据类HistoryPanel:"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:1
+msgid "qteasy 量化投资系统使用的主要历史数据的数据类型"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:3
+msgid ""
+"一个HistoryPanel对象其本质是一个numpy.ndarray，这个ndarray是一个 "
+"三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。历史数据类型可以包括 "
+"类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:10
+msgid "HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:8
+msgid ""
+"axis 0: "
+"levels/层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares axis "
+"1: rows/行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates axis 2:"
+" columns/列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:12
+msgid ""
+"使用HistoryPanel类，用户可以： 1, "
+"方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:30
+msgid "numpy ndarray。"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:15
+msgid ""
+"为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates "
+"slicer]的顺序 传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活： * "
+"可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:18
+msgid ""
+"HistoryPanel['close']: 选择所有股票品种的全部历史收盘价 HistoryPanel[,'000300.SH']: "
+"选择000300股票品种的所有历史数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:20
+msgid "可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:21
+msgid "HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:22
+msgid "可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:23
+msgid "HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:25
+msgid "可以通过int列表或str列表指定某几个品种或类型的数据，如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:25
+msgid ""
+"HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', "
+"'low']] 选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:27
+msgid "也可以通过常见的slicer对象来选择， 如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:28
+msgid "HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:30
+msgid "上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:30
+msgid ""
+"要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现： "
+"HistoryPanel['close:high', ['000300', '000500', '000700'], "
+"'20100101:20101231']"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:37
+msgid "2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:33
+msgid ""
+"HistoryPanel.shares     输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称 "
+"HistoryPanel.hdates     输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间 "
+"HistoryPanel.htypes     输出一个列表，包含按顺序排列的所有列标签，即所数据类型 HistoryPanel.levels"
+"     输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1） HistoryPanel.columns    "
+"输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1） HistoryPanel.rows       "
+"输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:39
+msgid ""
+"3, 方便地打印HistoryPanel的相关信息 4, 方便地打印及格式化输出HistoryPanel的内容 5, 方便地转化为 pandas "
+"DataFrame对象"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:42
+msgid ""
+"HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择"
+" HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:44
+msgid "6, 方便地由多个pandas DataFrame对象组合而成"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:47
+msgid "Properties"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:48
+msgid ""
+"is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空 values: np.ndarray, "
+"该属性返回一个numpy ndarray，包含HistoryPanel的全部数据 levels: dict, 该属性返回一个dict， "
+"包含所有层标签(股票代码)及其对应的层编号 rows: dict, 该属性返回一个dict， 包含所有行标签(交易日期)及其对应的行编号 "
+"columns: dict, 该属性返回一个dict， 包含所有列标签(数据类型)及其对应的列编号 shares: list, "
+"该属性包含所有层标签，即所有股票代码 hdates: list, 该属性包含所有行标签，即所有日期时间 htypes: list, "
+"该属性包含所有列标签，即所有历史数据类型"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:59
+msgid "该方法用于对HistoryPanel进行切片，返回一个numpy ndarray"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:63
+msgid "该方法用于重新设置HistoryPanel的标签，如果不输入任何参数，则会自动重新生成标签"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:67
+msgid "该方法用于将两个HistoryPanel对象合并为一个HistoryPanel对象"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:71
+msgid "该方法用于将HistoryPanel的一个切片转化为pandas DataFrame对象"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel:75
+msgid "该方法用于将HistoryPanel转化为一个multi-index DataFrame对象"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.as_type:1
+msgid "将HistoryPanel的数据类型转换为dtype类型，dtype只能为'float'或'int'"
+msgstr ""
+
+#: of qteasy.core.get_history_data qteasy.history.HistoryPanel.as_type
+#: qteasy.history.HistoryPanel.ffill qteasy.history.HistoryPanel.fillinf
+#: qteasy.history.HistoryPanel.fillna qteasy.history.HistoryPanel.flatten
+#: qteasy.history.HistoryPanel.flatten_to_dataframe
+#: qteasy.history.HistoryPanel.flattened_head
+#: qteasy.history.HistoryPanel.flattened_tail qteasy.history.HistoryPanel.head
+#: qteasy.history.HistoryPanel.isegment qteasy.history.HistoryPanel.join
+#: qteasy.history.HistoryPanel.re_label qteasy.history.HistoryPanel.segment
+#: qteasy.history.HistoryPanel.slice
+#: qteasy.history.HistoryPanel.slice_to_dataframe
+#: qteasy.history.HistoryPanel.tail qteasy.history.HistoryPanel.to_df_dict
+#: qteasy.history.HistoryPanel.to_multi_index_dataframe
+#: qteasy.history.HistoryPanel.unstack qteasy.history.dataframe_to_hp
+#: qteasy.history.stack_dataframes
+msgid "参数"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.as_type:3
+msgid "需要转换的目标数据类型"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows qteasy.history.HistoryPanel.as_type
+#: qteasy.history.HistoryPanel.ffill qteasy.history.HistoryPanel.fillinf
+#: qteasy.history.HistoryPanel.fillna qteasy.history.HistoryPanel.flatten
+#: qteasy.history.HistoryPanel.flatten_to_dataframe
+#: qteasy.history.HistoryPanel.info qteasy.history.HistoryPanel.isegment
+#: qteasy.history.HistoryPanel.join qteasy.history.HistoryPanel.len
+#: qteasy.history.HistoryPanel.re_label qteasy.history.HistoryPanel.segment
+#: qteasy.history.HistoryPanel.slice
+#: qteasy.history.HistoryPanel.slice_to_dataframe
+#: qteasy.history.HistoryPanel.to_df_dict
+#: qteasy.history.HistoryPanel.to_multi_index_dataframe
+#: qteasy.history.HistoryPanel.unstack qteasy.history.dataframe_to_hp
+#: qteasy.history.stack_dataframes
+msgid "返回类型"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.as_type
+msgid "抛出"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.as_type:8
+msgid "当输入的数据类型不正确或输入除float/int外的其他数据类型时"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.candle:1
+msgid ""
+"plot candle chart with data in the HistoryPanel, check data availability "
+"before plotting"
+msgstr ""
+
+#: of qteasy.HistoryPanel.column_count:1
+msgid "获取HistoryPanel的列数量或历史数据数量"
+msgstr ""
+
+#: of qteasy.HistoryPanel.columns:1
+msgid "返回一个字典，代表HistoryPanel的历史数据，将历史数据与列号进行对应 columns = {htype_name[0]: 0,"
+msgstr ""
+
+#: of qteasy.HistoryPanel.columns:3
+msgid "htype_naem[1]: 1, htype_name[2]: 2, ... htype_name[c]: c}"
+msgstr ""
+
+#: of qteasy.HistoryPanel.columns:8
+msgid "这样便于内部根据股票代码对数据进行切片"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.copy:1
+msgid "返回一个新的HistoryPanel对象，其值和本对象相同"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.ffill:1
+msgid "前向填充缺失值，当历史数据中存在缺失值时，使用缺失值以前 的最近有效数据填充缺失值"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows qteasy.core.get_history_data
+#: qteasy.history.HistoryPanel.ffill qteasy.history.HistoryPanel.fillinf
+#: qteasy.history.HistoryPanel.fillna
+#: qteasy.history.HistoryPanel.flattened_head
+#: qteasy.history.HistoryPanel.flattened_tail qteasy.history.HistoryPanel.head
+#: qteasy.history.HistoryPanel.isegment qteasy.history.HistoryPanel.len
+#: qteasy.history.HistoryPanel.segment qteasy.history.HistoryPanel.slice
+#: qteasy.history.HistoryPanel.tail qteasy.history.HistoryPanel.to_df_dict
+#: qteasy.history.HistoryPanel.unstack qteasy.history.stack_dataframes
+msgid "返回"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.ffill:7 qteasy.history.HistoryPanel.fillinf:6
+#: qteasy.history.HistoryPanel.fillna:6
+msgid "**out**"
+msgstr ""
+
+#: of qteasy.core.get_history_data:130 qteasy.history.HistoryPanel.ffill:11
+#: qteasy.history.HistoryPanel.flatten:10
+#: qteasy.history.HistoryPanel.flatten_to_dataframe:13
+#: qteasy.history.HistoryPanel.flattened_head:10
+#: qteasy.history.HistoryPanel.flattened_tail:10
+#: qteasy.history.HistoryPanel.head:10 qteasy.history.HistoryPanel.info:6
+#: qteasy.history.HistoryPanel.isegment:14 qteasy.history.HistoryPanel.join:20
+#: qteasy.history.HistoryPanel.len:7 qteasy.history.HistoryPanel.re_label:13
+#: qteasy.history.HistoryPanel.segment:14 qteasy.history.HistoryPanel.slice:13
+#: qteasy.history.HistoryPanel.slice_to_dataframe:22
+#: qteasy.history.HistoryPanel.tail:10
+#: qteasy.history.HistoryPanel.to_df_dict:16
+#: qteasy.history.HistoryPanel.to_multi_index_dataframe:10
+#: qteasy.history.HistoryPanel.unstack:10 qteasy.history.dataframe_to_hp:26
+#: qteasy.history.stack_dataframes:50
+msgid "示例"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.fillinf:1
+msgid "使用with_value来填充HistoryPanel中的所有inf值"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.fillinf:3
+#: qteasy.history.HistoryPanel.fillna:3
+msgid "填充的值"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.fillna:1
+msgid "使用with_value来填充HistoryPanel中的所有nan值"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flatten:1
+#: qteasy.history.HistoryPanel.to_multi_index_dataframe:1
+msgid "等同于HistoryPanel.flatten_to_dataframe()"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flatten:3
+#: qteasy.history.HistoryPanel.flatten_to_dataframe:6
+#: qteasy.history.HistoryPanel.to_multi_index_dataframe:3
+msgid "平铺HistoryPanel的每一层时，沿行方向还是列方向平铺， 'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flatten_to_dataframe:1
+msgid "将一个HistoryPanel\"展平\"成为一个DataFrame"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flatten_to_dataframe:3
+msgid ""
+"HistoryPanel的多层数据会被\"平铺\"到DataFrame的列，变成一个MultiIndex，或者多层数据 "
+"会被平铺到DataFrame的行，同样变成一个MultiIndex，平铺到行还是列取决于along参数"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_head:1
+msgid "以multi-index DataFrame的形式返回HistoryPanel的最初几行，默认五行"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_head:3
+#: qteasy.history.HistoryPanel.flattened_tail:3
+#: qteasy.history.HistoryPanel.head:3 qteasy.history.HistoryPanel.tail:3
+msgid "打印的行数"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_head:6
+#: qteasy.history.HistoryPanel.head:6
+msgid ""
+"* *dataframe, multi-indexed by share and htype as columns, with only "
+"first row_count rows* * *一个dataframe，以share和htype为列的多重索引，只包含前row_count行*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_head:6
+#: qteasy.history.HistoryPanel.head:6
+msgid ""
+"*dataframe, multi-indexed by share and htype as columns, with only first "
+"row_count rows*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_head:7
+#: qteasy.history.HistoryPanel.head:7
+msgid "*一个dataframe，以share和htype为列的多重索引，只包含前row_count行*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_tail:1
+msgid "以multi-index DataFrame的形式返回HistoryPanel的最后几行，默认五行"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_tail:6
+msgid ""
+"* *dataframe, multi-indexed by share and htype as columns, with only last"
+" row_count rows* * *一个dataframe，以share和htype为列的多重索引，只包含后row_count行*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_tail:6
+#: qteasy.history.HistoryPanel.tail:6
+msgid ""
+"*dataframe, multi-indexed by share and htype as columns, with only last "
+"row_count rows*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.flattened_tail:7
+msgid "*一个dataframe，以share和htype为列的多重索引，只包含后row_count行*"
+msgstr ""
+
+#: of qteasy.HistoryPanel.hdate_count:1 qteasy.HistoryPanel.htype_count:1
+msgid "获取HistoryPanel的历史数据类型数量"
+msgstr ""
+
+#: of qteasy.HistoryPanel.hdates:1
+msgid "获取HistoryPanel的历史日期时间戳list"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.head:1
+msgid "返回HistoryPanel的最初几行，默认五行"
+msgstr ""
+
+#: of qteasy.HistoryPanel.htypes:1
+msgid "获取HistoryPanel的历史数据类型列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.info:1
+msgid "打印本HistoryPanel对象的信息"
+msgstr ""
+
+#: of qteasy.HistoryPanel.is_empty:1
+msgid "判断HistoryPanel是否为空"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:3
+msgid "获取HistoryPanel的一个片段，start_index和end_index都是int数，表示日期序号，返回"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:2
+msgid "这两个序号代表的日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和 htypes的数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:10
+#: qteasy.history.HistoryPanel.segment:10
+msgid "**out** -- 一个HistoryPanel，包含start_date到end_date之间所有share和htypes的数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:26
+#: qteasy.history.HistoryPanel.re_label:33
+#: qteasy.history.HistoryPanel.segment:27
+msgid "share 1, label: 000200"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:27
+#: qteasy.history.HistoryPanel.isegment:33
+#: qteasy.history.HistoryPanel.segment:28
+#: qteasy.history.HistoryPanel.segment:35
+msgid "open  high  low  close  volume"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:28
+#: qteasy.history.HistoryPanel.isegment:34
+msgid ""
+"2015-01-07    10    20   30     40      50 2015-01-08    10    20   30"
+"     40      50 2015-01-09    10    20   30     40      50"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.isegment:32
+#: qteasy.history.HistoryPanel.re_label:46
+#: qteasy.history.HistoryPanel.segment:34
+msgid "share 2, label: 000300"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:1
+msgid "将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel："
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:3
+msgid ""
+"新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列"
+" 层标签完全包含两个HistoryPanel对象的对应标签。"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:6
+msgid "需要合并的另一个HistoryPanel"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:8
+msgid "两个HP的shares是否相同，如果相同，可以省去shares维度的标签合并，以节省时间。默认False，"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:10
+msgid "两个HP的htypes是否相同，如果相同，可以省去htypes维度的标签合并，以节省时间。默认False，"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:12
+msgid "两个HP的hdates是否相同，如果相同，可以省去hdates维度的标签合并，以节省时间。默认False，"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:14
+msgid "空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:21
+msgid ""
+"# "
+"如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如："
+" >>> hp1 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, "
+"0, 7], [8, 7, 9]], ...                                     [[2, 3, 3], "
+"[5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]), ..."
+"                           levels=['000200', '000300'], ..."
+"                           rows=pd.date_range('2020-01-01', periods=5), "
+"...                           columns=['close', 'open', 'high']) >>> hp2 "
+"= HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8,"
+" 7, 9]], ...                                     [[2, 3, 3], [5, 4, 6], "
+"[2, 8, 7], [3, 3, 4], [8, 8, 7]]]), ...                           "
+"levels=['000400', '000500'], ...                           "
+"rows=pd.date_range('2020-01-01', periods=5), ..."
+"                           columns=['close', 'open', 'high']) >>> hp1 "
+"share 0, label: 000200"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:34 qteasy.history.HistoryPanel.join:41
+#: qteasy.history.HistoryPanel.join:49 qteasy.history.HistoryPanel.join:56
+msgid "close  open  high"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:35
+msgid ""
+"2020-01-01      8     9     9 2020-01-02      7     5     5 2020-01-03"
+"      4     8     4 2020-01-04      1     0     7 2020-01-05      8     7"
+"     9 share 1, label: 000300"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:42
+msgid ""
+"2020-01-01      2     3     3 2020-01-02      5     4     6 2020-01-03"
+"      2     8     7 2020-01-04      3     3     4 2020-01-05      8     8"
+"     7 >>> hp2 share 0, label: 000400"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:50
+msgid ""
+"2020-01-01      8     9     9 2020-01-02      7     5     5 2020-01-03"
+"      4     8     4 2020-01-04      1     0     7 2020-01-05      8     7"
+"     9 share 1, label: 000500"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.join:57
+msgid ""
+"2020-01-01      2     3     3 2020-01-02      5     4     6 2020-01-03"
+"      2     8     7 2020-01-04      3     3     4 2020-01-05      8     8"
+"     7"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.len:1
+msgid "返回HistoryPanel对象的长度，即日期个数"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.len:3
+msgid "日期个数"
+msgstr ""
+
+#: of qteasy.HistoryPanel.level_count:1
+msgid "返回HistoryPanel中股票或资产品种的数量"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:1
+msgid "返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:3
+msgid "HistoryPanel的层标签是保存成一个字典形式的： levels =    {share_name[0]: 0,"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:5
+msgid "share_name[1]: 1, share_name[2]: 2, ... share_name[l]: l}"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:9
+msgid "这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过："
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:10
+msgid "data = HP.values[levels[level_name[a], :, :]"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:11
+msgid "来访问"
+msgstr ""
+
+#: of qteasy.HistoryPanel.levels:13
+msgid "不过这是HistoryPanel内部的处理机制，在HistoryPanel的外部，可以通过切片的方式快速访问不同的数据。"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.ohlc:1
+msgid ""
+"plot ohlc chart with data in the HistoryPanel, check data availability "
+"before plotting"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.ohlc:3 qteasy.history.HistoryPanel.renko:3
+msgid "args: kwargs: :return:"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.plot:1
+msgid "plot current HistoryPanel, settings according to args and kwargs"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:1
+msgid "给HistoryPanel对象的层、行、列标签重新赋值"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:3
+msgid "股票列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:5
+msgid "数据类型列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:7
+msgid "日期列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:34
+#: qteasy.history.HistoryPanel.re_label:47
+msgid "typeA  typeB  typeC  typeD  typeE"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.re_label:35
+#: qteasy.history.HistoryPanel.re_label:48
+msgid ""
+"2015-01-05     10     20     30     40     50 2015-01-06     10     20"
+"     30     40     50 2015-01-07     10     20     30     40     50 "
+"2015-01-08     10     20     30     40     50 2015-01-09     10     20"
+"     30     40     50 2015-01-10     10     20     30     40     50 "
+"2015-01-11     10     20     30     40     50 2015-01-12     10     20"
+"     30     40     50 2015-01-13     10     20     30     40     50 "
+"2015-01-14     10     20     30     40     50"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.renko:1
+msgid ""
+"plot renko chart with data in the HistoryPanel, check data availability "
+"before plotting"
+msgstr ""
+
+#: of qteasy.HistoryPanel.row_count:1
+msgid "获取HistoryPanel的行数量"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows:1
+msgid "返回Hi storyPanel的日期字典，通过这个字典建立日期与行号的联系："
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows:7
+msgid "rows =  {row_date[0]: 0,"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows:4
+msgid "row_date[1]: 1, row_date[2]: 2, ... row_date[r]: r }"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows:9
+msgid "因此内部可以较快地进行数据切片或数据访问"
+msgstr ""
+
+#: of qteasy.HistoryPanel.rows:11
+msgid "日期字典"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.segment:3
+msgid "获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.segment:2
+msgid "这两个日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和 htypes的数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.segment:29
+#: qteasy.history.HistoryPanel.segment:36
+msgid ""
+"2015-01-07    10    20   30     40      50 2015-01-08    10    20   30"
+"     40      50 2015-01-09    10    20   30     40      50 2015-01-10    "
+"10    20   30     40      50"
+msgstr ""
+
+#: of qteasy.HistoryPanel.shape:1
+msgid "获取HistoryPanel的各个维度的尺寸"
+msgstr ""
+
+#: of qteasy.HistoryPanel.share_count:1
+msgid "获取HistoryPanel中股票或资产品种的数量"
+msgstr ""
+
+#: of qteasy.HistoryPanel.shares:1
+msgid "返回HistoryPanel的层标签——股票列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice:2
+msgid "获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice:2
+msgid "串，表示需要获取的股票或数据的种类。"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice:4
+msgid "需要的股票列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice:6
+msgid "需要的数据类型列表"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice:9
+msgid "**out** -- 一个HistoryPanel，包含shares和htypes中指定的股票和数据类型的数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:1
+msgid "将HistoryPanel对象中的指定片段转化为DataFrame"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:3
+msgid ""
+"指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。 "
+"由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:6
+msgid ""
+"表示需要生成DataFrame的数据类型切片 "
+"如果给出此参数，定位该htype对应的切片后，将该htype对应的所有股票所有日期的数据转化为一个DataFrame "
+"如果类型为str，表示htype的名称，如果类型为int，代表该htype所在的列序号"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:10
+msgid ""
+"表示需要生成DataFrame的股票代码切片 "
+"如果给出此参数，定位该share对应的切片后，将该share对应的所有数据类型所有日期的数据转化为一个DataFrame "
+"如果类型为str，表示股票代码，如果类型为int，代表该share所在的层序号"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:14
+msgid "是否去除NaN值"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.slice_to_dataframe:16
+msgid "是否将inf值当成NaN值一同去掉，当dropna为False时无效"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.tail:1
+msgid "返回HistoryPanel的最末几行，默认五行"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.tail:6
+msgid ""
+"* *dataframe, multi-indexed by share and htype as columns, with only last"
+" row_count rows* * *一个dataframe，以share和htype为列的多重索引，只包含最后row_count行*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.tail:7
+msgid "*一个dataframe，以share和htype为列的多重索引，只包含最后row_count行*"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:2
+msgid "将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:2
+msgid "这些数据以DataFrame的格式存储"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:4
+msgid ""
+"- 'share' 或 'shares': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame， "
+"它的keys是股票的代码，每个股票代码一个DataFrame - 'htype' 或 'htypes': "
+"将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，  它的keys是历史数据类型，每种类型一个DataFrame"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:5
+msgid "'share' 或 'shares': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:6
+msgid ""
+"它的keys是股票的代码，每个股票代码一个DataFrame - 'htype' 或 'htypes': "
+"将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:9
+msgid "它的keys是历史数据类型，每种类型一个DataFrame"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.to_df_dict:12
+msgid "**df_dict**"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.unstack:1
+msgid "等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.unstack:3
+msgid "指定按照share或者htype来unstack, 默认为share"
+msgstr ""
+
+#: of qteasy.history.HistoryPanel.unstack:6
+msgid "unstack后的结果，是一个字典，key为share或htype，value为对应的DataFrame"
+msgstr ""
+
+#: of qteasy.HistoryPanel.values:1
+msgid "返回HistoryPanel的values"
+msgstr ""
+
+#: of qteasy.core.get_history_data:2
+msgid "从本地data_source获取所需的数据并组装为适应于策略"
+msgstr ""
+
+#: of qteasy.core.get_history_data:2
+msgid "需要的HistoryPanel数据对象"
+msgstr ""
+
+#: of qteasy.core.get_history_data:4
+msgid ""
+"需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数 "
+"结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略"
+msgstr ""
+
+#: of qteasy.core.get_history_data:7
+msgid ""
+"需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建 "
+"所有可能的htypes。输入方式可以为str或list：  - str:     'open, high, low, close'  - "
+"list:    ['open', 'high', 'low', 'close']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:7 qteasy.core.get_history_data:12
+msgid ""
+"需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建 "
+"所有可能的htypes。输入方式可以为str或list："
+msgstr ""
+
+#: of qteasy.core.get_history_data:9
+msgid "str:     'open, high, low, close'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:10
+msgid "list:    ['open', 'high', 'low', 'close']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:15
+msgid ""
+"需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
+"如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
+msgstr ""
+
+#: of qteasy.core.get_history_data:18
+msgid "需要获取历史数据的数据源"
+msgstr ""
+
+#: of qteasy.core.get_history_data:20
+msgid ""
+"需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效：  - str:     "
+"'000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'  - list:    ['000001.SZ', "
+"'000002.SZ', '000004.SZ', '000005.SZ']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:20
+msgid "需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效："
+msgstr ""
+
+#: of qteasy.core.get_history_data:22
+msgid "str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:23
+msgid "list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:25
+msgid ""
+"需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效： - str:     "
+"'000001, 000002, 000004, 000005' - list:    ['000001', '000002', "
+"'000004', '000005']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:30
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:32
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:34
+msgid ""
+"获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
+"如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
+msgstr ""
+
+#: of qteasy.core.get_history_data:37
+msgid ""
+"获取的历史数据的频率，包括以下选项：  - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)  - H/D/W/M "
+"分别代表小时/天/周/月 周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:39
+msgid "获取的历史数据的频率，包括以下选项："
+msgstr ""
+
+#: of qteasy.core.get_history_data:39
+msgid "1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:40
+msgid "H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:42
+msgid ""
+"限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括 逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 "
+"['E', 'IDX']都是合法输入  - any: 可以获取任意资产类型的证券数据(默认值)  - E:   只获取股票类型证券的数据  - "
+"IDX: 只获取指数类型证券的数据  - FT:  只获取期货类型证券的数据  - FD:  只获取基金类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:42
+msgid ""
+"限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括 逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 "
+"['E', 'IDX']都是合法输入"
+msgstr ""
+
+#: of qteasy.core.get_history_data:44
+msgid "any: 可以获取任意资产类型的证券数据(默认值)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:45
+msgid "E:   只获取股票类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:46
+msgid "IDX: 只获取指数类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:47
+msgid "FT:  只获取期货类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:48
+msgid "FD:  只获取基金类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:50
+msgid ""
+"Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：  - none / n: 不复权(默认值)  - "
+"back / b: 后复权  - forward / fw / f: 前复权  "
+"从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
+msgstr ""
+
+#: of qteasy.core.get_history_data:54
+msgid "Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括："
+msgstr ""
+
+#: of qteasy.core.get_history_data:52
+msgid "none / n: 不复权(默认值)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:53
+msgid "back / b: 后复权"
+msgstr ""
+
+#: of qteasy.core.get_history_data:54
+msgid "forward / fw / f: 前复权"
+msgstr ""
+
+#: of qteasy.core.get_history_data:55
+msgid "从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
+msgstr ""
+
+#: of qteasy.core.get_history_data:57
+msgid "True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典"
+msgstr ""
+
+#: of qteasy.core.get_history_data:59
+msgid ""
+"如果返回DataFrame对象，设置dataframe的分组策略 - 'shares' / 'share' / 's': "
+"每一个share组合为一个dataframe - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe"
+msgstr ""
+
+#: of qteasy.core.get_history_data:63
+msgid ""
+"用于生成trade_time_index的参数，包括： drop_nan: bool     是否保留全NaN的行 "
+"resample_method: str     如果数据需要升频或降频时，调整频率的方法     "
+"调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：     "
+"数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，     "
+"例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）         [(1, 2, 3), (4, 5), (6, 7)] "
+"合并后变为: [(?), (?), (?)]     数据合并方法:     - 'last'/'close': 使用合并区间的最后一个值。如："
+"         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]     - "
+"'first'/'open': 使用合并区间的第一个值。如：         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为:"
+" [(1), (4), (6)]     - 'max'/'high': 使用合并区间的最大值作为合并值：         [(1, 2, 3),"
+" (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]     - 'min'/'low': "
+"使用合并区间的最小值作为合并值：         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), "
+"(6)]     - 'avg'/'mean': 使用合并区间的平均值作为合并值：         [(1, 2, 3), (4, 5), (6,"
+" 7)] 合并后变为: [(2), (4.5), (6.5)]     - 'sum'/'total': 使用合并区间的平均值作为合并值："
+"         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]      "
+"数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。     例如，填充下列数据(?表示插入的数据）         [1, "
+"2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]     缺失数据的填充方法如下:     - 'ffill': "
+"使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：         [1, 2, 3] 填充后变为: [NaN, 1, 1,"
+" 2, 2, 3, 3]     - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：         "
+"[1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]     - 'nan': 使用NaN值填充缺失数据："
+"         [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]     - 'zero': "
+"使用0值填充缺失数据：         [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0] b_days_only: "
+"bool 默认True     是否强制转换自然日频率为工作日，即：     'D' -> 'B'     'W' -> 'W-FRI'     "
+"'M' -> 'BM' trade_time_only: bool, default True     为True时 "
+"仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定 include_start: bool, default True     "
+"日期时间序列是否包含开始日期/时间 include_end: bool, default True     日期时间序列是否包含结束日期/时间 "
+"start_am:, str     早晨交易时段的开始时间 end_am:, str     早晨交易时段的结束时间 "
+"include_start_am: bool     早晨交易时段是否包括开始时间 include_end_am: bool     "
+"早晨交易时段是否包括结束时间 start_pm: str     下午交易时段的开始时间 end_pm: str     下午交易时段的结束时间 "
+"include_start_pm: bool     下午交易时段是否包含开始时间 include_end_pm: bool     "
+"下午交易时段是否包含结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:63
+msgid "用于生成trade_time_index的参数，包括： drop_nan: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:65
+msgid "是否保留全NaN的行"
+msgstr ""
+
+#: of qteasy.core.get_history_data:96
+msgid "resample_method: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:67
+msgid ""
+"如果数据需要升频或降频时，调整频率的方法 调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同： "
+"数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息， "
+"例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）"
+msgstr ""
+
+#: of qteasy.core.get_history_data:71
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:72
+msgid "数据合并方法: - 'last'/'close': 使用合并区间的最后一个值。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:74 qteasy.core.get_history_data:78
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:75
+msgid "'first'/'open': 使用合并区间的第一个值。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:76 qteasy.core.get_history_data:80
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:77
+msgid "'max'/'high': 使用合并区间的最大值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:79
+msgid "'min'/'low': 使用合并区间的最小值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:81
+msgid "'avg'/'mean': 使用合并区间的平均值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:82 qteasy.core.get_history_data:84
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:84
+msgid "'sum'/'total': 使用合并区间的平均值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:86
+msgid "数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。 例如，填充下列数据(?表示插入的数据）"
+msgstr ""
+
+#: of qteasy.core.get_history_data:88
+msgid "[1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:89
+msgid "缺失数据的填充方法如下: - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:91
+msgid "[1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:92
+msgid "'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:93
+msgid "[1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:94
+msgid "'nan': 使用NaN值填充缺失数据："
+msgstr ""
+
+#: of qteasy.core.get_history_data:95
+msgid "[1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:96
+msgid "'zero': 使用0值填充缺失数据："
+msgstr ""
+
+#: of qteasy.core.get_history_data:97
+msgid "[1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:101
+msgid "b_days_only: bool 默认True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:99
+msgid "是否强制转换自然日频率为工作日，即： 'D' -> 'B' 'W' -> 'W-FRI' 'M' -> 'BM'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:103
+msgid "trade_time_only: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:104
+msgid "为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定"
+msgstr ""
+
+#: of qteasy.core.get_history_data:105
+msgid "include_start: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:106
+msgid "日期时间序列是否包含开始日期/时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:107
+msgid "include_end: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:108
+msgid "日期时间序列是否包含结束日期/时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:109
+msgid "start_am:, str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:110
+msgid "早晨交易时段的开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:111
+msgid "end_am:, str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:112
+msgid "早晨交易时段的结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:113
+msgid "include_start_am: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:114
+msgid "早晨交易时段是否包括开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:115
+msgid "include_end_am: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:116
+msgid "早晨交易时段是否包括结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:117
+msgid "start_pm: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:118
+msgid "下午交易时段的开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:119
+msgid "end_pm: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:120
+msgid "下午交易时段的结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:121
+msgid "include_start_pm: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:122
+msgid "下午交易时段是否包含开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:124
+msgid "include_end_pm: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:124
+msgid "下午交易时段是否包含结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:126
+msgid ""
+"* *HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象 * *Dict "
+"of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
+msgstr ""
+
+#: of qteasy.core.get_history_data:126
+msgid "*HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象"
+msgstr ""
+
+#: of qteasy.core.get_history_data:127
+msgid "*Dict of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:1
+msgid "将多个dataframe组合成一个HistoryPanel."
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:3
+msgid ""
+"需要被堆叠的dataframe，可以为list或dict， "
+"dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含"
+" "
+"所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列"
+" （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:8
+msgid ""
+"每个dataframe代表的数据类型。 dataframe_as == 'shares'，     "
+"表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象     "
+"层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集     "
+"在这种模式下：     "
+"如果dfs是一个list，shares参数必须给出，且shares的数量必须与DataFrame的数量相同，作为HP的层标签     "
+"如果dfs是一个dict，shares参数不必给出，dfs的keys会被用于层标签，如果shares参数给出且符合要求，     "
+"shares参数将取代dfs的keys参数  dataframe_as == 'htypes'，     "
+"表示每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象     "
+"列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集     "
+"在这种模式下，     "
+"如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签     "
+"如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求，     "
+"htypes参数将取代dfs的keys参数"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:8
+msgid "每个dataframe代表的数据类型。 dataframe_as == 'shares'，"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:10
+msgid ""
+"表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象 "
+"层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集 在这种模式下： "
+"如果dfs是一个list，shares参数必须给出，且shares的数量必须与DataFrame的数量相同，作为HP的层标签 "
+"如果dfs是一个dict，shares参数不必给出，dfs的keys会被用于层标签，如果shares参数给出且符合要求， "
+"shares参数将取代dfs的keys参数"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:22
+msgid "dataframe_as == 'htypes'，"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:18
+msgid ""
+"表示每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象 "
+"列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集 在这种模式下， "
+"如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签 "
+"如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求， "
+"htypes参数将取代dfs的keys参数"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:25
+msgid ""
+"生成的HistoryPanel的层标签或股票名称标签。 "
+"如果堆叠方式为\"shares\"，则层标签必须以dict的key的形式给出或者在shares参数中给出 以下两种参数均有效且等效： "
+"'000001.SZ, 000002.SZ, 000003.SZ' ['000001.SZ', '000002.SZ', '000003.SZ']"
+"  如果堆叠方式为\"htypes\"，不需要给出shares，默认使用dfs的columns标签的并集作为输出的层标签 "
+"如果给出了shares，则会强制使用shares作为层标签，多出的标签会用fill_values填充， 多余的DataFrame数据会被丢弃"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:25
+msgid ""
+"生成的HistoryPanel的层标签或股票名称标签。 "
+"如果堆叠方式为\"shares\"，则层标签必须以dict的key的形式给出或者在shares参数中给出 以下两种参数均有效且等效： "
+"'000001.SZ, 000002.SZ, 000003.SZ' ['000001.SZ', '000002.SZ', '000003.SZ']"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:31
+msgid ""
+"如果堆叠方式为\"htypes\"，不需要给出shares，默认使用dfs的columns标签的并集作为输出的层标签 "
+"如果给出了shares，则会强制使用shares作为层标签，多出的标签会用fill_values填充， 多余的DataFrame数据会被丢弃"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:35
+msgid ""
+"生成的HistoryPanel的列标签或数据类型标签。 "
+"如果堆叠方式为\"htypes\"，则层标签必须以dict的key的形式给出或者在shares参数中给出 以下两种参数均有效且等效： "
+"'000001.SZ, 000002.SZ, 000003.SZ' ['000001.SZ', '000002.SZ', '000003.SZ']"
+" 如果堆叠方式为\"shares\"，不需要给出htypes，默认使用dfs的columns标签的并集作为列标签 "
+"如果给出了htypes，则会强制用它作为列标签，多出的标签会用fill_values填充， 多余的DataFrame数据会被丢弃"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:44
+msgid "多余的位置用fill_value填充"
+msgstr ""
+
+#: of qteasy.history.stack_dataframes:46
+msgid "一个由多个单index的数据框组成的HistoryPanel对象"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:1
+msgid "根据DataFrame中的数据创建HistoryPanel对象。"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:3
+msgid "需要被转化为HistoryPanel的DataFrame。"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:5
+msgid "如果给出hdates，它会被用于转化后HistoryPanel的日期标签"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:7
+msgid "转化后HistoryPanel的历史数据类型标签"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:9
+msgid "转化后HistoryPanel的股票代码标签"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:11
+msgid ""
+"DataFrame的column代表的数据类型，可以为 'shares' or 'htype' "
+"如果为None，则必须输入htypes和shares参数中的一个"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:18
+msgid "备注"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:19
+msgid ""
+"由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一： "
+"1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的shape为(1, dates, "
+"htypes)"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:21
+msgid "在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出"
+msgstr ""
+
+#: of qteasy.history.dataframe_to_hp:22
+msgid ""
+"2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, "
+"dates, 1) "
+"具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断"
 msgstr ""
 
