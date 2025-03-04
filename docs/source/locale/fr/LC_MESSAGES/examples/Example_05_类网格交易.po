@@ -1,0 +1,64 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_05_类网格交易.md:1
+msgid "类网格交易策略"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:3
+msgid "本策略首先计算过去300个价格数据的均值和标准差 (天数是一个可调参数)"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:4
+msgid "并根据均值加减1和2个标准差得到网格的区间分界线,（加减标准差的倍数是可调参数)"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:5
+msgid "并分别配以0.3和0.5的仓位权重 (仓位权重是可调参数）"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:6
+msgid ""
+"然后根据价格所在的区间来配置仓位(+/-40为上下界,无实际意义): "
+"(-40,-3],(-3,-2],(-2,2],(2,3],(3,40](具体价格等于均值+数字倍标准差) [-0.5, -0.3, 0.0, "
+"0.3, 0.5] (资金比例,此处负号表示开空仓，回测时设置为允许持有空头仓位)"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:10
+msgid "回测数据为:HS300指数的1min数据 回测时间为:2022-03-01 09:30:00到2022-07-31 15:00:00"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:18
+msgid "定义交易策略"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:68
+msgid "设定交易员对象，并且设置交易配置，实施交易回测"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:136
+msgid "![png](img/output_3_1.png)"
+msgstr ""
+
+#: ../../source/examples/Example_05_类网格交易.md:136
+msgid "png"
+msgstr ""
+

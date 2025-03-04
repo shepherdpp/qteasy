@@ -1,0 +1,159 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_01_双均线择时策略.md:1
+msgid "双均线择时策略"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:3
+msgid "本策略根据交易目标的其日K线数据建立简单移动平均线的双均线交易模型， 交易策略如下："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:6
+msgid ""
+"策略包含两个参数：短周期天数S、长周期天数L "
+"分别以两个不同的周期计算交易标的日K线收盘价的移动平均线，得到两根移动均线，以S为周期计算的均线为快均线，以L为周期计算的均线为慢均线，根据快慢均线的交叉情况产生交易信号："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:8
+msgid "当快均线由下向上穿越慢均线时全仓买入交易标的"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:9
+msgid "当快均线由上向下穿越短均线时平仓"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:11
+msgid "**模拟回测交易：**"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:13
+msgid "回测数据为:沪深300指数（000300.SH)"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:14
+msgid "回测周期为2011年1月1日到2020年12月31日"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:15
+msgid "生成交易结果图表"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:17
+msgid "**策略参数优化：**"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:19
+msgid "同样使用HS300指数，在2011年至2020年共十年的历史区间上搜索最佳策略参数"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:20
+msgid "并在2020年至2022年的数据上进行验证"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:21
+msgid "输出30组最佳参数的测试结果"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:24
+msgid "首先导入qteasy模块"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:29
+msgid "创建一个新的策略"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:30
+msgid ""
+"使用`qt.RuleIterator`策略基类，可以创建规则迭代策略， "
+"这种策略可以把相同的规则迭代应用到投资组合中的所有股票上，适合在一个投资组合 中的所有股票上应用同一种择时规则。"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:100
+msgid "回测交易策略，查看结果"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:101
+msgid "使用历史数据回测交易策略，使用历史数据生成交易信号后进行模拟交易，记录并分析交易结果"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:123
+msgid "交易结果如下；"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:169
+msgid "从上面的交易结果可以看到，十年间买入25次卖出24次，持仓时间为52%，最终收益率只有17.2%。"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:171
+msgid "下面是交易结果的可视化图表展示"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:173
+msgid "![png](img/output_3_2.png)"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:173
+#: ../../source/examples/Example_01_双均线择时策略.md:325
+#: ../../source/examples/Example_01_双均线择时策略.md:392
+msgid "png"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:176
+msgid "交叉线交易策略的长短周期选择很重要，可以使用`qteasy`来搜索最优的策略参数："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:194
+msgid "策略优化可能会花很长时间，qt会显示一个进度条："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:200
+msgid "优化完成，显示最好的30组参数及其相关信息："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:261
+msgid "这三十组参数会被用于独立测试，以检验它们是否过拟合："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:323
+msgid "参数优化结果以及各个指标的可视化图表展示："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:325
+msgid "![png](img/output_4_1.png)"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:327
+msgid "优化之后我们可以检验一下找到的最佳参数："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:387
+msgid "优化后总回报率达到了117%，比优化前的参数好很多。"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:389
+msgid "优化后的结果可视化图表如下："
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:392
+msgid "![png](img/output_5_1.png)"
+msgstr ""
+

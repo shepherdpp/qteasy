@@ -1,0 +1,92 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_06_指数增强选股.md:1
+msgid "指数增强选股策略"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:3
+msgid ""
+"本策略以0.8为初始权重跟踪指数标的沪深300中权重大于0.35%的成份股. "
+"个股所占的百分比为(0.8*成份股权重)*100%.然后根据个股是否: 1.连续上涨5天 2.连续下跌5天 "
+"来判定个股是否为强势股/弱势股,并对其把权重由0.8调至1.0或0.6"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:8
+msgid "策略运行频率：每日运行 策略运行时间：每日收盘前"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:11
+msgid "回测时间为:2021-01-01到2022-12-31"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:13
+msgid "1. 策略代码"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:15
+msgid "创建自定义交易策略："
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:70
+msgid "2. 策略回测"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:72
+msgid "回测参数："
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:73
+msgid "回测时间：2021-01-01到2022-12-31"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:74
+msgid "资产类型：股票"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:75
+msgid "资产池：沪深300成份股"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:76
+msgid "初始资金：100万"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:77
+msgid "买入批量：100股"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:78
+msgid "卖出批量：1股"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:101
+msgid "回测结果"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:174
+msgid "![png](img/output_4_1_3.png)"
+msgstr ""
+
+#: ../../source/examples/Example_06_指数增强选股.md:174
+msgid "png"
+msgstr ""
+

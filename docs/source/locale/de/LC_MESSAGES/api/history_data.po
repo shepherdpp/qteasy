@@ -1,0 +1,61 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/api/history_data.rst:2
+msgid "历史数据获取和管理"
+msgstr ""
+
+#: ../../source/api/history_data.rst:4
+msgid "使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"
+msgstr ""
+
+#: ../../source/api/history_data.rst:6
+msgid "所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。"
+msgstr ""
+
+#: ../../source/api/history_data.rst:9
+msgid "查找支持历史数据"
+msgstr ""
+
+#: ../../source/api/history_data.rst:14
+msgid "下载历史数据"
+msgstr ""
+
+#: ../../source/api/history_data.rst:18
+msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
+msgstr ""
+
+#: ../../source/api/history_data.rst:21
+msgid "检查本地数据"
+msgstr ""
+
+#: ../../source/api/history_data.rst:26
+msgid "获取已经下载的本地数据总览"
+msgstr ""
+
+#: ../../source/api/history_data.rst:33
+msgid "使用下载的数据——基础数据"
+msgstr ""
+
+#: ../../source/api/history_data.rst:44
+msgid "使用下载的数据——获取价格或技术指标"
+msgstr ""
+

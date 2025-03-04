@@ -1,0 +1,342 @@
+# Translations template for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:2
+msgid "创建自定义因子选股交易策略"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:4
+msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:6
+msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:7
+msgid "量化交易策略的创建，并提供大量内置基本交易策略"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:8
+msgid "向量化的高速交易策略回测及交易结果评价"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:9
+msgid "交易策略参数的优化以及评价"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:10
+msgid "交易策略的部署、实盘运行"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:12
+msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:14
+msgid "开始前的准备工作"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:16
+msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:18
+msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:19
+msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:20
+msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:21
+msgid "**学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:22
+msgid "**了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:24
+msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:26
+msgid "本节的目标"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:28
+msgid "在本节中，我们将承接上一节开始的内容，介绍`qteasy`的交易策略基类，在介绍过一个最简单的择时交易策略类以后，我们将介绍如何使用`qteasy`提供的另外两种策略基类，创建一个多因子选股策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:30
+msgid "为了提供足够的使用便利性，`qteasy`的提供的各种策略基类本质上并无区别，只是为了减少用户编码工作量而提供的预处理形式，甚至可以将不同的交易策略基类理解成，为了特定交易策略设计的“语法糖”，因此，同一交易策略往往可以用多种不同的交易策略基类实现，因此，在本节中，我们将用两种不同的策略基类来实现一个Alpha选股交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:31
+msgid "Alpha选股策略的选股思想"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:33
+msgid "我们在这里讨论的Alpha选股策略是一个低频运行的选股策略，这个策略可以每周或者每月运行一次，每次选股时会遍历HS300指数的全部成分股，依照一定的标准将这300支股票进行优先级排序，从中选择出排位靠前的30支股票，等权持有，也就是说，每个月进行一次调仓换股，调仓时将排名靠后的股票卖掉，买入排名靠前的股票，并确保股票的持有份额相同。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:35
+msgid "Alpha选股策略的排名依据每一支股票的两个财务指标：EV（企业市场价值）以及EBITDA（息税折旧摊销前利润）来计算，对每一支股票计算EV与EBITDA的比值，当这个比值大于0的时候，说明该上市公司是盈利的（因为EBITDA为正）。这时，这个比值代表该公司每赚到一块钱利润，需要投入的企业总价值。自然，这个比值越低越好。例如，下面两家上市公司数据如下："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:37
+msgid "A公司的EBITDA为一千万，而企业市场价值为一百亿，EV/EBITDA=1000.。说明该公司每一千元的市场价值可以挣到一元钱利润"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:38
+msgid "B公司的EBITDA同样为一千万，企业市场价值为一千亿，EV/EBITDA=10000，说明该公司每一万元的市场价值可以挣到一元钱利润"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:40
+msgid "从常理分析，我们自然会觉得A公司比较好，因为靠着较少的公司市场价值，就挣到了同样的利润，这时我们认为A公司的排名比较靠前。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:42
+msgid "按照上面的规则，我们在每个月的最后一天，将HS300成分股的所有上市公司全部进行一次从小到大排名，剔除掉EV/EBITDA小于0的公司（盈利为负的公司当然应该剔除）以后，选择排名最靠前的30个公司持有，就是Alpha选股交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:44
+msgid "其实，类似于这样的指标排序选股策略，`qteasy`提供了一个内置交易策略可以直接实现："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:91
+msgid "不过这个内置交易策略仅支持以`qteasy`内置历史数据类型为选股因子，例如pe市盈率、profit利润等数据是`qteasy`的内置历史数据，可以直接引用。但如果是``qteasy``内置历史数据中找不到的选股因子，就不能直接使用内置交易策略了。EV/EBITDA这个指标是一个计算指标，因此，我们必须使用自定义交易策略。并在自定义策略中计算该指标。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:92
+msgid "计算选股指标"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:94
+msgid "为了计算EV/EBITDA，我们必须至少先确认`qteasy`中是否已经提供了EV和EBITDA这两种历史数据："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:96
+msgid "我们可以使用`find_history_data()`来查看历史数据是否被`qteasy`支持"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:119
+msgid ""
+"从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，可以通过'ebitda‘ / "
+"income_ebitda "
+"这两个ID来获取（我们将使用'ebitda'），但是EV企业现金价值并不在内置数据类型中，但我们知道EV可以通过下面的公式计算："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:121
+msgid "$$ EV = 总市值 + 总负债 - 总现金 $$"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:123
+msgid "而上面几个财务指标都是`qteasy`直接支持的："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:125
+msgid "总市值 - 数据类型： `total_mv`"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:126
+msgid "总负债 - 数据类型： `total_liab`"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:127
+msgid "总现金 - 数据类型： `c_cash_equ_end_period`"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:129
+msgid "我们可以测试一下："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:144
+msgid "可以看到选股因子已经计算出来了，那么我们可以开始定义交易策略了。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:145
+msgid "用`FactorSorter`定义Alpha选股策略"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:147
+msgid "针对这种定时选股类型的交易策略，`qteasy`提供了`FactorSorter`交易策略类，顾名思义，这个交易策略基类允许用户在策略的实现方法中计算一组选股因子，这样策略就可以自动将所有的股票按照选股因子的值排序，并选出排名靠前的股票。至于排序方法、筛选规则、股票持仓权重等都可以通过策略参数设置。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:149
+msgid "如果符合上面定义的交易策略，使用`FactorSorter`策略基类将会非常方便。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:151
+msgid "下面我们就来一步步定义看看，首先继承`FactorSorter`并定义一个类，在上一个章节中，我们在自定义策略的`__init__()`方法中定义名称、描述以及默认参数等信息，然而我们也可以忽略`__init__()`方法，仅仅在创建策略对象时传入参数等信息，这也是可以的，我们在这里就这样做："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:160
+msgid ""
+"与上一节相同，在`realize()`中需要做的第一步是获取历史数据。我们知道历史数据包括`total_mv, total_liab, "
+"c_cash_equ_end_period, "
+"ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L,"
+" M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:162
+msgid "因此，要获取四种数据类型最后一个周期的所有股票的数据，应该使用如下方法切片："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:175
+msgid "这样我们获取到的每一种数据类型都是一个一维数组，这个数组的长度与我们传入的备选股票池中的股票数量相同，每一个元素代表该股票的数据。加入我们的投资股票池中有三支股票，那么total_mv中就会有三个数字，分别代表三支股票的总市值，以此类推。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:177
+msgid "做好上述准备后，计算选股因子就非常方便了，而且，由于我们使用了`FactorSorter`策略基类，计算好选股因子后，直接返回选股因子就可以了，`qteasy`会处理剩下的选股操作："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:189
+msgid "至此，仅仅用六行代码，一个自定义Alpha选股交易策略就定义好了。是不是非常简单？"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:191
+msgid "好了，我们来看看回测的结果如何？"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:193
+msgid "交易策略的回测结果"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:195
+msgid "由于我们忽略了策略类的`__init__()`方法，因此在实例化策略对象时，必须输入完整的策略参数："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:213
+msgid "然后创建一个`Operator`对象，因为我们希望控制持仓比例，因此最好使用“PT”信号类型："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:224
+#: ../../source/tutorials/6-more-self-defined-strategies.md:375
+msgid "回测结果如下："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:289
+msgid "![在这里插入图片描述](../examples/img/output_5_1_2.png)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:289
+#: ../../source/tutorials/6-more-self-defined-strategies.md:440
+msgid "在这里插入图片描述"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:292
+msgid "回测结果显示这个策略并不能非常有效地跑赢沪深300指数，不过总体来说回撤较小一些，风险较低，是一个不错的保底策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:294
+msgid "但策略的表现并不是我们讨论的重点，下面我们再来看一看，如果不用`FactorSorter`基类，如何定义同样的Alpha选股策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:295
+msgid "用`GeneralStg`定义一个Alpha选股策略"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:296
+msgid "前面已经提过了两种策略基类："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:298
+msgid ""
+"**`RuleIterator`**： "
+"用户只需要针对一支股票定义选股规则，`qteasy`便能将同样的规则应用到股票池中所有的恶股票上，而且还能针对不同股票设置不同的可调参数"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:299
+msgid "**`FactorSorter`**：用户只需要定义一个选股因子，`qteasy`便能根据选股因子自动排序后选择最优的股票持有，并卖掉不够格的股票。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:301
+msgid "而`GeneralStg`是`qteasy`提供的一个最基本的策略基类，它没有提供任何“语法糖”功能，帮助用户降低编码工作量，但是正是因为没有语法糖，它才是一个真正的“万能”策略类，可以用来更加自由地创建交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:303
+msgid "上面的Alpha选股交易策略可以很容易用`FactorSorter`实现，但为了了解`GeneralStg`，我们来看看如何使用它来创建相同的策略："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:305
+msgid "直接把完整的代码贴出来："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:337
+msgid "将上面的代码与`FactorSorter`的代码对比，可以发现，`GeneralStg`的代码在计算出选股因子以后，还多出了因子处理的工作："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:339
+msgid "剔除小于零的因子"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:340
+msgid "排序并选出剩余因子中最小的30个"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:341
+msgid "选出股票后将他们的持仓比例设置为3.3%"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:343
+msgid "事实上，上面的这些工作都是`FactorSorter`提供的“语法糖”，在这里我们必须手动实现而已。值得注意的是，我在上面例子中使用的排序等代码都是从`FactorSorter`中直接提取出来的高度优化的`numpy`代码，它们的运行速度是很快的，比一般用户能写出的代码快很多，因此，只要条件允许，用户都应该尽量利用这些语法糖，只有在不得已的情况下才自己编写排序代码。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:345
+msgid "大家可以研究一下上面的代码，但是请注意，如果使用`GeneralStg`策略类，策略的输出应该是股票的目标仓位，而不是选股因子。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:347
+msgid "下面看看回测结果："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:349
+msgid "回测结果："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:351
+msgid "使用同样的数据进行回测："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:440
+msgid "![在这里插入图片描述](../examples/img/output_7_1.png)"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:442
+msgid "两种交易策略的输出结果基本相同"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:443
+msgid "本节回顾"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:445
+msgid "通过本节的学习，我们了解了`qteasy`提供的另外两种交易策略基类`FactorSorter`和`GeneralStg`的使用方法，实际创建了两个交易策略，虽然使用不同的基类，但是创建出了基本相同的Alpha选股交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:447
+msgid "在下一个章节中，我们仍然将继续介绍自定义交易策略，但是会用一个更加复杂的例子来演示自定义交易策略的使用方法。敬请期待！"
+msgstr ""
+

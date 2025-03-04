@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_03_集合竞价选股.md:1
+msgid "集合竞价选股策略"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:3
+msgid "本策略通过获取SHSE.000300沪深300的成份股数据并统计其30天内开盘价大于前收盘价的天数,并在该天数大于阈值10的时候加入股票池,随后对不在股票池的股票平仓并等权配置股票池的标的,每次交易间隔1个月."
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:5
+msgid "回测数据为:SHSE.000300沪深300指数成份股 回测时间为:2016-04-05 到 2021-02-01"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:33
+msgid "第一种自定义策略设置方法，使用持仓数据和选股数据直接生成比例交易信号`PS`信号："
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:34
+msgid ""
+"使用`GeneralStrategy`策略类，计算选股因子后，去掉所有小于零的因子，排序后提取排名前三十的股票 按以下逻辑生成交易信号： "
+"1，检查当前持仓，如果持仓的股票未被选中，则全数卖出 2，检查当前持仓，如果新选中的股票没有持仓，则等权买入新增选中的股票"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:39
+msgid "设置交易信号类型为`PS`，生成交易信号 由于生成交易信号需要用到持仓数据，因此不能使用批量生成模式，只能使用`stepwise`模式"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:92
+msgid "创建一个`Operator`对象，并回测交易策略"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:116
+msgid "运行结果如下："
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:186
+msgid "![png](img/output_4_1_2.png)"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:186
+#: ../../source/examples/Example_03_集合竞价选股.md:327
+msgid "png"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:189
+msgid "第二种自定义策略设置方，使用PT交易信号设置持仓目标："
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:191
+msgid "在完成选股因子的计算之后，直接设置每个股票的持仓目标，这样就不需要使用知道持仓数据，直接输出持仓目标信号 ，在回测过程中根据实际持仓量生成交易信号。"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:236
+msgid "创建一个Operator对象，开始回测交易策略"
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:260
+msgid "交易回测结果如下："
+msgstr ""
+
+#: ../../source/examples/Example_03_集合竞价选股.md:327
+msgid "![png](img/output_6_1.png)"
+msgstr ""
+

@@ -1,0 +1,436 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/tutorials/3-start-first-strategy.md:1
+msgid "回测您的第一个交易策略"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:3
+msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:5
+msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:6
+msgid "量化交易策略的创建，并提供大量内置基本交易策略"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:7
+msgid "向量化的高速交易策略回测及交易结果评价"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:8
+msgid "交易策略参数的优化以及评价"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:9
+msgid "交易策略的部署、实盘运行"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:11
+msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:13
+msgid "开始前的准备工作"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:15
+msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:17
+msgid "完成`qteasy`的安装并升级到最新版本，完成`qteasy`的初始化配置"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:18
+msgid "配置好本地数据源，掌握下载各种金融数据的方法，能够将指数、股票的各种历史价格数据、财务报表数据等下载到本地。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:20
+msgid "在[上一篇教程](https://blog.csdn.net/Shepherdppz/article/details/136098697)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:22
+msgid "本节的目标"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:24
+msgid "在本节中，我们将通过创建`qteasy`模块来测试一个大小盘轮动交易策略，"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:26
+msgid "大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:28
+msgid "在这里，我们需要创建一个最简单的轮动策略：在前面提到的两个指数之间轮动，每天选择未来可能的涨幅较大的指数持有："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:30
+msgid "分别计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:31
+msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:33
+msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:35
+msgid "策略的实现"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:36
+msgid "根据上述的策略思路，我们很容易在`qteasy`中实现这样的轮动选股策略，因为`qteasy`中已经内置了近70个交易策略，所有的内置策略都有独特的名称，直接引用名称即可使用这些内置策略。`qteasy`中的所有交易策略都必须包含在一个名为`Operator`（交易员）的对象中，交易员对象实际是一个策略的容器，可以理解为一个交易员可以同时管理多个策略，并且同时运行这些策略来生成交易信号。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:38
+msgid "交易员对象可以直接通过`qt.Operator()`来创建，创建时传递`strategies`参数即可在创建时同时创建交易策略："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:43
+msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:45
+msgid "使用`qt.built_ins()`函数，可以查看内置策略的详细介绍："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:87
+msgid "至此，一个`Operator`对象和交易策略就已经创建好了。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:89
+msgid "我们可以使用`Operator.info()`来查看交易员对象和交易策略的详细信息，同时，通过`Operator.strategies`属性可以访问其中的所有交易策略，通过它的`info()`方法也可以查看更详细的策略参数和信息"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:123
+msgid "从上面的信息中可以看到，`ndayrate`策略有许多的可配置参数，通过调整这些参数，我们可以调整策略的选股方式，从而调整交易策略的表现。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:125
+msgid "接下来，我们还需要做一些最基本的设定，确保这个选股策略能按照我们的想法选股。`Operator`对象中的所有参数都可以通过`op.set_parameter()`方法来实现。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:135
+msgid "在上面的代码段中，我们通过几个简单的参数设置选股策略的基本行为："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:137
+msgid "`sample_freq='d'`: 每日选股，如果设置选股周期为`'w'`表示每周选股，`'2d'`表示每两天选股一次"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:138
+msgid "`sort_ascending=False`：该策略的操作方式是将所有的N日涨幅排序后取前几位，因为需要取最大涨幅，因此需要降序排列，如果要取最小涨幅，则需要设置`sort_ascending=True`"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:139
+msgid "`proportion_or_quantity=1`：选择的股票数量，因为从两个指数中固定二选一，因此设置此参数为1"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:140
+msgid "`pars=(20, )`：策略参数N，设置为20表示根据20日涨幅选股"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:141
+msgid "`data_types='close'`：默认值，计算收盘价的涨幅"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:143
+msgid "准备回测数据"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:144
+msgid "配置好选股策略以后，需要通过回测检验策略的表现，也就是调用沪深300和创业板两个指数的实际历史数据，进行模拟交易，看看模拟交易的结果是否能够跑赢大盘。在实际操作中，卖卖大盘指数不太容易，不过一般都可以很容易找到跟踪大盘指数的ETF基金来代替大盘，在这里为了简单起见，我们这里就直接投资于2011年1月1日一直到2020年12月31日之间的沪深300和创业板指数，假设交易费率为万分之一，双向收费，看看投资的结果如何。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:146
+msgid "前面我们已经了解过如何下载历史数据了，这里我们需要沪深300和创业板指数从2013年到2022年底之间的所有数据。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:148
+msgid ""
+"**注意** "
+"在下载历史数据用于回测的时候，下载的数据需要比回测日期起点更多一些，例如，回测从2013年1月1日开始，实际需要的数据更多一些，因此下载数据的起点应该从2012年9月开始。关于这一点的详细分析，请参见[参考文档](http://qteasy.readthedocs.io)"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:151
+msgid "使用下面的代码下载相应的历史数据："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:159
+msgid "确认数据是否下载成功："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:164
+msgid "![在这里插入图片描述](img/tutorial02-01.png)"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:164
+#: ../../source/tutorials/3-start-first-strategy.md:166
+#: ../../source/tutorials/3-start-first-strategy.md:257
+#: ../../source/tutorials/3-start-first-strategy.md:276
+#: ../../source/tutorials/3-start-first-strategy.md:360
+msgid "在这里插入图片描述"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:166
+msgid "![在这里插入图片描述](img/tutorial02-02.png)"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:168
+msgid "配置回测参数"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:170
+msgid "数据准备好之后，就可以开始配置回测参数并开始回测了。`qteasy`的策略回测完全是参数化的，在回测之前我们需要告诉系统所有的相关信息，例如投资的产品品种、投入资金的数量、回测开始日期和结束日期、回测过程的交易费用计算方法、交易批量等。我们可以通过`qt.configure()`对回测参数进行基本配置："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:183
+msgid "上面的配置含义如下"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:184
+msgid ""
+"`asset_pool=['000300.SH', "
+"'399006.SZ']`：投资目标指数用列表形式给出，如果要投资其他的指数或ETF基金，直接传入证券代码即可，如果要从三个或更多的证券中选股，直接加入列表中即可"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:185
+msgid "`invest_amounts=100000`： 投资金额为十万元，如果需要模拟多次分批投入，还可以传入一个列表，不过需要分别指定每次投入的具体日期"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:186
+msgid ""
+"`asset_type='IDX'`： 投资标的类型：`'E'`代表股票， `'IDX'`代表指数，` "
+"'FD'`代表基金，`'FT'`代表期货，`'OPT'`代表期权"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:187
+msgid "`cost_rate_buy=0.0001`： 设置买入和卖出交易费用比例，`qteasy`还支持设置最低费用、固定费用等等，这里只简单设置费率即可"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:188
+msgid "`cost_rate_sell=0.0001`："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:189
+msgid "`invest_start='20110101'`： 模拟交易开始日期"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:190
+msgid "`invest_end='20201231'`：  模拟交易结束日期"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:191
+msgid ""
+"`trade_batch_size=0`：  "
+"买入资产时最小交易批量，`0`代表可以交易任意份额，1代表只能交易整数份，这里可以输入任意大于`0`的数"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:192
+msgid "`sell_batch_size=0`： 卖出资产时最小交易批量为`0`"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:194
+msgid "`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:196
+msgid "策略的回测结果"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:198
+msgid "`qteasy`的策略回测非常简单，设置好所有的配置后，即可以开始回测了，我们可以调用`qt.run()`开始回测，回测的同时，我们开启可视化图表输出，并且开启交易明细记录："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:206
+msgid "等待片刻后，回测完成，`qteasy`会自动打印回测报告如下："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:250
+msgid "从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右，甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了17.8%，十年间总资产从十万元达到了五十多万元，翻了五倍多"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:253
+msgid "策略的进一步改进"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:254
+msgid "我们的策略获得了初步的成功，不过，光看总回报率还不能完全说明问题，策略在整个十年间的表现如何呢？这就需要进一步分析，看看能否进一步改进这个策略。这时我们需要进一步查看回测的结果，尤其是可视化结果和交易明细记录，通过这些记录和报告来找到策略的不足和改进点。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:256
+msgid "可视化报告的使用"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:257
+msgid ""
+"由于设置了`visual=True`，在回测报告的最后，还能看到运行结果的可视化图表报告如下： "
+"![在这里插入图片描述](img/tutorial02-03.png) "
+"可视化图表是`qteasy`的一个很有用的功能。首先我们可以看到回测的历史回报率曲线图。这个曲线图以百分比为单位，将投资组合的回报率曲线和一个参考曲线（默认情况下参考曲线是沪深300指数，可以通过`qt.configure(reference_asset='xxxxxx.xx')`来设置为不同的指数）的收益率对比。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。"
+" "
+"在这张图的参考指数曲线上，会用红、绿色箭头标注所有的买卖点，同时，图表在持有仓位的时间区间填充上绿色，响应没有持仓（空仓）的时段会保持为白色，这样就很容易看出整个投资历史上组合的回报率，以及买卖、持仓的大致时段和比例。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:262
+msgid "紧接着第一张图表，后续五张图表都是历史曲线图，显示了投资回报的多种不同的评价指标，这里面我感觉最有用的是“underwater”图，也就是第六张图，显示了投资资产回撤的情况，这个表我们过一会来仔细分析。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:264
+msgid "最下面还有并列的三张图表，分别统计了历史上历年或历月的收益率，其中可以看到整个十年中有三年（2011年、2016年和2018年）的收益率是负的，其余年份均实现了正收益。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:266
+msgid ""
+"了解了可视化图表，我们来分析历史曲线，大家可以看着历史回报率曲线图，并开始设想，加入我按这个投资策略开始投资，从2015年6月3日开始，我的收益率会如何？结果是：到2016年6月13日亏损50.6%，然后一直到2020年2月才能解套！如下图："
+" ![最大一次回撤持续了近五年](img/tutorial02-04.png) "
+"同样，我们从第六张underwater图中也可以看到，在整个十年投资期间，总资产不断地出现回撤，50%回撤是最大最深的一次，但前期还有31%、22%的多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:266
+msgid "最大一次回撤持续了近五年"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:270
+msgid ""
+"![整个十年基本上都属于深度套牢状态](img/tutorial02-05.png) "
+"如上图，整个十年间除2015年前后或者2020年下半年以外，几乎都处于潜水套牢状态。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:270
+msgid "整个十年基本上都属于深度套牢状态"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:273
+msgid "因此，我们可以想办法改进一下这个策略，看看如何能够降低回撤，提升策略的性能。为此，我们需要仔细分析模拟交易回测过程中的每一笔交易，寻找降低回撤的办法。要查看回测交易的每一个细节，那就需要查看交易明细报告。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:275
+msgid "交易明细报告"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:276
+msgid ""
+"我们在回测的时候，设置了`print_backtest_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`qteasy/log`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开："
+" ![两个交易明细报告](img/tutorial02-06.png) "
+"打开第一个文件可以看到交易日志，交易日志中记录了每一个交易日资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录："
+" ![在这里插入图片描述](img/tutorial02-07.png) "
+"从上面的文件中可以看到，1月4日买入了31份沪深300指数，到1月5日收盘时卖出了持有的沪深300指数31份，并在1月6日收盘时买入87份创业板指，并在1月7日继续持有。。。"
+" "
+"而打开trade_records.csv文件可以看到，这里记录了每一笔成交的交易，包括交易日期、买卖方向、交易份额、价格、总金额、交易费率等等信息，由于只记录有交易的实际发生，因此信息更加紧凑："
+" ![在这里插入图片描述](img/tutorial02-08.png) "
+"仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300："
+" ![在这里插入图片描述](img/tutorial02-09.png) "
+"所以其实这时候我们的策略仍然选择了正确的指数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:276
+msgid "两个交易明细报告"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:287
+msgid "那么，我们可否从这里出发改进我们的策略呢？思路很简单，我们可以加一条规则："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:289
+msgid "每天计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:290
+msgid "如果选股日两个指数都小于0，那么我们第二天就空仓，一个指数都不持有"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:291
+msgid "否则，选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:293
+msgid "我们在原来的简单选股规则基础上增加了一条“过滤条件”，将两个指数都小于0的情况排除在外，好了，那么在`qteasy`中如何调整，以反映这个新的修改呢？"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:295
+msgid "改进后的策略设置"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:297
+msgid "`qteasy`的内置选股策略提供了一个过滤条件`condition`属性，默认条件下`condition='any'`，代表没有过滤条件，现在我们需要把小于0的收益率过滤掉，因此可以设置`condition='greater'`同时设置过滤范围`ubound=0`即可："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:308
+msgid "上面的设置跟前一节基本相同，增加了两个参数："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:310
+msgid "`condition='greater'`：含义是增加过滤条件，N日涨幅必须大于等于某个值才能参加选股，这个值在`ubound`参数中设置。也就是说排除掉小于这个值的股票，让其无法中选"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:311
+msgid "`ubound=0`： 设置为0，这样只有涨幅大于等于0的指数才能被选中，当然还可以设置为其他浮点数"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:313
+msgid "改进后的结果"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:314
+msgid "同样按照前面的配置，直接执行`qt.run()`。这里直接放结果："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:360
+msgid ""
+"可视化图表如下： ![在这里插入图片描述](img/tutorial02-10.png) "
+"从资产收益率图上可以看到，原来一片绿色（全程持仓）变成了白绿相间（白色区间空仓持币），资产回撤情况得到了大幅度优化：从原来的50%回撤降低到了20%左右。而且总回报率也大大提升："
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:364
+msgid "资产总额从改进前的五十多万提高到一百万"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:365
+msgid "总收益率从400%提升到了900%"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:366
+msgid "年化收益率从17%提升到了26%"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:367
+msgid "最大回撤从50%降低到了20%"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:369
+msgid "通过查看交易记录可知，的确策略在2015年6月底的股灾期间保持空仓，躲避了单边下跌的行情。"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:370
+msgid "本篇回顾"
+msgstr ""
+
+#: ../../source/tutorials/3-start-first-strategy.md:372
+msgid "通过本教程，我们通过一个大小盘轮动交易策略的创建、回测、修改熟悉了解了`qteasy`的交易策略，知道如何通过引用内置交易策略，创建一个单策略交易员对象，并使交易员运行策略获得回测结果。从下一篇教程开始，我们将进一步详细讨论`qteasy`的内置交易策略，并且介绍组合策略的实现方式，在交易员对象中添加更多的策略并设定组合方式，通过策略组合实现更复杂的效果，并且了解更多策略控制和类型。"
+msgstr ""
+

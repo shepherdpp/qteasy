@@ -1,0 +1,172 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:1
+msgid "Alpha选股交易策略"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:3
+msgid "本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票，随后平掉排名EV/EBITDA不在最小的30的股票持仓并等权购买EV/EBITDA最小排名在前30的股票"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:5
+msgid "回测数据为:SHSE.000300沪深300指数成份股"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:7
+msgid "回测时间为:2016-04-05 到 2021-02-01"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:16
+msgid "在选股之前，需要检查需要的历史数据"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:18
+msgid "EV/EBITDA数据并不直接存在于qteasy定义的数据类型中，需要通过几个数据组合计算出来"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:20
+msgid "EV/EBITDA = (Market Capitalization + Total Debt - Total Cash) / EBITDA"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:22
+msgid "上面几个数据分别代表总市值、总负债、总现金及现金等价物，这些数据需要从`qteasy`内置的数据类型中分别提取，并使用上面的公式计算后，作为选股因子。排除掉小于0的因子后，将所有选股因子从小到大排列，选出因子排在最前的30支股票，将手中的全部资金平均分配投入到所有选中的股票中持有一个月，直到下一次选股为止。"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:24
+msgid "我们可以通过下面的方法检查数据检查结果。"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:39
+msgid "输出结果如下"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:44
+msgid "有了上面的数据定义，我们就可以创建这样的选股策略了。"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:46
+msgid "实际上，我们可以使用好几种不同的方法实现同样的选股策略："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:49
+msgid "第一种自定义策略设置方法，使用持仓数据和选股数据直接生成比例交易信号PS信号："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:50
+msgid ""
+"使用`GeneralStrategy`策略类，计算选股因子后，去掉所有小于零的因子，排序后提取排名前三十的股票 按以下逻辑生成交易信号： "
+"1，检查当前持仓，如果持仓的股票不在选中的30个中间，则全数卖出 2，检查当前持仓，如果新选中的股票没有持仓，则等权买入新增选中的股票"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:55
+msgid "设置交易信号类型为`PS`，生成交易信号 由于生成交易信号需要用到持仓数据，因此不能使用批量生成模式，只能使用`stepwise`模式"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:58
+msgid "策略的定义如下"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:98
+msgid "创建一个`Operator`对象，并运行这个策略。"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:100
+msgid "由于策略使用了当前持仓数据，因此只能使用`stepwise`模式回测"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:123
+msgid "输出结果如下："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:190
+msgid "![png](img/output_5_1_2.png)"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:190
+#: ../../source/examples/Example_02_Alpha选股策略.md:327
+#: ../../source/examples/Example_02_Alpha选股策略.md:462
+msgid "png"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:194
+msgid "第二种自定义策略设置方法，使用`PT`交易信号设置持仓目标："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:196
+msgid "在完成选股因子的计算之后，直接设置每个股票的持仓目标，这样就不需要使用知道持仓数据，直接输出持仓目标信号 ，在回测过程中根据实际持仓量生成交易信号。"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:233
+msgid "生成一个Operator对象，运行回测"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:258
+#: ../../source/examples/Example_02_Alpha选股策略.md:393
+msgid "回测结果如下："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:327
+msgid "![png](img/output_7_1.png)"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:329
+msgid "第三种自定义策略设置方法："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:330
+msgid ""
+"使用`FactorSorter`策略类，直接生成交易策略的选股因子，再根据 "
+"`FactorSorter`策略的选股参数实现选股，本质上与第二种方式相同，但是 可以大大减少代码量"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:334
+msgid "设置交易信号类型为`PT`，生成持仓目标，自动生成交易信号"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:359
+msgid "同样创建一个`Operator`对象，回测交易策略 注意这个交易策略需要更多的参数用于因子选股："
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:362
+msgid "`max_sel_count=30`   设置选股数量，最多选出30个股票"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:363
+msgid "`condition='greater'`   设置筛选条件，仅筛选因子大于`ubound`的股票"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:364
+msgid "`ubound=0.0`   设置筛选条件，仅筛选因子大于0的股票"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:365
+msgid "`weighting='even'`   设置股票权重，所有选中的股票平均分配权重"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:366
+msgid "`sort_ascending=True`   设置排序方式，因子从小到大排序选择头30名"
+msgstr ""
+
+#: ../../source/examples/Example_02_Alpha选股策略.md:462
+msgid "![png](img/output_9_1.png)"
+msgstr ""
+

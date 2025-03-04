@@ -1,0 +1,427 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/references/1-build-in-results.md:1
+msgid "内置交易策略回测结果"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:3
+msgid "测试内置的择时策略和选股策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:5
+msgid "回测参数"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:7
+msgid "每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下："
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:9
+msgid "回测区间起止日期：1996-04-13 —— 2021-04-13，持续25年"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:10
+msgid "测试投资标的： “000001.SH”上证指数"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:11
+msgid "业绩参考标准： “000001.SH”上证指数"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:19
+msgid "均线类策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:23
+msgid "Crossline交叉线策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:169
+msgid "![png](../tutorials/img/output_3_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:169
+#: ../../source/references/1-build-in-results.md:232
+#: ../../source/references/1-build-in-results.md:295
+#: ../../source/references/1-build-in-results.md:358
+#: ../../source/references/1-build-in-results.md:424
+#: ../../source/references/1-build-in-results.md:491
+#: ../../source/references/1-build-in-results.md:553
+#: ../../source/references/1-build-in-results.md:637
+#: ../../source/references/1-build-in-results.md:700
+#: ../../source/references/1-build-in-results.md:763
+#: ../../source/references/1-build-in-results.md:826
+#: ../../source/references/1-build-in-results.md:889
+#: ../../source/references/1-build-in-results.md:952
+#: ../../source/references/1-build-in-results.md:1015
+#: ../../source/references/1-build-in-results.md:1078
+#: ../../source/references/1-build-in-results.md:1141
+#: ../../source/references/1-build-in-results.md:1205
+#: ../../source/references/1-build-in-results.md:1268
+#: ../../source/references/1-build-in-results.md:1333
+#: ../../source/references/1-build-in-results.md:1396
+#: ../../source/references/1-build-in-results.md:1459
+#: ../../source/references/1-build-in-results.md:1522
+#: ../../source/references/1-build-in-results.md:1585
+#: ../../source/references/1-build-in-results.md:1648
+#: ../../source/references/1-build-in-results.md:1711
+#: ../../source/references/1-build-in-results.md:1774
+#: ../../source/references/1-build-in-results.md:1837
+#: ../../source/references/1-build-in-results.md:1901
+#: ../../source/references/1-build-in-results.md:1966
+#: ../../source/references/1-build-in-results.md:2029
+#: ../../source/references/1-build-in-results.md:2093
+#: ../../source/references/1-build-in-results.md:2156
+#: ../../source/references/1-build-in-results.md:2219
+#: ../../source/references/1-build-in-results.md:2282
+#: ../../source/references/1-build-in-results.md:2345
+#: ../../source/references/1-build-in-results.md:2408
+#: ../../source/references/1-build-in-results.md:2471
+#: ../../source/references/1-build-in-results.md:2534
+#: ../../source/references/1-build-in-results.md:2597
+msgid "png"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:172
+msgid "MACD策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:232
+msgid "![png](../tutorials/img/output_4_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:235
+msgid "DMA策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:295
+msgid "![png](../tutorials/img/output_5_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:298
+msgid "TRIX 策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:358
+msgid "![png](../tutorials/img/output_6_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:362
+msgid "K线模式识别策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:364
+msgid "CDL 策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:424
+msgid "![png](../tutorials/img/output_7_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:427
+msgid "动量类策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:429
+msgid "Bollinger Band策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:491
+msgid "![png](../tutorials/img/output_8_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:493
+msgid "S-BBAND 策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:553
+msgid "![png](../tutorials/img/output_9_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:556
+msgid "SAREXT 策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:632
+msgid "单均线交叉类测路"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:634
+msgid "DEMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:637
+msgid "![png](../tutorials/img/output_11_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:700
+msgid "![png](../tutorials/img/output_12_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:703
+msgid "EMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:763
+msgid "![png](../tutorials/img/output_13_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:766
+msgid "HT_TRENDLINE 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:826
+msgid "![png](../tutorials/img/output_14_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:829
+msgid "KAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:889
+msgid "![png](../tutorials/img/output_15_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:892
+msgid "MAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:952
+msgid "![png](../tutorials/img/output_16_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:955
+msgid "FAMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1015
+msgid "![png](../tutorials/img/output_17_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1018
+msgid "T3 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1078
+msgid "![png](../tutorials/img/output_18_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1081
+msgid "TEMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1141
+msgid "![png](../tutorials/img/output_19_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1143
+msgid "TRIMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1205
+msgid "![png](../tutorials/img/output_20_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1207
+msgid "WMA 单均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1268
+msgid "![png](../tutorials/img/output_21_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1271
+msgid "双均线交叉交易策略类"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1273
+msgid "SMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1333
+msgid "![png](../tutorials/img/output_22_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1335
+msgid "DEMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1396
+msgid "![png](../tutorials/img/output_23_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1398
+msgid "EMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1459
+msgid "![png](../tutorials/img/output_24_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1461
+msgid "KAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1522
+msgid "![png](../tutorials/img/output_25_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1525
+msgid "MAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1585
+msgid "![png](../tutorials/img/output_26_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1587
+msgid "FAMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1648
+msgid "![png](../tutorials/img/output_27_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1651
+msgid "T3 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1711
+msgid "![png](../tutorials/img/output_28_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1713
+msgid "TEMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1774
+msgid "![png](../tutorials/img/output_29_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1776
+msgid "TRIMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1837
+msgid "![png](../tutorials/img/output_30_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1840
+msgid "WMA 双均线交叉策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1901
+msgid "![png](../tutorials/img/output_31_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1904
+msgid "均线斜率回归策略类"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1906
+msgid "SMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1966
+msgid "![png](../tutorials/img/output_32_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:1969
+msgid "DEMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2029
+msgid "![png](../tutorials/img/output_33_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2031
+msgid "EMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2093
+msgid "![png](../tutorials/img/output_34_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2095
+msgid "HT_TRENDLINE 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2156
+msgid "![png](../tutorials/img/output_35_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2159
+msgid "KAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2219
+msgid "![png](../tutorials/img/output_36_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2222
+msgid "MAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2282
+msgid "![png](../tutorials/img/output_37_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2284
+msgid "FAMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2345
+msgid "![png](../tutorials/img/output_38_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2348
+msgid "T3 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2408
+msgid "![png](../tutorials/img/output_39_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2411
+msgid "TEMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2471
+msgid "![png](../tutorials/img/output_40_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2474
+msgid "TRIMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2534
+msgid "![png](../tutorials/img/output_41_3.png)"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2537
+msgid "WMA 均线斜率回归策略"
+msgstr ""
+
+#: ../../source/references/1-build-in-results.md:2597
+msgid "![png](../tutorials/img/output_42_3.png)"
+msgstr ""
+

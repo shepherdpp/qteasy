@@ -1,0 +1,151 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:1
+msgid "使用交易策略类，创建更复杂的自定义策略"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:3
+msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，[Github地址在这里](https://github.com/shepherdpp/qteasy)，并且可以[通过pip安装](https://blog.csdn.net/Shepherdppz/article/details/136075222?spm=1001.2014.3001.5501)："
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:9
+msgid "`qteasy`具备以下功能："
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:12
+msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:13
+msgid "量化交易策略的创建，并提供大量内置基本交易策略"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:14
+msgid "向量化的高速交易策略回测及交易结果评价"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:15
+msgid "交易策略参数的优化以及评价"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:16
+msgid "交易策略的部署、实盘运行"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:18
+msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:20
+msgid "开始前的准备工作"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:22
+msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:24
+msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:25
+msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:26
+msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:27
+msgid "**学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:28
+msgid ""
+"**了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-"
+"strategy.md)[QTEASY教程6](6-more-self-defined-strategies.md)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:30
+msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:32
+msgid "`qteasy`的内核被设计为一个兼顾高速执行以及足够的灵活性的框架，理论上您可以实现您所设想的任何类型的交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:34
+msgid "同时，`qteasy`的回测框架也做了相当多的特殊设计，可以完全避免您无意中在交易策略中导入\"未来函数\"，确保您的交易策略在回测时完全基于过去的数据，同时也使用了很多预处理技术以及JIT技术对内核关键函数进行了编译，以实现不亚于C语言的运行速度。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:36
+msgid "不过，为了实现理论上无限可能的交易策略，仅仅使用内置交易策略以及策略混合就不一定够用了，一些特定的交易策略，或者一些特别复杂的交易策略是无法通过内置策略混合而成的，这就需要我们使用`qteasy`提供的`Strategy`基类，基于一定的规则创建一个自定义交易策略了。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:37
+msgid "本节的目标"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:39
+msgid "在本节中，我们将介绍`qteasy`的交易策略基类，通过一个具体的例子详细讲解如何基于这几个基类，创建一个只属于您自己的交易策略。为了说明"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:41
+msgid "继承Strategy类，创建一个复杂的多因子选股策略"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:44
+msgid "在这个例子中，我们使用"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:154
+msgid "策略和回测参数配置，并开始回测"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:155
+msgid "定义好上面的策略之后，就可以开始进行回测了，我们需要在`qteasy`中创建一个交易员对象，操作前面创建的策略："
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:177
+msgid "运行结果如下："
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:244
+msgid "![png](img/output_4_4.png)"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:244
+msgid "png"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:246
+msgid "本节回顾"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:248
+msgid "在本节中，我们通过一个具体的例子，详细讲解了如何基于`qteasy`的交易策略基类，创建一个只属于您自己的交易策略。通过这个例子，您可以看到，`qteasy`的交易策略基类提供了足够的灵活性，可以实现您所设想的任何类型的交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:250
+msgid "从下一个教程开始，我们将会介绍`qteasy`交易策略优化方法，通过多种优化算法，找到最优的交易策略参数，以及评价交易策略的性能。"
+msgstr ""
+

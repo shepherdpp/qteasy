@@ -1,0 +1,1362 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_data/3. data_tables_30.md:1
+msgid "`DataTables`——价格行情表"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:3
+msgid "`qteasy`内置大量的行情数据表，包含股票、基金、指数、期货、期权等不同资产类型的不同频率的K线行情数据。大部分行情数据都包含从1分钟到1小时的中高频K线数据，以及日K线、周、月等低频K线数据。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:5
+msgid "除了行情数据表之外，还包含了一些特殊的行情数据表，例如股票复权因子表、特殊指数的日K线行情表等。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:7
+msgid "股票行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:9
+msgid "股票分钟K线行情: `stock_1min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:10
+msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:13
+msgid "股票分钟K线行情表包含了所有股票的1分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "columns"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "dtypes"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "remarks"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "is_prime_key"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "0"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "ts_code"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(20)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "证券代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "Y"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "1"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "trade_time"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "datetime"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "交易日期时间"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "2"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "open"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "float"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "开盘价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "N"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "3"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "high"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "最高价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "4"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "low"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "最低价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "5"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "close"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "收盘价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "6"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "vol"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "double"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交量(股)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "7"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "amount"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交额(元)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:26
+msgid "股票5分钟K线行情: `stock_5min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:27
+msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:30
+msgid "股票5分钟K线行情表包含了所有股票的5分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:43
+msgid "股票15分钟K线行情: `stock_15min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:44
+msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:47
+msgid "股票15分钟K线行情表包含了所有股票的15分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:60
+msgid "股票30分钟K线行情: `stock_30min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:61
+msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:64
+msgid "股票30分钟K线行情表包含了所有股票的30分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:77
+msgid "股票60分钟K线行情: `stock_hourly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:78
+msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:81
+msgid "股票60分钟K线行情表包含了所有股票的60分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:94
+msgid "股票日线行情: `stock_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:95
+msgid "数据表用途: `data`, 资产类型: `E`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:97
+msgid "股票日线行情表包含了所有股票的日线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "trade_date"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "date"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "交易日期"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pre_close"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "昨收价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "change"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌额"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "8"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pct_chg"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌幅"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "9"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交量(手)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "10"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交额(千元)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:113
+msgid "股票周线行情: `stock_weekly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:114
+msgid "数据表用途: `data`, 资产类型: `E`, 数据频率: `w`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:116
+msgid "股票周线行情表包含了所有股票的周线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:132
+msgid "股票月线行情: `stock_monthly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:133
+msgid "数据表用途: `data`, 资产类型: `E`, 数据频率: `m`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:135
+msgid "股票月线行情表包含了所有股票的月线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:151
+msgid "沪深指数行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:153
+msgid "指数分钟K线行情: `index_1min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:154
+msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:157
+msgid "指数分钟K线行情表包含了所有指数的1分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:170
+msgid "指数5分钟K线行情: `index_5min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:171
+msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:174
+msgid "指数5分钟K线行情表包含了所有指数的5分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:187
+msgid "指数15分钟K线行情: `index_15min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:188
+msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:191
+msgid "指数15分钟K线行情表包含了所有指数的15分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:204
+msgid "指数30分钟K线行情: `index_30min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:205
+msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:208
+msgid "指数30分钟K线行情表包含了所有指数的30分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:221
+msgid "指数60分钟K线行情: `index_hourly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:222
+msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:225
+msgid "指数小时K线行情表包含了所有沪深市场指数的60分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:238
+msgid "指数日线行情: `index_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:239
+msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:241
+msgid "指数日K线行情表包含了所有沪深市场指数的日线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:257
+msgid "指数周线行情: `index_weekly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:258
+msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `w`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:260
+msgid "指数周K线行情表包含了所有沪深市场指数的周K线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:276
+msgid "指数月度行情: `index_monthly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:277
+msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `m`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:279
+msgid "指数月K线行情表包含了所有沪深市场指数的月K线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:295
+msgid "其他指数行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:297
+msgid "同花顺行业指数日线行情: `ths_index_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:298
+msgid "数据表用途: `data`, 资产类型: `THS`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:300
+msgid "同花顺行业指数行情表包含了同花顺行业指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(14)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "TS指数代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "交易日"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "收盘点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "开盘点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "最高点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "最低点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "昨日收盘点"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "avg_price"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "平均价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pct_change"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交量"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "11"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "turnover_rate"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "换手率"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "12"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "total_mv"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "总市值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "13"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "float_mv"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "流通市值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:319
+msgid "中证指数日线行情: `ci_index_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:320 data_tables_30.md:339
+#: data_tables_30.md:362
+msgid "数据表用途: reference, 资产类型: none, 数据频率: d"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:322
+msgid "中证指数日线行情表包含了中证指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "指数代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "昨日收盘点位"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交量（万股）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交额（万元）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:338
+msgid "申万指数日线行情: `sw_index_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:341
+msgid "申万指数日线行情表包含了申万指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "name"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(24)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "指数名称"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pe"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "市盈率"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pb"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "市净率"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "流通市值（万元）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "14"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "总市值（万元）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:361
+msgid "全球指数日线行情: `global_index_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:364
+msgid "全球主要指数主要包括："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:365
+msgid "美国主要指数：道琼斯工业平均指数、标准普尔500指数、纳斯达克综合指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:366
+msgid "欧洲主要指数：英国富时100指数、德国DAX指数、法国CAC40指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:367
+msgid "亚太主要指数：日经225指数、恒生指数、澳大利亚标普200指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:368
+msgid "其他主要指数：巴西IBOVESPA指数、俄罗斯RTS指数、印度SENSEX指数等等 上述指数代码对照表如下："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "XIN9"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "富时中国A50指数 (富时A50)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "HSI"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "恒生指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "HKTECH"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "恒生科技指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "HKAH"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "恒生AH股H指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "DJI"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "道琼斯工业指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "IXIC"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "纳斯达克指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "FTSE"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "富时100指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "FCHI"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "法国CAC40指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "GDAXI"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "德国DAX指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "N225"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "日经225指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "KS11"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "韩国综合指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "AS51"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "澳大利亚标普200指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "SENSEX"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "印度孟买SENSEX指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "15"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "IBOVESPA"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "巴西IBOVESPA指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "16"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "RTS"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "俄罗斯RTS指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "17"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "TWII"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "台湾加权指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "18"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "CKLSE"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "马来西亚指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "19"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "SPTSX"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "加拿大S&P/TSX指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "20"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "CSX5P"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "STOXX欧洲50指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "21"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "RUT"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "罗素2000指数"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:395
+msgid "全球指数日线行情表包含了全球主要指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "swing"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "振幅"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交量 （大部分无此项数据）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交额 （大部分无此项数据）"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:412
+msgid "基金行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:414
+msgid "场内基金分钟K线行情: `fund_1min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:415
+msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:418
+msgid "场内基金分钟K线行情表包含了所有沪深市场场内基金的1分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:431
+msgid "场内基金5分钟K线行情: `fund_5min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:432
+msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:435
+msgid "场内基金5分钟K线行情表包含了所有沪深市场场内基金的5分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:448
+msgid "场内基金15分钟K线行情: `fund_15min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:449
+msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:452
+msgid "场内基金15分钟K线行情表包含了所有沪深市场场内基金的15分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:465
+msgid "场内基金30分钟K线行情: `fund_30min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:466
+msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:469
+msgid "场内基金30分钟K线行情表包含了所有沪深市场场内基金的30分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:482
+msgid "场内基金60分钟K线行情: `fund_hourly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:483
+msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:486
+msgid "场内基金小时K线行情表包含了所有沪深市场场内基金的60分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:499
+msgid "场内基金每日K线行情: `fund_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:500 data_tables_30.md:557
+msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:502
+msgid "场内基金日K线行情表包含了所有沪深市场场内基金的日线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:518
+msgid "场内基金周K线行情: `fund_weekly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:519
+msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `w`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:521
+msgid "场内基金周K线行情表包含了所有沪深市场场内基金的周K线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:537
+msgid "场内基金月K线行情: `fund_monthly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:538
+msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `m`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:540
+msgid "场内基金月K线行情表包含了所有沪深市场场内基金的月K线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:556
+msgid "场外基金每日净值: `fund_nav`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:559
+msgid "场外基金每日净值表包含了所有场外基金的每日净值数据，包括基金代码、交易日期、单位净值、累计净值、日增长率、申购状态、赎回状态等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "nav_date"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "净值日期"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "ann_date"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "公告日期"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "unit_nav"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "单位净值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "accum_nav"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "累计净值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "accum_div"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "累计分红"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "net_asset"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "资产净值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "total_netasset"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "合计资产净值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "adj_nav"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "复权单位净值"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "update_flag"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(2)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "更新标记"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:574
+msgid "期货行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:576
+msgid "期货合约映射表: `future_mapping`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:577 data_tables_30.md:678
+msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:579
+msgid "期货合约映射表包含了所有期货合约的映射关系，包括连续合约代码、起始日期、期货合约代码等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "连续合约代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "起始日期"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "mapping_ts_code"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(18)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "期货合约代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:587
+msgid "期货分钟K线行情: `future_1min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:588
+msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:591
+msgid "期货分钟K线行情表包含了所有沪深市场期货的1分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交金额(元)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "oi"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "持仓量(手)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:605
+msgid "期货5分钟K线行情: `future_5min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:606
+msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:609
+msgid "期货5分钟K线行情表包含了所有沪深市场期货的5分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:623
+msgid "期货15分钟K线行情: `future_15min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:624
+msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:627
+msgid "期货15分钟K线行情表包含了所有沪深市场期货的15分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:641
+msgid "期货30分钟K线行情: `future_30min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:642
+msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:645
+msgid "期货30分钟K线行情表包含了所有沪深市场期货的30分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:659
+msgid "期货60分钟K线行情: `future_hourly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:660
+msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:663
+msgid "期货小时K线行情表包含了所有沪深市场期货的60分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:677
+msgid "期货每日行情: `future_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:680
+msgid "期货日线行情表包含了所有沪深市场期货的日线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "昨收盘价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "pre_settle"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "昨结算价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "settle"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "结算价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "change1"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌1 收盘价-昨结算价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "change2"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌2 结算价-昨结算价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交金额(万元)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "oi_chg"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "持仓量变化"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "delv_settle"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "交割结算价"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:701
+msgid "期货周线行情: `future_weekly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:702
+msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `w`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:704
+msgid "期货周线行情表包含了所有沪深市场期货的周线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:725
+msgid "期货月线行情: `future_monthly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:726
+msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `m`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:728
+msgid "期货月线行情表包含了所有沪深市场期货的月线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:749
+msgid "期权行情数据表："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:751
+msgid "期权分钟K线行情: `options_1min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:752
+msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:755
+msgid "期权分钟K线行情表包含了所有沪深市场期权的1分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:768
+msgid "期权5分钟K线行情: `options_5min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:769
+msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:772
+msgid "期权5分钟K线行情表包含了所有沪深市场期权的5分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:785
+msgid "期权15分钟K线行情: `options_15min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:786
+msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:789
+msgid "期权15分钟K线行情表包含了所有沪深市场期权的15分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:802
+msgid "期权30分钟K线行情: `options_30min`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:803
+msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:806
+msgid "期权30分钟K线行情表包含了所有沪深市场期权的30分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:819
+msgid "期权60分钟K线行情: `options_hourly`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:820
+msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:823
+msgid "期权小时K线行情表包含了所有沪深市场期权的60分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:836
+msgid "期权每日行情: `options_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:837
+msgid "数据表用途: `data`, 资产类型: `OPT`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:839
+msgid "期权每日行情数据表字段说明："
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "exchange"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "varchar(8)"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "交易市场"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:858
+msgid "美股和港股行情数据"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:861
+msgid "美股日线行情: `us_stock_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:862
+msgid "数据表用途: `not_implemented`, 资产类型: `US`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:864
+msgid "美股日线行情表包含了所有美股的日线行情数据，包括股票代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌额、涨跌幅、成交量、成交额、平均价、换手率、总市值、市盈率、市净率等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "股票代码"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "成交额"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "vwap"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "turnover_ratio"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "PE-市盈率"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "PB-市净率"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:885
+msgid "港股日线行情: `hk_stock_daily`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:886
+msgid "数据表用途: `not_implemented`, 资产类型: `HK`, 数据频率: `d`"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md:888
+msgid "港股日线行情表包含了所有港股的日线行情数据，包括股票代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌额、涨跌幅、成交量、成交额等信息。"
+msgstr ""
+
+#: ../../source/manage_data/3. data_tables_30.md
+msgid "涨跌幅(%)"
+msgstr ""
+

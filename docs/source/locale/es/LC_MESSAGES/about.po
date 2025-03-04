@@ -1,0 +1,45 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-03 21:13+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/about.md:2
+msgid "关于 QTEASY"
+msgstr ""
+
+#: ../../source/about.md:4
+msgid "作者: **Jackie PENG**"
+msgstr ""
+
+#: ../../source/about.md:5
+msgid "Email: *jackie_pengzhao@163.com*"
+msgstr ""
+
+#: ../../source/about.md:6
+msgid "创建日期: 2019, July, 16"
+msgstr ""
+
+#: ../../source/about.md:7
+msgid "最新版本: `1.4.8`"
+msgstr ""
+
+#: ../../source/about.md:8
+msgid "License: BSD 3-Clause"
+msgstr ""
+
