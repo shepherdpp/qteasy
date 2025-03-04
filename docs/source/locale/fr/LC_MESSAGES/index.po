@@ -61,7 +61,7 @@ msgstr "LICENCE"
 
 #: ../../source/index.rst:183
 msgid "关于 ``qteasy``"
-msgstr "À propos de « QTEASY »"
+msgstr "À propos de ``QTEASY``"
 
 #: ../../source/index.rst:195
 msgid "常见问题"
@@ -69,7 +69,7 @@ msgstr "FAQ"
 
 #: ../../source/index.rst:7
 msgid "欢迎使用 ``QTEASY`` 文档!"
-msgstr "Bienvenue dans la documentation « QTEASY » !"
+msgstr "Bienvenue dans la documentation ``QTEASY`` !"
 
 #: ../../source/index.rst:15
 msgid ""
@@ -91,7 +91,7 @@ msgstr "Créé le 16 juillet 2019"
 
 #: ../../source/index.rst:24
 msgid "最新版本: `1.4.8`"
-msgstr "Dernière version : « 1.4.8 »"
+msgstr "Dernière version: ``1.4.8``"
 
 #: ../../source/index.rst:25
 msgid "License: BSD 3-Clause"
@@ -103,13 +103,13 @@ msgstr "Brève introduction"
 
 #: ../../source/index.rst:30
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
-msgstr "``QTEASY`` est un ensemble de boîtes à outils de trading quantitatif développées pour le personnel de trading quantitatif, avec les fonctions de base suivantes :"
+msgstr "``QTEASY`` est un ensemble de boîtes à outils de trading quantitatif développées pour le personnel de trading quantitatif, avec les fonctions de base suivantes :"
 
 #: ../../source/index.rst:32
 msgid ""
 "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
 "``Tushare`` 、 ``EastMoney`` 等"
-msgstr "Acquisition, nettoyage, tri, visualisation, requête de stockage local et application de données historiques financières ; prend en charge plusieurs méthodes de stockage de données, y compris les fichiers locaux, les bases de données MySQL, etc., les sources de données incluent « Tushare », « EastMoney », etc."
+msgstr "Acquisition, nettoyage, tri, visualisation, requête de stockage local et application de données historiques financières ; prend en charge plusieurs méthodes de stockage de données, y compris les fichiers locaux, les bases de données MySQL, etc., les sources de données incluent ``Tushare``, ``EastMoney``, etc."
 
 #: ../../source/index.rst:33
 msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
@@ -161,7 +161,7 @@ msgstr "Surveillez et contrôlez les programmes de trading via plusieurs interfa
 
 #: ../../source/index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
-msgstr "À l'avenir, « qteasy » pourra réaliser des transactions automatiques en direct en se connectant aux API de trading fournies par les courtiers, tels que QMT"
+msgstr "À l'avenir, ``qteasy`` pourra réaliser des transactions automatiques en direct en se connectant aux API de trading fournies par les courtiers, tels que QMT"
 
 #: ../../source/index.rst:73
 msgid "回测、评价、优化交易策略"
