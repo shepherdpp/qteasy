@@ -69,7 +69,7 @@ msgstr "Häufig gestellte Fragen"
 
 #: ../../source/index.rst:7
 msgid "欢迎使用 ``QTEASY`` 文档!"
-msgstr "Willkommen bei der „QTEASY“-Dokumentation!"
+msgstr "Willkommen bei der ``QTEASY``-Dokumentation!"
 
 #: ../../source/index.rst:15
 #, fuzzy
@@ -80,8 +80,8 @@ msgstr ""
 "Derzeit befindet sich ``qteasy`` in der intensiven Entwicklungs- und "
 "Testphase und die Software weist zwangsläufig einige Schwachstellen und "
 "Fehler auf. Wenn Sie während der Verwendung auf Probleme stoßen, können "
-"Sie mir gerne ein „Problem melden“ oder eine „Anforderung für eine neue "
-"Funktion“ senden. Sie können auch den „Diskussionsbereich“ aufrufen, um "
+"Sie mir gerne ein ``Problem melden`` oder eine ``Anforderung für eine neue "
+"Funktion`` senden. Sie können auch den ``Diskussionsbereich`` aufrufen, um "
 "an der Diskussion teilzunehmen. Beiträge werden sehr geschätzt!"
 
 #: ../../source/index.rst:21
@@ -142,7 +142,7 @@ msgstr ""
 
 #: ../../source/index.rst:37
 msgid "``QTEASY`` 能做什么?"
-msgstr "Wofür ist „QTEASY“ gedacht?"
+msgstr "Wofür ist ``QTEASY`` gedacht?"
 
 #: ../../source/index.rst:40
 msgid "获取并管理金融历史数据"

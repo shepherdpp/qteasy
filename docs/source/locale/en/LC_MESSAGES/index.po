@@ -77,11 +77,10 @@ msgid ""
 "目前 ``qteasy`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
 "`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
-"Currently, ``qteasy`` is in the intensive development and testing stage, "
-"and there are inevitably some vulnerabilities and bugs in the software. "
-"If you encounter problems during use, welcome to `Report Issue`_ or "
-"submit `New Feature Request`_ to me, you can also enter the `Discussion "
-"Area`_ to participate in the discussion. Contributions are highly "
+"Currently, ``qteasy`` is under intense development, "
+"thus there might be bugs in the software. "
+"If you encounter any problem, please `Report Issue`_ or "
+"submit `New Feature Request`_ , you can also use `Discussion`_ to share your idea with us. Contributions are highly "
 "appreciated!"
 
 #: ../../source/index.rst:21
@@ -187,8 +186,8 @@ msgstr "Monitor and control trading programs through multiple user interfaces"
 #: ../../source/index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
 msgstr ""
-"In the future, it will access the real-time trading interface provided by"
-" the broker through the QMT interface to achieve automated trading"
+"In the future, ``qteasy`` will be able to realize automatic live trading"
+" by connecting to trading APIs provided by brokers, such as QMT"
 
 #: ../../source/index.rst:73
 msgid "回测、评价、优化交易策略"
@@ -197,8 +196,7 @@ msgstr "Backtest, evaluate, and optimize trading strategies"
 #: ../../source/index.rst:75
 msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
 msgstr ""
-"Backtest trading strategies using historical data, generate a complete "
-"historical trading list, and generate trading results"
+"Backtest trading strategies using historical data, generate complete trading records, and results"
 
 #: ../../source/index.rst:76
 msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
@@ -209,6 +207,5 @@ msgstr ""
 #: ../../source/index.rst:77
 msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
 msgstr ""
-"Optimize the strategy parameters with multiple optimization algorithms to"
-" improve the strategy performance"
+"Optimize the strategy parameters with multiple optimization algorithms."
 
