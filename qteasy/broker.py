@@ -522,7 +522,7 @@ class SimulatorBroker(Broker):
                  moq_sell=0.0,
                  delay=1.0,
                  price_deviation=0.0,
-                 probabilities=(0.9, 0.08, 0.02),
+                 probabilities=(0.55, 0.35, 0.1),
                  data_source=None):
         """ 生成一个Broker对象
 
