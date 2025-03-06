@@ -1828,6 +1828,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
                     channel='eastmoney',
                     qt_codes=hist_op.shares,
                     freq=operator.op_data_freq,
+                    matured_kline_only=True,  # 只获取成熟的K线数据(即已经收盘的K线数据)
             )
             live_kline_prices.set_index('ts_code', inplace=True)
         else:

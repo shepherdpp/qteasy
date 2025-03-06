@@ -1750,7 +1750,7 @@ class Trader(object):
                     channel=self.live_price_channel,
                     qt_codes=self.asset_pool,
                     verbose=False,
-                    matured_kline_only=False,  # 这里确保只获取成熟的K线数据
+                    matured_kline_only=True,  # 这里确保只获取成熟的K线数据
             )
             # 将real_time_data写入DataSource
             self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
