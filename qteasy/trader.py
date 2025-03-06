@@ -689,17 +689,16 @@ class Trader(object):
         """
 
         if self.live_sys_logger is None:
-            logger_live = self.new_sys_logger()
-        else:
-            logger_live = self.live_sys_logger
+            self.init_system_logger()
 
-        prefix_message = self.add_message_prefix(message, debug=debug)
+        logger_live = self.live_sys_logger
+        message_with_prefix = self.add_message_prefix(message, debug=debug)
 
         # 将添加消息头的消息写入log文件
         if debug:
-            logger_live.debug(prefix_message)
+            logger_live.debug(message_with_prefix)
         else:
-            logger_live.info(prefix_message)
+            logger_live.info(message_with_prefix)
 
         # 如果debug 但 not self.debug，不发送消息到消息队列
         if debug and (not self.debug):
