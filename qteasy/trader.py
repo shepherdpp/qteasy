@@ -495,6 +495,9 @@ class Trader(object):
                             self.run_task(task_name, *args)
                         else:
                             self.run_task(task_name)
+                    # error handling: (TODO: if there's connection problem, reconnect or hold the trader?)
+                    except RuntimeError as e:
+                        self.send_message(f'Runtime Error occurred when executing task: {task_name}, error: {e}')
                     except Exception as e:
                         import traceback
                         self.send_message(f'error occurred when executing task: {task_name}, error: {e}')
@@ -2162,7 +2165,7 @@ class Trader(object):
 
         task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price', 'run_strategy']
+        new_thread_tasks = ['acquire_live_price', 'run_strategy']  # ‘proces_result’ was in the list before
         # TODO: 观察改进效果
         #  这里将'process_result'任务从new_thread_tasks中移除，因为process_result任务不能在单独的线程
         #  中运行，因为如果同时有多个交易结果需要处理，可能会导致多个数据被同时写入数据库，引起数据冲突导致

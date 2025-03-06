@@ -466,6 +466,10 @@ class DataSource:
             # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常
             try:
                 df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
+            except FileNotFoundError:
+                raise FileNotFoundError(f'File {file_name} not found!')
+            except FileExistsError:
+                raise FileExistsError(f'File {file_name} exists but can not be read!')
             except Exception as e:
                 err = RuntimeError(f'{e}, file reading error encountered.')
                 raise err
@@ -1420,7 +1424,8 @@ class DataSource:
         # 检查file_path_name是否存在，如果已经存在，则抛出异常
         file_path_name = path.join(file_path, file_name)
         if os.path.exists(file_path_name):
-            raise FileExistsError(f'File {file_path_name} already exists!')
+            err = FileExistsError(f'File {file_path_name} already exists!')
+            raise err
 
         # 读取table数据
         df = self.read_table_data(table=table, shares=shares, start=start, end=end)
@@ -1480,7 +1485,8 @@ class DataSource:
             elif on_duplicate == 'update':
                 rows_affected = self._update_database(df, db_table=table, primary_key=primary_key)
             else:  # for unexpected cases
-                raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
+                err = KeyError(f'Invalid process mode on duplication: {on_duplicate}')
+                raise err
         self._table_list.add(table)
         return rows_affected
 
@@ -1833,32 +1839,12 @@ class DataSource:
                                    auto_increment_id=True)
                 return 0
 
-            # import pymysql
-            # con = pymysql.connect(
-            #         host=self.host,
-            #         port=self.port,
-            #         user=self.__user__,
-            #         password=self.__password__,
-            #         db=self.db_name,
-            # )
-            # cursor = con.cursor()
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table, with_primary_keys=True)
             primary_key = primary_keys[0]
             sql = f"SELECT * FROM `{table}` ORDER BY `{primary_key}` DESC LIMIT 1;"
             res = self._db_execute_one(sql)
             if res is not None:
                 return res[0][0] if len(res) > 0 else 0
-            # try:
-            #     cursor.execute(sql)
-            #     con.commit()
-            #     res = cursor.fetchall()
-            #     return res[0][0] if len(res) > 0 else 0
-            # except Exception as e:
-            #     err = RuntimeError(
-            #             f'{e}, An error occurred when getting last record_id for table {table} with SQL:\n{sql}')
-            #     raise err
-            # finally:
-            #     con.close()
 
         else:  # for other unexpected cases
             pass
