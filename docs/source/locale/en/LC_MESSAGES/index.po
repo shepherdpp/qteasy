@@ -21,39 +21,39 @@ msgstr ""
 
 #: ../../source/index.rst:84
 msgid "``qteasy`` 快速入门"
-msgstr "``QTEASY`` Quick Start"
+msgstr "QTEASY Quick Start"
 
 #: ../../source/index.rst:92
 msgid "``qteasy`` 使用教程"
-msgstr "``QTEASY`` Tutorial"
+msgstr "Tutorials"
 
 #: ../../source/index.rst:101
 msgid "下载并管理金融历史数据"
-msgstr "Download and manage financial historical data"
+msgstr "MANAGING DATA"
 
 #: ../../source/index.rst:110
 msgid "创建交易策略"
-msgstr "Create trading strategy"
+msgstr "BUILD STRATEGIES"
 
 #: ../../source/index.rst:120
 msgid "回测并评价交易策略"
-msgstr "Backtest and evaluate trading strategy"
+msgstr "BACKTEST & EVALUATION"
 
 #: ../../source/index.rst:131
 msgid "优化交易策略"
-msgstr "Optimize trading strategy"
+msgstr "OPTIMIZATION"
 
 #: ../../source/index.rst:141
 msgid "模拟实盘运行交易策略"
-msgstr "Simulate real-time trading strategy"
+msgstr "LIVE SIMULATION"
 
 #: ../../source/index.rst:152
 msgid "自定义策略示例"
-msgstr "Example of custom strategy"
+msgstr "EXAMPLE STRATEGIES"
 
 #: ../../source/index.rst:161
 msgid "API参考"
-msgstr "API Reference"
+msgstr "API REFERENCES"
 
 #: ../../source/index.rst:177
 msgid "LICENSE"

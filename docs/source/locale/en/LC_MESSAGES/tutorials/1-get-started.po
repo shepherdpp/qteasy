@@ -21,162 +21,162 @@ msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:1
 msgid "安装方法及初始配置"
-msgstr ""
+msgstr "How to install and initial configuration"
 
 #: ../../source/tutorials/1-get-started.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
+msgstr "`qteasy` is a fully localized deployment and operation of quantitative trading analysis toolkit, with the following functions:"
 
 #: ../../source/tutorials/1-get-started.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr ""
+msgstr "Financial data acquisition, cleaning, storage, processing, visualization, and use"
 
 #: ../../source/tutorials/1-get-started.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
+msgstr " Quantitative trading strategy creation, and provide a large number of built-in basic trading strategies"
 
 #: ../../source/tutorials/1-get-started.md:7
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr ""
+msgstr "Vectorized high-speed trading strategy backtesting and trading result evaluation"
 
 #: ../../source/tutorials/1-get-started.md:8
 msgid "交易策略参数的优化以及评价"
-msgstr ""
+msgstr "Optimization and evaluation of trading strategy parameters"
 
 #: ../../source/tutorials/1-get-started.md:9
 msgid "交易策略的部署、实盘运行"
-msgstr ""
+msgstr "Deployment and live operation of trading strategies"
 
 #: ../../source/tutorials/1-get-started.md:11
 msgid "`qteasy`使用`python`创建，使用向量化回测及交易模拟引擎实现了策略的高速回测，同时又兼顾策略框架的灵活性，使得用户可以根据需要灵活定制各种高级策。`qteasy`提供了多种策略参数优化算法，帮助优化及评价交易策略，同时提供了实时运行模式，使交易策略可以直接部署使用。"
-msgstr ""
+msgstr "Here is a series of tutorials to help you understand the main functions and usage of `qteasy` through a series of practical examples."
 
 #: ../../source/tutorials/1-get-started.md:13
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr ""
+msgstr "`qteasy` is created using `python`, and uses a vectorized backtesting and trading simulation engine to achieve high-speed backtesting of strategies, while also taking into account the flexibility of the strategy framework, allowing users to customize various advanced strategies as needed. `qteasy` provides a variety of strategy parameter optimization algorithms to help optimize and evaluate trading strategies, and provides real-time operation mode, allowing trading strategies to be directly deployed and used."
 
 #: ../../source/tutorials/1-get-started.md:15
 msgid "`qteasy`安装前的准备工作"
-msgstr ""
+msgstr "Preparation before installing `qteasy`"
 
 #: ../../source/tutorials/1-get-started.md:17
 msgid "创建安装环境"
-msgstr ""
+msgstr "Create installation environment"
 
 #: ../../source/tutorials/1-get-started.md:19
 msgid "`qteasy`可以通过`pip`来安装，由于依赖包较多，为了避免各依赖包与现有环境中的包产生冲突，建议创建一个独立的`python`环境来安装`qteasy`。"
-msgstr ""
+msgstr "`qteasy` can be installed via `pip`. Since there are many dependent packages, to avoid conflicts between the dependent packages and the packages in the existing environment, it is recommended to create an independent `python` environment to install `qteasy`."
 
 #: ../../source/tutorials/1-get-started.md:21
 msgid "创建虚拟环境的方法有很多种，这里介绍两种方法，分别是使用`venv`和`conda`："
-msgstr ""
+msgstr "Here are two methods to create a virtual environment, using `venv` and `conda` respectively:"
 
 #: ../../source/tutorials/1-get-started.md:23
 msgid ""
 "要使用`venv`创建虚拟环境，macOS和Linux用户可以打开终端，进入您需要创建环境的路径，输入以下命令，在当前目录下创建一个名为"
 "`qteasy-env`的虚拟环境，并激活环境："
-msgstr ""
+msgstr "Users of macOS and Linux can open the terminal, enter the path where you need to create the environment, and enter the following command to create a virtual environment named `qteasy-env` in the current directory and activate the environment:"
 
 #: ../../source/tutorials/1-get-started.md:30
 msgid "Windows用户可以打开命令提示符，进入您需要创建环境的文件夹，输入以下命令，创建虚拟环境并激活："
-msgstr ""
+msgstr "Windows users can open the command prompt, enter the folder where you need to create the environment, enter the following command to create a virtual environment and activate it:"
 
 #: ../../source/tutorials/1-get-started.md:37
 msgid "要使用conda创建虚拟环境，可以打开终端，输入以下命令，创建一个名为`qteasy-env`的虚拟环境，并激活环境："
-msgstr ""
+msgstr "Users can open the terminal, enter the following command to create a virtual environment named `qteasy-env` and activate the environment:"
 
 #: ../../source/tutorials/1-get-started.md:44
 msgid "在激活的虚拟环境中，使用以下命令安装`qteasy`："
-msgstr ""
+msgstr "Use the following command to install `qteasy` in the activated virtual environment:"
 
 #: ../../source/tutorials/1-get-started.md:49
 msgid "安装`MySQL`数据库 (可选)"
-msgstr ""
+msgstr "Install `MySQL` database (optional)"
 
 #: ../../source/tutorials/1-get-started.md:51
 msgid "`qteasy`可以管理大量的金融数据。`qteasy`的工作方式是将所有的金融数据下载到本地，清洗后存储到事先定义好的数据表中，在需要时（生成K线图、交易信号生成、模拟交易回测、交易结果评价等所有环节都需要用到金融数据）从本地数据源直接读取所需的数据。因此，必须在本地设置一个数据管理环境。"
-msgstr ""
+msgstr "`qteasy` can manage a large amount of financial data. The way `qteasy` works is to download all financial data to the local machine, clean it, and store it in a predefined data table. When needed (generating K-line charts, generating trading signals, simulating trading backtesting, trading result evaluation, etc., all links require financial data), the required data is read directly from the local data source. Therefore, a data management environment must be set up locally."
 
 #: ../../source/tutorials/1-get-started.md:53
 msgid "`qteasy`同时支持数据库及文件系统作为数据管理环境，考虑到金融数据量，强烈推荐使用数据库作为本地数据源。`qteasy`支持的本地数据源包括："
-msgstr ""
+msgstr "`qteasy` supports both databases and file systems as data management environments. Considering the amount of financial data, it is strongly recommended to use a database as a local data source. The local data sources supported by `qteasy` include:"
 
 #: ../../source/tutorials/1-get-started.md:55
 msgid "**`csv` 文件** 默认数据源。占用空间大，但是可以使用Excel读取本地数据，数据量大时速度慢"
-msgstr ""
+msgstr "Use **`csv` file** as the default data source. It takes up a lot of space, but you can use Excel to read local data. It is slow when the data volume is large"
 
 #: ../../source/tutorials/1-get-started.md:56
 msgid "**`mysql` 数据库**，强烈推荐使用mysql数据库并确保磁盘有至少1TB的存储空间，速度快"
-msgstr ""
+msgstr "Highly recommended to use **`mysql` database** and ensure that the disk has at least 1TB of storage space, which is fast"
 
 #: ../../source/tutorials/1-get-started.md:57
 msgid "**`hdf5` 文件** 占用空间大，数据量大时速度慢"
-msgstr ""
+msgstr "**`hdf5` file** takes up a lot of space, and is slow when the data volume is large"
 
 #: ../../source/tutorials/1-get-started.md:58
 msgid "**`feather` 文件** 占用空间较小，数据量大时速度慢"
-msgstr ""
+msgstr "**`feather` file** takes up less space, and is slow when the data volume is large"
 
 #: ../../source/tutorials/1-get-started.md:60
 msgid "为了实现最佳的数据存储效率，建议使用`mysql`数据库作为本地数据源。"
-msgstr ""
+msgstr "To achieve the best data storage efficiency, it is recommended to use `mysql` database as the local data source."
 
 #: ../../source/tutorials/1-get-started.md:62
 msgid "如果需要使用数据库作为本地数据源，参照以下方法安装`MySQL`数据库，如果使用文件作为本地数据源，可以跳过这一步。"
-msgstr ""
+msgstr "If you need to use a database as a local data source, refer to the following method to install `MySQL` database. If you use a file as a local data source, you can skip this step."
 
 #: ../../source/tutorials/1-get-started.md:64
 msgid ""
 "在`MySQL`的[官网](https://dev.mysql.com/downloads/mysql/)可以直接找到社区开源版本下载: "
 "网站提供了dmg和tar等多种不同的安装方式，而且还有针对Apple M1芯片的版本可选："
-msgstr ""
+msgstr "You can directly find the community open source version for download on the [official website](https://dev.mysql.com/downloads/mysql/): The website provides a variety of different installation methods such as dmg and tar, and there are also versions available for the Apple M1 chip:"
 
 #: ../../source/tutorials/1-get-started.md:67
 msgid "![png](img/mysql.png)"
-msgstr ""
+msgstr "![png](img/mysql.png)"
 
 #: ../../source/tutorials/1-get-started.md:67
 #: ../../source/tutorials/1-get-started.md:103
 #: ../../source/tutorials/1-get-started.md:107
 #: ../../source/tutorials/1-get-started.md:111
 msgid "png"
-msgstr ""
+msgstr "png"
 
 #: ../../source/tutorials/1-get-started.md:69
 msgid "安装完成后，创建用户，设置访问方式并设置密码："
-msgstr ""
+msgstr "Install the database, create a user, set the access method, and set the password:"
 
 #: ../../source/tutorials/1-get-started.md:88
 msgid "数据库设置好之后，`qteasy`会自动创建数据库表，将金融数据存储到数据库中。"
-msgstr ""
+msgstr "The database is set up, `qteasy` will automatically create database tables and store financial data in the database."
 
 #: ../../source/tutorials/1-get-started.md:90
 msgid "安装`pymysql`"
-msgstr ""
+msgstr "Install `pymysql`"
 
 #: ../../source/tutorials/1-get-started.md:96
 msgid "创建`tushare`账号并获取API token (可选)"
-msgstr ""
+msgstr "How to create a `tushare` account and get the API token (optional)"
 
 #: ../../source/tutorials/1-get-started.md:98
 msgid "`qteasy`可以从多个不同的网络金融数据提供商获取金融数据，将他们清洗、整理、一致化以后保存在本地数据库中。"
-msgstr ""
+msgstr " `qteasy` can obtain financial data from multiple different network financial data providers, clean, organize, and save them in a local database after they are consistent."
 
 #: ../../source/tutorials/1-get-started.md:100
 msgid "尽管qteasy在不断地增加金融数据获取渠道，不过目前仍然主要依赖`tushare`。系统内建了比较完整的`tushare`接口API。鉴于`tushare`的接口均有权限或积分要求，建议用户提前准备好相应的`tushare`积分，并开通相应权限。"
-msgstr ""
+msgstr "Although `qteasy` is constantly adding financial data acquisition channels, it still mainly relies on `tushare`. The system has a relatively complete `tushare` interface API. Since the `tushare` interface requires permissions or points, it is recommended that users prepare the corresponding `tushare` points in advance and open the corresponding permissions."
 
 #: ../../source/tutorials/1-get-started.md:103
 msgid "![png](img/tushare-3.png)"
-msgstr ""
+msgstr "![png](img/tushare-3.png)"
 
 #: ../../source/tutorials/1-get-started.md:105
 msgid "注册tushare账号和权限的方法请参见[tushare pro主页](https://tushare.pro):"
-msgstr ""
+msgstr "For the method of registering a `tushare` account and permissions, please refer to the [tushare pro homepage](https://tushare.pro):"
 
 #: ../../source/tutorials/1-get-started.md:107
 msgid "![png](img/tushare.png)"
-msgstr ""
+msgstr "![png](img/tushare.png)"
 
 #: ../../source/tutorials/1-get-started.md:109
 msgid "如果不创建`tushare`账号，`qteasy`仍然可以获得一些数据，但是数据的种类非常有限，访问频率和次数也受到限制，很多`qteasy`功能的使用将会受到限制，如下图所示:"
@@ -184,15 +184,15 @@ msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:111
 msgid "![png](img/tushare4.png)"
-msgstr ""
+msgstr "![png](img/tushare4.png)"
 
 #: ../../source/tutorials/1-get-started.md:113
 msgid "目前已经有部分高频金融数据可以通过`akshare`或者东方财富网免费获取，未来的版本更新中会进一步增加通过其他网络渠道获取的数据。"
-msgstr ""
+msgstr "Currently, some high-frequency financial data can be obtained for free through `akshare` or East Money, and more data obtained through other network channels will be added in future version updates."
 
 #: ../../source/tutorials/1-get-started.md:115
 msgid "安装TA-lib (可选)"
-msgstr ""
+msgstr "Install TA-lib (optional)"
 
 #: ../../source/tutorials/1-get-started.md:117
 msgid ""
@@ -200,27 +200,30 @@ msgid ""
 "lib`。 "
 "如果跳过这一步，将只能使用以下内置策略，这里有[完整的内置策略清单及详细说明参考文档](https://qteasy.readthedocs.io/zh/latest/api/Built_In.html)以及[内置交易策略回测结果](https://qteasy.readthedocs.io/zh/latest/references/1"
 "-build-in-results.html):"
-msgstr ""
+msgstr " `qteasy` has a large number of technical indicators built in, and the calculation of these technical indicators depends on `TA-lib`. If you need to use all the technical indicators built into `qteasy`, you need to install `TA-"
+"lib`. "
+"If you skip this step, you will only be able to use the following built-in strategies. Here is the [complete list of built-in strategies and detailed explanations in the reference document](https://qteasy.readthedocs.io/en/latest/api/Built_In.html) and [built-in trading strategy backtesting results](https://qteasy.readthedocs.io/en/latest/references/1"
+"-build-in-results.html):"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "策略名称"
-msgstr ""
+msgstr "Strategy name"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "说明"
-msgstr ""
+msgstr "Instructions"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "crossline"
-msgstr ""
+msgstr "crossline"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingCrossline`"
-msgstr ""
+msgstr "TimingCrossline"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
@@ -228,43 +231,47 @@ msgid ""
 "/>1，当短均线位于长均线上方，且距离大于l\\*m%时，设置仓位目标为1<br "
 "/>2，当短均线位于长均线下方，且距离大于l\\*m%时，设置仓位目标为-1<br "
 "/>3，当长短均线之间的距离不大于l\\*m%时，设置仓位目标为0"
-msgstr ""
+msgstr "crossline timing strategy class, using the cross of long and short moving averages to determine the long and short states<br "
+"/>1. When the short moving average is above the long moving average and the distance is greater than l\\*m%, set the position target to 1<br "
+"/>2. When the short moving average is below the long moving average and the distance is greater than l\\*m%, set the position target to -1<br "
+"/>3. When the distance between the long and short moving averages is not greater than l\\*m%, set the position target to 0"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "macd"
-msgstr ""
+msgstr "macd"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingMACD`"
-msgstr ""
+msgstr "TimingMACD"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
 "MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br "
 "/>2，当MACD值小于0时，设置仓位目标为0"
-msgstr ""
+msgstr "MACD timing strategy class, using the MACD moving average strategy to generate the target position percentage:<br />1. When the MACD value is greater than 0, set the position target to 1<br "
+"/>2. When the MACD value is less than 0, set the position target to 0"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "dma"
-msgstr ""
+msgstr "dma"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingDMA`"
-msgstr ""
+msgstr "TimingDMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
 "DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， "
 "DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0"
-msgstr ""
+msgstr "DMA timing strategy<br />1. When DMA is above AMA, it is a long interval, that is, after the DMA line crosses the AMA line from bottom to top, the output is 1<br />2. When DMA is below AMA, it is a short interval, that is, after the DMA line crosses the AMA line from top to bottom, the output is 0"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "trix"
-msgstr ""
+msgstr "trix"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingTRIX`"
-msgstr ""
+msgstr "TimingTRIX"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
@@ -272,510 +279,516 @@ msgid ""
 "/>计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， "
 "TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1"
 msgstr ""
+"TRIX timing strategy, using the triple-smoothed exponential moving average price of the stock price for long and short judgment:<br "
+"/>Calculate the triple-smoothed exponential moving average price TRIX of the price, and then calculate the moving average of the M-day TRIX:<br />1. "
+"When TRIX is above MATRIX, set the position target to 1<br />2. When TRIX is below MATRIX, set the position target to -1"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ssma"
-msgstr ""
+msgstr "ssma"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SCRSSMA`"
-msgstr ""
+msgstr "SCRSSMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average cross strategy - SMA moving average (simple moving average): set the position ratio based on the relative position of the stock price and the SMA moving average"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "sema"
-msgstr ""
+msgstr "sema"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SCRSEMA`"
-msgstr ""
+msgstr "SCRSEMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average cross strategy - EMA moving average (exponential smoothing moving average): set the position ratio based on the relative position of the stock price and the EMA moving average"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "dsma"
-msgstr ""
+msgstr "dsma"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`DCRSSMA`"
-msgstr ""
+msgstr "DCRSSMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average cross strategy - SMA moving average (simple moving average):<br />Based on the SMA moving average calculation rules to generate fast and slow moving averages, set the position ratio based on the relative position of the fast and slow moving averages"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "dema"
-msgstr ""
+msgstr "dema"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`DCRSEMA`"
-msgstr ""
+msgstr "DCRSEMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average cross strategy - EMA moving average (exponential smoothing moving average):<br />Based on the EMA moving average calculation rules to generate fast and slow moving averages, set the position ratio based on the relative position of the fast and slow moving averages"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "slema"
-msgstr ""
+msgstr "slema"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SLPEMA`"
-msgstr ""
+msgstr "SLPEMA"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "均线斜率交易策略——EMA均线(指数平滑移动平均线)：<br />基于EMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标"
-msgstr ""
+msgstr "Moving average slope trading strategy - EMA moving average (exponential smoothing moving average):<br />Based on the EMA calculation rules to generate moving averages, set the position ratio target based on the slope of the moving average"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "signal_none"
-msgstr ""
+msgstr "signal_none"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SignalNone`"
-msgstr ""
+msgstr "SignalNone"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "空交易信号策略：不生成任何交易信号的策略"
-msgstr ""
+msgstr "Empty trading signal strategy: a strategy that does not generate any trading signals"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "sellrate"
-msgstr ""
+msgstr "sellrate"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SellRate`"
-msgstr ""
+msgstr "SellRate"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
 "变化率卖出信号策略：当价格的变化率超过阈值时，产生卖出信号<br />1，当change > "
 "0，且day日涨幅大于change时，产生-1卖出信号<br />2，当change < 0，且day日跌幅大于change时，产生-1卖出信号"
-msgstr ""
+msgstr "Change rate sell signal strategy: when the change rate of the price exceeds the threshold, a sell signal is generated<br />1. When change > 0 and the daily increase is greater than change, a -1 sell signal is generated<br />2. When change < 0 and the daily decline is greater than change, a -1 sell signal is generated"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "buyrate"
-msgstr ""
+msgstr "buyrate"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`BuyRate`"
-msgstr ""
+msgstr "BuyRate"
 
 #: ../../source/tutorials/1-get-started.md
 msgid ""
 "变化率买入信号策略：当价格的变化率超过阈值时，产生买入信号<br />1，当change > "
 "0，且day日涨幅大于change时，产生1买入信号<br />2，当change < 0，且day日跌幅大于change时，产生1买入信号"
-msgstr ""
+msgstr "Change rate buy signal strategy: when the change rate of the price exceeds the threshold, a buy signal is generated<br />1. When change > 0 and the daily increase is greater than change, a 1 buy signal is generated<br />2. When change < 0 and the daily decline is greater than change, a 1 buy signal is generated"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "long"
-msgstr ""
+msgstr "Long"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingLong`"
-msgstr ""
+msgstr "TimingLong"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "简单择时策略，整个历史周期上固定保持多头全仓状态"
-msgstr ""
+msgstr "Simple timing strategy, fixed long position throughout the entire historical period"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "short"
-msgstr ""
+msgstr "short"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingShort`"
-msgstr ""
+msgstr "TimingShort"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "简单择时策略，整个历史周期上固定保持空头全仓状态"
-msgstr ""
+msgstr "Simple timing strategy, fixed short position throughout the entire historical period"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "zero"
-msgstr ""
+msgstr "zero"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`TimingZero`"
-msgstr ""
+msgstr "T"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "简单择时策略，整个历史周期上固定保持空仓状态"
-msgstr ""
+msgstr "Simple timing strategy, fixed empty position throughout the entire historical period"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "all"
-msgstr ""
+msgstr "all"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingAll`"
-msgstr ""
+msgstr "SelectingAll"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "保持历史股票池中的所有股票都被选中，投资比例平均分配"
-msgstr ""
+msgstr "Keep all stocks in the historical stock pool selected, and the investment ratio is evenly distributed"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "select_none"
-msgstr ""
+msgstr "select_none"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNone`"
-msgstr ""
+msgstr "SelectingNone"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "保持历史股票池中的所有股票都不被选中，投资仓位为0"
-msgstr ""
+msgstr "Keep all stocks in the historical stock pool unselected, and the investment position is 0"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "random"
-msgstr ""
+msgstr "random"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingRandom`"
-msgstr ""
+msgstr "SelectingRandom"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，或随机抽取指定数量（p>=1）的股票进入投资组合，投资比例平均分配"
-msgstr ""
+msgstr "In each historical segment, randomly select a certain number of stocks according to the specified proportion (p<1), or randomly select a specified number of stocks (p>=1) to enter the investment portfolio, and the investment ratio is evenly distributed"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "finance"
-msgstr ""
+msgstr "finance"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingAvgIndicator`"
-msgstr ""
+msgstr "SelectingAvgIndicator"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "以股票过去一段时间内的财务指标的平均值作为选股因子选股，基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入，改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入"
-msgstr ""
+msgstr "Invest in stocks based on the average value of financial indicators of stocks over a period of time. Basic stock selection strategy: use the average value of historical indicators of stocks as the stock selection factor. The factor sorting parameters can be passed in as strategy parameters to change the strategy data type, select stocks based on different historical data, and select stock parameters can be passed in through pars"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ndaylast"
-msgstr ""
+msgstr "ndaylast"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNDayLast`"
-msgstr ""
+msgstr "`SelectingNDayLast`"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "以股票N天前的价格或数据指标作为选股因子选股"
-msgstr ""
+msgstr "Select stocks based on the price or data indicators of stocks N days ago"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ndayavg"
-msgstr ""
+msgstr "ndayavg"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNDayAvg`"
-msgstr ""
+msgstr "SelectingNDayAvg"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "以股票过去N天的价格或数据指标的平均值作为选股因子选股"
-msgstr ""
+msgstr "Select stocks based on the average value of the price or data indicators of stocks over the past N days"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ndayrate"
-msgstr ""
+msgstr "ndayrate"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNDayRateChange`"
-msgstr ""
+msgstr "SelectingNDayRateChange"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "以股票过去N天的价格或数据指标的变动比例作为选股因子选股"
-msgstr ""
+msgstr "Select stocks based on the change rate of the price or data indicators of stocks over the past N days"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ndaychg"
-msgstr ""
+msgstr "ndaychg"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNDayChange`"
-msgstr ""
+msgstr "`SelectingNDayChange`"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "以股票过去N天的价格或数据指标的变动值作为选股因子选股"
-msgstr ""
+msgstr "S"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "ndayvol"
-msgstr ""
+msgstr "ndayvol"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "`SelectingNDayVolatility`"
-msgstr ""
+msgstr "SelectingNDayVolatility"
 
 #: ../../source/tutorials/1-get-started.md
 msgid "根据股票以前N天的股价波动率作为选股因子"
-msgstr ""
+msgstr "Based on the stock price volatility of the stock in the previous N days as the stock selection factor"
 
 #: ../../source/tutorials/1-get-started.md:148
 msgid "下面简单介绍`TA-lib`的安装方法："
-msgstr ""
+msgstr "Next, a brief introduction to the installation method of `TA-lib`"
 
 #: ../../source/tutorials/1-get-started.md:150
 msgid ""
 "完整的`TA-Lib`包无法通过pip安装，因为通过`pip install ta-lib`安装的只是TA-Lib包的一个`python "
 "wrapper`, 用户必须首先安装C语言的TA-Lib才能在python中使用它。"
-msgstr ""
+msgstr "Complete `TA-Lib` package cannot be installed via pip, because what is installed by `pip install ta-lib` is only a `python "
 
 #: ../../source/tutorials/1-get-started.md:152
 msgid "有些用户可以用下面的方法安装C语言的TA-Lib包： `conda install -c conda-forge libta-lib`"
-msgstr ""
+msgstr "Some users can install the C language TA-Lib package using the following method: `conda install -c conda-forge libta-lib`"
 
 #: ../../source/tutorials/1-get-started.md:155
 msgid "在不同的系统下安装C语言的TA-Lib包的方法："
-msgstr ""
+msgstr "Installation method of C language TA-Lib package on different systems:"
 
 #: ../../source/tutorials/1-get-started.md:157
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: ../../source/tutorials/1-get-started.md:159
 msgid ""
 "下载 [ta-lib-0.4.0-msvc.zip](http://prdownloads.sourceforge.net/ta-lib/ta-"
 "lib-0.4.0-msvc.zip) 并解压至 `C:\\ta-lib`."
-msgstr ""
+msgstr "Download [ta-lib-0.4.0-msvc.zip](http://prdownloads.sourceforge.net/ta-lib/ta-"
+"lib-0.4.0-msvc.zip) and unzip to `C:\\ta-lib`."
 
 #: ../../source/tutorials/1-get-started.md:160
 msgid "下载并安装 `Visual Studio Community` (2015 或更新版本)， 选择 `[Visual C++]` 功能"
-msgstr ""
+msgstr "Download and install `Visual Studio Community` (2015 or later version), select `[Visual C++]` function"
 
 #: ../../source/tutorials/1-get-started.md:161
 msgid "Windows 开始菜单, 启动 `[VS2015 x64 Native Tools Command Prompt]`"
-msgstr ""
+msgstr "Windows Start menu, start `[VS2015 x64 Native Tools Command Prompt]`"
 
 #: ../../source/tutorials/1-get-started.md:162
 msgid "移动至 `C:\\ta-lib\\c\\make\\cdr\\win32\\msvc`"
-msgstr ""
+msgstr "Move to `C:\\ta-lib\\c\\make\\cdr\\win32\\msvc`"
 
 #: ../../source/tutorials/1-get-started.md:163
 msgid "`nmake`"
-msgstr ""
+msgstr "`nmake`"
 
 #: ../../source/tutorials/1-get-started.md:165
 msgid "Mac OS"
-msgstr ""
+msgstr "Mac OS"
 
 #: ../../source/tutorials/1-get-started.md:171
 msgid "如果使用Apple Silicon芯片，可以使用："
-msgstr ""
+msgstr "If you are using an Apple Silicon chip, you can use:"
 
 #: ../../source/tutorials/1-get-started.md:177
 msgid "Linux"
-msgstr ""
+msgstr "Linux"
 
 #: ../../source/tutorials/1-get-started.md:179
 msgid ""
 "下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib"
 "/ta-lib-0.4.0-src.tar.gz) ，然后:"
-msgstr ""
+msgstr "Download [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib"
+
 
 #: ../../source/tutorials/1-get-started.md:188
 msgid "安装完成C语言`TA-Lib`后，可以安装`TA-Lib`的`python wrapper`："
-msgstr ""
+msgstr "Install the `python wrapper` of `TA-Lib` after installing the C language `TA-Lib`"
 
 #: ../../source/tutorials/1-get-started.md:194
 msgid "更完整的`TA-Lib`的安装方法请参考[这里](https://pypi.org/prject/TA-Lib/)"
-msgstr ""
+msgstr "More complete installation method of `TA-Lib`, please refer to [here](https://pypi.org/prject/TA-Lib/)"
 
 #: ../../source/tutorials/1-get-started.md:197
 msgid "初始化`QTEASY`"
-msgstr ""
+msgstr "Initialize `QTEASY`"
 
 #: ../../source/tutorials/1-get-started.md:199
 msgid "当`qteasy`的所有依赖包正确安装后，就可以在IDE中导入`qteasy`了。"
-msgstr ""
+msgstr "When all the dependent packages of `qteasy` are correctly installed, you can import `qteasy` in the IDE."
 
 #: ../../source/tutorials/1-get-started.md:206
 msgid "第一次导入`qteasy`时会自动初始化，初始化过程会创建一个`qteasy.cfg`文件，这个文件用于存储qteasy的环境配置变量，用户可以通过修改这个文件来修改`qteasy`的环境配置变量。"
-msgstr ""
+msgstr "Importing `qteasy` for the first time will automatically initialize. The initialization process will create a `qteasy.cfg` file, which is used to store the environment configuration variables of qteasy. Users can modify this file to modify the environment configuration variables of `qteasy`."
 
 #: ../../source/tutorials/1-get-started.md:208
 msgid "用户可以将一些关键配置信息存放在`qteasy.cfg`文件中，这样`qteasy`在导入时会自动读取这些配置信息。"
-msgstr ""
+msgstr "Users can store some key configuration information in the `qteasy.cfg` file, so that `qteasy` will automatically read these configuration information when imported."
 
 #: ../../source/tutorials/1-get-started.md:210
 msgid "访问`QTEASY`初始配置文件的两种方法"
-msgstr ""
+msgstr "Visit the two methods of the initial configuration file of `QTEASY`"
 
 #: ../../source/tutorials/1-get-started.md:212
 msgid "为了方便用户编辑`qteasy`的初始配置文件，`qteasy`提供了两种方法："
-msgstr ""
+msgstr "For the convenience of users to edit the initial configuration file of `qteasy`, `qteasy` provides two methods:"
 
 #: ../../source/tutorials/1-get-started.md:214
 msgid "1，使用`qteasy.update_start_up_setting()`方法"
-msgstr ""
+msgstr "1. Use the `qteasy.update_start_up_setting()` method"
 
 #: ../../source/tutorials/1-get-started.md:216
 msgid "`qteasy`提供了一系列的内置函数，方便用户在启动后显示和修改启动配置信息。"
-msgstr ""
+msgstr "`qteasy` provides a series of built-in functions to facilitate users to display and modify startup configuration information after startup."
 
 #: ../../source/tutorials/1-get-started.md:218
 msgid "要查看当前的启动配置，使用函数`qteasy.start_up_settings()`打印当前的启动配置信息："
-msgstr ""
+msgstr "To view the current startup configuration, use the function `qteasy.start_up_settings()` to print the current startup configuration information:"
 
 #: ../../source/tutorials/1-get-started.md:227
 msgid "第一次启动`qteasy`时启动配置文件为空，此时打印出的信息为空。"
-msgstr ""
+msgstr "Start the first time `qteasy` is started, the startup configuration file is empty, and the printed information is empty."
 
 #: ../../source/tutorials/1-get-started.md:229
 msgid "要修改或更新启动配置文件，直接调用函数`qteasy.update_start_up_setting(**kwargs)`,传入的参数将被写入启动配置文件："
-msgstr ""
+msgstr "To modify or update the startup configuration file, directly call the function `qteasy.update_start_up_setting(**kwargs)`, the parameters passed in will be written to the startup configuration file:"
 
 #: ../../source/tutorials/1-get-started.md:248
 msgid "如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效"
-msgstr ""
+msgstr "If the above information is incorrect, you can modify it at any time, close the IDE and re-import `qteasy` to take effect"
 
 #: ../../source/tutorials/1-get-started.md:250
 msgid "2，直接访问`qteasy.cfg`文件"
-msgstr ""
+msgstr "2. Directly access the `qteasy.cfg` file"
 
 #: ../../source/tutorials/1-get-started.md:252
 msgid "用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。"
-msgstr ""
+msgstr "Users can find the root directory of `qteasy` in the file explorer, Finder, or terminal, and then open the `qteasy.cfg` file to modify its contents."
 
 #: ../../source/tutorials/1-get-started.md:253
 msgid "在qteasy中可以通过`qt.QT_ROOT_PATH`查看qteasy的根目录"
-msgstr ""
+msgstr "In qteasy, you can view the root directory of qteasy through `qt.QT_ROOT_PATH`"
 
 #: ../../source/tutorials/1-get-started.md:259
 msgid "第一次初始化后的`qteasy.cfg`文件内容如下："
-msgstr ""
+msgstr "The content of the `qteasy.cfg` file after the first initialization is as follows:"
 
 #: ../../source/tutorials/1-get-started.md:268
 msgid "用户可以直接在文件中添加配置信息，保存文件后重新导入`qteasy`即可使配置生效了，例如："
-msgstr ""
+msgstr "Users can directly add configuration information in the file, save the file and re-import `qteasy` to make the configuration effective, for example:"
 
 #: ../../source/tutorials/1-get-started.md:274
 msgid "以下几个配置信息是用户在使用`qteasy`前非常有必要配置的："
-msgstr ""
+msgstr "Following are several configuration information that users must configure before using `qteasy`"
 
 #: ../../source/tutorials/1-get-started.md:276
 msgid "配置`tushare`的API token"
-msgstr ""
+msgstr "Configure the API token of `tushare`"
 
 #: ../../source/tutorials/1-get-started.md:278
 msgid ""
 "注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare "
 "token`，将无法正常使用`tushare`的数据服务。"
-msgstr ""
+msgstr "Note that `tushare` is a paid data service. Users need to obtain points. The more points they have, the more types of data they can obtain, and the greater the permissions. If you do not configure the `tushare token`, you will not be able to use the `tushare` data service normally."
+
 
 #: ../../source/tutorials/1-get-started.md:280
 msgid "如果您按照教程前一节的内容创建了`tushare`账号并获取了`token`，可以将token写入`qteasy.cfg`文件中，这样在导入`qteasy`时就会自动读取这个`token`。"
-msgstr ""
+msgstr "If you have created a `tushare` account and obtained a `token` according to the content of the previous section of the tutorial, you can write the token to the `qteasy.cfg` file, so that the `token` will be automatically read when importing `qteasy`."
 
 #: ../../source/tutorials/1-get-started.md:282
 msgid "在`qteasy.cfg`文件中添加以下内容："
-msgstr ""
+msgstr "Add the following content to the `qteasy.cfg` file:"
 
 #: ../../source/tutorials/1-get-started.md:288
 msgid "配置本地数据源"
-msgstr ""
+msgstr "Configure local data source"
 
 #: ../../source/tutorials/1-get-started.md:290
 msgid "默认情况下，`qteasy`使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用`qteasy`，用户还应该完成本地数据源的基本配置。"
-msgstr ""
+msgstr "By default, `qteasy` uses csv files to save local data, which is slow and takes up a lot of space. In order to better use `qteasy`, users should also complete the basic configuration of the local data source."
 
 #: ../../source/tutorials/1-get-started.md:292
 msgid "如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cfg`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。"
-msgstr ""
+msgstr "If you have created a `mysql` database according to the content of the previous section of the tutorial, you can write the configuration information of the database to the `qteasy.cfg` file, so that `qteasy` will connect to the database you specified and store financial data in the database."
 
 #: ../../source/tutorials/1-get-started.md:294
 msgid "在`qteasy.cfg`文件中添加以下内容，"
-msgstr ""
+msgstr "Add the following content to the `qteasy.cfg` file:"
 
 #: ../../source/tutorials/1-get-started.md:305
 msgid "或者使用`qteasy.update_start_up_setting()`："
-msgstr ""
+msgstr "Or use `qteasy.update_start_up_setting()`："
 
 #: ../../source/tutorials/1-get-started.md:312
 msgid "如果不做上述配置，`qteasy`会使用默认的csv文件作为本地数据源。"
-msgstr ""
+msgstr "If the above configuration is not done, `qteasy` will use the default csv file as the local data source."
 
 #: ../../source/tutorials/1-get-started.md:314
 msgid "请注意，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。"
-msgstr ""
+msgstr "Please note that when giving configuration information in the file, do not add `<` and `>`, otherwise, these characters will also be regarded as part of the `token` or database name. This will cause the database connection to fail."
 
 #: ../../source/tutorials/1-get-started.md:316
 msgid "`qteasy`在解析配置文件的时候，会根据配置的类型，自动转换为正确的格式，例如，数据库端口`3306`应该是`int`变量，直接使用："
-msgstr ""
+msgstr "`qteasy` will automatically convert to the correct format according to the type of configuration when parsing the configuration file. For example, the database port `3306` should be an `int` variable. Direct use:"
 
 #: ../../source/tutorials/1-get-started.md:322
 msgid "即可。`qteasy`会将字符串`3306`转换为`int`型`3306`。·"
-msgstr ""
+msgstr "That's it. `qteasy` will convert the string `3306` to `int` type `3306`."
 
 #: ../../source/tutorials/1-get-started.md:324
 msgid "下面这个配置文件的例子是正确的："
-msgstr ""
+msgstr "The following example of the configuration file is correct:"
 
 #: ../../source/tutorials/1-get-started.md:338
 msgid "开始下载第一批金融数据"
-msgstr ""
+msgstr "Start downloading the first batch of financial data"
 
 #: ../../source/tutorials/1-get-started.md:340
 msgid "完成上述配置以后，保存并关闭`qteasy.cfg`文件，恭喜你，`qteasy`已经安装并配置好了，现在可以开始使用`qteasy`了。"
-msgstr ""
+msgstr "Finish the above configuration, save and close the `qteasy.cfg` file, congratulations, `qteasy` has been installed and configured, now you can start using `qteasy`."
 
 #: ../../source/tutorials/1-get-started.md:342
 msgid "首先，我们需要下载一些金融数据，交易策略的回测、优化、评价等所有功能都需要用到金融数据。 在这里，我们可以先下载一些股票数据，以便后续的教程中使用。"
-msgstr ""
+msgstr "First, we need to download some financial data. All functions such as backtesting, optimization, evaluation, etc. of trading strategies require financial data. Here, we can first download some stock data for use in subsequent tutorials."
 
 #: ../../source/tutorials/1-get-started.md:345
 msgid "`qt.refill_data_source`是一个通用的数据下载函数，通过指定数据表名称，数据获取渠道（默认`tushare`)，开始日期/结束日期和股票代码，`qteasy`就能连接上相应的网络数据提供商，自动分批下载数据。当下载数据量很大时，该函数会自动处理数据拆分。同时，该函数会自动处理网络延迟导致的数据下载失败问题，同时提供了限流选项，防止下载流量过大导致连接失败。下载完成的数据会自动进行清洗整理和去重，确保写入`DataSource`中的数据是干净的。关于`refill_data_source()`函数的更多介绍，请参见[api_reference](../api/api_reference.rst)。"
-msgstr ""
+msgstr "`qt.refill_data_source` is a general data download function. By specifying the data table name, data acquisition channel (default `tushare`), start date/end date, and stock code, `qteasy` can connect to the corresponding network data provider and automatically download data in batches. When the amount of data downloaded is very large, this function will automatically handle data splitting. At the same time, this function will automatically handle the problem of data download failure caused by network latency, and provide a throttling option to prevent connection failure caused by excessive download traffic. The downloaded data will be automatically cleaned up and deduplicated to ensure that the data written to `DataSource` is clean. For more information about the `refill_data_source()` function, please refer to [api_reference](../api/api_reference.rst)."
 
 #: ../../source/tutorials/1-get-started.md:347
 msgid "通过`refill_data_source`函数，您可以下载股票、期货、指数、基金等金融数据，也可以下载宏观经济、财务报表、财务指标、公司基本信息等非交易数据。`qteasy`可以批量下载数据到本地，另外，还可以使用多线程并行下载，提供下载进度条，特别适合一次性下载大量历史数据保存到本地，也适合定期运行，定期补充增量数据，例如每月或每周补充下载本月或本周的所有数据。"
-msgstr ""
+msgstr "Through the `refill_data_source` function, you can download financial data such as stocks, futures, indexes, funds, etc., as well as non-trading data such as macroeconomics, financial statements, financial indicators, company basic information, etc. `qteasy` can batch download data to the local, and can also use multi-threaded parallel download, provide download progress bar, especially suitable for downloading a large amount of historical data to the local at one time, and also suitable for regular operation, regularly supplementing incremental data, such as monthly or weekly supplement download all data of this month or this week."
 
 #: ../../source/tutorials/1-get-started.md:349
 msgid ""
 "目前支持从`tushare` / `akshare` / `eastmoney` "
 "等渠道获取数据，不过暂时以`tushare`为主，`tushare`渠道涵盖了所有的数据API，其他两种渠道的API会随版本更新逐步添加。"
-msgstr ""
+msgstr "Currently, data can be obtained from channels such as `tushare` / `akshare` / `eastmoney`, but `tushare` is the main channel for the time being. The `tushare` channel covers all data APIs, and the APIs of the other two channels will be gradually added with version updates."
 
 #: ../../source/tutorials/1-get-started.md:364
 msgid "在`qteasy`中，所有数据都保存在特定的数据表中，而且每一种数据都有数据ID，例如`pe`表示市盈率，`open`表示开盘价，等等；通过数据ID，用户可以在`qteasy`中随时获取所需的数据——只要数据已经下载到本地。"
-msgstr ""
+msgstr "In `qteasy`, all data is saved in a specific data table, and each type of data has a data ID, such as `pe` representing the price-earnings ratio, `open` representing the opening price, and so on; through the data ID, users can obtain the required data in `qteasy` at any time - as long as the data has been downloaded to the local."
 
 #: ../../source/tutorials/1-get-started.md:366
 msgid "同时，数据ID也是`qteasy`中交易策略的核心，用户可以通过数据ID在交易策略中\"订阅\"所需要的数据类型，并根据这些数据生成交易信号（关于交易信号和交易策略，请参见教程第四章）。"
-msgstr ""
+msgstr "At the same time, the data ID is also the core of the trading strategy in `qteasy`. Users can \"subscribe\" the required data type in the trading strategy through the data ID, and generate trading signals based on these data (for trading signals and trading strategies, please refer to Chapter 4 of the tutorial)."
 
 #: ../../source/tutorials/1-get-started.md:368
 msgid "根据您的网络环境和数据量大小，下载数据的时间可能会有所不同，下载完成后，2023年内的所有股票数据就可以直接获取了。"
-msgstr ""
+msgstr "Considering your network environment and the size of the data, the time to download the data may vary. After the download is complete, all stock data in 2023 can be obtained directly."
 
 #: ../../source/tutorials/1-get-started.md:370
 msgid ""
 "要获取历史数据，可以使用`get_history_data`函数，在参数中指定数据类型、股票代码、开始日期和结束日期， "
 "下面的代码可以获取2023年1月1日到3月1日的股票000001.SZ的开盘价、最高价、最低价、收盘价、成交量、成交额等数据："
-msgstr ""
+msgstr "To obtain historical data, you can use the `get_history_data` function, specify the data type, stock code, start date, and end date in the parameters. The following code can obtain the opening price, highest price, lowest price, closing price, trading volume, turnover, etc. of stock 000001.SZ from January 1, 2023 to March 1, 2023:"
 
 #: ../../source/tutorials/1-get-started.md:387
 msgid "至此，如果您看到上面的数据，表明`qteasy`的安装和初始化工作已经完成，您已经可以开始使用`qteasy`了。"
-msgstr ""
+msgstr "At this point, if you see the data above, it means that the installation and initialization of `qteasy` have been completed, and you can start using `qteasy`."
 
 #: ../../source/tutorials/1-get-started.md:389
 msgid "在下一章节中，我们将会介绍`qteasy`的基本数据类型，以及如何使用`qteasy`来获取并管理金融数据。"
-msgstr ""
+msgstr "In the next chapter, we will introduce the basic data types of `qteasy`, and how to use `qteasy` to obtain and manage financial data."
 
 #: ../../source/tutorials/1-get-started.md:391
 msgid "API 参考"
-msgstr ""
+msgstr "A"
 
 #: ../../source/tutorials/1-get-started.md:393
 msgid ""
 "关于qteasy环境变量的AP，以及所有的环境变量，请参考 [Configuration "
 "APIs](../api/api_reference.rst)"
-msgstr ""
+msgstr "About the AP of qteasy environment variables, and all environment variables, please refer to [Configuration APIs](../api/api_reference.rst)"
 
