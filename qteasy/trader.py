@@ -495,6 +495,9 @@ class Trader(object):
                             self.run_task(task_name, *args)
                         else:
                             self.run_task(task_name)
+                    # error handling: (TODO: if there's connection problem, reconnect or hold the trader?)
+                    except RuntimeError as e:
+                        self.send_message(f'Runtime Error occurred when executing task: {task_name}, error: {e}')
                     except Exception as e:
                         import traceback
                         self.send_message(f'error occurred when executing task: {task_name}, error: {e}')
@@ -686,17 +689,16 @@ class Trader(object):
         """
 
         if self.live_sys_logger is None:
-            logger_live = self.new_sys_logger()
-        else:
-            logger_live = self.live_sys_logger
+            self.init_system_logger()
 
-        prefix_message = self.add_message_prefix(message, debug=debug)
+        logger_live = self.live_sys_logger
+        message_with_prefix = self.add_message_prefix(message, debug=debug)
 
         # 将添加消息头的消息写入log文件
         if debug:
-            logger_live.debug(prefix_message)
+            logger_live.debug(message_with_prefix)
         else:
-            logger_live.info(prefix_message)
+            logger_live.info(message_with_prefix)
 
         # 如果debug 但 not self.debug，不发送消息到消息队列
         if debug and (not self.debug):
@@ -1077,7 +1079,7 @@ class Trader(object):
         )
         logger_live = logging.getLogger('live')
         logger_live.addHandler(live_handler)
-        logger_live.setLevel(logging.INFO)
+        logger_live.setLevel(logging.DEBUG)
         logger_live.propagate = False
 
         return logger_live
@@ -1360,6 +1362,9 @@ class Trader(object):
         filled_price = full_trade_result['price']
         trade_cost = full_trade_result['transaction_fee']
 
+        # TODO: 发现bug：
+        #  如果一个订单分批完成，第一个结果应返回状态partial-filled，第二个结果返回状态filled
+        #  但是在这里两个状态都会是partial-filled，需要查找原因并修改
         # send message to indicate execution of order
         self.send_message(f'<ORDER EXECUTED {order_id}>: '
                           f'{d}-{pos} of {symbol}: {status} with {filled_qty} @ {filled_price}')
@@ -1407,7 +1412,7 @@ class Trader(object):
                               f'->{available_qty:.2f}; '
                               f'cost: {cost - full_trade_result["cost_change"]:.2f}->{cost:.2f}')
         if full_trade_result['cash_amount_change'] != 0:
-            self.send_message(f'<RESULT LOGGED>: account cash changed: '
+            self.send_message(f'<RESULT LOGGED {order_id}>: account cash changed: '
                               f'cash: ¥{cash_amount - cash_amount_change:,.2f}->¥{cash_amount:,.2f}'
                               f'available: ¥{available_cash - full_trade_result["available_cash_change"]:,.2f}'
                               f'->¥{available_cash:,.2f}')
@@ -1745,7 +1750,7 @@ class Trader(object):
                     channel=self.live_price_channel,
                     qt_codes=self.asset_pool,
                     verbose=False,
-                    matured_kline_only=False,  # 这里确保只获取成熟的K线数据
+                    matured_kline_only=True,  # 这里确保只获取成熟的K线数据
             )
             # 将real_time_data写入DataSource
             self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
@@ -2159,7 +2164,13 @@ class Trader(object):
 
         task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
+        new_thread_tasks = ['acquire_live_price', 'run_strategy']  # ‘proces_result’ was in the list before
+        # TODO: 观察改进效果
+        #  这里将'process_result'任务从new_thread_tasks中移除，因为process_result任务不能在单独的线程
+        #  中运行，因为如果同时有多个交易结果需要处理，可能会导致多个数据被同时写入数据库，引起数据冲突导致
+        #  数据结果不一致。这种不一致现在在一个订单分批同时成交时观察到了：当一个500股的买入订单分两批成交，
+        #  第一批300股，第二批200股时，实际记录到数据库中的交易结果只有第二次成交记录，第一次成交记录丢失。
+        #  从而引起数据混乱。现在修改后待观察是否还会出现这种情况。
         if (not run_in_main_thread) and (task in new_thread_tasks):
             from threading import Thread
             if args:
@@ -2524,7 +2535,8 @@ def start_trader_ui(
             "moq_sell":        config['sell_batch_size'],
             "delay":           1.0,
             "price_deviation": 0.001,
-            "probabilities":   (0.9, 0.08, 0.02),
+            # TODO: the probabilities should be a parameter passed in
+            "probabilities":   (0.5, 0.45, 0.05),  # originally: (0.9, 0.08, 0.02)
         }
 
     from qteasy.broker import get_broker

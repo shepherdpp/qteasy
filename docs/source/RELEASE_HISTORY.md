@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 1.4.9 (2025-03-08)
+Bug fixes:
+- Fixed problem in trader logger that causes duplicated logs in live trade mode
+- Fixed a bug in trader: when two trade results are generated at nearly the same time for the same position, the results will be wrongly recorded in the database due to data recording conflicts
+- Fixed a bug in trader that very occasionally price data with wrong timestamp will be returned and may cause NaN values output from strategies for some symbols.
+
 ## 1.4.8 (2025-03-01)
 New features:
 - Added a new CLI command in trader CLI: `refill`, to manually refill datasource tables in trader CLI

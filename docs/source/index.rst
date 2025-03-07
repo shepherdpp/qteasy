@@ -12,7 +12,7 @@
 
 .. note::
 
-   目前 ``qteasy`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！
+   目前 ``QTEASY`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！
 
 .. _报告Issue: https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=
 .. _新功能需求: https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request--功能需求.md&title=
@@ -21,7 +21,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - 创建日期: 2019, July, 16
-- 最新版本: `1.4.8`
+- 最新版本: `1.4.9`
 - License: BSD 3-Clause
 
 简介
