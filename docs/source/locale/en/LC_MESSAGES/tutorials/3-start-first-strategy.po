@@ -21,51 +21,51 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:1
 msgid "回测您的第一个交易策略"
-msgstr ""
+msgstr "Backtest your first trading strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
+msgstr "`qteasy` is a fully localized deployment and operation of quantitative trading analysis toolkit, with the following functions:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr ""
+msgstr "Aquire, clean, store, process, visualize and use financial data"
 
 #: ../../source/tutorials/3-start-first-strategy.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
+msgstr "Create quantitative trading strategies, and provide a large number of built-in basic trading strategies"
 
 #: ../../source/tutorials/3-start-first-strategy.md:7
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr ""
+msgstr "Vectorized high-speed trading strategy backtesting and trading result evaluation"
 
 #: ../../source/tutorials/3-start-first-strategy.md:8
 msgid "交易策略参数的优化以及评价"
-msgstr ""
+msgstr "Optimization and evaluation of trading strategy parameters"
 
 #: ../../source/tutorials/3-start-first-strategy.md:9
 msgid "交易策略的部署、实盘运行"
-msgstr ""
+msgstr "Deployment and real-time operation of trading strategies"
 
 #: ../../source/tutorials/3-start-first-strategy.md:11
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr ""
+msgstr "You will understand the basic functions and usage of `qteasy` through a series of practical examples in this series of tutorials."
 
 #: ../../source/tutorials/3-start-first-strategy.md:13
 msgid "开始前的准备工作"
-msgstr ""
+msgstr "Before you start"
 
 #: ../../source/tutorials/3-start-first-strategy.md:15
 msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
-msgstr ""
+msgstr "Please make sure you have mastered the following content before starting this tutorial:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:17
 msgid "完成`qteasy`的安装并升级到最新版本，完成`qteasy`的初始化配置"
-msgstr ""
+msgstr "Install and upgrade `qteasy` to the latest version, and complete the initialization configuration of `qteasy`"
 
 #: ../../source/tutorials/3-start-first-strategy.md:18
 msgid "配置好本地数据源，掌握下载各种金融数据的方法，能够将指数、股票的各种历史价格数据、财务报表数据等下载到本地。"
-msgstr ""
+msgstr "Prepare the local data source, master the method of downloading various financial data, and be able to download various historical price data, financial statement data, etc. of indexes and stocks to the local."
 
 #: ../../source/tutorials/3-start-first-strategy.md:20
 msgid "在[上一篇教程](https://blog.csdn.net/Shepherdppz/article/details/136098697)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
@@ -73,43 +73,43 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:22
 msgid "本节的目标"
-msgstr ""
+msgstr "Target of this chapter"
 
 #: ../../source/tutorials/3-start-first-strategy.md:24
 msgid "在本节中，我们将通过创建`qteasy`模块来测试一个大小盘轮动交易策略，"
-msgstr ""
+msgstr "We will test a large-cap and small-cap rotation trading strategy through the creation of the `qteasy` module in this chapter."
 
 #: ../../source/tutorials/3-start-first-strategy.md:26
 msgid "大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
-msgstr ""
+msgstr "The large-small cap rotation is a very basic and common trading strategy. This trading strategy captures the characteristics of the asynchronous rise and fall of large-cap stocks and small-cap stocks, and alternately holds large-cap stocks and small-cap stocks in the hope of obtaining higher returns. By creating this trading strategy, we can easily understand how to use `qteasy` to create trading strategies, call historical price backtesting trading strategies, analyze the performance of strategies, and improve strategies."
 
 #: ../../source/tutorials/3-start-first-strategy.md:28
 msgid "在这里，我们需要创建一个最简单的轮动策略：在前面提到的两个指数之间轮动，每天选择未来可能的涨幅较大的指数持有："
-msgstr ""
+msgstr "Now, we need to create the simplest rotation strategy: rotate between the two indices mentioned earlier, and hold the index with the larger possible increase in the future every day:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:30
 msgid "分别计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr ""
+msgstr "Calculate the increase of the two indices in the past 20 days, that is, the increase of today's price relative to the price 20 days ago"
 
 #: ../../source/tutorials/3-start-first-strategy.md:31
 msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr ""
+msgstr "Choose the index with the larger increase, hold it the next day, and sell the index with the smaller increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
 msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
-msgstr ""
+msgstr "$$Daily increase = \\frac{Price_0}{Price_{20}} - 1$$"
 
 #: ../../source/tutorials/3-start-first-strategy.md:35
 msgid "策略的实现"
-msgstr ""
+msgstr "Realize the strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:36
 msgid "根据上述的策略思路，我们很容易在`qteasy`中实现这样的轮动选股策略，因为`qteasy`中已经内置了近70个交易策略，所有的内置策略都有独特的名称，直接引用名称即可使用这些内置策略。`qteasy`中的所有交易策略都必须包含在一个名为`Operator`（交易员）的对象中，交易员对象实际是一个策略的容器，可以理解为一个交易员可以同时管理多个策略，并且同时运行这些策略来生成交易信号。"
-msgstr ""
+msgstr "According to the above strategy idea, we can easily implement such a rotation stock selection strategy in `qteasy`, because `qteasy` has built-in nearly 70 trading strategies, all built-in strategies have unique names, and these built-in strategies can be used directly by referencing the names. All trading strategies in `qteasy` must be included in an object named `Operator`, which is actually a container for strategies. It can be understood that a trader can manage multiple strategies at the same time and run these strategies at the same time to generate trading signals."
 
 #: ../../source/tutorials/3-start-first-strategy.md:38
 msgid "交易员对象可以直接通过`qt.Operator()`来创建，创建时传递`strategies`参数即可在创建时同时创建交易策略："
-msgstr ""
+msgstr "An Operator object can be created directly through `qt.Operator()`, and the `strategies` parameter can be passed when creating to create trading strategies at the same time:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:43
 msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
