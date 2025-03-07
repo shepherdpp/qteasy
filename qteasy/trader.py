@@ -2535,7 +2535,8 @@ def start_trader_ui(
             "moq_sell":        config['sell_batch_size'],
             "delay":           1.0,
             "price_deviation": 0.001,
-            "probabilities":   (0.9, 0.08, 0.02),
+            # TODO: the probabilities should be a parameter passed in
+            "probabilities":   (0.5, 0.45, 0.05),  # originally: (0.9, 0.08, 0.02)
         }
 
     from qteasy.broker import get_broker
