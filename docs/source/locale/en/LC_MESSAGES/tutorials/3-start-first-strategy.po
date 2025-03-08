@@ -113,81 +113,83 @@ msgstr "An Operator object can be created directly through `qt.Operator()`, and 
 
 #: ../../source/tutorials/3-start-first-strategy.md:43
 msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
-msgstr ""
+msgstr "With the above code, we have created a stock selection strategy (`ndayrate`) in `queasy`, which is a built-in stock selection strategy. It selects stocks based on the \"N-day price increase\". The stock selection logic is to judge the N-day price increase of all stocks in the stock pool, and select stocks or assets based on the price increase (of course, the selection method is configured through parameters, which will be mentioned in the following text)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:45
 msgid "使用`qt.built_ins()`函数，可以查看内置策略的详细介绍："
-msgstr ""
+msgstr "With the `qt.built_ins()` function, you can view detailed descriptions of built-in strategies:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:87
 msgid "至此，一个`Operator`对象和交易策略就已经创建好了。"
-msgstr ""
+msgstr "Now, an `Operator` object and a trading strategy have been created."
 
 #: ../../source/tutorials/3-start-first-strategy.md:89
 msgid "我们可以使用`Operator.info()`来查看交易员对象和交易策略的详细信息，同时，通过`Operator.strategies`属性可以访问其中的所有交易策略，通过它的`info()`方法也可以查看更详细的策略参数和信息"
-msgstr ""
+msgstr "We may use `Operator.info()` to view detailed information about the trader object and trading strategy. At the same time, all trading strategies can be accessed through its `strategies` attribute, and more detailed strategy parameters and information can be viewed through its `info()` method."
 
 #: ../../source/tutorials/3-start-first-strategy.md:123
 msgid "从上面的信息中可以看到，`ndayrate`策略有许多的可配置参数，通过调整这些参数，我们可以调整策略的选股方式，从而调整交易策略的表现。"
-msgstr ""
+msgstr "We can see from the above information that the `ndayrate` strategy has many configurable parameters. By adjusting these parameters, we can adjust the stock selection method of the strategy, thereby adjusting the performance of the trading strategy."
 
 #: ../../source/tutorials/3-start-first-strategy.md:125
 msgid "接下来，我们还需要做一些最基本的设定，确保这个选股策略能按照我们的想法选股。`Operator`对象中的所有参数都可以通过`op.set_parameter()`方法来实现。"
-msgstr ""
+msgstr "Now, we need to make some basic settings to ensure that this stock selection strategy selects stocks as we want. All parameters in the `Operator` object can be implemented through the `op.set_parameter()` method."
 
 #: ../../source/tutorials/3-start-first-strategy.md:135
 msgid "在上面的代码段中，我们通过几个简单的参数设置选股策略的基本行为："
-msgstr ""
+msgstr "In above code snippet, we set the basic behavior of the stock selection strategy through several simple parameter settings:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:137
 msgid "`sample_freq='d'`: 每日选股，如果设置选股周期为`'w'`表示每周选股，`'2d'`表示每两天选股一次"
-msgstr ""
+msgstr "`sample_freq='d'`: Select stocks daily. If the stock selection cycle is set to `'w'`, it means selecting stocks weekly, and `'2d'` means selecting stocks every two days."
 
 #: ../../source/tutorials/3-start-first-strategy.md:138
 msgid "`sort_ascending=False`：该策略的操作方式是将所有的N日涨幅排序后取前几位，因为需要取最大涨幅，因此需要降序排列，如果要取最小涨幅，则需要设置`sort_ascending=True`"
-msgstr ""
+msgstr "`sort_ascending=False`: The operation mode of this strategy is to sort all N-day increases and take the top few. Because the largest increase needs to be taken, it needs to be sorted in descending order. If the smallest increase needs to be taken, `sort_ascending=True` needs to be set."
 
 #: ../../source/tutorials/3-start-first-strategy.md:139
 msgid "`proportion_or_quantity=1`：选择的股票数量，因为从两个指数中固定二选一，因此设置此参数为1"
-msgstr ""
+msgstr "`proportion_or_quantity=1`: The number of stocks selected. Because one of the two indices is fixed, this parameter is set to 1."
 
 #: ../../source/tutorials/3-start-first-strategy.md:140
 msgid "`pars=(20, )`：策略参数N，设置为20表示根据20日涨幅选股"
-msgstr ""
+msgstr "`pars=(20, )`: Strategy parameter N, set to 20 to select stocks based on the 20-day increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:141
 msgid "`data_types='close'`：默认值，计算收盘价的涨幅"
-msgstr ""
+msgstr "`data_types='close'`: Default value, calculate the increase of the closing price"
 
 #: ../../source/tutorials/3-start-first-strategy.md:143
 msgid "准备回测数据"
-msgstr ""
+msgstr "Prepare backtest data"
 
 #: ../../source/tutorials/3-start-first-strategy.md:144
 msgid "配置好选股策略以后，需要通过回测检验策略的表现，也就是调用沪深300和创业板两个指数的实际历史数据，进行模拟交易，看看模拟交易的结果是否能够跑赢大盘。在实际操作中，卖卖大盘指数不太容易，不过一般都可以很容易找到跟踪大盘指数的ETF基金来代替大盘，在这里为了简单起见，我们这里就直接投资于2011年1月1日一直到2020年12月31日之间的沪深300和创业板指数，假设交易费率为万分之一，双向收费，看看投资的结果如何。"
-msgstr ""
+msgstr "After configuring the stock selection strategy, it is necessary to verify the performance of the strategy through backtesting, that is, call the actual historical data of the Shanghai and Shenzhen 300 and ChiNext two indices, conduct simulated trading, and see if the results of simulated trading can outperform the market. In actual operation, it is not easy to buy and sell large-cap indices, but it is generally easy to find ETF funds that track large-cap indices to replace large-cap indices. For simplicity, we will invest in the Shanghai and Shenzhen 300 and ChiNext indices from January 1, 2011 to December 31, 2020, assuming a transaction fee rate of one thousandth, and see how the investment results are."
 
 #: ../../source/tutorials/3-start-first-strategy.md:146
 msgid "前面我们已经了解过如何下载历史数据了，这里我们需要沪深300和创业板指数从2013年到2022年底之间的所有数据。"
-msgstr ""
+msgstr "Previously, we have learned how to download historical data. Here we need all the data of the Shanghai and Shenzhen 300 and ChiNext indices from 2013 to the end of 2022."
 
 #: ../../source/tutorials/3-start-first-strategy.md:148
 msgid ""
 "**注意** "
 "在下载历史数据用于回测的时候，下载的数据需要比回测日期起点更多一些，例如，回测从2013年1月1日开始，实际需要的数据更多一些，因此下载数据的起点应该从2012年9月开始。关于这一点的详细分析，请参见[参考文档](http://qteasy.readthedocs.io)"
 msgstr ""
+"**Note** "
+"When downloading historical data for backtesting, the downloaded data needs to be more than the starting point of the backtesting date. For example, if the backtesting starts on January 1, 2013, more data is actually needed, so the starting point of the downloaded data should start from September 2012. For a detailed analysis of this, please refer to the [reference document](http://qteasy.readthedocs.io)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:151
 msgid "使用下面的代码下载相应的历史数据："
-msgstr ""
+msgstr "Download the corresponding historical data using the following code:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:159
 msgid "确认数据是否下载成功："
-msgstr ""
+msgstr "Confirm whether the data is downloaded successfully:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:164
 msgid "![在这里插入图片描述](img/tutorial02-01.png)"
-msgstr ""
+msgstr "![insert image description](img/tutorial02-01.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:164
 #: ../../source/tutorials/3-start-first-strategy.md:166
@@ -195,69 +197,74 @@ msgstr ""
 #: ../../source/tutorials/3-start-first-strategy.md:276
 #: ../../source/tutorials/3-start-first-strategy.md:360
 msgid "在这里插入图片描述"
-msgstr ""
+msgstr "Insert image description here"
 
 #: ../../source/tutorials/3-start-first-strategy.md:166
 msgid "![在这里插入图片描述](img/tutorial02-02.png)"
-msgstr ""
+msgstr "![insert image description](img/tutorial02-02.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:168
 msgid "配置回测参数"
-msgstr ""
+msgstr "Configure backtest parameters"
 
 #: ../../source/tutorials/3-start-first-strategy.md:170
 msgid "数据准备好之后，就可以开始配置回测参数并开始回测了。`qteasy`的策略回测完全是参数化的，在回测之前我们需要告诉系统所有的相关信息，例如投资的产品品种、投入资金的数量、回测开始日期和结束日期、回测过程的交易费用计算方法、交易批量等。我们可以通过`qt.configure()`对回测参数进行基本配置："
-msgstr ""
+msgstr "After the data is ready, you can start configuring the backtest parameters and start backtesting. The strategy backtesting of `qteasy` is completely parameterized. Before backtesting, we need to tell the system all relevant information, such as the variety of investment products, the amount of funds invested, the start and end dates of backtesting, the transaction fee calculation method during backtesting, and the transaction batch, etc. We can use `qt.configure()` to configure the backtest parameters:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:183
 msgid "上面的配置含义如下"
-msgstr ""
+msgstr "The meaning of the above configuration is as follows"
 
 #: ../../source/tutorials/3-start-first-strategy.md:184
 msgid ""
 "`asset_pool=['000300.SH', "
 "'399006.SZ']`：投资目标指数用列表形式给出，如果要投资其他的指数或ETF基金，直接传入证券代码即可，如果要从三个或更多的证券中选股，直接加入列表中即可"
 msgstr ""
+"`asset_pool=['000300.SH', "
+"'399006.SZ']`：Investment target index is given in list form. If you want to invest in other indexes or ETF funds, you can directly pass in the security code. If you want to select stocks from three or more securities, you can directly add them to the list."
 
 #: ../../source/tutorials/3-start-first-strategy.md:185
 msgid "`invest_amounts=100000`： 投资金额为十万元，如果需要模拟多次分批投入，还可以传入一个列表，不过需要分别指定每次投入的具体日期"
-msgstr ""
+msgstr "`invest_amounts=100000`：The investment amount is one hundred thousand yuan. If you need to simulate multiple batch investments, you can also pass in a list, but you need to specify the specific date of each investment separately."
 
 #: ../../source/tutorials/3-start-first-strategy.md:186
 msgid ""
 "`asset_type='IDX'`： 投资标的类型：`'E'`代表股票， `'IDX'`代表指数，` "
 "'FD'`代表基金，`'FT'`代表期货，`'OPT'`代表期权"
 msgstr ""
+"`asset_type='IDX'`：Investment target type: `'E'` represents stocks, `'IDX'` represents indexes, `'FD'` represents funds, `'FT'` represents futures, `'OPT'` represents options"
 
 #: ../../source/tutorials/3-start-first-strategy.md:187
 msgid "`cost_rate_buy=0.0001`： 设置买入和卖出交易费用比例，`qteasy`还支持设置最低费用、固定费用等等，这里只简单设置费率即可"
-msgstr ""
+msgstr "`cost_rate_buy=0.0001`：Set the buy and sell transaction fee ratio. `qteasy` also supports setting the minimum fee, fixed fee, etc. Here, only the fee rate needs to be set."
 
 #: ../../source/tutorials/3-start-first-strategy.md:188
 msgid "`cost_rate_sell=0.0001`："
-msgstr ""
+msgstr "`cost_rate_sell=0.0001`："
 
 #: ../../source/tutorials/3-start-first-strategy.md:189
 msgid "`invest_start='20110101'`： 模拟交易开始日期"
-msgstr ""
+msgstr "`invest_start='20110101'`：Simulation trading start date"
 
 #: ../../source/tutorials/3-start-first-strategy.md:190
 msgid "`invest_end='20201231'`：  模拟交易结束日期"
-msgstr ""
+msgstr "`invest_end='20201231'`：Simulation trading end date"
 
 #: ../../source/tutorials/3-start-first-strategy.md:191
 msgid ""
 "`trade_batch_size=0`：  "
 "买入资产时最小交易批量，`0`代表可以交易任意份额，1代表只能交易整数份，这里可以输入任意大于`0`的数"
 msgstr ""
+"`trade_batch_size=0`：  "
+"The minimum trading batch when buying assets. `0` means that any number of shares can be traded, 1 means that only integer shares can be traded. Any number greater than `0` can be entered here."
 
 #: ../../source/tutorials/3-start-first-strategy.md:192
 msgid "`sell_batch_size=0`： 卖出资产时最小交易批量为`0`"
-msgstr ""
+msgstr "`sell_batch_size=0`：The minimum trading batch when selling assets is `0`"
 
 #: ../../source/tutorials/3-start-first-strategy.md:194
 msgid "`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)。"
-msgstr ""
+msgstr "`qteasy` has other configuration parameters, see [QTEASY documentation](https://qteasy.readthedocs.io/zh/latest/)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:196
 msgid "策略的回测结果"
