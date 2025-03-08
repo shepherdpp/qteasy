@@ -268,31 +268,31 @@ msgstr "`qteasy` has other configuration parameters, see [QTEASY documentation](
 
 #: ../../source/tutorials/3-start-first-strategy.md:196
 msgid "策略的回测结果"
-msgstr ""
+msgstr "Results of backtesting the strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:198
 msgid "`qteasy`的策略回测非常简单，设置好所有的配置后，即可以开始回测了，我们可以调用`qt.run()`开始回测，回测的同时，我们开启可视化图表输出，并且开启交易明细记录："
-msgstr ""
+msgstr "It is very simple to backtest the strategy of `qteasy`. After setting all the configurations, you can start backtesting. You can call `qt.run()` to start backtesting. At the same time, we enable visual chart output and open trading details recording:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:206
 msgid "等待片刻后，回测完成，`qteasy`会自动打印回测报告如下："
-msgstr ""
+msgstr "The backtest is completed after a while, and `qteasy` will automatically print the backtest report as follows:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:250
 msgid "从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右，甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了17.8%，十年间总资产从十万元达到了五十多万元，翻了五倍多"
-msgstr ""
+msgstr "It is easy to see from the backtest results that this strategy outperformed the Shanghai and Shenzhen 300 index. The annualized return of the Shanghai and Shenzhen 300 index was only about 5% in the past ten years, even lower than some higher-yield regular products. The annualized return on investment of our strategy reached 17.8%, and the total assets increased from one hundred thousand yuan to more than five hundred thousand yuan in ten years, more than five times."
 
 #: ../../source/tutorials/3-start-first-strategy.md:253
 msgid "策略的进一步改进"
-msgstr ""
+msgstr "Improvement of the strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:254
 msgid "我们的策略获得了初步的成功，不过，光看总回报率还不能完全说明问题，策略在整个十年间的表现如何呢？这就需要进一步分析，看看能否进一步改进这个策略。这时我们需要进一步查看回测的结果，尤其是可视化结果和交易明细记录，通过这些记录和报告来找到策略的不足和改进点。"
-msgstr ""
+msgstr "Our strategy somewhat successful. However, just looking at the total return rate cannot fully explain the problem. How does the strategy perform throughout the ten years? This requires further analysis to see if the strategy can be further improved. At this time, we need to further check the results of the backtest, especially the visual results and trading details records, to find the shortcomings and improvement points of the strategy through these records and reports."
 
 #: ../../source/tutorials/3-start-first-strategy.md:256
 msgid "可视化报告的使用"
-msgstr ""
+msgstr "Use the visual report"
 
 #: ../../source/tutorials/3-start-first-strategy.md:257
 msgid ""
@@ -302,14 +302,19 @@ msgid ""
 " "
 "在这张图的参考指数曲线上，会用红、绿色箭头标注所有的买卖点，同时，图表在持有仓位的时间区间填充上绿色，响应没有持仓（空仓）的时段会保持为白色，这样就很容易看出整个投资历史上组合的回报率，以及买卖、持仓的大致时段和比例。"
 msgstr ""
+"The visual report is displayed since we set `visual=True`. At the end of the backtest report, you can see the visual chart report of the running results as follows: "
+"![insert image description](img/tutorial02-03.png) "
+"The visual chart is a very useful feature of `qteasy`. First, we can see the historical return rate curve of the backtest. This curve chart is in percentage, comparing the return rate curve of the investment portfolio with a reference curve (by default, the reference curve is the Shanghai and Shenzhen 300 index, which can be set to a different index by `qt.configure(reference_asset='xxxxxx.xx')`). The red curve is the return rate of the investment portfolio, and the blue curve is the return rate of the reference index."
+" "
+"On the reference index curve of this chart, all buy and sell points are marked with red and green arrows. At the same time, the chart fills the time interval of holding positions with green, and the time interval of not holding positions (empty positions) will remain white, so it is easy to see the return rate of the portfolio throughout the investment history, as well as the approximate time and proportion of buying, selling, and holding."
 
 #: ../../source/tutorials/3-start-first-strategy.md:262
 msgid "紧接着第一张图表，后续五张图表都是历史曲线图，显示了投资回报的多种不同的评价指标，这里面我感觉最有用的是“underwater”图，也就是第六张图，显示了投资资产回撤的情况，这个表我们过一会来仔细分析。"
-msgstr ""
+msgstr "Right below the first chart, the next five charts are all historical curve charts, showing various different evaluation indicators of investment returns. I feel the most useful one is the \"underwater\" chart, which is the sixth chart, showing the situation of investment asset drawdown. We will analyze this table carefully in a moment."
 
 #: ../../source/tutorials/3-start-first-strategy.md:264
 msgid "最下面还有并列的三张图表，分别统计了历史上历年或历月的收益率，其中可以看到整个十年中有三年（2011年、2016年和2018年）的收益率是负的，其余年份均实现了正收益。"
-msgstr ""
+msgstr "There are three parallel charts at the bottom, which respectively summarize the annual or monthly returns in history. It can be seen that in the entire ten years, the returns of three years (2011, 2016, and 2018) are negative, and the remaining years have achieved positive returns."
 
 #: ../../source/tutorials/3-start-first-strategy.md:266
 msgid ""
@@ -317,28 +322,33 @@ msgid ""
 " ![最大一次回撤持续了近五年](img/tutorial02-04.png) "
 "同样，我们从第六张underwater图中也可以看到，在整个十年投资期间，总资产不断地出现回撤，50%回撤是最大最深的一次，但前期还有31%、22%的多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？"
 msgstr ""
+"After understanding the visual chart, let's analyze the historical curve. You can look at the historical return rate curve chart and start to imagine. If I start investing according to this investment strategy from June 3, 2015, how will my return rate be? The result is: a loss of 50.6% until June 13, 2016, and then it will take until February 2020 to get out of the trap! As shown below: "
+" ![The maximum drawdown lasted for nearly five years](img/tutorial02-04.png) "
+"Similarly, we can also see from the sixth underwater chart that during the entire ten-year investment period, the total assets have continued to experience drawdowns. The 50% drawdown is the largest and deepest one, but there are also multiple drawdowns of 31% and 22% in the early stage, and the lengths are not short. The entire investment is in a situation of \"long-term being trapped, occasionally turning over\", I believe that few investors can withstand such suffering, right?"
 
 #: ../../source/tutorials/3-start-first-strategy.md:266
 msgid "最大一次回撤持续了近五年"
-msgstr ""
+msgstr "The maximum drawdown lasted for nearly five years"
 
 #: ../../source/tutorials/3-start-first-strategy.md:270
 msgid ""
 "![整个十年基本上都属于深度套牢状态](img/tutorial02-05.png) "
 "如上图，整个十年间除2015年前后或者2020年下半年以外，几乎都处于潜水套牢状态。"
 msgstr ""
+"![The entire decade is basically in a deep trap state](img/tutorial02-05.png) "
+"As shown in the above figure, except for around 2015 or the second half of 2020, the entire decade is almost in a deep underwater trap state."
 
 #: ../../source/tutorials/3-start-first-strategy.md:270
 msgid "整个十年基本上都属于深度套牢状态"
-msgstr ""
+msgstr "The entire decade is basically in a deep trap state"
 
 #: ../../source/tutorials/3-start-first-strategy.md:273
 msgid "因此，我们可以想办法改进一下这个策略，看看如何能够降低回撤，提升策略的性能。为此，我们需要仔细分析模拟交易回测过程中的每一笔交易，寻找降低回撤的办法。要查看回测交易的每一个细节，那就需要查看交易明细报告。"
-msgstr ""
+msgstr "Therefore, we can try to improve this strategy to see how to reduce the drawdown and improve the performance of the strategy. For this, we need to carefully analyze every transaction in the simulated trading backtest process to find ways to reduce the drawdown. To view every detail of the backtest transaction, you need to view the trade details report."
 
 #: ../../source/tutorials/3-start-first-strategy.md:275
 msgid "交易明细报告"
-msgstr ""
+msgstr "Detailed trade report"
 
 #: ../../source/tutorials/3-start-first-strategy.md:276
 msgid ""
@@ -354,90 +364,103 @@ msgid ""
 " ![在这里插入图片描述](img/tutorial02-09.png) "
 "所以其实这时候我们的策略仍然选择了正确的指数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。"
 msgstr ""
+"When backtesting, we set `print_backtest_log=True`, so the system will generate a detailed trade details report. This report is saved in the `qteasy/log` path, and you can see that there are two reports, both saved as csv files, which are easy to open with Excel: "
+" ![Two trade details reports](img/tutorial02-06.png) "
+"Open the first file to see the trade log. The trade log records the change of funds on each trading day, the change of holdings, and the trading details of each stock, etc., regardless of whether there is a transaction or a change in holdings, there is a record every day: "
+" ![insert image description](img/tutorial02-07.png) "
+"From the above file, you can see that 31 shares of the Shanghai and Shenzhen 300 index were bought on January 4, and the 31 shares of the Shanghai and Shenzhen 300 index were sold at the close on January 5, and 87 shares of the ChiNext index were bought at the close on January 6, and continued to hold on January 7..."
+" "
+"Open the trade_records.csv file to see that it records every transaction, including the transaction date, buy/sell direction, transaction quantity, price, total amount, transaction fee rate, etc. Since only actual transactions are recorded, the information is more compact: "
+" ![insert image description](img/tutorial02-08.png) "
+"Carefully analyzing the above table, you will find that this investment strategy is fully held except when changing stocks. During the stock disaster in 2015, we found that starting from June 18, 2015, whether it is the Shanghai and Shenzhen 300 index or the ChiNext index, their 20-day return rate has changed from positive to negative, indicating that the future market has begun to decline. However, the strategy still firmly holds the ChiNext index at this time because the ChiNext index has a smaller decline than the Shanghai and Shenzhen 300 index, that is, the return rate is higher than the Shanghai and Shenzhen 300 index: "
+" ![insert image description](img/tutorial02-09.png) "
+"So, in fact, our strategy still chose the correct index at this time. It's just that because both indices are falling, our strategy chose to hold the one with the smaller decline, reducing our losses."
 
 #: ../../source/tutorials/3-start-first-strategy.md:276
 msgid "两个交易明细报告"
-msgstr ""
+msgstr "Two trade details reports"
 
 #: ../../source/tutorials/3-start-first-strategy.md:287
 msgid "那么，我们可否从这里出发改进我们的策略呢？思路很简单，我们可以加一条规则："
-msgstr ""
+msgstr "Then, can we improve our strategy from here? The idea is simple. We can add a rule:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:289
 msgid "每天计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr ""
+msgstr "Calculate the increase of the two indices in the past 20 days every day, that is, the increase of today's price relative to the price 20 days ago"
 
 #: ../../source/tutorials/3-start-first-strategy.md:290
 msgid "如果选股日两个指数都小于0，那么我们第二天就空仓，一个指数都不持有"
-msgstr ""
+msgstr "If both indices are less than 0 on the stock selection day, then we will be empty the next day, and we will not hold any index"
 
 #: ../../source/tutorials/3-start-first-strategy.md:291
 msgid "否则，选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr ""
+msgstr "Otherwise, choose the index with the larger increase, hold it the next day, and sell the index with the smaller increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:293
 msgid "我们在原来的简单选股规则基础上增加了一条“过滤条件”，将两个指数都小于0的情况排除在外，好了，那么在`qteasy`中如何调整，以反映这个新的修改呢？"
-msgstr ""
+msgstr "We need to add a \"filter condition\" to the original simple stock selection rule to exclude the situation where both indices are less than 0. So, how to adjust in `qteasy` to reflect this new modification?"
 
 #: ../../source/tutorials/3-start-first-strategy.md:295
 msgid "改进后的策略设置"
-msgstr ""
+msgstr "Improved strategy settings"
 
 #: ../../source/tutorials/3-start-first-strategy.md:297
 msgid "`qteasy`的内置选股策略提供了一个过滤条件`condition`属性，默认条件下`condition='any'`，代表没有过滤条件，现在我们需要把小于0的收益率过滤掉，因此可以设置`condition='greater'`同时设置过滤范围`ubound=0`即可："
-msgstr ""
+msgstr "`qteasy`'s built-in stock selection strategy provides a filter condition `condition` attribute. The default condition is `condition='any'`, which means there is no filter condition. Now we need to filter out the return rate less than 0, so you can set `condition='greater'` and set the filter range `ubound=0`."
 
 #: ../../source/tutorials/3-start-first-strategy.md:308
 msgid "上面的设置跟前一节基本相同，增加了两个参数："
-msgstr ""
+msgstr "Above settings are basically the same as the previous section, with two additional parameters:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:310
 msgid "`condition='greater'`：含义是增加过滤条件，N日涨幅必须大于等于某个值才能参加选股，这个值在`ubound`参数中设置。也就是说排除掉小于这个值的股票，让其无法中选"
-msgstr ""
+msgstr "`condition='greater'`：it means a filter condition. The N-day increase must be greater than or equal to a certain value to participate in the stock selection. This value is set in the `ubound` parameter. That is, exclude stocks that are less than this value and make them unable to be selected"
 
 #: ../../source/tutorials/3-start-first-strategy.md:311
 msgid "`ubound=0`： 设置为0，这样只有涨幅大于等于0的指数才能被选中，当然还可以设置为其他浮点数"
-msgstr ""
+msgstr "`ubound=0`：Set to 0, so that only indices with an increase greater than or equal to 0 can be selected. Of course, it can also be set to other floating-point numbers"
 
 #: ../../source/tutorials/3-start-first-strategy.md:313
 msgid "改进后的结果"
-msgstr ""
+msgstr "Improved results"
 
 #: ../../source/tutorials/3-start-first-strategy.md:314
 msgid "同样按照前面的配置，直接执行`qt.run()`。这里直接放结果："
-msgstr ""
+msgstr "Execute `qt.run()` directly according to the previous configuration. Here are the results:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:360
 msgid ""
 "可视化图表如下： ![在这里插入图片描述](img/tutorial02-10.png) "
 "从资产收益率图上可以看到，原来一片绿色（全程持仓）变成了白绿相间（白色区间空仓持币），资产回撤情况得到了大幅度优化：从原来的50%回撤降低到了20%左右。而且总回报率也大大提升："
 msgstr ""
+"The visual chart is as follows: ![insert image description](img/tutorial02-10.png) "
+"From the asset return rate chart, you can see that the original all-green (full position) has become white-green (white interval empty position holding currency), and the asset drawdown situation has been greatly optimized: from the original 50% drawdown to about 20%. And the total return rate has also greatly improved:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:364
 msgid "资产总额从改进前的五十多万提高到一百万"
-msgstr ""
+msgstr " The total assets increased from more than five hundred thousand to one million"
 
 #: ../../source/tutorials/3-start-first-strategy.md:365
 msgid "总收益率从400%提升到了900%"
-msgstr ""
+msgstr "The total return rate increased from 400% to 900%"
 
 #: ../../source/tutorials/3-start-first-strategy.md:366
 msgid "年化收益率从17%提升到了26%"
-msgstr ""
+msgstr "Annualized return rate increased from 17% to 26%"
 
 #: ../../source/tutorials/3-start-first-strategy.md:367
 msgid "最大回撤从50%降低到了20%"
-msgstr ""
+msgstr "Maximum drawdown reduced from 50% to 20%"
 
 #: ../../source/tutorials/3-start-first-strategy.md:369
 msgid "通过查看交易记录可知，的确策略在2015年6月底的股灾期间保持空仓，躲避了单边下跌的行情。"
-msgstr ""
+msgstr "By checking the transaction records, it is indeed that the strategy kept empty positions during the stock disaster at the end of June 2015, avoiding the one-way decline market."
 
 #: ../../source/tutorials/3-start-first-strategy.md:370
 msgid "本篇回顾"
-msgstr ""
+msgstr "Recap"
 
 #: ../../source/tutorials/3-start-first-strategy.md:372
 msgid "通过本教程，我们通过一个大小盘轮动交易策略的创建、回测、修改熟悉了解了`qteasy`的交易策略，知道如何通过引用内置交易策略，创建一个单策略交易员对象，并使交易员运行策略获得回测结果。从下一篇教程开始，我们将进一步详细讨论`qteasy`的内置交易策略，并且介绍组合策略的实现方式，在交易员对象中添加更多的策略并设定组合方式，通过策略组合实现更复杂的效果，并且了解更多策略控制和类型。"
-msgstr ""
+msgstr "In this tutorial, we familiarized ourselves with the trading strategy of `qteasy` through the creation, backtesting, and modification of a small-cap rotation trading strategy. We learned how to create a single strategy trader object by referencing the built-in trading strategy and run the strategy to obtain backtest results. Starting from the next tutorial, we will further discuss the built-in trading strategies of `qteasy` in detail and introduce the implementation of combination strategies. We will add more strategies to the trader object and set the combination method to achieve more complex effects through strategy combination, and understand more strategy control and types."
 
