@@ -81,35 +81,35 @@ msgstr "In the [QTEASY documentation](https://qteasy.readthedocs.io), you can fi
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:24
 msgid "本节的目标"
-msgstr ""
+msgstr "Target of this chapter"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:26
 msgid "`qteasy`的内核被设计为一个兼顾高速执行以及足够的灵活性的框架，理论上您可以实现您所设想的任何类型的交易策略。"
-msgstr ""
+msgstr "`qteasy`'s kernel is designed as a framework that balances high-speed"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:28
 msgid "同时，`qteasy`的回测框架也做了相当多的特殊设计，可以完全避免您无意中在交易策略中导入\"未来函数\"，确保您的交易策略在回测时完全基于过去的数据，同时也使用了很多预处理技术以及JIT技术对内核关键函数进行了编译，以实现不亚于C语言的运行速度。"
-msgstr ""
+msgstr "Meanwhile, `qteasy`'s backtesting framework has also been specially designed to completely avoid inadvertently importing \"future functions\" into your trading strategy, ensuring that your trading strategy is completely based on past data during backtesting, and also uses a lot of preprocessing techniques and JIT technology to compile key functions of the kernel to achieve a running speed comparable to that of C."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:30
 msgid "不过，为了实现理论上无限可能的交易策略，仅仅使用内置交易策略以及策略混合就不一定够用了，一些特定的交易策略，或者一些特别复杂的交易策略是无法通过内置策略混合而成的，这就需要我们使用`qteasy`提供的`Strategy`基类，基于一定的规则创建一个自定义交易策略。"
-msgstr ""
+msgstr "However, in order to achieve theoretically infinite possibilities of trading strategies, it may not be enough to use only built-in trading strategies and strategy mixing. Some specific trading strategies, or some particularly complex trading strategies cannot be created by mixing built-in strategies. This requires us to use the `Strategy` base class provided by `qteasy` to create a custom trading strategy based on certain rules."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:32
 msgid "在本节中，我们将介绍`qteasy`的交易策略基类，通过几个具体的例子详细讲解如何基于这几个基类，创建一个只属于您自己的交易策略。为了循序渐进，我们先从一个较为简单的例子开始。"
-msgstr ""
+msgstr "In this chapter, we will introduce the trading strategy base class of `qteasy`, and explain in detail how to create a trading strategy that belongs only to you based on these base classes through several specific examples. To be progressive, we start with a relatively simple example."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:34
 msgid "自定义策略的实现方法"
-msgstr ""
+msgstr "Build a custom strategy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:36
 msgid "在量化交易的工作流程中，一个交易策略实际上就是一个函数，这个函数以已知的信息作为输入，通过一系列逻辑推演，输出交易决策。不管什么技术流派，不管哪种交易风格，不管任何分析方法，交易策略的最根本的定义，就是如此。"
-msgstr ""
+msgstr "In the workflow of quantitative trading, a trading strategy is actually a function that takes known information as input and outputs trading decisions through a series of logical deductions. Regardless of the technical school, trading style, or analysis method, the most fundamental definition of a trading strategy is this."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:38
 msgid "![在这里插入图片描述](../img/Essence_of_Strategy.png)"
-msgstr ""
+msgstr "![在这里插入图片描述](../img/Essence_of_Strategy.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:38
 #: ../../source/tutorials/5-first-self-defined-strategy.md:67
@@ -119,49 +119,51 @@ msgstr ""
 #: ../../source/tutorials/5-first-self-defined-strategy.md:311
 #: ../../source/tutorials/5-first-self-defined-strategy.md:330
 msgid "在这里插入图片描述"
-msgstr ""
+msgstr "Insert image description here"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:41
 msgid "比如："
-msgstr ""
+msgstr "For example:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:43
 msgid "技术分析派利用过去的股票价格（**输入数据**）计算技术指标（**逻辑推演**），进行买入/卖出操作（**交易决策**）"
-msgstr ""
+msgstr "Technical analysts use past stock prices (**input data**) to calculate technical indicators (**logical deduction**) and make buy/sell decisions (**trading decisions**)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:44
 msgid "价值投资派利用上市公司的各项指标（**输入数据**），分析公司的成长潜力（**逻辑推演**），决定买入/卖出哪一支股票（**交易决策**）"
-msgstr ""
+msgstr "Value investors use various indicators of listed companies (**input data**) to analyze the growth potential of the company (**logical deduction**) and decide which stock to buy/sell (**trading decisions**)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:45
 msgid "宏观分析者即使不关心个股的价格，也需要参考热点新闻、市场景气（仍然是**输入数据**），分析市场的整体趋势（**逻辑推演**），决定是否入市（**交易决策**）"
-msgstr ""
+msgstr "Macro analysts, even if they don't care about stock prices, need to refer to hot news, market sentiment (**input data**), analyze the overall market trend (**logical deduction**), and decide whether to enter the market (**trading decisions**)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:46
 msgid "高频或超高频的套利交易，也需要根据短期内价格的实时变化（**输入数据**），分析套利空间大小（**逻辑推演**），以便迅速介入操作（**交易决策**）"
-msgstr ""
+msgstr "High-frequency or ultra-high-frequency arbitrage trading also needs to analyze the real-time changes in prices in the short term (**input data**), analyze the size of the arbitrage space (**logical deduction**), and intervene quickly in operations (**trading decisions**)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:48
 msgid "上面的交易策略，如果以较高的频率，跟踪少数投资品种，就是所谓的“**择时交易策略**”，如果以较低的频率，跟踪大量的投资品种，就是所谓的“**选股策略**”。"
-msgstr ""
+msgstr "If a trading strategy tracks a small number of investment products at a high frequency, it is called a \"**timing trading strategy**\"; if it tracks a large number of investment products at a low frequency, it is called a \"**stock selection strategy**\"."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:50
 msgid "总之，一切量化交易，都是一套**定期运行的逻辑推演，在每次运行时，提取当时的最新数据作为输入，输出一套交易决策**。如此反复运行，形成稳定的交易操作流水，概莫能外，这就是交易策略的抽象概念。"
-msgstr ""
+msgstr "In short, all quantitative trading is a set of **regularly run logical deductions, extracting the latest data as input each time it runs, and outputting a set of trading decisions**. Repeatedly running in this way forms a stable trading operation flow, which is nothing more than the abstract concept of a trading strategy."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:52
 msgid "使用 `qteasy` 的 `Strategy` 策略类"
-msgstr ""
+msgstr "Use the `Strategy` strategy class in `qteasy`"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:54
 msgid "`qteasy`的交易策略就是基于上面的概念定义的。qteasy提供了策略基类Strategy，定义交易策略时只需要继承Strategy类，并在初始化时定义下面三个方面的内容："
-msgstr ""
+msgstr "`qteasy`'s trading strategy is defined based on the above concept. qteasy provides the Strategy base class, and when defining a trading strategy, you only need to inherit the Strategy class and define the following three aspects during initialization:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:56
 msgid ""
 "**策略的运行时机** —— "
 "策略何时运行，以什么频率运行，例如，每分钟运行一次，每天运行一次，是开盘时运行，还是收盘时运行？在`qteasy`中，策略的运行时机是以策略的属性`Strategy.strategy_run_timing`来定义"
 msgstr ""
+"**Timing of the strategy** —— "
+"When the strategy runs, how often it runs, for example, once a minute, once a day, does it run at the opening or closing? In `qteasy`, the timing of the strategy is defined by the strategy attribute `Strategy.strategy_run_timing`"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:57
 msgid ""
@@ -169,214 +171,228 @@ msgid ""
 "——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.strategy_data_types`"
 " 等属性完全自由定义，并指定数据类型、频率以及窗口长度"
 msgstr ""
+"**Data required by the strategy** "
+"——The data input required by the strategy; for example, do you need 10 days of daily K-line data, or the P/E ratio for the past year? In `qteasy`, the amount of data required by the strategy can be completely freely defined by attributes such as `Strategy.strategy_data_types` and specified data types, frequencies, and window lengths"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:58
 msgid "**策略的逻辑** ——通过重写`Strategy.realize()`方法，用户可以自由定义如何使用输入数据，产生交易决策。"
-msgstr ""
+msgstr "**Logic of the strategy** ——By overriding the `Strategy.realize()` method, users can freely define how to use input data to generate trading decisions."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:60
 msgid "除了上面跟策略有关的信息以外，其余所有的工作`qteasy`都已经做好了，所有的交易数据都会根据策略属性被自动打包成一个`ndarray`数组，可以很方便地提取并使用；同一个交易策略，在实盘运行时会自动抽取交易数据，根据定义好的策略生成交易信号，在回测时也会自动提取历史数据，自动生成历史数据切片，不会形成未来函数。同时，所有交易数据都会"
-msgstr ""
+msgstr "Except for the information related to the strategy above, all other work has been done by `qteasy`, and all trading data will be automatically packaged into an `ndarray` array according to the strategy attributes, which can be easily extracted and used; the same trading strategy will automatically extract trading data during live operation, generate trading signals according to the defined strategy, and automatically extract historical data during backtesting, generate historical data slices, and will not form future functions. At the same time, all trading data will"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:62
 msgid "因此，在`qteasy`中的策略自定义非常简单："
-msgstr ""
+msgstr "Therefore, customizing strategies in `qteasy` is very simple:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:64
 msgid "**`__init__()`** 在此方法中定义策略的运行参数，包括运行的频率、视窗长度、使用的数据类型、可调参数数量类型等"
-msgstr ""
+msgstr "**`__init__()`** Define the running parameters of the strategy in this method, including the running frequency, window length, data types used, the number and type of adjustable parameters, etc."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:65
 msgid "**`realize()`** 在此方法中定义策略的运行逻辑：提取自动生成的交易数据，根据数据生成交易信号"
-msgstr ""
+msgstr "**`realize()`** Define the running logic of the strategy in this method: extract automatically generated trading data and generate trading signals based on the data"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:67
 msgid "![在这里插入图片描述](../img/Strategy_Class_Illustration.png)"
-msgstr ""
+msgstr "![Insert image description here](../img/Strategy_Class_Illustration.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:69
 msgid "除了上面所说的策略属性以外，自定义策略同样拥有与内置交易策略相同的基本属性，例如可调参数数量、类型等等，因为它们与内置交易策略相同，在这里就不赘述了。"
-msgstr ""
+msgstr "Except for the strategy attributes mentioned above, custom strategies also have the same basic attributes as built-in trading strategies, such as the number and type of adjustable parameters, etc., because they are the same as built-in trading strategies, so they are not repeated here."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:70
 msgid "三种不同的自定义策略基类"
-msgstr ""
+msgstr "There are three different custom strategy base classes"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:72
 msgid "`qteasy`提供了三种不同的策略类，便于用户针对不同的情况创建自定义策略。"
-msgstr ""
+msgstr "Three different strategy classes are provided by `qteasy` to facilitate users to create custom strategies for different situations."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:74
 msgid "**`GeneralStg`**: 通用交易策略类，用户需要在`realize()`方法中给出所有交易资产的交易决策信号"
-msgstr ""
+msgstr "**`GeneralStg`**: General trading strategy class, users need to provide trading decision signals for all trading assets in the `realize()` method"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:75
 msgid "**`FactorSorter`**: 因子选股类，用户只需要在`realize()`方法中定义出选股因子，便可以通过对象属性实现多种选股动作"
-msgstr ""
+msgstr "**`FactorSorter`**: Factor stock selection class, users only need to define the stock selection factor in the `realize()` method, and multiple stock selection actions can be implemented through object attributes"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:76
 msgid ""
 "**`RuleIterator`**: "
 "循环规则类，用户只要针对一支股票定义选股或择时规则，则同样的规则会被循环作用于所有的股票，而且不同股票可以定义不同的参数"
 msgstr ""
+"**`RuleIterator`**: "
+"Rule Iterator class, users only need to define stock selection or timing rules for a stock, and the same rules will be cyclically applied to all stocks, and different stocks can define different parameters"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:78
 msgid "三种交易策略基类的属性、方法都完全相同，区别仅在于`realize()`方法的定义。"
-msgstr ""
+msgstr "Three trading strategy base classes have exactly the same attributes and methods, the only difference is in the definition of the `realize()` method."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:80
 msgid "下面，我们通过几个循序渐进的例子来了解如何创建自定义策略。"
-msgstr ""
+msgstr "Now, Let's learn how to create custom strategies through a few progressive examples."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:81
 msgid "定义一个双均线择时交易策略"
-msgstr ""
+msgstr "Define a dual moving average timing trading strategy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:83
 msgid "我们的第一个例子是最简单的双均线择时交易策略，这是一个最经典的择时交易策略。 这个均线择时策略有两个可调参数："
-msgstr ""
+msgstr "Our first example is the simplest dual moving average timing trading strategy, which is the most classic timing trading strategy. This moving average timing strategy has two adjustable parameters:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:85
 msgid "FMA 快均线周期"
-msgstr ""
+msgstr "FMA Fast moving average period"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:86
 msgid "SMA 慢均线周期 策略根据过去一段时间的收盘价，计算上述两个周期产生的简单移动平均线，当两根均线发生交叉时产生交易信号："
-msgstr ""
+msgstr "SMA Slow moving average period The strategy calculates the simple moving average generated by the above two periods based on the closing price of the past period. When the two moving averages cross, a trading signal is generated:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:89
 msgid "当快均线自下而上穿过上边界，发出全仓买入信号"
-msgstr ""
+msgstr "When the fast moving average crosses the upper boundary from bottom to top, a full buy signal is issued"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:90
 msgid "当快均线自上而下穿过上边界，发出全部卖出信号"
-msgstr ""
+msgstr "When the fast moving average crosses the upper boundary from top to bottom, a full sell signal is issued"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:92
 msgid "![在这里插入图片描述](img/MAV_Cross_Strategy.png)"
-msgstr ""
+msgstr "![Insert image description here](img/MAV_Cross_Strategy.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:94
 msgid "这个策略的逻辑非常简单。那我们怎么定义这个策略呢？首先，我们需要决定使用哪一种交易策略基类。很多情况下，三种交易策略基类都可以用来生成同样的交易策略，只不过某些基类针对特定类型的策略提前做了一些定义，因而可以进一步简化策略的代码。这个策略是一个典型的择时策略，是针对不同投资品种应用同一规则的策略类型，因此，我们可以先用`RuleIterator`策略类来建立策略。在后面的例子中我们会陆续讲到另外两种策略类。"
-msgstr ""
+msgstr "The logic of this strategy is very simple. So how do we define this strategy? First, we need to decide which type of trading strategy base class to use. In many cases, all three trading strategy base classes can be used to generate the same trading strategy, but some base classes have made some definitions in advance for specific types of strategies, which can further simplify the code of the strategy. This strategy is a typical timing strategy, which is a strategy type that applies the same rule to different investment products, so we can use the `RuleIterator` strategy class to establish the strategy. In the following examples, we will talk about the other two strategy classes."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:96
 msgid "接下来，我们把这个策略的三大要素明确一下："
-msgstr ""
+msgstr "Now, let's clarify the three main elements of this strategy:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:98
 msgid "**策略的运行时机** —— 为了简单，我们定义这个策略每天收盘时运行"
-msgstr ""
+msgstr "**Timing of the strategy** —— For simplicity, we define that this strategy runs at the close of each day"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:99
 msgid ""
 "**策略需要的数据** "
 "——为了计算两条均线，我们需要每次策略运行时的历史收盘价(`“close”`)，而且需要过去连续至少SMA天的历史数据，才足够用来计算SMA慢均线"
 msgstr ""
+"**Data required by the strategy** "
+"——To calculate the two moving averages, we need the historical closing price (`“close”`) each time the strategy runs, and we need at least SMA days of historical data to calculate the SMA slow moving average"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:100
 msgid ""
 "**策略的逻辑** "
 "——提取收盘价后，首先计算两条均线，然后判断最近一天的均线是否有上穿/下穿。具体说来，就是比较昨天和今天两个移动平均价的相对关系，如果昨天SMA大于FMA，而今天SMA就小于FMA了，说明FMA从下方上穿了SMA，应该产生全仓买入信号，这个信号为1，如果情况正好相反，则输出全仓卖出信号-1，其他情况下则输出0，没有交易信号。"
 msgstr ""
+"**Logic of the strategy** "
+"——After extracting the closing price, first calculate the two moving averages, and then determine whether the moving average of the most recent day has crossed up/down. Specifically, it is to compare the relative relationship between the two moving average prices of yesterday and today. If the SMA was greater than the FMA yesterday, and today the SMA is less than the FMA, it means that the FMA has crossed the SMA from below, and a full buy signal should be generated. This signal is 1. If the situation is exactly the opposite, a full sell signal of -1 is output. In other cases, 0 is output, and there is no trading signal."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:102
 msgid "有了上面的准备，那我们来看看策略代码如何定义。一个最基本的策略代码，第一步就是继承策略基类（这里是`RuleIterator`），创建一个自定义类："
-msgstr ""
+msgstr "With the above preparation, let's see how the strategy code is defined. The first step in a basic strategy code is to inherit the strategy base class (here it is `RuleIterator`) and create a custom class:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:119
 msgid "好了，上面几行代码，就是我们第一个自定义交易策略的全部框架了，在这个框架中填充属性，补充逻辑，就能成为一个完整的交易策略。怎么做呢，我们首先定义这个策略的最基本属性——名称、描述、以及可调参数："
-msgstr ""
+msgstr "OK, the above few lines of code are the entire framework of our first custom trading strategy. Fill in the attributes and supplement the logic in this framework to become a complete trading strategy. How to do it? First, define the most basic attributes of this strategy — name, description, and adjustable parameters:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:121
 msgid "名称和描述都是策略的信息，在后续调用时方便了解策略的用途，咱们按照喜好定义即可，比较关键的属性是可调参数。"
-msgstr ""
+msgstr "Name and description are both information about the strategy, which is convenient for understanding the purpose of the strategy when called later. We can define them according to our preferences. The more critical attribute is the adjustable parameters."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:123
 msgid "在我们这个策略中，我们希望快均线和慢均线的计算参数是可调的，因为这两个参数直接影响了快慢均线的具体位置，从而直接影响两条均线的交叉点，从而形成不同的买卖点，参见下面两张图，分别显示了同一只股票在同一段时间内不同速度均线的交叉情况，当均线的计算周期不同时，产生的买卖点也完全不同："
-msgstr ""
+msgstr "In this custom strategy, we want the calculation parameters of the fast moving average and the slow moving average to be adjustable, because these two parameters directly affect the specific positions of the fast and slow moving averages, which directly affect the intersection points of the two moving averages, thus forming different buying and selling points. See the following two figures, which show the intersection of different speed moving averages of the same stock at the same time. When the calculation period of the moving average is different, the buying and selling points generated are completely different:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:125
 msgid ""
 "![在这里插入图片描述](img/MAV_Cross_Strategy.png) 上图中均线周期分别为15天/40天，产生三次买入、两次卖出信号 "
 "![在这里插入图片描述](img/MAV_Cross_Strategy2.png) 上图中均线周期分别为5天/50天，产生两次买入、一次卖出信号"
 msgstr ""
+"![Insert image description here](img/MAV_Cross_Strategy.png) The moving average periods in the above figure are 15 days/40 days, generating three buy signals and two sell signals "
+"![Insert image description here](img/MAV_Cross_Strategy2.png) The moving average periods in the above figure are 5 days/50 days, generating two buy signals and one sell signal"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:130
 msgid "既然均线周期直接影响到策略的表现，因此我们自然希望找到最优的均线周期组合（参数组合），使得策略的表现最佳。为了达到这个目的，`qteasy`允许用户将这些参数定义为“可调参数”，并提供优化算法来寻找最优参数。对所有的内置交易策略来说，可调参数的数量和含义是定义好的，用户不能修改，但是在自定义策略这里，用户就有了很大的自由度，理论上讲，策略运行过程中用到的任何变量，都可以被定义为可调参数。"
-msgstr ""
+msgstr "Since the moving average period directly affects the performance of the strategy, we naturally hope to find the best combination of moving average periods (parameter combinations) to make the strategy perform best. To achieve this goal, `qteasy` allows users to define these parameters as \"adjustable parameters\" and provides optimization algorithms to find the best parameters. For all built-in trading strategies, the number and meaning of adjustable parameters are defined and cannot be modified by users. However, in custom strategies, users have a lot of freedom. In theory, any variable used in the strategy running process can be defined as an adjustable parameter."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:132
 msgid "在这里，我们将快慢均线的周期定义为可调参数，在策略属性中进行以下定义"
-msgstr ""
+msgstr "Here, we define the periods of the fast and slow moving averages as adjustable parameters, and define them in the strategy attributes as follows"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:145
 msgid "定义策略运行时机"
-msgstr ""
+msgstr "Define the timing of the strategy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:147
 msgid ""
 "接下来，我们开始定义策略的运行时机。运行时机由两个属性定义： "
 "策略的运行时机可以定义为`‘close’`（收盘时）或者`‘open’`（开盘时）。这里的开盘与收盘并不仅仅指每个交易日的开盘与收盘，而是指广义的区间结束和开始，如果策略被定义为每分钟运行一次，那么`close`指的是在这个每分钟时间区间的结束时运行策略，也就是每分钟的最后一秒运行策略。因此，`timing`和`freq`两个属性共同定义了策略的运行时机。"
 msgstr ""
+"Next, we start to define the timing of the strategy. The timing of the strategy is defined by two attributes: "
+"The timing of the strategy can be defined as `‘close’` (at the close) or `‘open’` (at the open). Here, the open and close do not only refer to the open and close of each trading day, but also refer to the end and beginning of the general interval. If the strategy is defined to run every minute, then `close` refers to running the strategy at the end of this minute time interval, that is, running the strategy at the last second of each minute. Therefore, the `timing` and `freq` attributes jointly define the timing of the strategy."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:150
 msgid "如下面的属性定义了策略在每个交易日收盘时运行（实盘运行时策略会在收盘前一分钟运行以避免收盘后无法提交交易委托）"
-msgstr ""
+msgstr "Next properties define the strategy to run at the close of each trading day (when running live, the strategy will run one minute before the close to avoid being unable to submit trading orders after the close)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:160
 msgid "定义策略需要的数据"
-msgstr ""
+msgstr "Define the data required by the strategy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:161
 msgid "策略需要的数据由三个属性确定，分别定义数据类型（ID），数据频率以及采样窗口长度。"
-msgstr ""
+msgstr "The data required by the strategy is determined by three attributes, which define the data type (ID), data frequency, and sampling window length."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:163
 msgid "定义好策略数据后，`qteasy`会自动将窗口内的数据打包送入策略`realize()`函数，如果在回测的过程中，所有历史数据会根据同样的规则分别打包成一系列的数据窗口，因此，不管是回测还是实盘运行，`realize()`函数接受到的历史数据格式完全相同，处理方式也完全相同，确保实盘和回测运行的一致性，也避免了回测中可能出现的未来函数："
-msgstr ""
+msgstr "With data defined, `qteasy` will automatically package the data within the window and send it to the strategy `realize()` function. If all historical data is packaged into a series of data windows according to the same rules during backtesting, the historical data format received by the `realize()` function is completely the same, and the processing method is completely the same, ensuring the consistency of live and backtesting operations, and also avoiding the future functions that may occur during backtesting:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:165
 msgid "![在这里插入图片描述](img/Data_window_explained.png)"
-msgstr ""
+msgstr "![Insert image description here](img/Data_window_explained.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:167
 msgid "数据类型的定义如下，我们需要过去201天的每日收盘价，之所以需要201天的收盘价，是因为我们定义了可调参数的最大范围为200，为了计算周期为200的移动均线，需要201天的收盘价"
-msgstr ""
+msgstr "The definition of data type is as follows. We need the daily closing price of the past 201 days. The reason why we need the closing price of 201 days is that we define the maximum range of adjustable parameters as 200. To calculate the moving average with a period of 200, we need the closing price of 201 days"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:178
 msgid "至此，自定义交易策略的所有重要属性就全部定义好了。接下来我们来定义策略的实现。"
-msgstr ""
+msgstr "Now, all the important attributes of the custom trading strategy have been defined. Next, we will define the implementation of the strategy."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:180
 msgid "自定义交易策略的实现：`realize()`"
-msgstr ""
+msgstr "Realization of custom trading strategy: `realize()`"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:182
 msgid "在`realize()`方法中，我们需要做三件事情，我们一件件解决："
-msgstr ""
+msgstr "In the `realize()` method, we need to do three things, and we solve them one by one:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:184
 msgid "获取历史数据"
-msgstr ""
+msgstr "Acquire historical data"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:185
 msgid "获取可调参数"
-msgstr ""
+msgstr "Acquire adjustable parameters"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:186
 msgid "编写逻辑，产生输出"
-msgstr ""
+msgstr "Create algorithm and define output"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:188
 msgid "获取历史数据和可调参数值："
-msgstr ""
+msgstr "Acquire historical data and adjustable parameter values:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:189
 msgid ""
 "`realize()`方法的输入参数是一个标准定义，前面已经提到过了，所有需要的数据都会自动打包传入，这些数据就是参数`h`。`h`代表`“history"
 " data”`"
 msgstr ""
+"The input parameter of the `realize()` method is a standard definition, as mentioned earlier, all the required data will be automatically packaged and passed in, and these data are the parameter `h`. `h` represents `“history"
+" data”`"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:191
 msgid ""
@@ -384,14 +400,17 @@ msgid ""
 "`ndarray`，在`RuleIterator`策略中，它是一个二维数组，有N行、M列，其中每一列包含一种历史数据，每一行包含一个周期的数据。 "
 "在这个例子中，由于我们定义的数据类型为过去201天的收盘价，只有一种数据类型，因此h有201行，1列，每一行是一天的收盘价，数据是升序排列的，因此第一行为最早的数据，最后一行为最近的数据。我们要获取历史数据，直接从`ndarray`中切片即可。"
 msgstr ""
+"`h` is a `Numpy` "
+"`ndarray`, in the `RuleIterator` strategy, it is a two-dimensional array with N rows and M columns, where each column contains a type of historical data, and each row contains data for a period. "
+"In this example, since we define the data type as the closing price of the past 201 days, there is only one data type, so h has 201 rows and 1 column, each row is the closing price of a day, and the data is in ascending order, so the first row is the earliest data, and the last row is the most recent data. To get historical data, just slice it from the `ndarray`."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:194
 msgid "前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.pars`即可获取。"
-msgstr ""
+msgstr "As mentioned earlier, the adjustable parameters of this strategy are the calculation periods of the moving averages. Therefore, to use the adjustable parameters to calculate the periods, we need to obtain the values of the adjustable parameters, which are saved in the strategy's `pars` attribute, and can be obtained through `self.pars`."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:204
 msgid "到这里，实现策略逻辑所需要的元素都备齐了，接下来我们可以开始实现策略逻辑。"
-msgstr ""
+msgstr "Now, all the elements needed to implement the strategy logic are ready, and we can start implementing the strategy logic."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:206
 msgid ""
@@ -399,72 +418,74 @@ msgid ""
 "lib`的`SMA`函数计算移动平均价，如果没有安装，现在也没有太大关系，因为`qteasy`为用户提供了免`ta-"
 "lib`版本的`SMA`函数，（并不是所有的技术指标都有免`ta-lib`版本，详情参见参考文档）可以直接引用计算。"
 msgstr ""
+"We need to calculate two sets of moving average prices first. If the user has installed the `ta-lib` library, the moving average price can be calculated directly by calling the `SMA` function of `ta-"
+"lib`. If not, it doesn't matter now, because `qteasy` provides users with a free version of the `SMA` function (not all technical indicators have a free version of `ta-lib`, see the reference documentation for details) that can be referenced directly."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:221
 msgid "计算出移动均线后，我们可以直接在`realize`方法中定义策略的输出，也就是交易决策。"
-msgstr ""
+msgstr "Calculate the moving average, we can directly define the output of the strategy in the `realize` method, that is, the trading decision."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:223
 msgid "对于`RuleIterator`类策略，不管我们的策略同时作用于多少支股票，我们都只需要定义一套规则即可，是为“规则迭代”，因此，我们只需要输出一个数字，代表交易决策即可。这个数字会被`qteasy`自动转化为不同的交易委托单。转化的规则由`Operator`对象的工作模式确定，关于这一点在前面的教程中已经介绍过了，这里不再赘述。"
-msgstr ""
+msgstr "For the `RuleIterator` class strategy, no matter how many stocks our strategy acts on at the same time, we only need to define one set of rules, which is called \"rule iteration\", so we only need to output a number to represent the trading decision. This number will be automatically converted into different trading orders by `qteasy`. The conversion rules are determined by the working mode of the `Operator` object, which has been introduced in the previous tutorials and will not be repeated here."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:225
 msgid "总之，如果我们计划让`Operator`工作在`“PS”`模式下，那么只需要在应当买入的当天，产生交易信号“1”，在应当卖出的当天，产生交易信号“-1”即可，如果不希望交易，则输出“0”："
-msgstr ""
+msgstr "Anyway, if we plan to let the `Operator` work in the `“PS”` mode, then we only need to generate a trading signal “1” on the day when we should buy, and generate a trading signal “-1” on the day when we should sell. If you don't want to trade, output “0”."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:241
 msgid "至此，这个交易策略就定义完成了！`qteasy`会完成所有背后的复杂工作，用户仅需要集中精力解决策略的数据和逻辑定义即可。完整代码如下（为节约篇幅，删除了所有注释）："
-msgstr ""
+msgstr "Now, we have finished the definition of a strategy! `qteasy` will complete all the complex work behind the scenes, and users only need to focus on solving the data and logic definitions of the strategy. The complete code is as follows (to save space, all comments are deleted):"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:282
 msgid "接下来，我们就可以像使用任何内置交易策略一样使用这个自定义策略了。"
-msgstr ""
+msgstr "Next, we can use this custom strategy just like any built-in trading strategy."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:288
 msgid "让我们看看这个策略的回测结果。"
-msgstr ""
+msgstr "Let's take a look at the backtest results of this strategy."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:290
 msgid "第一个策略的回测结果"
-msgstr ""
+msgstr "Backtest results of the first strategy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:292
 msgid "策略回测的参数设置与内置交易策略完全一样"
-msgstr ""
+msgstr "The parameter settings for backtesting the strategy are exactly the same as for built-in trading strategies"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:309
 msgid "回测的结果如下："
-msgstr ""
+msgstr "Results of backtesting are as follows:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:311
 msgid "![在这里插入图片描述](../examples/img/output_3_2.png)"
-msgstr ""
+msgstr "![Insert image description here](../examples/img/output_3_2.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:313
 msgid "下面，我们可以尝试一下修改策略的可调参数，再重新跑一遍回测，回测区间与前一次相同："
-msgstr ""
+msgstr "Now, we can try to modify the adjustable parameters of the strategy and run the backtest again. The backtest interval is the same as the previous one:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:328
 msgid "可以看到，改变参数后，策略的回测结果大为改观：要了解如何进行策略参数优化，请参考本教程的后续章节"
-msgstr ""
+msgstr "As you can see, the backtest results of the strategy have changed significantly after changing the parameters: To learn how to optimize strategy parameters, please refer to the following chapters of this tutorial"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:330
 msgid "![在这里插入图片描述](../examples/img/output_5_1.png)"
-msgstr ""
+msgstr "![Insert image description here](../examples/img/output_5_1.png)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:332
 msgid "至此，我们已经实现了一个简单的自定义择时交易策略，那么另外两种策略类如何实现呢？下面我们再用两个例子来说明。"
-msgstr ""
+msgstr "Now, we have implemented a simple custom timing trading strategy. How to implement the other two strategy classes? Next, we will use two more examples to illustrate."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:334
 msgid "本节回顾"
-msgstr ""
+msgstr "Recap"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:337
 msgid "在这一节中，我们了解了`qteasy`中对交易策略的抽象定义，了解了一个交易策略所包含的基本要素以及它们的定义方法，并且通过一个最简单的例子，实际创建了一个自定义双均线交易策略。"
-msgstr ""
+msgstr "In this section, we learned about the abstract definition of trading strategies in `qteasy`, understood the basic elements contained in a trading strategy and their definition methods, and created a custom dual moving average trading strategy through the simplest example."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:339
 msgid "接下来，我们还将继续介绍自定义交易策略，因为相关的内容比较多，所以自定义交易策略相关的教程将占用三个章节。在下一章节中，我们将学习如何使用另外两种自定义策略基类（`FactorSorter`因子选股基类和`GeneralStg`通用策略基类）来创建交易策略。接着，我们将再用一个章节的篇幅，来介绍一个比较复杂的自定义交易策略，展示`qteasy`的灵活性，让我们下一节见！"
-msgstr ""
+msgstr "As next step, we will continue to introduce custom trading strategies. Because there is a lot of related content, the tutorials related to custom trading strategies will occupy three chapters. In the next chapter, we will learn how to use the other two custom strategy base classes (`FactorSorter` factor stock selection base class and `GeneralStg` general strategy base class) to create trading strategies. Then, we will use another chapter to introduce a more complex custom trading strategy to show the flexibility of `qteasy`. See you in the next section!"
 
