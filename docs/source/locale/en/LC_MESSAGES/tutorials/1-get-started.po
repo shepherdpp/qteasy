@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:1
 msgid "安装方法及初始配置"
-msgstr "How to install and initial configuration"
+msgstr "Installation & Configuration"
 
 #: ../../source/tutorials/1-get-started.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："

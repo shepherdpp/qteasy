@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:1
 msgid "回测您的第一个交易策略"
-msgstr "Backtest your first trading strategy"
+msgstr "Build your first strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
