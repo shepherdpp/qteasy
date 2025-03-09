@@ -590,9 +590,10 @@ class Trader(object):
             trader_info_dict['tushare'] = tushare.__version__
             try:
                 from talib import __version__
-                trader_info_dict['ta-lib'] = __version__
             except ImportError:
-                trader_info_dict['ta-lib'] = 'not installed'
+                __version__ = 'not installed'
+
+            trader_info_dict['ta-lib'] = 'not installed'
             trader_info_dict['Local DataSource'] = self.datasource
             trader_info_dict['System log file path'] = self.get_config("sys_log_file_path")["sys_log_file_path"]
             trader_info_dict['Trade log file path'] = self.get_config("trade_log_file_path")["trade_log_file_path"]
@@ -2394,11 +2395,16 @@ class Trader(object):
                                                      'close_market'])]
         elif mcc < current_time:
             # after market close, remove all task before current time except pre_open and post_close
-            self.send_message('market closed, removing all tasks before current time except post_close', debug=True)
+            self.send_message('market closed, removing all tasks before current time except '
+                              'pre_open and post_close',
+                              debug=True)
+            # previously considered to add refill), but looks like it is not the best practice,
+            # because this will result in multiple refill tasks if the user restart the trader
+            # for many times after 16:00, this might not be the ideal case,
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
-                                                     'post_close'])]
+                                                     'post_close',])]
         else:
             err = ValueError(f'Invalid current time: {current_time}')
             raise err
