@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_10.md:1
 msgid "统一定义的金融历史数据表"
-msgstr ""
+msgstr "Built-in Data Tables"
 
 #: ../../source/manage_data/3. data_tables_10.md:3
 msgid "`DataTable`是`qteasy`内置统一定义的数据存储表。包括："

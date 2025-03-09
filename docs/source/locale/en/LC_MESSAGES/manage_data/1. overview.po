@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/1. overview.md:1
 msgid "qteasy金融历史数据管理"
-msgstr ""
+msgstr "Manage Data with qteasy"
 
 #: ../../source/manage_data/1. overview.md:3
 msgid "`qteasy` 是一套功能全面的量化交易工具包，金融数据的获取和使用是`qteasy`提供的核心功能之一。"

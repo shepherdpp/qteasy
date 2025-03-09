@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md:1
 msgid "`DataTables`——上市公司基本面数据"
-msgstr ""
+msgstr "Public Company Financial Statements"
 
 #: ../../source/manage_data/3. data_tables_40.md:3
 msgid "上市公司财务报表数据"

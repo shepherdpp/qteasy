@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:2
 msgid "创建自定义因子选股交易策略"
-msgstr ""
+msgstr "Another Custom Strategy"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:4
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："

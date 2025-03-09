@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md:1
 msgid "`DataTables`——上市公司技术面指标及市场趋势"
-msgstr ""
+msgstr "Market Technical Indicators and Market Trends"
 
 #: ../../source/manage_data/3. data_tables_35.md:4
 msgid "沪深股票技术指标数据："

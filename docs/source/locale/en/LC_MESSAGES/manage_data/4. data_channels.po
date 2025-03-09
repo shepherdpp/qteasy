@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/4. data_channels.md:1
 msgid "使用数据获取渠道自动填充数据"
-msgstr ""
+msgstr "Data Fetching Channels"
 
 #: ../../source/manage_data/4. data_channels.md:3
 msgid "前面介绍过`DataSource`对象的基本操作方法，但是在实际使用中，我们需要往`DataSource`对象中填充大量数据，如果使用前面章节介绍的`DataSource.update_table_data()`方法手动填充数据，这样的工作量是非常大的。"

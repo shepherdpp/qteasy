@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md:1
 msgid "`DataTables`——基本信息表"
-msgstr ""
+msgstr "Basic Data Tables"
 
 #: ../../source/manage_data/3. data_tables_20.md:3
 msgid "下面列出`qteasy`中所有的内置预定义数据表，包括交易日历表、股票基本信息表、指数基本信息表、基金基本信息表、期货基本信息表、期权基本信息表、同花顺指数基本信息表、申万行业分类表等。"
