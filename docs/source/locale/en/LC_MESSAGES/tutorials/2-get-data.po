@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/tutorials/2-get-data.md:1
 msgid "获取并管理金融数据"
-msgstr "Aquire and manage financial data"
+msgstr "Manage financial data"
 
 #: ../../source/tutorials/2-get-data.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
