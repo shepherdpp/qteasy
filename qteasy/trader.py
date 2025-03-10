@@ -497,7 +497,9 @@ class Trader(object):
                             self.run_task(task_name)
                     # error handling: (TODO: if there's connection problem, reconnect or hold the trader?)
                     except RuntimeError as e:
+                        import traceback
                         self.send_message(f'Runtime Error occurred when executing task: {task_name}, error: {e}')
+                        self.send_message(f'Traceback: \n{traceback.format_exc()}', debug=True)
                     except Exception as e:
                         import traceback
                         self.send_message(f'error occurred when executing task: {task_name}, error: {e}')
