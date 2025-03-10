@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 1.4.9 (2025-03-08)
+## 1.4.9 (2025-03-10)
 Bug fixes:
 - Fixed problem in trader logger that causes duplicated logs in live trade mode
 - Fixed a bug in trader: when two trade results are generated at nearly the same time for the same position, the results will be wrongly recorded in the database due to data recording conflicts
