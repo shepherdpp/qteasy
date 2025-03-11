@@ -205,13 +205,13 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     weekly_refill_tables = config['live_trade_weekly_refill_tables']
     monthly_refill_tables = config['live_trade_monthly_refill_tables']
 
-    if daily_refill_tables and is_trade_day:
+    if daily_refill_tables and is_trade_day:  # 每个交易日运行
         task_agenda.append((data_source_refilling_time, 'refill', (daily_refill_tables, 1)))
 
-    if today.weekday() == 0 and weekly_refill_tables:
+    if today.weekday() == 4 and weekly_refill_tables:  # 每周五运行
         task_agenda.append((data_source_refilling_time, 'refill', (weekly_refill_tables, 7)))
 
-    if today.day == 1 and monthly_refill_tables:
+    if today.day == 1 and monthly_refill_tables:  # 每月1号运行
         task_agenda.append((data_source_refilling_time, 'refill', (monthly_refill_tables, 31)))
 
     # 对任务日程进行排序 （其实排序并不一定需要）
@@ -1105,7 +1105,13 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
             err = RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
             raise err
-
+        # TODO: bug
+        #  这里会有问题发生，如果一个订单在很短时间内产生两个交易结果，第二个交易结果
+        #  很可能会在第一个交易结果确认并计入系统之前就被处理，这样就会导致此时无法获得
+        #  正确的remaining_qty，从而导致错误的订单状态。例如
+        #  一个买入500股的订单分为2笔成交，第一笔300股，第二笔200股，那么正确的结果应
+        #  该是第一笔成交后状态为partial-filled，第二笔成交后变为filled。但如果第二
+        #  笔在第一笔交易结果存入数据库之前就处理，那么两笔交易结果的状态都会是partial-filled
         # 如果filled_qty等于remaining_qty，则将交易订单的状态设置为 'filled'
         elif raw_trade_result['filled_qty'] == remaining_qty:
             order_detail['status'] = 'filled'
@@ -1202,6 +1208,20 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
     full_trade_result['cash_amount_change'] = cash_amount_change
     full_trade_result['available_cash_change'] = available_cash_change
 
+    # TODO: 严重bug：
+    #  如果两个订单的交易结果在同一时间内生成，那么在更新账户余额和持仓时，就会发生冲突
+    #  导致前一个订单的结果无法正确保存到数据库中，因为下面两个函数的执行过程都是：
+    #  1，从数据库中读取原始数据
+    #  2，将原始数据加上变更量，得到新的数据
+    #  3，将新的数据写入数据库
+    #  如果同时有两个线程同时执行上面的操作，就很有可能同时读取了原始的数据，各自加上变化量
+    #  后再分别写入数据库，导致数据写入错误，举例如下：
+    #  假如线程A和线程B分别同时打算更新账户余额，线程A需要增加1000元，线程B增加2000元，而
+    #  最初的账户余额为10000元。正确情况下，两个线程分别增加账户余额后，账户余额应该为
+    #  10000 + 1000 + 2000 = 13000元，但是如果两个线程同时读取了最初账户余额，各自增加后写入
+    #  数据库，那么最终的账户余额就会变成10000 + 1000 = 11000元或者10000 + 2000 = 12000元
+    #  从而导致数据错误。因此，本质上这个函数应该在一个阻塞线程内工作，等一个交易结果处理完毕，
+    #  再处理下一个交易结果，这样就不会出现数据错误的情况了。
     # 更新现金余额和订单状态
     update_account_balance(
             account_id=order_detail['account_id'],

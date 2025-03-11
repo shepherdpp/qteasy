@@ -11,8 +11,7 @@
 # from different channels such as
 # tushare, yahoo finance, akshare, etc.
 # ======================================
-
-
+import numpy as np
 import pandas as pd
 import time
 
@@ -27,6 +26,7 @@ from .utilfuncs import (
     str_to_list,
     list_truncate,
     list_to_str_format,
+    get_current_timezone_datetime,
 )
 
 """
@@ -463,10 +463,9 @@ def fetch_real_time_klines(
     if isinstance(qt_codes, str):
         qt_codes = str_to_list(qt_codes)
 
-    if time_zone == 'local':
-        today = pd.Timestamp.today().strftime('%Y%m%d')
-    else:
-        today = pd.Timestamp.today(tz=time_zone).strftime('%Y%m%d')
+    # 获取当前时间以及当天日期
+    current_time = get_current_timezone_datetime(time_zone)
+    today =current_time.strftime('%Y%m%d')
 
     # 使用ProcessPoolExecutor, as_completed加速数据获取，当parallel=False时，不使用多进程
     if parallel:
@@ -494,7 +493,12 @@ def fetch_real_time_klines(
                     if df.empty:
                         continue
                     df['ts_code'] = symbol
-                    k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+                    # 根据当前时间确定哪个是matured kline，而不是直接取最后一个，因为最后一个可能是不完整的
+                    if matured_kline_only:
+                        last_matured_index = np.searchsorted(df.index, current_time, side='right') - 1
+                        k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
+                    else:  # 否则就直接取最后一个，不管是否完整
+                        k_line = df.iloc[-1:, :]
                     data.append(k_line)
     else:  # parallel == False, 不使用多进程
         for symbol in qt_codes:
@@ -502,7 +506,12 @@ def fetch_real_time_klines(
             if df.empty:
                 continue
             df['ts_code'] = symbol
-            k_line = df.iloc[-2:-1, :] if matured_kline_only else df.iloc[-1:, :]
+            # 根据当前时间确定哪个是matured kline，而不是直接取最后一个，因为最后一个可能是不完整的
+            if matured_kline_only:
+                last_matured_index = np.searchsorted(df.index, current_time, side='right') - 1
+                k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
+            else:  # 否则就直接取最后一个，不管是否完整
+                k_line = df.iloc[-1:, :]
             data.append(k_line)
     try:
         data = pd.concat(data)

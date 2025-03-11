@@ -4111,20 +4111,32 @@ def get_history_data_from_source(
         row_count = None
 
     if row_count is not None:
-        adjusted_row_count = ceil(row_count / row_count_adj_factors.get(freq, 1)) + 1
+        trade_day_offset = ceil(row_count / row_count_adj_factors.get(freq, 1)) + 1
     else:
-        adjusted_row_count = None
+        trade_day_offset = None
 
     if all(param is None for param in (start, end, row_count)):
         raise ValueError(f'parameter "start", "end", "row_count" can not be all None, '
                          f'you should provide at least two of them')
 
+    # calculate days offset between start and end based on row_count
+    if start is None and end is None:
+        raise ValueError(f'at least one of start or end should be given, both are None!')
     if start is None:
-        # end should be given in this case
-        start = pd.to_datetime(end) - pd.Timedelta(days=adjusted_row_count)
+        # TODO:
+        #  the best solution is to check the trade calendar and find out the previous
+        #  N-th trade day based on the end date
+        # if end is Monday then start should be Friday (this is still temporary)
+        end = pd.to_datetime(end)
+        if end.weekday() == 0:
+            trade_day_offset += 2
+        start = end - pd.Timedelta(days=trade_day_offset)
     if end is None:
+        start = pd.to_datetime(start)
+        if start.weekday() == 4:
+            trade_day_offset += 2
         # start and row_count should be given in this case
-        end = pd.to_datetime(start) + pd.Timedelta(days=adjusted_row_count)
+        end = start + pd.Timedelta(days=trade_day_offset)
 
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')

@@ -1711,6 +1711,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
         invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+# @ deprecated('0.1.0', '0.2.0', 'This function is deprecated, there\'s no need to re-connect datasource any more.')
 def reconnect_ds(data_source=None):  # deprecated
     """ （当数据库连接超时时）重新连接到data source，如果不指定具体的data_source，则重新连接默认数据源
 
@@ -1827,6 +1828,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
                     channel='eastmoney',
                     qt_codes=hist_op.shares,
                     freq=operator.op_data_freq,
+                    matured_kline_only=False,  # 只获取成熟的K线数据(即已经收盘的K线数据)
             )
             live_kline_prices.set_index('ts_code', inplace=True)
         else:
