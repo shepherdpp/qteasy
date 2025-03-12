@@ -25,79 +25,79 @@ msgstr "Another Custom Strategy"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:4
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
+msgstr "`qteasy` is a fully localized deployment and operation of quantitative trading analysis toolkit, with the following functions:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:6
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr ""
+msgstr "Acquisition, cleaning, storage, processing, visualization, and use of financial data"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:7
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
+msgstr "Create quantitative trading strategies and provide a large number of built-in basic trading strategies"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:8
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr ""
+msgstr "Vectorized high-speed trading strategy backtesting and trading result evaluation"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:9
 msgid "交易策略参数的优化以及评价"
-msgstr ""
+msgstr "Optimization and evaluation of trading strategy parameters"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:10
 msgid "交易策略的部署、实盘运行"
-msgstr ""
+msgstr "Deployment and live operation of trading strategies"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:12
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr ""
+msgstr "In this tutorial, you will fully understand the main functions and usage of `qteasy` through a series of practical examples."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:14
 msgid "开始前的准备工作"
-msgstr ""
+msgstr "Before you start"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:16
 msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
-msgstr ""
+msgstr "Please make sure you have mastered the following content before starting this tutorial:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:18
 msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
-msgstr ""
+msgstr "**Install and configure `qteasy`** —— [QTEASY Tutorial 1](1-get-started.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:19
 msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
-msgstr ""
+msgstr "**Set up a local data source**, and have downloaded enough historical data to the local —"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:20
 msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
-msgstr ""
+msgstr "**Learn to create a trader object, use built-in trading strategies** —— [QTEASY Tutorial 3](3-start-first-strategy.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:21
 msgid "**学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)"
-msgstr ""
+msgstr "**Learn to use the mixer to mix multiple simple strategies into more complex trading strategies** —— [QTEASY Tutorial 4](4-build-in-strategies.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:22
 msgid "**了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)"
-msgstr ""
+msgstr "**Learn how to customize trading strategies** —— [QTEASY Tutorial 5](5-first-self-defined-strategy.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:24
 msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
-msgstr ""
+msgstr "In the [QTEASY documentation](https://qteasy.readthedocs.io/zh/latest/), you can find more information about using built-in trading strategies, creating custom strategies, and so on. If you are not familiar with the basic usage of `qteasy`, you can go there to see more detailed instructions."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:26
 msgid "本节的目标"
-msgstr ""
+msgstr "Target of this tutorial"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:28
 msgid "在本节中，我们将承接上一节开始的内容，介绍`qteasy`的交易策略基类，在介绍过一个最简单的择时交易策略类以后，我们将介绍如何使用`qteasy`提供的另外两种策略基类，创建一个多因子选股策略。"
-msgstr ""
+msgstr "In this section, we will continue the content of the previous section and introduce the trading strategy base class of `qteasy`. After introducing the simplest timing trading strategy class, we will introduce how to use the other two strategy base classes provided by `qteasy` to create a multi-factor stock selection strategy."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:30
 msgid "为了提供足够的使用便利性，`qteasy`的提供的各种策略基类本质上并无区别，只是为了减少用户编码工作量而提供的预处理形式，甚至可以将不同的交易策略基类理解成，为了特定交易策略设计的“语法糖”，因此，同一交易策略往往可以用多种不同的交易策略基类实现，因此，在本节中，我们将用两种不同的策略基类来实现一个Alpha选股交易策略。"
-msgstr ""
+msgstr "In order to provide sufficient ease of use, the various strategy base classes provided by `qteasy` are essentially the same, just a pre-processing form provided to reduce the user's coding workload, and even different trading strategy base classes can be understood as "syntax sugar" designed for specific trading strategies. Therefore, the same trading strategy can often be implemented using multiple different trading strategy base classes. Therefore, in this section, we will use two different strategy base classes to implement an Alpha stock selection trading strategy."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:31
 msgid "Alpha选股策略的选股思想"
-msgstr ""
+msgstr "How Alpha stock selection strategy works"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:33
 msgid "我们在这里讨论的Alpha选股策略是一个低频运行的选股策略，这个策略可以每周或者每月运行一次，每次选股时会遍历HS300指数的全部成分股，依照一定的标准将这300支股票进行优先级排序，从中选择出排位靠前的30支股票，等权持有，也就是说，每个月进行一次调仓换股，调仓时将排名靠后的股票卖掉，买入排名靠前的股票，并确保股票的持有份额相同。"
