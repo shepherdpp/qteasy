@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/2. datasource.md:1
 msgid "本地数据源——DataSource对象"
-msgstr ""
+msgstr "Local Data Source - `DataSource`"
 
 #: ../../source/manage_data/2. datasource.md:3
 msgid "本地数据源是`qteasy`数据管理功能的核心，所有的数据都必须首先下载并保存在本地数据源中，才能为`qteasy`所用。`qteasy`使用`DataSource`对象管理本地数据源，本地数据源类似于一个数据库，包含一系列预先定义的数据表，`DataSource`类提供了一系列API用于数据表中数据的管理，包括读取、更新、删除和查询其中的数据。"

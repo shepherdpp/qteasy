@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/5. datatypes.md:1
 msgid "以标准化方式从数据表中提取信息"
-msgstr ""
+msgstr "Standardized Information Extraction"
 
 #: ../../source/manage_data/5. datatypes.md:3
 msgid "前面的章节中，我们介绍了数据源和数据源的概念，并且介绍了如何往数据源中填充金融数据。在这一章节中，我们将介绍如何从数据源中提取对我们有用的信息，而不仅仅是读取数据。"

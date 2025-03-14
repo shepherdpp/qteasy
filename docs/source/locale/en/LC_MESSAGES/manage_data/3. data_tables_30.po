@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md:1
 msgid "`DataTables`——价格行情表"
-msgstr ""
+msgstr "Historical Prices"
 
 #: ../../source/manage_data/3. data_tables_30.md:3
 msgid "`qteasy`内置大量的行情数据表，包含股票、基金、指数、期货、期权等不同资产类型的不同频率的K线行情数据。大部分行情数据都包含从1分钟到1小时的中高频K线数据，以及日K线、周、月等低频K线数据。"
