@@ -25,79 +25,79 @@ msgstr "Manage Data with qteasy"
 
 #: ../../source/manage_data/1. overview.md:3
 msgid "`qteasy` 是一套功能全面的量化交易工具包，金融数据的获取和使用是`qteasy`提供的核心功能之一。"
-msgstr ""
+msgstr "`qteasy` is a comprehensive quantitative trading toolkit, and the acquisition and use of financial data is one of the core functions provided by `qteasy`."
 
 #: ../../source/manage_data/1. overview.md:5
 msgid "总体介绍"
-msgstr ""
+msgstr "Overview"
 
 #: ../../source/manage_data/1. overview.md:7
 msgid "目前，网上有很多不同的金融数据获取渠道，可供量化交易者下载金融数据，但是直接从网上下载数据，有许多缺点："
-msgstr ""
+msgstr "Presently, there are many different financial data acquisition channels available online for quantitative traders to download financial data, but there are many drawbacks to downloading data directly from the Internet:"
 
 #: ../../source/manage_data/1. overview.md:9
 msgid "数据格式不统一：同样的数据，例如交易量数据，有些渠道提供的数据单位为“手”，而另一些提供的数据为“股”"
-msgstr ""
+msgstr " Data format is not uniform: the same data, such as trading volume data, is provided by some channels in units of 'hands', while others provide data in units of 'shares'"
 
 #: ../../source/manage_data/1. overview.md:10
 msgid "可提取的数据量有限：尤其是通过爬虫获取的数据，高频K线数据往往只有过去几天的数据，更久以前的数据无法提供"
-msgstr ""
+msgstr "Limited amount of data that can be extracted: especially data obtained through web crawlers, high-frequency K-line data often only has data from the past few days, and data from longer ago cannot be provided"
 
 #: ../../source/manage_data/1. overview.md:11
 msgid "数据提取不稳定：数据提取速度和成功率不能保证，受网络连接影响很大"
-msgstr ""
+msgstr "Unstable data extraction: data extraction speed and success rate cannot be guaranteed, and are greatly affected by network connections"
 
 #: ../../source/manage_data/1. overview.md:12
 msgid "下载成本较高：收费数据渠道往往能提供更全面的数据，但是一般都有流量限制，而免费渠道提供的数据不全，也提高成本"
-msgstr ""
+msgstr "High download costs: paid data channels often provide more comprehensive data, but generally have traffic restrictions, while free channels do not provide complete data, which also increases costs"
 
 #: ../../source/manage_data/1. overview.md:13
 msgid "信息提取不易：获得原始数据以后，还需要进一步将数据转化为需要的信息，这个过程费力且不直观"
-msgstr ""
+msgstr "Difficult to extract information: after obtaining the original data, it is necessary to further convert the data into the required information, which is laborious and not intuitive"
 
 #: ../../source/manage_data/1. overview.md:15
 msgid "`qteasy`就是为了解决上面提到的这些痛点而设计的。"
-msgstr ""
+msgstr "`qteasy` is designed to solve the above-mentioned pain points."
 
 #: ../../source/manage_data/1. overview.md:17
 msgid "`qteasy`的金融数据管理模块提供了三个主要的功能，这三个功能的设计，着眼点都是为了"
-msgstr ""
+msgstr "`qteasy`'s financial data management module provides three main functions, and the design of these three functions is aimed at"
 
 #: ../../source/manage_data/1. overview.md:19
 msgid "**数据拉取**：从多个不同的网络数据提供商拉取多种金融数据，满足不同用户的使用习惯："
-msgstr ""
+msgstr "**Data Fetching**: Pulling a variety of financial data from multiple different network data providers to meet the usage habits of different users:"
 
 #: ../../source/manage_data/1. overview.md:21
 msgid "`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
-msgstr ""
+msgstr "`qteasy`'s data fetching API has powerful multi-threaded parallel downloads, data chunk downloads, download traffic control, and error delay retry functions to adapt to various abnormal traffic restrictions of different data suppliers. At the same time, the data fetching API can easily run regularly and automatically complete data batch download tasks, without worrying about missing high-frequency data."
 
 #: ../../source/manage_data/1. overview.md:23
 msgid "**数据清洗和存储**：标准化定义本地数据存储，将从网络拉取的数据清洗、整理后保存到本地数据库中："
-msgstr ""
+msgstr "**Data Scrubbing and Storage**: Standardized definition of local data storage, cleaning and organizing data pulled from the network and saving it to a local database:"
 
 #: ../../source/manage_data/1. overview.md:25
 msgid "`qteasy`定义了一个专门用于存储金融历史数据的`DataSource`类，并以标准化的形式预定义了大量金融历史数据存储表，不管数据的来源如何，最终存储的数据始终会被清洗后以统一的格式存储在`DataSource`中，避免不同时期不同来源的数据产生偏差，确保数据高质量存储。同时提供多种存储引擎，满足不同用户的使用习惯。"
-msgstr ""
+msgstr "`qteasy` defines a `DataSource` class specifically for storing financial historical data, and predefines a large number of financial historical data storage tables in a standardized form. Regardless of the source of the data, the data will always be cleaned and stored in a unified format in the `DataSource`, avoiding deviations in data from different sources at different times, ensuring high-quality data storage. At the same time, it provides multiple storage engines to meet the usage habits of different users."
 
 #: ../../source/manage_data/1. overview.md:28
 msgid "**信息提取和使用**：区分“数据“和”信息，“提供接口将集中在数据表中的真正有意义的信息提取出来，从而直接用于交易策略或数据分析："
-msgstr ""
+msgstr "**Information Extraction and Use**: Distinguish between 'data' and 'information,' provide interfaces to extract the truly meaningful information concentrated in the data table, and use it directly for trading strategies or data analysis:"
 
 #: ../../source/manage_data/1. overview.md:30
 msgid "我们知道”数据“并不等于”信息“，光是将数据表保存在本地不代表立即就能使用其中的信息。而`qteasy`特意将数据表中的可用“信息”以标准化的方式定义为`DataType`对象，简化数据访问过程和策略的定义过程，统一的API使得获取信息的过程变得更加直接和友好"
-msgstr ""
+msgstr "We know that 'data' is not equal to 'information,' and just saving the data table locally does not mean that the information in it can be used immediately. `qteasy` intentionally defines the available 'information' in the data table as `DataType` objects in a standardized manner, simplifying the data access process and strategy definition process, and the unified API makes the process of obtaining information more direct and friendly"
 
 #: ../../source/manage_data/1. overview.md:32
 msgid "总体来说，`qteasy`的数据获取模块的结构可以用下面的示意图来表示："
-msgstr ""
+msgstr "In general, the structure of `qteasy`'s data acquisition module can be represented by the following diagram:"
 
 #: ../../source/manage_data/1. overview.md:34
 msgid "`QTEASY`数据管理模块: ![数据获取模块结构](img/Overview.png)"
-msgstr ""
+msgstr "`QTEASY` Data Management Module: ![Data Acquisition Module Structure](img/Overview.png)"
 
 #: ../../source/manage_data/1. overview.md:34
 msgid "数据获取模块结构"
-msgstr ""
+msgstr "Data Acquisition Module Structure"
 
 #: ../../source/manage_data/1. overview.md:36
 msgid ""
@@ -105,24 +105,25 @@ msgid ""
 " "
 "Extraction`。而这个`DataType`对象在`qteasy`内部被广泛使用，创建交易策略，进行数据分析、可视化等后续的一切工作，都是以DataType对象为基础进行的。"
 msgstr ""
+"As shown in the figure, `qteasy`'s data functions are divided into three layers. The first layer includes a variety of data download interfaces for obtaining data from network data providers, a process called `DataFetching`. The second layer is one of the core functions of `qteasy`, defining a local database for storing a large number of data tables, and supporting multiple data engines. The core of this layer is the `DataSource` class. The third layer is the data application layer, which extracts meaningful information from the data table and defines it as a `DataType` object. The process of extracting data is called `Information Extraction`. The `DataType` object is widely used internally in `qteasy`, and all subsequent work, such as creating trading strategies, data analysis, visualization, etc., is based on the `DataType` object."
 
 #: ../../source/manage_data/1. overview.md:38
 msgid "正因为金融数据在量化交易过程中的重要性，从下一章节开始，我们将详细介绍qteasy数据功能的所有功能模块："
-msgstr ""
+msgstr "Given the importance of financial data in the quantitative trading process, starting from the next chapter, we will detail all the functional modules of the qteasy data functions:"
 
 #: ../../source/manage_data/1. overview.md:40
 msgid "**本地数据源**——DataSource对象"
-msgstr ""
+msgstr "**Local Data Source**——DataSource object"
 
 #: ../../source/manage_data/1. overview.md:41
 msgid "**本地数据源**——内置数据表"
-msgstr ""
+msgstr "**Local Data Source**——Built-in data tables"
 
 #: ../../source/manage_data/1. overview.md:42
 msgid "**拉取网络数据**——从不同的渠道"
-msgstr ""
+msgstr "**Fetch Network Data**——From different channels"
 
 #: ../../source/manage_data/1. overview.md:43
 msgid "**使用本地数据**——DataType对象"
-msgstr ""
+msgstr "**Use Local Data**——DataType object"
 
