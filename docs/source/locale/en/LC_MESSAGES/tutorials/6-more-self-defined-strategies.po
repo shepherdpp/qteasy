@@ -93,7 +93,7 @@ msgstr "In this section, we will continue the content of the previous section an
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:30
 msgid "为了提供足够的使用便利性，`qteasy`的提供的各种策略基类本质上并无区别，只是为了减少用户编码工作量而提供的预处理形式，甚至可以将不同的交易策略基类理解成，为了特定交易策略设计的“语法糖”，因此，同一交易策略往往可以用多种不同的交易策略基类实现，因此，在本节中，我们将用两种不同的策略基类来实现一个Alpha选股交易策略。"
-msgstr "In order to provide sufficient ease of use, the various strategy base classes provided by `qteasy` are essentially the same, just a pre-processing form provided to reduce the user's coding workload, and even different trading strategy base classes can be understood as "syntax sugar" designed for specific trading strategies. Therefore, the same trading strategy can often be implemented using multiple different trading strategy base classes. Therefore, in this section, we will use two different strategy base classes to implement an Alpha stock selection trading strategy."
+msgstr "In order to provide sufficient ease of use, the various strategy base classes provided by `qteasy` are essentially the same, just a pre-processing form provided to reduce the user's coding workload, and even different trading strategy base classes can be understood as \"syntax sugar\" designed for specific trading strategies. Therefore, the same trading strategy can often be implemented using multiple different trading strategy base classes. Therefore, in this section, we will use two different strategy base classes to implement an Alpha stock selection trading strategy."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:31
 msgid "Alpha选股策略的选股思想"
@@ -183,19 +183,19 @@ msgstr "We can see that the stock selection factor has been calculated, so we ca
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:145
 msgid "用`FactorSorter`定义Alpha选股策略"
-msgstr ""
+msgstr "Define Alpha stock selection strategy with `FactorSorter`"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:147
 msgid "针对这种定时选股类型的交易策略，`qteasy`提供了`FactorSorter`交易策略类，顾名思义，这个交易策略基类允许用户在策略的实现方法中计算一组选股因子，这样策略就可以自动将所有的股票按照选股因子的值排序，并选出排名靠前的股票。至于排序方法、筛选规则、股票持仓权重等都可以通过策略参数设置。"
-msgstr ""
+msgstr "`qteasy` provides the `FactorSorter` trading strategy class for this type of timed stock selection trading strategy. As the name suggests, this trading strategy base class allows users to calculate a set of stock selection factors in the implementation method of the strategy, so that the strategy can automatically sort all stocks according to the value of the stock selection factor, and select the stocks with higher rankings. As for the sorting method, screening rules, stock holding weights, etc., can be set through strategy parameters."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:149
 msgid "如果符合上面定义的交易策略，使用`FactorSorter`策略基类将会非常方便。"
-msgstr ""
+msgstr "If it meets the definition of the trading strategy above, using the `FactorSorter` strategy base class will be very convenient."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:151
 msgid "下面我们就来一步步定义看看，首先继承`FactorSorter`并定义一个类，在上一个章节中，我们在自定义策略的`__init__()`方法中定义名称、描述以及默认参数等信息，然而我们也可以忽略`__init__()`方法，仅仅在创建策略对象时传入参数等信息，这也是可以的，我们在这里就这样做："
-msgstr ""
+msgstr "Next, let's define it step by step. First, inherit `FactorSorter` and define a class. In the previous section, we defined the name, description, default parameters, and other information in the `__init__()` method of the custom strategy. However, we can also ignore the `__init__()` method and only pass in parameters when creating the strategy object. This is also possible. We do it here:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:160
 msgid ""
@@ -204,144 +204,150 @@ msgid ""
 "ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L,"
 " M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
 msgstr ""
+"Same as the previous section, the first step to be done in `realize()` is to get historical data. We know that historical data includes `total_mv, total_liab, "
+"c_cash_equ_end_period, "
+"ebitda` and other four types, these historical data are also stored in the historical data attribute h after packaging. Unlike the previous chapter, h is a three-dimensional `ndarray` with a shape of (L,"
+" M, N), containing L layers, M rows, and N columns, representing each stock, each date, and each data type."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:162
 msgid "因此，要获取四种数据类型最后一个周期的所有股票的数据，应该使用如下方法切片："
-msgstr ""
+msgstr "Therefore, to obtain the data of all stocks in the last period of the four data types, the following method"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:175
 msgid "这样我们获取到的每一种数据类型都是一个一维数组，这个数组的长度与我们传入的备选股票池中的股票数量相同，每一个元素代表该股票的数据。加入我们的投资股票池中有三支股票，那么total_mv中就会有三个数字，分别代表三支股票的总市值，以此类推。"
-msgstr ""
+msgstr "Thus, the data type we obtain is a one-dimensional array, and the length of this array is the same as the number of stocks in the alternative stock pool we pass in, and each element represents the data of the stock. If there are three stocks in our investment stock pool, then there will be three numbers in total_mv, representing the total market value of the three stocks, and so on."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:177
 msgid "做好上述准备后，计算选股因子就非常方便了，而且，由于我们使用了`FactorSorter`策略基类，计算好选股因子后，直接返回选股因子就可以了，`qteasy`会处理剩下的选股操作："
-msgstr ""
+msgstr "If you are ready for the above, it is very convenient to calculate the stock selection factor. Moreover, since we use the `FactorSorter` strategy base class, after calculating the stock selection factor, you can directly return the stock selection factor, and `qteasy` will handle the rest of the stock selection operation:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:189
 msgid "至此，仅仅用六行代码，一个自定义Alpha选股交易策略就定义好了。是不是非常简单？"
-msgstr ""
+msgstr "Now, with just six lines of code, a custom Alpha stock selection trading strategy is defined. Isn't it very simple?"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:191
 msgid "好了，我们来看看回测的结果如何？"
-msgstr ""
+msgstr "OK, let's see how the backtest results are?"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:193
 msgid "交易策略的回测结果"
-msgstr ""
+msgstr "Results of backtesting trading strategies"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:195
 msgid "由于我们忽略了策略类的`__init__()`方法，因此在实例化策略对象时，必须输入完整的策略参数："
-msgstr ""
+msgstr "Since we ignored the `__init__()` method of the strategy class, the complete strategy parameters must be entered when instantiating the strategy object:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:213
 msgid "然后创建一个`Operator`对象，因为我们希望控制持仓比例，因此最好使用“PT”信号类型："
-msgstr ""
+msgstr "Then create an `Operator` object, because we want to control the position ratio, it is best to use the 'PT' signal type:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:224
 #: ../../source/tutorials/6-more-self-defined-strategies.md:375
 msgid "回测结果如下："
-msgstr ""
+msgstr "Results of backtesting:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:289
 msgid "![在这里插入图片描述](../examples/img/output_5_1_2.png)"
-msgstr ""
+msgstr "![](../examples/img/output_5_1_2.png)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:289
 #: ../../source/tutorials/6-more-self-defined-strategies.md:440
 msgid "在这里插入图片描述"
-msgstr ""
+msgstr "Insert image description here"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:292
 msgid "回测结果显示这个策略并不能非常有效地跑赢沪深300指数，不过总体来说回撤较小一些，风险较低，是一个不错的保底策略。"
-msgstr ""
+msgstr "Backtesting results show that this strategy cannot effectively outperform the Shanghai and Shenzhen 300 Index, but overall, the drawdown is relatively small and the risk is low, making it a good bottom strategy."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:294
 msgid "但策略的表现并不是我们讨论的重点，下面我们再来看一看，如果不用`FactorSorter`基类，如何定义同样的Alpha选股策略。"
-msgstr ""
+msgstr "But the performance of the strategy is not the focus of our discussion. Next, let's take a look at how to define the same Alpha stock selection strategy without using the `FactorSorter` base class."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:295
 msgid "用`GeneralStg`定义一个Alpha选股策略"
-msgstr ""
+msgstr "Define an Alpha stock selection strategy with `GeneralStg`"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:296
 msgid "前面已经提过了两种策略基类："
-msgstr ""
+msgstr "We have introduced two strategy base classes before:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:298
 msgid ""
 "**`RuleIterator`**： "
 "用户只需要针对一支股票定义选股规则，`qteasy`便能将同样的规则应用到股票池中所有的恶股票上，而且还能针对不同股票设置不同的可调参数"
 msgstr ""
+"**`RuleIterator`**： "
+"Users only need to define stock selection rules for a stock, and `qteasy` will apply the same rules to all stocks in the stock pool, and can also set different adjustable parameters for different stocks"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:299
 msgid "**`FactorSorter`**：用户只需要定义一个选股因子，`qteasy`便能根据选股因子自动排序后选择最优的股票持有，并卖掉不够格的股票。"
-msgstr ""
+msgstr "**`FactorSorter`**：Users only need to define a stock selection factor, and `qteasy` will automatically select the best stocks to hold based on the stock selection factor after sorting, and sell the stocks that are not qualified."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:301
 msgid "而`GeneralStg`是`qteasy`提供的一个最基本的策略基类，它没有提供任何“语法糖”功能，帮助用户降低编码工作量，但是正是因为没有语法糖，它才是一个真正的“万能”策略类，可以用来更加自由地创建交易策略。"
-msgstr ""
+msgstr "While `GeneralStg` is a basic strategy base class provided by `qteasy`, it does not provide any \"syntax sugar\" functions to help users reduce coding workload, but precisely because it does not have syntax sugar, it is a real \"universal\" strategy class that can be used to create trading strategies more freely."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:303
 msgid "上面的Alpha选股交易策略可以很容易用`FactorSorter`实现，但为了了解`GeneralStg`，我们来看看如何使用它来创建相同的策略："
-msgstr ""
+msgstr "Above Alpha stock selection trading strategy can be easily implemented with `FactorSorter`, but to understand `GeneralStg`, let's see how to use it to create the same strategy:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:305
 msgid "直接把完整的代码贴出来："
-msgstr ""
+msgstr "Here is the complete code:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:337
 msgid "将上面的代码与`FactorSorter`的代码对比，可以发现，`GeneralStg`的代码在计算出选股因子以后，还多出了因子处理的工作："
-msgstr ""
+msgstr "Compare the above code with the code of `FactorSorter`, you can find that the code of `GeneralStg` has more factor processing work after calculating the stock selection factor:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:339
 msgid "剔除小于零的因子"
-msgstr ""
+msgstr "Remove factors less than zero"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:340
 msgid "排序并选出剩余因子中最小的30个"
-msgstr ""
+msgstr "Sort and select the smallest 30 of the remaining factors"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:341
 msgid "选出股票后将他们的持仓比例设置为3.3%"
-msgstr ""
+msgstr "Set the position ratio of the selected stocks to 3.3%"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:343
 msgid "事实上，上面的这些工作都是`FactorSorter`提供的“语法糖”，在这里我们必须手动实现而已。值得注意的是，我在上面例子中使用的排序等代码都是从`FactorSorter`中直接提取出来的高度优化的`numpy`代码，它们的运行速度是很快的，比一般用户能写出的代码快很多，因此，只要条件允许，用户都应该尽量利用这些语法糖，只有在不得已的情况下才自己编写排序代码。"
-msgstr ""
+msgstr "In fact, all of the above work is the \"syntax sugar\" provided by `FactorSorter`, which we must manually implement here. It is worth noting that the sorting and other codes I used in the above examples are highly optimized `numpy` codes directly extracted from `FactorSorter`, and their running speed is very fast, much faster than the code that general users can write. Therefore, as long as the conditions permit, users should try to use these syntax sugars as much as possible, and only write sorting code when necessary."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:345
 msgid "大家可以研究一下上面的代码，但是请注意，如果使用`GeneralStg`策略类，策略的输出应该是股票的目标仓位，而不是选股因子。"
-msgstr ""
+msgstr "You may study the above code, but please note that if you use the `GeneralStg` strategy class, the output of the strategy should be the target position of the stock, not the stock selection factor."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:347
 msgid "下面看看回测结果："
-msgstr ""
+msgstr "Here is the backtesting results:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:349
 msgid "回测结果："
-msgstr ""
+msgstr "Backtesting results:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:351
 msgid "使用同样的数据进行回测："
-msgstr ""
+msgstr "Backtesting with the same data:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:440
 msgid "![在这里插入图片描述](../examples/img/output_7_1.png)"
-msgstr ""
+msgstr "![](../examples/img/output_7_1.png)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:442
 msgid "两种交易策略的输出结果基本相同"
-msgstr ""
+msgstr "Results of the two trading strategies are basically the same"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:443
 msgid "本节回顾"
-msgstr ""
+msgstr "Recap"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:445
 msgid "通过本节的学习，我们了解了`qteasy`提供的另外两种交易策略基类`FactorSorter`和`GeneralStg`的使用方法，实际创建了两个交易策略，虽然使用不同的基类，但是创建出了基本相同的Alpha选股交易策略。"
-msgstr ""
+msgstr "We have learned the usage of the other two trading strategy base classes `FactorSorter` and `GeneralStg` provided by `qteasy` in this section, and actually created two trading strategies. Although different base classes are used, the same Alpha stock selection trading strategy is created."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:447
 msgid "在下一个章节中，我们仍然将继续介绍自定义交易策略，但是会用一个更加复杂的例子来演示自定义交易策略的使用方法。敬请期待！"
-msgstr ""
+msgstr "In the next section, we will continue to introduce custom trading strategies, but will use a more complex example to demonstrate the usage of custom trading strategies. Stay tuned!"
 
