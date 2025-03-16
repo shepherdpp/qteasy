@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/history_data.rst:2
 msgid "历史数据获取和管理"
-msgstr ""
+msgstr "Acquiring and Managing Data"
 
 #: ../../source/api/history_data.rst:4
 msgid "使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"

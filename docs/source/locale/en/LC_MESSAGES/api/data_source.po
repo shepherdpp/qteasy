@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/data_source.rst:2
 msgid "历史数据的存储——DataSource对象"
-msgstr ""
+msgstr "Managing Historical Data - DataSource Object"
 
 #: of qteasy.database.DataSource:1
 msgid "DataSource 对象管理存储在本地的历史数据文件或数据库."

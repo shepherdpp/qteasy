@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/Strategies.rst:3
 msgid "交易策略类"
-msgstr ""
+msgstr "Trading Strategy Class"
 
 #: of qteasy.strategy.BaseStrategy:1
 msgid "量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用"

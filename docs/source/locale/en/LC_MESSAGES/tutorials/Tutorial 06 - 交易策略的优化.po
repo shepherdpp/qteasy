@@ -21,7 +21,7 @@ msgstr ""
 
 #: - ../../source/tutorials/Tutorial 06 交易策略的优化.md:1
 msgid "交易策略的优化"
-msgstr ""
+msgstr "Optimize Strategies"
 
 #: - ../../source/tutorials/Tutorial 06 交易策略的优化.md:3
 msgid "TO BE COMPLETED"
