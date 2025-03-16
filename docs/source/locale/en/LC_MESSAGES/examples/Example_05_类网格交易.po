@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/examples/Example_05_类网格交易.md:1
 msgid "类网格交易策略"
-msgstr ""
+msgstr "Psuedo-Grid Trading Strategy"
 
 #: ../../source/examples/Example_05_类网格交易.md:3
 msgid "本策略首先计算过去300个价格数据的均值和标准差 (天数是一个可调参数)"

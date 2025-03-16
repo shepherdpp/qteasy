@@ -21,15 +21,15 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md:1
 msgid "内置交易策略"
-msgstr ""
+msgstr "Built-in Strategies"
 
 #: ../../source/references/4-build-in-strategy-blender.md:3
 msgid "qteasy提供了70多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。"
-msgstr ""
+msgstr "There are more than 70 built-in trading strategies in qteasy, which users can easily use directly. At the same time, qteasy provides a set of trading strategy combination mechanisms, and users can combine multiple simple trading strategies into a more complex trading strategy. The combination method of the strategy can be flexibly set. After combining multiple simple trading strategies into a complex strategy, the strategy optimization tool can also be used to search for the best parameters of the entire complex strategy."
 
 #: ../../source/references/4-build-in-strategy-blender.md:5
 msgid "在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。"
-msgstr ""
+msgstr "In this tutorial, you will learn how to use built-in trading strategies, how to combine strategies, how to set combination rules to achieve complex strategies, and how to optimize strategies."
 
 #: ../../source/references/4-build-in-strategy-blender.md:8
 msgid "`qt.get_built_in_strategy(id)`"
@@ -44,10 +44,12 @@ msgid ""
 "上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。 "
 "如果给出stg_id，则打印出指定的交易策略的详细信息。例如："
 msgstr ""
+"Output of the above three methods is the same, all of them list all built-in trading strategies with a dict, where the key is the ID of the trading strategy and the value is the trading strategy object. "
+"If stg_id is given, the detailed information of the specified trading strategy is printed. For example:"
 
 #: ../../source/references/4-build-in-strategy-blender.md:19
 msgid "打印如下信息："
-msgstr ""
+msgstr "Following information is printed:"
 
 #: ../../source/references/4-build-in-strategy-blender.md:45
 msgid "在qteasy中，可以直接使用策略的ID获取内置交易策略"

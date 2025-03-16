@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/examples/Example_02_Alpha选股策略.md:1
 msgid "Alpha选股交易策略"
-msgstr ""
+msgstr "Alpha Stock Selection"
 
 #: ../../source/examples/Example_02_Alpha选股策略.md:3
 msgid "本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票，随后平掉排名EV/EBITDA不在最小的30的股票持仓并等权购买EV/EBITDA最小排名在前30的股票"

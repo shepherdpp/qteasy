@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/examples/Example_04_多因子选股.md:1
 msgid "多因子选股策略"
-msgstr ""
+msgstr "Multi-factor Stock Selection"
 
 #: ../../source/examples/Example_04_多因子选股.md:3
 msgid ""

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/examples/Example_06_指数增强选股.md:1
 msgid "指数增强选股策略"
-msgstr ""
+msgstr "Enhanced Index Stock Selection"
 
 #: ../../source/examples/Example_06_指数增强选股.md:3
 msgid ""
@@ -29,62 +29,65 @@ msgid ""
 "个股所占的百分比为(0.8*成份股权重)*100%.然后根据个股是否: 1.连续上涨5天 2.连续下跌5天 "
 "来判定个股是否为强势股/弱势股,并对其把权重由0.8调至1.0或0.6"
 msgstr ""
+"This strategy tracks the index constituents of the Shanghai and Shenzhen 300 with an initial weight of 0.8. "
+"The percentage of individual stocks is (0.8 * constituent stock weight) * 100%. Then, according to whether the individual stocks: 1. rose for 5 consecutive days 2. fell for 5 consecutive days, "
+"to determine whether the individual stocks are strong stocks/weak stocks, and adjust their weights from 0.8 to 1.0 or 0.6."
 
 #: ../../source/examples/Example_06_指数增强选股.md:8
 msgid "策略运行频率：每日运行 策略运行时间：每日收盘前"
-msgstr ""
+msgstr "Frequency of strategy run: daily operation Time of strategy operation: before the close of each day"
 
 #: ../../source/examples/Example_06_指数增强选股.md:11
 msgid "回测时间为:2021-01-01到2022-12-31"
-msgstr ""
+msgstr "Backtest time: 2021-01-01 to 2022-12-31"
 
 #: ../../source/examples/Example_06_指数增强选股.md:13
 msgid "1. 策略代码"
-msgstr ""
+msgstr "1. Strategy code"
 
 #: ../../source/examples/Example_06_指数增强选股.md:15
 msgid "创建自定义交易策略："
-msgstr ""
+msgstr "Create a custom trading strategy:"
 
 #: ../../source/examples/Example_06_指数增强选股.md:70
 msgid "2. 策略回测"
-msgstr ""
+msgstr "2. Strategy backtest"
 
 #: ../../source/examples/Example_06_指数增强选股.md:72
 msgid "回测参数："
-msgstr ""
+msgstr "Backtest parameters:"
 
 #: ../../source/examples/Example_06_指数增强选股.md:73
 msgid "回测时间：2021-01-01到2022-12-31"
-msgstr ""
+msgstr "Backtest time: 2021-01-01 to 2022-12-31"
 
 #: ../../source/examples/Example_06_指数增强选股.md:74
 msgid "资产类型：股票"
-msgstr ""
+msgstr "Asset type: stocks"
 
 #: ../../source/examples/Example_06_指数增强选股.md:75
 msgid "资产池：沪深300成份股"
-msgstr ""
+msgstr "Asset pool: Shanghai and Shenzhen 300 constituents"
 
 #: ../../source/examples/Example_06_指数增强选股.md:76
 msgid "初始资金：100万"
-msgstr ""
+msgstr "Initial investment: 1 million"
 
 #: ../../source/examples/Example_06_指数增强选股.md:77
 msgid "买入批量：100股"
-msgstr ""
+msgstr "Purchase batch: 100 shares"
 
 #: ../../source/examples/Example_06_指数增强选股.md:78
 msgid "卖出批量：1股"
-msgstr ""
+msgstr "Sell batch: 1 share"
 
 #: ../../source/examples/Example_06_指数增强选股.md:101
 msgid "回测结果"
-msgstr ""
+msgstr "Backtest results"
 
 #: ../../source/examples/Example_06_指数增强选股.md:174
 msgid "![png](img/output_4_1_3.png)"
-msgstr ""
+msgstr "![png](img/output_4_1_3.png)"
 
 #: ../../source/examples/Example_06_指数增强选股.md:174
 msgid "png"

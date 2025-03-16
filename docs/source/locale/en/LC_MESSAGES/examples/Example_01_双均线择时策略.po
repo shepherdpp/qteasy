@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:1
 msgid "双均线择时策略"
-msgstr ""
+msgstr "Double MA Timing"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:3
 msgid "本策略根据交易目标的其日K线数据建立简单移动平均线的双均线交易模型， 交易策略如下："
