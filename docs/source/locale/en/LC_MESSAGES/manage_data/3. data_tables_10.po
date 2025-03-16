@@ -25,11 +25,11 @@ msgstr "Built-in Data Tables"
 
 #: ../../source/manage_data/3. data_tables_10.md:3
 msgid "`DataTable`是`qteasy`内置统一定义的数据存储表。包括："
-msgstr ""
+msgstr "`DataTable` is a built-in data storage table in `qteasy`. It includes:"
 
 #: ../../source/manage_data/3. data_tables_10.md:5
 msgid "最重要的数据表"
-msgstr ""
+msgstr "Most Important Data Tables"
 
 #: ../../source/manage_data/3. data_tables_10.md:7
 msgid ""
@@ -38,128 +38,140 @@ msgid ""
 " "
 "`qteasy`使用这张表中的数据来判断交易日，如果要下载其他的数据表，通常也必须通过交易日数据表来确定下载的起止日期，因此，这是您应该**绝对优先**填充的数据表。"
 msgstr ""
+"`trade_calendar` -- "
+" Trade calendar table, which contains the trading calendar information of all exchanges, including trading days, exchange codes, exchange names, etc. It can be said that this is the foundation of `qteasy` operation. If this table is missing, many functions of `qteasy` will not be able to run or will reduce efficiency."
+"`qteasy` uses the data in this table to determine trading days. If you want to download other data tables, you usually need to determine the start and end dates of the download through the trading day data table. Therefore, this is the data table you should **absolutely prioritize** filling in."
 
 #: ../../source/manage_data/3. data_tables_10.md:8
 msgid ""
 "`stock_basic` -- "
 "股票基本信息表，包含了所有上市股票的基本信息，包括股票代码、股票名称、上市日期、退市日期、所属行业、地域等信息。这张表是很多其他数据表的基础，例如股票日K线数据表、股票财务数据表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`stock_basic` -- "
+"Stock basic information table, which contains the basic information of all listed stocks, including stock code, stock name, listing date, delisting date, industry, region, etc. This table is the basis of many other data tables, such as stock daily K-line data table, stock financial data table, etc., so this is also the data table you should **prioritize** to fill in."
 
 #: ../../source/manage_data/3. data_tables_10.md:9
 msgid ""
 "`index_basic` -- "
 "指数基本信息表，包含了所有指数的基本信息，包括指数代码、指数名称、发布日期、退市日期等信息。这张表是很多其他数据表的基础，例如指数日K线数据表、指数成分股表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`index_basic` -- "
+"Index basic information table, which contains the basic information of all indexes, including index code, index name, release date, delisting date, etc. This table is the basis of many other data tables, such as index daily K-line data table, index component stock table, etc., so this is also the data table you should **prioritize** to fill in."
 
 #: ../../source/manage_data/3. data_tables_10.md:10
 msgid ""
 "`fund_basic` -- "
 "基金基本信息表，包含了所有基金的基本信息，包括基金代码、基金名称、基金类型、基金规模等信息。这张表是很多其他数据表的基础，例如基金日K线数据表、基金净值数据表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`fund_basic` -- "
+"Fund basic information table, which contains the basic information of all funds, including fund code, fund name, fund type, fund size, etc. This table is the basis of many other data tables, such as fund daily K-line data table, fund net value data table, etc., so this is also the data table you should **prioritize** to fill in."
 
 #: ../../source/manage_data/3. data_tables_10.md:12
 msgid "除了上面提到的几张重要的数据表之外，数据源中还定义了大量的数据表，这些数据表包含了各种各样的金融数据，包括股票、指数、基金、期货、期权等各种金融产品的基本信息、日K线数据、财务数据、分红数据、业绩报表、宏观经济数据等等，主要分类如下："
-msgstr ""
+msgstr "Except for the several important data tables mentioned above, the data source also defines a large number of data tables, which contain a variety of financial data, including basic information, daily K-line data, financial data, dividend data, performance reports, macroeconomic data, etc. of various financial products such as stocks, indexes, funds, futures, options, etc., mainly classified as follows:"
 
 #: ../../source/manage_data/3. data_tables_10.md:14
 msgid "**行情数据表** -- 这类数据表包含了股票、基金、指数各个不同频率的K线行情数据"
-msgstr ""
+msgstr "**Market Data Tables** -- These data tables contain K-line market data of stocks, funds, and indexes at different frequencies"
 
 #: ../../source/manage_data/3. data_tables_10.md:15
 msgid "**基本信息表** -- 这类数据表包含了股票、基金、指数、期货、期权等各种金融产品的基本信息"
-msgstr ""
+msgstr "**Basic Information Tables** -- These data tables contain basic information of various financial products such as stocks, funds, indexes, futures, options"
 
 #: ../../source/manage_data/3. data_tables_10.md:16
 msgid "**指标信息表** -- 这类数据表包含了各种指标的信息，例如技术指标、基本面指标、宏观经济指标等"
-msgstr ""
+msgstr "**Indicator Information Tables** -- These data tables contain information about various indicators, such as technical indicators, fundamental indicators, macroeconomic indicators, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:17
 msgid "**财务数据表** -- 这类数据表包含了上市公司的财务报表数据，包括资产负债表、利润表、现金流量表等"
-msgstr ""
+msgstr "**Financial Data Tables** -- These data tables contain financial statement data of listed companies, including balance sheets, income statements, cash flow statements, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:18
 msgid "**业绩报表表** -- 这类数据表包含了上市公司的业绩报表数据，包括业绩快报、业绩预告、业绩预测等"
-msgstr ""
+msgstr "**Performance Report Tables** -- These data tables contain performance report data of listed companies, including performance bulletins, performance forecasts, performance forecasts, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:19
 msgid "**分红交易数据表** -- 这类数据表包含了上市公司的分红数据，以及股票大宗交易、股东交易等信息表"
-msgstr ""
+msgstr "**Dividend Trading Data Tables** -- These data tables contain dividend data of listed companies, as well as block trading, shareholder trading, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:20
 msgid "**参考数据表** -- 这类数据表包含了各种参考数据，例如宏观经济数据、行业数据、交易所数据等"
-msgstr ""
+msgstr "**Reference Data Tables** -- These data tables contain various reference data, such as macroeconomic data, industry data, exchange data, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:22
 msgid "数据表的`schema`信息可以通过`DataSource`对象的`get_table_info()`方法获取:"
-msgstr ""
+msgstr "The `schema` of the data table can be obtained through the `get_table_info()` method of the `DataSource` object:"
 
 #: ../../source/manage_data/3. data_tables_10.md:29
 msgid "数据表的定义"
-msgstr ""
+msgstr "Definition of Data Tables"
 
 #: ../../source/manage_data/3. data_tables_10.md:31
 msgid "在`qteasy`中，每一张数据表都有以下几个基本属性："
-msgstr ""
+msgstr "There are several basic attributes for each data table in `qteasy`:"
 
 #: ../../source/manage_data/3. data_tables_10.md:33
 msgid ""
 "**数据表用途**：表示该数据表的用途，不同用途的数据表可用的操作不同。不同的用途包括：`basics`表示基本信息表，`finance`表示财务数据表，`report`表示业绩报表表,"
 " `reference`表示参考数据表等"
 msgstr ""
+"**Table Usage**：Indicates the purpose of the data table, and different operations are available for data tables with different purposes. Different purposes include: `basics` for basic information tables, `finance` for financial data tables, `report` for performance report tables,"
 
 #: ../../source/manage_data/3. data_tables_10.md:34
 msgid "**资产类型**：表示该数据表包含的信息属于哪种资产类型。不同的资产类型包括：`E`表示股票，`IDX`表示指数，`FD`表示基金，`FT`表示期货，`OPT`表示期权等"
-msgstr ""
+msgstr "**Asset Type**：Indicates which asset type the information in the data table belongs to. Different asset types include: `E` for stocks, `IDX` for indexes, `FD` for funds, `FT` for futures, `OPT` for options, etc."
 
 #: ../../source/manage_data/3. data_tables_10.md:35
 msgid "**数据频率**：表示存储的数据的频率，不同的数据频率包括：`mins`表示分钟级别数据，`d`表示日频数据，`w`表示周频数据，`m`表示月频数据，`q`表示季频数据，`y`表示年频数据，`none`表示无频率数据"
-msgstr ""
+msgstr "**Frequency**：Indicates the frequency of the stored data. Different data frequencies include: `mins` for minute-level data, `d` for daily data, `w` for weekly data, `m` for monthly data, `q` for quarterly data, `y` for annual data, `none` for data with no frequency"
 
 #: ../../source/manage_data/3. data_tables_10.md:36
 msgid "**分表信息**：对于某些数据表，由于数据量极大，因此需要分表存储，与分表相关的属性包括分表数量以及分表字段等"
-msgstr ""
+msgstr "**Table Partition**：For some data tables, due to the extremely large amount of data, partitioned storage is required. The attributes related to partitioning include the number of partitions and the partitioning fields"
 
 #: ../../source/manage_data/3. data_tables_10.md:37
 msgid "**数据表的`SCHEMA`**：数据表的`SCHEMA`定义了数据表的所有字段和数据类型"
-msgstr ""
+msgstr "**`SCHEMA` of the Data Table**：The `SCHEMA` of the data table defines all fields and data types of the data table"
 
 #: ../../source/manage_data/3. data_tables_10.md:39
 msgid "数据表的`SCHEMA`定义了数据表的所有字段和数据类型，`SCHEMA`各个字段的含义如下："
-msgstr ""
+msgstr "The `SCHEMA` of the data table defines all fields and data types of the data table. The meanings of the fields in the `SCHEMA` are as follows:"
 
 #: ../../source/manage_data/3. data_tables_10.md:41
 msgid "**`columns`** -- 字段名"
-msgstr ""
+msgstr "**`columns`** -- Field Name"
 
 #: ../../source/manage_data/3. data_tables_10.md:42
 msgid ""
 "**`dtypes`** -- 字段数据类型, "
 "`varchar`表示字符串类型，`int`表示整数类型，`float`表示浮点数类型，`date`表示日期类型，`text`表示文本类型"
 msgstr ""
+"**`dtypes`** -- Field Data Type, "
+"`varchar` for string type, `int` for integer type, `float` for floating-point type, `date` for date type, `text` for text type"
 
 #: ../../source/manage_data/3. data_tables_10.md:43
 msgid "**`remarks`** -- 字段备注"
-msgstr ""
+msgstr "**`remarks`** -- Field Remarks"
 
 #: ../../source/manage_data/3. data_tables_10.md:44
 msgid "**`is_prime_key`** -- 是否是主键，`Y`表示是主键，`N`表示不是主键"
-msgstr ""
+msgstr "**`is_prime_key`** -- Whether it is a primary key, `Y` means it is a primary key, `N` means it is not a primary key"
 
 #: ../../source/manage_data/3. data_tables_10.md:47
 msgid "交易日历表的定义："
-msgstr ""
+msgstr "Definition of the Trade Calendar Table:"
 
 #: ../../source/manage_data/3. data_tables_10.md:49
 msgid "以最重要的交易日历表为例，它的属性及SCHEMA定义如下："
-msgstr ""
+msgstr "Take the most important trade calendar table as an example, its attributes and SCHEMA definition are as follows:"
 
 #: ../../source/manage_data/3. data_tables_10.md:51
 msgid "交易日历表: `trade_calendar`"
-msgstr ""
+msgstr "Trade Calendar Table: `trade_calendar`"
 
 #: ../../source/manage_data/3. data_tables_10.md:53
 msgid "数据表用途: `basics`, 资产类型: `none`, 数据频率: `none`"
-msgstr ""
+msgstr "Table Usage: `basics`, Asset Type: `none`, Frequency: `none`"
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "columns"
@@ -191,7 +203,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "日期: 格式YYYYMMDD"
-msgstr ""
+msgstr "Date: Format YYYYMMDD"
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "Y"
@@ -211,7 +223,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "交易所：SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源"
-msgstr ""
+msgstr "Exchange: SSE Shanghai Stock Exchange, SZSE Shenzhen Stock Exchange, CFFEX China Financial Futures Exchange, SHFE Shanghai Futures Exchange, CZCE Zhengzhou Commodity Exchange, DCE Dalian Commodity Exchange, INE Shanghai International Energy Exchange"
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "2"
@@ -227,7 +239,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "是否交易：是：1，否：0"
-msgstr ""
+msgstr "Is Trading Day: Yes: 1, No: 0"
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "N"
@@ -243,5 +255,5 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_10.md
 msgid "上一交易日"
-msgstr ""
+msgstr "Previous Trading Day"
 
