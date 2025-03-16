@@ -25,167 +25,179 @@ msgstr "Local Data Source - `DataSource`"
 
 #: ../../source/manage_data/2. datasource.md:3
 msgid "本地数据源是`qteasy`数据管理功能的核心，所有的数据都必须首先下载并保存在本地数据源中，才能为`qteasy`所用。`qteasy`使用`DataSource`对象管理本地数据源，本地数据源类似于一个数据库，包含一系列预先定义的数据表，`DataSource`类提供了一系列API用于数据表中数据的管理，包括读取、更新、删除和查询其中的数据。"
-msgstr ""
+msgstr "The local data source is the core of the `qteasy` data management function. All data must be downloaded and saved in the local data source before it can be used by `qteasy`. `qteasy` uses the `DataSource` object to manage the local data source, which is similar to a database and contains a series of predefined data tables. The `DataSource` class provides a series of APIs for managing data in the data tables, including reading, updating, deleting, and querying the data."
 
 #: ../../source/manage_data/2. datasource.md:5
 msgid "要创建一个新的`DataSource`对象，可以使用下面的命令："
-msgstr ""
+msgstr "Use the following command to create a new `DataSource` object:"
 
 #: ../../source/manage_data/2. datasource.md:12
 msgid "通过打印`DataSource`对象，可以查看其最基本的属性："
-msgstr ""
+msgstr "You can view the most basic properties of the `DataSource` object by printing it:"
 
 #: ../../source/manage_data/2. datasource.md:19
 msgid "从`DataSource`的打印字符串`file://csv@qt_root/data/`中，可以看出它的基本属性"
-msgstr ""
+msgstr "You can see its basic properties from the print string `file://csv@qt_root/data/` of `DataSource`"
 
 #: ../../source/manage_data/2. datasource.md:21
 msgid "打印结果包含数据源对象的基本信息："
-msgstr ""
+msgstr "The basic information of the data source object is included in the print result:"
 
 #: ../../source/manage_data/2. datasource.md:22
 msgid ""
 "`file:` -- "
 "数据源的类型。`qteasy`支持两种类型的数据源：文件型和数据库型，`file`代表数据源中的所有数据表都是以文件的形式保存在磁盘上的，同样，数据也可以保存在`mysql`数据库中，此时数据源的类型代码为`db`。"
 msgstr ""
+"`file:` -- "
+"Data source type. `qteasy` supports two types of data sources: file type and database type. `file` represents that all data tables in the data source are saved on the disk in the form of files. Similarly, data can also be saved in the `mysql` database, in which case the data source type code is `db`."
 
 #: ../../source/manage_data/2. datasource.md:23
 msgid ""
 "`csv:` -- "
 "数据文件保存格式。`qteasy`可以将数据文件以不同的格式保存在磁盘上，最基本的格式为`csv`文件，但是用户同样可以将数据保存为`hdf`文件和`fth`文件（`feather`文件)，以满足不同的性能偏好。"
 msgstr ""
+"`csv:` -- "
+"Data file save format. `qteasy` can save data files in different formats on the disk. The most basic format is `csv` file, but users can also save data as `hdf` file and `fth` file (`feather` file) to meet different performance preferences."
 
 #: ../../source/manage_data/2. datasource.md:24
 msgid ""
 "`qt_root/data/:` -- "
 "数据文件的保存路径。其中`qt_root`表示`qteasy`的安装根路径，默认情况下所有数据文件都保存在根目录下的`/data/`子路径下"
 msgstr ""
+"`qt_root/data/:` -- "
+"The save path of the data file. Where `qt_root` represents the installation root path of `qteasy`, by default, all data files are saved in the `/data/` subpath under the root directory"
 
 #: ../../source/manage_data/2. datasource.md:26
 msgid ""
 "同样，可以创建一个数据保存类型为数据库的数据源对象，并查看其基本属性: "
 "不过，创建类型为数据库的数据源时，需要指定需要连接的Mysql数据库的主机名、用户名、密码、（或者）数据库名称等信息:"
 msgstr ""
+"Similarly, you can create a data source object with the data save type as a database and view its basic properties: "
+"However, when creating a data source of type database, you need to specify the host name, user name, password, and (or) database name of the Mysql database to be connected:"
 
 #: ../../source/manage_data/2. datasource.md:35
 msgid "同样，打印结果中包含数据源的基本信息："
-msgstr ""
+msgstr "Similarly, the print result contains the basic information of the data source:"
 
 #: ../../source/manage_data/2. datasource.md:36
 msgid "`db:mysql` -- 数据源的类型为mysql数据库，所有的数据表都保存在数据库中"
-msgstr ""
+msgstr "`db:mysql` -- The type of the data source is a mysql database, and all data tables are saved in the database"
 
 #: ../../source/manage_data/2. datasource.md:37
 msgid "`localhost` -- 数据库的主机名"
-msgstr ""
+msgstr "`localhost` -- The host name of the database"
 
 #: ../../source/manage_data/2. datasource.md:38
 msgid "`3306` -- 数据库连接端口"
-msgstr ""
+msgstr "`3306` -- Database connection port"
 
 #: ../../source/manage_data/2. datasource.md:39
 msgid "`test_db` -- 数据库名称，如果不指定名称，默认数据库`qt_db`，不过这个数据库必须事先创建好"
-msgstr ""
+msgstr "`test_db` -- Database name, if not specified, the default database `qt_db`, but this database must be created in advance"
 
 #: ../../source/manage_data/2. datasource.md:41
 msgid "不同的数据源对象，如果它们的存储方式不同，存储路径不同，那么它们所保存的数据没有关系，互不干扰，但如果两个数据源指向同一个路径，且文件类型相同时，那么它们所保存的数据就会重复。"
-msgstr ""
+msgstr "If two datasource objects have different storage methods and storage paths, the data they save is irrelevant and does not interfere with each other. However, if two data sources point to the same path and the file types are the same, the data they save will be duplicated."
 
 #: ../../source/manage_data/2. datasource.md:43
 msgid "要查看数据源的更多基本属性，可以调用数据源对象的几个属性查看："
-msgstr ""
+msgstr "Following are the basic properties of the data source, you can call the properties of the data source object to view:"
 
 #: ../../source/manage_data/2. datasource.md:56
 msgid "默认数据源"
-msgstr ""
+msgstr "Default data source"
 
 #: ../../source/manage_data/2. datasource.md:58
 msgid "`qteasy`有一个内置默认的数据源，不需要用户手动创建，默认情况下，所有的数据都会保存到这个默认数据源，并从这个数据源读取。用户可以通过`qteasy`的配置文件配置该数据源的参数，确保该数据源指向正确的路径或使用正确的用户名登陆正确的数据库。通过下面的方法查看内置默认数据源的属性："
-msgstr ""
+msgstr "`qteasy` has a built-in default data source that does not need to be created manually by the user. By default, all data is saved to this default data source and read from it. Users can configure the parameters of this data source through the `qteasy` configuration file to ensure that the data source points to the correct path or uses the correct username to log in to the correct database. Use the following method to view the properties of the built-in default data source:"
 
 #: ../../source/manage_data/2. datasource.md:65
 msgid "查看数据表"
-msgstr ""
+msgstr "Check the data table"
 
 #: ../../source/manage_data/2. datasource.md:67
 msgid "了解数据源对象的基本属性后，下一步可以进一步了解数据源中保存的数据。"
-msgstr ""
+msgstr "Now, after understanding the basic properties of the data source object, you can further understand the data saved in the data source."
 
 #: ../../source/manage_data/2. datasource.md:69
 msgid "数据源中的数据表都是事先定义好的，每一张数据表都保存一类不同的数据，这些数据涵盖沪深股市、期货市场的股票、指数、基金、期货、期权等各种不同投资产品的基本信息、K线行情、上市公司业绩报表、宏观经济数据等等大量的数据，完整的数据表清单介绍，请参见下一章节，这里主要介绍如何查看各种数据表的基本情况和数据。"
-msgstr ""
+msgstr "All the data tables in the data source are predefined, and each data table saves a different type of data. These data cover a large amount of data such as the basic information of stocks, indexes, funds, futures, options, etc., in the Shanghai and Shenzhen stock markets, the K-line market, the performance reports of listed companies, macroeconomic data, etc. For a complete list of data tables, please refer to the next chapter. Here, we mainly introduce how to view the basic information and data of various data tables."
 
 #: ../../source/manage_data/2. datasource.md:71
 msgid "数据源中的数据表清单可以通过数据源的`all_tables`属性获取，它会返回一个列表对象，包含数据源中已经预定义的所有数据表。不过，这里必须厘清一个概念，数据源中虽然已经定义好了很多数据表，但这些数据表仅仅是有了基本的定义，即表头信息，数据表的字段名称、每个字段的含义以及数据类型都定义好了，但是刚刚建立的新数据源，其数据表往往都是空的，还没有任何数据。如果要查看数据源中有哪些数据表已经有了数据，需要用`get_table_info()`函数来获取："
-msgstr ""
+msgstr "You can check the list of data tables in the data source by using the `all_tables` attribute of the data source, which returns a list object containing all the data tables predefined in the data source. However, it must be clarified here that although many data tables have been predefined in the data source, these data tables only have basic definitions, that is, the header information of the data table, the field names of the data table, the meaning of each field, and the data type are defined. However, the data tables of the newly established data source are often empty and have no data. If you want to see which data tables in the data source already have data, you need to use the `get_table_info()` function to get:"
 
 #: ../../source/manage_data/2. datasource.md:79
 msgid "可见，目前版本的`qteasy`预定义了108张数据表，其中部分数据表的名称包括`stock_basic`等。"
-msgstr ""
+msgstr "As you can see, the current version of `qteasy` predefines 108 data tables, some of which are named `stock_basic`."
 
 #: ../../source/manage_data/2. datasource.md:81
 msgid "如果要查看当前数据源中某张数据表的详情，例如该数据表的定义，是否包含数据等信息，使用`get_table_info()`方法获取："
-msgstr ""
+msgstr "If you want to view the details of a data table in the current data source, such as the definition of the data table, whether it contains data, etc., use the `get_table_info()` method to get:"
 
 #: ../../source/manage_data/2. datasource.md:112
 msgid "打印的信息包括数据表的名称、说明、数据表的字段定义以及数据类型。"
-msgstr ""
+msgstr "Information printed includes the name of the data table, description, field definition of the data table, and data type."
 
 #: ../../source/manage_data/2. datasource.md:114
 msgid "值得说明的是，如果数据表中已经填充了数据，那么就会显示出数据表目前的大小，在上面的例子中，一些关键信息的解释如下："
-msgstr ""
+msgstr "Notably, if the data table has been filled with data, the current size of the data table will be displayed. In the example above, the explanation of some key information is as follows:"
 
 #: ../../source/manage_data/2. datasource.md:116
 msgid "`852KB/5K records on disc` -- 表示数据表占用磁盘空间大约852K字节，且数据量大约为5000行"
-msgstr ""
+msgstr "`852KB/5K records on disc` -- Indicates that the data table occupies approximately 852K bytes of disk space and contains approximately 5000 rows of data"
 
 #: ../../source/manage_data/2. datasource.md:117
 msgid ""
 "`primary keys` -- "
 "显示数据的主键列，这里表示`ts_code`列为数据表的主键，且该列大约有5396条不同的记录。如果数据表有多个主键，那么每个主键列都分别列出，同时会列出该字段数据的范围，例如上例中`ts_code`列数据范围就是从`000001.SZ`开始一直到`920128.BJ`为止，让我们知道股票基本信息表里包含了代码从000001一直到920128为止的共五千多只股票的信息"
 msgstr ""
+"`primary keys` -- "
+"Shows the primary key column of the data, here the `ts_code` column is the primary key of the data table, and this column has approximately 5396 different records. If the data table has multiple primary keys, each primary key column is listed separately, and the range of the data of the field is also listed. For example, the data range of the `ts_code` column in the above example is from `000001.SZ` to `920128.BJ`, which lets us know that the stock basic information table contains information about more than 5,000 stocks with codes ranging from 000001 to 920128"
 
 #: ../../source/manage_data/2. datasource.md:118
 msgid ""
 "`columns of table` -- "
 "这里显示数据表的字段定义，也就是数据表的`schema`。列出每一列的名称`columns`、数据类型`dtypes`以及说明信息`remarks`"
 msgstr ""
+"`columns of table` -- "
+"Shows the field definition of the data table, that is, the `schema` of the data table. Lists the name `columns`, data type `dtypes`, and description information `remarks` of each column"
 
 #: ../../source/manage_data/2. datasource.md:120
 msgid "另外，`get_table_info()`方法返回一个`dict`，同样包含该数据表的信息,可以将这些信息打印出来，与上述格式化信息对照了解："
-msgstr ""
+msgstr "On the other hand, the `get_table_info()` method returns a `dict` that also contains information about the data table, which can be printed out to compare with the above formatted information:"
 
 #: ../../source/manage_data/2. datasource.md:127
 msgid "查看数据源的整体信息"
-msgstr ""
+msgstr "Check the overview of the data source"
 
 #: ../../source/manage_data/2. datasource.md:129
 msgid "通过上面的方法，我们可以查看每一张数据表的具体定义和已经填充的数据信息。同样，通过`overview()`方法，我们可以检查所有的数据表，并汇总出整个数据源的整体信息："
-msgstr ""
+msgstr "We may check the specific definition and data information of each data table through the above method. Similarly, through the `overview()` method, we can check all the data tables and summarize the overview of the entire data source:"
 
 #: ../../source/manage_data/2. datasource.md:145
 msgid "查看整个数据源的总体信息，可能需要花费数分钟的时间，因为需要统计每张数据表的所有信息。"
-msgstr ""
+msgstr "To check the overview of the entire data source may take a few minutes, as it will analyze of all information of each data table."
 
 #: ../../source/manage_data/2. datasource.md:147
 msgid "在统计过程中，`qteasy`会显示一根进度条显示统计的进度，最终统计分析完成后，`qteasy`会将数据源中所有数据表的信息以DataFrame的形式返回，并打印出关键的信息。"
-msgstr ""
+msgstr "During analysis, `qteasy` will display a progress bar to show the progress of the analysis. After the final analysis is completed, `qteasy` will return the information of all data tables in the data source in the form of a DataFrame and print out the key information."
 
 #: ../../source/manage_data/2. datasource.md:150
 msgid "上面的信息显示了数据源中有3张数据表已经有了数据，包括`trade_calendar`、`stock_basic`和`stock_daily`，并显示了这些数据表的数据量、占用磁盘空间、数据的起始日期��结束日期等信息。如果想查看所有数据表的信息，可以将返回的`DataFrame`打印出来："
-msgstr ""
+msgstr "Above information shows that there are 3 data tables in the data source that already have data, including `trade_calendar`, `stock_basic`, and `stock_daily`, and shows the amount of data in these data tables, disk space occupied, start date of data, end date, etc. If you want to view the information of all data tables, you can print the returned `DataFrame` out:"
 
 #: ../../source/manage_data/2. datasource.md:185
 msgid "最重要的数据表"
-msgstr ""
+msgstr "Most important data tables"
 
 #: ../../source/manage_data/2. datasource.md:187
 msgid "如果您是第一次使用`qteasy`，很可能数据源中的数据表都是空的，没有任何数据。通常这没有任何问题，因为`qteasy`的设计初衷就是极大地简化金融数据的获取和使用过程。"
-msgstr ""
+msgstr "If you are new to `qteasy`, it is likely that the data tables in the data source are empty and have no data. This is usually not a problem because the original intention of `qteasy` design is to greatly simplify the process of obtaining and using financial data."
 
 #: ../../source/manage_data/2. datasource.md:189
 msgid "您可以非常容易地从网络数据提供商处获取最基本的数据。不过，虽然数据表中的数据可以是空的，但是有几张数据表却比其他的数据表更加重要，您应该优先将这几张数据表的数据填充完整，因为这几张数据表中的数据是很多其他数据表的基础，甚至是`qteasy`的运行基础："
-msgstr ""
+msgstr "Basic historical data can be easily obtained from network data providers. However, although the data in the data table can be empty, there are several data tables that are more important than other data tables, and you should prioritize filling the data in these data tables because the data in these data tables is the basis of many other data tables, and even the basis of `qteasy` operation:"
 
 #: ../../source/manage_data/2. datasource.md:191
 msgid ""
@@ -194,44 +206,58 @@ msgid ""
 " "
 "`qteasy`使用这张表中的数据来判断交易日，如果要下载其他的数据表，通常也必须通过交易日数据表来确定下载的起止日期，因此，这是您应该**绝对优先**填充的数据表。"
 msgstr ""
+"`trade_calendar` -- "
+"Trading calendar table, which contains the trading calendar information of all exchanges, including trading days, exchange codes, exchange names, etc. It can be said that this is the basis of `qteasy` operation. If this table is missing, many functions of `qteasy` will not be able to run or will be inefficient."
+" "
+"`qteasy` uses the data in this table to determine trading days. If you want to download other data tables, you usually need to determine the start and end dates of the download through the trading day data table. Therefore, this is the data table you should **absolutely prioritize** filling."
 
 #: ../../source/manage_data/2. datasource.md:192
 msgid ""
 "`stock_basic` -- "
 "股票基本信息表，包含了所有上市股票的基本信息，包括股票代码、股票名称、上市日期、退市日期、所属行业、地域等信息。这张表是很多其他数据表的基础，例如股票日K线数据表、股票财务数据表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`stock_basic` -- "
+"Stock basic information table, which contains the basic information of all listed stocks, including stock codes, stock names, listing dates, delisting dates, industries, regions, etc. This table is the basis of many other data tables, such as stock daily K-line data tables, stock financial data tables, etc., so this is also the data table you should **prioritize** filling."
 
 #: ../../source/manage_data/2. datasource.md:193
 msgid ""
 "`index_basic` -- "
 "指数基本信息表，包含了所有指数的基本信息，包括指数代码、指数名称、发布日期、退市日期等信息。这张表是很多其他数据表的基础，例如指数日K线数据表、指数成分股表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`index_basic` -- "
+"Index basic information table, which contains the basic information of all indexes, including index codes, index names, release dates, delisting dates, etc. This table is the basis of many other data tables, such as index daily K-line data tables, index component tables, etc., so this is also the data table you should **prioritize** filling."
 
 #: ../../source/manage_data/2. datasource.md:194
 msgid ""
 "`fund_basic` -- "
 "基金基本信息表，包含了所有基金的基本信息，包括基金代码、基金名称、基金类型、基金规模等信息。这张表是很多其他数据表的基础，例如基金日K线数据表、基金净值数据表等，因此，这也是您应该**优先**填充的数据表。"
 msgstr ""
+"`fund_basic` -- "
+"Fund basic information table, which contains the basic information of all funds, including fund codes, fund names, fund types, fund sizes, etc. This table is the basis of many other data tables, such as fund daily K-line data tables, fund net value data tables, etc., so this is also the data table you should **prioritize** filling."
 
 #: ../../source/manage_data/2. datasource.md:196
 msgid "基本上，如果您能够填充了上面这几张数据表的数据，那么您就可以开始比较顺畅使用`qteasy`的大部分数据相关的功能了。"
-msgstr ""
+msgstr "Basically, if you can fill the data of the above data tables, you can start using most of the data-related functions of `qteasy` quite smoothly."
 
 #: ../../source/manage_data/2. datasource.md:198
 msgid "另外，`qteasy`还在数据源中定义了几张系统数据表，这些表一共四张，用于存储跟实盘交易相关的信息："
-msgstr ""
+msgstr "On the other hand, `qteasy` also defines several system data tables in the data source, a total of four, used to store information related to real trading:"
 
 #: ../../source/manage_data/2. datasource.md:200
 msgid ""
 "`sys_op_live_accounts` -- "
 "实盘交易账户信息表，包含了所有实盘交易账户的基本信息，包括账户ID、账户名称、账户类型、账户状态等信息。"
 msgstr ""
+"`sys_op_live_accounts` -- "
+"Real trading account information table, which contains the basic information of all real trading accounts, including account ID, account name, account type, account status, etc."
 
 #: ../../source/manage_data/2. datasource.md:201
 msgid ""
 "`sys_op_positions` -- "
 "实盘持仓信息表，包括所有实盘交易账户的持仓信息，包括账户ID、证券代码、证券名称、持仓数量、持仓成本等信息。"
 msgstr ""
+"`sys_op_positions` -- "
+"Real trading position information table, which includes the position information of all real trading accounts, including account ID, security code, security name, position quantity, position cost, etc."
 
 #: ../../source/manage_data/2. datasource.md:202
 msgid ""
