@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:1
 msgid "内置交易策略回测结果"
-msgstr ""
+msgstr "Backtest results of built-in trading strategies"
 
 #: ../../source/references/1-build-in-results.md:3
 msgid "测试内置的择时策略和选股策略"
