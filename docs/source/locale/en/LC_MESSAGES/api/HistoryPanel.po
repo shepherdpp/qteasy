@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/HistoryPanel.rst:2
 msgid "HistoryPanel 类"
-msgstr ""
+msgstr "HistoryPanel Class"
 
 #: ../../source/api/HistoryPanel.rst:4
 msgid "历史数据类HistoryPanel:"

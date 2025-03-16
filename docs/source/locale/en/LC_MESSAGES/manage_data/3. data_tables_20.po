@@ -25,56 +25,56 @@ msgstr "Basic Data Tables"
 
 #: ../../source/manage_data/3. data_tables_20.md:3
 msgid "下面列出`qteasy`中所有的内置预定义数据表，包括交易日历表、股票基本信息表、指数基本信息表、基金基本信息表、期货基本信息表、期权基本信息表、同花顺指数基本信息表、申万行业分类表等。"
-msgstr ""
+msgstr "Here are all the built-in predefined data tables in `qteasy`, including trading calendar tables, stock basic information tables, index basic information tables, fund basic information tables, futures basic information tables, options basic information tables, Tonghuashun index basic information tables, and Shenwan industry classification tables."
 
 #: ../../source/manage_data/3. data_tables_20.md:5
 msgid "交易日历："
-msgstr ""
+msgstr "Trading Calendar:"
 
 #: ../../source/manage_data/3. data_tables_20.md:8
 msgid "中国交易日历: `trade_calendar`"
-msgstr ""
+msgstr "China Trade Calendar: `trade_calendar`"
 
 #: ../../source/manage_data/3. data_tables_20.md:9 data_tables_20.md:31
 #: data_tables_20.md:42
 msgid "数据表用途: `cal`, 资产类型: `none`, 数据频率: `none`"
-msgstr ""
+msgstr "Usage: `cal`, Asset Type: `none`, Data Frequency: `none`"
 
 #: ../../source/manage_data/3. data_tables_20.md:11
 msgid "中国交易日历包括上海、深圳股票交易所的交易日历，也包括各大期货商品交易所的交易日历"
-msgstr ""
+msgstr "China Trade Calendar includes the trading calendars of the Shanghai and Shenzhen stock exchanges, as well as the trading calendars of major commodity futures exchanges"
 
 #: ../../source/manage_data/3. data_tables_20.md:13
 msgid "交易所代码对照如下："
-msgstr ""
+msgstr "Exchange codes are as follows:"
 
 #: ../../source/manage_data/3. data_tables_20.md:15
 msgid "**SSE** 上交所——上海证券交易所"
-msgstr ""
+msgstr "**SSE** 上交所——上海证券交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:16
 msgid "**SZSE** 深交所——深圳股票交易所"
-msgstr ""
+msgstr "**SZSE** 深交所——深圳股票交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:17
 msgid "**CFFEX** 中金所——中国金融期货交易所"
-msgstr ""
+msgstr "**CFFEX** 中金所——中国金融期货交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:18
 msgid "**SHFE** 上期所——上海期货交易所"
-msgstr ""
+msgstr "**SHFE** 上期所——上海期货交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:19
 msgid "**CZCE** 郑商所——郑州商品交易所"
-msgstr ""
+msgstr "**CZCE** 郑商所——郑州商品交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:20
 msgid "**DCE** 大商所——大连商品交易所"
-msgstr ""
+msgstr "**DCE** 大商所——大连商品交易所"
 
 #: ../../source/manage_data/3. data_tables_20.md:21
 msgid "**INE** 上能源——上海国际能源交易中心"
-msgstr ""
+msgstr "**INE** 上能源——上海国际能源交易中心"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "columns"
@@ -106,7 +106,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "日期（格式YYYYMMDD）"
-msgstr ""
+msgstr "Date (format YYYYMMDD)"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "Y"
@@ -142,7 +142,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "是否交易"
-msgstr ""
+msgstr "Is trade day"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "N"
@@ -158,47 +158,47 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "上一交易日"
-msgstr ""
+msgstr "Previous trade day"
 
 #: ../../source/manage_data/3. data_tables_20.md:30
 msgid "美股交易日历: `us_trade_calendar`"
-msgstr ""
+msgstr "US Trade Calendar: `us_trade_calendar`"
 
 #: ../../source/manage_data/3. data_tables_20.md:33
 msgid "美股交易日历保存了美股的交易日历表"
-msgstr ""
+msgstr "US Trade Calendar saves the trading calendar of US stocks"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "日期"
-msgstr ""
+msgstr "Date"
 
 #: ../../source/manage_data/3. data_tables_20.md:41
 msgid "港股交易日历: `hk_trade_calendar`"
-msgstr ""
+msgstr "HK Trade Calendar: `hk_trade_calendar`"
 
 #: ../../source/manage_data/3. data_tables_20.md:44
 msgid "港股交易日历表保存了香港股票交易所的交易日历"
-msgstr ""
+msgstr "Hong Kong Stock Exchange's trading calendar is saved in the HK Stock Exchange's trading calendar table"
 
 #: ../../source/manage_data/3. data_tables_20.md:52
 msgid "股票基本信息表："
-msgstr ""
+msgstr "Stock Basic Information Table:"
 
 #: ../../source/manage_data/3. data_tables_20.md:54
 msgid "基本信息表包括了股票、指数、基金、期货、期权等各种金融产品的基本信息。"
-msgstr ""
+msgstr "Basic information table includes the basic information of various financial products such as stocks, indexes, funds, futures, options, etc."
 
 #: ../../source/manage_data/3. data_tables_20.md:56
 msgid "股票基本信息: `stock_basic`"
-msgstr ""
+msgstr "Stock Basic Information: `stock_basic`"
 
 #: ../../source/manage_data/3. data_tables_20.md:57 data_tables_20.md:94
 msgid "数据表用途: basics, 资产类型: E, 数据频率: none"
-msgstr ""
+msgstr "Usage: basics, Asset Type: E, Data Frequency: none"
 
 #: ../../source/manage_data/3. data_tables_20.md:59
 msgid "股票基本信息表包含了所有上市股票的基本信息，包括股票代码、股票名称、上市日期、退市日期、所属行业、地域等信息。"
-msgstr ""
+msgstr "Basic information table contains the basic information of all listed stocks, including stock code, stock name, listing date, delisting date, industry, region, etc."
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "ts_code"
@@ -206,7 +206,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "证券代码"
-msgstr ""
+msgstr "Asset Code"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "symbol"
@@ -218,7 +218,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "股票代码"
-msgstr ""
+msgstr "Stock Code"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "name"
@@ -230,7 +230,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "股票名称"
-msgstr ""
+msgstr "Stock Name"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "area"
@@ -242,7 +242,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "地域"
-msgstr ""
+msgstr "Address"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "4"
@@ -254,7 +254,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "所属行业"
-msgstr ""
+msgstr "Industry"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "5"
@@ -270,7 +270,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "股票全称"
-msgstr ""
+msgstr "Stock Full Name"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "6"
@@ -286,7 +286,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "英文全称"
-msgstr ""
+msgstr "English Full Name"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "7"
@@ -302,7 +302,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "拼音缩写"
-msgstr ""
+msgstr "Chinese Pinyin Abbreviation"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "8"
@@ -314,7 +314,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "市场类型"
-msgstr ""
+msgstr "Market Type"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "9"
@@ -322,7 +322,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "交易所代码"
-msgstr ""
+msgstr "Exchange Code"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "10"
@@ -334,7 +334,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "交易货币"
-msgstr ""
+msgstr "Currency"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "11"
@@ -350,7 +350,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "上市状态"
-msgstr ""
+msgstr "Status"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "12"
@@ -362,7 +362,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "上市日期"
-msgstr ""
+msgstr "Listing Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "13"
@@ -374,7 +374,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "退市日期"
-msgstr ""
+msgstr "De-listing Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "14"
@@ -390,19 +390,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "是否沪深港通"
-msgstr ""
+msgstr "Is Shanghai-Hong Kong Stock Connect"
 
 #: ../../source/manage_data/3. data_tables_20.md:79
 msgid "股票名称变更: `stock_names`"
-msgstr ""
+msgstr "Stock Name Change: `stock_names`"
 
 #: ../../source/manage_data/3. data_tables_20.md:80
 msgid "数据表用途: `events`, 资产类型: `E`, 数据频率: `none`"
-msgstr ""
+msgstr "Usage: `events`, Asset Type: `E`, Data Frequency: `none`"
 
 #: ../../source/manage_data/3. data_tables_20.md:82
 msgid "股票名称变更表包含了所有股票名称变更的信息，包括股票代码、开始日期、证券名称、结束日期、公告日期、变更原因等信息。"
-msgstr ""
+msgstr "Stock name change table contains information about all stock name changes, including stock code, start date, security name, end date, announcement date, change reason, etc."
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "start_date"
@@ -410,7 +410,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "开始日期"
-msgstr ""
+msgstr "Start Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "varchar(8)"

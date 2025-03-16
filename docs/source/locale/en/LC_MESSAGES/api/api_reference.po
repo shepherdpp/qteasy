@@ -21,15 +21,15 @@ msgstr ""
 
 #: ../../source/api/api_reference.rst:2
 msgid "配置QTEASY"
-msgstr ""
+msgstr "Configure QTEASY"
 
 #: ../../source/api/api_reference.rst:4
 msgid "查看qteasy的当前系统配置信息:"
-msgstr ""
+msgstr "View the current system configuration information of qteasy:"
 
 #: of qteasy.configure.configuration:1
 msgid "显示qt当前的配置变量，"
-msgstr ""
+msgstr "View the current configuration variables of qteasy:"
 
 #: of qteasy.configure.configuration qteasy.configure.configure
 #: qteasy.configure.get_config qteasy.configure.get_configurations
@@ -37,7 +37,7 @@ msgstr ""
 #: qteasy.configure.reset_config qteasy.configure.save_config
 #: qteasy.configure.set_config qteasy.configure.update_start_up_setting
 msgid "参数"
-msgstr ""
+msgstr "Parameters"
 
 #: of qteasy.configure.configuration:3 qteasy.configure.get_config:3
 #: qteasy.configure.get_configurations:3

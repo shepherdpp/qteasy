@@ -25,27 +25,27 @@ msgstr "Historical Prices"
 
 #: ../../source/manage_data/3. data_tables_30.md:3
 msgid "`qteasy`内置大量的行情数据表，包含股票、基金、指数、期货、期权等不同资产类型的不同频率的K线行情数据。大部分行情数据都包含从1分钟到1小时的中高频K线数据，以及日K线、周、月等低频K线数据。"
-msgstr ""
+msgstr "There are a large number of historical price tables built into `qteasy`, including different asset types such as stocks, funds, indices, futures, and options, with different frequency K-line data. Most of the price data includes medium to high frequency K-line data from 1 minute to 1 hour, as well as low frequency K-line data such as daily, weekly, and monthly."
 
 #: ../../source/manage_data/3. data_tables_30.md:5
 msgid "除了行情数据表之外，还包含了一些特殊的行情数据表，例如股票复权因子表、特殊指数的日K线行情表等。"
-msgstr ""
+msgstr "Apart from the price data tables, there are also some special price data tables, such as the stock adjustment factor table and the daily K-line price table of special indices."
 
 #: ../../source/manage_data/3. data_tables_30.md:7
 msgid "股票行情数据表："
-msgstr ""
+msgstr "Stock market price data tables:"
 
 #: ../../source/manage_data/3. data_tables_30.md:9
 msgid "股票分钟K线行情: `stock_1min`"
-msgstr ""
+msgstr "Stock minute K-line data: `stock_1min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:10
 msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `E`, data frequency: `1min` Table rule: 30 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:13
 msgid "股票分钟K线行情表包含了所有股票的1分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "Minute K-line data table for all stocks, including stock code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "columns"
@@ -77,7 +77,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "证券代码"
-msgstr ""
+msgstr "Stock code"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "Y"
@@ -97,7 +97,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "交易日期时间"
-msgstr ""
+msgstr "Trade date and time"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "2"
@@ -113,7 +113,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "开盘价"
-msgstr ""
+msgstr "Opening price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "N"
@@ -129,7 +129,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "最高价"
-msgstr ""
+msgstr "Highest price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "4"
@@ -141,7 +141,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "最低价"
-msgstr ""
+msgstr "Lowest price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "5"
@@ -153,7 +153,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "收盘价"
-msgstr ""
+msgstr "Closing price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "6"
@@ -169,7 +169,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交量(股)"
-msgstr ""
+msgstr "Volume (shares)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "7"
@@ -181,39 +181,39 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交额(元)"
-msgstr ""
+msgstr "Value of transactions (RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md:26
 msgid "股票5分钟K线行情: `stock_5min`"
-msgstr ""
+msgstr "5-minute K-line data for stocks: `stock_5min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:27
 msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `E`, data frequency: `5min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:30
 msgid "股票5分钟K线行情表包含了所有股票的5分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "5-minute K-line data table for all stocks, including stock code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:43
 msgid "股票15分钟K线行情: `stock_15min`"
-msgstr ""
+msgstr "15-minute K-line data for stocks: `stock_15min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:44
 msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `E`, data frequency: `15min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:47
 msgid "股票15分钟K线行情表包含了所有股票的15分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "15-minute K-line data table for all stocks, including stock code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:60
 msgid "股票30分钟K线行情: `stock_30min`"
-msgstr ""
+msgstr "30-minute K-line data for stocks: `stock_30min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:61
 msgid "数据表用途: `mins`, 资产类型: `E`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `E`, data frequency: `30min` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:64
 msgid "股票30分钟K线行情表包含了所有股票的30分钟K线行情数据，包括股票代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"

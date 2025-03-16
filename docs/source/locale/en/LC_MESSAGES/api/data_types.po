@@ -21,5 +21,5 @@ msgstr ""
 
 #: ../../source/api/data_types.rst:2
 msgid "管理历史数据的类型——DataType对象"
-msgstr ""
+msgstr "Historical Data Types - DataType Object"
 

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/use_qteasy.rst:2
 msgid "启动QTEASY"
-msgstr ""
+msgstr "Start QTEASY"
 
 #: ../../source/api/use_qteasy.rst:4
 msgid "启动qteasy的配置信息:"

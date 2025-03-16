@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/api/Operators.rst:2
 msgid "Operator交易员 类"
-msgstr ""
+msgstr "Operator Class"
 
 #: ../../source/api/Operators.rst:4
 msgid "交易员类Operator:"

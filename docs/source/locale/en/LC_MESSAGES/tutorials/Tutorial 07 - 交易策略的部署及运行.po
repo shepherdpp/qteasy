@@ -21,7 +21,7 @@ msgstr ""
 
 #: - ../../source/tutorials/Tutorial 07 交易策略的部署及运行.md:1
 msgid "交易策略的部署运行"
-msgstr ""
+msgstr "Deploy Strategies"
 
 #: - ../../source/tutorials/Tutorial 07 交易策略的部署及运行.md:3
 msgid "TO BE COMPLETED"
