@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-03-18 21:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -73,15 +73,16 @@ msgstr "Willkommen bei der ``QTEASY``-Dokumentation!"
 
 #: ../../source/index.rst:15
 msgid ""
-"目前 ``qteasy`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
+"目前 ``QTEASY`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
 "`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
 "Derzeit befindet sich ``qteasy`` in der intensiven Entwicklungs- und "
 "Testphase und die Software weist zwangsläufig einige Schwachstellen und "
 "Fehler auf. Wenn Sie während der Verwendung auf Probleme stoßen, können "
-"Sie mir gerne ein ``Problem melden`` oder eine ``Anforderung für eine neue "
-"Funktion`` senden. Sie können auch den ``Diskussionsbereich`` aufrufen, um "
-"an der Diskussion teilzunehmen. Beiträge werden sehr geschätzt!"
+"Sie mir gerne ein ``Problem melden`` oder eine ``Anforderung für eine "
+"neue Funktion`` senden. Sie können auch den ``Diskussionsbereich`` "
+"aufrufen, um an der Diskussion teilzunehmen. Beiträge werden sehr "
+"geschätzt!"
 
 #: ../../source/index.rst:21
 msgid "作者: **Jackie PENG**"
@@ -96,8 +97,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Erstellt: 16. Juli 2019"
 
 #: ../../source/index.rst:24
-msgid "最新版本: `1.4.8`"
-msgstr "Neueste Version: `1.4.8`"
+msgid "最新版本: `1.4.9`"
+msgstr "Neueste Version: `1.4.9`"
 
 #: ../../source/index.rst:25
 msgid "License: BSD 3-Clause"

@@ -96,9 +96,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Creado: 16 de julio de 2019"
 
 #: ../../source/index.rst:24
-#, fuzzy
 msgid "最新版本: `1.4.9`"
-msgstr "Última versión: `1.4.8`"
+msgstr "Última versión: `1.4.9`"
 
 #: ../../source/index.rst:25
 msgid "License: BSD 3-Clause"
