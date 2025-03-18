@@ -1,17 +1,5 @@
 # FAQ
 
-## 问题目录
-
-- [如何搭建不同python版本的安装环境](如何搭建不同python版本的安装环境)
-- [使用国内的pip镜像源](使用国内的pip镜像源)
-- [如何安装TA-Lib](如何安装TA-Lib)
-- [python3.11环境下安装qteasy失败](在较高版本python环境中安装qteasy)
-- [连接数据库失败](在qteasy.cfg中添加配置信息后，为何仍然提示数据库连接失败)
-- [系统提示建议安装sqlalchemy](从数据库中读取数据时，为什么会出现提示建议安装\`sqlalchemy\`\？)
-- [从tushare下载数据受频率限制失败](从tushare下载数据时提示下载频率过高而失败)
-
----
-
 ## 如何搭建不同python版本的安装环境
 
 在`qteasy` Tutorial中，我们介绍了使用`venv`创建虚拟环境安装`qteasy`的方法。但是，有时候用户可能需要在不同的`python`版本下安装`qteasy`，例如在`python`3.9、`python`3.10、`python`3.11、`python`3.12等等版本下安装`qteasy`。这里我们介绍一种方法，可以在不同的`python`版本下安装`qteasy`。
