@@ -25,265 +25,280 @@ msgstr "Data Fetching Channels"
 
 #: ../../source/manage_data/4. data_channels.md:3
 msgid "前面介绍过`DataSource`对象的基本操作方法，但是在实际使用中，我们需要往`DataSource`对象中填充大量数据，如果使用前面章节介绍的`DataSource.update_table_data()`方法手动填充数据，这样的工作量是非常大的。"
-msgstr ""
+msgstr "We have introduced the basic operation methods of the `DataSource` object before, but in actual use, we need to fill a large amount of data into the `DataSource` object. If we use the `DataSource.update_table_data()` method introduced in the previous chapter to fill data manually, the workload is very large."
 
 #: ../../source/manage_data/4. data_channels.md:5
 msgid "这里我们介绍如何使用数据获取渠道自动填充数据。"
-msgstr ""
+msgstr "Here we introduce how to use data acquisition channels to automatically fill data."
 
 #: ../../source/manage_data/4. data_channels.md:7
 msgid "QTEASY数据拉取功能"
-msgstr ""
+msgstr "How QTEASY Data Fetching Works"
 
 #: ../../source/manage_data/4. data_channels.md:9
 msgid "`QTEASY`数据管理模块: ![数据获取模块结构](img/DataFetching.png)"
-msgstr ""
+msgstr "`QTEASY` Data Management Module: ![Data Fetching Module Structure](img/DataFetching.png)"
 
 #: ../../source/manage_data/4. data_channels.md:9
 msgid "数据获取模块结构"
-msgstr ""
+msgstr "Structure of Data Fetching Module"
 
 #: ../../source/manage_data/4. data_channels.md:11
 msgid "如上图所示，`qteasy`的数据功能分为三层，第一层包括多种数据下载接口，用于从网络数据提供商获取数据，这个过程称为`DataFetching`。"
-msgstr ""
+msgstr "As shown in the above figure, the data function of `qteasy` is divided into three layers. The first layer includes a variety of data download interfaces, which are used to obtain data from network data providers. This process is called `DataFetching`."
 
 #: ../../source/manage_data/4. data_channels.md:13
 msgid "数据拉取接口`refill_data_source()`"
-msgstr ""
+msgstr "API `refill_data_source()`"
 
 #: ../../source/manage_data/4. data_channels.md:15
 msgid "`qteasy`提供了一个自动化数据下载接口`qteasy.refill_data_source()`，可以从多个不同的网络数据提供商拉取多种金融数据，满足不同用户的使用习惯。`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
-msgstr ""
+msgstr "There is an automated data download interface `qteasy.refill_data_source()` provided by `qteasy`, which can pull various financial data from multiple network data providers to meet the usage habits of different users. The data fetching API provided by `qteasy` has powerful multi-threaded parallel download, data block download, download traffic control, and error delay retry functions to adapt to various abnormal traffic restrictions of different data suppliers. At the same time, the data fetching API can easily run automatically on a regular basis to complete data batch download tasks without worrying about missing high-frequency data."
 
 #: ../../source/manage_data/4. data_channels.md:17
 msgid "下面先用一个例子解释如何使用`qteasy.refill_data_source()`接口自动填充数据。我们先创建一个不含数据的`DataSource`对象，并向其中填充最基本的数据。"
-msgstr ""
+msgstr "Let't explain how to use the `qteasy.refill_data_source()` interface to automatically fill data with an example. First, create a `DataSource` object without data and fill it with the most basic data."
 
 #: ../../source/manage_data/4. data_channels.md:37
 msgid "我们可以看到，`DataSource`对象中已经有了一些数据表，为了进行下面的测试，我们将首先删除`trade_calendar`以及`stock_daily`两张数据表中的数据，然后再使用数据拉取接口自动填充它们。"
-msgstr ""
+msgstr "We can see that there are already some data tables in the `DataSource` object. To perform the following tests, we will first delete the data in the two data tables `trade_calendar` and `stock_daily`, and then use the data fetching interface to automatically fill them."
 
 #: ../../source/manage_data/4. data_channels.md:39
 msgid "首先删除两张数据表，为了删除数据表，首先将数据源的`allow_drop_table`属性设置为`True`，然后再删除数据表。"
-msgstr ""
+msgstr "First delete the two data tables. To delete a data table, first set the `allow_drop_table` attribute of the data source to `True`, and then delete the data table."
 
 #: ../../source/manage_data/4. data_channels.md:58
 msgid "可以看到，`trade_calendar`和`stock_daily`两张数据表中的数据已经被删除。"
-msgstr ""
+msgstr "We can see that the data in the two data tables `trade_calendar` and `stock_daily` has been deleted."
 
 #: ../../source/manage_data/4. data_channels.md:60
 msgid "接下来，我们使用`qteasy.refill_data_source()`接口自动填充数据，代码很简单，只有一行，剩下的工作`qteasy`会自动完成。"
-msgstr ""
+msgstr "Then, we use the `qteasy.refill_data_source()` interface to automatically fill the data. The code is very simple, only one line, and the rest of the work will be automatically completed by `qteasy`."
 
 #: ../../source/manage_data/4. data_channels.md:79
 msgid "拉取并填充数据后，可以检查数据已经下载成功了："
-msgstr ""
+msgstr "Fetch and fill the data, and check that the data has been downloaded successfully:"
 
 #: ../../source/manage_data/4. data_channels.md:146
 msgid "数据拉取API的功能特性"
-msgstr ""
+msgstr "Features of Data Fetching API"
 
 #: ../../source/manage_data/4. data_channels.md:148
 msgid "分析数据拉取的过程，我们可以看到，`qteasy`自动完成了下面的工作："
-msgstr ""
+msgstr "Take a closer look at the data fetching process, we can see that `qteasy` automatically completes the following tasks:"
 
 #: ../../source/manage_data/4. data_channels.md:150
 msgid ""
 "**自动查找依赖表** —— "
 "虽然我们只指定了`stock_daily`数据表，但是`qteasy`自动检测到`trade_calendar`数据表也是空的，且`stock_daily`表依赖交易日历表，所以也自动填充了`trade_calendar`数据表。"
 msgstr ""
+"**Automatic Detection of Dependent Tables** —— "
+"Although we only specified the `stock_daily` data table, `qteasy` automatically detected that the `trade_calendar` data table was also empty, and the `stock_daily` table depends on the trading calendar table, so the `trade_calendar` data table was also automatically filled."
 
 #: ../../source/manage_data/4. data_channels.md:151
 msgid ""
 "**下载进度可视化** —— "
 "`qteasy`提供了下载进度可视化，可以看到每个数据分块的下载进度，以及总体下载进度，过程中可以显示剩余时间，方便用户查看数据下载的情况。"
 msgstr ""
+"**Visualization of Download Progress** —— "
+"`qteasy` provides visualization of the download progress, which shows the download progress of each data block and the overall download progress. The remaining time can be displayed during the process, making it easy for users to check the data download status."
 
 #: ../../source/manage_data/4. data_channels.md:152
 msgid ""
 "**大数据量自动分块** —— "
 "上面的代码下载了2021年全年所有股票的日K线数据，这些数据量共有239万行，不管从任何数据渠道，这么大量的数据都不可能一次性下载下来，因此，`qteasy`自动将数据分块，每一块只有一天的数据，可以看到整年的数据被分成了243块，数据分块下载显著降低了每次网络申请的数据量，提高成功率且降低了被阻断的风险。"
 msgstr ""
+"**Automatic Data Chunking for Large Data Volumes** —— "
+"The above code downloads the daily K-line data of all stocks in 2021. These data have a total of 2.39 million rows. No matter from any data channel, such a large amount of data cannot be downloaded all at once. Therefore, `qteasy` automatically divides the data into blocks, with only one day of data in each block. You can see that the data for the whole year is divided into 243 blocks. Data chunking significantly reduces the amount of data requested each time, improves the success rate, and reduces the risk of being blocked."
 
 #: ../../source/manage_data/4. data_channels.md:153
 msgid ""
 "**多线程并行下载** —— "
 "实行数据分块下载后，`qteasy`自动使用多线程并行下载，加快数据下载速度，243个数据分块并行下载总共耗时仅16秒。"
 msgstr ""
+"**Multi-threaded Parallel Download** —— "
+"After implementing data chunking, `qteasy` automatically uses multi-threaded parallel download to speed up data download. The total time for parallel download of 243 data blocks is only 16 seconds."
 
 #: ../../source/manage_data/4. data_channels.md:155
 msgid "有了上面这些特性，`qteasy`的数据拉取功能可以满足几乎所有用户的数据获取需求，不管是下载大量数据，还是下载高频数据，`qteasy`都能提供高效的数据下载服务。"
-msgstr ""
+msgstr "With these features, `qteasy`'s data fetching function can meet the data acquisition needs of almost all users, whether it is downloading a large amount of data or high-frequency data, `qteasy` can provide efficient data download services."
 
 #: ../../source/manage_data/4. data_channels.md:157
 msgid "当然，除了上面提到的这些特性之外，`qteasy`还提供了更多的功能特性，以针对下载过程中出现的各种状况，这些功能特性我们在后面会逐步介绍："
-msgstr ""
+msgstr "Of course, in addition to the features mentioned above, `qteasy` also provides more functional features to deal with various situations that may occur during the download process. We will introduce these functional features step by step later:"
 
 #: ../../source/manage_data/4. data_channels.md:159
 msgid "**多渠道下载** —— `qteasy`提供了多种数据下载渠道，很多数据表可以从多个不同的渠道下载，而且随着版本更新，数据拉取渠道也在不断增加。"
-msgstr ""
+msgstr "**Multi-channel Download** —— `qteasy` provides multiple data download channels, and many data tables can be downloaded from multiple different channels. With the version update, the data fetching channels are also constantly increasing."
 
 #: ../../source/manage_data/4. data_channels.md:160
 msgid ""
 "**流量控制** —— "
 "有些数据渠道对数据下载有流量限制，`qteasy`提供了流量控制功能，可以限制数据下载的速度，即下载一定分块数量的数据后，可以暂停一段时间，例如每下载300个分块的数据，就暂停一分钟，避免被数据渠道封禁。"
 msgstr ""
+"**Traffic Control** —— "
+"Some data channels have traffic restrictions on data downloads. `qteasy` provides traffic control functions, which can limit the download speed of data. After downloading a certain number of data blocks, you can pause for a period of time. For example, pause for one minute after downloading 300 data blocks to avoid being blocked by the data channel."
 
 #: ../../source/manage_data/4. data_channels.md:161
 msgid ""
 "**错误重试** —— "
 "有些数据渠道下载数据时，可能会出现网络错误，`qteasy`提供了错误重试功能，可以在下载失败后，自动重试下载，如果重试不成功，会延长重试等待时间再试，直到下载成功或超过重试次数并报错。"
 msgstr ""
+"**Error Retry** —— "
+"Some data channels may encounter network errors when downloading data. `qteasy` provides error retry functions, which can automatically retry downloading after a download failure. If the retry is unsuccessful, the retry wait time will be extended until the download is successful or the retry limit is reached and an error is reported."
 
 #: ../../source/manage_data/4. data_channels.md:162
 msgid ""
 "**日志记录** —— "
 "`qteasy`提供了数据下载日志记录功能，可以记录每次数据下载的详细信息，包括下载的数据量、下载的时间、下载的速度等，方便用户查看数据下载的情况。"
 msgstr ""
+"**Logging** —— "
+"`qteasy` provides data download logging functions, which can record detailed information about each data download, including the amount of data downloaded, the time of download, the download speed, etc., making it easy for users to check the data download status."
 
 #: ../../source/manage_data/4. data_channels.md:164
 msgid "多渠道拉取数据"
-msgstr ""
+msgstr "Multi-channel Data Fetching"
 
 #: ../../source/manage_data/4. data_channels.md:166
 msgid "`qteasy`提供了多种数据下载渠道，很多数据表可以从多个不同的渠道下载，而且随着版本更新，数据拉取渠道也在不断增加。"
-msgstr ""
+msgstr "`qteasy` provides multiple data download channels, and many data tables can be downloaded from multiple different channels. With the version update, the data fetching channels are also constantly increasing."
 
 #: ../../source/manage_data/4. data_channels.md:168
 msgid ""
 "refill_data_source()接口的channel参数可以指定数据下载渠道，如果不指定，`qteasy`会自动选择一个默认的数据下载渠道`tushare`，但是用户也可以手动指定数据下载渠道，例如"
 " ："
 msgstr ""
+"The `channel` parameter of the refill_data_source() interface can specify the data download channel. If not specified, `qteasy` will automatically select a default data download channel `tushare`. However, users can also manually specify the data download channel, for example:"
 
 #: ../../source/manage_data/4. data_channels.md:170
 msgid "下面的代码尝试从`eastmoney`数据渠道下载`stock_daily`数据表从2025年最初两个月的日K线数据："
-msgstr ""
+msgstr "Following code tries to download the daily K-line data of the `stock_daily` data table from the `eastmoney` data channel for the first two months of 2025:"
 
 #: ../../source/manage_data/4. data_channels.md:188
 msgid "验证一下数据是否下载成功："
-msgstr ""
+msgstr "Let's check if the data has been downloaded successfully:"
 
 #: ../../source/manage_data/4. data_channels.md:244
 msgid "数据下载显然也是成功的。分析上面的下载过程，可以发现几个特点："
-msgstr ""
+msgstr "Clearly, the data download was successful. Analyzing the download process above, we can find several characteristics:"
 
 #: ../../source/manage_data/4. data_channels.md:246
 msgid "不同渠道下载的数据格式是相同的，这是`qteasy`的设计原则，不同的数据下载渠道下载的数据会经历相同的清洗过程，这样用户可以方便地切换不同的数据下载渠道，而不用担心数据格式不同导致的数据处理问题。"
-msgstr ""
+msgstr "Data formats downloaded from different channels are the same. This is the design principle of `qteasy`. Data downloaded from different data channels will undergo the same cleaning process, so users can easily switch between different data download channels without worrying about data processing problems caused by different data formats."
 
 #: ../../source/manage_data/4. data_channels.md:247
 msgid "不同的渠道下载分块方式不同，导致下载速度不同，`eastmoney`数据渠道下载速度较慢，需要约17分钟才能下载完成。这是由于不同下载渠道的特殊限制决定的。"
-msgstr ""
+msgstr "The data download speed of different channels is different due to different data block download methods. The `eastmoney` data channel has a slower download speed and takes about 17 minutes to complete the download. This is determined by the special restrictions of different download channels."
 
 #: ../../source/manage_data/4. data_channels.md:248
 msgid "不同渠道的下载可以下载的数据表也不同，有些数据表无法通过某些渠道下载，可能是因为权限限制或者其他因素导致的，如果某个数据表无法下载，`qteasy`会自动跳过这个数据表，不会影响其他数据表的下载。"
-msgstr ""
+msgstr "Available data tables for download from different channels are also different. Some data tables cannot be downloaded through certain channels, which may be due to permission restrictions or other factors. If a data table cannot be downloaded, `qteasy` will automatically skip this data table without affecting the download of other data tables."
 
 #: ../../source/manage_data/4. data_channels.md:250
 msgid "因此，用户需要根据自身的情况选择不同的渠道拉取数据。"
-msgstr ""
+msgstr "Therefore, users need to choose different channels to fetch data according to their own situation."
 
 #: ../../source/manage_data/4. data_channels.md:252
 msgid "实现下载流量控制"
-msgstr ""
+msgstr "Realize Download Traffic Control"
 
 #: ../../source/manage_data/4. data_channels.md:254
 msgid "`qteasy`的`refill_data_source`提供了流量控制功能，可以限制数据下载的速度，即下载一定分块数量的数据后，可以暂停一段时间，例如每下载300个分块的数据，就暂停一分钟，避免被数据渠道封禁。"
-msgstr ""
+msgstr "`qteasy`'s `refill_data_source` provides traffic control functions, which can limit the download speed of data. After downloading a certain number of data blocks, you can pause for a period of time. For example, pause for one minute after downloading 300 data blocks to avoid being blocked by the data channel."
 
 #: ../../source/manage_data/4. data_channels.md:256
 msgid "这个功能通过refill_data_source()接口的`download_batch_size`和`download_batch_interval`两个参数实现："
-msgstr ""
+msgstr "This function is implemented through the `download_batch_size` and `download_batch_interval` parameters of the refill_data_source() interface:"
 
 #: ../../source/manage_data/4. data_channels.md:258
 msgid "`download_batch_size`参数指定每次下载的数据分块数量，如果设置为300，则在下载300个数据分块后，会暂停一段时间。"
-msgstr ""
+msgstr "The `download_batch_size` parameter specifies the number of data blocks downloaded each time. If set to 300, it will pause for a period of time after downloading 300 data blocks."
 
 #: ../../source/manage_data/4. data_channels.md:259
 msgid "`download_batch_interval`参数指定每次下载数据分块后的暂停时间，默认为0，即不暂停。"
-msgstr ""
+msgstr "The `download_batch_interval` parameter specifies the pause time after downloading each data block, with a default value of 0, which means no pause."
 
 #: ../../source/manage_data/4. data_channels.md:261
 msgid "下面的代码演示了如何使用`download_batch_size`和`download_batch_interval`参数实现下载流量控制："
-msgstr ""
+msgstr "Following snippet demonstrates how to use the `download_batch_size` and `download_batch_interval` parameters to implement download traffic control:"
 
 #: ../../source/manage_data/4. data_channels.md:275
 msgid "如果是用流量控制，当然下载时间会变长，但是对于某些数据渠道，这是必须的，否则可能会被封禁或报错导致下载失败。"
-msgstr ""
+msgstr "If traffic control is used, the download time will be longer, but for some data channels, this is necessary, otherwise it may be blocked or reported an error, resulting in download failure."
 
 #: ../../source/manage_data/4. data_channels.md:277
 msgid "实现错误重试"
-msgstr ""
+msgstr "Error Retry"
 
 #: ../../source/manage_data/4. data_channels.md:279
 msgid "需要注意的是，数据下载过程中出错，`qteasy`会自动重试下载，重试机制如下："
-msgstr ""
+msgstr "Please note that if an error occurs during the data download process, `qteasy` will automatically retry the download. The retry mechanism is as follows:"
 
 #: ../../source/manage_data/4. data_channels.md:281
 msgid "第一次下载失败后重试之前会等待一段时间，默认等待时间为1.0秒"
-msgstr ""
+msgstr "Wait for a period of time before retrying after the first download failure, with a default wait time of 1.0 second"
 
 #: ../../source/manage_data/4. data_channels.md:282
 msgid "每次重试失败后，等待时间都会增加，默认等待时间增加为2倍，即第一次等待1.0秒，第二次等待2.0秒，第三次等待4.0秒，以此类推。"
-msgstr ""
+msgstr "The wait time will increase after each retry failure, with the default wait time doubling, i.e., the first wait is 1.0 second, the second wait is 2.0 seconds, the third wait is 4.0 seconds, and so on."
 
 #: ../../source/manage_data/4. data_channels.md:283
 msgid "重试超过最大限额后停止重试并报错，默认情况下最多重复7次。"
-msgstr ""
+msgstr "Stop retrying and report an error after exceeding the maximum limit. By default, it will be repeated up to 7 times."
 
 #: ../../source/manage_data/4. data_channels.md:285
 msgid "以上三个错误重试参数都是通过`qteasy`的配置文件在设定的，用户可以通过`qt.config()`接口查看或修改这些参数，也可以在`qteasy`的初始配置文件中修改这些参数。"
-msgstr ""
+msgstr "Above three error retry parameters are set through the `qteasy` configuration file. Users can view or modify these parameters through the `qt.config()` interface, or modify these parameters in the initial configuration file of `qteasy`."
 
 #: ../../source/manage_data/4. data_channels.md:287
 msgid "`hist_dnld_retry_cnt` - 最大重试次数，默认为7次"
-msgstr ""
+msgstr "`hist_dnld_retry_cnt` - Maximum number of retries, default is 7 times"
 
 #: ../../source/manage_data/4. data_channels.md:288
 msgid "`hist_dnld_retry_wait` - 第一次重试等待时间，默认为1.0秒"
-msgstr ""
+msgstr "`hist_dnld_retry_wait` - Retry wait time for the first time, default is 1.0 second"
 
 #: ../../source/manage_data/4. data_channels.md:289
 msgid "`hist_dnld_backoff` - 重试等待时间增加倍数，默认为2.0"
-msgstr ""
+msgstr "`hist_dnld_backoff` - Retry wait time increase factor, default is 2.0"
 
 #: ../../source/manage_data/4. data_channels.md:291
 msgid "关于如何修改配置文件，或者使用`qteasy`的初始配置文件，请参考[`qteasy`的配置文件章节](../api/api_reference.rst)。"
-msgstr ""
+msgstr "For how to modify the configuration file, or use the initial configuration file of `qteasy`, please refer to the [`qteasy` configuration file section](../api/api_reference.rst)."
 
 #: ../../source/manage_data/4. data_channels.md:293
 msgid "日志记录"
-msgstr ""
+msgstr "Logging"
 
 #: ../../source/manage_data/4. data_channels.md:295
 msgid "`qteasy`提供了数据下载日志记录功能，可以记录每次数据下载的详细信息，包括下载的数据量、下载的时间、下载的速度等，方便用户查看数据下载的情况。"
-msgstr ""
+msgstr "`qteasy` provides data download logging functions, which can record detailed information about each data download, including the amount of data downloaded, the time of download, the download speed, etc., making it easy for users to check the data download status."
 
 #: ../../source/manage_data/4. data_channels.md:297
 msgid "其他功能"
-msgstr ""
+msgstr "Other Features"
 
 #: ../../source/manage_data/4. data_channels.md:299
 msgid "`qteasy`的`refill_data_source()`接口还提供了其他一些功能，例如："
-msgstr ""
+msgstr "`qteasy`'s `refill_data_source()` interface also provides some other functions, such as:"
 
 #: ../../source/manage_data/4. data_channels.md:301
 msgid "限制下载数据的范围，可以通过`start_date`和`end_date`参数限制下载数据的时间范围，通过`shares`参数限制下载数据的股票范围。"
-msgstr ""
+msgstr "Limit the range of downloaded data. You can limit the time range of downloaded data by the `start_date` and `end_date` parameters, and limit the stock range of downloaded data by the `shares` parameter."
 
 #: ../../source/manage_data/4. data_channels.md:302
 msgid "设置是否并行下载，可以通过`parallel`参数设置是否并行下载，如果设置为False，则会串行下载，否则会并行下载。"
-msgstr ""
+msgstr "Toggle parallel download. You can set whether to download in parallel by the `parallel` parameter. If set to False, it will download serially, otherwise it will download in parallel."
 
 #: ../../source/manage_data/4. data_channels.md:303
 msgid "设置是否下载依赖表，可以通过`download_dependent`参数设置是否下载依赖表，如果设置为False，则不会下载依赖表，否则会下载依赖表。"
-msgstr ""
+msgstr "Toggle download of dependent tables. You can set whether to download dependent tables by the `download_dependent` parameter. If set to False, dependent tables will not be downloaded, otherwise they will be downloaded."
 
 #: ../../source/manage_data/4. data_channels.md:304
 msgid "设置是否强制更新交易日历表。"
-msgstr ""
+msgstr "Toggle force update of the trading calendar table."
 
 #: ../../source/manage_data/4. data_channels.md:306
 msgid "其他更多关于该接口的解释，请参见`qteasy`的[API文档](../api/history_data.rst)。"
-msgstr ""
+msgstr "Other explanations about this interface, please refer to the [`qteasy` API documentation](../api/history_data.rst)."
 

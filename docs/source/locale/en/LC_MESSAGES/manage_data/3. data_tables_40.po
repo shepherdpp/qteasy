@@ -25,25 +25,25 @@ msgstr "Public Company Financial Statements"
 
 #: ../../source/manage_data/3. data_tables_40.md:3
 msgid "上市公司财务报表数据"
-msgstr ""
+msgstr "Public Company Financial Statements"
 
 #: ../../source/manage_data/3. data_tables_40.md:5
 msgid "`qteasy`提供了上市公司的财务报表数据，包括利润表、资产负债表、现金流量表等。数据来源于tushare，数据频率为季度频率。"
-msgstr ""
+msgstr "`qteasy` provides public company financial statements, including income statements, balance sheets, cash flow statements, etc. The data comes from tushare and the data frequency is quarterly."
 
 #: ../../source/manage_data/3. data_tables_40.md:7
 msgid "上市公司利润表: `income`"
-msgstr ""
+msgstr "Public Company Income Statement: `income`"
 
 #: ../../source/manage_data/3. data_tables_40.md:8 data_tables_40.md:110
 #: data_tables_40.md:276 data_tables_40.md:381 data_tables_40.md:556
 #: data_tables_40.md:576
 msgid "数据表用途: `report`, 资产类型: `E`, 数据频率: `q`"
-msgstr ""
+msgstr "Usage: `report`, Asset Type: `E`, Data Frequency: `q`"
 
 #: ../../source/manage_data/3. data_tables_40.md:10
 msgid "利润表是上市公司的财务报表之一，主要包括营业总收入、营业收入、营业总成本、营业成本、营业税金及附加、销售费用、管理费用、财务费用、资产减值损失、营业利润、利润总额、所得税费用、净利润等信息。"
-msgstr ""
+msgstr "Income statement is one of the financial statements of public companies, mainly including total operating revenue, operating revenue, total operating costs, operating costs, business tax and surcharge, sales expenses, management expenses, financial expenses, asset impairment losses, operating profit, total profit, income tax expenses, net profit, etc."
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "columns"
@@ -75,7 +75,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "证券代码"
-msgstr ""
+msgstr "Security Code"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "Y"
@@ -95,7 +95,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "报告期"
-msgstr ""
+msgstr "Reporting Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "2"
@@ -107,7 +107,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "公告日期"
-msgstr ""
+msgstr "Announcement Date"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "N"
@@ -123,7 +123,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "实际公告日期"
-msgstr ""
+msgstr "Actual Announcement Date"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "4"
@@ -139,7 +139,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "报告类型 见底部表"
-msgstr ""
+msgstr "Report Type See Bottom Table"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "5"
@@ -151,7 +151,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "公司类型(1一般工商业2银行3保险4证券)"
-msgstr ""
+msgstr "Company Type (1 General Industry 2 Bank 3 Insurance 4 Securities)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "6"
@@ -163,7 +163,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "报告期类型"
-msgstr ""
+msgstr "Reporting Period Type"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "7"
@@ -179,7 +179,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "基本每股收益"
-msgstr ""
+msgstr "Basic Earnings Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "8"
@@ -191,7 +191,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "稀释每股收益"
-msgstr ""
+msgstr "Diuted Earnings Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "9"
@@ -203,7 +203,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总收入"
-msgstr ""
+msgstr "Total Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "10"
@@ -215,7 +215,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业收入"
-msgstr ""
+msgstr "Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "11"
@@ -227,7 +227,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利息收入"
-msgstr ""
+msgstr "Interest Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "12"
@@ -239,7 +239,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "已赚保费"
-msgstr ""
+msgstr "Premium Earned"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "13"
@@ -251,7 +251,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "手续费及佣金收入"
-msgstr ""
+msgstr "Commission Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "14"
@@ -263,7 +263,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "手续费及佣金净收入"
-msgstr ""
+msgstr "Net Commission Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "15"
@@ -275,7 +275,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他经营净收益"
-msgstr ""
+msgstr "Net Other Operating Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "16"
@@ -287,7 +287,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:其他业务净收益"
-msgstr ""
+msgstr "Net Other Business Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "17"
@@ -299,7 +299,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保险业务收入"
-msgstr ""
+msgstr "Premium Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "18"
@@ -311,7 +311,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:分出保费"
-msgstr ""
+msgstr "Minus: Premium Paid Out"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "19"
@@ -323,7 +323,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "提取未到期责任准备金"
-msgstr ""
+msgstr "Unearned Premium Reserve"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "20"
@@ -335,7 +335,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:分保费收入"
-msgstr ""
+msgstr "Reinsurance Premium Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "21"
@@ -347,7 +347,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "代理买卖证券业务净收入"
-msgstr ""
+msgstr "Net Securities Trading Business Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "22"
@@ -359,7 +359,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "证券承销业务净收入"
-msgstr ""
+msgstr "Net Securities Underwriting Business Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "23"
@@ -371,7 +371,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "受托客户资产管理业务净收入"
-msgstr ""
+msgstr "Net Asset Management Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "24"
@@ -383,7 +383,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他业务收入"
-msgstr ""
+msgstr "Other Business Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "25"
@@ -395,7 +395,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:公允价值变动净收益"
-msgstr ""
+msgstr "Fair Value Change Net Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "26"
@@ -407,7 +407,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:投资净收益"
-msgstr ""
+msgstr "Investment Net Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "27"

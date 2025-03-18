@@ -70,7 +70,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "证券代码"
-msgstr ""
+msgstr "Equity Code"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "Y"
@@ -90,7 +90,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "交易日期"
-msgstr ""
+msgstr "Trading Date"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "2"
@@ -106,7 +106,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "当日收盘价"
-msgstr ""
+msgstr "Closing Price of the Day"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "N"
@@ -122,7 +122,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "换手率(%)"
-msgstr ""
+msgstr "Turnover Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "4"
@@ -134,7 +134,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "换手率(自由流通股)"
-msgstr ""
+msgstr "Turnover Rate (Free Float Shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "5"
@@ -146,7 +146,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "量比"
-msgstr ""
+msgstr "Volume Ratio"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "6"
@@ -158,7 +158,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市盈率(总市值/净利润， 亏损的PE为空)"
-msgstr ""
+msgstr "Price-to-Earnings Ratio (Total Market Value/Net Profit, PE is empty for loss)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "7"
@@ -170,7 +170,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市盈率(TTM，亏损的PE为空)"
-msgstr ""
+msgstr "Price-to-Earnings Ratio (TTM, PE is empty for loss)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "8"
@@ -182,7 +182,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市净率(总市值/净资产)"
-msgstr ""
+msgstr "Price-to-Book Ratio (Total Market Value/Net Assets)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "9"
@@ -194,7 +194,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市销率"
-msgstr ""
+msgstr "Price-to-Sales Ratio"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "10"
@@ -206,7 +206,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市销率(TTM)"
-msgstr ""
+msgstr "Price-to-Sales Ratio (TTM)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "11"
@@ -218,7 +218,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "股息率(%)"
-msgstr ""
+msgstr "Dividend Yield (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "12"
@@ -230,7 +230,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "股息率(TTM)(%)"
-msgstr ""
+msgstr "Dividend Yield (TTM) (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "13"
@@ -246,7 +246,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "总股本(万股)"
-msgstr ""
+msgstr "Total Shares (10,000 Shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "14"
@@ -258,7 +258,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "流通股本(万股)"
-msgstr ""
+msgstr "Floating Stock (10,000 Shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "15"
@@ -270,7 +270,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "自由流通股本(万)"
-msgstr ""
+msgstr "Free Floating Stock (10,000 Shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "16"
@@ -282,7 +282,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "总市值(万元)"
-msgstr ""
+msgstr "Total Market Value (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "17"
@@ -294,15 +294,15 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "流通市值(万元)"
-msgstr ""
+msgstr "Circular Market Value (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_35.md:32
 msgid "股票技术指标表2: `stock_indicator2`"
-msgstr ""
+msgstr "Stock Technical Indicators Table 2: `stock_indicator2`"
 
 #: ../../source/manage_data/3. data_tables_35.md:35
 msgid "股票技术指标表2包含了股票的各种技术指标数据，例如市盈率、市净率、市销率、股息率、换手率等。"
-msgstr ""
+msgstr "Stock Technical Indicators Table 2 contains various technical indicator data for stocks, such as P/E ratio, P/B ratio, P/S ratio, dividend yield, and turnover rate."
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "vol_ratio"
@@ -314,7 +314,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "换手率"
-msgstr ""
+msgstr "Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "swing"
@@ -322,7 +322,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "振幅"
-msgstr ""
+msgstr "Swing"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "selling"
@@ -330,7 +330,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "内盘(主动卖，手)"
-msgstr ""
+msgstr "Selling (Active Selling, Hands)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "buying"
@@ -338,19 +338,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "外盘(主动买， 手)"
-msgstr ""
+msgstr "Buying (Active Buying, Hands)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "总股本(亿)"
-msgstr ""
+msgstr "Total Shares (100 million shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "流通股本(亿)"
-msgstr ""
+msgstr "Floating Stock (100 million shares)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "市盈(动)"
-msgstr ""
+msgstr "P/E (Dynamic)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "float_mv"
@@ -358,11 +358,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "流通市值"
-msgstr ""
+msgstr "Floating Market Value"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "总市值"
-msgstr ""
+msgstr "Total Market Value"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "avg_price"
@@ -370,7 +370,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "平均价"
-msgstr ""
+msgstr "Average Price"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "strength"
@@ -378,7 +378,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "强弱度(%)"
-msgstr ""
+msgstr "Strength (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "activity"
@@ -386,7 +386,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "活跃度(%)"
-msgstr ""
+msgstr "Activity (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "avg_turnover"
@@ -394,7 +394,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "笔换手"
-msgstr ""
+msgstr "Average Turnover"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "attack"
@@ -402,7 +402,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "攻击波(%)"
-msgstr ""
+msgstr "Attack Wave (%)"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "interval_3"
@@ -410,7 +410,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "近3月涨幅"
-msgstr ""
+msgstr "Return in the Last 3 Months"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "18"
@@ -422,19 +422,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "近6月涨幅"
-msgstr ""
+msgstr "Return in the Last 6 Months"
 
 #: ../../source/manage_data/3. data_tables_35.md:59
 msgid "港股技术指标: `hk_stock_indicator`"
-msgstr ""
+msgstr "Hong Kong Stock Technical Indicators: `hk_stock_indicator`"
 
 #: ../../source/manage_data/3. data_tables_35.md:60
 msgid "数据表用途: `not_implemented`, 资产类型: `HK`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `not_implemented`, Asset Type: `HK`, Data Frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_35.md:62
 msgid "港股技术指标数据表包含了港股的各种技术指标数据，例如市盈率、市净率、市销率、股息率、换手率等。"
-msgstr ""
+msgstr "Hong Kong Stock Technical Indicators Table contains various technical indicator data for Hong Kong stocks, such as P/E ratio, P/B ratio, P/S ratio, dividend yield, and turnover rate."
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "str"
@@ -442,7 +442,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "股票代码"
-msgstr ""
+msgstr "Stock Code"
 
 #: ../../source/manage_data/3. data_tables_35.md
 msgid "收盘价"
