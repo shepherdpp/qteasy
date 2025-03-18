@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -21,5 +21,25 @@ msgstr ""
 
 #: ../../source/api/data_source.rst:2
 msgid "历史数据的存储——DataSource对象"
+msgstr ""
+
+#: of qteasy.database.DataSource:1
+msgid "DataSource 对象管理存储在本地的历史数据文件或数据库."
+msgstr ""
+
+#: of qteasy.database.DataSource:3
+msgid ""
+"通过DataSource对象，History模块可以容易地从本地存储的数据中读取并组装所需要的历史数据 "
+"并确保历史数据符合HistoryPanel的要求。 "
+"所有的历史数据必须首先从网络数据提供商处下载下来并存储在本地文件或数据库中，DataSource "
+"对象会检查数据的格式，确保格式正确并删除重复的数据。 下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样 "
+"的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf, "
+"fth(feather)，兼容的数据库包括mysql和MariaDB。 "
+"如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会 返回空DataFrame。 "
+"DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作"
+msgstr ""
+
+#: of qteasy.database.DataSource:16
+msgid "以表格形式列出所有数据表的当前数据状态"
 msgstr ""
 

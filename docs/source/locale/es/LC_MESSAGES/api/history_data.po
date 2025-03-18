@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -35,8 +35,245 @@ msgstr ""
 msgid "查找支持历史数据"
 msgstr ""
 
+#: of qteasy.datatypes.find_history_data:1
+msgid "根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型。"
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
+#: qteasy.core.get_basic_info qteasy.core.get_data_overview
+#: qteasy.core.get_history_data qteasy.core.get_stock_info
+#: qteasy.core.get_table_overview qteasy.core.refill_data_source
+#: qteasy.datatypes.find_history_data
+msgid "参数"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:4
+msgid "一个字符串，用于查找或匹配历史数据类型"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:6
+msgid ""
+"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True  - False: 仅匹配数据名称  - True:  "
+"同时匹配数据描述"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:8
+msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:8
+msgid "False: 仅匹配数据名称"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:9
+msgid "True:  同时匹配数据描述"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:11
+msgid ""
+"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True  - False: 精确匹配数据名称  - "
+"True:  模糊匹配数据名称或数据描述"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:13
+msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:13
+msgid "False: 精确匹配数据名称"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:14
+msgid "True:  模糊匹配数据名称或数据描述"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:16
+msgid "数据频率，如果提供，则只匹配该频率的数据 可以输入单个频率，也可以输入逗号分隔的多个频率"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:19
+msgid "证券类型，如果提供，则只匹配该证券类型的数据 可以输入单个证券类型，也可以输入逗号分隔的多个证券类型"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:22
+msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
+msgstr ""
+
+#: of qteasy.core.filter_stocks qteasy.core.get_basic_info
+#: qteasy.core.get_data_overview qteasy.core.get_history_data
+#: qteasy.core.get_stock_info qteasy.datatypes.find_history_data
+msgid "返回"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:25
+msgid "**data_id** -- 匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据"
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
+#: qteasy.core.get_basic_info qteasy.core.get_stock_info
+#: qteasy.core.get_table_overview qteasy.core.refill_data_source
+#: qteasy.datatypes.find_history_data
+msgid "返回类型"
+msgstr ""
+
+#: of qteasy.core.filter_stocks:17 qteasy.core.get_basic_info:37
+#: qteasy.core.get_data_overview:16 qteasy.core.get_history_data:130
+#: qteasy.core.get_table_info:32 qteasy.core.refill_data_source:74
+#: qteasy.datatypes.find_history_data:29
+msgid "示例"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data
+msgid "抛出"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:72
+msgid "输入的s不是字符串，或者freq/asset_type不是字符串或列表:"
+msgstr ""
+
 #: ../../source/api/history_data.rst:14
 msgid "下载历史数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:1
+msgid "从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:3
+msgid ""
+"数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 'stock_daily, "
+"stock_weekly' 也可以给出数据表的用途，如 'data, basic'"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:7
+msgid "需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:9
+msgid ""
+"数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
+" - 'akshare'     : 从AKshare API获取金融数据 - 'eastmoney'   : 从东方财富网获取金融数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:9
+msgid "数据获取渠道，金融数据API，支持以下选项:"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:11
+msgid "'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:12
+msgid "'akshare'     : 从AKshare API获取金融数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:13
+msgid "'eastmoney'   : 从东方财富网获取金融数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:15
+msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:17
+msgid "需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:19
+msgid "需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:21
+msgid "需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:23
+msgid "是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:25
+msgid "是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:27 qteasy.core.refill_data_source:29
+msgid "限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:31
+msgid ""
+"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含"
+" 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
+"例如，下载stock_basic表数据时，下载以下输入均为合法输入：  - 'SZSE'     仅下载深圳交易所的股票数据 - ['SSE', "
+"'SZSE'] - 'SSE, SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:31
+msgid ""
+"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含"
+" 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
+"例如，下载stock_basic表数据时，下载以下输入均为合法输入："
+msgstr ""
+
+#: of qteasy.core.refill_data_source:35
+msgid "'SZSE'"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:36
+msgid "仅下载深圳交易所的股票数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:37
+msgid "['SSE', 'SZSE']"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:38
+msgid "'SSE, SZSE'"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:39
+msgid "上面两种写法等效，下载上海和深圳交易所的股票数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:41
+msgid "用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:43
+msgid "是否逆序参数下载数据， 默认False - True:  逆序参数下载数据 - False: 顺序参数下载数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:47
+msgid "是否启用多线程下载数据 - True:  启用多线程下载数据 - False: 禁用多线程下载"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:51
+msgid "启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:53
+msgid "保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后 再批量保存到本地，chunk_size即批量，默认值100"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:56
+msgid ""
+"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
+"该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 如果为0，则不暂停，一次性下载所有数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:60
+msgid ""
+"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
+"该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 如果<=0，则不暂停，立即开始下一批数据下载"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:64
+msgid ""
+"数据写入数据源时的合并方式，支持以下选项： - 'update'  : 更新数据，如果数据已存在，则更新数据 - 'ignore'  : "
+"忽略数据，如果数据已存在，则丢弃下载的数据"
+msgstr ""
+
+#: of qteasy.core.refill_data_source:68
+msgid "是否记录数据下载日志"
 msgstr ""
 
 #: ../../source/api/history_data.rst:18
@@ -47,15 +284,703 @@ msgstr ""
 msgid "检查本地数据"
 msgstr ""
 
+#: of qteasy.core.get_table_info:2
+msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容"
+msgstr ""
+
+#: of qteasy.core.get_table_info:2
+msgid "以及数据列的名称、数据类型及说明"
+msgstr ""
+
+#: of qteasy.core.get_table_info:5
+msgid "Parameters:"
+msgstr ""
+
+#: of qteasy.core.get_table_info:6
+msgid "table_name: str"
+msgstr ""
+
+#: of qteasy.core.get_table_info:7
+msgid "需要查询的数据表名称"
+msgstr ""
+
+#: of qteasy.core.get_table_info:8
+msgid "data_source: DataSource"
+msgstr ""
+
+#: of qteasy.core.get_table_info:9
+msgid "需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息"
+msgstr ""
+
+#: of qteasy.core.get_table_info:11
+msgid "verbose: bool, Default: True，"
+msgstr ""
+
+#: of qteasy.core.get_table_info:11
+msgid "是否打印完整数据列名称及类型清单"
+msgstr ""
+
+#: of qteasy.core.get_table_info
+msgid "returns"
+msgstr ""
+
+#: of qteasy.core.get_table_info:26
+msgid "{"
+msgstr ""
+
+#: of qteasy.core.get_table_info:16
+msgid ""
+"table name:    数据表名称 table_exists:  bool，数据表是否存在 table_size:    "
+"int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    "
+"int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  str，数据表第一个主键名称 "
+"pk_count1:     int，数据表第一个主键记录数量 pk_min1:       obj，数据表主键1起始记录 pk_max1:"
+"       obj，数据表主键2最终记录 primary_key2:  str，数据表第二个主键名称 pk_count2:     "
+"int，数据表第二个主键记录 pk_min2:       obj，数据表主键2起始记录 pk_max2:       "
+"obj，数据表主键2最终记录"
+msgstr ""
+
+#: of qteasy.core.get_table_info:28
+msgid "}"
+msgstr ""
+
+#: of qteasy.core.get_table_info
+msgid "rtype"
+msgstr ""
+
+#: of qteasy.core.get_table_info:29
+msgid "一个dict，包含数据表的结构化信息："
+msgstr ""
+
 #: ../../source/api/history_data.rst:26
 msgid "获取已经下载的本地数据总览"
+msgstr ""
+
+#: of qteasy.core.get_table_overview:1
+msgid "显示默认数据源或指定数据源的数据总览"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:5 qteasy.core.get_table_overview:3
+msgid "一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:7 qteasy.core.get_table_overview:5
+msgid "需要显示overview的数据表名称，如果为None，则显示所有数据表的overview"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:9 qteasy.core.get_table_overview:7
+msgid "是否显示系统数据表的overview"
+msgstr ""
+
+#: of qteasy.core.get_stock_info:35 qteasy.core.get_table_overview:13
+msgid "备注"
+msgstr ""
+
+#: of qteasy.core.get_table_overview:14
+msgid "用法示例参见get_data_overview()"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:1
+msgid "显示数据源的数据总览，等同于get_table_overview()"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:3
+msgid "获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:12
+msgid "* *pd.DataFrame* * *返回一个包含数据表的overview信息的DataFrame*"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:12
+msgid "*pd.DataFrame*"
+msgstr ""
+
+#: of qteasy.core.get_data_overview:13
+msgid "*返回一个包含数据表的overview信息的DataFrame*"
 msgstr ""
 
 #: ../../source/api/history_data.rst:33
 msgid "使用下载的数据——基础数据"
 msgstr ""
 
+#: of qteasy.core.get_basic_info:2
+msgid "等同于get_stock_info()"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:2 qteasy.core.get_stock_info:2
+msgid "根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:4
+msgid ""
+"证券代码或名称：  - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 - "
+"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:4
+msgid "证券代码或名称："
+msgstr ""
+
+#: of qteasy.core.get_basic_info:6
+msgid "如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:7
+msgid "如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:8
+msgid "如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:9 qteasy.core.get_stock_info:8
+msgid ""
+"证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：  - E     股票 - IDX   指数 - FD    基金 - FT    期货"
+" - OPT   期权"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:9 qteasy.core.get_stock_info:8
+msgid "证券类型，接受列表或逗号分隔字符串，包含认可的资产类型："
+msgstr ""
+
+#: of qteasy.core.get_basic_info:11 qteasy.core.get_stock_info:10
+msgid "E     股票"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:12 qteasy.core.get_stock_info:11
+msgid "IDX   指数"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:13 qteasy.core.get_stock_info:12
+msgid "FD    基金"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:14 qteasy.core.get_stock_info:13
+msgid "FT    期货"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:15 qteasy.core.get_stock_info:14
+msgid "OPT   期权"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:17 qteasy.core.get_stock_info:15
+msgid "是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:19 qteasy.core.get_stock_info:17
+msgid "如果为True，打印匹配到的结果"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:21 qteasy.core.get_stock_info:19
+msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息  - False 默认值，只显示匹配度最高的内容 - True  显示所有匹配到的内容"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:21 qteasy.core.get_stock_info:19
+msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:23 qteasy.core.get_stock_info:21
+msgid "False 默认值，只显示匹配度最高的内容"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:24 qteasy.core.get_stock_info:22
+msgid "True  显示所有匹配到的内容"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:27 qteasy.core.get_stock_info:25
+msgid ""
+"当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：  - "
+"股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   "
+"基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:27 qteasy.core.get_stock_info:25
+msgid "当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同："
+msgstr ""
+
+#: of qteasy.core.get_basic_info:29 qteasy.core.get_stock_info:27
+msgid "股票信息：公司名、地区、行业、全名、上市状态、上市日期"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:30 qteasy.core.get_stock_info:28
+msgid "指数信息：指数名、全名、发行人、种类、发行日期"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:31 qteasy.core.get_stock_info:29
+msgid "基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:32 qteasy.core.get_stock_info:30
+msgid "期货：   期货名称"
+msgstr ""
+
+#: of qteasy.core.get_basic_info:33 qteasy.core.get_stock_info:31
+msgid "期权：   期权名称"
+msgstr ""
+
+#: of qteasy.core.get_stock_info:2
+msgid "等同于get_basic_info()"
+msgstr ""
+
+#: of qteasy.core.get_stock_info:4
+msgid ""
+"证券代码或名称， 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 "
+"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+msgstr ""
+
+#: of qteasy.core.get_stock_info:36
+msgid "用法示例参见：get_basic_info()"
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes:1
+msgid "根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单"
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes:3 qteasy.core.filter_stocks:3
+msgid "筛选股票的上市日期，在该日期以后上市的股票将会被剔除："
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes:5
+msgid "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来"
+msgstr ""
+
+#: of qteasy.core.filter_stock_codes:10
+msgid ":obj:`filter_stocks`"
+msgstr ""
+
+#: of qteasy.core.filter_stocks:1
+msgid "根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame"
+msgstr ""
+
+#: of qteasy.core.filter_stocks:5
+msgid ""
+"可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来 - index:      "
+"根据指数筛选，不含在指定的指数内的股票将会被剔除 - industry:   公司所处行业，只有列举出来的行业会被选中 - area:"
+"       公司所处省份，只有列举出来的省份的股票才会被选中 - market:     市场，分为主板、创业板等 - exchange:   "
+"交易所，包括上海证券交易所和深圳股票交易所"
+msgstr ""
+
+#: of qteasy.core.filter_stocks:13
+msgid "**DataFrame**"
+msgstr ""
+
 #: ../../source/api/history_data.rst:44
 msgid "使用下载的数据——获取价格或技术指标"
+msgstr ""
+
+#: of qteasy.core.get_history_data:2
+msgid "从本地data_source获取所需的数据并组装为适应于策略"
+msgstr ""
+
+#: of qteasy.core.get_history_data:2
+msgid "需要的HistoryPanel数据对象"
+msgstr ""
+
+#: of qteasy.core.get_history_data:4
+msgid ""
+"需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数 "
+"结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略"
+msgstr ""
+
+#: of qteasy.core.get_history_data:7
+msgid ""
+"需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建 "
+"所有可能的htypes。输入方式可以为str或list：  - str:     'open, high, low, close'  - "
+"list:    ['open', 'high', 'low', 'close']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:7 qteasy.core.get_history_data:12
+msgid ""
+"需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建 "
+"所有可能的htypes。输入方式可以为str或list："
+msgstr ""
+
+#: of qteasy.core.get_history_data:9
+msgid "str:     'open, high, low, close'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:10
+msgid "list:    ['open', 'high', 'low', 'close']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:15
+msgid ""
+"需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
+"如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
+msgstr ""
+
+#: of qteasy.core.get_history_data:18
+msgid "需要获取历史数据的数据源"
+msgstr ""
+
+#: of qteasy.core.get_history_data:20
+msgid ""
+"需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效：  - str:     "
+"'000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'  - list:    ['000001.SZ', "
+"'000002.SZ', '000004.SZ', '000005.SZ']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:20
+msgid "需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效："
+msgstr ""
+
+#: of qteasy.core.get_history_data:22
+msgid "str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:23
+msgid "list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:25
+msgid ""
+"需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效： - str:     "
+"'000001, 000002, 000004, 000005' - list:    ['000001', '000002', "
+"'000004', '000005']"
+msgstr ""
+
+#: of qteasy.core.get_history_data:30
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:32
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:34
+msgid ""
+"获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
+"如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
+msgstr ""
+
+#: of qteasy.core.get_history_data:37
+msgid ""
+"获取的历史数据的频率，包括以下选项：  - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)  - H/D/W/M "
+"分别代表小时/天/周/月 周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:39
+msgid "获取的历史数据的频率，包括以下选项："
+msgstr ""
+
+#: of qteasy.core.get_history_data:39
+msgid "1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:40
+msgid "H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:42
+msgid ""
+"限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括 逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 "
+"['E', 'IDX']都是合法输入  - any: 可以获取任意资产类型的证券数据(默认值)  - E:   只获取股票类型证券的数据  - "
+"IDX: 只获取指数类型证券的数据  - FT:  只获取期货类型证券的数据  - FD:  只获取基金类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:42
+msgid ""
+"限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括 逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 "
+"['E', 'IDX']都是合法输入"
+msgstr ""
+
+#: of qteasy.core.get_history_data:44
+msgid "any: 可以获取任意资产类型的证券数据(默认值)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:45
+msgid "E:   只获取股票类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:46
+msgid "IDX: 只获取指数类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:47
+msgid "FT:  只获取期货类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:48
+msgid "FD:  只获取基金类型证券的数据"
+msgstr ""
+
+#: of qteasy.core.get_history_data:50
+msgid ""
+"Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：  - none / n: 不复权(默认值)  - "
+"back / b: 后复权  - forward / fw / f: 前复权  "
+"从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
+msgstr ""
+
+#: of qteasy.core.get_history_data:54
+msgid "Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括："
+msgstr ""
+
+#: of qteasy.core.get_history_data:52
+msgid "none / n: 不复权(默认值)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:53
+msgid "back / b: 后复权"
+msgstr ""
+
+#: of qteasy.core.get_history_data:54
+msgid "forward / fw / f: 前复权"
+msgstr ""
+
+#: of qteasy.core.get_history_data:55
+msgid "从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
+msgstr ""
+
+#: of qteasy.core.get_history_data:57
+msgid "True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典"
+msgstr ""
+
+#: of qteasy.core.get_history_data:59
+msgid ""
+"如果返回DataFrame对象，设置dataframe的分组策略 - 'shares' / 'share' / 's': "
+"每一个share组合为一个dataframe - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe"
+msgstr ""
+
+#: of qteasy.core.get_history_data:63
+msgid ""
+"用于生成trade_time_index的参数，包括： drop_nan: bool     是否保留全NaN的行 "
+"resample_method: str     如果数据需要升频或降频时，调整频率的方法     "
+"调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：     "
+"数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，     "
+"例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）         [(1, 2, 3), (4, 5), (6, 7)] "
+"合并后变为: [(?), (?), (?)]     数据合并方法:     - 'last'/'close': 使用合并区间的最后一个值。如："
+"         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]     - "
+"'first'/'open': 使用合并区间的第一个值。如：         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为:"
+" [(1), (4), (6)]     - 'max'/'high': 使用合并区间的最大值作为合并值：         [(1, 2, 3),"
+" (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]     - 'min'/'low': "
+"使用合并区间的最小值作为合并值：         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), "
+"(6)]     - 'avg'/'mean': 使用合并区间的平均值作为合并值：         [(1, 2, 3), (4, 5), (6,"
+" 7)] 合并后变为: [(2), (4.5), (6.5)]     - 'sum'/'total': 使用合并区间的平均值作为合并值："
+"         [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]      "
+"数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。     例如，填充下列数据(?表示插入的数据）         [1, "
+"2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]     缺失数据的填充方法如下:     - 'ffill': "
+"使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：         [1, 2, 3] 填充后变为: [NaN, 1, 1,"
+" 2, 2, 3, 3]     - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：         "
+"[1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]     - 'nan': 使用NaN值填充缺失数据："
+"         [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]     - 'zero': "
+"使用0值填充缺失数据：         [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0] b_days_only: "
+"bool 默认True     是否强制转换自然日频率为工作日，即：     'D' -> 'B'     'W' -> 'W-FRI'     "
+"'M' -> 'BM' trade_time_only: bool, default True     为True时 "
+"仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定 include_start: bool, default True     "
+"日期时间序列是否包含开始日期/时间 include_end: bool, default True     日期时间序列是否包含结束日期/时间 "
+"start_am:, str     早晨交易时段的开始时间 end_am:, str     早晨交易时段的结束时间 "
+"include_start_am: bool     早晨交易时段是否包括开始时间 include_end_am: bool     "
+"早晨交易时段是否包括结束时间 start_pm: str     下午交易时段的开始时间 end_pm: str     下午交易时段的结束时间 "
+"include_start_pm: bool     下午交易时段是否包含开始时间 include_end_pm: bool     "
+"下午交易时段是否包含结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:63
+msgid "用于生成trade_time_index的参数，包括： drop_nan: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:65
+msgid "是否保留全NaN的行"
+msgstr ""
+
+#: of qteasy.core.get_history_data:96
+msgid "resample_method: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:67
+msgid ""
+"如果数据需要升频或降频时，调整频率的方法 调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同： "
+"数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息， "
+"例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）"
+msgstr ""
+
+#: of qteasy.core.get_history_data:71
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:72
+msgid "数据合并方法: - 'last'/'close': 使用合并区间的最后一个值。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:74 qteasy.core.get_history_data:78
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:75
+msgid "'first'/'open': 使用合并区间的第一个值。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:76 qteasy.core.get_history_data:80
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:77
+msgid "'max'/'high': 使用合并区间的最大值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:79
+msgid "'min'/'low': 使用合并区间的最小值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:81
+msgid "'avg'/'mean': 使用合并区间的平均值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:82 qteasy.core.get_history_data:84
+msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:84
+msgid "'sum'/'total': 使用合并区间的平均值作为合并值："
+msgstr ""
+
+#: of qteasy.core.get_history_data:86
+msgid "数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。 例如，填充下列数据(?表示插入的数据）"
+msgstr ""
+
+#: of qteasy.core.get_history_data:88
+msgid "[1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:89
+msgid "缺失数据的填充方法如下: - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:91
+msgid "[1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:92
+msgid "'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如："
+msgstr ""
+
+#: of qteasy.core.get_history_data:93
+msgid "[1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:94
+msgid "'nan': 使用NaN值填充缺失数据："
+msgstr ""
+
+#: of qteasy.core.get_history_data:95
+msgid "[1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:96
+msgid "'zero': 使用0值填充缺失数据："
+msgstr ""
+
+#: of qteasy.core.get_history_data:97
+msgid "[1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]"
+msgstr ""
+
+#: of qteasy.core.get_history_data:101
+msgid "b_days_only: bool 默认True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:99
+msgid "是否强制转换自然日频率为工作日，即： 'D' -> 'B' 'W' -> 'W-FRI' 'M' -> 'BM'"
+msgstr ""
+
+#: of qteasy.core.get_history_data:103
+msgid "trade_time_only: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:104
+msgid "为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定"
+msgstr ""
+
+#: of qteasy.core.get_history_data:105
+msgid "include_start: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:106
+msgid "日期时间序列是否包含开始日期/时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:107
+msgid "include_end: bool, default True"
+msgstr ""
+
+#: of qteasy.core.get_history_data:108
+msgid "日期时间序列是否包含结束日期/时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:109
+msgid "start_am:, str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:110
+msgid "早晨交易时段的开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:111
+msgid "end_am:, str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:112
+msgid "早晨交易时段的结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:113
+msgid "include_start_am: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:114
+msgid "早晨交易时段是否包括开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:115
+msgid "include_end_am: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:116
+msgid "早晨交易时段是否包括结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:117
+msgid "start_pm: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:118
+msgid "下午交易时段的开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:119
+msgid "end_pm: str"
+msgstr ""
+
+#: of qteasy.core.get_history_data:120
+msgid "下午交易时段的结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:121
+msgid "include_start_pm: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:122
+msgid "下午交易时段是否包含开始时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:124
+msgid "include_end_pm: bool"
+msgstr ""
+
+#: of qteasy.core.get_history_data:124
+msgid "下午交易时段是否包含结束时间"
+msgstr ""
+
+#: of qteasy.core.get_history_data:126
+msgid ""
+"* *HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象 * *Dict "
+"of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
+msgstr ""
+
+#: of qteasy.core.get_history_data:126
+msgid "*HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象"
+msgstr ""
+
+#: of qteasy.core.get_history_data:127
+msgid "*Dict of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
 msgstr ""
 

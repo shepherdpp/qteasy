@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-18 21:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -73,11 +73,15 @@ msgstr "¡Bienvenido a la documentación de ``QTEASY``!"
 
 #: ../../source/index.rst:15
 msgid ""
-"目前 ``qteays`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
+"目前 ``QTEASY`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
 "`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
-"Actualmente, ``qteasy`` se encuentra en una etapa intensiva de desarrollo y prueba, y es inevitable que existan algunas vulnerabilidades y errores en el software"
-"Si encuentra problemas durante el uso, puede ``Informar un problema`` o enviarme ``Nueva solicitud de función``. También puede ingresar al ``Área de discusión`` para participar en la discusión. ¡Agradecemos mucho sus contribuciones!"
+"Actualmente, ``qteasy`` se encuentra en una etapa intensiva de desarrollo"
+" y prueba, y es inevitable que existan algunas vulnerabilidades y errores"
+" en el softwareSi encuentra problemas durante el uso, puede ``Informar un"
+" problema`` o enviarme ``Nueva solicitud de función``. También puede "
+"ingresar al ``Área de discusión`` para participar en la discusión. "
+"¡Agradecemos mucho sus contribuciones!"
 
 #: ../../source/index.rst:21
 msgid "作者: **Jackie PENG**"
@@ -92,7 +96,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Creado: 16 de julio de 2019"
 
 #: ../../source/index.rst:24
-msgid "最新版本: `1.4.8`"
+#, fuzzy
+msgid "最新版本: `1.4.9`"
 msgstr "Última versión: `1.4.8`"
 
 #: ../../source/index.rst:25
@@ -105,21 +110,38 @@ msgstr "Breve introducción"
 
 #: ../../source/index.rst:30
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
-msgstr "``QTEASY`` es un conjunto de herramientas de desarrollo de estrategias comerciales cuantitativas desarrollado para personal de comercio cuantitativo, con las siguientes funciones básicas:"
+msgstr ""
+"``QTEASY`` es un conjunto de herramientas de desarrollo de estrategias "
+"comerciales cuantitativas desarrollado para personal de comercio "
+"cuantitativo, con las siguientes funciones básicas:"
 
 #: ../../source/index.rst:32
 msgid ""
 "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
 "``Tushare`` 、 ``EastMoney`` 等"
-msgstr "Adquisición, limpieza, clasificación, visualización, consulta y aplicación de datos históricos financieros; admite múltiples métodos de almacenamiento de datos, incluidos archivos locales, bases de datos MySQL, etc., las fuentes de datos incluyen ``Tushare``, ``EastMoney``, etc."
+msgstr ""
+"Adquisición, limpieza, clasificación, visualización, consulta y "
+"aplicación de datos históricos financieros; admite múltiples métodos de "
+"almacenamiento de datos, incluidos archivos locales, bases de datos "
+"MySQL, etc., las fuentes de datos incluyen ``Tushare``, ``EastMoney``, "
+"etc."
 
 #: ../../source/index.rst:33
 msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
-msgstr "Creación de estrategias de negociación de inversiones, pruebas retrospectivas, evaluación del rendimiento y provisión de múltiples algoritmos de optimización para lograr la optimización de parámetros de las estrategias de negociación mediante la definición de los parámetros ajustables de la estrategia"
+msgstr ""
+"Creación de estrategias de negociación de inversiones, pruebas "
+"retrospectivas, evaluación del rendimiento y provisión de múltiples "
+"algoritmos de optimización para lograr la optimización de parámetros de "
+"las estrategias de negociación mediante la definición de los parámetros "
+"ajustables de la estrategia"
 
 #: ../../source/index.rst:34
 msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Implementación de estrategia comercial, operación en tiempo real, simulación de resultados comerciales y seguimiento y registro de registros comerciales, posiciones de acciones, cambios en los fondos de la cuenta, etc."
+msgstr ""
+"Implementación de estrategia comercial, operación en tiempo real, "
+"simulación de resultados comerciales y seguimiento y registro de "
+"registros comerciales, posiciones de acciones, cambios en los fondos de "
+"la cuenta, etc."
 
 #: ../../source/index.rst:37
 msgid "``QTEASY`` 能做什么?"
@@ -131,7 +153,9 @@ msgstr "Adquirir y gestionar datos históricos financieros"
 
 #: ../../source/index.rst:42
 msgid "获取、清洗、本地存储大量金融历史数据"
-msgstr "Adquirir, limpiar y almacenar localmente una gran cantidad de datos históricos financieros"
+msgstr ""
+"Adquirir, limpiar y almacenar localmente una gran cantidad de datos "
+"históricos financieros"
 
 #: ../../source/index.rst:43
 msgid "检索、处理、调用本地数据"
@@ -147,37 +171,57 @@ msgstr "Crear una estrategia comercial, simular el comercio automatizado"
 
 #: ../../source/index.rst:55
 msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
-msgstr "Cree una estrategia comercial rápidamente, utilice más de 70 estrategias comerciales integradas o cree una estrategia comercial usted mismo"
+msgstr ""
+"Cree una estrategia comercial rápidamente, utilice más de 70 estrategias "
+"comerciales integradas o cree una estrategia comercial usted mismo"
 
 #: ../../source/index.rst:56
 msgid "获取实时市场数据，运行策略模拟自动化交易"
-msgstr "Adquiera datos del mercado en tiempo real y ejecute operaciones automatizadas con simulación de estrategias"
+msgstr ""
+"Adquiera datos del mercado en tiempo real y ejecute operaciones "
+"automatizadas con simulación de estrategias"
 
 #: ../../source/index.rst:57
 msgid "跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Realice un seguimiento y registre registros de operaciones, posiciones de acciones, cambios en los fondos de la cuenta, etc."
+msgstr ""
+"Realice un seguimiento y registre registros de operaciones, posiciones de"
+" acciones, cambios en los fondos de la cuenta, etc."
 
 #: ../../source/index.rst:58
 msgid "通过多种用户界面查看并控制交易程序"
-msgstr "Supervise y controle los programas comerciales a través de múltiples interfaces de usuario"
+msgstr ""
+"Supervise y controle los programas comerciales a través de múltiples "
+"interfaces de usuario"
 
 #: ../../source/index.rst:59
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
-msgstr "En el futuro, ``qteasy`` podrá realizar operaciones automáticas en vivo conectándose a las API de operaciones proporcionadas por corredores, como QMT."
+msgstr ""
+"En el futuro, ``qteasy`` podrá realizar operaciones automáticas en vivo "
+"conectándose a las API de operaciones proporcionadas por corredores, como"
+" QMT."
 
 #: ../../source/index.rst:73
 msgid "回测、评价、优化交易策略"
-msgstr "Realizar pruebas retrospectivas, evaluar y optimizar las estrategias comerciales"
+msgstr ""
+"Realizar pruebas retrospectivas, evaluar y optimizar las estrategias "
+"comerciales"
 
 #: ../../source/index.rst:75
 msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
-msgstr "Pruebe estrategias comerciales retrospectivamente utilizando datos históricos, genere registros comerciales completos y genere resultados comerciales"
+msgstr ""
+"Pruebe estrategias comerciales retrospectivamente utilizando datos "
+"históricos, genere registros comerciales completos y genere resultados "
+"comerciales"
 
 #: ../../source/index.rst:76
 msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
-msgstr "Evalúe los resultados comerciales desde múltiples dimensiones, genere informes comerciales y gráficos de resultados"
+msgstr ""
+"Evalúe los resultados comerciales desde múltiples dimensiones, genere "
+"informes comerciales y gráficos de resultados"
 
 #: ../../source/index.rst:77
 msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
-msgstr "Optimice los parámetros de la estrategia con múltiples algoritmos de optimización."
+msgstr ""
+"Optimice los parámetros de la estrategia con múltiples algoritmos de "
+"optimización."
 

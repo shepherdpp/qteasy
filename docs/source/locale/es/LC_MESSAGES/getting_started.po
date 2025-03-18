@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-04 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -260,12 +260,12 @@ msgstr ""
 
 #: ../../source/getting_started.md:191
 msgid ""
-"`qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时"
+"`qteasy`中的所有交易策略都是由`qteasy.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时"
 " 管理多个不同的交易策略。"
 msgstr ""
 
 #: ../../source/getting_started.md:194
-msgid "`queasy`提供了两种方式创建交易策略，详细的说明请参见使用教程："
+msgid "`qteasy`提供了两种方式创建交易策略，详细的说明请参见使用教程："
 msgstr ""
 
 #: ../../source/getting_started.md:196
@@ -428,4 +428,12 @@ msgstr ""
 #: ../../source/getting_started.md:457
 msgid "上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)"
 msgstr ""
+
+#~ msgid ""
+#~ "`qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时"
+#~ " 管理多个不同的交易策略。"
+#~ msgstr ""
+
+#~ msgid "`queasy`提供了两种方式创建交易策略，详细的说明请参见使用教程："
+#~ msgstr ""
 
