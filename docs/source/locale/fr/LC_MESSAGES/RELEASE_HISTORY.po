@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-18 21:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -24,37 +24,78 @@ msgid "RELEASE HISTORY"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:3
-msgid "1.4.8 (2025-03-01)"
+msgid "1.4.9 (2025-03-11)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:4 ../../source/RELEASE_HISTORY.md:11
-#: ../../source/RELEASE_HISTORY.md:49
-msgid "New features:"
+#: ../../source/RELEASE_HISTORY.md:4
+msgid "Bug fixes:"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:5
+msgid ""
+"Fixed problem in trader logger that causes duplicated logs in live trade "
+"mode"
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:6
+msgid ""
+"Fixed a bug in trader: when two trade results are generated at nearly the"
+" same time for the same position, the results will be wrongly recorded in"
+" the database due to data recording conflicts"
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:7
+msgid ""
+"Fixed a bug in trader that very occasionally price data with wrong "
+"timestamp will be returned and may cause NaN values output from "
+"strategies for some symbols."
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:8
+msgid ""
+"Fixed a bug that strategy will not get enough extracted data to run in "
+"live trade mode in some cases on Monday morning due to not mis-"
+"calculation of date offset due to weekends."
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:9
+msgid ""
+"Corrected automatic datasource refill timing for weekly data refilling, "
+"now it will refill data every Friday evening"
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:11
+msgid "1.4.8 (2025-03-01)"
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:12 ../../source/RELEASE_HISTORY.md:19
+#: ../../source/RELEASE_HISTORY.md:57
+msgid "New features:"
+msgstr ""
+
+#: ../../source/RELEASE_HISTORY.md:13
 msgid ""
 "Added a new CLI command in trader CLI: `refill`, to manually refill "
 "datasource tables in trader CLI"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:6
+#: ../../source/RELEASE_HISTORY.md:14
 msgid ""
 "Allowed users to manually refill datasource table with trader CLI command"
 " `run` with parameter `--task refill` Bug fixes:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:8
+#: ../../source/RELEASE_HISTORY.md:16
 msgid ""
 "Fixed a bug that will lead to failure of automatic datasource refilling "
 "in trader"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:10
+#: ../../source/RELEASE_HISTORY.md:18
 msgid "1.4.7 (2025-02-26)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:12
+#: ../../source/RELEASE_HISTORY.md:20
 msgid ""
 "Added configuration settings: `live_trade_daily_refill_tables`, "
 "`live_trade_weekly_refill_tables`, `live_trade_monthly_refill_tables`, to"
@@ -62,192 +103,192 @@ msgid ""
 "bugs:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:14
+#: ../../source/RELEASE_HISTORY.md:22
 msgid ""
 "Sometimes the configure settings might be overwritten unexpectedly in "
 "trading mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:15
+#: ../../source/RELEASE_HISTORY.md:23
 msgid "`DataSource.all_basic_tables` will not return correct tables in some cases"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:16
+#: ../../source/RELEASE_HISTORY.md:24
 msgid ""
 "CLI command `schedule` fails to print out current scheduled tasks in "
 "trader shell"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:18
+#: ../../source/RELEASE_HISTORY.md:26
 msgid "1.4.6 (2025-02-19)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:19
+#: ../../source/RELEASE_HISTORY.md:27
 msgid ""
 "Improved function `qt.refill_data_source()`, now it will skip the tables "
 "that are not available from current channel and provide a warning message"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:20
+#: ../../source/RELEASE_HISTORY.md:28
 msgid ""
 "Fixed a bug that will sometimes result in duplicated data being refilled "
 "from channels while running `qt.refill_data_source()`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:22
+#: ../../source/RELEASE_HISTORY.md:30
 msgid "1.4.5 (2025-02-18)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:23
+#: ../../source/RELEASE_HISTORY.md:31
 msgid ""
 "Fixed a bug that may cause incorrect k-line data being stored in the "
 "datasource when running in live trade mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:24
+#: ../../source/RELEASE_HISTORY.md:32
 msgid ""
 "Added APIs to get minute level and daily candle bar price data for funds "
 "from channel 'eastmoney'"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:26
+#: ../../source/RELEASE_HISTORY.md:34
 msgid "1.4.4 (2025-02-12)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:27 ../../source/RELEASE_HISTORY.md:41
+#: ../../source/RELEASE_HISTORY.md:35 ../../source/RELEASE_HISTORY.md:49
 msgid "Fixed bugs:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:28
+#: ../../source/RELEASE_HISTORY.md:36
 msgid ""
 "Simulator broker and Trader module in live trade mode might fail to fetch"
 " real time price data in some cases"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:29
+#: ../../source/RELEASE_HISTORY.md:37
 msgid ""
 "Sometimes the historical data extracted from datasource are not re-"
 "indexed to exactly matching the stock market open time."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:30
+#: ../../source/RELEASE_HISTORY.md:38
 msgid ""
 "Corrected the data formats and errors downloaded from channel "
 "`eastmoney`, improved error handling and stability"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:32
+#: ../../source/RELEASE_HISTORY.md:40
 msgid "1.4.3 (2025-02-11)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:33
+#: ../../source/RELEASE_HISTORY.md:41
 msgid ""
 "Fixed a bug: Trader might fail to acquire live prices from correct "
 "channel and may fail to save the prices to datasource due to channel "
 "updates"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:34
+#: ../../source/RELEASE_HISTORY.md:42
 msgid ""
 "Improved `refill_data_source()`: added an optional parameter: "
 "`refill_dependent_tabes: bool = True`, to give user control if dependent "
 "tables are downloaded"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:36
+#: ../../source/RELEASE_HISTORY.md:44
 msgid "1.4.2 (2025-02-07)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:37
+#: ../../source/RELEASE_HISTORY.md:45
 msgid ""
 "Added `dbutil` as mandatory dependency, and moved `pymysql` also as "
 "mandatory, removed optional dependencies as database"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:38
+#: ../../source/RELEASE_HISTORY.md:46
 msgid ""
 "Fixed a bug: warnings showing missing of some dependencies are not "
 "properly displayed."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:40
+#: ../../source/RELEASE_HISTORY.md:48
 msgid "1.4.1 (2025-02-06)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:42
+#: ../../source/RELEASE_HISTORY.md:50
 msgid "sometimes the back-adjusted prices are not properly get from data source"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:43
+#: ../../source/RELEASE_HISTORY.md:51
 msgid ""
 "sometimes data types with parameters will not set correct parameter into "
 "the kwargs, and will cause problem"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:44
+#: ../../source/RELEASE_HISTORY.md:52
 msgid "sometimes the realtime kline data will have no valid trade time in index"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:45
+#: ../../source/RELEASE_HISTORY.md:53
 msgid "Improvement:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:46
+#: ../../source/RELEASE_HISTORY.md:54
 msgid ""
 "Improved function refill_data_source, made parameters \"channel\" and "
 "\"data_source\" optional and provided type and validity check"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:48
+#: ../../source/RELEASE_HISTORY.md:56
 msgid "1.4.0 (2025-02-05)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:50
+#: ../../source/RELEASE_HISTORY.md:58
 msgid ""
 "A new DataType class has been introduced, making it much easier and more "
 "flexible to utilize historical data stored in local datasources"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:51
+#: ../../source/RELEASE_HISTORY.md:59
 msgid ""
 "Now datatypes can be defined with parameters followed by a \"|\" in its "
 "name, like \"close|b\" represents \"back adjusted close price\"."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:52
+#: ../../source/RELEASE_HISTORY.md:60
 msgid ""
 "A new data_channel module has been defined for qteasy, allowing users to "
 "download data from different online sources"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:53
+#: ../../source/RELEASE_HISTORY.md:61
 msgid ""
 "More data tables are defined to store more types of financial historical "
 "data."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:54
+#: ../../source/RELEASE_HISTORY.md:62
 msgid ""
 "Enhanced real-time price data acquisition APIs, allowing real-time data "
 "been downloaded from different sources"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:55
+#: ../../source/RELEASE_HISTORY.md:63
 msgid "More introduction to above new features can be found in qteasy documents."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:56
+#: ../../source/RELEASE_HISTORY.md:64
 msgid "Deprecated"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:57
+#: ../../source/RELEASE_HISTORY.md:65
 msgid ""
 "The old way of extracting adjusted price data with parameter \"adj\" is "
 "deprecated, although still supported, now adjusted prices can be acquired"
 " with datatypes with parameter like \"close|b\" or \"open|f\""
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:58
+#: ../../source/RELEASE_HISTORY.md:66
 #, python-format
 msgid ""
 "The old way of getting composition data, \"wt_000300.SH\" is deprecated "
@@ -255,344 +296,344 @@ msgid ""
 "index code"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:59
+#: ../../source/RELEASE_HISTORY.md:67
 msgid "More introductions to the new datatypes can be found in qteasy documents."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:61
+#: ../../source/RELEASE_HISTORY.md:69
 msgid "1.3.12 (2024-12-18)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:62
+#: ../../source/RELEASE_HISTORY.md:70
 msgid "Improved Log information and print outs in trader TUI and CLI:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:63
+#: ../../source/RELEASE_HISTORY.md:71
 msgid ""
 "excessive digits of amount changes are now truncated to 2 or 3 digits in "
 "trader CLI for RESULT DELIVERY"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:64
+#: ../../source/RELEASE_HISTORY.md:72
 msgid "added timestamp before all system logs on the system log pane"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:65
+#: ../../source/RELEASE_HISTORY.md:73
 msgid "added system environment information in TUI system info panel"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:67
+#: ../../source/RELEASE_HISTORY.md:75
 msgid "1.3.11 (2024-11-03)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:68
+#: ../../source/RELEASE_HISTORY.md:76
 msgid ""
 "fixed a bug: pure digit strings are not properly parsed from start up "
 "configuration file"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:70
+#: ../../source/RELEASE_HISTORY.md:78
 msgid "1.3.10 (2024-09-03)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:71
+#: ../../source/RELEASE_HISTORY.md:79
 msgid ""
 "removed deprecated pandas syntax from database.py and updated version "
 "requirements"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:72
+#: ../../source/RELEASE_HISTORY.md:80
 msgid ""
 "added qt level configure keys for Chinese font names in candle chart for "
 "different Operating systems respectively:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:73
+#: ../../source/RELEASE_HISTORY.md:81
 msgid "`ZH_font_name_MAC` / `ZH_font_name_WIN` / `ZH_font_name_LINUX`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:74
+#: ../../source/RELEASE_HISTORY.md:82
 msgid "added qt function and attributes:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:75
+#: ../../source/RELEASE_HISTORY.md:83
 msgid "`get_start_up_settings()`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:76
+#: ../../source/RELEASE_HISTORY.md:84
 msgid "`start_up_config`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:77
+#: ../../source/RELEASE_HISTORY.md:85
 msgid "corrected help messages for live trader users"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:79
+#: ../../source/RELEASE_HISTORY.md:87
 msgid "1.3.9 (2024-09-01)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:80
+#: ../../source/RELEASE_HISTORY.md:88
 msgid ""
 "Added setting key validation in `qt.update_start_up_setting()` to prevent"
 " from invalid values if the key is in qt_config_kwargs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:81
+#: ../../source/RELEASE_HISTORY.md:89
 msgid "improved print outs and return values of `qt.start_up_settings()`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:82
+#: ../../source/RELEASE_HISTORY.md:90
 msgid ""
 "improved the way the start up setting file is written to always keep "
 "intro messages"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:84
+#: ../../source/RELEASE_HISTORY.md:92
 msgid "1.3.8 (2024-09-01)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:85
+#: ../../source/RELEASE_HISTORY.md:93
 msgid ""
 "Added new features: now qteasy has multiple functions to access and "
 "modify start up setting file:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:86
+#: ../../source/RELEASE_HISTORY.md:94
 msgid ""
 "Added new function `qt.start_up_settings()`, to access and print contents"
 " of start up settings file"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:87
+#: ../../source/RELEASE_HISTORY.md:95
 msgid ""
 "Added new function `qt.update_start_up_setting()`, to modify start up "
 "settings file"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:88
+#: ../../source/RELEASE_HISTORY.md:96
 msgid ""
 "Added new function `qt.remove_start_up_setting()`, to remove settings "
 "from the file"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:89
+#: ../../source/RELEASE_HISTORY.md:97
 msgid ""
 "Fixed bugs in trader TUI buy and sell orders, added error handling for "
 "wrong inputs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:91
+#: ../../source/RELEASE_HISTORY.md:99
 msgid "1.3.7 (2024-08-31)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:92
+#: ../../source/RELEASE_HISTORY.md:100
 msgid "Added features in trader TUI:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:93
+#: ../../source/RELEASE_HISTORY.md:101
 msgid "Added commands and short-cuts to manually place buy and sell orders"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:94
+#: ../../source/RELEASE_HISTORY.md:102
 msgid "Added commands and short-cuts to cancel submitted orders"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:95
+#: ../../source/RELEASE_HISTORY.md:103
 msgid "Added a new data table to display trade logs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:97
+#: ../../source/RELEASE_HISTORY.md:105
 msgid "1.3.6 (2024-08-25)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:98
+#: ../../source/RELEASE_HISTORY.md:106
 msgid "Fixed bugs in command `orders` in trader CLI:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:99
+#: ../../source/RELEASE_HISTORY.md:107
 msgid "now `orders` command selects symbols correctly"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:100
+#: ../../source/RELEASE_HISTORY.md:108
 msgid "now parameter `--time` works with value 'all' or 'a'"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:101
+#: ../../source/RELEASE_HISTORY.md:109
 msgid ""
 "Added new command `summary` that displays trading operations in given "
 "period in human readable way"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:103
+#: ../../source/RELEASE_HISTORY.md:111
 msgid "1.3.5 (2024-08-22)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:104
+#: ../../source/RELEASE_HISTORY.md:112
 msgid ""
 "Added new feature: now trader will save the latest operation status on "
 "the dist while exit, and will restore the status when re-enter"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:105
+#: ../../source/RELEASE_HISTORY.md:113
 msgid ""
 "Improved delete_account() function, now it will delete all account "
 "related files, including trade logs, trade records, and trader break "
 "points"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:106
+#: ../../source/RELEASE_HISTORY.md:114
 msgid "Other bug fixes and optimizations in trader"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:108
+#: ../../source/RELEASE_HISTORY.md:116
 msgid "1.3.4 (2024-08-17)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:109
+#: ../../source/RELEASE_HISTORY.md:117
 msgid ""
 "Improved Live trade broker, added retry count before canceling submitted "
 "orders when live price is not available, reduced chance of order filling "
 "failure"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:110
+#: ../../source/RELEASE_HISTORY.md:118
 msgid ""
 "Corrected a mistake in grid trading example files, nan prices are now not"
 " written to strategy parameters"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:112
+#: ../../source/RELEASE_HISTORY.md:120
 msgid "1.3.3 (2024-08-16)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:113
+#: ../../source/RELEASE_HISTORY.md:121
 msgid ""
 "Fixed a bug that will cause buying stock with 0 price when live prices "
 "are not available"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:114
+#: ../../source/RELEASE_HISTORY.md:122
 msgid ""
 "Added freq alias support for pandas version >= 2.2.0, to prevent from "
 "FutureWarning raised by pandas"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:116
+#: ../../source/RELEASE_HISTORY.md:124
 msgid "1.3.2 (2024-08-13)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:117
+#: ../../source/RELEASE_HISTORY.md:125
 msgid "Corrected Font name in candle chart in Windows environment"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:119
+#: ../../source/RELEASE_HISTORY.md:127
 msgid "1.3.1 (2024-08-13)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:120
+#: ../../source/RELEASE_HISTORY.md:128
 msgid ""
 "Added trader CLI command `debug`, to set or toggle debug mode while "
 "trader is running"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:121
+#: ../../source/RELEASE_HISTORY.md:129
 msgid "Fixed and improved watched prices in trader CLI"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:122
+#: ../../source/RELEASE_HISTORY.md:130
 msgid ""
 "Fixed a bug that may lead to failure displaying watched prices in trader "
 "CLI"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:123
+#: ../../source/RELEASE_HISTORY.md:131
 msgid "Corrected a font name issue in candle chart in Windows environment"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:125
+#: ../../source/RELEASE_HISTORY.md:133
 msgid "1.3.0 (2024-08-09)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:126
+#: ../../source/RELEASE_HISTORY.md:134
 msgid "New Feature:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:127
+#: ../../source/RELEASE_HISTORY.md:135
 msgid ""
 "Running example strategy files with parameter -r can now remove orders "
 "only for designated account, instead of all accounts"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:128
+#: ../../source/RELEASE_HISTORY.md:136
 msgid "Improvements and bug fixes:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:129
+#: ../../source/RELEASE_HISTORY.md:137
 msgid ""
 "Improved live trade log, Now delivery records for selling stocks are also"
 " displayed in a new line"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:130
+#: ../../source/RELEASE_HISTORY.md:138
 msgid "Now delivery records are clearer shown"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:131
+#: ../../source/RELEASE_HISTORY.md:139
 msgid "Fixed a bug that may cause wrong stock or cash change in trade logs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:132
+#: ../../source/RELEASE_HISTORY.md:140
 msgid "Fixed a bug that causes buying results not being delivered properly"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:133
+#: ../../source/RELEASE_HISTORY.md:141
 msgid ""
 "Fixed a bug that sometimes empty data will be extracted even with valid "
 "data id from system datasource tables"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:134
+#: ../../source/RELEASE_HISTORY.md:142
 msgid "Fixed a few bugs that will lead to error in CLI command `CHANGE`:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:135
+#: ../../source/RELEASE_HISTORY.md:143
 msgid "Prevented from acquiring latest price when only cash is to be changed"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:136
+#: ../../source/RELEASE_HISTORY.md:144
 msgid "Ensured symbol be given when changing quantity of a stock"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:138
+#: ../../source/RELEASE_HISTORY.md:146
 msgid "1.2.15 (2024-07-28)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:139
+#: ../../source/RELEASE_HISTORY.md:147
 msgid "Added new built-in strategies: `ATR` and `OBV`, with docstrings"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:141
+#: ../../source/RELEASE_HISTORY.md:149
 msgid "1.2.14 (2024-07-12)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:142
+#: ../../source/RELEASE_HISTORY.md:150
 msgid ""
 "Updated Built-in Strategy AD and ADOSC, corrected mistakes, added "
 "docstring and optimized realization"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:144
+#: ../../source/RELEASE_HISTORY.md:152
 msgid "1.2.13 (2024-06-19)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:145
+#: ../../source/RELEASE_HISTORY.md:153
 msgid ""
 "Changed function qt.built_ins(), now it always return a dict of id and "
 "type of built-in strategies, and if incorrect strategy id is given as "
 "argument, it returns all fuzzy matched strategy ids"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:146
+#: ../../source/RELEASE_HISTORY.md:154
 msgid ""
 "Changed function qt.built_in_list() and qt.built_in_strategies(), now "
 "they return list of strategy ids and strategy types, respectively; and "
@@ -600,882 +641,882 @@ msgid ""
 "argument"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:147
+#: ../../source/RELEASE_HISTORY.md:155
 msgid ""
 "Added new function qt.built_in_doc(), to return the docstring of a built-"
 "in strategy"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:149
+#: ../../source/RELEASE_HISTORY.md:157
 msgid "1.2.12 (2024-06-12)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:150
+#: ../../source/RELEASE_HISTORY.md:158
 msgid ""
 "Fixed a bug, now cash gained by selling stocks can be delivered "
 "immediately to update available cash amount."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:151
+#: ../../source/RELEASE_HISTORY.md:159
 msgid ""
 "Fixed a bug, now unfilled orders can be correctly canceled after each "
 "trading day"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:152
+#: ../../source/RELEASE_HISTORY.md:160
 msgid ""
 "Fixed a bug that might lead to failure of getting table information in "
 "Windows environment"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:154
+#: ../../source/RELEASE_HISTORY.md:162
 msgid "1.2.11 (2024-06-09)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:155
+#: ../../source/RELEASE_HISTORY.md:163
 msgid "Fall back to default data source type if mysql connection fails"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:156
+#: ../../source/RELEASE_HISTORY.md:164
 msgid "Fixed a bug in tui watch list management"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:158
+#: ../../source/RELEASE_HISTORY.md:166
 msgid "1.2.10 (2024-06-07)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:159
+#: ../../source/RELEASE_HISTORY.md:167
 msgid ""
 "Now symbols can be added to or removed from the watch list in the live "
 "trader TUI, with two added short cuts: ctrl+a to add and ctrl+r to remove"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:160
+#: ../../source/RELEASE_HISTORY.md:168
 msgid ""
 "Dialogs are now added to the live trader TUI to accept user inputs for "
 "adding symbols to the watch list, as well confirming to quit the App"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:161
+#: ../../source/RELEASE_HISTORY.md:169
 msgid "Slightly adjusted the appearance of live trader TUI"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:163
+#: ../../source/RELEASE_HISTORY.md:171
 msgid "1.2.9 (2024-06-03)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:164
+#: ../../source/RELEASE_HISTORY.md:172
 msgid ""
 "Added more help information and docstrings for user to initialize live "
 "trades"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:166
+#: ../../source/RELEASE_HISTORY.md:174
 msgid "1.2.8 (2024-06-02)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:167
+#: ../../source/RELEASE_HISTORY.md:175
 msgid ""
 "Changed argument \"-u\" in qt_argparser, now either \"tui\" or \"cli\" "
 "should be specified to choose ui type"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:168
+#: ../../source/RELEASE_HISTORY.md:176
 msgid ""
 "qt parameter \"live_trade_account\" is now renamed to "
 "\"live_trade_account_name\", and more help info is provided to guide "
 "users to set up live trade accounts in live trade mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:169
+#: ../../source/RELEASE_HISTORY.md:177
 msgid ""
 "Fixed a bug in qt.candle() that will fail to create candle charts when "
 "TA-lib is not installed"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:171
+#: ../../source/RELEASE_HISTORY.md:179
 msgid "1.2.7 (2024-05-30)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:172
+#: ../../source/RELEASE_HISTORY.md:180
 msgid ""
 "Fixed a bug in database that may cause data refill failure when trade "
 "calendar is not available in some cases"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:174
+#: ../../source/RELEASE_HISTORY.md:182
 msgid "1.2.6 (2024-05-07)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:175
+#: ../../source/RELEASE_HISTORY.md:183
 msgid ""
 "Fixed a bug in data source that causes failure of getting the last record"
 " id from system tables in some cases"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:177
+#: ../../source/RELEASE_HISTORY.md:185
 msgid "1.2.5 (2024-05-06)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:178
+#: ../../source/RELEASE_HISTORY.md:186
 msgid "Fixed a bug in HistoryPanel that causes recursive importing"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:180
+#: ../../source/RELEASE_HISTORY.md:188
 msgid "1.2.4 (2024-05-05)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:181
+#: ../../source/RELEASE_HISTORY.md:189
 msgid ""
 "Fixed bugs in built-in strategies: `MACDEXT`, `WILLR`, `AROONOSC`, and "
 "`SLPHT`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:182
+#: ../../source/RELEASE_HISTORY.md:190
 msgid "Updated test cases for built-in strategies"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:184
+#: ../../source/RELEASE_HISTORY.md:192
 msgid "1.2.3 (2024-04-30)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:185
+#: ../../source/RELEASE_HISTORY.md:193
 msgid ""
 "Corrected a mistake in version 1.2,2: '1.2.1' will be displayed when "
 "running `qteasy.__version__`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:186
+#: ../../source/RELEASE_HISTORY.md:194
 msgid ""
 "Fixed a bad information displayed with progress bar while downloading "
 "data from tushare with refill datasource"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:188
+#: ../../source/RELEASE_HISTORY.md:196
 msgid "1.2.2 (2024-04-29)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:189
+#: ../../source/RELEASE_HISTORY.md:197
 msgid ""
 "Fixed a bug that causes abnormally low speed in some cases if TA-LIB is "
 "not installed"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:190
+#: ../../source/RELEASE_HISTORY.md:198
 msgid ""
 "Fixed a bug that causes escaped failure in some cases when strategy is "
 "based on RuleIterator"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:191
+#: ../../source/RELEASE_HISTORY.md:199
 msgid ""
 "Now it is possible to view all live accounts with "
 "`qt.live_trade_accounts()`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:193
+#: ../../source/RELEASE_HISTORY.md:201
 msgid "1.2.1 (2024-04-25)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:194
+#: ../../source/RELEASE_HISTORY.md:202
 msgid ""
 "Corrected a build mistake in version 1.2.0, which caused style files not "
 "being included in the package"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:195
+#: ../../source/RELEASE_HISTORY.md:203
 msgid ""
 "Added new qt level function: `live_trade_accounts()` to get detailed "
 "information of all accounts for live trading"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:196
+#: ../../source/RELEASE_HISTORY.md:204
 msgid "Corrected a mistake in trader CLI of wrong formatting of trade info"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:197
+#: ../../source/RELEASE_HISTORY.md:205
 msgid "Improved help information for live trade related configurations"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:199
+#: ../../source/RELEASE_HISTORY.md:207
 msgid "1.2.0 (2024-04-25)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:200
+#: ../../source/RELEASE_HISTORY.md:208
 msgid ""
 "New feature added: Now qteasy has a new Terminal UI for live trading, "
 "thus users can choose from one of the two UIs for live trading: the "
 "Trader Shell or the TUI"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:201
+#: ../../source/RELEASE_HISTORY.md:209
 msgid ""
 "A new configure key `qt.config['live_trade_ui_type']` is added to allow "
 "users to choose between the two UIs for live trading"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:202
+#: ../../source/RELEASE_HISTORY.md:210
 msgid ""
 "The new TUI has built in light mode and dark mode themes, and is more "
 "user-friendly for users who are not familiar with command line interfaces"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:203
+#: ../../source/RELEASE_HISTORY.md:211
 msgid ""
 "The new TUI displays live status of the account, on hand stocks, "
 "historical order, and live operation logs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:204
+#: ../../source/RELEASE_HISTORY.md:212
 msgid "Use Ctrl=P and Ctrl+R to pause and resume the live trading process"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:206
+#: ../../source/RELEASE_HISTORY.md:214
 msgid "1.1.11 (2024-04-20)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:207
+#: ../../source/RELEASE_HISTORY.md:215
 msgid ""
 "Improved function `refill_data_source`, allowed data being downloaded in "
 "batches that are adjust-able in size and intervals in between"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:208
+#: ../../source/RELEASE_HISTORY.md:216
 msgid ""
 "Improved error messages raised by qt when wrong values are set to "
 "configuration keys, providing better guidance for users"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:210
+#: ../../source/RELEASE_HISTORY.md:218
 msgid "1.1.10 (2024-04-19)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:211
+#: ../../source/RELEASE_HISTORY.md:219
 msgid ""
 "Fixed a bug that causes not taking effect the configuration that are "
 "related to automatic retries in data acquiring from tushare"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:213
+#: ../../source/RELEASE_HISTORY.md:221
 msgid "1.1.9 (2024-04-09)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:214
+#: ../../source/RELEASE_HISTORY.md:222
 msgid ""
 "Fixed a bug that might cause error extracting minute level data from "
 "local data source"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:215
+#: ../../source/RELEASE_HISTORY.md:223
 msgid "Improved compatibilities"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:217
+#: ../../source/RELEASE_HISTORY.md:225
 msgid "1.1.8 (2024-04-05)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:218
+#: ../../source/RELEASE_HISTORY.md:226
 msgid "Improved compatibility for higher versions of `python` from 3.9 up to 3.12"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:219
+#: ../../source/RELEASE_HISTORY.md:227
 msgid ""
 "Improved compatibility for higher versions of `pandas` (v2.2.1), `numpy` "
 "(1.26.4), and `numba` (v0.59.1)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:220
+#: ../../source/RELEASE_HISTORY.md:228
 msgid ""
 "Fixed a bug that will cause failure of strategy optimizations in python "
 "3.10 and above"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:221
+#: ../../source/RELEASE_HISTORY.md:229
 msgid "Corrected and improved a few error messages"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:223
+#: ../../source/RELEASE_HISTORY.md:231
 msgid "1.1.7 (2024-04-03)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:224
+#: ../../source/RELEASE_HISTORY.md:232
 msgid ""
 "Now qteasy can be installed in higher versions of `python` from 3.9 up to"
 " 3.12"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:226
+#: ../../source/RELEASE_HISTORY.md:234
 msgid "1.1.4 (2024-03-30)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:227
+#: ../../source/RELEASE_HISTORY.md:235
 msgid ""
 "Updated version restrictions on dependencies, to solve the version "
 "conflicts between `numba` and `numpy`."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:228
+#: ../../source/RELEASE_HISTORY.md:236
 msgid ""
 "Slightly improved warning information when loading qteasy for the first "
 "time."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:229
+#: ../../source/RELEASE_HISTORY.md:237
 msgid "Fixed a few bugs that will cause compatibility issue with `pandas` > 2.0"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:230
+#: ../../source/RELEASE_HISTORY.md:238
 msgid ""
 "Added performance warnings for strategy optimization method 2 when some "
 "`numpy` and `numba` versions will cause performance degrade in "
 "multiprocessing"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:232
+#: ../../source/RELEASE_HISTORY.md:240
 msgid "1.1.3 (2024-03-25)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:233
+#: ../../source/RELEASE_HISTORY.md:241
 msgid ""
 "now trade_log, trade_records, full_histories are added to the results "
 "returned from backtest run, and can be accessed by `res['trade_log']`, "
 "`res['trade_records']`, and `res['full_histories']`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:235
+#: ../../source/RELEASE_HISTORY.md:243
 msgid "1.1.2 (2024-03-18)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:236
+#: ../../source/RELEASE_HISTORY.md:244
 msgid ""
 "New parameter `--rewind` is now added to command `dashboard`, to allow "
 "users to view previously saved logs when switched to dashboard mode."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:237
+#: ../../source/RELEASE_HISTORY.md:245
 msgid ""
 "Added more information print-outs for command `buy` and `sell`, to show "
 "if orders are submitted successfully."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:239
+#: ../../source/RELEASE_HISTORY.md:247
 msgid "1.1.1 (2024-03-16)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:240
+#: ../../source/RELEASE_HISTORY.md:248
 msgid ""
 "corrected system log for live trade, now different live trade instances "
 "will log to different files"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:241
+#: ../../source/RELEASE_HISTORY.md:249
 msgid ""
 "added capability of reading info from live trade log files and system log"
 " files"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:243
+#: ../../source/RELEASE_HISTORY.md:251
 msgid "1.1.0 (2024-03-08)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:244
+#: ../../source/RELEASE_HISTORY.md:252
 msgid ""
 "New feature: The QTEASY shell is now parsing command arguments in a "
 "better and more intuitive way:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:245
+#: ../../source/RELEASE_HISTORY.md:253
 msgid ""
 "Now all commands support `--parameter` / `-p` style parameters, same way "
 "as all other CLI tools"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:246
+#: ../../source/RELEASE_HISTORY.md:254
 msgid ""
 "All commands now support `--help` and `-h` to show help messages, are now"
 " fully documented in the shell help message"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:247
+#: ../../source/RELEASE_HISTORY.md:255
 msgid ""
 "All commands now have better error handling and usage messages when wrong"
 " arguments are given"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:248
+#: ../../source/RELEASE_HISTORY.md:256
 msgid "All commands are now thoroughly tested and debugged"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:249
+#: ../../source/RELEASE_HISTORY.md:257
 msgid ""
 "Arguments of some commands are now re-designed and re-organized to be "
 "more intuitive and easier to use:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:250
+#: ../../source/RELEASE_HISTORY.md:258
 msgid ""
 "`watch` command now supports `--remove` / `-r` to remove symbols from "
 "watch list, and `--clear` / `-c` to clear the list"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:251
+#: ../../source/RELEASE_HISTORY.md:259
 msgid ""
 "`buy` and `sell` commands now uses `--price` / `-p` to specify price, and"
 " `--side` / `-s` to specify position side"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:252
+#: ../../source/RELEASE_HISTORY.md:260
 msgid ""
 "`info` and `overview` commands now support new argument `--system` to "
 "show system info, and `verbose` will be replaced by `detail` in future "
 "versions"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:253
+#: ../../source/RELEASE_HISTORY.md:261
 msgid "`history` command now accepts explicit argument `all` to show all history"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:254
+#: ../../source/RELEASE_HISTORY.md:262
 msgid ""
 "`orders` command now accepts order filter arguments with optional tags "
 "`--status`, `--time`, `--side`, and `--type`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:255
+#: ../../source/RELEASE_HISTORY.md:263
 msgid ""
 "`config` command now support `--set` / `-s` to set configurations, and "
 "set view levels with count of `--level` / `-l`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:256
+#: ../../source/RELEASE_HISTORY.md:264
 msgid ""
 "`strategies` command now supports `--set-par` to set strategy optimizable"
 " parameters, and to be implemented: possible to set blenders with "
 "`--blender` and `--timing`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:257
+#: ../../source/RELEASE_HISTORY.md:265
 msgid ""
 "`run` command now supports running tasks with arguments given with "
 "optional flag `--args` / `-a`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:258
+#: ../../source/RELEASE_HISTORY.md:266
 msgid ""
 "`orders` command now works with new optional arguments for time, type, "
 "side and status in more logical way"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:260
+#: ../../source/RELEASE_HISTORY.md:268
 msgid "1.0.27 (2024-3-5)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:261
+#: ../../source/RELEASE_HISTORY.md:269
 msgid ""
 "Removed dependency on pandas to load dataframes from database, which will"
 " arouse UserWarnings in higher versions of pandas, requesting users to "
 "install sqlalchemy"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:263
+#: ../../source/RELEASE_HISTORY.md:271
 msgid "1.0.26 (2024-2-29)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:264
+#: ../../source/RELEASE_HISTORY.md:272
 msgid ""
 "Now live trade logs are kept in system log files, live logs are saved in "
 "the same file, with different account number as prefix"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:265 ../../source/RELEASE_HISTORY.md:283
-#: ../../source/RELEASE_HISTORY.md:313 ../../source/RELEASE_HISTORY.md:356
+#: ../../source/RELEASE_HISTORY.md:273 ../../source/RELEASE_HISTORY.md:291
+#: ../../source/RELEASE_HISTORY.md:321 ../../source/RELEASE_HISTORY.md:364
 msgid "Fixed bugs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:267
+#: ../../source/RELEASE_HISTORY.md:275
 msgid "1.0.25 (2024-2-28)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:268
+#: ../../source/RELEASE_HISTORY.md:276
 msgid ""
 "Now trade logs are saved in a file in live trade mode, the file is saved "
 "in the same directory as set in `qt.config['trade_log_file_path']`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:269
+#: ../../source/RELEASE_HISTORY.md:277
 msgid ""
 "Fixed a few bugs in live trade mode, and added information print-outs on "
 "errors"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:271
+#: ../../source/RELEASE_HISTORY.md:279
 msgid "1.0.24 (2024-02-18)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:272
+#: ../../source/RELEASE_HISTORY.md:280
 msgid ""
 "Corrected a mistake introduced since version 1.0.18, with wrongly merged "
 "incomplete and untested features in broker. this bug will cause failure "
 "of execution orders in live trade mode."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:274
+#: ../../source/RELEASE_HISTORY.md:282
 msgid "1.0.23 (2024-02-15)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:275
+#: ../../source/RELEASE_HISTORY.md:283
 msgid ""
 "Fixed a bug that will cause wrong type conversion when filtering stocks "
 "with `qt.filter_stocks()` and creating candle charts with `qt.candle()`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:277
+#: ../../source/RELEASE_HISTORY.md:285
 msgid "1.0.22 (2024-02-14)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:278
+#: ../../source/RELEASE_HISTORY.md:286
 msgid ""
 "Fixed a mistake in qt.get_config and qt.candle() that interprets wrong "
 "list dates in basic data"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:279
+#: ../../source/RELEASE_HISTORY.md:287
 msgid "Improved progress bar: trim the text to screen width"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:280
+#: ../../source/RELEASE_HISTORY.md:288
 msgid ""
 "Allows qt.get_stock_info() to run without all basic tables being "
 "downloaded"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:282
+#: ../../source/RELEASE_HISTORY.md:290
 msgid "1.0.21 (2024-02-11)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:285
+#: ../../source/RELEASE_HISTORY.md:293
 msgid "1.0.20 (2024-02-08)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:286
+#: ../../source/RELEASE_HISTORY.md:294
 msgid ""
 "Fixed mistakes in ta-lib compatible functions `EMA()`, `MACD()`, "
 "`TRIX()`, and `DEMA()`, now they can be used without `ta-lib` installed, "
 "although the results are slightly different from their talib versions"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:288
+#: ../../source/RELEASE_HISTORY.md:296
 msgid "1.0.19 (2024-02-07)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:289
+#: ../../source/RELEASE_HISTORY.md:297
 msgid ""
 "Removed dependency on `ta-lib` package for ta functions `RSI()`, `MA()`, "
 "and `BBANDS()`, thus candle charts can be created without `ta-lib` "
 "installed"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:290
+#: ../../source/RELEASE_HISTORY.md:298
 msgid ""
 "Updated dependencies, made package more use-able for beginners with no "
 "`ta-lib` and only basic `tushare` credits"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:292
+#: ../../source/RELEASE_HISTORY.md:300
 msgid "1.0.18 (2024-02-05)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:293
+#: ../../source/RELEASE_HISTORY.md:301
 msgid ""
 "Improved Trader Shell live messages: now order execution results are "
 "better displayed with more info regarding change of stock qty and cash "
 "amounts"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:294
+#: ../../source/RELEASE_HISTORY.md:302
 msgid ""
 "Command INFO and OVERVIEW in trader shell now will not print out system "
 "information in default."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:295
+#: ../../source/RELEASE_HISTORY.md:303
 msgid "Updated version requirements for numpy"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:296
+#: ../../source/RELEASE_HISTORY.md:304
 msgid "Bug fixes"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:298
+#: ../../source/RELEASE_HISTORY.md:306
 msgid "1.0.17 (2024-01-29)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:299
+#: ../../source/RELEASE_HISTORY.md:307
 msgid ""
 "improved trader shell command \"run\", now it can run a strategy in main "
 "thread, making it easier to debug"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:300
+#: ../../source/RELEASE_HISTORY.md:308
 msgid ""
 "fixed a bug that will cause error acquiring live price in live trade mode"
 " if running freq is lower than 1 hour"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:302
+#: ../../source/RELEASE_HISTORY.md:310
 msgid "1.0.16 (2024-01-27)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:303
+#: ../../source/RELEASE_HISTORY.md:311
 msgid ""
 "Added feature: if a valid trade signal can not be converted to an order "
 "due to lack of available cash/stock, a message will be posted in live "
 "mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:304
+#: ../../source/RELEASE_HISTORY.md:312
 msgid ""
 "Fixed a bug in live trade mode that will cause trade results being "
 "processed and delivered for more than one time, thus leads to wrong "
 "available qty or available cash recorded"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:305
+#: ../../source/RELEASE_HISTORY.md:313
 msgid ""
 "Fixed a mistake that will cause wrong cost being calculated during live "
 "trade"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:306
+#: ../../source/RELEASE_HISTORY.md:314
 msgid ""
 "Fixed a mistake in live trade shell with command history, that wrong "
 "stock cost is calculated when history of multiple stocks are listed"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:307
+#: ../../source/RELEASE_HISTORY.md:315
 msgid ""
 "Fixed bug in issue #85 where data are extracted and filled unexpectedly "
 "in non-trading days"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:308
+#: ../../source/RELEASE_HISTORY.md:316
 msgid "Fixed other bugs"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:310
+#: ../../source/RELEASE_HISTORY.md:318
 msgid "1.0.15 (2023-12-29)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:311
+#: ../../source/RELEASE_HISTORY.md:319
 msgid "Now live prices of Index and ETFs can also be watched in live running mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:312
+#: ../../source/RELEASE_HISTORY.md:320
 msgid "ETF and Index are now supported in live trading mode as trading targets"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:315
+#: ../../source/RELEASE_HISTORY.md:323
 msgid "1.0.14 (2023-12-22)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:316
+#: ../../source/RELEASE_HISTORY.md:324
 msgid "Removed optional dependency sqlalchemy"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:317
+#: ../../source/RELEASE_HISTORY.md:325
 msgid "Added retry in broker to stop order execution after max retries"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:319
+#: ../../source/RELEASE_HISTORY.md:327
 msgid "1.0.13 (2023-12-21)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:320
+#: ../../source/RELEASE_HISTORY.md:328
 msgid "Improvements in Trader Shell"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:321
+#: ../../source/RELEASE_HISTORY.md:329
 msgid ""
 "Now users can scroll to previous commands with up and down keys in "
 "Command mode"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:322
+#: ../../source/RELEASE_HISTORY.md:330
 msgid ""
 "Created new command `buy` / `sell` to allow users to manually submit "
 "orders to broker"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:323
+#: ../../source/RELEASE_HISTORY.md:331
 msgid ""
 "Optimized shell tasks and let live price acquisition to run in background"
 " threads"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:324
+#: ../../source/RELEASE_HISTORY.md:332
 msgid "In Broker:"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:325
+#: ../../source/RELEASE_HISTORY.md:333
 msgid ""
 "Optimized behavior of Simulator Broker, to return execution result "
 "according to live prices"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:326
+#: ../../source/RELEASE_HISTORY.md:334
 msgid "Fixed bugs: order execution will not block each other"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:328
+#: ../../source/RELEASE_HISTORY.md:336
 msgid "1.0.12 (2023-12-07)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:329
+#: ../../source/RELEASE_HISTORY.md:337
 msgid "improved visual effects"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:330
+#: ../../source/RELEASE_HISTORY.md:338
 msgid ""
 "now live prices are acquired in background threads, not causing lags in "
 "the main loop"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:331
+#: ../../source/RELEASE_HISTORY.md:339
 msgid ""
 "mistake corrections that allow live prices to be displayed when time zone"
 " is not local"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:332
+#: ../../source/RELEASE_HISTORY.md:340
 msgid "watched price refresh interval is now configurable"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:334
+#: ../../source/RELEASE_HISTORY.md:342
 msgid "*in next release:*"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:336
+#: ../../source/RELEASE_HISTORY.md:344
 msgid "two new commands will be added to Shell: `buy` and `sell`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:338
+#: ../../source/RELEASE_HISTORY.md:346
 msgid "1.0.11 (2023-12-03)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:339
+#: ../../source/RELEASE_HISTORY.md:347
 msgid ""
 "Implemented \"--parameter\" / \"-p\" style parameter in Trader Shell, the"
 " old style will be deprecated in later versions"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:340
+#: ../../source/RELEASE_HISTORY.md:348
 msgid ""
 "Allowed users to set up live trade broker parameters with QT "
 "configurations"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:341
+#: ../../source/RELEASE_HISTORY.md:349
 msgid "Allowed users to set up live trade running time zone"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:342
+#: ../../source/RELEASE_HISTORY.md:350
 msgid ""
 "Made dependency ta-lib as optional, kept a few critical built in "
 "strategies usable without `ta-lib`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:344
+#: ../../source/RELEASE_HISTORY.md:352
 msgid "1.0.10 (2023-11-25)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:345
+#: ../../source/RELEASE_HISTORY.md:353
 msgid ""
 "Corrected a mistake left out in version 1.0.9, which caused error when "
 "reference data is None in strategy"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:346
+#: ../../source/RELEASE_HISTORY.md:354
 msgid "Changed default value of qteasy parameter `backtest_price_adj` to `none`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:348
+#: ../../source/RELEASE_HISTORY.md:356
 msgid "1.0.9 (2023-11-24)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:349
+#: ../../source/RELEASE_HISTORY.md:357
 msgid ""
 "Corrected a mistake in reference data generation and allocation to "
 "strategies, making reference data available to strategies"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:350
+#: ../../source/RELEASE_HISTORY.md:358
 msgid "Improved documentations"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:352
+#: ../../source/RELEASE_HISTORY.md:360
 msgid "1.0.8 (2023-11-22)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:353
+#: ../../source/RELEASE_HISTORY.md:361
 msgid ""
 "Improved trader shell visual effects, added color coding for different "
 "types of messages, with dependency on `rich` package"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:354
+#: ../../source/RELEASE_HISTORY.md:362
 msgid ""
 "Published `Qteasy` Docs to https://qteasy.readthedocs.io/zh/latest/, "
 "added more supportive documents including api reference, examples, "
 "tutorials, etc."
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:355
+#: ../../source/RELEASE_HISTORY.md:363
 msgid "Added parameter `qteasy.__version__`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:358
+#: ../../source/RELEASE_HISTORY.md:366
 msgid "1.0.7 (2023-11-11)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:359
+#: ../../source/RELEASE_HISTORY.md:367
 msgid ""
 "Improved Strategy class, added Strategy.use_latest_data_cycle property to"
 " allow use the latest prices to create trade signals"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:360
+#: ../../source/RELEASE_HISTORY.md:368
 msgid "now stock names are displayed in qt shell"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:361
+#: ../../source/RELEASE_HISTORY.md:369
 msgid "Added shell command `watch`, to watch stock price in realtime"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:362
+#: ../../source/RELEASE_HISTORY.md:370
 msgid "Implemented live price acquiring channel eastmoney"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:363
+#: ../../source/RELEASE_HISTORY.md:371
 msgid "Improvements in text display effects and bug fixes"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:365
+#: ../../source/RELEASE_HISTORY.md:373
 msgid "1.0.6 (2023-10-19)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:366
+#: ../../source/RELEASE_HISTORY.md:374
 msgid "Added shell command `config`"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:367
+#: ../../source/RELEASE_HISTORY.md:375
 msgid "Supported using FUND as investment type"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:369
+#: ../../source/RELEASE_HISTORY.md:377
 msgid "1.0.0 (2023-09-19)"
 msgstr ""
 
-#: ../../source/RELEASE_HISTORY.md:370
+#: ../../source/RELEASE_HISTORY.md:378
 msgid "First release of working version on PyPI."
 msgstr ""
 

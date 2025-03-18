@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 21:13+0800\n"
+"POT-Creation-Date: 2025-03-18 21:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -21,11 +21,11 @@ msgstr ""
 
 #: ../../source/about.md:2
 msgid "关于 QTEASY"
-msgstr ""
+msgstr "À propos de QTEASY"
 
 #: ../../source/about.md:4
 msgid "作者: **Jackie PENG**"
-msgstr ""
+msgstr "Auteur: **Jackie PENG**"
 
 #: ../../source/about.md:5
 msgid "Email: *jackie_pengzhao@163.com*"
@@ -33,13 +33,16 @@ msgstr ""
 
 #: ../../source/about.md:6
 msgid "创建日期: 2019, July, 16"
-msgstr ""
+msgstr "Créé le: 2019, Juillet, 16"
 
 #: ../../source/about.md:7
-msgid "最新版本: `1.4.8`"
-msgstr ""
+msgid "最新版本: `1.4.9`"
+msgstr "Dernière version: `1.4.9`"
 
 #: ../../source/about.md:8
 msgid "License: BSD 3-Clause"
 msgstr ""
+
+#~ msgid "最新版本: `1.4.8`"
+#~ msgstr ""
 
