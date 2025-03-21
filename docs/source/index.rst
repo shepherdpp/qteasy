@@ -113,7 +113,6 @@
     :maxdepth: 1
     :glob:
 
-    references/1-strategy-overview.md
     manage_strategies/*
 
 
@@ -123,8 +122,8 @@
     :maxdepth: 1
     :glob:
 
-    references/1-backtest-overview.md
     references/3-back-test-strategy.md
+    references/4-build-in-strategy-blender.md
     back_testing/*
 
 

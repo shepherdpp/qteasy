@@ -99,6 +99,7 @@ from qteasy.database import (
 
 from qteasy.datatypes import (
     find_history_data,
+    DataType,
 )
 
 from qteasy._arg_validators import (

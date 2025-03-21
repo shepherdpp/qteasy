@@ -1514,7 +1514,7 @@ class Trader(object):
         updated_qty = delivery_result['updated_qty']
         color_tag = 'bold red' if prev_qty > updated_qty else 'bold green'
 
-        name = get_symbol_names(self.datasource, symbols=symbol)
+        name = get_symbol_names(self.datasource, symbols=symbol)[0]
         # 生成trade_log并写入文件
         trade_log = {
             'reason':               'delivery',
