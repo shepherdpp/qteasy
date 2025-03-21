@@ -5,6 +5,8 @@ qteasy提供了70多种内置交易策略，用户可以很容易地直接使用
 在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。
 
 
+## 内置交易策略的使用
+
 ### `qt.get_built_in_strategy(id)`
 
 ### `qt.built_in_list(stg_id=None)`
@@ -241,8 +243,8 @@ Subclasses:
 
 在ipython等交互式python环境中，也可以使用?来显示内置交易策略的详细信息，例如：
 
-```python
-qt.built_in.SelectingNDayRateChange?
+```text
+>>> qt.built_in.SelectingNDayRateChange?
 ```
 
 可以看到：

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-03-22 01:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -24,13 +24,14 @@ msgid "内置交易策略"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:4
-msgid "qteasy提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。"
+msgid "``qteasy`` 提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:6
 msgid ""
-"qteasy所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个qteasy内置交易策略都有一个ID，通过这个唯一的ID"
-" 用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建Operator对象时使用这个交易策略。"
+"``qteasy`` 所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个 ``qteasy`` "
+"内置交易策略都有一个ID，通过这个唯一的ID 用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建 ``Operator`` "
+"对象时使用这个交易策略。"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:10
@@ -43,20 +44,21 @@ msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:14
 msgid ""
-"下面的函数接受相同的参数stg_id，但是返回不同类型的数据，如果stg_id为None，则返回所有的内置交易策略，否则返回指定ID的交易策略。 "
-"如果用户输入的stg_id不存在，qteasy会根据用户输入的stg_id返回id与其最接近的交易策略。"
+"下面的函数接受相同的参数 ``stg_id``，但是返回不同类型的数据，如果 ``stg_id`` 为 "
+"``None``，则返回所有的内置交易策略，否则返回指定ID的交易策略。 如果用户输入的 ``stg_id`` 不存在，``qteasy`` "
+"会根据用户输入的 ``stg_id`` 返回id与其最接近的交易策略。"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:17
-msgid "下面的函数返回一个字典，字典的key是交易策略的ID，value是交易策略的说明文档。"
+msgid "下面的函数返回一个字典，字典的 ``key`` 是交易策略的ID，``value`` 是交易策略的说明文档。"
 msgstr ""
 
 #: of qteasy.built_in.built_ins:1
 msgid "获取或筛选内置的交易策略,可以通过stg_id进行模糊匹配，返回的是策略的字典"
 msgstr ""
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "参数"
 msgstr ""
@@ -68,8 +70,8 @@ msgid ""
 "支持模糊匹配，例如'cross'可以匹配到'crossline'"
 msgstr ""
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "返回"
 msgstr ""
@@ -78,8 +80,8 @@ msgstr ""
 msgid "**strategies** -- 所有被筛选的内置策略的字典"
 msgstr ""
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "返回类型"
 msgstr ""
@@ -1237,13 +1239,13 @@ msgid "参数范围: ``[(2, 100), (0.5, 5), (0.5, 5)]``"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:106
-msgid "依赖``TA-Lib``技术分析包的交易策略"
+msgid "依赖 ``TA-Lib`` 技术分析包的交易策略"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:108
 msgid ""
-"以下是一些依赖``TA-Lib``技术分析包的交易策略，这些交易策略都是基于``TA-Lib``技术分析包的计算，需要安装``TA-"
-"Lib``技术分析包。"
+"以下是一些依赖 ``TA-Lib`` 技术分析包的交易策略，这些交易策略都是基于 ``TA-Lib`` 技术分析包的计算，需要安装 ``TA-"
+"Lib`` 技术分析包。"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:112
@@ -2563,4 +2565,28 @@ msgstr ""
 #: of qteasy.built_in.NATR:1 qteasy.built_in.TRANGE:1
 msgid "Not Implemented Yet"
 msgstr ""
+
+#~ msgid "qteasy提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "qteasy所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个qteasy内置交易策略都有一个ID，通过这个唯一的ID"
+#~ " 用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建Operator对象时使用这个交易策略。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "下面的函数接受相同的参数stg_id，但是返回不同类型的数据，如果stg_id为None，则返回所有的内置交易策略，否则返回指定ID的交易策略。"
+#~ " 如果用户输入的stg_id不存在，qteasy会根据用户输入的stg_id返回id与其最接近的交易策略。"
+#~ msgstr ""
+
+#~ msgid "下面的函数返回一个字典，字典的key是交易策略的ID，value是交易策略的说明文档。"
+#~ msgstr ""
+
+#~ msgid "依赖``TA-Lib``技术分析包的交易策略"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "以下是一些依赖``TA-Lib``技术分析包的交易策略，这些交易策略都是基于``TA-"
+#~ "Lib``技术分析包的计算，需要安装``TA-Lib``技术分析包。"
+#~ msgstr ""
 

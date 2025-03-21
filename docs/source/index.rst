@@ -133,7 +133,7 @@
     :maxdepth: 1
     :glob:
 
-    references/1-optimization-overview.md
+    optimization/*
     references/5-optimize-strategy.md
 
 

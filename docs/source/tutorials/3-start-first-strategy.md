@@ -315,7 +315,7 @@ op.set_parameter(0,
 ```python
 res=qt.run(op, visual=True, print_backtest_log=True)
 ```
-```code
+```text
      ====================================
      |                                  |
      |       BACK TESTING RESULT        |

@@ -111,8 +111,8 @@ Subclasses:
 
 在`ipython`等交互式`python`环境中，也可以使用`?`来显示内置交易策略的详细信息，例如：
 
-```python
-qt.built_in.SelectingNDayRateChange?
+```text
+>>> qt.built_in.SelectingNDayRateChange?
 ```
 
 可以看到：

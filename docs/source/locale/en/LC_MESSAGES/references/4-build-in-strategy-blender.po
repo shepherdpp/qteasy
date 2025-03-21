@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-03-22 01:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -25,41 +25,60 @@ msgstr "Built-in Strategies"
 
 #: ../../source/references/4-build-in-strategy-blender.md:3
 msgid "qteasy提供了70多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。"
-msgstr "There are more than 70 built-in trading strategies in qteasy, which users can easily use directly. At the same time, qteasy provides a set of trading strategy combination mechanisms, and users can combine multiple simple trading strategies into a more complex trading strategy. The combination method of the strategy can be flexibly set. After combining multiple simple trading strategies into a complex strategy, the strategy optimization tool can also be used to search for the best parameters of the entire complex strategy."
+msgstr ""
+"There are more than 70 built-in trading strategies in qteasy, which users"
+" can easily use directly. At the same time, qteasy provides a set of "
+"trading strategy combination mechanisms, and users can combine multiple "
+"simple trading strategies into a more complex trading strategy. The "
+"combination method of the strategy can be flexibly set. After combining "
+"multiple simple trading strategies into a complex strategy, the strategy "
+"optimization tool can also be used to search for the best parameters of "
+"the entire complex strategy."
 
 #: ../../source/references/4-build-in-strategy-blender.md:5
 msgid "在这篇教程中，您将了解如何使用内置交易策略，如何组合策略，如何设定组合规则实现复杂策略，以及如何优化策略。"
-msgstr "In this tutorial, you will learn how to use built-in trading strategies, how to combine strategies, how to set combination rules to achieve complex strategies, and how to optimize strategies."
+msgstr ""
+"In this tutorial, you will learn how to use built-in trading strategies, "
+"how to combine strategies, how to set combination rules to achieve "
+"complex strategies, and how to optimize strategies."
 
 #: ../../source/references/4-build-in-strategy-blender.md:8
+#, fuzzy
+msgid "内置交易策略的使用"
+msgstr "Built-in Strategies"
+
+#: ../../source/references/4-build-in-strategy-blender.md:10
 msgid "`qt.get_built_in_strategy(id)`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:10
+#: ../../source/references/4-build-in-strategy-blender.md:12
 msgid "`qt.built_in_list(stg_id=None)`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:12
+#: ../../source/references/4-build-in-strategy-blender.md:14
 msgid ""
 "上面三个方法的输出是一样的，都用一个dict列出所有的内置交易策略，dict的key是交易策略的ID，value是交易策略对象。 "
 "如果给出stg_id，则打印出指定的交易策略的详细信息。例如："
 msgstr ""
-"Output of the above three methods is the same, all of them list all built-in trading strategies with a dict, where the key is the ID of the trading strategy and the value is the trading strategy object. "
-"If stg_id is given, the detailed information of the specified trading strategy is printed. For example:"
+"Output of the above three methods is the same, all of them list all "
+"built-in trading strategies with a dict, where the key is the ID of the "
+"trading strategy and the value is the trading strategy object. If stg_id "
+"is given, the detailed information of the specified trading strategy is "
+"printed. For example:"
 
-#: ../../source/references/4-build-in-strategy-blender.md:19
+#: ../../source/references/4-build-in-strategy-blender.md:21
 msgid "打印如下信息："
 msgstr "Following information is printed:"
 
-#: ../../source/references/4-build-in-strategy-blender.md:45
+#: ../../source/references/4-build-in-strategy-blender.md:47
 msgid "在qteasy中，可以直接使用策略的ID获取内置交易策略"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:47
+#: ../../source/references/4-build-in-strategy-blender.md:49
 msgid "除了使用qt.get_built_in_strategy()获取交易策略以外，在创建Operator对象的时候，将内置交易策略的ID作为参数传入，也可以直接创建交易策略。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:129
+#: ../../source/references/4-build-in-strategy-blender.md:131
 msgid "目前qteasy支持的内置交易策略如下："
 msgstr ""
 
@@ -993,69 +1012,69 @@ msgstr ""
 msgid "根据股票以前N天的股价波动率作为选股因子"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:206
+#: ../../source/references/4-build-in-strategy-blender.md:208
 msgid "如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的Doc-string："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:208
+#: ../../source/references/4-build-in-strategy-blender.md:210
 msgid "例如："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:213
+#: ../../source/references/4-build-in-strategy-blender.md:215
 msgid "可以看到"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:242
+#: ../../source/references/4-build-in-strategy-blender.md:244
 msgid "在ipython等交互式python环境中，也可以使用?来显示内置交易策略的详细信息，例如："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:248
+#: ../../source/references/4-build-in-strategy-blender.md:250
 msgid "可以看到："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:293
+#: ../../source/references/4-build-in-strategy-blender.md:295
 msgid "多重策略以及策略组合"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:295
+#: ../../source/references/4-build-in-strategy-blender.md:297
 msgid "在qteasy中，一个Operator交易员对象可以同时运行多个交易策略。这些交易策略在运行的时候，都会分别提取各自所需的历史数据，独立生成不同的交易信号，这些交易信号会被组合成一组交易信号，统一执行。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:297
+#: ../../source/references/4-build-in-strategy-blender.md:299
 msgid "利用这种特性，用户可以在一个交易员对象中同时运行多个各有侧重的交易策略，例如，一个交易策略监控个股的股价，根据股价产生择信号，第二个交易策略专门负责监控大盘走势，通过大盘走势决定整体仓位。第三个交易策略专门负责止盈止损，在特定时刻止损。最终的交易信号以第一个交易策略为主，但受到第二个策略的节制，必要时会被第三个策略完全控制。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:299
+#: ../../source/references/4-build-in-strategy-blender.md:301
 msgid "或者，用户也可以很容易地制定出一个“委员会”策略，在一个综合性策略中由多个策略独立地做出交易决策，最终的交易信号由所有子策略组成的”委员会“投票决定，投票的方式可以是简单多数、绝对多数、加权投票结果等等。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:301
+#: ../../source/references/4-build-in-strategy-blender.md:303
 msgid "上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。相信这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:303
+#: ../../source/references/4-build-in-strategy-blender.md:305
 msgid "不过，在一个Operator对象中，不同策略生成的交易信号可能运行的交易价格是不同的，例如，某些策略生成开盘价交易信号，而另一些策略生成的是收盘价交易策略，那么不同的交易价格信号当然不应该混合。但除此之外，只要是交易价格相同的信号，都应该全部混合。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:305
+#: ../../source/references/4-build-in-strategy-blender.md:307
 msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个ndarray的函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:306
+#: ../../source/references/4-build-in-strategy-blender.md:308
 msgid "定义策略组合方式`blender`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:308
+#: ../../source/references/4-build-in-strategy-blender.md:310
 msgid "`qteasy`中的组合策略是由`blender`实现的。在一个`Operator`中，如果策略的数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:310
+#: ../../source/references/4-build-in-strategy-blender.md:312
 msgid ""
 "`blender "
 "expression`是用户自行定义的一个组合表达式，用户使用这个表达式确定不同交易策略的组合方式。这个组合表达式使用四则运算符、逻辑运算符、函数等符号规定策略信号是如何组合的。`blender`表达式中可以包括以下元素："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:312
+#: ../../source/references/4-build-in-strategy-blender.md:314
 msgid "`blender`表达式中支持的函数如下："
 msgstr ""
 
@@ -1139,75 +1158,75 @@ msgstr ""
 msgid "组合运算"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:324
+#: ../../source/references/4-build-in-strategy-blender.md:326
 msgid "`blender`示例"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:326
+#: ../../source/references/4-build-in-strategy-blender.md:328
 msgid "当一个`Operator`对象中有三个交易策略时（其序号分别为0/1/2），按照以下方式定义的`blender`都是合法可用的，同时使用`Operator.set_blender()`来设置`blender`："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:328
+#: ../../source/references/4-build-in-strategy-blender.md:330
 msgid "使用四则运算符定义blender表达式"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:330
+#: ../../source/references/4-build-in-strategy-blender.md:332
 msgid "`'s0 + s1 + s2'`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:332
+#: ../../source/references/4-build-in-strategy-blender.md:334
 msgid "此时三个交易策略生成的交易信号会被加起来，成为最终的交易信号，如果策略0的结果为买入10%，策略1结果为买入10%，策略2结果为买入30%，则最终的结果为买入50%"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:334
+#: ../../source/references/4-build-in-strategy-blender.md:336
 msgid "使用逻辑运算符定义blender表达式："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:336
+#: ../../source/references/4-build-in-strategy-blender.md:338
 msgid "`'s0 and s1 and s2'`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:338
+#: ../../source/references/4-build-in-strategy-blender.md:340
 msgid "表示只有当交易策略1、2、3都出现交易信号的时候，才会最终形成交易信号。如策略1的结果为买入，策略2结果为买入，而策略3没有交易信号，则最终的结果为没有交易信号。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:340
+#: ../../source/references/4-build-in-strategy-blender.md:342
 msgid "blender表达式中还可以包含括号和一些函数："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:342
+#: ../../source/references/4-build-in-strategy-blender.md:344
 msgid "`'max(s0, s1) + s2'`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:344
+#: ../../source/references/4-build-in-strategy-blender.md:346
 msgid "表示策略1、2的结果中最大值与策略3的结果相加，成为最终交易信号。如果策略1的结果为买入10%，策略2结果为买入20%，策略3结果为买入30%，最终的结果为买入50%"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:346
+#: ../../source/references/4-build-in-strategy-blender.md:348
 msgid "blender 表达式中每个策略可以出现不止一次，也可以出现纯数字："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:348
+#: ../../source/references/4-build-in-strategy-blender.md:350
 msgid "`'(0.5 * s0 + 1.0 * s1 + 1.5 * s2) / 3 * min(s0, s1, s2)'`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:350
+#: ../../source/references/4-build-in-strategy-blender.md:352
 msgid "上面的blender表达式表示：首先计算三个策略信号的加权平均（权重分别为0.5、1.0、1.5），然后再乘以三个信号的最小值"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:352
+#: ../../source/references/4-build-in-strategy-blender.md:354
 msgid "blender 表达式中函数的操作参数在函数名中定义："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:354
+#: ../../source/references/4-build-in-strategy-blender.md:356
 msgid "`'clip_-0.5_0.5(s0 + s1 + s2) + pos_2_0.2(s0, s1, s2)'`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:356
+#: ../../source/references/4-build-in-strategy-blender.md:358
 msgid "上面的blender表达式定义了两种不同的函数操作，分别得到结果后相加得到最终结果。第一个函数是范围剪切，将三组策略信号相加后，剪切掉小于-0.5的信号值以及大于0.5的信号值，得到计算结果；第二个函数是仓位判断函数，统计三组信号中持仓大于0.2的时间段，将其定义为“多头”，然后再统计每一个时间段三个策略中持多头建议的数量，如果超过两个策略持多头建议，则输出满仓多头，否则输出空仓。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:358
+#: ../../source/references/4-build-in-strategy-blender.md:360
 msgid "blender表达式中支持的函数如下："
 msgstr ""
 
@@ -1487,49 +1506,49 @@ msgid ""
 " />输入信号的数量不限"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:387
+#: ../../source/references/4-build-in-strategy-blender.md:389
 msgid "以下方法可以被用来设置或获取策略的blender"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:389
+#: ../../source/references/4-build-in-strategy-blender.md:391
 msgid "`operator.set_blender(blender=None, price_type=None)`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:390
+#: ../../source/references/4-build-in-strategy-blender.md:392
 msgid "设置blender，直接传入一个表达式，这个表达式会被自动解析后用于组合交易策略。"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:393
+#: ../../source/references/4-build-in-strategy-blender.md:395
 msgid "`operator.view_blender()`"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:394
+#: ../../source/references/4-build-in-strategy-blender.md:396
 msgid "查看blender"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:396
+#: ../../source/references/4-build-in-strategy-blender.md:398
 msgid "blender使用示例"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:398
+#: ../../source/references/4-build-in-strategy-blender.md:400
 msgid "下面使用一个例子来演示blender的工作方式："
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:467
+#: ../../source/references/4-build-in-strategy-blender.md:469
 msgid "![png](img/output_10_1.png)"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:467
-#: ../../source/references/4-build-in-strategy-blender.md:525
-#: ../../source/references/4-build-in-strategy-blender.md:578
+#: ../../source/references/4-build-in-strategy-blender.md:469
+#: ../../source/references/4-build-in-strategy-blender.md:527
+#: ../../source/references/4-build-in-strategy-blender.md:580
 msgid "png"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:525
+#: ../../source/references/4-build-in-strategy-blender.md:527
 msgid "![png](img/output_11_1.png)"
 msgstr ""
 
-#: ../../source/references/4-build-in-strategy-blender.md:578
+#: ../../source/references/4-build-in-strategy-blender.md:580
 msgid "![png](img/output_12_1_2.png)"
 msgstr ""
 

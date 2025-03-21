@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-03-22 01:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -24,15 +24,26 @@ msgid "内置交易策略"
 msgstr "Built-in Strategies"
 
 #: ../../source/api/built_in_strategies.rst:4
-msgid "qteasy提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。"
-msgstr "There are more than 70 built-in trading strategies in qteasy, all of which can be used directly. By modifying the parameters of these trading strategies, different personalized effects can be easily achieved."
+#, fuzzy
+msgid "``qteasy`` 提供超过70种内置交易策略，所有的交易策略都可以直接使用，通过修改这些交易策略的参数，可以很容易地实现不同的个性化效果。"
+msgstr ""
+"There are more than 70 built-in trading strategies in qteasy, all of "
+"which can be used directly. By modifying the parameters of these trading "
+"strategies, different personalized effects can be easily achieved."
 
 #: ../../source/api/built_in_strategies.rst:6
+#, fuzzy
 msgid ""
-"qteasy所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个qteasy内置交易策略都有一个ID，通过这个唯一的ID"
-" 用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建Operator对象时使用这个交易策略。"
+"``qteasy`` 所有的内置交易策略都有完整的说明文档，提供了交易策略的详细说明，参数说明，以及默认参数值。每一个 ``qteasy`` "
+"内置交易策略都有一个ID，通过这个唯一的ID 用户可以容易地获取这个交易策略，查看说明文档，或者直接在创建 ``Operator`` "
+"对象时使用这个交易策略。"
 msgstr ""
-"There are complete documentation for all built-in trading strategies in qteasy, providing detailed descriptions of trading strategies, parameter descriptions, and default parameter values. Each built-in trading strategy in qteasy has a unique ID, through which users can easily obtain this trading strategy, view the documentation, or use this trading strategy directly when creating an Operator object."
+"There are complete documentation for all built-in trading strategies in "
+"qteasy, providing detailed descriptions of trading strategies, parameter "
+"descriptions, and default parameter values. Each built-in trading "
+"strategy in qteasy has a unique ID, through which users can easily obtain"
+" this trading strategy, view the documentation, or use this trading "
+"strategy directly when creating an Operator object."
 
 #: ../../source/api/built_in_strategies.rst:10
 msgid "获取内置交易策略"
@@ -40,26 +51,40 @@ msgstr "Access Built-in Strategies"
 
 #: ../../source/api/built_in_strategies.rst:12
 msgid "查看所有的内置交易策略，或者根据ID筛选部分交易策略。使用下面的函数："
-msgstr "List all built-in trading strategies, or filter some trading strategies based on ID. Use the following function:"
+msgstr ""
+"List all built-in trading strategies, or filter some trading strategies "
+"based on ID. Use the following function:"
 
 #: ../../source/api/built_in_strategies.rst:14
+#, fuzzy
 msgid ""
-"下面的函数接受相同的参数stg_id，但是返回不同类型的数据，如果stg_id为None，则返回所有的内置交易策略，否则返回指定ID的交易策略。 "
-"如果用户输入的stg_id不存在，qteasy会根据用户输入的stg_id返回id与其最接近的交易策略。"
+"下面的函数接受相同的参数 ``stg_id``，但是返回不同类型的数据，如果 ``stg_id`` 为 "
+"``None``，则返回所有的内置交易策略，否则返回指定ID的交易策略。 如果用户输入的 ``stg_id`` 不存在，``qteasy`` "
+"会根据用户输入的 ``stg_id`` 返回id与其最接近的交易策略。"
 msgstr ""
-"The following function accepts the same parameter stg_id, but returns different types of data. If stg_id is None, all built-in trading strategies are returned, otherwise the specified ID trading strategy is returned. "
-"If the stg_id entered by the user does not exist, qteasy will return the trading strategy closest to the id entered by the user based on the stg_id entered by the user."
+"The following function accepts the same parameter stg_id, but returns "
+"different types of data. If stg_id is None, all built-in trading "
+"strategies are returned, otherwise the specified ID trading strategy is "
+"returned. If the stg_id entered by the user does not exist, qteasy will "
+"return the trading strategy closest to the id entered by the user based "
+"on the stg_id entered by the user."
 
 #: ../../source/api/built_in_strategies.rst:17
-msgid "下面的函数返回一个字典，字典的key是交易策略的ID，value是交易策略的说明文档。"
-msgstr "The following function returns a dictionary, where the key of the dictionary is the ID of the trading strategy and the value is the documentation of the trading strategy."
+#, fuzzy
+msgid "下面的函数返回一个字典，字典的 ``key`` 是交易策略的ID，``value`` 是交易策略的说明文档。"
+msgstr ""
+"The following function returns a dictionary, where the key of the "
+"dictionary is the ID of the trading strategy and the value is the "
+"documentation of the trading strategy."
 
 #: of qteasy.built_in.built_ins:1
 msgid "获取或筛选内置的交易策略,可以通过stg_id进行模糊匹配，返回的是策略的字典"
-msgstr "Access or filter built-in trading strategies, which can be matched by stg_id, and return a dictionary of strategies"
+msgstr ""
+"Access or filter built-in trading strategies, which can be matched by "
+"stg_id, and return a dictionary of strategies"
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "参数"
 msgstr "Parameters"
@@ -70,11 +95,12 @@ msgid ""
 "策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典 "
 "支持模糊匹配，例如'cross'可以匹配到'crossline'"
 msgstr ""
-"Strategy ID or fragment of ID, used to filter the required strategy. If stg_id is None, a dictionary of all built-in strategies is returned. "
+"Strategy ID or fragment of ID, used to filter the required strategy. If "
+"stg_id is None, a dictionary of all built-in strategies is returned. "
 "Fuzzy matching is supported, for example, 'cross' can match 'crossline'"
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "返回"
 msgstr "Returns"
@@ -83,8 +109,8 @@ msgstr "Returns"
 msgid "**strategies** -- 所有被筛选的内置策略的字典"
 msgstr "**strategies** -- A dictionary of all filtered built-in strategies"
 
-#: of qteasy.built_in.built_in_doc qteasy.built_in.built_in_list
-#: qteasy.built_in.built_in_strategies qteasy.built_in.built_ins
+#: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
+#: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
 msgid "返回类型"
 msgstr "Return Type"
@@ -97,7 +123,9 @@ msgstr "Examples"
 
 #: ../../source/api/built_in_strategies.rst:21
 msgid "下面的函数返回一个列表，列表的元素是交易策略的ID或者交易策略的名称。"
-msgstr "Following function returns a list, the elements of which are the ID or name of the trading strategy."
+msgstr ""
+"Following function returns a list, the elements of which are the ID or "
+"name of the trading strategy."
 
 #: of qteasy.built_in.built_in_list:1
 msgid "获取内置交易策略ID的列表,可以通过stg_id进行模糊匹配"
@@ -1242,13 +1270,13 @@ msgid "参数范围: ``[(2, 100), (0.5, 5), (0.5, 5)]``"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:106
-msgid "依赖``TA-Lib``技术分析包的交易策略"
+msgid "依赖 ``TA-Lib`` 技术分析包的交易策略"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:108
 msgid ""
-"以下是一些依赖``TA-Lib``技术分析包的交易策略，这些交易策略都是基于``TA-Lib``技术分析包的计算，需要安装``TA-"
-"Lib``技术分析包。"
+"以下是一些依赖 ``TA-Lib`` 技术分析包的交易策略，这些交易策略都是基于 ``TA-Lib`` 技术分析包的计算，需要安装 ``TA-"
+"Lib`` 技术分析包。"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:112
@@ -2568,4 +2596,12 @@ msgstr ""
 #: of qteasy.built_in.NATR:1 qteasy.built_in.TRANGE:1
 msgid "Not Implemented Yet"
 msgstr ""
+
+#~ msgid "依赖``TA-Lib``技术分析包的交易策略"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "以下是一些依赖``TA-Lib``技术分析包的交易策略，这些交易策略都是基于``TA-"
+#~ "Lib``技术分析包的计算，需要安装``TA-Lib``技术分析包。"
+#~ msgstr ""
 

@@ -56,7 +56,7 @@ pip install ipython
 
 在配置好`tushare_token`以后，第一次导入`qteasy`时，如果系统未找到交易日历数据，会显示信息提示交易日历无法读取。
 
-关于`DataSource`数据源对象的更多信息，请参见[DataSource Reference]()
+关于`DataSource`数据源对象的更多信息，请参见[DataSource Reference](../references/2-get-history-data.md)
 
 ```python
 import qteasy as qt

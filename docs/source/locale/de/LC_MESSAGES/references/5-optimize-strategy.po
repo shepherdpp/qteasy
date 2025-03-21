@@ -19,11 +19,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
-#: ../../source/back_testing/overview.md:1
-msgid "交易策略的回测"
+#: ../../source/references/5-optimize-strategy.md:1
+msgid "优化交易策略"
 msgstr ""
 
-#: ../../source/back_testing/overview.md:3
+#: ../../source/references/5-optimize-strategy.md:3
+msgid "本文介绍如何优化交易策略。"
+msgstr ""
+
+#: ../../source/references/5-optimize-strategy.md:5
 msgid "未完待续"
 msgstr ""
 
