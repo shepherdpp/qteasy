@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../source/manage_strategies/overview.md:1
 msgid "使用交易策略"
-msgstr ""
+msgstr "Use Trading Strategies"
 
 #: ../../source/manage_strategies/overview.md:3
 msgid "未完待续"
-msgstr ""
+msgstr "To be completed"
 

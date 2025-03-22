@@ -21,13 +21,13 @@ msgstr ""
 
 #: ../../source/references/1-simulation-overview.md:1
 msgid "交易策略的模拟实盘运行"
-msgstr ""
+msgstr "Simulated Live Trading"
 
 #: ../../source/references/1-simulation-overview.md:3
 msgid "本文介绍如何使用`qteasy`模拟实盘运行交易策略。"
-msgstr ""
+msgstr "This article describes how to use `qteasy` to simulate live trading strategies."
 
 #: ../../source/references/1-simulation-overview.md:5
 msgid "未完待续"
-msgstr ""
+msgstr "To be completed"
 

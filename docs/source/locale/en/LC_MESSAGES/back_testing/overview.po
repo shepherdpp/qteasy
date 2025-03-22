@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../source/back_testing/overview.md:1
 msgid "交易策略的回测"
-msgstr ""
+msgstr "Backtesting of Trading Strategies"
 
 #: ../../source/back_testing/overview.md:3
 msgid "未完待续"
-msgstr ""
+msgstr "To be completed"
 

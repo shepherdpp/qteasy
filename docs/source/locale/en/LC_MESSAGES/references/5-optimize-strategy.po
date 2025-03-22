@@ -21,13 +21,13 @@ msgstr ""
 
 #: ../../source/references/5-optimize-strategy.md:1
 msgid "优化交易策略"
-msgstr ""
+msgstr "Optimize Trading Strategies"
 
 #: ../../source/references/5-optimize-strategy.md:3
 msgid "本文介绍如何优化交易策略。"
-msgstr ""
+msgstr "This article describes how to optimize trading strategies."
 
 #: ../../source/references/5-optimize-strategy.md:5
 msgid "未完待续"
-msgstr ""
+msgstr "To be completed"
 

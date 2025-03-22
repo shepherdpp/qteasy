@@ -21,13 +21,13 @@ msgstr ""
 
 #: ../../source/optimization/overview.md:1
 msgid "交易策略优化总览"
-msgstr ""
+msgstr "Overview of Strategy Optimization"
 
 #: ../../source/optimization/overview.md:3
 msgid "本文介绍如何使用`qteasy`优化交易策略。"
-msgstr ""
+msgstr "This article describes how to optimize trading strategies."
 
 #: ../../source/optimization/overview.md:5
 msgid "未完待续"
-msgstr ""
+msgstr "To be completed"
 

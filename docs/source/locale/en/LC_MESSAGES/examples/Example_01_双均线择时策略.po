@@ -25,87 +25,91 @@ msgstr "Double MA Timing"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:3
 msgid "本策略根据交易目标的其日K线数据建立简单移动平均线的双均线交易模型， 交易策略如下："
-msgstr ""
+msgstr "This strategy establishes a double moving average trading model based on the daily K-line data of the trading target, and the trading strategy is as follows:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:6
 msgid ""
 "策略包含两个参数：短周期天数S、长周期天数L "
 "分别以两个不同的周期计算交易标的日K线收盘价的移动平均线，得到两根移动均线，以S为周期计算的均线为快均线，以L为周期计算的均线为慢均线，根据快慢均线的交叉情况产生交易信号："
 msgstr ""
+"The strategy contains two parameters: the number of days in the short period S and the number of days in the long period L. "
+"Calculate the moving average of the closing price of the daily K-line of the trading target with two different periods to obtain two moving averages. The moving average calculated with S as the period is the fast moving average, and the moving average calculated with L as the period is the slow moving average. Generate trading signals according to the cross situation of the fast and slow moving averages:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:8
 msgid "当快均线由下向上穿越慢均线时全仓买入交易标的"
-msgstr ""
+msgstr "When the fast moving average crosses the slow moving average from bottom to top, the trading target is fully bought"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:9
 msgid "当快均线由上向下穿越短均线时平仓"
-msgstr ""
+msgstr "When the fast moving average crosses the short moving average from top to bottom, close the position"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:11
 msgid "**模拟回测交易：**"
-msgstr ""
+msgstr "**Simulated backtesting trading:**"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:13
 msgid "回测数据为:沪深300指数（000300.SH)"
-msgstr ""
+msgstr "Backtest data: Shanghai and Shenzhen 300 Index (000300.SH)"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:14
 msgid "回测周期为2011年1月1日到2020年12月31日"
-msgstr ""
+msgstr "Backtest period: January 1, 2011 to December 31, 2020"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:15
 msgid "生成交易结果图表"
-msgstr ""
+msgstr "Generate trading result charts"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:17
 msgid "**策略参数优化：**"
-msgstr ""
+msgstr "**Strategy parameter optimization:**"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:19
 msgid "同样使用HS300指数，在2011年至2020年共十年的历史区间上搜索最佳策略参数"
-msgstr ""
+msgstr "Use the HS300 index in the historical interval of ten years from 2011 to 2020 to search for the best strategy parameters"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:20
 msgid "并在2020年至2022年的数据上进行验证"
-msgstr ""
+msgstr "Test on data from 2020 to 2022"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:21
 msgid "输出30组最佳参数的测试结果"
-msgstr ""
+msgstr "Output test results of 30 best parameters"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:24
 msgid "首先导入qteasy模块"
-msgstr ""
+msgstr "Import the qteasy module first"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:29
 msgid "创建一个新的策略"
-msgstr ""
+msgstr "Create a new strategy"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:30
 msgid ""
 "使用`qt.RuleIterator`策略基类，可以创建规则迭代策略， "
 "这种策略可以把相同的规则迭代应用到投资组合中的所有股票上，适合在一个投资组合 中的所有股票上应用同一种择时规则。"
 msgstr ""
+"Use the `qt.RuleIterator` strategy base class to create a rule iteration strategy. "
+"This strategy can apply the same rule iteration to all stocks in the portfolio, which is suitable for applying the same timing rule to all stocks in a portfolio."
 
 #: ../../source/examples/Example_01_双均线择时策略.md:100
 msgid "回测交易策略，查看结果"
-msgstr ""
+msgstr "Backtest trading strategy and view results"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:101
 msgid "使用历史数据回测交易策略，使用历史数据生成交易信号后进行模拟交易，记录并分析交易结果"
-msgstr ""
+msgstr "Backtest trading strategy using historical data, simulate trading after generating trading signals with historical data, record and analyze trading results"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:123
 msgid "交易结果如下；"
-msgstr ""
+msgstr "Results of trading are as follows:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:169
 msgid "从上面的交易结果可以看到，十年间买入25次卖出24次，持仓时间为52%，最终收益率只有17.2%。"
-msgstr ""
+msgstr "We can see from the above trading results that 25 purchases and 24 sales were made in ten years, the holding time was 52%, and the final return rate was only 17.2%."
 
 #: ../../source/examples/Example_01_双均线择时策略.md:171
 msgid "下面是交易结果的可视化图表展示"
-msgstr ""
+msgstr "Here is a visual display of the trading results"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:173
 msgid "![png](img/output_3_2.png)"
@@ -119,23 +123,23 @@ msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:176
 msgid "交叉线交易策略的长短周期选择很重要，可以使用`qteasy`来搜索最优的策略参数："
-msgstr ""
+msgstr "Cross-line trading strategy is very important to choose the long and short periods, you can use `qteasy` to search for the best strategy parameters:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:194
 msgid "策略优化可能会花很长时间，qt会显示一个进度条："
-msgstr ""
+msgstr "Optimizing the strategy may take a long time, and qt will display a progress bar:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:200
 msgid "优化完成，显示最好的30组参数及其相关信息："
-msgstr ""
+msgstr "Optimization is complete, showing the best 30 sets of parameters and related information:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:261
 msgid "这三十组参数会被用于独立测试，以检验它们是否过拟合："
-msgstr ""
+msgstr "These thirty sets of parameters will be used for independent testing to see if they are overfitting:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:323
 msgid "参数优化结果以及各个指标的可视化图表展示："
-msgstr ""
+msgstr "Visualization of parameter optimization results and various indicators:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:325
 msgid "![png](img/output_4_1.png)"
@@ -143,15 +147,15 @@ msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:327
 msgid "优化之后我们可以检验一下找到的最佳参数："
-msgstr ""
+msgstr "We can check the best parameters found after optimization:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:387
 msgid "优化后总回报率达到了117%，比优化前的参数好很多。"
-msgstr ""
+msgstr "Total return rate after optimization reached 117%, much better than the parameters before optimization."
 
 #: ../../source/examples/Example_01_双均线择时策略.md:389
 msgid "优化后的结果可视化图表如下："
-msgstr ""
+msgstr "Visualization of the results after optimization:"
 
 #: ../../source/examples/Example_01_双均线择时策略.md:392
 msgid "![png](img/output_5_1.png)"
