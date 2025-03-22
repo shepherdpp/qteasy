@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/5-simulate-operation-in-CLI.md:1
 msgid "模拟实盘交易——CLI"
-msgstr ""
+msgstr "Simulieren Sie echten Handel – CLI"
 
 #: ../../source/references/5-simulate-operation-in-CLI.md:3
 msgid "本文介绍如何使用命令行界面（CLI）模拟实盘交易。"

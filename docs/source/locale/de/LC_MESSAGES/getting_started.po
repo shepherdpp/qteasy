@@ -21,41 +21,43 @@ msgstr ""
 
 #: ../../source/getting_started.md:1
 msgid "QTEASY快速上手指南"
-msgstr ""
+msgstr "QTEASY-Kurzanleitung"
 
 #: ../../source/getting_started.md:3
 msgid "安装及依赖"
-msgstr ""
+msgstr "Installation und Abhängigkeiten"
 
 #: ../../source/getting_started.md:5
 msgid "通过`pip`安装"
-msgstr ""
+msgstr "Installation mit `pip`"
 
 #: ../../source/getting_started.md:11
 msgid "python 版本"
-msgstr ""
+msgstr "Python-Version"
 
 #: ../../source/getting_started.md:12
 msgid "*`python` version >= 3.6, <3.13*"
-msgstr ""
+msgstr "*`python` Version >= 3.6, <3.13*"
 
 #: ../../source/getting_started.md:14
 msgid "安装依赖包"
-msgstr ""
+msgstr "Abhängigkeiten installieren"
 
 #: ../../source/getting_started.md:16
 msgid "`qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包："
-msgstr ""
+msgstr " `qteasy` enthält alle notwendigen Abhängigkeiten, die während der Installation mit `pip` installiert werden können. In einigen speziellen Fällen müssen Sie jedoch optionale Abhängigkeiten angeben, um sie während der Installation von `qteasy` zu installieren oder manuell zu installieren:"
 
 #: ../../source/getting_started.md:18
 msgid "**`pymysql`**, 从`v1.4`开始，`pymysql`以及`db-utils`已经成为`qteasy`的默认依赖包，无需额外安装"
-msgstr ""
+msgstr "**`pymysql`**, Von `v1.4` an sind `pymysql` und `db-utils` Standardabhängigkeiten von `qteasy` und müssen nicht separat installiert werden"
 
 #: ../../source/getting_started.md:20
 msgid ""
 "**`pyarrow`**, "
 "用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装："
 msgstr ""
+"**`pyarrow`**, "
+"Wird verwendet, um „Feather“-Dateien zu betreiben und lokale Daten als „Feather“-Dateien zu speichern. „pyarrow“ kann automatisch bei der Installation von „qteasy“ oder manuell installiert werden:"
 
 #: ../../source/getting_started.md:25
 msgid ""

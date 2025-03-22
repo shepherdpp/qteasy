@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md:1
 msgid "内置交易策略"
-msgstr ""
+msgstr "Integrierte Handelsstrategien"
 
 #: ../../source/references/4-build-in-strategy-blender.md:3
 msgid "qteasy提供了70多种内置交易策略，用户可以很容易地直接使用这些交易策略，同时，qteasy提供了一套交易策略组合机制，用户可以将多个简单的交易策略组合成一个比较复杂的交易策略，策略的组合方式是可以灵活设定的。将多个简单交易策略组合成一个复杂的策略后，同样可以使用策略优化工具搜索整个复杂策略的最佳参数。"

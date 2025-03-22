@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/6-simulate-operation-in-TUI.md:1
 msgid "模拟实盘交易——TUI"
-msgstr ""
+msgstr "Simulieren Sie echten Handel – TUI"
 
 #: ../../source/references/6-simulate-operation-in-TUI.md:3
 msgid "本文介绍如何在 TUI 中模拟实盘交易。"

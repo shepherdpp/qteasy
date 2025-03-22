@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/5-optimize-strategy.md:1
 msgid "优化交易策略"
-msgstr ""
+msgstr "Optimierung von Handelsstrategien"
 
 #: ../../source/references/5-optimize-strategy.md:3
 msgid "本文介绍如何优化交易策略。"
