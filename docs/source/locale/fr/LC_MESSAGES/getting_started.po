@@ -21,132 +21,144 @@ msgstr ""
 
 #: ../../source/getting_started.md:1
 msgid "QTEASY快速上手指南"
-msgstr ""
+msgstr "Guide de démarrage rapide QTEASY"
 
 #: ../../source/getting_started.md:3
 msgid "安装及依赖"
-msgstr ""
+msgstr "Installation et dépendances"
 
 #: ../../source/getting_started.md:5
 msgid "通过`pip`安装"
-msgstr ""
+msgstr "Installation via `pip`"
 
 #: ../../source/getting_started.md:11
 msgid "python 版本"
-msgstr ""
+msgstr "Version de Python"
 
 #: ../../source/getting_started.md:12
 msgid "*`python` version >= 3.6, <3.13*"
-msgstr ""
+msgstr " *`python` version >= 3.6, <3.13*"
 
 #: ../../source/getting_started.md:14
 msgid "安装依赖包"
-msgstr ""
+msgstr " Installation des dépendances"
 
 #: ../../source/getting_started.md:16
 msgid "`qteasy`所有必要的依赖包都可以在`pip`安装的同时安装好，但某些特殊情况下，您需要在安装时指定可选依赖包，以便在安装`qteasy`时同时安装，或者手动安装依赖包："
-msgstr ""
+msgstr " Toutes les dépendances nécessaires à `qteasy` peuvent être installées en même temps que `pip`, mais dans certains cas spécifiques, vous devez spécifier les dépendances facultatives lors de l'installation, afin de les installer en même temps que `qteasy`, ou de les installer manuellement :"
 
 #: ../../source/getting_started.md:18
 msgid "**`pymysql`**, 从`v1.4`开始，`pymysql`以及`db-utils`已经成为`qteasy`的默认依赖包，无需额外安装"
-msgstr ""
+msgstr " **`pymysql`**, À partir de `v1.4`, `pymysql` et `db-utils` sont devenus des dépendances par défaut de `qteasy`, pas besoin de les installer séparément"
 
 #: ../../source/getting_started.md:20
 msgid ""
 "**`pyarrow`**, "
 "用于操作`feather`文件，将本地数据存储为`feather`文件，`pyarrow`可以在安装`qteasy`时自动安装，也可以手动安装："
 msgstr ""
+"**`pyarrow`**, "
+"Utilisé pour manipuler les fichiers `feather`, stocker les données locales dans des fichiers `feather`, `pyarrow` peut être installé automatiquement lors de l'installation"
 
 #: ../../source/getting_started.md:25
 msgid ""
 "**`pytables`**, "
 "用于操作`HDF`文件，将本地数据存储到`HDF`文件，`pytables`不能自动安装，需要使用`conda`手动安装`pytables`："
 msgstr ""
+"**`pytables`**, "
+"Utilisé pour manipuler les fichiers `HDF`, stocker les données locales dans des fichiers `HDF`, `pytables` ne peut pas être installé automatiquement, vous devez l'installer manuellement avec `conda` :"
 
 #: ../../source/getting_started.md:29
 msgid ""
 "**`ta-lib`**, 以便使用所有的内置交易策略，下面的方法可以安装`ta-lib API`，但它还依赖C语言的`TA-"
 "Lib`包，安装方法请参考[FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html#id2)"
 msgstr ""
+"**`ta-lib`**, pour utiliser toutes les stratégies de trading intégrées, la méthode suivante peut être utilisée pour installer l'API `ta-lib`, mais elle dépend également du package `TA-"
+"Lib` en C, veuillez vous référer à la méthode d'installation dans [FAQ](https://qteasy.readthedocs.io/zh/latest/faq.html#id2)"
 
 #: ../../source/getting_started.md:34
 msgid "10分钟了解qteasy的功能"
-msgstr ""
+msgstr "10 minutes pour comprendre les fonctionnalités de qteasy"
 
 #: ../../source/getting_started.md:36
 msgid "导入`qteasy`"
-msgstr ""
+msgstr "Importer `qteasy`"
 
 #: ../../source/getting_started.md:37
 msgid "基本的模块导入方法如下"
-msgstr ""
+msgstr "La méthode d'importation de base du module est la suivante"
 
 #: ../../source/getting_started.md:44
 msgid "配置本地数据源和tushare token"
-msgstr ""
+msgstr "Configurer la source de données locale et le jeton tushare"
 
 #: ../../source/getting_started.md:46
 msgid "为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。"
-msgstr ""
+msgstr " Pour utiliser `qteasy`, vous avez besoin de beaucoup de données historiques financières, toutes les données historiques doivent d'abord être stockées localement, si vous n'avez pas de données historiques locales, de nombreuses fonctionnalités de `qteasy` ne peuvent pas être exécutées."
 
 #: ../../source/getting_started.md:48
 msgid ""
 "`qteasy`可以通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请`API "
 "Token`，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）"
 msgstr ""
+"`qteasy` peut obtenir de nombreuses données financières via le package de données financières `tushare`, les utilisateurs doivent demander un `API "
+"Token`, obtenir les autorisations et les points correspondants (voir : https://tushare.pro/document/2)"
 
 #: ../../source/getting_started.md:50
 msgid "因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置。在`QT_ROOT_PATH/qteasy/`路径下打开配置文件`qteasy.cfg`，可以看到下面内容："
-msgstr ""
+msgstr "Par conséquent, avant d'utiliser `qteasy`, vous devez configurer la source de données locale et `tushare`. Ouvrez le fichier de configuration `qteasy.cfg` dans le chemin `QT_ROOT_PATH/qteasy/`, vous pouvez voir le contenu suivant :"
 
 #: ../../source/getting_started.md:59
 msgid "配置`tushare token`"
-msgstr ""
+msgstr "Configurer le jeton tushare"
 
 #: ../../source/getting_started.md:61
 msgid "将你获得的tushare API token添加到配置文件中，如下所示："
-msgstr ""
+msgstr "Ajoutez le jeton tushare API que vous avez obtenu au fichier de configuration, comme indiqué ci-dessous :"
 
 #: ../../source/getting_started.md:67
 msgid "配置本地数据源 —— 用MySQL数据库作为本地数据源"
-msgstr ""
+msgstr "Configurer la source de données locale - Utiliser une base de données MySQL comme source de données locale"
 
 #: ../../source/getting_started.md:68
 msgid ""
 "默认情况下`qteasy`使用存储在`data/`路径下的`.csv`文件作为数据源，不需要特殊设置。 "
 "如果设置使用`mysql`数据库作为本地数据源，在配置文件中添加以下配置："
 msgstr ""
+"Par défaut, `qteasy` utilise les fichiers `.csv` stockés dans le chemin `data/` comme source de données, aucune configuration spéciale n'est nécessaire. "
+"Si vous souhaitez utiliser une base de données `mysql` comme source de données locale, ajoutez la configuration suivante dans le fichier de configuration :"
 
 #: ../../source/getting_started.md:81
 msgid "关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地了。"
-msgstr ""
+msgstr "Après avoir fermé et enregistré le fichier de configuration, réimportez `qteasy`, la configuration de la source de données est terminée, vous pouvez commencer à télécharger les données localement."
 
 #: ../../source/getting_started.md:83
 msgid "下载金融历史数据"
-msgstr ""
+msgstr "Télécharger des données historiques financières"
 
 #: ../../source/getting_started.md:85
 msgid ""
 "要下载金融价格数据，使用`qt.refill_data_source()`函数。下面的代码下载2021及2022两年内所有股票、所有指数的日K线数据，同时下载所有的股票和基金的基本信息数据。"
 " （根据网络速度，下载数据可能需要十分钟左右的时间，如果存储为csv文件，将占用大约200MB的磁盘空间）："
 msgstr ""
+"Pour télécharger des données de prix financières, utilisez la fonction `qt.refill_data_source()`. Le code suivant télécharge les données K-line quotidiennes de toutes les actions et tous les indices de 2021 et 2022, et télécharge également les données d'informations de base de toutes les actions et fonds. "
+"(En fonction de la vitesse du réseau, le téléchargement des données peut prendre environ dix minutes. Si elles sont stockées dans un fichier csv, elles occuperont environ 200 Mo d'espace disque) :"
 
 #: ../../source/getting_started.md:98
 msgid "数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。"
-msgstr ""
+msgstr "Une fois les données téléchargées localement, vous pouvez utiliser `qt.get_history_data()` pour obtenir les données. Si vous obtenez les données historiques de plusieurs actions en même temps, les données historiques de chaque action seront enregistrées séparément dans un `dict`."
 
 #: ../../source/getting_started.md:106
 msgid "运行上述代码会得到一个`Dict`对象，包含两个股票\"000001.SZ\"以及\"000005.SZ\"的K线数据（数据存储为`DataFrame`）："
-msgstr ""
+msgstr " Exécuter le code ci-dessus renverra un objet `Dict` contenant les données K-line de deux actions \"000001.SZ\" et \"000005.SZ\" (les données sont stockées sous forme de `DataFrame`) :"
 
 #: ../../source/getting_started.md:128
 #, python-format
 msgid "除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[QTEASY教程：金融数据下载及管理](https://github.com/shepherdpp/qteasy/blob/master/tutorials/Tutorial%2002%20-%20金融数据获取及管理.md)"
-msgstr ""
+msgstr " En plus des données de prix, `qteasy` peut également télécharger et gérer une grande quantité de données financières, y compris les rapports financiers, les indicateurs techniques, les données fondamentales, etc. Pour plus de détails, veuillez consulter [QTEASY教程：金融数据下载及管理]("
 
 #: ../../source/getting_started.md:130
 msgid "股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。"
-msgstr ""
+msgstr " Après le téléchargement des données des actions, vous pouvez afficher le graphique K-line des données des actions en utilisant `qt.candle()`."
 
 #: ../../source/getting_started.md:135
 msgid "![png](img/output_5_2.png)"
@@ -166,26 +178,28 @@ msgid ""
 "`qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图 "
 "`qt.candle()`支持功能如下："
 msgstr ""
+"La fonction K-line `candle` de `qteasy` prend en charge la recherche de codes de sécurité précis en utilisant des codes d'actions/indices à six chiffres, et prend également en charge l'affichage de graphiques K-line en utilisant des noms d'actions/indices. "
+"`qt.candle()` prend en charge les fonctions suivantes :"
 
 #: ../../source/getting_started.md:139
 msgid "显示股票、基金、期货的K线"
-msgstr ""
+msgstr " Afficher les graphiques K-line des actions, des fonds et des contrats à terme"
 
 #: ../../source/getting_started.md:140
 msgid "显示复权价格"
-msgstr ""
+msgstr " Afficher les prix ajustés"
 
 #: ../../source/getting_started.md:141
 msgid "显示分钟、 周或月K线"
-msgstr ""
+msgstr " Afficher les graphiques K-line par minute, par semaine ou par mois"
 
 #: ../../source/getting_started.md:142
 msgid "显示不同移动均线以及MACD/KDJ等指标"
-msgstr ""
+msgstr " Afficher différentes moyennes mobiles et indicateurs tels que MACD/KDJ"
 
 #: ../../source/getting_started.md:144
 msgid "详细的用法请参考文档，示例如下(请先使用`qt.refill_data_source()`下载相应的历史数据)："
-msgstr ""
+msgstr " Pour plus de détails, veuillez consulter la documentation, voici un exemple (veuillez d'abord télécharger les données historiques correspondantes avec `qt.refill_data_source()`) :"
 
 #: ../../source/getting_started.md:160
 msgid "![png](img/output_3_1.png)"
@@ -213,34 +227,37 @@ msgid ""
 "动态图表，详情请参阅 "
 "[matplotlib文档](https://matplotlib.org/stable/users/explain/backends.html)"
 msgstr ""
+"Le graphique K-line généré peut être un graphique K-line dynamique interactif (veuillez noter que le graphique K-line est dessiné en utilisant `matplotlib`, et les fonctionnalités d'affichage varient selon les terminaux utilisés, certains terminaux ne prennent pas en charge "
+"les graphiques dynamiques, veuillez vous référer à la "
+"[documentation matplotlib](https://matplotlib.org/stable/users/explain/backends.html)"
 
 #: ../../source/getting_started.md:175
 msgid "在使用动态K线图时，用户可以用鼠标和键盘控制K线图的显示范围："
-msgstr ""
+msgstr " Lors de l'utilisation du graphique K-line dynamique, l'utilisateur peut contrôler la plage d'affichage du graphique K-line à l'aide de la souris et du clavier :"
 
 #: ../../source/getting_started.md:177
 msgid "鼠标在图表上左右拖动：可以移动K线图显示更早或更晚的K线"
-msgstr ""
+msgstr " Faites glisser la souris vers la gauche ou la droite sur le graphique : pour déplacer le graphique K-line pour afficher des K-line plus anciens ou plus récents"
 
 #: ../../source/getting_started.md:178
 msgid "鼠标滚轮在图表上滚动，可以缩小或放大K线图的显示范围"
-msgstr ""
+msgstr " Faites défiler la souris sur le graphique : pour zoomer ou dézoomer le graphique K-line"
 
 #: ../../source/getting_started.md:179
 msgid "通过键盘左右方向键，可以移动K线图的显示范围显示更早或更晚的K线"
-msgstr ""
+msgstr " Utilisez les touches fléchées gauche et droite du clavier : pour déplacer la plage d'affichage du graphique K-line pour afficher des K-line plus anciens ou plus récents"
 
 #: ../../source/getting_started.md:180
 msgid "通过键盘上下键，可以缩小或放大K线图的显示范围"
-msgstr ""
+msgstr " Utilisez les touches fléchées haut et"
 
 #: ../../source/getting_started.md:181
 msgid "在K线图上双击鼠标，可以切换不同的均线类型"
-msgstr ""
+msgstr " Double-cliquez sur le graphique K-line"
 
 #: ../../source/getting_started.md:182
 msgid "在K线图的指标区域双击，可以切换不同的指标类型：`MACD`，`RSI`，`DEMA`"
-msgstr ""
+msgstr " Double-cliquez sur la zone d'indicateur du graphique K-line pour"
 
 #: ../../source/getting_started.md:184
 msgid "![gif](img/output_dyna_plot.gif)"
@@ -252,73 +269,78 @@ msgstr ""
 
 #: ../../source/getting_started.md:186
 msgid "关于`DataSource`对象的更多详细介绍，请参见[qteasy教程](https://github.com/shepherdpp/qteasy/tutorials)"
-msgstr ""
+msgstr " Pour plus de détails sur l'objet `DataSource`, veuillez consulter [qteasy教程]("
 
 #: ../../source/getting_started.md:189
 msgid "创建一个投资策略"
-msgstr ""
+msgstr " Créer une stratégie d'investissement"
 
 #: ../../source/getting_started.md:191
 msgid ""
 "`qteasy`中的所有交易策略都是由`qteasy.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时"
 " 管理多个不同的交易策略。"
 msgstr ""
+"Toutes les stratégies de trading dans `qteasy` sont implémentées par l'objet `qteasy.Operator` (trader), l'objet `Operator` est un conteneur de stratégie, un trader peut gérer simultanément plusieurs stratégies de trading différentes."
 
 #: ../../source/getting_started.md:194
 msgid "`qteasy`提供了两种方式创建交易策略，详细的说明请参见使用教程："
-msgstr ""
+msgstr " `qteasy` propose deux façons de créer des stratégies de trading, veuillez consulter le tutoriel d'utilisation pour plus de détails :"
 
 #: ../../source/getting_started.md:196
 msgid "**使用内置交易策略组合**"
-msgstr ""
+msgstr "**Utiliser une combinaison de stratégies de trading intégrées**"
 
 #: ../../source/getting_started.md:197
 msgid "**通过策略类自行创建策略**"
-msgstr ""
+msgstr "**Créer des stratégies en utilisant des classes de stratégie personnalisées**"
 
 #: ../../source/getting_started.md:199
 msgid "生成一个DMA均线择时交易策略"
-msgstr ""
+msgstr " Créer une stratégie de trading de sélection de temps de moyenne mobile DMA"
 
 #: ../../source/getting_started.md:200
 msgid "在这里，我们将使用一个内置的`DMA`均线择时策略来生成一个最简单的大盘择时交易系统。所有内置交易策略的清单和详细说明请参见文档。"
-msgstr ""
+msgstr " Ici, nous utiliserons une stratégie de sélection de temps de moyenne mobile `DMA` intégrée pour créer un système de trading de sélection de temps de marché le plus simple. Pour une liste complète des stratégies de trading intégrées et des explications détaillées, veuillez consulter la documentation."
 
 #: ../../source/getting_started.md:202
 msgid ""
 "创建`Operator`对象时传入参数：`strategies='DMA'`，可以新建一个`DMA`双均线择时交易策略。 "
 "创建好`Operator`对象后，可以用`op.info()`来查看它的信息。"
 msgstr ""
+"Lors de la création de l'objet `Operator`, passez les paramètres : `strategies='DMA'`, pour créer une nouvelle stratégie de trading de sélection de temps de moyenne mobile `DMA`. "
+"Une fois l'objet `Operator` créé, vous pouvez utiliser `op.info()` pour afficher ses informations."
 
 #: ../../source/getting_started.md:211
 msgid "现在可以看到`op`中有一个交易策略，ID是`dma`，我们在`Operator`层面设置或修改策略的参数 时，都需要引用这个`ID`。"
-msgstr ""
+msgstr " Vous pouvez maintenant voir qu'il y a une stratégie de trading dans `op`, l'ID est `dma`, lorsque vous définissez ou modifiez les paramètres de la stratégie au niveau de l'objet `Operator`, vous devez faire référence à cet `ID`."
 
 #: ../../source/getting_started.md:214
 msgid "`DMA`是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值`DMA`与其移动平均值`AMA`之间的交叉情况来确定多空或买卖点。："
-msgstr ""
+msgstr " `DMA` est une stratégie de sélection de temps de moyenne mobile intégrée, elle détermine les points longs ou courts ou d'achat et de vente en calculant la différence entre les deux moyennes mobiles rapides et lentes du prix de clôture quotidien des actions `DMA` et en croisant la moyenne mobile `AMA` :"
 
 #: ../../source/getting_started.md:216
 msgid "使用`qt.built_ins()`函数可以查看`DMA`策略的详细解，使用`qt.built_ins()`函数可以获取或者筛选需要的内置交易策略，例如："
-msgstr ""
+msgstr " Vous pouvez utiliser la fonction `qt.built_ins()` pour afficher les détails de la stratégie `DMA`, et vous pouvez utiliser la fonction `qt.built_ins()` pour obtenir ou filtrer les stratégies de trading intégrées dont vous avez besoin, par exemple :"
 
 #: ../../source/getting_started.md:220
 msgid "得到："
-msgstr ""
+msgstr " Résultat :"
 
 #: ../../source/getting_started.md:245
 msgid ""
 "在默认情况下，策略由三个**可调参数**：`(12,26,9)`, "
 "但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应 不同的策略运行周期。"
 msgstr ""
+"Par défaut, la stratégie a trois **paramètres ajustables** : `(12,26,9)`, "
+"mais vous pouvez fournir trois entiers arbitraires supérieurs à 2 et inférieurs à 250 en tant que paramètres de stratégie, pour s'adapter à des actions de différentes activités de trading, ou pour s'adapter à différents cycles de trading."
 
 #: ../../source/getting_started.md:249
 msgid "回测并评价交易策略的性能表现"
-msgstr ""
+msgstr " Backtest et évaluation des performances de la stratégie de trading"
 
 #: ../../source/getting_started.md:250
 msgid "`qteasy`可以使用历史数据回测策略表现并输出图表如下："
-msgstr ""
+msgstr " `qteasy` peut utiliser des données historiques pour backtester les performances de la stratégie de trading et afficher les graphiques comme suit :"
 
 #: ../../source/getting_started.md:252
 msgid "![png](img/output_14_3.png)"
@@ -326,11 +348,11 @@ msgstr ""
 
 #: ../../source/getting_started.md:254
 msgid "使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`op.run(mode=1)`。"
-msgstr ""
+msgstr " Vous pouvez utiliser `op.run(mode=1)` pour backtester les performances de la stratégie DMA que vous venez de créer avec les paramètres par défaut sur les données historiques."
 
 #: ../../source/getting_started.md:270
 msgid "输出结果如下："
-msgstr ""
+msgstr " Les résultats de sortie sont les suivants :"
 
 #: ../../source/getting_started.md:315
 msgid "![png](img/output_21_1.png)"
@@ -338,21 +360,22 @@ msgstr ""
 
 #: ../../source/getting_started.md:317
 msgid "交易策略的参数调优"
-msgstr ""
+msgstr " Optimisation des paramètres de la stratégie de trading"
 
 #: ../../source/getting_started.md:319
 msgid "交易策略的表现与参数有关，如果输入不同的参数，策略回报相差会非常大。`qteasy`可以用多种不同的优化算法，帮助搜索最优的策略参数，"
-msgstr ""
+msgstr " Les performances de la stratégie de trading dépendent des paramètres, si vous entrez des paramètres différents, les rendements de la stratégie peuvent varier considérablement. `qteasy` peut utiliser plusieurs algorithmes d'optimisation différents pour rechercher les meilleurs paramètres de stratégie,"
 
 #: ../../source/getting_started.md:321
 msgid "要使用策略优化功能，需要设置交易策略的优化标记`opt_tag=1`，并配置环境变量`mode=2`即可:"
-msgstr ""
+msgstr " Pour utiliser la fonction d'optimisation de la stratégie, vous devez définir le drapeau d'optimisation de la stratégie de trading `opt_tag=1`, et configurer la variable d'environnement `mode=2` :"
 
 #: ../../source/getting_started.md:335
 msgid ""
 "`qteasy`将在同一段历史数据（优化区间）上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据（测试区间）上进行独立测试，并显"
 " 示独立测试的结果："
 msgstr ""
+"`qteasy` effectuera des backtests répétés sur la même période de données historiques (période d'optimisation), trouvera les 30 meilleurs résultats de paramètres, et testera ces 30 groupes de paramètres sur une autre période de données historiques (période de test) pour afficher les résultats du test indépendant :"
 
 #: ../../source/getting_started.md:361
 msgid "![png](img/output_24_1.png)    将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升："
@@ -360,7 +383,7 @@ msgstr ""
 
 #: ../../source/getting_started.md:378
 msgid "结果如下："
-msgstr ""
+msgstr " Les résultats sont les suivants :"
 
 #: ../../source/getting_started.md:380
 msgid "![png](img/output_26_1.png)"
@@ -368,23 +391,23 @@ msgstr ""
 
 #: ../../source/getting_started.md:382
 msgid "关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档"
-msgstr ""
+msgstr " Pour plus d'informations sur l'interprétation des résultats de l'optimisation de la stratégie, et pour plus d'informations sur l'optimisation des paramètres, veuillez consulter la documentation détaillée"
 
 #: ../../source/getting_started.md:384
 msgid "部署并开始交易策略的实盘运行"
-msgstr ""
+msgstr " Déploiement et démarrage de l'exécution"
 
 #: ../../source/getting_started.md:386
 msgid "在配置好`Operator`对象并设置好策略后，`qteasy`可以自动定期运行、自动盯盘、自动下载实时数据并根据策略结果生成交易指令，模拟交易过程并记录交易结果。"
-msgstr ""
+msgstr " Après avoir configuré l'objet `Operator` et défini la stratégie, `qteasy` peut fonctionner automatiquement à intervalles réguliers, surveiller automatiquement, télécharger automatiquement les données en temps réel et générer des ordres de trading en fonction des résultats de la stratégie, simuler le processus de trading et enregistrer les résultats de trading."
 
 #: ../../source/getting_started.md:388
 msgid "`Qteasy`的实盘一旦启动，就会在`terminal`中启动一个单独的线程在后台运行，运行的时机也是跟真实的股票市场一致的，股票市场收市的时候不运行，交易日早上9点15分唤醒系统开始拉取实时股价，9点半开始运行交易策略，交易策略的运行时机和运行频率在策略的属性中设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。"
-msgstr ""
+msgstr " Une fois que le trading en direct de `Qteasy` est démarré, un thread distinct s'exécute en arrière-plan dans le `terminal`, le moment de l'exécution est également conforme au marché boursier réel, il ne fonctionne pas lorsque le marché boursier est fermé, le système est réveillé à 9h15 le matin pour commencer à extraire les prix des actions en temps réel, et à 9h30 pour commencer à exécuter la stratégie de trading, l'heure et la fréquence d'exécution de la stratégie de trading sont définies dans les attributs de la stratégie. Si les résultats de l'exécution de la stratégie génèrent des signaux de trading, des ordres simulés sont passés en fonction des signaux de trading, les ordres passés sont exécut"
 
 #: ../../source/getting_started.md:420
 msgid "完成上述设置后，使用下面的代码运行交易策略。"
-msgstr ""
+msgstr " Après avoir terminé la configuration ci-dessus, utilisez le code suivant pour exécuter la stratégie de trading."
 
 #: ../../source/getting_started.md:422
 msgid ""
@@ -392,10 +415,14 @@ msgid ""
 " "
 "ID）就可以从上次中断的地方继续运行了，包括交易策略的参数等信息都会从上次停止的地方重新启动，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行，或者删除当前账户下的所有记录重新开始交易。"
 msgstr ""
+"Le trading en direct de `Qteasy` utilise le concept de \"compte\", tout comme l'ouverture d'un compte sur le marché boursier, un compte peut avoir son propre capital, ses positions en actions, et calculer les profits et les pertes séparément. Vous pouvez arrêter le programme à tout moment pendant "
+"Au cours de l'exécution, tous les enregistrements de trading seront sauvegardés, la prochaine fois que vous redémarrez, vous pouvez reprendre à partir de l'endroit où vous vous êtes arrêté la dernière fois en référençant l'ID de compte (account"
+" "
+"ID) utilisé lors de la dernière exécution, y compris les paramètres de la stratégie de trading et d'autres informations seront redémarrés à partir de l'endroit où vous vous êtes arrêté la dernière fois. Par conséquent, vous devez spécifier un compte lors du démarrage, si vous ne souhaitez pas continuer avec le compte précédent, vous pouvez créer un nouveau compte pour exécuter, ou supprimer tous les enregistrements sous le compte actuel et recommencer le trading."
 
 #: ../../source/getting_started.md:424
 msgid "在启动实盘时可以通过`qteasy`的系统配置变量`live_trade_account_name`来指定使用的账户名，系统会自动创建一个新的账户并赋予账户ID；如果想要使用已有的账户，可以在启动时通过`live_trade_account_id`指定账户ID。"
-msgstr ""
+msgstr " Lors du démarrage du trading en direct, vous pouvez spécifier le nom du compte à utiliser en utilisant la variable de configuration système `live_trade_account_name` de `qteasy`, le système créera automatiquement un nouveau compte et lui attribuera un ID de compte ; si vous souhaitez utiliser un compte existant, vous pouvez spécifier l'ID de compte lors du démarrage en utilisant `live_trade_account_id`."
 
 #: ../../source/getting_started.md:437
 msgid ""
@@ -403,20 +430,25 @@ msgid ""
 " "
 "`qteasy`提供了几个实盘交易脚本文件的示例，您可以在`qteasy`的安装目录下的`examples`文件夹中找到这些脚本文件，并使用下面的命令启动实盘交易："
 msgstr ""
+" Si vous souhaitez démarrer le trading en direct de `qteasy` via la ligne de commande dans le Terminal et commencer le trading en direct directement, vous pouvez créer un fichier de script et démarrer le trading via la ligne de commande dans le Terminal. "
+" "
+"`qteasy` fournit plusieurs exemples de fichiers de script de trading en direct, vous pouvez trouver ces fichiers de script dans le dossier `examples` du répertoire d'installation de `qteasy`, et démarrer le trading en direct en utilisant la commande suivante :"
 
 #: ../../source/getting_started.md:444
 msgid "上面的命令将启动一个实盘交易，使用账户ID为18，使用CLI界面监控实盘交易。"
-msgstr ""
+msgstr " La commande ci-dessus démarrera un trading en direct, utilisera l'ID de compte 18, et utilisera l'interface CLI pour surveiller le trading en direct."
 
 #: ../../source/getting_started.md:446
 msgid "`qteasy`提供了两种不同的用户界面以运行实盘交易："
-msgstr ""
+msgstr " `qteasy` propose deux interfaces utilisateur différentes pour exécuter le trading en direct :"
 
 #: ../../source/getting_started.md:448
 msgid ""
 "**`TraderShell`** 交互式命令行界面，可以在命令行中输入命令，查看交易日志、查看持仓、查看账户资金变化等信息： "
 "![png](img/output_27_1.png)   ![png](img/output_27_3.png)"
 msgstr ""
+"**`TraderShell`** Interface de ligne de commande interactive, vous pouvez entrer des commandes dans la ligne de commande pour afficher les journaux de trading, les positions, les changements de fonds du compte, etc. : "
+"![png](img/output_27_1.png)   ![png](img/output_27_3.png)"
 
 #: ../../source/getting_started.md:453
 msgid ""
@@ -424,10 +456,13 @@ msgid ""
 "![png](examples/img/trader_app_light_theme.png)  "
 "![png](examples/img/trader_app_2.png)"
 msgstr ""
+"**`TraderApp`** (ajouté dans la version 1.2.0) Interface graphique interactive, vous pouvez afficher les journaux de trading, les positions, les changements de fonds du compte, etc. dans l'interface graphique "
+"![png](examples/img/trader_app_light_theme.png)  "
+"![png](examples/img/trader_app_2.png)"
 
 #: ../../source/getting_started.md:457
 msgid "上面两种方式都可以在实盘运行时使用，根据`qteasy`的配置参数进入不同的交互界，关于更多实盘运行的介绍，请参见[`QTEASY`文档](https://qteasy.readthedocs.io)"
-msgstr ""
+msgstr " Les deux méthodes ci-dessus peuvent être utilisées pendant le trading en direct, et vous pouvez accéder à des interfaces interactives différentes en fonction des paramètres de configuration de `qteasy`, pour plus d'informations sur le trading en direct, veuillez consulter la [documentation `QTEASY`](https://qteasy.readthedocs.io)"
 
 #~ msgid ""
 #~ "`qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时"
