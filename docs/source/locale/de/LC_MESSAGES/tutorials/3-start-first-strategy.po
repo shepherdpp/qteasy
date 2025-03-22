@@ -21,19 +21,19 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:1
 msgid "回测您的第一个交易策略"
-msgstr ""
+msgstr "Backtesten Sie Ihre erste Handelsstrategie"
 
 #: ../../source/tutorials/3-start-first-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
+msgstr "`qteasy` ist ein vollständig lokalisiertes Paket für die quantitative Handelsanalyse, das folgende Funktionen bietet:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr ""
+msgstr "Abrufen, Bereinigen, Speichern, Verarbeiten, Visualisieren und Verwenden von Finanzdaten"
 
 #: ../../source/tutorials/3-start-first-strategy.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
+msgstr "Erstellung von quantitativen Handelsstrategien und Bereitstellung einer Vielzahl von integrierten Basisstrategien"
 
 #: ../../source/tutorials/3-start-first-strategy.md:7
 msgid "向量化的高速交易策略回测及交易结果评价"

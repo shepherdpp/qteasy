@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:1
 msgid "使用交易策略类，创建更复杂的自定义策略"
-msgstr ""
+msgstr "Verwenden Sie die Handelsstrategieklasse, um komplexere benutzerdefinierte Strategien zu erstellen"
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，[Github地址在这里](https://github.com/shepherdpp/qteasy)，并且可以[通过pip安装](https://blog.csdn.net/Shepherdppz/article/details/136075222?spm=1001.2014.3001.5501)："

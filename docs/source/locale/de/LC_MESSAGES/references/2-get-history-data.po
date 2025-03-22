@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:1
 msgid "金融数据下载及管理"
-msgstr ""
+msgstr "Herunterladen und Verwalten von Finanzdaten"
 
 #: ../../source/references/2-get-history-data.md:3
 msgid ""

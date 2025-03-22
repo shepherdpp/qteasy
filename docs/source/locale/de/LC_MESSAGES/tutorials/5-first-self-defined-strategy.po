@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:1
 msgid "使用qteasy创建自定义交易策略"
-msgstr ""
+msgstr "Erstellen benutzerdefinierter Handelsstrategien mit qteasy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../source/references/3-back-test-strategy.md:1
 msgid "创建交易策略并评价回测结果"
-msgstr ""
+msgstr "Erstellen Sie Handelsstrategien und werten Sie Backtesting-Ergebnisse aus"
 
 #: ../../source/references/3-back-test-strategy.md:3
 msgid ""
