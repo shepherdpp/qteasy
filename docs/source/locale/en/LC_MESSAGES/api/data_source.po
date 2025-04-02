@@ -25,7 +25,7 @@ msgstr "Managing Historical Data - DataSource Object"
 
 #: of qteasy.database.DataSource:1
 msgid "DataSource 对象管理存储在本地的历史数据文件或数据库."
-msgstr ""
+msgstr "DataSource object manages historical data files or databases stored locally."
 
 #: of qteasy.database.DataSource:3
 msgid ""
@@ -38,8 +38,21 @@ msgid ""
 "如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会 返回空DataFrame。 "
 "DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作"
 msgstr ""
+"With the DataSource object, the History module can easily read and assemble the required "
+"historical data from locally stored data and ensure that the historical data meets the "
+"requirements of the HistoryPanel. All historical data must first be downloaded from the "
+"network data provider and stored in local files or databases. The DataSource object checks "
+"the format of the data to ensure that the format is correct and removes duplicate data. "
+"The downloaded historical data can be stored in different formats, but regardless of the "
+"storage format, the structure of all data tables is the same and is compatible with Pandas' "
+"DataFrame data table format. Currently compatible file storage formats include csv, hdf, "
+"fth (feather), and compatible databases include mysql and MariaDB. If the data required by "
+"the HistoryPanel is not stored locally, the DataSource object will not actively download the "
+"missing data, but will only return an empty DataFrame. The DataSource object can be "
+"periodically refreshed or data can be pulled from the Provider as required, or it can be "
+"manually operated."
 
 #: of qteasy.database.DataSource:16
 msgid "以表格形式列出所有数据表的当前数据状态"
-msgstr ""
+msgstr "List the current data status of all data tables in tabular form"
 

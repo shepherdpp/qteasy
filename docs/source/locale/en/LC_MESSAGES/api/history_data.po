@@ -25,19 +25,19 @@ msgstr "Acquiring and Managing Data"
 
 #: ../../source/api/history_data.rst:4
 msgid "使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"
-msgstr ""
+msgstr "You can acquire and manage a large amount of historical data using qteasy. The historical data that qteasy can manage covers stocks, funds, indices, futures, etc., including price data, technical indicators, macroeconomics, company financial reports, macro finance, etc."
 
 #: ../../source/api/history_data.rst:6
 msgid "所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。"
-msgstr ""
+msgstr "All data can be obtained through the tushare interface. After downloading to the local, you can manage and call it through the qteasy interface."
 
 #: ../../source/api/history_data.rst:9
 msgid "查找支持历史数据"
-msgstr ""
+msgstr "Looking for supported Historical Data"
 
 #: of qteasy.datatypes.find_history_data:1
 msgid "根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型。"
-msgstr ""
+msgstr "Look for or match historical data types based on the input string, and display detailed information about the historical data. Support fuzzy search, support wildcards, support matching historical data types through English characters or Chinese characters."
 
 #: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_data_overview
@@ -45,35 +45,39 @@ msgstr ""
 #: qteasy.core.get_table_overview qteasy.core.refill_data_source
 #: qteasy.datatypes.find_history_data
 msgid "参数"
-msgstr ""
+msgstr "Parameters"
 
 #: of qteasy.datatypes.find_history_data:4
 msgid "一个字符串，用于查找或匹配历史数据类型"
-msgstr ""
+msgstr "A string used to find or match historical data types"
 
 #: of qteasy.datatypes.find_history_data:6
 msgid ""
 "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True  - False: 仅匹配数据名称  - True:  "
 "同时匹配数据描述"
 msgstr ""
+"Whether to match the data description fuzzily, if the string contains non-Ascii characters, it will be automatically converted to True - False: "
+"Match only the data name - True:  Match both the data name and the data description"
 
 #: of qteasy.datatypes.find_history_data:8
 msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True"
-msgstr ""
+msgstr "If the string contains non-Ascii characters, it will be automatically converted to True"
 
 #: of qteasy.datatypes.find_history_data:8
 msgid "False: 仅匹配数据名称"
-msgstr ""
+msgstr "False: Match only the data name"
 
 #: of qteasy.datatypes.find_history_data:9
 msgid "True:  同时匹配数据描述"
-msgstr ""
+msgstr "True:  Match both the data name and the data description"
 
 #: of qteasy.datatypes.find_history_data:11
 msgid ""
 "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True  - False: 精确匹配数据名称  - "
 "True:  模糊匹配数据名称或数据描述"
 msgstr ""
+"Whether to match the data name fuzzily, if the string contains non-Ascii characters or wildcards */?, it will be automatically converted to True  - False: "
+"Match the data name exactly  - True:  Fuzzy match the data name or the data description"
 
 #: of qteasy.datatypes.find_history_data:13
 msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"

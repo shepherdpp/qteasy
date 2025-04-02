@@ -25,7 +25,7 @@ msgstr "Historical Data Types - DataType Object"
 
 #: of qteasy.datatypes.DataType:1
 msgid "DataType class, 代表qteasy可以使用的历史数据类型。"
-msgstr ""
+msgstr "DataType class, represents the historical data types that qteasy can use."
 
 #: of qteasy.datatypes.DataType:3
 msgid ""
@@ -34,16 +34,20 @@ msgid ""
 "以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。 "
 "如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。"
 msgstr ""
+"Each historical data type in qteasy is defined by three sets of parameters: - name: the name of the data type - freq: the "
+"frequency of the data - asset_type: the asset type of the data "
+"The above three sets of parameters uniquely define a data type. qteasy defines a large number of commonly used data types, which users can use directly, or define new data types according to their needs. "
+"If the user defines a new data type, the three sets of parameters cannot be duplicated with existing data types."
 
 #: of qteasy.datatypes.DataType:10
 msgid "用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。"
-msgstr ""
+msgstr "When defining a custom data type, the user needs to specify the description of the data type, the method of obtaining the data, and the parameters for obtaining the data. For details, see the qteasy documentation."
 
 #: of qteasy.datatypes.DataType:12
 msgid "一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。"
-msgstr ""
+msgstr "Once the data type is defined, it can be used by qteasy for downloading, processing, and analyzing historical data, and can also be used directly for the development of trading strategies."
 
 #: of qteasy.datatypes.DataType:14
 msgid "需要获取数据时，通过DataType.get_data_from_source()方法获取。"
-msgstr ""
+msgstr "Use DataType.get_data_from_source() method to obtain data when needed."
 
