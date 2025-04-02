@@ -28,46 +28,48 @@ msgid ""
 "本示例展示了如何使用qteasy模块下载、管理及提取本地存储的金融数据 "
 "QTEASY提供了一套比较完善的金融数据下载及管理工具，可以通过tushare服务器下载相当广泛的金融数据，将数据存储在本地，并在需要的时候自动从本地提取数据用于策略的回测或策略运行。"
 msgstr ""
+"This Example demonstrates how to download, manage, and extract financial data stored locally using the qteasy module. "
+"QTEASY supplies a complete set of tools to help you download and manage financial data. You can download a wide range of financial data from the tushare server, store it locally, and automatically extract it from the local storage when needed for backtesting or strategy execution."
 
 #: ../../source/references/2-get-history-data.md:6
 msgid "本地数据源对象`DataSource`"
-msgstr ""
+msgstr "Loacl Data Source Object `DataSource`"
 
 #: ../../source/references/2-get-history-data.md:8
 msgid "在`qteasy`中定义了一个`DataSource`对象，这个对象定义了一个本地金融数据源，并提供了一系列内置的本地金融数据表和数据类型，用户可以直接通过各种数据类型的ID来直接读取相应的金融数据（前提是这些金融数据已经从网上下载并保存到了本地数据源中）。"
-msgstr ""
+msgstr "There is a `DataSource` object defined in `qteasy`, which defines a local financial data source and provides a series of built-in local financial data tables and data types. Users can directly read the corresponding financial data by using the ID of various data types (provided that these financial data have been downloaded from the Internet and saved to the local data source)."
 
 #: ../../source/references/2-get-history-data.md:10
 msgid "大量常用的金融数据，例如'close' 'pe'都是预先定义并内置在`qteasy`中的，这些数据涵盖了相当广泛的范围，包括："
-msgstr ""
+msgstr "Large amounts of commonly used financial data, such as 'close' and 'pe', are predefined and built into `qteasy`. These data cover a wide range, including:"
 
 #: ../../source/references/2-get-history-data.md:12
 msgid "量价数据，如开盘价open、收盘价close、最高价high，交易量vol等等"
-msgstr ""
+msgstr "Volume and prices, such as opening price open, closing price close, high price high, trading volume vol, etc."
 
 #: ../../source/references/2-get-history-data.md:13
 msgid "财务指标数据，如市盈率pe，市净率pb"
-msgstr ""
+msgstr "Financial indicators, such as price-earnings ratio pe, price-to-book ratio pb"
 
 #: ../../source/references/2-get-history-data.md:14
 msgid "财务报表数据，如ebidta、ebit等等"
-msgstr ""
+msgstr "Financial statements, such as ebidta, ebit, etc."
 
 #: ../../source/references/2-get-history-data.md:15
 msgid "公司基本信息数据，如管理层姓名、公司行业信息"
-msgstr ""
+msgstr "Basic company information, such as management names and company industry information"
 
 #: ../../source/references/2-get-history-data.md:17
 msgid "上面的数据都是以“数据表”的形式内置并定义在系统中的，如果需要使用这些数据，必须首先下载数据至本地。`DataSource`对象定义了数据存储的方式和位置。`qteasy`定义了一个默认的数据源对象`QT_DATA_SOURCE`，在不特殊指明的情况下，`qteasy`所操作及使用的数据都在这个数据源中。"
-msgstr ""
+msgstr "Above data is predefined and defined in the system in the form of 'data tables'. If you need to use this data, you must first download the data to the local. The `DataSource` object defines the method and location of data storage. `qteasy` defines a default data source object `QT_DATA_SOURCE`, and in the absence of special instructions, all data operated and used by `qteasy` are in this data source."
 
 #: ../../source/references/2-get-history-data.md:19
 msgid "`DataSource`对象可以将数据保存为文件格式（csv、fth等），也可以将数据保存在mysql数据库中，鉴于金融数据的体量，建议将数据保存在数据库中。数据存储方式及存储位置可以在`qteasy`的`configuration`中设置。"
-msgstr ""
+msgstr "`DataSource` object can save data in file format (csv, fth, etc.), or save data in a mysql database. Given the volume of financial data, it is recommended to save data in the database. The data storage method and location can be set in the `configuration` of `qteasy`."
 
 #: ../../source/references/2-get-history-data.md:22
 msgid "DataSource的两种数据源类型"
-msgstr ""
+msgstr "Two types of data sources for DataSource"
 
 #: ../../source/references/2-get-history-data.md:24
 msgid ""
@@ -77,23 +79,23 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:26
 msgid "对于一个`DataSource`对象，用户可以选择将数据存储为不同的形式，也叫数据源。`DataSource`目前支持两种不同的数据源："
-msgstr ""
+msgstr "Users may choose to store data in different forms, also known as data sources, for a `DataSource` object. `DataSource` currently supports two different data sources:"
 
 #: ../../source/references/2-get-history-data.md:27
 msgid "db: 数据库，数据存储在mysql/Maria DB数据库中，通过建立数据库连接来访问"
-msgstr ""
+msgstr "db: data is stored in a mysql/Maria DB database, accessed by establishing a database connection"
 
 #: ../../source/references/2-get-history-data.md:28
 msgid "file: 文件，数据以文件的形式存储在指定的文件夹中，支持csv、hdf5以及feather三种文件格式"
-msgstr ""
+msgstr "file: data is stored in the specified folder in the form of a file, supporting three file formats: csv, hdf5, and feather"
 
 #: ../../source/references/2-get-history-data.md:30
 msgid "鉴于金融数据的数据量较大（例如，所有股票的日K线历史数据有超过一千万行数据，分钟级K线的数据量更加庞大），推荐使用`mysql`数据库来存储数据，如果使用本地文件存储数据，数据交换的效率将会很低。"
-msgstr ""
+msgstr "As the volume of financial data is large (for example, the historical data of daily K-line for all stocks has more than ten million rows of data, and the data volume of minute-level K-line is even larger), it is recommended to use the `mysql` database to store data. If you use local files to store data, the efficiency of data exchange will be very low."
 
 #: ../../source/references/2-get-history-data.md:32
 msgid "使用下面的参数建立一个连接到本地数据库的DataSource对象："
-msgstr ""
+msgstr "Following parameters are used to establish a DataSource object connected to a local database:"
 
 #: ../../source/references/2-get-history-data.md:40
 msgid "可以通过connection_type属性了解DataSource对象的连接性质"
