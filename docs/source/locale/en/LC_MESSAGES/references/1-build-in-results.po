@@ -25,35 +25,35 @@ msgstr "Backtest results of built-in trading strategies"
 
 #: ../../source/references/1-build-in-results.md:3
 msgid "测试内置的择时策略和选股策略"
-msgstr ""
+msgstr "Testing built-in timing and stock selection strategies"
 
 #: ../../source/references/1-build-in-results.md:5
 msgid "回测参数"
-msgstr ""
+msgstr "Test parameters"
 
 #: ../../source/references/1-build-in-results.md:7
 msgid "每种策略进行一次回测，回测区间苁1996年到2021年，测试使用默认策略参数，测试参数如下："
-msgstr ""
+msgstr "Every strategy is backtested once, the backtest period is from 1996 to 2021, the default strategy parameters are used for testing, and the test parameters are as follows:"
 
 #: ../../source/references/1-build-in-results.md:9
 msgid "回测区间起止日期：1996-04-13 —— 2021-04-13，持续25年"
-msgstr ""
+msgstr "Start and end dates of backtest period: 1996-04-13 —— 2021-04-13, lasting 25 years"
 
 #: ../../source/references/1-build-in-results.md:10
 msgid "测试投资标的： “000001.SH”上证指数"
-msgstr ""
+msgstr "Asset tested: “000001.SH” Shanghai Stock Exchange Index"
 
 #: ../../source/references/1-build-in-results.md:11
 msgid "业绩参考标准： “000001.SH”上证指数"
-msgstr ""
+msgstr "Benchmark: “000001.SH” Shanghai Stock Exchange Index"
 
 #: ../../source/references/1-build-in-results.md:19
 msgid "均线类策略"
-msgstr ""
+msgstr "Moving average strategy"
 
 #: ../../source/references/1-build-in-results.md:23
 msgid "Crossline交叉线策略"
-msgstr ""
+msgstr "Crossline strategies"
 
 #: ../../source/references/1-build-in-results.md:169
 msgid "![png](../tutorials/img/output_3_3.png)"
@@ -103,7 +103,7 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:172
 msgid "MACD策略"
-msgstr ""
+msgstr "MACD strategy"
 
 #: ../../source/references/1-build-in-results.md:232
 msgid "![png](../tutorials/img/output_4_3.png)"
@@ -111,7 +111,7 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:235
 msgid "DMA策略"
-msgstr ""
+msgstr "DMA strategy"
 
 #: ../../source/references/1-build-in-results.md:295
 msgid "![png](../tutorials/img/output_5_3.png)"
@@ -119,7 +119,7 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:298
 msgid "TRIX 策略"
-msgstr ""
+msgstr "TRIX strategy"
 
 #: ../../source/references/1-build-in-results.md:358
 msgid "![png](../tutorials/img/output_6_3.png)"
@@ -127,11 +127,11 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:362
 msgid "K线模式识别策略"
-msgstr ""
+msgstr "Candlestick pattern recognition strategy"
 
 #: ../../source/references/1-build-in-results.md:364
 msgid "CDL 策略"
-msgstr ""
+msgstr "CDL strategy"
 
 #: ../../source/references/1-build-in-results.md:424
 msgid "![png](../tutorials/img/output_7_3.png)"
@@ -139,11 +139,11 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:427
 msgid "动量类策略"
-msgstr ""
+msgstr "Momentum strategies"
 
 #: ../../source/references/1-build-in-results.md:429
 msgid "Bollinger Band策略"
-msgstr ""
+msgstr "Bollinger Band strategy"
 
 #: ../../source/references/1-build-in-results.md:491
 msgid "![png](../tutorials/img/output_8_3.png)"
@@ -151,7 +151,7 @@ msgstr ""
 
 #: ../../source/references/1-build-in-results.md:493
 msgid "S-BBAND 策略"
-msgstr ""
+msgstr "S-BBAND strategy"
 
 #: ../../source/references/1-build-in-results.md:553
 msgid "![png](../tutorials/img/output_9_3.png)"
