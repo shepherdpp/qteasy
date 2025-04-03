@@ -25,51 +25,51 @@ msgstr "Erstellen benutzerdefinierter Handelsstrategien mit qteasy"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
+msgstr "`qteasy` ist ein vollständig lokalisiertes und betriebenes Quantitative Trading-Analyse-Toolkit mit folgenden Funktionen:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr ""
+msgstr " Erfassung, Reinigung, Speicherung und Verarbeitung von Finanzdaten, Visualisierung und Verwendung"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
+msgstr " Erstellung quantitativer Handelsstrategien und Bereitstellung einer Vielzahl von integrierten grundlegenden Handelsstrategien"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:7
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr ""
+msgstr " Vektorisierte Hochgeschwindigkeits-Backtests von Handelsstrategien und Bewertung der Handelsergebnisse"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:8
 msgid "交易策略参数的优化以及评价"
-msgstr ""
+msgstr " Optimierung und Bewertung von Handelsstrategieparametern"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:9
 msgid "交易策略的部署、实盘运行"
-msgstr ""
+msgstr " Bereitstellung und Echtzeitbetrieb von Handelsstrategien"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:11
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr ""
+msgstr " Durch diese Tutorials werden Sie die Hauptfunktionen und Verwendungsmethoden von `qteasy` anhand einer Reihe praktischer Beispiele vollständig verstehen."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:13
 msgid "开始前的准备工作"
-msgstr ""
+msgstr " Vorbereitungen vor dem Start"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:15
 msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
-msgstr ""
+msgstr " Bevor Sie mit diesem Tutorial beginnen, stellen Sie bitte sicher, dass Sie Folgendes beherrschen:"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:17
 msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
-msgstr ""
+msgstr " **Installieren und Konfigurieren von `qteasy`** - [QTEASY-Tutorial 1](1-get-started.md)"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:18
 msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
-msgstr ""
+msgstr "**"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:19
 msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
-msgstr ""
+msgstr "**"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:20
 msgid "**学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)"

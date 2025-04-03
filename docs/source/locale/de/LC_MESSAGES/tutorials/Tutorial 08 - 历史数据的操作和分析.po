@@ -25,5 +25,5 @@ msgstr "Bedienung und Analyse historischer Daten"
 
 #: - ../../source/tutorials/Tutorial 08 历史数据的操作和分析.md:3
 msgid "TO BE COMPLETED"
-msgstr ""
+msgstr " FERTIGSTELLEN"
 
