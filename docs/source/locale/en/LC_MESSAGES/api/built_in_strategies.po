@@ -270,7 +270,7 @@ msgstr ""
 
 #: of qteasy.built_in.SelectingAvgIndicator:5
 msgid "``sort_ascending``: ``enum``, 是否升序排列因子"
-msgstr ""
+msgstr "``sort_ascending``: ``enum``, Whether to sort the factor in ascending order"
 
 #: of qteasy.built_in.SelectingAvgIndicator:7
 #: qteasy.built_in.SelectingNDayAvg:33 qteasy.built_in.SelectingNDayChange:33
@@ -278,7 +278,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:33
 #: qteasy.built_in.SelectingNDayVolatility:32
 msgid "``True``: 优先选择因子最小的股票,"
-msgstr ""
+msgstr "``True``: Prioritize stocks with the smallest factor,"
 
 #: of qteasy.built_in.SelectingAvgIndicator:9
 #: qteasy.built_in.SelectingNDayAvg:35 qteasy.built_in.SelectingNDayChange:35
@@ -286,15 +286,15 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:35
 #: qteasy.built_in.SelectingNDayVolatility:34
 msgid "``False``, 优先选择因子最大的股票"
-msgstr ""
+msgstr "``False``, Prioritize stocks with the largest factor"
 
 #: of qteasy.built_in.SelectingAvgIndicator:11
 msgid "``weighting``: ``enum``, 股票仓位分配比例权重"
-msgstr ""
+msgstr "``weighting``: ``enum``, Weighting of stock position allocation ratio"
 
 #: of qteasy.built_in.SelectingAvgIndicator:13
 msgid "``even``       :默认值, 所有被选中的股票都获得同样的权重"
-msgstr ""
+msgstr "``even``       : Default value, all selected stocks get the same weight"
 
 #: of qteasy.built_in.SelectingAvgIndicator:15
 #: qteasy.built_in.SelectingNDayAvg:41 qteasy.built_in.SelectingNDayChange:41
@@ -302,7 +302,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:41
 #: qteasy.built_in.SelectingNDayVolatility:40
 msgid "``linear``     :权重根据因子排序线性分配"
-msgstr ""
+msgstr "``linear``     : The weight is linearly distributed according to the factor ranking"
 
 #: of qteasy.built_in.SelectingAvgIndicator:17
 #: qteasy.built_in.SelectingNDayAvg:43 qteasy.built_in.SelectingNDayChange:43
@@ -310,7 +310,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:43
 #: qteasy.built_in.SelectingNDayVolatility:42
 msgid "``distance``   :股票的权重与他们的指标与最低之间的差值（距离）成比例"
-msgstr ""
+msgstr "``distance``   : The weight of the stock is proportional to the difference (distance) between their indicators and the minimum"
 
 #: of qteasy.built_in.SelectingAvgIndicator:19
 #: qteasy.built_in.SelectingNDayAvg:45 qteasy.built_in.SelectingNDayChange:45
@@ -318,11 +318,11 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:45
 #: qteasy.built_in.SelectingNDayVolatility:44
 msgid "``proportion`` :权重与股票的因子分值成正比"
-msgstr ""
+msgstr "``proportion`` : The weight is proportional to the factor score of the stock"
 
 #: of qteasy.built_in.SelectingAvgIndicator:21
 msgid "``condition``: enum, 股票筛选条件"
-msgstr ""
+msgstr "``condition``: enum, Stock selection condition"
 
 #: of qteasy.built_in.SelectingAvgIndicator:23
 #: qteasy.built_in.SelectingNDayAvg:17 qteasy.built_in.SelectingNDayChange:17
@@ -330,7 +330,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:17
 #: qteasy.built_in.SelectingNDayVolatility:16
 msgid "``any``        :默认值，选择所有可用股票"
-msgstr ""
+msgstr "``any``        : Default value, select all available stocks"
 
 #: of qteasy.built_in.SelectingAvgIndicator:25
 #: qteasy.built_in.SelectingNDayAvg:19 qteasy.built_in.SelectingNDayChange:19
@@ -338,7 +338,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:19
 #: qteasy.built_in.SelectingNDayVolatility:18
 msgid "``greater``    :筛选出因子大于``ubound``的股票"
-msgstr ""
+msgstr "``greater``    : Filter stocks with factors greater than ``ubound``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:27
 #: qteasy.built_in.SelectingNDayAvg:21 qteasy.built_in.SelectingNDayChange:21
@@ -346,7 +346,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:21
 #: qteasy.built_in.SelectingNDayVolatility:20
 msgid "``less``       :筛选出因子小于``lbound``的股票"
-msgstr ""
+msgstr "``less``       : Filter stocks with factors less than ``lbound``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:29
 #: qteasy.built_in.SelectingNDayAvg:23 qteasy.built_in.SelectingNDayChange:23
@@ -354,7 +354,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:23
 #: qteasy.built_in.SelectingNDayVolatility:22
 msgid "``between``    :筛选出因子介于``lbound``与``ubound``之间的股票"
-msgstr ""
+msgstr "``between``    : Filter stocks with factors between ``lbound`` and ``ubound``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:31
 #: qteasy.built_in.SelectingNDayAvg:25 qteasy.built_in.SelectingNDayChange:25
@@ -362,19 +362,19 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:25
 #: qteasy.built_in.SelectingNDayVolatility:24
 msgid "``not_between``:筛选出因子不在``lbound``与``ubound``之间的股票"
-msgstr ""
+msgstr "``not_between``: Filter stocks with factors not between ``lbound`` and ``ubound``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:33
 msgid "``lbound``: ``float``, 股票筛选下限值, 默认值``np.-inf``"
-msgstr ""
+msgstr "``lbound``: ``float``, Stock screening lower limit, default value ``np.-inf``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:35
 msgid "``ubound``: ``float``, 股票筛选上限值, 默认值``np.inf``"
-msgstr ""
+msgstr "``ubound``: ``float``, Stock screening upper limit, default value ``np.inf``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:37
 msgid "``max_sel_count``: ``float``, 抽取的股票的数量(p>=1)或比例(p<1), 默认值: 0.5，表示选中50%的股票"
-msgstr ""
+msgstr "``max_sel_count``: ``float``, The number of stocks extracted (p>=1) or the proportion (p<1), default value: 0.5, indicating that 50% of the stocks are selected"
 
 #: of qteasy.built_in.AD:7 qteasy.built_in.ADOSC:9 qteasy.built_in.ADX:6
 #: qteasy.built_in.APO:12 qteasy.built_in.AROON:8 qteasy.built_in.ATR:9
@@ -409,7 +409,7 @@ msgstr ""
 #: qteasy.built_in.TimingShort:5 qteasy.built_in.TimingZero:5
 #: qteasy.built_in.ULTOSC:14 qteasy.built_in.WILLR:10
 msgid "信号类型:"
-msgstr ""
+msgstr "Signal Type"
 
 #: of qteasy.built_in.SelectingAll:6 qteasy.built_in.SelectingAvgIndicator:39
 #: qteasy.built_in.SelectingNDayAvg:7 qteasy.built_in.SelectingNDayChange:7
@@ -420,7 +420,7 @@ msgstr ""
 #: qteasy.built_in.TimingLong:6 qteasy.built_in.TimingShort:6
 #: qteasy.built_in.TimingZero:6
 msgid "PT型: 百分比持仓比例信号"
-msgstr ""
+msgstr "PT Type: Percentage Position Ratio Signal"
 
 #: of qteasy.built_in.AD:17 qteasy.built_in.ADOSC:17 qteasy.built_in.ADX:14
 #: qteasy.built_in.APO:18 qteasy.built_in.AROON:18 qteasy.built_in.ATR:23
@@ -456,11 +456,11 @@ msgstr ""
 #: qteasy.built_in.TimingShort:7 qteasy.built_in.TimingZero:7
 #: qteasy.built_in.ULTOSC:20 qteasy.built_in.WILLR:16
 msgid "信号规则:"
-msgstr ""
+msgstr "Rules"
 
 #: of qteasy.built_in.SelectingAvgIndicator:41
 msgid "使用data_types指定一种数据类型，将股票过去的datatypes数据取平均值，将该平均值作为选股因子进行选股"
-msgstr ""
+msgstr "Determine a data type using data_types, take the average of the past datatypes data of the stock, and use this average value as the stock selection factor for stock selection"
 
 #: of qteasy.built_in.AD:27 qteasy.built_in.ADOSC:27 qteasy.built_in.ADX:24
 #: qteasy.built_in.APO:28 qteasy.built_in.AROON:28 qteasy.built_in.ATR:33
@@ -495,19 +495,19 @@ msgstr ""
 #: qteasy.built_in.TimingShort:17 qteasy.built_in.TimingZero:17
 #: qteasy.built_in.ULTOSC:30 qteasy.built_in.WILLR:26
 msgid "策略属性缺省值:"
-msgstr ""
+msgstr "Default Values of Strategy Attributes"
 
 #: of qteasy.built_in.SelectingAvgIndicator:43
 msgid "默认参数: ``(True, 'even', 'greater', 0, 0, 0.25)``"
-msgstr ""
+msgstr "Default Parameters: ``(True, 'even', 'greater', 0, 0, 0.25)``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:45
 msgid "数据类型: ``eps`` 每股收益，单数据输入"
-msgstr ""
+msgstr "Data Type: ``eps`` Earnings per share, single data input"
 
 #: of qteasy.built_in.SelectingAvgIndicator:47
 msgid "采样频率: ``Y``, 年"
-msgstr ""
+msgstr "Frequency: ``Y``, Year"
 
 #: of qteasy.built_in.ADX:23 qteasy.built_in.BBand:26
 #: qteasy.built_in.BuyRate:24 qteasy.built_in.CROSSLINE:24
@@ -532,15 +532,15 @@ msgstr ""
 #: qteasy.built_in.TRIX:22 qteasy.built_in.TimingLong:16
 #: qteasy.built_in.TimingShort:16 qteasy.built_in.TimingZero:16
 msgid "窗口长度: ``270``"
-msgstr ""
+msgstr "Window Length: ``270``"
 
 #: of qteasy.built_in.SelectingAvgIndicator:51
 msgid "参数范围: ``[(True, False)``,"
-msgstr ""
+msgstr "Range of Parameters: ``[(True, False)``,"
 
 #: of qteasy.built_in.SelectingAvgIndicator:53
 msgid "``('even', 'linear', 'proportion')``,"
-msgstr ""
+msgstr "``('even', 'linear', 'proportion')``,"
 
 #: of qteasy.built_in.SelectingAvgIndicator:55
 msgid "``('any', 'greater', 'less', 'between', 'not_between')``,"
@@ -588,26 +588,26 @@ msgstr ""
 #: qteasy.built_in.TimingShort:19 qteasy.built_in.TimingZero:19
 #: qteasy.built_in.ULTOSC:32 qteasy.built_in.WILLR:28
 msgid "策略不支持参考数据，不支持交易数据"
-msgstr ""
+msgstr "Reference data is not supported, and trading data is not supported"
 
 #: of qteasy.built_in.SelectingNDayLast:1
 msgid "以股票N天前的价格或数据指标作为选股因子选股基础选股策略，以股票的N日前历史数据作为选股因子，因子排序参数以策略属性的形式控制"
-msgstr ""
+msgstr "Select stocks based on the price or data indicators of the stock N days ago as the stock selection factor. The historical data of the stock N days ago is used as the stock selection factor, and the factor sorting parameters are controlled in the form of strategy attributes"
 
 #: of qteasy.built_in.SelectingNDayLast:4
 msgid "``n``: int, 股票历史数据的前置期"
-msgstr ""
+msgstr "``n``: int, The lead period of historical data of stocks"
 
 #: of qteasy.built_in.SelectingNDayAvg:9 qteasy.built_in.SelectingNDayLast:8
 msgid "在每个选股周期使用N日前的历史数据作为选股因子进行选股"
-msgstr ""
+msgstr "Select stocks using historical data from N days ago as stock selection factors in each stock selection cycle"
 
 #: of qteasy.built_in.SelectingNDayAvg:11
 #: qteasy.built_in.SelectingNDayChange:11 qteasy.built_in.SelectingNDayLast:10
 #: qteasy.built_in.SelectingNDayRateChange:11
 #: qteasy.built_in.SelectingNDayVolatility:10
 msgid "通过以下策略属性控制选股方法:"
-msgstr ""
+msgstr "Control the stock selection method through the following strategy attributes:"
 
 #: of qteasy.built_in.SelectingNDayAvg:13
 #: qteasy.built_in.SelectingNDayChange:13 qteasy.built_in.SelectingNDayLast:12
@@ -617,52 +617,53 @@ msgid ""
 "``max_sel_count``:     ``float``,  选股限额，表示最多选出的股票的数量，默认值: "
 "``0.5``，表示选中50%的股票"
 msgstr ""
+"``max_sel_count``:     ``float``,  Stock selection limit, indicating the maximum number of stocks selected, default value: ``0.5``, indicating that 50% of the stocks are selected"
 
 #: of qteasy.built_in.SelectingNDayAvg:15
 #: qteasy.built_in.SelectingNDayChange:15 qteasy.built_in.SelectingNDayLast:14
 #: qteasy.built_in.SelectingNDayRateChange:15
 #: qteasy.built_in.SelectingNDayVolatility:14
 msgid "``condition``:         ``str`` ,   确定股票的筛选条件，默认值``any``"
-msgstr ""
+msgstr "``condition``:         ``str`` ,   Determine the stock screening condition, default value ``any``"
 
 #: of qteasy.built_in.SelectingNDayAvg:27
 #: qteasy.built_in.SelectingNDayChange:27 qteasy.built_in.SelectingNDayLast:26
 #: qteasy.built_in.SelectingNDayRateChange:27
 #: qteasy.built_in.SelectingNDayVolatility:26
 msgid "``lbound``:            ``float``,  执行条件筛选时的指标下界, 默认值``np.-inf``"
-msgstr ""
+msgstr "``lbound``:            ``float``,  Lower bound of the indicator when executing the condition screening, default value ``np.-inf``"
 
 #: of qteasy.built_in.SelectingNDayAvg:29
 #: qteasy.built_in.SelectingNDayChange:29 qteasy.built_in.SelectingNDayLast:28
 #: qteasy.built_in.SelectingNDayRateChange:29
 #: qteasy.built_in.SelectingNDayVolatility:28
 msgid "``ubound``:            ``float``,  执行条件筛选时的指标上界, 默认值``np.inf``"
-msgstr ""
+msgstr "``ubound``:            ``float``,  Upper bound of the indicator when executing the condition screening, default value ``np.inf``"
 
 #: of qteasy.built_in.SelectingNDayAvg:31
 #: qteasy.built_in.SelectingNDayChange:31 qteasy.built_in.SelectingNDayLast:30
 #: qteasy.built_in.SelectingNDayRateChange:31
 #: qteasy.built_in.SelectingNDayVolatility:30
 msgid "``sort_ascending``:    ``bool``,   排序方法，默认值: ``False``,"
-msgstr ""
+msgstr "``sort_ascending``:    ``bool``,   Sorting method, default value: ``False``,"
 
 #: of qteasy.built_in.SelectingNDayAvg:37
 #: qteasy.built_in.SelectingNDayChange:37 qteasy.built_in.SelectingNDayLast:36
 #: qteasy.built_in.SelectingNDayRateChange:37
 #: qteasy.built_in.SelectingNDayVolatility:36
 msgid "``weighting``:         ``str`` ,   确定如何分配选中股票的权重，默认值: ``even``"
-msgstr ""
+msgstr "``weighting``:         ``str`` ,   Determine how to allocate the weights of selected stocks, default value: ``even``"
 
 #: of qteasy.built_in.SelectingNDayAvg:39
 #: qteasy.built_in.SelectingNDayChange:39 qteasy.built_in.SelectingNDayLast:38
 #: qteasy.built_in.SelectingNDayRateChange:39
 #: qteasy.built_in.SelectingNDayVolatility:38
 msgid "``even``       :所有被选中的股票都获得同样的权重"
-msgstr ""
+msgstr "``even``       : All selected stocks receive the same weight"
 
 #: of qteasy.built_in.SelectingNDayLast:46
 msgid "默认参数: ``(2,)``"
-msgstr ""
+msgstr "Default Parameters: ``(2,)``"
 
 #: of qteasy.built_in.APO:23 qteasy.built_in.BBand:22
 #: qteasy.built_in.BuyRate:20 qteasy.built_in.CROSSLINE:20
@@ -691,12 +692,12 @@ msgstr ""
 #: qteasy.built_in.TRIX:18 qteasy.built_in.TimingLong:12
 #: qteasy.built_in.TimingShort:12 qteasy.built_in.TimingZero:12
 msgid "数据类型: ``close`` 收盘价，单数据输入"
-msgstr ""
+msgstr "Data Type: ``close`` Closing price, single data input"
 
 #: of qteasy.built_in.SelectingNDayAvg:51
 #: qteasy.built_in.SelectingNDayChange:51 qteasy.built_in.SelectingNDayLast:50
 msgid "采样频率: 月"
-msgstr ""
+msgstr "Frequency: Month"
 
 #: of qteasy.built_in.AD:26 qteasy.built_in.ADOSC:26 qteasy.built_in.ATR:32
 #: qteasy.built_in.CDL:20 qteasy.built_in.MOM:23 qteasy.built_in.OBV:31
@@ -705,16 +706,16 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayLast:52 qteasy.built_in.ULTOSC:29
 #: qteasy.built_in.WILLR:25
 msgid "窗口长度: ``100``"
-msgstr ""
+msgstr "Window Length: ``100``"
 
 #: of qteasy.built_in.AROON:29 qteasy.built_in.CMO:29 qteasy.built_in.MFI:23
 #: qteasy.built_in.SelectingNDayLast:54
 msgid "参数范围: ``[(2, 100)]``"
-msgstr ""
+msgstr "Range of Parameters: ``[(2, 100)]``"
 
 #: of qteasy.built_in.SelectingNDayAvg:1
 msgid "以股票过去N天的价格或数据指标的平均值作为选股因子选股 基础选股策略: 以股票的前N日历史数据平均值作为选股因子，因子排序参数以策略属性的形式控制"
-msgstr ""
+msgstr "Select stocks based on the average value of the price or data indicators of the stock in the past N days as the stock selection factor. The average value of the historical data of the stock in the previous N days is used as the stock selection factor, and the factor sorting parameters are controlled in the form of strategy attributes"
 
 #: of qteasy.built_in.SelectingNDayAvg:5 qteasy.built_in.SelectingNDayChange:5
 msgid "n: int, 股票历史数据的选择期"
