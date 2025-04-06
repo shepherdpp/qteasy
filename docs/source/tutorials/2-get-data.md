@@ -24,13 +24,13 @@
 
 另外，为了方便后续图表等功能的使用，建议使用`jupyter notebook`来进行开发，您可以在新建的虚拟环境中运行以下命令安装`jupyter notebook`：
 
-```
-pip install notebook
+```bash
+(bash): pip install notebook
 ```
 安装完成后，可以使用下面命令启动`jupyter notebook`：
 
-```
-jupyter notebook
+```bash
+(bash): jupyter notebook
 ```
 
 启动后，就可以在浏览器中的一个交互式开发环境中运行代码了，如下图所示：
@@ -38,8 +38,8 @@ jupyter notebook
 ![在这里插入图片描述](img/jupyter_notebook.png)
 
 如果不使用`jupyter notebook`，也可以使用`ipython`：
-```
-pip install ipython
+```bash
+(bash): pip install ipython
 ```
 `ipython` 运行在terminal中，但是对图表的支持没有那么好
 
@@ -59,7 +59,7 @@ pip install ipython
 关于`DataSource`数据源对象的更多信息，请参见[DataSource Reference](../references/2-get-history-data.md)
 
 ```python
-import qteasy as qt
+>>> import qteasy as qt
 ```
 提示信息：
 ```text
@@ -70,8 +70,8 @@ UserWarning: trade calendar is not loaded, some utility functions may not work p
 `qteasy`提供了一个函数`get_table_overview()`来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。
 
 ```python
-import qteasy as qt
-qt.get_table_overivew()
+>>> import qteasy as qt
+>>> qt.get_table_overview()
 ```
 数据表分析过程可能会花费几分钟时间，其间会显示进度条显示分析进度。分析完成以后，会显示本地数据源的数据表清单，以及数据表的数据范围等信息。
 
@@ -95,7 +95,7 @@ Index: []
 要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码：
 
 ```python
-qt.refill_data_source(tables='trade_calendar, stock_basic, index_basic')
+>>> qt.refill_data_source(tables='trade_calendar, stock_basic, index_basic')
 ```
 数据下载过程中会显示进度条显示下载进度。
 
@@ -108,7 +108,7 @@ Filling data source file://csv@qt_root/data/ ...
 下载完成后，再次运行`qt.get_table_overview()`函数
 
 ```python
-qt.get_table_overivew()
+>>> qt.get_table_overview()
 ```
 可以看到数据已经成功下载到本地：
 ```text
@@ -132,10 +132,10 @@ index_basic      True       3.4MB         10K           None        None
 查找股票/指数详细信息可以使用`get_stock_info()`或者`get_basic_info()`函数，两个函数功能相同，都可以根据输入的证券代码、名称或者关键字查找证券的信息，支持通配符或者模糊查找；如果同一个代码对应不同的`qt_code`，例如股票`000001`代表平安银行，对应`qt_code: 000001.SZ`，而指数`000001`代表上证指数，`qt_code: 000001.SZ`，`qteasy`会罗列出所有的证券信息：
 
 ```python
-import qteasy as qt
+>>> import qteasy as qt
 
 # 通过完整的qt_code获取信息
-qt.get_basic_info('000001.SZ')
+>>> qt.get_basic_info('000001.SZ')
 ```
 输出如下
 ```text
@@ -162,7 +162,7 @@ list_date    1991-04-03
 
 除了查找股票或证券的基本信息以外，我们还能用`qt.filter_stock()`函数来筛选股票：
 ```python
-qt.filter_stocks(date='20240212', industry='银行', area='上海')
+>>> qt.filter_stocks(date='20240212', industry='银行', area='上海')
 ```
 输出：
 ```text
@@ -187,12 +187,12 @@ qt_code
 我们同样使用`qt.refill_data_source()`函数下载股票数据。最常用的股票日K线数据保存在`stock_daily`表中。不过由于数据量较大，我们最好在下载数据时限定数据的范围，通过`start_date`/`end_date`参数，指定下载数据的起始日期，分批下载历史数据，否则，下载的过程将会非常漫长：
 
 ```python
-qt.refill_data_source(tables='stock_daily', start_date='20230101', end_date='20231231')
+>>> qt.refill_data_source(tables='stock_daily', start_date='20230101', end_date='20231231')
 ```
 上面的代码下载了2023年全年所有已上市股票的日K线数据，同样，下面的代码可以用来下载常用指数（上证指数和沪深300指数）的日K线数据：
 
 ```python
-qt.refill_data_source(tables='index_daily', symbols='000001, 000300', start_date='20231231', end_date='20240208')
+>>> qt.refill_data_source(tables='index_daily', symbols='000001, 000300', start_date='20231231', end_date='20240208')
 ```
 ### 从本地获取股价数据
 当股价数据保存在本地之后，就可以随时提取出来使用了。
@@ -200,7 +200,7 @@ qt.refill_data_source(tables='index_daily', symbols='000001, 000300', start_date
 我们可以使用`qt.get_history_data()`函数来获取股票的量价数据。这个函数是`qteasy`的一个通用接口，可以用来获取各种类型的数据。在函数的参数中指定数据的类型（通过数据类型ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`"open, high, low, close, vol"`以获取开盘价、最高价、最低价、收盘价和交易量：
 
 ```python
-qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20230101', end='20230201')
+>>> qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', start='20230101', end='20230201')
 ```
 
 得到结果如下：
@@ -238,15 +238,15 @@ qt.get_history_data(htypes='open, high, low, close, vol', shares='000001.SZ', st
 `qteasy`提供了`qt.candle()`函数，用于显示专业K线图，只要数据下载到本地后，就可以立即显示K线图：
 
 ```python
-qt.candle('600004.SH', start='20230101', end='20230301')
+>>> qt.candle('600004.SH', start='20230101', end='20230301')
 ```
 ![在这里插入图片描述](img/candle-600004.png)
 
 下载复权因子数据到本地后，就可以显示复权价格了：
 
 ```python
-qt.refill_data_source(tables='adj', start_date='20230101', end_date='20230601')
-qt.candle('600004.SH', start='20230101', end='20230301', adj='b')
+>>> qt.refill_data_source(tables='adj', start_date='20230101', end_date='20230601')
+>>> qt.candle('600004.SH', start='20230101', end='20230301', adj='b')
 ```
 
 ![在这里插入图片描述](img/candle-600004-b.png)
@@ -256,19 +256,19 @@ qt.candle('600004.SH', start='20230101', end='20230301', adj='b')
 
 下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等，为了显示下面示例中的K线图，您需要下载相应的数据。
 ```python
-import qteasy as qt
-df = qt.candle('159601', start='20210420', freq='d')
-df = qt.candle('000001.SH', start = '20211221', asset_type='IDX', plot_type='c')
-df = qt.candle('000300.SH', start = '20220331', asset_type='IDX', mav=[], plot_type='c')
-df = qt.candle('000300.SH', start = '20221021', asset_type='IDX', mav=[], plot_type='c', 
-               freq='30min')
-df = qt.candle('601728', freq='30min', adj='b', plot_type='c')
-df = qt.candle('沪镍主力', start = '20211130', mav=[5, 12, 36])
-df = qt.candle('510300', start='20200101', asset_type='FD', adj='b', mav=[])
-df = qt.candle('格力电器', start='20220101', asset_type='E', adj='f', mav=[5, 10, 20, 30])
-df = qt.candle('513100', asset_type='FD', adj='f', mav=[])
-df = qt.candle('110025', asset_type='FD', adj='f', mav=[9, 28])
-df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
+>>> import qteasy as qt
+>>> df = qt.candle('159601', start='20210420', freq='d')
+>>> df = qt.candle('000001.SH', start = '20211221', asset_type='IDX', plot_type='c')
+>>> df = qt.candle('000300.SH', start = '20220331', asset_type='IDX', mav=[], plot_type='c')
+>>> df = qt.candle('000300.SH', start = '20221021', asset_type='IDX', mav=[], plot_type='c', 
+>>>                freq='30min')
+>>> df = qt.candle('601728', freq='30min', adj='b', plot_type='c')
+>>> df = qt.candle('沪镍主力', start = '20211130', mav=[5, 12, 36])
+>>> df = qt.candle('510300', start='20200101', asset_type='FD', adj='b', mav=[])
+>>> df = qt.candle('格力电器', start='20220101', asset_type='E', adj='f', mav=[5, 10, 20, 30])
+>>> df = qt.candle('513100', asset_type='FD', adj='f', mav=[])
+>>> df = qt.candle('110025', asset_type='FD', adj='f', mav=[9, 28])
+>>> df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 ```
 
 ![png](img/output_18_1.png)
@@ -311,7 +311,7 @@ df = qt.candle('001104', asset_type='FD', adj='f', mav=[12, 26])
 `qt.find_history_data()`函数可以根据输入查找相关的数据类型，并且显示它们的ID，数据表、说明等相关信息，例如，搜索`‘close’`（收盘价）可以找到所有相关的数据类型：
 
 ```python
-qt.find_history_data('close')
+>>> qt.find_history_data('close')
 ```
 得到下面输出：
 ```text
@@ -360,7 +360,7 @@ close        d   Any        top_list  融资融券交易明细 - 收盘价
 再例如，搜索市盈率pe，可以得到：
 
 ```python
-qt.find_history_data('pe')
+>>> qt.find_history_data('pe')
 ```
 得到下面输出：
 ```
@@ -431,8 +431,8 @@ if __name__ == '__main__':
 要下载2023年全年的`stock_daily`数据，只需要在命令行中运行以下命令：
 
 
-```
-python -m refill_data --tables stock_daily --start_date 20230101 --end_date 20231231
+``` bash
+(bash): python -m refill_data --tables stock_daily --start_date 20230101 --end_date 20231231
 ```
 
 
