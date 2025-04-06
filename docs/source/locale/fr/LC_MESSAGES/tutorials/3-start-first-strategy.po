@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 21:24+0800\n"
+"POT-Creation-Date: 2025-04-06 21:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -114,7 +114,7 @@ msgid "交易员对象可以直接通过`qt.Operator()`来创建，创建时传�
 msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:43
-msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
+msgid "通过上面的代码，我们已经在`qteasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
 msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:45
@@ -437,5 +437,8 @@ msgid "通过本教程，我们通过一个大小盘轮动交易策略的创建�
 msgstr ""
 
 #~ msgid "在[上一篇教程](https://blog.csdn.net/Shepherdppz/article/details/136098697)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
+#~ msgstr ""
+
+#~ msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
 #~ msgstr ""
 

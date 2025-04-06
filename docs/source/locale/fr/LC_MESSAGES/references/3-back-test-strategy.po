@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-04-06 21:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgid "关于`Operator`对象的更多介绍，请参见`qteasy`文档"
 msgstr ""
 
 #: ../../source/references/3-back-test-strategy.md:12
-msgid "`queasy`提供了两种方式创建交易策略："
+msgid "`qteasy`提供了两种方式创建交易策略："
 msgstr ""
 
 #: ../../source/references/3-back-test-strategy.md:14
@@ -866,4 +866,7 @@ msgstr ""
 #: ../../source/references/3-back-test-strategy.md:814
 msgid "使用qteasy不仅可以使用内置策略，也可以创建自定义策略。下面有一个简单的例子，定义了一个简单的轮动交易策略"
 msgstr ""
+
+#~ msgid "`queasy`提供了两种方式创建交易策略："
+#~ msgstr ""
 
