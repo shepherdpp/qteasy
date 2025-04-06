@@ -760,113 +760,114 @@ msgstr "Large number of parameters can be set in the simulated trading process o
 
 #: ../../source/references/3-back-test-strategy.md:558
 msgid "投入资金的数量、日期、或者设置分批多次投入资金；"
-msgstr ""
+msgstr "Total amount of funds invested, date, or set to invest in batches multiple times;"
 
 #: ../../source/references/3-back-test-strategy.md:559
 msgid "买入和卖出交易的费用、包括佣金费率、最低费用、固定费用、以及滑点。各种费率都可以针对买入和卖出分别设定"
-msgstr ""
+msgstr "Trading fees for buying and selling, including commission rate, minimum fee, fixed fee, and slippage. Various rates can be set separately for buying and selling"
 
 #: ../../source/references/3-back-test-strategy.md:560
 msgid "买入和卖出交易的交割时间，也就是T+N日交割制度"
-msgstr ""
+msgstr "Delivery time of buying and selling transactions, that is, T+N delivery system"
 
 #: ../../source/references/3-back-test-strategy.md:561
 msgid "买入和卖出交易的最小批量，例如是否允许分数份额交易、还是必须整数份额、甚至整百份交易"
-msgstr ""
+msgstr "Minimum batch size for buying and selling transactions, such as whether fractional shares are allowed, or whether integer shares or even hundreds of shares are required for trading"
 
 #: ../../source/references/3-back-test-strategy.md:563
 msgid "最终打印的回测结果是考虑上述所有交易参数之后的最终结果，因此可以看到总交易成本。详细的交易参数设置请参见详细文档。"
-msgstr ""
+msgstr "Final printed backtesting results are the final results after considering all the above trading parameters, so you can see the total trading costs. For detailed trading parameter settings, please refer to the detailed documentation."
 
 #: ../../source/references/3-back-test-strategy.md:565
 msgid ""
 "另外，`qteasy`还给给出了关于策略表现的几个指标： "
 "如alpha和beta分别是0.067和1.002，而夏普率为0.041。最大回撤发生在2009年8月3日到2014年7月10日，回撤了35.0%，且到了2014年12月16日才翻盘。"
 msgstr ""
+"Additionally, `qteasy` also provides several indicators about strategy performance: alpha and beta are 0.067 and 1.002 respectively, while the Sharpe ratio is 0.041. The maximum drawdown occurred from August 3, 2009 to July 10, 2014, with a drawdown of 35.0%, and it was not until December 16, 2014 that it turned around."
 
 #: ../../source/references/3-back-test-strategy.md:568
 msgid "在上面的回测结果中我们给出了参数`visual=False`，如果令`visual=True`，就能得到可视化的回测结果，以图表的形式给出，并提供可视化信息："
-msgstr ""
+msgstr "In the above backtesting results, we set the parameter `visual=False`. If we set `visual=True`, we can get visual backtesting results in the form of charts, and provide visual information:"
 
 #: ../../source/references/3-back-test-strategy.md:570
 msgid "投资策略的历史资金曲线"
-msgstr ""
+msgstr "Capital curve of investment strategy"
 
 #: ../../source/references/3-back-test-strategy.md:571
 msgid "参考数据（沪深300指数）的历史曲线"
-msgstr ""
+msgstr "Benchmark data (CSI 300 index) historical curve"
 
 #: ../../source/references/3-back-test-strategy.md:572
 msgid "买点和卖点（在参考数据上以红色、绿色箭头显示）"
-msgstr ""
+msgstr "Purchase and sell points (displayed with red and green arrows on the reference data)"
 
 #: ../../source/references/3-back-test-strategy.md:573
 msgid "持仓区间（绿色表示持仓）"
-msgstr ""
+msgstr "Holding period (green indicates holding)"
 
 #: ../../source/references/3-back-test-strategy.md:574
 msgid "投资策略的评价指标（alpha、sharp等）"
-msgstr ""
+msgstr "Investment strategy evaluation indicators (alpha, sharp, etc.)"
 
 #: ../../source/references/3-back-test-strategy.md:575
 msgid "历史回撤分析（显示五次最大的回撤）"
-msgstr ""
+msgstr "Drawdown analysis (showing the five largest drawdowns)"
 
 #: ../../source/references/3-back-test-strategy.md:576
 msgid "历史收益率热力图、山积图等图表"
-msgstr ""
+msgstr "Return rate heat map, mountain accumulation chart, and other charts"
 
 #: ../../source/references/3-back-test-strategy.md:579
 msgid "`qteasy`提供了丰富的策略回测选项，例如："
-msgstr ""
+msgstr "`qteasy` provides rich strategy backtesting options, such as:"
 
 #: ../../source/references/3-back-test-strategy.md:581
 msgid "回测开始结束日期"
-msgstr ""
+msgstr "Start and end date of backtesting"
 
 #: ../../source/references/3-back-test-strategy.md:582
 msgid "回测结果评价指标"
-msgstr ""
+msgstr "Investment strategy evaluation indicators"
 
 #: ../../source/references/3-back-test-strategy.md:583
 msgid "回测时是否允许持有负数仓位（用于模拟期货交易卖空行为，也可以使用专门的期货交易模拟算法）"
-msgstr ""
+msgstr "If negative positions are allowed during backtesting (used to simulate futures trading short-selling behavior, or special futures trading simulation algorithms can be used)"
 
 #: ../../source/references/3-back-test-strategy.md:585
 msgid "更多的选项请参见详细文档"
-msgstr ""
+msgstr "More options can be found in the detailed documentation"
 
 #: ../../source/references/3-back-test-strategy.md:587
 msgid "单择时策略的优化"
-msgstr ""
+msgstr "Optimization of single timing strategy"
 
 #: ../../source/references/3-back-test-strategy.md:588
 msgid "显然，没有经过优化的参数无法得到理想的回测结果，因此我们需要进行一次优化"
-msgstr ""
+msgstr "Obviously, the unoptimized parameters cannot achieve ideal backtesting results, so we need to perform an optimization"
 
 #: ../../source/references/3-back-test-strategy.md:590
 msgid "通过设置context对象的各个参数，我们可以设置优化方式并控制优化过程： 以下参数的含义分别如下："
-msgstr ""
+msgstr "We can set the optimization method and control the optimization process by setting various parameters of the context object: The meanings of the following parameters are as follows:"
 
 #: ../../source/references/3-back-test-strategy.md:593
 msgid "优化方法设置为1，使用蒙特卡洛优化，对于较大的参数空间有较好的寻优能力"
-msgstr ""
+msgstr "Optimization method is set to 1, using Monte Carlo optimization, which has good optimization ability for larger parameter space"
 
 #: ../../source/references/3-back-test-strategy.md:594
 msgid "输出结果数量设置为30"
-msgstr ""
+msgstr "Output result quantity is set to 30"
 
 #: ../../source/references/3-back-test-strategy.md:595
 msgid "优化过程迭代次数为1000次"
-msgstr ""
+msgstr "Number of iterations in the optimization process is 1000"
 
 #: ../../source/references/3-back-test-strategy.md:596
 msgid "parallel参数设置为True会使用多核处理器的所有核心进行并行计算节省时间"
-msgstr ""
+msgstr "If the parallel parameter is set to True, all cores of the multi-core processor will be used for parallel computing to save time"
 
 #: ../../source/references/3-back-test-strategy.md:598
 msgid "最后开始优化，使用`perfs_dma`和`pars_dma`两个变量来存储优化结果 优化过程中会显示进度条，结束后会显示优化结果"
-msgstr ""
+msgstr "Then start the optimization, using the `perfs_dma` and `pars_dma` variables to store the optimization results. A progress bar will be displayed during the optimization process, and the optimization results will be displayed after completion"
 
 #: ../../source/references/3-back-test-strategy.md:745
 msgid "![png](../tutorials/img/output_14_2.png)"
@@ -874,15 +875,15 @@ msgstr ""
 
 #: ../../source/references/3-back-test-strategy.md:753
 msgid "优化结束后，可以看到三十组最佳参数，其中最差的一组也能实现最终资产6万元以上。我们可以手动选取其中最佳的参数，再进行一次回测："
-msgstr ""
+msgstr "After the optimization, we can see thirty sets of best parameters, and even the worst one can achieve a final asset of over 60,000 yuan. We can manually select the best parameters from them and conduct another backtest:"
 
 #: ../../source/references/3-back-test-strategy.md:755
 msgid "能发现终值从上次回测的1.9万暴涨至12.4万，年化收益18.9%，夏普率也上升到了0.833"
-msgstr ""
+msgstr "We can find that the final value has skyrocketed from 19,000 in the last backtest to 124,000, with an annualized return of 18.9%, and the Sharpe ratio has also risen to 0.833"
 
 #: ../../source/references/3-back-test-strategy.md:764
 msgid "输出回测结果如下："
-msgstr ""
+msgstr "Output backtesting results are as follows:"
 
 #: ../../source/references/3-back-test-strategy.md:810
 msgid "![png](../tutorials/img/output_16_2.png)"
@@ -890,12 +891,10 @@ msgstr ""
 
 #: ../../source/references/3-back-test-strategy.md:812
 msgid "创建一个自定义策略"
-msgstr ""
+msgstr "Create a Custom Strategy"
 
 #: ../../source/references/3-back-test-strategy.md:814
 msgid "使用qteasy不仅可以使用内置策略，也可以创建自定义策略。下面有一个简单的例子，定义了一个简单的轮动交易策略"
-msgstr ""
+msgstr "qteasy not only allows the use of built-in strategies, but also the creation of custom strategies. Below is a simple example that defines a simple rotation trading strategy"
 
-#~ msgid "`queasy`提供了两种方式创建交易策略："
-#~ msgstr ""
 
