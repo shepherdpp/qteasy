@@ -72,15 +72,15 @@ msgstr "Following information is printed:"
 
 #: ../../source/references/4-build-in-strategy-blender.md:47
 msgid "在qteasy中，可以直接使用策略的ID获取内置交易策略"
-msgstr ""
+msgstr "The built-in trading strategy can be obtained directly by the ID in qteasy"
 
 #: ../../source/references/4-build-in-strategy-blender.md:49
 msgid "除了使用qt.get_built_in_strategy()获取交易策略以外，在创建Operator对象的时候，将内置交易策略的ID作为参数传入，也可以直接创建交易策略。"
-msgstr ""
+msgstr "Apart from using qt.get_built_in_strategy() to get the trading strategy, the built-in trading strategy ID can also be passed as a parameter when creating the Operator object to create the trading strategy directly."
 
 #: ../../source/references/4-build-in-strategy-blender.md:131
 msgid "目前qteasy支持的内置交易策略如下："
-msgstr ""
+msgstr "Following built-in trading strategies are supported by qteasy:"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "ID"
@@ -88,11 +88,11 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "策略名称"
-msgstr ""
+msgstr "Name"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "说明"
-msgstr ""
+msgstr "Description"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "crossline"
@@ -109,6 +109,14 @@ msgid ""
 "/>2，当短均线位于长均线下方，且距离大于l\\*m%时，设置仓位目标为-1<br "
 "/>3，当长短均线之间的距离不大于l\\*m%时，设置仓位目标为0"
 msgstr ""
+"Crossline timing strategy class, using the crossover of long and short "
+"moving averages to determine the long and short state<br "
+"/>1. When the short moving average is above the long moving average and "
+"the distance is greater than l\\*m%, set the position target to 1<br "
+"/>2. When the short moving average is below the long moving average and "
+"the distance is greater than l\\*m%, set the position target to -1<br "
+"/>3. When the distance between the long and short moving averages is not "
+"greater than l\\*m%, set the position target to 0"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "macd"
@@ -123,6 +131,9 @@ msgid ""
 "MACD择时策略类，运用MACD均线策略，生成目标仓位百分比:<br />1，当MACD值大于0时，设置仓位目标为1<br "
 "/>2，当MACD值小于0时，设置仓位目标为0"
 msgstr ""
+"MACD timing strategy class, using MACD moving average strategy to generate target position percentage:<br "
+"/>1. When the MACD value is greater than 0, set the position target to 1<br "
+"/>2. When the MACD value is less than 0, set the position target to 0"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dma"
@@ -137,6 +148,7 @@ msgid ""
 "DMA择时策略<br />1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1<br />2， "
 "DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0"
 msgstr ""
+"DMA timing strategy<br />1. When DMA is above AMA, it is a long position interval, that is, when the DMA line crosses the AMA line from bottom to top, the output is 1<br />2. When DMA is below AMA, it is a short position interval, that is, when the DMA line crosses the AMA line from top to bottom, the output is 0"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "trix"
@@ -152,6 +164,8 @@ msgid ""
 "/>计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：<br />1， "
 "TRIX位于MATRIX上方时，设置仓位目标为1<br />2， TRIX位于MATRIX下方时，设置仓位目标位-1"
 msgstr ""
+"TRIX timing strategy, using the triple smoothed exponential moving average price of stock prices for long and short judgment:<br "
+"/>Calculate the triple smoothed exponential moving average price TRIX of the price, and then calculate the moving average of M-day TRIX:<br />1. When TRIX is above MATRIX, set the position target to 1<br />2. When TRIX is below MATRIX, set the position target to -1"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "cdl"
@@ -166,6 +180,8 @@ msgid ""
 "CDL择时策略，在K线图中找到符合要求的cdldoji模式<br "
 "/>搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算 等效cdldoji匹配数量，以匹配数量为交易信号。"
 msgstr ""
+"CDL timing strategy, find the cdldoji pattern that meets the requirements in the K-line chart<br "
+"/>Search for the cdldoji pattern that appears in the historical data window (matching degree between 0 and 100), add it up /100, and calculate the equivalent cdldoji matching quantity, using the matching quantity as the trading signal."
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "bband"
@@ -180,6 +196,7 @@ msgid ""
 "布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，在价格上穿或下穿布林带线上下轨时产生交易信号。布林带线的均线类型不可选<br"
 " />1，当价格上穿上轨时，产生全仓买入信号<br />2，当价格下穿下轨时，产生全仓卖出信号"
 msgstr ""
+"Bollinger Band trading strategy, determines long and short positions based on the relationship between stock prices and the upper and lower bands of the Bollinger Bands. Trading signals are generated when the price crosses above or below the upper and lower bands. The moving average type of the Bollinger Bands is not selectable<br "
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "s-bband"
@@ -194,6 +211,8 @@ msgid ""
 "布林带线渐进交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，交易信号不是一次性产生的，而是逐步渐进买入和卖出。计算BBAND，检查价格是否超过BBAND的上轨或下轨：<br"
 " />1，当价格大于上轨后，每天产生10%的比例买入交易信号<br />2，当价格低于下轨后，每天产生33%的比例卖出交易信号"
 msgstr ""
+"Bollinger Band progressive trading strategy, determines long and short positions based on the relationship between stock prices and the upper and lower bands of the Bollinger Bands. The trading signal is not generated all at once, but is gradually increased for buying and selling. Calculate BBAND, check if the price exceeds the upper or lower band of BBAND:<br "
+"/>1. When the price is greater than the upper band, a 10% proportion buy trading signal is generated every day<br />2. When the price is lower than the lower band, a 33% proportion sell trading signal is generated every day"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "sarext"
@@ -205,7 +224,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号"
-msgstr ""
+msgstr "SAR strategy, when the indicator is greater than 0, a buy signal is issued, and when the indicator is less than 0, a sell signal is issued."
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "ssma"
@@ -217,7 +236,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - SMA moving average (simple moving average): set the position ratio according to the relative position of the stock price and the SMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "sdema"
@@ -229,7 +248,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - DEMA moving average (double exponential smoothing moving average): set the position ratio according to the relative position of the stock price and the DEMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "sema"
@@ -241,7 +260,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - EMA moving average (exponential smoothing moving average): set the position ratio according to the relative position of the stock price and the EMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "sht"
@@ -253,7 +272,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——HT(希尔伯特变换瞬时趋势线)：根据股价与HT线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - HT (Hilbert transform instantaneous trend line): set the position ratio according to the relative position of the stock price and the HT line"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "skama"
@@ -265,7 +284,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——KAMA均线(考夫曼自适应移动均线)：根据股价与KAMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - KAMA moving average (Kaufman adaptive moving average): set the position ratio according to the relative position of the stock price and the KAMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "smama"
@@ -277,7 +296,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——MAMA均线(MESA自适应移动平均线)：根据股价与MAMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - MAMA moving average (MESA adaptive moving average): set the position ratio according to the relative position of the stock price and the MAMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "st3"
