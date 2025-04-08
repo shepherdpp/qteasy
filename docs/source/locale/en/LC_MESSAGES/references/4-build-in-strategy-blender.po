@@ -308,7 +308,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - T3 moving average (triple exponential smoothing moving average): set the position ratio according to the relative position of the stock price and the T3 moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "stema"
@@ -320,7 +320,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——TEMA均线(三重指数平滑移动平均线)：根据股价与TEMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - TEMA moving average (triple exponential smoothing moving average): set the position ratio according to the relative position of the stock price and the TEMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "strima"
@@ -332,7 +332,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——TRIMA均线(三重指数平滑移动平均线)：根据股价与TRIMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - TRIMA moving average (triple exponential smoothing moving average): set the position ratio according to the relative position of the stock price and the TRIMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "swma"
@@ -344,7 +344,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "单均线交叉策略——WMA均线(加权移动平均线)：根据股价与WMA均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Single moving average crossover strategy - WMA moving average (weighted moving average): set the position ratio according to the relative position of the stock price and the WMA moving average"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dsma"
@@ -356,7 +356,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average crossover strategy - SMA moving average (simple moving average): <br />Generate fast and slow moving averages based on the SMA moving average calculation rules, and set the position ratio according to the relative position of the fast and slow moving averages"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "ddema"
@@ -368,7 +368,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于DEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average crossover strategy - SMA moving average (simple moving average): <br />Generate fast and slow moving averages based on the DEMA moving average calculation rules, and set the position ratio according to the relative position of the fast and slow moving averages"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dema"
@@ -380,7 +380,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average crossover strategy - SMA moving average (simple moving average): <br />Generate fast and slow moving averages based on the EMA moving average calculation rules, and set the position ratio according to the relative position of the fast and slow moving averages"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dkama"
@@ -392,7 +392,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于KAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average crossover strategy - SMA moving average (simple moving average): <br />Generate fast and slow moving averages based on the KAMA moving average calculation rules, and set the position ratio according to the relative position of the fast and slow moving averages"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dmama"
@@ -404,7 +404,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于MAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double moving average crossover strategy - SMA moving average (simple moving average): <br />Generate fast and slow moving averages based on the MAMA moving average calculation rules, and set the position ratio according to the relative position of the fast and slow moving averages"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dt3"
@@ -416,7 +416,7 @@ msgstr ""
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "双均线交叉策略——SMA均线(简单移动平均线)：<br />基于T3均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例"
-msgstr ""
+msgstr "Double"
 
 #: ../../source/references/4-build-in-strategy-blender.md
 msgid "dtema"
