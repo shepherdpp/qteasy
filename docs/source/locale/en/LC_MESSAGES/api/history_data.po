@@ -81,127 +81,129 @@ msgstr ""
 
 #: of qteasy.datatypes.find_history_data:13
 msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"
-msgstr ""
+msgstr "Whether to match the data name fuzzily, if the string contains non-Ascii characters or wildcards */?, it will be automatically converted to True"
 
 #: of qteasy.datatypes.find_history_data:13
 msgid "False: 精确匹配数据名称"
-msgstr ""
+msgstr "If False: Match the data name exactly"
 
 #: of qteasy.datatypes.find_history_data:14
 msgid "True:  模糊匹配数据名称或数据描述"
-msgstr ""
+msgstr "If True:  Fuzzy match the data name or the data description"
 
 #: of qteasy.datatypes.find_history_data:16
 msgid "数据频率，如果提供，则只匹配该频率的数据 可以输入单个频率，也可以输入逗号分隔的多个频率"
-msgstr ""
+msgstr "Frequency of data, if provided, only match the frequency of data. You can enter a single frequency or multiple frequencies separated by commas"
 
 #: of qteasy.datatypes.find_history_data:19
 msgid "证券类型，如果提供，则只匹配该证券类型的数据 可以输入单个证券类型，也可以输入逗号分隔的多个证券类型"
-msgstr ""
+msgstr "Asset type, if provided, only match the asset type of data. You can enter a single asset type or multiple asset types separated by commas"
 
 #: of qteasy.datatypes.find_history_data:22
 msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
-msgstr ""
+msgstr "Threshold for matching degree, items with a matching degree exceeding this threshold will be judged as matched"
 
 #: of qteasy.core.filter_stocks qteasy.core.get_basic_info
 #: qteasy.core.get_data_overview qteasy.core.get_history_data
 #: qteasy.core.get_stock_info qteasy.datatypes.find_history_data
 msgid "返回"
-msgstr ""
+msgstr "Returns"
 
 #: of qteasy.datatypes.find_history_data:25
 msgid "**data_id** -- 匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据"
-msgstr ""
+msgstr "**data_id** -- The data_id of the matched data type, which can be used to download data using qt.get_history_data()"
 
 #: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_stock_info
 #: qteasy.core.get_table_overview qteasy.core.refill_data_source
 #: qteasy.datatypes.find_history_data
 msgid "返回类型"
-msgstr ""
+msgstr "Return Type"
 
 #: of qteasy.core.filter_stocks:17 qteasy.core.get_basic_info:37
 #: qteasy.core.get_data_overview:16 qteasy.core.get_history_data:130
 #: qteasy.core.get_table_info:32 qteasy.core.refill_data_source:74
 #: qteasy.datatypes.find_history_data:29
 msgid "示例"
-msgstr ""
+msgstr "Example"
 
 #: of qteasy.datatypes.find_history_data
 msgid "抛出"
-msgstr ""
+msgstr "Raises"
 
 #: of qteasy.datatypes.find_history_data:72
 msgid "输入的s不是字符串，或者freq/asset_type不是字符串或列表:"
-msgstr ""
+msgstr "If the input s is not a string, or freq/asset_type is not a string or list:"
 
 #: ../../source/api/history_data.rst:14
 msgid "下载历史数据"
-msgstr ""
+msgstr "Download Historical Data"
 
 #: of qteasy.core.refill_data_source:1
 msgid "从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中"
-msgstr ""
+msgstr "Download data in batches from the API channel of the network data provider, clean it, and fill it into the local data source"
 
 #: of qteasy.core.refill_data_source:3
 msgid ""
 "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 'stock_daily, "
 "stock_weekly' 也可以给出数据表的用途，如 'data, basic'"
 msgstr ""
+"Data table name, must be the data table defined in the database, used to specify the data table to be downloaded. You can give the data table name, such as 'stock_daily, stock_weekly', or you can give the purpose of the data table, such as 'data, basic'"
 
 #: of qteasy.core.refill_data_source:7
 msgid "需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE"
-msgstr ""
+msgstr "DataSource to be filled with data. If None, fill the data source to QT_DATA_SOURCE"
 
 #: of qteasy.core.refill_data_source:9
 msgid ""
 "数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
 " - 'akshare'     : 从AKshare API获取金融数据 - 'eastmoney'   : 从东方财富网获取金融数据"
 msgstr ""
+"Data acquisition channel, financial data API, supports the following options:  - 'tushare'     : Get financial data from Tushare API, please apply for the corresponding permission and points by yourself - 'akshare'     : Get financial data from AKshare API - 'eastmoney'   : Get financial data from Eastmoney"
 
 #: of qteasy.core.refill_data_source:9
 msgid "数据获取渠道，金融数据API，支持以下选项:"
-msgstr ""
+msgstr "Data acquisition channel, financial data API, supports the following options:"
 
 #: of qteasy.core.refill_data_source:11
 msgid "'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-msgstr ""
+msgstr "`tushare`     : Get financial data from Tushare API, please apply for the corresponding permission and points by yourself"
 
 #: of qteasy.core.refill_data_source:12
 msgid "'akshare'     : 从AKshare API获取金融数据"
-msgstr ""
+msgstr "`akshare`     : Get financial data from AKshare API"
 
 #: of qteasy.core.refill_data_source:13
 msgid "'eastmoney'   : 从东方财富网获取金融数据"
-msgstr ""
+msgstr "`eastmoney`   : Get financial data from Eastmoney"
 
 #: of qteasy.core.refill_data_source:15
 msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表"
-msgstr ""
+msgstr "Data table name, must be the data table defined in the database, used to specify the data table to be downloaded"
 
 #: of qteasy.core.refill_data_source:17
 msgid "需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型"
-msgstr ""
+msgstr "Data type to be downloaded, used to further filter the data table, must be the data type defined in the database"
 
 #: of qteasy.core.refill_data_source:19
 msgid "需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率"
-msgstr ""
+msgstr "Data frequency to be downloaded, used to further filter the data table, must be the data frequency defined in the database"
 
 #: of qteasy.core.refill_data_source:21
 msgid "需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型"
-msgstr ""
+msgstr "Asset type to be downloaded, used to further filter the data table, must be the asset type defined in the database"
 
 #: of qteasy.core.refill_data_source:23
 msgid "是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据"
-msgstr ""
+msgstr "If True, the trade_calendar table will be downloaded"
 
 #: of qteasy.core.refill_data_source:25
 msgid "是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功"
-msgstr ""
+msgstr "If set to False, ignore the dependency table, which may cause data download failure"
 
 #: of qteasy.core.refill_data_source:27 qteasy.core.refill_data_source:29
 msgid "限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载"
-msgstr ""
+msgstr "Limit the time range of data download. If start_date/end_date is given, only the data within this time period will be downloaded"
 
 #: of qteasy.core.refill_data_source:31
 msgid ""
@@ -210,6 +212,7 @@ msgid ""
 "例如，下载stock_basic表数据时，下载以下输入均为合法输入：  - 'SZSE'     仅下载深圳交易所的股票数据 - ['SSE', "
 "'SZSE'] - 'SSE, SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
 msgstr ""
+"The filtering parameters when downloading data. Some data tables provide filterable parameters in the form of a list, such as the stock_basic table, which has a filterable parameter \"exchange\" with options 'SSE', 'SZSE', 'BSE'. You can limit the range of downloaded data through this parameter. If filter_arg is None, all data will be downloaded. For example, when downloading stock_basic table data, the following inputs are all valid:  - 'SZSE'     Only download stock data from Shenzhen Stock Exchange - ['SSE', 'SZSE'] - 'SSE, SZSE'     The above two writing methods are equivalent, downloading stock data from Shanghai and Shenzhen Stock Exchanges"
 
 #: of qteasy.core.refill_data_source:31
 msgid ""
@@ -217,6 +220,7 @@ msgid ""
 " 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
 "例如，下载stock_basic表数据时，下载以下输入均为合法输入："
 msgstr ""
+"The filtering parameters when downloading data. Some data tables provide filterable parameters in the form of a list, such as the stock_basic table, which has a filterable parameter \"exchange\" with options 'SSE', 'SZSE', 'BSE'. You can limit the range of downloaded data through this parameter. If filter_arg is None, all data will be downloaded. For example, when downloading stock_basic table data, the following inputs are all valid:"
 
 #: of qteasy.core.refill_data_source:35
 msgid "'SZSE'"
@@ -224,7 +228,7 @@ msgstr ""
 
 #: of qteasy.core.refill_data_source:36
 msgid "仅下载深圳交易所的股票数据"
-msgstr ""
+msgstr "Only download stock data from Shenzhen Stock Exchange"
 
 #: of qteasy.core.refill_data_source:37
 msgid "['SSE', 'SZSE']"
@@ -236,49 +240,52 @@ msgstr ""
 
 #: of qteasy.core.refill_data_source:39
 msgid "上面两种写法等效，下载上海和深圳交易所的股票数据"
-msgstr ""
+msgstr "Above two ways are equivalent, downloading stock data from Shanghai and Shenzhen Stock Exchanges"
 
 #: of qteasy.core.refill_data_source:41
 msgid "用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载"
-msgstr ""
+msgstr "Stock codes used to download data. If symbols are given, only the data of these stock codes will be downloaded"
 
 #: of qteasy.core.refill_data_source:43
 msgid "是否逆序参数下载数据， 默认False - True:  逆序参数下载数据 - False: 顺序参数下载数据"
-msgstr ""
+msgstr "If True, download data in reverse order - False: download data in normal order"
 
 #: of qteasy.core.refill_data_source:47
 msgid "是否启用多线程下载数据 - True:  启用多线程下载数据 - False: 禁用多线程下载"
-msgstr ""
+msgstr "If True, enable multi-threaded data download - False: disable multi-threaded download"
 
 #: of qteasy.core.refill_data_source:51
 msgid "启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数"
-msgstr ""
+msgstr "Number of threads opened simultaneously when multi-threaded download is enabled, default value is the number of CPU cores of the device"
 
 #: of qteasy.core.refill_data_source:53
 msgid "保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后 再批量保存到本地，chunk_size即批量，默认值100"
-msgstr ""
+msgstr "Number of data to be accumulated before saving to local, chunk_size is the batch size, default value is 100"
 
 #: of qteasy.core.refill_data_source:56
 msgid ""
 "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
 "该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 如果为0，则不暂停，一次性下载所有数据"
 msgstr ""
+"Number of data to be downloaded before pausing, this parameter is only valid when parallel=False. If 0, no pause, download all data at once"
 
 #: of qteasy.core.refill_data_source:60
 msgid ""
 "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
 "该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 如果<=0，则不暂停，立即开始下一批数据下载"
 msgstr ""
+"Number of seconds to pause before continuing to download data, this parameter is only valid when parallel=False. If <=0, no pause, immediately start the next batch of data download"
 
 #: of qteasy.core.refill_data_source:64
 msgid ""
 "数据写入数据源时的合并方式，支持以下选项： - 'update'  : 更新数据，如果数据已存在，则更新数据 - 'ignore'  : "
 "忽略数据，如果数据已存在，则丢弃下载的数据"
 msgstr ""
+"Merge method when writing data to data source, supports the following options: - 'update'  : Update data, if data already exists, update data - 'ignore'  : Ignore data, if data already exists, discard downloaded data"
 
 #: of qteasy.core.refill_data_source:68
 msgid "是否记录数据下载日志"
-msgstr ""
+msgstr "If True, record data download log"
 
 #: ../../source/api/history_data.rst:18
 msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
