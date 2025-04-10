@@ -289,19 +289,19 @@ msgstr "If True, record data download log"
 
 #: ../../source/api/history_data.rst:18
 msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
-msgstr ""
+msgstr "After downloading historical data to the local, you can check, manage, and call this data."
 
 #: ../../source/api/history_data.rst:21
 msgid "检查本地数据"
-msgstr ""
+msgstr "Check Local Data"
 
 #: of qteasy.core.get_table_info:2
 msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容"
-msgstr ""
+msgstr "Acquire and print the information of a data table in the data source, including data volume, disk space occupied, primary key name, and content"
 
 #: of qteasy.core.get_table_info:2
 msgid "以及数据列的名称、数据类型及说明"
-msgstr ""
+msgstr "as well as the name, data type and description of the data column"
 
 #: of qteasy.core.get_table_info:5
 msgid "Parameters:"
@@ -313,7 +313,7 @@ msgstr ""
 
 #: of qteasy.core.get_table_info:7
 msgid "需要查询的数据表名称"
-msgstr ""
+msgstr "Datatable name to be queried"
 
 #: of qteasy.core.get_table_info:8
 msgid "data_source: DataSource"
