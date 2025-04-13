@@ -834,115 +834,115 @@ msgstr "Trading volume (most data not available)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交额 （大部分无此项数据）"
-msgstr ""
+msgstr "Trading amount (most data not available)"
 
 #: ../../source/manage_data/3. data_tables_30.md:412
 msgid "基金行情数据表："
-msgstr ""
+msgstr "Fund price data tables:"
 
 #: ../../source/manage_data/3. data_tables_30.md:414
 msgid "场内基金分钟K线行情: `fund_1min`"
-msgstr ""
+msgstr "Fund minute K-line data: `fund_1min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:415
 msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FD`, data frequency: `1min` Table rule: 30 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:418
 msgid "场内基金分钟K线行情表包含了所有沪深市场场内基金的1分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "Fund minute K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:431
 msgid "场内基金5分钟K线行情: `fund_5min`"
-msgstr ""
+msgstr "5-minute K-line data for funds: `fund_5min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:432
 msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FD`, data frequency: `5min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:435
 msgid "场内基金5分钟K线行情表包含了所有沪深市场场内基金的5分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "5-minute K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:448
 msgid "场内基金15分钟K线行情: `fund_15min`"
-msgstr ""
+msgstr "15-minute K-line data for funds: `fund_15min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:449
 msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FD`, data frequency: `15min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:452
 msgid "场内基金15分钟K线行情表包含了所有沪深市场场内基金的15分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "15-minute K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:465
 msgid "场内基金30分钟K线行情: `fund_30min`"
-msgstr ""
+msgstr "30-minute K-line data for funds: `fund_30min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:466
 msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FD`, data frequency: `30min` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:469
 msgid "场内基金30分钟K线行情表包含了所有沪深市场场内基金的30分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "30-minute K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:482
 msgid "场内基金60分钟K线行情: `fund_hourly`"
-msgstr ""
+msgstr "60-minute K-line data for funds: `fund_hourly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:483
 msgid "数据表用途: `mins`, 资产类型: `FD`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FD`, data frequency: `h` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:486
 msgid "场内基金小时K线行情表包含了所有沪深市场场内基金的60分钟K线行情数据，包括基金代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "60-minute K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:499
 msgid "场内基金每日K线行情: `fund_daily`"
-msgstr ""
+msgstr "Daily K-line data for funds: `fund_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:500 data_tables_30.md:557
 msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FD`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:502
 msgid "场内基金日K线行情表包含了所有沪深市场场内基金的日线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Daily K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:518
 msgid "场内基金周K线行情: `fund_weekly`"
-msgstr ""
+msgstr "Weekly K-line data for funds: `fund_weekly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:519
 msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `w`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FD`, data frequency: `w`"
 
 #: ../../source/manage_data/3. data_tables_30.md:521
 msgid "场内基金周K线行情表包含了所有沪深市场场内基金的周K线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Weekly K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:537
 msgid "场内基金月K线行情: `fund_monthly`"
-msgstr ""
+msgstr "Monthly K-line data for funds: `fund_monthly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:538
 msgid "数据表用途: `data`, 资产类型: `FD`, 数据频率: `m`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FD`, data frequency: `m`"
 
 #: ../../source/manage_data/3. data_tables_30.md:540
 msgid "场内基金月K线行情表包含了所有沪深市场场内基金的月K线行情数据，包括基金代码、交易日期、开盘价、最高价、最低价、收盘价、昨收价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Monthly K-line data table for all Shanghai and Shenzhen market funds, including fund code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:556
 msgid "场外基金每日净值: `fund_nav`"
-msgstr ""
+msgstr "Daily net value for funds: `fund_nav`"
 
 #: ../../source/manage_data/3. data_tables_30.md:559
 msgid "场外基金每日净值表包含了所有场外基金的每日净值数据，包括基金代码、交易日期、单位净值、累计净值、日增长率、申购状态、赎回状态等信息。"
-msgstr ""
+msgstr "Outdoor fund daily net value table includes daily net value data for all outdoor funds, including fund code, trading date, unit net value, cumulative net value, daily growth rate, subscription status, redemption status, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "nav_date"
@@ -950,7 +950,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "净值日期"
-msgstr ""
+msgstr "Net value date"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "ann_date"
@@ -958,7 +958,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "公告日期"
-msgstr ""
+msgstr "Announcement date"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "unit_nav"
@@ -966,7 +966,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "单位净值"
-msgstr ""
+msgstr "Unit net value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "accum_nav"
@@ -974,7 +974,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "累计净值"
-msgstr ""
+msgstr "Accumulated net value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "accum_div"
@@ -982,7 +982,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "累计分红"
-msgstr ""
+msgstr "Accumulated dividend"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "net_asset"
@@ -990,7 +990,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "资产净值"
-msgstr ""
+msgstr "Net asset value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "total_netasset"
@@ -998,7 +998,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "合计资产净值"
-msgstr ""
+msgstr "Total net asset value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "adj_nav"
@@ -1006,7 +1006,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "复权单位净值"
-msgstr ""
+msgstr "Adjusted unit net value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "update_flag"
@@ -1018,31 +1018,31 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "更新标记"
-msgstr ""
+msgstr "Update flag"
 
 #: ../../source/manage_data/3. data_tables_30.md:574
 msgid "期货行情数据表："
-msgstr ""
+msgstr "Futures price data tables:"
 
 #: ../../source/manage_data/3. data_tables_30.md:576
 msgid "期货合约映射表: `future_mapping`"
-msgstr ""
+msgstr "Futures contract mapping data: `future_mapping`"
 
 #: ../../source/manage_data/3. data_tables_30.md:577 data_tables_30.md:678
 msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FT`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:579
 msgid "期货合约映射表包含了所有期货合约的映射关系，包括连续合约代码、起始日期、期货合约代码等信息。"
-msgstr ""
+msgstr "Futures contract mapping table includes the mapping relationship of all futures contracts, including continuous contract code, start date, futures contract code, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "连续合约代码"
-msgstr ""
+msgstr "Continuous contract code"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "起始日期"
-msgstr ""
+msgstr "Start date"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "mapping_ts_code"
@@ -1054,23 +1054,23 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "期货合约代码"
-msgstr ""
+msgstr "Futures contract code"
 
 #: ../../source/manage_data/3. data_tables_30.md:587
 msgid "期货分钟K线行情: `future_1min`"
-msgstr ""
+msgstr "1-minute K-line data for futures: `future_1min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:588
 msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FT`, data frequency: `1min` Table rule: 30 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:591
 msgid "期货分钟K线行情表包含了所有沪深市场期货的1分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "1-minute K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交金额(元)"
-msgstr ""
+msgstr "Trading amount (RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "oi"
@@ -1078,67 +1078,67 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "持仓量(手)"
-msgstr ""
+msgstr "Interest volume (hands)"
 
 #: ../../source/manage_data/3. data_tables_30.md:605
 msgid "期货5分钟K线行情: `future_5min`"
-msgstr ""
+msgstr "5-minute K-line data for futures: `future_5min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:606
 msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FT`, data frequency: `5min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:609
 msgid "期货5分钟K线行情表包含了所有沪深市场期货的5分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "5-minute K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:623
 msgid "期货15分钟K线行情: `future_15min`"
-msgstr ""
+msgstr "15-minute K-line data for futures: `future_15min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:624
 msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FT`, data frequency: `15min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:627
 msgid "期货15分钟K线行情表包含了所有沪深市场期货的15分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "15-minute K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:641
 msgid "期货30分钟K线行情: `future_30min`"
-msgstr ""
+msgstr "30-minute K-line data for futures: `future_30min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:642
 msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FT`, data frequency: `30min` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:645
 msgid "期货30分钟K线行情表包含了所有沪深市场期货的30分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "30-minute K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:659
 msgid "期货60分钟K线行情: `future_hourly`"
-msgstr ""
+msgstr "60-minute K-line data for futures: `future_hourly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:660
 msgid "数据表用途: `mins`, 资产类型: `FT`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `FT`, data frequency: `h` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:663
 msgid "期货小时K线行情表包含了所有沪深市场期货的60分钟K线行情数据，包括期货代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "60-minute K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:677
 msgid "期货每日行情: `future_daily`"
-msgstr ""
+msgstr "Daily K-line data for futures: `future_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:680
 msgid "期货日线行情表包含了所有沪深市场期货的日线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Daily K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "昨收盘价"
-msgstr ""
+msgstr "Last closing price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "pre_settle"
@@ -1146,7 +1146,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "昨结算价"
-msgstr ""
+msgstr "Last settlement price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "settle"
@@ -1154,7 +1154,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "结算价"
-msgstr ""
+msgstr "Settlement price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "change1"
@@ -1162,7 +1162,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "涨跌1 收盘价-昨结算价"
-msgstr ""
+msgstr "Price change 1 Closing price - last settlement price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "change2"
@@ -1170,11 +1170,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "涨跌2 结算价-昨结算价"
-msgstr ""
+msgstr "Price change 2 Settlement price - last settlement price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交金额(万元)"
-msgstr ""
+msgstr "Trading amount (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "oi_chg"
@@ -1182,7 +1182,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "持仓量变化"
-msgstr ""
+msgstr "Open interest change"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "delv_settle"
@@ -1190,107 +1190,107 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "交割结算价"
-msgstr ""
+msgstr "Delivery settlement price"
 
 #: ../../source/manage_data/3. data_tables_30.md:701
 msgid "期货周线行情: `future_weekly`"
-msgstr ""
+msgstr "Weekly K-line data for futures: `future_weekly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:702
 msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `w`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FT`, data frequency: `w`"
 
 #: ../../source/manage_data/3. data_tables_30.md:704
 msgid "期货周线行情表包含了所有沪深市场期货的周线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Weekly K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:725
 msgid "期货月线行情: `future_monthly`"
-msgstr ""
+msgstr "Monthly K-line data for futures: `future_monthly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:726
 msgid "数据表用途: `data`, 资产类型: `FT`, 数据频率: `m`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `FT`, data frequency: `m`"
 
 #: ../../source/manage_data/3. data_tables_30.md:728
 msgid "期货月线行情表包含了所有沪深市场期货的月线行情数据，包括期货代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Monthly K-line data table for all Shanghai and Shenzhen market futures, including futures code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:749
 msgid "期权行情数据表："
-msgstr ""
+msgstr "Option price data tables:"
 
 #: ../../source/manage_data/3. data_tables_30.md:751
 msgid "期权分钟K线行情: `options_1min`"
-msgstr ""
+msgstr "1-minute K-line data for options: `options_1min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:752
 msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `1min` 分表规则：30 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `OPT`, data frequency: `1min` Table rule: 30 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:755
 msgid "期权分钟K线行情表包含了所有沪深市场期权的1分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "1-minute K-line data table for all Shanghai and Shenzhen market options, including options code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:768
 msgid "期权5分钟K线行情: `options_5min`"
-msgstr ""
+msgstr "5-minute K-line data for options: `options_5min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:769
 msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `5min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `OPT`, data frequency: `5min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:772
 msgid "期权5分钟K线行情表包含了所有沪深市场期权的5分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "5-minute K-line data table for all Shanghai and Shenzhen market options, including options code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:785
 msgid "期权15分钟K线行情: `options_15min`"
-msgstr ""
+msgstr "15-minute K-line data for options: `options_15min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:786
 msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `15min` 分表规则：10 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `OPT`, data frequency: `15min` Table rule: 10 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:789
 msgid "期权15分钟K线行情表包含了所有沪深市场期权的15分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "15-minute K-line data table for all Shanghai and Shenzhen market options, including options code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:802
 msgid "期权30分钟K线行情: `options_30min`"
-msgstr ""
+msgstr "30-minute K-line data for options: `options_30min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:803
 msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `OPT`, data frequency: `30min` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:806
 msgid "期权30分钟K线行情表包含了所有沪深市场期权的30分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "30-minute K-line data table for all Shanghai and Shenzhen market options, including options code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:819
 msgid "期权60分钟K线行情: `options_hourly`"
-msgstr ""
+msgstr "60-minute K-line data for options: `options_hourly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:820
 msgid "数据表用途: `mins`, 资产类型: `OPT`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `OPT`, data frequency: `h` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:823
 msgid "期权小时K线行情表包含了所有沪深市场期权的60分钟K线行情数据，包括期权代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "60-minute K-line data table for all Shanghai and Shenzhen market options, including options code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:836
 msgid "期权每日行情: `options_daily`"
-msgstr ""
+msgstr "Daily K-line data for options: `options_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:837
 msgid "数据表用途: `data`, 资产类型: `OPT`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `OPT`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:839
 msgid "期权每日行情数据表字段说明："
-msgstr ""
+msgstr "Daily K-line data for options table field description:"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "exchange"
@@ -1302,31 +1302,31 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "交易市场"
-msgstr ""
+msgstr "Exchange market"
 
 #: ../../source/manage_data/3. data_tables_30.md:858
 msgid "美股和港股行情数据"
-msgstr ""
+msgstr "US and HK stock price data"
 
 #: ../../source/manage_data/3. data_tables_30.md:861
 msgid "美股日线行情: `us_stock_daily`"
-msgstr ""
+msgstr "Daily K-line data for US stocks: `us_stock_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:862
 msgid "数据表用途: `not_implemented`, 资产类型: `US`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `not_implemented`, asset type: `US`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:864
 msgid "美股日线行情表包含了所有美股的日线行情数据，包括股票代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌额、涨跌幅、成交量、成交额、平均价、换手率、总市值、市盈率、市净率等信息。"
-msgstr ""
+msgstr "Daily K-line data table for all US stocks, including stock code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, price change rate, trading volume, trading amount, average price, turnover rate, total market value, price-earnings ratio, price-book ratio, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "股票代码"
-msgstr ""
+msgstr "Stock code"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交额"
-msgstr ""
+msgstr "Trading amount"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "vwap"
@@ -1338,25 +1338,25 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "PE-市盈率"
-msgstr ""
+msgstr "PE Price-Earnings Ratio"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "PB-市净率"
-msgstr ""
+msgstr "PB Price-Book Ratio"
 
 #: ../../source/manage_data/3. data_tables_30.md:885
 msgid "港股日线行情: `hk_stock_daily`"
-msgstr ""
+msgstr "HK stock daily K-line data: `hk_stock_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:886
 msgid "数据表用途: `not_implemented`, 资产类型: `HK`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `not_implemented`, asset type: `HK`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:888
 msgid "港股日线行情表包含了所有港股的日线行情数据，包括股票代码、交易日期、开盘价、最高价、最低价、收盘价、昨收盘价、涨跌额、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "HK stock daily K-line data table for all HK stocks, including stock code, trading date, opening price, highest price, lowest price, closing price, previous closing price, price change, price change rate, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "涨跌幅(%)"
-msgstr ""
+msgstr "Price change rate (%)"
 
