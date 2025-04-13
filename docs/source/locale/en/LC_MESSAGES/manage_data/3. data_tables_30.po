@@ -722,7 +722,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "澳大利亚标普200指数"
-msgstr ""
+msgstr "Australian S&P 200 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "SENSEX"
@@ -730,7 +730,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "印度孟买SENSEX指数"
-msgstr ""
+msgstr "India Mumbai SENSEX Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "15"
@@ -742,7 +742,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "巴西IBOVESPA指数"
-msgstr ""
+msgstr "Brazil IBOVESPA Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "16"
@@ -754,7 +754,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "俄罗斯RTS指数"
-msgstr ""
+msgstr "Russia RTS Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "17"
@@ -766,7 +766,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "台湾加权指数"
-msgstr ""
+msgstr "Taiwan Weighted Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "18"
@@ -778,7 +778,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "马来西亚指数"
-msgstr ""
+msgstr "Malaysia Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "19"
@@ -790,7 +790,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "加拿大S&P/TSX指数"
-msgstr ""
+msgstr "Canada S&P/TSX Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "20"
@@ -802,7 +802,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "STOXX欧洲50指数"
-msgstr ""
+msgstr "STOXX Europe 50 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "21"
@@ -814,11 +814,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "罗素2000指数"
-msgstr ""
+msgstr "Russell 2000 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md:395
 msgid "全球指数日线行情表包含了全球主要指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Global index daily K-line data table, including global major indices, with daily K-line data, including index code, trading date, opening price, highest price, lowest price, closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "swing"
@@ -826,11 +826,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "振幅"
-msgstr ""
+msgstr "Swing"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交量 （大部分无此项数据）"
-msgstr ""
+msgstr "Trading volume (most data not available)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交额 （大部分无此项数据）"
