@@ -808,15 +808,15 @@ msgid ""
 "下午交易时段是否包含结束时间"
 msgstr ""
 "Parameters used to generate trade_time_index, including: drop_nan: bool     Whether to keep all NaN rows resample_method: str     If the data needs to be upsampled or downsampled, adjust the frequency method     Adjusting data frequency is divided into data downsampling and upsampling. In two different cases, the available methods are different:     Data downsampling is to combine multiple data into one, thereby reducing the amount of data while retaining as much information as possible,     For example, merge the following data (each tuple is merged into a value, ? indicates the merged value)         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(?), (?), (?)]     Data merging method:     - 'last'/'close': Use the last value of the merged interval. For example:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(3), (5), (7)]     - 'first'/'open': Use the first value of the merged interval. For example:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(1), (4), (6)]     - 'max'/'high': Use the maximum value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(3), (5), (7)]     - 'min'/'low': Use the minimum value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(1), (4), (6)]     - 'avg'/'mean': Use the average value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(2), (4.5), (6.5)]     - 'sum'/'total': Use the average value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(2), (4.5), (6.5)]      Data upsampling is to"
-
+" insert new data into existing data, and the inserted new data is missing data that needs to be filled.     For example, fill the following data (? indicates the inserted data)         [1, 2, 3] After filling: [?, 1, ?, 2, ?, 3, ?]     The method of filling missing data is as follows:     - 'ffill': Use the most recent available data before the missing data to fill in. If there is no available data, fill in NaN. For example:         [1, 2, 3] After filling: [NaN, 1, 1, 2, 2, 3, 3]     - 'bfill': Use the most recent available data after the missing data to fill in. If there is no available data, fill in NaN. For example:         [1, 2, 3] After filling: [1, 1, 2, 2, 3, 3, NaN]     - 'nan': Fill in missing data with NaN value:         [1, 2, 3] After filling: [NaN, 1, NaN, 2, NaN, 3, NaN]     - 'zero': Fill in missing data with zero value:         [1, 2, 3] After filling: [0, 1, 0, 2, 0, 3, 0] b_days_only: bool default True     Whether to force convert natural day frequency to working day frequency:     'D' -> 'B'     'W' -> 'W-FRI'     'M' -> 'BM' trade_time_only: bool default True     If True only generate data within trading hours. The parameters for trading hours are set through **kwargs include_start: bool default True     Whether the date time series includes start date/time include_end: bool default True     Whether the date time series includes end date/time start_am:, str     Morning trading period start time end_am:, str     Morning trading period end time include_start_am: bool     Whether the morning trading period includes start time include_end_am: bool     Whether the morning trading period includes end time start_pm: str     Afternoon trading period start time end_pm: str     Afternoon trading period end time include_start_pm: bool     Whether the afternoon trading period includes start time include_end_pm:"
 
 #: of qteasy.core.get_history_data:63
 msgid "用于生成trade_time_index的参数，包括： drop_nan: bool"
-msgstr ""
+msgstr "Parameters used to generate trade_time_index, including: drop_nan: bool"
 
 #: of qteasy.core.get_history_data:65
 msgid "是否保留全NaN的行"
-msgstr ""
+msgstr "If True, keep all NaN rows"
 
 #: of qteasy.core.get_history_data:96
 msgid "resample_method: str"
@@ -828,94 +828,95 @@ msgid ""
 "数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息， "
 "例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）"
 msgstr ""
+"If the data needs to be upsampled or downsampled, adjust the frequency method Adjusting data frequency is divided into data downsampling and upsampling. In two different cases, the available methods are different: Data downsampling is to combine multiple data into one, thereby reducing the amount of data while retaining as much information as possible, For example, merge the following data (each tuple is merged into a value, ? indicates the merged value)"
 
 #: of qteasy.core.get_history_data:71
 msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]"
-msgstr ""
+msgstr "[(1, 2, 3), (4, 5), (6, 7)] After merging: [(?), (?), (?)]"
 
 #: of qteasy.core.get_history_data:72
 msgid "数据合并方法: - 'last'/'close': 使用合并区间的最后一个值。如："
-msgstr ""
+msgstr "Merging method: - 'last'/'close': Use the last value of the merged interval. For example:"
 
 #: of qteasy.core.get_history_data:74 qteasy.core.get_history_data:78
 msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]"
-msgstr ""
+msgstr "[(1, 2, 3), (4, 5), (6, 7)] After merging: [(3), (5), (7)]"
 
 #: of qteasy.core.get_history_data:75
 msgid "'first'/'open': 使用合并区间的第一个值。如："
-msgstr ""
+msgstr "'first'/'open': Use the first value of the merged interval. For example:"
 
 #: of qteasy.core.get_history_data:76 qteasy.core.get_history_data:80
 msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]"
-msgstr ""
+msgstr "[(1, 2, 3), (4, 5), (6, 7)] After merging: [(1), (4), (6)]"
 
 #: of qteasy.core.get_history_data:77
 msgid "'max'/'high': 使用合并区间的最大值作为合并值："
-msgstr ""
+msgstr "'max'/'high': Use the maximum value of the merged interval as the merged value:"
 
 #: of qteasy.core.get_history_data:79
 msgid "'min'/'low': 使用合并区间的最小值作为合并值："
-msgstr ""
+msgstr "'min'/'low': Use the minimum value of the merged interval as the merged value:"
 
 #: of qteasy.core.get_history_data:81
 msgid "'avg'/'mean': 使用合并区间的平均值作为合并值："
-msgstr ""
+msgstr "'avg'/'mean': Use the average value of the merged interval as the merged value:"
 
 #: of qteasy.core.get_history_data:82 qteasy.core.get_history_data:84
 msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]"
-msgstr ""
+msgstr "[(1, 2, 3), (4, 5), (6, 7)] After merging: [(2), (4.5), (6.5)]"
 
 #: of qteasy.core.get_history_data:84
 msgid "'sum'/'total': 使用合并区间的平均值作为合并值："
-msgstr ""
+msgstr "'sum'/'total': Use the average value of the merged interval as the merged value:"
 
 #: of qteasy.core.get_history_data:86
 msgid "数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。 例如，填充下列数据(?表示插入的数据）"
-msgstr ""
+msgstr "Upsampling is to insert new data into existing data, and the inserted new data is missing data that needs to be filled. For example, fill the following data (? indicates the inserted data)"
 
 #: of qteasy.core.get_history_data:88
 msgid "[1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]"
-msgstr ""
+msgstr "[1, 2, 3] After filling: [?, 1, ?, 2, ?, 3, ?]"
 
 #: of qteasy.core.get_history_data:89
 msgid "缺失数据的填充方法如下: - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如："
-msgstr ""
+msgstr "Missing data can be filled as follows: - 'ffill': Use the most recent available data before the missing data to fill in. If there is no available data, fill in NaN. For example:"
 
 #: of qteasy.core.get_history_data:91
 msgid "[1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]"
-msgstr ""
+msgstr "[1, 2, 3] After filling: [NaN, 1, 1, 2, 2, 3, 3]"
 
 #: of qteasy.core.get_history_data:92
 msgid "'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如："
-msgstr ""
+msgstr "'bfill': Use the most recent available data after the missing data to fill in. If there is no available data, fill in NaN. For example:"
 
 #: of qteasy.core.get_history_data:93
 msgid "[1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]"
-msgstr ""
+msgstr "[1, 2, 3] After filling: [1, 1, 2, 2, 3, 3, NaN]"
 
 #: of qteasy.core.get_history_data:94
 msgid "'nan': 使用NaN值填充缺失数据："
-msgstr ""
+msgstr "'nan': Fill in missing data with NaN value:"
 
 #: of qteasy.core.get_history_data:95
 msgid "[1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]"
-msgstr ""
+msgstr "[1, 2, 3] After filling: [NaN, 1, NaN, 2, NaN, 3, NaN]"
 
 #: of qteasy.core.get_history_data:96
 msgid "'zero': 使用0值填充缺失数据："
-msgstr ""
+msgstr "'zero': Fill in missing data with zero value:"
 
 #: of qteasy.core.get_history_data:97
 msgid "[1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]"
-msgstr ""
+msgstr "[1, 2, 3] After filling: [0, 1, 0, 2, 0, 3, 0]"
 
 #: of qteasy.core.get_history_data:101
 msgid "b_days_only: bool 默认True"
-msgstr ""
+msgstr "b_days_only: bool default True"
 
 #: of qteasy.core.get_history_data:99
 msgid "是否强制转换自然日频率为工作日，即： 'D' -> 'B' 'W' -> 'W-FRI' 'M' -> 'BM'"
-msgstr ""
+msgstr "If True, force convert natural day frequency to working day frequency: 'D' -> 'B' 'W' -> 'W-FRI' 'M' -> 'BM'"
 
 #: of qteasy.core.get_history_data:103
 msgid "trade_time_only: bool, default True"
@@ -923,7 +924,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:104
 msgid "为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定"
-msgstr ""
+msgstr "If True only generate data within trading hours. The parameters for trading hours are set through **kwargs"
 
 #: of qteasy.core.get_history_data:105
 msgid "include_start: bool, default True"
@@ -931,7 +932,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:106
 msgid "日期时间序列是否包含开始日期/时间"
-msgstr ""
+msgstr "If True, the date time series includes start date/time"
 
 #: of qteasy.core.get_history_data:107
 msgid "include_end: bool, default True"
@@ -939,7 +940,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:108
 msgid "日期时间序列是否包含结束日期/时间"
-msgstr ""
+msgstr "If True, the date time series includes end date/time"
 
 #: of qteasy.core.get_history_data:109
 msgid "start_am:, str"
@@ -947,7 +948,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:110
 msgid "早晨交易时段的开始时间"
-msgstr ""
+msgstr "Start time of morning trading period"
 
 #: of qteasy.core.get_history_data:111
 msgid "end_am:, str"
@@ -955,7 +956,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:112
 msgid "早晨交易时段的结束时间"
-msgstr ""
+msgstr "End time of morning trading period"
 
 #: of qteasy.core.get_history_data:113
 msgid "include_start_am: bool"
@@ -963,7 +964,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:114
 msgid "早晨交易时段是否包括开始时间"
-msgstr ""
+msgstr "If True, the morning trading period includes start time"
 
 #: of qteasy.core.get_history_data:115
 msgid "include_end_am: bool"
@@ -971,7 +972,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:116
 msgid "早晨交易时段是否包括结束时间"
-msgstr ""
+msgstr "If True, the morning trading period includes end time"
 
 #: of qteasy.core.get_history_data:117
 msgid "start_pm: str"
@@ -979,7 +980,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:118
 msgid "下午交易时段的开始时间"
-msgstr ""
+msgstr "Start time of afternoon trading period"
 
 #: of qteasy.core.get_history_data:119
 msgid "end_pm: str"
@@ -987,7 +988,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:120
 msgid "下午交易时段的结束时间"
-msgstr ""
+msgstr "End time of afternoon trading period"
 
 #: of qteasy.core.get_history_data:121
 msgid "include_start_pm: bool"
@@ -995,7 +996,7 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:122
 msgid "下午交易时段是否包含开始时间"
-msgstr ""
+msgstr "If True, the afternoon trading period includes start time"
 
 #: of qteasy.core.get_history_data:124
 msgid "include_end_pm: bool"
@@ -1003,19 +1004,20 @@ msgstr ""
 
 #: of qteasy.core.get_history_data:124
 msgid "下午交易时段是否包含结束时间"
-msgstr ""
+msgstr "If True, the afternoon trading period includes end time"
 
 #: of qteasy.core.get_history_data:126
 msgid ""
 "* *HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象 * *Dict "
 "of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
 msgstr ""
+"**HistoryPanel** -- If as_data_frame is set to False, a HistoryPanel object is returned **Dict of DataFrame** -- If as_data_frame is set to True, a Dict is returned, with multiple DataFrames as values"
 
 #: of qteasy.core.get_history_data:126
 msgid "*HistoryPanel* -- 如果设置as_data_frame为False，则返回一个HistoryPanel对象"
-msgstr ""
+msgstr "*HistoryPanel* -- If as_data_frame is set to False, a HistoryPanel object is returned"
 
 #: of qteasy.core.get_history_data:127
 msgid "*Dict of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
-msgstr ""
+msgstr "*Dict of DataFrame* -- If as_data_frame is set to True, a Dict is returned, with multiple DataFrames as values"
 
