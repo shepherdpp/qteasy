@@ -50,31 +50,31 @@ msgstr "Exchange codes are as follows:"
 
 #: ../../source/manage_data/3. data_tables_20.md:15
 msgid "**SSE** 上交所——上海证券交易所"
-msgstr "**SSE** 上交所——上海证券交易所"
+msgstr "**SSE** Shanghai Stock Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:16
 msgid "**SZSE** 深交所——深圳股票交易所"
-msgstr "**SZSE** 深交所——深圳股票交易所"
+msgstr "**SZSE** Shenzhen Stock Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:17
 msgid "**CFFEX** 中金所——中国金融期货交易所"
-msgstr "**CFFEX** 中金所——中国金融期货交易所"
+msgstr "**CFFEX** China Financial Futures Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:18
 msgid "**SHFE** 上期所——上海期货交易所"
-msgstr "**SHFE** 上期所——上海期货交易所"
+msgstr "**SHFE** Shanghai Futures Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:19
 msgid "**CZCE** 郑商所——郑州商品交易所"
-msgstr "**CZCE** 郑商所——郑州商品交易所"
+msgstr "**CZCE** Zhengzhou Commodity Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:20
 msgid "**DCE** 大商所——大连商品交易所"
-msgstr "**DCE** 大商所——大连商品交易所"
+msgstr "**DCE** Dalian Commodity Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md:21
 msgid "**INE** 上能源——上海国际能源交易中心"
-msgstr "**INE** 上能源——上海国际能源交易中心"
+msgstr "**INE** International Energy Exchange"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "columns"
@@ -418,7 +418,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "证券名称"
-msgstr ""
+msgstr "Security Name"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "end_date"
@@ -426,7 +426,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "结束日期"
-msgstr ""
+msgstr "End Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "ann_date"
@@ -434,7 +434,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "公告日期"
-msgstr ""
+msgstr "Announcement Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "change_reason"
@@ -446,15 +446,15 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "变更原因"
-msgstr ""
+msgstr "Reason for Change"
 
 #: ../../source/manage_data/3. data_tables_20.md:93
 msgid "上市公司基本信息: `stock_company`"
-msgstr ""
+msgstr "Basic Information of Listed Companies: `stock_company`"
 
 #: ../../source/manage_data/3. data_tables_20.md:96
 msgid "上市公司基本信息表包含了所有上市公司的基本信息，包括公司代码、公司名称、法人代表、总经理、董秘、注册资本、注册日期、所在省份、所在城市、公司介绍、公司主页、电子邮件、办公室地址、员工人数、主要业务及产品、经营范围等信息。"
-msgstr ""
+msgstr "Basic information table of listed companies contains the basic information of all listed companies, including company code, company name, legal representative, general manager, secretary, registered capital, registration date, province, city, company introduction, company homepage, email, office address, number of employees, main business and products, business scope and other information."
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "chairman"
@@ -466,7 +466,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "法人代表"
-msgstr ""
+msgstr "Legal Representative"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "manager"
@@ -474,7 +474,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "总经理"
-msgstr ""
+msgstr "General Manager"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "secretary"
@@ -482,7 +482,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "董秘"
-msgstr ""
+msgstr "Secretary of the Board"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "reg_capital"
@@ -494,7 +494,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "注册资本"
-msgstr ""
+msgstr "Registered Capital"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "setup_date"
@@ -502,7 +502,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "注册日期"
-msgstr ""
+msgstr "Registration Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "province"
@@ -510,7 +510,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "所在省份"
-msgstr ""
+msgstr "Province"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "city"
@@ -518,7 +518,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "所在城市"
-msgstr ""
+msgstr "Located city"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "introduction"
@@ -526,7 +526,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "公司介绍"
-msgstr ""
+msgstr "Introduction"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "website"
@@ -538,7 +538,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "公司主页"
-msgstr ""
+msgstr "Website"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "email"
@@ -546,7 +546,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "电子邮件"
-msgstr ""
+msgstr "Email"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "office"
@@ -554,7 +554,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "办公室地址"
-msgstr ""
+msgstr "Office Address"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "employees"
@@ -566,7 +566,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "员工人数"
-msgstr ""
+msgstr "Employee headcount"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "main_business"
@@ -574,7 +574,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "主要业务及产品"
-msgstr ""
+msgstr "Main Business and Products"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "15"
@@ -586,27 +586,27 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "经营范围"
-msgstr ""
+msgstr "Business Scope"
 
 #: ../../source/manage_data/3. data_tables_20.md:117
 msgid "上市公司管理层: `stk_managers`"
-msgstr ""
+msgstr "Management of Listed Companies: `stk_managers`"
 
 #: ../../source/manage_data/3. data_tables_20.md:118
 msgid "数据表用途: `events`, 资产类型: `E`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `events`, Asset Type: `E`, Data Frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_20.md:120
 msgid "上市公司管理层表包含了上市公司的高管信息，包括公司管理层姓名、性别、学历、简历以及任职期限等"
-msgstr ""
+msgstr "stk_managers table includes information of the management team, including their names, gender, education, resume, and tenure."
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "TS股票代码"
-msgstr ""
+msgstr "TS Stock Code"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "姓名"
-msgstr ""
+msgstr "Name"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "gender"
@@ -614,7 +614,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "性别"
-msgstr ""
+msgstr "Gender"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "lev"
@@ -622,7 +622,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "岗位类别"
-msgstr ""
+msgstr "Position Category"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "title"
@@ -630,7 +630,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "岗位"
-msgstr ""
+msgstr "Title"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "edu"
@@ -642,7 +642,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "学历"
-msgstr ""
+msgstr "Education"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "national"
@@ -650,7 +650,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "国籍"
-msgstr ""
+msgstr "Nationality"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "birthday"
@@ -658,7 +658,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "出生年月"
-msgstr ""
+msgstr "Year of Birth"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "begin_date"
@@ -666,11 +666,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "上任日期"
-msgstr ""
+msgstr "Onboard Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "离任日期"
-msgstr ""
+msgstr "Leave Date"
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "resume"
@@ -678,19 +678,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "个人简历"
-msgstr ""
+msgstr "Resume"
 
 #: ../../source/manage_data/3. data_tables_20.md:137
 msgid "IPO新股列表: `new_share`"
-msgstr ""
+msgstr "IPO New Share List: `new_share`"
 
 #: ../../source/manage_data/3. data_tables_20.md:138
 msgid "数据表用途: `basics`, 资产类型: `E`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `basics`, Asset Type: `E`, Data Frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_20.md:140
 msgid "IPO新股列表包含了所有新股的基本信息，包括股票代码、申购代码、名称、上网发行日期、上市日期、发行总量、上网发行总量、发行价格、市盈率、个人申购上限、募集资金、中签率等信息。"
-msgstr ""
+msgstr "IPO new share list contains the basic information of all new shares, including stock code, subscription code, name, online issuance date, listing date, total issuance, online issuance total, issue price, price-earnings ratio, individual subscription limit, fundraising, and winning rate."
 
 #: ../../source/manage_data/3. data_tables_20.md
 msgid "sub_code"
