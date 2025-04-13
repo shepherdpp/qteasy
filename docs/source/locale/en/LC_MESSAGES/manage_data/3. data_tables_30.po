@@ -365,79 +365,79 @@ msgstr "15-minute K-line data table for all indices, including index code, tradi
 
 #: ../../source/manage_data/3. data_tables_30.md:204
 msgid "指数30分钟K线行情: `index_30min`"
-msgstr ""
+msgstr "30-minute K-line data for indices: `index_30min`"
 
 #: ../../source/manage_data/3. data_tables_30.md:205
 msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `30min` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `IDX`, data frequency: `30min` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:208
 msgid "指数30分钟K线行情表包含了所有指数的30分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "30-minute K-line data table for all indices, including index code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:221
 msgid "指数60分钟K线行情: `index_hourly`"
-msgstr ""
+msgstr "60-minute K-line data for indices: `index_hourly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:222
 msgid "数据表用途: `mins`, 资产类型: `IDX`, 数据频率: `h` 分表规则：5 by KEY(ts_code)"
-msgstr ""
+msgstr "Usage: `mins`, asset type: `IDX`, data frequency: `h` Table rule: 5 by KEY(ts_code)"
 
 #: ../../source/manage_data/3. data_tables_30.md:225
 msgid "指数小时K线行情表包含了所有沪深市场指数的60分钟K线行情数据，包括指数代码、交易日期时间、开盘价、最高价、最低价、收盘价、成交量、成交额等信息。"
-msgstr ""
+msgstr "60-minute K-line data table for all Shanghai and Shenzhen market indices, including index code, trading date and time, opening price, highest price, lowest price, closing price, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md:238
 msgid "指数日线行情: `index_daily`"
-msgstr ""
+msgstr "Daily K-line data for indices: `index_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:239
 msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `IDX`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:241
 msgid "指数日K线行情表包含了所有沪深市场指数的日线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
-msgstr ""
+msgstr "Daily K-line data table for all Shanghai and Shenzhen market indices, including daily K-line data, with additional data such as previous closing price, price change, and percentage change compared to high-frequency data. The units of trading volume and trading amount are also different."
 
 #: ../../source/manage_data/3. data_tables_30.md:257
 msgid "指数周线行情: `index_weekly`"
-msgstr ""
+msgstr "Weekly K-line data for indices: `index_weekly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:258
 msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `w`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `IDX`, data frequency: `w`"
 
 #: ../../source/manage_data/3. data_tables_30.md:260
 msgid "指数周K线行情表包含了所有沪深市场指数的周K线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
-msgstr ""
+msgstr "Weekly K-line data table for all Shanghai and Shenzhen market indices, including weekly K-line data, with additional data such as previous closing price, price change, and percentage change compared to high-frequency data. The units of trading volume and trading amount are also different."
 
 #: ../../source/manage_data/3. data_tables_30.md:276
 msgid "指数月度行情: `index_monthly`"
-msgstr ""
+msgstr "Monthly K-line data for indices: `index_monthly`"
 
 #: ../../source/manage_data/3. data_tables_30.md:277
 msgid "数据表用途: `data`, 资产类型: `IDX`, 数据频率: `m`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `IDX`, data frequency: `m`"
 
 #: ../../source/manage_data/3. data_tables_30.md:279
 msgid "指数月K线行情表包含了所有沪深市场指数的月K线行情数据，中低频K线行情相比中高频数据，多出了昨收价、涨跌幅、涨跌额等数据，同时成交量和成交额的单位也不一样。"
-msgstr ""
+msgstr "Monthly K-line data table for all Shanghai and Shenzhen market indices, including monthly K-line data, with additional data such as previous closing price, price change, and percentage change compared to high-frequency data. The units of trading volume and trading amount are also different."
 
 #: ../../source/manage_data/3. data_tables_30.md:295
 msgid "其他指数行情数据表："
-msgstr ""
+msgstr "Other index price data tables:"
 
 #: ../../source/manage_data/3. data_tables_30.md:297
 msgid "同花顺行业指数日线行情: `ths_index_daily`"
-msgstr ""
+msgstr "Daily K-line data for THS industry indices: `ths_index_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:298
 msgid "数据表用途: `data`, 资产类型: `THS`, 数据频率: `d`"
-msgstr ""
+msgstr "Usage: `data`, asset type: `THS`, data frequency: `d`"
 
 #: ../../source/manage_data/3. data_tables_30.md:300
 msgid "同花顺行业指数行情表包含了同花顺行业指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "Tonghuashun Industry Index daily K-line data table, including index code, trading date, opening price, highest price, lowest price, closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "varchar(14)"
@@ -445,31 +445,31 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "TS指数代码"
-msgstr ""
+msgstr "Index code"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "交易日"
-msgstr ""
+msgstr "Trading date"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "收盘点位"
-msgstr ""
+msgstr "Closing price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "开盘点位"
-msgstr ""
+msgstr "Opening price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "最高点位"
-msgstr ""
+msgstr "Highest price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "最低点位"
-msgstr ""
+msgstr "Lowest price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "昨日收盘点"
-msgstr ""
+msgstr "Last closing price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "avg_price"
@@ -477,11 +477,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "平均价"
-msgstr ""
+msgstr "Average price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "涨跌点位"
-msgstr ""
+msgstr "Change amount"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "pct_change"
@@ -489,7 +489,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交量"
-msgstr ""
+msgstr "Price change"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "11"
@@ -501,7 +501,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "换手率"
-msgstr ""
+msgstr "Turnover rate"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "12"
@@ -513,7 +513,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "总市值"
-msgstr ""
+msgstr "Total market value"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "13"
@@ -525,44 +525,44 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "流通市值"
-msgstr ""
+msgstr "Floating market value"
 
 #: ../../source/manage_data/3. data_tables_30.md:319
 msgid "中证指数日线行情: `ci_index_daily`"
-msgstr ""
+msgstr "CSIndex daily K-line data: `ci_index_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:320 data_tables_30.md:339
 #: data_tables_30.md:362
 msgid "数据表用途: reference, 资产类型: none, 数据频率: d"
-msgstr ""
+msgstr "Usage: reference, asset type: none, data frequency: d"
 
 #: ../../source/manage_data/3. data_tables_30.md:322
 msgid "中证指数日线行情表包含了中证指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "CIIndex daily K-line data table, including index code, trading date, opening price, highest price, lowest price, closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "指数代码"
-msgstr ""
+msgstr "Index code"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "昨日收盘点位"
-msgstr ""
+msgstr "Last closing price"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交量（万股）"
-msgstr ""
+msgstr "Trading volume (10,000 shares)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "成交额（万元）"
-msgstr ""
+msgstr "Trading amount (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md:338
 msgid "申万指数日线行情: `sw_index_daily`"
-msgstr ""
+msgstr "SWIndex daily K-line data: `sw_index_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:341
 msgid "申万指数日线行情表包含了申万指数的日线行情数据，包括指数代码、交易日期、开盘价、最高价、最低价、收盘价、涨跌幅、成交量、成交额等信息。"
-msgstr ""
+msgstr "SWIndex daily K-line data table, including index code, trading date, opening price, highest price, lowest price, closing price, price change, trading volume, trading amount, etc."
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "name"
@@ -574,7 +574,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "指数名称"
-msgstr ""
+msgstr "Index name"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "pe"
@@ -582,7 +582,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "市盈率"
-msgstr ""
+msgstr "Price-to-earnings ratio"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "pb"
@@ -590,11 +590,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "市净率"
-msgstr ""
+msgstr "Price-to-book ratio"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "流通市值（万元）"
-msgstr ""
+msgstr "Floating market value (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "14"
@@ -602,31 +602,31 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "总市值（万元）"
-msgstr ""
+msgstr "Total market value (10,000 RMB)"
 
 #: ../../source/manage_data/3. data_tables_30.md:361
 msgid "全球指数日线行情: `global_index_daily`"
-msgstr ""
+msgstr "Global index daily K-line data: `global_index_daily`"
 
 #: ../../source/manage_data/3. data_tables_30.md:364
 msgid "全球主要指数主要包括："
-msgstr ""
+msgstr "Global major indices include:"
 
 #: ../../source/manage_data/3. data_tables_30.md:365
 msgid "美国主要指数：道琼斯工业平均指数、标准普尔500指数、纳斯达克综合指数"
-msgstr ""
+msgstr "US major indices: Dow Jones Industrial Average, S&P 500 Index, NASDAQ Composite Index"
 
 #: ../../source/manage_data/3. data_tables_30.md:366
 msgid "欧洲主要指数：英国富时100指数、德国DAX指数、法国CAC40指数"
-msgstr ""
+msgstr "European major indices: UK FTSE 100 Index, German DAX Index, French CAC40 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md:367
 msgid "亚太主要指数：日经225指数、恒生指数、澳大利亚标普200指数"
-msgstr ""
+msgstr "Asia-Pacific major indices: Nikkei 225 Index, Hang Seng Index, Australian S&P 200 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md:368
 msgid "其他主要指数：巴西IBOVESPA指数、俄罗斯RTS指数、印度SENSEX指数等等 上述指数代码对照表如下："
-msgstr ""
+msgstr "Other major indices: Brazil IBOVESPA Index, Russia RTS Index, India SENSEX Index, etc. The corresponding table for the above indices is as follows:"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "XIN9"
@@ -634,7 +634,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "富时中国A50指数 (富时A50)"
-msgstr ""
+msgstr "FTSE China A50 Index (FTSE A50)"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "HSI"
@@ -642,7 +642,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "恒生指数"
-msgstr ""
+msgstr "Hang Seng Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "HKTECH"
@@ -650,7 +650,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "恒生科技指数"
-msgstr ""
+msgstr "Hang Seng Technology Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "HKAH"
@@ -658,7 +658,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "恒生AH股H指数"
-msgstr ""
+msgstr "Hang Seng AH Share H Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "DJI"
@@ -666,7 +666,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "道琼斯工业指数"
-msgstr ""
+msgstr "Dow Jones Industrial Average"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "IXIC"
@@ -674,7 +674,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "纳斯达克指数"
-msgstr ""
+msgstr "NASDAQ Composite Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "FTSE"
@@ -682,7 +682,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "富时100指数"
-msgstr ""
+msgstr "FTSE 100 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "FCHI"
@@ -690,7 +690,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "法国CAC40指数"
-msgstr ""
+msgstr "French CAC40 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "GDAXI"
@@ -698,7 +698,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "德国DAX指数"
-msgstr ""
+msgstr "German DAX Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "N225"
@@ -706,7 +706,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "日经225指数"
-msgstr ""
+msgstr "Japan Nikkei 225 Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "KS11"
@@ -714,7 +714,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "韩国综合指数"
-msgstr ""
+msgstr "Korea Composite Index"
 
 #: ../../source/manage_data/3. data_tables_30.md
 msgid "AS51"
