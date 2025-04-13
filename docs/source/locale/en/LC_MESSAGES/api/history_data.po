@@ -586,21 +586,22 @@ msgstr ""
 
 #: ../../source/api/history_data.rst:44
 msgid "使用下载的数据——获取价格或技术指标"
-msgstr ""
+msgstr "Use the downloaded data - Get price or technical indicators"
 
 #: of qteasy.core.get_history_data:2
 msgid "从本地data_source获取所需的数据并组装为适应于策略"
-msgstr ""
+msgstr "Acquire the required data from the local data_source and assemble it to adapt to the strategy"
 
 #: of qteasy.core.get_history_data:2
 msgid "需要的HistoryPanel数据对象"
-msgstr ""
+msgstr "Needed HistoryPanel data object"
 
 #: of qteasy.core.get_history_data:4
 msgid ""
 "需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数 "
 "结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略"
 msgstr ""
+"The data types to be obtained can be given by the data_types parameter. If the data_types parameter is not given, possible htypes can be created by combining the htypes/htype_names parameters with the freq and asset_type parameters. If the data_types parameter is given, the htypes/htype_names parameters will be ignored"
 
 #: of qteasy.core.get_history_data:7
 msgid ""
@@ -608,12 +609,14 @@ msgid ""
 "所有可能的htypes。输入方式可以为str或list：  - str:     'open, high, low, close'  - "
 "list:    ['open', 'high', 'low', 'close']"
 msgstr ""
+"The set of historical data names to be obtained. If htypes is empty, the system will try to create all possible htypes based on the historical data names and freq/asset_type parameters. The input method can be str or list:  - str:     'open, high, low, close'  - list:    ['open', 'high', 'low', 'close']"
 
 #: of qteasy.core.get_history_data:7 qteasy.core.get_history_data:12
 msgid ""
 "需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建 "
 "所有可能的htypes。输入方式可以为str或list："
 msgstr ""
+"The set of historical data names to be obtained. If htypes is empty, the system will try to create all possible htypes based on the historical data names and freq/asset_type parameters. The input method can be str or list:"
 
 #: of qteasy.core.get_history_data:9
 msgid "str:     'open, high, low, close'"
@@ -628,10 +631,11 @@ msgid ""
 "需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
 "如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
 msgstr ""
+"The set of historical data types to be obtained, must be a legal data type object. If this parameter is given, htype_names will be ignored, otherwise possible htypes will be created based on the htype_names parameter"
 
 #: of qteasy.core.get_history_data:18
 msgid "需要获取历史数据的数据源"
-msgstr ""
+msgstr "Data source to obtain historical data"
 
 #: of qteasy.core.get_history_data:20
 msgid ""
@@ -639,10 +643,11 @@ msgid ""
 "'000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'  - list:    ['000001.SZ', "
 "'000002.SZ', '000004.SZ', '000005.SZ']"
 msgstr ""
+"Set of stock codes for which historical data is to be obtained, which can be a comma-separated string of stock codes or a list of stock code characters. The following two input methods are both legal and equivalent:  - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'  - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']"
 
 #: of qteasy.core.get_history_data:20
 msgid "需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表， 如以下两种输入方式皆合法且等效："
-msgstr ""
+msgstr "Stock codes for which historical data is to be obtained, which can be a comma-separated string of stock codes or a list of stock code characters. The following two input methods are both legal and equivalent:"
 
 #: of qteasy.core.get_history_data:22
 msgid "str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'"
@@ -658,38 +663,41 @@ msgid ""
 "'000001, 000002, 000004, 000005' - list:    ['000001', '000002', "
 "'000004', '000005']"
 msgstr ""
+"Set of stock codes for which historical data is to be obtained, which can be a comma-separated string of stock codes or a list of stock code characters. The following two input methods are both legal and equivalent: - str:     '000001, 000002, 000004, 000005' - list:    ['000001', '000002', '000004', '000005']"
 
 #: of qteasy.core.get_history_data:30
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
-msgstr ""
+msgstr "YYYYMMDD HH:MM:SS format date/time, start date/time of historical data to be obtained (if available)"
 
 #: of qteasy.core.get_history_data:32
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
-msgstr ""
+msgstr "YYYYMMDD HH:MM:SS format date/time, end date/time of historical data to be obtained (if available)"
 
 #: of qteasy.core.get_history_data:34
 msgid ""
 "获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
 "如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
 msgstr ""
+"Number of rows of historical data to be obtained. If start and end are specified, this parameter is ignored, and the time range of the obtained data is [start, end]. If start and end are not specified, the most recent rows of data in the data table will be obtained. Using row to obtain data is much slower than using date"
 
 #: of qteasy.core.get_history_data:37
 msgid ""
 "获取的历史数据的频率，包括以下选项：  - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)  - H/D/W/M "
 "分别代表小时/天/周/月 周期数据(如K线)"
 msgstr ""
+"Frequency of historical data to be obtained, including the following options:  - 1/5/15/30min 1/5/15/30 minute frequency cycle data (such as K-line)  - H/D/W/M respectively represent hour/day/week/month cycle data (such as K-line)"
 
 #: of qteasy.core.get_history_data:39
 msgid "获取的历史数据的频率，包括以下选项："
-msgstr ""
+msgstr "Frequency of historical data to be obtained, including the following options:"
 
 #: of qteasy.core.get_history_data:39
 msgid "1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)"
-msgstr ""
+msgstr "1/5/15/30 minute frequency cycle data (such as K-line)"
 
 #: of qteasy.core.get_history_data:40
 msgid "H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)"
-msgstr ""
+msgstr "H/D/W/M respectively represent hour/day/week/month cycle data (such as K-line)"
 
 #: of qteasy.core.get_history_data:42
 msgid ""
@@ -697,32 +705,34 @@ msgid ""
 "['E', 'IDX']都是合法输入  - any: 可以获取任意资产类型的证券数据(默认值)  - E:   只获取股票类型证券的数据  - "
 "IDX: 只获取指数类型证券的数据  - FT:  只获取期货类型证券的数据  - FD:  只获取基金类型证券的数据"
 msgstr ""
+"Limit the types of assets included in the data to be obtained, including the following options or combinations of the options below. Legal combinations include comma-separated strings or string lists, for example: 'E, IDX' and ['E', 'IDX'] are both legal inputs  - any: You can obtain securities data of any asset type (default value)  - E:   Only obtain data of stock type securities  - IDX: Only obtain data of index type securities  - FT:  Only obtain data of futures type securities  - FD:  Only obtain data of fund type securities"
 
 #: of qteasy.core.get_history_data:42
 msgid ""
 "限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括 逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 "
 "['E', 'IDX']都是合法输入"
 msgstr ""
+"Limit the types of assets included in the data to be obtained, including the following options or combinations of the options below. Legal combinations include comma-separated strings or string lists, for example: 'E, IDX' and ['E', 'IDX'] are both legal inputs"
 
 #: of qteasy.core.get_history_data:44
 msgid "any: 可以获取任意资产类型的证券数据(默认值)"
-msgstr ""
+msgstr "any: You can obtain securities data of any asset type (default value)"
 
 #: of qteasy.core.get_history_data:45
 msgid "E:   只获取股票类型证券的数据"
-msgstr ""
+msgstr "E:   Only obtain data of stock type securities"
 
 #: of qteasy.core.get_history_data:46
 msgid "IDX: 只获取指数类型证券的数据"
-msgstr ""
+msgstr "IDX: Only obtain data of index type securities"
 
 #: of qteasy.core.get_history_data:47
 msgid "FT:  只获取期货类型证券的数据"
-msgstr ""
+msgstr "FT: Only obtain data of futures type securities"
 
 #: of qteasy.core.get_history_data:48
 msgid "FD:  只获取基金类型证券的数据"
-msgstr ""
+msgstr "FD: Only obtain data of fund type securities"
 
 #: of qteasy.core.get_history_data:50
 msgid ""
@@ -730,36 +740,39 @@ msgid ""
 "back / b: 后复权  - forward / fw / f: 前复权  "
 "从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
 msgstr ""
+"Deprecated: For some data, you can obtain adjusted data, which needs to be calculated through the adjustment factor, the adjustment options include:  - none / n: no adjustment (default value)  - back / b: back adjustment  - forward / fw / f: forward adjustment  "
 
 #: of qteasy.core.get_history_data:54
 msgid "Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括："
-msgstr ""
+msgstr "Deprecated: For some data, you can obtain adjusted data, which needs to be calculated through the adjustment factor, the adjustment options include:"
 
 #: of qteasy.core.get_history_data:52
 msgid "none / n: 不复权(默认值)"
-msgstr ""
+msgstr "none / n: No adjustment (default value)"
 
 #: of qteasy.core.get_history_data:53
 msgid "back / b: 后复权"
-msgstr ""
+msgstr "back / b: Back adjustment"
 
 #: of qteasy.core.get_history_data:54
 msgid "forward / fw / f: 前复权"
-msgstr ""
+msgstr "forward / fw / f: Forward adjustment"
 
 #: of qteasy.core.get_history_data:55
 msgid "从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
-msgstr ""
+msgstr "Starting from the next version, the adj parameter will no longer be available. Please directly specify the adjusted price in the htype using close:b and other methods"
 
 #: of qteasy.core.get_history_data:57
 msgid "True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典"
-msgstr ""
+msgstr "If True, return a HistoryPanel object. If False, return a dictionary containing DataFrame objects"
 
 #: of qteasy.core.get_history_data:59
 msgid ""
 "如果返回DataFrame对象，设置dataframe的分组策略 - 'shares' / 'share' / 's': "
 "每一个share组合为一个dataframe - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe"
 msgstr ""
+"If returning DataFrame objects, set the grouping strategy for dataframe - 'shares' / 'share' / 's': "
+"Every share combination is grouped into a dataframe - 'htypes' / 'htype' / 'h': Every htype combination is grouped into a dataframe"
 
 #: of qteasy.core.get_history_data:63
 msgid ""
@@ -794,6 +807,8 @@ msgid ""
 "include_start_pm: bool     下午交易时段是否包含开始时间 include_end_pm: bool     "
 "下午交易时段是否包含结束时间"
 msgstr ""
+"Parameters used to generate trade_time_index, including: drop_nan: bool     Whether to keep all NaN rows resample_method: str     If the data needs to be upsampled or downsampled, adjust the frequency method     Adjusting data frequency is divided into data downsampling and upsampling. In two different cases, the available methods are different:     Data downsampling is to combine multiple data into one, thereby reducing the amount of data while retaining as much information as possible,     For example, merge the following data (each tuple is merged into a value, ? indicates the merged value)         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(?), (?), (?)]     Data merging method:     - 'last'/'close': Use the last value of the merged interval. For example:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(3), (5), (7)]     - 'first'/'open': Use the first value of the merged interval. For example:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(1), (4), (6)]     - 'max'/'high': Use the maximum value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(3), (5), (7)]     - 'min'/'low': Use the minimum value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(1), (4), (6)]     - 'avg'/'mean': Use the average value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(2), (4.5), (6.5)]     - 'sum'/'total': Use the average value of the merged interval as the merged value:         [(1, 2, 3), (4, 5), (6, 7)] After merging: [(2), (4.5), (6.5)]      Data upsampling is to"
+
 
 #: of qteasy.core.get_history_data:63
 msgid "用于生成trade_time_index的参数，包括： drop_nan: bool"
