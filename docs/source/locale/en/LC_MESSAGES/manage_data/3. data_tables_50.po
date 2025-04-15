@@ -70,7 +70,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "日期"
-msgstr ""
+msgstr "Date"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "Y"
@@ -90,7 +90,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "隔夜"
-msgstr ""
+msgstr "Prime"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "N"
@@ -106,7 +106,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "1周"
-msgstr ""
+msgstr "1 Week"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "3"
@@ -118,7 +118,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "2周"
-msgstr ""
+msgstr "2 Weeks"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "4"
@@ -130,7 +130,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "1个月"
-msgstr ""
+msgstr "1 Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "5"
@@ -142,7 +142,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "3个月"
-msgstr ""
+msgstr "3 Months"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "6"
@@ -154,7 +154,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "6个月"
-msgstr ""
+msgstr "6 Months"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "7"
@@ -166,7 +166,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "9个月"
-msgstr ""
+msgstr "9 Months"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "8"
@@ -178,15 +178,15 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "1年"
-msgstr ""
+msgstr "1 Year"
 
 #: ../../source/manage_data/3. data_tables_50.md:24
 msgid "伦敦银行间行业拆放利率(LIBOR): `libor`"
-msgstr ""
+msgstr "London Interbank Offered Rate (LIBOR): `libor`"
 
 #: ../../source/manage_data/3. data_tables_50.md:27
 msgid "伦敦银行间行业拆放利率(LIBOR)是伦敦银行间同业拆息市场的利率指标，包括了隔夜、1周、1个月、3个月、6个月、1年等多个利率指标。"
-msgstr ""
+msgstr "London Interbank Offered Rate (LIBOR) is the interest rate indicator of the London Interbank Offered Rate market, including overnight, 1 week, 1 month, 3 months, 6 months, and 1 year interest rates."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "curr_type"
@@ -198,7 +198,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "货币"
-msgstr ""
+msgstr "Currency"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "2m"
@@ -206,7 +206,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "2个月"
-msgstr ""
+msgstr "2 Months"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "12m"
@@ -214,23 +214,23 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "12个月"
-msgstr ""
+msgstr "12 Months"
 
 #: ../../source/manage_data/3. data_tables_50.md:41
 msgid "香港银行间行业拆放利率(HIBOR): `hibor`"
-msgstr ""
+msgstr "Hong Kong Interbank Offered Rate (HIBOR): `hibor`"
 
 #: ../../source/manage_data/3. data_tables_50.md:44
 msgid "香港银行间行业拆放利率(HIBOR)是香港银行间同业拆息市场的利率指标，包括了隔夜、1周、2周、1个月、3个月、6个月、9个月、1年等多个利率指标。"
-msgstr ""
+msgstr "Hong Kong Interbank Offered Rate (HIBOR) is the interest rate indicator of the Hong Kong Interbank Offered Rate market, including overnight, 1 week, 2 weeks, 1 month, 3 months, 6 months, 9 months, and 1 year interest rates."
 
 #: ../../source/manage_data/3. data_tables_50.md:58
 msgid "温州民间借贷指数: `wz_index`"
-msgstr ""
+msgstr "Wenzhou Private Lending Index: `wz_index`"
 
 #: ../../source/manage_data/3. data_tables_50.md:61
 msgid "温州民间借贷指数是指温州地区民间借贷市场的利率指数，包括了温州地区民间借贷市场的综合利率指数、民间借贷服务中心利率、小额贷款公司放款利率、民间资本管理公司融资价格、社会直接借贷利率、其他市场主体利率、农村互助会互助金费率、��州地区民间借贷分期限利率（一月期、三月期、六月期、一年期、长期）等多个利率指标。"
-msgstr ""
+msgstr "Wenzhou Private Lending Index refers to the interest rate index of the private lending market in Wenzhou, including the comprehensive interest rate index of the private lending market in Wenzhou, the interest rate of the private lending service center, the loan interest rate of small loan companies, the financing price of private capital management companies, the direct lending interest rate of society, the interest rate of other market entities, the mutual aid fund rate of rural mutual aid associations, and the Wenzhou private lending interest rates for different terms (one month, three months, six months, one year, long term)."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "comp_rate"
@@ -238,7 +238,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州民间融资综合利率指数 (%，下同)"
-msgstr ""
+msgstr "Wenzhou Private Financing Comprehensive Interest Rate Index (%, same below)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "center_rate"
@@ -246,7 +246,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "民间借贷服务中心利率"
-msgstr ""
+msgstr "Private Lending Service Center Interest Rate"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "micro_rate"
@@ -254,7 +254,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷款公司放款利率"
-msgstr ""
+msgstr "Small Loan Company Loan Interest Rate"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "cm_rate"
@@ -262,7 +262,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "民间资本管理公司融资价格"
-msgstr ""
+msgstr "Private Capital Management Company Financing Price"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "sdb_rate"
@@ -270,7 +270,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "社会直接借贷利率"
-msgstr ""
+msgstr "Social Direct Lending Interest Rate"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "om_rate"
@@ -278,7 +278,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "其他市场主体利率"
-msgstr ""
+msgstr "Other Market Entities Interest Rate"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "aa_rate"
@@ -286,7 +286,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "农村互助会互助金费率"
-msgstr ""
+msgstr "Rural Mutual Aid Association Mutual Aid Fund Rate"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m1_rate"
@@ -294,7 +294,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州地区民间借贷分期限利率（一月期）"
-msgstr ""
+msgstr "Wenzhou Private Lending Interest Rate by Term (One Month)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "9"
@@ -306,7 +306,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州地区民间借贷分期限利率（三月期）"
-msgstr ""
+msgstr "Wenzhou Private Lending Interest Rate by Term (Three Months)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "10"
@@ -318,7 +318,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州地区民间借贷分期限利率（六月期）"
-msgstr ""
+msgstr "Wenzhou Private Lending Interest Rate by Term (Six Months)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "11"
@@ -330,7 +330,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州地区民间借贷分期限利率（一年期）"
-msgstr ""
+msgstr "Wenzhou Private Lending Interest Rate by Term (One Year)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "12"
@@ -342,15 +342,15 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "温州地区民间借贷分期限利率（长期）"
-msgstr ""
+msgstr "Wenzhou Private Lending Interest Rate by Term (Long Term)"
 
 #: ../../source/manage_data/3. data_tables_50.md:79
 msgid "广州民间借贷指数: `gz_index`"
-msgstr ""
+msgstr "Guangzhou Private Lending Index: `gz_index`"
 
 #: ../../source/manage_data/3. data_tables_50.md:82
 msgid "广州民间借贷指数是指广州地区民间借贷市场的利率指数，包括了广州地区民间借贷市场的综合利率指数、小额贷款公司放款利率、民间资本管理公司融资价格、社会直接借贷利率、其他市场主体利率、农村互助会互助金费率、广州地区民间借贷分期限利率（一月期、三月期、六月期、一年期、长期）等多个利率指标。"
-msgstr ""
+msgstr "Guangzhou Private Lending Index refers to the interest rate index of the private lending market in Guangzhou, including the comprehensive interest rate index of the private lending market in Guangzhou, the interest rate of small loan companies, the financing price of private capital management companies, the direct lending interest rate of society, the interest rate of other market entities, the mutual aid fund rate of rural mutual aid associations, and the Guangzhou private lending interest rates for different terms (one month, three months, six months, one year, long term)."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "d10_rate"
@@ -358,47 +358,47 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（十天） （单位：%，下同）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (Ten Days) (Unit: %, same below)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（一月期）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (One Month)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（三月期）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (Three Months)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（六月期）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (Six Months)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（一年期）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (One Year)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "小额贷市场平均利率（长期）"
-msgstr ""
+msgstr "Small Loan Market Average Interest Rate (Long Term)"
 
 #: ../../source/manage_data/3. data_tables_50.md:94
 msgid "中国宏观经济数据"
-msgstr ""
+msgstr "China Macro Economy Data"
 
 #: ../../source/manage_data/3. data_tables_50.md:96
 msgid "国内生产总值年度数据: `cn_gdp`"
-msgstr ""
+msgstr "National Gross Domestic Product Annual Data: `cn_gdp`"
 
 #: ../../source/manage_data/3. data_tables_50.md:97
 msgid "数据表用途: `reference`, 资产类型: `none`, 数据频率: `q`"
-msgstr ""
+msgstr "Usage: `reference`, Asset Type: `none`, Frequency: `q`"
 
 #: ../../source/manage_data/3. data_tables_50.md:99
 msgid "国内生产总值（GDP）是指一个国家（或地区）在一定时期内生产的全部最终产品和劳务的市场价值。GDP是衡量一个国家经济总量的重要指标，也是国家宏观调控的重要参考指标之一。"
-msgstr ""
+msgstr "Gross Domestic Product (GDP) refers to the market value of all final products and services produced by a country (or region) within a certain period. GDP is an important indicator for measuring the total economic output of a country and is also one of the important reference indicators for national macroeconomic regulation and control."
 
 #: ../../source/manage_data/3. data_tables_50.md:101
 msgid "国内生产总值表涵盖了GDP的全部值、同比增速、季度值、第一产业、第二产业和第三产业多个构成指标。"
-msgstr ""
+msgstr "Gross Domestic Product table covers all values, year-on-year growth rates, quarterly values, primary industry, secondary industry, and tertiary industry components of GDP."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "quarter"
@@ -410,7 +410,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "季度"
-msgstr ""
+msgstr "Quarter"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "gdp"
@@ -418,7 +418,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "GDP累计值（亿元）"
-msgstr ""
+msgstr "GDP Accumulated Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "gdp_yoy"
@@ -426,7 +426,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "当季同比增速（%）"
-msgstr ""
+msgstr "Increase Rate (YoY) of the Current Quarter (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pi"
@@ -434,7 +434,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第一产业累计值（亿元）"
-msgstr ""
+msgstr "First Industry Accumulated Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pi_yoy"
@@ -442,7 +442,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第一产业同比增速（%）"
-msgstr ""
+msgstr "First Industry Increase Rate (YoY) (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "si"
@@ -450,7 +450,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第二产业累计值（亿元）"
-msgstr ""
+msgstr "Second Industry Accumulated Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "si_yoy"
@@ -458,7 +458,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第二产业同比增速（%）"
-msgstr ""
+msgstr "Second Industry Increase Rate (YoY) (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ti"
@@ -466,7 +466,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第三产业累计值（亿元）"
-msgstr ""
+msgstr "Third Industry Accumulated Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ti_yoy"
@@ -474,24 +474,24 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "第三产业同比增速（%）"
-msgstr ""
+msgstr "Third Industry Increase Rate (YoY) (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md:115
 msgid "居民消费价格指数月度数据: `cn_cpi`"
-msgstr ""
+msgstr "Residential Consumer Price Index Monthly Data: `cn_cpi`"
 
 #: ../../source/manage_data/3. data_tables_50.md:116 data_tables_50.md:139
 #: data_tables_50.md:180 data_tables_50.md:200 data_tables_50.md:212
 msgid "数据表用途: `reference`, 资产类型: `none`, 数据频率: `m`"
-msgstr ""
+msgstr "Usage: `reference`, Asset Type: `none`, Frequency: `m`"
 
 #: ../../source/manage_data/3. data_tables_50.md:118
 msgid "居民消费价格指数（CPI）是指反映一定时期或特定时点居民家庭购买消费品和服务价格水平的变动情况的综合指数。CPI是衡量居民生活水平变动的重要指标，也是国家宏观调控的重要参考指标之一。"
-msgstr ""
+msgstr "Residential Consumer Price Index (CPI) refers to a comprehensive index that reflects the changes in the price level of consumer goods and services purchased by households during a certain period or at a specific point in time. CPI is an important indicator for measuring changes in residents' living standards and is also one of the important reference indicators for national macroeconomic regulation and control."
 
 #: ../../source/manage_data/3. data_tables_50.md:120
 msgid "居民消费价格指数表涵盖了CPI的全部商品和服务、食品、非食品、工业品、农产品、服务等多个构成指数及其同比、环比变化率。"
-msgstr ""
+msgstr "Residential Consumer Price Index table covers all goods and services, food, non-food, industrial products, agricultural products, services, and other component indices of CPI, as well as their year-on-year and month-on-month changes."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "month"
@@ -507,7 +507,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "全国当月值"
-msgstr ""
+msgstr "National Monthly Value"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "nt_yoy"
@@ -515,7 +515,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "全国同比（%）"
-msgstr ""
+msgstr "National Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "nt_mom"
@@ -523,7 +523,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "全国环比（%）"
-msgstr ""
+msgstr "National Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "nt_accu"
@@ -531,7 +531,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "全国累计值"
-msgstr ""
+msgstr "National Accumulated Value"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "town_val"
@@ -539,7 +539,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "城市当月值"
-msgstr ""
+msgstr "City Monthly Value"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "town_yoy"
@@ -547,7 +547,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "城市同比（%）"
-msgstr ""
+msgstr "City Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "town_mom"
@@ -555,7 +555,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "城市环比（%）"
-msgstr ""
+msgstr "City Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "town_accu"
@@ -563,7 +563,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "城市累计值"
-msgstr ""
+msgstr "City Accumulated Value"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "cnt_val"
@@ -571,7 +571,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "农村当月值"
-msgstr ""
+msgstr "Rural Monthly Value"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "cnt_yoy"
@@ -579,7 +579,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "农村同比（%）"
-msgstr ""
+msgstr "Rural Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "cnt_mom"
@@ -587,7 +587,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "农村环比（%）"
-msgstr ""
+msgstr "Rural Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "cnt_accu"
@@ -595,19 +595,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "农村累计值"
-msgstr ""
+msgstr "Rural Accumulated Value"
 
 #: ../../source/manage_data/3. data_tables_50.md:138
 msgid "工业品出厂价格指数月度数据: `cn_ppi`"
-msgstr ""
+msgstr "Industrial Product Ex-Factory Price Index Monthly Data: `cn_ppi`"
 
 #: ../../source/manage_data/3. data_tables_50.md:141
 msgid "工业品出厂价格指数（PPI）是指工业企业生产的产品出厂时的价格指数，是衡量工业品价格变动的重要指标。PPI分为生产资料价格指数和生活资料价格指数两大类，生产资料价格指数又分为采掘工业价格指数、原料工业价格指数和加工工业价格指数三个子类��生活资料价格指数又分为食品类价格指数、衣着类价格指数、一般日用品类价格指数和耐用消费品类价格指数四个子类。"
-msgstr ""
+msgstr "Industrial Product Ex-Factory Price Index (PPI) refers to the price index of products produced by industrial enterprises at the time of ex-factory, which is an important indicator for measuring the price changes of industrial products. PPI is divided into two categories: production material price index and living material price index. The production material price index is further divided into three subcategories: mining industry price index, raw material industry price index, and processing industry price index. The living material price index is further divided into four subcategories: food price index, clothing price index, general daily necessities price index, and durable consumer goods price index."
 
 #: ../../source/manage_data/3. data_tables_50.md:143
 msgid "工业品出厂价格指数表涵盖了PPI的全部工业品、生产资料、生活资料多个构成指数及其同比、环比变化率。"
-msgstr ""
+msgstr "Industrial Product Ex-Factory Price Index table covers all industrial products, production materials, living materials, and other component indices of PPI, as well as their year-on-year and month-on-month changes."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_yoy"
@@ -615,7 +615,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：全部工业品：当月同比"
-msgstr ""
+msgstr "PPI: All Industrial Products: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mp_yoy"
@@ -623,7 +623,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：当月同比"
-msgstr ""
+msgstr "PPI: Production Materials: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mp_qm_yoy"
@@ -631,7 +631,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：采掘业：当月同比"
-msgstr ""
+msgstr "PPI: Production Materials: Mining Industry: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mp_rm_yoy"
@@ -639,7 +639,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：原料业：当月同比"
-msgstr ""
+msgstr "PPI: Production Materials: Raw Material Industry: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mp_p_yoy"
@@ -647,7 +647,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：加工业：当月同比"
-msgstr ""
+msgstr "PPI: Production Materials: Processing Industry: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_cg_yoy"
@@ -655,7 +655,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：当月同比"
-msgstr ""
+msgstr "PPI: Living Materials: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_cg_f_yoy"
@@ -663,7 +663,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：食品类：当月同比"
-msgstr ""
+msgstr "PPI: Living Materials: Food Category: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_cg_c_yoy"
@@ -671,7 +671,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：衣着类：当月同比"
-msgstr ""
+msgstr "PPI: Living Materials: Clothing Category: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_cg_adu_yoy"
@@ -679,7 +679,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：一般日用品类：当月同比"
-msgstr ""
+msgstr "PPI: Living Materials: General Daily Necessities Category: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_cg_dcg_yoy"
@@ -687,7 +687,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：耐用消费品类：当月同比"
-msgstr ""
+msgstr "PPI: Living Materials: Durable Consumer Goods Category: Monthly Year-on-Year"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mom"
@@ -695,7 +695,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：全部工业品：环比"
-msgstr ""
+msgstr "PPI: All Industrial Products: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "ppi_mp_mom"
@@ -703,7 +703,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：环比"
-msgstr ""
+msgstr "PPI: Production Materials: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "13"
@@ -715,7 +715,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：采掘业：环比"
-msgstr ""
+msgstr "PPI: Production Materials: Mining Industry: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "14"
@@ -727,7 +727,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：原料业：环比"
-msgstr ""
+msgstr "PPI: Production Materials: Raw Material Industry: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "15"
@@ -739,7 +739,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：加工业：环比"
-msgstr ""
+msgstr "PPI: Production Materials: Processing Industry: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "16"
@@ -751,7 +751,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：环比"
-msgstr ""
+msgstr "PPI: Living Materials: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "17"
@@ -763,7 +763,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：食品类：环比"
-msgstr ""
+msgstr "PPI: Living Materials: Food Category: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "18"
@@ -775,7 +775,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：衣着类：环比"
-msgstr ""
+msgstr "PPI: Living Materials: Clothing Category: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "19"
@@ -787,7 +787,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：一般日用品类：环比"
-msgstr ""
+msgstr "PPI: Living Materials: General Daily Necessities Category: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "20"
@@ -799,7 +799,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：耐用消费品类：环比"
-msgstr ""
+msgstr "PPI: Living Materials: Durable Consumer Goods Category: Month-on-Month"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "21"
@@ -811,7 +811,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：全部工业品：累计同比"
-msgstr ""
+msgstr "PPI: All Industrial Products: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "22"
