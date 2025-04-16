@@ -823,7 +823,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：累计同比"
-msgstr ""
+msgstr "PPI: Production Materials: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "23"
@@ -835,7 +835,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：采掘业：累计同比"
-msgstr ""
+msgstr "PPI: Production Materials: Mining Industry: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "24"
@@ -847,7 +847,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：原料业：累计同比"
-msgstr ""
+msgstr "PPI: Production Materials: Raw Material Industry: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "25"
@@ -859,7 +859,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生产资料：加工业：累计同比"
-msgstr ""
+msgstr "PPI: Production Materials: Processing Industry: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "26"
@@ -871,7 +871,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：累计同比"
-msgstr ""
+msgstr "PPI: Living Materials: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "27"
@@ -883,7 +883,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：食品类：累计同比"
-msgstr ""
+msgstr "PPI: Living Materials: Food Category: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "28"
@@ -895,7 +895,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：衣着类：累计同比"
-msgstr ""
+msgstr "PPI: Living Materials: Clothing Category: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "29"
@@ -907,7 +907,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：一般日用品类：累计同比"
-msgstr ""
+msgstr "PPI: Living Materials: General Daily Necessities Category: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "30"
@@ -919,19 +919,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "PPI：生活资料：耐用消费品类：累计同比"
-msgstr ""
+msgstr "PPI: Living Materials: Durable Consumer Goods Category: Year-on-Year Accumulated"
 
 #: ../../source/manage_data/3. data_tables_50.md:179
 msgid "中国货币供应量: `cn_money`"
-msgstr ""
+msgstr "China Money Supply: `cn_money`"
 
 #: ../../source/manage_data/3. data_tables_50.md:182
 msgid "中国货币供应量是中国人民银行发布的一个重要宏观经济指标，是指金融机构向非金融企业和居民提供的各种货币信贷和融资服务的总量。货币供应量统计包括了M0、M1、M2三个指标。"
-msgstr ""
+msgstr "China Money Supply is an important macroeconomic indicator released by the People's Bank of China, referring to the total amount of various monetary credit and financing services provided by financial institutions to non-financial enterprises and residents. The money supply statistics include three indicators: M0, M1, and M2."
 
 #: ../../source/manage_data/3. data_tables_50.md:184
 msgid "中国货币供应商数据表同样涵盖了M0、M1、M2三个指标及其同比、环比变化率。"
-msgstr ""
+msgstr "China Money Supply table also covers three indicators: M0, M1, and M2, as well as their year-on-year and month-on-month changes."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m0"
@@ -939,7 +939,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M0（亿元）"
-msgstr ""
+msgstr "M0 (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m0_yoy"
@@ -947,7 +947,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M0同比（%）"
-msgstr ""
+msgstr "M0 Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m0_mom"
@@ -955,7 +955,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M0环比（%）"
-msgstr ""
+msgstr "M0 Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m1"
@@ -963,7 +963,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M1（亿元）"
-msgstr ""
+msgstr "M1 (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m1_yoy"
@@ -971,7 +971,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M1同比（%）"
-msgstr ""
+msgstr "M1 Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m1_mom"
@@ -979,7 +979,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M1环比（%）"
-msgstr ""
+msgstr "M1 Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m2"
@@ -987,7 +987,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M2（亿元）"
-msgstr ""
+msgstr "M2 (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m2_yoy"
@@ -995,7 +995,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M2同比（%）"
-msgstr ""
+msgstr "M2 Year-on-Year (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "m2_mom"
@@ -1003,19 +1003,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "M2环比（%）"
-msgstr ""
+msgstr "M2 Month-on-Month (%)"
 
 #: ../../source/manage_data/3. data_tables_50.md:199
 msgid "中国社会融资规模月度数据: `cn_sf`"
-msgstr ""
+msgstr "China Social Financing Monthly Data: `cn_sf`"
 
 #: ../../source/manage_data/3. data_tables_50.md:202
 msgid "中国社会融资规模统计是中国人民银行发布的一个重要宏观经济指标，是指金融机构向非金融企业和居民提供的各种货币信贷和融资服务的总量。社会融资规模统计包括了贷款、债券、股票、信托、委托贷款、非金融企业境内外融资等多种金融工具。"
-msgstr ""
+msgstr "China Social Financing Scale Statistics is an important macroeconomic indicator released by the People's Bank of China, referring to the total amount of various monetary credit and financing services provided by financial institutions to non-financial enterprises and residents. The social financing scale statistics include various financial instruments such as loans, bonds, stocks, trusts, entrusted loans, and domestic and foreign financing of non-financial enterprises."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "月度"
-msgstr ""
+msgstr "Monthly"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "inc_month"
@@ -1023,7 +1023,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "社融增量当月值（亿元）"
-msgstr ""
+msgstr "Social Financing Increment Monthly Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "inc_cumval"
@@ -1031,7 +1031,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "社融增量累计值（亿元）"
-msgstr ""
+msgstr "Social Financing Increment Accumulated Value (100 Million Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "stk_endval"
@@ -1039,21 +1039,22 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "社融存量期末值（万亿元）"
-msgstr ""
+msgstr "Social Financing Stock End Value (Trillion Yuan)"
 
 #: ../../source/manage_data/3. data_tables_50.md:211
 msgid "采购经理人指数月度数据: `cn_pmi`"
-msgstr ""
+msgstr "Purchasing Managers' Index Monthly Data: `cn_pmi`"
 
 #: ../../source/manage_data/3. data_tables_50.md:214
 msgid ""
 "采购经理指数（PMI），是通过对企业采购经理的月度调查结果统计汇总、编制而成的指数，它涵盖了企业采购、生产、流通等各个环节，包括制造业和非制造业领域，是国际上通用的监测宏观经济走势的先行性指数之一，具有较强的预测、预警作用。"
 " 综合PMI产出指数是PMI指标体系中反映当期全行业（制造业和非制造业）产出变化情况的综合指数。"
 msgstr ""
+"Purchasing Managers' Index (PMI) is an index compiled from the monthly survey results of corporate purchasing managers, covering various aspects of corporate procurement, production, and circulation, including both manufacturing and non-manufacturing sectors. It is one of the commonly used leading indicators for monitoring macroeconomic trends internationally, with strong predictive and warning functions. The Composite PMI Output Index is a comprehensive index reflecting the changes in output across all industries (manufacturing and non-manufacturing) during the current period."
 
 #: ../../source/manage_data/3. data_tables_50.md:216
 msgid "采购经理人指数表涵盖了制造业PMI、非制造业PMI多个构成指数以及和中国综合PMI三个指数。"
-msgstr ""
+msgstr "PMI table covers the Manufacturing PMI, Non-Manufacturing PMI, and the Composite PMI of China, including various component indices."
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010000"
@@ -1061,7 +1062,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI"
-msgstr ""
+msgstr "PMI Manufacturing"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010100"
@@ -1069,7 +1070,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010200"
@@ -1077,7 +1078,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010300"
@@ -1085,7 +1086,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010400"
@@ -1093,7 +1094,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/生产指数"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Production Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010401"
@@ -1101,7 +1102,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/生产指数:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Production Index: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010402"
@@ -1109,7 +1110,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/生产指数:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Production Index: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010403"
@@ -1117,7 +1118,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/生产指数:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Production Index: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010500"
@@ -1125,7 +1126,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/新订单指数"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/New Orders Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010501"
@@ -1133,7 +1134,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/新订单指数:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/New Orders Index: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010502"
@@ -1141,7 +1142,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/新订单指数:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/New Orders Index: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010503"
@@ -1149,7 +1150,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/新订单指数:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/New Orders Index: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010600"
@@ -1157,7 +1158,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/供应商配送时间指数"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Supplier Delivery Time Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010601"
@@ -1165,7 +1166,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Supplier Delivery Time Index: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010602"
@@ -1173,7 +1174,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Supplier Delivery Time Index: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010603"
@@ -1181,7 +1182,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Supplier Delivery Time Index: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010700"
@@ -1189,7 +1190,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/原材料库存指数"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Raw Material Inventory Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010701"
@@ -1197,7 +1198,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/原材料库存指数:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Raw Material Inventory Index: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010702"
@@ -1205,7 +1206,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/原材料库存指数:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Raw Material Inventory Index: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010703"
@@ -1213,7 +1214,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/原材料库存指数:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Raw Material Inventory Index: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010800"
@@ -1221,7 +1222,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/从业人员指数"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Employment Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010801"
@@ -1229,7 +1230,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/从业人员指数:企业规模/大型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Employment Index: Enterprise Size/Large Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010802"
@@ -1237,7 +1238,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/从业人员指数:企业规模/中型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Employment Index: Enterprise Size/Medium Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010803"
@@ -1245,7 +1246,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:构成指数/从业人员指数:企业规模/小型企业"
-msgstr ""
+msgstr "PMI Manufacturing: Component Index/Employment Index: Enterprise Size/Small Enterprises"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi010900"
@@ -1253,7 +1254,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/新出口订单"
-msgstr ""
+msgstr "PMI Manufacturing: Other/New Export Orders"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi011000"
@@ -1261,7 +1262,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/进口"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Imports"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi011100"
@@ -1269,7 +1270,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/采购量"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Purchase Volume"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi011200"
@@ -1277,7 +1278,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/主要原材料购进价格"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Main Raw Material Purchase Price"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi011300"
@@ -1285,7 +1286,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/出厂价格"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Ex-factory Price"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "pmi011400"
@@ -1293,7 +1294,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/产成品库存"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Finished Goods Inventory"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "31"
@@ -1305,7 +1306,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/在手订单"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Orders on Hand"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "32"
@@ -1317,7 +1318,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:其他/生产经营活动预期"
-msgstr ""
+msgstr "PMI Manufacturing: Other/Production and Business Activity Expectations"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "33"
@@ -1329,7 +1330,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:分行业/装备制造业"
-msgstr ""
+msgstr "PMI Manufacturing: By Industry/Equipment Manufacturing"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "34"
@@ -1341,7 +1342,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:分行业/高技术制造业"
-msgstr ""
+msgstr "PMI Manufacturing: By Industry/High-tech Manufacturing"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "35"
@@ -1353,7 +1354,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:分行业/基础原材料制造业"
-msgstr ""
+msgstr "PMI Manufacturing: By Industry/Basic Raw Material Manufacturing"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "36"
@@ -1365,7 +1366,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "制造业PMI:分行业/消费品制造业"
-msgstr ""
+msgstr "PMI Manufacturing: By Industry/Consumer Goods Manufacturing"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "37"
@@ -1377,7 +1378,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:商务活动"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "38"
@@ -1389,7 +1390,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:商务活动:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "39"
@@ -1401,7 +1402,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:商务活动:分行业/服务业业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "40"
@@ -1413,7 +1414,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:新订单指数"
-msgstr ""
+msgstr "PMI Non-Manufacturing: New Orders Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "41"
@@ -1425,7 +1426,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:新订单指数:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: New Orders Index: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "42"
@@ -1437,7 +1438,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:新订单指数:分行业/服务业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: New Orders Index: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "43"
@@ -1449,7 +1450,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:投入品价格指数"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Input Price Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "44"
@@ -1461,7 +1462,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:投入品价格指数:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Input Price Index: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "45"
@@ -1473,7 +1474,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:投入品价格指数:分行业/服务业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Input Price Index: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "46"
@@ -1485,7 +1486,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:销售价格指数"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Selling Price Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "47"
@@ -1497,7 +1498,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:销售价格指数:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Selling Price Index: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "48"
@@ -1509,7 +1510,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:销售价格指数:分行业/服务业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Selling Price Index: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "49"
@@ -1521,7 +1522,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:从业人员指数"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Employment Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "50"
@@ -1533,7 +1534,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:从业人员指数:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Employment Index: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "51"
@@ -1545,7 +1546,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:从业人员指数:分行业/服务业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Employment Index: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "52"
@@ -1557,7 +1558,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:业务活动预期指数"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity Expectation Index"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "53"
@@ -1569,7 +1570,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:业务活动预期指数:分行业/建筑业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity Expectation Index: By Industry/Construction"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "54"
@@ -1581,7 +1582,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:业务活动预期指数:分行业/服务业"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Business Activity Expectation Index: By Industry/Service"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "55"
@@ -1593,7 +1594,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:新出口订单"
-msgstr ""
+msgstr "PMI Non-Manufacturing: New Export Orders"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "56"
@@ -1605,7 +1606,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:在手订单"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Orders on Hand"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "57"
@@ -1617,7 +1618,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:存货"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Inventory"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "58"
@@ -1629,7 +1630,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "非制造业PMI:供应商配送时间"
-msgstr ""
+msgstr "PMI Non-Manufacturing: Supplier Delivery Time"
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "59"
@@ -1641,5 +1642,5 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_50.md
 msgid "中国综合PMI:产出指数"
-msgstr ""
+msgstr "PMI Composite: Output Index"
 
