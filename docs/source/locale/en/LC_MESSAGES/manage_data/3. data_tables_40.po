@@ -3835,7 +3835,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "息税前利润/营业总收入"
-msgstr ""
+msgstr "Earnings Before Interest and Taxes to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe"
@@ -3843,7 +3843,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产收益率"
-msgstr ""
+msgstr "Return on Equity"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe_waa"
@@ -3851,7 +3851,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加权平均净资产收益率"
-msgstr ""
+msgstr "Return on Equity Weighted Average"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe_dt"
@@ -3859,7 +3859,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产收益率(扣除非经常损益)"
-msgstr ""
+msgstr "Return on Equity (Deducting Non-Recurring Items)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roa"
@@ -3867,7 +3867,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产报酬率"
-msgstr ""
+msgstr "Return on Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "npta"
@@ -3875,7 +3875,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产净利润"
-msgstr ""
+msgstr "Net Profit to Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roic"
@@ -3883,7 +3883,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投入资本回报率"
-msgstr ""
+msgstr "Return on Invested Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe_yearly"
@@ -3891,7 +3891,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "年化净资产收益率"
-msgstr ""
+msgstr "Return on Equity Annualized"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roa2_yearly"
@@ -3899,7 +3899,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "年化总资产报酬率"
-msgstr ""
+msgstr "Return on Assets Annualized"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe_avg"
@@ -3907,7 +3907,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "平均净资产收益率(增发条件)"
-msgstr ""
+msgstr "Return on Equity Average (Conditions for Additional Issuance)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "opincome_of_ebt"
@@ -3915,7 +3915,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动净收益/利润总额"
-msgstr ""
+msgstr "Operating Income to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "investincome_of_ebt"
@@ -3923,7 +3923,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "价值变动净收益/利润总额"
-msgstr ""
+msgstr "Investment Income to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_op_profit_of_ebt"
@@ -3931,7 +3931,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业外收支净额/利润总额"
-msgstr ""
+msgstr "Net Non-Operating Income and Expenses to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tax_to_ebt"
@@ -3939,7 +3939,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "所得税/利润总额"
-msgstr ""
+msgstr "Tax to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "dtprofit_to_profit"
@@ -3947,7 +3947,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "扣除非经常损益后的净利润/净利润"
-msgstr ""
+msgstr "Deducted Non-Recurring Items Net Profit to Net Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "salescash_to_or"
@@ -3955,7 +3955,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售商品提供劳务收到的现金/营业收入"
-msgstr ""
+msgstr "Sales of Goods and Services Received Cash to Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_or"
@@ -3963,7 +3963,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/营业收入"
-msgstr ""
+msgstr "Operating Cash Flow to Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_opincome"
@@ -3971,7 +3971,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/经营活动净收益"
-msgstr ""
+msgstr "Operating Cash Flow to Operating Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "capitalized_to_da"
@@ -3979,7 +3979,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "资本支出/折旧和摊销"
-msgstr ""
+msgstr "Capital Expenditure to Depreciation and Amortization"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "debt_to_assets"
@@ -3987,7 +3987,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "资产负债率"
-msgstr ""
+msgstr "Debt to Assets Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "assets_to_eqt"
@@ -3995,7 +3995,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "权益乘数"
-msgstr ""
+msgstr "Assets to Equity Multiplier"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "dp_assets_to_eqt"
@@ -4003,7 +4003,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "权益乘数(杜邦分析)"
-msgstr ""
+msgstr "DuPont Analysis of Assets to Equity Multiplier"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ca_to_assets"
@@ -4011,7 +4011,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "流动资产/总资产"
-msgstr ""
+msgstr "Current Assets to Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "nca_to_assets"
@@ -4019,7 +4019,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非流动资产/总资产"
-msgstr ""
+msgstr "Non-Current Assets to Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tbassets_to_totalassets"
@@ -4027,7 +4027,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "有形资产/总资产"
-msgstr ""
+msgstr "Tangible Assets to Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "int_to_talcap"
@@ -4035,7 +4035,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "带息债务/全部投入资本"
-msgstr ""
+msgstr "Interest-Bearing Debt to Invested Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eqt_to_talcapital"
@@ -4043,7 +4043,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属于母公司的股东权益/全部投入资本"
-msgstr ""
+msgstr "Equity Attributable to Parent Company to Invested Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "currentdebt_to_debt"
@@ -4051,7 +4051,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "流动负债/负债合计"
-msgstr ""
+msgstr "Current Liabilities to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "longdeb_to_debt"
@@ -4059,7 +4059,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非流动负债/负债合计"
-msgstr ""
+msgstr "Long-Term Liabilities to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_shortdebt"
@@ -4067,7 +4067,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/流动负债"
-msgstr ""
+msgstr "Operating Cash Flow to Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "debt_to_eqt"
@@ -4075,7 +4075,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "产权比率"
-msgstr ""
+msgstr "Debt to Equity Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eqt_to_debt"
@@ -4083,7 +4083,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属于母公司的股东权益/负债合计"
-msgstr ""
+msgstr "Equity Attributable to Parent Company to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eqt_to_interestdebt"
@@ -4091,7 +4091,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属于母公司的股东权益/带息债务"
-msgstr ""
+msgstr "Equity Attributable to Parent Company to Interest-Bearing Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tangibleasset_to_debt"
@@ -4099,7 +4099,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "有形资产/负债合计"
-msgstr ""
+msgstr "Tangible Assets to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tangasset_to_intdebt"
@@ -4107,7 +4107,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "有形资产/带息债务"
-msgstr ""
+msgstr "Tangible Assets to Interest-Bearing Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tangibleasset_to_netdebt"
@@ -4115,7 +4115,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "有形资产/净债务"
-msgstr ""
+msgstr "Tangible Assets to Net Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_debt"
@@ -4123,7 +4123,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/负债合计"
-msgstr ""
+msgstr "Operating Cash Flow to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_interestdebt"
@@ -4131,7 +4131,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/带息债务"
-msgstr ""
+msgstr "Operating Cash Flow to Interest-Bearing Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_netdebt"
@@ -4139,7 +4139,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额/净债务"
-msgstr ""
+msgstr "Operating Cash Flow to Net Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ebit_to_interest"
@@ -4147,7 +4147,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "已获利息倍数(EBIT/利息费用)"
-msgstr ""
+msgstr "Earnings Before Interest and Taxes to Interest Expense Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "longdebt_to_workingcapital"
@@ -4155,7 +4155,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "长期债务与营运资金比率"
-msgstr ""
+msgstr "Long-Term Debt to Working Capital Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ebitda_to_debt"
@@ -4163,7 +4163,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "息税折旧摊销前利润/负债合计"
-msgstr ""
+msgstr "Earnings Before Interest, Taxes, Depreciation and Amortization to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "turn_days"
@@ -4171,7 +4171,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业周期"
-msgstr ""
+msgstr "Turnover Days"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roa_yearly"
@@ -4179,7 +4179,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "年化总资产净利率"
-msgstr ""
+msgstr "Return on Assets Annualized"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roa_dp"
@@ -4187,7 +4187,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产净利率(杜邦分析)"
-msgstr ""
+msgstr "Return on Assets DuPont Analysis"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fixed_assets"
@@ -4195,7 +4195,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产合计"
-msgstr ""
+msgstr "Fixed Assets Total"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "profit_prefin_exp"
@@ -4203,7 +4203,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "扣除财务费用前营业利润"
-msgstr ""
+msgstr "Profit Before Financial Expenses"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "non_op_profit"
@@ -4211,7 +4211,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非营业利润"
-msgstr ""
+msgstr "Non-Operating Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_to_ebt"
@@ -4219,7 +4219,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润／利润总额"
-msgstr ""
+msgstr "Operating Profit to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "nop_to_ebt"
@@ -4227,7 +4227,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非营业利润／利润总额"
-msgstr ""
+msgstr "Non-Operating Profit to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_to_profit"
@@ -4235,7 +4235,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额／营业利润"
-msgstr ""
+msgstr "Operating Cash Flow to Operating Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cash_to_liqdebt"
@@ -4243,7 +4243,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "货币资金／流动负债"
-msgstr ""
+msgstr "Cash and Cash Equivalents to Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cash_to_liqdebt_withinterest"
@@ -4251,7 +4251,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "货币资金／带息流动负债"
-msgstr ""
+msgstr "Cash and Cash Equivalents to Interest-Bearing Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_to_liqdebt"
@@ -4259,7 +4259,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润／流动负债"
-msgstr ""
+msgstr "Operating Profit to Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_to_debt"
