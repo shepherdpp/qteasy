@@ -419,7 +419,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:对联营企业和合营企业的投资收益"
-msgstr ""
+msgstr "Investment return from joint ventures or cooperation corporates"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "28"
@@ -431,7 +431,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:汇兑净收益"
-msgstr ""
+msgstr "Add: Foreign Exchange Gains"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "29"
@@ -443,7 +443,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总成本"
-msgstr ""
+msgstr "Total cost of operation"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "30"
@@ -455,7 +455,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:营业成本"
-msgstr ""
+msgstr "Minus: Operating Cost"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "31"
@@ -467,7 +467,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:利息支出"
-msgstr ""
+msgstr "Minus: Interest Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "32"
@@ -479,7 +479,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:手续费及佣金支出"
-msgstr ""
+msgstr "Minus: Commission Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "33"
@@ -491,7 +491,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:营业税金及附加"
-msgstr ""
+msgstr "Minus: Business Tax and Surcharges"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "34"
@@ -503,7 +503,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:销售费用"
-msgstr ""
+msgstr "Minus: Selling Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "35"
@@ -515,7 +515,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:管理费用"
-msgstr ""
+msgstr "Minus: Administrative Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "36"
@@ -527,7 +527,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:财务费用"
-msgstr ""
+msgstr "Minus: Financial Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "37"
@@ -539,7 +539,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:资产减值损失"
-msgstr ""
+msgstr "Minus: Asset Impairment Loss"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "38"
@@ -551,7 +551,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "退保金"
-msgstr ""
+msgstr "Premium Refund"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "39"
@@ -563,7 +563,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "赔付总支出"
-msgstr ""
+msgstr "Compensation Payout"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "40"
@@ -575,7 +575,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "提取保险责任准备金"
-msgstr ""
+msgstr "Reserved Insurance Liability"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "41"
@@ -587,7 +587,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保户红利支出"
-msgstr ""
+msgstr "Dividend Payout"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "42"
@@ -599,7 +599,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "分保费用"
-msgstr ""
+msgstr "Reinsurance Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "43"
@@ -611,7 +611,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业支出"
-msgstr ""
+msgstr "Operating Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "44"
@@ -623,7 +623,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:摊回赔付支出"
-msgstr ""
+msgstr "Minus: Compensation Payout Refund"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "45"
@@ -635,7 +635,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:摊回保险责任准备金"
-msgstr ""
+msgstr "Minus: Insurance Liability Reserve Refund"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "46"
@@ -647,7 +647,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:摊回分保费用"
-msgstr ""
+msgstr "Minus: Reinsurance Expense Refund"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "47"
@@ -659,7 +659,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他业务成本"
-msgstr ""
+msgstr "Other Business Cost"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "48"
@@ -671,7 +671,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润"
-msgstr ""
+msgstr "Operation Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "49"
@@ -683,7 +683,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:营业外收入"
-msgstr ""
+msgstr "Add: Non-Operation Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "50"
@@ -695,7 +695,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:营业外支出"
-msgstr ""
+msgstr "Minus: Non-Operation Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "51"
@@ -707,7 +707,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:减:非流动资产处置净损失"
-msgstr ""
+msgstr "Include: Minus: Non-Current Asset Disposal Net Loss"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "52"
@@ -719,7 +719,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利润总额"
-msgstr ""
+msgstr "Total Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "53"
@@ -731,7 +731,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "所得税费用"
-msgstr ""
+msgstr "Income Tax Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "54"
@@ -743,7 +743,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润(含少数股东损益)"
-msgstr ""
+msgstr "Net Profit (Including Minority Shareholders' Profit)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "55"
@@ -755,7 +755,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润(不含少数股东损益)"
-msgstr ""
+msgstr "Net Profit (Excluding Minority Shareholders' Profit)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "56"
@@ -767,7 +767,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "少数股东损益"
-msgstr ""
+msgstr "Minority Shareholders' Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "57"
@@ -779,7 +779,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他综合收益"
-msgstr ""
+msgstr "Other Comprehensive Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "58"
@@ -791,7 +791,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "综合收益总额"
-msgstr ""
+msgstr "Total Comprehensive Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "59"
@@ -803,7 +803,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属于母公司(或股东)的综合收益总额"
-msgstr ""
+msgstr "Comprehensive Income Attributable to Parent Company (or Shareholders)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "60"
@@ -815,7 +815,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属于少数股东的综合收益总额"
-msgstr ""
+msgstr "Comprehensive Income Attributable to Minority Shareholders"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "61"
@@ -827,7 +827,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "息税前利润"
-msgstr ""
+msgstr "Earnings Before Interest and Taxes"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "62"
@@ -839,7 +839,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "息税折旧摊销前利润"
-msgstr ""
+msgstr "Earnings Before Interest, Taxes, Depreciation and Amortization"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "63"
@@ -851,7 +851,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保险业务支出"
-msgstr ""
+msgstr "Insurance Business Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "64"
