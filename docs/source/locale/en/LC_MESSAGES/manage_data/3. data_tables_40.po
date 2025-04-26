@@ -2011,7 +2011,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "递延收益-非流动负债"
-msgstr ""
+msgstr "Deferred Income - Non-Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "101"
@@ -2023,7 +2023,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他非流动负债"
-msgstr ""
+msgstr "Other Non-Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "102"
@@ -2035,7 +2035,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非流动负债合计"
-msgstr ""
+msgstr "Total Non-Current Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "103"
@@ -2047,7 +2047,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同业和其它金融机构存放款项"
-msgstr ""
+msgstr "Deposits with Other Banks and Financial Institutions"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "104"
@@ -2059,7 +2059,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "衍生金融负债"
-msgstr ""
+msgstr "Derivative Financial Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "105"
@@ -2071,7 +2071,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "吸收存款"
-msgstr ""
+msgstr "Deposits"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "106"
@@ -2083,7 +2083,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "代理业务负债"
-msgstr ""
+msgstr "Agency Business Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "107"
@@ -2095,7 +2095,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他负债"
-msgstr ""
+msgstr "Other Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "108"
@@ -2107,7 +2107,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预收保费"
-msgstr ""
+msgstr "Premiums Receivable in Advance"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "109"
@@ -2119,7 +2119,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "存入保证金"
-msgstr ""
+msgstr "Deposits Received"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "110"
@@ -2131,7 +2131,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保户储金及投资款"
-msgstr ""
+msgstr "Policyholder Deposits and Investment Funds"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "111"
@@ -2143,7 +2143,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "未到期责任准备金"
-msgstr ""
+msgstr "Reserve for Unearned Premium"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "112"
@@ -2155,7 +2155,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "未决赔款准备金"
-msgstr ""
+msgstr "Reserve for Outstanding Claims"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "113"
@@ -2167,7 +2167,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "寿险责任准备金"
-msgstr ""
+msgstr "Reserve for Life Insurance"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "114"
@@ -2179,7 +2179,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "长期健康险责任准备金"
-msgstr ""
+msgstr "Reserve for Long-Term Health Insurance"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "115"
@@ -2191,7 +2191,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "独立账户负债"
-msgstr ""
+msgstr "Independent Account Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "116"
@@ -2203,7 +2203,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:质押借款"
-msgstr ""
+msgstr "Including: Pledge Borrowings"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "117"
@@ -2215,7 +2215,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应付赔付款"
-msgstr ""
+msgstr "Indemnity Payable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "118"
@@ -2227,7 +2227,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应付保单红利"
-msgstr ""
+msgstr "Policy Dividend Payable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "119"
@@ -2239,7 +2239,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "负债合计"
-msgstr ""
+msgstr "Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "120"
@@ -2251,7 +2251,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:库存股"
-msgstr ""
+msgstr "Minus: Treasury Shares"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "121"
@@ -2263,7 +2263,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "一般风险准备"
-msgstr ""
+msgstr "Ordinary Risk Reserve"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "122"
@@ -2275,7 +2275,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "外币报表折算差额"
-msgstr ""
+msgstr "Foreign Currency Translation Difference"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "123"
@@ -2287,7 +2287,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "未确认的投资损失"
-msgstr ""
+msgstr "Investment Loss Not Recognized"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "124"
@@ -2299,7 +2299,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "少数股东权益"
-msgstr ""
+msgstr "Minority Interests"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "125"
@@ -2311,7 +2311,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "股东权益合计(不含少数股东权益)"
-msgstr ""
+msgstr "Total Shareholders' Equity (Excluding Minority Interests)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "126"
@@ -2323,7 +2323,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "股东权益合计(含少数股东权益)"
-msgstr ""
+msgstr "Total Shareholders' Equity (Including Minority Interests)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "127"
@@ -2335,7 +2335,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "负债及股东权益总计"
-msgstr ""
+msgstr "Total Liabilities and Shareholders' Equity"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "128"
@@ -2347,7 +2347,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "长期应付职工薪酬"
-msgstr ""
+msgstr "Long-Term Payroll Payable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "129"
@@ -2367,7 +2367,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他权益工具"
-msgstr ""
+msgstr "Other Equity Instruments"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "131"
@@ -2379,7 +2379,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他权益工具(优先股)"
-msgstr ""
+msgstr "Other Equity Instruments (Preferred Shares)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "132"
@@ -2391,7 +2391,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "融出资金"
-msgstr ""
+msgstr "Lending Funds"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "133"
@@ -2403,7 +2403,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应收款项"
-msgstr ""
+msgstr "Accounts Receivable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "134"
@@ -2415,7 +2415,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应付短期融资款"
-msgstr ""
+msgstr "Short-Term Financing Payable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "135"
@@ -2427,7 +2427,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应付款项"
-msgstr ""
+msgstr "Payables"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "136"
@@ -2439,7 +2439,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "持有待售的资产"
-msgstr ""
+msgstr "Held-for-Sale Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "137"
@@ -2451,7 +2451,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "持有待售的负债"
-msgstr ""
+msgstr "Held-for-Sale Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "138"
@@ -2463,7 +2463,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "以摊余成本计量的金融资产"
-msgstr ""
+msgstr "Cost Financial Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "139"
@@ -2475,7 +2475,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "以公允价值计量且其变动计入其他综合收益的金融资产"
-msgstr ""
+msgstr "Fair Value Financial Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "140"
@@ -2487,7 +2487,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "在建工程(合计)(元)"
-msgstr ""
+msgstr "Construction in Progress (Total) (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "141"
@@ -2499,7 +2499,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他应付款(合计)(元)"
-msgstr ""
+msgstr "Other Payables (Total) (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "142"
@@ -2511,7 +2511,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "长期应付款(合计)(元)"
-msgstr ""
+msgstr "Long-Term Payables (Total) (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "143"
@@ -2523,7 +2523,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "债权投资(元)"
-msgstr ""
+msgstr "Debt Investment (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "144"
@@ -2535,7 +2535,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他债权投资(元)"
-msgstr ""
+msgstr "Other Debt Investment (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "145"
@@ -2547,7 +2547,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他权益工具投资(元)"
-msgstr ""
+msgstr "Other Equity Investment (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "146"
@@ -2559,7 +2559,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他非流动金融资产(元)"
-msgstr ""
+msgstr "Other Illiquid Financial Assets (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "147"
@@ -2571,7 +2571,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他权益工具:永续债(元)"
-msgstr ""
+msgstr "Other Equity Instruments: Perpetual Bonds (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "148"
@@ -2583,7 +2583,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应收款项融资"
-msgstr ""
+msgstr "Investment Receivables Financing"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "149"
@@ -2595,7 +2595,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "使用权资产"
-msgstr ""
+msgstr "Use Right Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "150"
@@ -2607,7 +2607,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "租赁负债"
-msgstr ""
+msgstr "Lease Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "151"
@@ -2619,7 +2619,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "合同资产"
-msgstr ""
+msgstr "Contract Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "152"
@@ -2631,7 +2631,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "合同负债"
-msgstr ""
+msgstr "Contract Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "153"
@@ -2643,7 +2643,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应收票据及应收账款"
-msgstr ""
+msgstr "Accounts Receivable and Notes Receivable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "154"
@@ -2655,7 +2655,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应付票据及应付账款"
-msgstr ""
+msgstr "Accounts Payable and Notes Payable"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "155"
@@ -2667,7 +2667,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他应收款(合计)(元)"
-msgstr ""
+msgstr "Other Receivables (Total) (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "156"
@@ -2679,7 +2679,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产(合计)(元)"
-msgstr ""
+msgstr "Fixed Assets (Total) (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "157"
@@ -2691,11 +2691,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md:275
 msgid "上市公司现金流量表: `cashflow`"
-msgstr ""
+msgstr "Cash Flow Statement of Listed Companies: `cashflow`"
 
 #: ../../source/manage_data/3. data_tables_40.md:278
 msgid "现金流量表是上市公司的财务报表之一，主要包括经营活动、投资活动、筹资活动等现金流量信息。"
-msgstr ""
+msgstr "Cash Flow Statement is one of the financial statements of listed companies, mainly including cash flow information of operating activities, investing activities, financing activities, etc."
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "net_profit"
@@ -2703,7 +2703,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润"
-msgstr ""
+msgstr "Net Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "finan_exp"
@@ -2711,7 +2711,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "财务费用"
-msgstr ""
+msgstr "Financial Expenses"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_fr_sale_sg"
@@ -2719,7 +2719,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售商品、提供劳务收到的现金"
-msgstr ""
+msgstr "Cash Received from Sale of Goods and Rendering of Services"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "recp_tax_rends"
@@ -2727,7 +2727,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到的税费返还"
-msgstr ""
+msgstr "Refunds of Taxes Received"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_depos_incr_fi"
@@ -2735,7 +2735,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "客户存款和同业存放款项净增加额"
-msgstr ""
+msgstr "Net Increase in Customer Deposits and Interbank Deposits"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_loans_cb"
@@ -2743,7 +2743,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "向中央银行借款净增加额"
-msgstr ""
+msgstr "Net Increase in Borrowings from Central Bank"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_inc_borr_oth_fi"
@@ -2751,7 +2751,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "向其他金融机构拆入资金净增加额"
-msgstr ""
+msgstr "Net Increase in Borrowings from Other Financial Institutions"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "prem_fr_orig_contr"
@@ -2759,7 +2759,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到原保险合同保费取得的现金"
-msgstr ""
+msgstr "Premiums Received from Original Insurance Contracts"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_insured_dep"
@@ -2767,7 +2767,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保户储金净增加额"
-msgstr ""
+msgstr "Net Increase in Policyholder Deposits"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_reinsur_prem"
@@ -2775,7 +2775,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到再保业务现金净额"
-msgstr ""
+msgstr "Net Cash Received from Reinsurance Business"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_disp_tfa"
@@ -2783,7 +2783,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "处置交易性金融资产净增加额"
-msgstr ""
+msgstr "Net Increase in Disposal of Trading Financial Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ifc_cash_incr"
@@ -2791,7 +2791,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收取利息和手续费净增加额"
-msgstr ""
+msgstr "Increase in Interest and Fees Received"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_disp_faas"
@@ -2799,7 +2799,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "处置可供出售金融资产净增加额"
-msgstr ""
+msgstr "Net Increase in Disposal of Available-for-Sale Financial Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_loans_oth_bank"
@@ -2807,7 +2807,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "拆入资金净增加额"
-msgstr ""
+msgstr "Net Increase in Borrowings"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_cap_incr_repur"
@@ -2815,7 +2815,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "回购业务资金净增加额"
-msgstr ""
+msgstr "Net Increase in Repurchase Business Funds"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_fr_oth_operate_a"
@@ -2823,7 +2823,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到其他与经营活动有关的现金"
-msgstr ""
+msgstr "Cash Received from Other Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_inf_fr_operate_a"
@@ -2831,7 +2831,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动现金流入小计"
-msgstr ""
+msgstr "Cash Inflow from Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_paid_goods_s"
@@ -2839,7 +2839,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "购买商品、接受劳务支付的现金"
-msgstr ""
+msgstr "Cash Paid for Purchase of Goods and Services"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_paid_to_for_empl"
@@ -2847,7 +2847,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付给职工以及为职工支付的现金"
-msgstr ""
+msgstr "Cash Paid to Employees and for Employees"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_paid_for_taxes"
@@ -2855,7 +2855,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付的各项税费"
-msgstr ""
+msgstr "Cash Paid for Taxes"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_clt_loan_adv"
@@ -2863,7 +2863,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "客户贷款及垫款净增加额"
-msgstr ""
+msgstr "Net Increase in Loans and Advances to Customers"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_dep_cbob"
@@ -2871,7 +2871,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "存放央行和同业款项净增加额"
-msgstr ""
+msgstr "Net Increase in Deposits with Central Bank and Interbank"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_pay_claims_orig_inco"
@@ -2879,7 +2879,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付原保险合同赔付款项的现金"
-msgstr ""
+msgstr "Cash Paid for Original Insurance Contract Claims"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "pay_handling_chrg"
@@ -2887,7 +2887,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付手续费的现金"
-msgstr ""
+msgstr "Cash Paid for Handling Charges"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "pay_comm_insur_plcy"
@@ -2895,7 +2895,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付保单红利的现金"
-msgstr ""
+msgstr "Cash Paid for Policy Dividends"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_cash_pay_oper_act"
@@ -2903,7 +2903,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付其他与经营活动有关的现金"
-msgstr ""
+msgstr "Other Cash Payments Related to Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "st_cash_out_act"
@@ -2911,7 +2911,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动现金流出小计"
-msgstr ""
+msgstr "Sum of Cash Outflows from Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_cashflow_act"
@@ -2919,7 +2919,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额"
-msgstr ""
+msgstr "Net Cash Flow from Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_recp_ral_inv_act"
@@ -2927,7 +2927,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到其他与投资活动有关的现金"
-msgstr ""
+msgstr "Other Cash Received Related to Investment Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_disp_withdrwl_invest"
@@ -2935,7 +2935,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收回投资收到的现金"
-msgstr ""
+msgstr "Cash Received from Investment Recovery"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_recp_return_invest"
@@ -2943,7 +2943,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "取得投资收益收到的现金"
-msgstr ""
+msgstr "Cash Received from Investment Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_recp_disp_fiolta"
@@ -2951,7 +2951,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "处置固定资产、无形资产和其他长期资产收回的现金净额"
-msgstr ""
+msgstr "Net Cash Received from Disposal of Fixed Assets, Intangible Assets and Other Long-Term Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_recp_disp_sobu"
@@ -2959,7 +2959,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "处置子公司及其他营业单位收到的现金净额"
-msgstr ""
+msgstr "Net Cash Received from Disposal of Subsidiaries and Other Operating Units"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "stot_inflows_inv_act"
@@ -2967,7 +2967,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投资活动现金流入小计"
-msgstr ""
+msgstr "Subtotal Cash Inflows from Investment Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_pay_acq_const_fiolta"
@@ -2975,7 +2975,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "购建固定资产、无形资产和其他长期资产支付的现金"
-msgstr ""
+msgstr "Cash Paid for Acquisition of Fixed Assets, Intangible Assets and Other Long-Term Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_paid_invest"
@@ -2983,7 +2983,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投资支付的现金"
-msgstr ""
+msgstr "Cash Paid for Investment"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_disp_subs_oth_biz"
@@ -2991,7 +2991,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "取得子公司及其他营业单位支付的现金净额"
-msgstr ""
+msgstr "Net Cash Paid for Acquiring Subsidiaries and Other Operating Units"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_pay_ral_inv_act"
@@ -2999,7 +2999,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付其他与投资活动有关的现金"
-msgstr ""
+msgstr "Other Cash Payments Related to Investment Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_pledge_loan"
@@ -3007,7 +3007,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "质押贷款净增加额"
-msgstr ""
+msgstr "Net Increase in Pledged Loans"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "stot_out_inv_act"
@@ -3015,7 +3015,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投资活动现金流出小计"
-msgstr ""
+msgstr "Subtotal Cash Outflows from Investment Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_cashflow_inv_act"
@@ -3023,7 +3023,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投资活动产生的现金流量净额"
-msgstr ""
+msgstr "Net Cash Flow from Investment Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_recp_borrow"
@@ -3031,7 +3031,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "取得借款收到的现金"
-msgstr ""
+msgstr "Cash Received from Borrowings"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "proc_issue_bonds"
@@ -3039,7 +3039,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "发行债券收到的现金"
-msgstr ""
+msgstr "Proceeds from Bond Issuance"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_cash_recp_ral_fnc_act"
@@ -3047,7 +3047,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "收到其他与筹资活动有关的现金"
-msgstr ""
+msgstr "Other Cash Received Related to Financing Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "stot_cash_in_fnc_act"
@@ -3055,7 +3055,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "筹资活动现金流入小计"
-msgstr ""
+msgstr "Subtotal Cash Inflows from Financing Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "free_cashflow"
@@ -3063,7 +3063,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "企业自由现金流量"
-msgstr ""
+msgstr "Free Cash Flow"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_prepay_amt_borr"
@@ -3071,7 +3071,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "偿还债务支付的现金"
-msgstr ""
+msgstr "Cash Paid for Debt Repayment"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_pay_dist_dpcp_int_exp"
@@ -3079,7 +3079,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "分配股利、利润或偿付利息支付的现金"
-msgstr ""
+msgstr "Cash Paid for Distribution of Dividends, Profits or Interest"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "incl_dvd_profit_paid_sc_ms"
@@ -3087,7 +3087,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:子公司支付给少数股东的股利、利润"
-msgstr ""
+msgstr "Including: Dividends and Profits Paid to Minority Shareholders by Subsidiaries"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_cashpay_ral_fnc_act"
@@ -3095,7 +3095,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "支付其他与筹资活动有关的现金"
-msgstr ""
+msgstr "Other Cash Payments Related to Financing Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "stot_cashout_fnc_act"
@@ -3103,7 +3103,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "筹资活动现金流出小计"
-msgstr ""
+msgstr "Subtotal Cash Outflows from Financing Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_cash_flows_fnc_act"
@@ -3111,7 +3111,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "筹资活动产生的现金流量净额"
-msgstr ""
+msgstr "Net Cash Flow from Financing Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eff_fx_flu_cash"
@@ -3119,7 +3119,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "汇率变动对现金的影响"
-msgstr ""
+msgstr "Effect of Exchange Rate Changes on Cash"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "n_incr_cash_cash_equ"
@@ -3127,7 +3127,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "现金及现金等价物净增加额"
-msgstr ""
+msgstr "Net Increase in Cash and Cash Equivalents"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_cash_equ_beg_period"
@@ -3135,7 +3135,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "期初现金及现金等价物余额"
-msgstr ""
+msgstr "Cash and Cash Equivalents at Beginning of Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_cash_equ_end_period"
@@ -3143,7 +3143,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "期末现金及现金等价物余额"
-msgstr ""
+msgstr "Cash and Cash Equivalents at End of Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "c_recp_cap_contrib"
@@ -3151,7 +3151,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "吸收投资收到的现金"
-msgstr ""
+msgstr "Cash Received from Capital Contributions"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "incl_cash_rec_saims"
@@ -3159,7 +3159,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其中:子公司吸收少数股东投资收到的现金"
-msgstr ""
+msgstr "Including: Cash Received from Minority Shareholders' Investment in Subsidiaries"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "uncon_invest_loss"
@@ -3167,7 +3167,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "未确认投资损失"
-msgstr ""
+msgstr "Unrecognized Investment Loss"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "prov_depr_assets"
@@ -3175,7 +3175,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:资产减值准备"
-msgstr ""
+msgstr "Add: Asset Impairment Provision"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "depr_fa_coga_dpba"
@@ -3183,7 +3183,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产折旧、油气资产折耗、生产性生物资产折旧"
-msgstr ""
+msgstr "Depreciation of Fixed Assets, Depletion of Oil and Gas Assets, Depreciation of Productive Biological Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "amort_intang_assets"
@@ -3191,7 +3191,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "无形资产摊销"
-msgstr ""
+msgstr "Amortization of Intangible Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "lt_amort_deferred_exp"
@@ -3199,7 +3199,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "长期待摊费用摊销"
-msgstr ""
+msgstr "Long-Term Deferred Expenses Amortization"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "decr_deferred_exp"
@@ -3207,7 +3207,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "待摊费用减少"
-msgstr ""
+msgstr "Decrease in Deferred Expenses"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "incr_acc_exp"
@@ -3215,7 +3215,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预提费用增加"
-msgstr ""
+msgstr "Increase in Accrued Expenses"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "loss_disp_fiolta"
@@ -3223,7 +3223,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "处置固定、无形资产和其他长期资产的损失"
-msgstr ""
+msgstr "Loss on Disposal of Fixed Assets, Intangible Assets and Other Long-Term Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "loss_scr_fa"
@@ -3231,7 +3231,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产报废损失"
-msgstr ""
+msgstr "Loss on Disposal of Fixed Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "loss_fv_chg"
@@ -3239,7 +3239,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "公允价值变动损失"
-msgstr ""
+msgstr "Loss on Fair Value Changes"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "invest_loss"
@@ -3247,7 +3247,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "投资损失"
-msgstr ""
+msgstr "Investment Loss"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "decr_def_inc_tax_assets"
@@ -3255,7 +3255,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "递延所得税资产减少"
-msgstr ""
+msgstr "Decrease in Deferred Tax Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "incr_def_inc_tax_liab"
@@ -3263,7 +3263,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "递延所得税负债增加"
-msgstr ""
+msgstr "Increase in Deferred Tax Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "decr_inventories"
@@ -3271,7 +3271,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "存货的减少"
-msgstr ""
+msgstr "Decrease in Inventories"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "decr_oper_payable"
@@ -3279,7 +3279,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营性应收项目的减少"
-msgstr ""
+msgstr "Decrease in Operating Receivables"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "incr_oper_payable"
@@ -3287,7 +3287,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营性应付项目的增加"
-msgstr ""
+msgstr "Increase in Operating Payables"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "others"
@@ -3295,7 +3295,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "其他"
-msgstr ""
+msgstr "Others"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "im_net_cashflow_oper_act"
@@ -3303,7 +3303,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额(间接法)"
-msgstr ""
+msgstr "Indirect Method of Net Cash Flow from Operating Activities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "conv_debt_into_cap"
@@ -3311,7 +3311,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "债务转为资本"
-msgstr ""
+msgstr "Conversion of Debt into Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "conv_copbonds_due_within_1y"
@@ -3319,7 +3319,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "一年内到期的可转换公司债券"
-msgstr ""
+msgstr "Convertible Corporate Bonds Due within One Year"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fa_fnc_leases"
@@ -3327,7 +3327,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "融资租入固定资产"
-msgstr ""
+msgstr "Finance Lease of Fixed Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "im_n_incr_cash_equ"
@@ -3335,7 +3335,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "现金及现金等价物净增加额(间接法)"
-msgstr ""
+msgstr "Indirect Method of Net Increase in Cash and Cash Equivalents"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "net_dism_capital_add"
@@ -3343,7 +3343,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "拆出资金净增加额"
-msgstr ""
+msgstr "Net Increase in Funds Disbursed"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "net_cash_rece_sec"
@@ -3351,7 +3351,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "代理买卖证券收到的现金净额(元)"
-msgstr ""
+msgstr "Net Cash Received from Securities Trading (CNY)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "use_right_asset_dep"
@@ -3359,7 +3359,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "使用权资产折旧"
-msgstr ""
+msgstr "Use Right Asset Depreciation"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "oth_loss_asset"
@@ -3371,7 +3371,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "现金的期末余额"
-msgstr ""
+msgstr "Ending Balance of Cash"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "beg_bal_cash"
@@ -3379,7 +3379,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:现金的期初余额"
-msgstr ""
+msgstr "Minus: Beginning Balance of Cash"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "end_bal_cash_equ"
@@ -3387,7 +3387,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "加:现金等价物的期末余额"
-msgstr ""
+msgstr "Add: Ending Balance of Cash Equivalents"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "beg_bal_cash_equ"
@@ -3395,19 +3395,19 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "减:现金等价物的期初余额"
-msgstr ""
+msgstr "Minus: Beginning Balance of Cash Equivalents"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "更新标志(1最新)"
-msgstr ""
+msgstr "Update Flag (1 Latest)"
 
 #: ../../source/manage_data/3. data_tables_40.md:380
 msgid "上市公司财务指标: `financial`"
-msgstr ""
+msgstr "Financial Indicators of Listed Companies: `financial`"
 
 #: ../../source/manage_data/3. data_tables_40.md:383
 msgid "财务指标表是上市公司的财务报表之一，主要包括每股指标、盈利能力指标、成长能力指标、偿债能力指标、现金流量指标等。"
-msgstr ""
+msgstr "Financial Indicators Table is one of the financial statements of listed companies, mainly including per-share indicators, profitability indicators, growth ability indicators, solvency indicators, cash flow indicators, etc."
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eps"
@@ -3423,7 +3423,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股营业总收入"
-msgstr ""
+msgstr "Total Revenue per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "revenue_ps"
@@ -3431,7 +3431,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股营业收入"
-msgstr ""
+msgstr "Revenue per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "capital_rese_ps"
@@ -3439,7 +3439,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股资本公积"
-msgstr ""
+msgstr "Capital Reserve per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "surplus_rese_ps"
@@ -3447,7 +3447,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股盈余公积"
-msgstr ""
+msgstr "Surplus Reserve per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "undist_profit_ps"
@@ -3455,7 +3455,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股未分配利润"
-msgstr ""
+msgstr "Undistributed Profit per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "extra_item"
@@ -3463,7 +3463,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "非经常性损益"
-msgstr ""
+msgstr "Extraordinary Items"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "profit_dedt"
@@ -3471,7 +3471,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "扣除非经常性损益后的净利润(扣非净利润)"
-msgstr ""
+msgstr "Profit Deducted Non-Recurring Items (Net Profit Deducted Non-Recurring Items)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "gross_margin"
@@ -3479,7 +3479,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "毛利"
-msgstr ""
+msgstr "Gross Margin"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "current_ratio"
@@ -3487,7 +3487,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "流动比率"
-msgstr ""
+msgstr "Current Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "quick_ratio"
@@ -3495,7 +3495,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "速动比率"
-msgstr ""
+msgstr "Quick Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cash_ratio"
@@ -3503,7 +3503,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "保守速动比率"
-msgstr ""
+msgstr "Cash Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "invturn_days"
@@ -3511,7 +3511,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "存货周转天数"
-msgstr ""
+msgstr "Inventory Turnover Days"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "arturn_days"
@@ -3519,7 +3519,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应收账款周转天数"
-msgstr ""
+msgstr "Accounts Receivable Turnover Days"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "inv_turn"
@@ -3527,7 +3527,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "存货周转率"
-msgstr ""
+msgstr "Inventory Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ar_turn"
@@ -3535,7 +3535,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "应收账款周转率"
-msgstr ""
+msgstr "Accounts Receivable Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ca_turn"
@@ -3543,7 +3543,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "流动资产周转率"
-msgstr ""
+msgstr "Current Asset Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fa_turn"
@@ -3551,7 +3551,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产周转率"
-msgstr ""
+msgstr "Fixed Asset Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "assets_turn"
@@ -3559,7 +3559,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产周转率"
-msgstr ""
+msgstr "Assets Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_income"
@@ -3567,7 +3567,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动净收益"
-msgstr ""
+msgstr "Operating Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "valuechange_income"
@@ -3575,7 +3575,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "价值变动净收益"
-msgstr ""
+msgstr "Value Change Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "interst_income"
@@ -3583,7 +3583,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利息费用"
-msgstr ""
+msgstr "Interest Expense"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "daa"
@@ -3591,7 +3591,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "折旧与摊销"
-msgstr ""
+msgstr "Depreciation and Amortization"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fcff"
@@ -3603,7 +3603,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "股权自由现金流量"
-msgstr ""
+msgstr "Free Cash Flow to Equity"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "current_exint"
@@ -3611,7 +3611,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "无息流动负债"
-msgstr ""
+msgstr "Current Non-Interest Bearing Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "noncurrent_exint"
@@ -3619,7 +3619,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "无息非流动负债"
-msgstr ""
+msgstr "Non-Current Non-Interest Bearing Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "interestdebt"
@@ -3627,7 +3627,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "带息债务"
-msgstr ""
+msgstr "Interest-Bearing Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "netdebt"
@@ -3635,7 +3635,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净债务"
-msgstr ""
+msgstr "Net Debt"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tangible_asset"
@@ -3643,7 +3643,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "有形资产"
-msgstr ""
+msgstr "Tangible Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "working_capital"
@@ -3651,7 +3651,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营运资金"
-msgstr ""
+msgstr "Working Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "networking_capital"
@@ -3659,7 +3659,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营运流动资本"
-msgstr ""
+msgstr "Networking Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "invest_capital"
@@ -3667,7 +3667,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "全部投入资本"
-msgstr ""
+msgstr "Invested Capital"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "retained_earnings"
@@ -3675,7 +3675,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "留存收益"
-msgstr ""
+msgstr "Retained Earnings"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "diluted2_eps"
@@ -3683,7 +3683,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "期末摊薄每股收益"
-msgstr ""
+msgstr "Diluted Earnings Per Share at End of Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "bps"
@@ -3691,7 +3691,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股净资产"
-msgstr ""
+msgstr "Book Value Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocfps"
@@ -3699,7 +3699,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股经营活动产生的现金流量净额"
-msgstr ""
+msgstr "Operating Cash Flow Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "retainedps"
@@ -3707,7 +3707,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股留存收益"
-msgstr ""
+msgstr "Retained Earnings Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cfps"
@@ -3715,7 +3715,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股现金流量净额"
-msgstr ""
+msgstr "Cash Flow Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ebit_ps"
@@ -3723,7 +3723,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股息税前利润"
-msgstr ""
+msgstr "Earnings Before Interest and Taxes Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fcff_ps"
@@ -3731,7 +3731,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股企业自由现金流量"
-msgstr ""
+msgstr "Free Cash Flow to Firm Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "fcfe_ps"
@@ -3739,7 +3739,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股股东自由现金流量"
-msgstr ""
+msgstr "Free Cash Flow to Equity Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "netprofit_margin"
@@ -3747,7 +3747,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售净利率"
-msgstr ""
+msgstr "Net Profit Margin"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "grossprofit_margin"
@@ -3755,7 +3755,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售毛利率"
-msgstr ""
+msgstr "Gross Profit Margin"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cogs_of_sales"
@@ -3763,7 +3763,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售成本率"
-msgstr ""
+msgstr "Cost of Goods Sold to Sales Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "expense_of_sales"
@@ -3771,7 +3771,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售期间费用率"
-msgstr ""
+msgstr "Expense of Sales Period Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "profit_to_gr"
@@ -3779,7 +3779,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润/营业总收入"
-msgstr ""
+msgstr "Profit to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "saleexp_to_gr"
@@ -3787,7 +3787,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售费用/营业总收入"
-msgstr ""
+msgstr "Sales Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "adminexp_of_gr"
@@ -3795,7 +3795,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "管理费用/营业总收入"
-msgstr ""
+msgstr "Administrative Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "finaexp_of_gr"
@@ -3803,7 +3803,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "财务费用/营业总收入"
-msgstr ""
+msgstr "Financial Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "impai_ttm"
@@ -3811,7 +3811,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "资产减值损失/营业总收入"
-msgstr ""
+msgstr "Financial Impairment Loss to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "gc_of_gr"
@@ -3819,7 +3819,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总成本/营业总收入"
-msgstr ""
+msgstr "Gross Cost to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_of_gr"
@@ -3827,7 +3827,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润/营业总收入"
-msgstr ""
+msgstr "Operating Profit to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ebit_of_gr"
