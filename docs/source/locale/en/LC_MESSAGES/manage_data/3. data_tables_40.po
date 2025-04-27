@@ -4267,7 +4267,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润／负债合计"
-msgstr ""
+msgstr "Operating Profit to Total Liabilities"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roic_yearly"
@@ -4275,7 +4275,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "年化投入资本回报率"
-msgstr ""
+msgstr "Return on Invested Capital Annualized"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "total_fa_trun"
@@ -4283,7 +4283,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "固定资产合计周转率"
-msgstr ""
+msgstr "Total Fixed Asset Turnover Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "profit_to_op"
@@ -4291,7 +4291,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利润总额／营业收入"
-msgstr ""
+msgstr "Profit to Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_opincome"
@@ -4299,7 +4299,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动单季度净收益"
-msgstr ""
+msgstr "Quarterly Operating Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_investincome"
@@ -4307,7 +4307,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "价值变动单季度净收益"
-msgstr ""
+msgstr "Quarterly Value Change Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_dtprofit"
@@ -4315,7 +4315,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "扣除非经常损益后的单季度净利润"
-msgstr ""
+msgstr "Quarterly Deducted Non-Recurring Items Net Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_eps"
@@ -4323,7 +4323,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股收益(单季度)"
-msgstr ""
+msgstr "Quarterly Earnings Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_netprofit_margin"
@@ -4331,7 +4331,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售净利率(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit Margin"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_gsprofit_margin"
@@ -4339,7 +4339,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售毛利率(单季度)"
-msgstr ""
+msgstr "Quarterly Gross Profit Margin"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_exp_to_sales"
@@ -4347,7 +4347,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售期间费用率(单季度)"
-msgstr ""
+msgstr "Quarterly Expense of Sales Period Ratio"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_profit_to_gr"
@@ -4355,7 +4355,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Profit to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_saleexp_to_gr"
@@ -4363,7 +4363,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售费用／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Sales Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_adminexp_to_gr"
@@ -4371,7 +4371,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "管理费用／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Administrative Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_finaexp_to_gr"
@@ -4379,7 +4379,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "财务费用／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Financial Expense to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_impair_to_gr_ttm"
@@ -4387,7 +4387,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "资产减值损失／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Financial Impairment Loss to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_gc_to_gr"
@@ -4395,7 +4395,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总成本／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Gross Cost to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_op_to_gr"
@@ -4403,7 +4403,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润／营业总收入(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Profit to Gross Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_roe"
@@ -4411,7 +4411,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产收益率(单季度)"
-msgstr ""
+msgstr "Quarterly Return on Equity"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_dt_roe"
@@ -4419,7 +4419,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产单季度收益率(扣除非经常损益)"
-msgstr ""
+msgstr "Quarterly Return on Equity (Deducting Non-Recurring Items)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_npta"
@@ -4427,7 +4427,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产净利润(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit to Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_opincome_to_ebt"
@@ -4435,7 +4435,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动净收益／利润总额(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Income to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_investincome_to_ebt"
@@ -4443,7 +4443,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "价值变动净收益／利润总额(单季度)"
-msgstr ""
+msgstr "Quarterly Investment Income to Earnings Before Tax"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_dtprofit_to_profit"
@@ -4451,7 +4451,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "扣除非经常损益后的净利润／净利润(单季度)"
-msgstr ""
+msgstr "Quarterly Deducted Non-Recurring Items Net Profit to Net Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_salescash_to_or"
@@ -4459,7 +4459,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "销售商品提供劳务收到的现金／营业收入(单季度)"
-msgstr ""
+msgstr "Quarterly Sales of Goods and Services Received Cash to Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_ocf_to_sales"
@@ -4467,7 +4467,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额／营业收入(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Cash Flow to Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_ocf_to_or"
@@ -4475,7 +4475,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额／经营活动净收益(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Cash Flow to Operating Income"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "basic_eps_yoy"
@@ -4483,7 +4483,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "基本每股收益同比增长率(%)"
-msgstr ""
+msgstr "Basic Earnings Per Share Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "dt_eps_yoy"
@@ -4491,7 +4491,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "稀释每股收益同比增长率(%)"
-msgstr ""
+msgstr "Diluted Earnings Per Share Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "cfps_yoy"
@@ -4499,7 +4499,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股经营活动产生的现金流量净额同比增长率(%)"
-msgstr ""
+msgstr "Cash Flow Per Share Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_yoy"
@@ -4507,7 +4507,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润同比增长率(%)"
-msgstr ""
+msgstr "Operating Profit Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ebt_yoy"
@@ -4515,7 +4515,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利润总额同比增长率(%)"
-msgstr ""
+msgstr "Earnings Before Tax Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "netprofit_yoy"
@@ -4523,7 +4523,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属母公司股东的净利润同比增长率(%)"
-msgstr ""
+msgstr "Net Profit Attributable to Parent Company Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "dt_netprofit_yoy"
@@ -4531,7 +4531,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属母公司股东的净利润-扣除非经常损益同比增长率(%)"
-msgstr ""
+msgstr "Deducted Non-Recurring Items Net Profit Attributable to Parent Company Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "ocf_yoy"
@@ -4539,7 +4539,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "经营活动产生的现金流量净额同比增长率(%)"
-msgstr ""
+msgstr "Operating Cash Flow Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "roe_yoy"
@@ -4547,7 +4547,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产收益率(摊薄)同比增长率(%)"
-msgstr ""
+msgstr "Return on Equity (Diluted) Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "bps_yoy"
@@ -4555,7 +4555,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股净资产相对年初增长率(%)"
-msgstr ""
+msgstr "Book Value Per Share Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "assets_yoy"
@@ -4563,7 +4563,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "资产总计相对年初增长率(%)"
-msgstr ""
+msgstr "Assets Total Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eqt_yoy"
@@ -4571,7 +4571,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属母公司的股东权益相对年初增长率(%)"
-msgstr ""
+msgstr "Equity Attributable to Parent Company Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tr_yoy"
@@ -4579,7 +4579,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总收入同比增长率(%)"
-msgstr ""
+msgstr "Total Revenue Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "or_yoy"
@@ -4587,7 +4587,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业收入同比增长率(%)"
-msgstr ""
+msgstr "Operating Revenue Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_gr_yoy"
@@ -4595,7 +4595,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总收入同比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Total Revenue Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_gr_qoq"
@@ -4603,7 +4603,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业总收入环比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Total Revenue Quarter-on-Quarter Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_sales_yoy"
@@ -4611,7 +4611,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业收入同比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Revenue Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "q_sales_qoq"
@@ -4619,7 +4619,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业收入环比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Revenue Quarter-on-Quarter Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "158"
@@ -4631,7 +4631,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润同比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Profit Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "159"
@@ -4643,7 +4643,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润环比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Operating Profit Quarter-on-Quarter Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "160"
@@ -4655,7 +4655,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润同比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "161"
@@ -4667,7 +4667,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润环比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit Quarter-on-Quarter Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "162"
@@ -4679,7 +4679,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属母公司股东的净利润同比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit Attributable to Parent Company Year-on-Year Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "163"
@@ -4691,7 +4691,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "归属母公司股东的净利润环比增长率(%)(单季度)"
-msgstr ""
+msgstr "Quarterly Net Profit Attributable to Parent Company Quarter-on-Quarter Growth Rate (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "164"
@@ -4703,7 +4703,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产同比增长率"
-msgstr ""
+msgstr "Equity Year-on-Year Growth Rate"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "165"
@@ -4715,11 +4715,11 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md:555
 msgid "上市公司财报预测: `forecast`"
-msgstr ""
+msgstr "Forecast of Listed Company Financial Report"
 
 #: ../../source/manage_data/3. data_tables_40.md:558
 msgid "财报预测表是上市公司的财务报表之一，主要包括业绩预告、业绩快报、业绩预测等。"
-msgstr ""
+msgstr "Forecast Table is one of the financial statements of listed companies, mainly including performance forecast, performance express, performance forecast, etc."
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "type"
@@ -4727,7 +4727,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "业绩预告类型"
-msgstr ""
+msgstr "Forecast Type"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "p_change_min"
@@ -4739,7 +4739,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预告净利润变动幅度下限(%)"
-msgstr ""
+msgstr "Forecasted Net Profit Change Lower Limit (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "p_change_max"
@@ -4747,7 +4747,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预告净利润变动幅度上限(%)"
-msgstr ""
+msgstr "Forecasted Net Profit Change Upper Limit (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "net_profit_min"
@@ -4755,7 +4755,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预告净利润下限(万元)"
-msgstr ""
+msgstr "Forecasted Net Profit Lower Limit (10,000 Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "net_profit_max"
@@ -4763,7 +4763,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "预告净利润上限(万元)"
-msgstr ""
+msgstr "Forecasted Net Profit Upper Limit (10,000 Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "last_parent_net"
@@ -4771,7 +4771,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "上年同期归属母公司净利润"
-msgstr ""
+msgstr "Last Year Same Period Net Profit Attributable to Parent Company"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "first_ann_date"
@@ -4779,7 +4779,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "首次公告日"
-msgstr ""
+msgstr "First Announcement Date"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "summary"
@@ -4791,7 +4791,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "业绩预告摘要"
-msgstr ""
+msgstr "Forecast Summary"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "change_reason"
@@ -4799,43 +4799,43 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "业绩变动原因"
-msgstr ""
+msgstr "Change Reason"
 
 #: ../../source/manage_data/3. data_tables_40.md:575
 msgid "上市公司财报快报: `express`"
-msgstr ""
+msgstr "Express of Listed Company Financial Report"
 
 #: ../../source/manage_data/3. data_tables_40.md:578
 msgid "财报快报表是上市公司的财务报表之一，主要包括业绩快报、业绩预告、业绩预测等。"
-msgstr ""
+msgstr "Express Table is one of the financial statements of listed companies, mainly including performance express, performance forecast, performance forecast, etc."
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业收入(元)"
-msgstr ""
+msgstr "Operating Revenue (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "营业利润(元)"
-msgstr ""
+msgstr "Operating Profit (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "利润总额(元)"
-msgstr ""
+msgstr "Total Profit (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净利润(元)"
-msgstr ""
+msgstr "Net Profit (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "总资产(元)"
-msgstr ""
+msgstr "Total Assets (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "股东权益合计(不含少数股东权益)(元)"
-msgstr ""
+msgstr "Total Equity (Excluding Minority Interests) (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "每股收益(摊薄)(元)"
-msgstr ""
+msgstr "Earnings Per Share (Diluted) (Yuan)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "diluted_roe"
@@ -4843,7 +4843,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "净资产收益率(摊薄)(%)"
-msgstr ""
+msgstr "Diluted Return on Equity (%)"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_net_profit"
@@ -4851,7 +4851,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期修正后净利润"
-msgstr ""
+msgstr "Year-on-Year Adjusted Net Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_sales"
@@ -4859,7 +4859,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增长率:营业收入"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Operating Revenue"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_op"
@@ -4867,7 +4867,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增长率:营业利润"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Operating Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_tp"
@@ -4875,7 +4875,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增长率:利润总额"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Total Profit"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_dedu_np"
@@ -4883,7 +4883,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增长率:归属母公司股东的净利润"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Net Profit Attributable to Parent Company"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_eps"
@@ -4891,7 +4891,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增长率:基本每股收益"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Basic Earnings Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_roe"
@@ -4899,7 +4899,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "同比增减:加权平均净资产收益率"
-msgstr ""
+msgstr "Year-on-Year Change: Weighted Average Return on Equity"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "growth_assets"
@@ -4907,7 +4907,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "比年初增长率:总资产"
-msgstr ""
+msgstr "Growth Rate Compared to Beginning of Year: Total Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "yoy_equity"
@@ -4915,7 +4915,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "比年初增长率:归属母公司的股东权益"
-msgstr ""
+msgstr "Year-on-Year Growth Rate: Equity Attributable to Parent Company"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "growth_bps"
@@ -4923,7 +4923,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "比年初增长率:归属于母公司股东的每股净资产"
-msgstr ""
+msgstr "Growth Rate Compared to Beginning of Year: Book Value Per Share Attributable to Parent Company"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "or_last_year"
@@ -4931,7 +4931,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期营业收入"
-msgstr ""
+msgstr "Operating Revenue Last Year Same Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "op_last_year"
@@ -4939,7 +4939,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期营业利润"
-msgstr ""
+msgstr "Operating Profit Last Year Same Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "tp_last_year"
@@ -4947,7 +4947,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期利润总额"
-msgstr ""
+msgstr "Total Profit Last Year Same Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "np_last_year"
@@ -4955,7 +4955,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期净利润"
-msgstr ""
+msgstr "Net Profit Last Year Same Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "eps_last_year"
@@ -4963,7 +4963,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "去年同期每股收益"
-msgstr ""
+msgstr "Earnings Per Share Last Year Same Period"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "open_net_assets"
@@ -4971,7 +4971,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "期初净资产"
-msgstr ""
+msgstr "Opening Net Assets"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "open_bps"
@@ -4979,7 +4979,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "期初每股净资产"
-msgstr ""
+msgstr "Opening Book Value Per Share"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "perf_summary"
@@ -4987,7 +4987,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "业绩简要说明"
-msgstr ""
+msgstr "Performance Summary"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "is_audit"
@@ -4995,7 +4995,7 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "是否审计： 1是 0否"
-msgstr ""
+msgstr "Is Audited: 1 Yes 0 No"
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "remark"
@@ -5003,5 +5003,5 @@ msgstr ""
 
 #: ../../source/manage_data/3. data_tables_40.md
 msgid "备注"
-msgstr ""
+msgstr "Remark"
 
