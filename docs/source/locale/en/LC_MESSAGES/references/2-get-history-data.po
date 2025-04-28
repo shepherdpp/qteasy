@@ -99,23 +99,23 @@ msgstr "Following parameters are used to establish a DataSource object connected
 
 #: ../../source/references/2-get-history-data.md:40
 msgid "可以通过connection_type属性了解DataSource对象的连接性质"
-msgstr ""
+msgstr "You can learn about the connection nature of the DataSource object through the connection_type attribute"
 
 #: ../../source/references/2-get-history-data.md:54
 msgid "使用下面的参数可以建立一个使用本地文件夹的`DataSource`对象"
-msgstr ""
+msgstr "Following parameters can be used to establish a `DataSource` object using the local folder"
 
 #: ../../source/references/2-get-history-data.md:71
 msgid "使用`qt.configuration`可以查看当前的配置变量，使用`qt.QT_DATA_SOURCE`可以查看当前数据源的类型和参数"
-msgstr ""
+msgstr "View the current configuration variables using `qt.configuration`, and view the type and parameters of the current data source using `qt.QT_DATA_SOURCE`"
 
 #: ../../source/references/2-get-history-data.md:86
 msgid "历史数据类型"
-msgstr ""
+msgstr "Historical Data Types"
 
 #: ../../source/references/2-get-history-data.md:88
 msgid "qteasy可以管理多种不同的数据类型，自动下载这些类型的数据并储存在本地，供交易策略调用。每一种数据都有一个内置的数据id（data_id），根据这个data_id，用户可以查看、读取、下载相应的数据。"
-msgstr ""
+msgstr "qteasy can manage multiple data types, automatically download these types of data, and store them locally for trading strategies to call. Each type of data has a built-in data ID (data_id). Based on this data_id, users can view, read, and download the corresponding data."
 
 #: ../../source/references/2-get-history-data.md:90
 msgid ""
@@ -128,20 +128,24 @@ msgid ""
 "`qt.find_history_data()`可以查找qteasy内置的所有数据类型，列出数据的id，资产类型和频率，以及数据的详细说明。 "
 "使用`qt.get_history_data()`并将找到的数据id作为参数传入，则可以直接查看已经下载的历史数据"
 msgstr ""
+"`qt.find_history_data()` can find all built-in data types in qteasy, listing the data ID, asset type, frequency, and detailed description of the data. "
+"Using `qt.get_history_data()` and passing the found data ID as a parameter, you can directly view the downloaded historical data."
 
 #: ../../source/references/2-get-history-data.md:99
 msgid "输出如下："
-msgstr ""
+msgstr "Output is as follows:"
 
 #: ../../source/references/2-get-history-data.md:142
 msgid "检查本地数据源的数据"
-msgstr ""
+msgstr "Check local data source data"
 
 #: ../../source/references/2-get-history-data.md:143
 msgid ""
 "使用`qt.get_table_overview()`可以查看当前数据源中已经下载的数据量 "
 "当数据量较大时，需要花费几分钟时间分析所有的数据，并打印本地数据源中数据表的数据量、占用磁盘空间以及数据范围"
 msgstr ""
+"Using `qt.get_table_overview()` you can view the amount of data already downloaded in the current data source. "
+"When the amount of data is large, it takes a few minutes to analyze all the data and print the amount of data in the data table, disk space occupied, and data range in the local data source."
 
 #: ../../source/references/2-get-history-data.md:146
 msgid ""
