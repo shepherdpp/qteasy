@@ -152,6 +152,8 @@ msgid ""
 "本地数据存储在若干张数据表中，也可以通过`qt.get_table_info()`来获取某一张数据表的详细信息 "
 "包括数据表的主键类型和取值范围以外，还包括各数据列的名称、含义和数据类型"
 msgstr ""
+"Local data is stored in several data tables, and you can also use `qt.get_table_info()` to obtain detailed information about a specific data table. "
+" In addition to the primary key type and value range of the data table, it also includes the name, meaning, and data type of each data column."
 
 #: ../../source/references/2-get-history-data.md:149
 msgid "`qt.get_table_info(table_name, data_source=None, verbose=True)`"
@@ -162,6 +164,8 @@ msgid ""
 "获取一张数据表的信息，包括数据量（数据行数），占用磁盘空间大小、数据主键的名称及数据范围 "
 "如果设置`verbose=True`，还可以查看数据表中的数据列完整信息，包括列名、数据类型和说明"
 msgstr ""
+"Get information about a data table, including the amount of data (number of rows), disk space occupied, name of the primary key, and data range. "
+"If `verbose=True` is set, you can also view the complete information of the data columns in the data table, including column names, data types, and descriptions."
 
 #: ../../source/references/2-get-history-data.md:154
 msgid "`qt.get_table_overview(data_source=None)`"
@@ -169,19 +173,19 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:156
 msgid "统计数据源中所有数据表的数据量并打印总览"
-msgstr ""
+msgstr "Print an overview of the amount of data in all data tables in the data source"
 
 #: ../../source/references/2-get-history-data.md:159
 msgid "使用`qt.get_table_info()`可以获取一张数据表的信息："
-msgstr ""
+msgstr "Acquire information about a data table using `qt.get_table_info()`:"
 
 #: ../../source/references/2-get-history-data.md:188
 msgid "使用`qt.get_table_overview()`可以检查并显示DataSource中保存的所有本地数据的总览"
-msgstr ""
+msgstr "Check and display an overview of all local data saved in DataSource using `qt.get_table_overview()`"
 
 #: ../../source/references/2-get-history-data.md:240
 msgid "获取历史数据，并将数据保存在DataSource中"
-msgstr ""
+msgstr "Acquire historical data and save it in DataSource"
 
 #: ../../source/references/2-get-history-data.md:241
 msgid ""
@@ -189,6 +193,10 @@ msgid ""
 "`DataSource`类提供了`_fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。"
 " 使用`DataSource`对象获取、更新数据的方法包括："
 msgstr ""
+"If there is no data in `DataSource`, it will be difficult for `qteasy` to play its role. Therefore, the first step is to save the data in `DataSource`. "
+"`DataSource` class provides the `_fetch_table_data_from_tushare()` function to acquire and store historical data in `DataSource`. "
+"In the parameters of this function, you can directly provide a `DataFrame`, a csv file name, or an excel file name. You can also connect to the API of the network data provider to acquire data. "
+" The methods to acquire and update data using the `DataSource` object include:"
 
 #: ../../source/references/2-get-history-data.md:245
 msgid ""
@@ -198,31 +206,31 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:246
 msgid "从外部数据源获取数据，调整清洗数据以使它与数据源中的数据表匹配"
-msgstr ""
+msgstr "Acquire data from external data sources, adjust and clean the data to match the data table in the data source"
 
 #: ../../source/references/2-get-history-data.md:248
 msgid "数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项："
-msgstr ""
+msgstr "Channel for data acquisition, specify local files, financial data API, or directly provide local_df, supporting the following options:"
 
 #: ../../source/references/2-get-history-data.md:249
 msgid "'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同"
-msgstr ""
+msgstr "`df` : pass a df through the parameter, and the columns of this df must be the same as the definition of the table"
 
 #: ../../source/references/2-get-history-data.md:250
 msgid "'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数"
-msgstr ""
+msgstr "`csv` : import data through the local csv file, and the f_name parameter must be given at this time"
 
 #: ../../source/references/2-get-history-data.md:251
 msgid "'excel'   : 通过一个Excel文件导入数据，此时必须给出f_name参数"
-msgstr ""
+msgstr "`excel` : import data through an Excel file, and the f_name parameter must be given at this time"
 
 #: ../../source/references/2-get-history-data.md:252
 msgid "'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-msgstr ""
+msgstr "`tushare` : acquire financial data from Tushare API, please apply for the corresponding permissions and points by yourself"
 
 #: ../../source/references/2-get-history-data.md:253
 msgid "'other'   : 其他金融数据API，尚未开发"
-msgstr ""
+msgstr "`other` : other financial data API, not yet developed"
 
 #: ../../source/references/2-get-history-data.md:255
 msgid "`DataSource.update_table_data()`"
@@ -230,19 +238,19 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:256
 msgid "检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤："
-msgstr ""
+msgstr "Inspect the input df, remove the columns or rows that do not meet the requirements, and merge the data into the table, including the following steps:"
 
 #: ../../source/references/2-get-history-data.md:258
 msgid "检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列"
-msgstr ""
+msgstr "Inspect whether the column names of the downloaded data table are the same as the definition of the data table, and delete the extra columns"
 
 #: ../../source/references/2-get-history-data.md:259
 msgid "如果datasource type是\"db\"，删除下载数据中与本地数据重复的部分，仅保留新增数据"
-msgstr ""
+msgstr "If the datasource type is \"db\", delete the part of the downloaded data that is duplicated with the local data, and only keep the new data"
 
 #: ../../source/references/2-get-history-data.md:260
 msgid "如果datasource type是\"file\"，将下载的数据与本地数据合并并去重"
-msgstr ""
+msgstr "If the datasource type is \"file\", merge the downloaded data with the local data and remove duplicates"
 
 #: ../../source/references/2-get-history-data.md:263
 msgid "`DataSource.read_table_data()`"
@@ -250,35 +258,39 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:265
 msgid "通过本地文件获取数据，并保存到DataSource中："
-msgstr ""
+msgstr "Acquire data through local files and save it in DataSource:"
 
 #: ../../source/references/2-get-history-data.md:267
 msgid "下面的示例代码将存储在`DataFrame`中的数据保存在`DataSource`中"
-msgstr ""
+msgstr "Following example code saves the data stored in `DataFrame` in `DataSource`"
 
 #: ../../source/references/2-get-history-data.md:276
 msgid "通过tushare获取数据，并保存到DataSource中："
-msgstr ""
+msgstr "Acquire data through tushare and save it in DataSource:"
 
 #: ../../source/references/2-get-history-data.md:277
 msgid ""
 "`tushare`是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请`tushare`账号并获取相应积分 "
 "`tushare`的说明文档在这里：https://tushare.pro/document/2"
 msgstr ""
+"`tushare` is a web financial data API that provides a large amount of financial data. However, some data requires points to obtain. Please apply for a `tushare` account and obtain the corresponding points by yourself. "
+"`tushare` documentation is here: https://tushare.pro/document/2"
 
 #: ../../source/references/2-get-history-data.md:280
 msgid "连接到`tushare`获取数据的时候，只需要指定数据表的名称即可，`DataSource`会自行调用相应的`tushare API`下载数据："
-msgstr ""
+msgstr "You only need to specify the name of the data table when connecting to `tushare` to acquire data. `DataSource` will automatically call the corresponding `tushare API` to download the data:"
 
 #: ../../source/references/2-get-history-data.md:288
 msgid "连接`tushare`下载数据并保存到本地数据源"
-msgstr ""
+msgstr "Download data from `tushare` and save it to the local data source"
 
 #: ../../source/references/2-get-history-data.md:290
 msgid ""
 "`qteasy`提供了`tushare`数据接口，在获取相应`tushare`权限后，可以直接从`tushare`批量下载金融数据，并将数据更新到本地数据源中"
 " 例如，下面的命令将2022年3月起到9月之间的所有股票日K线数据下载到本地： 在下载数据前检察`stock_daily`表的信息："
 msgstr ""
+"`qteasy` provides the `tushare` data interface. After obtaining the corresponding `tushare` permissions, you can directly download financial data in batches from `tushare` and update the data to the local data source. "
+" For example, the following command downloads all stock daily K-line data from March to September 2022 to the local: Check the information of the `stock_daily` table before downloading data:"
 
 #: ../../source/references/2-get-history-data.md:294
 msgid "`qt.refill_data_source(data_source, *args, **kwargs)`"
@@ -289,6 +301,8 @@ msgid ""
 "连接到`tushare`下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过`start_date`和`end_date`限定数据的范围，同时可以通过`freq`、`asset_type`等指定不同的数据类型，即可下载表格数据并保存到合适的位置。"
 " 重复的数据会被忽略或覆盖已有的数据。"
 msgstr ""
+"Connect to `tushare` to download the required data and save it to the corresponding data table. Specify the name of the data table to be downloaded, limit the range of data through `start_date` and `end_date`, and specify different data types through `freq`, `asset_type`, etc. You can download table data and save it to the appropriate location. "
+" Duplicate data will be ignored or overwrite existing data."
 
 #: ../../source/references/2-get-history-data.md:300
 msgid ""
