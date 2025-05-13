@@ -101,7 +101,7 @@ def acquire_data(api_name, **kwargs):
     try:
         func = globals()[api_name]
     except KeyError:
-        raise KeyError(f'undefined API {api_name} for tushare')
+        raise KeyError(f'undefined API {api_name} for eastmoney')
     decorated_func = retry_decorator(func)
 
     res = decorated_func(**kwargs)
