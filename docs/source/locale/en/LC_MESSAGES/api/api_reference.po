@@ -47,11 +47,13 @@ msgid ""
 " local_data_file_type, local_data_file_path' ['local_data_source', "
 "'local_data_file_type', 'local_data_file_path']"
 msgstr ""
+"The variable name to be displayed. If no name is given, all matching variable names are displayed according to level, up_to, etc. "
+"Multiple variable names can be given in the form of a comma-separated string or in the form of a list. The following two methods are equivalent: 'local_data_source, local_data_file_type, local_data_file_path' ['local_data_source', 'local_data_file_type', 'local_data_file_path']"
 
 #: of qteasy.configure.configuration:9 qteasy.configure.get_config:9
 #: qteasy.configure.get_configurations:9
 msgid "需要显示的配置变量的级别。 如果给出了config，则忽略此参数"
-msgstr ""
+msgstr "The level of the configuration variable to be displayed. If config is given, this parameter is ignored"
 
 #: of qteasy.configure.configuration:12 qteasy.configure.get_config:12
 #: qteasy.configure.get_configurations:12
@@ -59,6 +61,7 @@ msgid ""
 "需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 "
 "会显示级别在0～2之间的所有配置变量 如果给出了config，则忽略此参数"
 msgstr ""
+"The upper limit of the level of the configuration variable to be displayed. It needs to be set in conjunction with level. For example, when level == 0, up_to == 2, all configuration variables at levels 0 to 2 will be displayed. If config is given, this parameter is ignored."
 
 #: of qteasy.configure.configuration:17 qteasy.configure.get_config:17
 #: qteasy.configure.get_configurations:17
