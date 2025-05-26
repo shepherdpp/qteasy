@@ -115,6 +115,8 @@ if __name__ == '__main__':
                                            'index_1min, index_5min, index_15min, index_30min, index_hourly, '
                                            'fund_1min, fund_5min, fund_15min, fund_30min, fund_hourly',
             live_trade_weekly_refill_tables='stock_daily, index_daily, fund_daily',
+            live_trade_data_refill_batch_size=10,
+            live_trade_data_refill_batch_interval=2,
     )
 
     op.run()
