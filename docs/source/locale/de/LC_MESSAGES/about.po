@@ -9,15 +9,16 @@ msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-18 21:24+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: de\n"
+"PO-Revision-Date: 2025-05-27 22:04+0800\n"
+"Last-Translator: \n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.6\n"
 
 #: ../../source/about.md:2
 msgid "关于 QTEASY"
@@ -29,7 +30,7 @@ msgstr "Autor: **Jackie PENG**"
 
 #: ../../source/about.md:5
 msgid "Email: *jackie_pengzhao@163.com*"
-msgstr ""
+msgstr "E-Mail: *jackie_pengzhao@163.com*"
 
 #: ../../source/about.md:6
 msgid "创建日期: 2019, July, 16"
@@ -41,8 +42,4 @@ msgstr "Neueste Version: `1.4.9`"
 
 #: ../../source/about.md:8
 msgid "License: BSD 3-Clause"
-msgstr ""
-
-#~ msgid "最新版本: `1.4.8`"
-#~ msgstr ""
-
+msgstr "Lizenz: BSD 3-Klausel"
