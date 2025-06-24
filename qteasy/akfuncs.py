@@ -14,8 +14,8 @@ from qteasy.__init__ import logger_core, QT_CONFIG
 from qteasy.utilfuncs import (
     retry,
 )
-import akshare as ak
 
+import akshare as ak
 
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
