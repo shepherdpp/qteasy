@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -26,7 +26,7 @@ msgstr ""
 #: ../../source/references/2-historical_data_types.md:3
 msgid ""
 "数据类型是qteasy的一个核心概念，它代表一个交易策略中所使用的信息，例如历史交易数据、宏观经济数据等。 "
-"信息并不等同于数据，在过去的版本中，qteasy将数据类型直接定义为DataSource数据表中的数据列， "
+"信息并不等同于数据，在过去的版本中，`qteasy`将数据类型直接定义为DataSource数据表中的数据列， "
 "但这样的定义方式并不妥当：因为信息与数据是不同的。原因包括："
 msgstr ""
 
@@ -72,7 +72,7 @@ msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:25
 msgid ""
-"因此，qteasy将数据类型重新进行了定义，并将其定义为我们需要的信息，提供简单易用的API，方便用户从数据表中 "
+"因此，`qteasy`将数据类型重新进行了定义，并将其定义为我们需要的信息，提供简单易用的API，方便用户从数据表中 "
 "快速提取所需信息，同时，允许用户创建自定义数据类型，以方便地提取自己感兴趣的信息。 "
 "另外，数据类型提供的API还将允许用户很容易地将提取的信息生成为图表、进行对比、比较以及统计分析"
 msgstr ""
@@ -103,20 +103,22 @@ msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:43
 msgid ""
-"API1: data_type.get(start, end, "
-"frequency):获取该类型与个股无关的，区间内的单频数据，输出为类似Series 的数据"
+"API1: `data_type.get(start, end, "
+"frequency)`:获取该类型与个股无关的，区间内的单频数据，输出为类似Series 的数据。"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:46
-msgid "API2: data_type.get(shares, start, end, frequency): 获取该类型与给定个股有关的区间内单频数据"
+msgid ""
+"API2: `data_type.get(shares, start, end, frequency)`: "
+"获取该类型与给定个股有关的区间内单频数据。"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:50
-msgid "也许还有第三个API： data_type.get(shares, start, end, frequency, **kwargs)"
+msgid "也许还有第三个API： `data_type.get(shares, start, end, frequency, **kwargs)`"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:53
-msgid "以上API应该完全统一，不管是内置还是自定义类型都可返回相同格式的数据"
+msgid "以上API应该完全统一，不管是内置还是自定义类型都可返回相同格式的数据。"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:55
@@ -141,100 +143,146 @@ msgid "在指定数据类型时，这种数据类型可以支持的输出类型�
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:65
-msgid ""
-"'basics', 基本数据型。这些数据与时间无关，原则上不属于历史数据，仅作为信息调用。   "
-"这种类型的数据只需要一个表名和列名作为kwargs读取参数"
+msgid "'basics'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:65
+msgid "基本数据型。这些数据与时间无关，原则上不属于历史数据，仅作为信息调用。 这种类型的数据只需要一个表名和列名作为kwargs读取参数"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:67
+msgid "'direct'"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:67
 msgid ""
-"'direct', 直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标   "
+"直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标 "
 "这种类型的数据类型只需要从一个表名和列名中读取数据即可，因此读取参数只有一个表名和列名"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:69
+msgid "'adjustment'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:69
 msgid ""
-"'adjustment', 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格   "
+"数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格 "
 "这种类型的数据需要从两张表中读取数据，因此读取参数有两个表名和列名"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:71
-msgid "'relations' 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等"
+msgid "'relations'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:71
+msgid "数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:72
-msgid "'operation' 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//"
+msgid "'operation'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:72
+msgid "数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:73
-msgid "'event_status', 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等"
+msgid "'event_status'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:73
+msgid "事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:74
-msgid "'event_multi_stat', 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等"
+msgid "'event_multi_stat'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:74
+msgid "多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:75
-msgid "'event_signal' 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等"
+msgid "'event_signal'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:75
+msgid "事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:76
-msgid "'composition' 成份查询型。从成份表中筛选出来数据并行列转换 另外还应该有一些特殊类型，由特殊的过程实现"
+msgid "'composition'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:76
+msgid "成份查询型。从成份表中筛选出来数据并行列转换 另外还应该有一些特殊类型，由特殊的过程实现"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:78
-msgid "'compound' 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表"
+msgid "'compound'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:78
+msgid "单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:80
-msgid "Output Type"
+msgid "**Output Type**"
 msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:82
-msgid "'symbolised'   以时间段为单位的symbolised数据，这种数据结构类似一个DataFrame，行为时间段，列为股票代码"
+msgid "'symbolised'"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:84
-msgid "'un-symbolised'   以时间段为单位的un-symbolised数据，这种数据结构类似于一个Series，行为时间段，只包含单列数据"
+#: ../../source/references/2-historical_data_types.md:82
+msgid "以时间段为单位的symbolised数据，这种数据结构类似一个DataFrame，行为时间段，列为股票代码"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:87
+#: ../../source/references/2-historical_data_types.md:83
+msgid "'un-symbolised'"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:83
+msgid "以时间段为单位的un-symbolised数据，这种数据结构类似于一个Series，行为时间段，只包含单列数据"
+msgstr ""
+
+#: ../../source/references/2-historical_data_types.md:85
 msgid "数据类型类的定义 类型的定义为了简单，应该是参数化的，只要参数定了，读取方式和读取目标表就确定了"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:90
+#: ../../source/references/2-historical_data_types.md:88
 msgid "类的唯一一个可被外部调用的方法只有一个，这个方法根据不同的读取方式调用不同的方法，从目标表中读取数据，并清洗后输出。"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:92
+#: ../../source/references/2-historical_data_types.md:90
 msgid "甚至，不同的数据特点都可以定义在类型中，如open可以在最新的cycle中使用，而close则不可以"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:94
+#: ../../source/references/2-historical_data_types.md:92
 msgid "为了可扩展性，类中也可以定义一个空白函数，用于特殊情况下由用户重写后自定义数据读取方式"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:96
+#: ../../source/references/2-historical_data_types.md:94
 msgid ""
 "qteasy内置数据类型有非常多，为了方便这些类的创建，这里创建一个数据类型映射表，将所有的数据类型与其关键参数映射起来， "
 "这样就可以通过一个简单的函数调用来创建一个数据类型类了。"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:99
+#: ../../source/references/2-historical_data_types.md:97
 msgid "1, DATA_TYPE_MAP:"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:101
+#: ../../source/references/2-historical_data_types.md:99
 msgid ""
 "DATA_TYPE_MAP:          定义数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到"
 "                         每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:104
+#: ../../source/references/2-historical_data_types.md:102
 msgid "Data table mapping中各列的含义如下： htype_name(key):            数据类型名称（主键）"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:107
+#: ../../source/references/2-historical_data_types.md:105
 msgid ""
 "freq(key):                  数据的可用频率（主键）                             min -"
 " 分钟数据                             d - 日数据                             w -"
@@ -242,7 +290,7 @@ msgid ""
 "季度数据"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:114
+#: ../../source/references/2-historical_data_types.md:112
 msgid ""
 "asset_type(key):            数据对应的金融资产类型:                             E - "
 "股票                             IDX - 指数                             FT - "
@@ -251,23 +299,98 @@ msgid ""
 " - 申万行业指数"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:123
+#: ../../source/references/2-historical_data_types.md:121
 msgid "description:                历史数据的详细描述，可以用于列搜索"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:125
+#: ../../source/references/2-historical_data_types.md:123
 msgid "acquisition_type:           数据的获取方式"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:127
+#: ../../source/references/2-historical_data_types.md:125
 msgid "table_name:                 历史数据所在的表的名称"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:129
+#: ../../source/references/2-historical_data_types.md:127
 msgid "column:                     历史数据在表中的列名称"
 msgstr ""
 
-#: ../../source/references/2-historical_data_types.md:132
+#: ../../source/references/2-historical_data_types.md:130
 msgid "\"\"\""
 msgstr ""
+
+#~ msgid ""
+#~ "数据类型是qteasy的一个核心概念，它代表一个交易策略中所使用的信息，例如历史交易数据、宏观经济数据等。 "
+#~ "信息并不等同于数据，在过去的版本中，qteasy将数据类型直接定义为DataSource数据表中的数据列， "
+#~ "但这样的定义方式并不妥当：因为信息与数据是不同的。原因包括："
+#~ msgstr ""
+
+#~ msgid ""
+#~ "因此，qteasy将数据类型重新进行了定义，并将其定义为我们需要的信息，提供简单易用的API，方便用户从数据表中 "
+#~ "快速提取所需信息，同时，允许用户创建自定义数据类型，以方便地提取自己感兴趣的信息。 "
+#~ "另外，数据类型提供的API还将允许用户很容易地将提取的信息生成为图表、进行对比、比较以及统计分析"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "API1: data_type.get(start, end, "
+#~ "frequency):获取该类型与个股无关的，区间内的单频数据，输出为类似Series 的数据"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "API2: data_type.get(shares, start, end, "
+#~ "frequency): 获取该类型与给定个股有关的区间内单频数据"
+#~ msgstr ""
+
+#~ msgid "也许还有第三个API： data_type.get(shares, start, end, frequency, **kwargs)"
+#~ msgstr ""
+
+#~ msgid "以上API应该完全统一，不管是内置还是自定义类型都可返回相同格式的数据"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "'basics', 基本数据型。这些数据与时间无关，原则上不属于历史数据，仅作为信息调用。   "
+#~ "这种类型的数据只需要一个表名和列名作为kwargs读取参数"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "'direct', 直读数据型。也就是根据区间频段直接从数据表内直接读取的数据，如价格或指标   "
+#~ "这种类型的数据类型只需要从一个表名和列名中读取数据即可，因此读取参数只有一个表名和列名"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "'adjustment', 数据修正型。从一张表中直读数据A，另一张表直读数据B，并用B修正后输出，如复权价格   "
+#~ "这种类型的数据需要从两张表中读取数据，因此读取参数有两个表名和列名"
+#~ msgstr ""
+
+#~ msgid "'relations' 数据关联型。从两张表中读取数据A与B，并输出它们之间的某种关系，如eq/ne/gt/or/nor等等"
+#~ msgstr ""
+
+#~ msgid "'operation' 数据计算型。从两张表中读取数据A与B，并输出他们之间的计算结果，如+/-/*//"
+#~ msgstr ""
+
+#~ msgid "'event_status', 事件状态型。从表中查询事件的发生日期并在事件影响区间内填充不同状态的，如停牌，改名等"
+#~ msgstr ""
+
+#~ msgid "'event_multi_stat', 多事件状态型。从表中查询多个事件的发生日期并在事件影响区间内填充多个不同的状态，如管理层名单等"
+#~ msgstr ""
+
+#~ msgid "'event_signal' 事件信号型。从表中查询事件的发生日期并在事件发生时产生信号的，如涨跌停，上板上榜，分红配股等"
+#~ msgstr ""
+
+#~ msgid "'composition' 成份查询型。从成份表中筛选出来数据并行列转换 另外还应该有一些特殊类型，由特殊的过程实现"
+#~ msgstr ""
+
+#~ msgid "'compound' 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表"
+#~ msgstr ""
+
+#~ msgid "Output Type"
+#~ msgstr ""
+
+#~ msgid "'symbolised'   以时间段为单位的symbolised数据，这种数据结构类似一个DataFrame，行为时间段，列为股票代码"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "'un-symbolised'   以时间段为单位的un-"
+#~ "symbolised数据，这种数据结构类似于一个Series，行为时间段，只包含单列数据"
+#~ msgstr ""
 

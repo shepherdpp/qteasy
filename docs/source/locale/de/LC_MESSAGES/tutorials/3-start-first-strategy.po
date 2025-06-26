@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-06 21:24+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -80,14 +80,15 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:18
 msgid "配置好本地数据源，掌握下载各种金融数据的方法，能够将指数、股票的各种历史价格数据、财务报表数据等下载到本地。"
-msgstr " Konfigurieren Sie die lokale Datenquelle, beherrschen Sie die Methoden zum "
+msgstr ""
+" Konfigurieren Sie die lokale Datenquelle, beherrschen Sie die Methoden "
+"zum "
 
 #: ../../source/tutorials/3-start-first-strategy.md:20
 msgid ""
 "在[上一篇教程](2-get-"
 "data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
 msgstr "In [dem vorherigen Tutorial](2-get-data.md)"
-""
 
 #: ../../source/tutorials/3-start-first-strategy.md:22
 msgid "本节的目标"
@@ -101,24 +102,33 @@ msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:26
 msgid "大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
-msgstr " Die Größenrotation ist eine sehr grundlegende und gängige Handelsstrategie, die die "
-"Eigenschaft nutzt, dass große und kleine Aktien oft nicht synchron steigen und fallen, und zwischen großen und kleinen Aktien wechselt, um eine höhere Rendite zu erzielen. "
+msgstr ""
+" Die Größenrotation ist eine sehr grundlegende und gängige "
+"Handelsstrategie, die die Eigenschaft nutzt, dass große und kleine Aktien"
+" oft nicht synchron steigen und fallen, und zwischen großen und kleinen "
+"Aktien wechselt, um eine höhere Rendite zu erzielen. "
 
 #: ../../source/tutorials/3-start-first-strategy.md:28
 msgid "在这里，我们需要创建一个最简单的轮动策略：在前面提到的两个指数之间轮动，每天选择未来可能的涨幅较大的指数持有："
-msgstr " Hier müssen wir eine der einfachsten Rotationsstrategien erstellen: "
-"zwischen den beiden zuvor erwähnten Indizes zu rotieren und jeden Tag den Index mit der voraussichtlich höheren zukünftigen Rendite auszuwählen."
+msgstr ""
+" Hier müssen wir eine der einfachsten Rotationsstrategien erstellen: "
+"zwischen den beiden zuvor erwähnten Indizes zu rotieren und jeden Tag den"
+" Index mit der voraussichtlich höheren zukünftigen Rendite auszuwählen."
 
 #: ../../source/tutorials/3-start-first-strategy.md:30
 msgid "分别计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr " Berechnen Sie die Rendite der beiden Indizes in den letzten 20 Tagen, d.h. die Rendite des heutigen Preises im Vergleich zum Preis vor 20 Tagen"
+msgstr ""
+" Berechnen Sie die Rendite der beiden Indizes in den letzten 20 Tagen, "
+"d.h. die Rendite des heutigen Preises im Vergleich zum Preis vor 20 Tagen"
 
 #: ../../source/tutorials/3-start-first-strategy.md:31
 msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr " Wählen Sie den Index mit der höheren Rendite, halten Sie ihn am nächsten Tag und verkaufen Sie gleichzeitig den Index mit der niedrigeren Rendite"
+msgstr ""
+" Wählen Sie den Index mit der höheren Rendite, halten Sie ihn am nächsten"
+" Tag und verkaufen Sie gleichzeitig den Index mit der niedrigeren Rendite"
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
-msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
+msgid "当日涨幅 = \\frac{Price_0}{Price_{20}} - 1"
 msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:35
@@ -460,5 +470,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
+#~ msgstr ""
+
+#~ msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
 #~ msgstr ""
 

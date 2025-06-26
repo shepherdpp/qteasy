@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -37,7 +37,7 @@ msgid ""
 "根据QT_CONFIG配置变量中的设置和运行模式（mode）进行不同的操作："
 msgstr ""
 
-#: of qteasy.core.run:14
+#: of qteasy.core.run:6
 msgid "mode == 0, live trade mode, 实盘交易模式："
 msgstr ""
 
@@ -56,7 +56,7 @@ msgid ""
 "ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。"
 msgstr ""
 
-#: of qteasy.core.run:60
+#: of qteasy.core.run:16
 msgid "mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易："
 msgstr ""
 
@@ -121,7 +121,7 @@ msgid ""
 "保存在磁盘上供未来调用"
 msgstr ""
 
-#: of qteasy.core.run:159
+#: of qteasy.core.run:62
 msgid ""
 "mode == 2, optimization mode, "
 "优化模式，使用一段历史数据区间内的数据来寻找最优的策略参数组合，然后在另一段历史数据区间内进行回测，评价:"
@@ -292,7 +292,7 @@ msgid ""
 "的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。"
 msgstr ""
 
-#: of qteasy.core.run:164
+#: of qteasy.core.run:161
 msgid "Config.mode == 3 or mode == 3:"
 msgstr ""
 
@@ -302,8 +302,8 @@ msgid ""
 "评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学 表现"
 msgstr ""
 
-#: of qteasy.core.info qteasy.core.run
-msgid "参数"
+#: ../../source/api/use_qteasy.rst
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.core.run:166
@@ -314,8 +314,8 @@ msgstr ""
 msgid "可用的kwargs包括所有合法的qteasy配置参数，参见qteasy文档"
 msgstr ""
 
-#: of qteasy.core.run
-msgid "返回"
+#: ../../source/api/use_qteasy.rst
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.core.run:170
@@ -339,4 +339,10 @@ msgstr ""
 #: of qteasy.core.info:1
 msgid "qteasy 模块的帮助信息入口函数"
 msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
 

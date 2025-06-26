@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -151,7 +151,7 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:121
-msgid "$$ EV = 总市值 + 总负债 - 总现金 $$"
+msgid " EV = 总市值 + 总负债 - 总现金 "
 msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:123
@@ -341,4 +341,7 @@ msgstr ""
 #: ../../source/tutorials/6-more-self-defined-strategies.md:447
 msgid "在下一个章节中，我们仍然将继续介绍自定义交易策略，但是会用一个更加复杂的例子来演示自定义交易策略的使用方法。敬请期待！"
 msgstr ""
+
+#~ msgid "$$ EV = 总市值 + 总负债 - 总现金 $$"
+#~ msgstr ""
 

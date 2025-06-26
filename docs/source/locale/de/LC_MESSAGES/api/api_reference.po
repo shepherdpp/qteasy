@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -31,12 +31,12 @@ msgstr ""
 msgid "显示qt当前的配置变量，"
 msgstr ""
 
-#: of qteasy.configure.configuration qteasy.configure.configure
-#: qteasy.configure.get_config qteasy.configure.get_configurations
-#: qteasy.configure.load_config qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.save_config
-#: qteasy.configure.set_config qteasy.configure.update_start_up_setting
-msgid "参数"
+#: ../../source/api/api_reference.rst of qteasy.configure.configuration
+#: qteasy.configure.configure qteasy.configure.get_config
+#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
+#: qteasy.configure.reset_config qteasy.configure.set_config
+#: qteasy.configure.update_start_up_setting
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.configure.configuration:3 qteasy.configure.get_config:3
@@ -70,18 +70,17 @@ msgstr ""
 msgid "是否显示完整说明信息，如果True，会同时显示配置变量的详细说明"
 msgstr ""
 
-#: of qteasy.configure.configuration qteasy.configure.configure
-#: qteasy.configure.get_config qteasy.configure.get_configurations
-#: qteasy.configure.load_config qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.save_config
-#: qteasy.configure.set_config qteasy.configure.start_up_settings
-#: qteasy.configure.update_start_up_setting
-msgid "返回类型"
+#: ../../source/api/api_reference.rst of qteasy.configure.configuration
+#: qteasy.configure.configure qteasy.configure.get_config
+#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
+#: qteasy.configure.reset_config qteasy.configure.set_config
+#: qteasy.configure.start_up_settings qteasy.configure.update_start_up_setting
+msgid "Return type"
 msgstr ""
 
 #: of qteasy.configure.configuration:25 qteasy.configure.configure:14
 #: qteasy.configure.reset_config:10
-msgid "备注"
+msgid "Notes"
 msgstr ""
 
 #: of qteasy.configure.configuration:26 qteasy.configure.get_configurations:26
@@ -97,7 +96,7 @@ msgstr ""
 #: qteasy.configure.remove_start_up_setting:11 qteasy.configure.set_config:14
 #: qteasy.configure.start_up_settings:6
 #: qteasy.configure.update_start_up_setting:10
-msgid "示例"
+msgid "Examples"
 msgstr ""
 
 #: ../../source/api/api_reference.rst:12
@@ -172,7 +171,7 @@ msgstr ""
 msgid "将所有的配置变量重置为默认值:"
 msgstr ""
 
-#: of qteasy.configure.reset_config:2
+#: of qteasy.configure.reset_config:1
 msgid "重设config对象，将所有的参数都设置为默认值"
 msgstr ""
 
@@ -192,7 +191,7 @@ msgstr ""
 msgid "从文件中读取配置信息:"
 msgstr ""
 
-#: of qteasy.configure.load_config:2
+#: of qteasy.configure.load_config:1
 msgid "从文件file_name中读取相应的config参数，写入到config中，如果config为"
 msgstr ""
 
@@ -208,16 +207,16 @@ msgstr ""
 msgid "文件名，默认None，如果为None，文件名为saved_config.cfg"
 msgstr ""
 
-#: of qteasy.configure.load_config qteasy.configure.save_config
-msgid "返回"
+#: ../../source/api/api_reference.rst
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.configure.load_config:9
 msgid "**config** -- 读取的配置参数"
 msgstr ""
 
-#: of qteasy.configure.load_config
-msgid "抛出"
+#: ../../source/api/api_reference.rst
+msgid "Raises"
 msgstr ""
 
 #: of qteasy.configure.load_config:12
@@ -2175,4 +2174,22 @@ msgstr ""
 #: ../../source/api/api_reference.rst:653
 msgid "策略参数优化后输出的最优参数数量"
 msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回类型"
+#~ msgstr ""
+
+#~ msgid "备注"
+#~ msgstr ""
+
+#~ msgid "示例"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
+
+#~ msgid "抛出"
+#~ msgstr ""
 

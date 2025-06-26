@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -37,7 +37,7 @@ msgid ""
 "根据QT_CONFIG配置变量中的设置和运行模式（mode）进行不同的操作："
 msgstr ""
 
-#: of qteasy.core.run:14
+#: of qteasy.core.run:6
 msgid "mode == 0, live trade mode, 实盘交易模式："
 msgstr "mode == 0, live trade mode:"
 
@@ -48,11 +48,18 @@ msgid ""
 "设置。如果策略运行的结果产生交易信号，则根据交易信号模拟挂单，挂单成交后修改响应账户资金和股票持仓，交易费用按照设置中 "
 "的费率扣除。如果资金不足或持仓不足会导致交易失败，当天买入的股票同真实市场一样T+1交割，第二个交易日开始前交割完毕。"
 msgstr ""
-"Running in this mode, a separate thread will be started in the background in the terminal, and the timing of the operation is consistent with the real stock market. "
-"When the stock market closes, it will not run. The system will start to pull real-time stock prices at 9:15 in the morning, and start running the trading strategy at 9:30. "
-"The timing and frequency of the trading strategy are set in the properties of the strategy. If the result of the strategy operation generates a trading signal, "
-"simulate the pending order according to the trading signal, modify the corresponding account funds and stock holdings after the pending order is executed, "
-"and deduct the trading fee according to the rate set. If the funds are insufficient or the positions are insufficient, the transaction will fail. "
+"Running in this mode, a separate thread will be started in the background"
+" in the terminal, and the timing of the operation is consistent with the "
+"real stock market. When the stock market closes, it will not run. The "
+"system will start to pull real-time stock prices at 9:15 in the morning, "
+"and start running the trading strategy at 9:30. The timing and frequency "
+"of the trading strategy are set in the properties of the strategy. If the"
+" result of the strategy operation generates a trading signal, simulate "
+"the pending order according to the trading signal, modify the "
+"corresponding account funds and stock holdings after the pending order is"
+" executed, and deduct the trading fee according to the rate set. If the "
+"funds are insufficient or the positions are insufficient, the transaction"
+" will fail. "
 
 #: of qteasy.core.run:12
 msgid ""
@@ -61,7 +68,7 @@ msgid ""
 "ID）就可以从上次中断的地方继续运行了，因此启动时需要指定账户，如果不想继续上次的账户，可以新开一个账户运行。"
 msgstr ""
 
-#: of qteasy.core.run:60
+#: of qteasy.core.run:16
 msgid "mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易："
 msgstr ""
 
@@ -126,7 +133,7 @@ msgid ""
 "保存在磁盘上供未来调用"
 msgstr ""
 
-#: of qteasy.core.run:159
+#: of qteasy.core.run:62
 msgid ""
 "mode == 2, optimization mode, "
 "优化模式，使用一段历史数据区间内的数据来寻找最优的策略参数组合，然后在另一段历史数据区间内进行回测，评价:"
@@ -278,7 +285,20 @@ msgid ""
 "优化器在回测区间上对寻找到的最优参数组合或目标联系进行测试，在回测区间生成对所有中选参数的“独立”表现评价。通常，可以选择优化区间较 "
 "长且较早，而回测区间较晚而较短，这样可以模拟根据过去的信息建立的策略在未来的表现。"
 msgstr ""
-"To realize the above methods, the optimizer needs two sets of historical data, corresponding to two different historical intervals, one is the optimization interval, and the other is the backtest interval. In the first stage of optimization, the optimizer generates trading signals on the optimization interval, or establishes a target relationship, and finds one or several best-performing parameter combinations or target relationships on the optimization interval. Next, in the second stage of optimization, the optimizer tests the best parameter combination or target relationship found on the backtest interval, and generates an independent performance evaluation for all selected parameters on the backtest interval. Usually, the optimization interval can be chosen to be longer and earlier, while the backtest interval can be chosen to be later and shorter, so as to simulate the performance of a strategy built on past information in the future."
+"To realize the above methods, the optimizer needs two sets of historical "
+"data, corresponding to two different historical intervals, one is the "
+"optimization interval, and the other is the backtest interval. In the "
+"first stage of optimization, the optimizer generates trading signals on "
+"the optimization interval, or establishes a target relationship, and "
+"finds one or several best-performing parameter combinations or target "
+"relationships on the optimization interval. Next, in the second stage of "
+"optimization, the optimizer tests the best parameter combination or "
+"target relationship found on the backtest interval, and generates an "
+"independent performance evaluation for all selected parameters on the "
+"backtest interval. Usually, the optimization interval can be chosen to be"
+" longer and earlier, while the backtest interval can be chosen to be "
+"later and shorter, so as to simulate the performance of a strategy built "
+"on past information in the future."
 
 #: of qteasy.core.run:150
 msgid ""
@@ -287,7 +307,19 @@ msgid ""
 "映射到先验数据的一个特定映射函数的参数空间，例如，在ANN方法中，参数空间就是神经网络所有神经元连接权值的可能取值空间。优化器的工作本质 "
 "就是在这个参数空间中寻找全局最优解或局部最优解。因此理论上所有的数值优化方法都可以用于优化器。"
 msgstr ""
-"The optimization starts with a well-defined parameter \"space\". The parameter space is defined as a Space object in the system. If the parameters of the strategy are represented as vectors, the space is the vector space formed by all possible parameter combinations. For unsupervised methods, the vectors accommodated in the parameter space are the trading signals themselves or the parameters themselves. For supervised algorithms, the parameter space is the parameter space of a specific mapping function that maps historical data to prior data. For example, in the ANN method, the parameter space is the possible value space of all neuron connection weights in the neural network. The essence of the optimizer's work is to find the global optimal solution or local optimal solution in this parameter space. Therefore, theoretically, all numerical optimization methods can be used for the optimizer."
+"The optimization starts with a well-defined parameter \"space\". The "
+"parameter space is defined as a Space object in the system. If the "
+"parameters of the strategy are represented as vectors, the space is the "
+"vector space formed by all possible parameter combinations. For "
+"unsupervised methods, the vectors accommodated in the parameter space are"
+" the trading signals themselves or the parameters themselves. For "
+"supervised algorithms, the parameter space is the parameter space of a "
+"specific mapping function that maps historical data to prior data. For "
+"example, in the ANN method, the parameter space is the possible value "
+"space of all neuron connection weights in the neural network. The essence"
+" of the optimizer's work is to find the global optimal solution or local "
+"optimal solution in this parameter space. Therefore, theoretically, all "
+"numerical optimization methods can be used for the optimizer."
 
 #: of qteasy.core.run:155
 msgid ""
@@ -298,10 +330,30 @@ msgid ""
 "的输出是一个实数，就能被用作目标函数。而对于有监督方法，目标函数表征的是从历史数据到先验信息的映射能力，通常用实际输出与先验信息之间 "
 "的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。"
 msgstr ""
-"The other important aspect of the optimizer is the objective function. According to the objective function, we can calculate an objective function value for each point in the optimization parameter space, and judge the quality of the parameters based on the size of this function value. Therefore, the output of the objective function should be a real number. For unsupervised methods, the objective function is closely related to the backtest results of the parameter strategy. The most direct objective function is the investment final value. When the initial investment amount is the same, we can simply think that the higher the final value, the better the performance of the parameters. However, the objective function is not only the final value, but also common evaluation indicators such as annualized return rate or return rate, Sharpe ratio, etc. The objective function can even be a composite index that comprehensively considers indicators such as return rate, transaction cost, and maximum drawdown, as long as the output of the objective function is a real number, it can be used as the objective function. For supervised methods, the objective function represents the mapping ability from historical data to prior information. The function that represents the difference between the actual output and the prior information is usually used as the objective function. In the fields of machine learning and numerical optimization, there are many functions to choose from, such as MSE function, CrossEntropy, etc."
+"The other important aspect of the optimizer is the objective function. "
+"According to the objective function, we can calculate an objective "
+"function value for each point in the optimization parameter space, and "
+"judge the quality of the parameters based on the size of this function "
+"value. Therefore, the output of the objective function should be a real "
+"number. For unsupervised methods, the objective function is closely "
+"related to the backtest results of the parameter strategy. The most "
+"direct objective function is the investment final value. When the initial"
+" investment amount is the same, we can simply think that the higher the "
+"final value, the better the performance of the parameters. However, the "
+"objective function is not only the final value, but also common "
+"evaluation indicators such as annualized return rate or return rate, "
+"Sharpe ratio, etc. The objective function can even be a composite index "
+"that comprehensively considers indicators such as return rate, "
+"transaction cost, and maximum drawdown, as long as the output of the "
+"objective function is a real number, it can be used as the objective "
+"function. For supervised methods, the objective function represents the "
+"mapping ability from historical data to prior information. The function "
+"that represents the difference between the actual output and the prior "
+"information is usually used as the objective function. In the fields of "
+"machine learning and numerical optimization, there are many functions to "
+"choose from, such as MSE function, CrossEntropy, etc."
 
-
-#: of qteasy.core.run:164
+#: of qteasy.core.run:161
 msgid "Config.mode == 3 or mode == 3:"
 msgstr ""
 
@@ -311,8 +363,8 @@ msgid ""
 "评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学 表现"
 msgstr ""
 
-#: of qteasy.core.info qteasy.core.run
-msgid "参数"
+#: ../../source/api/use_qteasy.rst
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.core.run:166
@@ -323,8 +375,8 @@ msgstr ""
 msgid "可用的kwargs包括所有合法的qteasy配置参数，参见qteasy文档"
 msgstr ""
 
-#: of qteasy.core.run
-msgid "返回"
+#: ../../source/api/use_qteasy.rst
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.core.run:170
@@ -348,4 +400,10 @@ msgstr ""
 #: of qteasy.core.info:1
 msgid "qteasy 模块的帮助信息入口函数"
 msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
 
