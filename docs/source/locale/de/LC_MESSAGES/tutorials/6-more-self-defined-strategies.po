@@ -8,14 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-26 09:45+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"PO-Revision-Date: 2025-06-24 22:26+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.6\n"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:2
 msgid "创建自定义因子选股交易策略"
@@ -82,15 +84,15 @@ msgstr " "
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:20
 msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
-msgstr ""
+msgstr "**Lernen Sie, Händlerobjekte zu erstellen und integrierte Handelsstrategien zu verwenden**, - [QTEASY Tutorial 3](3-start-first-strategy.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:21
 msgid "**学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)"
-msgstr ""
+msgstr "**Lernen Sie, einen Mixer zu verwenden, um mehrere einfache Strategien zu komplexeren Handelsstrategien zu verbinden** - [QTEASY Tutorial 4](4-build-in-strategies.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:22
 msgid "**了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)"
-msgstr ""
+msgstr "**Erfahren Sie, wie Sie Ihre Handelsstrategie anpassen**——[QTEASY-Tutorial 5](5-first-self-defined-strategy.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:24
 msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
@@ -113,61 +115,70 @@ msgstr " "
 #: ../../source/tutorials/6-more-self-defined-strategies.md:30
 msgid "为了提供足够的使用便利性，`qteasy`的提供的各种策略基类本质上并无区别，只是为了减少用户编码工作量而提供的预处理形式，甚至可以将不同的交易策略基类理解成，为了特定交易策略设计的“语法糖”，因此，同一交易策略往往可以用多种不同的交易策略基类实现，因此，在本节中，我们将用两种不同的策略基类来实现一个Alpha选股交易策略。"
 msgstr ""
+"Um einen ausreichenden Komfort zu gewährleisten, sind die verschiedenen Strategie-Basisklassen von `qteasy` im Wesentlichen identisch. Es handelt sich lediglich um Vorverarbeitungsformen, die den Programmieraufwand des Benutzers reduzieren. Verschiedene Handelsstrategie-Basisklassen können sogar als „syntaktischer Zucker“ für spezifische "
+"Handelsstrategien verstanden werden. Daher kann dieselbe Handelsstrategie oft mit mehreren verschiedenen Handelsstrategie-Basisklassen implementiert werden. In diesem Abschnitt verwenden wir daher zwei verschiedene Strategie-Basisklassen, um eine Alpha-Aktienauswahl-Handelsstrategie zu implementieren."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:31
 msgid "Alpha选股策略的选股思想"
-msgstr ""
+msgstr "Alpha-Aktienauswahlstrategie, Ideen zur Aktienauswahl"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:33
 msgid "我们在这里讨论的Alpha选股策略是一个低频运行的选股策略，这个策略可以每周或者每月运行一次，每次选股时会遍历HS300指数的全部成分股，依照一定的标准将这300支股票进行优先级排序，从中选择出排位靠前的30支股票，等权持有，也就是说，每个月进行一次调仓换股，调仓时将排名靠后的股票卖掉，买入排名靠前的股票，并确保股票的持有份额相同。"
 msgstr ""
+"Die hier besprochene Alpha-Aktienauswahlstrategie ist eine Strategie mit niedriger Aktienfrequenz. Diese Strategie kann wöchentlich oder monatlich angewendet werden. Bei jeder Aktienauswahl werden alle im HS300-Index enthaltenen Aktien durchsucht, nach bestimmten Kriterien priorisiert und die 30 besten Aktien daraus ausgewählt und gleichmäßig "
+"gehalten. Das heißt, das Portfolio wird monatlich angepasst, wobei die Aktien mit niedrigerem Ranking verkauft und die Aktien mit höherem Ranking gekauft werden. Dabei wird sichergestellt, dass die Aktienbestände gleich bleiben."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:35
 msgid "Alpha选股策略的排名依据每一支股票的两个财务指标：EV（企业市场价值）以及EBITDA（息税折旧摊销前利润）来计算，对每一支股票计算EV与EBITDA的比值，当这个比值大于0的时候，说明该上市公司是盈利的（因为EBITDA为正）。这时，这个比值代表该公司每赚到一块钱利润，需要投入的企业总价值。自然，这个比值越低越好。例如，下面两家上市公司数据如下："
 msgstr ""
+"Das Ranking der Alpha-Aktienauswahlstrategie basiert auf zwei Finanzkennzahlen jeder Aktie: EV (Unternehmensmarktwert) und EBITDA (Gewinn vor Zinsen, Steuern und Abschreibungen). Das Verhältnis von EV zu EBITDA wird für jede Aktie berechnet. Ist dieses Verhältnis größer als 0, bedeutet dies, dass das börsennotierte Unternehmen profitabel ist (da das "
+"EBITDA positiv ist). Dieses Verhältnis stellt den gesamten Unternehmenswert dar, der für jeden Dollar Gewinn investiert werden muss. Je niedriger dieses Verhältnis, desto besser. Die Daten der folgenden beiden börsennotierten Unternehmen lauten beispielsweise wie folgt:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:37
 msgid "A公司的EBITDA为一千万，而企业市场价值为一百亿，EV/EBITDA=1000.。说明该公司每一千元的市场价值可以挣到一元钱利润"
-msgstr ""
+msgstr "Das EBITDA von Unternehmen A beträgt 10 Millionen und sein Marktwert 10 Milliarden. EV/EBITDA = 1000. Dies bedeutet, dass das Unternehmen pro 1.000 Yuan Marktwert 1 Yuan Gewinn erzielen kann."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:38
 msgid "B公司的EBITDA同样为一千万，企业市场价值为一千亿，EV/EBITDA=10000，说明该公司每一万元的市场价值可以挣到一元钱利润"
-msgstr ""
+msgstr "Das EBITDA von Unternehmen B beträgt ebenfalls 10 Millionen und sein Marktwert 100 Milliarden. EV/EBITDA = 10.000, was bedeutet, dass das Unternehmen pro 10.000 Yuan Marktwert einen Gewinn von 1 Yuan erzielen kann."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:40
 msgid "从常理分析，我们自然会觉得A公司比较好，因为靠着较少的公司市场价值，就挣到了同样的利润，这时我们认为A公司的排名比较靠前。"
-msgstr ""
+msgstr "Aus gesundem Menschenverstand würden wir natürlich annehmen, dass Unternehmen A besser ist, da es bei geringerem Marktwert den gleichen Gewinn erzielt. Derzeit gehen wir davon aus, dass Unternehmen A einen höheren Rang einnimmt."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:42
 msgid "按照上面的规则，我们在每个月的最后一天，将HS300成分股的所有上市公司全部进行一次从小到大排名，剔除掉EV/EBITDA小于0的公司（盈利为负的公司当然应该剔除）以后，选择排名最靠前的30个公司持有，就是Alpha选股交易策略。"
 msgstr ""
+"Gemäß den oben genannten Regeln werden wir am letzten Tag jedes Monats alle börsennotierten Unternehmen, die Bestandteile des HS300 sind, von klein bis groß einstufen, Unternehmen mit einem EV/EBITDA von weniger als 0 ausschließen (Unternehmen mit negativen Gewinnen sollten natürlich ausgeschlossen werden) und dann die 30 besten Unternehmen zum "
+"Halten auswählen, was der Alpha-Aktienauswahl-Handelsstrategie entspricht."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:44
 msgid "其实，类似于这样的指标排序选股策略，`qteasy`提供了一个内置交易策略可以直接实现："
-msgstr ""
+msgstr "Tatsächlich bietet „qteasy“ ähnlich dieser Strategie zur Aktienauswahl mit Sortierung nach Indikatoren eine integrierte Handelsstrategie, die direkt implementiert werden kann:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:91
 msgid "不过这个内置交易策略仅支持以`qteasy`内置历史数据类型为选股因子，例如pe市盈率、profit利润等数据是`qteasy`的内置历史数据，可以直接引用。但如果是``qteasy``内置历史数据中找不到的选股因子，就不能直接使用内置交易策略了。EV/EBITDA这个指标是一个计算指标，因此，我们必须使用自定义交易策略。并在自定义策略中计算该指标。"
 msgstr ""
+"Diese integrierte Handelsstrategie unterstützt jedoch nur die in „qteasy“ integrierten historischen Datentypen als Aktienauswahlfaktoren. Beispielsweise sind KGV, Gewinn und andere Daten integrierte historische Daten von „qteasy“ und können direkt referenziert werden. Wenn der Aktienauswahlfaktor jedoch nicht in den integrierten historischen Daten "
+"von „qteasy“ enthalten ist, kann die integrierte Handelsstrategie nicht direkt verwendet werden. Der EV/EBITDA-Indikator ist ein berechneter Indikator, daher müssen wir eine benutzerdefinierte Handelsstrategie verwenden und diesen Indikator in der benutzerdefinierten Strategie berechnen."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:92
 msgid "计算选股指标"
-msgstr ""
+msgstr "Berechnung von Aktienauswahlindikatoren"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:94
 msgid "为了计算EV/EBITDA，我们必须至少先确认`qteasy`中是否已经提供了EV和EBITDA这两种历史数据："
-msgstr ""
+msgstr "Um EV/EBITDA zu berechnen, müssen wir zunächst bestätigen, ob die historischen Daten von EV und EBITDA bereits in „qteasy“ bereitgestellt werden:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:96
 msgid "我们可以使用`find_history_data()`来查看历史数据是否被`qteasy`支持"
-msgstr ""
+msgstr "Wir können `find_history_data()` verwenden, um zu sehen, ob die historischen Daten von `qteasy` unterstützt werden."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:119
-msgid ""
-"从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，可以通过'ebitda‘ / "
-"income_ebitda "
-"这两个ID来获取（我们将使用'ebitda'），但是EV企业现金价值并不在内置数据类型中，但我们知道EV可以通过下面的公式计算："
+msgid "从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，可以通过'ebitda‘ / income_ebitda 这两个ID来获取（我们将使用'ebitda'），但是EV企业现金价值并不在内置数据类型中，但我们知道EV可以通过下面的公式计算："
 msgstr ""
+"Wie aus dem obigen Rückgabewert ersichtlich ist, ist EBITDA in den integrierten historischen Datentypen von „qteasy“ ein standardmäßiger historischer Datentyp, der über die beiden IDs „ebitda“ / „income_ebitda“ abgerufen werden kann (wir verwenden „ebitda“). Der Unternehmensbarwert EV ist jedoch nicht im integrierten Datentyp enthalten. Wir wissen "
+"jedoch, dass EV mit der folgenden Formel berechnet werden kann:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:121
 msgid " EV = 总市值 + 总负债 - 总现金 "
@@ -175,192 +186,190 @@ msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:123
 msgid "而上面几个财务指标都是`qteasy`直接支持的："
-msgstr ""
+msgstr "Die oben genannten Finanzindikatoren werden direkt von „qteasy“ unterstützt:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:125
 msgid "总市值 - 数据类型： `total_mv`"
-msgstr ""
+msgstr "Gesamtmarktwert - Datentyp: `total_mv`"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:126
 msgid "总负债 - 数据类型： `total_liab`"
-msgstr ""
+msgstr "Gesamtverbindlichkeiten – Datentyp: „total_liab“"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:127
 msgid "总现金 - 数据类型： `c_cash_equ_end_period`"
-msgstr ""
+msgstr "Gesamtbargeld – Datentyp: „c_cash_equ_end_period“"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:129
 msgid "我们可以测试一下："
-msgstr ""
+msgstr "Wir können dies testen:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:144
 msgid "可以看到选股因子已经计算出来了，那么我们可以开始定义交易策略了。"
-msgstr ""
+msgstr "Sie sehen, dass die Aktienauswahlfaktoren berechnet wurden, sodass wir mit der Definition der Handelsstrategie beginnen können."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:145
 msgid "用`FactorSorter`定义Alpha选股策略"
-msgstr ""
+msgstr "Definieren von Alpha-Aktienauswahlstrategien mit „FactorSorter“"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:147
 msgid "针对这种定时选股类型的交易策略，`qteasy`提供了`FactorSorter`交易策略类，顾名思义，这个交易策略基类允许用户在策略的实现方法中计算一组选股因子，这样策略就可以自动将所有的股票按照选股因子的值排序，并选出排名靠前的股票。至于排序方法、筛选规则、股票持仓权重等都可以通过策略参数设置。"
 msgstr ""
+"Für diese Art von zeitgesteuerter Aktienauswahlstrategie bietet „qteasy“ die Handelsstrategieklasse „FactorSorter“. Wie der Name schon sagt, ermöglicht diese Basisklasse die Berechnung von Aktienauswahlfaktoren in der Strategieimplementierung. So sortiert die Strategie automatisch alle Aktien nach dem Wert des Aktienauswahlfaktors und wählt die am "
+"besten bewerteten Aktien aus. Sortiermethode, Auswahlregeln, Aktiengewichtung usw. lassen sich über Strategieparameter festlegen."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:149
 msgid "如果符合上面定义的交易策略，使用`FactorSorter`策略基类将会非常方便。"
-msgstr ""
+msgstr "Wenn Sie zur oben definierten Handelsstrategie passen, ist es sehr praktisch, die Basisklasse der FactorSorter-Strategie zu verwenden."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:151
 msgid "下面我们就来一步步定义看看，首先继承`FactorSorter`并定义一个类，在上一个章节中，我们在自定义策略的`__init__()`方法中定义名称、描述以及默认参数等信息，然而我们也可以忽略`__init__()`方法，仅仅在创建策略对象时传入参数等信息，这也是可以的，我们在这里就这样做："
 msgstr ""
+"Definieren wir es Schritt für Schritt. Zunächst erben wir „FactorSorter“ und definieren eine Klasse. Im vorherigen Abschnitt haben wir Name, Beschreibung und Standardparameter in der Methode „__init__()“ der benutzerdefinierten Strategie definiert. Wir können die Methode „__init__()“ jedoch auch ignorieren und nur Parameter und andere Informationen "
+"beim Erstellen des Strategieobjekts übergeben. Dies ist ebenfalls möglich. Wir tun dies hier:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:160
-msgid ""
-"与上一节相同，在`realize()`中需要做的第一步是获取历史数据。我们知道历史数据包括`total_mv, total_liab, "
-"c_cash_equ_end_period, "
-"ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L,"
-" M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
+msgid "与上一节相同，在`realize()`中需要做的第一步是获取历史数据。我们知道历史数据包括`total_mv, total_liab, c_cash_equ_end_period, ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L, M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
 msgstr ""
+"Wie im vorherigen Abschnitt besteht der erste Schritt in „realize()“ darin, historische Daten zu erhalten. Wir wissen, dass historische Daten vier Typen umfassen: „total_mv“, „total_liab“, „c_cash_equ_end_period“ und „ebitda“. Diese historischen Daten werden ebenfalls im historischen Datenattribut h zusammengefasst und gespeichert. Im Gegensatz zum "
+"vorherigen Abschnitt ist h ein dreidimensionales „ndarray“ mit der Form („shape“) (L, M, N), das L Ebenen, M Zeilen und N Spalten enthält und jede Aktie, jedes Datum und jeden Datentyp repräsentiert."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:162
 msgid "因此，要获取四种数据类型最后一个周期的所有股票的数据，应该使用如下方法切片："
-msgstr ""
+msgstr "Um die Daten aller Aktien im letzten Zeitraum der vier Datentypen zu erhalten, sollte daher die folgende Aufteilungsmethode verwendet werden:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:175
 msgid "这样我们获取到的每一种数据类型都是一个一维数组，这个数组的长度与我们传入的备选股票池中的股票数量相同，每一个元素代表该股票的数据。加入我们的投资股票池中有三支股票，那么total_mv中就会有三个数字，分别代表三支股票的总市值，以此类推。"
 msgstr ""
+"Auf diese Weise ist jeder von uns erhaltene Datentyp ein eindimensionales Array. Die Länge dieses Arrays entspricht der Anzahl der Aktien im übergebenen Kandidatenpool, und jedes Element repräsentiert die Daten der Aktie. Befindet sich in unserem Investment-Aktienpool drei Aktien, enthält total_mv drei Zahlen, die den Gesamtmarktwert der drei Aktien "
+"darstellen, und so weiter."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:177
 msgid "做好上述准备后，计算选股因子就非常方便了，而且，由于我们使用了`FactorSorter`策略基类，计算好选股因子后，直接返回选股因子就可以了，`qteasy`会处理剩下的选股操作："
-msgstr ""
+msgstr "Nach den oben genannten Vorbereitungen ist die Berechnung des Aktienauswahlfaktors sehr einfach. Da wir außerdem die Strategie-Basisklasse „FactorSorter“ verwenden, können wir nach der Berechnung des Aktienauswahlfaktors diesen direkt zurückgeben, und „qteasy“ übernimmt die restlichen Aktienauswahlvorgänge:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:189
 msgid "至此，仅仅用六行代码，一个自定义Alpha选股交易策略就定义好了。是不是非常简单？"
-msgstr ""
+msgstr "An diesem Punkt wurde eine benutzerdefinierte Alpha-Aktienauswahl-Handelsstrategie mit nur sechs Codezeilen definiert. Ist das nicht ganz einfach?"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:191
 msgid "好了，我们来看看回测的结果如何？"
-msgstr ""
+msgstr "Okay, sehen wir uns die Backtest-Ergebnisse an."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:193
 msgid "交易策略的回测结果"
-msgstr ""
+msgstr "Backtesting-Ergebnisse von Handelsstrategien"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:195
 msgid "由于我们忽略了策略类的`__init__()`方法，因此在实例化策略对象时，必须输入完整的策略参数："
-msgstr ""
+msgstr "Da wir die Methode `__init__()` der Strategieklasse ignoriert haben, müssen wir beim Instanziieren eines Strategieobjekts die vollständigen Strategieparameter übergeben:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:213
 msgid "然后创建一个`Operator`对象，因为我们希望控制持仓比例，因此最好使用“PT”信号类型："
-msgstr ""
+msgstr "Erstellen Sie dann ein „Operator“-Objekt. Da wir das Positionsverhältnis steuern möchten, ist es besser, den Signaltyp „PT“ zu verwenden:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:224
-#: ../../source/tutorials/6-more-self-defined-strategies.md:375
+#: ../../source/tutorials/6-more-self-defined-strategies.md:224 ../../source/tutorials/6-more-self-defined-strategies.md:375
 msgid "回测结果如下："
-msgstr ""
+msgstr "Die Ergebnisse des Backtests lauten wie folgt:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:289
 msgid "![在这里插入图片描述](../examples/img/output_5_1_2.png)"
-msgstr ""
+msgstr "![Bildbeschreibung hier einfügen](../examples/img/output_5_1_2.png)"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:289
-#: ../../source/tutorials/6-more-self-defined-strategies.md:440
+#: ../../source/tutorials/6-more-self-defined-strategies.md:289 ../../source/tutorials/6-more-self-defined-strategies.md:440
 msgid "在这里插入图片描述"
-msgstr ""
+msgstr "Bildbeschreibung hier einfügen"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:292
 msgid "回测结果显示这个策略并不能非常有效地跑赢沪深300指数，不过总体来说回撤较小一些，风险较低，是一个不错的保底策略。"
-msgstr ""
+msgstr "Die Backtest-Ergebnisse zeigen, dass diese Strategie den CSI 300 Index nicht sehr effektiv übertreffen kann, aber insgesamt ist der Drawdown kleiner und das Risiko niedriger, was sie zu einer guten Bottom-Line-Strategie macht."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:294
 msgid "但策略的表现并不是我们讨论的重点，下面我们再来看一看，如果不用`FactorSorter`基类，如何定义同样的Alpha选股策略。"
-msgstr ""
+msgstr "Die Performance der Strategie steht jedoch nicht im Mittelpunkt unserer Diskussion. Sehen wir uns an, wie dieselbe Alpha-Aktienauswahlstrategie ohne Verwendung der Basisklasse „FactorSorter“ definiert werden kann."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:295
 msgid "用`GeneralStg`定义一个Alpha选股策略"
-msgstr ""
+msgstr "Definieren Sie eine Alpha-Aktienauswahlstrategie mit „GeneralStg“"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:296
 msgid "前面已经提过了两种策略基类："
-msgstr ""
+msgstr "Zwei Strategie-Basisklassen wurden bereits erwähnt:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:298
-msgid ""
-"**`RuleIterator`**： "
-"用户只需要针对一支股票定义选股规则，`qteasy`便能将同样的规则应用到股票池中所有的恶股票上，而且还能针对不同股票设置不同的可调参数"
-msgstr ""
+msgid "**`RuleIterator`**： 用户只需要针对一支股票定义选股规则，`qteasy`便能将同样的规则应用到股票池中所有的恶股票上，而且还能针对不同股票设置不同的可调参数"
+msgstr "**`RuleIterator`**: Benutzer müssen nur Aktienauswahlregeln für eine Aktie definieren, und `qteasy` kann dieselben Regeln auf alle schlechten Aktien im Aktienpool anwenden und auch unterschiedliche anpassbare Parameter für unterschiedliche Aktien festlegen."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:299
 msgid "**`FactorSorter`**：用户只需要定义一个选股因子，`qteasy`便能根据选股因子自动排序后选择最优的股票持有，并卖掉不够格的股票。"
-msgstr ""
+msgstr "**`FactorSorter`**: Benutzer müssen nur einen Aktienauswahlfaktor definieren, und `qteasy` kann automatisch entsprechend dem Aktienauswahlfaktor sortieren und die besten Aktien zum Halten auswählen sowie nicht qualifizierte Aktien verkaufen."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:301
 msgid "而`GeneralStg`是`qteasy`提供的一个最基本的策略基类，它没有提供任何“语法糖”功能，帮助用户降低编码工作量，但是正是因为没有语法糖，它才是一个真正的“万能”策略类，可以用来更加自由地创建交易策略。"
-msgstr ""
+msgstr "`GeneralStg` ist die grundlegendste Strategie-Basisklasse von „qteasy“. Sie bietet keine „Syntax Sugar“-Funktion, um den Programmieraufwand zu reduzieren. Gerade aufgrund des fehlenden Syntax Sugars handelt es sich jedoch um eine wirklich universelle Strategieklasse, mit der Handelsstrategien freier entwickelt werden können."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:303
 msgid "上面的Alpha选股交易策略可以很容易用`FactorSorter`实现，但为了了解`GeneralStg`，我们来看看如何使用它来创建相同的策略："
-msgstr ""
+msgstr "Die oben beschriebene Alpha-Aktienauswahl-Handelsstrategie könnte problemlos mit FactorSorter umgesetzt werden. Um jedoch GeneralStg zu verstehen, sehen wir uns an, wie man damit dieselbe Strategie erstellt:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:305
 msgid "直接把完整的代码贴出来："
-msgstr ""
+msgstr "Fügen Sie einfach den vollständigen Code ein:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:337
 msgid "将上面的代码与`FactorSorter`的代码对比，可以发现，`GeneralStg`的代码在计算出选股因子以后，还多出了因子处理的工作："
-msgstr ""
+msgstr "Wenn wir den obigen Code mit dem Code von „FactorSorter“ vergleichen, können wir feststellen, dass der Code von „GeneralStg“ nach der Berechnung der Aktienauswahlfaktoren zusätzliche Faktorverarbeitungsarbeit erfordert:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:339
 msgid "剔除小于零的因子"
-msgstr ""
+msgstr "Eliminieren Sie Faktoren kleiner als Null"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:340
 msgid "排序并选出剩余因子中最小的30个"
-msgstr ""
+msgstr "Sortieren und wählen Sie die 30 kleinsten verbleibenden Faktoren aus"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:341
 msgid "选出股票后将他们的持仓比例设置为3.3%"
-msgstr ""
+msgstr "Nach der Auswahl der Aktien legen Sie deren Beteiligungsquote auf 3,3 % fest"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:343
 msgid "事实上，上面的这些工作都是`FactorSorter`提供的“语法糖”，在这里我们必须手动实现而已。值得注意的是，我在上面例子中使用的排序等代码都是从`FactorSorter`中直接提取出来的高度优化的`numpy`代码，它们的运行速度是很快的，比一般用户能写出的代码快很多，因此，只要条件允许，用户都应该尽量利用这些语法糖，只有在不得已的情况下才自己编写排序代码。"
 msgstr ""
+"Tatsächlich handelt es sich bei der gesamten oben genannten Arbeit um den von „FactorSorter“ bereitgestellten „Syntaxzucker“, den wir hier manuell implementieren müssen. Es ist erwähnenswert, dass die Sortiercodes, die ich in den obigen Beispielen verwendet habe, hochoptimierte „Numpy“-Codes sind, die direkt aus „FactorSorter“ extrahiert wurden. Sie "
+"laufen sehr schnell, viel schneller als der Code, den normale Benutzer schreiben können. Daher sollten Benutzer, sofern es die Bedingungen erlauben, versuchen, diese syntaktischen Zucker zu verwenden und nur dann selbst Sortiercodes zu schreiben, wenn es unbedingt nötig ist."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:345
 msgid "大家可以研究一下上面的代码，但是请注意，如果使用`GeneralStg`策略类，策略的输出应该是股票的目标仓位，而不是选股因子。"
-msgstr ""
+msgstr "Sie können den obigen Code studieren, beachten Sie jedoch, dass bei Verwendung der Strategieklasse „GeneralStg“ die Ausgabe der Strategie die Zielposition der Aktie und nicht der Aktienauswahlfaktor sein sollte."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:347
 msgid "下面看看回测结果："
-msgstr ""
+msgstr "Werfen wir einen Blick auf die Backtest-Ergebnisse:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:349
 msgid "回测结果："
-msgstr ""
+msgstr "Backtest-Ergebnisse für die erste Strategie"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:351
 msgid "使用同样的数据进行回测："
-msgstr ""
+msgstr "Backtesting mit denselben Daten:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:440
 msgid "![在这里插入图片描述](../examples/img/output_7_1.png)"
-msgstr ""
+msgstr "![Bildbeschreibung hier einfügen](../examples/img/output_7_1.png)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:442
 msgid "两种交易策略的输出结果基本相同"
-msgstr ""
+msgstr "Die Ergebnisse der beiden Handelsstrategien sind grundsätzlich gleich"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:443
 msgid "本节回顾"
-msgstr ""
+msgstr "Rückblick auf diesen Abschnitt"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:445
 msgid "通过本节的学习，我们了解了`qteasy`提供的另外两种交易策略基类`FactorSorter`和`GeneralStg`的使用方法，实际创建了两个交易策略，虽然使用不同的基类，但是创建出了基本相同的Alpha选股交易策略。"
-msgstr ""
+msgstr "Durch das Studium dieses Abschnitts haben wir gelernt, wie man die beiden anderen Handelsstrategie-Basisklassen „FactorSorter“ und „GeneralStg“ von „qteasy“ verwendet und tatsächlich zwei Handelsstrategien erstellt. Obwohl unterschiedliche Basisklassen verwendet wurden, entstand im Grunde dieselbe Handelsstrategie für die Alpha-Aktienauswahl."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:447
 msgid "在下一个章节中，我们仍然将继续介绍自定义交易策略，但是会用一个更加复杂的例子来演示自定义交易策略的使用方法。敬请期待！"
-msgstr ""
-
-#~ msgid "$$ EV = 总市值 + 总负债 - 总现金 $$"
-#~ msgstr ""
-
+msgstr "Im nächsten Kapitel werden wir weiterhin benutzerdefinierte Handelsstrategien vorstellen, jedoch anhand eines komplexeren Beispiels demonstrieren, wie man benutzerdefinierte Handelsstrategien einsetzt. Bleiben Sie dran!"
