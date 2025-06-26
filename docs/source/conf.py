@@ -40,7 +40,7 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
-language = 'en'  # set the language for the documentation, 'en' for English
+language = 'zh_CN'  # set the language for the documentation, 'en' for English
 locale_dirs = ['locale/']  # directory where translation templates are stored
 gettext_compact = False
 
@@ -71,7 +71,7 @@ myst_enable_extensions = [
 
 html_theme = 'sphinx_rtd_theme'  # other popular themes include 'alabaster', 'classic', 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_logo = "NESDRA_Logo.png"
+html_logo = "QTEASY_facebook_cover.png"
 html_theme_options = {
     'logo_only': True,
     'display_version': False,
