@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -47,7 +47,7 @@ msgstr ""
 msgid "Properties"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:17
+#: of qteasy.qt_operator.Operator:11
 msgid "strategies:"
 msgstr ""
 
@@ -71,11 +71,11 @@ msgstr ""
 msgid "一个包含两个交易策略，其中第一个是自定义策略的列表"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:23
+#: of qteasy.qt_operator.Operator:19
 msgid "signal_type:"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:22
+#: of qteasy.qt_operator.Operator:20
 msgid "交易信号模式，Operator支持三种不同的信号模式，分别如下："
 msgstr ""
 
@@ -95,11 +95,11 @@ msgstr ""
 msgid "在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:31
+#: of qteasy.qt_operator.Operator:25
 msgid "op_type:"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:31
+#: of qteasy.qt_operator.Operator:26
 msgid "运行类型，Operator对象有两种不同的运行类型："
 msgstr ""
 
@@ -111,7 +111,7 @@ msgstr ""
 msgid "不支持某些特殊交易策略的模拟回测交易，也不支持实时交易"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator:31
+#: of qteasy.qt_operator.Operator:29
 msgid "stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条"
 msgstr ""
 
@@ -139,66 +139,21 @@ msgid ""
 "列表中的元素可以为代表内置策略类型的字符串，或者为一个具体的策略对象 字符串和策略对象可以混合给出"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.add_strategies
+#: of qteasy.qt_operator.Operator qteasy.qt_operator.Operator.add_strategies
 #: qteasy.qt_operator.Operator.add_strategy
-#: qteasy.qt_operator.Operator.create_signal
-#: qteasy.qt_operator.Operator.get_blender
-#: qteasy.qt_operator.Operator.get_bt_price_type_id_in_priority
-#: qteasy.qt_operator.Operator.get_bt_price_types_in_priority
-#: qteasy.qt_operator.Operator.get_hdate_idx
-#: qteasy.qt_operator.Operator.get_op_history_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_history_data_by_run_timing
-#: qteasy.qt_operator.Operator.get_op_ref_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_ref_data_by_run_timing
-#: qteasy.qt_operator.Operator.get_op_sample_indices_by_price_type
-#: qteasy.qt_operator.Operator.get_op_sample_indices_by_run_timing
-#: qteasy.qt_operator.Operator.get_price_type_idx
-#: qteasy.qt_operator.Operator.get_share_idx
-#: qteasy.qt_operator.Operator.get_stg
-#: qteasy.qt_operator.Operator.get_strategies_by_price_type
-#: qteasy.qt_operator.Operator.get_strategies_by_run_timing
-#: qteasy.qt_operator.Operator.get_strategy_by_id
-#: qteasy.qt_operator.Operator.info qteasy.qt_operator.Operator.is_ready
 #: qteasy.qt_operator.Operator.set_blender
-#: qteasy.qt_operator.Operator.set_opt_par
-#: qteasy.qt_operator.Operator.set_parameter
-#: qteasy.qt_operator.Operator.view_blender
-msgid "参数"
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.add_strategies:8
 msgid "交易策略的名称或者交易策略对象"
 msgstr ""
 
-#: of qteasy.Operator.bt_price_type_count qteasy.Operator.max_window_length
-#: qteasy.Operator.op_list qteasy.Operator.op_list_hdates
-#: qteasy.Operator.op_list_price_types qteasy.Operator.op_list_shape
-#: qteasy.Operator.op_list_shares qteasy.Operator.op_signal
-#: qteasy.Operator.op_signal_hdate qteasy.Operator.op_signal_hdate_idx
-#: qteasy.Operator.op_signal_price_type
-#: qteasy.Operator.op_signal_price_type_idx qteasy.Operator.opt_space_par
-#: qteasy.Operator.ready qteasy.Operator.strategy_timing_count
-#: qteasy.qt_operator.Operator.add_strategies
+#: of qteasy.qt_operator.Operator qteasy.qt_operator.Operator.add_strategies
 #: qteasy.qt_operator.Operator.add_strategy
-#: qteasy.qt_operator.Operator.get_blender
-#: qteasy.qt_operator.Operator.get_bt_price_type_id_in_priority
-#: qteasy.qt_operator.Operator.get_bt_price_types_in_priority
-#: qteasy.qt_operator.Operator.get_hdate_idx
-#: qteasy.qt_operator.Operator.get_op_history_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_history_data_by_run_timing
-#: qteasy.qt_operator.Operator.get_op_ref_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_ref_data_by_run_timing
-#: qteasy.qt_operator.Operator.get_op_sample_indices_by_price_type
-#: qteasy.qt_operator.Operator.get_op_sample_indices_by_run_timing
-#: qteasy.qt_operator.Operator.get_price_type_idx
-#: qteasy.qt_operator.Operator.get_share_idx
-#: qteasy.qt_operator.Operator.get_stg
-#: qteasy.qt_operator.Operator.get_strategies_by_price_type
-#: qteasy.qt_operator.Operator.get_strategy_by_id
 #: qteasy.qt_operator.Operator.get_strategy_id_pairs
-#: qteasy.qt_operator.Operator.is_ready qteasy.qt_operator.Operator.set_blender
-#: qteasy.qt_operator.Operator.set_opt_par
-msgid "返回类型"
+#: qteasy.qt_operator.Operator.set_blender
+msgid "Return type"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.add_strategies:14
@@ -208,7 +163,7 @@ msgstr ""
 #: qteasy.qt_operator.Operator.get_strategy_id_pairs:6
 #: qteasy.qt_operator.Operator.set_blender:21
 #: qteasy.qt_operator.Operator.set_opt_par:18
-msgid "示例"
+msgid "Examples"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.add_strategy:1
@@ -278,7 +233,7 @@ msgstr ""
 msgid "交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:23
+#: of qteasy.qt_operator.Operator.assign_hist_data:21
 msgid "self._op_sample_idx:"
 msgstr ""
 
@@ -292,7 +247,7 @@ msgstr ""
 msgid "Parameters:"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:37
+#: of qteasy.qt_operator.Operator.assign_hist_data:27
 msgid "hist_data: HistoryPanel"
 msgstr ""
 
@@ -300,7 +255,7 @@ msgstr ""
 msgid "历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有 个股所有类型的数据，"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:35
+#: of qteasy.qt_operator.Operator.assign_hist_data:31
 msgid "例如，operator对象中存在两个交易策略，分别需要的数据类型如下："
 msgstr ""
 
@@ -314,7 +269,7 @@ msgstr ""
 msgid "hist_data中就应该包含close、open、high、eps四种类型的数据 数据覆盖的时间段和时间频率也必须符合上述要求"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:40
+#: of qteasy.qt_operator.Operator.assign_hist_data:39
 msgid "cash_plan: CashPlan"
 msgstr ""
 
@@ -322,7 +277,7 @@ msgstr ""
 msgid "一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题 在live_mode下不需要"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:44
+#: of qteasy.qt_operator.Operator.assign_hist_data:42
 msgid "reference_data: HistoryPanel"
 msgstr ""
 
@@ -333,7 +288,7 @@ msgid ""
 "的历史数据也可以被用作参考数据，参考数据可以被所有个股共享。reference_data包含所有策略所需的参考数据。"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:47
+#: of qteasy.qt_operator.Operator.assign_hist_data:46
 msgid "live_mode: bool, default False"
 msgstr ""
 
@@ -343,7 +298,7 @@ msgid ""
 " 的策略序号来设置op_sample_idx，如果为False，则根据stg_timing设置op_sample_idx"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.assign_hist_data:53
+#: of qteasy.qt_operator.Operator.assign_hist_data:49
 msgid "live_running_stgs: list, optional"
 msgstr ""
 
@@ -366,7 +321,7 @@ msgstr ""
 #: of qteasy.qt_operator.Operator.assign_hist_data:60
 #: qteasy.qt_operator.Operator.get_stg:9
 #: qteasy.qt_operator.Operator.set_opt_par:14
-msgid "备注"
+msgid "Notes"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.assign_hist_data:61
@@ -426,7 +381,7 @@ msgstr ""
 msgid "根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号："
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.create_signal:20
+#: of qteasy.qt_operator.Operator.create_signal:11
 msgid "如果sample_idx为一个int或np.int时，进入stepwise模式，生成单组信号（单个价格类型上单一时间点混合信号）"
 msgstr ""
 
@@ -451,7 +406,7 @@ msgid ""
 "只有sample_idx在op_sample_indices中时，才会产生交易信号，否则输出None"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.create_signal:37
+#: of qteasy.qt_operator.Operator.create_signal:22
 msgid "如果sample_idx为None（默认）或一个ndarray，进入batch模式，生成完整清单"
 msgstr ""
 
@@ -463,7 +418,7 @@ msgid ""
 "全部为np.nan："
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.create_signal:34
+#: of qteasy.qt_operator.Operator.create_signal:28
 msgid "array[[  0,   0,   0,   0,   0],"
 msgstr ""
 
@@ -505,20 +460,8 @@ msgid ""
 "当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成 一组信号"
 msgstr ""
 
-#: of qteasy.Operator.op_list_shape qteasy.Operator.op_reference_data
-#: qteasy.Operator.opt_space_par qteasy.qt_operator.Operator.create_signal
-#: qteasy.qt_operator.Operator.get_blender
-#: qteasy.qt_operator.Operator.get_bt_price_type_id_in_priority
-#: qteasy.qt_operator.Operator.get_bt_price_types_in_priority
-#: qteasy.qt_operator.Operator.get_hdate_idx
-#: qteasy.qt_operator.Operator.get_op_history_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_ref_data_by_price_type
-#: qteasy.qt_operator.Operator.get_op_sample_indices_by_price_type
-#: qteasy.qt_operator.Operator.get_price_type_idx
-#: qteasy.qt_operator.Operator.get_share_idx
-#: qteasy.qt_operator.Operator.get_strategies_by_price_type
-#: qteasy.qt_operator.Operator.is_ready
-msgid "返回"
+#: of qteasy.qt_operator.Operator
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.create_signal:61
@@ -936,7 +879,7 @@ msgstr ""
 msgid "检查Operator对象是否已经准备好，可以开始生成交易信号"
 msgstr ""
 
-#: of qteasy.Operator.ready:5
+#: of qteasy.Operator.ready:3
 msgid "返回True，表明Operator的各项属性已经具备以下条件："
 msgstr ""
 
@@ -987,7 +930,7 @@ msgid ""
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.set_blender
-msgid "抛出"
+msgid "Raises"
 msgstr ""
 
 #: of qteasy.qt_operator.Operator.set_blender:16
@@ -1045,7 +988,7 @@ msgstr ""
 msgid "[v0, v1, v2, v3, v4]"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.set_opt_par:32
+#: of qteasy.qt_operator.Operator.set_opt_par:27
 msgid "set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为0，则将相应的参数赋值给strategy："
 msgstr ""
 
@@ -1079,7 +1022,7 @@ msgstr ""
 msgid "[v0, v1, v2]，其中v2 = (i0, i1, i2)"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.set_opt_par:49
+#: of qteasy.qt_operator.Operator.set_opt_par:45
 msgid "set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略"
 msgstr ""
 
@@ -1184,7 +1127,7 @@ msgstr ""
 msgid "返回operator对象所有策略子对象的运行时间类型"
 msgstr ""
 
-#: of qteasy.qt_operator.Operator.view_blender:2
+#: of qteasy.qt_operator.Operator.view_blender:1
 msgid "返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的"
 msgstr ""
 
@@ -1195,4 +1138,22 @@ msgstr ""
 #: of qteasy.qt_operator.Operator.view_blender:4
 msgid "一个可用的run_timing"
 msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回类型"
+#~ msgstr ""
+
+#~ msgid "示例"
+#~ msgstr ""
+
+#~ msgid "备注"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
+
+#~ msgid "抛出"
+#~ msgstr ""
 

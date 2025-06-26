@@ -1,13 +1,13 @@
 # coding=utf-8
 # ======================================
-# File:     emfuncs.py
+# File:     sinafuncs.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
-# Created:  2023-11-01
+# Created:  2025-06-24
 # Desc:
-#   Interfaces to eastmoney data
+#   Interfaces to sina finance data
 # functions and api, as the default
-# api in qteasy, emfuncs provides basic
+# api in qteasy, sinafuncs provides basic
 # functions to acquire price k-lines.
 # ======================================
 
@@ -25,7 +25,7 @@ from qteasy.utilfuncs import (
 
 ERRORS_TO_CHECK_ON_RETRY = Exception
 
-east_money_freq_map = {
+sina_finance_freq_map = {
     '1min':  1,
     '5min':  5,
     '15min': 15,
@@ -123,7 +123,7 @@ def _timestamp_to_time(time_stamp, form_date="%Y-%m-%d %H:%M:%S"):
     return str(other_style_time)
 
 
-def _gen_eastmoney_code(rawcode: str) -> str:
+def _gen_sina_code(rawcode: str) -> str:
     """
     生成东方财富专用的secid: 1.000001 0.399001等
 
@@ -144,11 +144,11 @@ def _gen_eastmoney_code(rawcode: str) -> str:
 
     Examples
     --------
-    >>> _gen_eastmoney_code('000001')
+    >>> _gen_sina_code('000001')
     0.000001
-    >>> _gen_eastmoney_code('000001.SZ')
+    >>> _gen_sina_code('000001.SZ')
     0.000001
-    >>> _gen_eastmoney_code('000001.SH')
+    >>> _gen_sina_code('000001.SH')
     1.000001
     """
 
@@ -232,7 +232,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     fields = list(EastmoneyKlines.keys())
     columns = list(EastmoneyKlines.values())
     fields2 = ",".join(fields)
-    secid = _gen_eastmoney_code(code)
+    secid = _gen_sina_code(code)
     params = (
         ('fields1', 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13'),
         ('fields2', fields2),
@@ -275,7 +275,7 @@ def _get_rt_quote(code: str) -> pd.DataFrame:
     """ codes from tushare, get real time quote data from eastmoney"""
 
     url = "https://push2.eastmoney.com/api/qt/stock/get"
-    symbol = _gen_eastmoney_code(code)
+    symbol = _gen_sina_code(code)
     # print(symbol)
     params = {
         "invt":   "2",
@@ -372,7 +372,7 @@ def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     DataFrame
         包含单支股票的K线数据，频率可选
     """
-    klt = east_money_freq_map.get(freq, 101)
+    klt = sina_finance_freq_map.get(freq, 101)
     df = _get_k_history(code=qt_code, beg=start, end=end, klt=klt, verbose=True)
     df['ts_code'] = qt_code
     # 重新计算pct_chg，因为原始数据的精度不够四位小数

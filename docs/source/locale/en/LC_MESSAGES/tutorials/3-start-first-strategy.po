@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-06 21:24+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -130,7 +130,8 @@ msgstr ""
 " the index with the smaller increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
-msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
+#, fuzzy
+msgid "当日涨幅 = \\frac{Price_0}{Price_{20}} - 1"
 msgstr "$$Daily increase = \\frac{Price_0}{Price_{20}} - 1$$"
 
 #: ../../source/tutorials/3-start-first-strategy.md:35

@@ -79,11 +79,7 @@ def _fetch_table_data_from_tushare(table, **kwargs):
     """
 
     from .tsfuncs import acquire_data
-
-    # 通过tushare的API下载数据
-    api_name = TUSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')]
-
-    dnld_data = acquire_data(api_name, **kwargs)
+    dnld_data = acquire_data(TUSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')], **kwargs)
 
     return dnld_data
 
@@ -104,9 +100,7 @@ def _fetch_table_data_from_akshare(table, **kwargs):
         下载后的数据
     """
     from .akfuncs import acquire_data
-    api_name = AKSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')]
-
-    dnld_data = acquire_data(api_name, **kwargs)
+    dnld_data = acquire_data(AKSHARE_API_MAP[table][API_MAP_COLUMNS.index('api')], **kwargs)
 
     return dnld_data
 
@@ -127,9 +121,28 @@ def _fetch_table_data_from_eastmoney(table, **kwargs):
         下载后的数据
     """
     from .emfuncs import acquire_data
-    api_name = EASTMONEY_API_MAP[table][API_MAP_COLUMNS.index('api')]
+    dnld_data = acquire_data(EASTMONEY_API_MAP[table][API_MAP_COLUMNS.index('api')], **kwargs)
 
-    dnld_data = acquire_data(api_name, **kwargs)
+    return dnld_data
+
+
+def _fetch_table_data_from_sina(table, **kwargs):
+    """ 使用kwargs参数，从新浪财经获取一次金融数据
+
+    Parameters
+    ----------
+    table: str,
+        数据表名，必须是API_MAP中定义的数据表
+    **kwargs:
+        用于下载金融数据的函数参数
+
+    Returns
+    -------
+    pd.DataFrame:
+        下载后的数据
+    """
+    from .sinafuncs import acquire_data
+    dnld_data = acquire_data(SINA_API_MAP[table][API_MAP_COLUMNS.index('api')], **kwargs)
 
     return dnld_data
 
@@ -138,7 +151,6 @@ def _fetch_realtime_kline_from_tushare(qt_code, date, freq):
     """ 从tushare获取实时K线数据"""
     from .tsfuncs import acquire_data
     api_name = TUSHARE_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
-
     dnld_data = acquire_data(api_name, **{'ts_code': qt_code, 'freq': freq})
 
     return dnld_data
@@ -148,7 +160,6 @@ def _fetch_realtime_kline_from_akshare(qt_code, date, freq):
     """ 从akshare获取实时K线数据"""
     from .akfuncs import acquire_data
     api_name = AKSHARE_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
-
     dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
     return dnld_data
@@ -158,7 +169,15 @@ def _fetch_realtime_kline_from_eastmoney(qt_code, date, freq):
     """ 从eastmoney获取实时K线数据"""
     from .emfuncs import acquire_data
     api_name = EASTMONEY_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
+    dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
+    return dnld_data
+
+
+def _fetch_realtime_kline_from_sina(qt_code, date, freq):
+    """ 从新浪财经获取实时K线数据"""
+    from .sinafuncs import acquire_data
+    api_name = SINA_REALTIME_API_MAP['realtime_bars'][API_MAP_COLUMNS.index('api')]
     dnld_data = acquire_data(api_name, **{'qt_code': qt_code, 'date': date, 'freq': freq})
 
     return dnld_data
@@ -186,6 +205,8 @@ def _get_fetch_table_func(channel: str):
         return _fetch_table_data_from_akshare
     elif channel in ['emoney', 'eastmoney']:
         return _fetch_table_data_from_eastmoney
+    elif channel == 'sina':
+        return _fetch_table_data_from_sina
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
@@ -198,6 +219,8 @@ def _get_realtime_kline_func(channel: str):
         return _fetch_realtime_kline_from_akshare
     elif channel in ['emoney', 'eastmoney']:
         return _fetch_realtime_kline_from_eastmoney
+    elif channel == 'sina':
+        return _fetch_realtime_kline_from_sina
     else:
         raise NotImplementedError(f'channel {channel} is not supported')
 
@@ -1580,4 +1603,34 @@ EASTMONEY_REALTIME_API_MAP = {
 
     'realtime_quotes':  # 实时报价数据
         ['real_time_quote', 'qt_code', 'list', 'none', '', 'N', '', '']
+}
+
+SINA_API_MAP = {
+    'stock_daily':
+        ['stock_daily', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
+
+    'stock_1min':
+        ['stock_1min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '1'],
+
+    'stock_5min':
+        ['stock_5min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_15min':
+        ['stock_15min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_30min':
+        ['stock_30min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_hourly':
+        ['stock_hourly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    # SINA does not provide weekly/monthly data
+}
+
+SINA_REALTIME_API_MAP = {
+    'realtime_bars':  # 实时K线行情数据
+        ['realtime_klines', 'qt_code', 'list', 'none', '', 'N', '', ''],
+
+    'realtime_quotes':  # 实时报价数据
+        ['realtime_quote', 'qt_code', 'list', 'none', '', 'N', '', '']
 }

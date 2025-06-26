@@ -25,19 +25,27 @@ msgstr "Erstellen Sie benutzerdefinierte Faktor-Aktienauswahl-Handelsstrategien"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:4
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr "`qteasy` ist ein vollständig lokalisiertes und betriebenes Quantitative Trading-Analyse-Toolkit mit folgenden Funktionen:"
+msgstr ""
+"`qteasy` ist ein vollständig lokalisiertes und betriebenes Quantitative "
+"Trading-Analyse-Toolkit mit folgenden Funktionen:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:6
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
-msgstr " Erfassung, Reinigung, Speicherung und Verarbeitung von Finanzdaten, Visualisierung und Verwendung"
+msgstr ""
+" Erfassung, Reinigung, Speicherung und Verarbeitung von Finanzdaten, "
+"Visualisierung und Verwendung"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:7
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr " Erstellung quantitativer Handelsstrategien und Bereitstellung einer Vielzahl von integrierten grundlegenden Handelsstrategien"
+msgstr ""
+" Erstellung quantitativer Handelsstrategien und Bereitstellung einer "
+"Vielzahl von integrierten grundlegenden Handelsstrategien"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:8
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr " Vektorisierte Hochgeschwindigkeits-Backtests von Handelsstrategien und Bewertung der Handelsergebnisse"
+msgstr ""
+" Vektorisierte Hochgeschwindigkeits-Backtests von Handelsstrategien und "
+"Bewertung der Handelsergebnisse"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:9
 msgid "交易策略参数的优化以及评价"
@@ -49,7 +57,10 @@ msgstr " Bereitstellung von Handelsstrategien und Durchführung von Live-Trades"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:12
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr " Durch diese Tutorials werden Sie anhand einer Reihe praktischer Beispiele die Hauptfunktionen und Verwendungsmethoden von `qteasy` vollständig verstehen."
+msgstr ""
+" Durch diese Tutorials werden Sie anhand einer Reihe praktischer "
+"Beispiele die Hauptfunktionen und Verwendungsmethoden von `qteasy` "
+"vollständig verstehen."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:14
 msgid "开始前的准备工作"
@@ -57,11 +68,15 @@ msgstr " Vorbereitungen vor dem Start"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:16
 msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
-msgstr " Bevor Sie mit diesem Tutorial beginnen, stellen Sie bitte sicher, dass Sie Folgendes beherrschen:"
+msgstr ""
+" Bevor Sie mit diesem Tutorial beginnen, stellen Sie bitte sicher, dass "
+"Sie Folgendes beherrschen:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:18
 msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
-msgstr " **Installieren und Konfigurieren von `qteasy`** - [QTEASY-Tutorial 1](1-get-started.md)"
+msgstr ""
+" **Installieren und Konfigurieren von `qteasy`** - [QTEASY-Tutorial 1](1"
+"-get-started.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:19
 msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
@@ -81,7 +96,13 @@ msgstr "**Erfahren Sie, wie Sie Ihre Handelsstrategie anpassen**——[QTEASY-Tu
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:24
 msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
-msgstr " Im [QTEASY-Dokument](https://qteasy.readthedocs.io/zh/latest/) finden Sie auch weitere Informationen zur Verwendung integrierter Handelsstrategien, zur Erstellung benutzerdefinierter Strategien usw. Wenn Sie mit den grundlegenden Verwendungsmethoden von `qteasy` noch nicht vertraut sind, können Sie dort weitere detaillierte Erklärungen finden."
+msgstr ""
+" Im [QTEASY-Dokument](https://qteasy.readthedocs.io/zh/latest/) finden "
+"Sie auch weitere Informationen zur Verwendung integrierter "
+"Handelsstrategien, zur Erstellung benutzerdefinierter Strategien usw. "
+"Wenn Sie mit den grundlegenden Verwendungsmethoden von `qteasy` noch "
+"nicht vertraut sind, können Sie dort weitere detaillierte Erklärungen "
+"finden."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:26
 msgid "本节的目标"
@@ -160,8 +181,8 @@ msgstr ""
 "jedoch, dass EV mit der folgenden Formel berechnet werden kann:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:121
-msgid "$$ EV = 总市值 + 总负债 - 总现金 $$"
-msgstr "$$ EV = Gesamtmarktwert + Gesamtverbindlichkeiten - Gesamtbargeld $$"
+msgid " EV = 总市值 + 总负债 - 总现金 "
+msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:123
 msgid "而上面几个财务指标都是`qteasy`直接支持的："

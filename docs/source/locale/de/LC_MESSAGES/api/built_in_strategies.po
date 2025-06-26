@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 01:06+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -60,7 +60,7 @@ msgstr ""
 #: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
 #: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
-msgid "参数"
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.built_in.built_in_list:3 qteasy.built_in.built_in_strategies:3
@@ -73,7 +73,7 @@ msgstr ""
 #: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
 #: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
-msgid "返回"
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.built_in.built_ins:7
@@ -83,13 +83,13 @@ msgstr ""
 #: ../../source/api/built_in_strategies.rst of qteasy.built_in.built_in_doc
 #: qteasy.built_in.built_in_list qteasy.built_in.built_ins
 #: qteasy.built_in.get_built_in_strategy
-msgid "返回类型"
+msgid "Return type"
 msgstr ""
 
 #: of qteasy.built_in.built_in_doc:10 qteasy.built_in.built_in_list:11
 #: qteasy.built_in.built_in_strategies:11 qteasy.built_in.built_ins:11
 #: qteasy.built_in.get_built_in_strategy:13
-msgid "示例"
+msgid "Examples"
 msgstr ""
 
 #: ../../source/api/built_in_strategies.rst:21
@@ -135,7 +135,7 @@ msgid "**stg**"
 msgstr ""
 
 #: of qteasy.built_in.get_built_in_strategy
-msgid "抛出"
+msgid "Raises"
 msgstr ""
 
 #: of qteasy.built_in.get_built_in_strategy:9
@@ -184,7 +184,7 @@ msgstr ""
 msgid "根据历史数据选股"
 msgstr ""
 
-#: of qteasy.built_in.SelectingAvgIndicator:2
+#: of qteasy.built_in.SelectingAvgIndicator:1
 msgid "以股票过去一段时间内的财务指标的平均值作为选股因子选股"
 msgstr ""
 
@@ -194,37 +194,37 @@ msgid ""
 "改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入"
 msgstr ""
 
-#: of qteasy.built_in.AD:5 qteasy.built_in.ADOSC:7 qteasy.built_in.ADX:4
-#: qteasy.built_in.APO:10 qteasy.built_in.AROON:6 qteasy.built_in.ATR:7
-#: qteasy.built_in.BBand:9 qteasy.built_in.BuyRate:7 qteasy.built_in.CDL:3
-#: qteasy.built_in.CMO:6 qteasy.built_in.CROSSLINE:7 qteasy.built_in.DCRSDEMA:6
-#: qteasy.built_in.DCRSEMA:6 qteasy.built_in.DCRSKAMA:6
-#: qteasy.built_in.DCRSMAMA:10 qteasy.built_in.DCRSSMA:6
-#: qteasy.built_in.DCRST3:10 qteasy.built_in.DCRSTEMA:6
-#: qteasy.built_in.DCRSTRIMA:6 qteasy.built_in.DCRSWMA:6 qteasy.built_in.DI:7
-#: qteasy.built_in.DM:8 qteasy.built_in.DMA:7 qteasy.built_in.MACD:7
+#: of qteasy.built_in.AD:5 qteasy.built_in.ADOSC:5 qteasy.built_in.ADX:4
+#: qteasy.built_in.APO:6 qteasy.built_in.AROON:6 qteasy.built_in.ATR:7
+#: qteasy.built_in.BBand:5 qteasy.built_in.BuyRate:5 qteasy.built_in.CDL:3
+#: qteasy.built_in.CMO:6 qteasy.built_in.CROSSLINE:3 qteasy.built_in.DCRSDEMA:4
+#: qteasy.built_in.DCRSEMA:4 qteasy.built_in.DCRSKAMA:4
+#: qteasy.built_in.DCRSMAMA:4 qteasy.built_in.DCRSSMA:4
+#: qteasy.built_in.DCRST3:4 qteasy.built_in.DCRSTEMA:4
+#: qteasy.built_in.DCRSTRIMA:4 qteasy.built_in.DCRSWMA:4 qteasy.built_in.DI:5
+#: qteasy.built_in.DM:6 qteasy.built_in.DMA:3 qteasy.built_in.MACD:3
 #: qteasy.built_in.MACDEXT:5 qteasy.built_in.MFI:4 qteasy.built_in.MOM:4
-#: qteasy.built_in.OBV:6 qteasy.built_in.PPO:9 qteasy.built_in.RSI:9
-#: qteasy.built_in.SAREXT:5 qteasy.built_in.SCRSDEMA:3
+#: qteasy.built_in.OBV:6 qteasy.built_in.PPO:5 qteasy.built_in.RSI:5
+#: qteasy.built_in.SAREXT:3 qteasy.built_in.SCRSDEMA:3
 #: qteasy.built_in.SCRSEMA:3 qteasy.built_in.SCRSHT:3
 #: qteasy.built_in.SCRSKAMA:3 qteasy.built_in.SCRSMAMA:3
-#: qteasy.built_in.SCRSSMA:3 qteasy.built_in.SCRST3:5
+#: qteasy.built_in.SCRSSMA:3 qteasy.built_in.SCRST3:3
 #: qteasy.built_in.SCRSTEMA:3 qteasy.built_in.SCRSTRIMA:3
-#: qteasy.built_in.SCRSWMA:3 qteasy.built_in.SLPDEMA:8 qteasy.built_in.SLPEMA:8
-#: qteasy.built_in.SLPHT:6 qteasy.built_in.SLPKAMA:8 qteasy.built_in.SLPMAMA:10
-#: qteasy.built_in.SLPSMA:8 qteasy.built_in.SLPT3:10 qteasy.built_in.SLPTEMA:8
-#: qteasy.built_in.SLPTRIMA:8 qteasy.built_in.SLPWMA:9 qteasy.built_in.STOCH:12
-#: qteasy.built_in.STOCHF:8 qteasy.built_in.STOCHRSI:10
-#: qteasy.built_in.SelectingAll:3 qteasy.built_in.SelectingAvgIndicator:36
+#: qteasy.built_in.SCRSWMA:3 qteasy.built_in.SLPDEMA:6 qteasy.built_in.SLPEMA:6
+#: qteasy.built_in.SLPHT:6 qteasy.built_in.SLPKAMA:6 qteasy.built_in.SLPMAMA:6
+#: qteasy.built_in.SLPSMA:6 qteasy.built_in.SLPT3:6 qteasy.built_in.SLPTEMA:6
+#: qteasy.built_in.SLPTRIMA:6 qteasy.built_in.SLPWMA:7 qteasy.built_in.STOCH:4
+#: qteasy.built_in.STOCHF:4 qteasy.built_in.STOCHRSI:4
+#: qteasy.built_in.SelectingAll:3 qteasy.built_in.SelectingAvgIndicator:4
 #: qteasy.built_in.SelectingNDayAvg:4 qteasy.built_in.SelectingNDayChange:4
 #: qteasy.built_in.SelectingNDayLast:3
 #: qteasy.built_in.SelectingNDayRateChange:4
 #: qteasy.built_in.SelectingNDayVolatility:3 qteasy.built_in.SelectingNone:3
-#: qteasy.built_in.SelectingRandom:4 qteasy.built_in.SellRate:7
-#: qteasy.built_in.SignalNone:4 qteasy.built_in.SoftBBand:11
-#: qteasy.built_in.TRIX:5 qteasy.built_in.TimingLong:3
+#: qteasy.built_in.SelectingRandom:4 qteasy.built_in.SellRate:5
+#: qteasy.built_in.SignalNone:4 qteasy.built_in.SoftBBand:5
+#: qteasy.built_in.TRIX:3 qteasy.built_in.TimingLong:3
 #: qteasy.built_in.TimingShort:3 qteasy.built_in.TimingZero:3
-#: qteasy.built_in.ULTOSC:12 qteasy.built_in.WILLR:8
+#: qteasy.built_in.ULTOSC:4 qteasy.built_in.WILLR:4
 msgid "策略参数:"
 msgstr ""
 
@@ -338,7 +338,7 @@ msgstr ""
 
 #: of qteasy.built_in.AD:7 qteasy.built_in.ADOSC:9 qteasy.built_in.ADX:6
 #: qteasy.built_in.APO:12 qteasy.built_in.AROON:8 qteasy.built_in.ATR:9
-#: qteasy.built_in.BBand:11 qteasy.built_in.BuyRate:9 qteasy.built_in.CDL:7
+#: qteasy.built_in.BBand:11 qteasy.built_in.BuyRate:9 qteasy.built_in.CDL:5
 #: qteasy.built_in.CMO:8 qteasy.built_in.CROSSLINE:9 qteasy.built_in.DCRSDEMA:8
 #: qteasy.built_in.DCRSEMA:8 qteasy.built_in.DCRSKAMA:8
 #: qteasy.built_in.DCRSMAMA:12 qteasy.built_in.DCRSSMA:8
@@ -364,7 +364,7 @@ msgstr ""
 #: qteasy.built_in.SelectingNDayRateChange:6
 #: qteasy.built_in.SelectingNDayVolatility:5 qteasy.built_in.SelectingNone:5
 #: qteasy.built_in.SelectingRandom:6 qteasy.built_in.SellRate:9
-#: qteasy.built_in.SignalNone:10 qteasy.built_in.SoftBBand:13
+#: qteasy.built_in.SignalNone:6 qteasy.built_in.SoftBBand:13
 #: qteasy.built_in.TRIX:7 qteasy.built_in.TimingLong:5
 #: qteasy.built_in.TimingShort:5 qteasy.built_in.TimingZero:5
 #: qteasy.built_in.ULTOSC:14 qteasy.built_in.WILLR:10
@@ -382,39 +382,39 @@ msgstr ""
 msgid "PT型: 百分比持仓比例信号"
 msgstr ""
 
-#: of qteasy.built_in.AD:17 qteasy.built_in.ADOSC:17 qteasy.built_in.ADX:14
-#: qteasy.built_in.APO:18 qteasy.built_in.AROON:18 qteasy.built_in.ATR:23
-#: qteasy.built_in.BBand:17 qteasy.built_in.BuyRate:15 qteasy.built_in.CDL:11
-#: qteasy.built_in.CMO:18 qteasy.built_in.CROSSLINE:15
-#: qteasy.built_in.DCRSDEMA:14 qteasy.built_in.DCRSEMA:14
-#: qteasy.built_in.DCRSKAMA:14 qteasy.built_in.DCRSMAMA:18
-#: qteasy.built_in.DCRSSMA:14 qteasy.built_in.DCRST3:18
-#: qteasy.built_in.DCRSTEMA:14 qteasy.built_in.DCRSTRIMA:14
-#: qteasy.built_in.DCRSWMA:14 qteasy.built_in.DI:15 qteasy.built_in.DM:18
-#: qteasy.built_in.DMA:16 qteasy.built_in.MACD:14 qteasy.built_in.MACDEXT:23
-#: qteasy.built_in.MFI:12 qteasy.built_in.MOM:14 qteasy.built_in.OBV:22
-#: qteasy.built_in.PPO:19 qteasy.built_in.RSI:19 qteasy.built_in.SAREXT:13
-#: qteasy.built_in.SCRSDEMA:11 qteasy.built_in.SCRSEMA:11
-#: qteasy.built_in.SCRSHT:11 qteasy.built_in.SCRSKAMA:11
-#: qteasy.built_in.SCRSMAMA:9 qteasy.built_in.SCRSSMA:11
-#: qteasy.built_in.SCRST3:13 qteasy.built_in.SCRSTEMA:11
-#: qteasy.built_in.SCRSTRIMA:11 qteasy.built_in.SCRSWMA:11
-#: qteasy.built_in.SLPDEMA:18 qteasy.built_in.SLPEMA:18
-#: qteasy.built_in.SLPHT:16 qteasy.built_in.SLPKAMA:18
-#: qteasy.built_in.SLPMAMA:20 qteasy.built_in.SLPSMA:18
-#: qteasy.built_in.SLPT3:20 qteasy.built_in.SLPTEMA:18
-#: qteasy.built_in.SLPTRIMA:18 qteasy.built_in.SLPWMA:19
-#: qteasy.built_in.STOCH:22 qteasy.built_in.STOCHF:18
-#: qteasy.built_in.STOCHRSI:20 qteasy.built_in.SelectingAll:7
-#: qteasy.built_in.SelectingAvgIndicator:40 qteasy.built_in.SelectingNDayAvg:44
-#: qteasy.built_in.SelectingNDayChange:44 qteasy.built_in.SelectingNDayLast:43
-#: qteasy.built_in.SelectingNDayRateChange:44
-#: qteasy.built_in.SelectingNDayVolatility:43 qteasy.built_in.SelectingNone:7
-#: qteasy.built_in.SelectingRandom:10 qteasy.built_in.SellRate:15
-#: qteasy.built_in.SignalNone:12 qteasy.built_in.SoftBBand:19
-#: qteasy.built_in.TRIX:13 qteasy.built_in.TimingLong:7
+#: of qteasy.built_in.AD:9 qteasy.built_in.ADOSC:11 qteasy.built_in.ADX:8
+#: qteasy.built_in.APO:14 qteasy.built_in.AROON:10 qteasy.built_in.ATR:11
+#: qteasy.built_in.BBand:13 qteasy.built_in.BuyRate:11 qteasy.built_in.CDL:9
+#: qteasy.built_in.CMO:10 qteasy.built_in.CROSSLINE:11
+#: qteasy.built_in.DCRSDEMA:10 qteasy.built_in.DCRSEMA:10
+#: qteasy.built_in.DCRSKAMA:10 qteasy.built_in.DCRSMAMA:14
+#: qteasy.built_in.DCRSSMA:10 qteasy.built_in.DCRST3:14
+#: qteasy.built_in.DCRSTEMA:10 qteasy.built_in.DCRSTRIMA:10
+#: qteasy.built_in.DCRSWMA:10 qteasy.built_in.DI:11 qteasy.built_in.DM:12
+#: qteasy.built_in.DMA:11 qteasy.built_in.MACD:11 qteasy.built_in.MACDEXT:19
+#: qteasy.built_in.MFI:8 qteasy.built_in.MOM:8 qteasy.built_in.OBV:10
+#: qteasy.built_in.PPO:13 qteasy.built_in.RSI:13 qteasy.built_in.SAREXT:9
+#: qteasy.built_in.SCRSDEMA:7 qteasy.built_in.SCRSEMA:7
+#: qteasy.built_in.SCRSHT:7 qteasy.built_in.SCRSKAMA:7
+#: qteasy.built_in.SCRSMAMA:9 qteasy.built_in.SCRSSMA:7
+#: qteasy.built_in.SCRST3:9 qteasy.built_in.SCRSTEMA:7
+#: qteasy.built_in.SCRSTRIMA:7 qteasy.built_in.SCRSWMA:7
+#: qteasy.built_in.SLPDEMA:12 qteasy.built_in.SLPEMA:12
+#: qteasy.built_in.SLPHT:10 qteasy.built_in.SLPKAMA:12
+#: qteasy.built_in.SLPMAMA:14 qteasy.built_in.SLPSMA:12
+#: qteasy.built_in.SLPT3:14 qteasy.built_in.SLPTEMA:12
+#: qteasy.built_in.SLPTRIMA:12 qteasy.built_in.SLPWMA:13
+#: qteasy.built_in.STOCH:16 qteasy.built_in.STOCHF:12
+#: qteasy.built_in.STOCHRSI:14 qteasy.built_in.SelectingAll:7
+#: qteasy.built_in.SelectingAvgIndicator:40 qteasy.built_in.SelectingNDayAvg:8
+#: qteasy.built_in.SelectingNDayChange:8 qteasy.built_in.SelectingNDayLast:7
+#: qteasy.built_in.SelectingNDayRateChange:8
+#: qteasy.built_in.SelectingNDayVolatility:7 qteasy.built_in.SelectingNone:7
+#: qteasy.built_in.SelectingRandom:8 qteasy.built_in.SellRate:11
+#: qteasy.built_in.SignalNone:12 qteasy.built_in.SoftBBand:15
+#: qteasy.built_in.TRIX:9 qteasy.built_in.TimingLong:7
 #: qteasy.built_in.TimingShort:7 qteasy.built_in.TimingZero:7
-#: qteasy.built_in.ULTOSC:20 qteasy.built_in.WILLR:16
+#: qteasy.built_in.ULTOSC:16 qteasy.built_in.WILLR:12
 msgid "信号规则:"
 msgstr ""
 
@@ -422,38 +422,38 @@ msgstr ""
 msgid "使用data_types指定一种数据类型，将股票过去的datatypes数据取平均值，将该平均值作为选股因子进行选股"
 msgstr ""
 
-#: of qteasy.built_in.AD:27 qteasy.built_in.ADOSC:27 qteasy.built_in.ADX:24
-#: qteasy.built_in.APO:28 qteasy.built_in.AROON:28 qteasy.built_in.ATR:33
-#: qteasy.built_in.BBand:27 qteasy.built_in.BuyRate:25 qteasy.built_in.CDL:21
-#: qteasy.built_in.CMO:28 qteasy.built_in.CROSSLINE:25
-#: qteasy.built_in.DCRSDEMA:24 qteasy.built_in.DCRSEMA:24
-#: qteasy.built_in.DCRSMAMA:28 qteasy.built_in.DCRSSMA:24
-#: qteasy.built_in.DCRST3:28 qteasy.built_in.DCRSTEMA:24
-#: qteasy.built_in.DCRSTRIMA:24 qteasy.built_in.DCRSWMA:24
-#: qteasy.built_in.DI:25 qteasy.built_in.DM:28 qteasy.built_in.DMA:26
-#: qteasy.built_in.MACD:24 qteasy.built_in.MACDEXT:33 qteasy.built_in.MFI:22
-#: qteasy.built_in.OBV:32 qteasy.built_in.PPO:29 qteasy.built_in.RSI:29
-#: qteasy.built_in.SAREXT:22 qteasy.built_in.SCRSDEMA:21
-#: qteasy.built_in.SCRSEMA:21 qteasy.built_in.SCRSHT:21
-#: qteasy.built_in.SCRSKAMA:21 qteasy.built_in.SCRSMAMA:15
-#: qteasy.built_in.SCRSSMA:21 qteasy.built_in.SCRST3:23
-#: qteasy.built_in.SCRSTEMA:21 qteasy.built_in.SCRSTRIMA:21
-#: qteasy.built_in.SCRSWMA:21 qteasy.built_in.SLPDEMA:28
-#: qteasy.built_in.SLPEMA:28 qteasy.built_in.SLPHT:26
-#: qteasy.built_in.SLPKAMA:28 qteasy.built_in.SLPMAMA:30
-#: qteasy.built_in.SLPSMA:28 qteasy.built_in.SLPT3:30
-#: qteasy.built_in.SLPTEMA:28 qteasy.built_in.SLPTRIMA:28
-#: qteasy.built_in.SLPWMA:29 qteasy.built_in.STOCH:32 qteasy.built_in.STOCHF:28
-#: qteasy.built_in.STOCHRSI:30 qteasy.built_in.SelectingAll:17
-#: qteasy.built_in.SelectingAvgIndicator:61 qteasy.built_in.SelectingNDayAvg:54
-#: qteasy.built_in.SelectingNDayChange:54 qteasy.built_in.SelectingNDayLast:54
-#: qteasy.built_in.SelectingNDayRateChange:54
-#: qteasy.built_in.SelectingNDayVolatility:53 qteasy.built_in.SelectingNone:17
-#: qteasy.built_in.SelectingRandom:20 qteasy.built_in.SellRate:25
-#: qteasy.built_in.SignalNone:22 qteasy.built_in.SoftBBand:29
-#: qteasy.built_in.TRIX:23 qteasy.built_in.TimingLong:17
-#: qteasy.built_in.TimingShort:17 qteasy.built_in.TimingZero:17
-#: qteasy.built_in.ULTOSC:30 qteasy.built_in.WILLR:26
+#: of qteasy.built_in.AD:19 qteasy.built_in.ADOSC:19 qteasy.built_in.ADX:16
+#: qteasy.built_in.APO:20 qteasy.built_in.AROON:20 qteasy.built_in.ATR:25
+#: qteasy.built_in.BBand:19 qteasy.built_in.BuyRate:17 qteasy.built_in.CDL:13
+#: qteasy.built_in.CMO:20 qteasy.built_in.CROSSLINE:17
+#: qteasy.built_in.DCRSDEMA:16 qteasy.built_in.DCRSEMA:16
+#: qteasy.built_in.DCRSMAMA:20 qteasy.built_in.DCRSSMA:16
+#: qteasy.built_in.DCRST3:20 qteasy.built_in.DCRSTEMA:16
+#: qteasy.built_in.DCRSTRIMA:16 qteasy.built_in.DCRSWMA:16
+#: qteasy.built_in.DI:17 qteasy.built_in.DM:20 qteasy.built_in.DMA:18
+#: qteasy.built_in.MACD:16 qteasy.built_in.MACDEXT:25 qteasy.built_in.MFI:14
+#: qteasy.built_in.OBV:24 qteasy.built_in.PPO:21 qteasy.built_in.RSI:21
+#: qteasy.built_in.SAREXT:15 qteasy.built_in.SCRSDEMA:13
+#: qteasy.built_in.SCRSEMA:13 qteasy.built_in.SCRSHT:13
+#: qteasy.built_in.SCRSKAMA:13 qteasy.built_in.SCRSMAMA:15
+#: qteasy.built_in.SCRSSMA:13 qteasy.built_in.SCRST3:15
+#: qteasy.built_in.SCRSTEMA:13 qteasy.built_in.SCRSTRIMA:13
+#: qteasy.built_in.SCRSWMA:13 qteasy.built_in.SLPDEMA:20
+#: qteasy.built_in.SLPEMA:20 qteasy.built_in.SLPHT:18
+#: qteasy.built_in.SLPKAMA:20 qteasy.built_in.SLPMAMA:22
+#: qteasy.built_in.SLPSMA:20 qteasy.built_in.SLPT3:22
+#: qteasy.built_in.SLPTEMA:20 qteasy.built_in.SLPTRIMA:20
+#: qteasy.built_in.SLPWMA:21 qteasy.built_in.STOCH:24 qteasy.built_in.STOCHF:20
+#: qteasy.built_in.STOCHRSI:22 qteasy.built_in.SelectingAll:9
+#: qteasy.built_in.SelectingAvgIndicator:42 qteasy.built_in.SelectingNDayAvg:46
+#: qteasy.built_in.SelectingNDayChange:46 qteasy.built_in.SelectingNDayLast:45
+#: qteasy.built_in.SelectingNDayRateChange:46
+#: qteasy.built_in.SelectingNDayVolatility:45 qteasy.built_in.SelectingNone:9
+#: qteasy.built_in.SelectingRandom:12 qteasy.built_in.SellRate:17
+#: qteasy.built_in.SignalNone:14 qteasy.built_in.SoftBBand:21
+#: qteasy.built_in.TRIX:15 qteasy.built_in.TimingLong:9
+#: qteasy.built_in.TimingShort:9 qteasy.built_in.TimingZero:9
+#: qteasy.built_in.ULTOSC:22 qteasy.built_in.WILLR:18
 msgid "策略属性缺省值:"
 msgstr ""
 
@@ -756,7 +756,7 @@ msgstr ""
 msgid "数据类型: ``high,low,close`` 最高价，最低价，收盘价，多数据输入"
 msgstr ""
 
-#: of qteasy.built_in.SignalNone:2
+#: of qteasy.built_in.SignalNone:1
 msgid "空交易信号策略:"
 msgstr ""
 
@@ -831,7 +831,7 @@ msgstr ""
 msgid "参数范围: ``[]``"
 msgstr ""
 
-#: of qteasy.built_in.SellRate:3
+#: of qteasy.built_in.SellRate:1
 msgid "变化率卖出信号策略:"
 msgstr ""
 
@@ -867,7 +867,7 @@ msgstr ""
 msgid "参数范围: ``[(1, 100), (-0.5, 0.5)]``"
 msgstr ""
 
-#: of qteasy.built_in.BuyRate:3
+#: of qteasy.built_in.BuyRate:1
 msgid "变化率买入信号策略:"
 msgstr ""
 
@@ -908,7 +908,7 @@ msgstr ""
 msgid "整个信号周期内持仓比例恒定，且所有投资组合的持仓比例都为0"
 msgstr ""
 
-#: of qteasy.built_in.SelectingRandom:2
+#: of qteasy.built_in.SelectingRandom:1
 msgid "基础选股策略: 在每个历史分段中，按照指定的比例（p<1时）随机抽取若干股票，"
 msgstr ""
 
@@ -1349,10 +1349,10 @@ msgstr ""
 msgid "``f``: ``float`` between 0 and 1, 快速移动极限"
 msgstr ""
 
-#: of qteasy.built_in.MACDEXT:34 qteasy.built_in.SCRSMAMA:9
-#: qteasy.built_in.SCRSMAMA:11 qteasy.built_in.SCRSMAMA:15
+#: of qteasy.built_in.MACDEXT:7 qteasy.built_in.SCRSMAMA:5
+#: qteasy.built_in.SCRSMAMA:11 qteasy.built_in.SCRSMAMA:13
 #: qteasy.built_in.SCRSMAMA:17 qteasy.built_in.SCRSMAMA:19
-#: qteasy.built_in.SCRSMAMA:21 qteasy.built_in.SCRSMAMA:24
+#: qteasy.built_in.SCRSMAMA:21 qteasy.built_in.SCRSMAMA:23
 msgid "``"
 msgstr ""
 
@@ -1561,7 +1561,7 @@ msgstr ""
 msgid "参数范围: ``[(2, 20), (2, 20)]``"
 msgstr ""
 
-#: of qteasy.built_in.DCRSTRIMA:2
+#: of qteasy.built_in.DCRSTRIMA:1
 msgid "双均线交叉策略——TRIMA均线(三重指数平滑移动平均线):"
 msgstr ""
 
@@ -1573,7 +1573,7 @@ msgstr ""
 msgid "参数范围: ``[(3, 200), (3, 200)]``"
 msgstr ""
 
-#: of qteasy.built_in.DCRSWMA:2
+#: of qteasy.built_in.DCRSWMA:1
 msgid "双均线交叉策略——WMA均线(加权移动平均线):"
 msgstr ""
 
@@ -1709,7 +1709,7 @@ msgstr ""
 msgid "参数范围: ``[(0.01, 0.99), (0.01, 0.99), (2, 20)]``"
 msgstr ""
 
-#: of qteasy.built_in.SLPT3:4
+#: of qteasy.built_in.SLPT3:1
 msgid "均线斜率交易策略——T3均线(三重指数平滑移动平均线):"
 msgstr ""
 
@@ -2136,7 +2136,7 @@ msgstr ""
 msgid "2, 当``MOM < 0``时，设置持仓目标为-1"
 msgstr ""
 
-#: of qteasy.built_in.MOM:24
+#: of qteasy.built_in.MOM:16
 msgid "策略属性缺省值:``"
 msgstr ""
 
@@ -2588,5 +2588,20 @@ msgstr ""
 #~ msgid ""
 #~ "以下是一些依赖``TA-Lib``技术分析包的交易策略，这些交易策略都是基于``TA-"
 #~ "Lib``技术分析包的计算，需要安装``TA-Lib``技术分析包。"
+#~ msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
+
+#~ msgid "返回类型"
+#~ msgstr ""
+
+#~ msgid "示例"
+#~ msgstr ""
+
+#~ msgid "抛出"
 #~ msgstr ""
 

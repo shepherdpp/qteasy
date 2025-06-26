@@ -2111,6 +2111,9 @@ class Trader(object):
         else:
             channel = channel
 
+        refill_data_batch_size = self.config['live_trade_data_refill_batch_size']
+        refill_data_batch_interval = self.config['live_trade_data_refill_batch_interval']
+
         refill_data_source(
                 tables=tables,
                 channel=channel,
@@ -2120,6 +2123,8 @@ class Trader(object):
                 data_source=self.datasource,
                 refresh_trade_calendar=False,
                 parallel=True,
+                download_batch_size=refill_data_batch_size,
+                download_batch_interval=refill_data_batch_interval,
         )
 
     # ================ task operations =================

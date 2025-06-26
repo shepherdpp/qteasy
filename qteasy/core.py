@@ -901,7 +901,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         short_form=False
                 )
                 progress_bar(completed, total,
-                             comments=f'<{table}> time left: {time_remain}',
+                             comments=f'<{table}> {total_written} written, time left: {time_remain}',
                              column_width=120,
                              cut_off_pos=1.0,
                              )

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -39,12 +39,11 @@ msgstr ""
 msgid "根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型。"
 msgstr ""
 
-#: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
+#: ../../source/api/history_data.rst of qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_data_overview
 #: qteasy.core.get_history_data qteasy.core.get_stock_info
 #: qteasy.core.get_table_overview qteasy.core.refill_data_source
-#: qteasy.datatypes.find_history_data
-msgid "参数"
+msgid "Parameters"
 msgstr ""
 
 #: of qteasy.datatypes.find_history_data:4
@@ -57,7 +56,7 @@ msgid ""
 "同时匹配数据描述"
 msgstr ""
 
-#: of qteasy.datatypes.find_history_data:8
+#: of qteasy.datatypes.find_history_data:7
 msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True"
 msgstr ""
 
@@ -75,7 +74,7 @@ msgid ""
 "True:  模糊匹配数据名称或数据描述"
 msgstr ""
 
-#: of qteasy.datatypes.find_history_data:13
+#: of qteasy.datatypes.find_history_data:12
 msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"
 msgstr ""
 
@@ -99,32 +98,31 @@ msgstr ""
 msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
 msgstr ""
 
-#: of qteasy.core.filter_stocks qteasy.core.get_basic_info
-#: qteasy.core.get_data_overview qteasy.core.get_history_data
-#: qteasy.core.get_stock_info qteasy.datatypes.find_history_data
-msgid "返回"
+#: ../../source/api/history_data.rst of qteasy.core.filter_stocks
+#: qteasy.core.get_basic_info qteasy.core.get_data_overview
+#: qteasy.core.get_history_data qteasy.core.get_stock_info
+msgid "Returns"
 msgstr ""
 
 #: of qteasy.datatypes.find_history_data:25
 msgid "**data_id** -- 匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据"
 msgstr ""
 
-#: of qteasy.core.filter_stock_codes qteasy.core.filter_stocks
+#: ../../source/api/history_data.rst of qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_stock_info
 #: qteasy.core.get_table_overview qteasy.core.refill_data_source
-#: qteasy.datatypes.find_history_data
-msgid "返回类型"
+msgid "Return type"
 msgstr ""
 
 #: of qteasy.core.filter_stocks:17 qteasy.core.get_basic_info:37
 #: qteasy.core.get_data_overview:16 qteasy.core.get_history_data:130
 #: qteasy.core.get_table_info:32 qteasy.core.refill_data_source:74
 #: qteasy.datatypes.find_history_data:29
-msgid "示例"
+msgid "Examples"
 msgstr ""
 
-#: of qteasy.datatypes.find_history_data
-msgid "抛出"
+#: ../../source/api/history_data.rst
+msgid "Raises"
 msgstr ""
 
 #: of qteasy.datatypes.find_history_data:72
@@ -284,7 +282,7 @@ msgstr ""
 msgid "检查本地数据"
 msgstr ""
 
-#: of qteasy.core.get_table_info:2
+#: of qteasy.core.get_table_info:1
 msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容"
 msgstr ""
 
@@ -312,7 +310,7 @@ msgstr ""
 msgid "需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息"
 msgstr ""
 
-#: of qteasy.core.get_table_info:11
+#: of qteasy.core.get_table_info:10
 msgid "verbose: bool, Default: True，"
 msgstr ""
 
@@ -324,7 +322,7 @@ msgstr ""
 msgid "returns"
 msgstr ""
 
-#: of qteasy.core.get_table_info:26
+#: of qteasy.core.get_table_info:15
 msgid "{"
 msgstr ""
 
@@ -372,7 +370,7 @@ msgid "是否显示系统数据表的overview"
 msgstr ""
 
 #: of qteasy.core.get_stock_info:35 qteasy.core.get_table_overview:13
-msgid "备注"
+msgid "Notes"
 msgstr ""
 
 #: of qteasy.core.get_table_overview:14
@@ -403,7 +401,7 @@ msgstr ""
 msgid "使用下载的数据——基础数据"
 msgstr ""
 
-#: of qteasy.core.get_basic_info:2
+#: of qteasy.core.get_basic_info:1
 msgid "等同于get_stock_info()"
 msgstr ""
 
@@ -518,7 +516,7 @@ msgstr ""
 msgid "期权：   期权名称"
 msgstr ""
 
-#: of qteasy.core.get_stock_info:2
+#: of qteasy.core.get_stock_info:1
 msgid "等同于get_basic_info()"
 msgstr ""
 
@@ -568,7 +566,7 @@ msgstr ""
 msgid "使用下载的数据——获取价格或技术指标"
 msgstr ""
 
-#: of qteasy.core.get_history_data:2
+#: of qteasy.core.get_history_data:1
 msgid "从本地data_source获取所需的数据并组装为适应于策略"
 msgstr ""
 
@@ -659,7 +657,7 @@ msgid ""
 "分别代表小时/天/周/月 周期数据(如K线)"
 msgstr ""
 
-#: of qteasy.core.get_history_data:39
+#: of qteasy.core.get_history_data:38
 msgid "获取的历史数据的频率，包括以下选项："
 msgstr ""
 
@@ -711,7 +709,7 @@ msgid ""
 "从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格"
 msgstr ""
 
-#: of qteasy.core.get_history_data:54
+#: of qteasy.core.get_history_data:51
 msgid "Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括："
 msgstr ""
 
@@ -783,7 +781,7 @@ msgstr ""
 msgid "是否保留全NaN的行"
 msgstr ""
 
-#: of qteasy.core.get_history_data:96
+#: of qteasy.core.get_history_data:66
 msgid "resample_method: str"
 msgstr ""
 
@@ -830,7 +828,7 @@ msgstr ""
 msgid "[(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]"
 msgstr ""
 
-#: of qteasy.core.get_history_data:84
+#: of qteasy.core.get_history_data:83
 msgid "'sum'/'total': 使用合并区间的平均值作为合并值："
 msgstr ""
 
@@ -874,7 +872,7 @@ msgstr ""
 msgid "[1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]"
 msgstr ""
 
-#: of qteasy.core.get_history_data:101
+#: of qteasy.core.get_history_data:98
 msgid "b_days_only: bool 默认True"
 msgstr ""
 
@@ -962,7 +960,7 @@ msgstr ""
 msgid "下午交易时段是否包含开始时间"
 msgstr ""
 
-#: of qteasy.core.get_history_data:124
+#: of qteasy.core.get_history_data:123
 msgid "include_end_pm: bool"
 msgstr ""
 
@@ -983,4 +981,22 @@ msgstr ""
 #: of qteasy.core.get_history_data:127
 msgid "*Dict of DataFrame* -- 如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames"
 msgstr ""
+
+#~ msgid "参数"
+#~ msgstr ""
+
+#~ msgid "返回"
+#~ msgstr ""
+
+#~ msgid "返回类型"
+#~ msgstr ""
+
+#~ msgid "示例"
+#~ msgstr ""
+
+#~ msgid "抛出"
+#~ msgstr ""
+
+#~ msgid "备注"
+#~ msgstr ""
 

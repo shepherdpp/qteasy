@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -95,7 +95,7 @@ msgstr ""
 msgid "策略描述，用户自定义，用于描述策略的基本原理"
 msgstr ""
 
-#: of qteasy.strategy.BaseStrategy:24
+#: of qteasy.strategy.BaseStrategy:21
 msgid "data_freq: str"
 msgstr ""
 
@@ -103,7 +103,7 @@ msgstr ""
 msgid "策略所使用的数据的频率，可以是以下几种类型： 'd'：日线数据 'w'：周线数据 'm'：月线数据"
 msgstr ""
 
-#: of qteasy.strategy.BaseStrategy:29
+#: of qteasy.strategy.BaseStrategy:26
 msgid "sample_freq: str"
 msgstr ""
 
@@ -135,7 +135,7 @@ msgstr ""
 msgid "策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同"
 msgstr ""
 
-#: of qteasy.strategy.BaseStrategy:42
+#: of qteasy.strategy.BaseStrategy:37
 msgid "bt_price_type: str"
 msgstr ""
 
@@ -183,8 +183,8 @@ msgstr ""
 msgid "用下面的方法创建一个策略对象："
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:32 qteasy.strategy.GeneralStg:26
-#: qteasy.strategy.RuleIterator:55
+#: of qteasy.strategy.FactorSorter:28 qteasy.strategy.GeneralStg:22
+#: qteasy.strategy.RuleIterator:51
 msgid "example_strategy = ExampleStrategy(pars=<example pars>,"
 msgstr ""
 
@@ -231,8 +231,8 @@ msgstr ""
 msgid "realize()的定义："
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:79 qteasy.strategy.GeneralStg:54
-#: qteasy.strategy.RuleIterator:68
+#: of qteasy.strategy.FactorSorter:74 qteasy.strategy.GeneralStg:51
+#: qteasy.strategy.RuleIterator:63
 msgid "def realize(self,"
 msgstr ""
 
@@ -251,7 +251,7 @@ msgid "par_1, par_2, ..., par_n = self.pars"
 msgstr ""
 
 #: of qteasy.strategy.FactorSorter:91 qteasy.strategy.GeneralStg:60
-#: qteasy.strategy.RuleIterator:152
+#: qteasy.strategy.RuleIterator:74
 msgid "realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档："
 msgstr ""
 
@@ -301,8 +301,8 @@ msgid ""
 "= (close_last_day / close_10_day) - 1"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:117 qteasy.strategy.GeneralStg:86
-#: qteasy.strategy.RuleIterator:92
+#: of qteasy.strategy.FactorSorter:114 qteasy.strategy.GeneralStg:83
+#: qteasy.strategy.RuleIterator:89
 msgid "例2, 判断股票最近的收盘价是否大于10日内的最高价："
 msgstr ""
 
@@ -312,8 +312,8 @@ msgid ""
 "-1, 3] penetrate = close_last_day > max_10_day"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:121 qteasy.strategy.GeneralStg:90
-#: qteasy.strategy.RuleIterator:96
+#: of qteasy.strategy.FactorSorter:119 qteasy.strategy.GeneralStg:88
+#: qteasy.strategy.RuleIterator:94
 msgid "例3, 获取股票最近10日市盈率的平均值"
 msgstr ""
 
@@ -321,8 +321,8 @@ msgstr ""
 msgid "pe_10_days = h_seg[:, -10:-1, 4] avg_pe = pe_10_days.mean(axis=1)"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:127 qteasy.strategy.GeneralStg:96
-#: qteasy.strategy.RuleIterator:102
+#: of qteasy.strategy.FactorSorter:123 qteasy.strategy.GeneralStg:92
+#: qteasy.strategy.RuleIterator:98
 msgid "例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价"
 msgstr ""
 
@@ -332,8 +332,8 @@ msgid ""
 "ma_10 = close_10_days.mean(axis=1) ma_50 = close_10_days.mean(axis=1)"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
-#: qteasy.strategy.RuleIterator:119
+#: of qteasy.strategy.FactorSorter:129 qteasy.strategy.GeneralStg:98
+#: qteasy.strategy.RuleIterator:104
 msgid "r(reference):参考历史数据，默认为None，shape为(N, L)"
 msgstr ""
 
@@ -352,13 +352,13 @@ msgstr ""
 msgid "L列，参考数据类型轴"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
-#: qteasy.strategy.RuleIterator:119
+#: of qteasy.strategy.FactorSorter:137 qteasy.strategy.GeneralStg:106
+#: qteasy.strategy.RuleIterator:112
 msgid "以下是获取参考数据的几个例子："
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:139 qteasy.strategy.GeneralStg:108
-#: qteasy.strategy.RuleIterator:114
+#: of qteasy.strategy.FactorSorter:138 qteasy.strategy.GeneralStg:107
+#: qteasy.strategy.RuleIterator:113
 msgid "设定："
 msgstr ""
 
@@ -376,8 +376,8 @@ msgstr ""
 msgid "close_300 = r[-1, 0]"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:144 qteasy.strategy.GeneralStg:113
-#: qteasy.strategy.RuleIterator:119
+#: of qteasy.strategy.FactorSorter:143 qteasy.strategy.GeneralStg:112
+#: qteasy.strategy.RuleIterator:118
 msgid "例2: 获取五天前的上证指数收盘价:"
 msgstr ""
 
@@ -386,8 +386,8 @@ msgstr ""
 msgid "close_SH = r[-5, 1]"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:174 qteasy.strategy.GeneralStg:144
-#: qteasy.strategy.RuleIterator:149
+#: of qteasy.strategy.FactorSorter:146 qteasy.strategy.GeneralStg:115
+#: qteasy.strategy.RuleIterator:121
 msgid "t(trade):交易历史数据，默认为None，shape为(N, 5)"
 msgstr ""
 
@@ -396,8 +396,8 @@ msgstr ""
 msgid "最近几次交易的结果数据，2D数据。包含N行5列数据 如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。 数据的结构如下"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:152 qteasy.strategy.GeneralStg:121
-#: qteasy.strategy.RuleIterator:127
+#: of qteasy.strategy.FactorSorter:151 qteasy.strategy.GeneralStg:120
+#: qteasy.strategy.RuleIterator:126
 msgid "N行， 股票/证券类型轴"
 msgstr ""
 
@@ -406,8 +406,8 @@ msgstr ""
 msgid "每一列代表一只个股或证券"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:159 qteasy.strategy.GeneralStg:128
-#: qteasy.strategy.RuleIterator:134
+#: of qteasy.strategy.FactorSorter:154 qteasy.strategy.GeneralStg:123
+#: qteasy.strategy.RuleIterator:129
 msgid "5列,  交易数据类型轴"
 msgstr ""
 
@@ -440,8 +440,8 @@ msgstr ""
 msgid "示例：以下是在策略中获取交易数据的几个例子："
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:168 qteasy.strategy.GeneralStg:137
-#: qteasy.strategy.RuleIterator:143
+#: of qteasy.strategy.FactorSorter:163 qteasy.strategy.GeneralStg:132
+#: qteasy.strategy.RuleIterator:138
 msgid "例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)："
 msgstr ""
 
@@ -452,8 +452,8 @@ msgid ""
 "trade_prices = t[4]"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:174 qteasy.strategy.GeneralStg:144
-#: qteasy.strategy.RuleIterator:149
+#: of qteasy.strategy.FactorSorter:170 qteasy.strategy.GeneralStg:139
+#: qteasy.strategy.RuleIterator:145
 msgid "例2: 获取当前持有股票数量:"
 msgstr ""
 
@@ -492,7 +492,7 @@ msgid ""
 "Nothing"
 msgstr ""
 
-#: of qteasy.strategy.GeneralStg:156 qteasy.strategy.RuleIterator:171
+#: of qteasy.strategy.GeneralStg:155 qteasy.strategy.RuleIterator:170
 #, python-format
 msgid ""
 "0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell "
@@ -513,7 +513,7 @@ msgstr ""
 msgid "关于GeneralStg类的更详细说明，请参见qteasy的文档。"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:2
+#: of qteasy.strategy.FactorSorter:1
 msgid "因子排序选股策略，根据用户定义的选股因子筛选排序后确定每个股票的选股权重(请注意，FactorSorter策略"
 msgstr ""
 
@@ -599,7 +599,7 @@ msgid ""
 "None ):"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:89
+#: of qteasy.strategy.FactorSorter:85
 msgid "或者："
 msgstr ""
 
@@ -611,7 +611,7 @@ msgstr ""
 msgid "par_1, par_2, ..., par_n = pars"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:89
+#: of qteasy.strategy.FactorSorter:88
 msgid "else:"
 msgstr ""
 
@@ -664,7 +664,7 @@ msgid ""
 "自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:181
+#: of qteasy.strategy.FactorSorter:180
 msgid "output："
 msgstr ""
 
@@ -672,11 +672,11 @@ msgstr ""
 msgid "np.array(arr), 如： np.array[0.1, 1.0, 10.0, 100.0]"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:190
+#: of qteasy.strategy.FactorSorter:183
 msgid "根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:187
+#: of qteasy.strategy.FactorSorter:184
 msgid "例如：当"
 msgstr ""
 
@@ -684,7 +684,7 @@ msgstr ""
 msgid "max_sel_count=0.5 condition='greater', ubound=0.5, weighting='even'"
 msgstr ""
 
-#: of qteasy.strategy.FactorSorter:190
+#: of qteasy.strategy.FactorSorter:189
 msgid "时，上述因子的选股结果为:"
 msgstr ""
 
@@ -830,7 +830,7 @@ msgstr ""
 msgid "策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种"
 msgstr ""
 
-#: of qteasy.strategy.RuleIterator:34
+#: of qteasy.strategy.RuleIterator:32
 msgid "reference_data_types:"
 msgstr ""
 
@@ -839,7 +839,7 @@ msgid "参考数据类型，用于生成交易策略的历史数据，但是与�
 msgstr ""
 
 #: of qteasy.strategy.RuleIterator:37
-msgid "示例"
+msgid "Examples"
 msgstr ""
 
 #: of qteasy.strategy.RuleIterator:38
@@ -850,7 +850,7 @@ msgstr ""
 msgid "input"
 msgstr ""
 
-#: of qteasy.strategy.RuleIterator:102
+#: of qteasy.strategy.RuleIterator:76
 msgid "h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，"
 msgstr ""
 
@@ -866,7 +866,7 @@ msgstr ""
 msgid "L列： 历史数据类型轴"
 msgstr ""
 
-#: of qteasy.strategy.RuleIterator:102
+#: of qteasy.strategy.RuleIterator:82
 msgid "示例："
 msgstr ""
 
@@ -908,7 +908,7 @@ msgstr ""
 msgid "def realize(): -> int"
 msgstr ""
 
-#: of qteasy.strategy.RuleIterator:161
+#: of qteasy.strategy.RuleIterator:159
 msgid "投资组合： [share1, share2, share3, share4]"
 msgstr ""
 
@@ -929,4 +929,7 @@ msgstr ""
 #: of qteasy.strategy.RuleIterator:176
 msgid "关于Strategy类的更详细说明，请参见qteasy的文档。 RuleIterator 策略类继承了交易策略基类"
 msgstr ""
+
+#~ msgid "示例"
+#~ msgstr ""
 

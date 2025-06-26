@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-06 21:24+0800\n"
+"POT-Creation-Date: 2025-06-26 09:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -98,7 +98,7 @@ msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨�
 msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
-msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
+msgid "当日涨幅 = \\frac{Price_0}{Price_{20}} - 1"
 msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:35
@@ -440,5 +440,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "通过上面的代码，我们已经在`queasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
+#~ msgstr ""
+
+#~ msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
 #~ msgstr ""
 

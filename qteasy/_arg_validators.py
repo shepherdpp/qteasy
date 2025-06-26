@@ -198,6 +198,18 @@ def _valid_qt_kwargs():
                           'tushare  - 通过tushare获取数据表\n'
                           'akshare  - Not Implemented: 从akshare获取数据表'},
 
+        'live_trade_data_refill_batch_size':
+            {'Default':   0,
+             'Validator': lambda value: isinstance(value, int),
+             'level':     4,
+             'text':      '实盘交易时每天完成自动数据抓取时每批下载数量，如果为0表示不分批下载'},
+
+        'live_trade_data_refill_batch_interval':
+            {'Default':   0,
+             'Validator': lambda value: isinstance(value, int),
+             'level':     4,
+             'text':      '实盘交易时每天完成自动数据抓取时每批下载间隔时间，单位为秒，如果为0表示不分批下载'},
+
         'live_price_acquire_freq':
             {'Default':   '15MIN',
              'Validator': lambda value: isinstance(value, str) and value.upper() in

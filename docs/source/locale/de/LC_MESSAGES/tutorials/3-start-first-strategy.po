@@ -66,7 +66,9 @@ msgstr " Installieren Sie `qteasy` und aktualisieren Sie es auf die neueste Vers
 
 #: ../../source/tutorials/3-start-first-strategy.md:18
 msgid "配置好本地数据源，掌握下载各种金融数据的方法，能够将指数、股票的各种历史价格数据、财务报表数据等下载到本地。"
-msgstr " Konfigurieren Sie die lokale Datenquelle, beherrschen Sie die Methoden zum "
+msgstr ""
+" Konfigurieren Sie die lokale Datenquelle, beherrschen Sie die Methoden "
+"zum "
 
 #: ../../source/tutorials/3-start-first-strategy.md:20
 msgid "在[上一篇教程](2-get-data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
@@ -81,29 +83,35 @@ msgid "在本节中，我们将通过创建`qteasy`模块来测试一个大小�
 msgstr " In diesem Abschnitt werden wir ein Größenrotationstrading-Strategiemodul in `qteasy` erstellen,"
 
 #: ../../source/tutorials/3-start-first-strategy.md:26
-msgid ""
-"大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使"
-"用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
+msgid "大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
 msgstr ""
-" Die Größenrotation ist eine sehr grundlegende und gängige Handelsstrategie, die die Eigenschaft nutzt, dass große und kleine Aktien oft nicht synchron steigen und fallen, und zwischen großen und kleinen Aktien "
-"wechselt, um eine höhere Rendite zu erzielen. "
+" Die Größenrotation ist eine sehr grundlegende und gängige "
+"Handelsstrategie, die die Eigenschaft nutzt, dass große und kleine Aktien"
+" oft nicht synchron steigen und fallen, und zwischen großen und kleinen "
+"Aktien wechselt, um eine höhere Rendite zu erzielen. "
 
 #: ../../source/tutorials/3-start-first-strategy.md:28
 msgid "在这里，我们需要创建一个最简单的轮动策略：在前面提到的两个指数之间轮动，每天选择未来可能的涨幅较大的指数持有："
 msgstr ""
-" Hier müssen wir eine der einfachsten Rotationsstrategien erstellen: zwischen den beiden zuvor erwähnten Indizes zu rotieren und jeden Tag den Index mit der voraussichtlich höheren zukünftigen Rendite auszuwählen."
+" Hier müssen wir eine der einfachsten Rotationsstrategien erstellen: "
+"zwischen den beiden zuvor erwähnten Indizes zu rotieren und jeden Tag den"
+" Index mit der voraussichtlich höheren zukünftigen Rendite auszuwählen."
 
 #: ../../source/tutorials/3-start-first-strategy.md:30
 msgid "分别计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr " Berechnen Sie die Rendite der beiden Indizes in den letzten 20 Tagen, d.h. die Rendite des heutigen Preises im Vergleich zum Preis vor 20 Tagen"
+msgstr ""
+" Berechnen Sie die Rendite der beiden Indizes in den letzten 20 Tagen, "
+"d.h. die Rendite des heutigen Preises im Vergleich zum Preis vor 20 Tagen"
 
 #: ../../source/tutorials/3-start-first-strategy.md:31
 msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr " Wählen Sie den Index mit der höheren Rendite, halten Sie ihn am nächsten Tag und verkaufen Sie gleichzeitig den Index mit der niedrigeren Rendite"
+msgstr ""
+" Wählen Sie den Index mit der höheren Rendite, halten Sie ihn am nächsten"
+" Tag und verkaufen Sie gleichzeitig den Index mit der niedrigeren Rendite"
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
-msgid "$$当日涨幅 = \\frac{Price_0}{Price_{20}} - 1$$"
-msgstr "$$$ Anstieg für den Tag = \\frac{Price_0}{Preis_{20}} - 1 $$$"
+msgid "当日涨幅 = \\frac{Price_0}{Price_{20}} - 1"
+msgstr ""
 
 #: ../../source/tutorials/3-start-first-strategy.md:35
 msgid "策略的实现"
@@ -518,7 +526,3 @@ msgid ""
 "通过本教程，我们通过一个大小盘轮动交易策略的创建、回测、修改熟悉了解了`qteasy`的交易策略，知道如何通过引用内置交易策略，创建一个单策略交易员对象，并使交易员运行策略获得回测结果。从下一篇教程开始，我们将进一步详细讨"
 "论`qteasy`的内置交易策略，并且介绍组合策略的实现方式，在交易员对象中添加更多的策略并设定组合方式，通过策略组合实现更复杂的效果，并且了解更多策略控制和类型。"
 msgstr ""
-"In diesem Tutorial haben wir uns mit der `qteasy`-Handelsstrategie vertraut gemacht, indem wir eine große und eine kleine Marktrotations-Handelsstrategie erstellt, backgetestet und modifiziert haben, und wir haben "
-"gelernt, wie man ein Trader-Objekt für eine einzelne Strategie erstellt, indem man die eingebaute Handelsstrategie referenziert und den Trader die Strategie ausführen lässt, um backgetestete Ergebnisse zu "
-"erhalten. Im nächsten Tutorial werden wir die eingebauten Handelsstrategien von Qteasy genauer besprechen und die Implementierung von kombinierten Strategien vorstellen. Wir werden weitere Strategien zum Trader-"
-"Objekt hinzufügen und Kombinationen einrichten, um komplexere Ergebnisse mit Kombinationen von Strategien zu erzielen, und wir werden mehr über Strategiekontrollen und -typen lernen."
