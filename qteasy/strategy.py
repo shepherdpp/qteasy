@@ -363,8 +363,8 @@ class BaseStrategy:
         Parameters
         ----------
         par_types: [list, str]
-            策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum',
-            或者也可以为'int', 'float'分别表示离散型和连续型
+            策略的参数类型，与Space类中的定义匹配，分为离散型 'discr', 连续型 'conti', 枚举型 'enum',
+            或者也可以为 'int', 'float' 分别表示离散型和连续型
 
         Returns
         -------
