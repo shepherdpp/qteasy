@@ -81,8 +81,6 @@ class Operator:
 
     """
 
-    # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
-
     def __init__(self, strategies=None, signal_type=None, op_type=None):
         """ 生成一个Operator对象
 
@@ -1728,7 +1726,7 @@ class Operator:
 
     def run(self, **kwargs):
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
-
+        # TODO Operator.run()函数应该被重构为一个私有函数，而不是直接调用qteasy.run(self, **kwargs)，这样可以避免在qteasy中直接调用Operator.run()，而是通过qteasy.run()来运行Operator 相反，qteasy.run()函数应该被重构为一个公有函数，直接调用Operator.run()函数
         See Also
         --------
         qteasy.run
