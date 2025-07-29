@@ -14,7 +14,7 @@ import numpy as np
 from numpy import int64
 import itertools
 
-from qteasy.space import Space, Axis, space_around_centre, ResultPool
+from qteasy.space import Space, Parameter, space_around_centre, ResultPool
 
 
 class TestSpace(unittest.TestCase):
@@ -287,8 +287,8 @@ class TestSpace(unittest.TestCase):
 
     def test_axis_extract(self):
         # test axis object with conti type
-        axis = Axis((0., 5))
-        self.assertIsInstance(axis, Axis)
+        axis = Parameter((0., 5))
+        self.assertIsInstance(axis, Parameter)
         self.assertEqual(axis.axis_type, 'float')
         self.assertEqual(axis.axis_boe, (0., 5.))
         self.assertEqual(axis.count, np.inf)
@@ -300,8 +300,8 @@ class TestSpace(unittest.TestCase):
         self.assertTrue(all([(0 <= item <= 5) for item in extracted]))
 
         # test axis object with discrete type
-        axis = Axis((1, 5))
-        self.assertIsInstance(axis, Axis)
+        axis = Parameter((1, 5))
+        self.assertIsInstance(axis, Parameter)
         self.assertEqual(axis.axis_type, 'int')
         self.assertEqual(axis.axis_boe, (1, 5))
         self.assertEqual(axis.count, 5)
@@ -313,8 +313,8 @@ class TestSpace(unittest.TestCase):
         self.assertTrue(all([(item in [1, 2, 3, 4, 5]) for item in extracted]))
 
         # test axis object with enumerate type
-        axis = Axis((1, 5, 7, 10, 'A', 'F'))
-        self.assertIsInstance(axis, Axis)
+        axis = Parameter((1, 5, 7, 10, 'A', 'F'))
+        self.assertIsInstance(axis, Parameter)
         self.assertEqual(axis.axis_type, 'enum')
         self.assertEqual(axis.axis_boe, (1, 5, 7, 10, 'A', 'F'))
         self.assertEqual(axis.count, 6)

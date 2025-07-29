@@ -81,7 +81,7 @@ class Operator:
 
     """
 
-    def __init__(self, strategies=None, signal_type=None, op_type=None):
+    def __init__(self, strategies=None, signal_type=None, op_type=None, group_merge_type='None'):
         """ 生成一个Operator对象
 
         parameters
@@ -89,11 +89,11 @@ class Operator:
         strategies : str, Strategy, list of str or list of Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
-        signal_type : str, Default: 'pt', {'pt', 'ps', 'vs'}
+        signal_type : str, Default: 'pt', {'pt', 'ps', 'vs'}  deprecated
             需要生成的交易信号的类型，包含以下三种类型:
             'pt', 'ps', 'vs'
             默认交易信号类型为'pt'
-        op_type : str, Default: 'batch', {'batch', 'stepwise'}
+        op_type : str, Default: 'batch', {'batch', 'stepwise'}  deprecated
             Operator对象的的运行模式，包含以下两种：
             'batch', 'stepwise'
 
@@ -227,6 +227,15 @@ class Operator:
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
         self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
+
+        # 新的Operator对象的属性：
+        self.groups = []
+        self.group_timing_table = None
+        self.group_merge_type = group_merge_type
+        self.data_buffers = {}
+        self.data_window_views = {}
+        self.data_window_indices = {}
+        self.group_schedules = {}
 
     def __repr__(self):
         res = list()
@@ -1660,6 +1669,116 @@ class Operator:
             for stg_id, stg in self.get_strategy_id_pairs():
                 stg.info(stg_id=stg_id, verbose=verbose)
             print('=' * info_width)
+
+    # Adding functions for the new operator class
+    def prepare_running_schedule(self, start_date=None, end_date=None):
+        print('preparing group timing table')
+        self.group_schedules = {}
+        for group in self.groups:
+            if group.run_timing is None or group.run_freq is None:
+                raise ValueError(f"Group {group.name} has no run timing or frequency defined.")
+            schedule_index = pd.date_range(
+                            start=start_date,
+                            end=end_date,
+                            freq=group.run_freq,
+                    ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
+            if group.run_freq.upper() == 'D':
+                schedule_index = pd.date_range(
+                            start=start_date,
+                            end=end_date,
+                            freq=group.run_freq,
+                    ) + pd.Timedelta(hours=16)  # 运行时间设定为16:00
+            self.group_schedules[group.name] = pd.DataFrame(
+                    data=1,
+                    index=schedule_index,
+                    columns=['is_running'],
+            )
+        self.group_timing_table = pd.concat(self.group_schedules.values(), axis=1)
+        self.group_timing_table = self.group_timing_table.fillna(0).astype('int')
+
+    def get_signal_count(self, steps=None) -> int:
+        '''after the running schedule is created, create signal count'''
+        assert not self.group_timing_table.empty, "Group timing table is empty. Please prepare it first."
+        if steps is not None:
+            running_schedule = self.group_timing_table.iloc[steps]
+        else:
+            running_schedule = self.group_timing_table
+
+        if self.group_merge_type == 'None':
+            return running_schedule.sum().sum()  # same as np.sum(running_schedule.values)
+        else:  # 'OR' or 'AND'
+            return len(running_schedule)
+
+    def prepare_data_buffer(self, start_date=None, end_date=None, data_source: dict = None):
+        print('preparing data buffer')
+        for strategie in self.strategies:
+            for data_type in strategie.data_types:
+                if data_type not in self.data_buffers:
+                    self.data_buffers[data_type] = data_source[data_type][start_date:end_date]
+
+    def create_data_windows(self):
+        """ Create data windows for each strategy and its data types.
+        Also create data window indices for each strategy and its data types.
+        data window indices are created according to group schedules.
+        """
+        print('creating data windows')
+        for group in self.groups:
+            schedule = self.group_timing_table
+            for strategy in group.members:
+                self.data_window_views[strategy.name] = {}
+                self.data_window_indices[strategy.name] = {}
+                for data_type in strategy.data_types:
+                    print(f'Creating data window for strategy: {strategy.name}, data type: {data_type}')
+                    window_length = strategy.data_window_lengths[data_type]
+                    buffered_data = self.data_buffers.get(data_type, None)
+
+                    window = rolling_window(buffered_data.values, window=window_length, axis=0)
+                    self.data_window_views[strategy.name][data_type] = window
+                    print(f'Window shape for {strategy.name} on {data_type}: \n{window.shape}')
+
+                    total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
+                    running_schedule = schedule.index
+                    window_schedules = buffered_data.index[total_window_indices]
+                    schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
+
+                    self.data_window_indices[strategy.name][data_type] = schedule_indices
+                    print(f'Window indices for {strategy.name} on {data_type}: \n'
+                          f'{self.data_window_indices[strategy.name][data_type]}')
+
+    def run_step(self, step_index) -> Generator[
+        Union[tuple[Any, Any, Any], tuple[Any, Any, Union[int, Any]]], Any, None]:
+        if self.group_timing_table is None:
+            raise ValueError("Group timing table is not set. Please set it before running steps.")
+        group_timing = self.group_timing_table.iloc[step_index].values
+        group_count = len(self.groups)
+        groups = [self.groups[i] for i in range(group_count) if group_timing[i]]
+
+        signal_type = groups[0].signal_type if groups else None
+
+        signal = 0 if self.group_merge_type == 'OR' else 1
+        print(f'In current op run step, following groups are running: {groups}')
+        for group in groups:
+            # ----set up data window for each strategy
+            for strategy in group.members:
+                strategy.update_data_window(
+                    data_windows=self.data_window_views[strategy.name],
+                    window_indices=self.data_window_indices[strategy.name],
+                    window_index=step_index,
+                )
+
+            # ---- end setting up data windows
+            signal_type = group.signal_type
+
+            if self.group_merge_type == 'None':
+                signal = group.blend((stg.realize() for stg in group.members))
+                yield signal_type, step_index, signal
+            elif self.group_merge_type == 'OR':
+                signal += group.blend((stg.realize() for stg in group.members))
+            elif self.group_merge_type == 'AND':
+                signal *= group.blend((stg.realize() for stg in group.members))
+
+        if self.group_merge_type != 'None':
+            yield signal_type, step_index, signal
 
     def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
