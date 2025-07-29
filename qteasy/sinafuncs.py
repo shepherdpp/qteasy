@@ -353,7 +353,6 @@ def _get_rt_quote(code: str) -> pd.DataFrame:
     df = df[new_order]
     return df
 
-
 def _stock_bars(qt_code, start, end=None, freq=None) -> pd.DataFrame:
     """ 获取单支股票的日K线数据
     Parameters

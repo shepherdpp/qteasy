@@ -363,7 +363,6 @@ class Broker(object):
         # 全部订单处理完毕或发生错误后结束
         return
 
-
     @abstractmethod
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
         """ 交易所处理交易订单并获取交易结果, 抽象方法，需要由用户在子类中实现
