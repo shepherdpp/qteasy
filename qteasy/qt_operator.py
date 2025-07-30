@@ -18,6 +18,7 @@ from qteasy.finance import CashPlan
 from qteasy.history import HistoryPanel
 from qteasy.strategy import BaseStrategy
 from qteasy.blender import blender_parser
+from qteasy.group import Group
 
 from qteasy.utilfuncs import (
     AVAILABLE_SIGNAL_TYPES,
@@ -1707,6 +1708,27 @@ class Operator:
 
     # Adding functions for the new operator class
     def prepare_running_schedule(self, start_date=None, end_date=None):
+        """ Running Schedule也就是策略运行时间表，包含每个策略的运行时间和频率等信息
+
+        在运行策略之前，必须先准备好运行时间表，这个时间表根据交易员中每个策略组的运行时机参数确定。
+        运行时间表包括N行，每一行代表一个时间点，列数为策略组的数量，每个单元格表示该策略组在该时间
+        点是否运行，0表示不运行，1表示运行。
+
+        在这个方法中，将设置以下两个属性的值：
+        - `group_schedules`: 一个字典，键为策略组名称，值为该组的运行时间表
+        - `group_timing_table`: 一个DataFrame，包含所有策略组的运行时间表
+
+        Parameters
+        ----------
+        start_date: str or pd.Timestamp, optional
+            开始日期，默认为None，表示从数据源的起始日期开始
+        end_date: str or pd.Timestamp, optional
+            结束日期，默认为None，表示到数据源的结束日期为止
+
+        Returns
+        -------
+        None
+        """
         print('preparing group timing table')
         self.group_schedules = {}
         for group in self.groups:
@@ -1732,7 +1754,18 @@ class Operator:
         self.group_timing_table = self.group_timing_table.fillna(0).astype('int')
 
     def get_signal_count(self, steps=None) -> int:
-        '''after the running schedule is created, create signal count'''
+        """ 获取当前运行时间表中所有策略组生成的交易信号数量
+
+        Parameters
+        ----------
+        steps: list of int, optional
+            如果给出steps，则只计算这些步骤对应的交易信号数量
+            如果为None，则计算所有步骤的交易信号数量
+
+        Returns
+        -------
+        int: 交易信号的数量
+        """
         assert not self.group_timing_table.empty, "Group timing table is empty. Please prepare it first."
         if steps is not None:
             running_schedule = self.group_timing_table.iloc[steps]
@@ -1780,8 +1813,24 @@ class Operator:
                     print(f'Window indices for {strategy.name} on {data_type}: \n'
                           f'{self.data_window_indices[strategy.name][data_type]}')
 
-    def run_step(self, step_index) -> Generator[
-        Union[tuple[Any, Any, Any], tuple[Any, Any, Union[int, Any]]], Any, None]:
+    def run_step(self, step_index):
+        """ 运行当前步骤的所有策略组，生成交易信号
+
+        本函数是一个生成器函数，返回每个策略组在当前步骤的交易信号。
+
+        Parameters
+        ----------
+        step_index: int
+            当前步骤的索引，表示在运行时间表中的位置
+
+        Returns
+        -------
+        generator: (signal_type, step_index, signal)
+            返回一个生成器，包含每个策略组在当前步骤的交易信号
+            signal_type: str, 策略组的信号类型
+            step_index: int, 当前步骤的索引
+            signal: np.ndarray, 交易信号，一组数字，在不同信号类型模式下表示不同的含义
+        """
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
         group_timing = self.group_timing_table.iloc[step_index].values

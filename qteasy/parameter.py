@@ -15,29 +15,31 @@ import numpy as np
 
 
 class Parameter:
-    """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度
+    """参数对象，参数空间的组成部分，代表参数空间的一个维度或一个方面
 
-    Axis对象包含Space对象的一个维度，与Space对象相似，Axis对象也有三种类型：
-    1，discr (int) Parameter，离散型数轴，包含一系列连续的整数，由这些整数值的上下界来定义。例如Axis([0, 10])代表一个Axis，这个Axis上的
+    Parameter对象包含Space对象的一个维度，Parameter对象有四种类型：
+    1，discr (int) Parameter，离散型数轴，包含一系列连续的整数，由这些整数值的上下界来定义。例如Parameter([0, 10])代表一个Parameter，这个Parameter上的
         取值范围为0～10，包括0与10
-    2，conti (float) Parameter，连续数轴对象，包含从下界到上界之间的所有浮点数，同样使用上下界定义，如Axis([0., 2.0])
-    3，enum Parameter，枚举值数轴，取值范围为一系列任意类型对象，这些对象需要在创建Axis的时候就定义好。
+    2，conti (float) Parameter，连续数轴对象，包含从下界到上界之间的所有浮点数，同样使用上下界定义，如Parameter([0., 2.0])
+    3，enum Parameter，枚举值数轴，取值范围为一系列任意类型对象，这些对象需要在创建Parameter的时候就定义好。
         例如：Parameter(['a', 1, 'abc', (1, 2, 3)])就是一个枚举轴，它的取值可以是以下列表中的任意一个
                         ['a', 1, 'abc', (1, 2, 3)]
-    Axis对象最重要的方法是extract()方法，代表从数轴的所有可能值中取出一部分并返回给Space对象生成迭代器。
-    对于Axis对象来说，有两种基本的extract()方法：
-    1，interval方法：间隔取值方法，即按照一定的间隔从数轴中取出一定数量的值。这种方法的参数主要是step_size，对于conti类型的数轴
-        step_size可以为一个浮点数，对于其他类型的数轴，step_size只能为整数。取值的举例如下：
-        a: 从一个conti数值轴中，以step_size=0.5取值：
-            Parameter([0, 3]).extract(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
-        b: 从一个discr数值轴中，以step_size=2取值:
-            Parameter([1, 5]).extract(step_size-2) -> [1, 3, 5]
-        c: 从一个enum轴中，以step_size=2取值:
-            Parameter([1, 2, 3, 'a', 'b', 'c', (1, 2)]).extract(step_size=2) -> [1, 3, 'b', (1, 2)]
-    2，random方法: 从数轴的所有可选值中随机选出指定数量的值返回到Space对象，对于任何类型的Axis，其取值方法都是类似的，指定的取值数量
-    必须是整数：举例如下：
-        a: 从一个enum轴中随机取出四个值：
-            Parameter(['a', 'b', 'c']).extract(count=4) -> ['b', 'a', 'c', 'a']
+    4，array Parameter，数组数轴，取值范围为一个数组对象，这个数组对象可以是int/float类型的numpy array对象。
+    Parameter对象最重要的方法是gen_value()方法，代表从数轴的所有可能值中取出一部分并返回给Space对象生成迭代器。
+    对于Parameter对象来说，有两种基本的gen_value()方法：
+        1，interval方法：间隔取值方法，即按照一定的间隔从数轴中取出一定数量的值。这种方法的参数主要是step_size，对于conti类型的数轴
+            step_size可以为一个浮点数，对于其他类型的数轴，step_size只能为整数。取值的举例如下：
+            a: 从一个conti数值轴中，以step_size=0.5取值：
+                Parameter([0, 3]).gen_value(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
+            b: 从一个discr数值轴中，以step_size=2取值:
+                Parameter([1, 5]).gen_value(step_size-2) -> [1, 3, 5]
+            c: 从一个enum轴中，以step_size=2取值:
+                Parameter([1, 2, 3, 'a', 'b', 'c', (1, 2)]).gen_value(step_size=2) -> [1, 3, 'b', (1, 2)]
+        2，random方法: 从数轴的所有可选值中随机选出指定数量的值返回到Space对象，对于任何类型的Parameter，其取值方法都是类似的，指定的取值数量
+        必须是整数：举例如下：
+            a: 从一个enum轴中随机取出四个值：
+                Parameter(['a', 'b', 'c']).gen_value(count=4) -> ['b', 'a', 'c', 'a']
+    另外Parameter对象还有常规的set_value方法等
 
     Properties
     ----------
@@ -50,7 +52,7 @@ class Parameter:
 
     Methods
     -------
-    extract(method, **kwargs)
+    gen_value(method, **kwargs)
         从数轴上取出一定数量的值，返回一个Generator对象，该Generator对象可以用于生成Space对象的迭代器
     """
     CONTI = 10
@@ -59,16 +61,21 @@ class Parameter:
     ARRAY = 40  # 数轴类型常量
     AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
 
-    def __init__(self, bounds_or_enum, typ=None):
-        """ 初始化数轴对象
+    def __init__(self, name: str, bounds_or_enum, typ=None, value=None):
+        """ 初始化参数对象
 
         Parameters
         ----------
+        name: str
+            参数名称
         bounds_or_enum: list or tuple
             数轴的上下界或枚举值，当数轴类型为conti或discr时，bounds_or_enum为一个长度为2的列表或元组，分别代表数轴的上下界；
             当数轴类型为enum时，bounds_or_enum为一个列表或元组，其中的元素为该数轴上所有可用的值
         typ: str, {'conti', 'float', 'discr', 'int', 'enum'}, optional
             数轴的类型，当typ为空时，根据bounds_or_enum的类型自动判断数轴类型
+        value: any, optional
+            参数的初始值，默认为None。对于枚举型数轴，value可以是bounds_or_enum中的任意一个元素；对于离散型或连续型数轴，
+            value可以是一个整数或浮点数，代表该数轴上的一个具体值
 
         Raises
         ------
@@ -101,7 +108,7 @@ class Parameter:
                 typ = 'enum'
         elif typ != 'enum' and typ != 'int' and typ != 'float':
             typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
-        # 开始根据typ的值生成具体的Axis
+        # 开始根据typ的值生成具体的Parameter
         if typ == 'enum':  # 创建一个枚举数轴
             self._new_enumerate_axis(boe)
         elif typ == 'int':  # 创建一个离散型数轴
@@ -116,7 +123,7 @@ class Parameter:
                 self._new_continuous_axis(boe[0], boe[1])
 
     def __repr__(self):
-        """输出数轴的字符串表示"""
+        """输出参数的字符串表示"""
         if self.axis_type == 'enum':
             return 'Enum Parameter({})'.format(self.axis_boe)
         elif self.axis_type == 'float':
@@ -126,7 +133,7 @@ class Parameter:
 
     @property
     def count(self):
-        """输出数轴中元素的个数，若数轴为连续型，输出为inf"""
+        """输出参数中可用元素的个数，若参数为连续型，输出为inf"""
         self_type = self._axis_type
         if self_type == 'float':
             return np.inf
@@ -156,7 +163,7 @@ class Parameter:
         else:
             return self._lbound, self._ubound
 
-    def extract(self, interval_or_qty=1, how='interval'):
+    def gen_value(self, interval_or_qty=1, how='interval'):
         """从数轴中抽取数据，并返回一个iterator迭代器对象
 
         Parameters
@@ -184,8 +191,14 @@ class Parameter:
                 return self._extract_enum_random(interval_or_qty)
             else:
                 return self._extract_bounding_random(interval_or_qty)
-        raise KeyError(f'extract method {how} is not valid, make sure method is one of '
+        raise KeyError(f'gen_value method {how} is not valid, make sure method is one of '
                        f'{self.AVAILABLE_EXTRACT_METHODS}')
+
+    def set_value(self, value):
+        raise NotImplementedError
+
+    def get_value(self):
+        raise NotImplementedError
 
     def _set_bounds(self, lbound, ubound):
         """设置数轴的上下界, 只适用于离散型或连续型数轴
