@@ -69,7 +69,7 @@ class Space:
     inf
     >>> space.types
     ['int', 'float', 'enum']
-    >>> list(space.gen_value(4, how='interval')[0])
+    >>> list(space.gen_values(4, how='interval')[0])
     [(1, 3.0, 5),
      (1, 3.0, 9),
      (1, 7.0, 5),
@@ -78,7 +78,7 @@ class Space:
      (5, 3.0, 9),
      (5, 7.0, 5),
      (5, 7.0, 9)]
-    >>> list(space.gen_value(8, how='rand')[0])
+    >>> list(space.gen_values(8, how='rand')[0])
     [(1, 7.928856883024961, 9),
      (3, 9.764777688087385, 8),
      (4, 8.445573333306598, 5),
@@ -167,7 +167,7 @@ class Space:
     def types(self):
         """List of types of axis of the space"""
         if self.dim > 0:
-            types = [ax.axis_type for ax in self.axis]
+            types = [ax.par_type for ax in self.axis]
             return types
         else:
             return None
@@ -250,7 +250,7 @@ class Space:
         >>> space = Space([(1, 10), (3, 10), (5, 6, 7, 8, 9)])
         >>> space
         <(1, 10),(3, 10),(5,...,9)>
-        >>> list(space.gen_value(4, how='interval')[0])
+        >>> list(space.gen_values(4, how='interval')[0])
         [(1, 3.0, 5),
          (1, 3.0, 9),
          (1, 7.0, 5),
@@ -259,7 +259,7 @@ class Space:
          (5, 3.0, 9),
          (5, 7.0, 5),
          (5, 7.0, 9)]
-        >>> list(space.gen_value(8, how='rand')[0])
+        >>> list(space.gen_values(8, how='rand')[0])
         [(1, 7.928856883024961, 9),
          (3, 9.764777688087385, 8),
          (4, 8.445573333306598, 5),
@@ -272,7 +272,7 @@ class Space:
         interval_or_qty_list = input_to_list(pars=interval_or_qty,
                                              dim=self.dim,
                                              padder=[1])
-        axis_ranges = [ax.gen_value(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
+        axis_ranges = [ax.gen_values(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
         total = np.array(list(map(len, axis_ranges))).prod()
         if self.types == ['enum'] and isinstance(self.boes[0], tuple):
             # in this case, space is an enum of tuple parameters, no formation of tuple is needed
