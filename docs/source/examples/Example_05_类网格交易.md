@@ -30,7 +30,7 @@ class GridTrading(qt.GeneralStg):
                 name='GridTrading',
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
                 strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='1min',  # 每份钟执行一次调整
+                run_freq='1min',  # 每份钟执行一次调整
                 strategy_data_types='close',  # 使用份钟收盘价调整
                 data_freq='1min',  # 数据频率（包括股票数据和参考数据）
                 window_length=300,

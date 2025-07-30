@@ -875,7 +875,7 @@ class TraderApp(App):
             timing_node = tree.root.add(f"Timing: {timing}", expand=True)
             for strategy in op.get_strategies_by_run_timing(timing):
                 strategy_node = timing_node.add(f"Strategy: {strategy.name}", expand=True)
-                strategy_node.add_leaf(f"Run freq: {strategy.strategy_run_freq}")
+                strategy_node.add_leaf(f"Run freq: {strategy.run_freq}")
                 strategy_node.add_leaf(f"Parameters: {strategy.pars}")
                 strategy_node.add_leaf(f"Par Types: {strategy.par_types}")
                 strategy_node.add_leaf(f"Data Types: {strategy.data_types}")

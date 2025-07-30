@@ -521,8 +521,8 @@ import qteasy as qt
 alpha = qt.get_built_in_strategy('ndayrate')  # create a N-day price change trade strategy 
 
 # set strategy parameters
-alpha.strategy_run_freq = 'd'  # strategy runs daily
-alpha.data_freq = 'd' # strategy uses daily data
+alpha.run_freq = 'd'  # strategy runs daily
+alpha.data_freq = 'd'  # strategy uses daily data
 alpha.window_length = 20  # length of data window
 alpha.sort_ascending = False  # select stocks with largest price change
 alpha.condition = 'greater'  # filter stocks with price change greater than:

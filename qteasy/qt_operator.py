@@ -847,7 +847,7 @@ class Operator:
             - par_ranges: list, 策略参数范围
             - data_freq: str, 策略数据频率
             - window_length: int, 策略窗口长度
-            - strategy_run_freq: str, 策略采样频率
+            - run_freq: str, 策略采样频率
             - strategy_data_types: list, 策略数据类型
             - strategy_run_timing: str, 策略运行时机
             - use_latest_data_cycle: bool, 策略是否使用最新数据周期
@@ -1687,7 +1687,7 @@ class Operator:
                    f'{"_" * info_width}')
             for stg_id, stg in self.get_strategy_id_pairs():
                 from .utilfuncs import parse_freq_string
-                qty, main_freq, sub_freq = parse_freq_string(stg.strategy_run_freq)
+                qty, main_freq, sub_freq = parse_freq_string(stg.run_freq)
                 qty = '' if qty == 1 else qty  # to prevent from printing 1x
                 run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
                 qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
@@ -2177,7 +2177,7 @@ class Operator:
                 self._op_sample_indices[stg_id] = [0] if stg_id in live_running_stgs else []
             else:
                 # 如果不是live_trade，根据策略运行频率strategy_run_freq生成信号生成采样点序列
-                freq = stg.strategy_run_freq
+                freq = stg.run_freq
                 # 根据strategy_run_freq生成一个策略运行采样日期序列
                 # TODO: 这里生成的策略运行采样日期时间应该可以由用户自定义，而不是完全由freq生成，
                 #  例如，如果freq为'M'的时候，应该允许用户选择采样日期是在每月的第一天，还是最后

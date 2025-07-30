@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # 内置交易策略，使用macd执行交易
     alpha = qt.get_built_in_strategy('ndaychg')  # 一个基于N日涨跌幅的策略，用于多市场轮动策略
 
-    alpha.strategy_run_freq = 'd'  # 每天运行
+    alpha.run_freq = 'd'  # 每天运行
     alpha.data_freq = 'd'  # 日频数据
     alpha.window_length = 25  # 数据窗口长度为25天
 

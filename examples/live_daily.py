@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # 每日选股策略，从一批股票中选出价格高于20日前的
     alpha = qt.get_built_in_strategy('ndayrate')
 
-    alpha.strategy_run_freq = 'd'  # 每日运行
+    alpha.run_freq = 'd'  # 每日运行
     alpha.data_freq = 'd'  # 日频数据
     alpha.window_length = 20  # 数据窗口长度
     alpha.sort_ascending = False  # 优先选择涨幅最大的股票
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     beta = qt.get_built_in_strategy('finance')
 
-    beta.strategy_run_freq = 'd'  # 每日运行
+    beta.run_freq = 'd'  # 每日运行
     beta.data_types = 'pe'  # 数据类型为市盈率
     beta.data_freq = 'd'  # 日频数据
     beta.window_length = 20  # 数据窗口长度
