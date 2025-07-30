@@ -30,15 +30,15 @@ class Parameter:
         1，interval方法：间隔取值方法，即按照一定的间隔从数轴中取出一定数量的值。这种方法的参数主要是step_size，对于conti类型的数轴
             step_size可以为一个浮点数，对于其他类型的数轴，step_size只能为整数。取值的举例如下：
             a: 从一个conti数值轴中，以step_size=0.5取值：
-                Parameter([0, 3]).gen_value(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
+                Parameter([0, 3]).gen_values(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
             b: 从一个discr数值轴中，以step_size=2取值:
-                Parameter([1, 5]).gen_value(step_size-2) -> [1, 3, 5]
+                Parameter([1, 5]).gen_values(step_size-2) -> [1, 3, 5]
             c: 从一个enum轴中，以step_size=2取值:
-                Parameter([1, 2, 3, 'a', 'b', 'c', (1, 2)]).gen_value(step_size=2) -> [1, 3, 'b', (1, 2)]
+                Parameter([1, 2, 3, 'a', 'b', 'c', (1, 2)]).gen_values(step_size=2) -> [1, 3, 'b', (1, 2)]
         2，random方法: 从数轴的所有可选值中随机选出指定数量的值返回到Space对象，对于任何类型的Parameter，其取值方法都是类似的，指定的取值数量
         必须是整数：举例如下：
             a: 从一个enum轴中随机取出四个值：
-                Parameter(['a', 'b', 'c']).gen_value(count=4) -> ['b', 'a', 'c', 'a']
+                Parameter(['a', 'b', 'c']).gen_values(count=4) -> ['b', 'a', 'c', 'a']
     另外Parameter对象还有常规的set_value方法等
 
     Properties
@@ -47,30 +47,31 @@ class Parameter:
         输出数轴中元素的个数，若数轴为连续型，输出为inf
     size: int
         数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界
-    axis_type: str
+    par_type: str
         该数轴的类型，可选值为'conti', 'discr', 'enum'
 
     Methods
     -------
-    gen_value(method, **kwargs)
+    gen_values(method, **kwargs)
         从数轴上取出一定数量的值，返回一个Generator对象，该Generator对象可以用于生成Space对象的迭代器
     """
     CONTI = 10
     DISCR = 20
     ENUM = 30
     ARRAY = 40  # 数轴类型常量
-    AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
+    VALUE_GENERATE_METHODS = ['int', 'interval', 'random', 'rand']
+    AVAILABLE_TYPES = ['conti', 'discr', 'enum', 'float', 'int', 'continuous', 'discrete', 'array', 'arr']
 
-    def __init__(self, name: str, bounds_or_enum, typ=None, value=None):
+    def __init__(self, bounds_or_enum, *, name: str = '', typ=None, value=None):
         """ 初始化参数对象
 
         Parameters
         ----------
-        name: str
-            参数名称
-        bounds_or_enum: list or tuple
+        bounds_or_enum: int, float, str or list or tuple of int, float, str
             数轴的上下界或枚举值，当数轴类型为conti或discr时，bounds_or_enum为一个长度为2的列表或元组，分别代表数轴的上下界；
             当数轴类型为enum时，bounds_or_enum为一个列表或元组，其中的元素为该数轴上所有可用的值
+        name: str, optional, default to ""
+            参数名称
         typ: str, {'conti', 'float', 'discr', 'int', 'enum'}, optional
             数轴的类型，当typ为空时，根据bounds_or_enum的类型自动判断数轴类型
         value: any, optional
@@ -84,11 +85,15 @@ class Parameter:
 
         """
         import numbers
-        self._axis_type = None  # 数轴类型
+        self._name = name  # 参数名称
+        self._par_type = None  # 数轴类型
         self._lbound = None  # 离散型或连续型数轴下界
         self._ubound = None  # 离散型或连续型数轴上界
         self._enum_val = None  # 当数轴类型为“枚举”型时，储存改数轴上所有可用值
+        self._value = value  # 参数的初始值
         # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
+        if isinstance(bounds_or_enum, (int, float, str)):
+            bounds_or_enum = [bounds_or_enum]
         boe = list(bounds_or_enum)
         length = len(boe)  # 列表元素个数
         if typ is None:
@@ -106,12 +111,14 @@ class Parameter:
                     typ = 'int'
             else:  # list长度为其余值时，全部处理为enum数据
                 typ = 'enum'
-        elif typ != 'enum' and typ != 'int' and typ != 'float':
-            typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
+        elif typ not in self.AVAILABLE_TYPES:
+            # 当发现typ为异常字符串时，raise
+            raise ValueError(f'Parameter type {typ} is not valid, should be one of '
+                             f'{self.AVAILABLE_TYPES}')
         # 开始根据typ的值生成具体的Parameter
         if typ == 'enum':  # 创建一个枚举数轴
             self._new_enumerate_axis(boe)
-        elif typ == 'int':  # 创建一个离散型数轴
+        elif typ in ['int', 'discr', 'discrete']:  # 创建一个离散型数轴
             if length == 1:
                 self._new_discrete_axis(0, boe[0])
             else:
@@ -122,19 +129,76 @@ class Parameter:
             else:
                 self._new_continuous_axis(boe[0], boe[1])
 
+        if value is not None:
+            if self.value not in self:
+                raise ValueError(f'Initial value {self.value} is not in range {self.axis_boe} of type {self.par_type}')
+
     def __repr__(self):
         """输出参数的字符串表示"""
-        if self.axis_type == 'enum':
-            return 'Enum Parameter({})'.format(self.axis_boe)
-        elif self.axis_type == 'float':
-            return 'Float Parameter({}, {})'.format(self._lbound, self._ubound)
+        if self.par_type == 'enum':
+            return 'Parameter({}, \'enum\')'.format(self.axis_boe)
+        elif self.par_type == 'float':
+            return 'Parameter(({}, {}), \'float\')'.format(self._lbound, self._ubound)
         else:
-            return 'Int Parameter({}, {})'.format(self._lbound, self._ubound)
+            return 'Parameter(({}, {}), \'int\')'.format(self._lbound, self._ubound)
+
+    def __contains__(self, item):
+        """判断参数的当前值是否在数轴的可用值中
+
+        Parameters
+        ----------
+        item: any
+            需要判断的值
+
+        Returns
+        -------
+        bool: True if item in self, False otherwise
+        """
+        if self.par_type == 'enum':
+            return item in self._enum_val
+        elif not isinstance(item, (float, int)):
+            raise TypeError(f'Item {item} should be a float or int for float axis, got {type(item)} instead.')
+        elif self.par_type == 'float':
+            return self._lbound <= item <= self._ubound
+        else:
+            return self._lbound <= item <= self._ubound and float(item).is_integer()
+
+    @property
+    def name(self):
+        """返回参数的名称"""
+        return self._name
+
+    @property
+    def value(self):
+        """返回参数的当前值
+
+        Returns
+        -------
+        value: any
+            参数的当前值，若参数为枚举型，则返回枚举值中的一个；若参数为离散型或连续型，则返回一个整数或浮点数
+        """
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        """设置参数的当前值
+
+        Parameters
+        ----------
+        value: any
+            需要设置的参数值，若参数为枚举型，则value可以是枚举值中的一个；若参数为离散型或连续型，则value可以是一个整数或浮点数
+
+        Raises
+        ------
+        ValueError
+            当value不在数轴的可用值中时，抛出ValueError异常
+        """
+        self.set_value(value)
 
     @property
     def count(self):
         """输出参数中可用元素的个数，若参数为连续型，输出为inf"""
-        self_type = self._axis_type
+        self_type = self._par_type
         if self_type == 'float':
             return np.inf
         elif self_type == 'int':
@@ -145,26 +209,93 @@ class Parameter:
     @property
     def size(self):
         """输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界"""
-        if self.axis_type == 'float':
+        if self.par_type == 'float':
             return self._ubound - self._lbound
         else:
             return self.count
 
     @property
-    def axis_type(self):
+    def par_type(self):
         """返回数轴的类型"""
-        return self._axis_type
+        return self._par_type
 
     @property
     def axis_boe(self):
         """返回数轴的上下界或枚举"""
-        if self._axis_type == 'enum':
+        if self._par_type == 'enum':
             return tuple(self._enum_val)
         else:
             return self._lbound, self._ubound
 
-    def gen_value(self, interval_or_qty=1, how='interval'):
-        """从数轴中抽取数据，并返回一个iterator迭代器对象
+    @property
+    def lower_bound(self):
+        """返回数轴的下界
+
+        Returns
+        -------
+        lower_bound: int or float
+            数轴的下界，若数轴为枚举型，则返回枚举值中的第一个元素
+        """
+        if self._par_type == 'enum':
+            return self._enum_val[0]
+        return self._lbound
+
+    @property
+    def lbound(self):
+        """返回数轴的下界
+
+        Returns
+        -------
+        lbound: int or float
+            数轴的下界，若数轴为枚举型，则返回枚举值中的第一个元素
+        """
+        return self.lower_bound
+
+    @property
+    def upper_bound(self):
+        """返回数轴的上界
+
+        Returns
+        -------
+        upper_bound: int or float
+            数轴的上界，若数轴为枚举型，则返回枚举值中的最后一个元素
+        """
+        if self._par_type == 'enum':
+            return self._enum_val[-1]
+        return self._ubound
+
+    @property
+    def ubound(self):
+        """返回数轴的上界
+
+        Returns
+        -------
+        ubound: int or float
+            数轴的上界，若数轴为枚举型，则返回枚举值中的最后一个元素
+        """
+        return self.upper_bound
+
+    def enum_values(self):
+        """一个生成器函数，生成参数的枚举值或者离散参数的所有可能值，如果参数是连续型，报错
+
+        Returns
+        -------
+        enum_values: list or tuple
+            数轴的枚举值，
+            若参数为离散型，返回所有可能的元素
+            若参数为连续型，则返回上下界的元组
+        """
+        if self._par_type == 'enum':
+            for item in self._enum_val:
+                yield item
+        elif self._par_type == 'int':
+            for item in range(self.lbound, self.ubound + 1):
+                yield item
+        else:
+            raise ValueError(f'Parameter {self.name} is continuous, cannot enumerate its values.')
+
+    def gen_values(self, interval_or_qty: [float, int] = 1, how: str = 'interval'):
+        """生成符合范围的一系列参数值，返回一个iterator迭代器对象生成参数值
 
         Parameters
         ----------
@@ -180,25 +311,40 @@ class Parameter:
         iterator: 一个迭代器对象，包含所有抽取的数值
         """
         if not isinstance(how, str):
-            raise TypeError(f'extract method \'how\' should be a string in {self.AVAILABLE_EXTRACT_METHODS}')
+            raise TypeError(f'extract method \'how\' should be a string in {self.VALUE_GENERATE_METHODS}')
         if how.lower() in ['interval', 'int']:
-            if self.axis_type == 'enum':
+            if self.par_type == 'enum':
                 return self._extract_enum_interval(interval_or_qty)
             else:
                 return self._extract_bounding_interval(interval_or_qty)
         if how.lower() in ['rand', 'random']:
-            if self.axis_type == 'enum':
+            if self.par_type == 'enum':
                 return self._extract_enum_random(interval_or_qty)
             else:
                 return self._extract_bounding_random(interval_or_qty)
-        raise KeyError(f'gen_value method {how} is not valid, make sure method is one of '
-                       f'{self.AVAILABLE_EXTRACT_METHODS}')
+        raise KeyError(f'gen_values method {how} is not valid, make sure method is one of '
+                       f'{self.VALUE_GENERATE_METHODS}')
 
     def set_value(self, value):
-        raise NotImplementedError
+        """设置参数的当前值
+
+        Parameters
+        ----------
+        value: any
+            需要设置的参数值，若参数为枚举型，则value可以是枚举值中的一个；若参数为离散型或连续型，则value可以是一个整数或浮点数
+
+        Raises
+        ------
+        ValueError
+            当value不在数轴的可用值中时，抛出ValueError异常
+        """
+        if value not in self:
+            raise ValueError(f'Value {value} is not in range {self.axis_boe} of type {self.par_type}')
+        self._value = value
 
     def get_value(self):
-        raise NotImplementedError
+        """获取参数的当前值"""
+        return self._value
 
     def _set_bounds(self, lbound, ubound):
         """设置数轴的上下界, 只适用于离散型或连续型数轴
@@ -214,9 +360,13 @@ class Parameter:
         -------
         None
         """
-        self._lbound = lbound
-        self._ubound = ubound
-        self.__enum = None
+        if lbound < ubound:
+            self._lbound = lbound
+            self._ubound = ubound
+        else:
+            self._lbound = ubound
+            self._ubound = lbound
+        self._enum_val = None
 
     def _set_enum_val(self, enum):
         """设置数轴的枚举值，适用于枚举型数轴
@@ -251,7 +401,7 @@ class Parameter:
         -------
         None
         """
-        self._axis_type = 'int'
+        self._par_type = 'int'
         self._set_bounds(int(lbound), int(ubound))
 
     def _new_continuous_axis(self, lbound, ubound):
@@ -268,7 +418,7 @@ class Parameter:
         -------
         None
         """
-        self._axis_type = 'float'
+        self._par_type = 'float'
         self._set_bounds(float(lbound), float(ubound))
 
     def _new_enumerate_axis(self, enum):
@@ -282,7 +432,7 @@ class Parameter:
         -------
         None
         """
-        self._axis_type = 'enum'
+        self._par_type = 'enum'
         self._set_enum_val(enum)
 
     def _extract_bounding_interval(self, interval: [int, float]):
@@ -297,9 +447,9 @@ class Parameter:
         -------
         np.array 从数轴中提取出的值对象
         """
-        if self._axis_type == 'float':
+        if self._par_type == 'float':
             return np.arange(self._lbound, self._ubound, interval)
-        if self._axis_type == 'int':
+        if self._par_type == 'int':
             if not float(interval).is_integer():
                 raise ValueError(f'interval should be an integer, got {interval} instead!')
             if not float(self._lbound).is_integer():
@@ -320,9 +470,9 @@ class Parameter:
         """
         if not float(qty).is_integer():
             raise ValueError(f'interval should be an integer, got {qty} instead!')
-        if self._axis_type == 'int':
+        if self._par_type == 'int':
             return np.random.randint(self._lbound, self._ubound + 1, size=qty)
-        if self._axis_type == 'float':
+        if self._par_type == 'float':
             return np.random.uniform(self._lbound, self._ubound, qty)
 
     def _extract_enum_interval(self, interval):
