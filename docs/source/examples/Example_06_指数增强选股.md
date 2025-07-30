@@ -29,7 +29,7 @@ class IndexEnhancement(qt.GeneralStg):
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
                 strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='d',  # 每天执行一次选股
+                run_freq='d',  # 每天执行一次选股
                 strategy_data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,

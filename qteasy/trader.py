@@ -1736,7 +1736,7 @@ class Trader(object):
         max_strategy_freq = 'T'
         for strategy_id in strategy_ids:
             strategy = operator[strategy_id]
-            freq = strategy.strategy_run_freq.upper()
+            freq = strategy.run_freq.upper()
             if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
                 max_strategy_freq = freq
         # 解析strategy_run的运行频率，根据频率确定是否下载实时数据

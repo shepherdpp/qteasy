@@ -18,6 +18,8 @@ from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
     str_to_list,
 )
+from qteasy.datatypes import DataType
+from qteasy.parameter import Parameter
 
 
 class BaseStrategy:
@@ -76,24 +78,16 @@ class BaseStrategy:
 
     def __init__(
             self,
-            pars: any = None,
+            pars: [Parameter, [Parameter]] = None,
             opt_tag: int = 0,
             stg_type: str = 'strategy type',
             name: str = 'strategy name',
             description: str = 'intro text of strategy',
-            par_count: int = None,
-            par_types: [[str], str] = None,
-            par_range: [list, tuple] = None,
-            strategy_run_freq: str = 'd',
-            sample_freq: str = None,  # to be deprecated
-            strategy_run_timing: str = 'close',
-            bt_price_type: str = None,  # to be deprecated
-            strategy_data_types: [str, [str]] = 'close',
-            data_types: [str, [str]] = None,  # to be deprecated
+            run_freq: str = 'd',
+            run_timing: str = 'close',
+            strategy_data_types: [DataType, [DataType]] = 'close',
             use_latest_data_cycle: bool = True,
-            reference_data_types: [str, [str]] = '',
-            data_freq: str = 'd',
-            window_length: int = 270,
+            window_length: [int, [int]] = 270,
     ):
         """ 初始化策略
 
@@ -109,18 +103,11 @@ class BaseStrategy:
             策略名称，用户自定义策略的名称，用于区分不同的策略
         description: str
             策略描述，用户自定义策略的描述，用于区分不同的策略
-        par_count: int
-            策略可调参数的个数
-        par_types: list of str, {'int', 'float', 'enum'}
-            策略可调参数的类型，每个参数的类型可以是int, float或enum
-        par_range: list or tuple
             策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
-        strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
+        run_freq: str {'d', 'w', 'm', 'q', 'y'}
             策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-            TODO: 如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
-        sample_freq: str, deprecated
-            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-        strategy_run_timing: datetime-like or str
+            如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
+        run_timing: datetime-like or str
             策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
             例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
             如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
@@ -129,11 +116,7 @@ class BaseStrategy:
             ['09:30:00', '10:30:00',
              '11:30:00', '13:00:00',
              '14:00:00', '15:00:00',]
-        bt_price_type: str, deprecated
-            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
         strategy_data_types: str or list of str
-            策略使用的数据类型，例如close, open, high, low等
-        data_types: str or list of str, deprecated
             策略使用的数据类型，例如close, open, high, low等
         use_latest_data_cycle: bool, default True
             是否使用最新的数据周期生成交易信号，默认True
@@ -145,10 +128,6 @@ class BaseStrategy:
             如果为False：
                 在回测或实盘运行时都仅使用当前已经获得的上一周期的已知数据生成交易信号，在运行频率较低时，可能会导致
                     交易信号的滞后，但是可以避免未来函数的出现。
-        reference_data_types: str or list of str
-            策略使用的参考数据类型，例如close, open, high, low等
-        data_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的数据频率，可以是日频、周频、月频、季频或年频
         window_length: int
             策略使用的数据窗口长度，即策略使用的历史数据的长度
 
@@ -156,16 +135,6 @@ class BaseStrategy:
         -------
         None
         """
-        # 关于已经废弃的参数，给出警告信息，并赋值给新的参数
-        if sample_freq is not None:
-            warnings.warn('sample_freq is deprecated, use strategy_run_freq instead')
-            strategy_run_freq = sample_freq
-        if bt_price_type is not None:
-            warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
-            strategy_run_timing = bt_price_type
-        if data_types is not None:
-            warnings.warn('data_types is deprecated, use strategy_data_types instead')
-            strategy_data_types = data_types
 
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
@@ -272,12 +241,8 @@ class BaseStrategy:
                          f' par_types={par_types}, par_range={par_range}')
 
         # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
-        assert data_freq is not None
-        assert strategy_run_freq is not None
         assert window_length is not None
         assert strategy_data_types is not None
-        assert strategy_run_timing is not None
-        assert reference_data_types is not None
         assert use_latest_data_cycle is not None
         self._data_freq = None
         self._strategy_run_freq = None
@@ -294,9 +259,7 @@ class BaseStrategy:
                            reference_data_types=reference_data_types,
                            use_latest_data_cycle=use_latest_data_cycle)
         logger_core.info(
-            f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
-            f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
-            f'reference_data_types={reference_data_types}')
+            f'Strategy creation. with other parameters: ')
 
     @property
     def stg_type(self):
@@ -424,21 +387,21 @@ class BaseStrategy:
     @property
     def sample_freq(self):  # to be deprecated
         """策略生成的采样频率"""
-        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        warnings.warn('sample_freq is deprecated, use run_freq instead', DeprecationWarning)
         return self._strategy_run_freq
 
     @sample_freq.setter
     def sample_freq(self, sample_freq):  # to be deprecated
-        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
+        warnings.warn('sample_freq is deprecated, use run_freq instead', DeprecationWarning)
         self.set_hist_pars(strategy_run_freq=sample_freq)
 
     @property
-    def strategy_run_freq(self):
+    def run_freq(self):
         """策略生成的采样频率"""
         return self._strategy_run_freq
 
-    @strategy_run_freq.setter
-    def strategy_run_freq(self, sample_freq):
+    @run_freq.setter
+    def run_freq(self, sample_freq):
         self.set_hist_pars(strategy_run_freq=sample_freq)
 
     @property
@@ -620,7 +583,7 @@ class BaseStrategy:
                f'Description\n    {self.description}')
         # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
         if verbose:
-            run_type_str = self.strategy_run_freq + ' @ ' + self.strategy_run_timing
+            run_type_str = self.run_freq + ' @ ' + self.strategy_run_timing
             data_type_str = str(self.window_length) + ' ' + self.data_freq
             rprint(
                     f'\n'
@@ -874,7 +837,7 @@ class BaseStrategy:
                     self.set_hist_pars(strategy_data_types=v)
                     continue
                 if k == 'bt_run_freq':
-                    warnings.warn('bt_run_freq is deprecated, use strategy_run_freq instead')
+                    warnings.warn('bt_run_freq is deprecated, use run_freq instead')
                     self.set_hist_pars(strategy_run_freq=v)
                     continue
                 if k == 'proportion_or_quantity':
@@ -1018,7 +981,7 @@ class GeneralStg(BaseStrategy):
             par_types: tuple/list,  策略参数类型
             par_range:              策略参数取值范围
             data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
-            strategy_run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
+            run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
             window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
             strategy_data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
             strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
@@ -1217,7 +1180,7 @@ class FactorSorter(BaseStrategy):
         par_types:          tuple,  策略参数类型
         par_range:          tuple,  策略参数取值范围
         data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-        strategy_run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
+        run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
         window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
         strategy_data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
         strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
@@ -1593,7 +1556,7 @@ class RuleIterator(BaseStrategy):
         策略参数取值范围
     data_freq:          str:
         数据频率，用于生成策略输出所需的历史数据的频率
-    strategy_run_freq:
+    run_freq:
         策略运行采样频率，即相邻两次策略生成的间隔频率。
     window_length:
         历史数据视窗长度。即生成策略输出所需要的历史数据的数量

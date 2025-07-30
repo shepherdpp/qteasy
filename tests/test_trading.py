@@ -1602,7 +1602,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
-        self.assertEqual(stg.strategy_run_freq, 'd')
+        self.assertEqual(stg.run_freq, 'd')
         self.assertEqual(stg.strategy_run_timing, 'close')
         config = {
             'market_open_time_am':               '09:30:00',
@@ -1638,7 +1638,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
+        stg.run_freq = 'h'
         stg.strategy_run_timing = 'open'
         config = {
             'market_open_time_am':               '09:30:00',
@@ -1675,13 +1675,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
         stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
+        stg.run_freq = 'h'
         stg.strategy_run_timing = 'open'
         stg = op.strategies[1]
-        stg.strategy_run_freq = '30min'
+        stg.run_freq = '30min'
         stg.strategy_run_timing = 'open'
         stg = op.strategies[2]
-        stg.strategy_run_freq = 'd'
+        stg.run_freq = 'd'
         stg.strategy_run_timing = '10:30'
         config = {
             'market_open_time_am':               '09:30:00',

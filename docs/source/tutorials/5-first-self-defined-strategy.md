@@ -153,7 +153,7 @@ class Cross_SMA(RuleIterator):
         super().__init__(
             ...  # 其他属性略
             strategy_run_timing = 'close'
-            strategy_run_freq = 'd'
+            run_freq = 'd'
         )
 ```
 
@@ -253,7 +253,7 @@ class Cross_SMA(RuleIterator):
             par_types=['int', 'int'],  # 策略两个参数的数据类型均为整型变量
             par_range=[(10, 100), (10, 200)],  # 两个策略参数的取值范围
             strategy_run_timing = 'close'
-            strategy_run_freq = 'd'
+            run_freq = 'd'
             strategy_data_types='close',  # 策略基于收盘价计算均线，因此数据类型为'close'
             data_freq = 'd',  # 历史数据的频率为日
             window_length=201,  # 历史数据窗口长度为201，每一次交易信号都是由它之前前201天的历史数据决定的

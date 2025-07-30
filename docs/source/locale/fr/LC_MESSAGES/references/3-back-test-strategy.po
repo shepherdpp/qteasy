@@ -526,7 +526,7 @@ msgstr ""
 #: ../../source/references/3-back-test-strategy.md:377
 msgid ""
 "`op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, "
-"par_types=None, data_freq=None, strategy_run_freq=None, "
+"par_types=None, data_freq=None, run_freq=None, "
 "window_length=None, data_types=None, strategy_run_timing=None, **kwargs)`"
 msgstr ""
 

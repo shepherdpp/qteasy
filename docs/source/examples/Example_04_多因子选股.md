@@ -44,7 +44,7 @@ class MultiFactors(qt.FactorSorter):
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
                 strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='m',  # 每月执行一次选股（每周或每天都可以）
+                run_freq='m',  # 每月执行一次选股（每周或每天都可以）
                 strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,

@@ -359,7 +359,7 @@ import qteasy as qt
 alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
 
 # 设置策略的运行参数
-alpha.strategy_run_freq = 'd'  # 每日运行
+alpha.run_freq = 'd'  # 每日运行
 alpha.data_freq = 'd' # 策略使用日频数据
 alpha.window_length = 20  # 数据窗口长度
 alpha.sort_ascending = False  # 优先选择涨幅最大的股票

@@ -1463,7 +1463,7 @@ def live_trade_accounts() -> pd.DataFrame:
 
 # TODO: Bug检查：
 #   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
-#   strategy_run_freq='m',
+#   run_freq='m',
 #   data_freq='m',
 #   window_length=6,
 def check_and_prepare_hist_data(oper, config, datasource):
@@ -1799,7 +1799,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             data_source=datasource,
     )
     if any(
-            (stg.strategy_run_freq.upper() in ['D', 'W', 'M']) and
+            (stg.run_freq.upper() in ['D', 'W', 'M']) and
             stg.use_latest_data_cycle
             for stg
             in operator.strategies

@@ -2386,7 +2386,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(self.stg.par_count, self.par_count)
         self.assertEqual(self.stg.opt_tag, self.opt_tag)
         self.assertEqual(self.stg.data_freq, self.data_freq)
-        self.assertEqual(self.stg.strategy_run_freq, self.sample_freq)
+        self.assertEqual(self.stg.run_freq, self.sample_freq)
         self.assertEqual(self.stg.data_types, self.data_types)
         self.assertEqual(self.stg.window_length, self.window_length)
         self.stg.name = 'NEW NAME'
@@ -3014,7 +3014,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         stg.set_pars(stg_pars)
         stg.window_length = 5
         stg.data_freq = 'd'
-        stg.strategy_run_freq = '10d'
+        stg.run_freq = '10d'
         stg.sort_ascending = False
         stg.condition = 'greater'
         stg.lbound = 0
@@ -3024,7 +3024,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
         self.assertEqual(stg.window_length, 5)
         self.assertEqual(stg.data_freq, 'd')
-        self.assertEqual(stg.strategy_run_freq, '10d')
+        self.assertEqual(stg.run_freq, '10d')
         self.assertEqual(stg.sort_ascending, False)
         self.assertEqual(stg.condition, 'greater')
         self.assertEqual(stg.lbound, 0)
