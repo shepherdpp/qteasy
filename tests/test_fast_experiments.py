@@ -299,7 +299,7 @@ class FastExperiments(unittest.TestCase):
     def test_get_history_data(self):
         """
         """
-        # extract normal data
+        # gen_value normal data
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',
@@ -308,7 +308,7 @@ class FastExperiments(unittest.TestCase):
                                    adj='n',
                                    asset_type='E')
         print(f'not adjusted data: \n{data}')
-        # extract back adjusted price for one asset
+        # gen_value back adjusted price for one asset
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',
@@ -317,7 +317,7 @@ class FastExperiments(unittest.TestCase):
                                    adj='b',
                                    asset_type='E')
         print(f'adjusted data: \n{data}')
-        # extract back adjusted prices for both assets mixed
+        # gen_value back adjusted prices for both assets mixed
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',
