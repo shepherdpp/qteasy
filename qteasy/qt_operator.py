@@ -820,7 +820,7 @@ class Operator:
             - data_freq: str, 策略数据频率
             - window_length: int, 策略窗口长度
             - run_freq: str, 策略采样频率
-            - strategy_data_types: list, 策略数据类型
+            - data_types: list, 策略数据类型
             - strategy_run_timing: str, 策略运行时机
             - use_latest_data_cycle: bool, 策略是否使用最新数据周期
 

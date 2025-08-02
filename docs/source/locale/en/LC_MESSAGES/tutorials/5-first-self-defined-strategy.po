@@ -168,11 +168,11 @@ msgstr ""
 #: ../../source/tutorials/5-first-self-defined-strategy.md:57
 msgid ""
 "**策略需要的数据** "
-"——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.strategy_data_types`"
+"——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.data_types`"
 " 等属性完全自由定义，并指定数据类型、频率以及窗口长度"
 msgstr ""
 "**Data required by the strategy** "
-"——The data input required by the strategy; for example, do you need 10 days of daily K-line data, or the P/E ratio for the past year? In `qteasy`, the amount of data required by the strategy can be completely freely defined by attributes such as `Strategy.strategy_data_types` and specified data types, frequencies, and window lengths"
+"——The data input required by the strategy; for example, do you need 10 days of daily K-line data, or the P/E ratio for the past year? In `qteasy`, the amount of data required by the strategy can be completely freely defined by attributes such as `Strategy.data_types` and specified data types, frequencies, and window lengths"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:58
 msgid "**策略的逻辑** ——通过重写`Strategy.realize()`方法，用户可以自由定义如何使用输入数据，产生交易决策。"

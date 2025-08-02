@@ -166,7 +166,7 @@ msgstr ""
 #: ../../source/tutorials/5-first-self-defined-strategy.md:57
 msgid ""
 "**策略需要的数据** "
-"——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.strategy_data_types`"
+"——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.data_types`"
 " 等属性完全自由定义，并指定数据类型、频率以及窗口长度"
 msgstr ""
 

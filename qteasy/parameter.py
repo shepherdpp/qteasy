@@ -85,7 +85,7 @@ class Parameter:
 
         """
         import numbers
-        self._name = name  # 参数名称
+        self.name = name  # 参数名称
         self._par_type = None  # 数轴类型
         self._lbound = None  # 离散型或连续型数轴下界
         self._ubound = None  # 离散型或连续型数轴上界
@@ -162,11 +162,6 @@ class Parameter:
             return self._lbound <= item <= self._ubound
         else:
             return self._lbound <= item <= self._ubound and float(item).is_integer()
-
-    @property
-    def name(self):
-        """返回参数的名称"""
-        return self._name
 
     @property
     def value(self):
