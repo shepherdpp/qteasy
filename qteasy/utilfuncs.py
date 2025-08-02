@@ -680,15 +680,15 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     return res
 
 
-def input_to_list(pars, dim, padder=None):
+def input_to_list(pars, dim=None, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     Parameters
     ----------
-    pars: str or int or list of int or list of str
+    pars: obj or list of obj or list of obj
         需要转化为list对象的输出对象
     dim: int
-        需要生成的目标list的元素数量
+        需要生成的目标list的元素数量，如果给出None，则不补足
     padder: Any
         当元素数量不足的时候用来补充的元素
 
@@ -707,13 +707,13 @@ def input_to_list(pars, dim, padder=None):
     >>> input_to_list('a', 3)
     ['a', 'a', 'a']
     """
-    if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
+    if not isinstance(pars, (list, tuple, dict)):  # 处理非iterable类型的输入
         pars = [pars] * dim
     else:
         pars = list(pars)  # 正常处理，输入转化为列表类型
     par_dim = len(pars)
     # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
-    if par_dim < dim:
+    if (dim is not None) and (par_dim < dim):
         pars.extend([padder] * (dim - par_dim))
     return pars
 

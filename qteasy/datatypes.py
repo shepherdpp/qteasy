@@ -419,7 +419,10 @@ class DataType:
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
 
-    def __init__(self, *, name, freq=None, asset_type=None):
+    def __init__(self, *,
+                 name:str = '',
+                 freq=None,
+                 asset_type=None):
         """
         根据用户输入的名称或完整参数实例化一个DataType对象。
 
@@ -490,12 +493,6 @@ class DataType:
                 built_in_tables=built_in_freqs is not None,
         )
 
-        # if default_asset_type.lower() == 'none':
-        #     default_asset_type = None
-        #
-        # if default_freq.lower() == 'none':
-        #     default_freq = None
-
         self._name = name
         self._name_pars = None
         self._default_freq = default_freq
@@ -513,6 +510,10 @@ class DataType:
     @property
     def name(self):
         return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
 
     @property
     def id(self):
@@ -1113,6 +1114,10 @@ class DataType:
             err = KeyError(f'columu name {column_name} not in columns of acquired_data: \n{acquired_data.columns}')
             raise err
         return acquired_data[column_name]
+
+    @name.setter
+    def name(self, value):
+        self._name = value
 
 
 DATA_TYPE_MAP_COLUMNS = ['description', 'acquisition_type', 'kwargs']

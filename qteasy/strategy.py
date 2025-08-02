@@ -17,6 +17,7 @@ import warnings
 from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
     str_to_list,
+    input_to_list,
 )
 from qteasy.datatypes import DataType
 from qteasy.parameter import Parameter
@@ -78,16 +79,17 @@ class BaseStrategy:
 
     def __init__(
             self,
-            pars: [Parameter, [Parameter]] = None,
+            *,
+            name: str = '',
+            description: str = '',
+            pars: [Parameter, [Parameter], {str: Parameter}] = None,
+            data_types: [DataType, [DataType], {str: DataType}] = None,
+            use_latest_data_cycle: [bool, [bool], {str: bool}] = False,
+            window_length: [int, [int], {str: int}] = 100,
             opt_tag: int = 0,
-            stg_type: str = 'strategy type',
-            name: str = 'strategy name',
-            description: str = 'intro text of strategy',
+            stg_type: str = '',
             run_freq: str = 'd',
             run_timing: str = 'close',
-            strategy_data_types: [DataType, [DataType]] = 'close',
-            use_latest_data_cycle: bool = True,
-            window_length: [int, [int]] = 270,
     ):
         """ 初始化策略
 
@@ -104,10 +106,11 @@ class BaseStrategy:
         description: str
             策略描述，用户自定义策略的描述，用于区分不同的策略
             策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
-        run_freq: str {'d', 'w', 'm', 'q', 'y'}
+        run_freq: str {'d', 'w', 'm', 'q', ’qe‘， 'y', 'ye'}, default: 'd'
             策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-            如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
-        run_timing: datetime-like or str
+            如果运行频率低于日频，可以通过'w_Fri' / 'm_15'(每月15日) / 'm_-2'(每月倒数第二天)等方式指定具体
+            哪一天运行
+        run_timing: datetime-like or str, default: 'close
             策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
             例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
             如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
@@ -116,8 +119,8 @@ class BaseStrategy:
             ['09:30:00', '10:30:00',
              '11:30:00', '13:00:00',
              '14:00:00', '15:00:00',]
-        strategy_data_types: str or list of str
-            策略使用的数据类型，例如close, open, high, low等
+        data_types: dict{str: DataType}
+            策略使用的数据类型，每个数据类型一个类型名
         use_latest_data_cycle: bool, default True
             是否使用最新的数据周期生成交易信号，默认True
             如果为True: 默认值
@@ -137,129 +140,29 @@ class BaseStrategy:
         """
 
         # 检查策略参数是否合法：
-        # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
         logger_core.info(f'initializing new Strategy: type: {stg_type}, name: {name}, text: {description}')
-        implied_par_count = None
-        implied_par_types = None
-        implied_par_range = None
-        if pars is None:
-            pass
-        # 如果给出了pars且为tuple时，推测 par_count, par_types, par_range 三个参数的值
-        elif isinstance(pars, (tuple, list)):
-            implied_par_count = len(pars)
-            implied_par_types = []
-            implied_par_range = []
-            for item in pars:
-                if isinstance(item, int):
-                    implied_par_types.append('int')
-                    implied_par_range.append((item, item + 1))
-                elif isinstance(item, float):
-                    implied_par_types.append('float')
-                    implied_par_range.append((item - 1, item + 1))
-                elif isinstance(item, str):
-                    implied_par_types.append('enum')
-                    implied_par_range.append(tuple([item]))
-                else:
-                    raise TypeError(f'Invalid parameter item type: ({type(item)}), parameter can only contain'
-                                    f'integers, floats or strings')
-        # 如果给出了pars且为dict时，仅检查是否dict中的所有值都是tuple
-        elif isinstance(pars, dict):
-            if not all(isinstance(item, tuple) for item in pars.values()):
-                raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encountered')
 
-        else:
-            raise TypeError(f'Invalid parameter type. pars should be a tuple, '
-                            f'a list or a dict, got {type(pars)} instead.')
-
-        # 如果给出了par_count/par_types/par_range等三个参数，则检查其合法性，如果合法，替换
-        # 推测参数（若存在），如果不合法，使用推测参数（若存在）并给出警告，如果推测参数不存在，
-        # 则报错，并给出有价值的指导意见
-        if par_count is None:
-            par_count = implied_par_count
-        else:
-            # TODO: 按照当前的代码，par_count一但设置后就无法修改，这点是否合理？
-            if not isinstance(par_count, int):
-                raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
-            if par_count < 0:
-                raise ValueError(f'Invalid parameter count ({par_count}), it should not be less than 0')
-            if implied_par_count is not None:
-                if par_count != implied_par_count:
-                    logger_core.warning(f'Invalid parameter count ({par_count}), given parameter implies '
-                                        f'({implied_par_count})'
-                                        f'par_count adjusted, you should '
-                                        f'probably pass "par_count = {implied_par_count}"')
-                    par_count = implied_par_count
-
-        if par_types is None:
-            par_types = implied_par_types
-        else:
-            if not isinstance(par_types, (str, list)):
-                raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
-                                f'got {type(par_types)} instead')
-            if isinstance(par_types, str):
-                par_types = str_to_list(par_types)
-            for item in par_types:
-                if not isinstance(item, str):
-                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
-                if not item.lower() in ['int', 'float', 'conti', 'discr', 'enum', 'list']:
-                    raise KeyError(f'Invalid type ({item}), should be one of "int, float, conti, discr, enum, list"')
-            if len(par_types) < par_count:
-                logger_core.warning(f'Not enough parameter types({len(par_types)}) to assign'
-                                    f' to all ({par_count}) parameters')
-            elif len(par_types) > par_count:
-                logger_core.info(f'Got more parameter types({len(par_types)}) than count of parameters({par_count})')
-                par_types = par_types[0:par_count]
-
-        if par_range is None:
-            par_range = implied_par_range
-        else:
-            if not isinstance(par_range, (tuple, list)):
-                raise TypeError(f'parameter range (par_range) should be a tuple or a list, '
-                                f'got {type(par_range)} instead')
-            for item in par_range:
-                if not isinstance(item, (tuple, list)):
-                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
-            if len(par_range) < par_count:
-                logger_core.warning(f'Not enough parameter ranges({len(par_range)}) to assign'
-                                    f' to all ({par_count}) parameters')
-            elif len(par_range) > par_count:
-                logger_core.info(f'Got more parameter types({len(par_range)}) than count of parameters({par_count})')
-                par_range = par_range[0:par_count]
+        self._stg_name = str(name)
+        self._stg_description = str(description)
+        self._run_freq = run_freq
+        self._run_timing = run_timing
 
         self._pars = None
+        self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
         self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
-        self._stg_name = name  # 策略的名称
-        self._stg_text = description  # 策略的描述文字
-        self._par_count = par_count  # 策略参数的元素个数
-        self._par_types = par_types  # 策略参数的类型，可选类型'int/float/discr/conti/enum/list'
-        self._par_bounds_or_enums = par_range
-        self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
-        logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={par_count},'
-                         f' par_types={par_types}, par_range={par_range}')
+        logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
+                         f' par_types={self.par_types}, par_range={self.par_range}')
 
-        # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
-        assert window_length is not None
-        assert strategy_data_types is not None
-        assert use_latest_data_cycle is not None
-        self._data_freq = None
-        self._strategy_run_freq = None
-        self._window_length = None
         self._data_types = None
-        self._strategy_run_timing = None
-        self._reference_data_types = None
-        self._use_latest_data_cycle = None
-        self.set_hist_pars(data_freq=data_freq,
-                           strategy_run_freq=strategy_run_freq,
-                           window_length=window_length,
-                           strategy_data_types=strategy_data_types,
-                           strategy_run_timing=strategy_run_timing,
-                           reference_data_types=reference_data_types,
-                           use_latest_data_cycle=use_latest_data_cycle)
+        self._data_names = None
+        self._data_ULC = None
+        self._data_WL = None
+        self.set_data_types(data_types, use_latest_data_cycle, window_length)
         logger_core.info(
-            f'Strategy creation. with other parameters: ')
+            f'Strategy data types set')
 
     @property
     def stg_type(self):
@@ -281,6 +184,21 @@ class BaseStrategy:
         self.set_pars(new_pars)
 
     @property
+    def par_count(self):
+        """策略的参数数量"""
+        return len(self.pars)
+
+    @property
+    def par_types(self):
+        """策略的参数类型，由策略参数类的par_type属性给出"""
+        return {par.name: par.par_type for par in self.pars}
+
+    @property
+    def par_range(self):
+        """策略的参数取值范围，用来定义参数空间用于参数优化"""
+        return {par.name: par.par_range for par in self.pars}
+
+    @property
     def name(self):
         """策略名称，打印策略信息的时候策略名称会被打印出来"""
         return self._stg_name
@@ -299,57 +217,6 @@ class BaseStrategy:
         if not isinstance(description, str):
             raise TypeError(f'description should be a string, got {type(description)} instead.')
         self._stg_text = description
-
-    @property
-    def par_count(self):
-        """策略的参数数量"""
-        return self._par_count
-
-    @par_count.setter
-    def par_count(self, par_count: int):
-        if not isinstance(par_count, int):
-            raise TypeError(f'par count should be an integer, got {type(par_count)} instead.')
-        self._par_count = par_count
-
-    @property
-    def par_types(self):
-        """策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum'"""
-        return self._par_types
-
-    @par_types.setter
-    def par_types(self, par_types: [list, str]):
-        """ 设置par_types属性
-
-        输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
-        'conti, conti' 代表 ['conti', 'conti']
-
-        Parameters
-        ----------
-        par_types: [list, str]
-            策略的参数类型，与Space类中的定义匹配，分为离散型 'discr', 连续型 'conti', 枚举型 'enum',
-            或者也可以为 'int', 'float' 分别表示离散型和连续型
-
-        Returns
-        -------
-        None
-        """
-        if par_types is None:
-            # 当没有给出策略参数类型时，参数类型为空列表
-            self._par_types = []
-        else:
-            if isinstance(par_types, str):
-                par_types = str_to_list(par_types, ',')
-            assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
-            self._par_types = par_types
-
-    @property
-    def par_range(self):
-        """策略的参数取值范围，用来定义参数空间用于参数优化"""
-        return self._par_bounds_or_enums
-
-    @par_range.setter
-    def par_range(self, boes: list):
-        self.set_par_range(par_range=boes)
 
     @property
     def opt_tag(self):
@@ -598,120 +465,186 @@ class BaseStrategy:
             )
         print()
 
-    def set_pars(self, pars: (tuple, dict)) -> int:
-        """设置策略参数，在设置之前对参数的个数进行检查
+    def set_pars(self, pars: any) -> None:
+        """ 设置参数字典，设置par对象的名字，设置策略的attribute
+        不设定参数的值
 
         Parameters
         ----------
-        pars: tuple or dict of tuples
-            需要设置的参数
+        pars: dict
+            需要设置的参数字典，key为参数名、value为参数
+
+        Returns
+        -------
+        None
+        """
+
+        if pars is None:
+            pars = {}
+        # 如果给出了pars且为tuple时，pars必须是Parameter对象，
+        elif isinstance(pars, Parameter):
+            pars = {pars.name: pars}
+        elif isinstance(pars, (list, tuple)):
+            pars = {par.name: par for par in pars}
+        elif isinstance(pars, dict):
+            pass
+        else:
+            raise TypeError(f'pars is invalid! ({pars})')
+
+        assert isinstance(pars, dict), f'parameter "pars" is invalid, please check your input'
+
+        self._pars = pars
+
+        for name, par in pars.items():
+            par.name = name
+            self.__setattr__(name, par.value)
+        return
+
+    def set_data_types(self,
+                       data_types: any,
+                       use_latest_data_cycle: any,
+                       window_length: any) -> None:
+        """ 设置策略参数
+
+        Parameters
+        ----------
+        data_types: dict
+            需要设置的参数字典，key为参数名、value为参数
 
         Returns
         -------
         int: 1: 设置成功，0: 设置失败
         """
-        assert isinstance(pars, (tuple, dict)) or pars is None, \
-            f'parameter should be either a tuple or a dict, got {type(pars)} instead'
-        if pars is None:
-            self._pars = pars
-            return 1
-        if isinstance(pars, dict):
-            return self.set_dict_pars(pars)
-
-        # try correct par types
-        pars = self.correct_pars_type(pars)
-        # now pars should be tuples
-        if self.check_pars(pars):
-            self._pars = pars
-            return 1
+        if data_types is None:
+            data_types = {}
+        elif isinstance(data_types, DataType):
+            data_types = {data_types.name: data_types}
+        elif isinstance(data_types, (list, tuple)):
+            data_types = {dtype.name: dtype for dtype in data_types}
         else:
-            return 0
+            raise TypeError(f'pars is invalid! ({data_types})')
 
-    def check_pars(self, pars: tuple) -> bool:
-        """检查pars(一个tuple)是否符合strategy的参数设置"""
-        for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
-            if not isinstance(pars, tuple):
-                raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
-            if len(pars) != self.par_count:
-                # 如果参数的个数不对，那么抛出异常
-                raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
-                                 f' got {len(pars)} ({pars}).')
-            if par_type in ['int', 'discr']:
-                # 如果par_type是int或者discr，那么par应该是一个整数
-                if not isinstance(par, int):
-                    raise Exception(f'Invalid parameter, it should be an integer, got {type(par)}')
+        assert isinstance(data_types, dict), f'parameter "pars" is invalid, please check your input'
 
-            if par_type in ['float', 'conti']:
-                # 如果par_type是float或者conti，那么par应该是一个浮点数/整数
-                if not isinstance(par, (int, float)):
-                    raise Exception(f'Invalid parameter, it should be a float or an integer, got {type(par)}')
+        self._data_types = data_types
 
-            if par_type in ['enum']:
-                # 如果par_type是enum，那么par应该是par_range中的一个元素
-                if par not in par_range:
-                    raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
-            else:
-                l_bound, u_bound = par_range
-                # 如果par_type是int或者float，那么par应该在par_range定义的范围内
-                if (par < l_bound) or (par > u_bound):
-                    raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
-        return True
+        self._data_names = [dtype.name for dtype in data_types]
+        self._data_types = data_types
+        for name, dtype in data_types.items():
+            dtype.name = name
+            self.__setattr__(name, dtype)
 
-    def correct_pars_type(self, pars: tuple) -> tuple:
-        """ 将可能为字符串格式的pars根据type调整为正确的格式
+        # 设置ULC
+        if isinstance(use_latest_data_cycle, bool):
+            self._data_ULC = {d_name: use_latest_data_cycle for d_name in self.data_types}
+        elif isinstance(use_latest_data_cycle, (list, tuple)):
+            ULCs = input_to_list(use_latest_data_cycle, len(self.data_types), False)
+            self._data_ULC = {self._data_names[i]: ULCs[i] for i in range(len(ULCs))}
+        elif isinstance(use_latest_data_cycle, dict):
+            self._data_ULC = {d_name: False for d_name in self._data_names}
+            self._data_ULC.update(use_latest_data_cycle)
+        else:
+            raise TypeError(f'parameter "use_latest_data_cycles" is invalid, please check your input')
 
-        Parameters
-        ----------
-        pars: tuple
-            策略参数
+        # 设置window lengths
+        if isinstance(window_length, bool):
+            self._data_WL = {d_name: window_length for d_name in self.data_types}
+        elif isinstance(window_length, (list, tuple)):
+            WLs = input_to_list(window_length, len(self.data_types), 20)
+            self._data_WL = {self._data_names[i]: ULCs[i] for i in range(len(ULCs))}
+        elif isinstance(window_length, dict):
+            self._data_WL = {d_name: False for d_name in self._data_names}
+            self._data_WL.update(window_length)
+        else:
+            raise TypeError(f'parameter "use_latest_data_cycles" is invalid, please check your input')
 
-        Returns
-        -------
-        pars: tuple
-            pars in corrected type
-        """
 
-        if len(pars) != self._par_count:
-            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
-                             f' got {len(pars)} ({pars}).')
-        # corrected_pars = [None] * self._par_count
-        corrected_pars = [None for _ in range(self._par_count)]
-        try:
-            for i in range(self._par_count):
-                par = pars[i]
-                p_type = self.par_types[i]
-                if p_type in ['int', 'descr']:
-                    corrected_pars[i] = int(par)
-                elif p_type in ['float', 'conti']:
-                    corrected_pars[i] = float(par)
-                else:
-                    corrected_pars[i] = par
 
-            return tuple(corrected_pars)
-
-        except Exception as e:
-            raise RuntimeError({e})
-
-    def set_dict_pars(self, pars: dict) -> int:
-        """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
-            检查dict的合法性，并设置参数
-        """
-
-        if not isinstance(pars, dict):
-            raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
-        if len(pars) == 0:
-            return self.set_pars(None)
-        for key in pars.keys():
-            if not isinstance(key, str):
-                raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
-                                f' got a {type(key)}')
-        if all(self.check_pars(par) for par in pars.values()):
-            self._pars = pars
-            return 1
-
-    def update_pars(self, pars: (tuple, dict)) -> None:
-        """ 极简方式更新策略的参数，默认参数格式正确，不检查参数的合规性"""
-        self._pars = pars
+    # def check_pars(self, pars: tuple) -> bool:
+    #     """检查pars(一个tuple)是否符合strategy的参数设置"""
+    #     for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
+    #         if not isinstance(pars, tuple):
+    #             raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
+    #         if len(pars) != self.par_count:
+    #             # 如果参数的个数不对，那么抛出异常
+    #             raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+    #                              f' got {len(pars)} ({pars}).')
+    #         if par_type in ['int', 'discr']:
+    #             # 如果par_type是int或者discr，那么par应该是一个整数
+    #             if not isinstance(par, int):
+    #                 raise Exception(f'Invalid parameter, it should be an integer, got {type(par)}')
+    #
+    #         if par_type in ['float', 'conti']:
+    #             # 如果par_type是float或者conti，那么par应该是一个浮点数/整数
+    #             if not isinstance(par, (int, float)):
+    #                 raise Exception(f'Invalid parameter, it should be a float or an integer, got {type(par)}')
+    #
+    #         if par_type in ['enum']:
+    #             # 如果par_type是enum，那么par应该是par_range中的一个元素
+    #             if par not in par_range:
+    #                 raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
+    #         else:
+    #             l_bound, u_bound = par_range
+    #             # 如果par_type是int或者float，那么par应该在par_range定义的范围内
+    #             if (par < l_bound) or (par > u_bound):
+    #                 raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
+    #     return True
+    #
+    # def correct_pars_type(self, pars: tuple) -> tuple:
+    #     """ 将可能为字符串格式的pars根据type调整为正确的格式
+    #
+    #     Parameters
+    #     ----------
+    #     pars: tuple
+    #         策略参数
+    #
+    #     Returns
+    #     -------
+    #     pars: tuple
+    #         pars in corrected type
+    #     """
+    #
+    #     if len(pars) != self._par_count:
+    #         raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
+    #                          f' got {len(pars)} ({pars}).')
+    #     # corrected_pars = [None] * self._par_count
+    #     corrected_pars = [None for _ in range(self._par_count)]
+    #     try:
+    #         for i in range(self._par_count):
+    #             par = pars[i]
+    #             p_type = self.par_types[i]
+    #             if p_type in ['int', 'descr']:
+    #                 corrected_pars[i] = int(par)
+    #             elif p_type in ['float', 'conti']:
+    #                 corrected_pars[i] = float(par)
+    #             else:
+    #                 corrected_pars[i] = par
+    #
+    #         return tuple(corrected_pars)
+    #
+    #     except Exception as e:
+    #         raise RuntimeError({e})
+    #
+    # def set_dict_pars(self, pars: dict) -> int:
+    #     """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
+    #         检查dict的合法性，并设置参数
+    #     """
+    #
+    #     if not isinstance(pars, dict):
+    #         raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
+    #     if len(pars) == 0:
+    #         return self.set_pars(None)
+    #     for key in pars.keys():
+    #         if not isinstance(key, str):
+    #             raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
+    #                             f' got a {type(key)}')
+    #     if all(self.check_pars(par) for par in pars.values()):
+    #         self._pars = pars
+    #         return 1
+    #
+    # def update_par_values(self, pars: (tuple, dict)) -> None:
+    #     """ 快速更新策略的参数值"""
+    #     self._pars = pars
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""
@@ -829,11 +762,11 @@ class BaseStrategy:
                     self.set_hist_pars(strategy_run_timing=v)
                     continue
                 if k == 'bt_data_type':
-                    warnings.warn('bt_data_type is deprecated, use strategy_data_types instead')
+                    warnings.warn('bt_data_type is deprecated, use data_types instead')
                     self.set_hist_pars(strategy_run_timing=v)
                     continue
                 if k == 'data_types':
-                    warnings.warn('data_types is deprecated, use strategy_data_types instead')
+                    warnings.warn('data_types is deprecated, use data_types instead')
                     self.set_hist_pars(strategy_data_types=v)
                     continue
                 if k == 'bt_run_freq':
@@ -966,7 +899,7 @@ class GeneralStg(BaseStrategy):
             example_strategy = ExampleStrategy(pars=<example pars>,
                                                name='example',
                                                description='example strategy',
-                                               strategy_data_types='close'
+                                               data_types='close'
                                                ...
                                                )
             在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -983,7 +916,7 @@ class GeneralStg(BaseStrategy):
             data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
             run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
             window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            strategy_data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
             strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
             reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
@@ -1016,7 +949,7 @@ class GeneralStg(BaseStrategy):
                         - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                         - data_freq = 'd'
                         - window_length = 100
-                        - strategy_data_types = "open, high, low, close, pe"
+                        - data_types = "open, high, low, close, pe"
 
                     以下例子都基于前面给出的参数设定
                     例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -1164,7 +1097,7 @@ class FactorSorter(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           strategy_data_types='close'
+                                           data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
@@ -1182,7 +1115,7 @@ class FactorSorter(BaseStrategy):
         data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
         run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
         window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-        strategy_data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+        data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
         strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
         reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
@@ -1239,7 +1172,7 @@ class FactorSorter(BaseStrategy):
                     - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
                     - data_freq = 'd'
                     - window_length = 100
-                    - strategy_data_types = "open, high, low, close, pe"
+                    - data_types = "open, high, low, close, pe"
 
                 以下例子都基于前面给出的参数设定
                 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -1560,7 +1493,7 @@ class RuleIterator(BaseStrategy):
         策略运行采样频率，即相邻两次策略生成的间隔频率。
     window_length:
         历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    strategy_data_types:
+    data_types:
         静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
     strategy_run_timing:
         策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
@@ -1586,7 +1519,7 @@ class RuleIterator(BaseStrategy):
         example_strategy = ExampleStrategy(pars=<example pars>,
                                            name='example',
                                            description='example strategy',
-                                           strategy_data_types='close'
+                                           data_types='close'
                                            ...
                                            )
         在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
