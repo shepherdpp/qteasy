@@ -316,7 +316,7 @@ class CROSSLINE(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            s, l, m = self.pars
+            s, l, m = self.par_values
         else:
             s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -405,7 +405,7 @@ class SoftBBand(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, u, d, m = self.pars
+            p, u, d, m = self.par_values
         else:
             p, u, d, m = pars
         h = h.T
@@ -460,7 +460,7 @@ class BBand(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            span, upper, lower = self.pars
+            span, upper, lower = self.par_values
         else:
             span, upper, lower = pars
         # 计算指数的指数移动平均价格
@@ -517,7 +517,7 @@ class SCRSSMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            rng, = self.pars
+            rng, = self.par_values
         else:
             rng, = pars
         h = h.T
@@ -559,7 +559,7 @@ class SCRSDEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            rng, = self.pars
+            rng, = self.par_values
         else:
             rng, = pars
         h = h.T
@@ -601,7 +601,7 @@ class SCRSEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            rng, = self.pars
+            rng, = self.par_values
         else:
             rng, = pars
         h = h.T
@@ -687,7 +687,7 @@ class SCRSKAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            rng, = self.pars
+            rng, = self.par_values
         else:
             rng, = pars
         h = h.T
@@ -731,7 +731,7 @@ class SCRSMAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, s = self.pars
+            f, s = self.par_values
         else:
             f, s = pars
         h = h.T
@@ -774,7 +774,7 @@ class SCRST3(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, v = self.pars
+            p, v = self.par_values
         else:
             p, v = pars
         h = h.T
@@ -817,7 +817,7 @@ class SCRSTEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -860,7 +860,7 @@ class SCRSTRIMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -903,7 +903,7 @@ class SCRSWMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -955,7 +955,7 @@ class DCRSSMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            l, s = self.pars
+            l, s = self.par_values
         else:
             l, s = pars
         h = h.T
@@ -999,7 +999,7 @@ class DCRSDEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            l, s = self.pars
+            l, s = self.par_values
         else:
             l, s = pars
         h = h.T
@@ -1043,7 +1043,7 @@ class DCRSEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            l, s = self.pars
+            l, s = self.par_values
         else:
             l, s = pars
         h = h.T
@@ -1087,7 +1087,7 @@ class DCRSKAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            l, s = self.pars
+            l, s = self.par_values
         else:
             l, s = pars
         h = h.T
@@ -1133,7 +1133,7 @@ class DCRSMAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            lf, ls, sf, ss = self.pars
+            lf, ls, sf, ss = self.par_values
         else:
             lf, ls, sf, ss = pars
         h = h.T
@@ -1179,7 +1179,7 @@ class DCRST3(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            lp, lv, sp, sv = self.pars
+            lp, lv, sp, sv = self.par_values
         else:
             lp, lv, sp, sv = pars
         h = h.T
@@ -1223,7 +1223,7 @@ class DCRSTEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            lp, sp = self.pars
+            lp, sp = self.par_values
         else:
             lp, sp = pars
         h = h.T
@@ -1267,7 +1267,7 @@ class DCRSTRIMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            lp, sp = self.pars
+            lp, sp = self.par_values
         else:
             lp, sp = pars
         h = h.T
@@ -1311,7 +1311,7 @@ class DCRSWMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            lp, sp = self.pars
+            lp, sp = self.par_values
         else:
             lp, sp = pars
         h = h.T
@@ -1364,7 +1364,7 @@ class SLPSMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1413,7 +1413,7 @@ class SLPDEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1461,7 +1461,7 @@ class SLPEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1513,7 +1513,7 @@ class SLPHT(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         h = h.T
@@ -1562,7 +1562,7 @@ class SLPKAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1611,7 +1611,7 @@ class SLPMAMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, s, n = self.pars
+            f, s, n = self.par_values
         else:
             f, s, n = pars
         h = h.T
@@ -1660,7 +1660,7 @@ class SLPT3(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, v, n = self.pars
+            p, v, n = self.par_values
         else:
             p, v, n = pars
         h = h.T
@@ -1708,7 +1708,7 @@ class SLPTEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1756,7 +1756,7 @@ class SLPTRIMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1804,7 +1804,7 @@ class SLPWMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, n = self.pars
+            f, n = self.par_values
         else:
             f, n = pars
         h = h.T
@@ -1854,7 +1854,7 @@ class SAREXT(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            a, m = self.pars
+            a, m = self.par_values
         else:
             a, m = pars
         h = h.T
@@ -1905,7 +1905,7 @@ class MACD(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            s, l, m = self.pars
+            s, l, m = self.par_values
         else:
             s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -1956,7 +1956,7 @@ class TRIX(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            s, m = self.pars
+            s, m = self.par_values
         else:
             s, m = pars
         h = h.T
@@ -2002,7 +2002,7 @@ class ADX(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2055,7 +2055,7 @@ class APO(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, s, m = self.pars
+            f, s, m = self.par_values
         else:
             f, s, m = pars
         h = h.T
@@ -2108,7 +2108,7 @@ class AROON(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2163,7 +2163,7 @@ class AROONOSC(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2218,7 +2218,7 @@ class CCI(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2273,7 +2273,7 @@ class CMO(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2330,7 +2330,7 @@ class MACDEXT(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, ft, sp, st, p, t = self.pars
+            fp, ft, sp, st, p, t = self.par_values
         else:
             fp, ft, sp, st, p, t = pars
         h = h.T
@@ -2375,7 +2375,7 @@ class MFI(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2424,7 +2424,7 @@ class DI(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, p, = self.pars
+            n, p, = self.par_values
         else:
             n, p, = pars
         h = h.T
@@ -2476,7 +2476,7 @@ class DM(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, p, = self.pars
+            n, p, = self.par_values
         else:
             n, p, = pars
         h = h.T
@@ -2526,7 +2526,7 @@ class MOM(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, = self.pars
+            p, = self.par_values
         else:
             p, = pars
         h = h.T
@@ -2578,7 +2578,7 @@ class PPO(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, sp, m = self.pars
+            fp, sp, m = self.par_values
         else:
             fp, sp, m = pars
         h = h.T
@@ -2630,7 +2630,7 @@ class RSI(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, ulim, llim = self.pars
+            p, ulim, llim = self.par_values
         else:
             p, ulim, llim = pars
         h = h.T
@@ -2683,7 +2683,7 @@ class STOCH(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fk, sk, skm, sd, sdm = self.pars
+            fk, sk, skm, sd, sdm = self.par_values
         else:
             fk, sk, skm, sd, sdm = pars
         h = h.T
@@ -2734,7 +2734,7 @@ class STOCHF(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fk, fd, fdm = self.pars
+            fk, fd, fdm = self.par_values
         else:
             fk, fd, fdm = pars
         h = h.T
@@ -2786,7 +2786,7 @@ class STOCHRSI(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, fk, fd, fdm = self.pars
+            p, fk, fd, fdm = self.par_values
         else:
             p, fk, fd, fdm = pars
         h = h.T
@@ -2838,7 +2838,7 @@ class ULTOSC(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p1, p2, p3, u, l = self.pars
+            p1, p2, p3, u, l = self.par_values
         else:
             p1, p2, p3, u, l = pars
         h = h.T
@@ -2888,7 +2888,7 @@ class WILLR(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, u, l = self.pars
+            p, u, l = self.par_values
         else:
             p, u, l = pars
         h = h.T
@@ -2988,7 +2988,7 @@ class ADOSC(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, s = self.pars
+            f, s = self.par_values
         else:
             f, s = pars
         h = h.T
@@ -3039,7 +3039,7 @@ class OBV(RuleIterator):
                          strategy_data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        n, = self.pars
+        n, = self.par_values
         h = h.T
         close, volume = h[0], h[1]
         obv_ma = sma(obv(close, volume), n)
@@ -3100,7 +3100,7 @@ class ATR(RuleIterator):
                          strategy_data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        n, = self.pars
+        n, = self.par_values
         h = h.T
         high, low, close = h[0], h[1], h[2]
         atr_value = atr(high, low, close, n)
@@ -3223,7 +3223,7 @@ class SellRate(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            day, change = self.pars
+            day, change = self.par_values
         else:
             day, change = pars
         h = h
@@ -3272,7 +3272,7 @@ class BuyRate(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            day, change = self.pars
+            day, change = self.par_values
         else:
             day, change = pars
         h = h
@@ -3405,7 +3405,7 @@ class DMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            s, l, d = self.pars
+            s, l, d = self.par_values
         else:
             s, l, d = pars
 
@@ -3507,7 +3507,7 @@ class SelectingRandom(GeneralStg):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            pct, = self.pars
+            pct, = self.par_values
         else:
             pct, = pars
         share_count = h.shape[0]
@@ -3640,7 +3640,7 @@ class SelectingNDayLast(FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         factors = h[:, -n-1, 0]
@@ -3699,7 +3699,7 @@ class SelectingNDayAvg(FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         n_average = h[:, -n-1:, 0].mean(axis=1)
@@ -3760,7 +3760,7 @@ class SelectingNDayChange(FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         current_price = h[:, -1, 0]
@@ -3821,7 +3821,7 @@ class SelectingNDayRateChange(FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         current_price = h[:, -1, 0]
@@ -3881,7 +3881,7 @@ class SelectingNDayVolatility(FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            n, = self.pars
+            n, = self.par_values
         else:
             n, = pars
         high = h[:, :, 0]

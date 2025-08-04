@@ -54,7 +54,7 @@ class TestLSStrategy(RuleIterator):
         if pars is not None:
             n, price = pars
         else:
-            n, price = self.pars
+            n, price = self.par_values
         h = h.T
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
@@ -207,7 +207,7 @@ class TestSigStrategy(GeneralStg):
         pass
 
     def realize(self, h, r=None, t=None):
-        max_ratio, price1, price2 = self.pars
+        max_ratio, price1, price2 = self.par_values
         ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
         diff = h[:, -1, 0] - h[:, -2, 0]
 
@@ -295,7 +295,7 @@ class StgBuyOpen(GeneralStg):
         pass
 
     def realize(self, h, r=None, t=None):
-        n, = self.pars
+        n, = self.par_values
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
@@ -327,7 +327,7 @@ class StgSelClose(GeneralStg):
         pass
 
     def realize(self, h, r=None, t=None):
-        n, = self.pars
+        n, = self.par_values
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
@@ -691,16 +691,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         stg_macd = self.op2[1]
         stg_trix = self.op2[2]
 
-        stg_dma.pars = (10, 20, 30)
-        self.assertEqual(stg_dma.pars, (10, 20, 30))
-        stg_macd.pars = (10, 20, 30)
-        self.assertEqual(stg_macd.pars, (10, 20, 30))
+        stg_dma.par_values = (10, 20, 30)
+        self.assertEqual(stg_dma.par_values, (10, 20, 30))
+        stg_macd.par_values = (10, 20, 30)
+        self.assertEqual(stg_macd.par_values, (10, 20, 30))
         stg_trix.set_pars((10, 20))
-        self.assertEqual(stg_trix.pars, (10, 20))
+        self.assertEqual(stg_trix.par_values, (10, 20))
         stg_dma.set_pars({'a': (10, 20, 30),
                           'b': (11, 21, 31),
                           'c': (12, 22, 32)})
-        self.assertEqual(stg_dma.pars,
+        self.assertEqual(stg_dma.par_values,
                          {'a': (10, 20, 30),
                           'b': (11, 21, 31),
                           'c': (12, 22, 32)})
@@ -1453,7 +1453,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_count, 1)
         self.assertEqual(op.strategy_ids, ['dma'])
         self.assertEqual(type(op.strategies[0]), DMA)
-        self.assertEqual(op.strategies[0].pars, (12, 123, 25))
+        self.assertEqual(op.strategies[0].par_values, (12, 123, 25))
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
@@ -1470,7 +1470,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
                                     amounts=[10000, 10000, 10000, 10000])
         # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
-        self.op.strategies[0].pars = None
+        self.op.strategies[0].par_values = None
         self.assertRaises(AssertionError,
                           self.op.assign_hist_data,
                           hist_data=self.hp1,
@@ -1481,15 +1481,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
                               pars={'000300': (5, 10.),
                                     '000400': (5, 10.),
                                     '000500': (5, 6.)})
-        self.assertEqual(self.op.strategies[0].pars, {'000300': (5, 10.),
-                                                      '000400': (5, 10.),
-                                                      '000500': (5, 6.)})
+        self.assertEqual(self.op.strategies[0].par_values, {'000300': (5, 10.),
+                                                      '000400':       (5, 10.),
+                                                      '000500':       (5, 6.)})
         self.op.set_parameter(stg_id='custom_1',
                               pars=())
-        self.assertEqual(self.op.strategies[1].pars, ()),
+        self.assertEqual(self.op.strategies[1].par_values, ()),
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
-        self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
+        self.assertEqual(self.op.strategies[2].par_values, (0.2, 0.02, -0.02)),
         self.op.assign_hist_data(
                 hist_data=self.hp1,
                 cash_plan=on_spot_cash,
@@ -1903,9 +1903,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          opt_tag=1,
                          pars=(9, -0.09),
                          window_length=10)
-        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
+        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
         self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
-        self.assertEqual(op.strategies[2].pars, (9, -0.09))
+        self.assertEqual(op.strategies[2].par_values, (9, -0.09))
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
@@ -2313,14 +2313,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          strategy_data_types=['close', 'open', 'high'])
         op.set_parameter('dma',
                          pars=(5, 10, 5))
-        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
+        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
         op.set_opt_par((5, 12, 9))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
 
         op.set_parameter('crossline',
                          opt_tag=1,
@@ -2331,14 +2331,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(5, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
         op.set_opt_par((5, 12, 9, 8, 26, 0.09))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
 
         op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
-        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
+        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
@@ -2349,13 +2349,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('crossline',
                          pars=(5, 10, 5))
         self.assertEqual(op.opt_tags, [1, 0, 2])
-        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (5, 10, 5))
+        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (5, 10, 5))
         op.set_opt_par((5, 12, 9, (8, 26, 9)))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 9))
 
         # Test Errors
         # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
@@ -2380,7 +2380,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(self.stg.stg_type, self.stg_type)
         self.assertEqual(self.stg.name, self.stg_name)
         self.assertEqual(self.stg.description, self.stg_text)
-        self.assertEqual(self.stg.pars, self.pars)
+        self.assertEqual(self.stg.par_values, self.pars)
         self.assertEqual(self.stg.par_types, self.par_types)
         self.assertEqual(self.stg.par_range, self.par_boes)
         self.assertEqual(self.stg.par_count, self.par_count)
@@ -2393,8 +2393,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.stg.description = 'NEW TEXT'
         self.assertEqual(self.stg.name, 'NEW NAME')
         self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.pars = (10, 20, 0.03)
-        self.assertEqual(self.stg.pars, (10, 20, 0.03))
+        self.stg.par_values = (10, 20, 0.03)
+        self.assertEqual(self.stg.par_values, (10, 20, 0.03))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
         self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]

@@ -566,7 +566,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升：
 
 ```python
-op.set_parameter('dma', pars=(143, 99, 32))
+op.set_parameter('dma', par_values=(143, 99, 32))
 res = op.run(
         mode=1,                         # 历史回测模式
         asset_pool='000300.SH',         # 投资资产池

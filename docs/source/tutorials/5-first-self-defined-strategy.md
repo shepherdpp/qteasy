@@ -195,10 +195,10 @@ class Cross_SMA(RuleIterator):
 
 ```python
     def realize(self, h, **kwargs):
-        """策略的具体实现代码
-        """
-        close = h[:, 0]  # 通过切片获取最近201天的收盘价
-        f, s= self.pars  # 读取快均线（f）和慢均线（s）的计算周期
+    """策略的具体实现代码
+    """
+    close = h[:, 0]  # 通过切片获取最近201天的收盘价
+    f, s = self.par_values  # 读取快均线（f）和慢均线（s）的计算周期
 ```
 
 到这里，实现策略逻辑所需要的元素都备齐了，接下来我们可以开始实现策略逻辑。

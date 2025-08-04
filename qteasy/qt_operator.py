@@ -864,7 +864,7 @@ class Operator:
         [RULE-ITER(DMA)]
         >>> op.strategies[0].opt_tag
         1
-        >>> op.strategies[0].pars
+        >>> op.strategies[0].par_values
         (50, 10, 20)
         """
 
@@ -1697,7 +1697,7 @@ class Operator:
                        f'{adjust_string_length(run_type_str, run_timing_width) :^{run_timing_width}}'
                        f'{adjust_string_length(data_type_str, data_window_width) :^{data_window_width}}'
                        f'{adjust_string_length(str(stg.history_data_types), data_type_width) :^{data_type_width}}'
-                       f'{adjust_string_length(str(stg.pars), par_width) :^{par_width}}')
+                       f'{adjust_string_length(str(stg.par_values), par_width) :^{par_width}}')
             print('=' * info_width)
         # 打印每个strategy的详细信息
         if (self.strategy_count > 0) and verbose:
