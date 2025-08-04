@@ -53,7 +53,7 @@ class MultiFactors(qt.FactorSorter):
 
     def realize(self, h, r=None, t=None, pars=None):
 
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.pars
+        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.par_values
         # 读取投资组合的数据PB和total_MV的最新值
         pb = h[:, -1, 0]  # 当前所有股票的PB值
         mv = h[:, -1, 1]  # 当前所有股票的市值
@@ -138,7 +138,7 @@ class IndexEnhancement(qt.GeneralStg):
         )
 
     def realize(self, h, r=None, t=None, pars=None):
-        weight_threshold, init_weight, price_days = self.pars
+        weight_threshold, init_weight, price_days = self.par_values
         # 读取投资组合的权重wt和最近price_days天的收盘价
         wt = h[:, -1, 0]  # 当前所有股票的权重值
         pre_close = h[:, -price_days - 1:-1, 1]
@@ -189,7 +189,7 @@ class GridTrading(qt.GeneralStg):
     def realize(self, h, r=None, t=None, pars=None):
         """策略输出PT信号，即仓位目标信号"""
 
-        low_threshold, high_threshold, low_pos, hi_pos, days = self.pars
+        low_threshold, high_threshold, low_pos, hi_pos, days = self.par_values
 
         # 读取最近N天的收盘价
         close = h[:, - days:, 0]  # 最新连续收盘价

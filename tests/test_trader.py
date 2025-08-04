@@ -572,7 +572,7 @@ class TestTrader(unittest.TestCase):
         op1 = ts.operator
         op2 = loaded_operator
         self.assertEqual(op1.strategy_ids, op2.strategy_ids)
-        self.assertEqual(op1[0].pars, op2[0].pars)
+        self.assertEqual(op1[0].par_values, op2[0].par_values)
 
         self.assertIsInstance(loaded_config, dict)
         conf1 = ts.config

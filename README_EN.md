@@ -488,7 +488,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 Run backtest again with the optimized parameters, and the result will be improved significantly:
 
 ```python
-op.set_parameter('dma', pars=(143, 99, 32))
+op.set_parameter('dma', par_values=(143, 99, 32))
 res = op.run(
         mode=1,                         # run in backtest mode
         asset_pool='000300.SH',         # the list symbols in trading pool

@@ -180,7 +180,7 @@ msgstr ""
 
 #: of qteasy.qt_operator.Operator.add_strategy:7
 msgid ""
-"任意合法的策略属性，可以在添加策略时直接给该策略属性赋值， 必须明确指定需要修改的属性名称，包含 - pars: dict or tuple, "
+"任意合法的策略属性，可以在添加策略时直接给该策略属性赋值， 必须明确指定需要修改的属性名称，包含 - par_values: dict or tuple, "
 "策略可调参数 - opt_tag: int, 策略优化标签 - stg_type: int, 策略类型 - par_count: int, "
 "策略参数个数 - par_types: list, 策略参数类型 - par_ranges: list, 策略参数范围 - data_freq: "
 "str, 策略数据频率 - window_length: int, 策略窗口长度 - run_freq: str, 策略采样频率"

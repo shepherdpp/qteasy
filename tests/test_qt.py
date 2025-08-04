@@ -50,7 +50,7 @@ class TestLSStrategy(RuleIterator):
         if pars is not None:
             n, price = pars
         else:
-            n, price = self.pars
+            n, price = self.par_values
         h = h.T
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)

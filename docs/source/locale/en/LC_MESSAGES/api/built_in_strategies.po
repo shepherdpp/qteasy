@@ -258,7 +258,7 @@ msgstr ""
 "historical indicators of stocks, factor sorting parameters can be passed in as "
 "strategy parameters to change the strategy data type, select stocks based on "
 "different historical data, and select stock parameters can be passed in through "
-"pars"
+"par_values"
 
 #: of qteasy.built_in.AD:5 qteasy.built_in.ADOSC:5 qteasy.built_in.ADX:4
 #: qteasy.built_in.APO:6 qteasy.built_in.AROON:6 qteasy.built_in.ATR:7

@@ -162,7 +162,8 @@ class BaseStrategy:
         self._data_WL = None
         self.set_data_types(data_types, use_latest_data_cycle, window_length)
         logger_core.info(
-            f'Strategy data types set')
+            f'Strategy data types set:\n'
+            f'data_types={self.data_types}, data_names={self._data_names}, ')
 
     @property
     def stg_type(self):
@@ -186,17 +187,22 @@ class BaseStrategy:
     @property
     def par_count(self):
         """策略的参数数量"""
-        return len(self.pars)
+        return len(self.par_values)
+
+    @property
+    def par_names(self):
+        """策略的参数名称列表"""
+        return [par.name for par in self.par_values] if self.par_values is not None else []
 
     @property
     def par_types(self):
         """策略的参数类型，由策略参数类的par_type属性给出"""
-        return {par.name: par.par_type for par in self.pars}
+        return {par.name: par.par_type for par in self.par_values}
 
     @property
     def par_range(self):
         """策略的参数取值范围，用来定义参数空间用于参数优化"""
-        return {par.name: par.par_range for par in self.pars}
+        return {par.name: par.par_range for par in self.par_values}
 
     @property
     def name(self):
@@ -228,39 +234,23 @@ class BaseStrategy:
         self.set_opt_tag(opt_tag=opt_tag)
 
     @property
-    def pars(self):
+    def par_values(self) -> tuple:
         """策略参数，元组
-        :return:
+        Return
+        -------
+        tuple: 策略参数的值，元组中的每个元素都是一个参数值，如果没有设置参数，则返回None
         """
-        return self._pars
+        return tuple(par.value for par in self._pars.values()) if self._pars is not None else None
 
-    @pars.setter
-    def pars(self, pars: tuple):
-        self.set_pars(pars)
+    @par_values.setter
+    def par_values(self, pars: tuple):
+        """设置策略参数，参数的合法性检查在这里进行"""
+        self.update_par_values(pars)
 
     @property
-    def has_pars(self):
+    def has_pars(self) -> bool:
+        """返回True如果策略有可调参数，否则返回False"""
         return self.pars is not None
-
-    @property
-    def data_freq(self):
-        """策略依赖的历史数据频率"""
-        return self._data_freq
-
-    @data_freq.setter
-    def data_freq(self, data_freq):
-        self.set_hist_pars(data_freq=data_freq)
-
-    @property
-    def sample_freq(self):  # to be deprecated
-        """策略生成的采样频率"""
-        warnings.warn('sample_freq is deprecated, use run_freq instead', DeprecationWarning)
-        return self._strategy_run_freq
-
-    @sample_freq.setter
-    def sample_freq(self, sample_freq):  # to be deprecated
-        warnings.warn('sample_freq is deprecated, use run_freq instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_freq=sample_freq)
 
     @property
     def run_freq(self):
@@ -270,6 +260,16 @@ class BaseStrategy:
     @run_freq.setter
     def run_freq(self, sample_freq):
         self.set_hist_pars(strategy_run_freq=sample_freq)
+
+    @property
+    def run_timing(self):
+        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        return self._run_timing
+
+    @run_timing.setter
+    def run_timing(self, run_timing):
+        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
+        self._run_timing = run_timing
 
     @property
     def window_length(self):
@@ -307,38 +307,6 @@ class BaseStrategy:
     @history_data_types.setter
     def history_data_types(self, data_types):
         self.set_hist_pars(strategy_data_types=data_types)
-
-    @property
-    def strategy_run_timing(self):
-        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        return self._strategy_run_timing
-
-    @strategy_run_timing.setter
-    def strategy_run_timing(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        self.set_hist_pars(strategy_run_timing=price_type)
-
-    @property
-    def strategy_timing(self):
-        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        return self._strategy_run_timing
-
-    @strategy_timing.setter
-    def strategy_timing(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        self.set_hist_pars(strategy_run_timing=price_type)
-
-    @property
-    def bt_price_type(self):  # to be deprecated
-        """策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
-        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        return self._strategy_run_timing
-
-    @bt_price_type.setter
-    def bt_price_type(self, price_type):  # to be deprecated
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_timing=price_type)
 
     @property
     def bt_price_types(self):
@@ -498,6 +466,7 @@ class BaseStrategy:
         for name, par in pars.items():
             par.name = name
             self.__setattr__(name, par.value)
+
         return
 
     def set_data_types(self,
@@ -557,8 +526,6 @@ class BaseStrategy:
             self._data_WL.update(window_length)
         else:
             raise TypeError(f'parameter "use_latest_data_cycles" is invalid, please check your input')
-
-
 
     # def check_pars(self, pars: tuple) -> bool:
     #     """检查pars(一个tuple)是否符合strategy的参数设置"""
@@ -641,10 +608,11 @@ class BaseStrategy:
     #     if all(self.check_pars(par) for par in pars.values()):
     #         self._pars = pars
     #         return 1
-    #
-    # def update_par_values(self, pars: (tuple, dict)) -> None:
-    #     """ 快速更新策略的参数值"""
-    #     self._pars = pars
+
+    def update_par_values(self, par_valuess: tuple) -> None:
+        """ 快速更新策略的参数值"""
+        for par_name, par_value in zip(self.par_names, par_valuess):
+            self._pars[par_name].value = par_value
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""
@@ -1682,7 +1650,7 @@ class RuleIterator(BaseStrategy):
             trade_data_iter = (None for i in range(share_count))
         else:
             trade_data_iter = trade_data
-        pars = self.pars
+        pars = self.par_values
         if isinstance(pars, dict):
             pars_iter = pars.values()
         else:

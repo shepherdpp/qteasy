@@ -479,10 +479,10 @@ msgstr ""
 "abrufen wollen, schneiden wir sie einfach direkt aus `ndarray` aus."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:194
-msgid "前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.pars`即可获取。"
+msgid "前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.par_values`即可获取。"
 msgstr ""
 "Wie bereits erwähnt, ist der einstellbare Parameter dieser Strategie die Periode der Mittelwertberechnung. Um die Periode mit Hilfe des einstellbaren Parameters zu berechnen, müssen wir die Werte des "
-"einstellbaren Parameters erhalten, die in der pars-Eigenschaft der Strategie gespeichert sind und über `self.pars` abgerufen werden können."
+"einstellbaren Parameters erhalten, die in der par_values-Eigenschaft der Strategie gespeichert sind und über `self.par_values` abgerufen werden können."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:204
 msgid "到这里，实现策略逻辑所需要的元素都备齐了，接下来我们可以开始实现策略逻辑。"

@@ -29,9 +29,9 @@ if __name__ == '__main__':
         def realize(self, h, r=None, t=None, pars=None):
 
             # 此时传入的pars参数为dict对象，dict的key与监控的股票一一对应，value为参数，需分别处理
-            pars_dict = self.pars
+            pars_dict = self.par_values
             if not isinstance(pars_dict, dict):
-                raise TypeError(f'self.pars should be a dict, got {type(self.pars)} instead.')
+                raise TypeError(f'self.pars should be a dict, got {type(self.par_values)} instead.')
             # 检查参数的个数必须与输入的历史数据价格的层数相同，因为每一层代表一只股票，股票数量必须与参数的数量相同
             if len(pars_dict) != h.shape[0]:
                 raise ValueError(
@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 # 使用新的基准网格更新交易参数
                 if not np.isnan(base_grid):
                     base_grid = np.round(base_grid, 2)
-                self.pars[symbol] = (grid_size, trade_batch, base_grid)
+                self.par_values[symbol] = (grid_size, trade_batch, base_grid)
 
             return trade_signals
 

@@ -28,7 +28,7 @@ if __name__ == '__main__':
         def realize(self, h, **kwargs):
 
             # 读取当前保存的策略参数，首次运行时base_grid参数为0，此时买入1000股并设置当前价格为基准网格
-            grid_size, trade_batch, base_grid = self.pars
+            grid_size, trade_batch, base_grid = self.par_values
 
             # 读取最新价格
             price = h[-1, 0]  # 最近一个K线周期的close价格

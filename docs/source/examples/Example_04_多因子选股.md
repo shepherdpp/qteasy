@@ -22,6 +22,7 @@
 import qteasy as qt
 import numpy as np
 
+
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
     """ 根据mv_target和bp_target计算市值加权收益率
 
@@ -34,7 +35,7 @@ def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target
 
 
 class MultiFactors(qt.FactorSorter):
-    
+
     def __init__(self, pars: tuple = (0.5, 0.3, 0.7)):
         super().__init__(
                 pars=pars,
@@ -56,10 +57,10 @@ class MultiFactors(qt.FactorSorter):
                 lbound=0,  # 仅选择因子小于0的股票
                 ubound=0,  # 仅选择因子小于0的股票
         )
-    
+
     def realize(self, h, r=None, t=None, pars=None):
 
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.pars
+        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.par_values
         # 读取投资组合的数据PB和total_MV的最新值
         pb = h[:, -1, 0]  # 当前所有股票的PB值
         mv = h[:, -1, 1]  # 当前所有股票的市值
