@@ -176,7 +176,7 @@ class Space:
     def boes(self):
         """List of bounds of axis of the space"""
         if self.dim > 0:
-            boes = [ax.axis_boe for ax in self.axis]
+            boes = [ax.par_range for ax in self.axis]
             return boes
         else:
             return None

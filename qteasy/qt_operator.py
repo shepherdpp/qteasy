@@ -90,13 +90,6 @@ class Operator:
         strategies : str, Strategy, list of str or list of Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
-        signal_type : str, Default: 'pt', {'pt', 'ps', 'vs'}  deprecated
-            需要生成的交易信号的类型，包含以下三种类型:
-            'pt', 'ps', 'vs'
-            默认交易信号类型为'pt'
-        op_type : str, Default: 'batch', {'batch', 'stepwise'}  deprecated
-            Operator对象的的运行模式，包含以下两种：
-            'batch', 'stepwise'
 
         Examples
         --------
