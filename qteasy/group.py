@@ -5,8 +5,8 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2025-07-29
 # Desc:
-#   Definition of Group class, which is
-# a collection of strategies in the
+#   Definition of Group class, a
+# collection of strategies in the
 # Operator class, managing blender of
 # strategy running results. All
 # strategies in the same group runs

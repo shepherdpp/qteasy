@@ -82,14 +82,14 @@ class BaseStrategy:
             *,
             name: str = '',
             description: str = '',
+            stg_type: str = '',
+            run_freq: str = 'd',
+            run_timing: str = 'close',
             pars: [Parameter, [Parameter], {str: Parameter}] = None,
             data_types: [DataType, [DataType], {str: DataType}] = None,
             use_latest_data_cycle: [bool, [bool], {str: bool}] = False,
             window_length: [int, [int], {str: int}] = 100,
             opt_tag: int = 0,
-            stg_type: str = '',
-            run_freq: str = 'd',
-            run_timing: str = 'close',
     ):
         """ 初始化策略
 
