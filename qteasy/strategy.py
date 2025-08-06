@@ -255,11 +255,11 @@ class BaseStrategy:
     @property
     def run_freq(self):
         """策略生成的采样频率"""
-        return self._strategy_run_freq
+        return self._run_freq
 
     @run_freq.setter
     def run_freq(self, sample_freq):
-        self.set_hist_pars(strategy_run_freq=sample_freq)
+        self._run_freq=sample_freq
 
     @property
     def run_timing(self):
@@ -271,101 +271,35 @@ class BaseStrategy:
         """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         self._run_timing = run_timing
 
-    @property
-    def window_length(self):
+    def get_window_length(self, data_type: str = None) -> int:
         """策略依赖的历史数据窗口长度"""
-        return self._window_length
-
-    @window_length.setter
-    def window_length(self, window_length):
-        self.set_hist_pars(window_length=window_length)
+        return self._data_WL[data_type]
 
     @property
     def data_types(self):
         """策略依赖的历史数据类型"""
         return self._data_types
 
-    @data_types.setter
-    def data_types(self, data_types):
-        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
-        self.set_hist_pars(strategy_data_types=data_types)
-
-    @property
-    def strategy_data_types(self):
-        """data_types的别名"""
-        return self._data_types
-
-    @strategy_data_types.setter
-    def strategy_data_types(self, data_types):
-        self.set_hist_pars(strategy_data_types=data_types)
-
-    @property
-    def history_data_types(self):
-        """data_types的别名"""
-        return self._data_types
-
-    @history_data_types.setter
-    def history_data_types(self, data_types):
-        self.set_hist_pars(strategy_data_types=data_types)
-
-    @property
-    def bt_price_types(self):
-        """ 策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
-        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        return self._strategy_run_timing
-
-    @bt_price_types.setter
-    def bt_price_types(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_timing=price_type)
-
-    @property
-    def ref_types(self):
-        """ 返回策略的参考数据类型，如果不需要参考数据，返回空列表
-
-        :return:
-        """
-        return self._reference_data_types
-
-    @ref_types.setter
-    def ref_types(self, ref_types):
-        """ 设置策略的参考数据类型"""
-        self.set_hist_pars(reference_data_types=ref_types)
-
-    @property
-    def reference_data_types(self):
-        """ ref_types的别名
-
-        Returns
-        -------
-        list: 策略的参考数据类型，如果不需要参考数据，返回空列表
-        """
-        return self._reference_data_types
-
-    @reference_data_types.setter
-    def reference_data_types(self, ref_types):
-        """ 设置策略的参考数据类型"""
-        self.set_hist_pars(reference_data_types=ref_types)
-
-    @property
-    def use_latest_data_cycle(self):
+    def get_use_latest_data_cycle(self, data_type: str = None) -> bool:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
-        return self._use_latest_data_cycle
+        return self._data_ULC[data_type]
 
-    @use_latest_data_cycle.setter
-    def use_latest_data_cycle(self, use_latest_data_cycle):
-        """ 设置是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
-        self.set_hist_pars(use_latest_data_cycle=use_latest_data_cycle)
+    def get_data_ULC(self, data_type: str = None) -> bool:
+        """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
+        return self._data_ULC[data_type] if data_type in self._data_ULC else False
+
+    def get_data_name(self, data_type: str = None) -> str:
+        """ 获取数据类型的名称"""
+        return self._data_names[data_type]
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
         str1 = f'{type(self)}'
         str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
-        str3 = f'\nInformation of the strategy: {self.name}, {self.description}'
-        str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_range}'
+        str3 = f'\nDescriptions: {self.name}, {self.description}'
+        str4 = f'\nRun freq and timing: {self.run_freq}, {self.run_timing}'
         if self._pars is not None:
-            str5 = f'\nParameter: {self._pars}\n'
+            str5 = f'\nParameter: {self.par_values}\n'
         else:
             str5 = f'\nNo Parameter!\n'
         return ''.join([str1, str2, str3, str4, str5])
@@ -382,13 +316,15 @@ class BaseStrategy:
         str2 = f'{self.name})'
         return ''.join([str1, str2])
 
-    def info(self, verbose: bool = True, stg_id: str = None) -> None:
+    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None) -> None:
         """打印所有相关信息和主要属性
 
         Parameters
         ----------
         verbose: bool, default True
             是否打印更多的信息
+        status: bool, default False
+            是否打印策略的运行状态
         stg_id: str, default None
             策略的ID，如果为None，则打印策略的名称，否则打印策略的ID
 
@@ -396,7 +332,6 @@ class BaseStrategy:
         -------
         None
         """
-        from .utilfuncs import adjust_string_length
         from rich import print as rprint
         from shutil import get_terminal_size
 
@@ -406,32 +341,21 @@ class BaseStrategy:
         info_width = int(term_width * 0.75) if term_width > 120 else term_width
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
-        stg_type = self.__class__.__bases__[0].__name__
-        rprint(f'\n{"Strategy_ID":<{key_width}}{adjust_string_length(str(stg_id), value_width)}')
+        rprint(self.__str__())
+        # 打印所有策略数据类型相关信息
         rprint('=' * info_width)
-        if self._pars is not None:
-            rprint(f'{"Strategy Parameter":<{key_width}}{adjust_string_length(str(self._pars), value_width)}')
-        else:
-            rprint('Strategy Parameter: No Parameter!')
-        rprint(f'{"Strategy_type":<{key_width}}{stg_type}\n'
-               f'{"Strategy name":<{key_width}}{self.name}\n'
-               f'Description\n    {self.description}')
-        # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
-        if verbose:
-            run_type_str = self.run_freq + ' @ ' + self.strategy_run_timing
-            data_type_str = str(self.window_length) + ' ' + self.data_freq
-            rprint(
-                    f'\n'
-                    f'{"Strategy Properties":<{key_width}}{"Values":{value_width}}\n'
-                    f'{"-" * info_width}\n'
-                    f'{"Param.count":<{key_width}}{self.par_count}\n'
-                    f'{"Param.types":<{key_width}}{adjust_string_length(str(self.par_types), value_width)}\n'
-                    f'{"Param.range":<{key_width}}{adjust_string_length(str(self.par_range), value_width)}\n'
-                    f'{"Run parameters":<{key_width}}{adjust_string_length(run_type_str, value_width)}\n'
-                    f'{"Data types":<{key_width}}{adjust_string_length(str(self.history_data_types), value_width)}\n'
-                    f'{"Data parameters":<{key_width}}{adjust_string_length(data_type_str, value_width)}'
-            )
-        print()
+        for dtype in self.data_types:
+            if verbose:
+                rprint(
+                        f'{"data type":<{dtype}}{"Values":{value_width}}\n'
+                        f'{"window length":<{key_width}}{self.get_window_length(dtype)}\n'
+                        f'{"use latest data cycle":<{key_width}}{self.get_use_latest_data_cycle(dtype)}\n'
+                )
+            else:
+                rprint(
+                        f'{"data type":<{dtype}}{"Values":{value_width}}\n'
+                        f'{"window length":<{key_width}}{self.get_window_length(dtype)}\n'
+                )
 
     def set_pars(self, pars: any) -> None:
         """ 设置参数字典，设置par对象的名字，设置策略的attribute
@@ -499,9 +423,6 @@ class BaseStrategy:
 
         self._data_names = [dtype.name for dtype in data_types]
         self._data_types = data_types
-        for name, dtype in data_types.items():
-            dtype.name = name
-            self.__setattr__(name, dtype)
 
         # 设置ULC
         if isinstance(use_latest_data_cycle, bool):
@@ -629,90 +550,96 @@ class BaseStrategy:
             self._par_bounds_or_enums = par_range
         return par_range
 
-    def set_hist_pars(self,
-                      data_freq: str = None,
-                      strategy_run_freq: str = None,
-                      window_length: int = None,
-                      strategy_data_types: str = None,
-                      strategy_run_timing: str = None,
-                      reference_data_types: str = None,
-                      use_latest_data_cycle: bool = None) -> None:
-        """ 设置策略的历史数据回测相关属性
+    def update_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+        """ 将策略的历史数据更新为window_index指定的历史数据"""
+        for dtype_name in self.data_types:
+            data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
+            setattr(self, dtype_name, data_window)
 
-        Parameters
-        ----------
-        data_freq: str
-            数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        strategy_run_freq: str
-            策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        window_length: int
-            回测时需要用到的历史数据窗口的长度
-        strategy_data_types: str
-            需要用到的历史数据类型
-        strategy_run_timing: str
-            需要用到的历史数据回测价格类型
-        reference_data_types: str
-            策略运行参考数据类型
-        use_latest_data_cycle: bool
-            是否使用最近的一个完整的数据周期
-
-        Returns
-        -------
-        None
-        """
-        if data_freq is not None:
-            assert isinstance(data_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
-            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
-                                                           f'string'
-            self._data_freq = data_freq
-        if strategy_run_freq is not None:
-            assert isinstance(strategy_run_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(strategy_run_freq)} instead'
-            import re
-            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', strategy_run_freq.lower()):
-                raise ValueError(f"{strategy_run_freq} is not a valid frequency string,"
-                                 f"sample freq can only be like '10d' or '2w'")
-            self._strategy_run_freq = strategy_run_freq
-        if window_length is not None:
-            assert isinstance(window_length, int), \
-                f'TypeError, window length should an integer, got {type(window_length)} instead'
-            assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
-            self._window_length = window_length
-        if strategy_data_types is not None:
-            if isinstance(strategy_data_types, str):
-                strategy_data_types = str_to_list(strategy_data_types, ',')
-            assert isinstance(strategy_data_types, list), \
-                f'TypeError, data type should be a list, got {type(strategy_data_types)} instead'
-            self._data_types = strategy_data_types
-        if strategy_run_timing is not None:
-            assert isinstance(strategy_run_timing,
-                              str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
-            try:
-                pd.to_datetime(strategy_run_timing)
-            except Exception as e:
-                if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
-                    # TODO: add deprecation warning: 以前定义的bt_price_type的部分允许值已经不再适用，需要更新
-                    raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
-                                     f'got {strategy_run_timing} instead')
-
-            self._strategy_run_timing = strategy_run_timing
-        if reference_data_types is not None:
-            if isinstance(reference_data_types, str):
-                reference_data_types = str_to_list(reference_data_types, ',')
-            assert isinstance(reference_data_types, list), \
-                f'TypeError, reference data types should be a list, got {type(reference_data_types)} instead'
-            self._reference_data_types = reference_data_types
-
-        if use_latest_data_cycle is not None:
-            assert isinstance(use_latest_data_cycle, bool), \
-                f'TypeError, use_latest_data_cycle should be a bool, got {type(use_latest_data_cycle)} instead'
-            # warn the user if use_latest_data_cycle is set to True for future functions
-            if use_latest_data_cycle:
-                if self.strategy_run_timing != 'close':
-                    warnings.warn(f'Be cautious of future function! Data required for strategy might '
-                                  f'not be available at {self.strategy_run_timing}!', UserWarning)
-            self._use_latest_data_cycle = use_latest_data_cycle
+    # def set_hist_pars(self,
+    #                   data_freq: str = None,
+    #                   strategy_run_freq: str = None,
+    #                   window_length: int = None,
+    #                   strategy_data_types: str = None,
+    #                   strategy_run_timing: str = None,
+    #                   reference_data_types: str = None,
+    #                   use_latest_data_cycle: bool = None) -> None:
+    #     """ 设置策略的历史数据回测相关属性
+    #
+    #     Parameters
+    #     ----------
+    #     data_freq: str
+    #         数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+    #     strategy_run_freq: str
+    #         策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
+    #     window_length: int
+    #         回测时需要用到的历史数据窗口的长度
+    #     strategy_data_types: str
+    #         需要用到的历史数据类型
+    #     strategy_run_timing: str
+    #         需要用到的历史数据回测价格类型
+    #     reference_data_types: str
+    #         策略运行参考数据类型
+    #     use_latest_data_cycle: bool
+    #         是否使用最近的一个完整的数据周期
+    #
+    #     Returns
+    #     -------
+    #     None
+    #     """
+    #     if data_freq is not None:
+    #         assert isinstance(data_freq, str), \
+    #             f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
+    #         assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
+    #                                                        f'string'
+    #         self._data_freq = data_freq
+    #     if strategy_run_freq is not None:
+    #         assert isinstance(strategy_run_freq, str), \
+    #             f'TypeError, sample frequency should be a string, got {type(strategy_run_freq)} instead'
+    #         import re
+    #         if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', strategy_run_freq.lower()):
+    #             raise ValueError(f"{strategy_run_freq} is not a valid frequency string,"
+    #                              f"sample freq can only be like '10d' or '2w'")
+    #         self._strategy_run_freq = strategy_run_freq
+    #     if window_length is not None:
+    #         assert isinstance(window_length, int), \
+    #             f'TypeError, window length should an integer, got {type(window_length)} instead'
+    #         assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
+    #         self._window_length = window_length
+    #     if strategy_data_types is not None:
+    #         if isinstance(strategy_data_types, str):
+    #             strategy_data_types = str_to_list(strategy_data_types, ',')
+    #         assert isinstance(strategy_data_types, list), \
+    #             f'TypeError, data type should be a list, got {type(strategy_data_types)} instead'
+    #         self._data_types = strategy_data_types
+    #     if strategy_run_timing is not None:
+    #         assert isinstance(strategy_run_timing,
+    #                           str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
+    #         try:
+    #             pd.to_datetime(strategy_run_timing)
+    #         except Exception as e:
+    #             if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
+    #                 # TODO: add deprecation warning: 以前定义的bt_price_type的部分允许值已经不再适用，需要更新
+    #                 raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
+    #                                  f'got {strategy_run_timing} instead')
+    #
+    #         self._strategy_run_timing = strategy_run_timing
+    #     if reference_data_types is not None:
+    #         if isinstance(reference_data_types, str):
+    #             reference_data_types = str_to_list(reference_data_types, ',')
+    #         assert isinstance(reference_data_types, list), \
+    #             f'TypeError, reference data types should be a list, got {type(reference_data_types)} instead'
+    #         self._reference_data_types = reference_data_types
+    #
+    #     if use_latest_data_cycle is not None:
+    #         assert isinstance(use_latest_data_cycle, bool), \
+    #             f'TypeError, use_latest_data_cycle should be a bool, got {type(use_latest_data_cycle)} instead'
+    #         # warn the user if use_latest_data_cycle is set to True for future functions
+    #         if use_latest_data_cycle:
+    #             if self.strategy_run_timing != 'close':
+    #                 warnings.warn(f'Be cautious of future function! Data required for strategy might '
+    #                               f'not be available at {self.strategy_run_timing}!', UserWarning)
+    #         self._use_latest_data_cycle = use_latest_data_cycle
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -720,31 +647,6 @@ class BaseStrategy:
             if k in self.__dict__:
                 setattr(self, k, v)
             else:
-                # deprecated key processing warning
-                if k == 'sample_freq':
-                    warnings.warn('sample_freq is deprecated, use strategy_fun_freq instead')
-                    self.set_hist_pars(strategy_run_freq=v)
-                    continue
-                if k == 'bt_price_type':
-                    warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
-                    self.set_hist_pars(strategy_run_timing=v)
-                    continue
-                if k == 'bt_data_type':
-                    warnings.warn('bt_data_type is deprecated, use data_types instead')
-                    self.set_hist_pars(strategy_run_timing=v)
-                    continue
-                if k == 'data_types':
-                    warnings.warn('data_types is deprecated, use data_types instead')
-                    self.set_hist_pars(strategy_data_types=v)
-                    continue
-                if k == 'bt_run_freq':
-                    warnings.warn('bt_run_freq is deprecated, use run_freq instead')
-                    self.set_hist_pars(strategy_run_freq=v)
-                    continue
-                if k == 'proportion_or_quantity':
-                    warnings.warn('proportion_or_quantity is deprecated, use max_sel_count instead')
-                    self.set_custom_pars(max_sel_count=v)
-                    continue
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
     def generate(self,
@@ -1023,10 +925,7 @@ class GeneralStg(BaseStrategy):
         return self.realize(h=h_seg, r=ref_seg, t=trade_data)
 
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None):
+    def realize(self):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
             交易信号的格式必须为1D 的numpy数组，数据类型为float
@@ -1331,7 +1230,7 @@ class FactorSorter(BaseStrategy):
         assert isinstance(h_seg, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
 
-        factors = self.realize(h=h_seg, r=ref_seg, t=trade_data)
+        factors = self.realize()
         # factors必须是一维向量，如果因子是二维向量，允许shape为(N, 1)型，此时将其转换为一维向量，否则报错
         if factors.ndim == 2:
             factors = factors.flatten()
@@ -1423,10 +1322,7 @@ class FactorSorter(BaseStrategy):
         return chosen
 
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None):
+    def realize(self):
         """ h, r, 和 t 都是用于生成交易信号的窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
@@ -1683,11 +1579,7 @@ class RuleIterator(BaseStrategy):
                             pars=params)
 
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None,
-                pars=None):
+    def realize(self):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一个股票的独立交易信号，同样的规则会被复制到其他股票
         """
