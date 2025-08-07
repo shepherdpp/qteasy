@@ -17,11 +17,12 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.array_size, 1)
         self.assertEqual(p.upper_bound, 10)
         self.assertEqual(p.lower_bound, 0)
-        self.assertTrue(np.allclose(p.gen_values(1, 'int'), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
-        self.assertRaises(ValueError, p.gen_values, 0.5, 'int')
+        self.assertTrue(np.allclose(p.gen_values(11, 'int'), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+        self.assertRaises(TypeError, p.gen_values, 0.5, 'int')
         extracted = p.gen_values(8, 'rand')
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(0 <= item <= 10) for item in extracted]))
+        self.assertTrue(all([item in p for item in extracted]))
         self.assertIsNone(p.value)
         p.set_value(7)
         self.assertEqual(p.value, 7)
@@ -47,8 +48,8 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.lower_bound, 0.0)
         self.assertEqual(p.ubound, 1.0)
         self.assertEqual(p.lbound, 0.0)
-        print(p.gen_values(0.5, 'interval'))
-        self.assertTrue(np.allclose(p.gen_values(0.5, 'interval'), [0.0, 0.5]))
+        print(p.gen_values(2, 'interval'))
+        self.assertTrue(np.allclose(p.gen_values(3, 'interval'), [0.0, 0.5, 1.0]))
         gen_values = p.gen_values(8, 'rand')
         self.assertEqual(len(gen_values), 8)
         self.assertTrue(all([(0.0 <= item <= 1.0) for item in gen_values]))
@@ -75,7 +76,7 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.lbound, 'a')
         self.assertEqual(p.upper_bound, 'b')
         self.assertEqual(p.lower_bound, 'a')
-        self.assertEqual(list(p.gen_values(1, 'int')), ['a', 'b'])
+        self.assertEqual(list(p.gen_values(2, 'int')), ['a', 'b'])
         self.assertEqual(list(p.enum_values()), ['a', 'b'])
         self.assertTrue('a' in p)
 
@@ -96,8 +97,49 @@ class TestParameter(unittest.TestCase):
         for val in p.gen_values(5, 'int'):
             self.assertEqual(val.shape, (4, 5))
             self.assertTrue(np.all((0 <= val) & (val <= 10)))
+            self.assertTrue(val in p)
+        for val in p.gen_values(5, 'rand'):
+            self.assertEqual(val.shape, (4, 5))
+            self.assertTrue(np.all((0 <= val) & (val <= 10)))
+            self.assertTrue(val in p)
 
-        p = Parameter((0, 1.5), name='float_arr_par', par_type='array[3, 5]')
+        value1 = np.random.randint(0, 11, size=(4, 5))
+        p.set_value(value1)
+        self.assertTrue(np.array_equal(p.value, value1))
+        self.assertTrue(value1 in p)
+        value2 = np.random.randint(10, 15, size=(4, 5))
+        self.assertFalse(value2 in p)
+        self.assertRaises(ValueError, p.set_value, value2)
+        value3 = np.random.randint(0, 11, size=(4, 4))
+        self.assertFalse(value3 in p)
+        self.assertRaises(ValueError, p.set_value, value3)
+
+        p = Parameter((0.0, 1.5), name='float_arr_par', par_type='array[3, 5]')
+        self.assertEqual(p.par_type, 'float_array')
+        for val in p.gen_values(5, 'int'):
+            self.assertEqual(val.shape, (3, 5))
+            print(val)
+            self.assertTrue(np.all((0 <= val) & (val <= 1.5)))
+            self.assertTrue(val in p)
+        for val in p.gen_values(5, 'rand'):
+            self.assertEqual(val.shape, (3, 5))
+            print(val)
+            self.assertTrue(np.all((0 <= val) & (val <= 1.5)))
+            self.assertTrue(val in p)
+
+        p = Parameter((1, 10), name='int_arr_par', par_type='int[3, 5]')
+        self.assertEqual(p.par_type, 'int_array')
+        p = Parameter(10, name='int_arr_par', par_type='int[3, 5]')
+        self.assertEqual(p.par_type, 'int_array')
+        p = Parameter((0, 10), name='float_arr_par', par_type='float[3, 5]')
+        self.assertEqual(p.par_type, 'float_array')
+        p = Parameter(1.5, name='float_arr_par', par_type='float[3, 5, 5]')
+        self.assertEqual(p.par_type, 'float_array')
+        self.assertEqual(p.shape, (3, 5, 5))
+        p = Parameter((1, 10), name='int_arr_par', par_type='int[3,]')
+        self.assertEqual(p.par_type, 'int_array')
+
+        self.assertRaises(ValueError, Parameter, 15, par_type='int[]')
 
         p = Parameter((1, 2, 3), name='par4')
         self.assertEqual(p.name, 'par4')
@@ -123,7 +165,7 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.name, '')
         self.assertEqual(p.par_type, 'int')
 
-        self.assertRaises(ValueError, Parameter, 5, typ='wrong_type')
+        self.assertRaises(ValueError, Parameter, 5, par_type='wrong_type')
 
         p = Parameter((0, 10), name='par8', par_type='int', value=5)
         self.assertEqual(p.name, 'par8')
@@ -134,7 +176,7 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.name, 'par9')
         self.assertEqual(p.par_type, 'int')
 
-        self.assertRaises(ValueError, Parameter, (0.0, 8.0), name='par10', typ='int', value=9.5)
+        self.assertRaises(ValueError, Parameter, (0.0, 8.0), name='par10', par_type='int', value=9.5)
 
         p = Parameter((10, -10), name='par10', par_type='int')
         self.assertEqual(p.name, 'par10')
@@ -150,25 +192,25 @@ class TestParameter(unittest.TestCase):
 
     def test_gen_values(self):
         p = Parameter((0, 10), name='par11', par_type='int')
-        values = p.gen_values(2, 'interval')
+        values = p.gen_values(6, 'interval')
         self.assertTrue(np.allclose(values, [0, 2, 4, 6, 8, 10]))
         values = p.gen_values(5, 'rand')
         self.assertEqual(len(values), 5)
         self.assertTrue(all([(0 <= item <= 10) for item in values]))
 
         p = Parameter((0.0, 10.0), name='par12', par_type='float')
-        values = p.gen_values(2.5, 'interval')
-        self.assertTrue(np.allclose(values, [0.0, 2.5, 5.0, 7.5]))
+        values = p.gen_values(5, 'interval')
+        self.assertTrue(np.allclose(values, [0.0, 2.5, 5.0, 7.5, 10]))
         values = p.gen_values(5, 'rand')
         self.assertEqual(len(values), 5)
         self.assertTrue(all([(0.0 <= item <= 10.0) for item in values]))
 
-        p = Parameter(('a', 'b', 'c', 'd', 'e', 'f'), name='par13', par_type='enum')
-        values = p.gen_values(2, how='int')
-        self.assertEqual(values, ['a', 'c', 'e'])
+        p = Parameter(('a', 'b', 'c', 'd', 'e', 'f', 'g'), name='par13', par_type='enum')
+        values = p.gen_values(3, how='int')
+        self.assertEqual(values, ['a', 'd', 'g'])
         values = p.gen_values(3, how='rand')
         self.assertEqual(len(values), 3)
-        self.assertTrue(all([item in ('a', 'b', 'c', 'd', 'e', 'f') for item in values]))
+        self.assertTrue(all([item in ('a', 'b', 'c', 'd', 'e', 'f', 'g') for item in values]))
 
 
 if __name__ == '__main__':
