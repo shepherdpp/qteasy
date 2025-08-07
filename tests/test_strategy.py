@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 
 from qteasy.strategy import (
     BaseStrategy,
@@ -23,6 +24,20 @@ param2 = Parameter(
         par_type='float',
         par_range=(0.0, 1.0),
         value=0.5,
+)
+
+param3 = Parameter(
+        name='param3',
+        par_type='enum',
+        par_range=('option1', 'option2', 'option3'),
+        value='option1',
+)
+
+param4 = Parameter(
+        name='param4',
+        par_type='array[3,]',
+        par_range=(1.0, 5.0),
+        value=np.array([1.0, 2.0, 3.0]),
 )
 
 

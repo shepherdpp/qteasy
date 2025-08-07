@@ -48,7 +48,7 @@ class Space:
 
     Methods
     -------
-    extract(interval_or_qty, how='interval'):
+    extract(qty, how='interval'):
         从参数空间中提取参数点，返回一个参数点的迭代器
 
     Examples
