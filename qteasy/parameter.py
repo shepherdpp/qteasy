@@ -92,7 +92,7 @@ class Parameter:
         self._ubound = None  # 离散型或连续型数轴上界
         self._enum_val = None  # 当数轴类型为“枚举”型时，储存改数轴上所有可用值
         self._array_shape = None  # 数轴的形状，当数轴类型为“数组”型时，储存该数组的形状
-        self._value = value  # 参数的初始值
+        self._value = None  # 参数的当前值
         # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
         if isinstance(par_range, (int, float, str)):
             par_range = [par_range]
@@ -129,7 +129,8 @@ class Parameter:
                     raise ValueError(f'shape of parameter, if given, cannot be empty, should be like [3,] or [3,4]')
 
                 par_shape = tuple(int(dim) for dim in par_shape_strs if dim.strip() != '')
-                if par_type in ['array', 'arr']: # 未知数组类型，根据bounds判断是int_array还是float_array
+
+                if par_type in ['array', 'arr']:  # 未知数组类型，根据bounds判断是int_array还是float_array
                     par_type = 'int_array' if all(isinstance(item, int) for item in boe) else 'float_array'
                 elif par_type in ['int_array', 'int', 'discr', 'discrete']:
                     par_type = 'int_array' if len(par_shape) > 0 else 'int'
@@ -141,10 +142,6 @@ class Parameter:
                 raise ValueError(f'Parameter type {par_type} is not valid, should be like '
                                  f'\'int\', \'float\', \'enum\', \'array[3,]\', \'array[3,4]\', etc.')
 
-        if par_type not in self.AVAILABLE_TYPES:
-            # 当发现typ为异常字符串时，raise
-            raise ValueError(f'Parameter type {par_type} is not valid, should be one of '
-                             f'{self.AVAILABLE_TYPES}')
         # 开始根据typ的值生成具体的Parameter
         if par_type == 'enum':  # 创建一个枚举数轴
             self._new_enumerate_axis(boe)
@@ -175,8 +172,7 @@ class Parameter:
                              f'{self.AVAILABLE_TYPES}')
 
         if value is not None:
-            if self.value not in self:
-                raise ValueError(f'Initial value {self.value} is not in range {self.par_range} of type {self.par_type}')
+            self.set_value(value)
 
     def __repr__(self):
         """输出参数的字符串表示"""
@@ -199,17 +195,20 @@ class Parameter:
         -------
         bool: True if item in self, False otherwise
         """
+
+        if self.par_type in ['float_array', 'int_array']:
+            if not isinstance(item, np.ndarray):
+                return False
+            if item.shape != self._array_shape:
+                return False
+
         if self.par_type == 'enum':
             return item in self._enum_val
-        elif self.par_type == 'float_array':
-            if item.shape != self._array_shape:
-                return False
-            return np.all((self._lbound <= item) & (item <= self._ubound))
         elif self.par_type == 'float':
             return self._lbound <= item <= self._ubound
+        elif self.par_type == 'float_array':
+            return np.all((self._lbound <= item) & (item <= self._ubound))
         elif self.par_type == 'int_array':
-            if item.shape != self._array_shape:
-                return False
             return np.all((self._lbound <= item) & (item <= self._ubound) & (item.astype(int) == item))
         else:
             return self._lbound <= item <= self._ubound and float(item).is_integer()
@@ -278,11 +277,9 @@ class Parameter:
         elif self_type == 'int':
             return self._ubound - self._lbound + 1
         elif self_type == 'int_array':
-            return (self._ubound - self._lbound + 1) * self.array_size
+            return (self._ubound - self._lbound + 1) ** self.array_size
         elif self_type == 'enum':
             return len(self._enum_val)
-        else:
-            raise ValueError(f'Invalid parameter type {self_type}!')
 
     @property
     def size(self):
@@ -290,7 +287,7 @@ class Parameter:
         if self.par_type == 'float':
             return self._ubound - self._lbound
         elif self.par_type == 'float_array':
-            return (self._ubound - self._lbound) * self.array_size
+            return (self._ubound - self._lbound) ** self.array_size
         else:
             return self.count
 
@@ -370,11 +367,9 @@ class Parameter:
         如果对一个数组型参数调用此方法，返回值的数量将可能非常大
         """
         if self._par_type == 'enum':
-            for item in self._enum_val:
-                yield item
+            return (item for item in self._enum_val)
         elif self._par_type == 'int':
-            for item in range(self.lbound, self.ubound + 1):
-                yield item
+            return (item for item in range(self.lbound, self.ubound + 1))
         elif self._par_type == 'int_array':
             raise ArithmeticError(f'Parameter {self.name} is an array, cannot enumerate its values.')
         else:
@@ -398,6 +393,11 @@ class Parameter:
         """
         if not isinstance(how, str):
             raise TypeError(f'extract method \'how\' should be a string in {self.VALUE_GENERATE_METHODS}')
+        if qty <= 0:
+            raise ValueError(f'qty should be a positive integer, got {qty}')
+        if not float(qty).is_integer():
+            raise ValueError(f'interval should be an integer, got {qty} instead!')
+
         if how.lower() in ['interval', 'int']:
             if self.par_type == 'enum':
                 return self._extract_enum_interval(qty)
@@ -465,9 +465,10 @@ class Parameter:
     def _set_enum_val(self, enum):
         """设置数轴的枚举值，适用于枚举型数轴
 
-        此处需要区分tuple_enum类型和普通enum类型的数轴，tuple_enum类型的数轴需要保留tuple类型，
-        因此不能使用np.array转换类型。普通enum类型可以使用np.array转换类型。转换类型的原因是为了便于使用np的random直接读出多个值，
-        而对于tuple_enum类型来说，使用np.array会强制将tuple类型转换为array，会在后续操作中导致问题。
+        TODO: 这段什么意思？？
+         此处需要区分tuple_enum类型和普通enum类型的数轴，tuple_enum类型的数轴需要保留tuple类型，
+         因此不能使用np.array转换类型。普通enum类型可以使用np.array转换类型。转换类型的原因是为了便于使用np的random直接读出多个值，
+         而对于tuple_enum类型来说，使用np.array会强制将tuple类型转换为array，会在后续操作中导致问题。
 
         Parameters
         ----------
@@ -480,6 +481,22 @@ class Parameter:
         self._lbound = None
         self._ubound = None
         self._enum_val = enum
+
+    def _set_shape(self, shape: tuple):
+        """设置数轴的形状，适用于数组型数轴
+
+        Parameters
+        ----------
+        shape: tuple[int, ...]
+            数组的形状，必须是一个整数元组，表示数组的维度
+
+        Returns
+        -------
+        None
+        """
+        if any(item <= 0 or not float(item).is_integer() for item in shape):
+            raise ValueError(f'shape should be a tuple of positive integers, got {shape}')
+        self._array_shape = shape
 
     def _new_discrete_axis(self, lbound, ubound):
         """ 创建一个新的离散型数轴
@@ -547,7 +564,7 @@ class Parameter:
         """
         self._par_type = 'int_array'
         self._set_bounds(lbound=int(lbound), ubound=int(ubound))
-        self._array_shape = shape
+        self._set_shape(shape)
 
     def _new_float_array_axis(self, lbound, ubound, shape:tuple):
         """ 创建一个新的数组型数轴
@@ -567,7 +584,7 @@ class Parameter:
         """
         self._par_type = 'float_array'
         self._set_bounds(lbound=float(lbound), ubound=float(ubound))
-        self._array_shape = shape
+        self._set_shape(shape)
 
     def _extract_bounding_interval(self, qty: int):
         """ 按照间隔方式从离散或连续型数轴中提取值
@@ -598,8 +615,6 @@ class Parameter:
         -------
         np.array 从数轴中提取出的值对象
         """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
         if self._par_type == 'int':
             return np.random.randint(self._lbound, self._ubound + 1, size=qty)
         if self._par_type == 'float':
@@ -617,8 +632,6 @@ class Parameter:
         -------
         list 从数轴中提取出的值对象
         """
-        if not float(qty).is_integer():
-            raise ValueError(f'qty should be an integer, got {type(qty)} instead!')
         selected = np.linspace(0, self.count - 1, qty, dtype='int')
         return [self._enum_val[i] for i in selected]
 
@@ -634,8 +647,6 @@ class Parameter:
         -------
         list 从数轴中提取出的值对象
         """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
         selected = np.random.choice(self.count, size=qty)
         return [self._enum_val[i] for i in selected]
 
@@ -653,17 +664,15 @@ class Parameter:
         -------
         list 从数轴中提取出的值对象
         """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
         selected = np.linspace(self.lbound, self.ubound, qty, dtype=dtype)
         return [np.full(self.shape, i) for i in selected]
 
-    def _extract_array_random(self, qty: int, dtype):
+    def _extract_array_random(self, qty: (), dtype):
         """ 按照随机方式从数组型参数中提取值
 
         Parameters
         ----------
-        qty: int
+        qty: int or float
             提取的数据总量
         dtype: str
             数组的类型，'int'或'float'
@@ -672,8 +681,6 @@ class Parameter:
         -------
         list 从数轴中提取出的值对象
         """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
         total = range(qty)
         bound = self._ubound - self._lbound
         return [(np.random.random(size=self.shape) * bound - self._lbound).astype(dtype) for _ in total]
