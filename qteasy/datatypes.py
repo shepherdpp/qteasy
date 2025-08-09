@@ -257,7 +257,11 @@ def _parse_built_in_type_id(name: str) -> tuple:
     """
     data_map = _get_built_in_data_type_map()
 
-    matched_types = data_map.loc[(name, slice(None), slice(None))]
+    try:
+        matched_types = data_map.loc[(name, slice(None), slice(None))]
+    except KeyError:
+        raise KeyError(f'{name} is not a valid data type name in DATA_TYPE_MAP.'
+                       f'correct your input or use define() to define a new data type.')
 
     if matched_types.empty:
         return tuple(), tuple()
@@ -349,6 +353,18 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
             if '%' in v and isinstance(v, list):
                 kwargs[k] = [i.replace('%', name_par) for i in v]
 
+    # 根据kwargs参数类型检查参数的合法性，并给出提示
+    if 'keys' in kwargs:
+        if isinstance(kwargs['keys'], str):
+            kwargs['keys'] = str_to_list(kwargs['keys'])
+        elif not isinstance(kwargs['keys'], list):
+            raise TypeError(f'keys must be a string or a list of strings, but got {type(kwargs["keys"])}')
+
+    if 'adj_type' in kwargs:
+        if kwargs['adj_type'] not in ['f', 'b']:
+            raise ValueError(f'name parameter in {search_name} must be '
+                             f'"f"(forward) or "b"(backward), but got \"{kwargs["adj_type"]}\"')
+
     return description, acquisition_type, kwargs
 
 
@@ -419,8 +435,9 @@ class DataType:
         'complex',  # 单时刻复合类型。查找一个时间点上可用的多种数据并组合输出，如个股某时刻的财务报表
     ]
 
-    def __init__(self, *,
+    def __init__(self,
                  name:str = '',
+                 *,
                  freq=None,
                  asset_type=None):
         """
@@ -520,6 +537,10 @@ class DataType:
         return f'{self._name}({self._default_asset_type})'
 
     @property
+    def dtype_id(self):
+        return f'{self._name}_{self._default_asset_type}_{self._default_freq}'
+
+    @property
     def freq(self):
         return self._default_freq
 
@@ -555,7 +576,7 @@ class DataType:
         return f'DataType(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\')'
 
     def __str__(self):
-        return f'{self.name}({self.asset_type})@{self.freq}'
+        return self.dtype_id
 
     def __eq__(self, other):
         """ two data types are considered equal if their names, freqs and asset types are the same """
@@ -792,6 +813,9 @@ class DataType:
         adj_table = self.kwargs.get('adj_table')
         adj_column = self.kwargs.get('adj_column')
         adj_type = self.kwargs.get('adj_type')
+
+        if adj_type not in ['b', 'f']:
+            raise ValueError('adj_type must be one of "b"(backward) or "f"(forward)')
 
         if table_name is None or column is None or adj_table is None or adj_column is None:
             raise ValueError(
