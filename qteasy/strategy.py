@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 from abc import abstractmethod, ABCMeta
+from numbers import Number
 import warnings
 
 from qteasy.utilfuncs import (
@@ -153,17 +154,18 @@ class BaseStrategy:
         self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
+
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
                          f' par_types={self.par_types}, par_range={self.par_range}')
 
         self._data_types = None
-        self._data_names = None
+        self._data_ids = None
         self._data_ULC = None
         self._data_WL = None
         self.set_data_types(data_types, use_latest_data_cycle, window_length)
         logger_core.info(
             f'Strategy data types set:\n'
-            f'data_types={self.data_types}, data_names={self._data_names}, ')
+            f'data_types={self.data_types}, data_ids={self._data_ids}, ')
 
     @property
     def stg_type(self):
@@ -190,50 +192,6 @@ class BaseStrategy:
         return len(self.par_values)
 
     @property
-    def par_names(self):
-        """策略的参数名称列表"""
-        return [par.name for par in self.par_values] if self.par_values is not None else []
-
-    @property
-    def par_types(self):
-        """策略的参数类型，由策略参数类的par_type属性给出"""
-        return {par.name: par.par_type for par in self.par_values}
-
-    @property
-    def par_range(self):
-        """策略的参数取值范围，用来定义参数空间用于参数优化"""
-        return {par.name: par.par_range for par in self.par_values}
-
-    @property
-    def name(self):
-        """策略名称，打印策略信息的时候策略名称会被打印出来"""
-        return self._stg_name
-
-    @name.setter
-    def name(self, name: str):
-        self._stg_name = name
-
-    @property
-    def description(self):
-        """策略说明文本，对策略的实现方法和功能进行简要介绍"""
-        return self._stg_text
-
-    @description.setter
-    def description(self, description: str):
-        if not isinstance(description, str):
-            raise TypeError(f'description should be a string, got {type(description)} instead.')
-        self._stg_text = description
-
-    @property
-    def opt_tag(self):
-        """策略的优化类型"""
-        return self._opt_tag
-
-    @opt_tag.setter
-    def opt_tag(self, opt_tag):
-        self.set_opt_tag(opt_tag=opt_tag)
-
-    @property
     def par_values(self) -> tuple:
         """策略参数，元组
         Return
@@ -251,6 +209,50 @@ class BaseStrategy:
     def has_pars(self) -> bool:
         """返回True如果策略有可调参数，否则返回False"""
         return self.pars is not None
+
+    @property
+    def par_names(self):
+        """策略的参数名称列表"""
+        return [par.name for par in self.pars.values()] if self.par_values is not None else []
+
+    @property
+    def par_types(self):
+        """策略的参数类型，由策略参数类的par_type属性给出"""
+        return {name: par.par_type for name, par in self.pars.items()}
+
+    @property
+    def par_range(self):
+        """策略的参数取值范围，用来定义参数空间用于参数优化"""
+        return {name: par.par_range for name, par in self.pars.items()}
+
+    @property
+    def name(self):
+        """策略名称，打印策略信息的时候策略名称会被打印出来"""
+        return self._stg_name
+
+    @name.setter
+    def name(self, name: str):
+        self._stg_name = name
+
+    @property
+    def description(self):
+        """策略说明文本，对策略的实现方法和功能进行简要介绍"""
+        return self._stg_description
+
+    @description.setter
+    def description(self, description: str):
+        if not isinstance(description, str):
+            raise TypeError(f'description should be a string, got {type(description)} instead.')
+        self._stg_description = str(description)
+
+    @property
+    def opt_tag(self):
+        """策略的优化类型"""
+        return self._opt_tag
+
+    @opt_tag.setter
+    def opt_tag(self, opt_tag):
+        self.set_opt_tag(opt_tag=opt_tag)
 
     @property
     def run_freq(self):
@@ -271,14 +273,50 @@ class BaseStrategy:
         """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
         self._run_timing = run_timing
 
-    def get_window_length(self, data_type: str = None) -> int:
-        """策略依赖的历史数据窗口长度"""
-        return self._data_WL[data_type]
+    @property
+    def data_type_count(self):
+        """策略依赖的历史数据类型的数量"""
+        return len(self.data_types)
 
     @property
     def data_types(self):
         """策略依赖的历史数据类型"""
         return self._data_types
+
+    @property
+    def data_type_ids(self):
+        """策略依赖的历史数据类型的ID"""
+        return self._data_ids
+
+    @property
+    def data_ids(self):
+        """策略依赖的历史数据类型的名称"""
+        return self._data_ids
+
+    @property
+    def data_names(self):
+        """策略依赖的历史数据类型的名称"""
+        return {dtype_id: dtype.name for dtype_id, dtype in self._data_types.items()}
+
+    @property
+    def data_freqs(self):
+        """策略依赖的历史数据类型的频率"""
+        return {dtype_id: dtype.freq for dtype_id, dtype in self._data_types.items()}
+
+    @property
+    def data_ULC(self):
+        """策略依赖的历史数据类型的最新周期使用标志"""
+        return self._data_ULC
+
+    @property
+    def data_window_lengths(self):
+        """策略依赖的历史数据类型的窗口长度"""
+        return self._data_WL
+
+    @property
+    def window_lengths(self):
+        """策略依赖的历史数据类型的窗口长度"""
+        return self._data_WL
 
     def get_use_latest_data_cycle(self, data_type: str = None) -> bool:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
@@ -288,9 +326,13 @@ class BaseStrategy:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
         return self._data_ULC[data_type] if data_type in self._data_ULC else False
 
+    def get_window_length(self, data_type: str = None) -> int:
+        """策略依赖的历史数据窗口长度"""
+        return self._data_WL[data_type]
+
     def get_data_name(self, data_type: str = None) -> str:
         """ 获取数据类型的名称"""
-        return self._data_names[data_type]
+        return self._data_ids[data_type]
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -384,6 +426,14 @@ class BaseStrategy:
             raise TypeError(f'pars is invalid! ({pars})')
 
         assert isinstance(pars, dict), f'parameter "pars" is invalid, please check your input'
+        assert all(isinstance(par, Parameter) for par in pars.values()), \
+            f'parameter "pars" should be a dict of Parameter objects, got {pars} instead'
+        assert all(isinstance(par.name, str) for par in pars.values()), \
+            f'parameter "pars" should be a dict of Parameter objects with name as key, ' \
+            f'got {pars} instead'
+        assert all(key == par.name for key, par in pars.items()), \
+            f'parameter "pars" should be a dict of Parameter objects with name as key, ' \
+            f'got {pars} instead'
 
         self._pars = pars
 
@@ -403,6 +453,10 @@ class BaseStrategy:
         ----------
         data_types: dict
             需要设置的参数字典，key为参数名、value为参数
+        use_latest_data_cycle:
+            是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号
+        window_length: int or dict
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
 
         Returns
         -------
@@ -411,17 +465,24 @@ class BaseStrategy:
         if data_types is None:
             data_types = {}
         elif isinstance(data_types, DataType):
-            data_types = {data_types.name: data_types}
+            data_types = {data_types.dtype_id: data_types}
         elif isinstance(data_types, (list, tuple)):
-            data_types = {dtype.name: dtype for dtype in data_types}
+            data_types = {dtype.dtype_id: dtype for dtype in data_types}
         else:
             raise TypeError(f'pars is invalid! ({data_types})')
 
         assert isinstance(data_types, dict), f'parameter "pars" is invalid, please check your input'
+        assert all(isinstance(dtype, DataType) for dtype in data_types.values()), \
+            f'parameter "data_types" should be a dict of DataType objects, got {data_types} instead'
+        assert all(isinstance(dtype.dtype_id, str) for dtype in data_types.values()), \
+            f'parameter "data_types" should be a dict of DataType objects with dtype_id as key, ' \
+            f'got {data_types} instead'
+        assert all(key == dtype.dtype_id for key, dtype in data_types.items()), \
+            f'parameter "data_types" should be a dict of DataType objects with dtype_id as key, ' \
+            f'got {data_types} instead'
 
         self._data_types = data_types
-
-        self._data_names = [dtype.name for dtype in data_types]
+        self._data_ids = [dtype_name for dtype_name in data_types]
         self._data_types = data_types
 
         # 设置ULC
@@ -429,24 +490,31 @@ class BaseStrategy:
             self._data_ULC = {d_name: use_latest_data_cycle for d_name in self.data_types}
         elif isinstance(use_latest_data_cycle, (list, tuple)):
             ULCs = input_to_list(use_latest_data_cycle, len(self.data_types), False)
-            self._data_ULC = {self._data_names[i]: ULCs[i] for i in range(len(ULCs))}
+            self._data_ULC = {self._data_ids[i]: ULCs[i] for i in range(len(ULCs))}
         elif isinstance(use_latest_data_cycle, dict):
-            self._data_ULC = {d_name: False for d_name in self._data_names}
+            self._data_ULC = {d_name: False for d_name in self._data_ids}
             self._data_ULC.update(use_latest_data_cycle)
         else:
-            raise TypeError(f'parameter "use_latest_data_cycles" is invalid, please check your input')
+            raise TypeError(f'parameter "use_latest_data_cycles" is invalid ({use_latest_data_cycle}), '
+                            f'please check your input')
 
         # 设置window lengths
-        if isinstance(window_length, bool):
+        if isinstance(window_length, (int, float)):
+            if window_length <= 0:
+                raise ValueError(f'window_length should be a positive integer, got {window_length} instead')
+            window_length = int(window_length)
             self._data_WL = {d_name: window_length for d_name in self.data_types}
         elif isinstance(window_length, (list, tuple)):
             WLs = input_to_list(window_length, len(self.data_types), 20)
-            self._data_WL = {self._data_names[i]: ULCs[i] for i in range(len(ULCs))}
+            self._data_WL = {self._data_ids[i]: WLs[i] for i in range(len(WLs))}
         elif isinstance(window_length, dict):
-            self._data_WL = {d_name: False for d_name in self._data_names}
+            self._data_WL = {d_name: False for d_name in self._data_ids}
             self._data_WL.update(window_length)
         else:
-            raise TypeError(f'parameter "use_latest_data_cycles" is invalid, please check your input')
+            raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
+
+        for dtype_id in data_types:
+            self.__setattr__(dtype_id, None)
 
     # def check_pars(self, pars: tuple) -> bool:
     #     """检查pars(一个tuple)是否符合strategy的参数设置"""

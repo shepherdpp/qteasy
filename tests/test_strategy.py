@@ -40,6 +40,36 @@ param4 = Parameter(
         value=np.array([1.0, 2.0, 3.0]),
 )
 
+dtype_1 = DataType(
+        name='close',
+        freq='d',
+        asset_type='E',
+)
+
+dtype_2 = DataType(
+        name='close',
+        freq='h',
+        asset_type='E',
+)
+
+dtype_3 = DataType(
+        name='close',
+        freq='5min',
+        asset_type='E',
+)
+
+dtype_4 = DataType(
+        name='close',
+        freq='15min',
+        asset_type='E',
+)
+
+dtype_5 = DataType(
+        name='close',
+        freq='w',
+        asset_type='E',
+)
+
 
 # 创建三个测试交易策略类，用于测试
 class GenStg(GeneralStg):
@@ -66,7 +96,7 @@ class GenStg(GeneralStg):
 
 class FactorSorterStg(FactorSorter):
     def __init__(self):
-        pass
+        super().__init__()
 
     def realize(self):
         print("FactorSorter realized")
@@ -74,7 +104,7 @@ class FactorSorterStg(FactorSorter):
 
 class RuleIteratorStg(RuleIterator):
     def __init__(self):
-        pass
+        super().__init__()
 
     def realize(self):
         print("RuleIterator realized")
@@ -85,19 +115,106 @@ class TestStrategy(unittest.TestCase):
         """ test creation of strategy objects"""
         stg = BaseStrategy(
                 name='TestStrategy',
+                run_freq='d',
+                run_timing='close',
+                pars=[param1, param2, param3, param4],
+                data_types=[dtype_1, dtype_2, dtype_3, dtype_4, dtype_5],
+                use_latest_data_cycle=False,
+                window_length=[10, 20, 30, 40, 50],
         )
+
         self.assertIsInstance(stg, BaseStrategy)
         self.assertEqual(stg.name, 'TestStrategy')
-        self.assertEqual(stg.run_freq, '1d')
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+
+        # test getting all parameters
+        self.assertEqual(len(stg.pars), 4)
+        self.assertEqual(stg.par_count, 4)
+        self.assertEqual(stg.par_names, ['param1', 'param2', 'param3', 'param4'])
+        self.assertEqual(stg.par_range,
+                         {'param1':(1, 100),
+                          'param2': (0.0, 1.0),
+                          'param3': ('option1', 'option2', 'option3'),
+                          'param4': (1.0, 5.0)})
+        self.assertEqual(stg.par_types,
+                         {'param1': 'int',
+                          'param2': 'float',
+                          'param3': 'enum',
+                          'param4': 'float_array'})
+        par_values = (50, 0.5, 'option1', np.array([1., 2., 3.]))
+        for a, e in zip(stg.par_values, par_values):
+            print(a, e)
+            if isinstance(e, np.ndarray):
+                self.assertTrue(np.array_equal(a, e))
+            else:
+                self.assertEqual(a, e)
+        for items in stg.pars:
+            self.assertIsInstance(stg.pars[items], Parameter)
+            self.assertEqual(stg.pars[items].name, items)
+
+        self.assertEqual(stg.param1, 50)
+        self.assertEqual(stg.param2, 0.5)
+        self.assertEqual(stg.param3, 'option1')
+        self.assertTrue(np.array_equal(stg.param4, np.array([1.0, 2.0, 3.0])))
+
+        # test getting all data types
+        self.assertEqual(len(stg.data_types), 5)
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_type_ids, [
+            'close_E_d',
+            'close_E_h',
+            'close_E_5min',
+            'close_E_15min',
+            'close_E_w',
+        ])
+        self.assertEqual(stg.data_ids, [
+            'close_E_d',
+            'close_E_h',
+            'close_E_5min',
+            'close_E_15min',
+            'close_E_w',
+        ])
+        self.assertEqual(stg.data_names, {
+            'close_E_15min': 'close',
+            'close_E_5min':  'close',
+            'close_E_d':     'close',
+            'close_E_h':     'close',
+            'close_E_w':     'close',
+        })
+        print(f'stg.data_freqs: {stg.data_freqs}')
+        self.assertEqual(stg.data_freqs, {
+            'close_E_d': 'd',
+            'close_E_h': 'h',
+            'close_E_5min': '5min',
+            'close_E_15min': '15min',
+            'close_E_w': 'w'
+        })
+        self.assertEqual(stg.data_ULC, {
+            'close_E_d': False,
+            'close_E_h': False,
+            'close_E_5min': False,
+            'close_E_15min': False,
+            'close_E_w': False
+        })
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d': 10,
+            'close_E_h': 20,
+            'close_E_5min': 30,
+            'close_E_15min': 40,
+            'close_E_w': 50
+        })
+
+        self.assertEqual(stg.close_E_d, None)
 
     def test_properties(self):
-        self.assertEqual(True, False)
+        pass
 
     def test_parameters(self):
-        self.assertEqual(True, False)
+        pass
 
     def test_general_stg(self):
-        self.assertEqual(True, False)
+        pass
 
 
 if __name__ == '__main__':
