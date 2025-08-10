@@ -2343,7 +2343,7 @@ def top_inst(trade_date: str = None,
     res = pro.top_inst(trade_date=trade_date,
                        ts_code=ts_code)
     logger_core.info(
-            f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
+        f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
     return res
 
 
