@@ -761,9 +761,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', run_timing='open')
         op.set_parameter('dma', run_timing='close')
         op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategies_by_run_timing('close')
-        stg_open = op.get_strategies_by_run_timing('open')
-        stg_high = op.get_strategies_by_run_timing('high')
+        stg_close = op.get_strategies_by_group('close')
+        stg_open = op.get_strategies_by_group('open')
+        stg_high = op.get_strategies_by_group('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -773,12 +773,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, [op.strategies[0], op.strategies[2]])
         self.assertEqual(stg_high, [])
 
-        stg_wrong = op.get_strategies_by_run_timing(123)
+        stg_wrong = op.get_strategies_by_group(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
     def test_get_strategy_count_by_run_timing(self):
-        """ test get_strategy_count_by_run_timing"""
+        """ test get_strategy_count_by_group"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
@@ -788,9 +788,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', run_timing='open')
         op.set_parameter('dma', run_timing='close')
         op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_count_by_run_timing('close')
-        stg_open = op.get_strategy_count_by_run_timing('open')
-        stg_high = op.get_strategy_count_by_run_timing('high')
+        stg_close = op.get_strategy_count_by_group('close')
+        stg_open = op.get_strategy_count_by_group('open')
+        stg_high = op.get_strategy_count_by_group('high')
 
         self.assertIsInstance(stg_close, int)
         self.assertIsInstance(stg_open, int)
@@ -800,7 +800,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, 2)
         self.assertEqual(stg_high, 0)
 
-        stg_wrong = op.get_strategy_count_by_run_timing(123)
+        stg_wrong = op.get_strategy_count_by_group(123)
         self.assertIsInstance(stg_wrong, int)
         self.assertEqual(stg_wrong, 0)
 
@@ -815,9 +815,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', run_timing='open')
         op.set_parameter('dma', run_timing='close')
         op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_names_by_run_timing('close')
-        stg_open = op.get_strategy_names_by_run_timing('open')
-        stg_high = op.get_strategy_names_by_run_timing('high')
+        stg_close = op.get_strategy_names_by_group('close')
+        stg_open = op.get_strategy_names_by_group('open')
+        stg_high = op.get_strategy_names_by_group('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -827,7 +827,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_open, ['MACD', 'TRIX'])
         self.assertEqual(stg_high, [])
 
-        stg_wrong = op.get_strategy_names_by_run_timing(123)
+        stg_wrong = op.get_strategy_names_by_group(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
@@ -843,9 +843,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('macd', run_timing='open')
         op.set_parameter('dma', run_timing='close')
         op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_id_by_run_timing('close')
-        stg_open = op.get_strategy_id_by_run_timing('open')
-        stg_high = op.get_strategy_id_by_run_timing('high')
+        stg_close = op.get_strategy_id_by_group('close')
+        stg_open = op.get_strategy_id_by_group('open')
+        stg_high = op.get_strategy_id_by_group('high')
 
         self.assertIsInstance(stg_close, list)
         self.assertIsInstance(stg_open, list)
@@ -863,9 +863,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Operator strategy id:\n'
               f'{op.strategies} on memory pos:\n'
               f'{[id(stg) for stg in op.strategies]}')
-        stg_close = op.get_strategy_id_by_run_timing('close')
-        stg_open = op.get_strategy_id_by_run_timing('open')
-        stg_all = op.get_strategy_id_by_run_timing()
+        stg_close = op.get_strategy_id_by_group('close')
+        stg_open = op.get_strategy_id_by_group('open')
+        stg_all = op.get_strategy_id_by_group()
         print(f'All IDs of strategies:\n'
               f'{stg_all}\n'
               f'All price types of strategies:\n'
@@ -873,7 +873,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_close, ['dma', 'trix', 'macd_1'])
         self.assertEqual(stg_open, ['macd', 'dma_1'])
 
-        stg_wrong = op.get_strategy_id_by_run_timing(123)
+        stg_wrong = op.get_strategy_id_by_group(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
@@ -896,15 +896,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(strategies[2], CDL)
 
     def test_property_strategy_count(self):
-        """ test Property strategy_count, and the method get_strategy_count_by_run_timing()"""
+        """ test Property strategy_count, and the method get_strategy_count_by_group()"""
         self.assertEqual(self.op.strategy_count, 1)
         self.assertEqual(self.op2.strategy_count, 3)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing(), 1)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing(), 3)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing('close'), 1)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing('high'), 0)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing('close'), 3)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing('open'), 0)
+        self.assertEqual(self.op.get_strategy_count_by_group(), 1)
+        self.assertEqual(self.op2.get_strategy_count_by_group(), 3)
+        self.assertEqual(self.op.get_strategy_count_by_group('close'), 1)
+        self.assertEqual(self.op.get_strategy_count_by_group('high'), 0)
+        self.assertEqual(self.op2.get_strategy_count_by_group('close'), 3)
+        self.assertEqual(self.op2.get_strategy_count_by_group('open'), 0)
 
     def test_property_strategy_names(self):
         """ test property strategy_ids"""
@@ -978,7 +978,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
-        self.assertEqual(op.strategy_timings, ['close', 'open'])
+        self.assertEqual(op.strategy_groups, ['close', 'open'])
         self.assertEqual(op.get_blender(), {'close': ['+', 's1', 's1'],
                                             'open':  ['+', 's1', 's1'], })
         self.assertEqual(blender_open, ['+', 's1', 's1'])
@@ -1126,19 +1126,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # self.assertEqual(dtf[1], 'm')
 
     def test_property_bt_price_types(self):
-        """ test property strategy_timings"""
+        """ test property strategy_groups"""
         print('------test property bt_price_tyeps-------')
         op = qt.Operator()
-        self.assertIsInstance(op.strategy_timings, list)
-        self.assertEqual(len(op.strategy_timings), 0)
-        self.assertEqual(op.strategy_timings, [])
+        self.assertIsInstance(op.strategy_groups, list)
+        self.assertEqual(len(op.strategy_groups), 0)
+        self.assertEqual(op.strategy_groups, [])
 
         op = qt.Operator('macd, dma, trix')
-        btp = op.strategy_timings
+        btp = op.strategy_groups
         self.assertIsInstance(btp, list)
         self.assertEqual(btp[0], 'close')
         op.set_parameter('macd', run_timing='open')
-        btp = op.strategy_timings
+        btp = op.strategy_groups
         btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
         self.assertIsInstance(btp, list)
@@ -1149,21 +1149,21 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op.add_strategies(['dma', 'macd'])
         op.set_parameter('dma_1', run_timing='close')
-        btp = op.strategy_timings
+        btp = op.strategy_groups
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
         self.assertEqual(btpc, 2)
 
         op.remove_strategy('dma_1')
-        btp = op.strategy_timings
+        btp = op.strategy_groups
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
         self.assertEqual(btpc, 2)
 
         op.remove_strategy('macd_1')
-        btp = op.strategy_timings
+        btp = op.strategy_groups
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
@@ -1921,7 +1921,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # test setting blenders to different price types
 
         # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
-        self.assertEqual(op.strategy_timings, ['close', 'open'])
+        self.assertEqual(op.strategy_groups, ['close', 'open'])
         op.set_blender('s0 and s1 or s2', 'open')
         self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
         op.set_blender('s0 or s1 and s2', 'close')

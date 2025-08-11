@@ -1599,7 +1599,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
     def test_create_daily_task_agenda(self):
         """ test function create_daily_task_schedule """
-        # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
+        # test create daily task agenda with only one strategy, run_freq='d', group='close'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
         self.assertEqual(stg.run_freq, 'd')
@@ -1635,7 +1635,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[24], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[25], ('16:00:00', 'refill', ('stock_1min', 1)))
 
-        # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
+        # test create daily task agenda with only one strategy, run_freq='h', group='open'
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
         stg.run_freq = 'h'
@@ -1672,7 +1672,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[29], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[30], ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)))
 
-        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
+        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', group='//10:30'
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
         stg = op.strategies[0]
         stg.run_freq = 'h'
