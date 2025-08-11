@@ -25,12 +25,12 @@ class TestTUI(unittest.TestCase):
         operator.set_parameter(
                 stg_id='dma',
                 window_length=20,
-                strategy_run_freq='H'
+                run_freq='H'
         )
         operator.set_parameter(
                 stg_id='macd',
                 window_length=30,
-                strategy_run_freq='30min',
+                run_freq='30min',
         )
         broker = SimulatorBroker()
         config = {
