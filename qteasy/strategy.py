@@ -12,7 +12,7 @@
 import numpy as np
 import pandas as pd
 from abc import abstractmethod, ABCMeta
-from numbers import Number
+from typing import Union, List, Tuple, Dict, Any, Callable, Literal, Iterable
 import warnings
 
 from qteasy.utilfuncs import (
@@ -39,7 +39,7 @@ def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
     return True
 
 
-class BaseStrategy():
+class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
     Properties
@@ -101,10 +101,10 @@ class BaseStrategy():
             stg_type: str = '',
             run_freq: str = 'd',
             run_timing: str = 'close',
-            pars: ([Parameter, [Parameter], {str: Parameter}]) = None,
-            data_types: ([DataType, [DataType], {str: DataType}]) = None,
-            use_latest_data_cycle: ([bool, [bool], {str: bool}]) = False,
-            window_length: ([int, [int], {str: int}]) = 30,
+            pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
+            data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
+            use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
+            window_length: Union[int, List[int], Dict[str, int]] = 30,
             opt_tag: int = 0,
     ):
         """ 初始化策略
@@ -319,7 +319,7 @@ class BaseStrategy():
         return {dtype_id: dtype.freq for dtype_id, dtype in self._data_types.items()}
 
     @property
-    def data_ULC(self):
+    def data_ulc(self):
         """策略依赖的历史数据类型的最新周期使用标志"""
         return self._data_ULC
 
@@ -411,23 +411,24 @@ class BaseStrategy():
         info_width = int(term_width * 0.75) if term_width > 120 else term_width
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
+        rprint(f'{stg_id:=^{info_width}}')
         rprint(self.__str__())
         # 打印所有策略数据类型相关信息
         rprint('=' * info_width)
-        for dtype in self.data_types:
+        for dtype_id, dtype in self.data_types.items():
             if verbose:
                 rprint(
-                        f'{"data type":<{dtype}}{"Values":{value_width}}\n'
-                        f'{"window length":<{key_width}}{self.get_window_length(dtype)}\n'
-                        f'{"use latest data cycle":<{key_width}}{self.get_use_latest_data_cycle(dtype)}\n'
+                        f'"data type":{dtype.id}{"Values":<{value_width}}\n'
+                        f'{"window length":<{key_width}}{self.get_window_length(dtype_id)}\n'
+                        f'{"use latest data cycle":<{key_width}}{self.get_use_latest_data_cycle(dtype_id)}\n'
                 )
             else:
                 rprint(
-                        f'{"data type":<{dtype}}{"Values":{value_width}}\n'
-                        f'{"window length":<{key_width}}{self.get_window_length(dtype)}\n'
+                        f'"data type":{dtype.id}{"Values":<{value_width}}\n'
+                        f'{"window length":<{key_width}}{self.get_window_length(dtype_id)}\n'
                 )
 
-    def set_pars(self, pars) -> None:
+    def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> None:
         """ 设置参数字典，设置par对象的名字，设置策略的attribute
         不设定参数的值
 
@@ -534,6 +535,7 @@ class BaseStrategy():
         """ 快速更新策略的参数值"""
         for par_name, par_value in zip(self.par_names, par_valuess):
             self._pars[par_name].value = par_value
+            self.__setattr__(par_name, par_value)
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""
@@ -1332,7 +1334,7 @@ class RuleIterator(BaseStrategy):
     RuleIterator 策略类继承了交易策略基类
 
     """
-    __mataclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     def __init__(self,
                  name: str = 'Rule-Iterator',
@@ -1360,6 +1362,10 @@ class RuleIterator(BaseStrategy):
         multi_pars: tuple
             返回一个元组，包含每个股票的参数，如果multi_pars为None，则返回一个空元组
         """
+        if not self.allow_multi_par:
+            # 如果不允许多参数，则直接返回一个空元组
+            return tuple()
+
         # 将tuple/list形式的multi_pars转化为dict形式，key为股票代码，value为参数的值元组
         if multi_pars is None:
             return tuple()

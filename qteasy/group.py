@@ -36,7 +36,7 @@ class Group:
         self.run_freq = None
 
     @property
-    def member_strageties(self):
+    def member_strategies(self):
         return [strategy.name for strategy in self.members]
 
     @property

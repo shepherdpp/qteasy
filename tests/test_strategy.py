@@ -1,3 +1,14 @@
+# coding=utf-8
+# ======================================
+# File:     test_strategy.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2025-07-29
+# Desc:
+#   Unittest for all Strategy class
+# properties and methods.
+# ======================================
+
 import unittest
 import numpy as np
 
@@ -78,16 +89,16 @@ class GenStg(GeneralStg):
     包含两个可调参数: `param1` 和 `param2`，用于测试参数传递和使用。
     使用三种不同的数据类型: 'price@5minx30', 'volume@hx10', 'indicator@dx5'，用于测试数据类型的处理。
     """
-    def __init__(self, pars=None, data_types=None):
+    def __init__(self, par_values=None):
         super().__init__(
                 name='test_gen',
                 description='test general strategy',
                 run_freq='d',
                 run_timing='close',
-                pars=pars,
+                pars=[param1, param2],
                 stg_type='general',
-                data_types=data_types,
-
+                data_types={'dt1': dtype_1, 'dt2': dtype_3},
+                window_length=[20, 15],
         )
 
     def realize(self):
@@ -95,8 +106,8 @@ class GenStg(GeneralStg):
 
 
 class FactorSorterStg(FactorSorter):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def realize(self):
         print("FactorSorter realized")
@@ -127,6 +138,20 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.name, 'TestStrategy')
         self.assertEqual(stg.run_freq, 'd')
         self.assertEqual(stg.run_timing, 'close')
+        stg.info()
+        stg.info(verbose=True)
+
+    def test_properties(self):
+
+        stg = BaseStrategy(
+                name='TestStrategy',
+                run_freq='d',
+                run_timing='close',
+                pars=[param1, param2, param3, param4],
+                data_types=[dtype_1, dtype_2, dtype_3, dtype_4
+                            , dtype_5],
+                use_latest_data_cycle=False,
+        )
 
         # test getting all parameters
         self.assertEqual(len(stg.pars), 4)
@@ -190,7 +215,7 @@ class TestStrategy(unittest.TestCase):
             'close_E_15min': '15min',
             'close_E_w': 'w'
         })
-        self.assertEqual(stg.data_ULC, {
+        self.assertEqual(stg.data_ulc, {
             'close_E_d': False,
             'close_E_h': False,
             'close_E_5min': False,
@@ -206,12 +231,41 @@ class TestStrategy(unittest.TestCase):
         })
 
         self.assertEqual(stg.close_E_d, None)
-
-    def test_properties(self):
-        pass
+        self.assertEqual(stg.close_E_h, None)
+        self.assertEqual(stg.close_E_5min, None)
+        self.assertEqual(stg.close_E_15min, None)
+        self.assertEqual(stg.close_E_w, None)
 
     def test_parameters(self):
-        pass
+
+        stg = BaseStrategy(
+                name='TestStrategy',
+                run_freq='d',
+                run_timing='close',
+                pars=[param1, param2, param3, param4],
+                data_types=[dtype_1, dtype_2, dtype_3, dtype_4, dtype_5],
+                use_latest_data_cycle=False,
+                window_length=[10, 20, 30, 40, 50],
+        )
+
+        # test updating parameters
+        stg.update_par_values((75, 0.75, 'option2', np.array([2.0, 3.0, 4.0])))
+        self.assertEqual(stg.param1, 75)
+        self.assertEqual(stg.param2, 0.75)
+        self.assertEqual(stg.param3, 'option2')
+        self.assertTrue(np.array_equal(stg.param4, np.array([2.0, 3.0, 4.0])))
+
+        par_values = (75, 0.75, 'option2', np.array([2.0, 3.0, 4.0]))
+        for a, e in zip(stg.par_values, par_values):
+            print(a, e)
+            if isinstance(e, np.ndarray):
+                self.assertTrue(np.array_equal(a, e))
+            else:
+                self.assertEqual(a, e)
+        self.assertEqual(stg.pars['param1'].value, 75)
+        self.assertEqual(stg.pars['param2'].value, 0.75)
+        self.assertEqual(stg.pars['param3'].value, 'option2')
+        self.assertTrue(np.array_equal(stg.pars['param4'].value, np.array([2.0, 3.0, 4.0])))
 
     def test_general_stg(self):
         pass
