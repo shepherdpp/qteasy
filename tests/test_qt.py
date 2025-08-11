@@ -861,7 +861,7 @@ class TestQT(unittest.TestCase):
                      trade_log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
-                         strategy_run_freq='Q',
+                         run_freq='Q',
                          strategy_data_types='pe',
                          sort_ascending=True,
                          weighting='proportion',
@@ -913,7 +913,7 @@ class TestQT(unittest.TestCase):
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 30),
-                         strategy_run_freq='Q',
+                         run_freq='Q',
                          strategy_data_types='basic_eps',
                          sort_ascending=True,
                          weighting='proportion',

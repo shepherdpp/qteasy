@@ -14,6 +14,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from typing import Union, Any
+
 from qteasy.finance import CashPlan
 from qteasy.history import HistoryPanel
 from qteasy.strategy import BaseStrategy
@@ -192,44 +194,36 @@ class Operator:
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
         self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
         self._strategies = {}  # Dict——保存实际的交易策略对象
-        self._op_history_data = {}  # Dict——保存供各个策略进行交易信号生成的历史数据（ndarray，与个股有关）
-        self._op_hist_data_rolling_windows = {}  # Dict——保存各个策略的历史数据滚动窗口（ndarray view, 与个股有关）
-        self._op_reference_data = {}  # Dic——保存供各个策略进行交易信号生成的参考数据（ndarray，与个股无关）
-        self._op_ref_data_rolling_windows = {}  # Dict——保存各个策略的参考数据滚动窗口（ndarray view，与个股无关）
-        self._op_sample_indices = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
-        self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
-        self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
+
+        # Operator对象包含的交易策略组
+        self.groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
+        self.group_timing_table = None  # 交易策略组的运行时间表
+        self.group_merge_type = group_merge_type  # 交易策略组的合并方式，默认为None
+        self.group_schedules = {}  # 交易策略组的运行时间表，包含每个组的运行时间和频率
+
+        # Operator对象存储的历史数据缓存和窗口缓存：
+        self.data_buffers = {}  # Dict——Operator对象的历史数据缓存，缓存所有策略所需的历史数据
+        self.data_window_views = {}  # Dict——Operator对象的历史数据滑窗视图，保存所有策略所需的历史数据滑窗
+        self.data_window_indices = {}  # Dict——Operator对象的历史数据滑窗索引，保存所有策略所需的历史数据滑窗索引
 
         # batch模式下生成的交易清单以及交易清单的相关信息
         self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
+        self._op_list_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
+        self._op_list_bt_indices = None  # 在batch模式下生成交易信号清单后，需要回测交易的信号行序号，只有序号中的信号行会被回测
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
         self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
-        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {p_type: idx}
-        self._op_list_bt_indices = None  # 在batch模式下生成交易信号清单后，需要回测交易的信号行序号，只有序号中的信号行会被回测
 
         # stepwise模式下生成的单次交易信号以及相关信息
-        self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
-        self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
-        self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
-        # 在stepwise模式下，各个strategy的信号分别存储为以下格式
-        # {'open':  [[1,1,1], [1,0,0], [1,1,1]],
-        #  'close': [[0,0,0], [1,1,1]]}
-        self._op_signal_indices_by_price_type_idx = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
-        self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
+        # self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
+        # self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
+        # self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
+        # self._op_signal_indices_by_price_type_idx = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
+        # self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
         # 设置operator的主要关键属性
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
         self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
-
-        # 新的Operator对象的属性：
-        self.groups = []
-        self.group_timing_table = None
-        self.group_merge_type = group_merge_type
-        self.data_buffers = {}
-        self.data_window_views = {}
-        self.data_window_indices = {}
-        self.group_schedules = {}
 
     def __repr__(self):
         res = list()
@@ -269,7 +263,7 @@ class Operator:
     @strategy_blenders.setter
     def strategy_blenders(self, blenders):
         """ setting blenders of strategy"""
-        self.set_blender(blender=blenders, run_timing=None)
+        self.set_blender(blender=blenders, group=None)
 
     @property
     def signal_type(self):
@@ -792,7 +786,84 @@ class Operator:
                               f'can not be added - got {stg}', RuntimeWarning, stacklevel=2)
             self.add_strategy(stg)
 
-    def add_strategy(self, stg, **kwargs):
+    # def add_strategy(self, stg, **kwargs):
+    #     """ 添加一个strategy交易策略到operator对象中
+    #
+    #     如果调用本方法添加一个交易策略到Operator中，可以在添加的时候同时修改或指定交易策略的基本属性
+    #
+    #     Parameters
+    #     ----------
+    #     stg: str or int or Strategy
+    #         需要添加的交易策略，也可以是内置交易策略的策略id或策略名称
+    #     kwargs:
+    #         任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
+    #         必须明确指定需要修改的属性名称，包含
+    #         - pars: dict or tuple, 策略可调参数
+    #         - opt_tag: int, 策略优化标签
+    #         - stg_type: int, 策略类型
+    #         - par_count: int, 策略参数个数
+    #         - par_types: list, 策略参数类型
+    #         - par_ranges: list, 策略参数范围
+    #         - data_freq: str, 策略数据频率
+    #         - window_length: int, 策略窗口长度
+    #         - run_freq: str, 策略采样频率
+    #         - data_types: list, 策略数据类型
+    #         - group: str, 策略运行时机
+    #         - use_latest_data_cycle: bool, 策略是否使用最新数据周期
+    #
+    #     Returns
+    #     -------
+    #     None
+    #
+    #     Examples
+    #     --------
+    #     >>> op = Operator()
+    #     >>> op.add_strategy('dma', opt_tag=1, pars=(50, 10, 20))
+    #     >>> op.strategies
+    #     [RULE-ITER(DMA)]
+    #     >>> op.strategies[0].opt_tag
+    #     1
+    #     >>> op.strategies[0].par_values
+    #     (50, 10, 20)
+    #     """
+    #
+    #     # TODO: 添加策略时应可以设置name属性
+    #     # TODO: 添加策略时应可以设置description属性
+    #     # TODO: 添加策略时如果有错误，应该删除刚刚添加的strategy
+    #     # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
+    #     if isinstance(stg, str):
+    #         stg_id = stg.lower()
+    #         strategy = get_built_in_strategy(stg)
+    #     # 当传入的对象是一个strategy对象时，直接添加该策略对象
+    #     elif isinstance(stg, BaseStrategy):
+    #         if stg in available_built_in_strategies:
+    #             stg_id_index = list(available_built_in_strategies).index(stg)
+    #             stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
+    #         else:
+    #             stg_id = 'custom'
+    #         strategy = stg
+    #     elif isinstance(stg, type):
+    #         if stg in available_built_in_strategies:
+    #             stg_id_index = list(available_built_in_strategies).index(stg)
+    #             stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
+    #         else:
+    #             stg_id = 'custom'
+    #         strategy = stg()
+    #     elif isinstance(stg, (tuple, list)):
+    #         err = TypeError(f'Strategy can not be a tuple of a list, only one strategy can be added! \n'
+    #                         f'To add multiple strategies in the same time, use add_strategies() method instead!')
+    #         raise err
+    #     else:
+    #         err = TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
+    #         raise err
+    #     stg_id = self._next_stg_id(stg_id)
+    #     self._strategy_id.append(stg_id)
+    #     self._strategies[stg_id] = strategy
+    #     # 逐一修改该策略对象的各个参数
+    #     self.set_parameter(stg_id=stg_id, **kwargs)
+
+    def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any], **kwargs):
+
         """ 添加一个strategy交易策略到operator对象中
 
         如果调用本方法添加一个交易策略到Operator中，可以在添加的时候同时修改或指定交易策略的基本属性
@@ -814,7 +885,7 @@ class Operator:
             - window_length: int, 策略窗口长度
             - run_freq: str, 策略采样频率
             - data_types: list, 策略数据类型
-            - strategy_run_timing: str, 策略运行时机
+            - group: str, 策略运行时机
             - use_latest_data_cycle: bool, 策略是否使用最新数据周期
 
         Returns
@@ -862,11 +933,28 @@ class Operator:
         else:
             err = TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
             raise err
+
         stg_id = self._next_stg_id(stg_id)
         self._strategy_id.append(stg_id)
         self._strategies[stg_id] = strategy
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
+
+        if len(self.groups) == 0 or not any(
+                stg.run_timing == group.run_timing and stg.run_freq == group.run_freq
+                for group in self.groups
+        ):  # create a new group if no existing group matches the strategy's timing and frequency
+            new_group = Group(name=f"Group_{len(self.groups) + 1}",
+                              signal_type='PT',
+                              blender=None, )
+            new_group.add_strategy(stg)
+            self.groups.append(new_group)
+        else:  # add the strategy to an existing group
+            for group in self.groups:
+                if stg.run_timing == group.run_timing and stg.run_freq == group.run_freq:
+                    group.add_strategy(stg)
+                    break
+            return
 
     def _next_stg_id(self, stg_id: str):
         """ 为一个交易策略生成一个新的id"""
@@ -1341,7 +1429,7 @@ class Operator:
                 stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
-    def set_blender(self, blender=None, run_timing=None):
+    def set_blender(self, blender=None, group=None):
         """ 统一的blender混合器属性设置入口
 
         Parameters
@@ -1349,7 +1437,7 @@ class Operator:
         blender: str or list of str
             一个合法的交易信号混合表达式当price_type为None时，可以接受list为参数，
             同时为所有的price_type设置混合表达式
-        run_timing: str,
+        group: str,
             一个字符串，用于指定需要混合的交易信号的价格类型，
             如果给出price_type则设置该price_type的策略的混合表达式
             如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
@@ -1393,7 +1481,7 @@ class Operator:
         """
         if self.strategy_count == 0:
             return
-        if run_timing is None:
+        if group is None:
             # 当price_type没有显式给出时，同时为所有的price_type设置blender，此时区分多种情况：
             if blender is None:
                 # price_type和blender都为空，退出
@@ -1407,16 +1495,16 @@ class Operator:
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
                 for bldr, pt in zip(blender, self.strategy_timings):
-                    self.set_blender(blender=bldr, run_timing=pt)
+                    self.set_blender(blender=bldr, group=pt)
             else:
                 raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
                                 f' got {type(blender)} instead')
             return
-        if isinstance(run_timing, str):
+        if isinstance(group, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
-            if run_timing not in self.strategy_timings:
+            if group not in self.strategy_timings:
                 msg = f'\n' \
-                      f'Given run timing \'{run_timing}\' is not valid in current Operator, \n' \
+                      f'Given run timing \'{group}\' is not valid in current Operator, \n' \
                       f'no blender will be created! current valid run timings are: \n' \
                       f'{self.strategy_timings}'
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
@@ -1424,17 +1512,17 @@ class Operator:
             if isinstance(blender, str):
                 try:
                     parsed_blender = blender_parser(blender)
-                    self._stg_blender[run_timing] = parsed_blender
-                    self._stg_blender_strings[run_timing] = blender
+                    self._stg_blender[group] = parsed_blender
+                    self._stg_blender_strings[group] = blender
                 except ValueError as e:
                     raise ValueError(f'Invalid blender expression: "{blender}" - {e}')
             else:
                 # 如果输入的blender类型不正确，则报错
                 raise TypeError(f'Wrong type of blender, a string should be given, got {type(blender)} instead')
-                # self._stg_blender_strings[run_timing] = None
-                # self._stg_blender[run_timing] = []
+                # self._stg_blender_strings[group] = None
+                # self._stg_blender[group] = []
         else:
-            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead')
+            raise TypeError(f'group should be a string, got {type(group)} instead')
         return
 
     def get_blender(self, run_timing=None):
@@ -1491,16 +1579,13 @@ class Operator:
         )
 
     def set_parameter(self,
-                      stg_id: [str, int],
-                      pars: [tuple, dict] = None,
+                      stg_id: Union[str, int],
+                      pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
-                      par_range: [tuple, list] = None,
-                      par_types: [list, str] = None,
-                      data_freq: str = None,
-                      strategy_run_freq: str = None,
+                      run_freq: str = None,
                       window_length: int = None,
-                      strategy_data_types: [str, list] = None,
-                      strategy_run_timing: str = None,
+                      strategy_data_types: Union[str, list] = None,
+                      run_timing: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
@@ -1527,9 +1612,9 @@ class Operator:
             enum - 枚举类型或给定列表中的元素
         data_freq: str,
             数据频率，策略本身所使用的数据的采样频率
-        strategy_run_freq: str,
+        run_freq: str,
             运行频率，策略运行时进行信号生成的频率
-        strategy_run_timing: str,
+        run_timing: str,
             策略的运行时机
         window_length: int,
             窗口长度：策略计算的前视窗口长度
@@ -1552,21 +1637,15 @@ class Operator:
                 raise ValueError(f'parameter setting error')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
-        if par_range is not None:  # 设置策略的参数优化边界
-            strategy.set_par_range(par_range)
-        if par_types is not None:  # 设置策略的参数类型
-            strategy.par_types = par_types
-        has_df = data_freq is not None
-        has_sf = strategy_run_freq is not None
+        has_sf = run_freq is not None
         has_wl = window_length is not None
         has_dt = strategy_data_types is not None
-        has_pt = strategy_run_timing is not None
-        if has_df or has_sf or has_wl or has_dt or has_pt:
-            strategy.set_hist_pars(data_freq=data_freq,
-                                   strategy_run_freq=strategy_run_freq,
+        has_pt = run_timing is not None
+        if has_sf or has_wl or has_dt or has_pt:
+            strategy.set_hist_pars(strategy_run_freq=run_freq,
                                    window_length=window_length,
                                    strategy_data_types=strategy_data_types,
-                                   strategy_run_timing=strategy_run_timing)
+                                   strategy_run_timing=run_timing)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
@@ -2059,7 +2138,7 @@ class Operator:
             for price_type in self.strategy_timings:
                 stg_count_for_price_type = self.get_strategy_count_by_run_timing(price_type)
                 strategy_indices = ('s' + idx for idx in map(str, range(stg_count_for_price_type)))
-                self.set_blender(blender='+'.join(strategy_indices), run_timing=price_type)
+                self.set_blender(blender='+'.join(strategy_indices), group=price_type)
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
             stg_id: hist_data[stg.history_data_types, :, :]

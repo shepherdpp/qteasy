@@ -758,9 +758,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('dma', run_timing='close')
+        op.set_parameter('trix', run_timing='open')
         stg_close = op.get_strategies_by_run_timing('close')
         stg_open = op.get_strategies_by_run_timing('open')
         stg_high = op.get_strategies_by_run_timing('high')
@@ -785,9 +785,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('dma', run_timing='close')
+        op.set_parameter('trix', run_timing='open')
         stg_close = op.get_strategy_count_by_run_timing('close')
         stg_open = op.get_strategy_count_by_run_timing('open')
         stg_high = op.get_strategy_count_by_run_timing('high')
@@ -812,9 +812,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('dma', run_timing='close')
+        op.set_parameter('trix', run_timing='open')
         stg_close = op.get_strategy_names_by_run_timing('close')
         stg_open = op.get_strategy_names_by_run_timing('open')
         stg_high = op.get_strategy_names_by_run_timing('high')
@@ -840,9 +840,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('dma', run_timing='close')
+        op.set_parameter('trix', run_timing='open')
         stg_close = op.get_strategy_id_by_run_timing('close')
         stg_open = op.get_strategy_id_by_run_timing('open')
         stg_high = op.get_strategy_id_by_run_timing('high')
@@ -856,10 +856,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_high, [])
 
         op.add_strategies('dma, macd')
-        op.set_parameter('dma_1', strategy_run_timing='open')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('macd_1', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='close')
+        op.set_parameter('dma_1', run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('macd_1', run_timing='close')
+        op.set_parameter('trix', run_timing='close')
         print(f'Operator strategy id:\n'
               f'{op.strategies} on memory pos:\n'
               f'{[id(stg) for stg in op.strategies]}')
@@ -951,8 +951,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.clear_strategies()
         self.assertEqual(op.strategy_blenders, {})
         op.add_strategies('dma, trix, macd, dma')
-        op.set_parameter('dma', strategy_run_timing='open')
-        op.set_parameter('trix', strategy_run_timing='close')
+        op.set_parameter('dma', run_timing='open')
+        op.set_parameter('trix', run_timing='close')
 
         op.set_blender('s1+s2', 'open')
         blender_open = op.get_blender('open')
@@ -1137,7 +1137,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         btp = op.strategy_timings
         self.assertIsInstance(btp, list)
         self.assertEqual(btp[0], 'close')
-        op.set_parameter('macd', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
         btp = op.strategy_timings
         btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
@@ -1148,7 +1148,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(btpc, 2)
 
         op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', strategy_run_timing='close')
+        op.set_parameter('dma_1', run_timing='close')
         btp = op.strategy_timings
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
@@ -1293,8 +1293,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
               f'otp is {otp}\n')
         self.assertIsInstance(otp, int)
         self.assertEqual(otp, 1)
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='open')
+        op.set_parameter('macd', run_timing='open')
+        op.set_parameter('dma', run_timing='open')
         otp = op.bt_price_type_count
         print(f'after setting price_type the price type count is 2:\n'
               f'otp is {otp}\n')
@@ -1321,8 +1321,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
         #  a_to_sell.set_parameter('dma, cdl', price_type='open')
-        op.set_parameter('dma', strategy_run_timing='open')
-        op.set_parameter('cdl', strategy_run_timing='open')
+        op.set_parameter('dma', run_timing='open')
+        op.set_parameter('cdl', run_timing='open')
         sb = op.strategy_blenders
         st = op.signal_type
         self.assertIsInstance(sb, dict)
@@ -1730,9 +1730,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         test_sel = TestSelStrategy()
         self.op.add_strategies([test_ls, test_sel])
         self.op.set_parameter(stg_id='custom_2',
-                              strategy_run_timing='open')
+                              run_timing='open')
         self.op.set_parameter(stg_id='custom_3',
-                              strategy_run_timing='open')
+                              run_timing='open')
         self.assertEqual(self.op['custom'].strategy_run_timing, 'close')
         self.assertEqual(self.op['custom_2'].strategy_run_timing, 'open')
         self.op.set_parameter(stg_id='custom_2',
@@ -1741,7 +1741,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                     '000039': (5, 6.)})
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
-        self.op.set_blender(blender='s0 or s1', run_timing='open')
+        self.op.set_blender(blender='s0 or s1', group='open')
         self.op.assign_hist_data(
                 hist_data=self.hp1,
                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000),
@@ -1896,9 +1896,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          pars=(5, 10, 5))
         op.set_parameter('all',
                          window_length=20)
-        op.set_parameter('all', strategy_run_timing='close')
+        op.set_parameter('all', run_timing='close')
         print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, strategy_run_timing='open')
+        op.set_parameter(2, run_timing='open')
         op.set_parameter(2,
                          opt_tag=1,
                          pars=(9, -0.09),
@@ -3421,20 +3421,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter(
                 0,
                 data_freq='d',
-                strategy_run_freq='d',
+                run_freq='d',
                 window_length=50,
                 pars=(20,),
                 strategy_data_types='close',  # 考察收盘价变化率
-                strategy_run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
+                run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
         )
         op.set_parameter(
                 1,
                 data_freq='d',
-                strategy_run_freq='d',
+                run_freq='d',
                 window_length=50,
                 pars=(20,),
                 strategy_data_types='close',  # 考察收盘价的变化率
-                strategy_run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+                run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
         )
         op.set_blender(blender='s0')
         op.get_blender()
@@ -3473,7 +3473,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
                          opt_tag=1,
-                         strategy_run_freq='m',
+                         run_freq='m',
                          strategy_data_types='wt_idx|000300.SH',
                          sort_ascending=False,
                          weighting='proportion',
@@ -3486,9 +3486,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
         op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
-        op_min.set_parameter(0, data_freq='h', strategy_run_freq='h')
-        op_min.set_parameter(1, data_freq='h', strategy_run_freq='d')
-        op_min.set_parameter(2, data_freq='h', strategy_run_freq='y')
+        op_min.set_parameter(0, data_freq='h', run_freq='h')
+        op_min.set_parameter(1, data_freq='h', run_freq='d')
+        op_min.set_parameter(2, data_freq='h', run_freq='y')
         op_min.set_blender(blender='(s0+s1)*s2')
         qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
                                  '000918.SZ', '000819.SZ', '000899.SZ'],
