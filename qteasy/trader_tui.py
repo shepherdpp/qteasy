@@ -871,9 +871,9 @@ class TraderApp(App):
         tree.root.expand()
 
         # add first level nodes per timing
-        for timing in op.strategy_timings:
+        for timing in op.strategy_groups:
             timing_node = tree.root.add(f"Timing: {timing}", expand=True)
-            for strategy in op.get_strategies_by_run_timing(timing):
+            for strategy in op.get_strategies_by_group(timing):
                 strategy_node = timing_node.add(f"Strategy: {strategy.name}", expand=True)
                 strategy_node.add_leaf(f"Run freq: {strategy.run_freq}")
                 strategy_node.add_leaf(f"Parameters: {strategy.par_values}")

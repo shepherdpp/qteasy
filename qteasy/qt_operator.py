@@ -21,6 +21,7 @@ from qteasy.history import HistoryPanel
 from qteasy.strategy import BaseStrategy
 from qteasy.blender import blender_parser
 from qteasy.group import Group
+from qteasy.database import DataSource
 
 from qteasy.utilfuncs import (
     AVAILABLE_SIGNAL_TYPES,
@@ -196,16 +197,6 @@ class Operator:
         return self._strategy_id
 
     @property
-    def strategy_blenders(self):
-        """返回operator对象中所有交易策略对象的混合表达式"""
-        return self._stg_blender
-
-    @strategy_blenders.setter
-    def strategy_blenders(self, blenders):
-        """ setting blenders of strategy"""
-        self.set_blender(blender=blenders, group=None)
-
-    @property
     def signal_type(self):
         """ 返回operator对象的信号类型"""
         return self._signal_type
@@ -340,14 +331,6 @@ class Operator:
     def op_data_type_list(self):
         """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
         return [stg.history_data_types for stg in self.strategies]
-
-    @property
-    def op_history_data(self):
-        """ 返回一个Dict，包含每个策略所需要的history_data，每个ndarray中包含了
-        可以用于生成交易信号的历史数据，且这些历史数据的类型与op_data_type_list
-        中规定的数据类型相同，历史数据跨度满足信号生成的需求
-        """
-        return self._op_history_data
 
     @property
     def opt_space_par(self):
@@ -640,6 +623,45 @@ class Operator:
         """
 
         return zip(self._strategy_id, self.strategies)
+
+    def get_group_by_id(self, group_id):
+        """ 获取一个Group对象
+
+        Parameters
+        ----------
+        group_id: int or str
+            组的名称或序号
+
+        Returns
+        -------
+        Group, 子组
+
+        Notes
+        -----
+        1，当group_id为int时，返回的是第group_id个组
+        2，当group_id为str时，返回的是名称为group_id的组
+        3，当group_id不符合要求时，返回最后一个组
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op.get_group_by_id(0)
+        Group(name=Group_1, members=[RULE-ITER(DMA), RULE-ITER(MACD)])
+        >>> op.get_group_by_id('Group_1')
+        Group(name=Group_1, members=[RULE-ITER(DMA), RULE-ITER(MACD)])
+        """
+        if isinstance(group_id, int):
+            if group_id < 0 or group_id >= len(self.groups):
+                group_id = len(self.groups) - 1
+            return self.groups[group_id]
+        elif isinstance(group_id, str):
+            for group in self.groups:
+                if group.name == group_id:
+                    return group
+            warnings.warn(f'No such group with ID ({group_id})!', RuntimeWarning, stacklevel=2)
+            return None
+        else:
+            raise TypeError(f'group_id should be an integer or a string, got {type(group_id)} instead!')
 
     def add_strategies(self, strategies):
         """ 添加多个Strategy交易策略到Operator对象中
@@ -1194,20 +1216,6 @@ class Operator:
             0: 不参加优化，在策略优化过程中不调整该策略的可调参数
             1: 参加优化，在策略优化过程中根据优化算法主动调整策略参数以寻找最佳参数组合
             2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
-        par_range: tuple or list, optional
-            可调参数取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
-                [(0, 1), (0, 100), (0, 100)]
-        par_types: str or list of str,
-            可调参数类型列表，与par_range配合确定策略参数取值范围类型
-            int - 整数类型
-            float - 浮点数类型
-            enum - 枚举类型或给定列表中的元素
-        data_freq: str,
-            数据频率，策略本身所使用的数据的采样频率
-        run_freq: str,
-            运行频率，策略运行时进行信号生成的频率
-        run_timing: str,
-            策略的运行时机
         window_length: int,
             窗口长度：策略计算的前视窗口长度
         strategy_data_types: str or list,
@@ -1229,17 +1237,61 @@ class Operator:
                 raise ValueError(f'parameter setting error')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
-        has_sf = run_freq is not None
         has_wl = window_length is not None
         has_dt = strategy_data_types is not None
-        has_pt = run_timing is not None
-        if has_sf or has_wl or has_dt or has_pt:
-            strategy.set_hist_pars(strategy_run_freq=run_freq,
-                                   window_length=window_length,
-                                   strategy_data_types=strategy_data_types,
-                                   strategy_run_timing=run_timing)
+        if has_wl or has_dt:
+            strategy.set_hist_pars(window_length=window_length,
+                                   strategy_data_types=strategy_data_types)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
+
+    def set_group_parameter(self,
+                            group: Union[str, int],
+                            run_timing: str = None,
+                            run_freq: str = None,
+                            signal_type: str = None,
+                            blender: Union[str, list] = None,
+                            **kwargs):
+        """ 设置一个策略组的参数
+        Parameters
+        ----------
+        group: str or int
+            策略组的名称或ID
+        run_timing: str, optional
+            策略组的运行时机，修改运行时机时，修改策略组中所有交易策略的运行时机
+        signal_type: str, optional
+            策略组的交易信号类型，默认为'PT'，即百分比持仓目标
+        blender: str or list, optional
+            策略组的交易信号混合表达式，可以是一个字符串或一个字符串列表
+        kwargs: dict, optional
+            其他参数，可以是任意合法的策略组参数，如group_name, run_timing, run_freq等
+
+        Returns
+        -------
+        None
+        Raises
+        ------
+        TypeError
+            如果group不是字符串或整数类型
+        ValueError
+            如果group不存在或无法找到
+        """
+        group = self.get_group_by_id(group)
+
+        has_sf = run_freq is not None
+        has_pt = run_timing is not None
+        if has_sf or has_pt:
+            for strategy in group.strategies:
+                strategy.set_hist_pars(run_timing=run_timing,
+                                       run_freq=run_freq)
+        if signal_type is not None:
+            group.set_signal_type(signal_type)
+        if blender is not None:
+            if isinstance(blender, str):
+                blender = [blender]
+            elif not isinstance(blender, list):
+                raise TypeError(f'blender should be a string or a list of strings, got {type(blender)} instead')
+            group.set_blender(blender=blender)
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -1532,4 +1584,61 @@ class Operator:
             print(f'Running step {step} for operator {self.name}')
             for result in self.run_step(step):
                 yield result
+
+    def create_signals(self, start_date=None, end_date=None, data_source: DataSource = None):
+        """ 创建交易信号，准备好数据缓冲区和数据窗口
+
+        Parameters
+        ----------
+        start_date: str or pd.Timestamp, optional
+            开始日期，默认为None，表示从数据源的起始日期开始
+        end_date: str or pd.Timestamp, optional
+            结束日期，默认为None，表示到数据源的结束日期为止
+        data_source: dict, optional
+            数据源字典，包含所有需要的数据类型
+
+        Returns
+        -------
+        None
+        """
+        self.prepare_running_schedule(start_date=start_date, end_date=end_date)
+        self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_source=data_source)
+        self.create_data_windows()
+
+        # tentative parameter total_run_steps = 25
+        total_run_steps = 25
+        # create trade signals between start and end dates
+        self.prepare_data_buffer(
+                start_date=start_date,
+                end_date=end_date,
+                data_source=data_source
+        )
+
+        self.prepare_running_schedule(start_date=start_date, end_date=end_date)
+
+        self.create_data_windows()
+
+        # for group in self.groups:
+        #     print(f'Group {group.name} data windows:')
+        #     for strategy in group.members:
+        #         print(f'Strategy {strategy.name}/{strategy.run_freq}@{strategy.run_timing} data windows and indices:')
+        #         for dtype in strategy.data_types:
+        #             window = self.data_window_views[strategy.name][dtype]
+        #             indices = self.data_window_indices[strategy.name][dtype]
+        #             print(f'{dtype}: {window.shape}, indices: {indices}\n'
+        #                   f'window (first 2 windows):\n{window[indices[0:2]]}\n')
+
+        signal_count = self.get_signal_count(range(total_run_steps))
+
+        self._op_list = np.empty(shape=(signal_count, 3))
+        self._op_list_types = np.empty(shape=(signal_count,), dtype=int)  # signal type: 0/1/2 for pt/ps/vs
+        self._op_list_bt_indices = np.empty(shape=(signal_count,), dtype=int)
+
+        signal_index = 0
+        for signal in self.run(range(total_run_steps)):
+            self._op_list_types[signal_index] = signal[0]  # the type of the signal
+            self._op_list[signal_index] = signal[2]  # the array of the signals
+            self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
+            signal_index += 1
+
 
