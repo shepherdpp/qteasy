@@ -1633,7 +1633,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
             data_source=datasource,
     ) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    bt_price_types = oper.strategy_timings
+    bt_price_types = oper.strategy_groups
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in back_trade_prices to prevent from result in nan in value
     back_trade_prices.fillinf(0)

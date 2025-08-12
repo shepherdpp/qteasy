@@ -312,7 +312,7 @@ Run Mode:    batch - All history operation signals are generated before back tes
 Signal Type: pt - Position Target, signal represents position holdings in percentage of total value
 
             ------------------------Strategy blenders-------------------------
-for strategy running timing - close:
+for strategy running group_id - close:
 no blender
 
             ----------------------------Strategies----------------------------
