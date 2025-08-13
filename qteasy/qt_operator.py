@@ -1178,13 +1178,11 @@ class Operator:
             for group in self.strategy_groups:
                 stg_ids = self.get_strategy_id_by_group(group)
                 all_blenders[group] = human_blender(
-                        self._stg_blender_strings[group],
+                        group._stg_blender_strings[group],
                         strategy_ids=stg_ids,
                 )
             return all_blenders
         if group not in self.strategy_groups:
-            return None
-        if group not in self._stg_blender:
             return None
         stg_id = self.get_strategy_id_by_group(group)
         return human_blender(
@@ -1585,7 +1583,7 @@ class Operator:
             for result in self.run_step(step):
                 yield result
 
-    def create_signals(self, start_date=None, end_date=None, data_source: DataSource = None):
+    def create_signals(self, start_date=None, end_date=None, data_source: dict = None):
         """ 创建交易信号，准备好数据缓冲区和数据窗口
 
         Parameters
@@ -1595,7 +1593,7 @@ class Operator:
         end_date: str or pd.Timestamp, optional
             结束日期，默认为None，表示到数据源的结束日期为止
         data_source: dict, optional
-            数据源字典，包含所有需要的数据类型
+            数据源字典，包含提前准备好的所有需要的数据类型的数据缓存
 
         Returns
         -------

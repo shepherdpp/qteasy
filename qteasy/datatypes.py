@@ -260,8 +260,9 @@ def _parse_built_in_type_id(name: str) -> tuple:
     try:
         matched_types = data_map.loc[(name, slice(None), slice(None))]
     except KeyError:
-        raise KeyError(f'{name} is not a valid data type name in DATA_TYPE_MAP.'
-                       f'correct your input or use define() to define a new data type.')
+        msg = f'{name} is not a valid data type name in DATA_TYPE_MAP.\n' \
+                f'correct your input or use define() to define a new data type.'
+        raise KeyError(msg)
 
     if matched_types.empty:
         return tuple(), tuple()
