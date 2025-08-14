@@ -23,116 +23,126 @@ from qteasy.datatypes import DataType
 from qteasy.parameter import Parameter
 
 
-param1 = Parameter(
-        name='param1',
-        par_type='int',
-        par_range=(1, 100),
-        value=50,
-)
+class TestStrategy(unittest.TestCase):
+    def setUp(self):
 
-param2 = Parameter(
-        name='param2',
-        par_type='float',
-        par_range=(0.0, 1.0),
-        value=0.5,
-)
-
-param3 = Parameter(
-        name='param3',
-        par_type='enum',
-        par_range=('option1', 'option2', 'option3'),
-        value='option1',
-)
-
-param4 = Parameter(
-        name='param4',
-        par_type='array[3,]',
-        par_range=(1.0, 5.0),
-        value=np.array([1.0, 2.0, 3.0]),
-)
-
-dtype_1 = DataType(
-        name='close',
-        freq='d',
-        asset_type='E',
-)
-
-dtype_2 = DataType(
-        name='close',
-        freq='h',
-        asset_type='E',
-)
-
-dtype_3 = DataType(
-        name='close',
-        freq='5min',
-        asset_type='E',
-)
-
-dtype_4 = DataType(
-        name='close',
-        freq='15min',
-        asset_type='E',
-)
-
-dtype_5 = DataType(
-        name='close',
-        freq='w',
-        asset_type='E',
-)
-
-
-# 创建三个测试交易策略类，用于测试
-class GenStg(GeneralStg):
-    """第一个测试交易策略类，继承自GeneralStg
-
-    包含两个可调参数: `param1` 和 `param2`，用于测试参数传递和使用。
-    使用三种不同的数据类型: 'price@5minx30', 'volume@hx10', 'indicator@dx5'，用于测试数据类型的处理。
-    """
-    def __init__(self, par_values=None):
-        super().__init__(
-                name='test_gen',
-                description='test general strategy',
-                run_freq='d',
-                run_timing='close',
-                pars=[param1, param2],
-                stg_type='general',
-                data_types={'dt1': dtype_1, 'dt2': dtype_3},
-                window_length=[20, 15],
+        self.param1 = Parameter(
+                name='param1',
+                par_type='int',
+                par_range=(1, 100),
+                value=50,
         )
 
-    def realize(self):
-        print("GeneralStg realized")
+        self.param2 = Parameter(
+                name='param2',
+                par_type='float',
+                par_range=(0.0, 1.0),
+                value=0.5,
+        )
 
+        self.param3 = Parameter(
+                name='param3',
+                par_type='enum',
+                par_range=('option1', 'option2', 'option3'),
+                value='option1',
+        )
 
-class FactorSorterStg(FactorSorter):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        self.param4 = Parameter(
+                name='param4',
+                par_type='array[3,]',
+                par_range=(1.0, 5.0),
+                value=np.array([1.0, 2.0, 3.0]),
+        )
 
-    def realize(self):
-        print("FactorSorter realized")
+        self.dtype_1 = DataType(
+                name='close',
+                freq='d',
+                asset_type='E',
+        )
 
+        self.dtype_2 = DataType(
+                name='close',
+                freq='h',
+                asset_type='E',
+        )
 
-class RuleIteratorStg(RuleIterator):
-    def __init__(self):
-        super().__init__()
+        self.dtype_3 = DataType(
+                name='close',
+                freq='5min',
+                asset_type='E',
+        )
 
-    def realize(self):
-        print("RuleIterator realized")
+        self.dtype_4 = DataType(
+                name='close',
+                freq='15min',
+                asset_type='E',
+        )
 
+        self.dtype_5 = DataType(
+                name='close',
+                freq='w',
+                asset_type='E',
+        )
 
-class TestStrategy(unittest.TestCase):
-    def test_creation(self):
-        """ test creation of strategy objects"""
-        stg = BaseStrategy(
+        self.base_stg = BaseStrategy(
                 name='TestStrategy',
                 run_freq='d',
                 run_timing='close',
-                pars=[param1, param2, param3, param4],
-                data_types=[dtype_1, dtype_2, dtype_3, dtype_4, dtype_5],
-                use_latest_data_cycle=False,
+                pars=[self.param1, self.param2, self.param3, self.param4],
+                data_types=[self.dtype_1, self.dtype_2, self.dtype_3, self.dtype_4
+                            , self.dtype_5],
                 window_length=[10, 20, 30, 40, 50],
+                use_latest_data_cycle=False,
         )
+
+        # 创建三个测试交易策略类，用于测试
+        class GenStg(GeneralStg):
+            """第一个测试交易策略类，继承自GeneralStg
+
+            包含两个可调参数: `param1` 和 `param2`，用于测试参数传递和使用。
+            使用三种不同的数据类型: 'price@5minx30', 'volume@hx10', 'indicator@dx5'，用于测试数据类型的处理。
+            """
+            param1 = self.param1
+            param2 = self.param2
+            dtype_1 = self.dtype_1
+            dtype_3 = self.dtype_3
+
+            def __init__(self, par_values=None):
+                super().__init__(
+                        name='test_gen',
+                        description='test general strategy',
+                        run_freq='d',
+                        run_timing='close',
+                        pars=[self.param1, self.param2],
+                        stg_type='general',
+                        data_types={'dt1': self.dtype_1, 'dt2': self.dtype_3},
+                        window_length=[20, 15],
+                )
+
+            def realize(self):
+                print("GeneralStg realized")
+
+        class FactorSorterStg(FactorSorter):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+            def realize(self):
+                print("FactorSorter realized")
+
+        class RuleIteratorStg(RuleIterator):
+            def __init__(self):
+                super().__init__()
+
+            def realize(self):
+                print("RuleIterator realized")
+
+        # self.gen_stg = GenStg(
+        #         par_values=(50, 0.5),
+        # )
+
+    def test_creation(self):
+        """ test creation of strategy objects"""
+        stg = self.base_stg
 
         self.assertIsInstance(stg, BaseStrategy)
         self.assertEqual(stg.name, 'TestStrategy')
@@ -143,15 +153,11 @@ class TestStrategy(unittest.TestCase):
 
     def test_properties(self):
 
-        stg = BaseStrategy(
-                name='TestStrategy',
-                run_freq='d',
-                run_timing='close',
-                pars=[param1, param2, param3, param4],
-                data_types=[dtype_1, dtype_2, dtype_3, dtype_4
-                            , dtype_5],
-                use_latest_data_cycle=False,
-        )
+        stg = self.base_stg
+        # test getting basic properties like name, type, description
+        self.assertEqual(stg.name, 'TestStrategy')
+        self.assertEqual(stg.stg_type, 'BASE')
+        self.assertEqual(stg.description, '')
 
         # test getting all parameters
         self.assertEqual(len(stg.pars), 4)
@@ -237,19 +243,11 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.close_E_w, None)
 
     def test_parameters(self):
+        """ test updating parameters of strategies"""
+        stg = self.base_stg
 
-        stg = BaseStrategy(
-                name='TestStrategy',
-                run_freq='d',
-                run_timing='close',
-                pars=[param1, param2, param3, param4],
-                data_types=[dtype_1, dtype_2, dtype_3, dtype_4, dtype_5],
-                use_latest_data_cycle=False,
-                window_length=[10, 20, 30, 40, 50],
-        )
-
-        # test updating parameters
-        stg.update_par_values((75, 0.75, 'option2', np.array([2.0, 3.0, 4.0])))
+        # test updating all parameters
+        stg.update_par_values(75, 0.75, 'option2', np.array([2.0, 3.0, 4.0]))
         self.assertEqual(stg.param1, 75)
         self.assertEqual(stg.param2, 0.75)
         self.assertEqual(stg.param3, 'option2')
@@ -267,154 +265,120 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.pars['param3'].value, 'option2')
         self.assertTrue(np.array_equal(stg.pars['param4'].value, np.array([2.0, 3.0, 4.0])))
 
-    def test_general_stg(self):
-        pass
+        # test updating partial parameters
+        stg.update_par_values(80, 0.875)
+        self.assertEqual(stg.param1, 80)
+        self.assertEqual(stg.param2, 0.875)
+        self.assertEqual(stg.param3, 'option2')
+        self.assertTrue(np.array_equal(stg.param4, np.array([2.0, 3.0, 4.0])))
 
-    def test_stg_parameter_setting(self):
-        """ test setting parameters of strategies
-        test the method set_parameters
+        par_values = (80, 0.875, 'option2', np.array([2.0, 3.0, 4.0]))
+        for a, e in zip(stg.par_values, par_values):
+            print(a, e)
+            if isinstance(e, np.ndarray):
+                self.assertTrue(np.array_equal(a, e))
+            else:
+                self.assertEqual(a, e)
+        self.assertEqual(stg.pars['param1'].value, 80)
+        self.assertEqual(stg.pars['param2'].value, 0.875)
+        self.assertEqual(stg.pars['param3'].value, 'option2')
+        self.assertTrue(np.array_equal(stg.pars['param4'].value, np.array([2.0, 3.0, 4.0])))
 
-        :return:
-        """
-        op = qt.Operator(strategies='dma, all, sellrate')
-        print(op.strategies, '\n', [qt.built_in.DMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
-        print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
-        # TODO: allow set_parameters to a list of strategies or str-listed strategies
-        # TODO: allow set_parameters to all strategies of specific bt price type
-        print(f'Set up strategy parameters by strategy id')
-        op.set_parameter('dma',
-                         opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        op.set_parameter('all',
-                         window_length=20)
-        op.set_parameter('all', run_timing='close')
-        print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, run_timing='open')
-        op.set_parameter(2,
-                         opt_tag=1,
-                         pars=(9, -0.09),
-                         window_length=10)
-        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
-        self.assertEqual(op.strategies[2].par_values, (9, -0.09))
-        self.assertEqual(op.op_data_freq, 'd')
-        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.max_window_length, 20)
-        print(f'KeyError will be raised if wrong strategy id is given')
-        self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
-        self.assertRaises(KeyError, op.set_parameter, stg_id='wrong_input', pars=(1, 2))
-        print(f'ValueError will be raised if parameter can be set')
-        self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
-        # test blenders of different price types
-        # test setting blenders to different price types
+        # test other forms of updating parameters
+        # TODO: is following form useful in any case?
+        #  stg.update_par_values(param1=75, param2=0.75)  - updating part of the parameters
+        stg.update_par_values(param1=85, param2=0.5, param3='option3', param4=np.array([3.0, 4.0, 5.0]))
+        self.assertEqual(stg.param1, 85)
+        self.assertEqual(stg.param2, 0.5)
+        self.assertEqual(stg.param3, 'option3')
+        self.assertTrue(np.array_equal(stg.param4, np.array([3.0, 4.0, 5.0])))
 
-        # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
-        self.assertEqual(op.strategy_groups, ['close', 'open'])
-        op.set_blender('s0 and s1 or s2', 'open')
-        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
-        op.set_blender('s0 or s1 and s2', 'close')
-        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
-                                            'open':  ['or', 's2', 'and', 's1', 's0']})
+        par_values = (85, 0.5, 'option3', np.array([3.0, 4.0, 5.0]))
+        for a, e in zip(stg.par_values, par_values):
+            print(a, e)
+            if isinstance(e, np.ndarray):
+                self.assertTrue(np.array_equal(a, e))
+            else:
+                self.assertEqual(a, e)
+        self.assertEqual(stg.pars['param1'].value, 85)
+        self.assertEqual(stg.pars['param2'].value, 0.5)
+        self.assertEqual(stg.pars['param3'].value, 'option3')
+        self.assertTrue(np.array_equal(stg.pars['param4'].value, np.array([3.0, 4.0, 5.0])))
 
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.opt_tags, [1, 0, 1])
+        # test partial updating parameters
+        stg.update_par_values(param1=95, param2=0.25)
+        self.assertEqual(stg.param1, 95)
+        self.assertEqual(stg.param2, 0.25)
+        self.assertEqual(stg.param3, 'option3')
+        self.assertTrue(np.array_equal(stg.param4, np.array([3.0, 4.0, 5.0])))
 
-    def test_set_opt_par(self):
-        """ test setting opt pars in batch"""
-        print(f'--------- Testing setting Opt Pars: set_opt_par -------')
-        op = qt.Operator('dma, random, crossline')
-        op.set_parameter('dma',
-                         opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
-        self.assertEqual(op.opt_tags, [1, 0, 0])
-        op.set_opt_par((5, 12, 9))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
-
-        op.set_parameter('crossline',
-                         opt_tag=1,
-                         par_range=((5, 10), (5, 35), (0, 1)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('crossline',
-                         pars=(5, 10, 0.1))
-        self.assertEqual(op.opt_tags, [1, 0, 1])
-        op.set_opt_par((5, 12, 9, 8, 26, 0.09))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
-
-        op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
-        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
-
-        # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
-        op.set_parameter('crossline',
-                         opt_tag=2,
-                         par_range=((5, 10), (5, 35), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('crossline',
-                         pars=(5, 10, 5))
-        self.assertEqual(op.opt_tags, [1, 0, 2])
-        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (5, 10, 5))
-        op.set_opt_par((5, 12, 9, (8, 26, 9)))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
-        self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 9))
-
-        # Test Errors
-        # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
+        # test updating parameters with wrong input
+        # wrong input type for each parameter
+        self.assertRaises(ValueError, stg.update_par_values, param1='wrong type')
+        self.assertRaises(ValueError, stg.update_par_values, param2='wrong type')
+        self.assertRaises(ValueError, stg.update_par_values, param3=123)  # wrong type
+        self.assertRaises(ValueError, stg.update_par_values, param4='wrong type')  # wrong type
+        # wrong input that go out of range both upper and lower bounds
+        self.assertRaises(ValueError, stg.update_par_values, param1=101)  # out of range
+        self.assertRaises(ValueError, stg.update_par_values, param1=0)
+        self.assertRaises(ValueError, stg.update_par_values, param2=1.5)  # out of range
+        self.assertRaises(ValueError, stg.update_par_values, param2=-0.1)
+        self.assertRaises(ValueError, stg.update_par_values, param3='wrong option')  # out of range
+        self.assertRaises(ValueError, stg.update_par_values, param4=np.array([6.0, 7.0, 8.0]))  # out of range
+        self.assertRaises(ValueError, stg.update_par_values, param4=np.array([0.0, 0.0, 0.0]))  # out of range
 
     def test_stg_attribute_get_and_set(self):
-        self.stg = qt.built_in.CROSSLINE()
-        self.stg_type = 'RULE-ITER'
-        self.stg_name = "CROSSLINE"
-        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
+        """ 测试策略属性的获取和设置 """
+        stg = self.base_stg
+        # print out all available parameters of the strategy:
+        print(f'strategy parameters\n'
+              f'stg_type: {stg.stg_type}\n'
+              f'name: {stg.name}\n'
+              f'description: {stg.description}\n'
+              f'has_pars: {stg.has_pars}\n'
+              f'pars: {stg.pars}\n'
+              f'par_count: {stg.par_count}\n'
+              f'par_values: {stg.par_values}\n'
+              f'par_names: {stg.par_names}\n'
+              f'par_types: {stg.par_types}\n'
+              f'par_range: {stg.par_range}\n'
+              f'opt_tag: {stg.opt_tag}\n'
+              f'run_freq: {stg.run_freq}\n'
+              f'run_timing: {stg.run_timing}\n'
+              f'data_type_counts: {stg.data_type_count}\n'
+              f'data_types: {stg.data_types}\n'
+              f'data_type_ids: {stg.data_type_ids}\n'
+              f'data_ids: {stg.data_ids}\n'
+              f'data_names: {stg.data_names}\n'
+              f'data_freqs: {stg.data_freqs}\n'
+              f'data_ulc: {stg.data_ulc}\n'
+              f'data_window_lengths: {stg.data_window_lengths}\n'
+              f'window_length: {stg.window_length}\n'
+              f'share_counts: {stg.share_counts}\n'
+              f'share_names: {stg.share_names}\n')
+        
+        stg.stg_name = "CROSSLINE"
+        stg.description = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        self.pars = (35, 120, 0.02)
-        self.par_boes = [(10, 250), (10, 250), (0, 0.1)]
-        self.par_count = 3
-        self.par_types = ['int', 'int', 'float']
-        self.opt_tag = 0
-        self.data_types = ['close']
-        self.data_freq = 'd'
-        self.sample_freq = 'd'
-        self.window_length = 270
+        stg.par_values = (55, 0.55, 'option2', np.array([1.0, 2.0, 3.0]))
+        stg.opt_tag = 1
+        stg.run_freq = '5min'
+        stg.run_timing = 'open'
 
-        self.assertEqual(self.stg.stg_type, self.stg_type)
-        self.assertEqual(self.stg.name, self.stg_name)
-        self.assertEqual(self.stg.description, self.stg_text)
-        self.assertEqual(self.stg.par_values, self.pars)
-        self.assertEqual(self.stg.par_types, self.par_types)
-        self.assertEqual(self.stg.par_range, self.par_boes)
-        self.assertEqual(self.stg.par_count, self.par_count)
-        self.assertEqual(self.stg.opt_tag, self.opt_tag)
-        self.assertEqual(self.stg.data_freq, self.data_freq)
-        self.assertEqual(self.stg.run_freq, self.sample_freq)
-        self.assertEqual(self.stg.data_types, self.data_types)
-        self.assertEqual(self.stg.window_length, self.window_length)
+
+        self.assertEqual(stg.stg_type, self.stg_type)
+        self.assertEqual(stg.name, self.stg_name)
+        self.assertEqual(stg.description, self.stg_text)
+        self.assertEqual(stg.par_values, self.pars)
+        self.assertEqual(stg.par_types, self.par_types)
+        self.assertEqual(stg.par_range, self.par_boes)
+        self.assertEqual(stg.par_count, self.par_count)
+        self.assertEqual(stg.opt_tag, self.opt_tag)
+        self.assertEqual(stg.data_freq, self.data_freq)
+        self.assertEqual(stg.run_freq, self.sample_freq)
+        self.assertEqual(stg.data_types, self.data_types)
+        self.assertEqual(stg.window_length, self.window_length)
         self.stg.name = 'NEW NAME'
         self.stg.description = 'NEW TEXT'
         self.assertEqual(self.stg.name, 'NEW NAME')

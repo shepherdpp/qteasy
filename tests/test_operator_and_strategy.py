@@ -1575,6 +1575,122 @@ class TestOperatorAndStrategy(unittest.TestCase):
         """测试分配Operator运行所需历史数据"""
         raise NotImplementedError
 
+    def test_stg_parameter_setting(self):
+        """ test setting parameters of strategies
+        test the method set_parameters
+
+        :return:
+        """
+        op = qt.Operator(strategies='dma, all, sellrate')
+        print(op.strategies, '\n', [qt.built_in.DMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
+        print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
+        # TODO: allow set_parameters to a list of strategies or str-listed strategies
+        # TODO: allow set_parameters to all strategies of specific bt price type
+        print(f'Set up strategy parameters by strategy id')
+        op.set_parameter('dma',
+                         opt_tag=1,
+                         par_range=((5, 10), (5, 15), (5, 15)),
+                         window_length=10,
+                         strategy_data_types=['close', 'open', 'high'])
+        op.set_parameter('dma',
+                         pars=(5, 10, 5))
+        op.set_parameter('all',
+                         window_length=20)
+        op.set_parameter('all', run_timing='close')
+        print(f'Can also set up strategy parameters by strategy index')
+        op.set_parameter(2, run_timing='open')
+        op.set_parameter(2,
+                         opt_tag=1,
+                         pars=(9, -0.09),
+                         window_length=10)
+        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
+        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
+        self.assertEqual(op.strategies[2].par_values, (9, -0.09))
+        self.assertEqual(op.op_data_freq, 'd')
+        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
+        self.assertEqual(op.opt_space_par,
+                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
+                          ['int', 'int', 'int', 'int', 'float']))
+        self.assertEqual(op.max_window_length, 20)
+        print(f'KeyError will be raised if wrong strategy id is given')
+        self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
+        self.assertRaises(KeyError, op.set_parameter, stg_id='wrong_input', pars=(1, 2))
+        print(f'ValueError will be raised if parameter can be set')
+        self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
+        # test blenders of different price types
+        # test setting blenders to different price types
+
+        # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
+        self.assertEqual(op.strategy_groups, ['close', 'open'])
+        op.set_blender('s0 and s1 or s2', 'open')
+        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
+        op.set_blender('s0 or s1 and s2', 'close')
+        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
+                                            'open':  ['or', 's2', 'and', 's1', 's0']})
+
+        self.assertEqual(op.opt_space_par,
+                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
+                          ['int', 'int', 'int', 'int', 'float']))
+        self.assertEqual(op.opt_tags, [1, 0, 1])
+
+    def test_set_opt_par(self):
+        """ test setting opt pars in batch"""
+        print(f'--------- Testing setting Opt Pars: set_opt_par -------')
+        op = qt.Operator('dma, random, crossline')
+        op.set_parameter('dma',
+                         opt_tag=1,
+                         par_range=((5, 10), (5, 15), (5, 15)),
+                         window_length=10,
+                         strategy_data_types=['close', 'open', 'high'])
+        op.set_parameter('dma',
+                         pars=(5, 10, 5))
+        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
+        self.assertEqual(op.opt_tags, [1, 0, 0])
+        op.set_opt_par((5, 12, 9))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
+
+        op.set_parameter('crossline',
+                         opt_tag=1,
+                         par_range=((5, 10), (5, 35), (0, 1)),
+                         window_length=10,
+                         strategy_data_types=['close', 'open', 'high'])
+        op.set_parameter('crossline',
+                         pars=(5, 10, 0.1))
+        self.assertEqual(op.opt_tags, [1, 0, 1])
+        op.set_opt_par((5, 12, 9, 8, 26, 0.09))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
+
+        op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
+        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
+
+        # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
+        op.set_parameter('crossline',
+                         opt_tag=2,
+                         par_range=((5, 10), (5, 35), (5, 15)),
+                         window_length=10,
+                         strategy_data_types=['close', 'open', 'high'])
+        op.set_parameter('crossline',
+                         pars=(5, 10, 5))
+        self.assertEqual(op.opt_tags, [1, 0, 2])
+        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (5, 10, 5))
+        op.set_opt_par((5, 12, 9, (8, 26, 9)))
+        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (8, 26, 9))
+
+        # Test Errors
+        # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
+
     def test_operator_generate(self):
         """ 测试operator对象生成完整交易信号
 
