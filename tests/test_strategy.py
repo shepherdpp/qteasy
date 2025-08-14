@@ -353,54 +353,109 @@ class TestStrategy(unittest.TestCase):
               f'data_freqs: {stg.data_freqs}\n'
               f'data_ulc: {stg.data_ulc}\n'
               f'data_window_lengths: {stg.data_window_lengths}\n'
-              f'window_length: {stg.window_length}\n'
-              f'share_counts: {stg.share_counts}\n'
+              f'window_lengths: {stg.window_lengths}\n'
+              f'share_counts: {stg.share_count}\n'
               f'share_names: {stg.share_names}\n')
-        
-        stg.stg_name = "CROSSLINE"
+
+        stg.name = "CROSSLINE"
         stg.description = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        stg.par_values = (55, 0.55, 'option2', np.array([1.0, 2.0, 3.0]))
         stg.opt_tag = 1
+        stg.pars = {
+            'param1': self.param1,
+            'param2': self.param2,
+        }
+        stg.par_values = (55, 0.55)
         stg.run_freq = '5min'
         stg.run_timing = 'open'
+        stg.data_types = [self.dtype_3, self.dtype_1, self.dtype_2]
 
+        # print out all parameters again and assert their values:
+        print(f'strategy parameters after setting new values\n'
+              f'stg_type: {stg.stg_type}\n'
+              f'name: {stg.name}\n'
+              f'description: {stg.description}\n'
+              f'has_pars: {stg.has_pars}\n'
+              f'pars: {stg.pars}\n'
+              f'par_count: {stg.par_count}\n'
+              f'par_values: {stg.par_values}\n'
+              f'par_names: {stg.par_names}\n'
+              f'par_types: {stg.par_types}\n'
+              f'par_range: {stg.par_range}\n'
+              f'opt_tag: {stg.opt_tag}\n'
+              f'run_freq: {stg.run_freq}\n'
+              f'run_timing: {stg.run_timing}\n'
+              f'data_type_counts: {stg.data_type_count}\n'
+              f'data_types: {stg.data_types}\n'
+              f'data_type_ids: {stg.data_type_ids}\n'
+              f'data_ids: {stg.data_ids}\n'
+              f'data_names: {stg.data_names}\n'
+              f'data_freqs: {stg.data_freqs}\n'
+              f'data_ulc: {stg.data_ulc}\n'
+              f'data_window_lengths: {stg.data_window_lengths}\n'
+              f'window_lengths: {stg.window_lengths}\n'
+              f'share_counts: {stg.share_count}\n'
+              f'share_names: {stg.share_names}\n')
 
-        self.assertEqual(stg.stg_type, self.stg_type)
-        self.assertEqual(stg.name, self.stg_name)
-        self.assertEqual(stg.description, self.stg_text)
-        self.assertEqual(stg.par_values, self.pars)
-        self.assertEqual(stg.par_types, self.par_types)
-        self.assertEqual(stg.par_range, self.par_boes)
-        self.assertEqual(stg.par_count, self.par_count)
-        self.assertEqual(stg.opt_tag, self.opt_tag)
-        self.assertEqual(stg.data_freq, self.data_freq)
-        self.assertEqual(stg.run_freq, self.sample_freq)
-        self.assertEqual(stg.data_types, self.data_types)
-        self.assertEqual(stg.window_length, self.window_length)
-        self.stg.name = 'NEW NAME'
-        self.stg.description = 'NEW TEXT'
-        self.assertEqual(self.stg.name, 'NEW NAME')
-        self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.par_values = (10, 20, 0.03)
-        self.assertEqual(self.stg.par_values, (10, 20, 0.03))
-        self.stg.par_count = 3
-        self.assertEqual(self.stg.par_count, 3)
-        self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
-        self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
-        self.stg.par_types = ['float', 'float', 'int', 'enum']
-        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'enum'])
-        self.stg.par_types = 'float, float, int, float'
-        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'float'])
-        self.stg.data_types = 'close, open'
-        self.assertEqual(self.stg.data_types, ['close', 'open'])
-        self.stg.data_types = ['close', 'high', 'low']
-        self.assertEqual(self.stg.data_types, ['close', 'high', 'low'])
-        self.stg.data_freq = 'w'
-        self.assertEqual(self.stg.data_freq, 'w')
-        self.stg.window_length = 300
-        self.assertEqual(self.stg.window_length, 300)
+        self.assertEqual(stg.name, "CROSSLINE")
+        self.assertEqual(stg.description, 'Moving average crossline strategy, determine long/short '
+                                          'position according to the cross '
+                                          'point of long and short term moving average prices ')
+        self.assertEqual(stg.has_pars, True)
+        self.assertEqual(stg.par_count, 2)
+        self.assertEqual(stg.par_values, (55, 0.55))
+        self.assertEqual(stg.par_names, ['param1', 'param2'])
+        self.assertEqual(stg.par_types, {'param1': 'int', 'param2': 'float'})
+        self.assertEqual(stg.par_range, {'param1': (1, 100), 'param2': (0.0, 1.0)})
+        self.assertEqual(stg.opt_tag, 1)
+        self.assertEqual(stg.run_freq, '5min')
+        self.assertEqual(stg.run_timing, 'open')
+        self.assertEqual(stg.data_type_count, 3)
+        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3,
+                                                 'close_E_d': self.dtype_1,
+                                                 'close_E_h': self.dtype_2})
+        self.assertEqual(stg.data_type_ids, ['close_E_5min', 'close_E_d', 'close_E_h'])
+        self.assertEqual(stg.data_ids, ['close_E_5min', 'close_E_d', 'close_E_h'])
+        self.assertEqual(stg.data_names, {'close_E_5min': 'close',
+                                            'close_E_d': 'close',
+                                            'close_E_h': 'close'})
+        self.assertEqual(stg.data_freqs, {'close_E_5min': '5min',
+                                            'close_E_d': 'd',
+                                            'close_E_h': 'h'})
+        self.assertEqual(stg.data_ulc, {'close_E_5min': False,
+                                        'close_E_d': False,
+                                        'close_E_h': False})
+        self.assertEqual(stg.data_window_lengths, {'close_E_5min': 30,
+                                                   'close_E_d': 30,
+                                                   'close_E_h': 30})
+        self.assertEqual(stg.window_lengths, {'close_E_5min': 30,
+                                              'close_E_d': 30,
+                                                    'close_E_h': 30})
+        self.assertEqual(stg.share_count, 0)
+        self.assertEqual(stg.share_names, [])
+        # test clear our parameters
+        stg.pars = {}
+
+        self.assertEqual(stg.has_pars, False)
+        self.assertEqual(stg.par_count, 0)
+        self.assertEqual(stg.par_values, ())
+        self.assertEqual(stg.par_names, [])
+        self.assertEqual(stg.par_types, {})
+        self.assertEqual(stg.par_range, {})
+
+        # test clear our data types
+        stg.data_types = []
+
+        self.assertEqual(stg.data_type_count, 0)
+        self.assertEqual(stg.data_types, {})
+        self.assertEqual(stg.data_type_ids, [])
+        self.assertEqual(stg.data_ids, [])
+        self.assertEqual(stg.data_names, {})
+        self.assertEqual(stg.data_freqs, {})
+        self.assertEqual(stg.data_ulc, {})
+        self.assertEqual(stg.data_window_lengths, {})
+        self.assertEqual(stg.window_lengths, {})
 
     def test_rule_iterator(self):
         """测试rule_iterator类型策略"""
