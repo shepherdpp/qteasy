@@ -98,7 +98,7 @@ class BaseStrategy:
             *,
             name: str = '',
             description: str = '',
-            stg_type: str = '',
+            stg_type: str = 'BASE',
             run_freq: str = 'd',
             run_timing: str = 'close',
             pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
@@ -185,6 +185,24 @@ class BaseStrategy:
         self._share_names = None
 
     @property
+    def name(self):
+        """策略名称，打印策略信息的时候策略名称会被打印出来"""
+        return self._stg_name
+
+    @name.setter
+    def name(self, name: str):
+        self._stg_name = name
+
+    @property
+    def description(self):
+        """策略说明文本，对策略的实现方法和功能进行简要介绍"""
+        return self._stg_description
+
+    @description.setter
+    def description(self, description: str):
+        self._stg_description = str(description)
+
+    @property
     def stg_type(self):
         """策略类型，表明策略的基类，即：
             - GeneralStg: GENERAL
@@ -192,6 +210,11 @@ class BaseStrategy:
             - RuleIterator: RULE-ITER
         """
         return self._stg_type
+
+    @property
+    def has_pars(self) -> bool:
+        """返回True如果策略有可调参数，否则返回False"""
+        return self.pars is not None
 
     @property
     def pars(self):
@@ -223,11 +246,6 @@ class BaseStrategy:
         self.update_par_values(pars)
 
     @property
-    def has_pars(self) -> bool:
-        """返回True如果策略有可调参数，否则返回False"""
-        return self.pars is not None
-
-    @property
     def par_names(self):
         """策略的参数名称列表"""
         return [par.name for par in self.pars.values()] if self.par_values is not None else []
@@ -241,24 +259,6 @@ class BaseStrategy:
     def par_range(self):
         """策略的参数取值范围，用来定义参数空间用于参数优化"""
         return {name: par.par_range for name, par in self.pars.items()}
-
-    @property
-    def name(self):
-        """策略名称，打印策略信息的时候策略名称会被打印出来"""
-        return self._stg_name
-
-    @name.setter
-    def name(self, name: str):
-        self._stg_name = name
-
-    @property
-    def description(self):
-        """策略说明文本，对策略的实现方法和功能进行简要介绍"""
-        return self._stg_description
-
-    @description.setter
-    def description(self, description: str):
-        self._stg_description = str(description)
 
     @property
     def opt_tag(self):
@@ -531,11 +531,33 @@ class BaseStrategy:
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
 
-    def update_par_values(self, par_valuess: tuple) -> None:
-        """ 快速更新策略的参数值"""
-        for par_name, par_value in zip(self.par_names, par_valuess):
-            self._pars[par_name].value = par_value
-            self.__setattr__(par_name, par_value)
+    def update_par_values(self, *par_values, **kwargs) -> None:
+        """ 快速更新策略的参数值
+
+        Parameters
+        ----------
+        par_values: tuple, optional
+            策略参数的值，元组中的每个元素是按顺序排列的所有参数值，如果
+            没有设置参数，则必须传入kwargs参数
+        kwargs: dict
+            以字典形式传入具体需要更新的参数值，键为参数名，值为参数值
+
+        Returns
+        -------
+        None
+        """
+        if par_values is not None:
+            for par_name, par_value in zip(self.par_names, par_values):
+                self._pars[par_name].value = par_value
+                self.__setattr__(par_name, par_value)
+        else:  # 如果没有传入par_values，则必须传入kwargs参数
+            if not kwargs:
+                raise ValueError('par_values is None, please provide par_values or kwargs to update parameters')
+            for par_name, par_value in kwargs.items():
+                if par_name not in self.par_names:
+                    raise KeyError(f'parameter {par_name} is not defined in the strategy')
+                self._pars[par_name].value = par_value
+                self.__setattr__(par_name, par_value)
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""
