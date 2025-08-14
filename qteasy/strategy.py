@@ -214,7 +214,7 @@ class BaseStrategy:
     @property
     def has_pars(self) -> bool:
         """返回True如果策略有可调参数，否则返回False"""
-        return self.pars is not None
+        return self.pars != {}
 
     @property
     def pars(self):
@@ -243,7 +243,7 @@ class BaseStrategy:
     @par_values.setter
     def par_values(self, pars: tuple):
         """设置策略参数，参数的合法性检查在这里进行"""
-        self.update_par_values(pars)
+        self.update_par_values(*pars)
 
     @property
     def par_names(self):
@@ -297,6 +297,15 @@ class BaseStrategy:
     def data_types(self):
         """策略依赖的历史数据类型"""
         return self._data_types
+
+    @data_types.setter
+    def data_types(self, data_types: Union[DataType, List[DataType], Dict[str, DataType]]):
+        """设置策略依赖的历史数据类型"""
+        self.set_data_types(
+                data_types,
+                False,
+                30,
+        )
 
     @property
     def data_type_ids(self):
@@ -466,9 +475,9 @@ class BaseStrategy:
         return
 
     def set_data_types(self,
-                       data_types=None,
-                       use_latest_data_cycle=False,
-                       window_length=None) -> None:
+                       data_types,
+                       use_latest_data_cycle,
+                       window_length) -> None:
         """ 设置策略参数
 
         Parameters
