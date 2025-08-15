@@ -285,8 +285,6 @@ class TestStrategy(unittest.TestCase):
         self.assertTrue(np.array_equal(stg.pars['param4'].value, np.array([2.0, 3.0, 4.0])))
 
         # test other forms of updating parameters
-        # TODO: is following form useful in any case?
-        #  stg.update_par_values(param1=75, param2=0.75)  - updating part of the parameters
         stg.update_par_values(param1=85, param2=0.5, param3='option3', param4=np.array([3.0, 4.0, 5.0]))
         self.assertEqual(stg.param1, 85)
         self.assertEqual(stg.param2, 0.5)
@@ -314,8 +312,8 @@ class TestStrategy(unittest.TestCase):
 
         # test updating parameters with wrong input
         # wrong input type for each parameter
-        self.assertRaises(ValueError, stg.update_par_values, param1='wrong type')
-        self.assertRaises(ValueError, stg.update_par_values, param2='wrong type')
+        self.assertRaises(TypeError, stg.update_par_values, param1='wrong type')
+        self.assertRaises(TypeError, stg.update_par_values, param2='wrong type')
         self.assertRaises(ValueError, stg.update_par_values, param3=123)  # wrong type
         self.assertRaises(ValueError, stg.update_par_values, param4='wrong type')  # wrong type
         # wrong input that go out of range both upper and lower bounds
@@ -456,6 +454,49 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.data_ulc, {})
         self.assertEqual(stg.data_window_lengths, {})
         self.assertEqual(stg.window_lengths, {})
+
+    def test_methods(self):
+        """ test all methods of strategy class"""
+        stg = self.base_stg
+
+        # test info method
+        stg.info()
+        stg.info(verbose=True)
+
+        # test get_use_latest_data_cycle method
+        self.assertEqual(stg.get_use_latest_data_cycle('close_E_d'), False)
+        self.assertEqual(stg.get_use_latest_data_cycle('close_E_h'), False)
+        self.assertEqual(stg.get_use_latest_data_cycle('close_E_5min'), False)
+        self.assertEqual(stg.get_use_latest_data_cycle('close_E_15min'), False)
+        self.assertEqual(stg.get_use_latest_data_cycle('close_E_w'), False)
+        self.assertRaises(KeyError, stg.get_use_latest_data_cycle, 'wrong_id')
+
+        # test get_data_ULC method
+        self.assertEqual(stg.get_data_ULC('close_E_d'), False)
+        self.assertEqual(stg.get_data_ULC('close_E_h'), False)
+        self.assertEqual(stg.get_data_ULC('close_E_5min'), False)
+        self.assertEqual(stg.get_data_ULC('close_E_15min'), False)
+        self.assertEqual(stg.get_data_ULC('close_E_w'), False)
+        self.assertRaises(KeyError, stg.get_data_ULC, 'wrong_id')
+
+        # test get_window_length method
+        self.assertEqual(stg.get_window_length('close_E_d'), 10)
+        self.assertEqual(stg.get_window_length('close_E_h'), 20)
+        self.assertEqual(stg.get_window_length('close_E_5min'), 30)
+        self.assertEqual(stg.get_window_length('close_E_15min'), 40)
+        self.assertEqual(stg.get_window_length('close_E_w'), 50)
+        self.assertRaises(KeyError, stg.get_window_length, 'wrong_id')
+
+        # test get_data_name method
+        self.assertEqual(stg.get_data_name('close_E_d'), 'close')
+        self.assertEqual(stg.get_data_name('close_E_h'), 'close')
+        self.assertEqual(stg.get_data_name('close_E_5min'), 'close')
+        self.assertEqual(stg.get_data_name('close_E_15min'), 'close')
+        self.assertEqual(stg.get_data_name('close_E_w'), 'close')
+        self.assertRaises(KeyError, stg.get_data_name, 'wrong_id')
+
+        # test update_data_window method
+        
 
     def test_rule_iterator(self):
         """测试rule_iterator类型策略"""
@@ -875,179 +916,6 @@ class TestStrategy(unittest.TestCase):
                   f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, atol=0.001, equal_nan=True))
-
-    def test_general_strategy2(self):
-        """ 测试第二种general strategy通用策略类型"""
-        # test strategy with only historical data
-        stg = TestSigStrategy()
-        stg_pars = (0.2, 0.02, -0.02)
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['close, open, high, low', :, 4:50]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
-
-        # test generate signal in real time mode:
-        output = []
-        for step in [0, 3, 5, 7, 10]:
-            output.append(stg.generate(hist_data=history_data_rolling_window, data_idx=step))
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0]])
-        for signal, target in zip(output, sigmatrix):
-            self.assertIsInstance(signal, np.ndarray)
-            self.assertEqual(signal.shape, (3,))
-            self.assertTrue(np.allclose(signal, target))
-
-        # test generate signal in batch mode:
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
-
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0]])
-
-        side_by_side_array = [[i, out_line, sig_line]
-                                       for
-                                       i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)]
-        # side_by_side_array = np.array(side_by_side_array)
-        print(f'output and signal matrix lined up side by side is \n'
-              f'{side_by_side_array}')
-        self.assertEqual(sigmatrix.shape, output.shape)
-        self.assertTrue(np.allclose(np.array(output), sigmatrix))
-
-        # test strategy with also reference data
-        print(f'\ntest strategy generate with reference_data')
-        stg_pars = (0.3, 0.02, -0.02)
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['close, open, high, low', :, 4:50]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
-        reference_data = self.test_ref_data2[0, 4:50, :]
-        ref_rolling_windows = rolling_window(reference_data, stg.window_length, 0)
-
-        # test generate signal in real time mode:
-        output = []
-        for step in [0, 3, 5, 7, 10]:
-            output.append(stg.generate(
-                    hist_data=history_data_rolling_window,
-                    ref_data=ref_rolling_windows,
-                    data_idx=step
-            ))
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 1.0, 0.0]])
-        for signal, target in zip(output, sigmatrix):
-            self.assertIsInstance(signal, np.ndarray)
-            self.assertEqual(signal.shape, (3,))
-            self.assertTrue(np.allclose(signal, target))
-
-        # test generate signal in batch mode:
-        output = stg.generate(
-                hist_data=history_data_rolling_window,
-                ref_data=ref_rolling_windows,
-                data_idx=np.arange(len(history_data_rolling_window))
-        )
-
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [1.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [1.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 1.0],
-                              [0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 1.0, 0.0]])
-
-        side_by_side_array = [[i, out_line == sig_line, out_line, sig_line]
-                                       for
-                                       i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)]
-        # side_by_side_array = np.array(side_by_side_array)
-        print(f'output and signal matrix lined up side by side is \n'
-              f'{side_by_side_array}')
-        self.assertEqual(sigmatrix.shape, output.shape)
-        self.assertTrue(np.allclose(np.array(output), sigmatrix, equal_nan=True))
 
     def test_factor_sorter(self):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
