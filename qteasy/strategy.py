@@ -361,7 +361,7 @@ class BaseStrategy:
 
     def get_data_ULC(self, data_type: str = None) -> bool:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
-        return self._data_ULC[data_type] if data_type in self._data_ULC else False
+        return self._data_ULC[data_type]
 
     def get_window_length(self, data_type: str = None) -> int:
         """策略依赖的历史数据窗口长度"""
@@ -461,7 +461,7 @@ class BaseStrategy:
         elif isinstance(pars, dict):
             pass
         else:
-            raise TypeError(f'pars is invalid! ({pars})')
+            raise TypeError(f'pars is in invalid type! ({type(pars)})')
 
         if not _dict_par_format_is_valid('pars', pars, Parameter, 'name'):
             raise ValueError(f'pars is invalid! ({pars})')
@@ -540,7 +540,7 @@ class BaseStrategy:
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
 
-    def update_par_values(self, *par_values, **kwargs) -> None:
+    def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
         """ 快速更新策略的参数值
 
         Parameters
@@ -555,7 +555,7 @@ class BaseStrategy:
         -------
         None
         """
-        if par_values is not None:
+        if par_values != ():
             for par_name, par_value in zip(self.par_names, par_values):
                 self._pars[par_name].value = par_value
                 self.__setattr__(par_name, par_value)
