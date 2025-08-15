@@ -369,7 +369,7 @@ class BaseStrategy:
 
     def get_data_name(self, data_type: str = None) -> str:
         """ 获取数据类型的名称"""
-        return self._data_ids[data_type]
+        return self.data_names[data_type]
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -581,7 +581,7 @@ class BaseStrategy:
         for dtype_name in self.data_types:
             data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
             setattr(self, dtype_name, data_window)
-        self._share_count = data_window.shape[0] if data_window is not None else 0
+        self._share_count = data_window.shape[1] if data_window is not None else 0
         self._share_names = data_window.index.tolist() if isinstance(data_window, pd.DataFrame) else None
 
     def set_custom_pars(self, **kwargs):
