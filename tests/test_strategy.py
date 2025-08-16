@@ -37,7 +37,7 @@ class TestStrategy(unittest.TestCase):
         self.param2 = Parameter(
                 name='param2',
                 par_type='float',
-                par_range=(0.0, 1.0),
+                par_range=(0.0, 10.),
                 value=0.5,
         )
 
@@ -141,30 +141,84 @@ class TestStrategy(unittest.TestCase):
                 return signal
 
         class FactorSorterStg(FactorSorter):
-            def __init__(self, **kwargs):
-                super().__init__(**kwargs)
+
+            param1 = self.param1
+            param2 = self.param2
+            dtype_1 = self.dtype_1
+            dtype_3 = self.dtype_3
+
+            def __init__(self, par_values=None, **kwargs):
+                super().__init__(
+                        name='test_factor_sorter',
+                        description='test factor sorter strategy',
+                        run_freq='d',
+                        run_timing='close',
+                        # TODO: user-defined parameter names should also be allowed
+                        pars=[self.param1, self.param2],
+                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
+                        **kwargs,
+                )
+
+                if par_values:
+                    self.update_par_values(*par_values)
 
             def realize(self):
                 print("FactorSorter realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                avg = dt1_avg * self.param1 + dt2_avg * self.param2
+                print(f'signal sorter = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+
+                return avg
 
         class RuleIteratorStg(RuleIterator):
-            def __init__(self):
-                super().__init__()
+
+            param1 = self.param1
+            param2 = self.param2
+            dtype_1 = self.dtype_1
+            dtype_3 = self.dtype_3
+
+            def __init__(self, par_values=None):
+                super().__init__(
+                        name='test_rule_iterator',
+                        description='test rule iterator strategy',
+                        run_freq='d',
+                        run_timing='close',
+                        # TODO: user-defined parameter names should also be allowed
+                        pars=[self.param1, self.param2],
+                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
+                )
+
+                if par_values:
+                    self.update_par_values(*par_values)
 
             def realize(self):
                 print("RuleIterator realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                criteria = dt1_avg * self.param1 >= dt2_avg * self.param2
+                print(f'criteria = avg1 * {self.param1} >= avg2 * {self.param2} = {criteria}')
+                if criteria:
+                    return 1
+                else:
+                    return 0
+
 
         # 实例化测试策略类
         self.gen_stg = GenStg(par_values=(50, 0.5))
 
         self.factor_sorter_stg = FactorSorterStg(
-                name='test_factor_sorter',
-                run_freq='d',
-                run_timing='close',
-                pars=[self.param1, self.param2],
-                data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
-                use_latest_data_cycle=[True, False],
-                window_length=[7, 9],
+                par_values=(10, 0.6)
         )
 
         self.rule_iterator_stg = RuleIteratorStg()
@@ -458,11 +512,11 @@ class TestStrategy(unittest.TestCase):
         }
 
         self.window_indices = {
-            'close_E_d':     np.arange(5) + 5,
-            'close_E_h':     np.arange(5),
-            'close_E_5min':  np.arange(5) + 3,
-            'close_E_15min': np.arange(5) + 1,
-            'close_E_w':     np.arange(5) + 2,
+            'close_E_d':     np.arange(15) + 5,
+            'close_E_h':     np.arange(15),
+            'close_E_5min':  np.arange(15) + 3,
+            'close_E_15min': np.arange(15) + 1,
+            'close_E_w':     np.arange(15) + 2,
         }
 
     def test_creation(self):
@@ -490,7 +544,7 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.par_names, ['param1', 'param2', 'param3', 'param4'])
         self.assertEqual(stg.par_range,
                          {'param1': (1, 100),
-                          'param2': (0.0, 1.0),
+                          'param2': (0.0, 10.),
                           'param3': ('option1', 'option2', 'option3'),
                           'param4': (1.0, 5.0)})
         self.assertEqual(stg.par_types,
@@ -499,6 +553,7 @@ class TestStrategy(unittest.TestCase):
                           'param3': 'enum',
                           'param4': 'float_array'})
         par_values = (50, 0.5, 'option1', np.array([1., 2., 3.]))
+        stg.update_par_values(*par_values)
         for a, e in zip(stg.par_values, par_values):
             print(a, e)
             if isinstance(e, np.ndarray):
@@ -644,7 +699,7 @@ class TestStrategy(unittest.TestCase):
         # wrong input that go out of range both upper and lower bounds
         self.assertRaises(ValueError, stg.update_par_values, param1=101)  # out of range
         self.assertRaises(ValueError, stg.update_par_values, param1=0)
-        self.assertRaises(ValueError, stg.update_par_values, param2=1.5)  # out of range
+        self.assertRaises(ValueError, stg.update_par_values, param2=11.5)  # out of range
         self.assertRaises(ValueError, stg.update_par_values, param2=-0.1)
         self.assertRaises(ValueError, stg.update_par_values, param3='wrong option')  # out of range
         self.assertRaises(ValueError, stg.update_par_values, param4=np.array([6.0, 7.0, 8.0]))  # out of range
@@ -730,7 +785,7 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.par_values, (55, 0.55))
         self.assertEqual(stg.par_names, ['param1', 'param2'])
         self.assertEqual(stg.par_types, {'param1': 'int', 'param2': 'float'})
-        self.assertEqual(stg.par_range, {'param1': (1, 100), 'param2': (0.0, 1.0)})
+        self.assertEqual(stg.par_range, {'param1': (1, 100), 'param2': (0.0, 10.)})
         self.assertEqual(stg.opt_tag, 1)
         self.assertEqual(stg.run_freq, '5min')
         self.assertEqual(stg.run_timing, 'open')
@@ -856,6 +911,11 @@ class TestStrategy(unittest.TestCase):
     def test_general_strategy(self):
         """ 测试第一种基础策略类General Strategy"""
         stg = self.gen_stg
+        stg.update_par_values(50, 0.5)
+
+        # test info method
+        stg.info()
+        stg.info(verbose=True)
 
         # test creation of the object, and its properties
         self.assertIsInstance(stg, GeneralStg)
@@ -906,17 +966,238 @@ class TestStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][6]))
         self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][4]))
 
-        stg.generate()
+        print(f'running result in step 2: {stg.generate()}')
 
+        for step in range(2, 10):
+            stg.update_data_window(
+                    data_windows=self.data_windows,
+                    window_indices=self.window_indices,
+                    window_index=step
+            )
+            self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5 + step]))
+            self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][3 + step]))
 
+            print(f'running result in step {step}: {stg.generate()}')
 
-    def test_rule_iterator(self):
-        """测试rule_iterator类型策略"""
-        raise NotImplementedError
+        # test other aspects of the strategy, such as:
+        # 1, modifying stg.data_ULC will impact the usage of data in each step （实际上不会有影响）
 
     def test_factor_sorter(self):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
-        raise NotImplementedError
+        stg = self.factor_sorter_stg
+        stg.update_par_values(10, 0.6)
+
+        # test info method
+        stg.info()
+        stg.info(verbose=True)
+
+        # test creation of the object, and its properties
+        self.assertIsInstance(stg, FactorSorter)
+        self.assertEqual(stg.name, 'test_factor_sorter')
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+        self.assertEqual(stg.stg_type, 'FACTOR')
+        self.assertEqual(stg.description, 'test factor sorter strategy')
+        self.assertEqual(stg.par_values, (10, 0.6))
+        self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
+        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
+
+        # test if parameters are correct:
+        self.assertEqual(stg.param1, 10)
+        self.assertEqual(stg.param2, 0.6)
+        self.assertEqual(stg.close_E_d, None)
+        self.assertEqual(stg.close_E_5min, None)
+
+        # update parameter and data windows before start generate()
+        stg.update_par_values(3, 0.75)
+        stg.update_data_window(
+                data_windows=self.data_windows,
+                window_indices=self.window_indices,
+                window_index=0,  # run the first step of the indices
+        )
+
+        # check if parameters and data windows are set:
+        self.assertEqual(stg.param1, 3)
+        self.assertEqual(stg.param2, 0.75)
+        self.assertIsInstance(stg.close_E_d, np.ndarray)
+        self.assertIsInstance(stg.close_E_5min, np.ndarray)
+        self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][3]))
+
+        self.assertEqual(stg.max_sel_count, 0.5)
+        self.assertEqual(stg.condition, 'any')
+        self.assertEqual(stg.lbound, -np.inf)
+        self.assertEqual(stg.ubound, np.inf)
+        self.assertEqual(stg.sort_ascending, False)
+        self.assertEqual(stg.weighting, 'even')
+
+        # run strategy.generate()
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0, 1])))
+
+        # text extra parameters of factor sorter such as max_sel_count,
+        stg.max_sel_count = 0.7
+        print('setting max_sel_count == 0.7')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0.5, 0.5])))
+
+        stg.weighting = 'ones'
+        print('setting weighting == "ones"')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 1, 1])))
+
+        stg.weighting = 'linear'
+        print('setting weighting == "linear"')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0.33333333, 0.66666667])))
+
+        stg.weighting = 'distance'
+        print('setting weighting == "distance"')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0.08333333, 0.91666667])))
+
+        stg.weighting = 'proportion'
+        print('setting weighting == "proportion"')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0.49470272, 0.50529728])))
+
+        stg.weighting = 'wrong type'
+        print('setting weighting == "distance"')
+        self.assertRaises(KeyError, stg.generate)
+
+        stg.sort_ascending = True
+        stg.weighting = 'ones'
+        print(f'setting sort_ascending = True')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([1, 1, 0])))
+
+        stg.condition = 'greater'
+        stg.ubound = 23.3
+        print(f'setting condition = greater than 23.3')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 1, 1])))
+
+        stg.condition = 'less'
+        stg.lbound = 23.3
+        stg.ubound = 23.3
+        print(f'setting condition = less than 23.3')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([1, 0, 0])))
+
+        stg.condition = 'between'
+        stg.lbound = 23.3
+        stg.ubound = 23.4
+        print(f'setting condition = between 23.3 and 23.4')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 1, 0])))
+
+        stg.condition = 'not_between'
+        stg.lbound = 23.3
+        stg.ubound = 23.4
+        print(f'setting condition = not between 23.3 and 23.4')
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([1, 0, 1])))
+
+        stg.condition = 'not_correct'
+        self.assertRaises(ValueError, stg.generate)
+
+    def test_rule_iterator(self):
+        """测试rule_iterator类型策略"""
+        stg = self.rule_iterator_stg
+        stg.update_par_values(10, 0.6)
+
+        # test info method
+        stg.info()
+        stg.info(verbose=True)
+
+        # test creation of the object, and its properties
+        self.assertIsInstance(stg, RuleIterator)
+        self.assertEqual(stg.name, 'test_rule_iterator')
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+        self.assertEqual(stg.stg_type, 'RULE-ITER')
+        self.assertEqual(stg.description, 'test rule iterator strategy')
+        self.assertEqual(stg.par_values, (10, 0.6))
+        self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
+        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
+
+        # test if parameters are correct:
+        self.assertEqual(stg.param1, 10)
+        self.assertEqual(stg.param2, 0.6)
+        self.assertEqual(stg.close_E_d, None)
+        self.assertEqual(stg.close_E_5min, None)
+
+        # update parameter and data windows before start generate()
+        stg.update_par_values(5, 6)
+        stg.update_data_window(
+                data_windows=self.data_windows,
+                window_indices=self.window_indices,
+                window_index=0,  # run the first step of the indices
+        )
+
+        # check if parameters and data windows are set:
+        self.assertEqual(stg.param1, 5)
+        self.assertEqual(stg.param2, 6)
+        self.assertIsInstance(stg._data_windows['close_E_d'], np.ndarray)
+        self.assertIsInstance(stg._data_windows['close_E_5min'], np.ndarray)
+        self.assertTrue(np.allclose(stg._data_windows['close_E_d'], self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg._data_windows['close_E_5min'], self.data_windows['close_E_5min'][3]))
+
+        self.assertEqual(stg.allow_multi_par, True)
+        self.assertEqual(stg.multi_pars, None)
+
+        stg.allow_multi_par = False
+        stg.set_multi_pars([(5, 5), (6, 1), (2, 4)])
+        self.assertEqual(stg.allow_multi_par, False)
+        self.assertEqual(stg.multi_pars, None)
+
+        # run strategy.generate()
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([0, 0, 0])))
+
+        # test run strategy with different stock parameters
+        stg.allow_multi_par = True
+        stg.set_multi_pars([(5, 5), (6, 1), (2, 4)])
+
+        self.assertEqual(stg.param1, 5)
+        self.assertEqual(stg.param2, 6)
+        self.assertIsInstance(stg._data_windows['close_E_d'], np.ndarray)
+        self.assertIsInstance(stg._data_windows['close_E_5min'], np.ndarray)
+        self.assertTrue(np.allclose(stg._data_windows['close_E_d'], self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg._data_windows['close_E_5min'], self.data_windows['close_E_5min'][3]))
+
+        self.assertEqual(stg.allow_multi_par, True)
+        self.assertEqual(stg.multi_pars, ((5, 5), (6, 1), (2, 4)))
+
+        # run strategy.generate()
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+        self.assertTrue(np.allclose(res, np.array([1, 1, 0])))
 
 
 if __name__ == '__main__':

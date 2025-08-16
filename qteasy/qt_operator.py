@@ -1486,6 +1486,9 @@ class Operator:
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
                     running_schedule = schedule.index
                     window_schedules = buffered_data.index[total_window_indices]
+                    # TODO: 在这里应该注意：np.searchsorted使用了默认参数side=“left”，表示找到的数据窗口时间一定是小于运行时间的
+                    #  但是如果strategy设置了“use_latest_cycle”，这就表明数据窗口的时间可以等于运行时间。
+                    #  这时应该使用参数side="right"来运行np.searchsorted，使找到的数据窗口时间小于等于运行时间
                     schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
                     self.data_window_indices[strategy.name][data_type] = schedule_indices
