@@ -213,7 +213,6 @@ class TestStrategy(unittest.TestCase):
                 else:
                     return 0
 
-
         # 实例化测试策略类
         self.gen_stg = GenStg(par_values=(50, 0.5))
 
