@@ -871,107 +871,15 @@ class FactorSorter(BaseStrategy):
 
     realize()的定义：
 
-        def realize(self,
-                    h: np.ndarray,
-                    r: np.ndarray = None,
-                    t: np.ndarray = None,
-                    pars: tuple = None
-                    ):
+        def realize():
 
     realize()中获取策略参数：
 
-            par_1, par_2, ..., par_n = self.pars
-
-    或者：
-            if pars is not None:
-                par_1, par_2, ..., par_n = pars
-            else:
-                par_1, par_2, ..., par_n = self.pars
+        self.par_1, self.par_2, ..., self.par_n = self.pars
 
     realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
 
-        - h(history): 历史数据片段，shape为(M, N, L)，即：
-
-            - M层：   M种股票的数据
-
-            - N行：   历史数据时间跨度
-
-            - L列：   L种历史数据类型
-
-            在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
-            例如：设定：
-                    - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                    - data_freq = 'd'
-                    - window_length = 100
-                    - data_types = "open, high, low, close, pe"
-
-                以下例子都基于前面给出的参数设定
-                例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                    close_last_day = h[:, -1, 3]
-                    close_10_day = h[:, -10, 3]
-                    rate_10 = (close_last_day / close_10_day) - 1
-
-                例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                    max_10_day = h[:, -10:-1, 1].max(axis=1)
-                    close_last_day = h[:, -1, 3]
-                    penetrate = close_last_day > max_10_day
-
-                例3, 获取股票最近10日市盈率的平均值
-                    pe_10_days = h[:, -10:-1, 4]
-                    avg_pe = pe_10_days.mean(axis=1)
-
-                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                    close_10_days = h[:, -10:-1, 3]
-                    close_50_days = h[:, -50:-1, 3]
-                    ma_10 = close_10_days.mean(axis=1)
-                    ma_50 = close_10_days.mean(axis=1)
-
-        - r(reference):参考历史数据，默认为None，shape为(N, L)
-            与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-            宏观经济数据等，
-
-            - N行, 交易日期/时间轴
-
-            - L列，参考数据类型轴
-
-            以下是获取参考数据的几个例子：
-                设定：
-                    - reference_data_types = "close-000300.SH, close-000001.SH"
-
-                例1: 获取最近一天的沪深300收盘价：
-                    close_300 = r[-1, 0]
-                例2: 获取五天前的上证指数收盘价:
-                    close_SH = r[-5, 1]
-
-        - t(trade):交易历史数据，默认为None，shape为(N, 5)
-            最近几次交易的结果数据，2D数据。包含N行5列数据
-            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-            数据的结构如下
-
-            - N行， 股票/证券类型轴
-                每一列代表一只个股或证券
-
-            - 5列,  交易数据类型轴
-                - 0, own_amounts:              当前持有每种股票的份额
-                - 1, available_amounts:        当前可用的每种股票的份额
-                - 2, current_prices:           当前的交易价格
-                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                - 4, recent_trade_prices:      最近一次成交价格
-
-            示例：以下是在策略中获取交易数据的几个例子：
-
-                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                    volume = t[:, 3]
-                    trade_prices = t[:, 4]
-                    或者:
-                    t = t.T
-                    volume = t[3]
-                    trade_prices = t[4]
-                例2: 获取当前持有股票数量:
-                    own_amounts = t[:, 0]
-                    或者:
-                    t = t.T
-                    own_amounts = t[0]
+        self.dtype_id
 
     realize()方法的输出：
     FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
@@ -1103,9 +1011,9 @@ class FactorSorter(BaseStrategy):
         elif condition == 'less':
             factors[np.where(factors > lbound)] = np.nan
         elif condition == 'between':
-            factors[np.where((factors < lbound) & (factors > ubound))] = np.nan
+            factors[np.where((factors < lbound) | (factors > ubound))] = np.nan
         elif condition == 'not_between':
-            factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
+            factors[np.where((factors > lbound) & (factors < ubound))] = np.nan
         else:
             raise ValueError(f'invalid selection condition \'{condition}\''
                              f'should be one of ["any", "greater", "less", "between", "not_between"]')
@@ -1181,9 +1089,7 @@ class FactorSorter(BaseStrategy):
 
     @abstractmethod
     def realize(self):
-        """ h, r, 和 t 都是用于生成交易信号的窗口数据，根据这一段窗口数据
-            生成一条交易信号
-        """
+        """ realize strategy here"""
         pass
 
 
@@ -1227,7 +1133,7 @@ class RuleIterator(BaseStrategy):
     --------
         Class ExampleStrategy(RuleIterator):
 
-            def realize(self, h, r=None, t=None, pars=None):
+            def realize(self):
 
                 # 在这里编写信号生成逻辑
                 ...
@@ -1250,24 +1156,13 @@ class RuleIterator(BaseStrategy):
 
     realize()的定义：
 
-        def realize(self,
-                    h: np.ndarray,
-                    r: np.ndarray = None,
-                    t: np.ndarray = None,
-                    pars: tuple = None
-                    ):
+        def realize(self):
 
     realize()中获取策略参数：
 
             par_1, par_2, ..., par_n = self.pars
 
     realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-        :input:
-        h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，
-            h 的shape为(N, L)，含义如下：
-
-            - N行：交易时间轴
-            - L列： 历史数据类型轴
 
             示例：
                 以下例子都基于前面给出的参数设定
@@ -1290,53 +1185,6 @@ class RuleIterator(BaseStrategy):
                     close_50_days = h_seg[-50:-1, 3]
                     ma_10 = close_10_days.mean(axis=1)
                     ma_50 = close_10_days.mean(axis=1)
-
-        - r(reference):参考历史数据，默认为None，shape为(N, L)
-            与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-            宏观经济数据等，
-
-            - N行, 交易日期/时间轴
-
-            - L列，参考数据类型轴
-
-            以下是获取参考数据的几个例子：
-                设定：
-                    - reference_data_types = "000300.SH.close, 000001.SH.close"
-
-                例1: 获取最近一天的沪深300收盘价：
-                    close_300 = r[-1, 0]
-                例2: 获取五天前的上证指数收盘价:
-                    close_SH = r[-5, 1]
-
-        - t(trade):交易历史数据，默认为None，shape为(N, 5)
-            最近几次交易的结果数据，2D数据。包含N行5列数据
-            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-            数据的结构如下
-
-            - N行， 股票/证券类型轴
-                每一列代表一只个股或证券
-
-            - 5列,  交易数据类型轴
-                - 0, own_amounts:              当前持有每种股票的份额
-                - 1, available_amounts:        当前可用的每种股票的份额
-                - 2, current_prices:           当前的交易价格
-                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                - 4, recent_trade_prices:      最近一次成交价格
-
-            示例：以下是在策略中获取交易数据的几个例子：
-
-                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                    volume = t[:, 3]
-                    trade_prices = t[:, 4]
-                    或者:
-                    t = t.T
-                    volume = t[3]
-                    trade_prices = t[4]
-                例2: 获取当前持有股票数量:
-                    own_amounts = t[:, 0]
-                    或者:
-                    t = t.T
-                    own_amounts = t[0]
 
         :output
         signals: 一个代表交易信号的数字，dtype为float
@@ -1379,10 +1227,12 @@ class RuleIterator(BaseStrategy):
                          description=description,
                          stg_type='RULE-ITER',
                          **kwargs)
+        self._data_windows = {}
         self.allow_multi_par = allow_multi_par  # 设置为True，表示策略可以对不同的股票使用不同的参数
-        self.multi_pars = self._set_multi_pars(multi_pars)
+        self.multi_pars = None
+        self.set_multi_pars(multi_pars)
 
-    def _set_multi_pars(self, multi_pars):
+    def set_multi_pars(self, multi_pars):
         """ 设置多参数的函数，允许用户为每只股票设置不同的参数
 
         Parameters
@@ -1397,17 +1247,26 @@ class RuleIterator(BaseStrategy):
         """
         if not self.allow_multi_par:
             # 如果不允许多参数，则直接返回一个空元组
-            return tuple()
+            self.multi_pars = None
+            return
 
         # 将tuple/list形式的multi_pars转化为dict形式，key为股票代码，value为参数的值元组
         if multi_pars is None:
-            return tuple()
+            self.multi_pars = None
         elif isinstance(multi_pars, (tuple, list)):
-            return tuple(multi_pars)
+            self.multi_pars = tuple(multi_pars)
         elif isinstance(multi_pars, dict):
-            return tuple(multi_pars.values())
+            self.multi_pars = tuple(multi_pars.values())
         else:
             raise TypeError(f'multi_pars should be a tuple, list, or dict, not {type(multi_pars)}')
+
+    def update_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+        """ 将策略的历史数据更新为window_index指定的历史数据，对Rule_iterator来说数据不能直接保存到"""
+        for dtype_name in self.data_types:
+            data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
+            self._data_windows[dtype_name] = data_window
+            self._share_count = data_window.shape[1] if data_window is not None else 0
+            self._share_names = data_window.index.tolist() if isinstance(data_window, pd.DataFrame) else None
 
     def generate(self):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
@@ -1424,17 +1283,21 @@ class RuleIterator(BaseStrategy):
         """
         # 生成iterators, 将参数送入realize_no_nan中逐个迭代后返回结果
         signal = np.empty(self.share_count, dtype=float)
-        for i, share in enumerate(self.share_names):
-            if self.allow_multi_par:
+
+        for i in range(self.share_count):
+            if self.allow_multi_par and self.multi_pars:
                 # 如果允许多参数，则为每个股票使用不同的参数
                 par = self.multi_pars[i]
-                self.update_par_values(par)
+                self.update_par_values(*par)
+            # 更新股票使用的数据
+            for dtype_name in self.data_types:
+                setattr(self, dtype_name, self._data_windows[dtype_name][:, i])
+
             signal[i] = self.realize()
 
         return signal
 
     @abstractmethod
     def realize(self):
-        """
-        """
+        """ realize strategy here"""
         pass
