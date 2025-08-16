@@ -210,7 +210,7 @@ class Parameter:
             return np.all((self._lbound <= item) & (item <= self._ubound))
         elif self.par_type == 'int_array':
             return np.all((self._lbound <= item) & (item <= self._ubound) & (item.astype(int) == item))
-        else:
+        else:  # self.par_type == 'int'
             return self._lbound <= item <= self._ubound and float(item).is_integer()
 
     @property
