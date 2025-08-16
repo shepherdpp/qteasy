@@ -26,14 +26,27 @@ from qteasy.blender import (
 class Group:
     def __init__(self, name: str, signal_type: str = 'PT', blender: str = None):
 
+        if not isinstance(name, str):
+            raise TypeError(f'name should be a string, got {type(name)} instead')
+
+        if not isinstance(signal_type, str):
+            raise TypeError()
+
+        signal_type = signal_type.upper()
+        if signal_type not in ['PT', 'PS', 'VS']:
+            raise ValueError()
+
         self.name = name
         self.signal_type = signal_type
         self.blender_str = blender
-        self._blender = blender_parser(blender)
+        self._blender = None
+
+        if self.blender_str:
+            self._blender = blender_parser(self.blender_str)
 
         self.members = []
-        self.run_timing = None
-        self.run_freq = None
+        self._run_timing = None
+        self._run_freq = None
 
     @property
     def member_strategies(self):
@@ -41,19 +54,33 @@ class Group:
 
     @property
     def blender(self):
-        return human_blender(self.blender_str, self.members)
+        return self._blender
+
+    @property
+    def human_blender(self):
+        strategy_ids = [stg.name for stg in self.members]
+        return human_blender(self.blender_str, strategy_ids)
+
+    @property
+    def run_freq(self):
+        return self._run_freq
+
+    @property
+    def run_timing(self):
+        return self._run_timing
 
     def add_strategy(self, strategy: BaseStrategy):
 
         if len(self.members) == 0:
             self.members.append(strategy)
-            self.run_freq = strategy.run_freq
-            self.run_timing = strategy.run_timing
+            self._run_freq = strategy.run_freq
+            self._run_timing = strategy.run_timing
         else:
             if strategy in self.members:
                 raise ValueError(f"Strategy {strategy.name} is already a member of the group {self.name}.")
             if strategy.run_timing != self.run_timing:
-                raise ValueError(f"Strategy {strategy.name} has a different run timing than the group {self.name}.")
+                raise ValueError(f"Run timing of Strategy {strategy.name} ({strategy.run_timing}) "
+                                 f"if different from the group {self.name}.")
             if strategy.run_freq != self.run_freq:
                 raise ValueError(f"Strategy {strategy.name} has a different run frequency than the group {self.name}.")
             self.members.append(strategy)
@@ -61,9 +88,6 @@ class Group:
     def blend(self, signals: np.ndarray):
         """Set the blender for the group."""
         return signal_blend(op_signals=signals, blender=self._blender)
-
-    def human_blender(self):
-        return human_blender(self.blender_str, self.members)
 
     def __repr__(self):
         return f"Group(name={self.name}, members={self.members})"

@@ -918,8 +918,8 @@ def human_blender(blender_str: str, strategy_ids: list) -> str:
             try:
                 strategy_id = strategy_ids[int(token[1:])]
             except IndexError:
-                raise IndexError(f'index {token[1:]} out of range, while there are only '
-                                 f'{len(strategy_ids)} strategies in the list')
+                raise IndexError(f'Invalid blender string "{blender_str}": the index "s{token[1:]}" is out of range, '
+                                 f'while there are only {len(strategy_ids)} strategies in the list')
             human_tokens.append(str(strategy_id))
         elif token in ['+', '-', '*', '/', '^', '&', '|', 'and', 'or', 'not', '~']:
             human_tokens.append(f' {token} ')
