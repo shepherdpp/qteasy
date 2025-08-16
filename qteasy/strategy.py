@@ -499,6 +499,8 @@ class BaseStrategy:
             data_types = {data_types.dtype_id: data_types}
         elif isinstance(data_types, (list, tuple)):
             data_types = {dtype.dtype_id: dtype for dtype in data_types}
+        elif isinstance(data_types, dict):
+            pass
         else:
             raise TypeError(f'pars is invalid! ({data_types})')
 

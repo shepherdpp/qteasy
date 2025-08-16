@@ -108,20 +108,37 @@ class TestStrategy(unittest.TestCase):
             dtype_1 = self.dtype_1
             dtype_3 = self.dtype_3
 
-            def __init__(self, par_values=None):
+            def __init__(self, par_values: tuple = None):
                 super().__init__(
                         name='test_gen',
                         description='test general strategy',
                         run_freq='d',
                         run_timing='close',
+                        # TODO: user-defined parameter names should also be allowed
                         pars=[self.param1, self.param2],
-                        stg_type='general',
-                        data_types={'dt1': self.dtype_1, 'dt2': self.dtype_3},
-                        window_length=[20, 15],
+                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
                 )
 
+                if par_values:
+                    self.update_par_values(*par_values)
+
             def realize(self):
+
                 print("GeneralStg realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                avg = dt1_avg * self.param1 + dt2_avg * self.param2
+                print(f'avg = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+                signal = np.zeros_like(avg)
+                signal[np.argmax(avg)] = 1
+                print(f'got signal: \n{signal}')
+
+                return signal
 
         class FactorSorterStg(FactorSorter):
             def __init__(self, **kwargs):
@@ -136,6 +153,21 @@ class TestStrategy(unittest.TestCase):
 
             def realize(self):
                 print("RuleIterator realized")
+
+        # 实例化测试策略类
+        self.gen_stg = GenStg(par_values=(50, 0.5))
+
+        self.factor_sorter_stg = FactorSorterStg(
+                name='test_factor_sorter',
+                run_freq='d',
+                run_timing='close',
+                pars=[self.param1, self.param2],
+                data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                use_latest_data_cycle=[True, False],
+                window_length=[7, 9],
+        )
+
+        self.rule_iterator_stg = RuleIteratorStg()
 
         # data used to create windows
         self.test_data = dict(
@@ -821,832 +853,70 @@ class TestStrategy(unittest.TestCase):
               f'close_E_15min: \n{stg.close_E_15min}\n'
               f'close_E_w: \n{stg.close_E_w}\n')
 
+    def test_general_strategy(self):
+        """ 测试第一种基础策略类General Strategy"""
+        stg = self.gen_stg
+
+        # test creation of the object, and its properties
+        self.assertIsInstance(stg, GeneralStg)
+        self.assertEqual(stg.name, 'test_gen')
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+        self.assertEqual(stg.stg_type, 'GENERAL')
+        self.assertEqual(stg.description, 'test general strategy')
+        self.assertEqual(stg.par_values, (50, 0.5))
+        self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
+        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
+
+        # test if parameters are correct:
+        self.assertEqual(stg.param1, 50)
+        self.assertEqual(stg.param2, 0.5)
+        self.assertEqual(stg.close_E_d, None)
+        self.assertEqual(stg.close_E_5min, None)
+
+        # update parameter and data windows before start generate()
+        stg.update_par_values(3, 0.75)
+        stg.update_data_window(
+                data_windows=self.data_windows,
+                window_indices=self.window_indices,
+                window_index=0,  # run the first step of the indices
+        )
+
+        # check if parameters and data windows are set:
+        self.assertEqual(stg.param1, 3)
+        self.assertEqual(stg.param2, 0.75)
+        self.assertIsInstance(stg.close_E_d, np.ndarray)
+        self.assertIsInstance(stg.close_E_5min, np.ndarray)
+        self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][3]))
+
+        # run strategy.generate()
+        res = stg.generate()
+        print(res)
+        self.assertIsInstance(res, np.ndarray)
+
+        # update to the next data window:
+        stg.update_data_window(
+                data_windows=self.data_windows,
+                window_indices=self.window_indices,
+                window_index=1,  # run the first step of the indices
+        )
+        self.assertIsInstance(stg.close_E_d, np.ndarray)
+        self.assertIsInstance(stg.close_E_5min, np.ndarray)
+        self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][6]))
+        self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][4]))
+
+        stg.generate()
+
+
 
     def test_rule_iterator(self):
         """测试rule_iterator类型策略"""
-        stg = TestLSStrategy()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, RuleIterator)
-        stg_pars = {'000100': (5, 10),
-                    '000200': (5, 10),
-                    '000300': (5, 6)}
-        stg.set_pars(stg_pars)
-        history_data = self.hp1.values[:, :-1]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
-
-        # test strategy generate with only hist_data
-        print(f'test strategy generate with only hist_data')
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        lsmask = np.array([[0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
-
-        # test strategy generate with history data and reference_data
-        print(f'\ntest strategy generate with reference_data')
-        ref_data = self.test_ref_data[0, :, :]
-        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              ref_data=ref_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        lsmask = np.array([[1.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 1.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
-
-        # test strategy generate with trade_data
-        print(f'\ntest strategy generate with trade_data')
-        output = []
-        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
-        trade_data.fill(np.nan)
-        recent_prices = np.zeros(shape=(3,))
-        for step in range(len(history_data_rolling_window)):
-            output.append(
-                    stg.generate(
-                            hist_data=history_data_rolling_window,
-                            trade_data=trade_data,
-                            data_idx=step
-                    )
-            )
-            current_prices = history_data_rolling_window[step, :, -1, 0]
-            current_signals = output[-1]
-            recent_prices = np.where(current_signals == 1., current_prices, recent_prices)
-            trade_data[:, 4] = recent_prices
-        output = np.array(output, dtype='float')
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        lsmask = np.array([[1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
-
-    def test_general_strategy(self):
-        """ 测试第一种基础策略类General Strategy"""
-        # test strategy with only history data
-        stg = TestSelStrategy()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, GeneralStg)
-        stg_pars = ()
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['high, low, close', :, :-1]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
-
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        selmask = np.array([[0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test strategy with history data and reference data
-        print(f'\ntest strategy generate with reference_data')
-        ref_data = self.test_ref_data[0, :, :]
-        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              ref_data=ref_rolling_window,
-                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        selmask = np.array([[0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test strategy generate with trade_data
-        print(f'\ntest strategy generate with trade_data')
-        output = []
-        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
-        trade_data.fill(np.nan)
-        recent_prices = np.zeros(shape=(3,))
-        prev_signals = np.zeros(shape=(3,))
-        for step in range(len(history_data_rolling_window)):
-            output.append(
-                    stg.generate(
-                            hist_data=history_data_rolling_window,
-                            trade_data=trade_data,
-                            data_idx=step
-                    )
-            )
-            current_prices = history_data_rolling_window[step, :, -1, 2]
-            current_signals = output[-1]
-            recent_prices = np.where(current_signals != prev_signals, current_prices, recent_prices)
-            trade_data[:, 4] = recent_prices
-            prev_signals = current_signals
-        output = np.array(output, dtype='float')
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        selmask = np.array([[0.33333, 0.33333, 0.33333],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5]])
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, atol=0.001, equal_nan=True))
+        raise NotImplementedError
 
     def test_factor_sorter(self):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
-        print(f'\ntest strategy generate with only history data')
-        stg = SelectingAvgIndicator()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, FactorSorter)
-        stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
-        stg.set_pars(stg_pars)
-        stg.window_length = 5
-        stg.data_freq = 'd'
-        stg.run_freq = '10d'
-        stg.sort_ascending = False
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.max_sel_count = 0.67
-        # test additional FactorSorter properties
-        self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
-        self.assertEqual(stg.window_length, 5)
-        self.assertEqual(stg.data_freq, 'd')
-        self.assertEqual(stg.run_freq, '10d')
-        self.assertEqual(stg.sort_ascending, False)
-        self.assertEqual(stg.condition, 'greater')
-        self.assertEqual(stg.lbound, 0)
-        self.assertEqual(stg.ubound, 0)
-        self.assertEqual(stg.max_sel_count, 0.67)
-
-        history_data = self.hp2.values[:, :-1]
-        hist_data_rolling_window = rolling_window(history_data, window=stg.window_length, axis=1)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        selmask = np.array([[0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.0, 1.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get mininum factor
-        stg_pars = (True, 'even', 'less', 1, 1, 0.67)
-        stg.sort_ascending = True
-        stg.condition = 'less'
-        stg.lbound = 1
-        stg.ubound = 1
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.0, 1.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get max factor in linear weight
-        stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'linear'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0.0, 0.33333333, 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.66666667, 0.33333333],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.33333333, 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0.66666667, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get max factor in linear weight
-        stg_pars = (False, 'distance', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'distance'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.08333333, 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.91666667, 0.08333333],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.91666667, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        # test single factor, get max factor in proportion weight
-        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'proportion'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.4, 0.6],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.6, 0.4],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.25, 0., 0.75],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.375, 0.625, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        # test single factor, get max factor in linear weight, threshold 0.2
-        stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'even'
-        stg.condition = 'greater'
-        stg.lbound = 0.2
-        stg.ubound = 0.2
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        print(f'\ntest financial generate with reference data')
-        # to be added
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
