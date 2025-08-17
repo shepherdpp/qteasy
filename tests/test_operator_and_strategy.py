@@ -14,74 +14,75 @@ import unittest
 import qteasy as qt
 import pandas as pd
 import numpy as np
-import math
-from qteasy.utilfuncs import rolling_window
+
+from qteasy.parameter import Parameter
 from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
 from qteasy.tafuncs import sma
-from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from qteasy.blender import _exp_to_token, blender_parser, signal_blend, human_blender
+from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 from qteasy.datatypes import DataType
 
+# test parameters and datatypes:
+param1 = Parameter(
+        name='param1',
+        par_type='int',
+        par_range=(1, 100),
+        value=50,
+)
 
-class TestLSStrategy(RuleIterator):
-    """用于test测试的简单多空蒙板生成策略。基于RuleIterator策略模版，将下列策略循环应用到所有股票上
-        同时，针对不同股票策略参数可以不相同
+param2 = Parameter(
+        name='param2',
+        par_type='float',
+        par_range=(0.0, 10.),
+        value=0.5,
+)
 
-    该策略有两个参数，N与Price
-    如果给出的历史数据不包含参考数据时，策略逻辑如下：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于Price时，状态为看多，否则为看空
-    如果给出参考数据时，策略逻辑变为：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于当日参考数据时，状态为看多，否则为看空
-    如果给出交易结果数据时，策略逻辑变为：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于上次交易价时，状态为看多，否则为看空
+param3 = Parameter(
+        name='param3',
+        par_type='enum',
+        par_range=('option1', 'option2', 'option3'),
+        value='option1',
+)
 
-    """
+param4 = Parameter(
+        name='param4',
+        par_type='array[3,]',
+        par_range=(1.0, 5.0),
+        value=np.array([1.0, 2.0, 3.0]),
+)
 
-    def __init__(self):
-        super().__init__(
-                name='test_LS',
-                description='test long/short strategy',
-                par_count=2,
-                par_types='discr, conti',
-                par_range=([1, 5], [2, 10]),
-                strategy_data_types='close, open, high, low',
-                data_freq='d',
-                window_length=5,
-                use_latest_data_cycle=False,
-        )
-        pass
+dtype_1 = DataType(
+        name='close',
+        freq='d',
+        asset_type='E',
+)
 
-    def realize(self):
-        n = self.n
-        price = self.price
-        h = h.T
-        avg = (h[0] + h[1] + h[2] + h[3]) / 4
-        ma = sma(avg, n)
-        if r is not None:
-            # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据，r[-1
-            if ma[-1] < ref_price:
-                return 0
-            else:
-                return 1
+dtype_2 = DataType(
+        name='close',
+        freq='h',
+        asset_type='E',
+)
 
-        if t is not None:
-            # 处理交易结果数据生成信号并返回
-            last_price = t[4]  # 获取最近的交易价格
-            if np.isnan(last_price):
-                return 1  # 生成第一次交易信号
-            if ma[-1] < last_price:
-                return 1
-            else:
-                return 0
+dtype_3 = DataType(
+        name='close',
+        freq='5min',
+        asset_type='E',
+)
 
-        if ma[-1] < price:
-            return 0
-        else:
-            return 1
+dtype_4 = DataType(
+        name='close',
+        freq='15min',
+        asset_type='E',
+)
+
+dtype_5 = DataType(
+        name='close',
+        freq='w',
+        asset_type='E',
+)
 
 
-class TestSelStrategy(GeneralStg):
+# basic test strategies
+class TestGenStg(GeneralStg):
     """用于Test测试的通用交易策略，基于GeneralStrategy策略生成
 
     策略没有参数，选股周期为5D
@@ -97,53 +98,38 @@ class TestSelStrategy(GeneralStg):
      - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
-    def __init__(self):
+    def __init__(self, par_values: tuple = None):
         super().__init__(
-                name='test_SEL',
-                description='test portfolio selection strategy',
-                par_count=0,
-                par_types='',
-                par_range=(),
-                strategy_data_types='high, low, close',
-                data_freq='d',
-                strategy_run_freq='10d',
-                window_length=5,
-                use_latest_data_cycle=False,
+                name='test_gen',
+                description='test general strategy',
+                run_freq='d',
+                run_timing='close',
+                pars=[param1, param2],
+                data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
+                use_latest_data_cycle=[True, False],
+                window_length=[7, 9],
         )
-        pass
+
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
-        avg = np.nanmean(h, axis=(1, 2))
-        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
-        dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
-        if r is not None:
-            # calculate difper while r
-            ref_price = np.nanmean(r[:, 0])
-            difper = dif_no_nan / avg / ref_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
 
-        if t is not None:
-            # calculate difper while t
-            last_price = t[:, 4]
-            if np.all(np.isnan(last_price)):
-                return np.ones_like(avg) * 0.333
-            difper = dif_no_nan / last_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
+        print("GeneralStg realized")
+        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+        dt1_avg = np.mean(self.close_E_d, axis=0)
+        dt2_avg = np.mean(self.close_E_5min, axis=0)
+        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+        avg = dt1_avg * self.param1 + dt2_avg * self.param2
+        print(f'avg = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+        signal = np.zeros_like(avg)
+        signal[np.argmax(avg)] = 1
+        print(f'got signal: \n{signal}')
 
-        difper = dif_no_nan / avg
-        large2 = difper.argsort()[1:]
-        chosen = np.zeros_like(avg)
-        chosen[large2] = 0.5
-        return chosen
+        return signal
 
 
-class TestSelStrategyDiffTime(GeneralStg):
+class TestFactorSorter(FactorSorter):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -151,31 +137,35 @@ class TestSelStrategyDiffTime(GeneralStg):
     选股比例为平均分配
     """
 
-    def __init__(self):
+    def __init__(self, par_values=None, **kwargs):
         super().__init__(
-                name='test_SEL',
-                description='test portfolio selection strategy',
-                par_count=0,
-                par_types='',
-                par_range=(),
-                strategy_data_types='close, low, open',
-                data_freq='d',
-                strategy_run_freq='w',
-                window_length=2,
-                use_latest_data_cycle=False,
+                name='test_factor_sorter',
+                description='test factor sorter strategy',
+                run_freq='d',
+                run_timing='close',
+                pars=[param1, param2],
+                data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
+                use_latest_data_cycle=[True, False],
+                window_length=[7, 9],
+                **kwargs,
         )
-        pass
+
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
-        avg = h.mean(axis=1).squeeze()
-        difper = (h[:, :, 0] - np.roll(h[:, :, 0], 1))[:, -1] / avg
-        large2 = difper.argsort()[0:2]
-        chosen = np.zeros_like(avg)
-        chosen[large2] = 0.5
-        return chosen
+        print("FactorSorter realized")
+        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+        dt1_avg = np.mean(self.close_E_d, axis=0)
+        dt2_avg = np.mean(self.close_E_5min, axis=0)
+        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+        avg = dt1_avg * self.param1 + dt2_avg * self.param2
+        print(f'signal sorter = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+
+        return avg
 
 
-class TestSigStrategy(GeneralStg):
+class TestRuleIter(RuleIterator):
     """用于Test测试的简单信号生成策略，基于GeneralStrategy策略生成
 
     策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
@@ -192,42 +182,38 @@ class TestSigStrategy(GeneralStg):
      2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
     """
 
-    def __init__(self):
+    def __init__(self, par_values=None):
         super().__init__(
-                name='test_SIG',
-                description='test signal creation strategy',
-                par_count=3,
-                par_types='conti, conti, conti',
-                par_range=([0, 10], [-3, 3], [-3, 3]),
-                strategy_data_types='close, open, high, low',
-                window_length=2,
-                use_latest_data_cycle=False,
+                name='test_rule_iterator',
+                description='test rule iterator strategy',
+                run_freq='d',
+                run_timing='close',
+                # TODO: user-defined parameter names should also be allowed
+                pars=[self.param1, self.param2],
+                # TODO: user-defined dtype names should be allowed using {name: Dtype} form
+                data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                use_latest_data_cycle=[True, False],
+                window_length=[7, 9],
         )
-        pass
+
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
-        max_ratio, price1, price2 = self.par_values
-        ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
-        diff = h[:, -1, 0] - h[:, -2, 0]
-
-        if r is not None:
-            type1 = r[-1, 0]
-            type2 = r[-1, 1]
-            sig = np.where((ratio < max_ratio) & (diff > type1),
-                           1,
-                           np.where((ratio < max_ratio) & (diff < type2), -1, 0))
-            return sig
-
-        if t is not None:
-            pass
-
-        sig = np.where((ratio < max_ratio) & (diff > price1),
-                       1,
-                       np.where((ratio < max_ratio) & (diff < price2), -1, 0))
-
-        return sig
+        print("RuleIterator realized")
+        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+        dt1_avg = np.mean(self.close_E_d, axis=0)
+        dt2_avg = np.mean(self.close_E_5min, axis=0)
+        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+        criteria = dt1_avg * self.param1 >= dt2_avg * self.param2
+        print(f'criteria = avg1 * {self.param1} >= avg2 * {self.param2} = {criteria}')
+        if criteria:
+            return 1
+        else:
+            return 0
 
 
+# Other high level test strategies
 class MyStg(qt.RuleIterator):
     """自定义双均线择时策略策略"""
 
@@ -363,7 +349,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
         # for some share_pool
 
-        price_d_data = np.array(
+        close_E_d = np.array(
                 [[0.994, 0.412, 0.876],
                  [1.117, 1.257, 1.447],
                  [2.315, 2.08, 2.799],
@@ -388,9 +374,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [21.482, 21.229, 21.578],
                  [22.435, 22.952, 22.289],
                  [23.605, 23.377, 23.311],
-                 [24.676, 24.23, 24.839]]
+                 [24.676, 24.23, 24.839]],
         )
-        volume_d_data = np.array(
+        close_E_h = np.array(
                 [[0.593, 0.82, 0.13],
                  [1.343, 1.253, 1.198],
                  [2.732, 2.43, 2.873],
@@ -411,13 +397,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [17.705, 17.642, 17.954],
                  [18.808, 18.995, 18.233],
                  [19.418, 19.02, 19.943],
-                 [20.712, 20.348, 20.239],
-                 [21.569, 21.743, 21.552],
-                 [22.931, 22.382, 22.153],
-                 [23.571, 23.224, 23.841],
-                 [24.853, 24.294, 24.279]]
+                 [20.712, 20.348, 0.239],
+                 [21.569, 21.743, 1.552],
+                 [22.931, 22.382, 2.153],
+                 [23.571, 23.224, 3.841],
+                 [24.853, 24.294, 4.279]]
         )
-        close_d_data = np.array(
+        close_E_5min = np.array(
                 [[0.97, 0.892, 0.784],
                  [1.526, 1.455, 1.606],
                  [2.509, 2.662, 2.306],
@@ -444,7 +430,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [23.833, 23.275, 23.104],
                  [24.514, 24.537, 24.06]]
         )
-        close_h_data = np.array(
+        close_E_15min = np.array(
                 [[0.704, 0.179, 0.9],
                  [0.882, 0.831, 1.206],
                  [0.61, 1.024, 1.473],
@@ -546,7 +532,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [25.384, 24.922, 25.486],
                  [25.144, 25.661, 25.176]]
         )
-        price_h_data = np.array(
+        close_E_w = np.array(
                 [[0.134, 0.207, 0.095],
                  [1.015, 0.591, 0.615],
                  [1.255, 0.85, 0.992],
@@ -649,8 +635,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [24.873, 25.657, 24.869]]
         )
 
-        # trade_price_h_data = np.ones(shape=(47, 3)) * 10.0  # all 10 prices
-
         trade_price_h_data = np.array(
                 [[37.58, 32.50, 24.14],
                  [38.65, 33.31, 23.80],
@@ -701,20 +685,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [34.88, 37.45, 27.24]]
         )
 
-        price_d_df = pd.DataFrame(
-                price_d_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
-        )
-        volume_d_df = pd.DataFrame(
-                volume_d_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
-        )
         close_d_df = pd.DataFrame(
-                close_d_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+                close_E_d, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
         )
         close_h_df = pd.DataFrame(
-                close_h_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+                close_E_h, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
         )
-        price_h_df = pd.DataFrame(
-                price_h_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+        close_5min_df = pd.DataFrame(
+                close_E_5min, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+        )
+        close_15min_df = pd.DataFrame(
+                close_E_15min, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+        )
+        close_w_df = pd.DataFrame(
+                close_E_w, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
         )
 
         trade_price_h_df = pd.DataFrame(
@@ -753,7 +737,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 freq='h',
                 asset_type='E',
         )
-
 
     def test_init(self):
         """ test initialization of Operator class"""
@@ -819,9 +802,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                           'c': (12, 22, 32)})
 
         # test errors
-        self.assertRaises(AssertionError, stg_dma.set_pars, 'wrong input')   # wrong input type
+        self.assertRaises(AssertionError, stg_dma.set_pars, 'wrong input')  # wrong input type
         self.assertRaises(ValueError, stg_dma.set_pars, (10, -100))  # par count does not match
-        self.assertRaises(ValueError, stg_dma.set_pars, (10, 10, -10))   # par out of range
+        self.assertRaises(ValueError, stg_dma.set_pars, (10, 10, -10))  # par out of range
         wrong_dict_pars = {'a': (10, 20, 30),
                            'b': (11, 21, 31),
                            'c': (12, 22, 32)}
@@ -1720,7 +1703,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 window_length=50,
                 pars=(20,),
                 strategy_data_types='close',  # 考察收盘价变化率
-                run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
+                run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
         )
         op.set_parameter(
                 1,
