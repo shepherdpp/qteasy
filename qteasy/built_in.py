@@ -10,6 +10,8 @@
 
 import numpy as np
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
+from qteasy.parameter import Parameter
+from qteasy.datatypes import DataType
 # commonly used ta-lib funcs that have a None ta-lib version
 from qteasy.tafuncs import (
     sma,
@@ -682,7 +684,7 @@ class SCRSKAMA(RuleIterator):
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - KAMA',
                          description='Single moving average strategy that uses KAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          strategy_data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1497,7 +1499,7 @@ class SLPHT(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(5, )):
+    def __init__(self, pars=(5,)):
         try:  # if ta-lib is installed
             from .tafuncs import ht
         except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
@@ -1894,22 +1896,22 @@ class MACD(RuleIterator):
     """
 
     def __init__(self, pars: tuple = (12, 26, 9)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (5, 250)],
-                         name='MACD',
-                         description='MACD strategy, determine long/short position according to differences of '
-                                     'exponential weighted moving average prices',
-                         strategy_data_types='close')
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), par_type='int', name='slow'),
+                    Parameter((10, 250), par_type='int', name='fast'),
+                    Parameter((5, 250), par_type='int', name='mid')
+                ],
+                name='MACD',
+                description='MACD strategy, determine long/short position according to differences of '
+                            'exponential weighted moving average prices',
+                data_types=DataType('close')
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, m = self.par_values
-        else:
-            s, l, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+    def realize(self):
+        s, l, m = self.slow, self.fast, self.mid
+
+        h = self.close_E_d
 
         # 计算指数的指数移动平均价格
         diff = ema(h[0], s) - ema(h[0], l)
@@ -3028,7 +3030,7 @@ class OBV(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(15, )):
+    def __init__(self, pars=(15,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -3089,7 +3091,7 @@ class ATR(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(15, )):
+    def __init__(self, pars=(15,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -3310,7 +3312,7 @@ class TimingLong(GeneralStg):
 
     def realize(self, h, r=None, t=None, pars=None):
         sc, wl, htp = h.shape
-        return np.ones(shape=(sc, ))
+        return np.ones(shape=(sc,))
 
 
 class TimingShort(GeneralStg):
@@ -3339,7 +3341,7 @@ class TimingShort(GeneralStg):
 
     def realize(self, h, r=None, t=None, pars=None):
         sc, wl, htp = h.shape
-        return -np.ones(shape=(sc, ))
+        return -np.ones(shape=(sc,))
 
 
 class TimingZero(GeneralStg):
@@ -3365,9 +3367,9 @@ class TimingZero(GeneralStg):
                          name='Zero',
                          description='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         sc, wl, htp = h.shape
-        return np.zeros(shape=(sc, ))
+        return np.zeros(shape=(sc,))
 
 
 class DMA(RuleIterator):
@@ -3393,23 +3395,26 @@ class DMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 26, 9)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (5, 250)],
-                         name='DMA',
-                         description='Quick DMA strategy, determine long/short position according to differences of '
-                                     'moving average prices with simple timing strategy',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 26, 9)):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(10, 250), par_type='int', name='slow'),
+                    Parameter(par_range=(10, 250), par_type='int', name='long'),
+                    Parameter(par_range=(5, 250), par_type='int', name='diff')
+                ],
+                name='DMA',
+                description='Quick DMA strategy, determine long/short position according to differences of '
+                            'moving average prices with simple timing strategy',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, d = self.par_values
-        else:
-            s, l, d = pars
+        if par_values:
+            self.update_par_values(*par_values)
 
-        h = h.T
+    def realize(self):
+        s, l, d = self.slow, self.long, self.diff
+
+        h = self.close_E_d
         dma = sma(h[0], s) - sma(h[0], l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
@@ -3643,7 +3648,7 @@ class SelectingNDayLast(FactorSorter):
             n, = self.par_values
         else:
             n, = pars
-        factors = h[:, -n-1, 0]
+        factors = h[:, -n - 1, 0]
 
         return factors
 
@@ -3702,7 +3707,7 @@ class SelectingNDayAvg(FactorSorter):
             n, = self.par_values
         else:
             n, = pars
-        n_average = h[:, -n-1:, 0].mean(axis=1)
+        n_average = h[:, -n - 1:, 0].mean(axis=1)
         factors = n_average
 
         return factors
@@ -3764,7 +3769,7 @@ class SelectingNDayChange(FactorSorter):
         else:
             n, = pars
         current_price = h[:, -1, 0]
-        n_previous = h[:, -n-1, 0]
+        n_previous = h[:, -n - 1, 0]
         factors = current_price - n_previous
 
         return factors
@@ -3825,7 +3830,7 @@ class SelectingNDayRateChange(FactorSorter):
         else:
             n, = pars
         current_price = h[:, -1, 0]
-        n_previous = h[:, -n-1, 0]
+        n_previous = h[:, -n - 1, 0]
         factors = (current_price - n_previous) / n_previous
 
         return factors
@@ -3889,85 +3894,84 @@ class SelectingNDayVolatility(FactorSorter):
         close = h[:, :, 2]
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
-        factors = np.array(list(map(atr, high, low, close, [n]*len(high))))[:, -1]
+        factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[:, -1]
 
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
-                       'macd':              MACD,
-                       'dma':               DMA,
-                       'trix':              TRIX,
-                       'cdl':               CDL,
-                       'bband':             BBand,
-                       's-bband':           SoftBBand,
-                       'sarext':            SAREXT,
-                       'ssma':              SCRSSMA,
-                       'sdema':             SCRSDEMA,
-                       'sema':              SCRSEMA,
-                       'sht':               SCRSHT,
-                       'skama':             SCRSKAMA,
-                       'smama':             SCRSMAMA,
-                       'st3':               SCRST3,
-                       'stema':             SCRSTEMA,
-                       'strima':            SCRSTRIMA,
-                       'swma':              SCRSWMA,
-                       'dsma':              DCRSSMA,
-                       'ddema':             DCRSDEMA,
-                       'dema':              DCRSEMA,
-                       'dkama':             DCRSKAMA,
-                       'dmama':             DCRSMAMA,
-                       'dt3':               DCRST3,
-                       'dtema':             DCRSTEMA,
-                       'dtrima':            DCRSTRIMA,
-                       'dwma':              DCRSWMA,
-                       'slsma':             SLPSMA,
-                       'sldema':            SLPDEMA,
-                       'slema':             SLPEMA,
-                       'slht':              SLPHT,
-                       'slkama':            SLPKAMA,
-                       'slmama':            SLPMAMA,
-                       'slt3':              SLPT3,
-                       'sltema':            SLPTEMA,
-                       'sltrima':           SLPTRIMA,
-                       'slwma':             SLPWMA,
-                       'adx':               ADX,
-                       'apo':               APO,
-                       'aroon':             AROON,
-                       'aroonosc':          AROONOSC,
-                       'cci':               CCI,
-                       'cmo':               CMO,
-                       'macdext':           MACDEXT,
-                       'mfi':               MFI,
-                       'di':                DI,
-                       'dm':                DM,
-                       'mom':               MOM,
-                       'ppo':               PPO,
-                       'rsi':               RSI,
-                       'stoch':             STOCH,
-                       'stochf':            STOCHF,
-                       'stochrsi':          STOCHRSI,
-                       'ultosc':            ULTOSC,
-                       'willr':             WILLR,
-                       'ad':                AD,
-                       'adosc':             ADOSC,
-                       'obv':               OBV,
-                       'signal_none':       SignalNone,
-                       'sellrate':          SellRate,
-                       'buyrate':           BuyRate,
-                       'long':              TimingLong,
-                       'short':             TimingShort,
-                       'zero':              TimingZero,
-                       'all':               SelectingAll,
-                       'select_none':       SelectingNone,
-                       'random':            SelectingRandom,
-                       'finance':           SelectingAvgIndicator,
-                       'ndaylast':          SelectingNDayLast,
-                       'ndayavg':           SelectingNDayAvg,
-                       'ndayrate':          SelectingNDayRateChange,
-                       'ndaychg':           SelectingNDayChange,
-                       'ndayvol':           SelectingNDayVolatility
+BUILT_IN_STRATEGIES = {'crossline':   CROSSLINE,
+                       'macd':        MACD,
+                       'dma':         DMA,
+                       'trix':        TRIX,
+                       'cdl':         CDL,
+                       'bband':       BBand,
+                       's-bband':     SoftBBand,
+                       'sarext':      SAREXT,
+                       'ssma':        SCRSSMA,
+                       'sdema':       SCRSDEMA,
+                       'sema':        SCRSEMA,
+                       'sht':         SCRSHT,
+                       'skama':       SCRSKAMA,
+                       'smama':       SCRSMAMA,
+                       'st3':         SCRST3,
+                       'stema':       SCRSTEMA,
+                       'strima':      SCRSTRIMA,
+                       'swma':        SCRSWMA,
+                       'dsma':        DCRSSMA,
+                       'ddema':       DCRSDEMA,
+                       'dema':        DCRSEMA,
+                       'dkama':       DCRSKAMA,
+                       'dmama':       DCRSMAMA,
+                       'dt3':         DCRST3,
+                       'dtema':       DCRSTEMA,
+                       'dtrima':      DCRSTRIMA,
+                       'dwma':        DCRSWMA,
+                       'slsma':       SLPSMA,
+                       'sldema':      SLPDEMA,
+                       'slema':       SLPEMA,
+                       'slht':        SLPHT,
+                       'slkama':      SLPKAMA,
+                       'slmama':      SLPMAMA,
+                       'slt3':        SLPT3,
+                       'sltema':      SLPTEMA,
+                       'sltrima':     SLPTRIMA,
+                       'slwma':       SLPWMA,
+                       'adx':         ADX,
+                       'apo':         APO,
+                       'aroon':       AROON,
+                       'aroonosc':    AROONOSC,
+                       'cci':         CCI,
+                       'cmo':         CMO,
+                       'macdext':     MACDEXT,
+                       'mfi':         MFI,
+                       'di':          DI,
+                       'dm':          DM,
+                       'mom':         MOM,
+                       'ppo':         PPO,
+                       'rsi':         RSI,
+                       'stoch':       STOCH,
+                       'stochf':      STOCHF,
+                       'stochrsi':    STOCHRSI,
+                       'ultosc':      ULTOSC,
+                       'willr':       WILLR,
+                       'ad':          AD,
+                       'adosc':       ADOSC,
+                       'obv':         OBV,
+                       'signal_none': SignalNone,
+                       'sellrate':    SellRate,
+                       'buyrate':     BuyRate,
+                       'long':        TimingLong,
+                       'short':       TimingShort,
+                       'zero':        TimingZero,
+                       'all':         SelectingAll,
+                       'select_none': SelectingNone,
+                       'random':      SelectingRandom,
+                       'finance':     SelectingAvgIndicator,
+                       'ndaylast':    SelectingNDayLast,
+                       'ndayavg':     SelectingNDayAvg,
+                       'ndayrate':    SelectingNDayRateChange,
+                       'ndaychg':     SelectingNDayChange,
+                       'ndayvol':     SelectingNDayVolatility
                        }
-
 
 available_built_in_strategies = BUILT_IN_STRATEGIES.values()

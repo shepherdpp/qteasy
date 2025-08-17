@@ -188,10 +188,8 @@ class TestRuleIter(RuleIterator):
                 description='test rule iterator strategy',
                 run_freq='d',
                 run_timing='close',
-                # TODO: user-defined parameter names should also be allowed
-                pars=[self.param1, self.param2],
-                # TODO: user-defined dtype names should be allowed using {name: Dtype} form
-                data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                pars=[param1, param2],
+                data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
                 use_latest_data_cycle=[True, False],
                 window_length=[7, 9],
         )
@@ -346,10 +344,40 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         print('start testing HistoryPanel object\n')
 
-        # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
-        # for some share_pool
+        # 1， 准备模拟历史数据对象
 
-        close_E_d = np.array(
+        close_E_d = DataType(
+                name='close',
+                freq='d',
+                asset_type='E'
+        )
+
+        close_E_h = DataType(
+                name='close',
+                freq='h',
+                asset_type='E'
+        )
+
+        close_E_5min = DataType(
+                name='close',
+                freq='5min',
+                asset_type='E'
+        )
+
+        close_E_15min = DataType(
+                name='close',
+                freq='15min',
+                asset_type='E',
+        )
+
+        close_E_w = DataType(
+                name='close',
+                freq='w',
+                asset_type='E',
+        )
+
+        # 测试数据的值不是来自于DataSource，而是直接设定，方便运算
+        close_E_d_data = np.array(
                 [[0.994, 0.412, 0.876],
                  [1.117, 1.257, 1.447],
                  [2.315, 2.08, 2.799],
@@ -376,7 +404,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [23.605, 23.377, 23.311],
                  [24.676, 24.23, 24.839]],
         )
-        close_E_h = np.array(
+        close_E_h_data = np.array(
                 [[0.593, 0.82, 0.13],
                  [1.343, 1.253, 1.198],
                  [2.732, 2.43, 2.873],
@@ -403,7 +431,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [23.571, 23.224, 3.841],
                  [24.853, 24.294, 4.279]]
         )
-        close_E_5min = np.array(
+        close_E_5min_data = np.array(
                 [[0.97, 0.892, 0.784],
                  [1.526, 1.455, 1.606],
                  [2.509, 2.662, 2.306],
@@ -430,7 +458,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [23.833, 23.275, 23.104],
                  [24.514, 24.537, 24.06]]
         )
-        close_E_15min = np.array(
+        close_E_15min_data = np.array(
                 [[0.704, 0.179, 0.9],
                  [0.882, 0.831, 1.206],
                  [0.61, 1.024, 1.473],
@@ -532,7 +560,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [25.384, 24.922, 25.486],
                  [25.144, 25.661, 25.176]]
         )
-        close_E_w = np.array(
+        close_E_w_data = np.array(
                 [[0.134, 0.207, 0.095],
                  [1.015, 0.591, 0.615],
                  [1.255, 0.85, 0.992],
@@ -686,19 +714,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
 
         close_d_df = pd.DataFrame(
-                close_E_d, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+                close_E_d_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
         )
         close_h_df = pd.DataFrame(
-                close_E_h, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+                close_E_h_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
         )
         close_5min_df = pd.DataFrame(
-                close_E_5min, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+                close_E_5min_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
         )
         close_15min_df = pd.DataFrame(
-                close_E_15min, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+                close_E_15min_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
         )
         close_w_df = pd.DataFrame(
-                close_E_w, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+                close_E_w_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
         )
 
         trade_price_h_df = pd.DataFrame(
@@ -706,41 +734,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 index=pd.date_range(start='2023-01-01', periods=47, freq='4h')
         )
 
-        # 1， 准备模拟历史数据对象
-
-        open_d = DataType(
-                name='open',
-                freq='d',
-                asset_type='E'
-        )
-
-        volume_d = DataType(
-                name='volume',
-                freq='d',
-                asset_type='E'
-        )
-
-        close_d = DataType(
-                name='close',
-                freq='d',
-                asset_type='E'
-        )
-
-        high_h = DataType(
-                name='high',
-                freq='h',
-                asset_type='E',
-        )
-
-        close_h = DataType(
-                name='close',
-                freq='h',
-                asset_type='E',
-        )
-
     def test_init(self):
         """ test initialization of Operator class"""
-        op = qt.Operator()
+        op = qt.Operator(name='test_operator')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.signal_type, 'pt')
         self.assertIsInstance(op.strategies, list)
