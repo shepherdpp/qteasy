@@ -12,8 +12,15 @@
 
 import unittest
 import numpy as np
+import math
 
 from qteasy.parameter import Parameter
+from qteasy.blender import (
+    blender_parser,
+    signal_blend,
+    human_blender,
+    _exp_to_token,
+)
 
 
 class TestParameter(unittest.TestCase):
