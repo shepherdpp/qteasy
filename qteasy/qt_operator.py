@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from typing import Union, Any, Iterable
+from typing import Union, Any, Iterable, Mapping
 
 from qteasy.finance import CashPlan
 from qteasy.history import HistoryPanel
@@ -85,14 +85,41 @@ class Operator:
 
     """
 
-    def __init__(self, name, strategies=None, signal_type=None, op_type=None, group_merge_type='None'):
+    def __init__(self,
+                 strategies: Union[str, list[Union[str, BaseStrategy]]] = None,
+                 *,
+                 name: str = None,
+                 signal_type: str = 'pt',
+                 op_type: str = 'batch',
+                 group_merge_type: str = 'None'):
         """ 生成一个Operator对象
 
         parameters
         ----------
-        strategies : str, Strategy, list of str or list of Strategy
+        strategies : str, Strategy, list of str or Strategy
             用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             如果不给出strategies，则会生成一个空的Operator对象
+        name : str, optional
+            Operator对象的名称
+        signal_type : str, {'pt', 'ps', 'vs'}, default 'pt'
+            交易信号模式，Operator支持为每个策略组设置三种不同的信号模式之一，分别如下：
+                - PT：positional target，生成的信号代表某种股票的目标仓位
+                - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
+                - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
+            在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见文档
+        op_type : str, {'batch', 'stepwise'}, default 'batch'
+            运行类型，Operator对象有两种不同的运行类型：
+                - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
+                                   不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
+                - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
+                                   交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
+                                   特殊交易策略，也可以用于实时交易
+        group_merge_type : str, {'None', 'and', 'or'}, default 'None'
+            交易策略组的合并方式，决定了当一个Operator对象中包含多个交易策略组时，如何将这些策略组
+            生成的交易信号进行合并。可选的合并方式包括：
+                - None: 每个策略组独立生成交易信号，同一时刻生成的交易信号会分别独立执行
+                - and: 同一时刻不同策略组运行生成的信号会被加总后合并执行
+                - or:  同一时刻不同策略组运行生成的信号会被相乘后合并执行
 
         Examples
         --------
@@ -753,18 +780,18 @@ class Operator:
         self.set_parameter(stg_id=stg_id, **kwargs)
 
         if len(self.groups) == 0 or not any(
-                stg.run_timing == group.run_timing and stg.run_freq == group.run_freq
+                strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
                 for group in self.groups
         ):  # create a new group if no existing group matches the strategy's timing and frequency
             new_group = Group(name=f"Group_{len(self.groups) + 1}",
                               signal_type='PT',
                               blender=None, )
-            new_group.add_strategy(stg)
+            new_group.add_strategy(strategy)
             self.groups.append(new_group)
         else:  # add the strategy to an existing group
             for group in self.groups:
-                if stg.run_timing == group.run_timing and stg.run_freq == group.run_freq:
-                    group.add_strategy(stg)
+                if strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq:
+                    group.add_strategy(strategy)
                     break
             return
 
@@ -1159,10 +1186,8 @@ class Operator:
                       stg_id: Union[str, int],
                       pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
-                      run_freq: str = None,
                       window_length: int = None,
                       strategy_data_types: Union[str, list] = None,
-                      run_timing: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
