@@ -234,21 +234,67 @@ class TestGroup(unittest.TestCase):
 
         self.assertEqual(gp.run_freq, 'd')
         self.assertEqual(gp.run_timing, 'close')
-        self.assertEqual(gp.blender_str, None)
+        self.assertEqual(gp.blender_str, '')
         self.assertEqual(gp.human_blender, '')
         gp.blender_str = 's0 + 3'
         self.assertEqual(gp.human_blender, 'test_gen + 3')
+        self.assertEqual(gp.blender, ['+', '3', 's0'])
 
         gp.add_strategy(self.factor_sorter_d_close)
 
         gp.blender_str = 's0 + s1'
         self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter')
+        self.assertEqual(gp.blender, ['+', 's1', 's0'])
 
         self.assertRaises(ValueError, gp.add_strategy, self.factor_sorter_h_open)
         self.assertEqual(gp.run_freq, 'd')
 
-    def test_merge(self):
-        raise NotImplementedError
+    def test_blender(self):
+        gp = Group('new_group')
+
+        self.assertEqual(gp.name, 'new_group')
+        self.assertEqual(gp.run_freq, None)
+        self.assertEqual(gp.run_timing, None)
+        self.assertEqual(gp.blender, None)
+        self.assertEqual(gp.human_blender, '')
+
+        gp.add_strategy(self.gen_stg_d_close)
+        gp.add_strategy(self.factor_sorter_d_close)
+        gp.add_strategy(self.iterator_stg_d_close)
+
+        gp.blender_str = 's0 + s1 + s2'
+        self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter + test_rule_iterator')
+        self.assertEqual(gp.blender, ['+', 's2', '+', 's1', 's0'])
+
+        signals = [
+            np.array([0.7,0.5,0.3]),
+            np.array([0.8,0.8,0.8]),
+            np.array([0.5,0.6,0.7]),
+        ]
+
+        blended_signal = gp.blend(signals)
+        print(blended_signal)
+        self.assertIsInstance(blended_signal, np.ndarray)
+        self.assertEqual(blended_signal.shape, (3,))
+        self.assertTrue(np.allclose(blended_signal, np.array([2., 1.9, 1.8])))
+
+        test_blender_strings = [
+            's0 + s1 + s2 + s0',
+            's0 * 2 + s1 * 3 - s2',
+            'max(s0, s1) + s2',
+            'sum(s0, s1, s2)',
+            'avg(s0, s1, s2)',
+            'pos_2_0.5(s0, s1, s2)',
+            'avgpos_2_0.5(s0, s1, s2)',
+            'power(s0, s1) + s2',
+            'unify(s0) + uni(s1) + unify(s2)'
+        ]
+
+        for blender_str in test_blender_strings:
+            gp.blender_str = blender_str
+            print(f'Testing blender: {gp.human_blender}, \nblender: {gp.blender}\nresult\n{gp.blend(signals)}')
+            self.assertIsInstance(gp.blender, list)
+            self.assertTrue(all(isinstance(item, str) for item in gp.blender))
 
 
 if __name__ == '__main__':

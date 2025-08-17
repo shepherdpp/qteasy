@@ -14,6 +14,7 @@
 # ======================================
 
 import numpy as np
+from typing import Iterable
 from qteasy.strategy import BaseStrategy
 
 from qteasy.blender import (
@@ -38,19 +39,30 @@ class Group:
 
         self.name = name
         self.signal_type = signal_type
-        self.blender_str = blender
+        self._blender_str = ''
         self._blender = None
-
-        if self.blender_str:
-            self._blender = blender_parser(self.blender_str)
 
         self.members = []
         self._run_timing = None
         self._run_freq = None
 
+        if blender:
+            self.blender_str = blender
+
     @property
     def member_strategies(self):
         return [strategy.name for strategy in self.members]
+
+    @property
+    def blender_str(self):
+        return self._blender_str
+
+    @blender_str.setter
+    def blender_str(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f'blender_str should be a string, got {type(value)} instead')
+        self._blender_str = value
+        self._blender = blender_parser(value) if value else None
 
     @property
     def blender(self):
@@ -85,7 +97,7 @@ class Group:
                 raise ValueError(f"Strategy {strategy.name} has a different run frequency than the group {self.name}.")
             self.members.append(strategy)
 
-    def blend(self, signals: np.ndarray):
+    def blend(self, signals: Iterable):
         """Set the blender for the group."""
         return signal_blend(op_signals=signals, blender=self._blender)
 
