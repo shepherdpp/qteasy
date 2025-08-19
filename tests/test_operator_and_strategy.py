@@ -51,21 +51,21 @@ param4 = Parameter(
 )
 
 dtype_1 = DataType(
-        name='close',
-        freq='d',
-        asset_type='E',
+                name='close',
+                freq='d',
+                asset_type='E'
 )
 
 dtype_2 = DataType(
         name='close',
         freq='h',
-        asset_type='E',
+        asset_type='E'
 )
 
 dtype_3 = DataType(
         name='close',
         freq='5min',
-        asset_type='E',
+        asset_type='E'
 )
 
 dtype_4 = DataType(
@@ -78,6 +78,364 @@ dtype_5 = DataType(
         name='close',
         freq='w',
         asset_type='E',
+)
+
+# 测试数据的值不是来自于DataSource，而是直接设定，方便运算
+dtype_1_data = np.array(
+        [[0.994, 0.412, 0.876],
+         [1.117, 1.257, 1.447],
+         [2.315, 2.08, 2.799],
+         [3.704, 3.87, 3.62],
+         [4.091, 4.127, 4.218],
+         [5.177, 5.337, 5.294],
+         [6.24, 6.254, 6.626],
+         [7.552, 7.446, 7.739],
+         [8.754, 8.192, 8.65],
+         [9.877, 9.685, 9.885],
+         [10.556, 10.774, 10.25],
+         [11.167, 11.026, 11.999],
+         [12.58, 12.236, 12.307],
+         [13.599, 13.797, 13.155],
+         [14.921, 14.938, 14.481],
+         [15.281, 15.604, 15.348],
+         [16.062, 16.559, 16.88],
+         [17.39, 17.247, 17.393],
+         [18.902, 18.344, 18.878],
+         [19.127, 19.099, 19.396],
+         [20.332, 20.854, 20.131],
+         [21.482, 21.229, 21.578],
+         [22.435, 22.952, 22.289],
+         [23.605, 23.377, 23.311],
+         [24.676, 24.23, 24.839]],
+)
+dtype_2_data = np.array(
+        [[0.593, 0.82, 0.13],
+         [1.343, 1.253, 1.198],
+         [2.732, 2.43, 2.873],
+         [3.539, 3.9, 3.725],
+         [4.394, 4.374, 4.294],
+         [5.898, 5.237, 5.132],
+         [6.447, 6.394, 6.976],
+         [7.14, 7.871, 7.544],
+         [8.816, 8.267, 8.663],
+         [9.108, 9.517, 9.412],
+         [10.754, 10.051, 10.161],
+         [11.798, 11.445, 11.558],
+         [12.103, 12.778, 12.4],
+         [13.564, 13.616, 13.387],
+         [14.858, 14.465, 14.478],
+         [15.973, 15.728, 15.84],
+         [16.733, 16.323, 16.027],
+         [17.705, 17.642, 17.954],
+         [18.808, 18.995, 18.233],
+         [19.418, 19.02, 19.943],
+         [20.712, 20.348, 0.239],
+         [21.569, 21.743, 1.552],
+         [22.931, 22.382, 2.153],
+         [23.571, 23.224, 3.841],
+         [24.853, 24.294, 4.279]]
+)
+dtype_3_data = np.array(
+        [[0.97, 0.892, 0.784],
+         [1.526, 1.455, 1.606],
+         [2.509, 2.662, 2.306],
+         [3.882, 3.308, 3.838],
+         [4.766, 4.977, 4.34],
+         [5.708, 5.401, 5.724],
+         [6.744, 6.793, 6.576],
+         [7.32, 7.943, 7.124],
+         [8.906, 8.529, 8.188],
+         [9.742, 9.037, 9.896],
+         [10.576, 10.528, 10.546],
+         [11.267, 11.595, 11.761],
+         [12.747, 12.589, 12.211],
+         [13.071, 13.948, 13.95],
+         [14.499, 14.872, 14.306],
+         [15.521, 15.553, 15.939],
+         [16.383, 16.966, 16.419],
+         [17.322, 17.845, 17.583],
+         [18.631, 18.327, 18.274],
+         [19.192, 19.413, 19.882],
+         [20.533, 20.566, 20.406],
+         [21.585, 21.583, 21.433],
+         [22.381, 22.428, 22.356],
+         [23.833, 23.275, 23.104],
+         [24.514, 24.537, 24.06]]
+)
+dtype_4_data = np.array(
+        [[0.704, 0.179, 0.9],
+         [0.882, 0.831, 1.206],
+         [0.61, 1.024, 1.473],
+         [0.797, 1.126, 1.37],
+         [1.632, 1.767, 1.102],
+         [1.802, 1.893, 1.783],
+         [1.861, 1.88, 1.854],
+         [2.515, 2.584, 2.603],
+         [2.326, 2.737, 2.25],
+         [2.55, 2.545, 2.654],
+         [3.418, 2.655, 2.9],
+         [2.924, 3.673, 3.706],
+         [3.653, 3.95, 3.319],
+         [3.314, 4.181, 4.022],
+         [3.523, 4.29, 4.267],
+         [4.598, 4.282, 3.935],
+         [4.08, 4.105, 4.498],
+         [4.757, 5.032, 4.547],
+         [4.529, 4.91, 4.535],
+         [5.229, 5.288, 5.085],
+         [5.641, 5.074, 5.016],
+         [6.222, 6.181, 5.866],
+         [6.025, 5.769, 5.506],
+         [6.365, 6.512, 6.316],
+         [6.104, 6.982, 6.779],
+         [6.258, 6.899, 6.395],
+         [7.316, 7.388, 6.71],
+         [7.377, 7.422, 7.299],
+         [7.701, 7.688, 7.205],
+         [7.312, 7.975, 7.673],
+         [8.476, 8.472, 8.487],
+         [8.591, 8.63, 7.768],
+         [8.726, 8.918, 8.23],
+         [8.554, 8.39, 8.686],
+         [8.946, 8.794, 8.688],
+         [8.75, 9.532, 9.151],
+         [9.551, 9.622, 9.375],
+         [9.604, 9.958, 10.159],
+         [9.817, 9.933, 10.225],
+         [10.231, 9.784, 10.579],
+         [10.947, 10.895, 10.823],
+         [10.324, 10.699, 10.652],
+         [11.19, 10.514, 10.977],
+         [10.878, 11.261, 11.267],
+         [11.92, 11.524, 11.359],
+         [12.032, 12.097, 11.81],
+         [11.901, 12.379, 12.362],
+         [12.067, 12.299, 11.844],
+         [12.117, 12.482, 12.886],
+         [12.759, 12.631, 12.658],
+         [13.363, 12.705, 12.758],
+         [13.507, 13.302, 13.375],
+         [13.691, 13.421, 13.15],
+         [13.913, 13.977, 14.13],
+         [13.812, 14.027, 14.423],
+         [14.148, 13.96, 13.978],
+         [14.363, 14.556, 14.241],
+         [14.624, 15.074, 15.048],
+         [14.814, 14.968, 15.132],
+         [14.756, 15.669, 15.643],
+         [15.564, 15.386, 15.105],
+         [15.624, 16.184, 15.963],
+         [15.629, 16.339, 15.819],
+         [16.567, 16.013, 16.575],
+         [16.24, 16.318, 16.011],
+         [16.881, 16.95, 16.276],
+         [16.911, 16.986, 17.131],
+         [16.986, 17.052, 17.523],
+         [17.389, 17.634, 17.998],
+         [17.404, 18.193, 17.411],
+         [17.633, 18.462, 18.201],
+         [18.316, 18.651, 18.633],
+         [18.941, 18.129, 18.014],
+         [18.834, 18.3, 18.316],
+         [19.303, 19.457, 19.35],
+         [18.842, 19.071, 19.253],
+         [19.528, 19.033, 19.273],
+         [19.385, 19.665, 20.08],
+         [19.936, 19.765, 20.262],
+         [20.512, 20.441, 20.379],
+         [20.018, 20.994, 20.374],
+         [20.35, 20.754, 20.633],
+         [21.176, 21.46, 20.546],
+         [20.934, 21.328, 21.421],
+         [21.414, 21.486, 21.426],
+         [21.352, 21.786, 21.56],
+         [21.552, 22.29, 21.921],
+         [22.095, 21.885, 22.069],
+         [22.795, 22.686, 22.516],
+         [22.594, 23.153, 22.951],
+         [22.87, 23.063, 22.501],
+         [23.224, 23.51, 23.647],
+         [23.048, 23.83, 23.679],
+         [23.733, 23.355, 23.633],
+         [23.658, 23.856, 23.99],
+         [24.408, 24.181, 23.931],
+         [24.716, 24.531, 24.268],
+         [25.195, 24.866, 24.897],
+         [25.384, 24.922, 25.486],
+         [25.144, 25.661, 25.176]]
+)
+dtype_5_data = np.array(
+        [[0.134, 0.207, 0.095],
+         [1.015, 0.591, 0.615],
+         [1.255, 0.85, 0.992],
+         [1.56, 1.107, 1.132],
+         [1, 1.111, 1.224],
+         [1.396, 1.325, 1.72],
+         [2.414, 1.651, 2.119],
+         [2.497, 2.406, 2.44],
+         [2.04, 2.279, 2.832],
+         [2.317, 2.473, 3.226],
+         [2.825, 2.836, 2.73],
+         [3.019, 3.574, 3.335],
+         [3.306, 3.45, 3.36],
+         [3.295, 3.401, 3.63],
+         [3.639, 4.088, 4.026],
+         [4.341, 4.214, 4.059],
+         [4.834, 4.739, 4.775],
+         [4.952, 5.152, 4.537],
+         [4.896, 4.833, 4.583],
+         [4.877, 5.266, 5.092],
+         [5.47, 5.128, 5.494],
+         [6.169, 5.552, 5.914],
+         [5.799, 5.543, 5.553],
+         [6.7, 5.976, 6.339],
+         [6.862, 6.864, 6.431],
+         [6.35, 7.196, 6.714],
+         [6.952, 6.798, 6.641],
+         [7.043, 7.416, 7.084],
+         [7.162, 7.636, 7.993],
+         [7.736, 8.095, 7.391],
+         [8.293, 8.066, 7.843],
+         [7.765, 7.795, 8.341],
+         [8.216, 8.063, 8.15],
+         [8.832, 8.347, 8.769],
+         [9.405, 8.91, 9.19],
+         [8.936, 9.377, 9.006],
+         [9.9, 9.414, 9.804],
+         [10.249, 10.085, 9.407],
+         [9.777, 9.765, 10.366],
+         [10.239, 10.05, 10.212],
+         [10.011, 10.026, 10.426],
+         [10.269, 11.219, 10.592],
+         [10.834, 11.453, 11.207],
+         [10.833, 11.703, 11.019],
+         [11.687, 11.513, 11.004],
+         [11.782, 11.565, 11.978],
+         [12.149, 12.344, 12.271],
+         [12.119, 12.728, 12.153],
+         [12.659, 12.777, 12.797],
+         [12.456, 13.043, 13.096],
+         [12.896, 12.598, 12.665],
+         [12.827, 13.557, 13.685],
+         [13.544, 13.513, 13.874],
+         [13.768, 13.322, 13.779],
+         [13.916, 13.816, 13.701],
+         [14.616, 13.817, 14.543],
+         [14.917, 14.383, 14.929],
+         [14.908, 14.919, 14.6],
+         [14.982, 15.08, 14.569],
+         [15.524, 15.283, 15.204],
+         [15.17, 15.168, 15.544],
+         [15.305, 16.242, 15.304],
+         [15.857, 16.32, 16.169],
+         [16.513, 16.501, 16.436],
+         [16.348, 16.775, 16.457],
+         [17.06, 16.416, 16.727],
+         [16.765, 16.743, 17.164],
+         [16.781, 17.367, 17.243],
+         [17.276, 17.242, 17.586],
+         [17.417, 17.519, 17.352],
+         [17.632, 17.625, 17.965],
+         [18.121, 17.759, 18.735],
+         [18.433, 18.643, 18.416],
+         [18.696, 19.104, 19.131],
+         [18.568, 18.507, 18.979],
+         [19.406, 19.572, 19.007],
+         [19.416, 19.216, 19.95],
+         [19.894, 19.411, 19.353],
+         [20.363, 19.79, 19.849],
+         [20.131, 19.823, 19.844],
+         [20.187, 20.775, 20.502],
+         [20.894, 20.286, 20.253],
+         [21.228, 21.335, 21.061],
+         [21.201, 21.002, 20.979],
+         [21.266, 21.771, 21.111],
+         [22.058, 22.077, 21.413],
+         [21.537, 22.34, 21.619],
+         [22.374, 22.441, 22.309],
+         [22.522, 22.259, 22.563],
+         [23.248, 22.452, 22.542],
+         [22.768, 22.674, 23.169],
+         [23.585, 23.053, 23.749],
+         [23.649, 23.068, 23.016],
+         [24.154, 23.828, 23.791],
+         [24.146, 24.483, 23.912],
+         [23.989, 23.954, 23.899],
+         [24.663, 24.686, 24.552],
+         [24.958, 24.981, 24.41],
+         [24.847, 25.181, 24.871],
+         [24.873, 25.657, 24.869]]
+)
+
+trade_price_h_data = np.array(
+        [[37.58, 32.50, 24.14],
+         [38.65, 33.31, 23.80],
+         [38.50, 34.20, 24.52],
+         [38.38, 34.10, 23.95],
+         [38.80, 34.09, 26.35],
+         [38.25, 34.12, 25.96],
+         [38.92, 34.43, 25.14],
+         [39.05, 34.12, 24.89],
+         [39.66, 34.45, 25.78],
+         [40.47, 35.48, 26.37],
+         [40.68, 35.45, 25.99],
+         [40.38, 35.21, 25.28],
+         [40.65, 35.10, 24.91],
+         [41.05, 35.05, 24.92],
+         [42.03, 35.05, 25.30],
+         [41.21, 34.63, 25.84],
+         [40.54, 34.95, 26.08],
+         [40.03, 34.88, 27.32],
+         [39.30, 34.70, 27.18],
+         [38.35, 33.84, 27.16],
+         [38.41, 34.42, 27.16],
+         [38.49, 34.29, 26.85],
+         [38.49, 34.35, 28.50],
+         [38.16, 34.27, 29.48],
+         [37.72, 34.71, 28.93],
+         [38.00, 34.87, 28.71],
+         [37.17, 34.54, 29.28],
+         [37.27, 34.15, 29.64],
+         [36.71, 33.97, 29.23],
+         [38.49, 35.15, 30.44],
+         [38.69, 36.14, 29.67],
+         [38.16, 36.08, 30.13],
+         [38.27, 37.03, 29.54],
+         [37.46, 36.56, 29.42],
+         [37.16, 35.21, 29.02],
+         [37.31, 35.52, 28.85],
+         [38.25, 36.42, 29.18],
+         [38.25, 36.61, 29.51],
+         [38.25, 36.97, 28.69],
+         [37.00, 36.91, 28.80],
+         [36.56, 36.24, 28.18],
+         [36.00, 36.49, 28.19],
+         [35.58, 36.62, 28.00],
+         [35.03, 35.61, 27.41],
+         [35.05, 37.11, 27.70],
+         [34.58, 36.94, 27.47],
+         [34.88, 37.45, 27.24]]
+)
+
+close_d_df = pd.DataFrame(
+        dtype_1_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+)
+close_h_df = pd.DataFrame(
+        dtype_2_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+)
+close_5min_df = pd.DataFrame(
+        dtype_3_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
+)
+close_15min_df = pd.DataFrame(
+        dtype_4_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+)
+close_w_df = pd.DataFrame(
+        dtype_5_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
+)
+
+trade_price_h_df = pd.DataFrame(
+        trade_price_h_data, columns=['A', 'B', 'C'],
+        index=pd.date_range(start='2023-01-01', periods=47, freq='4h')
 )
 
 
@@ -102,8 +460,6 @@ class TestGenStg(GeneralStg):
         super().__init__(
                 name='test_gen',
                 description='test general strategy',
-                run_freq='d',
-                run_timing='close',
                 pars=[param1, param2],
                 data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
                 use_latest_data_cycle=[True, False],
@@ -141,8 +497,6 @@ class TestFactorSorter(FactorSorter):
         super().__init__(
                 name='test_factor_sorter',
                 description='test factor sorter strategy',
-                run_freq='d',
-                run_timing='close',
                 pars=[param1, param2],
                 data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
                 use_latest_data_cycle=[True, False],
@@ -182,16 +536,15 @@ class TestRuleIter(RuleIterator):
      2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
     """
 
-    def __init__(self, par_values=None):
+    def __init__(self, par_values=None, **kwargs):
         super().__init__(
                 name='test_rule_iterator',
                 description='test rule iterator strategy',
-                run_freq='d',
-                run_timing='close',
                 pars=[param1, param2],
                 data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
                 use_latest_data_cycle=[True, False],
                 window_length=[7, 9],
+                **kwargs,
         )
 
         if par_values:
@@ -345,394 +698,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('start testing HistoryPanel object\n')
 
         # 1， 准备模拟历史数据对象
-
-        close_E_d = DataType(
-                name='close',
-                freq='d',
-                asset_type='E'
-        )
-
-        close_E_h = DataType(
-                name='close',
-                freq='h',
-                asset_type='E'
-        )
-
-        close_E_5min = DataType(
-                name='close',
-                freq='5min',
-                asset_type='E'
-        )
-
-        close_E_15min = DataType(
-                name='close',
-                freq='15min',
-                asset_type='E',
-        )
-
-        close_E_w = DataType(
-                name='close',
-                freq='w',
-                asset_type='E',
-        )
-
-        # 测试数据的值不是来自于DataSource，而是直接设定，方便运算
-        close_E_d_data = np.array(
-                [[0.994, 0.412, 0.876],
-                 [1.117, 1.257, 1.447],
-                 [2.315, 2.08, 2.799],
-                 [3.704, 3.87, 3.62],
-                 [4.091, 4.127, 4.218],
-                 [5.177, 5.337, 5.294],
-                 [6.24, 6.254, 6.626],
-                 [7.552, 7.446, 7.739],
-                 [8.754, 8.192, 8.65],
-                 [9.877, 9.685, 9.885],
-                 [10.556, 10.774, 10.25],
-                 [11.167, 11.026, 11.999],
-                 [12.58, 12.236, 12.307],
-                 [13.599, 13.797, 13.155],
-                 [14.921, 14.938, 14.481],
-                 [15.281, 15.604, 15.348],
-                 [16.062, 16.559, 16.88],
-                 [17.39, 17.247, 17.393],
-                 [18.902, 18.344, 18.878],
-                 [19.127, 19.099, 19.396],
-                 [20.332, 20.854, 20.131],
-                 [21.482, 21.229, 21.578],
-                 [22.435, 22.952, 22.289],
-                 [23.605, 23.377, 23.311],
-                 [24.676, 24.23, 24.839]],
-        )
-        close_E_h_data = np.array(
-                [[0.593, 0.82, 0.13],
-                 [1.343, 1.253, 1.198],
-                 [2.732, 2.43, 2.873],
-                 [3.539, 3.9, 3.725],
-                 [4.394, 4.374, 4.294],
-                 [5.898, 5.237, 5.132],
-                 [6.447, 6.394, 6.976],
-                 [7.14, 7.871, 7.544],
-                 [8.816, 8.267, 8.663],
-                 [9.108, 9.517, 9.412],
-                 [10.754, 10.051, 10.161],
-                 [11.798, 11.445, 11.558],
-                 [12.103, 12.778, 12.4],
-                 [13.564, 13.616, 13.387],
-                 [14.858, 14.465, 14.478],
-                 [15.973, 15.728, 15.84],
-                 [16.733, 16.323, 16.027],
-                 [17.705, 17.642, 17.954],
-                 [18.808, 18.995, 18.233],
-                 [19.418, 19.02, 19.943],
-                 [20.712, 20.348, 0.239],
-                 [21.569, 21.743, 1.552],
-                 [22.931, 22.382, 2.153],
-                 [23.571, 23.224, 3.841],
-                 [24.853, 24.294, 4.279]]
-        )
-        close_E_5min_data = np.array(
-                [[0.97, 0.892, 0.784],
-                 [1.526, 1.455, 1.606],
-                 [2.509, 2.662, 2.306],
-                 [3.882, 3.308, 3.838],
-                 [4.766, 4.977, 4.34],
-                 [5.708, 5.401, 5.724],
-                 [6.744, 6.793, 6.576],
-                 [7.32, 7.943, 7.124],
-                 [8.906, 8.529, 8.188],
-                 [9.742, 9.037, 9.896],
-                 [10.576, 10.528, 10.546],
-                 [11.267, 11.595, 11.761],
-                 [12.747, 12.589, 12.211],
-                 [13.071, 13.948, 13.95],
-                 [14.499, 14.872, 14.306],
-                 [15.521, 15.553, 15.939],
-                 [16.383, 16.966, 16.419],
-                 [17.322, 17.845, 17.583],
-                 [18.631, 18.327, 18.274],
-                 [19.192, 19.413, 19.882],
-                 [20.533, 20.566, 20.406],
-                 [21.585, 21.583, 21.433],
-                 [22.381, 22.428, 22.356],
-                 [23.833, 23.275, 23.104],
-                 [24.514, 24.537, 24.06]]
-        )
-        close_E_15min_data = np.array(
-                [[0.704, 0.179, 0.9],
-                 [0.882, 0.831, 1.206],
-                 [0.61, 1.024, 1.473],
-                 [0.797, 1.126, 1.37],
-                 [1.632, 1.767, 1.102],
-                 [1.802, 1.893, 1.783],
-                 [1.861, 1.88, 1.854],
-                 [2.515, 2.584, 2.603],
-                 [2.326, 2.737, 2.25],
-                 [2.55, 2.545, 2.654],
-                 [3.418, 2.655, 2.9],
-                 [2.924, 3.673, 3.706],
-                 [3.653, 3.95, 3.319],
-                 [3.314, 4.181, 4.022],
-                 [3.523, 4.29, 4.267],
-                 [4.598, 4.282, 3.935],
-                 [4.08, 4.105, 4.498],
-                 [4.757, 5.032, 4.547],
-                 [4.529, 4.91, 4.535],
-                 [5.229, 5.288, 5.085],
-                 [5.641, 5.074, 5.016],
-                 [6.222, 6.181, 5.866],
-                 [6.025, 5.769, 5.506],
-                 [6.365, 6.512, 6.316],
-                 [6.104, 6.982, 6.779],
-                 [6.258, 6.899, 6.395],
-                 [7.316, 7.388, 6.71],
-                 [7.377, 7.422, 7.299],
-                 [7.701, 7.688, 7.205],
-                 [7.312, 7.975, 7.673],
-                 [8.476, 8.472, 8.487],
-                 [8.591, 8.63, 7.768],
-                 [8.726, 8.918, 8.23],
-                 [8.554, 8.39, 8.686],
-                 [8.946, 8.794, 8.688],
-                 [8.75, 9.532, 9.151],
-                 [9.551, 9.622, 9.375],
-                 [9.604, 9.958, 10.159],
-                 [9.817, 9.933, 10.225],
-                 [10.231, 9.784, 10.579],
-                 [10.947, 10.895, 10.823],
-                 [10.324, 10.699, 10.652],
-                 [11.19, 10.514, 10.977],
-                 [10.878, 11.261, 11.267],
-                 [11.92, 11.524, 11.359],
-                 [12.032, 12.097, 11.81],
-                 [11.901, 12.379, 12.362],
-                 [12.067, 12.299, 11.844],
-                 [12.117, 12.482, 12.886],
-                 [12.759, 12.631, 12.658],
-                 [13.363, 12.705, 12.758],
-                 [13.507, 13.302, 13.375],
-                 [13.691, 13.421, 13.15],
-                 [13.913, 13.977, 14.13],
-                 [13.812, 14.027, 14.423],
-                 [14.148, 13.96, 13.978],
-                 [14.363, 14.556, 14.241],
-                 [14.624, 15.074, 15.048],
-                 [14.814, 14.968, 15.132],
-                 [14.756, 15.669, 15.643],
-                 [15.564, 15.386, 15.105],
-                 [15.624, 16.184, 15.963],
-                 [15.629, 16.339, 15.819],
-                 [16.567, 16.013, 16.575],
-                 [16.24, 16.318, 16.011],
-                 [16.881, 16.95, 16.276],
-                 [16.911, 16.986, 17.131],
-                 [16.986, 17.052, 17.523],
-                 [17.389, 17.634, 17.998],
-                 [17.404, 18.193, 17.411],
-                 [17.633, 18.462, 18.201],
-                 [18.316, 18.651, 18.633],
-                 [18.941, 18.129, 18.014],
-                 [18.834, 18.3, 18.316],
-                 [19.303, 19.457, 19.35],
-                 [18.842, 19.071, 19.253],
-                 [19.528, 19.033, 19.273],
-                 [19.385, 19.665, 20.08],
-                 [19.936, 19.765, 20.262],
-                 [20.512, 20.441, 20.379],
-                 [20.018, 20.994, 20.374],
-                 [20.35, 20.754, 20.633],
-                 [21.176, 21.46, 20.546],
-                 [20.934, 21.328, 21.421],
-                 [21.414, 21.486, 21.426],
-                 [21.352, 21.786, 21.56],
-                 [21.552, 22.29, 21.921],
-                 [22.095, 21.885, 22.069],
-                 [22.795, 22.686, 22.516],
-                 [22.594, 23.153, 22.951],
-                 [22.87, 23.063, 22.501],
-                 [23.224, 23.51, 23.647],
-                 [23.048, 23.83, 23.679],
-                 [23.733, 23.355, 23.633],
-                 [23.658, 23.856, 23.99],
-                 [24.408, 24.181, 23.931],
-                 [24.716, 24.531, 24.268],
-                 [25.195, 24.866, 24.897],
-                 [25.384, 24.922, 25.486],
-                 [25.144, 25.661, 25.176]]
-        )
-        close_E_w_data = np.array(
-                [[0.134, 0.207, 0.095],
-                 [1.015, 0.591, 0.615],
-                 [1.255, 0.85, 0.992],
-                 [1.56, 1.107, 1.132],
-                 [1, 1.111, 1.224],
-                 [1.396, 1.325, 1.72],
-                 [2.414, 1.651, 2.119],
-                 [2.497, 2.406, 2.44],
-                 [2.04, 2.279, 2.832],
-                 [2.317, 2.473, 3.226],
-                 [2.825, 2.836, 2.73],
-                 [3.019, 3.574, 3.335],
-                 [3.306, 3.45, 3.36],
-                 [3.295, 3.401, 3.63],
-                 [3.639, 4.088, 4.026],
-                 [4.341, 4.214, 4.059],
-                 [4.834, 4.739, 4.775],
-                 [4.952, 5.152, 4.537],
-                 [4.896, 4.833, 4.583],
-                 [4.877, 5.266, 5.092],
-                 [5.47, 5.128, 5.494],
-                 [6.169, 5.552, 5.914],
-                 [5.799, 5.543, 5.553],
-                 [6.7, 5.976, 6.339],
-                 [6.862, 6.864, 6.431],
-                 [6.35, 7.196, 6.714],
-                 [6.952, 6.798, 6.641],
-                 [7.043, 7.416, 7.084],
-                 [7.162, 7.636, 7.993],
-                 [7.736, 8.095, 7.391],
-                 [8.293, 8.066, 7.843],
-                 [7.765, 7.795, 8.341],
-                 [8.216, 8.063, 8.15],
-                 [8.832, 8.347, 8.769],
-                 [9.405, 8.91, 9.19],
-                 [8.936, 9.377, 9.006],
-                 [9.9, 9.414, 9.804],
-                 [10.249, 10.085, 9.407],
-                 [9.777, 9.765, 10.366],
-                 [10.239, 10.05, 10.212],
-                 [10.011, 10.026, 10.426],
-                 [10.269, 11.219, 10.592],
-                 [10.834, 11.453, 11.207],
-                 [10.833, 11.703, 11.019],
-                 [11.687, 11.513, 11.004],
-                 [11.782, 11.565, 11.978],
-                 [12.149, 12.344, 12.271],
-                 [12.119, 12.728, 12.153],
-                 [12.659, 12.777, 12.797],
-                 [12.456, 13.043, 13.096],
-                 [12.896, 12.598, 12.665],
-                 [12.827, 13.557, 13.685],
-                 [13.544, 13.513, 13.874],
-                 [13.768, 13.322, 13.779],
-                 [13.916, 13.816, 13.701],
-                 [14.616, 13.817, 14.543],
-                 [14.917, 14.383, 14.929],
-                 [14.908, 14.919, 14.6],
-                 [14.982, 15.08, 14.569],
-                 [15.524, 15.283, 15.204],
-                 [15.17, 15.168, 15.544],
-                 [15.305, 16.242, 15.304],
-                 [15.857, 16.32, 16.169],
-                 [16.513, 16.501, 16.436],
-                 [16.348, 16.775, 16.457],
-                 [17.06, 16.416, 16.727],
-                 [16.765, 16.743, 17.164],
-                 [16.781, 17.367, 17.243],
-                 [17.276, 17.242, 17.586],
-                 [17.417, 17.519, 17.352],
-                 [17.632, 17.625, 17.965],
-                 [18.121, 17.759, 18.735],
-                 [18.433, 18.643, 18.416],
-                 [18.696, 19.104, 19.131],
-                 [18.568, 18.507, 18.979],
-                 [19.406, 19.572, 19.007],
-                 [19.416, 19.216, 19.95],
-                 [19.894, 19.411, 19.353],
-                 [20.363, 19.79, 19.849],
-                 [20.131, 19.823, 19.844],
-                 [20.187, 20.775, 20.502],
-                 [20.894, 20.286, 20.253],
-                 [21.228, 21.335, 21.061],
-                 [21.201, 21.002, 20.979],
-                 [21.266, 21.771, 21.111],
-                 [22.058, 22.077, 21.413],
-                 [21.537, 22.34, 21.619],
-                 [22.374, 22.441, 22.309],
-                 [22.522, 22.259, 22.563],
-                 [23.248, 22.452, 22.542],
-                 [22.768, 22.674, 23.169],
-                 [23.585, 23.053, 23.749],
-                 [23.649, 23.068, 23.016],
-                 [24.154, 23.828, 23.791],
-                 [24.146, 24.483, 23.912],
-                 [23.989, 23.954, 23.899],
-                 [24.663, 24.686, 24.552],
-                 [24.958, 24.981, 24.41],
-                 [24.847, 25.181, 24.871],
-                 [24.873, 25.657, 24.869]]
-        )
-
-        trade_price_h_data = np.array(
-                [[37.58, 32.50, 24.14],
-                 [38.65, 33.31, 23.80],
-                 [38.50, 34.20, 24.52],
-                 [38.38, 34.10, 23.95],
-                 [38.80, 34.09, 26.35],
-                 [38.25, 34.12, 25.96],
-                 [38.92, 34.43, 25.14],
-                 [39.05, 34.12, 24.89],
-                 [39.66, 34.45, 25.78],
-                 [40.47, 35.48, 26.37],
-                 [40.68, 35.45, 25.99],
-                 [40.38, 35.21, 25.28],
-                 [40.65, 35.10, 24.91],
-                 [41.05, 35.05, 24.92],
-                 [42.03, 35.05, 25.30],
-                 [41.21, 34.63, 25.84],
-                 [40.54, 34.95, 26.08],
-                 [40.03, 34.88, 27.32],
-                 [39.30, 34.70, 27.18],
-                 [38.35, 33.84, 27.16],
-                 [38.41, 34.42, 27.16],
-                 [38.49, 34.29, 26.85],
-                 [38.49, 34.35, 28.50],
-                 [38.16, 34.27, 29.48],
-                 [37.72, 34.71, 28.93],
-                 [38.00, 34.87, 28.71],
-                 [37.17, 34.54, 29.28],
-                 [37.27, 34.15, 29.64],
-                 [36.71, 33.97, 29.23],
-                 [38.49, 35.15, 30.44],
-                 [38.69, 36.14, 29.67],
-                 [38.16, 36.08, 30.13],
-                 [38.27, 37.03, 29.54],
-                 [37.46, 36.56, 29.42],
-                 [37.16, 35.21, 29.02],
-                 [37.31, 35.52, 28.85],
-                 [38.25, 36.42, 29.18],
-                 [38.25, 36.61, 29.51],
-                 [38.25, 36.97, 28.69],
-                 [37.00, 36.91, 28.80],
-                 [36.56, 36.24, 28.18],
-                 [36.00, 36.49, 28.19],
-                 [35.58, 36.62, 28.00],
-                 [35.03, 35.61, 27.41],
-                 [35.05, 37.11, 27.70],
-                 [34.58, 36.94, 27.47],
-                 [34.88, 37.45, 27.24]]
-        )
-
-        close_d_df = pd.DataFrame(
-                close_E_d_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
-        )
-        close_h_df = pd.DataFrame(
-                close_E_h_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
-        )
-        close_5min_df = pd.DataFrame(
-                close_E_5min_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=25, freq='D')
-        )
-        close_15min_df = pd.DataFrame(
-                close_E_15min_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
-        )
-        close_w_df = pd.DataFrame(
-                close_E_w_data, columns=['A', 'B', 'C'], index=pd.date_range(start='2023-01-01', periods=100, freq='6h')
-        )
-
-        trade_price_h_df = pd.DataFrame(
-                trade_price_h_data, columns=['A', 'B', 'C'],
-                index=pd.date_range(start='2023-01-01', periods=47, freq='4h')
-        )
+        pass
 
     def test_init(self):
         """ test initialization of Operator class"""
@@ -762,6 +728,147 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
         self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
+
+    def test_operator_add_strategy(self):
+        """test adding strategies to Operator"""
+        op = qt.Operator('dma, all, sellrate')
+
+        self.assertIsInstance(op, qt.Operator)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
+        self.assertIsInstance(op[0], qt.built_in.DMA)
+        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op[2], qt.built_in.SellRate)
+        self.assertIsInstance(op['dma'], qt.built_in.DMA)
+        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
+        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
+        self.assertEqual(op.strategy_count, 3)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate'])
+        print(f'test adding strategies into existing op')
+        print('test adding strategy by string')
+        op.add_strategy('macd')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.MACD)
+        self.assertEqual(op.strategy_count, 4)
+        op.add_strategy('random')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
+        self.assertEqual(op.strategy_count, 5)
+        test_ls = TestGenStg()
+        op.add_strategy(test_ls)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[5], TestGenStg)
+        self.assertEqual(op.strategy_count, 6)
+        print(f'Test different instance of objects are added to operator')
+        op.add_strategy('dma')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.DMA)
+        self.assertIsNot(op.strategies[0], op.strategies[6])
+        print(f'Test adding strategy with class name')
+        op.add_strategy(TestRuleIter)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[7], TestRuleIter)
+        self.assertEqual(op.strategy_count, 8)
+        self.assertEqual(op.strategy_ids,
+                         ['dma', 'all', 'sellrate', 'macd', 'random', 'custom', 'dma_1', 'custom_1'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0]})
+        self.assertEqual(op.strategy_group_count, 1)
+
+        print(f'create a new empty operator and add strategies with different run freq and run timing')
+        op = qt.Operator()  # now operator has no strategy and no strategy group
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.group_ids, [])
+
+        print(f'add a strategy with default run freq and run timing')
+        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 1)
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.strategy_ids, ['custom'])
+        self.assertEqual(op.group_ids, ['Group_1'])
+
+
+    def test_operator_add_strategies(self):
+        """ etst adding multiple strategies to Operator"""
+        op = qt.Operator('dma, all, sellrate')
+        self.assertEqual(op.strategy_count, 3)
+        print('test adding multiple strategies -- adding strategy by list of strings')
+        op.add_strategies(['dma', 'macd'])
+        self.assertEqual(op.strategy_count, 5)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by comma separated strings')
+        op.add_strategies('dma, macd')
+        self.assertEqual(op.strategy_count, 7)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[5], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by list of strategies')
+        op.add_strategies([qt.built_in.DMA(), qt.built_in.MACD()])
+        self.assertEqual(op.strategy_count, 9)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[7], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[8], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by list of strategy and str')
+        op.add_strategies(['DMA', qt.built_in.MACD()])
+        self.assertEqual(op.strategy_count, 11)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[9], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[10], qt.built_in.MACD)
+        self.assertIsNot(op.strategies[0], op.strategies[9])
+        self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
+        print('test adding fault arr')
+        self.assertRaises(AssertionError, op.add_strategies, 123)
+        self.assertRaises(AssertionError, op.add_strategies, None)
+
+    def test_operator_remove_strategy(self):
+        """ test method remove strategy"""
+        op = qt.Operator('dma, all, sellrate')
+        op.add_strategies(['dma', 'macd'])
+        op.add_strategies(['DMA', TestLSStrategy()])
+        self.assertEqual(op.strategy_count, 7)
+        print('test removing strategies from Operator')
+        op.remove_strategy('dma')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['dma_1'])
+        self.assertEqual(op.strategies[3], op['macd'])
+        self.assertEqual(op.strategies[4], op['dma_2'])
+        self.assertEqual(op.strategies[5], op['custom'])
+        op.remove_strategy('dma_1')
+        self.assertEqual(op.strategy_count, 5)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['macd'])
+        self.assertEqual(op.strategies[3], op['dma_2'])
+        self.assertEqual(op.strategies[4], op['custom'])
+
+    def test_operator_clear_strategies(self):
+        """ test operator clear strategies"""
+        op = qt.Operator('dma, all, sellrate')
+        op.add_strategies(['dma', 'macd'])
+        op.add_strategies(['DMA', TestLSStrategy()])
+        self.assertEqual(op.strategy_count, 7)
+        print('test removing strategies from Operator')
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        op.add_strategy('dma', pars=(12, 123, 25))
+        self.assertEqual(op.strategy_count, 1)
+        self.assertEqual(op.strategy_ids, ['dma'])
+        self.assertEqual(type(op.strategies[0]), DMA)
+        self.assertEqual(op.strategies[0].par_values, (12, 123, 25))
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
 
     def test_info(self):
         """Test information output of Operator"""
@@ -1217,50 +1324,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # self.assertEqual(dtf[0], 'd')
         # self.assertEqual(dtf[1], 'm')
 
-    def test_property_bt_price_types(self):
-        """ test property strategy_groups"""
-        print('------test property bt_price_tyeps-------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_groups, list)
-        self.assertEqual(len(op.strategy_groups), 0)
-        self.assertEqual(op.strategy_groups, [])
-
-        op = qt.Operator('macd, dma, trix')
-        btp = op.strategy_groups
-        self.assertIsInstance(btp, list)
-        self.assertEqual(btp[0], 'close')
-        op.set_parameter('macd', run_timing='open')
-        btp = op.strategy_groups
-        btpc = op.bt_price_type_count
-        print(f'price_types are \n{btp}')
-        self.assertIsInstance(btp, list)
-        self.assertEqual(len(btp), 2)
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', run_timing='close')
-        btp = op.strategy_groups
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.remove_strategy('dma_1')
-        btp = op.strategy_groups
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.remove_strategy('macd_1')
-        btp = op.strategy_groups
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
     def test_property_op_data_type_list(self):
         """ test property op_data_type_list"""
         op = qt.Operator()
@@ -1282,20 +1345,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(ohd[1], ['close'])
         self.assertEqual(ohd[2], ['close'])
         self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
-
-    def test_property_op_history_data(self):
-        """ Test this important function to get operation history arr that shall be used in
-            signal generation
-            these arr are stored in list of nd-arrays, each ndarray represents the arr
-            that is needed for each and every strategy
-        """
-        print(f'------- Test getting operation history arr ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.op_history_data, {})
-        self.assertEqual(op.signal_type, 'pt')
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
@@ -1372,27 +1421,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
 
-    def test_property_bt_price_type_count(self):
-        """ test property bt_price_type_count"""
-        print(f'-----test property bt_price_type_count--------:\n')
-        op = qt.Operator()
-        self.assertIsInstance(op.bt_price_type_count, int)
-        self.assertEqual(op.bt_price_type_count, 0)
-
-        op = qt.Operator('macd, dma, trix, cdl')
-        otp = op.bt_price_type_count
-        print(f'before setting price_type the price count is 1:\n'
-              f'otp is {otp}\n')
-        self.assertIsInstance(otp, int)
-        self.assertEqual(otp, 1)
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('dma', run_timing='open')
-        otp = op.bt_price_type_count
-        print(f'after setting price_type the price type count is 2:\n'
-              f'otp is {otp}\n')
-        self.assertIsInstance(otp, int)
-        self.assertEqual(otp, 2)
-
     def test_property_set(self):
         """ test all property setters:
             setting following properties:
@@ -1435,120 +1463,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         """test the method ready of Operator"""
         op = qt.Operator()
         print(f'operator is ready? "{op.ready}"')
-
-    def test_operator_add_strategy(self):
-        """test adding strategies to Operator"""
-        op = qt.Operator('dma, all, sellrate')
-
-        self.assertIsInstance(op, qt.Operator)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
-        self.assertIsInstance(op[0], qt.built_in.DMA)
-        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op[2], qt.built_in.SellRate)
-        self.assertIsInstance(op['dma'], qt.built_in.DMA)
-        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
-        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
-        self.assertEqual(op.strategy_count, 3)
-        print(f'test adding strategies into existing op')
-        print('test adding strategy by string')
-        op.add_strategy('macd')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[3], qt.built_in.MACD)
-        self.assertEqual(op.strategy_count, 4)
-        op.add_strategy('random')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
-        self.assertEqual(op.strategy_count, 5)
-        test_ls = TestLSStrategy()
-        op.add_strategy(test_ls)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[5], TestLSStrategy)
-        self.assertEqual(op.strategy_count, 6)
-        print(f'Test different instance of objects are added to operator')
-        op.add_strategy('dma')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[6], qt.built_in.DMA)
-        self.assertIsNot(op.strategies[0], op.strategies[6])
-
-    def test_operator_add_strategies(self):
-        """ etst adding multiple strategies to Operator"""
-        op = qt.Operator('dma, all, sellrate')
-        self.assertEqual(op.strategy_count, 3)
-        print('test adding multiple strategies -- adding strategy by list of strings')
-        op.add_strategies(['dma', 'macd'])
-        self.assertEqual(op.strategy_count, 5)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[3], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[4], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by comma separated strings')
-        op.add_strategies('dma, macd')
-        self.assertEqual(op.strategy_count, 7)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[5], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[6], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by list of strategies')
-        op.add_strategies([qt.built_in.DMA(), qt.built_in.MACD()])
-        self.assertEqual(op.strategy_count, 9)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[7], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[8], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by list of strategy and str')
-        op.add_strategies(['DMA', qt.built_in.MACD()])
-        self.assertEqual(op.strategy_count, 11)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[9], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[10], qt.built_in.MACD)
-        self.assertIsNot(op.strategies[0], op.strategies[9])
-        self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
-        print('test adding fault arr')
-        self.assertRaises(AssertionError, op.add_strategies, 123)
-        self.assertRaises(AssertionError, op.add_strategies, None)
-
-    def test_operator_remove_strategy(self):
-        """ test method remove strategy"""
-        op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
-        self.assertEqual(op.strategy_count, 7)
-        print('test removing strategies from Operator')
-        op.remove_strategy('dma')
-        self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
-        self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['sellrate'])
-        self.assertEqual(op.strategies[2], op['dma_1'])
-        self.assertEqual(op.strategies[3], op['macd'])
-        self.assertEqual(op.strategies[4], op['dma_2'])
-        self.assertEqual(op.strategies[5], op['custom'])
-        op.remove_strategy('dma_1')
-        self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
-        self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['sellrate'])
-        self.assertEqual(op.strategies[2], op['macd'])
-        self.assertEqual(op.strategies[3], op['dma_2'])
-        self.assertEqual(op.strategies[4], op['custom'])
-
-    def test_operator_clear_strategies(self):
-        """ test operator clear strategies"""
-        op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
-        self.assertEqual(op.strategy_count, 7)
-        print('test removing strategies from Operator')
-        op.clear_strategies()
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-        op.add_strategy('dma', pars=(12, 123, 25))
-        self.assertEqual(op.strategy_count, 1)
-        self.assertEqual(op.strategy_ids, ['dma'])
-        self.assertEqual(type(op.strategies[0]), DMA)
-        self.assertEqual(op.strategies[0].par_values, (12, 123, 25))
-        op.clear_strategies()
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
 
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""

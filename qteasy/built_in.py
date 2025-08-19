@@ -3215,20 +3215,22 @@ class SellRate(RuleIterator):
     # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
 
     def __init__(self, pars=(20, 0.1)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(1, 100), (-0.5, 0.5)],
-                         window_length=100,
-                         name='SELLRATE',
-                         description='Generate selling signal when N-day change rate is over a certain value')
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), name='day', par_type='int'),
+                    Parameter((-0.5, 0.5), name='change', par_type='float')
+                ],
+                data_types=DataType('close', freq='d', asset_type='E'),
+                window_length=100,
+                name='SELLRATE',
+                description='Generate selling signal when N-day change rate is over a certain value',
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            day, change = self.par_values
-        else:
-            day, change = pars
-        h = h
+    def realize(self):
+
+        day, change = self.day, self.change
+        h = self.close_E_d
+
         diff = h[-1] - h[-day]
         if (change >= 0) and (diff > change):
             return -1
@@ -3497,25 +3499,28 @@ class SelectingRandom(GeneralStg):
         默认参数: ``(0.5, )``\n
         数据类型: ``close`` 收盘价，单数据输入\n
         采样频率: 天\n
-        窗口长度: ``270``\n
+        窗口长度: ``100``\n
         参数范围: ``[(0, np.inf)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.5,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['float'],
-                         par_range=[(0, np.inf)],
-                         name='RANDOM',
-                         description='GeneralStg share Randomly and distribute weights evenly')
+    def __init__(self, par_values=(0.5,)):
+        super().__init__(
+                pars=[
+                    Parameter((0, np.inf), name='pct', par_type='float')
+                ],
+                data_types=DataType('close', freq='d', asset_type='E'),
+                window_length=100,
+                name='RANDOM',
+                description='GeneralStg share Randomly and distribute weights evenly',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            pct, = self.par_values
-        else:
-            pct, = pars
-        share_count = h.shape[0]
+    def realize(self):
+        pct = self.pct
+
+        share_count = self.close_E_d.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
             chosen = np.random.choice([1, 0], size=share_count, p=[pct, 1 - pct])
