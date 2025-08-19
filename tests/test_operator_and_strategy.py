@@ -51,9 +51,9 @@ param4 = Parameter(
 )
 
 dtype_1 = DataType(
-                name='close',
-                freq='d',
-                asset_type='E'
+        name='close',
+        freq='d',
+        asset_type='E'
 )
 
 dtype_2 = DataType(
@@ -456,7 +456,7 @@ class TestGenStg(GeneralStg):
      - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
-    def __init__(self, par_values: tuple = None):
+    def __init__(self, par_values: tuple = None, **kwargs):
         super().__init__(
                 name='test_gen',
                 description='test general strategy',
@@ -464,6 +464,7 @@ class TestGenStg(GeneralStg):
                 data_types={'close_E_d': dtype_1, 'close_E_5min': dtype_3},
                 use_latest_data_cycle=[True, False],
                 window_length=[7, 9],
+                **kwargs,
         )
 
         if par_values:
@@ -790,7 +791,78 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_group_count, 1)
         self.assertEqual(op.strategy_ids, ['custom'])
         self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
 
+        print(f'add a strategy with run freq h and run timing close')
+        op.add_strategy(TestRuleIter(run_freq='h', run_timing='close'))
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 2)
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_1'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+
+        print(f'add a strategy again with run freq d and run timing close')
+        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 3)
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+
+        print(f'test adding strategy with run freq h and run timing open')
+        op.add_strategy(TestRuleIter(run_freq='h', run_timing='open'))
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2', 'custom_3'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_3'].members))
+        self.assertTrue(all(stg.run_timing == 'open' for stg in op.groups['Group_3'].members))
+        print(f'test adding strategy with run freq d and run timing close')
+        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 5)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2', 'custom_3', 'custom_4'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 3)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_3'].members))
+        self.assertTrue(all(stg.run_timing == 'open' for stg in op.groups['Group_3'].members))
 
     def test_operator_add_strategies(self):
         """ etst adding multiple strategies to Operator"""
@@ -822,6 +894,90 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op.strategies[10], qt.built_in.MACD)
         self.assertIsNot(op.strategies[0], op.strategies[9])
         self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
+        print('test adding multiple strategies -- adding strategy by list of custom strategy and custom strategy names')
+        op.add_strategies([TestGenStg, TestGenStg(), TestRuleIter()])
+        self.assertEqual(op.strategy_count, 14)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[11], TestGenStg)
+        self.assertIsInstance(op.strategies[12], TestGenStg)
+        self.assertIsInstance(op.strategies[13], TestRuleIter)
+        self.assertIsNot(op.strategies[11], op.strategies[12])
+        self.assertIsNot(op.strategies[11], op.strategies[13])
+        self.assertIsNot(op.strategies[12], op.strategies[13])
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0]})
+        print('test adding multiple strategies with different run freq and run timing')
+        op.add_strategies([TestRuleIter(run_freq='d', run_timing='close'),
+                           TestRuleIter(run_freq='h', run_timing='close'),
+                           TestRuleIter(run_freq='h', run_timing='open')])
+        self.assertEqual(op.strategy_count, 17)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
+                                           'custom', 'custom_1', 'dma_3', 'custom_2', 'custom_3', 'custom_4',
+                                           'custom_5', 'custom_6', 'custom_7', 'custom_8'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 15)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        print(f'Group_2 has {op.groups["Group_2"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+
+        print(f'test adding multiple strategies with common run_timing and run_freq parameters')
+        op.add_strategies([TestRuleIter, 'dma', TestGenStg], run_timing='open', run_freq='d')
+        op.add_strategies(['macd', TestGenStg()], run_timing='close', run_freq='h')
+        self.assertEqual(op.strategy_count, 22)
+        self.assertEqual(op.strategy_group_count, 4)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
+                                           'custom', 'custom_1', 'dma_3', 'custom_2', 'custom_3', 'custom_4',
+                                           'custom_5', 'custom_6', 'custom_7', 'custom_8', 'custom_9', 'dma_4',
+                                           'custom_10', 'macd_2', 'custom_11'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3', 'Group_4'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 15)
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['dma',
+                                                                  'all',
+                                                                  'sellrate',
+                                                                  'dma_1',
+                                                                  'macd',
+                                                                  'dma_2',
+                                                                  'macd_1',
+                                                                  'custom',
+                                                                  'custom_1',
+                                                                  'dma_3',
+                                                                  'custom_2',
+                                                                  'custom_3',
+                                                                  'custom_4',
+                                                                  'custom_5',
+                                                                  'custom_6'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_1'), 15)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 3)
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['custom_7', 'macd_2', 'custom_11'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_2'), 3)
+        print(f'Group_2 has {op.groups["Group_2"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['custom_8'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_3'), 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_4'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_4'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_4'].strategy_count, 3)
+        self.assertEqual(op.get_strategy_id_by_group('Group_4'), ['custom_9', 'dma_4', 'custom_10'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_4'), 3)
+        print(f'Group_4 has {op.groups["Group_4"].strategy_count}')
+
         print('test adding fault arr')
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)
@@ -830,7 +986,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         """ test method remove strategy"""
         op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
+        op.add_strategies(['DMA', TestGenStg()])
         self.assertEqual(op.strategy_count, 7)
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
@@ -842,6 +998,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[3], op['macd'])
         self.assertEqual(op.strategies[4], op['dma_2'])
         self.assertEqual(op.strategies[5], op['custom'])
+        self.assertEqual(op.strategy_group_count, 1)
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
         self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
@@ -855,13 +1012,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         """ test operator clear strategies"""
         op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
+        op.add_strategies(['DMA', TestGenStg()])
         self.assertEqual(op.strategy_count, 7)
         print('test removing strategies from Operator')
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
-        op.add_strategy('dma', pars=(12, 123, 25))
+        op.add_strategy('dma', par_values=(12, 123, 25))
         self.assertEqual(op.strategy_count, 1)
         self.assertEqual(op.strategy_ids, ['dma'])
         self.assertEqual(type(op.strategies[0]), DMA)
