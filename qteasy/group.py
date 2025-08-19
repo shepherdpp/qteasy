@@ -81,6 +81,10 @@ class Group:
     def run_timing(self):
         return self._run_timing
 
+    @property
+    def strategy_count(self):
+        return len(self.members)
+
     def add_strategy(self, strategy: BaseStrategy):
 
         if len(self.members) == 0:
@@ -102,4 +106,7 @@ class Group:
         return signal_blend(op_signals=signals, blender=self._blender)
 
     def __repr__(self):
-        return f"Group(name={self.name}, members={self.members})"
+        return f"{self.name}({self.signal_type}) with {self.strategy_count} stgs"
+
+    def __str__(self):
+        return f"{self.name}({self.strategy_count}IN{self.signal_type})@{self.run_freq}/{self.run_timing}"

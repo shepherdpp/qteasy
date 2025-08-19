@@ -164,7 +164,7 @@ class Operator:
         self._strategies = {}  # Dict——保存实际的交易策略对象
 
         # Operator对象包含的交易策略组
-        self.groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
+        self._groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
         self.group_timing_table = None  # 交易策略组的运行时间表
         self.group_merge_type = group_merge_type  # 交易策略组的合并方式，默认为None
         self.group_schedules = {}  # 交易策略组的运行时间表，包含每个组的运行时间和频率
@@ -343,10 +343,22 @@ class Operator:
     @property
     def strategy_groups(self):
         """返回operator对象所有策略子对象的运行时间类型"""
-        p_types = [item.strategy_run_timing for item in self.strategies]
-        p_types = list(set(p_types))
-        p_types.sort()
-        return p_types
+        return {g.name: g for g in self._groups}
+
+    @property
+    def groups(self):
+        """返回operator对象所有策略子对象的运行时间类型"""
+        return {g.name: g for g in self._groups}
+
+    @property
+    def group_ids(self):
+        """返回operator对象所有策略子对象的运行时间类型"""
+        return [g.name for g in self._groups]
+
+    @property
+    def group_names(self):
+        """返回operator对象所有策略子对象的运行时间类型"""
+        return [g.name for g in self._groups]
 
     @property
     def all_price_and_data_types(self):
@@ -807,17 +819,17 @@ class Operator:
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
 
-        if len(self.groups) == 0 or not any(
+        if len(self._groups) == 0 or not any(
                 strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
-                for group in self.groups
+                for group in self._groups
         ):  # create a new group if no existing group matches the strategy's timing and frequency
-            new_group = Group(name=f"Group_{len(self.groups) + 1}",
+            new_group = Group(name=f"Group_{len(self._groups) + 1}",
                               signal_type='PT',
                               blender=None, )
             new_group.add_strategy(strategy)
-            self.groups.append(new_group)
+            self._groups.append(new_group)
         else:  # add the strategy to an existing group
-            for group in self.groups:
+            for group in self._groups:
                 if strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq:
                     group.add_strategy(strategy)
                     break
@@ -1168,25 +1180,25 @@ class Operator:
             raise TypeError(f'group should be a string, got {type(group)} instead')
         return
 
-    def get_blender(self, group=None):
-        """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
+    def get_blender(self, group_name=None):
+        """返回operator对象中的多空蒙板混合器, 如果不指定group_name的话，输出完整的blender字典
 
         Parameters
         ----------
-        group: str
-            一个可用的price_type
+        group_name: str
+            一个可用的group_name
 
         Returns
         -------
         blender: dict or list
-            如果price_type为None，则返回一个字典，其中包含所有的run_timing的blender
-            如果price_type不为None，则返回一个列表，其中包含该run_timing的blender
+            如果group_name为None，则返回一个字典，其中包含所有的run_timing的blender
+            如果group_name不为None，则返回一个列表，其中包含该run_timing的blender
         """
-        if group is None:
-            return {g.id: g.blender for g in self.groups if g.blender is not None}
-        if group not in self.strategy_groups:
+        if group_name is None:
+            return {g.id: g.blender for g in self._groups if g.blender is not None}
+        if group_name not in self.strategy_groups:
             return None
-        return self.groups[group].blender
+        return self.groups[group_name].blender
 
     def view_blender(self, group=None):
         """ 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
@@ -1435,7 +1447,7 @@ class Operator:
         """
         print('preparing group timing table')
         self.group_schedules = {}
-        for group in self.groups:
+        for group in self._groups:
             if group.run_timing is None or group.run_freq is None:
                 raise ValueError(f"Group {group.name} has no run timing or frequency defined.")
             schedule_index = pd.date_range(
@@ -1494,7 +1506,7 @@ class Operator:
         data window indices are created according to group schedules.
         """
         print('creating data windows')
-        for group in self.groups:
+        for group in self._groups:
             schedule = self.group_timing_table
             for strategy in group.members:
                 self.data_window_views[strategy.name] = {}
