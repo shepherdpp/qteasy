@@ -183,6 +183,8 @@ class BaseStrategy:
         # 以下是策略运行时产生的动态参数
         self._share_count = 0
         self._share_names = None
+        self._strategy_id = None  # 策略的唯一ID，在策略运行时由系统分配
+        self._group_id = None  # 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
 
     @property
     def name(self):
@@ -192,6 +194,14 @@ class BaseStrategy:
     @name.setter
     def name(self, name: str):
         self._stg_name = name
+
+    @property
+    def strategy_id(self):
+        return self._strategy_id
+
+    @property
+    def group_id(self):
+        return self._group_id
 
     @property
     def description(self):
@@ -457,6 +467,8 @@ class BaseStrategy:
         elif isinstance(pars, Parameter):
             pars = {pars.name: pars}
         elif isinstance(pars, (list, tuple)):
+            if not all(isinstance(par, Parameter) for par in pars):
+                raise TypeError(f'pars should be a list of Parameter objects, got {type(pars)} instead')
             pars = {par.name: par for par in pars}
         elif isinstance(pars, dict):
             pass

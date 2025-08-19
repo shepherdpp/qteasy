@@ -1943,25 +1943,26 @@ class TRIX(RuleIterator):
 
     """
 
-    def __init__(self, pars=(12, 12)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 50), (3, 150)],
-                         name='TRIX',
-                         description='TRIX strategy, determine long/short position according to triple exponential '
-                                     'weighted moving average prices',
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=270,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 12), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter((2, 50), par_type='int', name='s'),
+                    Parameter((3, 150), par_type='int', name='m')
+                ],
+                name='TRIX',
+                description='TRIX strategy, determine long/short position according to triple exponential '
+                            'weighted moving average prices',
+                data_types=DataType('close'),
+                window_length=270,
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, m = self.par_values
-        else:
-            s, m = pars
-        h = h.T
+    def realize(self):
+        s, m = self.s, self.m
+
+        h = self.close_E_d
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
         if trx[-1] > matrix[-1]:
@@ -3397,7 +3398,7 @@ class DMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, par_values=(12, 26, 9)):
+    def __init__(self, par_values=(12, 26, 9), **kwargs):
         super().__init__(
                 pars=[
                     Parameter(par_range=(10, 250), par_type='int', name='slow'),
@@ -3408,6 +3409,7 @@ class DMA(RuleIterator):
                 description='Quick DMA strategy, determine long/short position according to differences of '
                             'moving average prices with simple timing strategy',
                 data_types=DataType('close', freq='d', asset_type='E'),
+                **kwargs,
         )
 
         if par_values:

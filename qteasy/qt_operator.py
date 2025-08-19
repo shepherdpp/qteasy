@@ -271,7 +271,7 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需历史数据类型的集合"""
-        d_types = [typ for item in self.strategies for typ in item.history_data_types]
+        d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
         return d_types
@@ -674,7 +674,7 @@ class Operator:
         else:
             raise TypeError(f'group_id should be an integer or a string, got {type(group_id)} instead!')
 
-    def add_strategies(self, strategies):
+    def add_strategies(self, strategies: Union[str, list[Union[str, BaseStrategy, type]]], **kwargs: Any):
         """ 添加多个Strategy交易策略到Operator对象中
 
         使用这个方法，不能在添加交易策策略的同时修改交易策略的基本属性
@@ -686,6 +686,8 @@ class Operator:
         ----------
         strategies: stg or list of str or list of Strategy
             交易策略的名称或者交易策略对象
+        **kwargs: Any
+            添加的交易策略所共享的属性，一般如run_timing， run_freq等属性
 
         Returns
         -------
@@ -707,7 +709,7 @@ class Operator:
             if not isinstance(stg, (str, BaseStrategy, type)):
                 warnings.warn(f'WrongType! some of the items in strategies '
                               f'can not be added - got {stg}', RuntimeWarning, stacklevel=2)
-            self.add_strategy(stg)
+            self.add_strategy(stg, **kwargs)
 
     def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any], **kwargs):
 
@@ -786,8 +788,22 @@ class Operator:
                              f'please add a different strategy or its copy.')
 
         stg_id = self._next_stg_id(stg_id)
+        strategy._strategy_id = stg_id
         self._strategy_id.append(stg_id)
         self._strategies[stg_id] = strategy
+
+        # 特殊处理run_freq和run_timings参数，如果这两个参数存在kwargs中，则需要单独修改strategy的这两个参数
+        if 'run_freq' in kwargs:
+            run_freq = kwargs.pop('run_freq')
+            if not isinstance(run_freq, str):
+                raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
+            strategy.run_freq = run_freq
+        if 'run_timing' in kwargs:
+            run_timing = kwargs.pop('run_timing')
+            if not isinstance(run_timing, str):
+                raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
+            strategy.run_timing = run_timing
+
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
 
@@ -795,15 +811,18 @@ class Operator:
                 strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
                 for group in self._groups
         ):  # create a new group if no existing group matches the strategy's timing and frequency
-            new_group = Group(name=f"Group_{len(self._groups) + 1}",
+            group_id = f"Group_{len(self._groups) + 1}"
+            new_group = Group(name=group_id,
                               signal_type='PT',
                               blender=None, )
             new_group.add_strategy(strategy)
+            strategy._group_id = group_id  # TODO: group里保存strategy，同时strategy里又保存group会造成信息冗余，可能出错
             self._groups.append(new_group)
         else:  # add the strategy to an existing group
             for group in self._groups:
                 if strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq:
                     group.add_strategy(strategy)
+                    strategy._group_id = group.name
                     break
             return
 
@@ -857,7 +876,7 @@ class Operator:
         if group_id is None:
             return self.strategies
         else:
-            return [stg for stg in self.strategies if stg.strategy_run_timing == group_id]
+            return self.groups[group_id].members
 
     def get_strategy_count_by_group(self, group_id=None):
         """返回operator中的交易策略的数量, timing为一个可选参数，
@@ -878,11 +897,7 @@ class Operator:
         if group_id is None:
             return all_ids
         else:
-            res = []
-            for stg, stg_id in zip(self.strategies, all_ids):
-                if stg.strategy_run_timing == group_id:
-                    res.append(stg_id)
-            return res
+            return [stg.strategy_id for stg in self.groups[group_id].members]
 
     def get_bt_price_type_id_in_priority(self, priority=None):
         """ 根据字符串priority输出正确的回测交易价格ID
@@ -1200,6 +1215,7 @@ class Operator:
                       opt_tag: int = None,
                       window_length: int = None,
                       strategy_data_types: Union[str, list] = None,
+                      par_values: Union[tuple, list] = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
@@ -1220,6 +1236,8 @@ class Operator:
             窗口长度：策略计算的前视窗口长度
         strategy_data_types: str or list,
             策略计算所需历史数据的数据类型
+        par_values: tuple or list,
+            策略参数的具体取值
         kwargs: dict,
             其他参数
 
@@ -1242,6 +1260,8 @@ class Operator:
         if has_wl or has_dt:
             strategy.set_hist_pars(window_length=window_length,
                                    strategy_data_types=strategy_data_types)
+        if par_values is not None:  # 设置策略参数的具体取值
+            strategy.update_par_values(*par_values)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
