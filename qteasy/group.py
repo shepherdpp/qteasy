@@ -38,7 +38,7 @@ class Group:
             raise ValueError()
 
         self.name = name
-        self.signal_type = signal_type
+        self._signal_type = signal_type
         self._blender_str = ''
         self._blender = None
 
@@ -80,6 +80,10 @@ class Group:
     @property
     def run_timing(self):
         return self._run_timing
+
+    @property
+    def signal_type(self):
+        return self._signal_type
 
     @property
     def strategy_count(self):

@@ -11,11 +11,14 @@
 # ======================================
 import unittest
 
+from numba.cuda import runtime
+
 import qteasy as qt
 import pandas as pd
 import numpy as np
 
 from qteasy.parameter import Parameter
+from qteasy.group import Group
 from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
 from qteasy.tafuncs import sma
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
@@ -730,6 +733,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
+    def test_get_next_ids(self):
+        """ test functions _next_stg_id and _next_group_id with fake ids"""
+        op = qt.Operator()
+        self.assertEqual(op._strategy_id, [])
+
+        # test getting next id in simple cases
+        op._strategy_id = ['dma', 'macd', 'trix']
+        self.assertEqual(op._next_stg_id('dma'), 'dma_1')
+        self.assertEqual(op._next_stg_id('macd'), 'macd_1')
+        self.assertEqual(op._next_stg_id('trix'), 'trix_1')
+        self.assertEqual(op._next_stg_id('random'), 'random')
+
+        # test getting next id in missing indexes
+        op._strategy_id = ['dma', 'macd', 'trix', 'dma_1', 'dma_3', 'dma_4']
+        self.assertEqual(op._next_stg_id('dma'), 'dma_5')
+        self.assertEqual(op._next_stg_id('macd'), 'macd_1')
+
+        # test getting next group id in simple cases
+        self.assertEqual(op.group_ids, [])
+        self.assertEqual(op._next_group_id(), 'Group_1')
+
+        # test getting next group id in missing indexes
+        op._groups = [Group('Group_1'),
+                      Group('Group_3'),
+                      Group('Group_5')]
+        self.assertEqual(op._next_group_id(), 'Group_6')
+
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
         op = qt.Operator('dma, all, sellrate')
@@ -984,10 +1014,25 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """ test method remove strategy"""
+
+        print(f'create a new operator with 7 strategies in 3 groups')
         op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestGenStg()])
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        op.add_strategies(['DMA', TestGenStg()], run_freq='h', run_timing='open')
         self.assertEqual(op.strategy_count, 7)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 3)
+        self.assertEqual(op.groups['Group_1'].members, [op['dma'], op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_2'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_2'].members, [op['dma_1'], op['macd']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
@@ -998,15 +1043,58 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[3], op['macd'])
         self.assertEqual(op.strategies[4], op['dma_2'])
         self.assertEqual(op.strategies[5], op['custom'])
-        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                     'Group_2': op._groups[1],
+                                     'Group_3': op._groups[2]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_2'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_2'].members, [op['dma_1'], op['macd']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+
+        print(f'testing remove both strategies from group2')
         op.remove_strategy('dma_1')
-        self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
+        op.remove_strategy('macd')
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
         self.assertEqual(op.strategies[1], op['sellrate'])
-        self.assertEqual(op.strategies[2], op['macd'])
-        self.assertEqual(op.strategies[3], op['dma_2'])
-        self.assertEqual(op.strategies[4], op['custom'])
+        self.assertEqual(op.strategies[2], op['dma_2'])
+        self.assertEqual(op.strategies[3], op['custom'])
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                        'Group_3': op._groups[1]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+
+        print(f'testing add strategies back to operator originally in group2, now they should be in group4')
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma', 'macd'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['dma_2'])
+        self.assertEqual(op.strategies[3], op['custom'])
+        self.assertEqual(op.strategies[4], op['dma'])
+        self.assertEqual(op.strategies[5], op['macd'])
+        import pdb; pdb.set_trace()
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                        'Group_3': op._groups[1],
+                                        'Group_4': op._groups[2]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_3', 'Group_4'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+        self.assertEqual(op.groups['Group_4'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_4'].members, [op['dma_3'], op['macd']])
 
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
@@ -1106,7 +1194,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIs(op[1], op.strategies[1])
         self.assertIs(op[3], op.strategies[2])
 
-    def test_get_strategies_by_price_type(self):
+    def test_get_strategies_by_group(self):
         """ test get_strategies_by_price_type"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)

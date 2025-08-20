@@ -86,7 +86,7 @@ class Operator:
     """
 
     def __init__(self,
-                 strategies: Union[str, list[Union[str, BaseStrategy]]] = None,
+                 strategies: Union[str, list[Union[str, BaseStrategy, type]]] = None,
                  *,
                  name: str = None,
                  signal_type: str = 'pt',
@@ -153,7 +153,6 @@ class Operator:
 
         # 初始化Operator对象的"工作数据"或"运行数据"，以下属性由Operator自动设置，不允许用户手动设置：
         # Operator对象的工作变量
-        self._signal_type = ''
         self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
         # 用于 2.0 弃用 API 的每实例单次告警
@@ -189,7 +188,6 @@ class Operator:
         # self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
         # 设置operator的主要关键属性
-        self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
         self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
 
@@ -199,7 +197,7 @@ class Operator:
         if self.strategy_count > 0:
             res.append(', '.join(self._strategy_id))
         res.append('], ')
-        res.append(f'\'{self.signal_type}\', \'{self.op_type}\')')
+        res.append(f'\'{self.op_type}\')')
         return ''.join(res)
 
     @property
@@ -222,36 +220,6 @@ class Operator:
     def strategy_ids(self):
         """返回operator对象中所有交易策略对象的ID"""
         return self._strategy_id
-
-    @property
-    def signal_type(self):
-        """ 返回operator对象的信号类型"""
-        return self._signal_type
-
-    @signal_type.setter
-    def signal_type(self, st):
-        """ 设置signal_type的值"""
-        if not isinstance(st, str):
-            raise TypeError(f'signal type should be a string, got {type(st)} instead!')
-        elif st.lower() in AVAILABLE_SIGNAL_TYPES:
-            self._signal_type = AVAILABLE_SIGNAL_TYPES[st.lower()]
-        elif st.lower() in AVAILABLE_SIGNAL_TYPES.values():
-            self._signal_type = st.lower()
-        else:
-            raise ValueError(f'Invalid signal type ({st})\nChoose one from '
-                             f'{AVAILABLE_SIGNAL_TYPES}')
-
-    @property
-    def signal_type_id(self):
-        """ 以数字的形式返回operator对象的信号类型，便于loop中识别使用"""
-        if self._signal_type == 'pt':
-            return 0
-        elif self._signal_type == 'ps':
-            return 1
-        elif self._signal_type == 'vs':
-            return 2
-        else:
-            raise ValueError(f'invalid signal type ({self._signal_type})')
 
     @property
     def op_type(self):
@@ -839,7 +807,7 @@ class Operator:
                 strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
                 for group in self._groups
         ):  # create a new group if no existing group matches the strategy's timing and frequency
-            group_id = f"Group_{len(self._groups) + 1}"
+            group_id = self._next_group_id()
             new_group = Group(name=group_id,
                               signal_type='PT',
                               blender=None, )
@@ -857,12 +825,22 @@ class Operator:
     def _next_stg_id(self, stg_id: str):
         """ 为一个交易策略生成一个新的id"""
         all_ids = self._strategy_id
-        if stg_id in all_ids:
-            stg_id_stripped = [ID.partition("_")[0] for ID in all_ids if ID.partition("_")[0] == stg_id]
-            next_id = stg_id + "_" + str(len(stg_id_stripped))
+        # 补全stg_id中缺失的序号，主要是将“stg_id”变为"stg_id_0"
+        all_ids = [ID + '_0' if len(ID.split("_")) == 1 else ID for ID in all_ids]
+        all_id_names = [ID.split("_")[0] for ID in all_ids if ID.split("_")[0] == stg_id]
+        if stg_id in all_id_names:
+            stg_id_stripped = [int(ID.split("_")[1]) for ID in all_ids if ID.split("_")[0] == stg_id]
+            next_id = stg_id + "_" + str(max(stg_id_stripped) + 1)
             return next_id
         else:
             return stg_id
+
+    def _next_group_id(self):
+        """ 为一个交易策略组生成一个新的id"""
+        all_ids = self.group_ids
+        group_id_stripped = [int(ID.split("_")[1]) for ID in all_ids]
+        next_id = 'Group' + "_" + str(max(group_id_stripped) + 1) if group_id_stripped else 'Group_1'
+        return next_id
 
     def remove_strategy(self, id_or_pos=None):
         """从Operator对象中移除一个交易策略, 删除时可以给出策略的id或者策略在Operator中的位置"""
@@ -881,8 +859,14 @@ class Operator:
             else:
                 pos = all_ids.index(id_or_pos)
         # 删除strategy的时候，不需要实际删除某个strategy，只需要删除其id即可
+        strategy = self[pos]
         self._strategy_id.pop(pos)
-        # self._strategies.pop(pos)
+        # 接下来还需要删除该strategy所在group中的members
+        group = self.groups[strategy._group_id]
+        group.members.pop(group.members.index(strategy))
+        # 如果该group中没有其他成员了，则删除该group
+        if len(group.members) == 0:
+            self._groups.remove(group)
         return
 
     def clear_strategies(self):
