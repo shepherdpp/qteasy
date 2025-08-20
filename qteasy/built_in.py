@@ -355,18 +355,22 @@ class CDL(RuleIterator):
     """
 
     def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=None,
-                         par_range=None,
-                         name='CDL INDICATOR',
-                         description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
-                         window_length=200,
-                         strategy_data_types='open,high,low,close')
+        super().__init__(
+                pars=[],
+                name='CDL INDICATOR',
+                description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('open', freq='d'),
+                    DataType('high', freq='d'),
+                    DataType('low', freq='d'),
+                    DataType('close', freq='d')
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        h = h.T
-        cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
+    def realize(self):
+        o, h, l, c = self.open_E_d, self.high_E_d, self.low_E_d, self.close_E_d
+        cat = (cdldoji(o, h, l, c).cumsum() // 100)
 
         return float(cat[-1])
 
@@ -3819,23 +3823,24 @@ class SelectingNDayRateChange(FactorSorter):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY RATE',
-                         description='Select stocks by its N day price change',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(2, 150), par_type='int', name='n')
+                ],
+                name='N-DAY RATE',
+                description='Select stocks by its N day price change',
+                data_types=DataType('close', freq='d', asset_type='E'),
+                run_freq='M',
+                window_length=150,
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.par_values
-        else:
-            n, = pars
+    def realize(self):
+        n, = self.n
+        h = self.close_E_d
         current_price = h[:, -1, 0]
         n_previous = h[:, -n - 1, 0]
         factors = (current_price - n_previous) / n_previous

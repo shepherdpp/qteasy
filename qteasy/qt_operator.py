@@ -846,6 +846,7 @@ class Operator:
         if self.strategy_count > 0:
             self._strategy_id = []
             self._strategies = {}
+            self._groups = []
         return
 
     def get_strategies_by_group(self, group_id=None):
@@ -1344,14 +1345,14 @@ class Operator:
         }
         rprint(f'{"Operator Information":-^{info_width}}\n'
                f'Strategies:  {self.strategy_count} Strategies\n'
-               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
-               f'Signal Type: {self.signal_type} - {signal_type_descriptions[self.signal_type]}\n')
+               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n')
         # 打印blender的信息：
-        for run_timing in self.strategy_groups:
+        for group in self._groups:
             rprint(f'{"Strategy blenders":-^{info_width}}\n'
-                  f'for strategy running timing - {run_timing}:')
-            if self.strategy_blenders != {}:
-                rprint(f'signal blenders: {self.view_blender(run_timing)}\n')
+                   f'for strategy group - {group}:\n'
+                   f'Signal Type: {group.signal_type} - {signal_type_descriptions[group.signal_type]}\n')
+            if group.blender_str:
+                rprint(f'signal blenders: {group.human_blender}\n')
             else:
                 rprint(f'no blender\n')
         # 打印各个strategy的基本信息：
@@ -1374,8 +1375,8 @@ class Operator:
                 from .utilfuncs import parse_freq_string
                 qty, main_freq, sub_freq = parse_freq_string(stg.run_freq)
                 qty = '' if qty == 1 else qty  # to prevent from printing 1x
-                run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.strategy_run_timing
-                qty, main_freq, sub_freq = parse_freq_string(stg.data_freq)
+                run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.run_timing
+                qty, main_freq, sub_freq = parse_freq_string(stg.data_type)
                 data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
                 rprint(f'{adjust_string_length(stg_id, id_width) :<{id_width}}'
                        f'{adjust_string_length(stg.name, name_width) :<{name_width}}'

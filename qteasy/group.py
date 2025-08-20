@@ -25,7 +25,7 @@ from qteasy.blender import (
 
 
 class Group:
-    def __init__(self, name: str, signal_type: str = 'PT', blender: str = None):
+    def __init__(self, name: str, signal_type: str = 'pt', blender: str = None):
 
         if not isinstance(name, str):
             raise TypeError(f'name should be a string, got {type(name)} instead')
@@ -33,8 +33,8 @@ class Group:
         if not isinstance(signal_type, str):
             raise TypeError()
 
-        signal_type = signal_type.upper()
-        if signal_type not in ['PT', 'PS', 'VS']:
+        signal_type = signal_type.lower()
+        if signal_type not in ['pt', 'ps', 'vs']:
             raise ValueError()
 
         self.name = name
