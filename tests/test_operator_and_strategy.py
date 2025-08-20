@@ -1076,14 +1076,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'testing add strategies back to operator originally in group2, now they should be in group4')
         op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
         self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma', 'macd'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3', 'macd'])
         self.assertEqual(op.strategies[0], op['all'])
         self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['dma_2'])
         self.assertEqual(op.strategies[3], op['custom'])
-        self.assertEqual(op.strategies[4], op['dma'])
+        self.assertEqual(op.strategies[4], op['dma_3'])
         self.assertEqual(op.strategies[5], op['macd'])
-        import pdb; pdb.set_trace()
         self.assertEqual(op.strategy_group_count, 3)
         self.assertEqual(op.groups, {'Group_1': op._groups[0],
                                         'Group_3': op._groups[1],
@@ -1099,24 +1098,42 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
         op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestGenStg()])
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        op.add_strategies(['DMA', TestGenStg()], run_freq='h', run_timing='open')
         self.assertEqual(op.strategy_count, 7)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
         print('test removing strategies from Operator')
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
-        op.add_strategy('dma', par_values=(12, 123, 25))
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.strategy_groups, {})
+
+        op.add_strategy('dma', par_values=(12, 123, 25), run_freq='5min', run_timing='open')
         self.assertEqual(op.strategy_count, 1)
         self.assertEqual(op.strategy_ids, ['dma'])
         self.assertEqual(type(op.strategies[0]), DMA)
         self.assertEqual(op.strategies[0].par_values, (12, 123, 25))
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.groups, {'Group_1': op._groups[0]})
+        self.assertEqual(op.groups['Group_1'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_1'].members, [op['dma']])
+        self.assertEqual(op.groups['Group_1'].run_freq, '5min')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
 
     def test_info(self):
         """Test information output of Operator"""
+        self.op = qt.Operator('dma, macd, trix')
         stg = qt.built_in.SelectingNDayRateChange()
         print(f'test printing information of strategies, in verbose mode')
         self.op[0].info()
