@@ -1169,45 +1169,49 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'test printing information of operator object')
         self.op.info()
 
-    def test_set_pars(self):
-        """ 测试设置策略参数"""
+    def test_set_par_values(self):
+        """ 测试设置策略参数，使用update_par_values"""
         op = qt.Operator('dma, macd, trix')
 
         stg_dma = op[0]
         stg_macd = op[1]
         stg_trix = op[2]
 
+        # test setting normal parameter values
         stg_dma.par_values = (10, 20, 30)
         self.assertEqual(stg_dma.par_values, (10, 20, 30))
-        stg_macd.par_values = (10, 20, 30)
+        stg_macd.par_values = (10, 20, 30.)
         self.assertEqual(stg_macd.par_values, (10, 20, 30))
-        stg_trix.set_pars((10, 20))
+        stg_trix.update_par_values(10, 20)
         self.assertEqual(stg_trix.par_values, (10, 20))
-        stg_dma.set_pars({'a': (10, 20, 30),
-                          'b': (11, 21, 31),
-                          'c': (12, 22, 32)})
-        self.assertEqual(stg_dma.par_values,
-                         {'a': (10, 20, 30),
-                          'b': (11, 21, 31),
-                          'c': (12, 22, 32)})
+        stg_dma.update_par_values(10, 20, 30)
+        self.assertEqual(stg_dma.par_values, (10, 20, 30))
 
         # test errors
-        self.assertRaises(AssertionError, stg_dma.set_pars, 'wrong input')  # wrong input type
-        self.assertRaises(ValueError, stg_dma.set_pars, (10, -100))  # par count does not match
-        self.assertRaises(ValueError, stg_dma.set_pars, (10, 10, -10))  # par out of range
-        wrong_dict_pars = {'a': (10, 20, 30),
-                           'b': (11, 21, 31),
-                           'c': (12, 22, 32)}
-        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par count not match in dict
-        wrong_dict_pars = {'a': 'wrong_type',
-                           'b': (11, 21),
-                           'c': (12, 22)}
-        self.assertRaises(TypeError, stg_trix.set_pars, wrong_dict_pars)  # wrong input type in dict
-        wrong_dict_pars = {'a': (10, 20),
-                           'b': (11, 21),
-                           'c': (12, -22)}
-        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par out of range in dict
-        # raise NotImplementedError
+        self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong input')  # wrong input type
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, -100)  # par count does not match
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, -10)  # par out of range
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10.5, -10)  # par type not match
+
+        # test setting multi-parameters to RuleIterators
+        op.add_strategy(TestRuleIter)
+
+        stg_rule = op[-1]
+        self.assertIsInstance(stg_rule, RuleIterator)
+        self.assertEqual(stg_rule.par_values, (10, 10, 30))
+        stg_rule.update_par_values(20, 20, 50)
+        self.assertEqual(stg_rule.par_values, (20, 20, 50))
+
+        self.assertEqual(stg_rule.allow_multi_par, True)
+        stg_rule._update_multi_pars(
+                {'000001': (10, 10, 30),
+                 '000002': (20, 20, 50),
+                 '000003': (30, 30, 70)}
+        )
+        self.assertEqual(stg_rule.multi_pars, (10, 10, 30))
+
+
+        raise NotImplementedError
 
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""

@@ -1168,7 +1168,7 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.multi_pars, None)
 
         stg.allow_multi_par = False
-        stg.set_multi_pars([(5, 5), (6, 1), (2, 4)])
+        stg._update_multi_pars([(5, 5), (6, 1), (2, 4)])
         self.assertEqual(stg.allow_multi_par, False)
         self.assertEqual(stg.multi_pars, None)
 
@@ -1180,7 +1180,7 @@ class TestStrategy(unittest.TestCase):
 
         # test run strategy with different stock parameters
         stg.allow_multi_par = True
-        stg.set_multi_pars([(5, 5), (6, 1), (2, 4)])
+        stg._update_multi_pars([(5, 5), (6, 1), (2, 4)])
 
         self.assertEqual(stg.param1, 5)
         self.assertEqual(stg.param2, 6)
