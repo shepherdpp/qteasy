@@ -1095,6 +1095,27 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_4'].strategy_count, 2)
         self.assertEqual(op.groups['Group_4'].members, [op['dma_3'], op['macd']])
 
+        # test removing strategy that does not exist
+        print(f'test removing strategy that does not exist')
+        self.assertRaises(ValueError, op.remove_strategy, 'not_exist')
+        self.assertRaises(ValueError, op.remove_strategy, 'all_1')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3', 'macd'])
+
+        # test removing all strategies from operator
+        print(f'test removing all strategies from operator')
+        op.remove_strategy('all')
+        op.remove_strategy('sellrate')
+        op.remove_strategy('dma_2')
+        op.remove_strategy('custom')
+        op.remove_strategy('dma_3')
+        op.remove_strategy('macd')
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.strategies, [])
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.group_ids, [])
+
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
         op = qt.Operator('dma, all, sellrate')
@@ -1130,6 +1151,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.group_ids, [])
 
     def test_info(self):
         """Test information output of Operator"""
@@ -1148,9 +1171,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_set_pars(self):
         """ 测试设置策略参数"""
-        stg_dma = self.op2[0]
-        stg_macd = self.op2[1]
-        stg_trix = self.op2[2]
+        op = qt.Operator('dma, macd, trix')
+
+        stg_dma = op[0]
+        stg_macd = op[1]
+        stg_trix = op[2]
 
         stg_dma.par_values = (10, 20, 30)
         self.assertEqual(stg_dma.par_values, (10, 20, 30))
