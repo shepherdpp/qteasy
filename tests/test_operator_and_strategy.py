@@ -1186,32 +1186,52 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(stg_trix.par_values, (10, 20))
         stg_dma.update_par_values(10, 20, 30)
         self.assertEqual(stg_dma.par_values, (10, 20, 30))
+        # update par values with kwargs
+        stg_macd.update_par_values(slow=10, fast=20, mid=30)
+        self.assertEqual(stg_macd.par_values, (10, 20, 30))
 
         # test errors
-        self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong input')  # wrong input type
+        self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong', 'input', 'type')  # wrong input type
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, -100)  # par count does not match
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, 10, 10)  # par count does not match
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, -10)  # par out of range
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10.5, -10)  # par type not match
 
         # test setting multi-parameters to RuleIterators
         op.add_strategy(TestRuleIter)
 
-        stg_rule = op[-1]
-        self.assertIsInstance(stg_rule, RuleIterator)
-        self.assertEqual(stg_rule.par_values, (10, 10, 30))
-        stg_rule.update_par_values(20, 20, 50)
-        self.assertEqual(stg_rule.par_values, (20, 20, 50))
+        stg_rule = op[3]
+        self.assertIsInstance(stg_rule, TestRuleIter)
+        self.assertEqual(stg_rule.par_values, (50, 0.5))
+        stg_rule.update_par_values(20, 5)
+        self.assertEqual(stg_rule.par_values, (20, 5))
 
         self.assertEqual(stg_rule.allow_multi_par, True)
-        stg_rule._update_multi_pars(
-                {'000001': (10, 10, 30),
-                 '000002': (20, 20, 50),
-                 '000003': (30, 30, 70)}
+        stg_rule.update_par_values(
+                {'000001': (10, 3.),
+                 '000002': (20, 5.),
+                 '000003': (30, 7.)}
         )
-        self.assertEqual(stg_rule.multi_pars, (10, 10, 30))
+        self.assertEqual(stg_rule.multi_pars, ((10, 3.0), (20, 5.0), (30, 7.0)))
+        self.assertEqual(stg_rule.par_values, (10, 3.0))
 
+        # update multi-parameter will fail if allow_multi_par is False
+        stg_rule.allow_multi_par = False
+        self.assertRaises(ValueError, stg_rule.update_par_values,
+                            {'000001': (10, 10, 30),
+                             '000002': (20, 20, 50),
+                             '000003': (30, 30, 70)})
 
-        raise NotImplementedError
+        # other types of strategies don't support multi-parameter
+        op.add_strategy(GeneralStg)
+        stg_gen = op[4]
+
+        self.assertIsInstance(stg_gen, GeneralStg)
+        self.assertEqual(stg_gen.par_values, ())
+        self.assertRaises(ValueError, stg_gen.update_par_values,
+                            {'000001': (10, 10, 30),
+                                '000002': (20, 20, 50),
+                                '000003': (30, 30, 70)})
 
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""

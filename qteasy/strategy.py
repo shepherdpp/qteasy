@@ -572,6 +572,8 @@ class BaseStrategy:
         -------
         None
         """
+        if len(par_values) != self.par_count and not kwargs:
+            raise ValueError(f'par_values should be a tuple of {self.par_count} elements, got {len(par_values)} instead')
         if par_values != ():
             for par_name, par_value in zip(self.par_names, par_values):
                 self._pars[par_name].value = par_value
@@ -1235,7 +1237,6 @@ class RuleIterator(BaseStrategy):
                  name: str = 'Rule-Iterator',
                  description: str = 'description of rule iterator strategy',
                  allow_multi_par: bool = True,
-                 multi_pars: dict = None,
                  **kwargs):
         super().__init__(name=name,
                          description=description,
@@ -1244,9 +1245,37 @@ class RuleIterator(BaseStrategy):
         self._data_windows = {}
         self.allow_multi_par = allow_multi_par  # 设置为True，表示策略可以对不同的股票使用不同的参数
         self.multi_pars = None
-        if multi_pars is not None:
-            # 如果multi_pars不为None，则设置多参数
-            self._update_multi_pars(multi_pars)
+
+    def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
+        """ 快速更新策略的参数值，如果参数是一个multi_par，将其写入multi_par，
+        并将其第一组参数值写入par_values
+
+        Parameters
+        ----------
+        par_values: tuple, optional
+            策略参数的值，元组中的每个元素是按顺序排列的所有参数值，如果
+            没有设置参数，则必须传入kwargs参数
+        kwargs: dict
+            以字典形式传入具体需要更新的参数值，键为参数名，值为参数值
+
+        Returns
+        -------
+        None
+        """
+        if not par_values:
+            super().update_par_values(**kwargs)
+            return
+
+        if isinstance(par_values[0], dict):
+            # par values中有multi_par，更新multi_par
+            par_values = par_values[0]
+            self._update_multi_pars(par_values)
+            # 将第一个参数值写入par_values
+            par_values = self.multi_pars[0]
+            super().update_par_values(*par_values)
+        else:
+            # par_values是一个tuple或list，直接更新参数值
+            super().update_par_values(*par_values)
 
     def _update_multi_pars(self, multi_pars):
         """ 设置多参数的函数，允许用户为每只股票设置不同的参数
@@ -1264,7 +1293,7 @@ class RuleIterator(BaseStrategy):
         if not self.allow_multi_par:
             # 如果不允许多参数，则直接返回一个空元组
             self.multi_pars = None
-            return
+            raise ValueError('multi_pars is not allowed, you need to set allow_multi_par to True first')
 
         # 将tuple/list形式的multi_pars转化为dict形式，key为股票代码，value为参数的值元组
         if multi_pars is None:
