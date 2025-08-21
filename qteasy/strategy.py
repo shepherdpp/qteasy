@@ -106,6 +106,7 @@ class BaseStrategy:
             use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
             window_length: Union[int, List[int], Dict[str, int]] = 30,
             opt_tag: int = 0,
+            par_values: Union[Tuple[Any], List[Any]] = None,
     ):
         """ 初始化策略
 
@@ -168,6 +169,8 @@ class BaseStrategy:
         self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
+        if par_values:
+            self.update_par_values(par_values)
 
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
                          f' par_types={self.par_types}, par_range={self.par_range}')
@@ -1232,7 +1235,7 @@ class RuleIterator(BaseStrategy):
                  name: str = 'Rule-Iterator',
                  description: str = 'description of rule iterator strategy',
                  allow_multi_par: bool = True,
-                 multi_pars=None,
+                 multi_pars: dict = None,
                  **kwargs):
         super().__init__(name=name,
                          description=description,
@@ -1241,9 +1244,11 @@ class RuleIterator(BaseStrategy):
         self._data_windows = {}
         self.allow_multi_par = allow_multi_par  # 设置为True，表示策略可以对不同的股票使用不同的参数
         self.multi_pars = None
-        self.set_multi_pars(multi_pars)
+        if multi_pars is not None:
+            # 如果multi_pars不为None，则设置多参数
+            self._update_multi_pars(multi_pars)
 
-    def set_multi_pars(self, multi_pars):
+    def _update_multi_pars(self, multi_pars):
         """ 设置多参数的函数，允许用户为每只股票设置不同的参数
 
         Parameters

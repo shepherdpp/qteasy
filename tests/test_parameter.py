@@ -36,6 +36,7 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.array_size, 1)
         self.assertEqual(p.upper_bound, 10)
         self.assertEqual(p.lower_bound, 0)
+        self.assertEqual(p.value, None)
         self.assertTrue(np.allclose(p.gen_values(11, 'int'), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
         self.assertRaises(ValueError, p.gen_values, 0.5, 'int')
         extracted = p.gen_values(8, 'rand')
