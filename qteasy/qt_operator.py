@@ -877,40 +877,28 @@ class Operator:
             self._groups = []
         return
 
-    def get_strategies_by_group(self, group_id=None):
+    def get_strategies_by_group(self, group_id:str):
         """返回operator对象中的strategy对象, timing为一个可选参数，
         如果给出timing时，返回使用该timing的交易策略
 
         Parameters
         ----------
-        group_id : str, optional
+        group_id : str
             一个可用的timing, by default None
         """
-        if group_id is None:
-            return self.strategies
-        else:
-            return self.groups[group_id].members
+        return self.groups[group_id].members
 
-    def get_strategy_count_by_group(self, group_id=None):
-        """返回operator中的交易策略的数量, timing为一个可选参数，
-        如果给出timing时，返回使用该timing的交易策略数量"""
+    def get_strategy_count_by_group(self, group_id:str):
+        """返回策略组group_id中的所有策略数量"""
         return len(self.get_strategies_by_group(group_id))
 
-    def get_strategy_names_by_group(self, group_id=None):
-        """返回operator对象中所有交易策略对象的名称, timing为一个可选参数，
-        注意，strategy name并没有实际的作用，未来将被去掉
-        在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
-        如果给出timing时，返回使用该timing的交易策略名称"""
+    def get_strategy_names_by_group(self, group_id:str):
+        """返回策略组group_id中的所有策略名称"""
         return [stg.name for stg in self.get_strategies_by_group(group_id)]
 
-    def get_strategy_id_by_group(self, group_id=None):
-        """返回operator对象中所有交易策略对象的ID, timing为一个可选参数，
-        如果给出timing时，返回使用该timing的交易策略名称"""
-        all_ids = self._strategy_id
-        if group_id is None:
-            return all_ids
-        else:
-            return [stg.strategy_id for stg in self.groups[group_id].members]
+    def get_strategy_id_by_group(self, group_id:str):
+        """返回策略组group_id中的所有策略ID"""
+        return [stg.strategy_id for stg in self.get_strategies_by_group(group_id)]
 
     def get_bt_price_type_id_in_priority(self, priority=None):
         """ 根据字符串priority输出正确的回测交易价格ID
