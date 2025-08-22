@@ -1267,125 +1267,45 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
 
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('dma', run_timing='close')
-        op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategies_by_group('close')
-        stg_open = op.get_strategies_by_group('open')
-        stg_high = op.get_strategies_by_group('high')
+        op.add_strategies('dma, macd, trix', run_timing='open', run_freq='h')
+        op.add_strategies('dma, macd, trix', run_timing='close', run_freq='h')
+        op.add_strategies('dma, macd, trix', run_timing='close', run_freq='d')
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.group_names, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
 
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
+        stg_group1 = op.get_strategies_by_group('Group_1')
+        stg_group2 = op.get_strategies_by_group('Group_2')
+        stg_group3 = op.get_strategies_by_group('Group_3')
 
-        self.assertEqual(stg_close, [op.strategies[1]])
-        self.assertEqual(stg_open, [op.strategies[0], op.strategies[2]])
-        self.assertEqual(stg_high, [])
+        self.assertIsInstance(stg_group1, list)
+        self.assertIsInstance(stg_group2, list)
+        self.assertIsInstance(stg_group3, list)
 
-        stg_wrong = op.get_strategies_by_group(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
+        self.assertEqual(stg_group1, [op['dma'], op['macd'], op['trix']])
+        self.assertEqual(stg_group2, [op['dma_1'], op['macd_1'], op['trix_1']])
+        self.assertEqual(stg_group3, [op['dma_2'], op['macd_2'], op['trix_2']])
 
-    def test_get_strategy_count_by_run_timing(self):
-        """ test get_strategy_count_by_group"""
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
+        # test get strategies by passing wrong group name
+        self.assertRaises(KeyError, op.get_strategies_by_group, 'not_exist')
+        self.assertRaises(KeyError, op.get_strategies_by_group, 'Group_4')
 
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('dma', run_timing='close')
-        op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_count_by_group('close')
-        stg_open = op.get_strategy_count_by_group('open')
-        stg_high = op.get_strategy_count_by_group('high')
+        # test getting other strategy information by group
+        self.assertEqual(op.get_strategy_count_by_group('Group_1'), 3)
+        self.assertEqual(op.get_strategy_count_by_group('Group_2'), 3)
+        self.assertEqual(op.get_strategy_count_by_group('Group_3'), 3)
 
-        self.assertIsInstance(stg_close, int)
-        self.assertIsInstance(stg_open, int)
-        self.assertIsInstance(stg_high, int)
+        self.assertEqual(op.get_strategy_names_by_group('Group_1'), ['DMA', 'MACD', 'TRIX'])
+        self.assertEqual(op.get_strategy_names_by_group('Group_2'), ['DMA', 'MACD', 'TRIX'])
+        self.assertEqual(op.get_strategy_names_by_group('Group_3'), ['DMA', 'MACD', 'TRIX'])
 
-        self.assertEqual(stg_close, 1)
-        self.assertEqual(stg_open, 2)
-        self.assertEqual(stg_high, 0)
-
-        stg_wrong = op.get_strategy_count_by_group(123)
-        self.assertIsInstance(stg_wrong, int)
-        self.assertEqual(stg_wrong, 0)
-
-    def test_get_strategy_names_by_price_type(self):
-        """ test get_strategy_names_by_price_type"""
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('dma', run_timing='close')
-        op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_names_by_group('close')
-        stg_open = op.get_strategy_names_by_group('open')
-        stg_high = op.get_strategy_names_by_group('high')
-
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
-
-        self.assertEqual(stg_close, ['DMA'])
-        self.assertEqual(stg_open, ['MACD', 'TRIX'])
-        self.assertEqual(stg_high, [])
-
-        stg_wrong = op.get_strategy_names_by_group(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
-
-    def test_get_strategy_id_by_price_type(self):
-        """ test get_strategy_IDs_by_price_type"""
-        print('-----Test get strategy IDs by price type------\n')
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('dma', run_timing='close')
-        op.set_parameter('trix', run_timing='open')
-        stg_close = op.get_strategy_id_by_group('close')
-        stg_open = op.get_strategy_id_by_group('open')
-        stg_high = op.get_strategy_id_by_group('high')
-
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
-
-        self.assertEqual(stg_close, ['dma'])
-        self.assertEqual(stg_open, ['macd', 'trix'])
-        self.assertEqual(stg_high, [])
-
-        op.add_strategies('dma, macd')
-        op.set_parameter('dma_1', run_timing='open')
-        op.set_parameter('macd', run_timing='open')
-        op.set_parameter('macd_1', run_timing='close')
-        op.set_parameter('trix', run_timing='close')
-        print(f'Operator strategy id:\n'
-              f'{op.strategies} on memory pos:\n'
-              f'{[id(stg) for stg in op.strategies]}')
-        stg_close = op.get_strategy_id_by_group('close')
-        stg_open = op.get_strategy_id_by_group('open')
-        stg_all = op.get_strategy_id_by_group()
-        print(f'All IDs of strategies:\n'
-              f'{stg_all}\n'
-              f'All price types of strategies:\n'
-              f'{[stg.strategy_run_timing for stg in op.strategies]}')
-        self.assertEqual(stg_close, ['dma', 'trix', 'macd_1'])
-        self.assertEqual(stg_open, ['macd', 'dma_1'])
-
-        stg_wrong = op.get_strategy_id_by_group(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['dma', 'macd', 'trix'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma_1', 'macd_1', 'trix_1'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['dma_2', 'macd_2', 'trix_2'])
 
     def test_property_strategies(self):
         """ test property strategies"""
