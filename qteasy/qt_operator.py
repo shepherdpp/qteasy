@@ -1289,16 +1289,14 @@ class Operator:
     # =================================================
     # 下面是Operation模块的公有方法：
     def info(self, verbose=False):
-        """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
+        """ 打印Operator对象的信息，包括策略组、组内策略，策略混合方式等等信息
 
-        如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
-        在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
-        首先打印Operation木块本身的信息
+        如果策略包含更多的信息，还会打印出策略的一些具体信息
 
         Parameters
         ----------
         verbose: bool, Default False
-            是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息，包括选股策略的信息等
+            是否打印出策略的详细信息, 如果为True, 则会打印出策略的详细信息
         """
         from .utilfuncs import adjust_string_length
         from rich import print as rprint
@@ -1331,54 +1329,48 @@ class Operator:
             '30min': '30min',
             'h': 'hours',
         }
-        rprint(f'{"Operator Information":-^{info_width}}\n'
-               f'Strategies:  {self.strategy_count} Strategies\n'
-               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n')
-        # 打印blender的信息：
-        for group in self._groups:
-            rprint(f'{"Strategy blenders":-^{info_width}}\n'
-                   f'for strategy group - {group}:\n'
-                   f'Signal Type: {group.signal_type} - {signal_type_descriptions[group.signal_type]}\n')
+        rprint(f'{"Operator Information":=^{info_width}}\n'
+               f'Name:        {self.name}\n'
+               f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
+               f'Groups:      {self.strategy_group_count} Groups, {self.strategy_count} Strategies\n')
+        # 依次打印各个Group的信息：
+        for group_id, group in self.groups.items():
+            rprint(f'{group_id:-^{info_width}}\n'
+                   f'Signal Type: {group.signal_type} - {signal_type_descriptions[group.signal_type]}\n'
+                   f'Run Timing:  {group.run_timing} @ {group.run_freq} - {data_freq_name[group.run_freq]}\n'
+                   f'Strategies ({group.strategy_count}): {self.get_strategy_id_by_group(group_id)}'
+                   )
             if group.blender_str:
-                rprint(f'signal blenders: {group.human_blender}\n')
+                rprint(f'Signal blenders: {group.human_blender}\n')
             else:
-                rprint(f'no blender\n')
-        # 打印各个strategy的基本信息：
-        if (self.strategy_count > 0) and (not verbose):
-            id_width = int(info_width * .1)
-            name_width = int(info_width * .2)
-            run_timing_width = int(info_width * .15)
-            data_window_width = int(info_width * .10)
-            data_type_width = int(info_width * .25)
-            par_width = int(info_width * .20)
-            rprint(f'{"Strategies":-^{info_width}}\n'
-                   f'{"stg_id":<{id_width}}'
-                   f'{"name":<{name_width}}'
-                   f'{"run timing":<{run_timing_width}}'
-                   f'{"data window":<{data_window_width}}'
-                   f'{"data types":<{data_type_width}}'
-                   f'{"parameters":<{par_width}}\n'
-                   f'{"_" * info_width}')
-            for stg_id, stg in self.get_strategy_id_pairs():
-                from .utilfuncs import parse_freq_string
-                qty, main_freq, sub_freq = parse_freq_string(stg.run_freq)
-                qty = '' if qty == 1 else qty  # to prevent from printing 1x
-                run_type_str = str(qty) + data_freq_name[main_freq.lower()] + ' @ ' + stg.run_timing
-                qty, main_freq, sub_freq = parse_freq_string(stg.data_type)
-                data_type_str = str(stg.window_length * qty) + ' x ' + data_freq_name[main_freq.lower()]
-                rprint(f'{adjust_string_length(stg_id, id_width) :<{id_width}}'
-                       f'{adjust_string_length(stg.name, name_width) :<{name_width}}'
-                       f'{adjust_string_length(run_type_str, run_timing_width) :^{run_timing_width}}'
-                       f'{adjust_string_length(data_type_str, data_window_width) :^{data_window_width}}'
-                       f'{adjust_string_length(str(stg.history_data_types), data_type_width) :^{data_type_width}}'
-                       f'{adjust_string_length(str(stg.par_values), par_width) :^{par_width}}')
-            print('=' * info_width)
-        # 打印每个strategy的详细信息
-        if (self.strategy_count > 0) and verbose:
-            print(f'{"Strategy Details":-^{info_width}}')
-            for stg_id, stg in self.get_strategy_id_pairs():
-                stg.info(stg_id=stg_id, verbose=verbose)
-            print('=' * info_width)
+                rprint(f'Signal blender not set\n')
+            # 依次打印各个strategy的基本信息：
+            if (self.strategy_count > 0) and (not verbose):
+                id_width = int(info_width * .2)
+                name_width = int(info_width * .3)
+                par_width = int(info_width * .5)
+                rprint(f'{"Strategies in group":-^{info_width}}\n'
+                       f'{"stg_id":<{id_width}}'
+                       f'{"name":<{name_width}}'
+                       f'{"parameters":<{par_width}}\n'
+                       f'{"-" * info_width}')
+                for stg in self.get_strategies_by_group(group_id=group_id):
+                    from .utilfuncs import parse_freq_string
+                    stg_id = stg.strategy_id
+                    qty, main_freq, sub_freq = parse_freq_string(stg.run_freq)
+                    qty = '' if qty == 1 else qty  # to prevent from printing 1x
+                    rprint(f'{adjust_string_length(stg_id, id_width) :<{id_width}}'
+                           f'{adjust_string_length(stg.name, name_width) :<{name_width}}'
+                           f'{adjust_string_length(str(stg.par_values), par_width) :^{par_width}}')
+                print('=' * info_width)
+            # 打印每个strategy的详细信息
+            if (self.strategy_count > 0) and verbose:
+                print(f'{"Strategy Details":-^{info_width}}')
+                for stg in self.get_strategies_by_group(group_id=group_id):
+                    from .utilfuncs import parse_freq_string
+                    stg_id = stg.strategy_id
+                    stg.info(stg_id=stg_id, verbose=verbose)
+                print('=' * info_width)
 
     # Adding functions for the new operator class
     def prepare_running_schedule(self, start_date=None, end_date=None):

@@ -1156,18 +1156,24 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_info(self):
         """Test information output of Operator"""
-        self.op = qt.Operator('dma, macd, trix')
+        op = qt.Operator('dma, macd, trix')
         stg = qt.built_in.SelectingNDayRateChange()
         print(f'test printing information of strategies, in verbose mode')
-        self.op[0].info()
+        op[0].info()
         stg.info()
 
         print(f'test printing information of strategies, in simple mode')
-        self.op[0].info(verbose=False)
+        op[0].info(verbose=False)
         stg.info(verbose=False)
 
-        print(f'test printing information of operator object')
-        self.op.info()
+        print(f'\n\ntest printing information of operator object')
+        op.info()
+
+        op.add_strategies('dma, macd', run_freq='h', run_timing='close')
+        op.add_strategies([TestRuleIter, TestGenStg, TestFactorSorter], run_freq='h', run_timing='open')
+        print(f'\n\ntest printing information of operator object with multiple strategy groups')
+
+        op.info()
 
     def test_set_par_values(self):
         """ 测试设置策略参数，使用update_par_values"""
