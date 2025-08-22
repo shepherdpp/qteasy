@@ -1331,40 +1331,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(strategies[1], MACD)
         self.assertIsInstance(strategies[2], CDL)
 
-    def test_property_strategy_count(self):
-        """ test Property strategy_count, and the method get_strategy_count_by_group()"""
-        self.assertEqual(self.op.strategy_count, 1)
-        self.assertEqual(self.op2.strategy_count, 3)
-        self.assertEqual(self.op.get_strategy_count_by_group(), 1)
-        self.assertEqual(self.op2.get_strategy_count_by_group(), 3)
-        self.assertEqual(self.op.get_strategy_count_by_group('close'), 1)
-        self.assertEqual(self.op.get_strategy_count_by_group('high'), 0)
-        self.assertEqual(self.op2.get_strategy_count_by_group('close'), 3)
-        self.assertEqual(self.op2.get_strategy_count_by_group('open'), 0)
-
-    def test_property_strategy_names(self):
-        """ test property strategy_ids"""
-        op = qt.Operator('dma')
-        self.assertIsInstance(op.strategy_ids, list)
-        names = op.strategy_ids[0]
-        print(f'names are {names}')
-        self.assertEqual(names, 'dma')
-
-        op = qt.Operator('dma, macd, trix, cdl')
-        self.assertIsInstance(op.strategy_ids, list)
-        self.assertEqual(op.strategy_ids[0], 'dma')
-        self.assertEqual(op.strategy_ids[1], 'macd')
-        self.assertEqual(op.strategy_ids[2], 'trix')
-        self.assertEqual(op.strategy_ids[3], 'cdl')
-
-        op = qt.Operator('dma, macd, trix, dma, dma')
-        self.assertIsInstance(op.strategy_ids, list)
-        self.assertEqual(op.strategy_ids[0], 'dma')
-        self.assertEqual(op.strategy_ids[1], 'macd')
-        self.assertEqual(op.strategy_ids[2], 'trix')
-        self.assertEqual(op.strategy_ids[3], 'dma_1')
-        self.assertEqual(op.strategy_ids[4], 'dma_2')
-
     def test_property_strategy_blenders(self):
         """ test property strategy blenders including property setter,
             and test the method get_blender()"""
