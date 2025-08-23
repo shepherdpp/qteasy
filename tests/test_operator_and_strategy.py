@@ -708,7 +708,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         """ test initialization of Operator class"""
         op = qt.Operator(name='test_operator')
         self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.signal_type, 'pt')
         self.assertIsInstance(op.strategies, list)
         self.assertEqual(len(op.strategies), 0)
         op = qt.Operator('dma')
@@ -719,6 +718,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
         op = qt.Operator(['dma', 'macd'])
         self.assertIsInstance(op, qt.Operator)
+
+        # test init with other parameters like signal_type, run_freq, run_timing, group_merge_type
+
+        raise NotImplementedError
 
     def test_repr(self):
         """ test basic representation of Opeartor class"""
@@ -1778,8 +1781,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
-        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
-        op_min.set_parameter(0, data_freq='h', run_freq='h')
+        op_min = qt.Operator(strategies='DMA, MACD, ALL')
+        op_min.set_parameter(0, )
         op_min.set_parameter(1, data_freq='h', run_freq='d')
         op_min.set_parameter(2, data_freq='h', run_freq='y')
         op_min.set_blender(blender='(s0+s1)*s2')

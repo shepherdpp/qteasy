@@ -91,7 +91,10 @@ class Operator:
                  name: str = None,
                  signal_type: str = 'pt',
                  op_type: str = 'batch',
-                 group_merge_type: str = 'None'):
+                 group_merge_type: str = 'None',
+                 run_freq: str = None,
+                 run_timing: str = None,
+                 ) -> None:
         """ 生成一个Operator对象
 
         parameters
@@ -120,6 +123,10 @@ class Operator:
                 - None: 每个策略组独立生成交易信号，同一时刻生成的交易信号会分别独立执行
                 - and: 同一时刻不同策略组运行生成的信号会被加总后合并执行
                 - or:  同一时刻不同策略组运行生成的信号会被相乘后合并执行
+        run_freq: str, default 'd'
+            同时设置Operator对象中所有交易策略的运行频率
+        run_timing: str, default 'close'
+            同时设置Operator对象中所有交易策略的运行时机
 
         Examples
         --------
@@ -185,7 +192,7 @@ class Operator:
 
         # 设置operator的主要关键属性
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
-        self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
+        self.add_strategies(stg, run_freq=run_freq, run_timing=run_timing)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
 
     def __repr__(self):
         res = list()
@@ -763,14 +770,14 @@ class Operator:
         # 特殊处理run_freq和run_timings参数，如果这两个参数存在kwargs中，则需要单独修改strategy的这两个参数
         if 'run_freq' in kwargs:
             run_freq = kwargs.pop('run_freq')
-            if not isinstance(run_freq, str):
+            if not isinstance(run_freq, str) and run_freq is not None:
                 raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
-            strategy.run_freq = run_freq
+            strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
         if 'run_timing' in kwargs:
             run_timing = kwargs.pop('run_timing')
-            if not isinstance(run_timing, str):
+            if not isinstance(run_timing, str) and run_timing is not None:
                 raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
-            strategy.run_timing = run_timing
+            strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
 
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
