@@ -1331,141 +1331,38 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(strategies[1], MACD)
         self.assertIsInstance(strategies[2], CDL)
 
-    def test_property_strategy_blenders(self):
-        """ test property strategy blenders including property setter,
-            and test the method get_blender()"""
-        print(f'------- Test property strategy blenders ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'pt')
-        # test adding blender to empty operator
-        op.strategy_blenders = '1 + 2'
-        op.signal_type = 'proportion signal'
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'ps')
-
-        op.add_strategy('dma')
-        op.strategy_blenders = 's1+s2'
-        self.assertEqual(op.strategy_blenders, {'close': ['+', 's2', 's1']})
-
-        op.clear_strategies()
-        self.assertEqual(op.strategy_blenders, {})
-        op.add_strategies('dma, trix, macd, dma')
-        op.set_parameter('dma', run_timing='open')
-        op.set_parameter('trix', run_timing='close')
-
-        op.set_blender('s1+s2', 'open')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        self.assertEqual(blender_open, ['+', 's2', 's1'])
-        self.assertEqual(blender_close, None)
-        self.assertEqual(blender_high, None)
-
-        op.set_blender('s1+2+3', 'open')
-        op.set_blender('s1+2+3', 'abc')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        blender_abc = op.get_blender('abc')
-        self.assertEqual(op.strategy_blenders, {'open': ['+', '3', '+', '2', 's1']})
-        self.assertEqual(blender_open, ['+', '3', '+', '2', 's1'])
-        self.assertEqual(blender_close, None)
-        self.assertEqual(blender_high, None)
-        self.assertEqual(blender_abc, None)
-
-        op.set_blender('s1+s1', None)
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        self.assertEqual(op.strategy_groups, ['close', 'open'])
-        self.assertEqual(op.get_blender(), {'close': ['+', 's1', 's1'],
-                                            'open':  ['+', 's1', 's1'], })
-        self.assertEqual(blender_open, ['+', 's1', 's1'])
-        self.assertEqual(blender_close, ['+', 's1', 's1'])
-
-        op.set_blender(['s1+s2+1', 's0+4'])
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', 's0'])
-        self.assertEqual(blender_close, ['+', '1', '+', 's2', 's1'])
-        self.assertEqual(op.view_blender('open'), 'dma + 4')
-        self.assertEqual(op.view_blender('close'), 'macd + dma_1 + 1')
-
-        op.strategy_blenders = (['s1+2', 's0*3'])
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        self.assertEqual(op.view_blender('open'), 'dma * 3')
-        self.assertEqual(op.view_blender('close'), 'macd + 2')
-
-        # test error inputs:
-        self.assertRaises(TypeError, op.set_blender, 123, 'open')
-        # wrong type of price_type
-        self.assertRaises(TypeError, op.set_blender, '1+3', 1)
-        # price_type not found, no change is made
-        op.set_blender('1+3', 'volume')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # price_type not valid, no change is made
-        op.set_blender('1+2', 'wrong_timing')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # wrong type of blender, no change is made
-        self.assertRaises(TypeError, op.set_blender, 55, 'open')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # wrong type of blender, no change is made
-        self.assertRaises(TypeError, op.set_blender, ['1+2'], 'close')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # can't parse blender, raise and no change is made
-        # self.assertWarns(Warning, op.set_blender, 'a+bc', 'high')
-        self.assertRaises(ValueError, op.set_blender, 'a+bc', 'close')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        self.assertIs(blender_high, None)
-
-    def test_property_singal_type(self):
+    def test_group_properties(self):
         """ test property signal_type"""
         op = qt.Operator()
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.signal_type, 'pt')
-        op = qt.Operator(signal_type='ps')
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.signal_type, 'ps')
-        op = qt.Operator(signal_type='PS')
-        self.assertEqual(op.signal_type, 'ps')
-        op = qt.Operator(signal_type='proportion signal')
-        self.assertEqual(op.signal_type, 'ps')
-        print(f'Error will be raised if Invalid signal type encountered')
-        self.assertRaises(
-                ValueError,
-                qt.Operator,
-                None,
-                'wrong value',
-                None
-        )
+        op.add_strategies('dma, macd, trix')
+        self.assertEqual(op.group_ids, ['Group_1'])
+        group = op.groups['Group_1']
+        self.assertIsInstance(group.signal_type, str)
+        self.assertEqual(group.signal_type, 'pt')
+        self.assertEqual(group.run_freq, 'd')
+        self.assertEqual(group.run_timing, 'close')
+        self.assertEqual(group.strategy_count, 3)
+        self.assertEqual(group.members, [op['dma'], op['macd'], op['trix']])
+        self.assertEqual(group.blender_str, '')
+        self.assertEqual(group.human_blender, '')
+        self.assertEqual(group.blender, None)
 
-        print(f'test signal_type.setter')
-        op.signal_type = 'ps'
-        self.assertEqual(op.signal_type, 'ps')
-        print(f'test error raising')
-        self.assertRaises(TypeError, setattr, op, 'signal_type', 123)
-        self.assertRaises(ValueError, setattr, op, 'signal_type', 'wrong value')
+        op.groups['Group_1'].blender_str = 's0+s1+s2'
+        self.assertEqual(group.blender_str, 's0+s1+s2')
+        self.assertEqual(group.human_blender, 'DMA + MACD + TRIX')
+        self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
+
+        op.add_strategies('dma, macd')
+        self.assertEqual(group.strategy_count, 5)
+        self.assertEqual(group.members, [op['dma'], op['macd'], op['trix'], op['dma_1'], op['macd_1']])
+        self.assertEqual(group.blender_str, 's0+s1+s2')
+        self.assertEqual(group.human_blender, 'DMA + MACD + TRIX')
+        self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
+
+        group.blender_str = 's0*2+s3-s1+max(s1, s2)'
+        self.assertEqual(group.blender_str, 's0*2+s3-s1+max(s1, s2)')
+        self.assertEqual(group.human_blender, 'DMA * 2 + DMA - MACD + max(MACD, TRIX)')
+        self.assertEqual(group.blender, ['+', 'max(2)', 's2', 's1', '-', 's1', '+', 's3', '*', '2', 's0'])
 
     def test_property_op_data_types(self):
         """ test property op_data_types"""
@@ -1475,22 +1372,22 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op = qt.Operator('macd, dma, trix')
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
+        self.assertEqual(dt[0], 'close_E_d')
 
         op = qt.Operator('macd, cdl')
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
-        self.assertEqual(dt[1], 'high')
-        self.assertEqual(dt[2], 'low')
-        self.assertEqual(dt[3], 'open')
-        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
+        self.assertEqual(dt[0], 'close_E_d')
+        self.assertEqual(dt[1], 'high_E_d')
+        self.assertEqual(dt[2], 'low_E_d')
+        self.assertEqual(dt[3], 'open_E_d')
+        self.assertEqual(dt, ['close_E_d', 'high_E_d', 'low_E_d', 'open_E_d'])
         op.add_strategy('dma')
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
-        self.assertEqual(dt[1], 'high')
-        self.assertEqual(dt[2], 'low')
-        self.assertEqual(dt[3], 'open')
-        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
+        self.assertEqual(dt[0], 'close_E_d')
+        self.assertEqual(dt[1], 'high_E_d')
+        self.assertEqual(dt[2], 'low_E_d')
+        self.assertEqual(dt[3], 'open_E_d')
+        self.assertEqual(dt, ['close_E_d', 'high_E_d', 'low_E_d', 'open_E_d'])
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
