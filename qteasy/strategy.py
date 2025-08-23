@@ -372,7 +372,7 @@ class BaseStrategy:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
         return self._data_ULC[data_type]
 
-    def get_data_ULC(self, data_type: str = None) -> bool:
+    def get_data_ulc(self, data_type: str = None) -> bool:
         """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
         return self._data_ULC[data_type]
 
@@ -385,28 +385,17 @@ class BaseStrategy:
         return self.data_names[data_type]
 
     def __str__(self):
-        """打印所有相关信息和主要属性"""
-        str1 = f'{type(self)}'
-        str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
-        str3 = f'\nDescriptions: {self.name}, {self.description}'
-        str4 = f'\nRun freq and timing: {self.run_freq}, {self.run_timing}'
-        if self._pars is not None:
-            str5 = f'\nParameter: {self.par_values}\n'
-        else:
-            str5 = f'\nNo Parameter!\n'
-        return ''.join([str1, str2, str3, str4, str5])
+        """返回交易策略的主要信息"""
+        return f'Strategy {self.stg_type}({self.name}): {self.description}'
 
     def __repr__(self):
-        """ 打印对象的代表信息，strategy对象的代表信息即它的名字，其他的属性都是可变的，唯独name是唯一不变的strategy的id
-        因此打印的格式为"Timing(macd)"或类似式样
+        """ 打印对象的代表信息
 
         Returns
         -------
         str
         """
-        str1 = f'{self._stg_type}('
-        str2 = f'{self.name})'
-        return ''.join([str1, str2])
+        return f'{self._stg_type}({self.name}, {self.par_values})'
 
     def info(self, verbose: bool = False, status: bool = False, stg_id: str = None) -> None:
         """打印所有相关信息和主要属性
@@ -426,6 +415,7 @@ class BaseStrategy:
         """
         from rich import print as rprint
         from shutil import get_terminal_size
+        from .utilfuncs import adjust_string_length
 
         if stg_id is None:
             stg_id = self.name
@@ -433,22 +423,51 @@ class BaseStrategy:
         info_width = int(term_width * 0.75) if term_width > 120 else term_width
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
-        rprint(f'{stg_id:=^{info_width}}')
+        stg_title = f' Strategy: {stg_id} '
+        rprint(f'{stg_title:=^{info_width}}')
         rprint(self.__str__())
+
+        # 打印所有策略可调参数相关信息
+        if verbose:
+            par_name_width = int(info_width * .1)
+            par_type_width = int(info_width * .2)
+            par_range_width = int(info_width * .2)
+            par_value_width = int(info_width * .5)
+            rprint(f'{" Parameters ":-^{info_width}}\n'
+                   f'{"name":<{par_name_width}}'
+                   f'{"type":<{par_type_width}}'
+                   f'{"range":<{par_range_width}}'
+                   f'{"value":<{par_value_width}}\n')
+            for par_name, par in self.pars.items():
+                rprint(
+                        f'{adjust_string_length(par_name, par_name_width) :<{par_name_width}}'
+                        f'{adjust_string_length(par.par_type, par_type_width) :<{par_type_width}}'
+                        f'{adjust_string_length(str(par.par_range), par_range_width) :^{par_range_width}}'
+                        f'{adjust_string_length(str(par.value), par_value_width) :^{par_value_width}}'
+                )
+        else:
+            rprint(f'Parameters: {self.par_names}, {self.par_values}')
+
         # 打印所有策略数据类型相关信息
-        rprint('=' * info_width)
-        for dtype_id, dtype in self.data_types.items():
-            if verbose:
+        if verbose:  # 列表形式打印
+            dtype_id_width = int(info_width * .1)
+            window_width = int(info_width * .2)
+            ulc_width = int(info_width * .2)
+            description_width = int(info_width * .5)
+            rprint(f'{" Data Types ":-^{info_width}}\n'
+                   f'{"id":<{dtype_id_width}}'
+                   f'{"window":<{window_width}}'
+                   f'{"use latest":<{ulc_width}}'
+                   f'{"description":<{description_width}}\n')
+            for dtype_id, dtype in self.data_types.items():
                 rprint(
-                        f'"data type":{dtype.id}{"Values":<{value_width}}\n'
-                        f'{"window length":<{key_width}}{self.get_window_length(dtype_id)}\n'
-                        f'{"use latest data cycle":<{key_width}}{self.get_use_latest_data_cycle(dtype_id)}\n'
+                        f'{adjust_string_length(dtype_id, dtype_id_width) :<{dtype_id_width}}'
+                        f'{adjust_string_length(str(self.get_window_length(dtype_id)), window_width) :<{window_width}}'
+                        f'{adjust_string_length(str(self.get_data_ulc(dtype_id)), ulc_width) :^{ulc_width}}'
+                        f'{adjust_string_length(str(dtype.description), description_width, hans_aware=True) :^{description_width}}'
                 )
-            else:
-                rprint(
-                        f'"data type":{dtype.id}{"Values":<{value_width}}\n'
-                        f'{"window length":<{key_width}}{self.get_window_length(dtype_id)}\n'
-                )
+        else:
+            rprint(f'')
 
     def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> None:
         """ 设置参数字典，设置par对象的名字，设置策略的attribute
