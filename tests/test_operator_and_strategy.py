@@ -1157,23 +1157,28 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_info(self):
         """Test information output of Operator"""
         op = qt.Operator('dma, macd, trix')
-        stg = qt.built_in.SelectingNDayRateChange()
-        print(f'test printing information of strategies, in verbose mode')
+        stg = qt.built_in.SelectingNDayRateChange()  # factor sorter info
+        print(f'\n  --==**  test printing information of strategies, in simple mode\n')
         op[0].info()
+        print(f'\n  --==**  test printing information of strategies, in simple mode\n')
         stg.info()
 
-        print(f'test printing information of strategies, in simple mode')
-        op[0].info(verbose=False)
-        stg.info(verbose=False)
+        print(f'\n  --==**  test printing information of strategies, in verbose mode\n')
+        op[0].info(verbose=True)
+        print(f'\n  --==**  test printing information of strategies, in verbose mode\n')
+        stg.info(verbose=True)
 
-        print(f'\n\ntest printing information of operator object')
+        print(f'\n  --==**  test printing information of operator object\n')
         op.info()
 
         op.add_strategies('dma, macd', run_freq='h', run_timing='close')
         op.add_strategies([TestRuleIter, TestGenStg, TestFactorSorter], run_freq='h', run_timing='open')
-        print(f'\n\ntest printing information of operator object with multiple strategy groups')
+        print(f'\n  --==**  test printing information of operator in simple mode\n')
 
         op.info()
+        print(f'\n  --==**  test printing information of operator in verbose mode\n')
+
+        op.info(verbose=True)
 
     def test_set_par_values(self):
         """ 测试设置策略参数，使用update_par_values"""
