@@ -386,7 +386,7 @@ class BaseStrategy:
 
     def __str__(self):
         """返回交易策略的主要信息"""
-        return f'Strategy {self.stg_type}({self.name}): {self.description}'
+        return f'Strategy {self.stg_type}({self.name})'
 
     def __repr__(self):
         """ 打印对象的代表信息
@@ -397,17 +397,19 @@ class BaseStrategy:
         """
         return f'{self._stg_type}({self.name}, {self.par_values})'
 
-    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None) -> None:
+    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None, extra_info = None) -> None:
         """打印所有相关信息和主要属性
 
         Parameters
         ----------
-        verbose: bool, default True
+        verbose: bool, default False
             是否打印更多的信息
         status: bool, default False
             是否打印策略的运行状态
         stg_id: str, default None
             策略的ID，如果为None，则打印策略的名称，否则打印策略的ID
+        extra_info: str, default None
+            额外的信息，可以是任何字符串，会被打印在策略主信息之后，参数和数据之前
 
         Returns
         -------
@@ -425,10 +427,17 @@ class BaseStrategy:
         value_width = max(7, info_width - key_width)
         stg_title = f' Strategy: {stg_id} '
         rprint(f'{stg_title:=^{info_width}}')
-        rprint(self.__str__())
-
-        # 打印所有策略可调参数相关信息
         if verbose:
+            rprint(f'{self.__str__()}: {self.description}')
+        else:
+            rprint(self.__str__())
+
+        if verbose:
+            # 打印额外信息
+            if extra_info:
+                rprint(extra_info)
+
+            # 打印所有策略可调参数相关信息
             par_name_width = int(info_width * .1)
             par_type_width = int(info_width * .2)
             par_range_width = int(info_width * .2)
@@ -437,7 +446,7 @@ class BaseStrategy:
                    f'{"name":<{par_name_width}}'
                    f'{"type":<{par_type_width}}'
                    f'{"range":<{par_range_width}}'
-                   f'{"value":<{par_value_width}}\n')
+                   f'{"value":<{par_value_width}}')
             for par_name, par in self.pars.items():
                 rprint(
                         f'{adjust_string_length(par_name, par_name_width) :<{par_name_width}}'
@@ -445,20 +454,17 @@ class BaseStrategy:
                         f'{adjust_string_length(str(par.par_range), par_range_width) :^{par_range_width}}'
                         f'{adjust_string_length(str(par.value), par_value_width) :^{par_value_width}}'
                 )
-        else:
-            rprint(f'Parameters: {self.par_names}, {self.par_values}')
 
-        # 打印所有策略数据类型相关信息
-        if verbose:  # 列表形式打印
-            dtype_id_width = int(info_width * .1)
-            window_width = int(info_width * .2)
+            # 打印所有策略数据类型相关信息
+            dtype_id_width = int(info_width * .2)
+            window_width = int(info_width * .1)
             ulc_width = int(info_width * .2)
             description_width = int(info_width * .5)
             rprint(f'{" Data Types ":-^{info_width}}\n'
                    f'{"id":<{dtype_id_width}}'
                    f'{"window":<{window_width}}'
                    f'{"use latest":<{ulc_width}}'
-                   f'{"description":<{description_width}}\n')
+                   f'{"description":<{description_width}}')
             for dtype_id, dtype in self.data_types.items():
                 rprint(
                         f'{adjust_string_length(dtype_id, dtype_id_width) :<{dtype_id_width}}'
@@ -467,7 +473,13 @@ class BaseStrategy:
                         f'{adjust_string_length(str(dtype.description), description_width, hans_aware=True) :^{description_width}}'
                 )
         else:
-            rprint(f'')
+            par_info = f'{self.par_names}, {self.par_values}'
+            dtype_info = ', '.join([f'{dtype}@{window}d' for dtype, window in self.window_lengths.items()])
+            rprint(f'Parameters: {par_info:<{value_width}}')
+            rprint(f'Date Types: {dtype_info:<{value_width}}')
+            # 打印额外信息
+            if extra_info:
+                rprint(extra_info)
 
     def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> None:
         """ 设置参数字典，设置par对象的名字，设置策略的attribute
@@ -968,7 +980,7 @@ class FactorSorter(BaseStrategy):
         self.sort_ascending = sort_ascending
         self.weighting = weighting
 
-    def info(self, verbose: bool = True, stg_id=None, **kwargs):
+    def info(self, verbose: bool = False, stg_id=None, **kwargs):
         """ display more FactorSorter-specific properties
 
         Parameters
@@ -981,7 +993,6 @@ class FactorSorter(BaseStrategy):
             other parameters
         """
         from .utilfuncs import adjust_string_length
-        from rich import print as rprint
         from shutil import get_terminal_size
 
         term_width = get_terminal_size().columns
@@ -989,16 +1000,18 @@ class FactorSorter(BaseStrategy):
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
 
-        super().info(verbose=verbose, stg_id=stg_id)
+        extra_info = f'{" Selection Properties ":-^{info_width}}\n'
         if self.max_sel_count > 1:
-            rprint(f'{"Max select count":<{key_width}}{int(self.max_sel_count)}')
+            extra_info += f'{"Max select count":<{key_width}}{int(self.max_sel_count)}\n'
         else:
-            rprint(f'{"Max select count":<{key_width}}{self.max_sel_count:.1%}')
-        rprint(f'{"Sort Ascending":<{key_width}}{self.sort_ascending}\n'
-               f'{"Weighting":<{key_width}}{adjust_string_length(self.weighting, value_width)}\n'
-               f'{"Filter Condition":<{key_width}}{adjust_string_length(self.condition, value_width)}\n'
-               f'{"Filter ubound":<{key_width}}{self.ubound}\n'
-               f'{"Filter lbound":<{key_width}}{self.lbound}')
+            extra_info += f'{"Max select count":<{key_width}}{self.max_sel_count:.1%}\n'
+        extra_info += f'{"Sort Ascending":<{key_width}}{self.sort_ascending}\n' \
+               f'{"Weighting":<{key_width}}{adjust_string_length(self.weighting, value_width)}\n' \
+               f'{"Filter Condition":<{key_width}}{adjust_string_length(self.condition, value_width)}\n' \
+               f'{"Filter ubound":<{key_width}}{self.ubound}\n' \
+               f'{"Filter lbound":<{key_width}}{self.lbound}'
+
+        super().info(verbose=verbose, stg_id=stg_id, extra_info=extra_info)
 
     def generate(self):
         """处理从_realize()方法传递过来的选股因子
@@ -1264,6 +1277,39 @@ class RuleIterator(BaseStrategy):
         self._data_windows = {}
         self.allow_multi_par = allow_multi_par  # 设置为True，表示策略可以对不同的股票使用不同的参数
         self.multi_pars = None
+
+    def info(self, verbose: bool = False, stg_id=None, **kwargs):
+        """ display more FactorSorter-specific properties
+
+        Parameters
+        ----------
+        verbose: bool
+            if True, display more properties
+        stg_id: str
+            strategy id, if None, use self.name
+        **kwargs:
+            other parameters
+        """
+        from shutil import get_terminal_size
+
+        term_width = get_terminal_size().columns
+        info_width = int(term_width * 0.75) if term_width > 120 else term_width
+        key_width = max(24, int(info_width * 0.3))
+
+        extra_info = f'{" Iteration Properties ":-^{info_width}}\n'
+        extra_info += f'{"Allow multi pars":<{key_width}}{self.allow_multi_par}'
+
+        if self.allow_multi_par:
+            if not self.multi_pars:
+                extra_info += f'\n{"Multi-parameter not set":<{info_width}}'
+            elif verbose:  # print out complete multi_pars
+                multi_par_str = '\n'.join([f'{str(k)}: {str(v)}' for k, v in self.multi_pars.items()])
+                extra_info += f'\n{"Multi-parameter":<{info_width}}\n{multi_par_str}'
+            else:  # print out brief multi_pars info
+                extra_info += f'\n{"Multi-parameter (pass verbose=True to view all multi pars)":<{info_width}}\n' \
+                              f'{self.multi_pars[self.multi_pars.values()[0]]}\n...'
+
+        super().info(verbose=verbose, stg_id=stg_id, extra_info=extra_info)
 
     def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
         """ 快速更新策略的参数值，如果参数是一个multi_par，将其写入multi_par，
