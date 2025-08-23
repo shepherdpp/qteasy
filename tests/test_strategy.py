@@ -850,13 +850,13 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.get_use_latest_data_cycle('close_E_w'), False)
         self.assertRaises(KeyError, stg.get_use_latest_data_cycle, 'wrong_id')
 
-        # test get_data_ULC method
-        self.assertEqual(stg.get_data_ULC('close_E_d'), False)
-        self.assertEqual(stg.get_data_ULC('close_E_h'), False)
-        self.assertEqual(stg.get_data_ULC('close_E_5min'), False)
-        self.assertEqual(stg.get_data_ULC('close_E_15min'), False)
-        self.assertEqual(stg.get_data_ULC('close_E_w'), False)
-        self.assertRaises(KeyError, stg.get_data_ULC, 'wrong_id')
+        # test get_data_ulc method
+        self.assertEqual(stg.get_data_ulc('close_E_d'), False)
+        self.assertEqual(stg.get_data_ulc('close_E_h'), False)
+        self.assertEqual(stg.get_data_ulc('close_E_5min'), False)
+        self.assertEqual(stg.get_data_ulc('close_E_15min'), False)
+        self.assertEqual(stg.get_data_ulc('close_E_w'), False)
+        self.assertRaises(KeyError, stg.get_data_ulc, 'wrong_id')
 
         # test get_window_length method
         self.assertEqual(stg.get_window_length('close_E_d'), 3)
