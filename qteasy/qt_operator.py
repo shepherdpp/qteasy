@@ -169,12 +169,8 @@ class Operator:
         # Operator对象的工作变量
         self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
-        # 用于 2.0 弃用 API 的每实例单次告警
-        self._op_type_warned = False
-        self._op_data_freq_warned = False
-        self._get_share_idx_warned = False
-        self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
-        self._strategies = {}  # Dict——保存实际的交易策略对象
+        # self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
+        # self._strategies = {}  # Dict——保存实际的交易策略对象
 
         # Operator对象包含的交易策略组
         self._groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
@@ -214,7 +210,7 @@ class Operator:
         res = list()
         res.append('Operator([')
         if self.strategy_count > 0:
-            res.append(', '.join(self._strategy_id))
+            res.append(', '.join(self.strategy_ids))
         res.append('], ')
         res.append(f'\'{self.op_type}\')')
         return ''.join(res)
@@ -228,42 +224,29 @@ class Operator:
     @property
     def strategies(self):
         """以列表的形式返回operator对象的所有Strategy对象"""
-        return [self._strategies[stg_id] for stg_id in self._strategy_id]
+        all_strategies = []
+        for group in self._groups:
+            all_strategies.extend(group.members)
+        return all_strategies
 
     @property
     def strategy_count(self):
         """返回operator对象中的所有Strategy对象的数量"""
-        return len(self._strategy_id)
+        return len(self.strategies)
 
     @property
     def strategy_ids(self):
         """返回operator对象中所有交易策略对象的ID"""
-        return self._strategy_id
+        return [stg.strategy_id for stg in self.strategies]
 
     @property
     def op_type(self):
         """ 返回operator对象的运行类型"""
-        if not self._op_type_warned:
-            self._op_type_warned = True
-            warnings.warn(
-                'Operator.op_type is deprecated and will be removed in qteasy 2.0. '
-                'Run mode is determined per strategy group.',
-                FutureWarning,
-                stacklevel=2,
-            )
         return self._op_type
 
     @op_type.setter
     def op_type(self, op_type):
         """ 设置operator对象的运行类型"""
-        if not self._op_type_warned:
-            self._op_type_warned = True
-            warnings.warn(
-                'Operator.op_type is deprecated and will be removed in qteasy 2.0. '
-                'Run mode is determined per strategy group.',
-                FutureWarning,
-                stacklevel=2,
-            )
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
         op_type = op_type.lower()
@@ -307,14 +290,6 @@ class Operator:
         """返回operator对象所有策略子对象所需数据的采样频率
             如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
         """
-        if not self._op_data_freq_warned:
-            self._op_data_freq_warned = True
-            warnings.warn(
-                'Operator.op_data_freq is deprecated and will be removed in qteasy 2.0. '
-                'Use strategy-level data type and frequency information instead.',
-                FutureWarning,
-                stacklevel=2,
-            )
         d_freq = [stg.data_freq for stg in self.strategies]
         d_freq = list(set(d_freq))
         d_freq.sort()
@@ -565,20 +540,21 @@ class Operator:
         if not (item_is_int or item_is_str):
             warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
             return
-        all_ids = self.strategy_ids
+        strategies = {stg_id:stg for stg_id, stg in zip(self.strategy_ids, self.strategies)}
+        all_ids = list(strategies.keys())
         if item_is_str:
             if item not in all_ids:
                 warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!',
                               RuntimeWarning, stacklevel=2)
                 return
-            return self._strategies[item]
+            return strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             # 当输入的item明显不符合要求时，仍然返回结果，是否不合理？
             item = strategy_count - 1
         elif item < 0:
             item = 0
-        return self._strategies[all_ids[item]]
+        return strategies[all_ids[item]]
 
     def get_stg(self, stg_id):
         """ 获取一个strategy对象, Operator[item]的另一种用法
@@ -648,25 +624,24 @@ class Operator:
         [('dma', RULE-ITER(DMA)), ('macd', RULE-ITER(MACD))]
         """
 
-        return zip(self._strategy_id, self.strategies)
+        return zip(self.strategy_ids, self.strategies)
 
     def get_group_by_id(self, group_id):
         """ 获取一个Group对象
 
         Parameters
         ----------
-        group_id: int or str
-            组的名称或序号
+        group_id: str or int
+            策略组的名称ID或序号
 
         Returns
         -------
-        Group, 子组
+        Group,
 
         Notes
         -----
-        1，当group_id为int时，返回的是第group_id个组
-        2，当group_id为str时，返回的是名称为group_id的组
-        3，当group_id不符合要求时，返回最后一个组
+        1，当group_id为int时，返回的是序号为group_id的策略组
+        2，当group_id为str时，返回的是ID为group_id的组
 
         Examples
         --------
@@ -678,14 +653,10 @@ class Operator:
         """
         if isinstance(group_id, int):
             if group_id < 0 or group_id >= len(self.groups):
-                group_id = len(self.groups) - 1
+                group_id = self.group_ids[group_id]
             return self.groups[group_id]
         elif isinstance(group_id, str):
-            for group in self.groups:
-                if group.name == group_id:
-                    return group
-            warnings.warn(f'No such group with ID ({group_id})!', RuntimeWarning, stacklevel=2)
-            return None
+            return self.groups[group_id]
         else:
             raise TypeError(f'group_id should be an integer or a string, got {type(group_id)} instead!')
 
@@ -804,8 +775,6 @@ class Operator:
 
         stg_id = self._next_stg_id(stg_id)
         strategy._strategy_id = stg_id
-        self._strategy_id.append(stg_id)
-        self._strategies[stg_id] = strategy
 
         # 特殊处理run_freq和run_timings参数，如果这两个参数存在kwargs中，则需要单独修改strategy的这两个参数
         if 'run_freq' in kwargs:
@@ -818,9 +787,6 @@ class Operator:
             if not isinstance(run_timing, str) and run_timing is not None:
                 raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
             strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
-
-        # 逐一修改该策略对象的各个参数
-        self.set_parameter(stg_id=stg_id, **kwargs)
 
         if len(self._groups) == 0 or not any(
                 strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
@@ -839,11 +805,13 @@ class Operator:
                     group.add_strategy(strategy)
                     strategy._group_id = group.name
                     break
-            return
+
+        # 逐一修改该策略对象的各个参数
+        self.set_parameter(stg_id=stg_id, **kwargs)
 
     def _next_stg_id(self, stg_id: str):
         """ 为一个交易策略生成一个新的id"""
-        all_ids = self._strategy_id
+        all_ids = self.strategy_ids
         # 补全stg_id中缺失的序号，主要是将“stg_id”变为"stg_id_0"
         all_ids = [ID + '_0' if len(ID.split("_")) == 1 else ID for ID in all_ids]
         all_id_names = [ID.split("_")[0] for ID in all_ids if ID.split("_")[0] == stg_id]
@@ -872,15 +840,13 @@ class Operator:
             else:
                 pos = -1
         if isinstance(id_or_pos, str):
-            all_ids = self._strategy_id
+            all_ids = self.strategy_ids
             if id_or_pos not in all_ids:
                 raise ValueError(f'the strategy {id_or_pos} is not in operator')
             else:
                 pos = all_ids.index(id_or_pos)
-        # 删除strategy的时候，不需要实际删除某个strategy，只需要删除其id即可
+        # 删除strategy的时候，不需要实际删除某个strategy，只需要删除该strategy所在group中的members
         strategy = self[pos]
-        self._strategy_id.pop(pos)
-        # 接下来还需要删除该strategy所在group中的members
         group = self.groups[strategy._group_id]
         group.members.pop(group.members.index(strategy))
         # 如果该group中没有其他成员了，则删除该group
@@ -891,8 +857,9 @@ class Operator:
     def clear_strategies(self):
         """ 清空Operator对象中的所有交易策略 """
         if self.strategy_count > 0:
-            self._strategy_id = []
-            self._strategies = {}
+            for group in self._groups:
+                group.clear_strategies()
+                del group
             self._groups = []
         return
 
@@ -988,13 +955,6 @@ class Operator:
         int
             返回一个整数，表示share对应的index
         """
-        if not self._get_share_idx_warned:
-            self._get_share_idx_warned = True
-            warnings.warn(
-                'Operator.get_share_idx() is deprecated and will be removed in qteasy 2.0.',
-                FutureWarning,
-                stacklevel=2,
-            )
         if self._op_list_shares == {}:
             return
         return self._op_list_shares[share]
@@ -1251,6 +1211,8 @@ class Operator:
                       window_length: Union[int, tuple[int], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool]] = None,
                       par_values: Union[tuple, list] = None,
+                      run_freq: str = None,
+                      run_timing: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
 
@@ -1275,17 +1237,20 @@ class Operator:
             是否使用最新的数据周期
         par_values: tuple or list,
             策略参数的具体取值
+        run_freq: str, optional
+            如果给出该参数，则修改策略的运行频率，修改运行频率会导致将策略从策略组中移除，并重新分配到一个新的策略组中
+        run_timing: str, optional
+            如果给出该参数，则修改策略的运行时机，修改运行时机会导致将策略从策略组中移除，并重新分配到一个新的策略组中
         kwargs: dict,
             其他参数
 
         """
-
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
         # TODO; 应该允许同时设置多个策略的参数（对于opt_tag这一类参数非常有用）
         strategy = self.get_strategy_by_id(stg_id)
         if strategy is None:
-            raise KeyError(f'Specified strategie does not exist or can not be found!')
+            raise KeyError(f'Specified strategy does not exist or can not be found!')
         # 逐一修改该策略对象的各个参数
         if pars is not None:  # 设置策略参数
             if not strategy.set_pars(pars):
@@ -1303,26 +1268,56 @@ class Operator:
             )
         if par_values is not None:  # 设置策略参数的具体取值
             strategy.update_par_values(*par_values)
-        # 设置可能存在的其他参数
+
+        if run_freq is not None or run_timing is not None:  # 设置策略的运行频率和运行时机
+            old_group_id = strategy._group_id
+            old_group = self.groups[old_group_id]
+            old_group.members.remove(strategy)
+            if len(old_group.members) == 0:
+                self._groups.remove(old_group)
+            strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
+            strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
+            # 将修改了run_freq或run_timing的策略重新分配到一个新的group中
+            target_group = [
+                group for group in self._groups if
+                strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
+            ]
+            if len(target_group) == 0:
+                group_id = self._next_group_id()
+                new_group = Group(name=group_id,
+                                  signal_type='PT',
+                                  blender=None, )
+                new_group.add_strategy(strategy)
+                strategy._group_id = group_id
+                self._groups.append(new_group)
+            elif len(target_group) == 1:
+                group = target_group[0]
+                group.add_strategy(strategy)
+                strategy._group_id = group.name
+            else:
+                raise RuntimeError(f'Internal error: more than one target group found for strategy {stg_id} '
+                                      f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
+
+        # 设置其他自定义参数
         strategy.set_custom_pars(**kwargs)
 
-    def set_group_parameter(self,
+    def set_group_parameters(self,
                             group: Union[str, int],
                             run_timing: str = None,
                             run_freq: str = None,
                             signal_type: str = None,
-                            blender: Union[str, list] = None,
+                            blender_str: str = None,
                             **kwargs):
-        """ 设置一个策略组的参数
+        """ 设置或修改一个策略组的参数
         Parameters
         ----------
-        group: str or int
-            策略组的名称或ID
+        group: str
+            策略组的ID
         run_timing: str, optional
             策略组的运行时机，修改运行时机时，修改策略组中所有交易策略的运行时机
         signal_type: str, optional
             策略组的交易信号类型，默认为'PT'，即百分比持仓目标
-        blender: str or list, optional
+        blender_str: str, optional
             策略组的交易信号混合表达式，可以是一个字符串或一个字符串列表
         kwargs: dict, optional
             其他参数，可以是任意合法的策略组参数，如group_name, run_timing, run_freq等
@@ -1342,17 +1337,36 @@ class Operator:
         has_sf = run_freq is not None
         has_pt = run_timing is not None
         if has_sf or has_pt:
-            for strategy in group.strategies:
-                strategy.set_hist_pars(run_timing=run_timing,
-                                       run_freq=run_freq)
+            # check if new run_freq and run_timing are not the same as any existing groups
+            new_run_freq = run_freq if run_freq is not None else group.run_freq
+            new_run_timing = run_timing if run_timing is not None else group.run_timing
+            target_group = [
+                g for g in self._groups if
+                new_run_freq == g.run_freq and new_run_timing == g.run_timing and g.name != group.name
+            ]
+            if len(target_group) > 0:
+                # move all strategies in current group to the target group and remove current group
+                target_group = target_group[0]
+                for strategy in group.member_strategies:
+                    strategy._group_id = target_group.name
+                    strategy.run_freq = new_run_freq
+                    strategy.run_timing = new_run_timing
+                    target_group.add_strategy(strategy)
+                self._groups.remove(group)
+            else:
+                # update group and strategies in group
+                group.run_freq = new_run_freq
+                group.run_timing = new_run_timing
+                for strategy in group.member_strategies:
+                    strategy.run_timing=new_run_timing
+                    strategy.run_freq=new_run_freq
+
         if signal_type is not None:
-            group.set_signal_type(signal_type)
-        if blender is not None:
-            if isinstance(blender, str):
-                blender = [blender]
-            elif not isinstance(blender, list):
-                raise TypeError(f'blender should be a string or a list of strings, got {type(blender)} instead')
-            group.set_blender(blender=blender)
+            group.signal_type = signal_type
+        if blender_str is not None:
+            if not isinstance(blender_str, str):
+                raise TypeError(f'blender should be a string or a list of strings, got {type(blender_str)} instead')
+            group.blender_str = blender_str
 
     # =================================================
     # 下面是Operation模块的公有方法：
