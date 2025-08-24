@@ -3582,26 +3582,27 @@ class SelectingAvgIndicator(FactorSorter):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(True, 'even', 'greater', 0, 0, 0.25)):
-        super().__init__(pars=pars,
-                         par_count=6,
-                         par_types=['enum', 'enum', 'enum', 'float', 'float', 'float'],
-                         par_range=[(True, False),
-                                    ('even', 'linear', 'distance', 'proportion'),
-                                    ('any', 'greater', 'less', 'between', 'not_between'),
-                                    (-np.inf, np.inf),
-                                    (-np.inf, np.inf),
-                                    (0, np.inf)],
-                         name='FINANCE',
-                         description='GeneralStg share_pool according to financial indicator PE',
-                         data_freq='d',
-                         strategy_run_freq='y',
-                         window_length=90,
-                         strategy_data_types='pe')
+    def __init__(self, par_values=(True, 'even', 'greater', 0, 0, 0.25)):
+        super().__init__(
+                pars=[
+                    Parameter((True, False), name='sort_ascending', par_type='enum'),
+                    Parameter(('even', 'linear', 'distance', 'proportion'), name='weighting', par_type='enum'),
+                    Parameter(('any', 'greater', 'less', 'between', 'not_between'), name='condition',
+                              par_type='enum'),
+                    Parameter((-np.inf, np.inf), name='lbound', par_type='float'),
+                    Parameter((-np.inf, np.inf), name='ubound', par_type='float'),
+                    Parameter((0, np.inf), name='max_sel_count', par_type='float')
+                ],
+                name='FINANCE',
+                description='GeneralStg share_pool according to financial indicator PE',
+                run_freq='Y',
+                window_length=90,
+                data_types=DataType('pe'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is not None:
-            self.sort_ascending, self.weighting, self.condition, self.lbound, self.ubound, self.max_sel_count = pars
+    def realize(self):
         factors = np.nanmean(h, axis=1)
 
         return factors
@@ -3644,24 +3645,23 @@ class SelectingNDayLast(FactorSorter):
 
     """
 
-    def __init__(self, pars=(2,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='N-DAY LAST',
-                         description='Select stocks according their previous prices',
-                         data_freq='d',
-                         strategy_run_freq='m',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(2,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), name='n', par_type='int')
+                ],
+                name='N-DAY LAST',
+                description='Select stocks according their previous prices',
+                run_freq='m',
+                window_length=100,
+                data_types=DataType('close'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.par_values
-        else:
-            n, = pars
-        factors = h[:, -n - 1, 0]
+    def realize(self):
+        n, = self.n
+        factors = self.close_E_d[:, -n - 1, 0]
 
         return factors
 
