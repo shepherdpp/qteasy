@@ -763,21 +763,22 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_get_next_ids(self):
         """ test functions _next_stg_id and _next_group_id with fake ids"""
         op = qt.Operator()
-        self.assertEqual(op._strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         # test getting next id in simple cases
-        op._strategy_id = ['dma', 'macd', 'trix']
+        op.add_strategies('dma, macd, trix')
         self.assertEqual(op._next_stg_id('dma'), 'dma_1')
         self.assertEqual(op._next_stg_id('macd'), 'macd_1')
         self.assertEqual(op._next_stg_id('trix'), 'trix_1')
         self.assertEqual(op._next_stg_id('random'), 'random')
 
         # test getting next id in missing indexes
-        op._strategy_id = ['dma', 'macd', 'trix', 'dma_1', 'dma_3', 'dma_4']
-        self.assertEqual(op._next_stg_id('dma'), 'dma_5')
+        op.add_strategies('dma, dma, dma')
+        self.assertEqual(op._next_stg_id('dma'), 'dma_4')
         self.assertEqual(op._next_stg_id('macd'), 'macd_1')
 
         # test getting next group id in simple cases
+        op = qt.Operator()
         self.assertEqual(op.group_ids, [])
         self.assertEqual(op._next_group_id(), 'Group_1')
 
@@ -870,7 +871,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 3)
         self.assertEqual(op.strategy_group_count, 2)
-        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2'])
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_1'])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
@@ -889,7 +890,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 4)
         self.assertEqual(op.strategy_group_count, 3)
-        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2', 'custom_3'])
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_1', 'custom_3'])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
         self.assertEqual(op.groups['Group_3'].run_freq, 'h')
         self.assertEqual(op.groups['Group_3'].run_timing, 'open')
@@ -902,7 +903,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 5)
         self.assertEqual(op.strategy_group_count, 3)
-        self.assertEqual(op.strategy_ids, ['custom', 'custom_1', 'custom_2', 'custom_3', 'custom_4'])
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_4', 'custom_1', 'custom_3'])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
@@ -991,10 +992,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategies(['macd', TestGenStg()], run_timing='close', run_freq='h')
         self.assertEqual(op.strategy_count, 22)
         self.assertEqual(op.strategy_group_count, 4)
-        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
-                                           'custom', 'custom_1', 'dma_3', 'custom_2', 'custom_3', 'custom_4',
-                                           'custom_5', 'custom_6', 'custom_7', 'custom_8', 'custom_9', 'dma_4',
-                                           'custom_10', 'macd_2', 'custom_11'])
+        self.assertEqual(op.strategy_ids, [
+            'dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2',
+            'macd_1', 'custom', 'custom_1', 'dma_3', 'custom_2',
+            'custom_3', 'custom_4', 'custom_5', 'custom_6',
+            'custom_7', 'macd_2', 'custom_11', 'custom_8',
+            'custom_9', 'dma_4', 'custom_10'
+        ])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3', 'Group_4'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
@@ -1093,7 +1097,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[3], op['custom'])
         self.assertEqual(op.strategy_group_count, 2)
         self.assertEqual(op.groups, {'Group_1': op._groups[0],
-                                        'Group_3': op._groups[1]})
+                                     'Group_3': op._groups[1]})
         self.assertEqual(op.group_ids, ['Group_1', 'Group_3'])
         self.assertEqual(op.groups['Group_1'].strategy_count, 2)
         self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
@@ -1112,8 +1116,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[5], op['macd'])
         self.assertEqual(op.strategy_group_count, 3)
         self.assertEqual(op.groups, {'Group_1': op._groups[0],
-                                        'Group_3': op._groups[1],
-                                        'Group_4': op._groups[2]})
+                                     'Group_3': op._groups[1],
+                                     'Group_4': op._groups[2]})
         self.assertEqual(op.group_ids, ['Group_1', 'Group_3', 'Group_4'])
         self.assertEqual(op.groups['Group_1'].strategy_count, 2)
         self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
@@ -1227,10 +1231,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # update par values with kwargs
         stg_macd.update_par_values(slow=10, fast=20, mid=30)
         self.assertEqual(stg_macd.par_values, (10, 20, 30))
+        # update partial kwargs
+        stg_macd.update_par_values(fast=25)
+        self.assertEqual(stg_macd.par_values, (10, 25, 30))
+        stg_macd.update_par_values(12, 13)
+        self.assertEqual(stg_macd.par_values, (12, 13, 30))
 
         # test errors
         self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong', 'input', 'type')  # wrong input type
-        self.assertRaises(ValueError, stg_dma.update_par_values, 10, -100)  # par count does not match
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, 10, 10)  # par count does not match
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, -10)  # par out of range
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10.5, -10)  # par type not match
@@ -1256,9 +1264,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # update multi-parameter will fail if allow_multi_par is False
         stg_rule.allow_multi_par = False
         self.assertRaises(ValueError, stg_rule.update_par_values,
-                            {'000001': (10, 10, 30),
-                             '000002': (20, 20, 50),
-                             '000003': (30, 30, 70)})
+                          {'000001': (10, 10, 30),
+                           '000002': (20, 20, 50),
+                           '000003': (30, 30, 70)})
 
         # other types of strategies don't support multi-parameter
         op.add_strategy(GeneralStg)
@@ -1267,9 +1275,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(stg_gen, GeneralStg)
         self.assertEqual(stg_gen.par_values, ())
         self.assertRaises(ValueError, stg_gen.update_par_values,
-                            {'000001': (10, 10, 30),
-                                '000002': (20, 20, 50),
-                                '000003': (30, 30, 70)})
+                          {'000001': (10, 10, 30),
+                           '000002': (20, 20, 50),
+                           '000003': (30, 30, 70)})
 
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""
@@ -1395,6 +1403,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(group.blender_str, 's0*2+s3-s1+max(s1, s2)')
         self.assertEqual(group.human_blender, 'DMA * 2 + DMA - MACD + max(MACD, TRIX)')
         self.assertEqual(group.blender, ['+', 'max(2)', 's2', 's1', '-', 's1', '+', 's3', '*', '2', 's0'])
+
+        op.add_strategies('dma', run_freq='h', run_timing='open')
+        self.assertEqual(op.get_group_by_id('Group_1'), op.groups['Group_1'])
+        self.assertEqual(op.get_group_by_id('Group_2'), op.groups['Group_2'])
+        self.assertRaises(KeyError, op.get_group_by_id, 'not_exist')
 
     def test_property_op_data_types(self):
         """ test property op_data_types"""
@@ -1569,95 +1582,119 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op_min.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op_min.groups['Group_1'].blender_str, '(s0+s1)*s2')
         self.assertEqual(op_min.groups['Group_1'].human_blender, '(DMA + MACD) * SIMPLE')
-        self.assertEqual(op_min.groups['Group_1'].blender,['*', 's2', '+', 's1', 's0'])
+        self.assertEqual(op_min.groups['Group_1'].blender, ['*', 's2', '+', 's1', 's0'])
 
         op = qt.Operator('macd, dma, trix, cdl')
-        # TODO: 修改set_parameter()，使下面的用法成立
-        #  a_to_sell.set_parameter('dma, cdl', price_type='open')
+        # ckeck that op has only one group with all strategies
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0]
+                            })
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'dma', 'trix', 'cdl'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_1'].blender_str, '')
+        self.assertEqual(op.groups['Group_1'].human_blender, '')
+        self.assertEqual(op.groups['Group_1'].blender, None)
+
+        # change run_freq and run_timing of some of the strategies, then groups will be changed
         op.set_parameter('dma', run_timing='open')
-        op.set_parameter('cdl', run_timing='open')
-        sb = op.strategy_blenders
-        st = op.signal_type
-        self.assertIsInstance(sb, dict)
-        print(f'before setting: strategy_blenders={sb}')
-        self.assertEqual(sb, {})
-        op.strategy_blenders = '1+s2 * 3'
-        sb = op.strategy_blenders
-        print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '*', '3', 's2', '1'],
-                              'open':  ['+', '*', '3', 's2', '1']})
-        op.strategy_blenders = ['s1+2', '3-s4']
-        sb = op.strategy_blenders
-        print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '2', 's1'],
-                              'open':  ['-', 's4', '3']})
+        op.set_parameter('cdl', run_freq='w')
+        # check that op has two groups now
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                                'Group_2': op._groups[1],
+                                                'Group_3': op._groups[2]}
+                             )
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'trix'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['cdl'])
+
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_1'].blender_str, '')
+        self.assertEqual(op.groups['Group_1'].human_blender, '')
+        self.assertEqual(op.groups['Group_1'].blender, None)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, '')
+        self.assertEqual(op.groups['Group_2'].human_blender, '')
+        self.assertEqual(op.groups['Group_2'].blender, None)
+        self.assertEqual(op.groups['Group_3'].run_freq, 'w')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_3'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_3'].blender_str, '')
+        self.assertEqual(op.groups['Group_3'].human_blender, '')
+        self.assertEqual(op.groups['Group_3'].blender, None)
+
+        # check all strategies are still in op.strategies
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['macd', 'trix', 'dma', 'cdl'])
+
+        # test setting group properties: run_timing, run_freq, signal_type, blender_str
+        op.set_group_parameters('Group_1', signal_type='VS')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'vs')
+        op.set_group_parameters('Group_1', blender_str='s0+s1')
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(op.groups['Group_1'].human_blender, 'MACD + TRIX')
+        self.assertEqual(op.groups['Group_1'].blender, ['+', 's1', 's0'])
+
+        op.set_group_parameters('Group_2', run_timing='close', run_freq='1min')
+        # check that Group_2 properties are changed
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].run_freq, '1min')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, '')
+        # check that all strategies in group 2 has new run_timing and run_freq
+        self.assertEqual(op['dma'].run_timing, 'close')
+        self.assertEqual(op['dma'].run_freq, '1min')
+
+        op.set_group_parameters('Group_3', run_timing='open', run_freq='30min', signal_type='PS', blender_str='s0')
+        # check that Group_3 properties are changed
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].run_freq, '30min')
+        self.assertEqual(op.groups['Group_3'].signal_type, 'ps')
+        self.assertEqual(op.groups['Group_3'].blender_str, 's0')
+        # check that all strategies in group 3 has new run_timing and run_freq
+        self.assertEqual(op['cdl'].run_timing, 'open')
+        self.assertEqual(op['cdl'].run_freq, '30min')
+
+        # check that setting group3 the same run freq and run timing as group1 will merge the two groups
+        op.set_group_parameters('Group_3', run_timing='close', run_freq='d')
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'trix', 'cdl'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'vs')  #
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')  # blender info of group1 is lost after merging
+        self.assertEqual(op.groups['Group_1'].human_blender, 'MACD + TRIX')
+        self.assertEqual(op.groups['Group_2'].run_freq, '1min')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, '')
+        self.assertEqual(op.groups['Group_2'].human_blender, '')
+        # check that group_3 no longer exists
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertRaises(KeyError, op.get_group_by_id, 'Group_3')
+        # check that all strategies are still in op.strategies
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['macd', 'trix', 'cdl', 'dma'])
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
         op = qt.Operator()
         print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
 
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""
         raise NotImplementedError
-
-    def test_stg_parameter_setting(self):
-        """ test setting parameters of strategies
-        test the method set_parameters
-
-        :return:
-        """
-        op = qt.Operator(strategies='dma, all, sellrate')
-        print(op.strategies, '\n', [qt.built_in.DMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
-        print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
-        # TODO: allow set_parameters to a list of strategies or str-listed strategies
-        # TODO: allow set_parameters to all strategies of specific bt price type
-        print(f'Set up strategy parameters by strategy id')
-        op.set_parameter('dma',
-                         opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        op.set_parameter('all',
-                         window_length=20)
-        op.set_parameter('all', run_timing='close')
-        print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, run_timing='open')
-        op.set_parameter(2,
-                         opt_tag=1,
-                         pars=(9, -0.09),
-                         window_length=10)
-        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
-        self.assertEqual(op.strategies[2].par_values, (9, -0.09))
-        self.assertEqual(op.op_data_freq, 'd')
-        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.max_window_length, 20)
-        print(f'KeyError will be raised if wrong strategy id is given')
-        self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
-        self.assertRaises(KeyError, op.set_parameter, stg_id='wrong_input', pars=(1, 2))
-        print(f'ValueError will be raised if parameter can be set')
-        self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
-        # test blenders of different price types
-        # test setting blenders to different price types
-
-        # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
-        self.assertEqual(op.strategy_groups, ['close', 'open'])
-        op.set_blender('s0 and s1 or s2', 'open')
-        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
-        op.set_blender('s0 or s1 and s2', 'close')
-        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
-                                            'open':  ['or', 's2', 'and', 's1', 's0']})
-
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""

@@ -288,14 +288,14 @@ class BaseStrategy:
         return self._run_freq
 
     @run_freq.setter
-    def run_freq(self, sample_freq):
+    def run_freq(self, run_freq):
         # check if run_freq is valid
-        if not isinstance(sample_freq, str):
-            raise TypeError(f'sample_freq should be a string, got {type(sample_freq)} instead')
-        sample_freq = sample_freq.lower()
-        if sample_freq not in TIME_FREQ_STRINGS:
-            raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {sample_freq} instead')
-        self._run_freq = sample_freq
+        if not isinstance(run_freq, str):
+            raise TypeError(f'sample_freq should be a string, got {type(run_freq)} instead')
+        run_freq = run_freq.lower()
+        if run_freq not in TIME_FREQ_STRINGS:
+            raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {run_freq} instead')
+        self._run_freq = run_freq
 
     @property
     def run_timing(self):
@@ -670,6 +670,9 @@ class BaseStrategy:
         """
         # allow updating partial parameter values, thus length check is not needed
         if par_values != ():
+            if len(par_values) > self.par_count:
+                raise ValueError(f'Number of par_values should not exceed {self.par_count}, '
+                                 f'got {len(par_values)} instead')
             for par_name, par_value in zip(self.par_names, par_values):
                 self._pars[par_name].value = par_value
                 self.__setattr__(par_name, par_value)

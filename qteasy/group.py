@@ -22,6 +22,9 @@ from qteasy.blender import (
     signal_blend,
     human_blender,
 )
+from qteasy.utilfuncs import (
+    TIME_FREQ_STRINGS,
+)
 
 
 class Group:
@@ -50,8 +53,16 @@ class Group:
             self.blender_str = blender
 
     @property
-    def member_strategies(self):
+    def member_strategy_names(self):
         return [strategy.name for strategy in self.members]
+
+    @property
+    def member_strategy_ids(self):
+        return [strategy.strategy_id for strategy in self.members]
+
+    @property
+    def member_strategies(self):
+        return self.members
 
     @property
     def blender_str(self):
@@ -77,9 +88,24 @@ class Group:
     def run_freq(self):
         return self._run_freq
 
+    @run_freq.setter
+    def run_freq(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f'run_freq should be a string, got {type(value)} instead')
+        run_freq = value.lower()
+        if run_freq not in TIME_FREQ_STRINGS:
+            raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {value} instead')
+        self._run_freq = value
+
     @property
     def run_timing(self):
         return self._run_timing
+
+    @run_timing.setter
+    def run_timing(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f'run_timing should be a string, got {type(value)} instead')
+        self._run_timing = value
 
     @property
     def signal_type(self):
@@ -115,6 +141,20 @@ class Group:
             if strategy.run_freq != self.run_freq:
                 raise ValueError(f"Strategy {strategy.name} has a different run frequency than the group {self.name}.")
             self.members.append(strategy)
+
+    def remove_strategy(self, strategy: BaseStrategy):
+        if strategy in self.members:
+            self.members.remove(strategy)
+            if len(self.members) == 0:
+                self._run_freq = None
+                self._run_timing = None
+        else:
+            raise ValueError(f"Strategy {strategy.name} is not a member of the group {self.name}.")
+
+    def clear_strategies(self):
+        self.members = []
+        self._run_freq = None
+        self._run_timing = None
 
     def blend(self, signals: Iterable):
         """Set the blender for the group."""
