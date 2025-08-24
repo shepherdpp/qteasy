@@ -572,7 +572,7 @@ class TestRuleIter(RuleIterator):
 class MyStg(qt.RuleIterator):
     """自定义双均线择时策略策略"""
 
-    def __init__(self):
+    def __init__(self, par_values=(20, 100, 0.01)):
         """这个均线择时策略只有三个参数：
             - SMA 慢速均线，所选择的股票
             - FMA 快速均线
@@ -581,29 +581,28 @@ class MyStg(qt.RuleIterator):
             策略的其他说明
 
         """
-        """
-        必须初始化的关键策略参数清单：
-
-        """
         super().__init__(
-                pars=(20, 100, 0.01),
-                par_count=3,
-                par_types=['int', 'int', 'float'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                pars=[
+                    Parameter((10, 250), par_type='int', name='f'),  # 快速均线
+                    Parameter((10, 250), par_type='int', name='s'),  # 慢速均线
+                    Parameter((0.0, 0.5), par_type='float', name='m'),  # 边界值
+                ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
+                data_types=DataType('close'),
                 window_length=200,
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = pars
+        f, s, m = self.f, self.s, self.m
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        h = self.close_E_d  # 取最近200个交易日的数据进行计算
         # 计算长短均线的当前值
         s_ma = sma(h[0], s)[-1]
         f_ma = sma(h[0], f)[-1]
@@ -622,20 +621,19 @@ class MyStg(qt.RuleIterator):
 
 
 class StgBuyOpen(GeneralStg):
-    def __init__(self, pars=(20,)):
+    def __init__(self, par_values=(20,)):
         super().__init__(
-                pars=pars,
-                par_count=1,
-                par_types=['int'],
+                pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='OPEN_BUY',
-                par_range=[(0, 100)],
-                strategy_run_timing='open',
+                run_timing=DataType('open'),
                 use_latest_data_cycle=False,
         )
-        pass
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None):
-        n, = self.par_values
+    def realize(self):
+        n, = self.n
+        h = self.close_E_d
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
@@ -657,17 +655,18 @@ class StgBuyOpen(GeneralStg):
 
 
 class StgSelClose(GeneralStg):
-    def __init__(self, pars=(20,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         name='SELL_CLOSE',
-                         par_range=[(0, 100)],
-                         strategy_run_timing='close')
-        pass
+    def __init__(self, par_values=(20,)):
+        super().__init__(
+                pars=[Parameter((0, 100), par_type='int', name='n')],
+                name='SELL_CLOSE',
+                run_timing=DataType('close'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None):
-        n, = self.par_values
+    def realize(self):
+        n, = self.n
+        h = self.close_E_d
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
@@ -1589,7 +1588,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_group_count, 1)
         self.assertEqual(op.group_ids, ['Group_1'])
         self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0]
-                            })
+                                              })
         self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'dma', 'trix', 'cdl'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
@@ -1605,9 +1604,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_group_count, 3)
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
         self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
-                                                'Group_2': op._groups[1],
-                                                'Group_3': op._groups[2]}
-                             )
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
         self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'trix'])
         self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma'])
         self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['cdl'])
@@ -1702,7 +1701,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('dma, random, crossline')
         op.set_parameter('dma',
                          opt_tag=1,
-                         window_length=10,)
+                         window_length=10, )
         op.set_parameter('dma',
                          par_values=(50, 10, 55))
         self.assertEqual(op.strategies[0].par_values, (50, 10, 55))
@@ -1716,7 +1715,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op.set_parameter('crossline',
                          opt_tag=1,
-                         window_length=10,)
+                         window_length=10, )
         op.set_parameter('crossline',
                          par_values=(55, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
@@ -1733,7 +1732,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
                          opt_tag=2,
-                         window_length=10,)
+                         window_length=10, )
         op.set_parameter('crossline',
                          par_values=(50, 10, 0.05))
         self.assertEqual(op.opt_tags, [1, 0, 2])
@@ -1825,7 +1824,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator(strategies=['finance'], signal_type='PS')
         op.set_parameter(0,
                          opt_tag=1,
-                         run_freq='m',
+                         run_freq='M',
                          strategy_data_types='wt_idx|000300.SH',
                          sort_ascending=False,
                          weighting='proportion',
