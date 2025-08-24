@@ -158,6 +158,13 @@ class Operator:
         if op_type is None:
             op_type = 'batch'
 
+        if group_merge_type:
+            if not isinstance(group_merge_type, str):
+                raise TypeError(f'group_merge_type should be a string, got {type(group_merge_type)} instead.')
+            group_merge_type = group_merge_type.lower()
+            if group_merge_type not in ['none', 'and', 'or']:
+                raise ValueError(f'Invalid group_merge_type ({group_merge_type})')
+
         # 初始化Operator对象的"工作数据"或"运行数据"，以下属性由Operator自动设置，不允许用户手动设置：
         # Operator对象的工作变量
         self._op_type = ''
@@ -196,7 +203,12 @@ class Operator:
 
         # 设置operator的主要关键属性
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
-        self.add_strategies(stg, run_freq=run_freq, run_timing=run_timing)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
+        self.add_strategies(stg, run_freq=run_freq, run_timing=run_timing)  # 添加strategy对象
+
+        if signal_type:
+            # change signal_types of all groups to the new signal_type
+            for group in self._groups:
+                group.signal_type = signal_type
 
     def __repr__(self):
         res = list()
@@ -403,7 +415,7 @@ class Operator:
         if self.strategy_count == 0:
             return 0
         else:
-            return max(stg.window_length for stg in self.strategies)
+            return max(stg.max_window_length for stg in self.strategies)
 
     @property
     def strategy_group_count(self):
@@ -1079,18 +1091,20 @@ class Operator:
                 stg.update_pars(opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
-    def set_blender(self, blender=None, group=None):
+    def set_blender(self,
+                    blender: Union[str, list[str], dict[str, str]],
+                    group_id: Union[str, None] = None):
         """ 统一的blender混合器属性设置入口
 
         Parameters
         ----------
-        blender: str or list of str
+        blender: str or list of str or dict of str, optional
             一个合法的交易信号混合表达式当price_type为None时，可以接受list为参数，
             同时为所有的price_type设置混合表达式
-        group: str,
-            一个字符串，用于指定需要混合的交易信号的价格类型，
-            如果给出price_type则设置该price_type的策略的混合表达式
-            如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
+        group_id: str, optional
+            一个字符串，用于指定需要混合交易策略组
+            如果给出group_id则设置该group的策略的混合表达式
+            如果group_id为None，则设置所有price_type的策略的混合表达式，此时：
                 如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
                 如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
                 如果blender中的元素不足，则重复最后一个混合表达式
@@ -1131,7 +1145,7 @@ class Operator:
         """
         if self.strategy_count == 0:
             return
-        if group is None:
+        if group_id is None:
             # 当price_type没有显式给出时，同时为所有的price_type设置blender，此时区分多种情况：
             if blender is None:
                 # price_type和blender都为空，退出
@@ -1141,29 +1155,34 @@ class Operator:
                 blender = [blender]
             if isinstance(blender, list):
                 # 将列表中的blender补齐数量后，递归调用本函数，分别赋予所有的price_type
+                if len(blender) == 0:
+                    raise ValueError('Empty blender list!')
+                if any(not isinstance(b, str) for b in blender):
+                    raise TypeError('All items in blender list should be strings!')
+                # 如果blender的数量少于price_type的数量，则重复最后一个blender
                 len_diff = self.strategy_group_count - len(blender)
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
-                for bldr, pt in zip(blender, self.strategy_groups):
-                    self.set_blender(blender=bldr, group=pt)
+                for bldr, group in zip(blender, self.group_ids):
+                    self.set_blender(blender=bldr, group_id=group)
+            elif isinstance(blender, dict):
+                # 如果blender为一个字典，则依次为字典中的每一个price_type赋予相应的blender
+                for group, bldr in blender.items():
+                    self.set_blender(blender=bldr, group_id=group)
             else:
                 raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
                                 f' got {type(blender)} instead')
             return
-        if isinstance(group, str):
+        if isinstance(group_id, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
-            if group not in self.strategy_groups:
-                msg = f'\n' \
-                      f'Given run timing \'{group}\' is not valid in current Operator, \n' \
-                      f'no blender will be created! current valid run timings are: \n' \
-                      f'{self.strategy_groups}'
+            if group_id not in self.group_ids:
+                msg = f'Strategy group "{group_id}" is not valid in current Operator: {self.group_ids}!\n'
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 return
             if isinstance(blender, str):
                 try:
-                    parsed_blender = blender_parser(blender)
-                    self._stg_blender[group] = parsed_blender
-                    self._stg_blender_strings[group] = blender
+                    group = self.strategy_groups[group_id]
+                    group.blender_str = blender
                 except ValueError as e:
                     raise ValueError(f'Invalid blender expression: "{blender}" - {e}')
             else:
@@ -1228,8 +1247,9 @@ class Operator:
                       stg_id: Union[str, int],
                       pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
-                      window_length: int = None,
-                      strategy_data_types: Union[str, list] = None,
+                      data_type_ids: Union[str, list] = None,
+                      window_length: Union[int, tuple[int], list[int]] = None,
+                      use_latest_data_cycle: Union[bool, list[bool], tuple[bool]] = None,
                       par_values: Union[tuple, list] = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略，将函数参数中给定的策略参数赋值给相应的策略
@@ -1247,10 +1267,12 @@ class Operator:
             0: 不参加优化，在策略优化过程中不调整该策略的可调参数
             1: 参加优化，在策略优化过程中根据优化算法主动调整策略参数以寻找最佳参数组合
             2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
-        window_length: int,
+        data_type_ids: str or list of str,
+            策略计算所需历史数据的数据类型的ID，给出该ID表明更新这个数据类型的参数
+        window_length: int or list of int or tuple of int,
             窗口长度：策略计算的前视窗口长度
-        strategy_data_types: str or list,
-            策略计算所需历史数据的数据类型
+        use_latest_data_cycle: bool or list of bool or tuple of bool,
+            是否使用最新的数据周期
         par_values: tuple or list,
             策略参数的具体取值
         kwargs: dict,
@@ -1271,10 +1293,14 @@ class Operator:
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
         has_wl = window_length is not None
-        has_dt = strategy_data_types is not None
-        if has_wl or has_dt:
-            strategy.set_hist_pars(window_length=window_length,
-                                   strategy_data_types=strategy_data_types)
+        has_dt = data_type_ids is not None
+        has_ulc = use_latest_data_cycle is not None
+        if has_wl or has_dt or has_ulc:
+            strategy.update_data_types(
+                    dtype_id=data_type_ids,
+                    window_length=window_length,
+                    use_latest_data_cycle=use_latest_data_cycle,
+            )
         if par_values is not None:  # 设置策略参数的具体取值
             strategy.update_par_values(*par_values)
         # 设置可能存在的其他参数
@@ -1555,7 +1581,7 @@ class Operator:
         for group in groups:
             # ----set up data window for each strategy
             for strategy in group.members:
-                strategy.update_data_window(
+                strategy.update_running_data_window(
                     data_windows=self.data_window_views[strategy.name],
                     window_indices=self.data_window_indices[strategy.name],
                     window_index=step_index,

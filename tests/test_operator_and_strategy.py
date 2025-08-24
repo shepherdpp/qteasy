@@ -720,8 +720,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
 
         # test init with other parameters like signal_type, run_freq, run_timing, group_merge_type
+        op = qt.Operator('dma, macd', signal_type='ps')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'ps')
 
-        raise NotImplementedError
+        op = qt.Operator('dma, macd', run_freq='15min')
+        self.assertEqual(op.groups['Group_1'].run_freq, '15min')
+        self.assertEqual(op['dma'].run_freq, '15min')
+        self.assertEqual(op['macd'].run_freq, '15min')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertRaises(TypeError, qt.Operator, 'dma, macd', run_freq=15)
+        self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq='5hourly')
+
+        op = qt.Operator('dma, macd', run_timing='open')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+        self.assertEqual(op['dma'].run_timing, 'open')
+        self.assertEqual(op['macd'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+
+        op = qt.Operator('dma, macd', group_merge_type='and')
+        self.assertEqual(op.group_merge_type, 'and')
+        self.assertRaises(TypeError, qt.Operator, 'dma, macd', group_merge_type=15)
+        self.assertRaises(ValueError, qt.Operator, 'dma, macd', group_merge_type='wrong_type')
+
+        op = qt.Operator('dma, macd', op_type='stepwise')
+        self.assertEqual(op.op_type, 'stepwise')
+        self.assertRaises(KeyError, qt.Operator, 'dma, macd', op_type=15)
+        self.assertRaises(KeyError, qt.Operator, 'dma, macd', op_type='fast')
 
     def test_repr(self):
         """ test basic representation of Opeartor class"""
@@ -1425,12 +1449,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(dtf, str)
         self.assertEqual(dtf[0], 'd')
         op.set_parameter('macd', data_freq='m')
-        # op交易策略存在多个数据频率的情况尚未得到支持，以后支持该情况后可以实现下列功能
-        # dtf = op.op_data_freq
-        # self.assertIsInstance(dtf, list)
-        # self.assertEqual(len(dtf), 2)
-        # self.assertEqual(dtf[0], 'd')
-        # self.assertEqual(dtf[1], 'm')
 
     def test_property_op_data_type_list(self):
         """ test property op_data_type_list"""
@@ -1529,6 +1547,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
 
+        # update window_length with multiple values
+        op.set_parameter('trix', window_length=(120,))
+        op.set_parameter('macd', window_length=(90,))
+
+        self.assertEqual(op['trix'].window_lengths, {'close_E_d': 120})
+        self.assertEqual(op['macd'].window_lengths, {'close_E_d': 90})
+        self.assertEqual(op['dma'].window_lengths, {'close_E_d': 350})
+        self.assertEqual(op.max_window_length, 350)
+
     def test_property_set(self):
         """ test all property setters:
             setting following properties:
@@ -1536,15 +1563,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
             - signal_type
             other properties can not be set"""
         print(f'------- Test setting properties ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'pt')
-        op.strategy_blenders = '1 + 2'
-        op.signal_type = 'proportion signal'
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'ps')
+        op_min = qt.Operator(strategies='DMA, MACD, ALL', run_freq='d', run_timing='open', signal_type='PS')
+        op_min.set_blender(blender='(s0+s1)*s2')
+
+        self.assertEqual(op_min.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op_min.groups['Group_1'].blender_str, '(s0+s1)*s2')
+        self.assertEqual(op_min.groups['Group_1'].human_blender, '(DMA + MACD) * SIMPLE')
+        self.assertEqual(op_min.groups['Group_1'].blender,['*', 's2', '+', 's1', 's0'])
 
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
@@ -1781,24 +1806,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
-        op_min = qt.Operator(strategies='DMA, MACD, ALL')
-        op_min.set_parameter(0, )
-        op_min.set_parameter(1, data_freq='h', run_freq='d')
-        op_min.set_parameter(2, data_freq='h', run_freq='y')
-        op_min.set_blender(blender='(s0+s1)*s2')
-        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
-                                 '000918.SZ', '000819.SZ', '000899.SZ'],
-                     asset_type='E',
-                     visual=True,
-                     trade_log=False)
-        res = qt.run(op_min,
-                     mode=1,
-                     visual=True,
-                     trade_log=False,
-                     invest_start='20160225',
-                     invest_end='20161023',
-                     trade_batch_size=100,
-                     sell_batch_size=100)
+        raise NotImplementedError
 
     def test_long_short_position_limits(self):
         """ 测试多头和空头仓位的最高仓位限制 """

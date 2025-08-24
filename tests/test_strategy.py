@@ -529,6 +529,13 @@ class TestStrategy(unittest.TestCase):
         stg.info()
         stg.info(verbose=True)
 
+        # test creating strategy with parameters
+        stg = self.gen_stg
+
+        self.assertEqual(stg.par_values, (10, 0.6))
+        print(stg.__str__())
+        print(stg.__repr__())
+
     def test_properties(self):
 
         stg = self.base_stg
@@ -704,6 +711,166 @@ class TestStrategy(unittest.TestCase):
         self.assertRaises(ValueError, stg.update_par_values, param4=np.array([6.0, 7.0, 8.0]))  # out of range
         self.assertRaises(ValueError, stg.update_par_values, param4=np.array([0.0, 0.0, 0.0]))  # out of range
 
+    def test_update_data_types(self):
+        """ test updating data types of strategies"""
+        # test updating use_latest_data_cycle and window_lengths with method update_data_types
+        stg = self.base_stg
+        # check all data type parameters of the strategy
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_types, {
+            'close_E_d':     self.dtype_1,
+            'close_E_h':     self.dtype_2,
+            'close_E_5min':  self.dtype_3,
+            'close_E_15min': self.dtype_4,
+            'close_E_w':     self.dtype_5,
+        })
+        self.assertEqual(stg.data_type_ids, [
+            'close_E_d',
+            'close_E_h',
+            'close_E_5min',
+            'close_E_15min',
+            'close_E_w',
+        ])
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d':     3,
+            'close_E_h':     7,
+            'close_E_5min':  5,
+            'close_E_15min': 8,
+            'close_E_w':     6
+        })
+        self.assertEqual(stg.data_ulc, {
+            'close_E_d':     False,
+            'close_E_h':     False,
+            'close_E_5min':  False,
+            'close_E_15min': False,
+            'close_E_w':     False
+        })
+
+        # update data type parameters with dtype id is given
+        stg.update_data_types(dtype_id='close_E_d', use_latest_data_cycle=True, window_length=5)
+        stg.update_data_types(dtype_id='close_E_h', use_latest_data_cycle=True,
+                                window_length=10)
+        # check the result
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_types, {
+            'close_E_d':     self.dtype_1,
+            'close_E_h':     self.dtype_2,
+            'close_E_5min':  self.dtype_3,
+            'close_E_15min': self.dtype_4,
+            'close_E_w':     self.dtype_5,
+        })
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d':     5,
+            'close_E_h':     10,
+            'close_E_5min':  5,
+            'close_E_15min': 8,
+            'close_E_w':     6
+        })
+        self.assertEqual(stg.data_ulc, {
+            'close_E_d':     True,
+            'close_E_h':     True,
+            'close_E_5min':  False,
+            'close_E_15min': False,
+            'close_E_w':     False
+        })
+
+        # update data type parameters with dtype id is not given, all data parameters will be updated
+        stg.update_data_types(use_latest_data_cycle=True, window_length=4)
+        # check the result
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_types, {
+            'close_E_d':     self.dtype_1,
+            'close_E_h':     self.dtype_2,
+            'close_E_5min':  self.dtype_3,
+            'close_E_15min': self.dtype_4,
+            'close_E_w':     self.dtype_5,
+        })
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d':     4,
+            'close_E_h':     4,
+            'close_E_5min':  4,
+            'close_E_15min': 4,
+            'close_E_w':     4
+        })
+        self.assertEqual(stg.data_ulc, {
+            'close_E_d':     True,
+            'close_E_h':     True,
+            'close_E_5min':  True,
+            'close_E_15min': True,
+            'close_E_w':     True
+        })
+
+        # test updating data types with dict type window_lengths without giving dtype id
+        stg.update_data_types(window_length={
+            'close_E_d':     3,
+            'close_E_h':     5,
+            'close_E_5min':  6,
+        })
+        # check the result
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_types, {
+            'close_E_d':     self.dtype_1,
+            'close_E_h':     self.dtype_2,
+            'close_E_5min':  self.dtype_3,
+            'close_E_15min': self.dtype_4,
+            'close_E_w':     self.dtype_5,
+        })
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d':     3,
+            'close_E_h':     5,
+            'close_E_5min':  6,
+            'close_E_15min': 4,
+            'close_E_w':     4
+        })
+        self.assertEqual(stg.data_ulc, {
+            'close_E_d':     True,
+            'close_E_h':     True,
+            'close_E_5min':  True,
+            'close_E_15min': True,
+            'close_E_w':     True
+        })
+
+        # test updating data types with dict type use latest data cycle without giving dtype id
+        stg.update_data_types(use_latest_data_cycle={
+            'close_E_d':     False,
+            'close_E_5min':  False,
+            'close_E_w':     False
+        })
+        # check the result
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_types, {
+            'close_E_d':     self.dtype_1,
+            'close_E_h':     self.dtype_2,
+            'close_E_5min':  self.dtype_3,
+            'close_E_15min': self.dtype_4,
+            'close_E_w':     self.dtype_5,
+        })
+        self.assertEqual(stg.data_window_lengths, {
+            'close_E_d':     3,
+            'close_E_h':     5,
+            'close_E_5min':  6,
+            'close_E_15min': 4,
+            'close_E_w':     4
+        })
+        self.assertEqual(stg.data_ulc, {
+            'close_E_d':     False,
+            'close_E_h':     True,
+            'close_E_5min':  False,
+            'close_E_15min': True,
+            'close_E_w':     False
+        })
+
+        # test updating data types with wrong dtype id
+        self.assertRaises(KeyError, stg.update_data_types, dtype_id='wrong_id', use_latest_data_cycle=True)
+        self.assertRaises(KeyError, stg.update_data_types, dtype_id='wrong_id', window_length=5)
+        self.assertRaises(KeyError, stg.update_data_types, dtype_id=1, use_latest_data_cycle=True)
+        # test updating data types with wrong input type
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', use_latest_data_cycle='wrong_type')
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', window_length='wrong_type')
+        self.assertRaises(TypeError, stg.update_data_types, window_length='wrong_type')
+        self.assertRaises(TypeError, stg.update_data_types, use_latest_data_cycle='wrong_type')
+        self.assertRaises(AssertionError, stg.update_data_types, window_length={'close_E_d': 'wrong_type'})
+
     def test_stg_attribute_get_and_set(self):
         """ 测试策略属性的获取和设置 """
         stg = self.base_stg
@@ -834,6 +1001,13 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.data_window_lengths, {})
         self.assertEqual(stg.window_lengths, {})
 
+        # test updating custom parameters with method set_custom_pars
+        stg.set_custom_pars(_opt_tag=1)
+        self.assertTrue(hasattr(stg, '_opt_tag'))
+        self.assertEqual(stg._opt_tag, 1)
+
+        self.assertRaises(KeyError, stg.set_custom_pars, wrong_arg='wrong arg')
+
     def test_methods(self):
         """ test all methods of strategy class"""
         stg = self.base_stg
@@ -874,17 +1048,17 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.get_data_name('close_E_w'), 'close')
         self.assertRaises(KeyError, stg.get_data_name, 'wrong_id')
 
-        # test update_data_window method
+        # test update_running_data_window method
         self.assertEqual(stg.share_count, 0)
         self.assertEqual(stg.share_names, [])
 
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=0
         )
         # check if the data windows are updated correctly
-        print(f'after update_data_window:\n'
+        print(f'after update_running_data_window:\n'
               f'close_E_d: \n{stg.close_E_d}\n'
               f'close_E_h: \n{stg.close_E_h}\n'
               f'close_E_5min: \n{stg.close_E_5min}\n'
@@ -894,13 +1068,13 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.share_count, 3)
         self.assertEqual(stg.share_names, [])
 
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=1
         )
         # check if the data windows are updated correctly
-        print(f'after update_data_window:\n'
+        print(f'after update_running_data_window:\n'
               f'close_E_d: \n{stg.close_E_d}\n'
               f'close_E_h: \n{stg.close_E_h}\n'
               f'close_E_5min: \n{stg.close_E_5min}\n'
@@ -935,7 +1109,7 @@ class TestStrategy(unittest.TestCase):
 
         # update parameter and data windows before start generate()
         stg.update_par_values(3, 0.75)
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=0,  # run the first step of the indices
@@ -955,7 +1129,7 @@ class TestStrategy(unittest.TestCase):
         self.assertIsInstance(res, np.ndarray)
 
         # update to the next data window:
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=1,  # run the first step of the indices
@@ -968,7 +1142,7 @@ class TestStrategy(unittest.TestCase):
         print(f'running result in step 2: {stg.generate()}')
 
         for step in range(2, 10):
-            stg.update_data_window(
+            stg.update_running_data_window(
                     data_windows=self.data_windows,
                     window_indices=self.window_indices,
                     window_index=step
@@ -1009,7 +1183,7 @@ class TestStrategy(unittest.TestCase):
 
         # update parameter and data windows before start generate()
         stg.update_par_values(3, 0.75)
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=0,  # run the first step of the indices
@@ -1150,7 +1324,7 @@ class TestStrategy(unittest.TestCase):
 
         # update parameter and data windows before start generate()
         stg.update_par_values(5, 6)
-        stg.update_data_window(
+        stg.update_running_data_window(
                 data_windows=self.data_windows,
                 window_indices=self.window_indices,
                 window_index=0,  # run the first step of the indices
@@ -1168,7 +1342,7 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.multi_pars, None)
 
         stg.allow_multi_par = False
-        stg._update_multi_pars([(5, 5), (6, 1), (2, 4)])
+        self.assertRaises(ValueError, stg._update_multi_pars, [(5, 5), (6, 1), (2, 4)])
         self.assertEqual(stg.allow_multi_par, False)
         self.assertEqual(stg.multi_pars, None)
 
