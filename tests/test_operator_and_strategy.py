@@ -1702,54 +1702,48 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('dma, random, crossline')
         op.set_parameter('dma',
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10,)
         op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        self.assertEqual(op.strategies[0].par_values, (5, 10, 5))
+                         par_values=(50, 10, 55))
+        self.assertEqual(op.strategies[0].par_values, (50, 10, 55))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
-        op.set_opt_par((5, 12, 9))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        op.set_opt_par((58, 12, 90))
+        self.assertEqual(op.strategies[0].par_values, (58, 12, 90))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
 
         op.set_parameter('crossline',
                          opt_tag=1,
-                         par_range=((5, 10), (5, 35), (0, 1)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10,)
         op.set_parameter('crossline',
-                         pars=(5, 10, 0.1))
+                         par_values=(55, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
-        op.set_opt_par((5, 12, 9, 8, 26, 0.09))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        op.set_opt_par((60, 12, 99, 80, 26, 0.09))
+        self.assertEqual(op.strategies[0].par_values, (60, 12, 99))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
+        self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
-        op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
-        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        op.set_opt_par((90, 200, 155, 80, 26, 0.09, 5, 12, 9))
+        self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 0.09))
+        self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
                          opt_tag=2,
-                         par_range=((5, 10), (5, 35), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10,)
         op.set_parameter('crossline',
-                         pars=(5, 10, 5))
+                         par_values=(50, 10, 0.05))
         self.assertEqual(op.opt_tags, [1, 0, 2])
-        self.assertEqual(op.strategies[0].par_values, (9, 200, 155))
+        self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (5, 10, 5))
-        op.set_opt_par((5, 12, 9, (8, 26, 9)))
-        self.assertEqual(op.strategies[0].par_values, (5, 12, 9))
+        self.assertEqual(op.strategies[2].par_values, (50, 10, 0.05))
+        op.set_opt_par((15, 12, 9, (18, 26, 0.09)))
+        self.assertEqual(op.strategies[0].par_values, (15, 12, 9))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
-        self.assertEqual(op.strategies[2].par_values, (8, 26, 9))
+        self.assertEqual(op.strategies[2].par_values, (18, 26, 0.09))
 
         # Test Errors
         # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性

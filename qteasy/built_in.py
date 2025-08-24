@@ -306,23 +306,25 @@ class CROSSLINE(RuleIterator):
 
     """
 
-    def __init__(self, pars: tuple = (35, 120, 0.02)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'float'],
-                         par_range=[(10, 250), (10, 250), (0, 0.1)],
-                         name='CROSSLINE',
-                         description='Moving average crossline strategy, determine long/short position according '
-                                     'to the cross point of long and short term moving average prices ',
-                         strategy_data_types='close')
+    def __init__(self, par_values: tuple = (35, 120, 0.02)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((10, 250), name='l', par_type='int'),
+                    Parameter((0, 0.1), name='m', par_type='float'),
+                ],
+                name='CROSSLINE',
+                description='Moving average crossline strategy, determine long/short position according '
+                            'to the cross point of long and short term moving average prices ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, m = self.par_values
-        else:
-            s, l, m = pars
+    def realize(self):
+        s, l, m = self.s, self.l, self.m
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        h = self.close_E_d
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         m = m * l
