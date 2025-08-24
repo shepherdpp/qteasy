@@ -92,7 +92,7 @@ class Group:
     def run_freq(self, value: str):
         if not isinstance(value, str):
             raise TypeError(f'run_freq should be a string, got {type(value)} instead')
-        run_freq = value.lower()
+        run_freq = value
         if run_freq not in TIME_FREQ_STRINGS:
             raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {value} instead')
         self._run_freq = value
@@ -130,8 +130,8 @@ class Group:
 
         if len(self.members) == 0:
             self.members.append(strategy)
-            self._run_freq = strategy.run_freq
-            self._run_timing = strategy.run_timing
+            self.run_freq = strategy.run_freq
+            self.run_timing = strategy.run_timing
         else:
             if strategy in self.members:
                 raise ValueError(f"Strategy {strategy.name} is already a member of the group {self.name}.")
