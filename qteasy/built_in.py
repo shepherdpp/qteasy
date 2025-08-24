@@ -3703,23 +3703,23 @@ class SelectingNDayAvg(FactorSorter):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY AVG',
-                         description='Select stocks by its N day average open price',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 150), name='n', par_type='int')
+                ],
+                name='N-DAY AVG',
+                description='Select stocks by its N day average open price',
+                run_freq='M',
+                window_length=150,
+                data_types=DataType('close'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.par_values
-        else:
-            n, = pars
+    def realize(self):
+        n, = self.n
+        h = self.close_E_d
         n_average = h[:, -n - 1:, 0].mean(axis=1)
         factors = n_average
 

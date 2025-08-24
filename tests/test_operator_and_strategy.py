@@ -750,15 +750,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_repr(self):
         """ test basic representation of Opeartor class"""
         op = qt.Operator()
-        self.assertEqual(op.__repr__(), 'Operator([], \'pt\', \'batch\')')
+        self.assertEqual(op.__repr__(), 'Operator([], \'batch\')')
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
-        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'pt\', \'batch\')')
-        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
-        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD)')
-        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
-        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
-        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
+        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'batch\')')
+        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA, (12, 26, 9))')
+        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD, (None, None, None))')
+        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX, (12, 12))')
+        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM, (0.5,))')
+        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG, (14,))')
 
     def test_get_next_ids(self):
         """ test functions _next_stg_id and _next_group_id with fake ids"""
