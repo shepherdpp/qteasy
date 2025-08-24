@@ -3453,12 +3453,12 @@ class SelectingAll(GeneralStg):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         name='SIMPLE ',
+                         name='SIMPLE',
                          description='GeneralStg all share and distribute weights evenly')
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         # 所有股票全部被选中，投资比例平均分配
-        share_count = h.shape[0]
+        share_count = self.share_count
         return np.ones(shape=(share_count,)) / share_count
 
 
@@ -3485,8 +3485,8 @@ class SelectingNone(GeneralStg):
                          name='NONE ',
                          description='None of the shares will be selected')
 
-    def realize(self, h, r=None, t=None, pars=None):
-        share_count = h.shape[0]
+    def realize(self):
+        share_count = self.share_count
         return [0.] * share_count
 
 

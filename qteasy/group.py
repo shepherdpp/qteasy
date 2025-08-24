@@ -85,6 +85,17 @@ class Group:
     def signal_type(self):
         return self._signal_type
 
+    @signal_type.setter
+    def signal_type(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f'signal_type should be a string, got {type(value)} instead')
+
+        value = value.lower()
+        if value not in ['pt', 'ps', 'vs']:
+            raise ValueError(f'signal_type should be one of ["pt", "ps", "vs"], got {value} instead')
+
+        self._signal_type = value
+
     @property
     def strategy_count(self):
         return len(self.members)

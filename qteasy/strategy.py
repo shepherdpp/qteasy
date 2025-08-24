@@ -289,7 +289,13 @@ class BaseStrategy:
 
     @run_freq.setter
     def run_freq(self, sample_freq):
-        self._run_freq=sample_freq
+        # check if run_freq is valid
+        if not isinstance(sample_freq, str):
+            raise TypeError(f'sample_freq should be a string, got {type(sample_freq)} instead')
+        sample_freq = sample_freq.lower()
+        if sample_freq not in TIME_FREQ_STRINGS:
+            raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {sample_freq} instead')
+        self._run_freq = sample_freq
 
     @property
     def run_timing(self):
@@ -354,6 +360,11 @@ class BaseStrategy:
     def window_lengths(self):
         """策略依赖的历史数据类型的窗口长度"""
         return self._data_WL
+
+    @property
+    def max_window_length(self):
+        """ 策略所有历史数据种类中，最大的窗口长度"""
+        return max(self._data_WL.values()) if self._data_WL else 0
 
     @property
     def share_count(self):
@@ -588,6 +599,60 @@ class BaseStrategy:
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
 
+    def update_data_types(self,
+                          dtype_id=None,
+                          *,
+                          use_latest_data_cycle: Union[bool, tuple[bool], list[bool], dict[str, bool]] = None,
+                          window_length: Union[int, tuple[int], list[int], dict[str, int]] = None) -> None:
+        """ 更新交易策略的数据参数，可以更新单个数据类型的参数，也可以更新多个数据类型的参数
+        如果给出dtype_id，则更新单个参数，否则更新所有参数
+        """
+        if dtype_id is not None:
+            if dtype_id not in self.data_types:
+                raise KeyError(f'data type {dtype_id} is not defined in the strategy')
+            if use_latest_data_cycle is not None:
+                assert isinstance(use_latest_data_cycle, bool), \
+                    f'use_latest_data_cycle should be a boolean, got {type(use_latest_data_cycle)} instead'
+                self._data_ULC[dtype_id] = use_latest_data_cycle
+            if window_length is not None:
+                assert isinstance(window_length, int) and window_length > 0, \
+                    f'window_length should be a positive integer, got {window_length} instead'
+                self._data_WL[dtype_id] = window_length
+        else:  # 如果没有给出dtype_id，则更新所有参数或按照dict更新参数
+            if use_latest_data_cycle is not None:
+                if isinstance(use_latest_data_cycle, bool):
+                    self._data_ULC = {d_name: use_latest_data_cycle for d_name in self.data_types}
+                elif isinstance(use_latest_data_cycle, (list, tuple)):
+                    if len(use_latest_data_cycle) != len(self.data_types):
+                        raise ValueError(f'Length of use_latest_data_cycle should be {len(self.data_types)}, '
+                                         f'got {len(use_latest_data_cycle)} instead')
+                    ULCs = input_to_list(use_latest_data_cycle, len(self.data_types), False)
+                    self._data_ULC = {self._data_ids[i]: ULCs[i] for i in range(len(ULCs))}
+                elif isinstance(use_latest_data_cycle, dict):
+                    assert all(isinstance(v, bool) for v in use_latest_data_cycle.values()), \
+                        f'All use_latest_data_cycle should be boolean, got {use_latest_data_cycle} instead'
+                    self._data_ULC.update(use_latest_data_cycle)
+                else:
+                    raise TypeError(f'Only one "use_latest_data_cycles" should be given when dtype_id is None, ')
+            if window_length is not None:
+                if isinstance(window_length, (int, float)):
+                    if window_length <= 0:
+                        raise ValueError(f'window_length should be a positive integer, got {window_length} instead')
+                    window_length = int(window_length)
+                    self._data_WL = {d_name: window_length for d_name in self.data_types}
+                elif isinstance(window_length, (list, tuple)):
+                    if len(window_length) != len(self.data_types):
+                        raise ValueError(f'Length of window_length should be {len(self.data_types)}, '
+                                         f'got {len(window_length)} instead')
+                    WLs = input_to_list(window_length, len(self.data_types), 20)
+                    self._data_WL = {self._data_ids[i]: WLs[i] for i in range(len(WLs))}
+                elif isinstance(window_length, dict):
+                    assert all(isinstance(v, int) for v in window_length.values()), \
+                        f'All window lengths should be positive integers, got {window_length} instead'
+                    self._data_WL.update(window_length)
+                else:
+                    raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
+
     def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
         """ 快速更新策略的参数值
 
@@ -603,8 +668,7 @@ class BaseStrategy:
         -------
         None
         """
-        if len(par_values) != self.par_count and not kwargs:
-            raise ValueError(f'par_values should be a tuple of {self.par_count} elements, got {len(par_values)} instead')
+        # allow updating partial parameter values, thus length check is not needed
         if par_values != ():
             for par_name, par_value in zip(self.par_names, par_values):
                 self._pars[par_name].value = par_value
@@ -625,7 +689,7 @@ class BaseStrategy:
         self._opt_tag = opt_tag
         return opt_tag
 
-    def update_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+    def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
         """ 将策略的历史数据更新为window_index指定的历史数据"""
         data_window = None
         for dtype_name in self.data_types:
@@ -641,6 +705,7 @@ class BaseStrategy:
                 setattr(self, k, v)
             else:
                 raise KeyError(f'The strategy does not have property \'{k}\'')
+
     @abstractmethod
     def generate(self):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
@@ -1370,7 +1435,7 @@ class RuleIterator(BaseStrategy):
         else:
             raise TypeError(f'multi_pars should be a tuple, list, or dict, not {type(multi_pars)}')
 
-    def update_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+    def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
         """ 将策略的历史数据更新为window_index指定的历史数据，对Rule_iterator来说数据不能直接保存到"""
         for dtype_name in self.data_types:
             data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
