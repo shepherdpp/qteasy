@@ -466,26 +466,34 @@ class Operator:
         )
 
     @property
-    def ready(self):
+    def ready(self, tell_me_why=False):
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
             1，Operator 已经有strategy
-            2，所有类型的strategy都有blender
+            2，所有Strategy Group的 blender已经设置
+            3，所有Strategy所需的历史数据类型都已经准备好
+        只有满足以上条件，Operator对象才能开始生成交易信号
+
+        Parameters
+        ----------
+        tell_me_why: bool, default False
+            如果Operator对象不满足准备好的条件，是否打印出具体原因, 默认不打印
 
         Returns
         -------
         bool, Operator对象是否已经准备好，可以开始生成交易信号
         """
-        if self.empty:
-            return False
+
         message = [f'Operator readiness:\n']
         is_ready = True
         if self.strategy_count == 0:
             message.append(f'No strategy -- add strategies to Operator!')
             is_ready = False
-        if len(self.strategy_blenders) < self.strategy_group_count:
-            message.append(f'No blender -- some of the strategies will not be used for signal, add blender')
+        group_no_blender = [g.name for g in self._groups if g.blender is None]
+        if len(group_no_blender) > 0:
+            message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
+                           f'set!\nPlease set blender for each strategy group!')
             is_ready = False
         else:
             pass
@@ -494,7 +502,7 @@ class Operator:
             message.append(f'No history data -- ')
             is_ready = False
 
-        if not is_ready:
+        if (not is_ready) and tell_me_why:
             print(''.join(message))
 
         return is_ready
