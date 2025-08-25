@@ -1690,6 +1690,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator()
         print(f'operator is ready? "{op.ready}"')
         self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
 
         raise NotImplementedError
 

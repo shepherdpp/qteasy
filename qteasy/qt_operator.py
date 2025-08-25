@@ -466,13 +466,18 @@ class Operator:
         )
 
     @property
-    def ready(self, tell_me_why=False):
+    def ready(self):
+        """ 属性，operator.is_ready()的另一种写法"""
+        return self.is_ready()
+
+    def is_ready(self, tell_me_why: bool = False):
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
             1，Operator 已经有strategy
             2，所有Strategy Group的 blender已经设置
-            3，所有Strategy所需的历史数据类型都已经准备好
+            3，所有Strategy所需的历史数据类型都已经准备好（合法性检查以后再做）
+            4，交易策略组运行时间表已经生成（合法性检查以后再做）
         只有满足以上条件，Operator对象才能开始生成交易信号
 
         Parameters
@@ -484,9 +489,9 @@ class Operator:
         -------
         bool, Operator对象是否已经准备好，可以开始生成交易信号
         """
-
-        message = [f'Operator readiness:\n']
+        message = [f'Operator readiness:  ']
         is_ready = True
+
         if self.strategy_count == 0:
             message.append(f'No strategy -- add strategies to Operator!')
             is_ready = False
@@ -498,9 +503,27 @@ class Operator:
         else:
             pass
 
-        if len(self.op_data_type_list) < self.strategy_count:
-            message.append(f'No history data -- ')
+        if len(self.data_buffers) == 0 or self.data_buffers is None:
+            message.append(f'No history data -- data buffers are empty!\n')
             is_ready = False
+
+        if len(self.data_window_views) == 0 or self.data_window_views is None:
+            message.append(f'No history data -- data window views are not created!\n')
+            is_ready = False
+
+        if len(self.data_window_indices) == 0 or self.data_window_indices is None:
+            message.append(f'No history data -- data window indices are not set!\n')
+            is_ready = False
+
+        if self.group_timing_table is None:
+            message.append(f'No group running schedule -- group timing table is not created!\n')
+            is_ready = False
+
+        if self.group_schedules == {} or self.group_schedules is None:
+            message.append(f'No group running schedule -- group schedules are not set!\n')
+            is_ready = False
+
+        message.insert(1, f'{"Ready" if is_ready else "Not Ready"}\n')
 
         if (not is_ready) and tell_me_why:
             print(''.join(message))
@@ -1622,34 +1645,6 @@ class Operator:
 
         if self.group_merge_type != 'None':
             yield signal_type, step_index, signal
-
-    def is_ready(self, raise_if_not=False):
-        """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
-        策略参数是否完整。
-            如果op可以运行，返回True
-            如果op不可以运行，检查所有可能存在的问题，提出改进建议，汇总后raise ValueError
-
-        Parameters
-        ----------
-        raise_if_not: bool, Default False
-            如果True，当operator对象未准备好时，raise ValueError
-            如果False，当operator对象未准备好时，返回False
-
-        Returns
-        -------
-        bool
-            如果operator对象准备好了，返回True
-        """
-        ready = True
-        err_msg = ''
-        if self.strategy_count == 0:
-            err_msg += f'operator object should contain at least one strategy, use operator.add_strategy() to add one.'
-            ready = False
-
-        if raise_if_not and not ready:
-            raise AttributeError(err_msg)
-
-        return ready
 
     def run(self, steps: Iterable):
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
