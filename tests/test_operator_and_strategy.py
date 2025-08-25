@@ -1691,6 +1691,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'operator is ready? "{op.ready}"')
         self.assertEqual(op.ready, False)
 
+        raise NotImplementedError
+
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""
         raise NotImplementedError
