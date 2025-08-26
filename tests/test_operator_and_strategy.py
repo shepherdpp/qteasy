@@ -1753,10 +1753,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""
+        # test function prepare_data_buffer()
+
+        # test function create_data_windows()
+
         raise NotImplementedError
 
     def test_operator_prepare_schedule(self):
         """测试Operator生成运行计划"""
+        # test function prepare_running_schedule()
         raise NotImplementedError
 
     def test_set_opt_par(self):

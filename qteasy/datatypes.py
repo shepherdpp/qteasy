@@ -14,6 +14,7 @@
 
 import pandas as pd
 from functools import lru_cache
+from typing import List, Tuple, Dict
 from warnings import warn
 from math import ceil
 
@@ -4067,14 +4068,14 @@ def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
 
 def get_history_data_from_source(
         datasource,
-        htypes: [DataType], *,
-        qt_codes: [str] = None,
+        htypes: List[DataType], *,
+        qt_codes: List[str] = None,
         start: str = None,
         end: str = None,
         freq: str = None,
         combine_htype_names: bool = False,
         row_count: int = None,
-) -> {str: pd.DataFrame}:
+) -> Dict[str, pd.DataFrame]:
     """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
     如果给出qt_codes/start/end参数，则返回符合要求的数据范围，或者返回最近的row_count行数据
     历史数据返回的结果为column为qt_codes，index为时间的DataFrame，因此只有htype的freq
@@ -4219,12 +4220,12 @@ def get_history_data_from_source(
 
 def get_reference_data_from_source(
         datasource,
-        htypes: [DataType], *,
+        htypes: List[DataType], *,
         start: str = None,
         end: str = None,
         freq: str = None,
         row_count: int = 100,
-) -> {str: pd.Series}:
+) -> Dict[str, pd.Series]:
     """ 根据给出的参考数据类型对象，获取相应的数据并组装成一个标准的Series-Dict并返回
 
     由于获取的数据是参考数据，因此数据是一个Series，index为时间，value为数据值，该数据
@@ -4236,7 +4237,7 @@ def get_reference_data_from_source(
     ----------
     datasource: DataSource
         数据源对象，用于获取参考数据
-    htypes: [DataType]
+    htypes: List[DataType]
         需要获取的参考数据类型，必须是合法的参考数据类型对象，可以是一个或多个
     freq: str, Optional
         获取的参考数据的目标频率，
