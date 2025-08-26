@@ -3887,25 +3887,25 @@ class SelectingNDayVolatility(FactorSorter):
     """
 
     def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY VOL',
-                         description='Select stocks by its N day price change',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='high,low,close')
+        super().__init__(
+                pars=[Parameter((2, 150), name='n', par_type='int')],
+                name='N-DAY VOL',
+                description='Select stocks by its N day price change',
+                run_freq='M',
+                window_length=150,
+                data_types=[
+                    DataType('high', freq='d', asset_type='E'),
+                    DataType('low', freq='d', asset_type='E'),
+                    DataType('close', freq='d', asset_type='E'),
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.par_values
-        else:
-            n, = pars
-        high = h[:, :, 0]
-        low = h[:, :, 1]
-        close = h[:, :, 2]
+    def realize(self):
+        n, = self.n
+
+        high = self.high_E_d
+        low = self.low_E_d
+        close = self.close_E_d
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
         factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[:, -1]

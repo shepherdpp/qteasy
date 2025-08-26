@@ -1545,28 +1545,54 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op.max_window_length, int)
         self.assertEqual(op.max_window_length, 0)
 
-        op = qt.Operator('macd, dma, trix, cdl')
+        op = qt.Operator('macd, dma, trix, ndayvol')
         mwl = op.max_window_length
         print(f'before setting window_length the value is 270:\n'
               f'mwl is {mwl}\n')
+        print(f'before setting window_length the max_window_length by dtype "close_E_d" is '
+              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+        print(f'before setting window_length the max_window_length by dtype "high_E_d" is '
+              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 270)
+        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 270)
+        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 150)
+
         op.set_parameter('macd', window_length=300)
-        op.set_parameter('dma', window_length=350)
+        op.set_parameter('ndayvol', window_length=350)
         mwl = op.max_window_length
         print(f'after setting window_length the value is new set value:\n'
               f'mwl is {mwl}\n')
+        print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
+              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
+              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
+        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 350)
 
         # update window_length with multiple values
         op.set_parameter('trix', window_length=(120,))
         op.set_parameter('macd', window_length=(90,))
+        op.set_parameter('ndayvol', window_length=(90, 135, 45))
 
+        print(f'set window_length again:')
         self.assertEqual(op['trix'].window_lengths, {'close_E_d': 120})
         self.assertEqual(op['macd'].window_lengths, {'close_E_d': 90})
-        self.assertEqual(op['dma'].window_lengths, {'close_E_d': 350})
-        self.assertEqual(op.max_window_length, 350)
+        self.assertEqual(op['dma'].window_lengths, {'close_E_d': 30})
+        self.assertEqual(op['ndayvol'].window_lengths, {'close_E_d': 45, 'high_E_d': 90, 'low_E_d': 135})
+        self.assertEqual(op.max_window_length, 135)
+        print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
+              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
+              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "low_E_d" is '
+              f'{op.get_max_window_length_by_dtype("low_E_d")}:')
+
+        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 120)
+        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 90)
+        self.assertEqual(op.get_max_window_length_by_dtype('low_E_d'), 135)
 
     def test_property_set(self):
         """ test all property setters:
@@ -1695,10 +1721,42 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 tell_me_why=True,
         )
 
+        print(f'Adding strategies to operator')
+        op.add_strategies('dma, macd')
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Adding one more group of strategies and Setting up blenders for groups')
+        op.add_strategies('trix, cdl', run_freq='h', run_timing='open')
+        op.set_group_parameters('Group_1', blender_str='s0+s1')
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+        op.set_group_parameters('Group_2', blender_str='s0*s1')
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, True)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=False,
+        )
+
+
+
         raise NotImplementedError
 
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""
+        raise NotImplementedError
+
+    def test_operator_prepare_schedule(self):
+        """测试Operator生成运行计划"""
         raise NotImplementedError
 
     def test_set_opt_par(self):
