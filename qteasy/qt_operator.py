@@ -916,7 +916,7 @@ class Operator:
         """返回策略组group_id中的所有策略ID"""
         return [stg.strategy_id for stg in self.get_strategies_by_group(group_id)]
 
-    def get_max_window_length_by_dtype(self, dtype):
+    def get_max_window_length_by_dtype(self, dtype) -> Union[int, None]:
         """ 计算并返回operator对象某个datatype最长的窗口长度。
 
         Returns
@@ -928,11 +928,11 @@ class Operator:
             raise ValueError(f'data type {dtype} is not in operator data types {self.op_data_types}')
 
         if self.strategy_count == 0:
-            return 0
+            return None
         else:
             window_length = [stg.window_lengths[dtype] for stg in self.strategies if dtype in stg.data_types]
             if len(window_length) == 0:
-                return 0
+                return None
             return max(window_length)
 
     def get_bt_price_type_id_in_priority(self, priority=None):
@@ -1417,6 +1417,13 @@ class Operator:
                 raise TypeError(f'blender should be a string or a list of strings, got {type(blender_str)} instead')
             group.blender_str = blender_str
 
+        if kwargs:
+            for key, value in kwargs.items():
+                if hasattr(group, key):
+                    setattr(group, key, value)
+                else:
+                    raise ValueError(f'Invalid group parameter: {key}')
+
     # =================================================
     # 下面是Operation模块的公有方法：
     def info(self, verbose=False):
@@ -1600,8 +1607,13 @@ class Operator:
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
 
         for data_type in self.all_price_and_data_types:
-            if data_type not in self.data_buffers:
-
+            if data_type not in data_package:
+                raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
+            else:
+                dtype_max_window = self.get_max_window_length_by_dtype(data_type)
+                if data_package[data_type].iloc[dtype_max_window - 1].index.values > pd.to_datetime(start_date):
+                    # 确保数据有足够的前置量
+                    raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. ")
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type] = data_package[data_type][start_date:end_date]
 
