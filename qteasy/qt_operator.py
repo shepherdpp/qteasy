@@ -381,11 +381,11 @@ class Operator:
 
     @property
     def max_window_length(self):
-        """ 计算并返回operator对象所有子策略中最长的策略形成期。在准备回测或优化历史数据时，以此确保有足够的历史数据供策略形成
+        """ 计算并返回operator对象所有子策略中最长的窗口长度。在准备回测或优化历史数据时，以此确保有足够的历史数据供策略形成
 
         Returns
         -------
-        int, operator对象中所有子策略中最长的策略形成期
+        int, operator对象中所有子策略中最长的窗口长度
         """
         if self.strategy_count == 0:
             return 0
@@ -493,30 +493,29 @@ class Operator:
         is_ready = True
 
         if self.strategy_count == 0:
-            message.append(f'No strategy -- add strategies to Operator!')
+            message.append(f'No strategy -- add strategies to Operator!\n')
             is_ready = False
+
         group_no_blender = [g.name for g in self._groups if g.blender is None]
-        if len(group_no_blender) > 0:
+        if len(group_no_blender) == 0:
             message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
-                           f'set!\nPlease set blender for each strategy group!')
+                           f'set!\n')
             is_ready = False
-        else:
-            pass
 
         if len(self.data_buffers) == 0 or self.data_buffers is None:
-            message.append(f'No history data -- data buffers are empty!\n')
+            message.append(f'No data buffer -- data buffers are empty!\n')
             is_ready = False
 
         if len(self.data_window_views) == 0 or self.data_window_views is None:
-            message.append(f'No history data -- data window views are not created!\n')
+            message.append(f'No data window -- data window views are not created!\n')
             is_ready = False
 
         if len(self.data_window_indices) == 0 or self.data_window_indices is None:
-            message.append(f'No history data -- data window indices are not set!\n')
+            message.append(f'No data indices -- data window indices are not set!\n')
             is_ready = False
 
         if self.group_timing_table is None:
-            message.append(f'No group running schedule -- group timing table is not created!\n')
+            message.append(f'No group timing table -- group timing table is not created!\n')
             is_ready = False
 
         if self.group_schedules == {} or self.group_schedules is None:
@@ -917,6 +916,25 @@ class Operator:
         """返回策略组group_id中的所有策略ID"""
         return [stg.strategy_id for stg in self.get_strategies_by_group(group_id)]
 
+    def get_max_window_length_by_dtype(self, dtype):
+        """ 计算并返回operator对象某个datatype最长的窗口长度。
+
+        Returns
+        -------
+        int, operator对象中所有子策略中某个dtype最长的窗口长度
+        """
+
+        if dtype not in self.op_data_types:
+            raise ValueError(f'data type {dtype} is not in operator data types {self.op_data_types}')
+
+        if self.strategy_count == 0:
+            return 0
+        else:
+            window_length = [stg.window_lengths[dtype] for stg in self.strategies if dtype in stg.data_types]
+            if len(window_length) == 0:
+                return 0
+            return max(window_length)
+
     def get_bt_price_type_id_in_priority(self, priority=None):
         """ 根据字符串priority输出正确的回测交易价格ID
 
@@ -1239,8 +1257,8 @@ class Operator:
                       pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
                       data_type_ids: Union[str, list] = None,
-                      window_length: Union[int, tuple[int], list[int]] = None,
-                      use_latest_data_cycle: Union[bool, list[bool], tuple[bool]] = None,
+                      window_length: Union[int, tuple[int, ...], list[int]] = None,
+                      use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
                       par_values: Union[tuple, list] = None,
                       run_freq: str = None,
                       run_timing: str = None,
@@ -1556,12 +1574,36 @@ class Operator:
         else:  # 'OR' or 'AND'
             return len(running_schedule)
 
-    def prepare_data_buffer(self, start_date=None, end_date=None, data_source: dict = None):
-        print('preparing data buffer')
-        for strategie in self.strategies:
-            for data_type in strategie.data_types:
-                if data_type not in self.data_buffers:
-                    self.data_buffers[data_type] = data_source[data_type][start_date:end_date]
+    def prepare_data_buffer(self, *, start_date, end_date, data_package):
+        """ 准备数据缓冲区，加载所有策略需要的数据
+
+        数据缓冲区是一个字典，键为数据类型，值为对应的数据DataFrame，输入参数包括数据包的开始和结束日期，
+        根据这两个日期从数据包中的每一个DataFrame中切片出相应的时间段，保存到数据缓冲区中。
+
+        保存数据缓冲时，还要检查并确保数据有足够的前置量以创建数据滑窗
+
+        Parameters
+        ----------
+        start_date: str or pd.Timestamp
+            数据的开始日期，默认为None，表示从数据包的起始日期开始
+        end_date: str or pd.Timestamp
+            数据的结束日期，默认为None，表示到数据包的结束日期为止
+        data_package: dict
+            一个字典，包含所有需要的数据，键为数据类型，值为对应的数据DataFrame
+            例如：{'price': price_df, 'volume': volume_df, ...}
+            其中每个DataFrame的索引为时间戳，列为不同的标的代码
+        """
+        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致
+        data_columns = data_package[data_package.keys()[0]].columns
+        for df in data_package.values():
+            if not df.columns.equals(data_columns):
+                raise ValueError("Data columns are not consistent across all data types in the data package.")
+
+        for data_type in self.all_price_and_data_types:
+            if data_type not in self.data_buffers:
+
+                # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
+                self.data_buffers[data_type] = data_package[data_type][start_date:end_date]
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.
