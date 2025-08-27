@@ -1595,7 +1595,7 @@ class Operator:
             数据的开始日期，默认为None，表示从数据包的起始日期开始
         end_date: str or pd.Timestamp
             数据的结束日期，默认为None，表示到数据包的结束日期为止
-        data_package: dict
+        data_package: dict[]
             一个字典，包含所有需要的数据，键为数据类型，值为对应的数据DataFrame
             例如：{'price': price_df, 'volume': volume_df, ...}
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
