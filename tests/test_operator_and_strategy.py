@@ -1741,13 +1741,24 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
         op.set_group_parameters('Group_2', blender_str='s0*s1')
         print(f'operator is ready? "{op.ready}"')
-        self.assertEqual(op.ready, True)
+        self.assertEqual(op.ready, False)
         print(f'checking why operator is not ready:\n')
         op.is_ready(
-                tell_me_why=False,
+                tell_me_why=True,
         )
 
-
+        print(f'Adding historical data buffer to operator')
+        all_dtypes = op.op_data_types
+        data_buffer = {}
+        for dtype in all_dtypes:
+            data_buffer[dtype] = close_d_df
+        start = close_d_df.index[0]
+        end = close_d_df.index[-1]
+        op.prepare_data_buffer(
+                start_date=start,
+                end_date=end,
+                data_buffer=data_buffer,
+        )
 
         raise NotImplementedError
 
