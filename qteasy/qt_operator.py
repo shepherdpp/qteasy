@@ -323,9 +323,9 @@ class Operator:
         return [g.name for g in self._groups]
 
     @property
-    def all_price_and_data_types(self):
+    def all_strategy_data_types(self):
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
-        all_types = set(self.op_data_types).union(self.strategy_groups)
+        all_types = set(self.op_data_types)
         return list(all_types)
 
     @property
@@ -497,7 +497,7 @@ class Operator:
             is_ready = False
 
         group_no_blender = [g.name for g in self._groups if g.blender is None]
-        if len(group_no_blender) == 0:
+        if len(group_no_blender) > 0:
             message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
                            f'set!\n')
             is_ready = False
@@ -1601,17 +1601,20 @@ class Operator:
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
         """
         # 针对所有data_type，检查数据框的数据列是否相同且顺序一致
-        data_columns = data_package[data_package.keys()[0]].columns
+        data_columns = data_package[next(iter(data_package.keys()))].columns
         for df in data_package.values():
             if not df.columns.equals(data_columns):
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
 
-        for data_type in self.all_price_and_data_types:
+        for data_type in self.all_strategy_data_types:
             if data_type not in data_package:
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
             else:
                 dtype_max_window = self.get_max_window_length_by_dtype(data_type)
-                if data_package[data_type].iloc[dtype_max_window - 1].index.values > pd.to_datetime(start_date):
+                if len(data_package[data_type]) < dtype_max_window:
+                    raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. "
+                                     f"Required: {dtype_max_window}, Available: {len(data_package[data_type])}")
+                if data_package[data_type].index[dtype_max_window - 1] > pd.to_datetime(start_date):
                     # 确保数据有足够的前置量
                     raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. ")
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
@@ -1623,6 +1626,9 @@ class Operator:
         data window indices are created according to group schedules.
         """
         print('creating data windows')
+        if self.group_timing_table is None:
+            raise ValueError("Group timing table is not set. Please set it before creating data windows.")
+
         for group in self._groups:
             schedule = self.group_timing_table
             for strategy in group.members:

@@ -1748,17 +1748,52 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
 
         print(f'Adding historical data buffer to operator')
+        # set stratety window lengths to be about 5 to 9
+        op.set_parameter('dma', window_length=3)
+        op.set_parameter('macd', window_length=6)
+        op.set_parameter('trix', window_length=9)
+        op.set_parameter('cdl', window_length=5)
+        self.assertEqual(op.max_window_length, 9)
         all_dtypes = op.op_data_types
         data_buffer = {}
         for dtype in all_dtypes:
             data_buffer[dtype] = close_d_df
-        start = close_d_df.index[0]
+        start = close_d_df.index[10]
         end = close_d_df.index[-1]
         op.prepare_data_buffer(
                 start_date=start,
                 end_date=end,
-                data_buffer=data_buffer,
+                data_package=data_buffer,
         )
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        # import pdb; pdb.set_trace()
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Preparing running schedule for operator')
+        op.prepare_running_schedule(
+                start_date=start,
+                end_date=end,
+        )
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Setting up data windows for strategies')
+        op.create_data_windows()
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, True)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+        import pdb; pdb.set_trace()
 
         raise NotImplementedError
 

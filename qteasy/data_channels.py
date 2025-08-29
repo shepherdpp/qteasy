@@ -1222,8 +1222,8 @@ TUSHARE_API_MAP = {
     'money_flow':
         ['moneyflow', 'trade_date', 'trade_date', '20000101', '', '', ''],
 
-    'stock_limit':
-        ['stk_limit', 'trade_date', 'trade_date', '20000101', '', '', ''],
+    'stock_limit':  # start date verified
+        ['stk_limit', 'trade_date', 'trade_date', '20070101', '', '', ''],
 
     'stock_suspend':
         ['suspend_d', 'trade_date', 'trade_date', '20000101', '', '', ''],
@@ -1310,7 +1310,7 @@ TUSHARE_API_MAP = {
         ['index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
 
     'ths_index_daily':
-        ['ths_daily', 'trade_date', 'trade_date', '20000101', '', '', ''],
+        ['ths_daily', 'trade_date', 'trade_date', '20070801', '', '', ''],
 
     'ths_index_weight':
         ['ths_member', 'ts_code', 'table_index', 'ths_index_basic', '', '', ''],
@@ -1319,7 +1319,7 @@ TUSHARE_API_MAP = {
         ['ci_daily', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
     'sw_index_daily':
-        ['sw_daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+        ['sw_daily', 'trade_date', 'trade_date', '20000101', '', '', ''],
 
     'global_index_daily':
         ['index_global', 'trade_date', 'trade_date', '19901211', '', '', ''],
