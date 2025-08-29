@@ -1604,7 +1604,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=oper.all_price_and_data_types,
+            names=oper.all_strategy_data_types,
             freqs=oper.op_data_freq,
             asset_types=config['asset_type'],
             adj=config['backtest_price_adj'] if run_mode > 0 else None,
@@ -1648,7 +1648,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=oper.all_price_and_data_types,
+            names=oper.all_strategy_data_types,
             freqs=oper.op_data_freq,
             asset_types=config['asset_type'],
             adj=config['backtest_price_adj'],
@@ -1769,7 +1769,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=operator.all_price_and_data_types,
+            names=operator.all_strategy_data_types,
             freqs=operator.op_data_freq,
             asset_types=config['asset_type'],
             adj='none',
