@@ -1511,7 +1511,11 @@ class Operator:
                 print('=' * info_width)
 
     # Adding functions for the new operator class
-    def prepare_running_schedule(self, start_date=None, end_date=None):
+    def prepare_running_schedule(self,
+                                 start_date=None,
+                                 end_date=None,
+                                 **kwargs,
+    ):
         """ Running Schedule也就是策略运行时间表，包含每个策略的运行时间和频率等信息
 
         在运行策略之前，必须先准备好运行时间表，这个时间表根据交易员中每个策略组的运行时机参数确定。
@@ -1528,27 +1532,39 @@ class Operator:
             开始日期，默认为None，表示从数据源的起始日期开始
         end_date: str or pd.Timestamp, optional
             结束日期，默认为None，表示到数据源的结束日期为止
+        kwargs: dict, optional
+            其他参数，包括：
 
         Returns
         -------
         None
         """
+
+        from qteasy.trading_util import _trade_time_index as tti
         print('preparing group timing table')
         self.group_schedules = {}
+
         for group in self._groups:
             if group.run_timing is None or group.run_freq is None:
                 raise ValueError(f"Group {group.name} has no run timing or frequency defined.")
-            schedule_index = pd.date_range(
+            if group.run_freq in ['1min', '5min', '15min', '30min', 'h']:
+                schedule_index = tti(
+                                start=start_date,
+                                end=end_date,
+                                freq=group.run_freq,
+                                **kwargs,
+                        ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
+            elif group.run_freq in ['d', 'w', 'm', 'me', 'q', 'qe', 'y', 'ye']:
+                # 运行时间设定为15:00 - close 及 09:30 - open
+                time_offset = 15 if group.run_timing == 'close' else 9.5
+                schedule_index = tti(
                             start=start_date,
                             end=end_date,
                             freq=group.run_freq,
-                    ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
-            if group.run_freq.upper() == 'D':
-                schedule_index = pd.date_range(
-                            start=start_date,
-                            end=end_date,
-                            freq=group.run_freq,
-                    ) + pd.Timedelta(hours=16)  # 运行时间设定为16:00
+                            **kwargs,
+                    ) + pd.Timedelta(hours=time_offset)
+            else:  # for other unexpected cases
+                raise ValueError(f"Unsupported frequency '{group.run_freq}' for group '{group.name}'.")
             self.group_schedules[group.name] = pd.DataFrame(
                     data=1,
                     index=schedule_index,
