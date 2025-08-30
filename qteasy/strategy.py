@@ -731,6 +731,7 @@ class GeneralStg(BaseStrategy):
 
         推荐使用下面的方法创建策略类：
 
+        ```
             Class ExampleStrategy(GeneralStg):
 
                 def realize(self, h, r=None, t=None, pars=None):
@@ -741,15 +742,17 @@ class GeneralStg(BaseStrategy):
                     # result代表策略的输出
 
                     return result
+        ```
 
         用下面的方法创建一个策略对象：
-
+        ```
             example_strategy = ExampleStrategy(pars=<example pars>,
                                                name='example',
                                                description='example strategy',
                                                data_types='close'
                                                ...
                                                )
+        ```
             在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
 
         GeneralStg通用策略的参数如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
@@ -773,10 +776,7 @@ class GeneralStg(BaseStrategy):
 
         realize()的定义：
 
-            def realize(self,
-                        h: np.ndarray,
-                        r: np.ndarray,
-                        t: np.ndarray):
+            def realize(self):
 
         realize()中获取策略参数：
 
