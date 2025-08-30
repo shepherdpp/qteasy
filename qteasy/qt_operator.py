@@ -1541,6 +1541,7 @@ class Operator:
         """
 
         from qteasy.trading_util import _trade_time_index as tti
+        from qteasy.utilfuncs import convert_time_string_to_hour_float as ctf
         print('preparing group timing table')
         self.group_schedules = {}
 
@@ -1556,7 +1557,12 @@ class Operator:
                         ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
             elif group.run_freq in ['d', 'w', 'm', 'me', 'q', 'qe', 'y', 'ye']:
                 # 运行时间设定为15:00 - close 及 09:30 - open
-                time_offset = 15 if group.run_timing == 'close' else 9.5
+                if group.run_timing == 'close':
+                    time_offset = 15
+                elif group.run_timing == 'open':
+                    time_offset = 9.5
+                else:
+                    time_offset = ctf(group.run_timing)
                 schedule_index = tti(
                             start=start_date,
                             end=end_date,

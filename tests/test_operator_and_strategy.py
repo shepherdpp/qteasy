@@ -1794,27 +1794,23 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 tell_me_why=True,
         )
 
-    def test_operator_assign_history_data(self):
-        """测试分配Operator运行所需历史数据"""
-        # test function prepare_data_buffer()
-
-        # test function create_data_windows()
-
-        raise NotImplementedError
-
     def test_operator_prepare_schedule(self):
         """测试Operator生成运行计划"""
         # test function prepare_running_schedule()
 
-        op = qt.Operator()
+        op = qt.Operator()  # create an operator with many strategy groups with freq and timing diversity
         op.add_strategies('dma, macd')  # first group: d@close
         op.add_strategies('dma, macd', run_freq='h')  # second group: h@close
         op.add_strategies('dma, macd', run_freq='d', run_timing='open')  # third group: d@open
+        op.add_strategies('dma, macd', run_freq='30min', run_timing='open')  # fourth group: 30min@open
+        op.add_strategies('dma, macd', run_freq='d', run_timing='10:00')  # fifth group: d@10:00
+        # op.add_strategies('dma, macd', run_freq='W-TUE', run_timing='11:00')  # TODO: sixth group: d@9:30
         # TODO: in the future, test group with run_timing like "9:30" or freq like "W-TUE"
 
         op.prepare_running_schedule(
                 start_date='2020-01-01',
                 end_date='2020-01-04',
+                trade_days_only=True,
         )
         print(f'operator running schedule is:\n')
         for group in op.groups:
@@ -1831,14 +1827,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # check details of the schedule of group 2
         schedule = op.group_schedules['Group_2']
         self.assertIsInstance(schedule, pd.DataFrame)
-        self.assertEqual(len(schedule.index), 12)
+        self.assertEqual(len(schedule.index), 10)
         self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
         self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
         self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:30:00'))
-        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 13:00:00'))
-        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 14:00:00'))
-        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 15:00:00'))
-        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 15:00:00'))
 
         # check details of the schedule of group 3
         schedule = op.group_schedules['Group_3']
@@ -1846,6 +1841,43 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(len(schedule.index), 2)
         self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
         self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 09:30:00'))
+
+        # check details of the schedule of group 4
+        schedule = op.group_schedules['Group_4']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 18)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 13:30:00'))
+        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 14:30:00'))
+        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 09:30:00'))
+        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 10:00:00'))
+        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 11:00:00'))
+        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 11:30:00'))
+        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 13:30:00'))
+        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 14:00:00'))
+        self.assertEqual(schedule.index[16], pd.Timestamp('2020-01-03 14:30:00'))
+        self.assertEqual(schedule.index[17], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 5
+        schedule = op.group_schedules['Group_5']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 10:00:00'))
+
+    def test_operator_assign_history_data(self):
+        """测试分配Operator运行所需历史数据"""
+        # test function prepare_data_buffer()
+
+        # test function create_data_windows()
 
         raise NotImplementedError
 
