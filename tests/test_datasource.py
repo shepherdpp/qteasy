@@ -1638,6 +1638,17 @@ class TestDataSource(unittest.TestCase):
                 all(day.day_name() == 'Friday' for day in indexer)
         )
 
+        print('test datetime index with freq like "M-5" representing 5th of day of each Month - Not Implemented')
+        # indexer = _trade_time_index('20200101', '20200601', freq='M-5', trade_days_only=False)
+        # print(f'the output is {indexer}')
+        # self.assertIsInstance(indexer, pd.DatetimeIndex)
+        # self.assertEqual(len(indexer), 6)
+        # self.assertEqual(list(indexer),
+        #                     list(pd.to_datetime(['2020-01-05', '2020-02-05', '2020-03-05',
+        #                                          '2020-04-05', '2020-05-05', '2020-06-05'])
+        #                          )
+        #                  )
+
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')
         indexer = _trade_time_index(start='20200102', end='20200103', periods=49)
@@ -1668,6 +1679,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with start/periods/freq')
+        # TODO: the periods=49 but the output is 9, to be improved
         indexer = _trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
@@ -1679,6 +1691,12 @@ class TestDataSource(unittest.TestCase):
                                               '2020-01-01 15:00:00'])
                               )
                          )
+
+        # TODO: more test cases, including test all available freq strings
+        #  and combinations of start/freq/periods
+        #  and combinations of end/freq/periods
+        #  when periods is given, the output length should be periods
+        #  as well as test different trade markets
 
         print('test false input')
 

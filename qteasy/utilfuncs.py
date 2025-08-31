@@ -2363,7 +2363,7 @@ def read_binary_file(*, file_path: str, file_name: str, mode: str = 'rb'):
     return saved_data
 
 
-def convert_time_string_to_hour_float(time_string):
+def time_string_to_hour_float(time_string):
     """
     Converts a time string (e.g., "HH:MM") to a float representing hours.
 
