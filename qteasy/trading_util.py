@@ -1385,6 +1385,7 @@ def _trade_time_index(start=None,
                       periods=None,
                       freq=None,
                       trade_days_only=True,
+                      time_offset=None,
                       market='SSE',
                       include_start=True,
                       include_end=True,
@@ -1411,6 +1412,8 @@ def _trade_time_index(start=None,
         日期时间序列的频率
     trade_days_only: bool, Default True
         是否剔除所有非交易日，默认True，如果为False，则保留所有的非交易日
+    time_offset: str, Default None
+        时间偏移量，代表时间的字符串，"00:00"到"23:59"之间，当freq低于等于一天('d', 'w', ...)时有效
     market: str, {'SSE', 'SZSE', 'SHFE', ...}, Default 'SSE'
         交易市场类型，不同的交易市场交易日定义可能不同, 默认上交所，trade_days_only为False时无效
     include_start: bool, Default True
@@ -1508,7 +1511,7 @@ def _trade_time_index(start=None,
         trade_cal = trade_cal.ffill()
         time_index = trade_cal.loc[trade_cal == 1].index
 
-    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
+    # 判断time_index的freq，确定频率低于等于1天(d/w/m)还是高于1天(h/min)
     if time_index.freqstr is not None:
         freq_str = time_index.freqstr.lower().split('-')[0]
     else:
@@ -1531,7 +1534,7 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在复合字符串，因此需要split
     '''
-
+    # 当freq小于一天时，需要按交易时段去掉不在交易时段以内的时间点
     if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
         # 在这里还有一处细节需要处理：当freq=‘h'的时候，生成的时间是整点如：
         # 09:00:00 / 10:00:00 / 11:00:00
@@ -1567,7 +1570,21 @@ def _trade_time_index(start=None,
                 time_index_pm[idx_pm],
         )
         return pd.to_datetime(time_index_am_pm)
-    else:
+    else:  # 当freq大于等于一天时，需查看是否需要对时间进行偏移
+        if time_offset is not None:
+            from qteasy.utilfuncs import time_string_to_hour_float
+            try:
+                offset_hour = time_string_to_hour_float(time_offset)
+                offset = pd.Timedelta(hours=offset_hour)
+            except Exception as e:
+                raise ValueError(f'Invalid time_offset {time_offset}, {e}')
+            time_index = time_index + offset
+            # 偏移后，可能会出现不在交易时段内的时间点，因此需要剔除不在交易时段内的时间点
+            if include_end:
+                time_index = time_index[np.where(time_index <= pd.to_datetime(end))]
+            else:
+                time_index = time_index[np.where(time_index < pd.to_datetime(end))]
+
         return time_index
 
 

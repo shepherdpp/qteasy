@@ -1541,7 +1541,7 @@ class Operator:
         """
 
         from qteasy.trading_util import _trade_time_index as tti
-        from qteasy.utilfuncs import convert_time_string_to_hour_float as ctf
+        from qteasy.utilfuncs import time_string_to_hour_float as ctf
         print('preparing group timing table')
         self.group_schedules = {}
 
@@ -1558,17 +1558,19 @@ class Operator:
             elif group.run_freq in ['d', 'w', 'm', 'me', 'q', 'qe', 'y', 'ye']:
                 # 运行时间设定为15:00 - close 及 09:30 - open
                 if group.run_timing == 'close':
-                    time_offset = 15
+                    time_offset = "15:00"
                 elif group.run_timing == 'open':
-                    time_offset = 9.5
+                    time_offset = "9:30"
                 else:
-                    time_offset = ctf(group.run_timing)
+                    time_offset = group.run_timing
+
                 schedule_index = tti(
                             start=start_date,
                             end=end_date,
                             freq=group.run_freq,
+                            time_offset=time_offset,
                             **kwargs,
-                    ) + pd.Timedelta(hours=time_offset)
+                    )
             else:  # for other unexpected cases
                 raise ValueError(f"Unsupported frequency '{group.run_freq}' for group '{group.name}'.")
             self.group_schedules[group.name] = pd.DataFrame(
@@ -1636,9 +1638,13 @@ class Operator:
                 if len(data_package[data_type]) < dtype_max_window:
                     raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. "
                                      f"Required: {dtype_max_window}, Available: {len(data_package[data_type])}")
-                if data_package[data_type].index[dtype_max_window - 1] > pd.to_datetime(start_date):
+                if data_package[data_type].index[dtype_max_window - 1].date() > pd.to_datetime(start_date).date():
                     # 确保数据有足够的前置量
-                    raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. ")
+                    msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
+                           f"Data package starts on {data_package[data_type].index[0]}, "
+                           f"and start_date is {start_date}, \nbut the first available window starts on "
+                           f" {data_package[data_type].index[dtype_max_window - 1]}. ")
+                    raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type] = data_package[data_type][start_date:end_date]
 
@@ -1654,16 +1660,17 @@ class Operator:
         for group in self._groups:
             schedule = self.group_timing_table
             for strategy in group.members:
-                self.data_window_views[strategy.name] = {}
-                self.data_window_indices[strategy.name] = {}
+                self.data_window_views[strategy.strategy_id] = {}
+                self.data_window_indices[strategy.strategy_id] = {}
                 for data_type in strategy.data_types:
-                    print(f'Creating data window for strategy: {strategy.name}, data type: {data_type}')
+                    print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
+                          f'data type: {data_type}')
                     window_length = strategy.data_window_lengths[data_type]
                     buffered_data = self.data_buffers.get(data_type, None)
 
                     window = rolling_window(buffered_data.values, window=window_length, axis=0)
-                    self.data_window_views[strategy.name][data_type] = window
-                    print(f'Window shape for {strategy.name} on {data_type}: \n{window.shape}')
+                    self.data_window_views[strategy.strategy_id][data_type] = window
+                    print(f'Window shape for {strategy.strategy_id}/{strategy.name} on {data_type}: \n{window.shape}')
 
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
                     running_schedule = schedule.index
@@ -1673,9 +1680,9 @@ class Operator:
                     #  这时应该使用参数side="right"来运行np.searchsorted，使找到的数据窗口时间小于等于运行时间
                     schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
-                    self.data_window_indices[strategy.name][data_type] = schedule_indices
-                    print(f'Window indices for {strategy.name} on {data_type}: \n'
-                          f'{self.data_window_indices[strategy.name][data_type]}')
+                    self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
+                    print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
+                          f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
     def run_step(self, step_index):
         """ 运行当前步骤的所有策略组，生成交易信号
