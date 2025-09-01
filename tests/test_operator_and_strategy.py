@@ -592,14 +592,7 @@ trade_price_h_data = np.array(
          [38.25, 36.42, 29.18],
          [38.25, 36.61, 29.51],
          [38.25, 36.97, 28.69],
-         [37.00, 36.91, 28.80],
-         [36.56, 36.24, 28.18],
-         [36.00, 36.49, 28.19],
-         [35.58, 36.62, 28.00],
-         [35.03, 35.61, 27.41],
-         [35.05, 37.11, 27.70],
-         [34.58, 36.94, 27.47],
-         [34.88, 37.45, 27.24]]
+         [37.00, 36.91, 28.80]]
 )
 
 close_d_df = pd.DataFrame(
@@ -624,7 +617,11 @@ close_w_df = pd.DataFrame(
 
 trade_price_h_df = pd.DataFrame(
         trade_price_h_data, columns=['A', 'B', 'C'],
-        index=pd.date_range(start='2023-01-01', periods=47, freq='4h')
+        index=tti(start='2023-01-10',
+                  end='2023-01-31',
+                  freq='h',
+                  include_start_am=False,
+                  include_start_pm=False)  # len = 40
 )
 
 
@@ -2099,8 +2096,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
             'close_E_w': close_w_df,
         }
         op.prepare_data_buffer(
-                start_date='2023-01-12',
-                end_date='2023-01-20',
+                start_date='2023-01-11',
+                end_date='2023-01-31',
                 data_package=data_buffer,
         )
         print(f'Operator data buffer prepared:\n')
@@ -2131,11 +2128,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 self.assertIn(dtype, op.op_data_types)
                 self.assertIsInstance(op.data_window_views[stg_id][dtype], np.ndarray)
                 self.assertIsInstance(op.data_window_indices[stg_id][dtype], np.ndarray)
-                self.assertEqual(op.data_window_views[stg_id][dtype].shape[0],
-                                 op[stg_id].window_lengths[dtype])
-                import pdb; pdb.set_trace()
                 self.assertEqual(op.data_window_views[stg_id][dtype].shape[1],
-                                 len(op.data_window_indices[stg_id][dtype]))
+                                 op[stg_id].window_lengths[dtype])
+                # import pdb; pdb.set_trace()
+                self.assertEqual(op.data_window_views[stg_id][dtype].shape[2],
+                                 3)
+
+        raise NotImplementedError
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
