@@ -1541,7 +1541,6 @@ class Operator:
         """
 
         from qteasy.trading_util import _trade_time_index as tti
-        from qteasy.utilfuncs import time_string_to_hour_float as ctf
         print('preparing group timing table')
         self.group_schedules = {}
 
@@ -1646,7 +1645,7 @@ class Operator:
                            f" {data_package[data_type].index[dtype_max_window - 1]}. ")
                     raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
-                self.data_buffers[data_type] = data_package[data_type][start_date:end_date]
+                self.data_buffers[data_type] = data_package[data_type]
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.
