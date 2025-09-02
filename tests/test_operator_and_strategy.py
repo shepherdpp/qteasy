@@ -29,14 +29,14 @@ from qteasy.trading_util import _trade_time_index as tti
 param1 = Parameter(
         name='param1',
         par_type='int',
-        par_range=(1, 100),
-        value=50,
+        par_range=(1, 4),
+        value=4,
 )
 
 param2 = Parameter(
         name='param2',
         par_type='float',
-        par_range=(0.0, 10.),
+        par_range=(0.0, 1.),
         value=0.5,
 )
 
@@ -629,17 +629,15 @@ trade_price_h_df = pd.DataFrame(
 class TestGenStg(GeneralStg):
     """用于Test测试的通用交易策略，基于GeneralStrategy策略生成
 
-    策略没有参数，选股周期为5D
-    在每个选股周期内，按以下逻辑选择股票并设定多空状态：
+    策略参数：param1，param2
+    历史数据：close_E_d：日线收盘价x4天，close_E_h：60分钟收盘价x5小时
+    输出信号：各个股票的持仓比例
+    策略逻辑：
     当历史数据不含参考数据和交易结果数据时：
-     - 计算：今日变化率 = (今收-昨收)/平均股价(HLC平均股价)，
+     - 计算：N日变化率 = (今收-param1日前收)/今收，
+     - 计算：N小时变化率 = (今收-param1小时前收)/今收
+     - 计算：综合变化率 = N日变化率*param2 + N小时变化率*(1-param2)
      - 选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
-    当给出参考数据时，按下面逻辑设定多空：
-     - 计算：今日相对变化率 = (今收-昨收)/HLC平均股价/参考数据
-     - 选择相对变化率最高的两只股票，设定投资比率为50%，否则为0
-    当给出交易结果数据时，按下面逻辑设定多空：
-     - 计算：交易价差变化率 = (今收-昨收)/上期交易价格
-     - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
     def __init__(self, par_values: tuple = None, **kwargs):
@@ -658,26 +656,40 @@ class TestGenStg(GeneralStg):
 
     def realize(self):
 
+        p1, p2 = self.param1, self.param2
+        close_d, close_h = self.close_E_d, self.close_E_h
         print("GeneralStg realized")
-        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
-        dt1_avg = np.mean(self.close_E_d, axis=0)
-        dt2_avg = np.mean(self.close_E_5min, axis=0)
-        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
-        avg = dt1_avg * self.param1 + dt2_avg * self.param2
-        print(f'avg = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
-        signal = np.zeros_like(avg)
-        signal[np.argmax(avg)] = 1
-        print(f'got signal: \n{signal}')
+        print(f"param1 = {p1}, param2 = {p2}")
+        print(f"got datas:\n{close_d}\n and \n{close_h}")
+        # create signal according to class doc and print out step results
+        dt1_change = (close_d[-1] - close_d[-p1]) / close_d[-1]
+        dt2_change = (close_h[-1] - close_h[-p1]) / close_h[-1]
+        print(f"dt1_change = (close_d[-1] - close_d[-{p1}]) / close_d[-1] = \n{dt1_change}")
+        print(f"dt2_change = (close_h[-1] - close_h[-{p1}]) / close_h[-1] = \n{dt2_change}")
+        combined_change = dt1_change * p2 + dt2_change * (1 - p2)
+        print(f"combined_change = dt1_change * {p2} + dt2_change * (1 - {p2}) = \n{combined_change}")
+        # get top 2 stock indexes
+        top2_idx = combined_change.argsort()[-2:][::-1]
+        print(f"top2 indexes = {top2_idx}")
+        signal = np.zeros_like(combined_change)
+        signal[top2_idx] = 0.5
+        print(f"signal = \n{signal}")
 
         return signal
 
 
 class TestFactorSorter(FactorSorter):
-    """用于Test测试的简单选股策略，基于Selecting策略生成
+    """用于Test测试的简单选股策略，基于FactorSorter策略生成
 
-    策略没有参数，选股周期为5D
-    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
-    选股比例为平均分配
+    策略参数：param1，param2
+    历史数据：close_E_d：日线收盘价x3天，close_E_w：周收盘价x1周
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+    当历史数据不含参考数据和交易结果数据时：
+     - 计算：N日平均价 = param1日内收盘平均价，
+     - 计算：周价变化率 = (今收-param1小时前收)/本周收盘价
+     - 计算：选股因子 = N日平均价*param2 + 周价变化率*(1-param2)
+     - 将所有股票的选股因子排序后根据FactorSorter策略的标准选股方法进行选股
     """
 
     def __init__(self, par_values=None, **kwargs):
@@ -695,39 +707,45 @@ class TestFactorSorter(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        print("FactorSorter realized")
-        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
-        dt1_avg = np.mean(self.close_E_d, axis=0)
-        dt2_avg = np.mean(self.close_E_5min, axis=0)
-        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
-        avg = dt1_avg * self.param1 + dt2_avg * self.param2
-        print(f'signal sorter = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
 
-        return avg
+        p1, p2 = self.param1, self.param2
+        close_d, close_w = self.close_E_d, self.close_E_w
+        print("FactorSorter realized")
+        print(f"param1 = {p1}, param2 = {p2}")
+        print(f"got datas:\n{close_d}\n and \n{close_w}")
+        # create signal according to class doc and print out step results
+        dt1_change = np.mean(close_d[-p1:], axis=0)
+        dt2_change = (close_d[-1] - close_d[-p1]) / close_w[-1]
+        print(f"dt1_avg = mean(close_d[-{p1}:], axis=0) = \n{dt1_change}")
+        print(f"dt2_change = (close_d[-1] - close_d[-{p1}]) / close_w[-1] = \n{dt2_change}")
+        selection_factor = dt1_change * p2 + dt2_change * (1 - p2)
+        print(f"selection_factor = dt1_avg * {p2} + dt2_change * (1 - {p2}) = \n{selection_factor}")
+
+        return selection_factor
 
 
 class TestRuleIter(RuleIterator):
-    """用于Test测试的简单信号生成策略，基于GeneralStrategy策略生成
+    """用于Test测试的循环规则策略，基于RuleIterator策略生成
 
-    策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
-    ratio是k线形状比例的阈值，定义为abs((C-O)/(H-L))。当这个比值小于ratio阈值时，判断该K线为十字交叉（其实还有丁字等多种情形，但这里做了
-    简化处理。
-    如果历史数据中没有给出参考数据，也没有给出交易结果数据时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
-    如果给出参考数据(参考数据包含两个种类type1与type2)时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于参考数据type1时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于参考数据type2时，卖出信号
-    如果给出交易结果数据时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于上期交易价格时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
+    策略参数：param3，param4 (4-1, 4-2, 4-3)
+    历史数据：close_E_h：小时收盘价x5小时，close_E_15min：15分钟收盘价x20周期
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+    对股票池中的每只股票执行下面的操作：
+    - 计算：小时线均价 = param4-1 小时收盘价均值
+    - 计算：15分钟线均价1 = param4-2周期收盘价均值
+    - 计算：15分钟线均价2 = param4-3周期收盘价均值
+    - 当param3参数分别为以下option时，输出信号不同：
+        - option 1：当小时线均价 >= 15分钟线均价1 - 15分钟线均价2时，输出1，否则输出0
+        - option 2：当小时线均价 <= 15分钟线均价1 - 15分钟线均价2时，输出1，否则输出0
+        - option 3：当小时线均价介于15分钟线均价1和15分钟线均价2之间时，输出0，否则输出1
     """
 
     def __init__(self, par_values=None, **kwargs):
         super().__init__(
                 name='test_rule_iterator',
                 description='test rule iterator strategy',
-                pars=[param1, param2],
+                pars=[param3, param4],
                 data_types={'close_E_h': dtype_2, 'close_E_15min': dtype_4},
                 use_latest_data_cycle=[True, False],
                 window_length=[5, 20],
@@ -738,17 +756,30 @@ class TestRuleIter(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
+
+        p1, p2 = self.param3, self.param4
+        close_h, close_m = self.close_E_h, self.close_E_15min
         print("RuleIterator realized")
-        print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
-        dt1_avg = np.mean(self.close_E_d, axis=0)
-        dt2_avg = np.mean(self.close_E_5min, axis=0)
-        print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
-        criteria = dt1_avg * self.param1 >= dt2_avg * self.param2
-        print(f'criteria = avg1 * {self.param1} >= avg2 * {self.param2} = {criteria}')
-        if criteria:
-            return 1
-        else:
-            return 0
+        print(f"param3 = {p1}, param4 = {p2}")
+        print(f"got datas:\n{close_h}\n and \n{close_m}")
+        # create signal according to class doc and print out step results
+        h_avg = np.mean(close_h[-p2[0]:], axis=0)
+        m1_avg = np.mean(close_m[-p2[1]:], axis=0)
+        m2_avg = np.mean(close_m[-p2[2]:], axis=0)
+        print(f"h_avg = mean(close_h[-{p2[0]}:], axis=0) = \n{h_avg}")
+        print(f"m1_avg = mean(close_m[-{p2[1]}:], axis=0) = \n{m1_avg}")
+        print(f"m2_avg = mean(close_m[-{p2[2]}:], axis=0) = \n{m2_avg}")
+        if p1 == 'option1':
+            signal = 1 if h_avg >= (m1_avg - m2_avg) else 0
+            print(f"option1: signal = 1 if h_avg >= (m1_avg - m2_avg) else 0")
+        elif p1 == 'option2':
+            signal = 1 if h_avg <= (m1_avg - m2_avg) else 0
+            print(f"option2: signal = 1 if h_avg <= (m1_avg - m2_avg) else 0")
+        else:  # p1 == 'option3':
+            signal = 0 if m2_avg <= h_avg <= m1_avg else 1
+            print(f"option3: signal = 0 if m2_avg <= h_avg <= m1_avg else 1")
+        print(f"signal = \n{signal}")
+        return signal
 
 
 # Other high level test strategies
@@ -808,7 +839,7 @@ class StgBuyOpen(GeneralStg):
         super().__init__(
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='OPEN_BUY',
-                run_timing=DataType('open'),
+                run_timing='open',
                 use_latest_data_cycle=False,
         )
         if par_values:
@@ -842,7 +873,7 @@ class StgSelClose(GeneralStg):
         super().__init__(
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='SELL_CLOSE',
-                run_timing=DataType('close'),
+                run_timing='close',
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1430,18 +1461,26 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         stg_rule = op[3]
         self.assertIsInstance(stg_rule, TestRuleIter)
-        self.assertEqual(stg_rule.par_values, (50, 0.5))
-        stg_rule.update_par_values(20, 5)
-        self.assertEqual(stg_rule.par_values, (20, 5))
+        self.assertEqual(stg_rule.par_values[0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 2., 3.])))
+        stg_rule.update_par_values('option2', np.array([2., 3., 4.]))
+        self.assertEqual(stg_rule.par_values[0], 'option2')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([2., 3., 4.])))
 
         self.assertEqual(stg_rule.allow_multi_par, True)
         stg_rule.update_par_values(
-                {'000001': (10, 3.),
-                 '000002': (20, 5.),
-                 '000003': (30, 7.)}
+                {'000001': ('option1', np.array([1, 4, 5])),
+                 '000002': ('option2', np.array([2, 4, 5])),
+                 '000003': ('option3', np.array([3, 4, 5]))}
         )
-        self.assertEqual(stg_rule.multi_pars, ((10, 3.0), (20, 5.0), (30, 7.0)))
-        self.assertEqual(stg_rule.par_values, (10, 3.0))
+        self.assertEqual(stg_rule.multi_pars[0][0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[0][1], np.array([1., 4., 5.])))
+        self.assertEqual(stg_rule.multi_pars[1][0], 'option2')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[1][1], np.array([2., 4., 5.])))
+        self.assertEqual(stg_rule.multi_pars[2][0], 'option3')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[2][1], np.array([3., 4., 5.])))
+        self.assertEqual(stg_rule.par_values[0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 4., 5.])))
 
         # update multi-parameter will fail if allow_multi_par is False
         stg_rule.allow_multi_par = False
@@ -2264,7 +2303,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',
-                         strategy_data_types='wt_idx|000300.SH',
+                         data_types='wt_idx|000300.SH',
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)
