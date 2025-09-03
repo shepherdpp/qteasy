@@ -2155,22 +2155,39 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(len(op.data_window_views), 3)
         self.assertEqual(len(op.data_window_indices), 3)
         # import pdb; pdb.set_trace()
+        data_window_shapes = {
+            'custom': {
+                'close_E_d': (22, 4, 3),
+                'close_E_w': (20, 5, 3),
+            },
+            'custom_1': {
+                'close_E_d': (23, 1, 3),
+                'close_E_w': (3, 1, 3),
+            },
+            'custom_2': {
+                'close_E_h': (56, 5, 3),
+                'close_E_15min': (157, 5, 3),
+            },
+        }
         for stg_id in op.strategy_ids:
             print(f'Strategy "{stg_id}" has data window for its data types:\n'
                   f'{op[stg_id].data_types}\n')
             for dtype in op[stg_id].data_types:
-                print(f'Data type "{dtype}" has data window:\n'
-                      f'{op.data_window_views[stg_id][dtype][:3]}\n'
-                      f'with window indices: {op.data_window_indices[stg_id][dtype]}\n'
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
                       )
                 # check data type and data shapes
                 self.assertIn(dtype, op.op_data_types)
-                self.assertIsInstance(op.data_window_views[stg_id][dtype], np.ndarray)
-                self.assertIsInstance(op.data_window_indices[stg_id][dtype], np.ndarray)
-                self.assertEqual(op.data_window_views[stg_id][dtype].shape[1],
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype])
+                self.assertEqual(data_window.shape[1],
                                  op[stg_id].window_lengths[dtype])
                 # import pdb; pdb.set_trace()
-                self.assertEqual(op.data_window_views[stg_id][dtype].shape[2],
+                self.assertEqual(data_window.shape[2],
                                  3)
 
         raise NotImplementedError
