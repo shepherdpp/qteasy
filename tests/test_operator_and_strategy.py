@@ -597,7 +597,7 @@ trade_price_h_data = np.array(
 
 close_d_df = pd.DataFrame(
         dtype_1_data, columns=['A', 'B', 'C'],
-        index=tti(start='2023-01-01', end='2023-02-13', freq='D') + pd.Timedelta(hours=15)  # len = 125
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 125
 )
 close_h_df = pd.DataFrame(
         dtype_2_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='h',
@@ -608,11 +608,12 @@ close_5min_df = pd.DataFrame(
                                                          include_start_pm=False, include_start_am=False)  # len = 192
 )
 close_15min_df = pd.DataFrame(
-        dtype_4_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-07', end='2023-01-31', freq='15min',
+        dtype_4_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-06', end='2023-01-30', freq='15min',
                                                          include_start_pm=False, include_start_am=False)  # len = 176
 )
 close_w_df = pd.DataFrame(
-        dtype_5_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='w-fri')  # len = 3
+        dtype_5_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='w-fri',
+                                                         time_offset="15:00")  # len = 3
 )
 
 trade_price_h_df = pd.DataFrame(
@@ -2130,9 +2131,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Operator data types needed are: {op.op_data_types}')
         data_buffer = {
             'close_E_15min': close_15min_df,
-            'close_E_d': close_d_df,
-            'close_E_h': close_h_df,
-            'close_E_w': close_w_df,
+            'close_E_d':     close_d_df,
+            'close_E_h':     close_h_df,
+            'close_E_w':     close_w_df,
         }
         op.prepare_data_buffer(
                 start_date='2023-01-11',
@@ -2156,17 +2157,164 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(len(op.data_window_indices), 3)
         # import pdb; pdb.set_trace()
         data_window_shapes = {
-            'custom': {
+            'custom':   {
                 'close_E_d': (22, 4, 3),
-                'close_E_w': (20, 5, 3),
+                'close_E_h': (56, 5, 3),
             },
             'custom_1': {
                 'close_E_d': (23, 1, 3),
                 'close_E_w': (3, 1, 3),
             },
             'custom_2': {
-                'close_E_h': (56, 5, 3),
+                'close_E_h':     (56, 5, 3),
                 'close_E_15min': (157, 5, 3),
+            },
+        }
+        data_window_targets = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [[[0.994, 0.412, 0.876],
+                          [1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62]],
+
+                         [[1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218]],
+
+                         [[2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218],
+                          [7.177, 7.337, 7.294]]],
+                ),
+                'close_E_h': np.array(
+                        [[[0.296, 0.969, 0.422],
+                          [0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381]],
+
+                         [[0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956]],
+
+                         [[0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956],
+                          [1.04, 1.577, 1.919]]],
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [[[0.994, 0.412, 0.876],
+                          [1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799]],
+
+                         [[1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62]],
+
+                         [[2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218]]],
+
+                ),
+                'close_E_w': np.array(
+                        [[[0.134, 0.207, 0.095]],
+
+                         [[1.015, 0.591, 0.615]],
+
+                         [[1.255, 0.85, 0.992]]],
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [[[0.296, 0.969, 0.422],
+                          [0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381]],
+
+                         [[0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956]],
+
+                         [[0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956],
+                          [1.04, 1.577, 1.919]]],
+                ),
+                'close_E_15min': np.array(
+                        [[[6.496, 6.578, 6.001],
+                          [6.026, 6.351, 6.198],
+                          [6.678, 6.386, 6.985],
+                          [6.357, 6.467, 6.014],
+                          [6.319, 6.782, 6.705],
+                          [6.356, 6.091, 6.209],
+                          [6.122, 6.918, 6.729],
+                          [6.094, 6.073, 6.343],
+                          [6.611, 6.083, 6.345],
+                          [6.978, 6.881, 6.738],
+                          [6.206, 6.035, 6.697],
+                          [6.567, 6.524, 6.884],
+                          [6.966, 6.796, 6.849],
+                          [6.225, 6.695, 6.128],
+                          [6.54, 6.954, 6.556],
+                          [6.501, 6.598, 6.956],
+                          [7.311, 7.261, 7.459],
+                          [7.707, 7.215, 7.338],
+                          [7.019, 7.607, 7.37],
+                          [7.966, 7.234, 7.653]],
+
+                         [[6.026, 6.351, 6.198],
+                          [6.678, 6.386, 6.985],
+                          [6.357, 6.467, 6.014],
+                          [6.319, 6.782, 6.705],
+                          [6.356, 6.091, 6.209],
+                          [6.122, 6.918, 6.729],
+                          [6.094, 6.073, 6.343],
+                          [6.611, 6.083, 6.345],
+                          [6.978, 6.881, 6.738],
+                          [6.206, 6.035, 6.697],
+                          [6.567, 6.524, 6.884],
+                          [6.966, 6.796, 6.849],
+                          [6.225, 6.695, 6.128],
+                          [6.54, 6.954, 6.556],
+                          [6.501, 6.598, 6.956],
+                          [7.311, 7.261, 7.459],
+                          [7.707, 7.215, 7.338],
+                          [7.019, 7.607, 7.37],
+                          [7.966, 7.234, 7.653],
+                          [7.786, 7.136, 7.881]],
+
+                         [[6.678, 6.386, 6.985],
+                          [6.357, 6.467, 6.014],
+                          [6.319, 6.782, 6.705],
+                          [6.356, 6.091, 6.209],
+                          [6.122, 6.918, 6.729],
+                          [6.094, 6.073, 6.343],
+                          [6.611, 6.083, 6.345],
+                          [6.978, 6.881, 6.738],
+                          [6.206, 6.035, 6.697],
+                          [6.567, 6.524, 6.884],
+                          [6.966, 6.796, 6.849],
+                          [6.225, 6.695, 6.128],
+                          [6.54, 6.954, 6.556],
+                          [6.501, 6.598, 6.956],
+                          [7.311, 7.261, 7.459],
+                          [7.707, 7.215, 7.338],
+                          [7.019, 7.607, 7.37],
+                          [7.966, 7.234, 7.653],
+                          [7.786, 7.136, 7.881],
+                          [7.9, 7.981, 7.76]]],
+                ),
             },
         }
         for stg_id in op.strategy_ids:
@@ -2183,12 +2331,18 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 self.assertIn(dtype, op.op_data_types)
                 self.assertIsInstance(data_window, np.ndarray)
                 self.assertIsInstance(data_window, np.ndarray)
-                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype])
+                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
                 self.assertEqual(data_window.shape[1],
                                  op[stg_id].window_lengths[dtype])
                 # import pdb; pdb.set_trace()
                 self.assertEqual(data_window.shape[2],
                                  3)
+                # check that the data indices are correct
+                self.assertTrue(np.allclose(data_window[:3],
+                                            data_window_targets[stg_id][dtype],))
+                # check all data indices
+                self.assertIsInstance(data_indices, np.ndarray)
+                self.assertEqual(len(data_indices), 40)
 
         raise NotImplementedError
 
