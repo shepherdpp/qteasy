@@ -2103,6 +2103,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
         op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
         print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
+        op.set_parameter('custom', use_latest_data_cycle=False)
+        op.set_parameter('custom_1', use_latest_data_cycle=False)
+        op.set_parameter('custom_2', use_latest_data_cycle=False)
         op.info(verbose=False)
 
         op.prepare_running_schedule(
@@ -2317,6 +2320,50 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 ),
             },
         }
+        target_data_indices = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [1, 1, 1, 1, 2, 2, 2, 2, 3, 3,
+                         3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
+                         6, 6, 6, 6, 7, 7, 7, 7, 8, 8,
+                         8, 8, 9, 9, 9, 9, 10, 10, 10, 10]
+                ),
+                'close_E_h': np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [2, 2, 2, 2, 3, 3, 3, 3, 4, 4,
+                         4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
+                         7, 7, 7, 7, 8, 8, 8, 8, 9, 9,
+                         9, 9, 10, 10, 10, 10, 11, 11, 11, 11]
+                ),
+                'close_E_w': np.array(
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 2, 2, 2, 2]
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+                'close_E_15min': np.array(
+                        [15, 19, 23, 27, 31, 35, 39, 43, 47, 51,
+                         55, 59, 63, 67, 71, 75, 79, 83, 87, 91,
+                         95, 99, 103, 107, 111, 115, 119, 123, 127, 131,
+                         135, 139, 143, 147, 151, 155, 156, 156, 156, 156]
+                ),
+            },
+        }
         for stg_id in op.strategy_ids:
             print(f'Strategy "{stg_id}" has data window for its data types:\n'
                   f'{op[stg_id].data_types}\n')
@@ -2339,12 +2386,100 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                  3)
                 # check that the data indices are correct
                 self.assertTrue(np.allclose(data_window[:3],
-                                            data_window_targets[stg_id][dtype],))
+                                            data_window_targets[stg_id][dtype], ))
                 # check all data indices
                 self.assertIsInstance(data_indices, np.ndarray)
                 self.assertEqual(len(data_indices), 40)
+                self.assertTrue(np.allclose(
+                        data_indices,
+                        target_data_indices[stg_id][dtype],
+                ))
 
-        raise NotImplementedError
+        # set different ULC for strategy data types, and check again data window and data indices
+        op.set_parameter('custom',
+                         use_latest_data_cycle=[True, False],)
+        op.set_parameter('custom_1',
+                            use_latest_data_cycle=[False, True],)
+        op.set_parameter('custom_2',
+                         use_latest_data_cycle=[False, True],)
+
+        op.create_data_windows()
+
+        target_data_indices = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [1, 1, 1, 2, 2, 2, 2, 3, 3, 3,
+                         3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
+                         6, 6, 6, 7, 7, 7, 7, 8, 8, 8,
+                         8, 9, 9, 9, 9, 10, 10, 10, 10, 11]  # USE latest data cycle = TRUE
+                ),
+                'close_E_h': np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [2, 2, 2, 2, 3, 3, 3, 3, 4, 4,
+                         4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
+                         7, 7, 7, 7, 8, 8, 8, 8, 9, 9,
+                         9, 9, 10, 10, 10, 10, 11, 11, 11, 11]
+                ),
+                'close_E_w': np.array(
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 2, 2, 2, 2, 2]  # USE latest data cycle = TRUE
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+                'close_E_15min': np.array(
+                        [16, 20, 24, 28, 32, 36, 40, 44, 48, 52,
+                         56, 60, 64, 68, 72, 76, 80, 84, 88, 92,
+                         96, 100, 104, 108, 112, 116, 120, 124, 128, 132,
+                         136, 140, 144, 148, 152, 156, 156, 156, 156, 156]  # USE latest data cycle = TRUE
+                ),
+            },
+        }
+        for stg_id in op.strategy_ids:
+            print(f'======================AFTER setting different ULC========================'
+                  f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
+                # check data type and data shapes
+                self.assertIn(dtype, op.op_data_types)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
+                self.assertEqual(data_window.shape[1],
+                                 op[stg_id].window_lengths[dtype])
+                # import pdb; pdb.set_trace()
+                self.assertEqual(data_window.shape[2],
+                                 3)
+                # check that the data indices are correct
+                self.assertTrue(np.allclose(data_window[:3],
+                                            data_window_targets[stg_id][dtype], ))
+                # check all data indices
+                self.assertIsInstance(data_indices, np.ndarray)
+                self.assertEqual(len(data_indices), 40)
+                self.assertTrue(np.allclose(
+                        data_indices,
+                        target_data_indices[stg_id][dtype],
+                ))
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
