@@ -304,13 +304,18 @@ class Operator:
 
     @property
     def strategy_groups(self):
-        """返回operator对象所有策略子对象的运行时间类型"""
+        """返回operator的所有策略组，返回以策略组的名称为索引的字典"""
         return {g.name: g for g in self._groups}
 
     @property
     def groups(self):
-        """返回operator对象所有策略子对象的运行时间类型"""
+        """返回operator的所有策略组，返回以策略组的名称为索引的字典"""
         return {g.name: g for g in self._groups}
+
+    @property
+    def groups_by_index(self):
+        """返回operator的所有策略组，返回以策略组的序号为索引的字典"""
+        return {i: g for i, g in enumerate(self._groups)}
 
     @property
     def group_ids(self):
@@ -470,7 +475,7 @@ class Operator:
         """ 属性，operator.is_ready()的另一种写法"""
         return self.is_ready()
 
-    def is_ready(self, tell_me_why: bool = False):
+    def is_ready(self, tell_me_why: bool = False, raise_error: bool = False) -> bool:
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
@@ -484,6 +489,8 @@ class Operator:
         ----------
         tell_me_why: bool, default False
             如果Operator对象不满足准备好的条件，是否打印出具体原因, 默认不打印
+        raise_error: bool, default False
+            如果Operator对象不满足准备好的条件，是否抛出异常, 默认不抛出
 
         Returns
         -------
@@ -526,6 +533,9 @@ class Operator:
 
         if (not is_ready) and tell_me_why:
             print(''.join(message))
+
+        if (not is_ready) and raise_error:
+            raise RuntimeError('Operator is not ready! ' + ''.join(message))
 
         return is_ready
 
@@ -1708,7 +1718,7 @@ class Operator:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
         group_timing = self.group_timing_table.iloc[step_index].values
         group_count = len(self.groups)
-        groups = [self.groups[i] for i in range(group_count) if group_timing[i]]
+        groups = [self.groups_by_index[i] for i in range(group_count) if group_timing[i]]
 
         signal_type = groups[0].signal_type if groups else None
 
@@ -1718,32 +1728,46 @@ class Operator:
             # ----set up data window for each strategy
             for strategy in group.members:
                 strategy.update_running_data_window(
-                    data_windows=self.data_window_views[strategy.name],
-                    window_indices=self.data_window_indices[strategy.name],
+                    data_windows=self.data_window_views[strategy.strategy_id],
+                    window_indices=self.data_window_indices[strategy.strategy_id],
                     window_index=step_index,
                 )
 
             # ---- end setting up data windows
             signal_type = group.signal_type
+            signals = [stg.generate() for stg in group.members]
 
             if self.group_merge_type == 'None':
-                signal = group.blend((stg.realize() for stg in group.members))
+                signal = group.blend(signals)
                 yield signal_type, step_index, signal
             elif self.group_merge_type == 'OR':
-                signal += group.blend((stg.realize() for stg in group.members))
+                signal += group.blend(signals)
             elif self.group_merge_type == 'AND':
-                signal *= group.blend((stg.realize() for stg in group.members))
+                signal *= group.blend(signals)
+            else:
+                raise ValueError(f'Invalid group merge type: {self.group_merge_type}')
 
         if self.group_merge_type != 'None':
             yield signal_type, step_index, signal
 
     def run(self, steps: Iterable):
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
-        # TODO Operator.run()函数应该被重构为一个私有函数，而不是直接调用qteasy.run(self, **kwargs)，这样可以避免在qteasy中直接调用Operator.run()，而是通过qteasy.run()来运行Operator 相反，qteasy.run()函数应该被重构为一个公有函数，直接调用Operator.run()函数
-        See Also
-        --------
-        qteasy.run
+
+        Parameters
+        ----------
+        steps: Iterable
+            一个可迭代对象，包含需要运行的步骤索引
+
+        Yields
+        ------
+        generator: (signal_type, step_index, signal)
+            返回一个生成器，包含每个步骤的交易信号
+            signal_type: str, 策略组的信号类型
+            step_index: int, 当前步骤的索引
+            signal: np.ndarray, 交易信号，一组数字，在不同信号类型模式下表示不同的含义
         """
+        self.is_ready(raise_error=True)
+
         for step in steps:
             print(f'Running step {step} for operator {self.name}')
             for result in self.run_step(step):
