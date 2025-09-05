@@ -1469,7 +1469,6 @@ class RuleIterator(BaseStrategy):
             # 更新股票使用的数据
             for dtype_name in self.data_types:
                 setattr(self, dtype_name, self._data_windows[dtype_name][:, i])
-
             signal[i] = self.realize()
 
         return signal
