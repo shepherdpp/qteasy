@@ -1665,6 +1665,7 @@ class Operator:
                     print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
                           f'data type: {data_type}')
                     window_length = strategy.data_window_lengths[data_type]
+                    ulc = strategy.data_ulc[data_type]
                     buffered_data = self.data_buffers.get(data_type, None)
 
                     window = rolling_window(buffered_data.values, window=window_length, axis=0)
@@ -1674,10 +1675,12 @@ class Operator:
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
                     running_schedule = schedule.index
                     window_schedules = buffered_data.index[total_window_indices]
-                    # TODO: 在这里应该注意：np.searchsorted使用了默认参数side=“left”，表示找到的数据窗口时间一定是小于运行时间的
-                    #  但是如果strategy设置了“use_latest_cycle”，这就表明数据窗口的时间可以等于运行时间。
+                    # 如果strategy设置了“use_latest_cycle”，这就表明数据窗口的时间可以等于运行时间。
                     #  这时应该使用参数side="right"来运行np.searchsorted，使找到的数据窗口时间小于等于运行时间
-                    schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
+                    if ulc:
+                        schedule_indices = np.searchsorted(window_schedules, running_schedule, side='right') - 1
+                    else:  # 否则，数据窗口的时间必须严格小于运行时间
+                        schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
                     self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
                     print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
