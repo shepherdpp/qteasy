@@ -354,6 +354,11 @@ class Parameter:
         """
         return self.upper_bound
 
+    def __copy__(self):
+        """返回参数对象的一个浅拷贝"""
+        new_par = Parameter(self.par_range, name=self.name, par_type=self.par_type, value=self.value)
+        return new_par
+
     def enum_values(self):
         """一个生成器函数，生成参数的枚举值或者离散参数的所有可能值，如果参数是连续型，报错
 
