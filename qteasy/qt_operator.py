@@ -174,6 +174,7 @@ class Operator:
 
         # Operator对象包含的交易策略组
         self._groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
+        self._group_merge_type = None  # 交易策略组的合并方式，默认为None
         self.group_timing_table = None  # 交易策略组的运行时间表
         self.group_merge_type = group_merge_type  # 交易策略组的合并方式，默认为None
         self.group_schedules = {}  # 交易策略组的运行时间表，包含每个组的运行时间和频率
@@ -301,6 +302,24 @@ class Operator:
         RuntimeWarning, stacklevel=2)
         raise ValueError(f'In current version, the data freq of all strategies should be the same, got {d_freq}')
         # return d_freq
+
+    @property
+    def group_merge_type(self):
+        """ 返回operator对象的策略组合并方式"""
+        return self._group_merge_type
+
+    @group_merge_type.setter
+    def group_merge_type(self, group_merge_type):
+        """ 设置operator对象的策略组合并方式"""
+        if group_merge_type is None:
+            self._group_merge_type = "None"
+            return
+        if not isinstance(group_merge_type, str):
+            raise TypeError(f'group_merge_type should be a string, got {type(group_merge_type)} instead.')
+        group_merge_type = group_merge_type.capitalize()
+        if group_merge_type not in ['None', 'And', 'Or']:
+            raise ValueError(f'Invalid group_merge_type ({group_merge_type})')
+        self._group_merge_type = group_merge_type
 
     @property
     def strategy_groups(self):
@@ -1722,7 +1741,7 @@ class Operator:
 
         signal_type = groups[0].signal_type if groups else None
 
-        signal = 0 if self.group_merge_type == 'OR' else 1
+        signal = 0 if self.group_merge_type == 'Or' else 1
         print(f'In current op run step, following groups are running: {groups}')
         for group in groups:
             # ----set up data window for each strategy
@@ -1740,9 +1759,9 @@ class Operator:
             if self.group_merge_type == 'None':
                 signal = group.blend(signals)
                 yield signal_type, step_index, signal
-            elif self.group_merge_type == 'OR':
+            elif self.group_merge_type == 'Or':
                 signal += group.blend(signals)
-            elif self.group_merge_type == 'AND':
+            elif self.group_merge_type == 'And':
                 signal *= group.blend(signals)
             else:
                 raise ValueError(f'Invalid group merge type: {self.group_merge_type}')

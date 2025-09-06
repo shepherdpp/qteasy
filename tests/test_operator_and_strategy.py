@@ -674,7 +674,7 @@ class TestGenStg(GeneralStg):
         print(f"top2 indexes = {top2_idx}")
         signal = np.zeros_like(combined_change)
         signal[top2_idx] = 0.5
-        print(f"signal = \n{signal}")
+        print(f"signal = {signal}")
 
         return signal
 
@@ -781,7 +781,7 @@ class TestRuleIter(RuleIterator):
         else:  # p1 == 'option3':
             signal = 0 if m2_avg <= m1_avg else 0.333
             print(f"option3: signal = 0 if m2_avg({m2_avg}) <= m1_avg({m1_avg}) else 1")
-        print(f"signal = \n{signal}")
+        print(f"signal = {signal}")
         return signal
 
 
@@ -954,7 +954,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
 
         op = qt.Operator('dma, macd', group_merge_type='and')
-        self.assertEqual(op.group_merge_type, 'and')
+        self.assertEqual(op.group_merge_type, 'And')
         self.assertRaises(TypeError, qt.Operator, 'dma, macd', group_merge_type=15)
         self.assertRaises(ValueError, qt.Operator, 'dma, macd', group_merge_type='wrong_type')
 
@@ -1463,6 +1463,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategy(TestRuleIter)
 
         stg_rule = op[3]
+        stg_rule.update_par_values('option1', np.array([1., 2., 3.]))
         self.assertIsInstance(stg_rule, TestRuleIter)
         self.assertEqual(stg_rule.par_values[0], 'option1')
         self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 2., 3.])))
@@ -2553,12 +2554,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
         print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
         op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
-        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5))
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2, weighting='even')
         op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
-        op.info(verbose=False)
+        op.info(verbose=True)
 
         # set up blender
-        op.set_group_parameters(group='Group_1', blender_str='s0+s1')
+        op.set_group_parameters(group='Group_1', blender_str='(s0+s1)/2')
         op.set_group_parameters(group='Group_2', blender_str='s0')
         op.group_merge_type = 'None'
 
@@ -2604,14 +2605,476 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # generate trading signals
         print(f'Generating trading signals with all ULCs set to False\n'
               f'Operator run schedule:\n'
-              f'{op.group_timing_table}\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
               f'signal_count\n'
               f'{op.get_signal_count()}\n')
-        for signal in op.run(steps=range(op.get_signal_count())):
-            print(signal)
-        print(f'Generating trading signals completed\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0., 0.])),
+            ('pt', 1, np.array([0., 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0.333, 0.333])),
+            ('pt', 3, np.array([0.25, 0.25, 0.5])),
+            ('pt', 3, np.array([0., 0.333, 0.])),
+            ('pt', 4, np.array([0., 0., 0.])),
+            ('pt', 5, np.array([0.333, 0., 0.])),
+            ('pt', 6, np.array([0., 0.333, 0.333])),
+            ('pt', 7, np.array([0.5, 0.25, 0.25])),
+            ('pt', 7, np.array([0., 0.333, 0.])),
+            ('pt', 8, np.array([0., 0., 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0.333, 0.333, 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0.333, 0.333, 0.333])),
+            ('pt', 12, np.array([0., 0., 0.])),
+            ('pt', 13, np.array([0., 0., 0.333])),
+            ('pt', 14, np.array([0.333, 0.333, 0.333])),
+            ('pt', 15, np.array([0.5, 0., 0.5])),
+            ('pt', 15, np.array([0.333, 0., 0.333])),
+            ('pt', 16, np.array([0., 0., 0.])),
+            ('pt', 17, np.array([0., 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.25, 0.5, 0.25])),
+            ('pt', 19, np.array([0.333, 0., 0.])),
+            ('pt', 20, np.array([0., 0., 0.])),
+            ('pt', 21, np.array([0.333, 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0.333, 0.])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0.333, 0.333, 0.333])),
+            ('pt', 24, np.array([0., 0., 0.])),
+            ('pt', 25, np.array([0., 0., 0.])),
+            ('pt', 26, np.array([0., 0., 0.])),
+            ('pt', 27, np.array([0., 0.5, 0.5])),
+            ('pt', 27, np.array([0., 0.333, 0.333])),
+            ('pt', 28, np.array([0., 0., 0.])),
+            ('pt', 29, np.array([0.333, 0., 0.])),
+            ('pt', 30, np.array([0.333, 0.333, 0.])),
+            ('pt', 31, np.array([0.25, 0.5, 0.25])),
+            ('pt', 31, np.array([0., 0., 0.])),
+            ('pt', 32, np.array([0., 0., 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0.333, 0., 0.])),
+            ('pt', 35, np.array([0.25, 0.25, 0.5])),
+            ('pt', 35, np.array([0.333, 0., 0.333])),
+            ('pt', 36, np.array([0.333, 0.333, 0.333])),
+            ('pt', 37, np.array([0.333, 0.333, 0.333])),
+            ('pt', 38, np.array([0.333, 0.333, 0.333])),
+            ('pt', 39, np.array([0.5, 0.25, 0.25])),
+            ('pt', 39, np.array([0.333, 0.333, 0.333])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        raise NotImplementedError
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
+
+        # 1, set different ULC combinations and check data windows and signals
+
+        op.set_parameter('custom', use_latest_data_cycle=[True, False])
+        op.set_parameter('custom_1', use_latest_data_cycle=[False, True])
+        op.set_parameter('custom_2', use_latest_data_cycle=True)
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+
+        # generate trading signals
+        print(f'Generating trading signals with all ULCs set to False\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.])),
+            ('pt', 3, np.array([0.25, 0.25, 0.5])),
+            ('pt', 3, np.array([0.333, 0.333, 0.])),
+            ('pt', 4, np.array([0.333, 0., 0.])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0.333, 0.])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0.333, 0.333, 0.])),
+            ('pt', 8, np.array([0.333, 0., 0.333])),
+            ('pt', 9, np.array([0.333, 0.333, 0.333])),
+            ('pt', 10, np.array([0., 0.333, 0.])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0.333, 0.333])),
+            ('pt', 12, np.array([0., 0.333, 0.333])),
+            ('pt', 13, np.array([0., 0.333, 0.333])),
+            ('pt', 14, np.array([0.333, 0., 0.])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0., 0.333])),
+            ('pt', 16, np.array([0., 0., 0.333])),
+            ('pt', 17, np.array([0.333, 0.333, 0.])),
+            ('pt', 18, np.array([0.333, 0., 0.333])),
+            ('pt', 19, np.array([0.25, 0.5, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0., 0.333])),
+            ('pt', 22, np.array([0.333, 0.333, 0.])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0., 0., 0.333])),
+            ('pt', 24, np.array([0., 0., 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0., 0.333])),
+            ('pt', 27, np.array([0., 0.5, 0.5])),
+            ('pt', 27, np.array([0., 0., 0.333])),
+            ('pt', 28, np.array([0.333, 0., 0.])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0., 0.])),
+            ('pt', 31, np.array([0.25, 0.5, 0.25])),
+            ('pt', 31, np.array([0., 0.333, 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.333])),
+            ('pt', 33, np.array([0.333, 0., 0.])),
+            ('pt', 34, np.array([0., 0., 0.])),
+            ('pt', 35, np.array([0.25, 0.25, 0.5])),
+            ('pt', 35, np.array([0.333, 0.333, 0.333])),
+            ('pt', 36, np.array([0.333, 0.333, 0.333])),
+            ('pt', 37, np.array([0.333, 0.333, 0.333])),
+            ('pt', 38, np.array([0.333, 0.333, 0.333])),
+            ('pt', 39, np.array([0.5, 0.5, 0.])),
+            ('pt', 39, np.array([0.333, 0.333, 0.333])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
+
+        # 2, set different parameters for strategies and check signals
+        op.set_parameter('custom', par_values=(3, 0.7))
+        op.set_parameter('custom_1', par_values=(2, 0.3))
+        op.set_parameter('custom_2', par_values=('option2', np.array([3, 2, 1])))
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+
+        # generate trading signals
+        print(f'Generating trading signals with all ULCs set to False\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0.333, 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0.333, 0., 0.])),
+            ('pt', 3, np.array([0.5, 0., 0.5])),
+            ('pt', 3, np.array([0., 0., 0.333])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0., 0., 0.333])),
+            ('pt', 8, np.array([0.333, 0.333, 0.333])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0.333, 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0.333, 0.333, 0.333])),
+            ('pt', 13, np.array([0.333, 0., 0.333])),
+            ('pt', 14, np.array([0., 0., 0.333])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0.333, 0.])),
+            ('pt', 16, np.array([0.333, 0.333, 0.333])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0., 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.333])),
+            ('pt', 21, np.array([0.333, 0.333, 0.333])),
+            ('pt', 22, np.array([0., 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0.333, 0., 0.])),
+            ('pt', 24, np.array([0.333, 0.333, 0.333])),
+            ('pt', 25, np.array([0.333, 0.333, 0.333])),
+            ('pt', 26, np.array([0., 0.333, 0.])),
+            ('pt', 27, np.array([0.25, 0.5, 0.25])),
+            ('pt', 27, np.array([0.333, 0.333, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.333])),
+            ('pt', 30, np.array([0., 0.333, 0.333])),
+            ('pt', 31, np.array([0.5, 0., 0.5])),
+            ('pt', 31, np.array([0.333, 0., 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.333])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.333])),
+            ('pt', 35, np.array([0.5, 0.5, 0.])),
+            ('pt', 35, np.array([0., 0.333, 0.])),
+            ('pt', 36, np.array([0., 0., 0.])),
+            ('pt', 37, np.array([0., 0., 0.])),
+            ('pt', 38, np.array([0., 0., 0.])),
+            ('pt', 39, np.array([0.25, 0.5, 0.25])),
+            ('pt', 39, np.array([0., 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
+
+        # 3, set different Multi_parameters for strategy 3 and check signals
+        op.set_parameter('custom_2', allow_multi_par=True,
+                         multi_pars=[
+                             ('option1', np.array([1, 2, 3])),
+                             ('option2', np.array([3, 2, 1])),
+                             ('option3', np.array([2, 3, 1])),
+                         ])
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+
+        # generate trading signals
+        print(f'Generating trading signals with multi-parameters \n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.5, 0., 0.5])),
+            ('pt', 3, np.array([0.333, 0., 0.333])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0.333, 0., 0.333])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0.333, 0.333])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0., 0., 0.])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0.25, 0.5, 0.25])),
+            ('pt', 27, np.array([0., 0.333, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0.5, 0., 0.5])),
+            ('pt', 31, np.array([0., 0., 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.5, 0.5, 0.])),
+            ('pt', 35, np.array([0.333, 0.333, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.25, 0.5, 0.25])),
+            ('pt', 39, np.array([0.333, 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 50)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
+
+        # 4, set group_merge_type to 'or' and check signals
+        op.group_merge_type = 'or'
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+        # generate trading signals
+        print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "or"\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+                f'signal_count\n'
+                f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.833, 0., 0.833])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.583, 0.25, 0.833])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.583, 0.583, 0.833])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0.25, 0.833, 0.25])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0.5, 0., 0.833])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.833, 0.833, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.583, 0.5, 0.25])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 40)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
+
+        # 5, set group_merge_type to 'and' and check signals
+        op.group_merge_type = 'and'
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+        # generate trading signals
+        print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "And"\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+                f'signal_count\n'
+                f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.1665, 0., 0.1665])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.08325, 0., 0.1665])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.08325, 0.08325, 0.1665])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0., 0., 0.])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0., 0.1665, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0., 0., 0.1665])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.1665, 0.1665, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.08325, 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 40)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
     def test_operator_create_signals(self):
         """ 测试operator对象生成完整的交易信号
