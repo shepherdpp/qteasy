@@ -1463,7 +1463,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategy(TestRuleIter)
 
         stg_rule = op[3]
-        stg_rule.update_par_values('option1', np.array([1., 2., 3.]))
         self.assertIsInstance(stg_rule, TestRuleIter)
         self.assertEqual(stg_rule.par_values[0], 'option1')
         self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 2., 3.])))

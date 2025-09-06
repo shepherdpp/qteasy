@@ -522,7 +522,7 @@ class BaseStrategy:
         if not _dict_par_format_is_valid('pars', pars, Parameter, 'name'):
             raise ValueError(f'pars is invalid! ({pars})')
 
-        self._pars = pars
+        self._pars = {name: par.copy() for name, par in pars.items()}
 
         for name, par in pars.items():
             par.name = name

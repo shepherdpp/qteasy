@@ -180,8 +180,14 @@ class Parameter:
             return 'Parameter({}, \'enum\')'.format(self.par_range)
         elif self.par_type == 'float':
             return 'Parameter(({}, {}), \'float\')'.format(self._lbound, self._ubound)
-        else:
+        elif self.par_type == 'int':
             return 'Parameter(({}, {}), \'int\')'.format(self._lbound, self._ubound)
+        elif self.par_type == 'float_array':
+            return 'Parameter(({}, {}), \'float_array[{}]\')'.format(self._lbound, self._ubound, ','.join(str(i) for i in self.shape))
+        elif self.par_type == 'int_array':
+            return 'Parameter(({}, {}), \'int_array[{}]\')'.format(self._lbound, self._ubound, ','.join(str(i) for i in self.shape))
+        else:
+            return 'Parameter(Unknown)'
 
     def __contains__(self, item):
         """判断参数的当前值是否在数轴的可用值中
@@ -354,9 +360,18 @@ class Parameter:
         """
         return self.upper_bound
 
-    def __copy__(self):
+    def copy(self):
         """返回参数对象的一个浅拷贝"""
-        new_par = Parameter(self.par_range, name=self.name, par_type=self.par_type, value=self.value)
+        if self.par_type in ['int_array', 'float_array']:
+            new_par = Parameter(
+                    self.par_range,
+                    name=self.name,
+                    par_type=f'{self.par_type}[{",".join(str(i) for i in self.shape)}]',
+                    value=self.value
+            )
+        else:
+            new_par = Parameter(self.par_range, name=self.name, par_type=self.par_type, value=self.value)
+
         return new_par
 
     def enum_values(self):

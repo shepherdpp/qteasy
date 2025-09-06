@@ -699,6 +699,39 @@ class TestParameter(unittest.TestCase):
         blender_exp = 'max(s0, s1/s0)+s1^0.5*s6'
         self.assertRaises(IndexError, human_blender, blender_exp, strategy_ids)
 
+    def test_parameter_copy(self):
+        p1 = Parameter((0, 10), name='par21', par_type='int', value=5)
+        p2 = p1.copy()
+        self.assertIsNot(p1, p2)
+        self.assertEqual(p1.name, p2.name)
+        self.assertEqual(p1.par_type, p2.par_type)
+        self.assertEqual(p1.par_range, p2.par_range)
+        self.assertEqual(p1.value, p2.value)
+
+        p1 = Parameter((0.0, 10.0), name='par22', par_type='float', value=5.5)
+        p2 = p1.copy()
+        self.assertIsNot(p1, p2)
+        self.assertEqual(p1.name, p2.name)
+        self.assertEqual(p1.par_type, p2.par_type)
+        self.assertEqual(p1.par_range, p2.par_range)
+        self.assertEqual(p1.value, p2.value)
+
+        p1 = Parameter(('a', 'b', 'c'), name='par23', par_type='enum', value='b')
+        p2 = p1.copy()
+        self.assertIsNot(p1, p2)
+        self.assertEqual(p1.name, p2.name)
+        self.assertEqual(p1.par_type, p2.par_type)
+        self.assertEqual(p1.par_range, p2.par_range)
+        self.assertEqual(p1.value, p2.value)
+
+        p1 = Parameter((0, 10), name='par24', par_type='array[2,3]', value=np.random.randint(0, 11, size=(2, 3)))
+        p2 = p1.copy()
+        self.assertIsNot(p1, p2)
+        self.assertEqual(p1.name, p2.name)
+        self.assertEqual(p1.par_type, p2.par_type)
+        self.assertEqual(p1.par_range, p2.par_range)
+        self.assertTrue(np.array_equal(p1.value, p2.value))
+
 
 if __name__ == '__main__':
     unittest.main()
