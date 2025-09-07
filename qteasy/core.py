@@ -1859,28 +1859,40 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     return hist_op, hist_ref
 
 
-def check_and_prepare_backtest_data(operator, config, datasource):
-    """ 在run_mode == 1的回测模式情况下准备相应的历史数据
+def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
+    """ 在run_mode == 1的回测模式情况下生成operator对象的交易策略运行计划，
+    从数据源中获取相应的历史数据、准备operator的数据滑窗，并获取交易价格
+
+    Parameters
+    ----------
+    operator: qteasy.Operator
+        交易员对象，包含投资策略信息
+    config: qteasy.Config
+        配置对象，存储qteasy的运行参数
+    datasource: qteasy.DataSource
+        数据源对象
 
     Returns
     -------
+    tuple: hist_data_package, trade_prices, benchmark_data, invest_cash_plan
+        hist_data_package: dict
+            包含回测所需的历史数据和资金计划的字典
+        trade_prices: pd.DataFrame
+            包含用于回测的交易价格数据
+        benchmark_data: pd.DataFrame
+            包含用于回测结果评价的基准数据
+        invest_cash_plan: qteasy.CashPlan
+            用于回测的资金投入计划
     """
-    (hist_op,
-     hist_ref,
-     back_trade_prices,
-     hist_opti,
-     hist_opti_ref,
-     opti_trade_prices,
-     hist_benchmark,
-     invest_cash_plan,
-     opti_cash_plan,
-     test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config, datasource)
+    hist_data_package = {}
+    trade_prices = pd.DataFrame()
+    benchmark_data = pd.DataFrame()
+    invest_cash_plan = CashPlan()
 
-    return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
+    return hist_data_package, trade_prices, benchmark_data, invest_cash_plan
 
 
-def check_and_prepare_optimize_data(operator, config, datasource):
+def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
 
     Parameters
@@ -1894,20 +1906,22 @@ def check_and_prepare_optimize_data(operator, config, datasource):
 
     Returns
     -------
+    tuple: hist_data_package, trade_prices
+        hist_data_package: dict
+            包含优化和测试所需的历史数据和资金计划的字典
+        trade_prices: pd.DataFrame
+            包含用于策略优化和测试的交易价格数据
+        benchmark_data: pd.DataFrame
+            包含用于回测结果评价的基准数据
+        invest_cash_plan: qteasy.CashPlan
+            用于回测的资金投入计划
     """
-    (hist_op,
-     hist_ref,
-     back_trade_prices,
-     hist_opti,
-     hist_opti_ref,
-     opti_trade_prices,
-     hist_benchmark,
-     invest_cash_plan,
-     opti_cash_plan,
-     test_cash_plan
-     ) = check_and_prepare_hist_data(operator, config, datasource)
+    hist_data_package = {}
+    trade_prices = pd.DataFrame()
+    benchmark_data = pd.DataFrame()
+    invest_cash_plan = CashPlan()
 
-    return hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, opti_cash_plan, test_cash_plan
+    return hist_data_package, trade_prices, benchmark_data, invest_cash_plan, test_cash_plan
 
 
 # noinspection PyTypeChecker
@@ -2091,12 +2105,6 @@ def run(operator, **kwargs):
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
 
-    try:
-        # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
-        operator.is_ready()
-    except Exception as e:
-        raise ValueError(f'operator object is not ready for running, please check following info:\n'
-                         f'{e}')
     from .optimization import _search_ga, _search_aco, _search_pso, _search_grid, _search_gradient
     from .optimization import _search_montecarlo, _search_incremental, _create_mock_data
     optimization_methods = {0: _search_grid,
@@ -2139,9 +2147,8 @@ def run(operator, **kwargs):
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
-        (hist_op,
-         hist_ref,
-         back_trade_prices,
+        (data_package,
+         trade_prices,
          hist_benchmark,
          invest_cash_plan
          ) = check_and_prepare_backtest_data(
@@ -2149,18 +2156,22 @@ def run(operator, **kwargs):
                 config=config,
                 datasource=qteasy.QT_DATA_SOURCE,
         )
-        # 在生成交易信号之前准备历史数据
-        operator.assign_hist_data(
-                hist_data=hist_op,
-                reference_data=hist_ref,
-                cash_plan=invest_cash_plan,
+        # 在生成交易信号之前准备运行计划及历史数据
+        operator.prepare_running_schedule()
+        operator.prepare_data_buffer(
+                start_date='',
+                end_date='',
+                data_package=data_package,
         )
+        operator.create_data_windows()
 
+        # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
+        operator.is_ready(raise_error=True)
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(
                 par=None,
                 op=operator,
-                trade_price_list=back_trade_prices,
+                trade_price_list=trade_prices,
                 benchmark_history_data=hist_benchmark,
                 benchmark_history_data_type=benchmark_data_type,
                 config=config,
@@ -2184,8 +2195,7 @@ def run(operator, **kwargs):
         assert operator.opt_space_par[0] != [], \
             f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
-        (hist_opti,
-         hist_opti_ref,
+        (data_package,
          opti_trade_prices,
          hist_benchmark,
          opti_cash_plan,
@@ -2195,11 +2205,14 @@ def run(operator, **kwargs):
                 config=config,
                 datasource=qteasy.QT_DATA_SOURCE,
         )
-        operator.assign_hist_data(
-                hist_data=hist_opti,
-                cash_plan=opti_cash_plan,
-                reference_data=hist_opti_ref,
+        # 在生成交易信号之前准备运行计划及历史数据
+        operator.prepare_running_schedule()
+        operator.prepare_data_buffer(
+                start_date='',
+                end_date='',
+                data_package=data_package,
         )
+        operator.create_data_windows()
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config['opti_method']
 
@@ -2285,3 +2298,15 @@ def run(operator, **kwargs):
                     pass
 
         return optimal_pars
+
+    def run_mode_0():
+        """ run qteasy in mode 0: live trade mode"""
+        raise NotImplementedError
+
+    def run_mode_1():
+        """ run qteasy in mode 1: back test mode"""
+        raise NotImplementedError
+
+    def run_mode_2():
+        """ run qteasy in mode 2: optimization mode"""
+        raise NotImplementedError

@@ -352,10 +352,10 @@ class Operator:
         all_types = set(self.op_data_types)
         return list(all_types)
 
-    @property
-    def op_data_type_list(self):
-        """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
-        return [stg.history_data_types for stg in self.strategies]
+    # @property
+    # def op_data_type_list(self):
+    #     """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
+    #     return [stg.data_types for stg in self.strategies]
 
     @property
     def opt_space_par(self):
