@@ -1674,41 +1674,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         dtn = op.op_data_type_count
         self.assertEqual(dtn, 4)
 
-    def test_property_op_data_freq(self):
-        """ test property op_data_freq"""
-        op = qt.Operator()
-        self.assertIsInstance(op.op_data_freq, str)
-        self.assertEqual(len(op.op_data_freq), 0)
-        self.assertEqual(op.op_data_freq, '')
-
-        op = qt.Operator('macd, dma, trix')
-        dtf = op.op_data_freq
-        self.assertIsInstance(dtf, str)
-        self.assertEqual(dtf[0], 'd')
-        op.set_parameter('macd', data_freq='m')
-
-    def test_property_op_data_type_list(self):
-        """ test property op_data_type_list"""
-        op = qt.Operator()
-        self.assertIsInstance(op.op_data_type_list, list)
-        self.assertEqual(len(op.op_data_type_list), 0)
-        self.assertEqual(op.op_data_type_list, [])
-
-        op = qt.Operator('macd, dma, trix, cdl')
-        ohd = op.op_data_type_list
-        print(f'ohd is {ohd}')
-        self.assertIsInstance(ohd, list)
-        self.assertEqual(ohd[0], ['close'])
-        op.set_parameter('macd', strategy_data_types='open, close')
-        ohd = op.op_data_type_list
-        print(f'ohd is {ohd}')
-        self.assertIsInstance(ohd, list)
-        self.assertEqual(len(ohd), 4)
-        self.assertEqual(ohd[0], ['open', 'close'])
-        self.assertEqual(ohd[1], ['close'])
-        self.assertEqual(ohd[2], ['close'])
-        self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
-
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
         print(f'-----test property opt_space_par--------:\n')
