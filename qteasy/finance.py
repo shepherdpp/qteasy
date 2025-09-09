@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 from numba import njit
+from typing import Union
 
 from qteasy.utilfuncs import ALL_COST_PARAMETERS
 
@@ -480,7 +481,7 @@ class CashPlan:
         self._ir = interest_rate
 
     @property
-    def first_day(self):
+    def first_day(self) -> Union[pd.Timestamp, None]:
         """ 返回投资第一天的日期
 
         Returns
@@ -496,7 +497,7 @@ class CashPlan:
         if self.dates:
             return self.dates[0]
         else:
-            return
+            return None
 
     @property
     def last_day(self):
@@ -553,7 +554,7 @@ class CashPlan:
         return len(self.dates)
 
     @property
-    def dates(self):
+    def dates(self) -> list[pd.Timestamp]:
         """ 返回整个投资计划期间的所有投资日期，按从先到后排列
 
         Returns

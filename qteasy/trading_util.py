@@ -42,6 +42,7 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
+# TODO: 这个功能应该利用operator的create_run_schedule()方法来实现，应该直接调用operator的方法
 def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
@@ -370,7 +371,7 @@ def _parse_pt_signals(signals,
         各个资产的价格
     own_amounts: np.ndarray
         各个资产的持仓数量
-    own_cash: float
+    own_cash: float, np.float64
         账户的现金
     pt_buy_threshold: float
         PT买入的阈值

@@ -1,0 +1,60 @@
+# coding=utf-8
+# ======================================
+# File:     config_parser.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2025-09-09
+# Desc:
+#   Functions used to parse specific
+# useful information from qteasy config
+# settings.
+# ======================================
+
+import re
+import pandas as pd
+from warnings import warn
+
+from typing import List, Dict, Any, Union
+
+from qteasy.configure import ConfigDict
+from qteasy.utilfuncs import next_market_trade_day, regulate_date_format, str_to_list
+from qteasy.finance import CashPlan
+
+
+def parse_investment_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
+    """Parse investment cash plan from config settings."""
+    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    if config['invest_cash_dates'] is None:
+        invest_start = next_market_trade_day(config['invest_start']).strftime('%Y%m%d')
+        return CashPlan(invest_start,
+                                    config['invest_cash_amounts'][0],
+                                    config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['invest_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                    amounts=config['invest_cash_amounts'],
+                                    interest_rate=config['riskfree_ir'])
+        invest_start = regulate_date_format(invest_cash_plan.first_day)
+
+        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
+            msg = (f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]},'
+                   f' first cash date will be used!')
+            raise RuntimeError(msg)
+
+        return invest_cash_plan
+
+
+def parse_investment_start_end(config) -> tuple[str, str]:
+    """Parse investment start and end date from config settings."""
+    invest_start = regulate_date_format(config['invest_start'])
+
+    if config['invest_end'] is None:
+        invest_end = regulate_date_format(pd.Timestamp.today())
+    else:
+        invest_end = regulate_date_format(config['invest_end'])
+
+    if pd.to_datetime(invest_start) >= pd.to_datetime(invest_end):
+        raise ValueError(f'invest_start {invest_start} should be earlier than invest_end {invest_end}')
+
+    return invest_start, invest_end

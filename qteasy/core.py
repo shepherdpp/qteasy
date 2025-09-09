@@ -1507,65 +1507,11 @@ def check_and_prepare_hist_data(oper, config, datasource):
         用于优化模式下，策略测试区间的资金投入计划
     """
     run_mode = config['mode']
-    # 如果run_mode=0，设置历史数据的开始日期为window length，结束日期为当前日期
+
     current_datetime = datetime.datetime.now()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
-    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config['invest_cash_dates'] is None:
-        invest_start = next_market_trade_day(config['invest_start']).strftime('%Y%m%d')
-        invest_cash_plan = CashPlan(invest_start,
-                                    config['invest_cash_amounts'][0],
-                                    config['riskfree_ir'])
-    else:
-        cash_dates = str_to_list(config['invest_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                    amounts=config['invest_cash_amounts'],
-                                    interest_rate=config['riskfree_ir'])
-        invest_start = regulate_date_format(invest_cash_plan.first_day)
-        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(
-                    f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                    f' date will be used!',
-                    RuntimeWarning)
+    # ...
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
-    # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config['opti_cash_dates'] is None:
-        opti_start = next_market_trade_day(config['opti_start']).strftime('%Y%m%d')
-        opti_cash_plan = CashPlan(opti_start,
-                                  config['opti_cash_amounts'][0],
-                                  config['riskfree_ir'])
-    else:
-        cash_dates = str_to_list(config['opti_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                  amounts=config['opti_cash_amounts'],
-                                  interest_rate=config['riskfree_ir'])
-        opti_start = regulate_date_format(opti_cash_plan.first_day)
-        if pd.to_datetime(opti_start) != pd.to_datetime(config['opti_start']):
-            warn(f'first cash investment on {opti_start} differ from invest_start {config["opti_start"]}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
-
-    # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    if config['test_cash_dates'] is None:
-        test_start = next_market_trade_day(config['test_start']).strftime('%Y%m%d')
-        test_cash_plan = CashPlan(
-                test_start,
-                config['test_cash_amounts'][0],
-                config['riskfree_ir'])
-    else:
-        cash_dates = str_to_list(config['test_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        test_cash_plan = CashPlan(
-                dates=adjusted_cash_dates,
-                amounts=config['test_cash_amounts'],
-                interest_rate=config['riskfree_ir'])
-        test_start = regulate_date_format(test_cash_plan.first_day)
-        if pd.to_datetime(test_start) != pd.to_datetime(config['test_start']):
-            warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = oper.max_window_length
@@ -1579,69 +1525,6 @@ def check_and_prepare_hist_data(oper, config, datasource):
         window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
         window_offset_freq = base_unit
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
-
-    # 设定投资结束日期
-    if run_mode == 0:
-        # 实时模式下，设置结束日期为现在，并下载最新的数据（下载的数据仅包含最小所需）
-        invest_end = regulate_date_format(current_datetime)
-        # 开始日期时间为现在往前推window_offset
-        invest_start = regulate_date_format(current_datetime - window_offset)
-    else:
-        invest_end = config['invest_end']
-        invest_start = regulate_date_format(pd.to_datetime(invest_start) - window_offset)
-
-    # 设置优化区间和测试区间的结束日期
-    opti_end = config['opti_end']
-    test_end = config['test_end']
-
-    # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
-    # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
-    opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
-    opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
-
-    # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=oper.all_strategy_data_types,
-            freqs=oper.op_data_freq,
-            asset_types=config['asset_type'],
-            adj=config['backtest_price_adj'] if run_mode > 0 else None,
-            force_match_freq=True,
-    )
-    hist_op = get_history_panel(
-            data_types=data_types,
-            shares=config['asset_pool'],
-            start=invest_start,
-            end=invest_end,
-            freq=oper.op_data_freq,
-            data_source=datasource,
-    ) if run_mode <= 1 else HistoryPanel()  # TODO: 当share较多时，运行速度非常慢，需要优化
-
-    # 解析参考数据类型，获取参考数据
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=oper.op_ref_types,
-            freqs=oper.op_data_freq,
-            asset_types=['IDX'],
-            force_match_freq=True,
-    )
-    hist_ref = get_history_panel(
-            data_types=data_types,
-            shares=None,
-            start=regulate_date_format(pd.to_datetime(invest_start) - window_offset),  # TODO: 已经offset过了，为什么还要offset？
-            end=invest_end,
-            freq=oper.op_data_freq,
-            data_source=datasource,
-    ) if run_mode <= 1 else HistoryPanel()
-    # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    bt_price_types = oper.strategy_groups
-    back_trade_prices = hist_op.slice(htypes=bt_price_types)
-    # fill np.inf in back_trade_prices to prevent from result in nan in value
-    back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
     # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
@@ -1657,26 +1540,6 @@ def check_and_prepare_hist_data(oper, config, datasource):
     hist_opti = get_history_panel(
             data_types=data_types,
             shares=config['asset_pool'],
-            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
-            end=opti_test_end,
-            freq=oper.op_data_freq,
-            data_source=datasource,
-    ) if run_mode == 2 else HistoryPanel()
-
-    # 生成用于优化策略测试的测试历史数据集合
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=oper.op_ref_types,
-            freqs=oper.op_data_freq,
-            asset_types=config['asset_type'],
-            adj=config['backtest_price_adj'],
-            force_match_freq=True,
-    )
-    hist_opti_ref = get_history_panel(
-            data_types=data_types,
-            shares=None,
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
@@ -1761,25 +1624,6 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             data_source=datasource,
     )
 
-    # 解析参考数据类型，获取参考数据
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=operator.op_ref_types,
-            freqs=operator.op_data_freq,
-            asset_types=config['asset_type'],
-            adj='none',
-            force_match_freq=True,
-    )
-    hist_ref = get_history_panel(
-            data_types=data_types,
-            shares=None,
-            rows=operator.max_window_length,
-            freq=operator.op_data_freq,
-            end='today',
-            data_source=datasource,
-    )
     if any(
             (stg.run_freq.upper() in ['D', 'W', 'M']) and
             stg.use_latest_data_cycle
@@ -1866,10 +1710,17 @@ def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
         invest_cash_plan: qteasy.CashPlan
             用于回测的资金投入计划
     """
+
+    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    from qteasy.config_parser import parse_investment_cash_plan, parse_investment_start_end
+    invest_cash_plan = parse_investment_cash_plan(config=config)
+    invest_start, invest_end = parse_investment_start_end(config=config)
+
+    data_types = operator.all_strategy_data_types
+
     hist_data_package = {}
     trade_prices = pd.DataFrame()
     benchmark_data = pd.DataFrame()
-    invest_cash_plan = CashPlan()
 
     return hist_data_package, trade_prices, benchmark_data, invest_cash_plan
 
@@ -1898,6 +1749,54 @@ def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
         invest_cash_plan: qteasy.CashPlan
             用于回测的资金投入计划
     """
+
+    # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    if config['opti_cash_dates'] is None:
+        opti_start = next_market_trade_day(config['opti_start']).strftime('%Y%m%d')
+        opti_cash_plan = CashPlan(opti_start,
+                                  config['opti_cash_amounts'][0],
+                                  config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['opti_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                  amounts=config['opti_cash_amounts'],
+                                  interest_rate=config['riskfree_ir'])
+        opti_start = regulate_date_format(opti_cash_plan.first_day)
+        if pd.to_datetime(opti_start) != pd.to_datetime(config['opti_start']):
+            warn(f'first cash investment on {opti_start} differ from invest_start {config["opti_start"]}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
+
+    # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    if config['test_cash_dates'] is None:
+        test_start = next_market_trade_day(config['test_start']).strftime('%Y%m%d')
+        test_cash_plan = CashPlan(
+                test_start,
+                config['test_cash_amounts'][0],
+                config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['test_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        test_cash_plan = CashPlan(
+                dates=adjusted_cash_dates,
+                amounts=config['test_cash_amounts'],
+                interest_rate=config['riskfree_ir'])
+        test_start = regulate_date_format(test_cash_plan.first_day)
+        if pd.to_datetime(test_start) != pd.to_datetime(config['test_start']):
+            warn(f'first cash investment on {test_start} differ from invest_start {config["test_start"]}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
+
+    # 设置优化区间和测试区间的结束日期
+    opti_end = config['opti_end']
+    test_end = config['test_end']
+
+    # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
+    # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
+    opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
+    opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
+
     hist_data_package = {}
     trade_prices = pd.DataFrame()
     benchmark_data = pd.DataFrame()
@@ -1910,7 +1809,7 @@ def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
 def run(operator, **kwargs):
     """ `qteasy`模块的主要入口函数
 
-    接受`operator`执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
+    接受`operator`交易员对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
     根据QT_CONFIG配置变量中的设置和运行模式（mode）进行不同的操作：
 
     mode == 0, live trade mode, 实盘交易模式：
@@ -1996,6 +1895,7 @@ def run(operator, **kwargs):
         在同一个历史区间上反复回测，通过比较回测的结果而找到最优或较优的参数。这一类优化方法的假设是，如果这一组参数在过去取得了良好的
         投资结果，那么很可能在未来也不会太差。
         这一类方法包括：
+
             1，Grid_searching                        网格搜索法：
 
                 网格法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，
@@ -2013,10 +1913,10 @@ def run(operator, **kwargs):
 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
 
-                3，Incremental_step_searching            递进搜索法
+            3，Incremental_step_searching            递进搜索法
 
                 递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
-                范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
+                范围缩小到更有希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
                 或搜索轮数大于设定值为止。
 
                 使用这种技术，在一个250*250*250的空间中，能够把搜索量从15,000,000降低到10,000左右,缩减到原来的1/1500，
@@ -2070,7 +1970,7 @@ def run(operator, **kwargs):
         的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
     Config.mode == 3 or mode == 3:
         进入评价模式（技术冻结后暂停开发此功能）
-        评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学
+        评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机模拟价格数据序列进行评价，因此可以得到策略的统计学
         表现
 
     Parameters
