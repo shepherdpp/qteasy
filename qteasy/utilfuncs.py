@@ -16,7 +16,8 @@ import time
 import warnings
 import numpy as np
 import pandas as pd
-import types
+
+from typing import Union
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -720,7 +721,7 @@ def input_to_list(pars, dim=None, padder=None):
     return pars
 
 
-def regulate_date_format(date_str: [str, object]) -> str:
+def regulate_date_format(date_str: Union[str, object]) -> str:
     """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
         将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
 
