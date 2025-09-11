@@ -1711,9 +1711,15 @@ def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
     invest_cash_plan = parse_investment_cash_plan(config=config)
     invest_start, invest_end = parse_investment_start_end(config=config)
 
-    data_types = operator.all_strategy_data_types
+    hist_data_package = get_history_panel(
+            data_types=operator.all_strategy_data_types,
+            shares=config['asset_pool'],
+            start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
+            end=invest_end,
+            freq=operator.op_data_freq,
+            data_source=datasource,
+    )
 
-    hist_data_package = {}
     trade_prices = pd.DataFrame()
     benchmark_data = pd.DataFrame()
 

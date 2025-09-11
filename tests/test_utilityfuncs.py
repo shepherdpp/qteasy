@@ -43,6 +43,18 @@ class TestUtilityFuncs(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_input_to_list(self):
+        print('Testing input_to_list() function')
+        input_str = 'first'
+        self.assertEqual(input_to_list(input_str, 3), ['first', 'first', 'first'])
+        self.assertEqual(input_to_list(input_str, 4), ['first', 'first', 'first', 'first'])
+        self.assertEqual(input_to_list(input_str, 2, None), ['first', 'first'])
+        input_list = ['first', 'second']
+        self.assertEqual(input_to_list(input_list, 3), ['first', 'second', None])
+        self.assertEqual(input_to_list(input_list, 4, 'padder'), ['first', 'second', 'padder', 'padder'])
+        self.assertEqual(input_to_list(input_list, 1), ['first', 'second'])
+        self.assertEqual(input_to_list(input_list, -5), ['first', 'second'])
+
     def test_unify(self):
         n1 = 2
         self.assertEqual(unify(n1), 2)
