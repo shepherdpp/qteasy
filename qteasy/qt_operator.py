@@ -41,9 +41,9 @@ from qteasy.built_in import (
 
 
 class Operator:
-    """ Operator(交易员)类，用于生成Operator对象，它是qteasy的核心对象。
+    """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
 
-    Operator是一个容器对象，它包含一系列交易策略，保存每一个交易策略所需的历史数据，并且可以调用所有交易策略，生成交易信号，
+    Operator是一个策略容器，它包含一系列交易策略，保存每一个交易策略所需的历史数据，并且可以调用所有交易策略，生成交易信号，
     同时根据保存的规则把所有交易策略生成的信号混合起来，形成一组最终的交易信号。就像一个交易员在实际交易中的行为一样。
 
     创建一个Operator对象时，需要给出一组交易策略，并设定好交易员的交易模式和信号模式，交易模式和信号模式都是Operator对象最重要
@@ -59,12 +59,6 @@ class Operator:
             一个包含两个内置交易策略的列表
          - [ExampleStrategy(), 'macd']
             一个包含两个交易策略，其中第一个是自定义策略的列表
-    signal_type:
-        交易信号模式，Operator支持三种不同的信号模式，分别如下：
-         - PT：positional target，生成的信号代表某种股票的目标仓位
-         - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
-         - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
-        在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见下文
     op_type:
         运行类型，Operator对象有两种不同的运行类型：
          - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
@@ -75,12 +69,10 @@ class Operator:
 
     Methods
     -------
-    assign_hist_data():
-        准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
-    create_signal():
-        生成交易信号，在batch模式下，使用所有的数据生成完整交易信号清单，用于交易信号的模拟
-        回测交易
-        在stepwise模式下，利用数据滑窗和交易相关数据，生成一组交易信号
+    add_strategy():
+        向Operator对象中添加一个交易策略
+    add_strategies():
+        向Operator对象中添加多个交易策略
 
 
     """
@@ -1847,5 +1839,4 @@ class Operator:
             self._op_list[signal_index] = signal[2]  # the array of the signals
             self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
             signal_index += 1
-
 

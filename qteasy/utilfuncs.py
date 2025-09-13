@@ -756,7 +756,7 @@ def regulate_date_format(date_str: Union[str, object]) -> str:
     return date_time.strftime(str_format)
 
 
-def list_to_str_format(str_list: [list, str]) -> str:
+def list_to_str_format(str_list: Union[list[str], str]) -> str:
     """ 将list型的str数据转变为逗号分隔的str类型，
 
     Parameters
