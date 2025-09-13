@@ -1461,11 +1461,9 @@ def live_trade_accounts() -> pd.DataFrame:
     return get_all_accounts(QT_DATA_SOURCE)
 
 
-# TODO: Bug检查：
-#   在使用AlphaSel策略，如下设置参数时，会产生数据长度不足错误：
-#   run_freq='m',
-#   data_freq='m',
-#   window_length=6,
+# =================================================
+# 以下是一些独立的函数, 用于检查和准备历史数据
+# =================================================
 def check_and_prepare_hist_data(oper, config, datasource):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
@@ -1680,7 +1678,31 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     return hist_op, hist_ref
 
 
-def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
+
+def get_backtest_start_end_dates(config) -> tuple:
+    """ 根据config参数字典中的invest_start、invest_end、invest_cash_dates等参数，确定回测的投资区间起止日期
+
+    Parameters
+    ----------
+    config: qteasy.Config
+        配置对象，存储qteasy的运行参数
+
+    Returns
+    -------
+    invest_start: str
+        回测投资区间的开始日期，格式为'YYYYMMDD'
+    invest_end: str
+        回测投资区间的结束日期，格式为'YYYYMMDD'
+    """
+
+    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    from qteasy.config_parser import parse_backtest_start_end_dates
+    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
+
+    return invest_start, invest_end
+
+
+def get_backtest_data_package(operator, config, datasource) -> dict:
     """ 在run_mode == 1的回测模式情况下生成operator对象的交易策略运行计划，
     从数据源中获取相应的历史数据、准备operator的数据滑窗，并获取交易价格
 
@@ -1707,9 +1729,8 @@ def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
     """
 
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    from qteasy.config_parser import parse_investment_cash_plan, parse_investment_start_end
-    invest_cash_plan = parse_investment_cash_plan(config=config)
-    invest_start, invest_end = parse_investment_start_end(config=config)
+    from qteasy.config_parser import parse_backtest_start_end_dates
+    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
 
     hist_data_package = get_history_panel(
             data_types=operator.all_strategy_data_types,
@@ -1720,10 +1741,45 @@ def check_and_prepare_backtest_data(operator, config, datasource) -> tuple:
             data_source=datasource,
     )
 
-    trade_prices = pd.DataFrame()
-    benchmark_data = pd.DataFrame()
+    return hist_data_package
 
-    return hist_data_package, trade_prices, benchmark_data, invest_cash_plan
+
+def get_backtest_invest_cash_plan(config) -> CashPlan:
+    """ 根据config参数字典中的资金投入计划参数，生成回测模式下的资金投入计划对象
+
+    Parameters
+    ----------
+    config: qteasy.Config
+        配置对象，存储qteasy的运行参数
+
+    Returns
+    -------
+    invest_cash_plan: qteasy.CashPlan
+        用于回测的资金投入计划
+    """
+
+    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
+    from qteasy.config_parser import parse_backtest_start_end_dates
+    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
+
+    if config['invest_cash_dates'] is None:
+        invest_start = next_market_trade_day(invest_start).strftime('%Y%m%d')
+        invest_cash_plan = CashPlan(invest_start,
+                                    config['invest_cash_amounts'][0],
+                                    config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['invest_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                    amounts=config['invest_cash_amounts'],
+                                    interest_rate=config['riskfree_ir'])
+        invest_start = regulate_date_format(invest_cash_plan.first_day)
+        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
+            warn(f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
+
+    return invest_cash_plan
 
 
 def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
@@ -2042,17 +2098,18 @@ def run_mode_0():
 
 def run_mode_1(operator, config, benchmark_data_type):
     """ run qteasy in mode 1: back test mode"""
-    (data_package,
-     trade_prices,
-     hist_benchmark,
-     invest_cash_plan
-     ) = check_and_prepare_backtest_data(
+    get_backtest_data_package(
             operator=operator,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
+
+    start_date, end_date = get_backtest_start_end_dates(config=config)
     # 在生成交易信号之前准备运行计划及历史数据
-    operator.prepare_running_schedule()
+    operator.prepare_running_schedule(
+            start_date=start_date,
+            end_date=end_date,
+    )
     operator.prepare_data_buffer(
             start_date='',
             end_date='',

@@ -16,8 +16,6 @@ import numpy as np
 
 from qteasy import QT_DATA_SOURCE
 
-from qteasy.space import Space, space_around_centre
-
 
 class TestCoreSubFuncs(unittest.TestCase):
     """Test all functions in core.py"""
@@ -247,6 +245,14 @@ class TestCoreSubFuncs(unittest.TestCase):
                           shares='missing_code, 513100.SH',
                           adj='wrong_adj'
                           )
+
+    def test_get_backtest_data_package(self):
+        """ 测试获取回测数据包"""
+        print('test get backtest data package')
+
+    def test_get_backtest_cashplan(self):
+        """ 测试获取回测资金计划"""
+        print('test get backtest cashplan')
 
 
 if __name__ == '__main__':

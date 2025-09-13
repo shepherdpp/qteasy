@@ -3127,6 +3127,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # TODO: implement this test
         pass
 
+    def test_check_and_prepare_data(self):
+        """ 测试函数check_and_prepare_backtest_data() in core.py"""
+
+        op = qt.Operator()
+        op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
+        op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
+        print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
+        op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2, weighting='even')
+        op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
+        op.info(verbose=True)
+
+        # set up blender
+        op.set_group_parameters(group='Group_1', blender_str='(s0+s1)/2')
+        op.set_group_parameters(group='Group_2', blender_str='s0')
+        op.group_merge_type = 'None'
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-10',
+                end_date='2023-01-31',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n')
+
 
 if __name__ == '__main__':
     unittest.main()

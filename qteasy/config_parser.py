@@ -21,7 +21,7 @@ from qteasy.utilfuncs import next_market_trade_day, regulate_date_format, str_to
 from qteasy.finance import CashPlan
 
 
-def parse_investment_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
+def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
     """Parse investment cash plan from config settings."""
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config['invest_cash_dates'] is None:
@@ -45,7 +45,7 @@ def parse_investment_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
         return invest_cash_plan
 
 
-def parse_investment_start_end(config) -> tuple[str, str]:
+def parse_backtest_start_end_dates(config) -> tuple[str, str]:
     """Parse investment start and end date from config settings."""
     invest_start = regulate_date_format(config['invest_start'])
 
@@ -58,3 +58,8 @@ def parse_investment_start_end(config) -> tuple[str, str]:
         raise ValueError(f'invest_start {invest_start} should be earlier than invest_end {invest_end}')
 
     return invest_start, invest_end
+
+
+def parse_backtest_data_package(config, dtypes) -> dict:
+    """获取回测所需的数据包，数据类型由dtypes参数给出"""
+
