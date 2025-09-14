@@ -11,6 +11,8 @@
 
 import pandas as pd
 import numpy as np
+from warnings import warn
+from typing import Union
 
 from qteasy.utilfuncs import (
     str_to_list,
@@ -2041,7 +2043,7 @@ def from_multi_index_dataframe(df: pd.DataFrame):
     raise NotImplementedError
 
 
-def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+def stack_dataframes(dfs: Union[list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
     """ 将多个dataframe组合成一个HistoryPanel.
 
     Parameters
@@ -2424,8 +2426,9 @@ def get_history_panel(
         resample_method='ffill',
         b_days_only=True,
         trade_time_only=True,
+        return_history_panel=True,
         **kwargs
-):
+) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -2440,10 +2443,11 @@ def get_history_panel(
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    freq: str
-        获取的历史数据的频率，包括以下选项：
+    freq: str, optional
+        如果给出此参数，则强制转换获取的历史数据的频率，此时输出的所有数据全部为同频率：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+        否则输出的历史数据频率与数据类型中规定的频率相同
     start: str
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str
@@ -2494,6 +2498,8 @@ def get_history_panel(
         为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
     resample_method: str
         处理数据频率更新时的方法
+    return_history_panel: bool, default True
+        是否返回HistoryPanel对象，如果为False，则返回一个dict，dict的key为data
     **kwargs:
         用于生成trade_time_index的参数，包括：
         include_start:   日期时间序列是否包含开始日期/时间
@@ -2517,8 +2523,8 @@ def get_history_panel(
     if data_source is None:
         raise TypeError(f'data source should not be None!')
 
-    if freq is None:
-        raise TypeError(f'freq can not be None!')
+    if freq is not None:
+        warn(f'All data will be converted to {freq} frequency!')
 
     if shares:
         normal_dfs = get_history_data_from_source(
@@ -2545,7 +2551,6 @@ def get_history_panel(
         all_dfs = reference_dfs
 
     # 处理所有的df，根据设定执行以下几个步骤：
-    #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
     #  2，检查整行NaN值的情况，根据设定去掉或保留这些行
     #  3，如果df是一个Series，则将其转化为DataFrame
     for htyp, df in all_dfs.items():
@@ -2554,7 +2559,7 @@ def get_history_panel(
             df.columns = ['none']
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
-        if (not b_days_only) or (not trade_time_only) or (htype_freq.freq != freq):
+        if (not b_days_only) or (not trade_time_only) or (freq is not None):
             new_df = _adjust_freq(
                     df,
                     target_freq=freq,
@@ -2573,7 +2578,8 @@ def get_history_panel(
         if drop_nan:
             df = df.dropna(how='all')
         all_dfs[htyp] = df
-
-    result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=all_dfs.keys(), shares=shares)
-
-    return result_hp
+    if return_history_panel:
+        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=all_dfs.keys(), shares=shares)
+        return result_hp
+    else:
+        return all_dfs

@@ -14,13 +14,13 @@ import unittest
 
 class TestConfigParser(unittest.TestCase):
     def test_parse_backtest_cash_plan(self):
-        pass
+        raise NotImplementedError
 
     def test_parse_backtest_start_end_dates(self):
-        pass
+        raise NotImplementedError
 
     def test_parse_backtest_data_packages(self):
-        pass
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

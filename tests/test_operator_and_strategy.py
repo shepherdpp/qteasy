@@ -24,6 +24,7 @@ from qteasy.tafuncs import sma
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 from qteasy.datatypes import DataType
 from qteasy.trading_util import _trade_time_index as tti
+from qteasy.core import get_backtest_data_package, get_backtest_start_end_dates
 
 # test parameters and datatypes:
 param1 = Parameter(
@@ -1640,23 +1641,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.op_data_types, [])
 
         op = qt.Operator('macd, dma, trix')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close_E_d')
+        self.assertEqual(dt_ids[0], 'close_E_d')
+        self.assertEqual(dt[0], DataType('close', freq='d', asset_type='E'))
 
         op = qt.Operator('macd, cdl')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close_E_d')
-        self.assertEqual(dt[1], 'high_E_d')
-        self.assertEqual(dt[2], 'low_E_d')
-        self.assertEqual(dt[3], 'open_E_d')
-        self.assertEqual(dt, ['close_E_d', 'high_E_d', 'low_E_d', 'open_E_d'])
+        self.assertIn('close_E_d', dt_ids)
+        self.assertIn('high_E_d', dt_ids)
+        self.assertIn('low_E_d', dt_ids)
+        self.assertIn('open_E_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='E'), dt)
         op.add_strategy('dma')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close_E_d')
-        self.assertEqual(dt[1], 'high_E_d')
-        self.assertEqual(dt[2], 'low_E_d')
-        self.assertEqual(dt[3], 'open_E_d')
-        self.assertEqual(dt, ['close_E_d', 'high_E_d', 'low_E_d', 'open_E_d'])
+        self.assertIn('close_E_d', dt_ids)
+        self.assertIn('high_E_d', dt_ids)
+        self.assertIn('low_E_d', dt_ids)
+        self.assertIn('open_E_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='E'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='E'), dt)
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
@@ -3041,10 +3052,49 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(len(signals), len(signals_target))
 
     def test_operator_create_signals(self):
-        """ 测试operator对象生成完整的交易信号
+        """ 测试operator对象从DataSource获取数据并生成完整的交易信号
         """
 
-        raise NotImplementedError
+        op = qt.Operator(
+                strategies=['dma'],
+                signal_type='PS',
+                run_freq='d',
+                run_timing='close',
+        )
+        backtest_config = {
+            'asset_pool': ['000001.SZ', '000651.SZ'],
+            'invest_start': '20200101',
+            'invest_end': '20201231',
+        }
+
+        from qteasy import QT_DATA_SOURCE
+        data_package = get_backtest_data_package(
+                operator=op,
+                config=backtest_config,
+                datasource=QT_DATA_SOURCE,
+        )
+        start_date, end_date = get_backtest_start_end_dates(config=backtest_config)
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date=start_date,
+                end_date=end_date,
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n')
+
+        op.prepare_data_buffer(
+                start_date=start_date,
+                end_date=end_date,
+                data_package=data_package,
+        )
+        print(f'Operator data buffer prepared:\n')
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
     def test_stg_trading_different_prices(self):
         """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""

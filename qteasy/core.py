@@ -1742,8 +1742,8 @@ def get_backtest_data_package(operator, config, datasource) -> dict:
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
             end=invest_end,
-            freq=operator.op_data_freq,
             data_source=datasource,
+            return_history_panel=False,
     )
 
     return hist_data_package
@@ -2103,26 +2103,27 @@ def run_mode_0():
 
 def run_mode_1(operator, config, benchmark_data_type):
     """ run qteasy in mode 1: back test mode"""
-    get_backtest_data_package(
+    data_package = get_backtest_data_package(
             operator=operator,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
-
     start_date, end_date = get_backtest_start_end_dates(config=config)
+    cash_plan = get_backtest_invest_cash_plan(config=config)
+
     # 在生成交易信号之前准备运行计划及历史数据
     operator.prepare_running_schedule(
             start_date=start_date,
             end_date=end_date,
     )
     operator.prepare_data_buffer(
-            start_date='',
-            end_date='',
+            start_date=start_date,
+            end_date=end_date,
             data_package=data_package,
     )
     operator.create_data_windows()
 
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
     operator.is_ready(raise_error=True)
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     loop_result = _evaluate_one_parameter(

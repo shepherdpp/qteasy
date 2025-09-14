@@ -1822,7 +1822,7 @@ class TestDataTypes(unittest.TestCase):
                     htype = DataType(name=htype_name, freq=freq, asset_type=at)
                     htypes.append(htype)
                 except:
-                    print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    print(f'  - failed to create htype with parameters: {htype_name}, {freq}, {at}')
                     continue
         shares = list_to_str_format(shares)
         print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
@@ -1837,6 +1837,7 @@ class TestDataTypes(unittest.TestCase):
                 freq=freq,
         )
         self.assertIsInstance(dfs, dict)
+        self.assertEqual(len(dfs), len(htypes))
         self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 

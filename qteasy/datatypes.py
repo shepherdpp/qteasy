@@ -11,10 +11,9 @@
 # collection of all built-in data types.
 # ======================================
 
-
 import pandas as pd
 from functools import lru_cache
-from typing import List, Tuple, Dict
+from typing import Union, List, Tuple, Dict
 from warnings import warn
 from math import ceil
 
@@ -4069,7 +4068,7 @@ def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
 def get_history_data_from_source(
         datasource,
         htypes: List[DataType], *,
-        qt_codes: List[str] = None,
+        qt_codes: Union[list, str] = None,
         start: str = None,
         end: str = None,
         freq: str = None,
@@ -4127,7 +4126,6 @@ def get_history_data_from_source(
     """
 
     history_data_acquired = {}
-    history_data_to_be_re_freqed = {}
     row_count_adj_factors = {
         '1min':  240,
         '5min':  48,
@@ -4182,7 +4180,6 @@ def get_history_data_from_source(
         if not combine_htype_names:
             # 下载的数据不会按htype.name合并，而是分别按htype.id存储
             history_data_acquired[htype.id] = df
-            history_data_to_be_re_freqed[htype.id] = True if htype.freq != freq else False
         else:
             # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
             original_df = history_data_acquired.get(htype.name)
@@ -4191,7 +4188,6 @@ def get_history_data_from_source(
             else:
                 new_df = pd.concat([original_df, df], axis=1, copy=False)
                 history_data_acquired[htype.name] = new_df
-            history_data_to_be_re_freqed[htype.name] = True if htype.freq != freq else False
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(df.empty for df in history_data_acquired.values()):
@@ -4230,7 +4226,7 @@ def get_reference_data_from_source(
 
     由于获取的数据是参考数据，因此数据是一个Series，index为时间，value为数据值，该数据
     并不针对具体的证券，因此普遍应该从不含证券代码的数据表中获取数据，如货币数据、国债数据等。
-    如果需要用某证券的数据作为参考数据，可以给出证券代码，但该证券代码会作为Series的index
+    如果需要用某证券的数据作为参考数据，可以给出证券代码，但该证券代码会作为Series的name
     而不会作为column返回。
 
     Parameters
@@ -4288,7 +4284,7 @@ def get_reference_data_from_source(
         raise err
 
     reference_data_acquired = {}
-    reference_data_to_be_refreqed = {}
+    # reference_data_to_be_refreqed = {}
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
@@ -4318,7 +4314,7 @@ def get_reference_data_from_source(
             if already_ser.empty:
                 reference_data_acquired[htype.name] = ser
 
-        reference_data_to_be_refreqed[htype.name] = True if htype.freq != freq else False
+        # reference_data_to_be_refreqed[htype.name] = True if htype.freq != freq else False
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(ser.empty for ser in reference_data_acquired.values()):

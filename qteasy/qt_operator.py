@@ -252,11 +252,17 @@ class Operator:
         self._op_type = op_type
 
     @property
-    def op_data_types(self):
-        """返回operator对象所有策略子对象所需历史数据类型的集合"""
-        d_types = [typ for item in self.strategies for typ in item.data_types]
+    def op_data_type_ids(self):
+        """返回operator对象所有策略子对象所需历史数据类型的ID"""
+        d_types = [typ for item in self.strategies for typ in item.data_type_ids]
         d_types = list(set(d_types))
-        d_types.sort()
+        return d_types
+
+    @property
+    def op_data_types(self):
+        """返回operator对象所有策略子对象所需历史数据类型对象"""
+        d_types = [typ for item in self.strategies for typ in item.data_types.values()]
+        d_types = list(set(d_types))
         return d_types
 
     @property
@@ -266,7 +272,7 @@ class Operator:
         return len(self.op_data_types)
 
     @property
-    def op_ref_types(self) -> list:
+    def op_ref_types(self) -> list:  # deprecated
         """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
         ref_types = [typ for item in self.strategies for typ in item.ref_types]
         ref_types = list(set(ref_types))
@@ -274,7 +280,7 @@ class Operator:
         return ref_types
 
     @property
-    def op_ref_type_count(self) -> int:
+    def op_ref_type_count(self) -> int:  # deprecated
         """ 返回operator对象生成交易清单所需的历史数据类型数量"""
         return len(self.op_ref_types)
 
@@ -1649,7 +1655,7 @@ class Operator:
         for df in data_package.values():
             if not df.columns.equals(data_columns):
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
-
+        import pdb; pdb.set_trace()
         for data_type in self.all_strategy_data_types:
             if data_type not in data_package:
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
