@@ -721,7 +721,8 @@ def input_to_list(pars, dim=None, padder=None):
     return pars
 
 
-def regulate_date_format(date_str: Union[str, object]) -> str:
+def regulate_date_format(date_str: Union[str, object],
+                         force_format: str = None) -> str:
     """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
         将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
 
@@ -729,6 +730,9 @@ def regulate_date_format(date_str: Union[str, object]) -> str:
     ----------
     date_str: str, date time like
         时间日期字符串
+    force_format: str, optional
+        强制使用某种格式输出，默认None, 可选'date': '%Y-%m-%d' 或 'datetime': '%Y-%m-%d %H:%M:%S'
+        或者其他给出的合法的strftime格式字符串
 
     Returns
     -------
@@ -749,10 +753,19 @@ def regulate_date_format(date_str: Union[str, object]) -> str:
     except Exception as e:
         raise ValueError(f'{e}: {date_str} is not a valid date-time')
     from datetime import time
-    if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
-        str_format = '%Y-%m-%d'
+    if force_format is None:
+        if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
+            str_format = '%Y-%m-%d'
+        else:
+            str_format = '%Y-%m-%d %H:%M:%S'
     else:
-        str_format = '%Y-%m-%d %H:%M:%S'
+        if force_format == 'date':
+            str_format = '%Y-%m-%d'
+        elif force_format == 'datetime':
+            str_format = '%Y-%m-%d %H:%M:%S'
+        else:
+            str_format = force_format
+
     return date_time.strftime(str_format)
 
 

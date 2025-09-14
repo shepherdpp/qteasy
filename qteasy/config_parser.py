@@ -47,12 +47,19 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
 
 def parse_backtest_start_end_dates(config) -> tuple[str, str]:
     """Parse investment start and end date from config settings."""
-    invest_start = regulate_date_format(config['invest_start'])
 
-    if config['invest_end'] is None:
-        invest_end = regulate_date_format(pd.Timestamp.today())
+    invest_start = config.get('invest_start')
+    invest_end = config.get('invest_end')
+
+    if invest_end is None:
+        invest_end = regulate_date_format(pd.Timestamp.today(), force_format='date')
     else:
-        invest_end = regulate_date_format(config['invest_end'])
+        invest_end = regulate_date_format(invest_end, force_format='date')
+
+    if invest_start is None:  # start is end - 1 year
+        invest_start = regulate_date_format(pd.Timestamp(invest_end) - pd.DateOffset(years=1), force_format='date')
+    else:
+        invest_start = regulate_date_format(invest_start, force_format='date')
 
     if pd.to_datetime(invest_start) >= pd.to_datetime(invest_end):
         raise ValueError(f'invest_start {invest_start} should be earlier than invest_end {invest_end}')
