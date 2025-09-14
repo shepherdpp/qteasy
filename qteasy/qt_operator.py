@@ -1655,7 +1655,7 @@ class Operator:
         for df in data_package.values():
             if not df.columns.equals(data_columns):
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
-        import pdb; pdb.set_trace()
+
         for data_type in self.all_strategy_data_types:
             if data_type not in data_package:
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
