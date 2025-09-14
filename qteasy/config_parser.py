@@ -16,9 +16,11 @@ from warnings import warn
 
 from typing import List, Dict, Any, Union
 
+from qteasy import QT_DATA_SOURCE
 from qteasy.configure import ConfigDict
 from qteasy.utilfuncs import next_market_trade_day, regulate_date_format, str_to_list
 from qteasy.finance import CashPlan
+from qteasy.history import get_history_panel
 
 
 def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
@@ -35,12 +37,6 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
         invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                     amounts=config['invest_cash_amounts'],
                                     interest_rate=config['riskfree_ir'])
-        invest_start = regulate_date_format(invest_cash_plan.first_day)
-
-        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            msg = (f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]},'
-                   f' first cash date will be used!')
-            raise RuntimeError(msg)
 
         return invest_cash_plan
 
@@ -69,4 +65,17 @@ def parse_backtest_start_end_dates(config) -> tuple[str, str]:
 
 def parse_backtest_data_package(config, dtypes) -> dict:
     """获取回测所需的数据包，数据类型由dtypes参数给出"""
+
+    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
+    data_source = config.get('data_source', QT_DATA_SOURCE)
+    data_package = get_history_panel(
+            data_types=dtypes,
+            shares=config['asset_pool'],
+            start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
+            end=invest_end,
+            data_source=data_source,
+            return_history_panel=False,
+    )
+
+    return data_package
 
