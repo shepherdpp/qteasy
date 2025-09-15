@@ -164,13 +164,16 @@ class TestConfigParser(unittest.TestCase):
         dtypes = [
             DataType('close', freq='d', asset_type='E'),
             DataType('pe', freq='d', asset_type='E'),
+            DataType('close', freq='w', asset_type='E')
         ]
         data_package = parse_backtest_data_package(config=config, dtypes=dtypes)
         self.assertIsInstance(data_package, dict)
-        self.assertIn('close', data_package)
-        self.assertIn('pe', data_package)
-        self.assertIsInstance(data_package['close'], pd.DataFrame)
-        self.assertIsInstance(data_package['pe'], pd.DataFrame)
+        self.assertIn('close_E_d', data_package)
+        self.assertIn('pe_E_d', data_package)
+        self.assertIn('close_E_w', data_package)
+        self.assertIsInstance(data_package['close_E_d'], pd.DataFrame)
+        self.assertIsInstance(data_package['pe_E_d'], pd.DataFrame)
+        self.assertIsInstance(data_package['close_E_w'], pd.DataFrame)
         print(data_package)
 
 

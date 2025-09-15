@@ -75,6 +75,7 @@ def parse_backtest_data_package(config, dtypes) -> dict:
             end=invest_end,
             data_source=data_source,
             return_history_panel=False,
+            combine_dtype_names=False,
     )
 
     return data_package

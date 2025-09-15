@@ -12,7 +12,7 @@
 import pandas as pd
 import numpy as np
 from warnings import warn
-from typing import Union
+from typing import Union, Iterable, Any
 
 from qteasy.utilfuncs import (
     str_to_list,
@@ -2043,7 +2043,11 @@ def from_multi_index_dataframe(df: pd.DataFrame):
     raise NotImplementedError
 
 
-def stack_dataframes(dfs: Union[list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+def stack_dataframes(dfs: Union[list, dict],
+                     dataframe_as: str = 'shares',
+                     shares: Iterable = None,
+                     htypes: Iterable = None,
+                     fill_value: Any = None):
     """ 将多个dataframe组合成一个HistoryPanel.
 
     Parameters
@@ -2414,6 +2418,75 @@ def _adjust_freq(hist_data: pd.DataFrame,
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
+def get_history_data_packages(
+        data_types,
+        data_source,
+        shares=None,
+        start=None,
+        end=None,
+        rows=None,
+) -> dict[str, pd.DataFrame]:
+    """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并返回一个
+    data_package（包含不同数据类型的区间数据），并可用于Operator对象创建历史数据缓存。
+
+    Parameters
+    ----------
+    data_types: [DataType]
+        需要获取的历史数据类型集合，必须是合法的DataType数据类型对象，
+    data_source: DataSource
+        数据源对象，用于获取数据
+    shares: [str, list]
+        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+        如以下两种输入方式皆合法且等效：
+         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+    start: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+    end: str
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+    rows: int
+        获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
+        如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
+
+    Returns
+    -------
+    dict of DataFrames:
+        一个dict，key为data_type.name，value为对应data_type的数据DataFrame
+
+    Examples
+    --------
+    >>> from qteasy import DataType, DataSource
+    >>> dt1 = DataType(name='close', freq='D', fields=['close'])
+    >>> dt2 = DataType(name='volume', freq='D', fields=['volume'])
+    >>> ds = DataSource('csv', data_path='./data')
+    >>> data_packages = get_history_data_packages([dt1, dt2], ds, shares='000001.SZ, 000002.SZ', start='20200101', end='20200110')
+    >>> data_packages.keys()
+    dict_keys(['close', 'volume'])
+    >>> data_packages['close']
+                    000001.SZ  000002.SZ
+    2020-01-01       13.62      18.34
+    2020-01-02       13.45      18.12
+    2020-01-03       13.50      18.20
+    2020-01-06       13.55      18.30
+    2020-01-07       13.60      18.40
+    2020-01-08       13.70      18.50
+    2020-01-09       13.80      18.60
+    2020-01-10       13.90      18.70
+    >>> data_packages['volume']
+                    000001.SZ  000002.SZ
+    2020-01-01       123456     234567
+    2020-01-02       120000     230000
+    2020-01-03       125000     235000
+    2020-01-06       130000     240000
+    2020-01-07       135000     245000
+    2020-01-08       140000     250000
+    2020-01-09       145000     255000
+    2020-01-10       150000     260000
+
+    """
+    raise NotImplementedError
+
+
 def get_history_panel(
         data_types,
         data_source,
@@ -2429,8 +2502,8 @@ def get_history_panel(
         return_history_panel=True,
         **kwargs
 ) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
-    """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
-        需要的HistoryPanel数据对象
+    """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
+    HistoryPanel数据对象
 
     Parameters
     ----------
@@ -2559,7 +2632,7 @@ def get_history_panel(
             df.columns = ['none']
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
-        if (not b_days_only) or (not trade_time_only) or (freq is not None):
+        if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
             new_df = _adjust_freq(
                     df,
                     target_freq=freq,

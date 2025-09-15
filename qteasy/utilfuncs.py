@@ -249,7 +249,7 @@ def parse_freq_string(freq, std_freq_only=False):
     return qty, main_freq, sub_freq
 
 
-def get_main_freq_level(freq) -> int or None:
+def get_main_freq_level(freq) -> Union[int, None]:
     """ 确定并返回freqency的级别
 
     Parameters
@@ -519,7 +519,7 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
         return time_str
 
 
-def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
+def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
     """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
 
     1，当输入item为slice时，直接返回slice
@@ -581,7 +581,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         return None
 
 
-def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dict:
+def labels_to_dict(input_labels: Union[list, str], target_list: Union[list, range]) -> dict:
     """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
@@ -1230,7 +1230,7 @@ def weekday_name(weekday: int):
     return weekday_names[weekday]
 
 
-def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
+def date_to_quarter_format(date: Union[str, pd.Timestamp]) -> str:
     """ convert a Timestamp or date like to quarter format like 2020Q3"""
     try:
         date = pd.to_datetime(date).floor(freq='d')
@@ -1240,7 +1240,7 @@ def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
     return f'{date.year}Q{date.quarter}'
 
 
-def date_to_month_format(date: [str, pd.Timestamp]) -> str:
+def date_to_month_format(date: Union[str, pd.Timestamp]) -> str:
     """ convert a Timestamp or date like to month format like 202012"""
     try:
         date = pd.to_datetime(date).floor(freq='d')
@@ -1295,7 +1295,7 @@ def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
         return (lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size))
 
 
-def is_number_like(key: [str, int, float]) -> bool:
+def is_number_like(key: Union[str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的数字
 
     Parameters
@@ -1316,7 +1316,7 @@ def is_number_like(key: [str, int, float]) -> bool:
     return False
 
 
-def is_integer_like(key: [str, int]) -> bool:
+def is_integer_like(key: Union[str, int]) -> bool:
     """ 判断一个字符串是否是一个合法的整数
 
     Parameters
@@ -1336,7 +1336,7 @@ def is_integer_like(key: [str, int]) -> bool:
     return False
 
 
-def is_float_like(key: [str, int, float]) -> bool:
+def is_float_like(key: Union[str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的浮点数
 
     Parameters
@@ -1985,37 +1985,6 @@ def reindent(s, num_spaces=4):
     s = [(num_spaces * ' ') + line.lstrip() for line in s]
     s = '\n'.join(s)
     return s
-
-
-def truncate_string(s, n, padder='.') -> str:  # to be deprecated
-    """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
-    以后使用adjust_string_length代替
-
-    Parameters
-    ----------
-    s: str
-        字符串
-    n: int
-        需要保留的长度
-    padder: str, Default: '...'
-        填充在截短的字符串后用于表示省略号的字符，默认为'.'
-
-    Returns
-    -------
-    str
-
-    Examples
-    --------
-    >>> truncate_string('hello world', 5)
-    'he...'
-    >>> truncate_string('hello world', 5, padder='*')
-    'he***'
-    >>> truncate_string('hello world', 3)
-    'h..'
-    """
-    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead',
-                  DeprecationWarning, stacklevel=2)
-    return adjust_string_length(s, n, filler=padder)
 
 
 def adjust_string_length(s, n, *,
