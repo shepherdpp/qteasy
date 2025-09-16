@@ -4167,6 +4167,10 @@ def get_history_data_from_source(
         # start and row_count should be given in this case
         end = start + pd.Timedelta(days=trade_day_offset)
 
+    # 调整start/end的时间，确保start的时间为00:00:01，end的时间为23:59:59，以便确保获取的数据与频率无关
+    start = pd.to_datetime(start).replace(hour=0, minute=0, second=1)
+    end = pd.to_datetime(end).replace(hour=23, minute=59, second=59)
+
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')
 
@@ -4178,8 +4182,8 @@ def get_history_data_from_source(
         # 从数据源获取数据，
         df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start, ends=end)
         if not combine_htype_names:
-            # 下载的数据不会按htype.name合并，而是分别按htype.id存储
-            history_data_acquired[htype.id] = df
+            # 下载的数据不会按htype.name合并，而是分别按htype.dtype_id存储
+            history_data_acquired[htype.dtype_id] = df
         else:
             # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
             original_df = history_data_acquired.get(htype.name)

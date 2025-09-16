@@ -20,7 +20,7 @@ from qteasy import QT_DATA_SOURCE
 from qteasy.configure import ConfigDict
 from qteasy.utilfuncs import next_market_trade_day, regulate_date_format, str_to_list
 from qteasy.finance import CashPlan
-from qteasy.history import get_history_panel
+from qteasy.history import get_history_data_packages, get_history_panel
 
 
 def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
@@ -68,14 +68,13 @@ def parse_backtest_data_package(config, dtypes) -> dict:
 
     invest_start, invest_end = parse_backtest_start_end_dates(config=config)
     data_source = config.get('data_source', QT_DATA_SOURCE)
-    data_package = get_history_panel(
+    # get data_package with another function in history module
+    data_package = get_history_data_packages(
             data_types=dtypes,
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
             end=invest_end,
             data_source=data_source,
-            return_history_panel=False,
-            combine_dtype_names=False,
     )
 
     return data_package

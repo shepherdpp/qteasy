@@ -1955,7 +1955,7 @@ def rolling_window(arr, window, axis=0):
                       writeable=False)
 
 
-def reindent(s, num_spaces=4):
+def reindent(s, num_spaces: int = 4) -> str:
     """ 给定一个（通常多行）的string，在每一行前面添加空格形成缩进效果
 
     Parameters
@@ -2350,19 +2350,19 @@ def time_string_to_hour_float(time_string):
     """
     Converts a time string (e.g., "HH:MM") to a float representing hours.
 
-    Args:
-        time_string (str): The time string in "HH:MM" format.
+    Parameters
+    ----------
+    time_string (str):
+        The time string in "HH:MM" format.
 
-    Returns:
+    Returns
+    -------
         float: The time represented as a float (e.g., 15.5 for "15:30").
     """
-    try:
-        hours_str, minutes_str = time_string.split(':')
-        hours = int(hours_str)
-        minutes = int(minutes_str)
 
-        total_hours = hours + (minutes / 60.0)
-        return total_hours
-    except ValueError:
-        print("Error: Invalid time string format. Please use 'HH:MM'.")
-        return None
+    hours_str, minutes_str = time_string.split(':')
+    hours = int(hours_str)
+    minutes = int(minutes_str)
+
+    total_hours = hours + (minutes / 60.0)
+    return total_hours
