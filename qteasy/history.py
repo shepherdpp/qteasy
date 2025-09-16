@@ -26,6 +26,7 @@ from qteasy.utilfuncs import (
 )
 
 from qteasy.datatypes import (
+    DataType,
     get_history_data_from_source,
     get_reference_data_from_source,
 )
@@ -2339,7 +2340,9 @@ def _adjust_freq(hist_data: pd.DataFrame,
     # 新版本pandas修改了部分freq alias，为了确保向后兼容，确保freq_aliases与pandas版本匹配
     target_freq = pandas_freq_alias_version_conversion(target_freq)
 
-    resampled = hist_data.resample(target_freq)
+    # 如果target_freq为h，则实际resample频率为30min，因为需要兼顾交易日早上9:30-11:30和下午13:00-15:00两个时段
+    # 如果target_freq为30min或15min等，则直接使用该freq
+    resampled = hist_data.resample('30min' if target_freq == 'h' else target_freq)
     if method in ['last', 'close']:
         resampled = resampled.last()
     elif method in ['first', 'open']:
@@ -2421,9 +2424,9 @@ def _adjust_freq(hist_data: pd.DataFrame,
 def get_history_data_packages(
         data_types,
         data_source,
-        shares=None,
-        start=None,
-        end=None,
+        shares,
+        start,
+        end,
         rows=None,
 ) -> dict[str, pd.DataFrame]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并返回一个
@@ -2441,10 +2444,10 @@ def get_history_data_packages(
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
     start: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间
     end: str
-        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-    rows: int
+        YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间
+    rows: int, optional
         获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
         如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
 
@@ -2456,35 +2459,34 @@ def get_history_data_packages(
     Examples
     --------
     >>> from qteasy import DataType, DataSource
-    >>> dt1 = DataType(name='close', freq='D', fields=['close'])
-    >>> dt2 = DataType(name='volume', freq='D', fields=['volume'])
-    >>> ds = DataSource('csv', data_path='./data')
-    >>> data_packages = get_history_data_packages([dt1, dt2], ds, shares='000001.SZ, 000002.SZ', start='20200101', end='20200110')
-    >>> data_packages.keys()
-    dict_keys(['close', 'volume'])
-    >>> data_packages['close']
-                    000001.SZ  000002.SZ
-    2020-01-01       13.62      18.34
-    2020-01-02       13.45      18.12
-    2020-01-03       13.50      18.20
-    2020-01-06       13.55      18.30
-    2020-01-07       13.60      18.40
-    2020-01-08       13.70      18.50
-    2020-01-09       13.80      18.60
-    2020-01-10       13.90      18.70
-    >>> data_packages['volume']
-                    000001.SZ  000002.SZ
-    2020-01-01       123456     234567
-    2020-01-02       120000     230000
-    2020-01-03       125000     235000
-    2020-01-06       130000     240000
-    2020-01-07       135000     245000
-    2020-01-08       140000     250000
-    2020-01-09       145000     255000
-    2020-01-10       150000     260000
 
     """
-    raise NotImplementedError
+    if isinstance(data_types, DataType):
+        data_types = [data_types]
+    if not isinstance(data_types, (list, tuple)):
+        raise TypeError(f'data_types should be a list or tuple of DataType, got {type(data_types)} instead.')
+    if not all([isinstance(dt, DataType) for dt in data_types]):
+        raise TypeError(f'all elements of data_types should be DataType, got {data_types} instead.')
+
+    if shares:
+        all_dfs = get_history_data_from_source(
+                datasource=data_source,
+                htypes=data_types,
+                qt_codes=list_to_str_format(shares),
+                start=start,
+                end=end,
+                row_count=rows,
+        )
+    else:
+        # 获取无share数据
+        all_dfs = get_reference_data_from_source(
+                datasource=data_source,
+                htypes=data_types,
+                start=start,
+                end=end,
+                row_count=rows,
+        )
+    return all_dfs
 
 
 def get_history_panel(
@@ -2633,6 +2635,7 @@ def get_history_panel(
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
+            import pdb; pdb.set_trace()
             new_df = _adjust_freq(
                     df,
                     target_freq=freq,
