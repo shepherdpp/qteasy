@@ -2635,7 +2635,6 @@ def get_history_panel(
         # find freq of the htyp:
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
-            import pdb; pdb.set_trace()
             new_df = _adjust_freq(
                     df,
                     target_freq=freq,
@@ -2656,6 +2655,10 @@ def get_history_panel(
         all_dfs[htyp] = df
     if return_history_panel:
         result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=all_dfs.keys(), shares=shares)
+        if rows is not None:
+            assert isinstance(rows, int)
+            assert rows > 0
+            result_hp = result_hp.tail(rows)
         return result_hp
     else:
         return all_dfs

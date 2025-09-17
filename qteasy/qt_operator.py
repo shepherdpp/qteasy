@@ -943,23 +943,29 @@ class Operator:
         """返回策略组group_id中的所有策略ID"""
         return [stg.strategy_id for stg in self.get_strategies_by_group(group_id)]
 
-    def get_max_window_length_by_dtype(self, dtype) -> Union[int, None]:
+    def get_max_window_length_by_dtype_id(self, dtype: str) -> int:
         """ 计算并返回operator对象某个datatype最长的窗口长度。
+
+        Parameters
+        ----------
+        dtype: str
+            需要查询的历史数据类型的dtype_id
 
         Returns
         -------
         int, operator对象中所有子策略中某个dtype最长的窗口长度
         """
-
-        if dtype not in self.op_data_types:
+        if not isinstance(dtype, str):
+            raise TypeError(f'dtype should be a string, got {type(dtype)} instead.')
+        if dtype not in self.op_data_type_ids:
             raise ValueError(f'data type {dtype} is not in operator data types {self.op_data_types}')
 
         if self.strategy_count == 0:
-            return None
+            raise ValueError(f'no strategy in operator!')
         else:
-            window_length = [stg.window_lengths[dtype] for stg in self.strategies if dtype in stg.data_types]
+            window_length = [stg.window_lengths[dtype] for stg in self.strategies if dtype in stg.data_type_ids]
             if len(window_length) == 0:
-                return None
+                raise ValueError(f'no strategy in operator uses data type {dtype}!')
             return max(window_length)
 
     def get_bt_price_type_id_in_priority(self, priority=None):
@@ -1657,22 +1663,22 @@ class Operator:
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
 
         for data_type in self.all_strategy_data_types:
-            if data_type not in data_package:
+            if data_type.dtype_id not in data_package:
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
             else:
-                dtype_max_window = self.get_max_window_length_by_dtype(data_type)
-                if len(data_package[data_type]) < dtype_max_window:
+                dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
+                if len(data_package[data_type.dtype_id]) < dtype_max_window:
                     raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. "
-                                     f"Required: {dtype_max_window}, Available: {len(data_package[data_type])}")
-                if data_package[data_type].index[dtype_max_window - 1].date() > pd.to_datetime(start_date).date():
+                                     f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
+                if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(start_date).date():
                     # 确保数据有足够的前置量
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
-                           f"Data package starts on {data_package[data_type].index[0]}, "
+                           f"Data package starts on {data_package[data_type.dtype_id].index[0]}, "
                            f"and start_date is {start_date}, \nbut the first available window starts on "
-                           f" {data_package[data_type].index[dtype_max_window - 1]}. ")
+                           f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]}. ")
                     raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
-                self.data_buffers[data_type] = data_package[data_type]
+                self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.

@@ -28,6 +28,7 @@ from qteasy.datatypes import (
 
 from qteasy.history import (
     get_history_panel,
+    get_history_data_packages,
     HistoryPanel,
 )
 
@@ -1732,13 +1733,12 @@ def get_backtest_data_package(operator, config, datasource) -> dict:
     from qteasy.config_parser import parse_backtest_start_end_dates
     invest_start, invest_end = parse_backtest_start_end_dates(config=config)
 
-    hist_data_package = get_history_panel(
+    hist_data_package = get_history_data_packages(
             data_types=operator.all_strategy_data_types,
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
             end=invest_end,
             data_source=datasource,
-            return_history_panel=False,
     )
 
     return hist_data_package

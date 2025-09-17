@@ -4127,11 +4127,11 @@ def get_history_data_from_source(
 
     history_data_acquired = {}
     row_count_adj_factors = {
-        '1min':  240,
-        '5min':  48,
-        '15min': 16,
-        '30min': 8,
-        'h':     4,
+        '1min':  241,
+        '5min':  49,
+        '15min': 17,
+        '30min': 9,
+        'h':     5,
         'w':     0.14,
         'm':     0.03,
     }
@@ -4142,7 +4142,7 @@ def get_history_data_from_source(
     if row_count is not None:
         trade_day_offset = ceil(row_count / row_count_adj_factors.get(freq, 1)) + 1
     else:
-        trade_day_offset = None
+        trade_day_offset = 7
 
     if all(param is None for param in (start, end, row_count)):
         raise ValueError(f'parameter "start", "end", "row_count" can not be all None, '
@@ -4152,9 +4152,6 @@ def get_history_data_from_source(
     if start is None and end is None:
         raise ValueError(f'at least one of start or end should be given, both are None!')
     if start is None:
-        # TODO:
-        #  the best solution is to check the trade calendar and find out the previous
-        #  N-th trade day based on the end date
         # if end is Monday then start should be Friday (this is still temporary)
         end = pd.to_datetime(end)
         if end.weekday() == 0:
@@ -4170,6 +4167,7 @@ def get_history_data_from_source(
     # 调整start/end的时间，确保start的时间为00:00:01，end的时间为23:59:59，以便确保获取的数据与频率无关
     start = pd.to_datetime(start).replace(hour=0, minute=0, second=1)
     end = pd.to_datetime(end).replace(hour=23, minute=59, second=59)
+    print(f'adjusted start/end to {start} - {end}')
 
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')

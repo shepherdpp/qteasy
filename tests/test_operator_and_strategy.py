@@ -1751,13 +1751,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'before setting window_length the value is 270:\n'
               f'mwl is {mwl}\n')
         print(f'before setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
         print(f'before setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 270)
-        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 270)
-        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 150)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 270)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 150)
 
         op.set_parameter('macd', window_length=300)
         op.set_parameter('ndayvol', window_length=350)
@@ -1765,13 +1765,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'after setting window_length the value is new set value:\n'
               f'mwl is {mwl}\n')
         print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
         print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
-        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 350)
-        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 350)
 
         # update window_length with multiple values
         op.set_parameter('trix', window_length=(120,))
@@ -1785,15 +1785,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op['ndayvol'].window_lengths, {'close_E_d': 45, 'high_E_d': 90, 'low_E_d': 135})
         self.assertEqual(op.max_window_length, 135)
         print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype("close_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
         print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype("high_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
         print(f'after setting window_length the max_window_length by dtype "low_E_d" is '
-              f'{op.get_max_window_length_by_dtype("low_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("low_E_d")}:')
 
-        self.assertEqual(op.get_max_window_length_by_dtype('close_E_d'), 120)
-        self.assertEqual(op.get_max_window_length_by_dtype('high_E_d'), 90)
-        self.assertEqual(op.get_max_window_length_by_dtype('low_E_d'), 135)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 120)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 90)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('low_E_d'), 135)
 
     def test_property_set(self):
         """ test all property setters:
@@ -3073,6 +3073,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 config=backtest_config,
                 datasource=QT_DATA_SOURCE,
         )
+        print(f'Backtest data package prepared:\n{data_package}\n')
+
         start_date, end_date = get_backtest_start_end_dates(config=backtest_config)
 
         # create running schedule and prepare data buffer and data windows
