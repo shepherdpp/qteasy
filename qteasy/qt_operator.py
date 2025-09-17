@@ -1656,14 +1656,18 @@ class Operator:
             例如：{'price': price_df, 'volume': volume_df, ...}
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
         """
-        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致
+        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致，检查数据包的key是否都是str
         data_columns = data_package[next(iter(data_package.keys()))].columns
+        for key in data_package.keys():
+            if not isinstance(key, str):
+                raise TypeError(f"Data package keys must be strings, got {type(key)} instead.")
         for df in data_package.values():
             if not df.columns.equals(data_columns):
                 raise ValueError("Data columns are not consistent across all data types in the data package.")
 
         for data_type in self.all_strategy_data_types:
             if data_type.dtype_id not in data_package:
+                import pdb; pdb.set_trace()
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
             else:
                 dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
