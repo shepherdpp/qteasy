@@ -1949,15 +1949,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
 
         print(f'Adding historical data buffer to operator')
-        # set stratety window lengths to be about 5 to 9
+        # set strategy window lengths to be about 5 to 9
         op.set_parameter('dma', window_length=3)
         op.set_parameter('macd', window_length=6)
         op.set_parameter('trix', window_length=9)
         op.set_parameter('cdl', window_length=5)
         self.assertEqual(op.max_window_length, 9)
-        all_dtypes = op.op_data_types
+        all_dtype_ids = op.op_data_type_ids
         data_buffer = {}
-        for dtype in all_dtypes:
+        for dtype in all_dtype_ids:
             data_buffer[dtype] = close_d_df
         start = close_d_df.index[10]
         end = close_d_df.index[-1]
@@ -2122,7 +2122,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 data_package=data_buffer,
         )
         print(f'Operator data buffer prepared:\n')
-        for dtype in op.op_data_types:
+        for dtype in op.op_data_type_ids:
             print(f'Data type "{dtype}" has data:\n')
             print(op.data_buffers[dtype])
             print('\n')
@@ -2353,7 +2353,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                       f'with window indices: {data_indices}\n'
                       )
                 # check data type and data shapes
-                self.assertIn(dtype, op.op_data_types)
+                self.assertIn(dtype, op.op_data_type_ids)
                 self.assertIsInstance(data_window, np.ndarray)
                 self.assertIsInstance(data_window, np.ndarray)
                 self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
@@ -2439,7 +2439,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                       f'with window indices: {data_indices}\n'
                       )
                 # check data type and data shapes
-                self.assertIn(dtype, op.op_data_types)
+                self.assertIn(dtype, op.op_data_type_ids)
                 self.assertIsInstance(data_window, np.ndarray)
                 self.assertIsInstance(data_window, np.ndarray)
                 self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
