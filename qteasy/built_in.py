@@ -3425,7 +3425,7 @@ class DMA(RuleIterator):
         s, l, d = self.slow, self.long, self.diff
 
         h = self.close_E_d
-        dma = sma(h[0], s) - sma(h[0], l)
+        dma = sma(h, s) - sma(h, l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
 

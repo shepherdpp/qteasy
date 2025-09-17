@@ -3098,6 +3098,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Data Windows created for all strategies\n'
               f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
+        # set up operator blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        signals = []
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+
+        print(f'Generating trading signals completed\n'
+              f'{signals}\n')
+
     def test_stg_trading_different_prices(self):
         """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
         # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
