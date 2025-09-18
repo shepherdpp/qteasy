@@ -1293,6 +1293,7 @@ class Operator:
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
                       par_values: Union[tuple, list] = None,
+                      par_range: Union[tuple, list] = None,
                       run_freq: str = None,
                       run_timing: str = None,
                       **kwargs):
@@ -1350,6 +1351,14 @@ class Operator:
             )
         if par_values is not None:  # 设置策略参数的具体取值
             strategy.update_par_values(*par_values)
+
+        if par_range is not None:  # 设置策略参数的取值范围
+            if not isinstance(par_range, (list, tuple)):
+                raise TypeError(f'par_range should be a list or a tuple, got {type(par_range)} instead!')
+            if len(par_range) != strategy.par_count:
+                raise ValueError(f'par_range should have the same length as the number of strategy parameters, '
+                                 f'expected {strategy.par_count}, got {len(par_range)} instead!')
+            strategy.update_par_ranges(par_range)
 
         if run_freq is not None or run_timing is not None:  # 设置策略的运行频率和运行时机
             old_group_id = strategy._group_id

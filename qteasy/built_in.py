@@ -322,9 +322,9 @@ class CROSSLINE(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        s, l, m = self.s, self.l, self.m
+        s, l, m = self.get_pars('s', 'l', 'f')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = self.close_E_d
+        h = self.get_data('close_E_d')
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         m = m * l
@@ -371,7 +371,7 @@ class CDL(RuleIterator):
         )
 
     def realize(self):
-        o, h, l, c = self.open_E_d, self.high_E_d, self.low_E_d, self.close_E_d
+        o, h, l, c = self.get_data('open_E_d', 'high_E_d', 'low_E_d', 'close_E_d')
         cat = (cdldoji(o, h, l, c).cumsum() // 100)
 
         return float(cat[-1])
