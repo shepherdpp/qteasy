@@ -530,6 +530,22 @@ class BaseStrategy:
 
         return
 
+    def get_pars(self, *par_names):
+        """get the value of parameter by its name or id, alias as operator.par_name
+        multiple parameters can be got at one time"""
+        return self._get_pars_or_data(*par_names)
+    
+    def _get_pars_or_data(self, *names: str):
+        """get the value of parameter or data by its name or id, alias as operator.par_name or operator.dtype_id
+        multiple parameters or data can be got at one time"""
+        undefined_names = [name for name in names if name not in self.par_names and name not in self.data_type_ids]
+        if undefined_names:
+            raise KeyError(f'names {undefined_names} not defined in strategy {self}')
+        if len(names) > 1:
+            return tuple(self.__getattribute__(name) for name in names)
+        else:
+            return self.__getattribute__(names[0])
+
     def set_data_types(self,
                        data_types,
                        use_latest_data_cycle,
@@ -597,6 +613,11 @@ class BaseStrategy:
 
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
+
+    def get_data(self, *dtype_id):
+        """get historical data by data_id, alias as operator.dtype_id
+        multiple datatypes can be got at one time"""
+        return self._get_pars_or_data(*dtype_id)
 
     def update_data_types(self,
                           dtype_id=None,
