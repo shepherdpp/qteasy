@@ -534,7 +534,7 @@ class BaseStrategy:
         """get the value of parameter by its name or id, alias as operator.par_name
         multiple parameters can be got at one time"""
         return self._get_pars_or_data(*par_names)
-    
+
     def _get_pars_or_data(self, *names: str):
         """get the value of parameter or data by its name or id, alias as operator.par_name or operator.dtype_id
         multiple parameters or data can be got at one time"""
@@ -704,6 +704,34 @@ class BaseStrategy:
                     raise KeyError(f'parameter {par_name} is not defined in the strategy')
                 self._pars[par_name].value = par_value
                 self.__setattr__(par_name, par_value)
+
+    def update_par_ranges(self, *par_ranges: Any, **kwargs) -> None:
+        """ 快速更新策略的参数取值范围
+
+        Parameters
+        ----------
+        par_ranges: tuple of dict, optional
+            策略参数的取值范围，元组中的每个元素是按顺序排列的所有参数取值范围的字典，
+            如果没有设置参数，则必须传入kwargs参数
+
+        Returns
+        -------
+        None
+        """
+        # allow updating partial parameter ranges, thus length check is not needed
+        if par_ranges != ():
+            if len(par_ranges) > self.par_count:
+                raise ValueError(f'Number of par_ranges should not exceed {self.par_count}, '
+                                 f'got {len(par_ranges)} instead')
+            for par_name, par_range in zip(self.par_names, par_ranges):
+                self._pars[par_name].par_range = par_range
+        else:  # 如果没有传入par_ranges，则必须传入kwargs参数
+            if not kwargs:
+                raise ValueError('par_ranges is None, please provide par_ranges or kwargs to update parameter ranges')
+            for par_name, par_range in kwargs.items():
+                if par_name not in self.par_names:
+                    raise KeyError(f'parameter {par_name} is not defined in the strategy')
+                self._pars[par_name].par_range = par_range
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""

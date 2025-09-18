@@ -330,6 +330,52 @@ class TestParameter(unittest.TestCase):
         value4 = np.random.randint(0, 11, size=(2, 2))
         self.assertRaises(ValueError, p.set_value, value4)
 
+    def test_update_range(self):
+        """ test method update_par_range with various parameter types,
+        test with valid and invalid inputs"""
+        p = Parameter((0, 10), name='par18', par_type='int')
+        p.update_par_range((5, 15))
+        self.assertEqual(p.par_range, (5, 15))
+        self.assertEqual(p.lower_bound, 5)
+        self.assertEqual(p.upper_bound, 15)
+        self.assertEqual(p.count, 11)
+        self.assertEqual(p.size, 11)
+
+        p.update_par_range((15, 5))
+        self.assertEqual(p.par_range, (5, 15))
+        self.assertEqual(p.lower_bound, 5)
+        self.assertEqual(p.upper_bound, 15)
+        self.assertEqual(p.count, 11)
+        self.assertEqual(p.size, 11)
+
+        self.assertRaises(TypeError, p.update_par_range, (5.5, 15))
+        self.assertRaises(TypeError, p.update_par_range, (5, '15'))
+        self.assertRaises(TypeError, p.update_par_range, 'wrong_type')
+
+        p = Parameter((0.0, 10.0), name='par19', par_type='float')
+        p.update_par_range((5.0, 15.0))
+        self.assertEqual(p.par_range, (5.0, 15.0))
+        self.assertEqual(p.lower_bound, 5.0)
+        self.assertEqual(p.upper_bound, 15.0)
+        self.assertEqual(p.count, np.inf)
+        self.assertEqual(p.size, 10.0)
+
+        self.assertRaises(ValueError, p.update_par_range, (5.0, 15.0, 16.0))
+        self.assertRaises(ValueError, p.update_par_range, (5.0, '15.0'))
+        self.assertRaises(ValueError, p.update_par_range, 'wrong_type')
+
+        p = Parameter(('a', 'b', 'c'), name='par20', par_type='enum')
+        p.update_par_range(('b', 'c', 'd', 'e'))
+        self.assertEqual(p.par_range, ('b', 'c', 'd', 'e'))
+        self.assertEqual(p.lower_bound, 'b')
+        self.assertEqual(p.upper_bound, 'e')
+        self.assertEqual(p.count, 4)
+        self.assertEqual(p.size, 4)
+
+        self.assertRaises(ValueError, p.update_par_range, ('a', 'b', 'c'))
+        self.assertRaises(ValueError, p.update_par_range, (5, 10))
+        self.assertRaises(ValueError, p.update_par_range, 'wrong_type')
+
     def test_signal_blend(self):
         self.assertEqual(blender_parser('s0 & 1'), ['&', '1', 's0'])
         self.assertEqual(blender_parser('s0 or 1'), ['or', '1', 's0'])

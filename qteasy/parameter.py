@@ -462,6 +462,57 @@ class Parameter:
         """获取参数的当前值"""
         return self._value
 
+    def update_par_range(self, new_range):
+        """更新参数的范围
+
+        Parameters
+        ----------
+        new_range: int, float, str or list or tuple of int, float, str
+            数轴的上下界或枚举值，当数轴类型为conti或discr时，bounds_or_enum为一个长度为2的列表或元组，分别代表数轴的上下界；
+            当数轴类型为enum时，bounds_or_enum为一个列表或元组，其中的元素为该数轴上所有可用的值
+
+        Raises
+        ------
+        ValueError
+            当输入的数轴类型不在可选值中时，抛出ValueError异常
+
+        """
+        import numbers
+        if not isinstance(new_range, (list, tuple)):
+            raise TypeError(f'new_range should be a list or tuple, got {type(new_range)} instead')
+        # 新的范围必须与当前范围类型一致，且不能与当前的参数类型冲突。对于上下界型范围，必须完整给出上下界，对于枚举型范围，必须给出所有枚举值
+        boe = list(new_range)
+        length = len(boe)  # 列表元素个数
+        if self.par_type in ['int', 'discr', 'discrete']:
+            if length != 2:
+                raise ValueError(f'New range for discrete parameter should be a list or tuple of two integers, got {new_range} instead')
+            if any(not isinstance(item, int) for item in boe):
+                raise TypeError(f'New range for discrete parameter should be a list or tuple of two integers, got {new_range} instead')
+            self._set_bounds(int(boe[0]), int(boe[1]))
+        elif self.par_type in ['float', 'conti', 'continuous']:
+            if length != 2:
+                raise ValueError(f'New range for continuous parameter should be a list or tuple of two floats, got {new_range} instead')
+            if any(not isinstance(item, numbers.Number) for item in boe):
+                raise TypeError(f'New range for continuous parameter should be a list or tuple of two floats, got {new_range} instead')
+            self._set_bounds(float(boe[0]), float(boe[1]))
+        elif self.par_type == 'enum':
+            if length < 1:
+                raise ValueError(f'New range for enum parameter should be a list or tuple of at least one element, got {new_range} instead')
+            self._set_enum_val(boe)
+        elif self.par_type in ['int_array', 'float_array']:
+            if length != 2:
+                raise ValueError(f'New range for array parameter should be a list or tuple of two numbers, got {new_range} instead')
+            if any(not isinstance(item, numbers.Number) for item in boe):
+                raise TypeError(f'New range for array parameter should be a list or tuple of two numbers, got {new_range} instead')
+            if self.par_type == 'int_array':
+                self._set_bounds(int(boe[0]), int(boe[1]))
+            else:
+                self._set_bounds(float(boe[0]), float(boe[1]))
+        else:
+            raise ValueError(f'Parameter type {self.par_type} is not valid, should be one of '
+                             f'{self.AVAILABLE_TYPES}')
+
+
     def _set_bounds(self, lbound, ubound):
         """设置数轴的上下界, 只适用于离散型或连续型数轴
 
