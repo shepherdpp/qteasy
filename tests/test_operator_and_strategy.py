@@ -653,13 +653,16 @@ class TestGenStg(GeneralStg):
                 **kwargs,
         )
 
+        self.param1 = None
         if par_values:
             self.update_par_values(*par_values)
 
     def realize(self):
 
-        p1, p2 = self.param1, self.param2
-        close_d, close_h = self.close_E_d, self.close_E_h
+        # p1, p2 = self.param1, self.param2
+        p1, p2 = self.get_pars('param1'), self.get_pars('param2')
+        # close_d, close_h = self.close_E_d, self.close_E_h
+        close_d, close_h = self.get_data('close_E_d'), self.get_data('close_E_h')
         print("GeneralStg is running")
         print(f"param1 = {p1}, param2 = {p2}")
         print(f"got datas:\n{close_d}\n and \n{close_h}")
@@ -710,8 +713,10 @@ class TestFactorSorter(FactorSorter):
 
     def realize(self):
 
-        p1, p2 = self.param1, self.param2
-        close_d, close_w = self.close_E_d, self.close_E_w
+        # p1, p2 = self.param1, self.param2
+        p1, p2 = self.get_pars('param1'), self.get_pars('param2')
+        # close_d, close_w = self.close_E_d, self.close_E_w
+        close_d, close_w = self.get_data('close_E_d'), self.get_data('close_E_w')
         print("FactorSorter is running")
         print(f"param1 = {p1}, param2 = {p2}")
         print(f"got datas:\n{close_d}\n and \n{close_w}")
@@ -759,8 +764,10 @@ class TestRuleIter(RuleIterator):
 
     def realize(self):
 
-        p1, p2 = self.param3, self.param4
-        close_h, close_m = self.close_E_h, self.close_E_15min
+        # p1, p2 = self.param3, self.param4
+        p1, p2 = self.get_pars('param3'), self.get_pars('param4')
+        # close_h, close_m = self.close_E_h, self.close_E_15min
+        close_h, close_m = self.get_data('close_E_h'), self.get_data('close_E_15min')
         print("RuleIterator is running")
         print(f"param3 = {p1}, param4 = {p2}")
         print(f"got datas:\n{close_h}\n and \n{close_m}")
@@ -818,9 +825,9 @@ class MyStg(qt.RuleIterator):
     def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = self.f, self.s, self.m
+        f, s, m = self.get_pars('f', 's', 'm')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = self.close_E_d  # 取最近200个交易日的数据进行计算
+        h = self.get_data('close_E_d')  # 取最近200个交易日的数据进行计算
         # 计算长短均线的当前值
         s_ma = sma(h[0], s)[-1]
         f_ma = sma(h[0], f)[-1]
@@ -850,8 +857,8 @@ class StgBuyOpen(GeneralStg):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.n
-        h = self.close_E_d
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
@@ -883,8 +890,8 @@ class StgSelClose(GeneralStg):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.n
-        h = self.close_E_d
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
         current_price = h[:, -1, 0]
         n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
