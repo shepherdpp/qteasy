@@ -3124,20 +3124,18 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
         op.set_parameter(
                 0,
-                data_freq='d',
                 run_freq='d',
                 window_length=50,
-                pars=(20,),
-                strategy_data_types='close',  # 考察收盘价变化率
+                par_values=(20,),
+                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价变化率
                 run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
         )
         op.set_parameter(
                 1,
-                data_freq='d',
                 run_freq='d',
                 window_length=50,
-                pars=(20,),
-                strategy_data_types='close',  # 考察收盘价的变化率
+                par_values=(20,),
+                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价的变化率
                 run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
         )
         op.set_blender(blender='s0')
@@ -3178,7 +3176,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',
-                         data_types='wt_idx|000300.SH',
+                         data_types=DataType('wt_idx|000300.SH', freq='d', asset_type='E'),
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)

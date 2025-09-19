@@ -547,7 +547,7 @@ class BaseStrategy:
             return self.__getattribute__(names[0])
 
     def set_data_types(self,
-                       data_types,
+                       data_types: Union[DataType, List[DataType], Dict[str, DataType]],
                        use_latest_data_cycle,
                        window_length) -> None:
         """ 设置策略参数
@@ -592,6 +592,8 @@ class BaseStrategy:
         elif isinstance(use_latest_data_cycle, dict):
             self._data_ULC = {d_name: False for d_name in self._data_ids}
             self._data_ULC.update(use_latest_data_cycle)
+        elif use_latest_data_cycle is None:
+            self._data_ULC = {d_name: False for d_name in self._data_ids}
         else:
             raise TypeError(f'parameter "use_latest_data_cycles" is invalid ({use_latest_data_cycle}), '
                             f'please check your input')
@@ -606,8 +608,10 @@ class BaseStrategy:
             WLs = input_to_list(window_length, len(self.data_types), 20)
             self._data_WL = {self._data_ids[i]: WLs[i] for i in range(len(WLs))}
         elif isinstance(window_length, dict):
-            self._data_WL = {d_name: False for d_name in self._data_ids}
+            self._data_WL = {d_name: 20 for d_name in self._data_ids}
             self._data_WL.update(window_length)
+        elif window_length is None:
+            self._data_WL = {d_name: 20 for d_name in self._data_ids}
         else:
             raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
 

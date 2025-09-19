@@ -16,20 +16,13 @@ import pandas as pd
 
 from typing import Union, Any, Iterable, Mapping
 
-from qteasy.finance import CashPlan
-from qteasy.history import HistoryPanel
 from qteasy.strategy import BaseStrategy
-from qteasy.blender import blender_parser
 from qteasy.group import Group
-from qteasy.database import DataSource
+from qteasy.datatypes import DataType
 
 from qteasy.utilfuncs import (
-    AVAILABLE_SIGNAL_TYPES,
     AVAILABLE_OP_TYPES,
-    pandas_freq_alias_version_conversion,
     str_to_list,
-    ffill_2d_data,
-    fill_nan_data,
     rolling_window,
 )
 
@@ -1251,7 +1244,7 @@ class Operator:
             如果group_name不为None，则返回一个列表，其中包含该run_timing的blender
         """
         if group_name is None:
-            return {g.id: g.blender for g in self._groups if g.blender is not None}
+            return {g.name: g.blender for g in self._groups if g.blender is not None}
         if group_name not in self.strategy_groups:
             return None
         return self.groups[group_name].blender
@@ -1289,6 +1282,7 @@ class Operator:
                       stg_id: Union[str, int],
                       pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
+                      data_types: Union[DataType, list[DataType], dict[str, DataType]] = None,
                       data_type_ids: Union[str, list] = None,
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
@@ -1312,6 +1306,8 @@ class Operator:
             0: 不参加优化，在策略优化过程中不调整该策略的可调参数
             1: 参加优化，在策略优化过程中根据优化算法主动调整策略参数以寻找最佳参数组合
             2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
+        data_types: DataType or list of DataType or dict of str, optional
+            策略计算所需历史数据的数据类型，如果给出，则更新这个数据类型的参数
         data_type_ids: str or list of str,
             策略计算所需历史数据的数据类型的ID，给出该ID表明更新这个数据类型的参数
         window_length: int or list of int or tuple of int,
@@ -1320,6 +1316,8 @@ class Operator:
             是否使用最新的数据周期
         par_values: tuple or list,
             策略参数的具体取值
+        par_range: tuple or list,
+            策略参数的取值范围
         run_freq: str, optional
             如果给出该参数，则修改策略的运行频率，修改运行频率会导致将策略从策略组中移除，并重新分配到一个新的策略组中
         run_timing: str, optional
@@ -1340,14 +1338,16 @@ class Operator:
                 raise ValueError(f'parameter setting error')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
-        has_wl = window_length is not None
-        has_dt = data_type_ids is not None
-        has_ulc = use_latest_data_cycle is not None
-        if has_wl or has_dt or has_ulc:
-            strategy.update_data_types(
-                    dtype_id=data_type_ids,
+        if data_types is not None:  # 设置策略的数据类型
+            strategy.set_data_types(
+                    data_types=data_types,
                     window_length=window_length,
                     use_latest_data_cycle=use_latest_data_cycle,
+            )
+
+        if data_type_ids is not None:  # 更新策略数据类型的ID
+            strategy.update_data_types(
+                    dtype_id=data_type_ids,
             )
         if par_values is not None:  # 设置策略参数的具体取值
             strategy.update_par_values(*par_values)
@@ -1596,7 +1596,7 @@ class Operator:
                                 freq=group.run_freq,
                                 **kwargs,
                         ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
-            elif group.run_freq in ['d', 'w', 'm', 'me', 'q', 'qe', 'y', 'ye']:
+            elif group.run_freq in ['d', 'w', 'M', 'ME', 'Q', 'QE', 'Y', 'YE']:
                 # 运行时间设定为15:00 - close 及 09:30 - open
                 if group.run_timing == 'close':
                     time_offset = "15:00"
