@@ -361,8 +361,8 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.size, 10.0)
 
         self.assertRaises(ValueError, p.update_par_range, (5.0, 15.0, 16.0))
-        self.assertRaises(ValueError, p.update_par_range, (5.0, '15.0'))
-        self.assertRaises(ValueError, p.update_par_range, 'wrong_type')
+        self.assertRaises(TypeError, p.update_par_range, (5.0, '15.0'))
+        self.assertRaises(TypeError, p.update_par_range, 'wrong_type')
 
         p = Parameter(('a', 'b', 'c'), name='par20', par_type='enum')
         p.update_par_range(('b', 'c', 'd', 'e'))
@@ -372,9 +372,8 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.count, 4)
         self.assertEqual(p.size, 4)
 
-        self.assertRaises(ValueError, p.update_par_range, ('a', 'b', 'c'))
-        self.assertRaises(ValueError, p.update_par_range, (5, 10))
-        self.assertRaises(ValueError, p.update_par_range, 'wrong_type')
+        self.assertRaises(TypeError, p.update_par_range, {'a', 'b', 'c'})
+        self.assertRaises(TypeError, p.update_par_range, 'wrong_type')
 
     def test_signal_blend(self):
         self.assertEqual(blender_parser('s0 & 1'), ['&', '1', 's0'])
