@@ -1345,9 +1345,12 @@ class Operator:
                     use_latest_data_cycle=use_latest_data_cycle,
             )
 
-        if data_type_ids is not None:  # 更新策略数据类型的ID
+        if (data_type_ids is not None) or (window_length is not None) or (use_latest_data_cycle is not None):
+            # 更新策略数据类型的ID或者其参数
             strategy.update_data_types(
                     dtype_id=data_type_ids,
+                    window_length=window_length,
+                    use_latest_data_cycle=use_latest_data_cycle,
             )
         if par_values is not None:  # 设置策略参数的具体取值
             strategy.update_par_values(*par_values)

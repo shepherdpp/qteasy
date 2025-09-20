@@ -1719,7 +1719,7 @@ class TestDataSource(unittest.TestCase):
         print('test get_main_freq_level function')
         self.assertEqual(get_main_freq_level('5min'), 90)
         self.assertEqual(get_main_freq_level('15min'), 80)
-        self.assertEqual(get_main_freq_level('w'), 40)
+        self.assertEqual(get_main_freq_level('W'), 40)
         self.assertIsNone(get_main_freq_level('wrong_input'), None)
 
         print('test next_main_freq function')
