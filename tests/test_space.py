@@ -24,8 +24,8 @@ class TestSpace(unittest.TestCase):
         """
         # first group of inputs, output Space with two discr axis from [0,10]
         print('testing space objects\n')
-        pars_list = [[(0, 10), (0, 10)],
-                     [[0, 10], [0, 10]]]
+        pars_list = [((0, 10), (0, 10)),
+                     ([0, 10], [0, 10])]
 
         types_list = ['int',
                       ['int', 'int']]
@@ -33,7 +33,7 @@ class TestSpace(unittest.TestCase):
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
             print(p)
-            s = Space(*p)
+            s = Space(*p[0], par_types=p[1])
             b = s.boes
             t = s.types
             print(s, t)
@@ -50,7 +50,7 @@ class TestSpace(unittest.TestCase):
         # test invalid par types
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            self.assertRaises(KeyError, Space, *p)
+            self.assertRaises(KeyError, Space, *p[0], par_types=p[1])
 
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
@@ -59,14 +59,14 @@ class TestSpace(unittest.TestCase):
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            s = Space(*p)
+            s = Space(*p[0], par_types=p[1])
             b = s.boes
             t = s.types
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['int', 'enum'], 'types incorrect')
 
         pars_list = [(0., 10), (0, 10)]
-        s = Space(pars=pars_list, par_types=None)
+        s = Space(*pars_list, par_types=None)
         self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 11))
@@ -75,7 +75,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(0., 10), (0, 10)]
-        s = Space(pars=pars_list, par_types='conti, enum')
+        s = Space(*pars_list, par_types='conti, enum')
         self.assertEqual(s.types, ['float', 'enum'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 2))
@@ -84,7 +84,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(1, 2), (2, 3), (3, 4)]
-        s = Space(pars=pars_list)
+        s = Space(*pars_list)
         self.assertEqual(s.types, ['int', 'int', 'int'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, (2, 2, 2))
@@ -93,7 +93,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(1, 2), (2, 3), (3, 4)])
 
         pars_list = [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
-        s = Space(pars=pars_list)
+        s = Space(*pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, (3, 3, 3))
@@ -102,7 +102,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
         pars_list = [((1, 2, 3), (2, 3, 4), (3, 4, 5))]
-        s = Space(pars=pars_list)
+        s = Space(*pars_list)
         self.assertEqual(s.types, ['enum'])
         self.assertEqual(s.dim, 1)
         self.assertEqual(s.size, (3,))
@@ -110,7 +110,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.count, 3)
 
         pars_list = ((1, 2, 3), (2, 3, 4), (3, 4, 5))
-        s = Space(pars=pars_list)
+        s = Space(*pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, (3, 3, 3))
@@ -119,8 +119,8 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
         print('testing space_around_centre')
-        pars_list = [(0, 10), (0, 10)]
-        s = Space(pars=pars_list, par_types=None)
+        pars_list = ((0, 10), (0, 10))
+        s = Space(*pars_list, par_types=None)
         centre = (5, 5)
         distance = 2
         s2 = space_around_centre(s, centre, distance)
@@ -131,8 +131,8 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s2.count, 25)
         self.assertEqual(s2.boes, [(3, 7), (3, 7)])
 
-        pars_space = [(0., 10.), (0, 10), (0., 10.)]
-        s = Space(pars=pars_space, par_types=None)
+        pars_space = ((0., 10.), (0, 10), (0., 10.))
+        s = Space(*pars_space, par_types=None)
         centre = (5, 5, 5)
         distance = 2
         s2 = space_around_centre(s, centre, distance)
@@ -143,6 +143,19 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s2.count, np.inf)
         self.assertEqual(s2.boes, [(3, 7), (3, 7), (3, 7)])
 
+        # test creating Space from Parameter objects
+        param1 = Parameter((0, 10), par_type='int')
+        param2 = Parameter((0., 10.), par_type='conti')
+        param3 = Parameter((1, 2, 3), par_type='enum')
+        s = Space(param1, param2, param3)
+        self.assertIsInstance(s, Space)
+        self.assertEqual(s.types, ['int', 'float', 'enum'])
+        self.assertEqual(s.dim, 3)
+        self.assertEqual(s.size, (11, 10.0, 3))
+        self.assertEqual(s.shape, (11, np.inf, 3))
+        self.assertEqual(s.count, np.inf)
+        self.assertEqual(s.boes, [(0, 10), (0., 10.), (1, 2, 3)])
+
     def test_extract(self):
         """
 
@@ -150,14 +163,14 @@ class TestSpace(unittest.TestCase):
         """
         pars_list = [(0, 10), (0, 10)]
         types_list = ['int', 'int']
-        s = Space(pars=pars_list, par_types=types_list)
-        extracted_int, count = s.extract(3, 'interval')
+        s = Space(*pars_list, par_types=types_list)
+        extracted_int, count = s.extract(4, 'interval')
         extracted_int_list = list(extracted_int)
         print('extracted int\n', extracted_int_list)
         self.assertEqual(count, 16, 'extraction count wrong!')
-        self.assertEqual(extracted_int_list, [(0, 0), (0, 3), (0, 6), (0, 9), (3, 0), (3, 3),
-                                              (3, 6), (3, 9), (6, 0), (6, 3), (6, 6), (6, 9),
-                                              (9, 0), (9, 3), (9, 6), (9, 9)],
+        self.assertEqual(extracted_int_list, [(0, 0), (0, 3), (0, 6), (0, 10), (3, 0), (3, 3),
+                                              (3, 6), (3, 10), (6, 0), (6, 3), (6, 6), (6, 10),
+                                              (10, 0), (10, 3), (10, 6), (10, 10)],
                          'space extraction wrong!')
         extracted_rand, count = s.extract(10, 'rand')
         extracted_rand_list = list(extracted_rand)
@@ -171,14 +184,21 @@ class TestSpace(unittest.TestCase):
             self.assertGreaterEqual(point[1], 0)
 
         pars_list = [(0., 10), (0, 10)]
-        s = Space(pars=pars_list, par_types=None)
-        extracted_int2, count = s.extract(3, 'interval')
+        s = Space(*pars_list, par_types=None)
+        extracted_int2, count = s.extract(4, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list2 = list(extracted_int2)
-        self.assertEqual(extracted_int_list2, [(0, 0), (0, 3), (0, 6), (0, 9), (3, 0), (3, 3),
-                                               (3, 6), (3, 9), (6, 0), (6, 3), (6, 6), (6, 9),
-                                               (9, 0), (9, 3), (9, 6), (9, 9)],
-                         'space extraction wrong!')
+        self.assertEqual(extracted_int_list2,
+                         [(0, 0), (0, 3), (0, 6), (0, 10),
+                          (3.3333333333333335, 0),
+                          (3.3333333333333335, 3),
+                          (3.3333333333333335, 6),
+                          (3.3333333333333335, 10),
+                          (6.666666666666667, 0),
+                          (6.666666666666667, 3),
+                          (6.666666666666667, 6),
+                          (6.666666666666667, 10),
+                          (10, 0), (10, 3), (10, 6), (10, 10)])
         print('extracted int list 2\n', extracted_int_list2)
         self.assertIsInstance(extracted_int_list2[0][0], float)
         self.assertIsInstance(extracted_int_list2[0][1], (int, int64))
@@ -196,8 +216,8 @@ class TestSpace(unittest.TestCase):
             self.assertGreaterEqual(point[1], 0)
 
         pars_list = [(0., 10), ('a', 'b')]
-        s = Space(pars=pars_list, par_types='enum, enum')
-        extracted_int3, count = s.extract(1, 'interval')
+        s = Space(*pars_list, par_types='enum, enum')
+        extracted_int3, count = s.extract(2, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list3 = list(extracted_int3)
         self.assertEqual(extracted_int_list3, [(0., 'a'), (0., 'b'), (10, 'a'), (10, 'b')],
@@ -217,10 +237,10 @@ class TestSpace(unittest.TestCase):
             self.assertIsInstance(point[1], str)
             self.assertIn(point[1], ['a', 'b'])
 
-        pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14))]
-        s = Space(pars=pars_list, par_types='enum')
+        pars_list = ((0, 10), (1, 'c'), ('a', 'b'), (1, 14))
+        s = Space(pars_list, par_types='enum')
         extracted_int4, count = s.extract(1, 'interval')
-        self.assertEqual(count, 4, 'extraction count wrong!')
+        self.assertEqual(count, 1, 'extraction count wrong!')
         extracted_int_list4 = list(extracted_int4)
         it = zip(extracted_int_list4, [(0, 10), (1, 'c'), (0, 'b'), (1, 14)])
         for item, item2 in it:
@@ -240,9 +260,9 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point[1], [10, 14, 'b', 'c'])
             self.assertIn(point, [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
-        pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)]
-        s = Space(pars=pars_list, par_types='enum, discr')
-        extracted_int5, count = s.extract(1, 'interval')
+        pars_list = ((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)
+        s = Space(*pars_list, par_types='enum, discr')
+        extracted_int5, count = s.extract(4, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list5 = list(extracted_int5)
         for item, item2 in extracted_int_list5:
@@ -262,9 +282,10 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point[0], [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
         print(f'test incremental extraction')
-        pars_list = [(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)]
-        s = Space(pars_list)
-        ext, count = s.extract(64, 'interval')
+        pars_list = ((10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250))
+        import pdb; pdb.set_trace()
+        s = Space(*pars_list)
+        ext, count = s.extract(4, 'interval')
         self.assertEqual(count, 4096)
         points = list(ext)
         # 已经取出所有的点，围绕其中10个点生成十个subspaces
@@ -286,42 +307,42 @@ class TestSpace(unittest.TestCase):
                   f'\n{points[:5]}')
 
     def test_axis_extract(self):
-        # test axis object with conti type
-        axis = Parameter((0., 5))
-        self.assertIsInstance(axis, Parameter)
-        self.assertEqual(axis.par_type, 'float')
-        self.assertEqual(axis.par_range, (0., 5.))
-        self.assertEqual(axis.count, np.inf)
-        self.assertEqual(axis.size, 5.0)
-        self.assertTrue(np.allclose(axis.gen_values(1, 'int'), [0., 1., 2., 3., 4.]))
-        self.assertTrue(np.allclose(axis.gen_values(0.5, 'int'), [0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4., 4.5]))
-        extracted = axis.gen_values(8, 'rand')
+        # test param object with conti type
+        param = Parameter((0., 5))
+        self.assertIsInstance(param, Parameter)
+        self.assertEqual(param.par_type, 'float')
+        self.assertEqual(param.par_range, (0., 5.))
+        self.assertEqual(param.count, np.inf)
+        self.assertEqual(param.size, 5.0)
+        self.assertTrue(np.allclose(param.gen_values(6, 'int'), [0., 1., 2., 3., 4., 5.]))
+        self.assertTrue(np.allclose(param.gen_values(11, 'int'), [0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5.]))
+        extracted = param.gen_values(8, 'rand')
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(0 <= item <= 5) for item in extracted]))
 
-        # test axis object with discrete type
-        axis = Parameter((1, 5))
-        self.assertIsInstance(axis, Parameter)
-        self.assertEqual(axis.par_type, 'int')
-        self.assertEqual(axis.par_range, (1, 5))
-        self.assertEqual(axis.count, 5)
-        self.assertEqual(axis.size, 5)
-        self.assertTrue(np.allclose(axis.gen_values(1, 'int'), [1, 2, 3, 4, 5]))
-        self.assertRaises(ValueError, axis.gen_values, 0.5, 'int')
-        extracted = axis.gen_values(8, 'rand')
+        # test param object with discrete type
+        param = Parameter((1, 5))
+        self.assertIsInstance(param, Parameter)
+        self.assertEqual(param.par_type, 'int')
+        self.assertEqual(param.par_range, (1, 5))
+        self.assertEqual(param.count, 5)
+        self.assertEqual(param.size, 5)
+        self.assertTrue(np.allclose(param.gen_values(5, 'int'), [1, 2, 3, 4, 5]))
+        self.assertRaises(ValueError, param.gen_values, 0.5, 'int')
+        extracted = param.gen_values(8, 'rand')
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(item in [1, 2, 3, 4, 5]) for item in extracted]))
 
-        # test axis object with enumerate type
-        axis = Parameter((1, 5, 7, 10, 'A', 'F'))
-        self.assertIsInstance(axis, Parameter)
-        self.assertEqual(axis.par_type, 'enum')
-        self.assertEqual(axis.par_range, (1, 5, 7, 10, 'A', 'F'))
-        self.assertEqual(axis.count, 6)
-        self.assertEqual(axis.size, 6)
-        self.assertEqual(axis.gen_values(1, 'int'), [1, 5, 7, 10, 'A', 'F'])
-        self.assertRaises(ValueError, axis.gen_values, 0.5, 'int')
-        extracted = axis.gen_values(8, 'rand')
+        # test param object with enumerate type
+        param = Parameter((1, 5, 7, 10, 'A', 'F'))
+        self.assertIsInstance(param, Parameter)
+        self.assertEqual(param.par_type, 'enum')
+        self.assertEqual(param.par_range, (1, 5, 7, 10, 'A', 'F'))
+        self.assertEqual(param.count, 6)
+        self.assertEqual(param.size, 6)
+        self.assertEqual(param.gen_values(6, 'int'), [1, 5, 7, 10, 'A', 'F'])
+        self.assertRaises(ValueError, param.gen_values, 0.5, 'int')
+        extracted = param.gen_values(8, 'rand')
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(item in [1, 5, 7, 10, 'A', 'F']) for item in extracted]))
 
@@ -329,7 +350,7 @@ class TestSpace(unittest.TestCase):
         """测试从一个点生成一个space"""
         # 生成一个space，指定space中的一个点以及distance，生成一个sub-space
         pars_list = [(0., 10), (0, 10)]
-        s = Space(pars=pars_list, par_types=None)
+        s = Space(*pars_list, par_types=None)
         self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10., 11))
@@ -350,7 +371,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(subspace.boes, [(1, 5), (1, 5)])
 
         print('create subspace from a 6 dimensional discrete space')
-        s = Space(pars=[(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
+        s = Space((10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250))
         p = (15, 200, 150, 150, 150, 150)
         d = 10
         subspace = s.from_point(p, d)
@@ -364,7 +385,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(subspace.boes, [(10, 25), (190, 210), (140, 160), (140, 160), (140, 160), (140, 160)])
 
         print('create subspace from a 6 dimensional continuous space')
-        s = Space(pars=[(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)])
+        s = Space((10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250))
         p = (15, 200, 150, 150, 150, 150)
         d = 10
         subspace = s.from_point(p, d)
@@ -378,7 +399,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(subspace.boes, [(10, 25), (190, 210), (140, 160), (140, 160), (140, 160), (140, 160)])
 
         print('create subspace with different distances on each dimension')
-        s = Space(pars=[(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)])
+        s = Space((10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250))
         p = (15, 200, 150, 150, 150, 150)
         d = [10, 5, 5, 10, 10, 5]
         subspace = s.from_point(p, d)
@@ -392,40 +413,40 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(subspace.boes, [(10, 25), (195, 205), (145, 155), (140, 160), (140, 160), (145, 155)])
 
     def test_point_in_space(self):
-        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp = Space((0., 10.), (0., 10.), (0., 10.))
         p1 = (5.5, 3.2, 7)
         p2 = (-1, 3, 10)
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
         self.assertFalse(p2 in sp)
         print(f'point {p2} is not in space {sp}')
-        sp = Space([(0., 10.), (0., 10.), range(40, 3, -2)], 'conti, conti, enum')
+        sp = Space((0., 10.), (0., 10.), range(40, 3, -2), par_types='conti, conti, enum')
         p1 = (5.5, 3.2, 8)
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
 
     def test_space_in_space(self):
         print('test if a space is in another space')
-        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
-        sp2 = Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp = Space((0., 10.), (0., 10.), (0., 10.))
+        sp2 = Space((0., 10.), (0., 10.), (0., 10.))
         self.assertTrue(sp2 in sp)
         self.assertTrue(sp in sp2)
         print(f'space {sp2} is in space {sp}\n'
               f'and space {sp} is in space {sp2}\n'
               f'they are equal to each other\n')
-        sp2 = Space([(0, 5.), (2, 7.), (3., 9.)])
+        sp2 = Space((0, 5.), (2, 7.), (3., 9.))
         self.assertTrue(sp2 in sp)
         self.assertFalse(sp in sp2)
         print(f'space {sp2} is in space {sp}\n'
               f'and space {sp} is not in space {sp2}\n'
               f'{sp2} is a sub space of {sp}\n')
-        sp2 = Space([(0, 5), (2, 7), (3., 9)])
+        sp2 = Space((0, 5), (2, 7), (3., 9))
         self.assertFalse(sp2 in sp)
         self.assertFalse(sp in sp2)
         print(f'space {sp2} is not in space {sp}\n'
               f'and space {sp} is not in space {sp2}\n'
               f'they have different types of axes\n')
-        sp = Space([(0., 10.), (0., 10.), range(40, 3, -2)])
+        sp = Space((0., 10.), (0., 10.), range(40, 3, -2))
         self.assertFalse(sp in sp2)
         self.assertFalse(sp2 in sp)
         print(f'space {sp2} is not in space {sp}\n'
@@ -433,7 +454,7 @@ class TestSpace(unittest.TestCase):
               f'they have different types of axes\n')
 
     def test_space_around_centre(self):
-        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp = Space((0., 10.), (0., 10.), (0., 10.))
         p1 = (5.5, 3.2, 7)
         ssp = space_around_centre(space=sp, centre=p1, radius=1.2)
         print(ssp.boes)
