@@ -146,8 +146,13 @@ class Space:
         par_dim = len(pars)
         if par_types is None:
             par_types = []
-        elif isinstance(par_types, str):
-            par_types = str_to_list(par_types, ',')
+        if isinstance(par_types, str):
+            par_types = [par_types]
+        if not isinstance(par_types, list):
+            raise TypeError(f'par_types should be a list of strings, got {type(par_types)} instead')
+        if not all(isinstance(pt, (str, type(None))) for pt in par_types):
+            raise TypeError('All elements in par_types should be strings or None')
+
         par_types = input_to_list(par_types, par_dim, None)
         # 预处理par_types
         for i in range(len(par_types)):
@@ -160,7 +165,8 @@ class Space:
             elif par_types[i].lower() in ['enum', 'enumerate']:
                 par_types[i] = 'enum'
             else:
-                raise KeyError(f'Invalid parameter type: {par_types[i]}')
+                continue
+                # raise KeyError(f'Invalid parameter type: {par_types[i]}')
         # 逐一生成Axis对象并放入axes列表中
         self._axis = [Parameter(par, par_type=par_type) for par, par_type in zip(pars, par_types)]
 
@@ -316,7 +322,7 @@ class Space:
 
         Examples
         --------
-        >>> s = Space(('x', 'y'), (0, 10), par_types='enum,int')
+        >>> s = Space(('x', 'y'), (0, 10), par_types=['enum','int'])
         <('x', 'y'),(0, 10)>
         >>> ('x', 6) in s
         True
@@ -328,21 +334,22 @@ class Space:
         """
         assert isinstance(item, (list, tuple, Space)), \
             f'TypeError, the item must be a point (tuple or list of coordinates) or a subspace, got {type(item)}'
-        if isinstance(item, (tuple, list)):  # if item is a point
+        if isinstance(item, (tuple, list)):  # if item is a point, all parameter should be in its range
             if len(item) != self.dim:
                 return False
-            for coordinate, boe, s_type in zip(item, self.boes, self.types):
-                if s_type == 'enum':
-                    if coordinate not in boe:
-                        return False
-                else:
-                    if not boe[0] <= coordinate <= boe[1]:
-                        return False
+            return all(cordi in ax for cordi, ax in zip(item, self.axis))
         else:  # if item is a space, check if all boes are within self boes
-            if item.dim != self.dim:
+            if item.dim != self.dim:  # different dimensions
                 return False
             if any(item_type != self_type for item_type, self_type in zip (item.types, self.types)):
+                # different par types
                 return False
+            if any(item_type in ['float_array', 'int_array'] for item_type in item.types):
+                # check array shapes
+                item_array_axis = [item for item, t in zip(item.axis, item.types) if t in ['float_array', 'int_array']]
+                self_array_axis = [item for item, t in zip(self.axis, self.types) if t in ['float_array', 'int_array']]
+                if any(it.shape != st.shape for it, st in zip(item_array_axis, self_array_axis)):
+                    return False
             for it_boe, s_boe, s_type in zip(item.boes, self.boes, self.types):
                 if s_type == 'enum':  # in case of enum, check if all items are in self boe
                     if any(it not in s_it for it, s_it in zip(it_boe, s_boe)):

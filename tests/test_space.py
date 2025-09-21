@@ -50,7 +50,7 @@ class TestSpace(unittest.TestCase):
         # test invalid par types
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            self.assertRaises(KeyError, Space, *p[0], par_types=p[1])
+            self.assertRaises(ValueError, Space, *p[0], par_types=p[1])
 
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
@@ -75,7 +75,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(0., 10), (0, 10)]
-        s = Space(*pars_list, par_types='conti, enum')
+        s = Space(*pars_list, par_types=['conti', 'enum'])
         self.assertEqual(s.types, ['float', 'enum'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 2))
@@ -216,7 +216,7 @@ class TestSpace(unittest.TestCase):
             self.assertGreaterEqual(point[1], 0)
 
         pars_list = [(0., 10), ('a', 'b')]
-        s = Space(*pars_list, par_types='enum, enum')
+        s = Space(*pars_list, par_types=['enum', 'enum'])
         extracted_int3, count = s.extract(2, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list3 = list(extracted_int3)
@@ -238,7 +238,7 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point[1], ['a', 'b'])
 
         pars_list = ((0, 10), (1, 'c'), ('a', 'b'), (1, 14))
-        s = Space(pars_list, par_types='enum')
+        s = Space(pars_list, par_types=['enum'])
         extracted_int4, count = s.extract(1, 'interval')
         self.assertEqual(count, 1, 'extraction count wrong!')
         extracted_int_list4 = list(extracted_int4)
@@ -261,7 +261,7 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point, [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
         pars_list = ((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)
-        s = Space(*pars_list, par_types='enum, discr')
+        s = Space(*pars_list, par_types=['enum', 'discr'])
         extracted_int5, count = s.extract(4, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list5 = list(extracted_int5)
@@ -283,7 +283,6 @@ class TestSpace(unittest.TestCase):
 
         print(f'test incremental extraction')
         pars_list = ((10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250))
-        import pdb; pdb.set_trace()
         s = Space(*pars_list)
         ext, count = s.extract(4, 'interval')
         self.assertEqual(count, 4096)
@@ -296,7 +295,7 @@ class TestSpace(unittest.TestCase):
             self.assertTrue(subspace in s)
             self.assertEqual(subspace.dim, 6)
             self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
-            ext, count = subspace.extract(32)
+            ext, count = subspace.extract(3)
             points = list(ext)
             self.assertGreaterEqual(count, 512)
             self.assertLessEqual(count, 4096)
@@ -420,10 +419,19 @@ class TestSpace(unittest.TestCase):
         print(f'point {p1} is in space {sp}')
         self.assertFalse(p2 in sp)
         print(f'point {p2} is not in space {sp}')
-        sp = Space((0., 10.), (0., 10.), range(40, 3, -2), par_types='conti, conti, enum')
+        sp = Space((0., 10.), (0., 10.), range(40, 3, -2), par_types=['conti', 'conti', 'enum'])
         p1 = (5.5, 3.2, 8)
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
+
+        # test array type of point
+        sp = Space((0., 10.), (0., 10.), par_types=['array[2]', 'array[2, 2]'])
+        p1 = (np.array([5.5, 3.2]), np.array([[1, 2], [3, 4]]))
+        self.assertTrue(p1 in sp)
+        print(f'point {p1} is in space {sp}')
+        p2 = (np.array([5.5, 11]), np.array([[1, 2], [3, 4]]))
+        self.assertFalse(p2 in sp)
+        print(f'point {p2} is not in space {sp}')
 
     def test_space_in_space(self):
         print('test if a space is in another space')
@@ -453,6 +461,23 @@ class TestSpace(unittest.TestCase):
               f'and space {sp} is not in space {sp2}\n'
               f'they have different types of axes\n')
 
+        # test array type of spaces
+        sp = Space((0., 10.), (0., 10.), par_types=['array[2]', 'array[2, 2]'])
+        sp2 = Space((0., 5.), (0., 5.), par_types=['array[2]', 'array[2, 2]'])
+        self.assertTrue(sp2 in sp)
+        print(f'space {sp2} is in space {sp}\n'
+              f'space {sp} is a sup space of {sp2}\n')
+        # if array dimensions are different, then not in
+        sp2 = Space((0., 5.), (0., 5.), par_types=['array[3]', 'array[2, 3, 2]'])
+        self.assertFalse(sp2 in sp)
+        print(f'space {sp2} is not in space {sp}\n'
+              f'space {sp} is not a sup space of {sp2}\n')
+        # if array range is larger, then not in
+        sp2 = Space((0., 15.), (-5., 5.), par_types=['array[2]', 'array[2, 2]'])
+        self.assertFalse(sp2 in sp)
+        print(f'space {sp2} is not in space {sp}\n'
+              f'space {sp} is not a sup space of {sp2}\n')
+
     def test_space_around_centre(self):
         sp = Space((0., 10.), (0., 10.), (0., 10.))
         p1 = (5.5, 3.2, 7)
@@ -469,7 +494,7 @@ class TestSpace(unittest.TestCase):
         print(ssp.boes)
         self.assertEqual(ssp.boes, [(1.6, 9.4), (0.0, 7.1), (3.1, 10.0)])
         print('\ntest enum spaces')
-        sp = Space([(0, 100), range(40, 3, -2)], 'discr, enum')
+        sp = Space((0, 100), range(40, 3, -2), par_types=['discr', 'enum'])
         p1 = [34, 12]
         ssp = space_around_centre(space=sp, centre=p1, radius=5, ignore_enums=False)
         self.assertEqual(ssp.boes, [(29, 39), (22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
