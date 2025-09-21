@@ -13,6 +13,8 @@ import numpy as np
 import itertools
 import warnings
 
+from typing import Union, Iterable
+
 from qteasy.utilfuncs import (
     str_to_list,
     input_to_list,
@@ -69,7 +71,7 @@ class Space:
     inf
     >>> space.types
     ['int', 'float', 'enum']
-    >>> list(space.gen_values(4, how='interval')[0])
+    >>> list(space.extract(4, how='interval')[0])
     [(1, 3.0, 5),
      (1, 3.0, 9),
      (1, 7.0, 5),
@@ -78,7 +80,7 @@ class Space:
      (5, 3.0, 9),
      (5, 7.0, 5),
      (5, 7.0, 9)]
-    >>> list(space.gen_values(8, how='rand')[0])
+    >>> list(space.extract(8, how='rand')[0])
     [(1, 7.928856883024961, 9),
      (3, 9.764777688087385, 8),
      (4, 8.445573333306598, 5),
@@ -89,20 +91,20 @@ class Space:
      (1, 7.595081100116288, 8)]
     """
 
-    def __init__(self, pars, par_types: [list, str] = None):
+    def __init__(self,
+                 *pars: Union[Iterable, Parameter, list[Parameter]],
+                 par_types: Union[list[str], str] = None
+                 ):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         Parameters
         ----------
-        pars: int、float或list,
-            需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照types中的类型字符串创建不
-            同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
-            pars为float，自动生成上下界为(0, items)的浮点型数值轴，
-            pars为int，自动生成上下界为(0, items)的整形数值轴
-            pars为list，根据list的元素种类和数量生成不同类型轴：
-                list元素只有两个且元素类型为int或float：生成上下界为(items[0], items[1])的浮点型数值
-                轴或整形数值轴
-                list元素不是两个，或list元素类型不是int或float：生成枚举轴，轴的元素包含par中的元素
+        *pars: tuple, list of tuple, Parameter, list of Parameter
+            参数空间中包括的参数，可以输入参数对象，参数对象的列表或者参数的范围列表
+            参数范围的列表和参数对象不能混合输入。
+            如果输入参数对象，则生成一个包含这些参数对象的参数空间，此时不需要输入par_types参数
+            如果输入参数范围列表，则根据par_types参数生成不同类型的参数对象，如果不输入par_types参数，
+            则根据参数范围自动判断参数类型
         par_types: list of str or str, optional
             生成的空间每个轴的类型，如果不给出types，会根据输入的pars自动判断，如果给出types，会根据types中
             的类型字符串创建不同的轴，types中的类型字符串分别如下：
@@ -113,17 +115,32 @@ class Space:
 
         Returns
         -------
-        None
+        Space object
 
         Examples
         --------
-        >>> space = Space([(1, 5), (3., 10.), (5, 6, 7, 8, 9)])
+        # 直接输入Parameter对象
+        >>> par1 = Parameter((1, 5), 'int')
+        >>> par2 = Parameter((3., 10.), 'float')
+        >>> par3 = Parameter((5, 6, 7, 8, 9), 'enum')
+        >>> space = Space(par1, par2, par3)
         <(1, 5),(3.0, 10.0),(5,...,9)>
-        >>> space = Space([(1, 5), (3., 10.), (5, 6, 7, 8, 9)], ['float', 'int', 'int'])
+        # 输入Parameter对象列表
+        >>> space = Space((1, 5), (3., 10.), (5, 6, 7, 8, 9))
+        <(1, 5),(3.0, 10.0),(5,...,9)>
+        # 输入参数范围列表，并指定每个参数的类型
+        >>> space = Space((1, 5), (3., 10.), (5, 6, 7, 8, 9), par_types=['float', 'int', 'int'])
         <(1.0, 5.0),(3, 10),(5, 6)>
         """
         self._axis = []
-        assert pars is not None, f'InputError, pars should be a list or tuple of items, got {pars}'
+        # import pdb; pdb.set_trace()
+        # 处理输入，如果pars参数为Parameter对象，则直接使用
+        if any(isinstance(par, Parameter) for par in pars):
+            if not all(isinstance(par, Parameter) for par in pars):
+                raise TypeError('All elements in pars should be Parameter objects if pars contains Parameter objects')
+            self._axis = list(pars)
+            return
+
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)
@@ -145,7 +162,7 @@ class Space:
             else:
                 raise KeyError(f'Invalid parameter type: {par_types[i]}')
         # 逐一生成Axis对象并放入axes列表中
-        self._axis = [Parameter(par, par_type) for par, par_type in zip(pars, par_types)]
+        self._axis = [Parameter(par, par_type=par_type) for par, par_type in zip(pars, par_types)]
 
     @property
     def dim(self):  # 空间的维度
@@ -227,13 +244,13 @@ class Space:
         else:
             print('Space is empty!')
 
-    def extract(self, interval_or_qty: int = 1, how: str = 'interval'):
+    def extract(self, quantities: Union[int, list[int]] = 1, how: str = 'interval'):
         """从空间中提取出一系列的点，并且把所有的点以迭代器对象的形式返回供迭代
 
         Parameters
         ----------
-        interval_or_qty: int
-            从空间中每个轴上需要提取数据的步长或坐标数量
+        quantities: int or list of int, default 1
+            从空间中每个轴上需要提取数据的点的数量
         how: str, default 'interval', {'interval', 'intv', 'step', 'rand', 'random'}
             合法参数：
             interval/intv/step,以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
@@ -247,19 +264,19 @@ class Space:
 
         Examples
         --------
-        >>> space = Space([(1, 10), (3, 10), (5, 6, 7, 8, 9)])
+        >>> space = Space((1, 10), (3, 10), (5, 6, 7, 8, 9))
         >>> space
         <(1, 10),(3, 10),(5,...,9)>
-        >>> list(space.gen_values(4, how='interval')[0])
+        >>> list(space.extract([2, 2, 2], how='interval')[0])
         [(1, 3.0, 5),
          (1, 3.0, 9),
-         (1, 7.0, 5),
-         (1, 7.0, 9),
-         (5, 3.0, 5),
-         (5, 3.0, 9),
-         (5, 7.0, 5),
-         (5, 7.0, 9)]
-        >>> list(space.gen_values(8, how='rand')[0])
+         (1, 10.0, 5),
+         (1, 10.0, 9),
+         (10, 3.0, 5),
+         (10, 3.0, 9),
+         (10, 10.0, 5),
+         (10, 10.0, 9)]
+        >>> list(space.extract(8, how='rand')[0])
         [(1, 7.928856883024961, 9),
          (3, 9.764777688087385, 8),
          (4, 8.445573333306598, 5),
@@ -269,10 +286,10 @@ class Space:
          (1, 3.3702544943635155, 7),
          (1, 7.595081100116288, 8)]
         """
-        interval_or_qty_list = input_to_list(pars=interval_or_qty,
+        interval_or_qty_list = input_to_list(pars=quantities,
                                              dim=self.dim,
                                              padder=[1])
-        axis_ranges = [ax.gen_values(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
+        axis_ranges = [ax.gen_values(qty, how) for ax, qty in zip(self.axis, interval_or_qty_list)]
         total = np.array(list(map(len, axis_ranges))).prod()
         if self.types == ['enum'] and isinstance(self.boes[0], tuple):
             # in this case, space is an enum of tuple parameters, no formation of tuple is needed
@@ -280,12 +297,12 @@ class Space:
         if how in ['interval', 'intv', 'step']:
             return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how in ['rand', 'random']:
-            return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
+            return itertools.zip_longest(*axis_ranges), quantities  # 使用迭代器工具将所有点组合打包为点集
         else:
             raise KeyError(f'Invalid extraction method: {how}\n'
                            f'Valid methods are: "interval" or "rand"')
 
-    def __contains__(self, item: [list, tuple, object]):
+    def __contains__(self, item: Union[list, tuple, object]):
         """ 判断item是否在Space对象中, 返回True如果item在Space中，否则返回False
 
         Parameters
@@ -299,9 +316,14 @@ class Space:
 
         Examples
         --------
-        >>> s = Space(['x', 'y'], ['int', 'float'])
-        >>> ('x', 'int') in s
+        >>> s = Space(('x', 'y'), (0, 10), par_types='enum,int')
+        <('x', 'y'),(0, 10)>
+        >>> ('x', 6) in s
         True
+        >>> ('z', 6) in s
+        False
+        >>> ('x', 15) in s
+        False
 
         """
         assert isinstance(item, (list, tuple, Space)), \
@@ -330,7 +352,7 @@ class Space:
                         return False
         return True
 
-    def from_point(self, point, distance: [int, float, list], ignore_enums=True):
+    def from_point(self, point, distance: Union[int, float, list], ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
 
         Parameters
@@ -379,7 +401,7 @@ class Space:
                     lbound = max((enum_pos - dis), 0)
                     ubound = min((enum_pos + dis), len(boe))
                     pars.append(boe[lbound:ubound])
-        return Space(pars, self.types)
+        return Space(*pars, par_types=self.types)
 
 
 class ResultPool:
