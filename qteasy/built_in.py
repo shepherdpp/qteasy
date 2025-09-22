@@ -356,7 +356,7 @@ class CDL(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
+    def __init__(self):
         super().__init__(
                 pars=[],
                 name='CDL INDICATOR',
@@ -401,22 +401,25 @@ class SoftBBand(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 2, 2, 0)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'float', 'float', 'int'],
-                         par_range=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
-                         name='Soft Bolinger Band',
-                         description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
-                         window_length=200,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 2, 2, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), name='p', par_type='int'),
+                    Parameter((0.5, 5), name='u', par_type='float'),
+                    Parameter((0.5, 5), name='d', par_type='float'),
+                    Parameter((0, 8), name='m', par_type='int'),
+                ],
+                name='Soft Bolinger Band',
+                description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
+                window_length=200,
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, u, d, m = self.par_values
-        else:
-            p, u, d, m = pars
-        h = h.T
+    def realize(self):
+        p, u, d, m = self.get_pars('p', 'u', 'd', 'm')
+        h = self.get_data('close_E_d')
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
@@ -454,25 +457,28 @@ class BBand(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 2, 2)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'float', 'float'],
-                         par_range=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         name='BBand',
-                         description='BBand strategy, determine long/short position according to Bollinger bands',
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=270,
-                         strategy_data_types=['close'])
+    def __init__(self, par_values=(20, 2, 2)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), name='span', par_type='int'),
+                    Parameter((0.5, 2.5), name='upper', par_type='float'),
+                    Parameter((0.5, 2.5), name='lower', par_type='float'),
+                ],
+                name='BBand',
+                description='BBand strategy, determine long/short position according to Bollinger bands',
+                data_freq='d',
+                strategy_run_freq='d',
+                window_length=270,
+                data_types=[DataType('close', freq='d', asset_type='E')],  # single data input
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            span, upper, lower = self.par_values
-        else:
-            span, upper, lower = pars
+    def realize(self):
+        span, upper, lower = self.get_pars('span', 'upper', 'lower')
+
         # 计算指数的指数移动平均价格
-        h = h.T
+        h = self.get_data('close_E_d')
         price = h[0]
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断:
@@ -514,21 +520,21 @@ class SCRSSMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - SMA',
-                         description='Single moving average strategy that uses simple moving average as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - SMA',
+                description='Single moving average strategy that uses simple moving average as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.par_values
-        else:
-            rng, = pars
-        h = h.T
+    def realize(self):
+        rng, = self.get_pars('rng')
+        h = self.get_data('close_E_d')
         diff = (sma(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -556,21 +562,19 @@ class SCRSDEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - DEMA',
-                         description='Single moving average strategy that uses DEMA as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=Parameter((3, 250), name='rng', par_type='int'),
+                name='SINGLE CROSSLINE - DEMA',
+                description='Single moving average strategy that uses DEMA as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.par_values
-        else:
-            rng, = pars
-        h = h.T
+    def realize(self):
+        rng, = self.get_pars('rng')
+        h = self.get_data('close_E_d')
         diff = (dema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -598,21 +602,21 @@ class SCRSEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - EMA',
-                         description='Single moving average strategy that uses EMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - EMA',
+                description='Single moving average strategy that uses EMA as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.par_values
-        else:
-            rng, = pars
-        h = h.T
+    def realize(self):
+        rng, = self.get_pars('rng')
+        h = self.get_data('close_E_d')
         diff = (ema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -640,22 +644,23 @@ class SCRSHT(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
+    def __init__(self, par_values=()):
         try:  # if ta-lib is installed
             from .tafuncs import ht
         except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
             err = NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
             raise err
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='SINGLE CROSSLINE - HT',
-                         description='Single moving average strategy that uses HT line as the trade line',
-                         strategy_data_types='close')
+        super().__init__(
+                pars=[],
+                name='SINGLE CROSSLINE - HT',
+                description='Single moving average strategy that uses HT line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        h = h.T
+    def realize(self):
+        h = self.get_data('close_E_d')
         diff = (ht(h[0]) - h[0])[-1]
         if diff < 0:
             return 1
@@ -683,22 +688,22 @@ class SCRSKAMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - KAMA',
-                         description='Single moving average strategy that uses KAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - KAMA',
+                description='Single moving average strategy that uses KAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.par_values
-        else:
-            rng, = pars
-        h = h.T
+    def realize(self):
+        rng, = self.get_pars('rng')
+        h = self.get_data('close_E_d')
         diff = (kama(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -727,22 +732,23 @@ class SCRSMAMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.5, 0.05)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99)],
-                         name='SINGLE CROSSLINE - MAMA',
-                         description='Single moving average strategy that uses MAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(0.5, 0.05)):
+        super().__init__(
+                pars=[
+                    Parameter((0.01, 0.99), name='f', par_type='float'),
+                    Parameter((0.01, 0.99), name='s', par_type='float'),
+                ],
+                name='SINGLE CROSSLINE - MAMA',
+                description='Single moving average strategy that uses MAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s = self.par_values
-        else:
-            f, s = pars
-        h = h.T
+    def realize(self):
+        f, s = self.get_pars('f', 's')
+        h = self.get_data('close_E_d')
         diff = (mama(h[0], f, s)[0] - h[0])[-1]
         if diff < 0:
             return 1
@@ -771,21 +777,22 @@ class SCRST3(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 0.5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(2, 20), (0, 1)],
-                         name='SINGLE CROSSLINE - T3',
-                         description='Single moving average strategy that uses T3 line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 0.5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='p', par_type='int'),
+                    Parameter((0, 1), name='v', par_type='float'),
+                ],
+                name='SINGLE CROSSLINE - T3',
+                description='Single moving average strategy that uses T3 line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, v = self.par_values
-        else:
-            p, v = pars
-        h = h.T
+    def realize(self):
+        p, v = self.get_pars('p', 'v')
+        h = self.get_data('close_E_d')
         diff = (t3(h[0], p, v) - h[0])[-1]
         if diff < 0:
             return 1
@@ -813,22 +820,22 @@ class SCRSTEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(6,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 20)],
-                         name='SINGLE CROSSLINE - TEMA',
-                         description='Single moving average strategy that uses TEMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(6,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - TEMA',
+                description='Single moving average strategy that uses TEMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.par_values
-        else:
-            p, = pars
-        h = h.T
+    def realize(self):
+        p, = self.get_pars('p')
+        h = self.get_data('close_E_d')
         diff = (tema(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -856,22 +863,22 @@ class SCRSTRIMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
-                         name='SINGLE CROSSLINE - TRIMA',
-                         description='Single moving average strategy that uses TRIMA line as the '
-                                     'trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - TRIMA',
+                description='Single moving average strategy that uses TRIMA line as the '
+                            'trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.par_values
-        else:
-            p, = pars
-        h = h.T
+    def realize(self):
+        p, = self.get_pars('p')
+        h = self.get_data('close_E_d')
         diff = (trima(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -899,22 +906,22 @@ class SCRSWMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
-                         name='SINGLE CROSSLINE - WMA',
-                         description='Single moving average strategy that uses MAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - WMA',
+                description='Single moving average strategy that uses MAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.par_values
-        else:
-            p, = pars
-        h = h.T
+    def realize(self):
+        p, = self.get_pars('p')
+        h = self.get_data('close_E_d')
         diff = (wma(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -952,21 +959,22 @@ class DCRSSMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='SINGLE CROSSLINE - SMA',
-                         description='Double moving average strategy that uses simple moving average as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - SMA',
+                description='Double moving average strategy that uses simple moving average as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.par_values
-        else:
-            l, s = pars
-        h = h.T
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_E_d')
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -996,21 +1004,22 @@ class DCRSDEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - DEMA',
-                         description='Double moving average strategy that uses DEMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - DEMA',
+                description='Double moving average strategy that uses DEMA as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.par_values
-        else:
-            l, s = pars
-        h = h.T
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_E_d')
         diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1040,21 +1049,22 @@ class DCRSEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - EMA',
-                         description='Double moving average strategy that uses EMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - EMA',
+                description='Double moving average strategy that uses EMA as the trade line',
+                data_types='close',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.par_values
-        else:
-            l, s = pars
-        h = h.T
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_E_d')
         diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1084,21 +1094,22 @@ class DCRSKAMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - KAMA',
-                         description='Double moving average strategy that uses KAMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - KAMA',
+                description='Double moving average strategy that uses KAMA line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.par_values
-        else:
-            l, s = pars
-        h = h.T
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_E_d')
         diff = (kama(h[0], l) - kama(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1130,21 +1141,24 @@ class DCRSMAMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['float', 'float', 'float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
-                         name='DOUBLE CROSSLINE - MAMA',
-                         description='Double moving average strategy that uses MAMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(0.15, 0.05, 0.55, 0.25)):
+        super().__init__(
+                pars=[
+                    Parameter((0.01, 0.99), name='lf', par_type='float'),
+                    Parameter((0.01, 0.99), name='ls', par_type='float'),
+                    Parameter((0.01, 0.99), name='sf', par_type='float'),
+                    Parameter((0.01, 0.99), name='ss', par_type='float'),
+                ],
+                name='DOUBLE CROSSLINE - MAMA',
+                description='Double moving average strategy that uses MAMA line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lf, ls, sf, ss = self.par_values
-        else:
-            lf, ls, sf, ss = pars
-        h = h.T
+    def realize(self):
+        lf, ls, sf, ss = self.get_pars('lf', 'ls', 'sf', 'ss')
+        h = self.get_data('close_E_d')
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
         if diff < 0:
             return 1
@@ -1176,21 +1190,24 @@ class DCRST3(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 0.5, 5, 0.5)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'float', 'int', 'float'],
-                         par_range=[(2, 20), (0, 1), (2, 20), (0, 1)],
-                         name='DOUBLE CROSSLINE - T3',
-                         description='Double moving average strategy that uses T3 line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 0.5, 5, 0.5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='lp', par_type='int'),
+                    Parameter((0, 1), name='lv', par_type='float'),
+                    Parameter((2, 20), name='sp', par_type='int'),
+                    Parameter((0, 1), name='sv', par_type='float'),
+                ],
+                name='DOUBLE CROSSLINE - T3',
+                description='Double moving average strategy that uses T3 line as the trade line',
+                data_types='close',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, lv, sp, sv = self.par_values
-        else:
-            lp, lv, sp, sv = pars
-        h = h.T
+    def realize(self):
+        lp, lv, sp, sv = self.get_pars('lp', 'lv', 'sp', 'sv')
+        h = self.get_data('close_E_d')
         diff = (t3(h[0], lp, lv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
             return 1
@@ -1220,21 +1237,22 @@ class DCRSTEMA(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(11, 6)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 20), (2, 20)],
-                         name='DOUBLE CROSSLINE - TEMA',
-                         description='Double moving average strategy that uses TEMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(11, 6)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='lp', par_type='int'),
+                    Parameter((2, 20), name='sp', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - TEMA',
+                description='Double moving average strategy that uses TEMA line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='E'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, sp = self.par_values
-        else:
-            lp, sp = pars
-        h = h.T
+    def realize(self):
+        lp, sp = self.get_pars('lp', 'sp')
+        h = self.get_data('close_E_d')
         diff = (tema(h[0], lp) - tema(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -1966,9 +1984,9 @@ class TRIX(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        s, m = self.s, self.m
+        s, m = self.get_pars('s', 'm')
+        h = self.get_data('close_E_d')
 
-        h = self.close_E_d
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
         if trx[-1] > matrix[-1]:
