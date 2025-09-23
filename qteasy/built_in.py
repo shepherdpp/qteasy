@@ -3847,14 +3847,14 @@ class SelectingNDayAvg(FactorSorter):
                 description='Select stocks by its N day average open price',
                 run_freq='M',
                 window_length=150,
-                data_types=DataType('close'),
+                data_types=DataType('close', freq='d', asset_type='E'),
         )
         if par_values:
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.n
-        h = self.close_E_d
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
         n_average = h[:, -n - 1:, 0].mean(axis=1)
         factors = n_average
 
@@ -3902,24 +3902,20 @@ class SelectingNDayChange(FactorSorter):
     def __init__(self, par_values=(14,)):
         super().__init__(
                 pars=[
-
+                    Parameter((2, 150), name='n', par_type='int')
                 ],
-                par_count=1,
-                par_types=['int'],
-                par_range=[(2, 150)],
                 name='N-DAY CHANGE',
                 description='Select stocks by its N day price change',
-                data_freq='d',
-                strategy_run_freq='M',
+                run_freq='M',
                 window_length=150,
                 data_types=DataType('close', freq='d', asset_type='E'),
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
-        if pars is None:
-            n, = self.par_values
-        else:
-            n, = pars
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
         current_price = h[:, -1, 0]
         n_previous = h[:, -n - 1, 0]
         factors = current_price - n_previous
@@ -3980,8 +3976,8 @@ class SelectingNDayRateChange(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.n
-        h = self.close_E_d
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
         current_price = h[:, -1, 0]
         n_previous = h[:, -n - 1, 0]
         factors = (current_price - n_previous) / n_previous
@@ -4038,13 +4034,13 @@ class SelectingNDayVolatility(FactorSorter):
                     DataType('close', freq='d', asset_type='E'),
                 ],
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.n
+        n, = self.get_pars('n')
 
-        high = self.high_E_d
-        low = self.low_E_d
-        close = self.close_E_d
+        high, low, close = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
         factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[:, -1]
