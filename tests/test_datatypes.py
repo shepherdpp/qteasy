@@ -1462,7 +1462,7 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     'close',
     'close|b',
     'high|f',
-    ('low|forward', None, 'E'),
+    ('low|f', None, 'E'),
     ('open', 'w', None),
     ('pe', 'd', 'IDX'),
     ('pe', 'd', 'E'),

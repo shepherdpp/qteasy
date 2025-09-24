@@ -728,14 +728,14 @@ class BaseStrategy:
                 raise ValueError(f'Number of par_ranges should not exceed {self.par_count}, '
                                  f'got {len(par_ranges)} instead')
             for par_name, par_range in zip(self.par_names, par_ranges):
-                self._pars[par_name].par_range = par_range
+                self._pars[par_name].update_par_range(new_range=par_range)
         else:  # 如果没有传入par_ranges，则必须传入kwargs参数
             if not kwargs:
                 raise ValueError('par_ranges is None, please provide par_ranges or kwargs to update parameter ranges')
             for par_name, par_range in kwargs.items():
                 if par_name not in self.par_names:
                     raise KeyError(f'parameter {par_name} is not defined in the strategy')
-                self._pars[par_name].par_range = par_range
+                self._pars[par_name].update_par_range(new_range=par_range)
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""

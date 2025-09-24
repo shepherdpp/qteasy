@@ -15,8 +15,10 @@ import numba as nb
 import qteasy as qt
 import numpy as np
 
+from qteasy.parameter import Parameter
 from qteasy.tafuncs import bbands
 from qteasy.tafuncs import sma
+from qteasy.datatypes import DataType
 
 from qteasy.strategy import RuleIterator, GeneralStg
 
@@ -35,42 +37,30 @@ class TestLSStrategy(RuleIterator):
 
     """
 
-    def __init__(self):
-        super().__init__(name='test_LS',
-                         description='test long/short strategy',
-                         par_count=2,
-                         par_types='discr, conti',
-                         par_range=([2, 20], [2, 20]),
-                         strategy_data_types='close, open, high, low',
-                         data_freq='d',
-                         window_length=5)
-        pass
+    def __init__(self, par_values=(10, 10.0)):
+        super().__init__(
+                name='test_LS',
+                description='test long/short strategy',
+                pars=[
+                    Parameter((2, 20), name='n', par_type='int'),
+                    Parameter((2, 20), name='price', par_type='float')
+                ],
+                data_types=[
+                    DataType('close', freq='d', asset_type='E'),
+                    DataType('open', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='E'),
+                    DataType('low', freq='d', asset_type='E'),
+                ],
+                window_length=5,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is not None:
-            n, price = pars
-        else:
-            n, price = self.par_values
-        h = h.T
+    def realize(self):
+        n, price = self.get_pars('n', 'price')
+        h = self.get_data('close_E_d, open_E_d', 'high_E_d, low_E_d')
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
-        if r is not None:
-            # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据，r[-1]
-            if ma[-1] < ref_price:
-                return 0
-            else:
-                return 1
-
-        if t is not None:
-            # 处理交易结果数据生成信号并返回
-            last_price = t[4]  # 获取最近的交易价格
-            if np.isnan(last_price):
-                return 1  # 生成第一次交易信号
-            if ma[-1] < last_price:
-                return 1
-            else:
-                return 0
 
         if ma[-1] < price:
             return 0
@@ -95,41 +85,25 @@ class TestSelStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='high, low, close',
-                         data_freq='d',
-                         strategy_run_freq='10d',
-                         window_length=5,
-                         )
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                pars=[],
+                data_types=[
+                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='E'),
+                    DataType('low', freq='d', asset_type='E'),
+                ],
+                run_freq='10d',
+                window_length=5,
+        )
         pass
 
-    def realize(self, h, r=None, t=None):
+    def realize(self):
+        h = self.get_data('close_E_d, high_E_d', 'low_E_d')
         avg = np.nanmean(h, axis=(1, 2))
         dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
-        if r is not None:
-            # calculate difper while r
-            ref_price = np.nanmean(r[:, 0])
-            difper = dif_no_nan / avg / ref_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
-
-        if t is not None:
-            # calculate difper while t
-            last_price = t[:, 4]
-            if np.all(np.isnan(last_price)):
-                return np.ones_like(avg) * 0.333
-            difper = dif_no_nan / last_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
 
         difper = dif_no_nan / avg
         large2 = difper.argsort()[1:]
@@ -141,7 +115,7 @@ class TestSelStrategy(GeneralStg):
 class Cross_SMA_PS(qt.RuleIterator):
     """自定义双均线择时策略策略，产生的信号类型为交易信号"""
 
-    def __init__(self):
+    def __init__(self, par_values=(25, 100, 0.01)):
         """这个均线择时策略只有三个参数：
             - SMA 慢速均线，所选择的股票
             - FMA 快速均线
@@ -155,25 +129,27 @@ class Cross_SMA_PS(qt.RuleIterator):
 
         """
         super().__init__(
-                pars=(25, 100, 0.01),
-                par_count=3,
-                par_types=['discr', 'discr', 'conti'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                pars=[
+                    Parameter((10, 250), name='f', par_type='int'),
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((0.0, 0.5), name='m', par_type='float')
+                ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
+                data_types=DataType('close', freq='d', asset_type='E'),
                 window_length=200,
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     # 策略的具体实现代码写在策略的realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度
         """
-        f, s, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        f, s, m = self.get_pars('f', 's', 'm')
+        h = self.get_data('close_E_d')
         # 计算长短均线的当前值和昨天的值
         sma = qt.tafuncs.sma
         s_ma = sma(h[0], s)
@@ -202,7 +178,7 @@ class Cross_SMA_PS(qt.RuleIterator):
 class Cross_SMA_PT(qt.RuleIterator):
     """自定义双均线择时策略策略，产生的信号类型为持仓目标信号"""
 
-    def __init__(self):
+    def __init__(self, par_values=(25, 100, 0.01)):
         """这个均线择时策略只有三个参数：
             - SMA 慢速均线，所选择的股票
             - FMA 快速均线
@@ -212,24 +188,26 @@ class Cross_SMA_PT(qt.RuleIterator):
 
         """
         super().__init__(
-                pars=(25, 100, 0.01),
-                par_count=3,
-                par_types=['discr', 'discr', 'conti'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                pars=[
+                    Parameter((10, 250), name='f', par_type='int'),
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((0.0, 0.5), name='m', par_type='float')
+                ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
+                data_types=DataType('close', freq='d', asset_type='E'),
                 window_length=200,
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        f, s, m = self.get_pars('f', 's', 'm')
+        h = self.get_data('close_E_d')
         # 计算长短均线的当前值
         sma = qt.tafuncs.sma
         s_ma = sma(h[0], s)[-1]
@@ -291,8 +269,8 @@ class TestQT(unittest.TestCase):
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
         self.op.set_blender('pos_2_0(s0, s1)')
-        self.op.set_parameter(stg_id='dma', pars=timing_pars1)
-        self.op.set_parameter(stg_id='macd', pars=timing_pars3)
+        self.op.set_parameter(stg_id='dma', par_values=timing_pars1)
+        self.op.set_parameter(stg_id='macd', par_values=timing_pars3)
 
     def test_configure(self):
         """测试参数设置
@@ -367,7 +345,7 @@ class TestQT(unittest.TestCase):
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
         op = qt.Operator(strategies=['stema'], op_type='stepwise')
-        op.set_parameter('stema', pars=(6,))
+        op.set_parameter('stema', par_values=(6,))
         qt.QT_CONFIG.mode = 0
         # qt.run(op)
         # TODO: running qteasy in mode 0 will enter interactive shell, which is not testable
