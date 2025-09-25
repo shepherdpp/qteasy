@@ -2610,7 +2610,7 @@ def get_history_panel(
                 end=end,
                 freq=freq,
                 row_count=rows,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         all_dfs = normal_dfs
     else:

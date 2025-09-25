@@ -4072,7 +4072,7 @@ def get_history_data_from_source(
         start: str = None,
         end: str = None,
         freq: str = None,
-        combine_htype_names: bool = False,
+        combine_asset_types: bool = False,
         row_count: int = None,
 ) -> Dict[str, pd.DataFrame]:
     """ 根据给出的历史数据类型对象，获取相应的数据并组装成一个标准的DataFrame-Dict并返回
@@ -4095,7 +4095,7 @@ def get_history_data_from_source(
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-    combine_htype_names: bool, optional, default False
+    combine_asset_types: bool, optional, default False
         在输入的数据类型中可能有相同的htype_names，例如pe(IDX)@'d'与pe(E)@'d'
         这两个htype的名称相同，只是数据类型不同。此时可以选择是否是否合并相同的htype name，
         如果为True，则下载的数据会被合并为一个pe类型，同时包含IDX与E类型的数据
@@ -4179,7 +4179,7 @@ def get_history_data_from_source(
             raise ValueError(f'Invalid data type {htype.name}, not a history data type')
         # 从数据源获取数据，
         df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start, ends=end)
-        if not combine_htype_names:
+        if not combine_asset_types:
             # 下载的数据不会按htype.name合并，而是分别按htype.dtype_id存储
             history_data_acquired[htype.dtype_id] = df
         else:

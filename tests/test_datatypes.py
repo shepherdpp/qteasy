@@ -1853,7 +1853,7 @@ class TestDataTypes(unittest.TestCase):
                 start=start,
                 end=end,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
@@ -1889,7 +1889,7 @@ class TestDataTypes(unittest.TestCase):
                 start=start,
                 end=end,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
@@ -1907,7 +1907,7 @@ class TestDataTypes(unittest.TestCase):
                 start='20210203',
                 row_count=20,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
