@@ -837,8 +837,8 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1.,
                      mode=1,
                      trade_log=True)
-        op.set_parameter('long', pars=())
-        op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
+        op.set_parameter('long', par_values=())
+        op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 0.4),
                          run_freq='Q',
                          strategy_data_types='pe',
                          sort_ascending=True,
@@ -847,7 +847,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=0.4)
-        op.set_parameter('signal_none', pars=())
+        op.set_parameter('signal_none', par_values=())
         op.set_blender('avg(s0, s1, s2)', 'ls')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
@@ -889,8 +889,8 @@ class TestQT(unittest.TestCase):
                      trade_log=False,
                      hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
-        op.set_parameter('long', pars=())
-        op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 30),
+        op.set_parameter('long', par_values=())
+        op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 30),
                          run_freq='Q',
                          strategy_data_types='basic_eps',
                          sort_ascending=True,
@@ -899,7 +899,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=30)
-        op.set_parameter('signal_none', pars=())
+        op.set_parameter('signal_none', par_values=())
         op.set_blender('avg(s0, s1, s2)', 'close')
         # TODO: 这里运行大量股票选股策略时，从DataSource读取数据需要24分钟时间，这个
         #  时间太长，必须尽快优化
@@ -911,8 +911,8 @@ class TestQT(unittest.TestCase):
         op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
         op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step')
         for op in [op_batch, op_stepwise]:
-            op.set_parameter(0, window_length=100, pars=(12, 26, 9))
-            op.set_parameter(1, window_length=100, pars=(12, 26, 9))
+            op.set_parameter(0, window_length=100, par_values=(12, 26, 9))
+            op.set_parameter(1, window_length=100, par_values=(12, 26, 9))
 
         qt.configure(
                 benchmark_asset='000300.SH',
@@ -1019,7 +1019,7 @@ class TestQT(unittest.TestCase):
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
         op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
-        op.set_parameter(0, pars=(23, 100, 0.02))
+        op.set_parameter(0, par_values=(23, 100, 0.02))
         res = qt.run(op,
                      mode=1,
                      invest_start='20060101',

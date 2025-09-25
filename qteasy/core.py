@@ -1733,8 +1733,17 @@ def get_backtest_data_package(operator, config, datasource) -> dict:
     from qteasy.config_parser import parse_backtest_start_end_dates
     invest_start, invest_end = parse_backtest_start_end_dates(config=config)
 
+    # 此时策略中定义的datatype的asset_type可能与config中的asset_type不一致，此时需要扩展
+    data_types = operator.all_strategy_data_types
+    new_data_types = infer_data_types(
+            names=[dtype.name for dtype in data_types],
+            freqs=[dtype.freq for dtype in data_types],
+            asset_types=config['asset_type'],
+            adj=config['backtest_price_adj'],
+    )
+
     hist_data_package = get_history_data_packages(
-            data_types=operator.all_strategy_data_types,
+            data_types=new_data_types,
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
             end=invest_end,
@@ -2120,6 +2129,21 @@ def run_mode_1(operator, config, benchmark_data_type):
 
     # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
     operator.is_ready(raise_error=True)
+
+    # 准备交易价格清单和业绩基准数据（用于执行交易计划）
+    trade_prices = operator.get_trade_price_list(
+            start_date=start_date,
+            end_date=end_date,
+    )  # TODO: to be realized
+
+    hist_benchmark = get_backtest_benchmark_data(
+            benchmark_asset=benchmark_data_type,
+            shares=config['asset_pool'],
+            start=start_date,
+            end=end_date,
+            data_source=qteasy.QT_DATA_SOURCE,
+    )  # TODO: to be realized
+
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     loop_result = _evaluate_one_parameter(
             par=None,
