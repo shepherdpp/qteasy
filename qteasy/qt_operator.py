@@ -1711,6 +1711,7 @@ class Operator:
                 self.data_window_views[strategy.strategy_id] = {}
                 self.data_window_indices[strategy.strategy_id] = {}
                 for data_type in strategy.data_types:
+                    # for debugging
                     print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
                           f'data type: {data_type}')
                     window_length = strategy.data_window_lengths[data_type]
@@ -1719,6 +1720,7 @@ class Operator:
 
                     window = rolling_window(buffered_data.values, window=window_length, axis=0)
                     self.data_window_views[strategy.strategy_id][data_type] = window
+                    # for debugging
                     print(f'Window shape for {strategy.strategy_id}/{strategy.name} on {data_type}: \n{window.shape}')
 
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
@@ -1732,6 +1734,7 @@ class Operator:
                         schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
                     self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
+                    # for debugging
                     print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
                           f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
@@ -1812,8 +1815,9 @@ class Operator:
             for result in self.run_step(step):
                 yield result
 
-    def create_signals(self, start_date=None, end_date=None, data_source: dict = None):
-        """ 创建交易信号，准备好数据缓冲区和数据窗口
+    def create_signals(self, start_date=None, end_date=None, data_package: dict = None):
+        """ 一个集成方法，调用operator的相关方法，准备好数据缓冲区和数据窗口，并批量创建交易信号
+        生成可以用于回测的交易信号列表，以便后续的回测模块使用
 
         Parameters
         ----------
@@ -1821,15 +1825,15 @@ class Operator:
             开始日期，默认为None，表示从数据源的起始日期开始
         end_date: str or pd.Timestamp, optional
             结束日期，默认为None，表示到数据源的结束日期为止
-        data_source: dict, optional
-            数据源字典，包含提前准备好的所有需要的数据类型的数据缓存
+        data_package: dict, optional
+            历史数据字典，包含提前准备好的所有需要的数据类型的数据缓存
 
         Returns
         -------
         None
         """
         self.prepare_running_schedule(start_date=start_date, end_date=end_date)
-        self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_source=data_source)
+        self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_package=data_package)
         self.create_data_windows()
 
         # tentative parameter total_run_steps = 25
@@ -1838,7 +1842,7 @@ class Operator:
         self.prepare_data_buffer(
                 start_date=start_date,
                 end_date=end_date,
-                data_source=data_source
+                data_package=data_package,
         )
 
         self.prepare_running_schedule(start_date=start_date, end_date=end_date)
