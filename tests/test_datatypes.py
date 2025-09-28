@@ -1536,6 +1536,11 @@ class TestDataTypes(unittest.TestCase):
         self.assertEqual(d1_adj, 'b')
         self.assertEqual(d2_adj, 'f')
 
+        # TODO: test create datatypes with asset_type='ANY'
+        #  this must be realized in the DataType class because
+        #  we must allow users to define their strategies that
+        #  can work with multiple types of assets.
+
     def test_all_types_with_full_id(self):
         ds = self.ds
         total = len(ALL_TYPES_TO_TEST_WITH_FULL_ID)

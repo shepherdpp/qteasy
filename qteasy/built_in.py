@@ -647,8 +647,8 @@ class SCRSHT(RuleIterator):
     def __init__(self, par_values=()):
         try:  # if ta-lib is installed
             from .tafuncs import ht
-        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
-            err = NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+        except Exception:  # if ta-lib is not installed, warn user to install ta-lib
+            err = ModuleNotFoundError('This strategy requires ta-lib, please install ta-lib first')
             raise err
         super().__init__(
                 pars=[],
@@ -1890,7 +1890,13 @@ class SAREXT(RuleIterator):
                 name='Parabolic SAREXT',
                 description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
                 window_length=200,
-                strategy_data_types='high, low')
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY')
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
         a, m = self.get_pars('a', 'm')
@@ -2099,6 +2105,8 @@ class APO(RuleIterator):
                 window_length=200,
                 data_types=DataType('close', freq='d', asset_type='E'),
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
         f, s, m = self.get_pars('f', 's', 'm')
@@ -2270,6 +2278,8 @@ class CCI(RuleIterator):
                     DataType('close', freq='d', asset_type='E'),
                 ],
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
         p, = self.get_pars('p')
@@ -2323,6 +2333,8 @@ class CMO(RuleIterator):
                 window_length=200,
                 data_types=DataType('close', freq='d', asset_type='E'),
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
         p, = self.get_pars('p')
@@ -2647,6 +2659,8 @@ class PPO(RuleIterator):
                 window_length=100,
                 data_types=DataType('close', freq='d', asset_type='E'),
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     def realize(self):
         fp, sp, m = self.get_pars('fp', 'sp', 'm')

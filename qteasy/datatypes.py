@@ -4526,10 +4526,20 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
 
 
 def get_tables_by_dtypes(
-        dtypes: [str] = None,
-        freqs: [str] = None,
-        asset_types: [str] = None) -> set:
-    """根据输入的数据类型反推相关的数据表名称"""
+        dtypes: list[str] = None,
+        freqs: list[str] = None,
+        asset_types: list[str] = None) -> set:
+    """根据输入的数据类型反推相关的数据表名称
+
+    Parameters
+    ----------
+    dtypes: list of str, optional
+        数据类型名称列表，如果为None，则表示所有数据类型
+    freqs: list of str, optional
+        数据频率列表，如果为None，则表示所有频率
+    asset_types: list of str, optional
+        证券类型列表，如果为None，则表示所有证券类型
+    """
 
     # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
     # 数据类型，反推需要下载的数据表
