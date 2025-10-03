@@ -203,7 +203,6 @@ def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying:
     if fixed_fees is None:
         fixed_fees = False
 
-    # TODO: 重写slipage的计算公式，使得slipage是一个交易费用的乘数，该乘数 = slipage * (qty / 100) ** 2
     if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
         if is_buying:
             # buy_fix + slipage * trade_values ** 2
@@ -239,7 +238,7 @@ def get_selling_result(prices: np.ndarray,
                        a_to_sell: np.ndarray,
                        moq,
                        cost_params: np.ndarray,
-                       ) -> (np.ndarray, np.ndarray, np.ndarray):
+                       ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """计算出售投资产品的要素
 
     Parameters
@@ -285,7 +284,7 @@ def get_purchase_result(prices: np.ndarray,
                         cash_to_spend: np.ndarray,
                         moq,
                         cost_params: np.ndarray,
-                        ) -> (np.ndarray, np.ndarray, np.ndarray):
+                        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """获得购买资产时的要素
 
     Parameters

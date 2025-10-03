@@ -661,6 +661,11 @@ trade_price_h_df = pd.DataFrame(
                   include_start_pm=False)  # len = 40
 )
 
+trade_price_d_df = pd.DataFrame(
+        trade_price_h_data[:25], columns=['A', 'B', 'C'],
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
+)
+
 close_ref_df = pd.DataFrame(
         dtype_ref_data, columns=['ref'],
         index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
@@ -3151,8 +3156,25 @@ class TestOperatorAndStrategy(unittest.TestCase):
             signals.append(signal)
             signal_index += 1
 
+        from qteasy.history import stack_dataframes
+        trade_price_data = stack_dataframes([trade_price_d_df], dataframe_as='htypes', htypes='price')
+        from qteasy.finance import CashPlan
+        cash_plan = CashPlan(
+                dates='2023-01-11',
+                amounts=[1000000],
+                interest_rate=0.0,
+        )
+
         # 执行回测
         print(f'Executing backtest with the generated trading signals\n')
+        from qteasy.backtest import apply_loop
+        res = apply_loop(
+                operator=op,
+                trade_price_list=trade_price_data,
+                start_idx=0,
+                end_idx=100,
+                cash_plan=cash_plan,
+        )
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率

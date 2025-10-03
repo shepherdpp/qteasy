@@ -25,6 +25,13 @@ from qteasy.finance import (
     get_cost_pamams,
 )
 
+from qteasy.trading_util import (
+    parse_trade_signal,
+    _parse_pt_signals,
+    _parse_ps_signals,
+    _parse_vs_signals,
+)
+
 
 @njit(nogil=True, cache=True)
 def _loop_step(signal_type: int,
@@ -37,7 +44,6 @@ def _loop_step(signal_type: int,
                cost_params: np.ndarray,
                pt_buy_threshold: float,
                pt_sell_threshold: float,
-               maximize_cash_usage: bool,
                long_pos_limit: float,
                short_pos_limit: float,
                allow_sell_short: bool,
@@ -79,9 +85,6 @@ def _loop_step(signal_type: int,
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: object Cost
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
-    maximize_cash_usage: object Cost
-        True:   先卖后买模式
-        False:  先买后卖模式
     long_pos_limit: float
         允许建立的多头总仓位与净资产的比值，默认值1.0，表示最多允许建立100%多头仓位
     short_pos_limit: float
@@ -119,63 +122,33 @@ def _loop_step(signal_type: int,
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:
-        # signal_type 为PT，比较当前持仓与计划持仓的差额，再生成买卖数量
-        ptbt = pt_buy_threshold
-        ptst = -pt_sell_threshold
-        # 计算当前持仓与目标持仓之间的差额
-        pre_position = pre_values / total_value
-        position_diff = op - pre_position
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
-        amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
-                                   position_diff / pre_position * own_amounts,
-                                   0.)
-        # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
-                                 position_diff * total_value,
-                                 0.)
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
 
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
-            cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
-                                      position_diff * total_value,
-                                      0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
-            amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
-                                        position_diff / pre_position * own_amounts,
-                                        0.)
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+            signals=op,
+            prices=prices,
+            own_amounts=own_amounts,
+            own_cash=own_cash,
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            allow_sell_short=allow_sell_short
+        )
 
     elif signal_type == 1:
-        # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0.)
-        # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0.)
-
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
-
-            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 交易信号 * 当前总资产
-            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0.)
+        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+                signals=op,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=allow_sell_short
+        )
 
     elif signal_type == 2:
-        # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
-        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-        # 当持有份额大于零时，卖出多仓：卖出数量 = 信号数量，此时持仓份额需大于零
-        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0.)
-        # 当持有份额不小于0时，买入多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
-        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0.)
-
-        # 当允许买空卖空时，允许开启空头头寸：
-        if allow_sell_short:
-            # 当持有份额小于等于零且交易信号为负，买入空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * prices, 0.)
-            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，卖出空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), -op, 0.)
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=op,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=allow_sell_short
+        )
 
     else:
         raise ValueError('Invalid signal_type')
@@ -185,6 +158,8 @@ def _loop_step(signal_type: int,
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
+
+    # 批量提交股份卖出计划，计算实际卖出份额和交易费用
     amount_sold, cash_gained, fee_selling = get_selling_result(
             prices=prices,
             a_to_sell=amounts_to_sell,
@@ -192,17 +167,13 @@ def _loop_step(signal_type: int,
             cost_params=cost_params,
     )
 
-    if maximize_cash_usage:
-        # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
-        # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
-        available_cash += cash_gained.sum()
-
     # 调整处理cash_to_spend
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     abs_cash_to_spend = np.abs(cash_to_spend)
 
     if np.all(abs_cash_to_spend < 0.01):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
+        # TODO: 所有的np.zeros_like()都需要提高效率，改为返回None或np.empty()
         return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
 
     # 分别处理买入金额中的多头买入和空头买入部分，分别计算当前持有的多头和空头仓位
@@ -429,7 +400,6 @@ def apply_loop(operator: Operator,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-    signal_type = operator.signal_type_id
     op_type = operator.op_type
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
@@ -497,7 +467,7 @@ def apply_loop(operator: Operator,
     if (op_type == 'batch') and (not trade_log):
         # batch模式下调用apply_loop_core函数:
         looped_day_indices = np.array(list(pd.to_datetime(pd.to_datetime(looped_dates).date).astype('int')))
-        # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amount，因为invest_dict无法被Numba处理
+        # 2, 将invset_dict处理为两个列表：invest_date_indices, invest_amounts，因为invest_dict无法被Numba处理
         investment_date_pos = np.array(list(investment_date_pos))
         invest_amounts = np.array(list(invest_dict.values()))
         cashes, fees, values, amounts_matrix = apply_loop_core(share_count,
@@ -521,7 +491,6 @@ def apply_loop(operator: Operator,
                                                                allow_sell_short,
                                                                long_pos_limit,
                                                                short_pos_limit,
-                                                               maximize_cash_usage,
                                                                price_priority_list)
     else:
         # 初始化计算结果列表
@@ -698,7 +667,6 @@ def apply_loop_core(share_count: int,
                     allow_sell_short: bool,
                     long_pos_limit: float,
                     short_pos_limit: float,
-                    max_cash_usage: bool,
                     price_priority_list: list):
     """ apply_loop的核心function,不含任何numba不支持的元素，仅包含batch模式下，
         不需要生成trade_log的情形下运行核心循环的核心代码。
@@ -821,7 +789,6 @@ def apply_loop_core(share_count: int,
                 amount_sold = np.zeros_like(current_op)
                 fee = np.zeros_like(current_op)
             else:
-                maximize_cash_usage = max_cash_usage and cash_delivery_period == 0
                 cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                         signal_type=signal_type,
                         own_cash=own_cash,
@@ -833,7 +800,6 @@ def apply_loop_core(share_count: int,
                         cost_params=cost_params,
                         pt_buy_threshold=pt_buy_threshold,
                         pt_sell_threshold=pt_sell_threshold,
-                        maximize_cash_usage=maximize_cash_usage,
                         allow_sell_short=allow_sell_short,
                         long_pos_limit=long_pos_limit,
                         short_pos_limit=short_pos_limit,
@@ -857,9 +823,9 @@ def apply_loop_core(share_count: int,
             available_cash += cash_spent.sum()
             available_amounts += amount_sold
             cash_changed = cash_gained + cash_spent
-            own_cash = own_cash + cash_changed.sum()
+            own_cash += cash_changed.sum()
             amount_changed = amount_sold + amount_purchased
-            own_amounts = own_amounts + amount_changed
+            own_amounts += amount_changed
             total_stock_values = (own_amounts * current_prices)
             total_stock_value = total_stock_values.sum()
             total_value = total_stock_value + own_cash
