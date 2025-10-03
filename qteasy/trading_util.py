@@ -14,6 +14,8 @@
 import os
 import pandas as pd
 import numpy as np
+from typing import Union
+from numba import njit
 
 from qteasy.__init__ import logger_core as logger
 from qteasy.qt_operator import Operator
@@ -222,6 +224,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
 
 
 # Utility functions for live trade
+@njit()
 def parse_trade_signal(signals,
                        signal_type,
                        shares,
@@ -339,7 +342,7 @@ def parse_trade_signal(signals,
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
 
-# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loopstep中直接引用这三个函数的返回值
+# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loop_step中直接引用这三个函数的返回值
 #  从而消除重复的代码
 # TODO: 考虑修改多空买卖信号的表示方式：当前的表示方式为：
 #  1. 多头买入信号：正数cash_to_spend
@@ -354,13 +357,14 @@ def parse_trade_signal(signals,
 #  4. 空头卖出信号：负数amounts_to_sell
 #  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
 #  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
-def _parse_pt_signals(signals,
-                      prices,
-                      own_amounts,
-                      own_cash,
-                      pt_buy_threshold,
-                      pt_sell_threshold,
-                      allow_sell_short):
+@njit(cache=True)
+def _parse_pt_signals(signals: np.ndarray,
+                      prices: np.ndarray,
+                      own_amounts: np.ndarray,
+                      own_cash: Union[float, np.float64],
+                      pt_buy_threshold: float,
+                      pt_sell_threshold: float,
+                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PT类型的交易信号
 
     Parameters
@@ -419,7 +423,12 @@ def _parse_pt_signals(signals,
     return cash_to_spend, amounts_to_sell
 
 
-def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
+@njit()
+def _parse_ps_signals(signals: np.ndarray,
+                      prices: np.ndarray,
+                      own_amounts: np.ndarray,
+                      own_cash: Union[float, np.float64],
+                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PS类型的交易信号
 
     Parameters
@@ -462,7 +471,11 @@ def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
+@njit()
+def _parse_vs_signals(signals: np.ndarray,
+                      prices: np.ndarray,
+                      own_amounts: np.ndarray,
+                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号
 
     Parameters
@@ -501,6 +514,7 @@ def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
+@njit()
 def _signal_to_order_elements(shares,
                               cash_to_spend,
                               amounts_to_sell,
