@@ -228,6 +228,123 @@ class Cross_SMA_PT(qt.RuleIterator):
             return 0
 
 
+# Other high level test strategies
+class MyStg(qt.RuleIterator):
+    """自定义双均线择时策略策略"""
+
+    def __init__(self, par_values=(20, 100, 0.01)):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), par_type='int', name='f'),  # 快速均线
+                    Parameter((10, 250), par_type='int', name='s'),  # 慢速均线
+                    Parameter((0.0, 0.5), par_type='float', name='m'),  # 边界值
+                ],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types=DataType('close'),
+                window_length=200,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    # 策略的具体实现代码写在策略的_realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
+        f, s, m = self.get_pars('f', 's', 'm')
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = self.get_data('close_E_d')  # 取最近200个交易日的数据进行计算
+        # 计算长短均线的当前值
+        s_ma = sma(h[0], s)[-1]
+        f_ma = sma(h[0], f)[-1]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_ma * (1 + m)
+        s_ma_l = s_ma * (1 - m)
+        # 根据观望模式在不同的点位产生Long/short/empty标记
+
+        if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
+            return 1
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
+            return 0
+        else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
+            return -1
+
+
+class StgBuyOpen(GeneralStg):
+    def __init__(self, par_values=(20,)):
+        super().__init__(
+                pars=[Parameter((0, 100), par_type='int', name='n')],
+                name='OPEN_BUY',
+                run_timing='open',
+                use_latest_data_cycle=False,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全0
+        sig = np.zeros_like(factors)
+        # buy_pos = np.nanargmax(factors)
+        # sig[buy_pos] = 1
+        # return sig
+        if np.all(factors <= 0.002):
+            # 如果所有的选股指标都小于0，则全部卖出
+            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
+            return sig
+        else:
+            # 如果选股指标有大于0的，则找出最大者
+            # 并生成买入信号
+            sig[np.nanargmax(factors)] = 1
+            return sig
+
+
+class StgSelClose(GeneralStg):
+    def __init__(self, par_values=(20,)):
+        super().__init__(
+                pars=[Parameter((0, 100), par_type='int', name='n')],
+                name='SELL_CLOSE',
+                run_timing='close',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n, = self.get_pars('n')
+        h = self.get_data('close_E_d')
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全-1
+        sig = -np.ones_like(factors)
+        # sig[np.nanargmax(factors)] = 0
+        # return sig
+        if np.all(factors <= 0.002):
+            # 如果所有的选股指标都小于0，则全部卖出
+            return sig
+        else:
+            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
+            # 产生卖出信号
+            sig[np.nanargmax(factors)] = 0
+            return sig
+
+
 class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
@@ -1052,6 +1169,76 @@ class TestQT(unittest.TestCase):
                      visual=True)
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
+
+    def test_stg_trading_different_prices(self):
+        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
+        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
+        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        op.set_parameter(
+                0,
+                run_freq='d',
+                window_length=50,
+                par_values=(20,),
+                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价变化率
+                run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
+        )
+        op.set_parameter(
+                1,
+                run_freq='d',
+                window_length=50,
+                par_values=(20,),
+                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价的变化率
+                run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+        )
+        op.set_blender(blender='s0')
+        op.get_blender()
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     trade_log=True,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=1,
+                     sell_batch_size=0)
+        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,
+                     invest_cash_amounts=[1000000],
+                     mode=1,
+                     trade_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=0.03,
+                     backtest_price_adj='none')
+
+    def test_stg_index_follow(self):
+        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
+        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         run_freq='M',
+                         data_types=DataType('wt_idx|000300.SH', freq='d', asset_type='E'),
+                         sort_ascending=False,
+                         weighting='proportion',
+                         max_sel_count=300)
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     trade_log=True)
 
 
 if __name__ == '__main__':
