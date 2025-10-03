@@ -1679,7 +1679,6 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     return hist_op, hist_ref
 
 
-
 def get_backtest_start_end_dates(config) -> tuple:
     """ 根据config参数字典中的invest_start、invest_end、invest_cash_dates等参数，确定回测的投资区间起止日期
 
@@ -2098,6 +2097,8 @@ def run(operator, **kwargs):
                 config=config,
                 benchmark_data_type=benchmark_data_type,
         )
+
+    return None
 
 
 def run_mode_0():

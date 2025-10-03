@@ -498,6 +498,8 @@ class DataType:
             default_asset_type = user_defined_asset_types[0]
         elif (asset_type in built_in_asset_types) or (asset_type in user_defined_asset_types):
             default_asset_type = asset_type
+        elif asset_type == 'ANY':
+            default_asset_type = built_in_asset_types[0] if len(built_in_asset_types) > 0 else None
         else:
             raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 

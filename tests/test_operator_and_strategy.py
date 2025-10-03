@@ -793,123 +793,6 @@ class TestRuleIter(RuleIterator):
         return signal
 
 
-# Other high level test strategies
-class MyStg(qt.RuleIterator):
-    """自定义双均线择时策略策略"""
-
-    def __init__(self, par_values=(20, 100, 0.01)):
-        """这个均线择时策略只有三个参数：
-            - SMA 慢速均线，所选择的股票
-            - FMA 快速均线
-            - M   边界值
-
-            策略的其他说明
-
-        """
-        super().__init__(
-                pars=[
-                    Parameter((10, 250), par_type='int', name='f'),  # 快速均线
-                    Parameter((10, 250), par_type='int', name='s'),  # 慢速均线
-                    Parameter((0.0, 0.5), par_type='float', name='m'),  # 边界值
-                ],
-                name='CUSTOM ROLLING TIMING STRATEGY',
-                description='Customized Rolling Timing Strategy for Testing',
-                data_types=DataType('close'),
-                window_length=200,
-        )
-        if par_values:
-            self.update_par_values(*par_values)
-
-    # 策略的具体实现代码写在策略的_realize()函数中
-    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self):
-        """策略的具体实现代码：
-        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = self.get_pars('f', 's', 'm')
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = self.get_data('close_E_d')  # 取最近200个交易日的数据进行计算
-        # 计算长短均线的当前值
-        s_ma = sma(h[0], s)[-1]
-        f_ma = sma(h[0], f)[-1]
-
-        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
-        s_ma_u = s_ma * (1 + m)
-        s_ma_l = s_ma * (1 - m)
-        # 根据观望模式在不同的点位产生Long/short/empty标记
-
-        if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
-            return 1
-        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
-            return 0
-        else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
-            return -1
-
-
-class StgBuyOpen(GeneralStg):
-    def __init__(self, par_values=(20,)):
-        super().__init__(
-                pars=[Parameter((0, 100), par_type='int', name='n')],
-                name='OPEN_BUY',
-                run_timing='open',
-                use_latest_data_cycle=False,
-        )
-        if par_values:
-            self.update_par_values(*par_values)
-
-    def realize(self):
-        n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
-        # 选股指标为各个股票的N日涨幅
-        factors = (current_price / n_day_price - 1).squeeze()
-        # 初始化选股买卖信号，初始值为全0
-        sig = np.zeros_like(factors)
-        # buy_pos = np.nanargmax(factors)
-        # sig[buy_pos] = 1
-        # return sig
-        if np.all(factors <= 0.002):
-            # 如果所有的选股指标都小于0，则全部卖出
-            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
-            return sig
-        else:
-            # 如果选股指标有大于0的，则找出最大者
-            # 并生成买入信号
-            sig[np.nanargmax(factors)] = 1
-            return sig
-
-
-class StgSelClose(GeneralStg):
-    def __init__(self, par_values=(20,)):
-        super().__init__(
-                pars=[Parameter((0, 100), par_type='int', name='n')],
-                name='SELL_CLOSE',
-                run_timing='close',
-        )
-        if par_values:
-            self.update_par_values(*par_values)
-
-    def realize(self):
-        n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
-        # 选股指标为各个股票的N日涨幅
-        factors = (current_price / n_day_price - 1).squeeze()
-        # 初始化选股买卖信号，初始值为全-1
-        sig = -np.ones_like(factors)
-        # sig[np.nanargmax(factors)] = 0
-        # return sig
-        if np.all(factors <= 0.002):
-            # 如果所有的选股指标都小于0，则全部卖出
-            return sig
-        else:
-            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
-            # 产生卖出信号
-            sig[np.nanargmax(factors)] = 0
-            return sig
-
-
 class TestOperatorAndStrategy(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
@@ -979,7 +862,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('macd, dma, trix, random, ndayavg')
         self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'batch\')')
         self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA, (12, 26, 9))')
-        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD, (None, None, None))')
+        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD, (12, 26, 9))')
         self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX, (12, 12))')
         self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM, (0.5,))')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG, (14,))')
@@ -2518,8 +2401,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # Test Errors
         # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
 
-    def test_operator_run(self):
-        """ 测试operator对象生成完整交易信号
+    def test_operator_signal_creation(self):
+        """ 测试operator对象生成完整信号,仅考虑交易信号的生成，不考虑信号的执行以及持仓变化
 
         生成一个包含两个group，三个交易策略的operator对象，使用测试数据生成交易信号清单
         三个交易策略的运行频率固定，使用的交易数据固定，数据窗口长度固定，运行时间区间也固定
@@ -2530,7 +2413,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         3，测试交易策略3的Multi_parameters参数，即不同的股票使用不同的参数
         4，测试不同的group_merge_type：首先使用None，然后测试group_merge_type=‘or'
         """
-        # create an operator with 2 groups of strategies, set all all ULCs to False
+        # create an operator with 2 groups of strategies, set all ULCs to False
         op = qt.Operator()
         op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
         op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
@@ -3058,8 +2941,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(len(signals), op.get_signal_count())
         self.assertEqual(len(signals), len(signals_target))
 
-    def test_operator_create_signals(self):
-        """ 测试operator对象从DataSource获取数据并生成完整的交易信号
+    def test_operator_signal_creation_using_reference_data(self):
+        """测试operator对象运行交易策略生成交易信号过程中使用参考数据的情形"""
+        raise NotImplementedError
+
+    def test_operator_run_and_execute(self):
+        """ 测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
+
+        主要的目的是为了测试生成的交易信号能否被正确地执行，
+        同时测试交易信号生成过程中需要用到交易数据的情形
+
+        生成一个包含两个group，三个交易策略的operator对象，使用测试数据生成交易信号清单
+        三个交易策略的运行频率固定，使用的交易数据固定，数据窗口长度固定，运行时间区间也固定
+        交易信号生成后，送入backtest loop模块生成交易结果并更新交易持仓
         """
 
         op = qt.Operator(
@@ -3114,60 +3008,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         print(f'Generating trading signals completed\n'
               f'{signals}\n')
-
-    def test_stg_trading_different_prices(self):
-        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
-        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
-        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
-        stg_buy = StgBuyOpen()
-        stg_sel = StgSelClose()
-        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(
-                0,
-                run_freq='d',
-                window_length=50,
-                par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价变化率
-                run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
-        )
-        op.set_parameter(
-                1,
-                run_freq='d',
-                window_length=50,
-                par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价的变化率
-                run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
-        )
-        op.set_blender(blender='s0')
-        op.get_blender()
-        qt.configure(asset_pool=['000300.SH',
-                                 '399006.SZ'],
-                     asset_type='IDX')
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     trade_log=True,
-                     invest_start='20110725',
-                     invest_end='20220401',
-                     trade_batch_size=1,
-                     sell_batch_size=0)
-        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
-        qt.configure(asset_pool=stock_pool,
-                     asset_type='E',
-                     benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
-                     opti_output_count=50,
-                     invest_start='20211013',
-                     invest_end='20211231',
-                     opti_sample_count=100,
-                     trade_batch_size=100.,
-                     sell_batch_size=100.,
-                     invest_cash_amounts=[1000000],
-                     mode=1,
-                     trade_log=True,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=0.03,
-                     backtest_price_adj='none')
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
