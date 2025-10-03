@@ -85,6 +85,12 @@ dtype_5 = DataType(
         asset_type='E',
 )
 
+dtype_ref = DataType(
+        name='close',
+        freq='d',
+        asset_type='IDX',
+)
+
 # 测试数据的值不是来自于DataSource，而是直接设定，方便运算
 dtype_1_data = np.array(
         [[0.994, 0.412, 0.876],
@@ -553,6 +559,35 @@ dtype_5_data = np.array(
          [1.255, 0.850, 0.992]]
 )
 
+dtype_ref_data = np.array(
+        [[5267.72],
+         [5368.5],
+         [5417.67],
+         [5513.66],
+         [5495.43],
+         [5441.16],
+         [5596.35],
+         [5577.97],
+         [5470.46],
+         [5458.08],
+         [5518.52],
+         [5437.52],
+         [5476.43],
+         [5564.97],
+         [5569.78],
+         [5625.92],
+         [5512.97],
+         [5528.],
+         [5377.14],
+         [5351.96],
+         [5417.65],
+         [5501.09],
+         [5485.2],
+         [5473.95],
+         [5483.41]]
+)
+
+
 trade_price_h_data = np.array(
         [[37.58, 32.50, 24.14],
          [38.65, 33.31, 23.80],
@@ -598,7 +633,7 @@ trade_price_h_data = np.array(
 
 close_d_df = pd.DataFrame(
         dtype_1_data, columns=['A', 'B', 'C'],
-        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 125
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
 )
 close_h_df = pd.DataFrame(
         dtype_2_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='h',
@@ -624,6 +659,11 @@ trade_price_h_df = pd.DataFrame(
                   freq='h',
                   include_start_am=False,
                   include_start_pm=False)  # len = 40
+)
+
+close_ref_df = pd.DataFrame(
+        dtype_ref_data, columns=['ref'],
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
 )
 
 
@@ -790,6 +830,65 @@ class TestRuleIter(RuleIterator):
             signal = 0 if m2_avg <= m1_avg else 0.333
             print(f"option3: signal = 0 if m2_avg({m2_avg}) <= m1_avg({m1_avg}) else 1")
         print(f"signal = {signal}")
+        return signal
+
+
+class TestReferenceData(GeneralStg):
+    """用于Test测试的参考数据策略，基于GeneralStrategy策略生成
+
+    策略参数：param1(N): 股票变化率周期N，param2(M): 参考数据变化率周期
+    历史数据：close_E_d：小时收盘价x5天，close:000300.SH_IDX_d：参考数据指数收盘价格x7天
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+     - 计算：股票N日变化率 = (今收-N日前收)/今收
+     - 计算：参考数据M日变化率 = (今收-M小时前价)/今收
+     - 判断：
+        - 当参考数据M日变化率 > 0时：选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+        - 当参考数据M日变化率 <= 0时：选择今日变化率最低的两支，设定投资比率50%，否则投资比例为0
+    """
+
+    def __init__(self, par_values: tuple = None, **kwargs):
+        super().__init__(
+                name='test_ref_data',
+                description='test reference data strategy',
+                pars=[
+                    Parameter((1, 5), name='N', par_type='int', value=5),
+                    Parameter((1, 7), name='M', par_type='int', value=7),
+                ],
+                data_types={'close_E_d': dtype_1, 'reference_d': dtype_ref},
+                use_latest_data_cycle=[False, False],
+                window_length=[5, 7],
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        """实现策略逻辑"""
+
+        # n, m = self.param1, self.param2
+        n, m = self.get_pars('N'), self.get_pars('M')
+        # close_d, ref_d = self.close_E_d, self.reference_d
+        close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
+        print("ReferenceData is running")
+        print(f"param1(N) = {n}, param2(M) = {m}")
+        print(f"got datas:\n{close_d}\n and \n{ref_d}")
+        # create signal according to class doc and print out step results
+        dt1_change = (close_d[-1] - close_d[-n]) / close_d[-1]
+        ref_change = (ref_d[-1] - ref_d[-m]) / ref_d[-1]
+        print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
+        print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
+        # get top 2 stock indexes
+        if ref_change > 0:
+            top2_idx = dt1_change.argsort()[-2:][::-1]
+            print(f"ref_change > 0, top2 indexes = {top2_idx}")
+        else:
+            top2_idx = dt1_change.argsort()[:2]
+            print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
+        signal = np.zeros_like(dt1_change)
+        signal[top2_idx] = 0.5
+        print(f"signal = {signal}")
+
         return signal
 
 
@@ -2943,7 +3042,73 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_signal_creation_using_reference_data(self):
         """测试operator对象运行交易策略生成交易信号过程中使用参考数据的情形"""
-        raise NotImplementedError
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PS')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-12',
+                end_date='2023-02-3',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n')
+        # prepare data buffer
+
+        data_buffer = {
+            'close_E_d':     close_d_df,
+            'reference_d':     close_ref_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
+        )
+        print(f'Operator data buffer prepared:\n')
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+
+        for stg_id in op.strategy_ids:
+            print(f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
+
+        # check that the signals are correct
+        signals_target = [
+            ('ps', 0, np.array([0.5, 0.5, 0.])),
+            ('ps', 1, np.array([0.5, 0., 0.5])),
+            ('ps', 2, np.array([0.5, 0., 0.5])),
+            ('ps', 3, np.array([0., 0.5, 0.5])),
+            ('ps', 4, np.array([0.5, 0.5, 0.])),
+            ('ps', 5, np.array([0.5, 0.5, 0.])),
+            ('ps', 6, np.array([0.5, 0., 0.5])),
+            ('ps', 7, np.array([0.5, 0., 0.5])),
+            ('ps', 8, np.array([0.5, 0., 0.5])),
+            ('ps', 9, np.array([0.5, 0.5, 0.])),
+            ('ps', 10, np.array([0.5, 0.5, 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
     def test_operator_run_and_execute(self):
         """ 测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
@@ -2955,59 +3120,39 @@ class TestOperatorAndStrategy(unittest.TestCase):
         三个交易策略的运行频率固定，使用的交易数据固定，数据窗口长度固定，运行时间区间也固定
         交易信号生成后，送入backtest loop模块生成交易结果并更新交易持仓
         """
-
-        op = qt.Operator(
-                strategies=['dma'],
-                signal_type='PS',
-                run_freq='d',
-                run_timing='close',
-        )
-        backtest_config = {
-            'asset_pool': ['000001.SZ', '000651.SZ'],
-            'invest_start': '20200101',
-            'invest_end': '20201231',
-        }
-
-        from qteasy import QT_DATA_SOURCE
-        data_package = get_backtest_data_package(
-                operator=op,
-                config=backtest_config,
-                datasource=QT_DATA_SOURCE,
-        )
-        print(f'Backtest data package prepared:\n{data_package}\n')
-
-        start_date, end_date = get_backtest_start_end_dates(config=backtest_config)
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PS')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
 
         # create running schedule and prepare data buffer and data windows
         op.prepare_running_schedule(
-                start_date=start_date,
-                end_date=end_date,
+                start_date='2023-01-12',
+                end_date='2023-02-3',
                 include_start_am=False,
                 include_start_pm=False,
         )
-        print(f'Operator running schedule prepared:\n')
-
+        # prepare data buffer
+        data_buffer = {
+            'close_E_d':     close_d_df,
+            'reference_d':     close_ref_df,
+        }
         op.prepare_data_buffer(
-                start_date=start_date,
-                end_date=end_date,
-                data_package=data_package,
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
         )
-        print(f'Operator data buffer prepared:\n')
 
         # create_data_windows()
         op.create_data_windows()
-        print(f'Data Windows created for all strategies\n'
-              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
-
-        # set up operator blender
-        op.set_group_parameters(group='Group_1', blender_str='s0')
-
         signals = []
+        signal_index = 0
         for signal in op.run(steps=range(len(op.group_timing_table))):
             signals.append(signal)
+            signal_index += 1
 
-        print(f'Generating trading signals completed\n'
-              f'{signals}\n')
+        # 执行回测
+        print(f'Executing backtest with the generated trading signals\n')
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率

@@ -531,6 +531,18 @@ class Operator:
             message.append(f'No data indices -- data window indices are not set!\n')
             is_ready = False
 
+        if len(self.data_window_indices) > 0:
+            for stg, data_window_indices in self.data_window_indices.items():
+                if not isinstance(data_window_indices, Mapping):
+                    message.append(f'Invalid data indices -- data window indices of strategy {stg} is not a dict!\n')
+                    is_ready = False
+                for dtype, indices in data_window_indices.items():
+                    if any(index < 0 for index in indices):
+                        message.append(f'Invalid data indices for dtype({dtype}) of stg({stg}) -- '
+                                       f'Some data window indices are negative! Normally this means the history '
+                                       f'data is not enough to cover start date of backtest!\n')
+                        is_ready = False
+
         if self.group_timing_table is None:
             message.append(f'No group timing table -- group timing table is not created!\n')
             is_ready = False
@@ -1668,14 +1680,20 @@ class Operator:
             例如：{'price': price_df, 'volume': volume_df, ...}
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
         """
-        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致，检查数据包的key是否都是str
-        data_columns = data_package[next(iter(data_package.keys()))].columns
+        # 针对所有data_type，检查数据包的key是否都是str
         for key in data_package.keys():
             if not isinstance(key, str):
                 raise TypeError(f"Data package keys must be strings, got {type(key)} instead.")
-        for df in data_package.values():
-            if not df.columns.equals(data_columns):
-                raise ValueError("Data columns are not consistent across all data types in the data package.")
+        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致（排除ref型数据（只有一列数据且名为'ref'））
+        data_columns = [data_package[key].columns for key in data_package.keys()]
+        # 允许data_columns出现两种情况：一种是所有数据列都相同，另一种是只有一个数据列且名为'ref'
+        data_columns_no_ref = [cols for cols in data_columns if not (len(cols) == 1 and cols[0] == 'ref')]
+        if len(data_columns_no_ref) > 1:
+            first_cols = data_columns_no_ref[0]
+            for cols in data_columns_no_ref[1:]:
+                if not first_cols.equals(cols):
+                    raise ValueError("Data package columns must be the same and in the same order for all data types, "
+                                     f"got {first_cols} and {cols} instead.")
 
         for data_type in self.all_strategy_data_types:
             if data_type.dtype_id not in data_package:
@@ -1848,16 +1866,6 @@ class Operator:
         self.prepare_running_schedule(start_date=start_date, end_date=end_date)
 
         self.create_data_windows()
-
-        # for group in self.groups:
-        #     print(f'Group {group.name} data windows:')
-        #     for strategy in group.members:
-        #         print(f'Strategy {strategy.name}/{strategy.run_freq}@{strategy.run_timing} data windows and indices:')
-        #         for dtype in strategy.data_types:
-        #             window = self.data_window_views[strategy.name][dtype]
-        #             indices = self.data_window_indices[strategy.name][dtype]
-        #             print(f'{dtype}: {window.shape}, indices: {indices}\n'
-        #                   f'window (first 2 windows):\n{window[indices[0:2]]}\n')
 
         signal_count = self.get_signal_count(range(total_run_steps))
 
