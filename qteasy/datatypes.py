@@ -517,6 +517,7 @@ class DataType:
         self._name_pars = None
         self._default_freq = default_freq
         self._default_asset_type = default_asset_type
+        self._dtype_id = f'{self._name}_{self._default_asset_type}_{self._default_freq}'
         self._all_built_in_freqs = None  # TODO: are these properties still needed?
         self._all_built_in_asset_types = None
         self._all_user_defined_freqs = None
@@ -541,7 +542,13 @@ class DataType:
 
     @property
     def dtype_id(self):
-        return f'{self._name}_{self._default_asset_type}_{self._default_freq}'
+        return self._dtype_id
+
+    @dtype_id.setter
+    def dtype_id(self, dtype_id:str):
+        if not isinstance(dtype_id, str):
+            raise TypeError(f'dtype_id must be a string, got {type(dtype_id)}')
+        self._dtype_id = dtype_id
 
     @property
     def freq(self):
