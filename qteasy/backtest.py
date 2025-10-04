@@ -13,6 +13,7 @@ import os
 import pandas as pd
 import numpy as np
 from numba import njit  # try taichi, which might be even faster
+from typing import Union
 
 import qteasy
 from qteasy.history import HistoryPanel
@@ -28,9 +29,9 @@ from qteasy.finance import (
 
 @njit(nogil=True, cache=True)
 def _loop_step(signal_type: int,
-               own_cash: float,
+               own_cash: Union[float, np.float64, np.ndarray],
                own_amounts: np.ndarray,
-               available_cash: float,
+               available_cash: Union[float, np.float64, np.ndarray],
                available_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
@@ -113,13 +114,13 @@ def _loop_step(signal_type: int,
     if signal_type == 0:
 
         cash_to_spend, amounts_to_sell = _parse_pt_signals(
-            signals=op,
-            prices=prices,
-            own_amounts=own_amounts,
-            own_cash=own_cash,
-            pt_buy_threshold=pt_buy_threshold,
-            pt_sell_threshold=pt_sell_threshold,
-            allow_sell_short=allow_sell_short
+                signals=op,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=allow_sell_short
         )
 
     elif signal_type == 1:
@@ -966,3 +967,165 @@ def process_loop_results(operator,
         op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name, encoding='utf-8')
 
     return value_history
+
+
+def initialize_backtest_delivery_queue(cash_delivery_period: int,
+                                       stock_delivery_period: int,
+                                       share_count: int):
+    """ 初始化回测现金和股票交割队列，因为回测是批量进行的，因此需要通过交割队列进行快速交割计算
+
+    Parameters
+    ----------
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
+    share_count: int
+        股票数量
+
+    Returns
+    -------
+    cash_delivery_queue: np.ndarray
+        现金交割队列
+    stock_delivery_queue: np.ndarray
+        股票交割队列
+    """
+
+    cash_delivery_queue = np.zeros(shape=(cash_delivery_period + 1,), dtype='float')
+
+    stock_delivery_queue = np.zeros(shape=(stock_delivery_period + 1, share_count), dtype='float')
+
+    return cash_delivery_queue, stock_delivery_queue
+
+
+@njit(nogil=True, cache=True)
+def process_backtest_delivery(cash_delivery_queue: np.ndarray,
+                              stock_delivery_queue: np.ndarray,
+                              is_new_day: bool,
+                              new_cash: float,
+                              new_stocks: np.ndarray,
+                              share_count: int) -> tuple[np.ndarray, np.ndarray, float, np.ndarray]:
+    """ 处理回测现金和股票交割队列，计算达到交割期的现金和股票，并更新可用现金和可用股票
+
+    Parameters
+    ----------
+    cash_delivery_queue: np.ndarray
+        现金交割队列
+    stock_delivery_queue: np.ndarray
+        股票交割队列
+    is_new_day: bool
+        是否为新的一天，用于判断是否需要更新交割队列
+    new_cash: float
+        新增的现金，用于加入交割队列
+    new_stocks: np.ndarray
+        新增的股票，用于加入交割队列
+    share_count: int
+        股票数量
+
+    Returns
+    -------
+    cash_delivery_queue: np.ndarray
+        更新后的现金交割队列
+    stock_delivery_queue: np.ndarray
+        更新后的股票交割队列
+    cash_delivered: float
+        达到交割期的现金
+    stocks_delivered: np.ndarray
+        达到交割期的股票数量
+    """
+
+    cash_delivery_queue, cash_delivered = process_cash_delivery(
+            cash_delivery_queue=cash_delivery_queue,
+            is_new_day=is_new_day,
+            new_cash=new_cash
+    )
+
+    stock_delivery_queue, stocks_delivered = process_stock_delivery(
+            stock_delivery_queue=stock_delivery_queue,
+            is_new_day=is_new_day,
+            new_stocks=new_stocks,
+            share_count=share_count
+    )
+
+    return cash_delivery_queue, stock_delivery_queue, cash_delivered, stocks_delivered
+
+
+@njit(nogil=True, cache=True)
+def process_cash_delivery(cash_delivery_queue: np.ndarray,
+                          is_new_day: bool,
+                          new_cash: float) -> tuple[np.ndarray, float]:
+    """ 处理回测现金交割队列，计算达到交割期的现金，并更新可用现金
+
+    Parameters
+    ----------
+    cash_delivery_queue: np.ndarray
+        现金交割队列
+    is_new_day: bool
+        是否为新的一天，用于判断是否需要更新交割队列
+    new_cash: float
+        新增的现金，用于加入交割队列
+
+    Returns
+    -------
+    cash_delivery_queue: np.ndarray
+        更新后的现金交割队列
+    cash_delivered: float
+        达到交割期的现金
+    """
+
+    if len(cash_delivery_queue) == 1:
+        # 如果现金交割周期为0，则直接将新增现金进行交割，并忽略交割队列
+        cash_delivered = new_cash
+
+    elif is_new_day:
+        # 处理现金交割
+        cash_delivery_queue = np.roll(cash_delivery_queue, -1)
+        cash_delivery_queue[-1] = new_cash
+        cash_delivered = cash_delivery_queue[0]
+
+    else:  # 不是新的一天，不进行滚动，不进行交割，现金累加入队列
+        cash_delivered = 0.
+        cash_delivery_queue[-1] += new_cash
+
+    return cash_delivery_queue, cash_delivered
+
+
+@njit(nogil=True, cache=True)
+def process_stock_delivery(stock_delivery_queue: np.ndarray,
+                           is_new_day: bool,
+                           new_stocks: np.ndarray,
+                           share_count: int) -> tuple[np.ndarray, np.ndarray]:
+    """ 处理回测股票交割队列，计算达到交割期的股票，并更新可用股票
+
+    Parameters
+    ----------
+    stock_delivery_queue: np.ndarray
+         股票交割队列
+    is_new_day: bool
+         是否为新的一天，用于判断是否需要更新交割队列
+    new_stocks: np.ndarray
+         新增的股票，用于加入交割队列
+    share_count: int
+         股票数量
+
+    Returns
+    -------
+    stock_delivery_queue: np.ndarray
+         更新后的股票交割队列
+    stocks_delivered: np.ndarray
+         达到交割期的股票数量
+    """
+
+    if stock_delivery_queue.shape[0] == 1:
+        # 如果股票交割周期为0，则直接将新增股票进行交割，并忽略交割队列
+        stocks_delivered = new_stocks
+    elif is_new_day:
+        # 处理股票交割
+        stock_delivery_queue = np.roll(stock_delivery_queue, -share_count)
+        stock_delivery_queue[-1, :] = new_stocks
+        stocks_delivered = stock_delivery_queue[0, :]
+    else:  # 不是新的一天，不进行滚动，不进行交割，
+        stocks_delivered = np.zeros(shape=(share_count,), dtype='float')
+        stock_delivery_queue[-1, :] += new_stocks
+
+    return stock_delivery_queue, stocks_delivered
