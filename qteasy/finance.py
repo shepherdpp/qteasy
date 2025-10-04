@@ -12,7 +12,7 @@
 import numpy as np
 import pandas as pd
 from numba import njit
-from typing import Union
+from typing import Union, Any
 
 from qteasy.utilfuncs import ALL_COST_PARAMETERS
 
@@ -45,7 +45,7 @@ def validate_cost_dict(cost: dict) -> None:
     return None
 
 
-def set_cost(**kwargs):
+def set_cost(**kwargs: Any):
     """ 新建一个cost字典
 
     交易成本的估算依赖四种类型的成本：

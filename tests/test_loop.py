@@ -14,9 +14,18 @@ import qteasy as qt
 import pandas as pd
 import numpy as np
 
-from qteasy.backtest import apply_loop, process_loop_results
 from qteasy.finance import get_cost_pamams
-from qteasy.history import stack_dataframes, dataframe_to_hp
+from qteasy.backtest import (
+    apply_loop,
+    process_loop_results,
+    initialize_backtest_delivery_queue,
+    process_backtest_delivery,
+)
+
+from qteasy.history import (
+    stack_dataframes,
+    dataframe_to_hp,
+)
 
 
 class TestLoop(unittest.TestCase):
@@ -2186,6 +2195,280 @@ class TestLoop(unittest.TestCase):
                  [0.0000, 0.0000, 0.0000, 24805.3389, 0.0000, 24805.3389],
                  [0.0000, 0.0000, 0.0000, 24805.3389, 0.0000, 24805.3389]])
 
+    def test_backtest_delivery(self):
+        """test backtest functions initialize_backtest_delivery_queue() and process_backtest_delivery()"""
+        # 测试现金及股票交割期分别为（2，0）、（0，2）、（2，2）、（0，0）的情况，通过测试数据检查是否正确交割
+        # 首先测试（2，0）交割期
+        c_queue, s_queue = initialize_backtest_delivery_queue(
+                cash_delivery_period=2,
+                stock_delivery_period=0,
+                share_count=3)
+        print(f'initial cash delivery queue:\n{c_queue}')
+        print(f'initial amount delivery queue:\n{s_queue}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 0.])))
+        self.assertEqual(c_queue.ndim, 1)
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertEqual(s_queue.ndim, 2)
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200., 300.]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 1000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 00., 0.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500, 600]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200, 300]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 3000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500, 600]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([1000, 3000., 2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertAlmostEqual(c_delivered, 1000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
+
+        # 其次测试（0，2）交割期
+        c_queue, s_queue = initialize_backtest_delivery_queue(
+                cash_delivery_period=0,
+                stock_delivery_period=2,
+                share_count=3)
+        print(f'initial cash delivery queue:\n{c_queue}')
+        print(f'initial amount delivery queue:\n{s_queue}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])))
+        self.assertEqual(c_queue.ndim, 1)
+        self.assertEqual(s_queue.ndim, 2)
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200, 300]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [100., 200., 300.]])))
+        self.assertAlmostEqual(c_delivered, 1000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500., 600]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [400., 500., 600.]])))
+        self.assertAlmostEqual(c_delivered, 2000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200., 300]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [500., 700., 900.]])))
+        self.assertAlmostEqual(c_delivered, 1000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500, 600]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.],[500., 700., 900.], [400., 500., 600.]])))
+        self.assertAlmostEqual(c_delivered, 2000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
+
+        # 接下来测试（2，2）交割期
+        c_queue, s_queue = initialize_backtest_delivery_queue(
+                cash_delivery_period=2,
+                stock_delivery_period=2,
+                share_count=3)
+        print(f'initial cash delivery queue:\n{c_queue}')
+        print(f'initial amount delivery queue:\n{s_queue}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200, 300]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 1000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [100., 200., 300.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500, 600]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [400., 500., 600.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200., 300.]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 3000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [500., 700., 900.]])))
+        self.assertAlmostEqual(c_delivered, 0.)
+        self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500., 600.]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([1000, 3000., 2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [500., 700., 900.], [400., 500., 600.]])))
+        self.assertAlmostEqual(c_delivered, 1000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
+
+        # 最后测试（0，0）交割期
+        c_queue, s_queue = initialize_backtest_delivery_queue(
+                cash_delivery_period=0,
+                stock_delivery_period=0,
+                share_count=3)
+        print(f'initial cash delivery queue:\n{c_queue}')
+        print(f'initial amount delivery queue:\n{s_queue}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertEqual(c_queue.ndim, 1)
+        self.assertEqual(s_queue.ndim, 2)
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=False,
+                new_cash=1000.,
+                new_stocks=np.array([100., 200., 300.]),
+                share_count=3,
+        )
+        print(f'after process (not new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (not new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertAlmostEqual(c_delivered, 1000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
+
+        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+                cash_delivery_queue=c_queue,
+                stock_delivery_queue=s_queue,
+                is_new_day=True,
+                new_cash=2000.,
+                new_stocks=np.array([400., 500., 600.]),
+                share_count=3,
+        )
+        print(f'after process (new day) cash delivery queue:\n{c_queue}')
+        print(f'after process (new day) amount delivery queue:\n{s_queue}')
+        print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
+        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertAlmostEqual(c_delivered, 2000.)
+        self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
+
+
     def test_loop_step_pt_sb00(self):
         """ test loop step PT-signal, sell first"""
         cost_params = get_cost_pamams(self.rate)
@@ -2199,7 +2482,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2224,7 +2506,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2249,7 +2530,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2274,7 +2554,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2299,7 +2578,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2324,7 +2602,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2349,7 +2626,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2377,7 +2653,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2402,7 +2677,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2427,7 +2701,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2452,7 +2725,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2477,7 +2749,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2502,7 +2773,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2527,7 +2797,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2555,7 +2824,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2580,7 +2848,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2605,7 +2872,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2630,7 +2896,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2655,7 +2920,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2680,7 +2944,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2705,7 +2968,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2733,7 +2995,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2758,7 +3019,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2783,7 +3043,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2808,7 +3067,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2833,7 +3091,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2858,7 +3115,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2883,7 +3139,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2911,7 +3166,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2936,7 +3190,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2961,7 +3214,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -2986,7 +3238,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3011,7 +3262,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3036,7 +3286,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3061,7 +3310,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=True,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3089,7 +3337,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3114,7 +3361,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3139,7 +3385,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3164,7 +3409,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3189,7 +3433,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3214,7 +3457,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
@@ -3239,7 +3481,6 @@ class TestLoop(unittest.TestCase):
                                                          cost_params=cost_params,
                                                          pt_buy_threshold=0.1,
                                                          pt_sell_threshold=0.1,
-                                                         maximize_cash_usage=False,
                                                          long_pos_limit=1.,
                                                          short_pos_limit=-1.,
                                                          allow_sell_short=False,
