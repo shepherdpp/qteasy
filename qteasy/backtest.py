@@ -25,13 +25,6 @@ from qteasy.finance import (
     get_cost_pamams,
 )
 
-from qteasy.trading_util import (
-    parse_trade_signal,
-    _parse_pt_signals,
-    _parse_ps_signals,
-    _parse_vs_signals,
-)
-
 
 @njit(nogil=True, cache=True)
 def _loop_step(signal_type: int,
@@ -106,15 +99,11 @@ def _loop_step(signal_type: int,
         amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
-
-    # 0, 当本期交易信号全为0，且信号类型为1或2时，退出计算，因为此时
-    # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
-    # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
-    # 出计算
-    # if np.all(op == 0) and (signal_type > 0):
-    #     # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
-    #     # 因为正好op全为0，因此返回op即可
-    #     return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
+    from qteasy.trading_util import (
+        _parse_pt_signals,
+        _parse_ps_signals,
+        _parse_vs_signals,
+    )
 
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
@@ -666,8 +655,7 @@ def apply_loop_core(share_count: int,
                     stock_delivery_period: int,
                     allow_sell_short: bool,
                     long_pos_limit: float,
-                    short_pos_limit: float,
-                    price_priority_list: list):
+                    short_pos_limit: float):
     """ apply_loop的核心function,不含任何numba不支持的元素，仅包含batch模式下，
         不需要生成trade_log的情形下运行核心循环的核心代码。
         在符合要求的情况下，这部分代码以njit方式加速运行，实现提速
@@ -724,14 +712,39 @@ def apply_loop_core(share_count: int,
         最大多头仓位
     short_pos_limit: float
         最大空头仓位
-    max_cash_usage: bool
-        是否最大化利用现金
-    price_priority_list: list
-        价格优先级列表
 
     Returns
     -------
     """
+    # TODO: 改造本函数，使其适用于最新的operator信号生成方式，并且拆分成几个更小的函数：
+    #  首先，以下子函数将被拆分出来分别调用：
+    #  1，用于计算现金增值的子函数 calculate_inflation()
+    #  2，用于处理现金交割的子函数 process_cash_delivery()  使用ndarray代替list处理交割队列
+    #  3，用于处理股票交割的子函数 process_stock_delivery()  使用ndarray代替list处理交割队列
+    #  4，用于处理单次交易的子函数 process_single_trade()
+    #  5，用于更新持仓和现金的子函数 update_holdings_and_cash()
+    #  以上子函数将被拆分出来分别调用
+    #  其次，本函数将被改造为同时适用于batch和stepwise两种运行模式：
+    #  此时operator将在本函数中被传入并调用operator.run()函数生成交易信号：
+    #  1，batch模式下，批量运行operator.run()函数生成批量交易信号，
+    #     然后在内存中创建批量交易数据清单，调用上述子函数计算最终的持仓表
+    #  2，stepwise模式下，每次循环调用operator.run()函数生成单步交易信号，
+    #     然后调用上述子函数计算单步持仓表，并根据执行的持仓结果更新operator的数据清单，
+    #     再重新运行operator直到循环结束
+    #  3，最后将两种模式下的结果进行统一输出
+    #  在两种模式下，交易信号的组成包括一张交易信号时间序列，以及一张交易信号清单，清单中包含
+    #  每个交易信号时间点上的信号类型，交易信号以及交易信号时间点序号，所有信号依次运行处理，
+    #  不再考虑price_priority_list。另外，根据交易信号时间序列，还可以计算交易信号换日序列，
+    #  用于计算现金增值以及股现交割。
+    #  - 由于operator对象现在有了get_signal_count()函数，因此可以直接从operator中获取交易信号的总数
+    #  以及交易信号清单，因此可以提前初始化整个交易结果清单array，而不需要使用list来动态添加
+    #  - 另外，operator对象现在也有了group_timing_table属性，因此可以直接从operator中获取交易信号
+    #  的交易时间点序列，因此可以提前批量计算现金增值并计算换日序列用于计算交割
+    #  - 关于交割，原来使用list来模拟交割队列，存在效率低下的问题，因此需要改造为使用numpy数组来模拟
+    #  交割队列，交割队列的长度为定长的ndarray，每次换日时，使用np.roll()函数将交割队列向前滚动一位，
+    #  然后将交割队列的最后一位清零，表示新的交割位置，然后在每次交易时，将新交割的现金或股票加入交割
+    #  队列的最后一位，表示新的交割将在若干日后完成，每次交割时，将最后一位的现金或股票取出，加入可用现金或可用股票中
+    #  这样就避免了使用list来动态添加和删除元素，提高了效率
 
     # 初始化计算结果列表
     own_cash = 0.  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
