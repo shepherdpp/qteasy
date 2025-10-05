@@ -143,6 +143,13 @@ def _evaluate_all_parameters(par_generator,
     return pool
 
 
+# TODO: 将这个函数进行拆分，分成两大类函数：
+#  1，根据qt的运行模式，从config配置文件
+#  中提取出不同的运行参数如回测开始日期、结束日期、投资金额、回测方式等等，这一类函数
+#  应该被进一步拆分为同一系列的多个函数，分别用于处理不同情况下的参数提取。
+#  2，回测执行函数，该函数接受所有的回测参数，执行回测并返回回测结果，这部分应该视情
+#  况调用不同的子函数运行，在最基础的情况下调用最基本的回测函数获得一张回测结果清单，
+#  然后再根据设置对回测结果进行进一步处理例如结果评价，生成报表，生成图表等等
 def _evaluate_one_parameter(par,
                             op: Operator,
                             trade_price_list: HistoryPanel,

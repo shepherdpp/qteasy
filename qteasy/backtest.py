@@ -26,26 +26,34 @@ from qteasy.finance import (
     get_cost_pamams,
 )
 
+from qteasy.trading_util import (
+    _parse_pt_signals,
+    _parse_ps_signals,
+    _parse_vs_signals,
+)
+
 
 @njit(nogil=True, cache=True)
-def _loop_step(signal_type: int,
-               own_cash: Union[float, np.float64, np.ndarray],
-               own_amounts: np.ndarray,
-               available_cash: Union[float, np.float64, np.ndarray],
-               available_amounts: np.ndarray,
-               op: np.ndarray,
-               prices: np.ndarray,
-               cost_params: np.ndarray,
-               pt_buy_threshold: float,
-               pt_sell_threshold: float,
-               long_pos_limit: float,
-               short_pos_limit: float,
-               allow_sell_short: bool,
-               moq_buy: float,
-               moq_sell: float) -> tuple:
-    """ 对同一批交易进行处理，采用向量化计算以提升效率
-        接受交易信号、交易价格以及期初可用现金和可用股票等输入，加上交易费率等信息计算交易后
+def backtest_step(signal_type: int,
+                  own_cash: Union[float, np.float64, np.ndarray],
+                  own_amounts: np.ndarray,
+                  available_cash: Union[float, np.float64, np.ndarray],
+                  available_amounts: np.ndarray,
+                  op_signal: np.ndarray,
+                  prices: np.ndarray,
+                  cost_params: np.ndarray,
+                  pt_buy_threshold: float,
+                  pt_sell_threshold: float,
+                  long_pos_limit: float,
+                  short_pos_limit: float,
+                  allow_sell_short: bool,
+                  moq_buy: float,
+                  moq_sell: float) -> tuple:
+    """ 对同一批交易进行处理，进行期初-期末的交易计算：
+        以交易信号、交易价格以及期初可用现金和可用股票等输入，加上交易费率等期初信息计算期末
         的现金和股票变动值、并计算交易费用
+
+        该函数使用numba进行加速，要求传入的参数均为numpy ndarray或numpy支持的标量类型
 
     Parameters
     ----------
@@ -62,8 +70,8 @@ def _loop_step(signal_type: int,
         本次交易开始前账户可用现金余额（交割中的现金不计入余额）
     available_amounts: np.ndarray:
         交易开始前各个股票的可用数量余额（交割中的股票不计入余额）
-    op: np.ndarray
-        本次交易的个股交易信号清单
+    op_signal: np.ndarray
+        本次交易的个股交易信号
     prices: np.ndarray，
         本次交易发生时各个股票的交易价格
     cost_params: np.ndarray
@@ -100,11 +108,6 @@ def _loop_step(signal_type: int,
         amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
-    from qteasy.trading_util import (
-        _parse_pt_signals,
-        _parse_ps_signals,
-        _parse_vs_signals,
-    )
 
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
@@ -112,9 +115,8 @@ def _loop_step(signal_type: int,
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:
-
         cash_to_spend, amounts_to_sell = _parse_pt_signals(
-                signals=op,
+                signals=op_signal,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -125,7 +127,7 @@ def _loop_step(signal_type: int,
 
     elif signal_type == 1:
         cash_to_spend, amounts_to_sell = _parse_ps_signals(
-                signals=op,
+                signals=op_signal,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -134,7 +136,7 @@ def _loop_step(signal_type: int,
 
     elif signal_type == 2:
         cash_to_spend, amounts_to_sell = _parse_vs_signals(
-                signals=op,
+                signals=op_signal,
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=allow_sell_short
@@ -164,7 +166,7 @@ def _loop_step(signal_type: int,
     if np.all(abs_cash_to_spend < 0.01):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         # TODO: 所有的np.zeros_like()都需要提高效率，改为返回None或np.empty()
-        return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
+        return cash_gained, np.zeros_like(op_signal), np.zeros_like(op_signal), amount_sold, fee_selling
 
     # 分别处理买入金额中的多头买入和空头买入部分，分别计算当前持有的多头和空头仓位
     pos_cash_to_spend = np.where(cash_to_spend > 0.01, cash_to_spend, 0)
@@ -208,6 +210,17 @@ def _loop_step(signal_type: int,
     fee = fee_buying + fee_selling
 
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
+
+
+def backtest_batch_steps(signal_types: np.ndarray,
+                         own_cashes: np.ndarray,
+                         own_amounts_array):
+    """批量处理多次交易的回测计算
+
+    输入数据为整个交易过程的交易信号、交易价格、初始持仓和现金等完整的持仓表，
+    循环调用backtest_step()函数，完成整个交易清单的回测计算
+    """
+    pass
 
 
 def _get_complete_hist(looped_value: pd.DataFrame,
@@ -306,9 +319,13 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 删除operator作为传入参数，仅处理回测结果，将回测结果传出
-#  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
-#  的参数
+# TODO: 将此函数移到core.py，改造为专司backtest的函数。专门处理operator的信号生成以及信号回测
+#  同时可以考虑将此函数一分为二，一个是处理operator信号生成不需要依赖回测数据的，可以一次性生成
+#  operator信号后，统一调用apply_loop_core返回回测结果，另一个处理operator信号生成依赖回测数据
+#  的，此时operator信号需要利用初始回测数据，然后在回测过程中逐步生成。该函数处理交易信号以及回测的
+#  结果，交易信号和回测的结果是一系列可以提前准备好的表组成，这些表均在本函数中提前创建好，并且由持仓
+#  数据区、交易信号区、日期索引区、以及其他有用的索引区例如资金投入信号区、资金无风险利率区等组成，上
+#  述所有的表均为固定长度的ndarray方便后续操作
 def apply_loop(operator: Operator,
                trade_price_list: HistoryPanel,
                start_idx: int = 0,
@@ -564,7 +581,7 @@ def apply_loop(operator: Operator,
                     amount_sold = np.zeros_like(current_op)
                     fee = np.zeros_like(current_op)
                 else:
-                    cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
+                    cash_gained, cash_spent, amount_purchased, amount_sold, fee = backtest_step(
                             signal_type=signal_type,
                             own_cash=own_cash,
                             own_amounts=own_amounts,
@@ -720,8 +737,8 @@ def apply_loop_core(share_count: int,
     # TODO: 改造本函数，使其适用于最新的operator信号生成方式，并且拆分成几个更小的函数：
     #  首先，以下子函数将被拆分出来分别调用：
     #  1，用于计算现金增值的子函数 calculate_inflation()
-    #  2，用于处理现金交割的子函数 process_cash_delivery()  使用ndarray代替list处理交割队列
-    #  3，用于处理股票交割的子函数 process_stock_delivery()  使用ndarray代替list处理交割队列
+    #  2，用于处理现金交割的子函数 process_cash_delivery()  使用ndarray代替list处理交割队列 done
+    #  3，用于处理股票交割的子函数 process_stock_delivery()  使用ndarray代替list处理交割队列 done
     #  4，用于处理单次交易的子函数 process_single_trade()
     #  5，用于更新持仓和现金的子函数 update_holdings_and_cash()
     #  以上子函数将被拆分出来分别调用
@@ -803,7 +820,7 @@ def apply_loop_core(share_count: int,
                 amount_sold = np.zeros_like(current_op)
                 fee = np.zeros_like(current_op)
             else:
-                cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
+                cash_gained, cash_spent, amount_purchased, amount_sold, fee = backtest_step(
                         signal_type=signal_type,
                         own_cash=own_cash,
                         own_amounts=own_amounts,
