@@ -56,11 +56,6 @@ from qteasy._arg_validators import (
     ConfigDict,
 )
 
-from qteasy.optimization import (
-    _evaluate_all_parameters,
-    _evaluate_one_parameter,
-)
-
 
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
@@ -1783,9 +1778,10 @@ def get_backtest_invest_cash_plan(config) -> CashPlan:
                                     interest_rate=config['riskfree_ir'])
         invest_start = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                 f' date will be used!',
-                 RuntimeWarning)
+            warn(
+                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
+                f' date will be used!',
+                RuntimeWarning)
 
     return invest_cash_plan
 
@@ -2288,3 +2284,147 @@ def run_mode_2(operator, config, benchmark_data_type):
                 pass
 
     return optimal_pars
+
+
+# TODO: 将此函数移到core.py，改造为专司backtest的函数。专门处理operator的信号生成以及信号回测
+#  同时可以考虑将此函数一分为二，一个是处理operator信号生成不需要依赖回测数据的，可以一次性生成
+#  operator信号后，统一调用apply_loop_core返回回测结果，另一个处理operator信号生成依赖回测数据
+#  的，此时operator信号需要利用初始回测数据，然后在回测过程中逐步生成。该函数处理交易信号以及回测的
+#  结果，交易信号和回测的结果是一系列可以提前准备好的表组成，这些表均在本函数中提前创建好，并且由持仓
+#  数据区、交易信号区、日期索引区、以及其他有用的索引区例如资金投入信号区、资金无风险利率区等组成，上
+#  述所有的表均为固定长度的ndarray方便后续操作
+def backtest_operator(operator: Operator,
+                      trade_price_list: HistoryPanel,
+                      start_idx: int = 0,
+                      end_idx: int = None,
+                      cash_plan: CashPlan = None,
+                      cost_rate: dict = None,
+                      moq_buy: float = 100.,
+                      moq_sell: float = 1.,
+                      inflation_rate: float = 0.03,
+                      pt_signal_timing: str = 'lazy',
+                      pt_buy_threshold: float = 0.1,
+                      pt_sell_threshold: float = 0.1,
+                      cash_delivery_period: int = 0,
+                      stock_delivery_period: int = 0,
+                      allow_sell_short: bool = False,
+                      long_pos_limit: float = 1.0,
+                      short_pos_limit: float = -1.0,
+                      max_cash_usage: bool = False,
+                      trade_log: bool = False) -> tuple:
+    """本函数接受一个operator对象以及回测运行参数（包括交易价格、资金计划、交易成本率等），根据这些参数
+    创建用于存储交易回测结果的交易信号清单、持仓清单、现金清单等表格，并分别调用operator对象的run方法和
+    backtest_core函数来生成交易信号和回测交易结果。返回持仓清单和现金清单作为回测结果。
+
+    运行中需要用到的数据表包括：
+        0, op_signals:          交易信号表
+        1, own_amounts:         持有资产数量表
+        2, available_amounts:   可用资产数量表
+        3, own_cash:            持有现金数量表
+        4, available_cash:      可用现金数量表
+        5, cash/stock_delivery: 现金/股票交割表
+
+    运行中需要用到的索引表包括：
+        0, op_datetime:       回测历史日期索引表，包含所有交易信号的交易日期时间
+        1, trade_indicators:  交易信号索引表，指示那些交易信号需要进行交易计算
+        2, invest_amounts:    资金投入日期索引表，指示每个交易信号日期的资金投入额
+        3, cash_inflation:    资金无风险利率索引表，指示每个交易信号日期的现金增长率
+
+    Parameters
+    ----------
+    operator: Operator
+        用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
+    start_idx: int, Default: 0
+        模拟交易从交易清单的该序号开始循环
+    end_idx: int, Default: None
+        模拟交易到交易清单的该序号为止
+    trade_price_list: object HistoryPanel
+        完整历史价格清单，数据的频率由freq参数决定
+    cash_plan: CashPlan: Default: None
+        资金投资计划，CashPlan对象
+    cost_rate: dict: Default: None
+        交易成本率，包含交易费、滑点及冲击成本
+    moq_buy: float：Default: 100
+        每次交易买进的最小份额单位
+    moq_sell: float: Default: 1
+        每次交易卖出的最小份额单位
+    inflation_rate: float, Default: 0.03
+        现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+    pt_signal_timing: str, {'lazy', 'eager', 'aggressive'}  # TODO: 增加参数值 'aggressive' 的alias 'eager'
+        控制PT模式下交易信号产生的时机
+    pt_buy_threshold: float, Default: 0.1
+        PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
+    pt_sell_threshold: flaot, Default: 0.1
+        PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
+    cash_delivery_period: int, Default: 0
+        现金交割周期，默认值为0，单位为天。
+    stock_delivery_period: int, Default: 0
+        股票交割周期，默认值为0，单位为天。
+    allow_sell_short: bool, Default: False
+        是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
+    long_pos_limit: float, Default: 1.0
+        允许持有的最大多头仓位比例
+    short_pos_limit: float, Default: -1.0
+        允许持有的最大空头仓位比例
+    max_cash_usage: bool, Default: False
+        是否最大化利用现金，如果为True，则在每次交易时，会将卖出股票的现金用于买入股票
+    trade_log: bool: Default: False
+        为True时，输出回测详细日志为csv格式的表格
+
+    Returns
+    -------
+    tuple: (own_amounts, available_amounts, own_cash, available_cash))
+    - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
+    - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
+    - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
+    - op_list_bt_indices:  交易清单中实际参加回测的行序号
+    """
+    # 1，检查operator对象是否已经准备好，否则raise error
+
+    # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
+
+    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
+
+    # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
+
+    # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
+
+    # 6，返回回测结果，包括日期时间索引、持仓数据、现金数据、
+
+    raise NotImplementedError
+
+
+def backtest_operator_independently():
+    """处理operator的交易信号不依赖于回测数据的情况:
+
+    根据输入参数调用operator.run()生成完整的交易信号清单，然后调用backtest_batch_steps()进行回测
+
+    """
+    # 1，调用operator.run()生成完整的交易信号清单
+
+    # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
+
+    # 3，返回完整的回测结果清单
+
+    raise NotImplementedError
+
+
+def backtest_operator_dependently():
+    """处理operator的交易信号依赖于回测数据的情况:
+
+    根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
+
+    # 循环执行下面步骤，直至完整生成回测结果清单
+
+    # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
+    #
+    # 2，调用operator.run_step()生成当前交易信号
+
+    # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
+
+    # 4，更新持仓和现金数据，更新operator中的依赖性历史数据
+
+    # 5，返回完整的回测结果清单
+
+    raise NotImplementedError
+

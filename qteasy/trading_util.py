@@ -12,6 +12,8 @@
 # ======================================
 
 import os
+from linecache import cache
+
 import pandas as pd
 import numpy as np
 from typing import Union
@@ -224,7 +226,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
 
 
 # Utility functions for live trade
-@njit()
+# @njit()
 def parse_trade_signal(signals,
                        signal_type,
                        shares,
@@ -423,7 +425,7 @@ def _parse_pt_signals(signals: np.ndarray,
     return cash_to_spend, amounts_to_sell
 
 
-@njit()
+@njit(cache=True)
 def _parse_ps_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
@@ -471,7 +473,7 @@ def _parse_ps_signals(signals: np.ndarray,
     return cash_to_spend, amounts_to_sell
 
 
-@njit()
+@njit(cache=True)
 def _parse_vs_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
@@ -514,7 +516,6 @@ def _parse_vs_signals(signals: np.ndarray,
     return cash_to_spend, amounts_to_sell
 
 
-@njit()
 def _signal_to_order_elements(shares,
                               cash_to_spend,
                               amounts_to_sell,
