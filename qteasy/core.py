@@ -2295,8 +2295,6 @@ def run_mode_2(operator, config, benchmark_data_type):
 #  述所有的表均为固定长度的ndarray方便后续操作
 def backtest_operator(operator: Operator,
                       trade_price_list: HistoryPanel,
-                      start_idx: int = 0,
-                      end_idx: int = None,
                       cash_plan: CashPlan = None,
                       cost_rate: dict = None,
                       moq_buy: float = 100.,
@@ -2317,27 +2315,24 @@ def backtest_operator(operator: Operator,
     backtest_core函数来生成交易信号和回测交易结果。返回持仓清单和现金清单作为回测结果。
 
     运行中需要用到的数据表包括：
-        0, op_signals:          交易信号表
-        1, own_amounts:         持有资产数量表
-        2, available_amounts:   可用资产数量表
-        3, own_cash:            持有现金数量表
-        4, available_cash:      可用现金数量表
-        5, cash/stock_delivery: 现金/股票交割表
+        0, op_signals:          交易信号表，N行M列，N为交易信号数量，M为交易品种数量
+        1, own_amounts:         持有资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
+        2, available_amounts:   可用资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
+        3, own_cash:            持有现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
+        4, available_cash:      可用现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
 
     运行中需要用到的索引表包括：
         0, op_datetime:       回测历史日期索引表，包含所有交易信号的交易日期时间
         1, trade_indicators:  交易信号索引表，指示那些交易信号需要进行交易计算
-        2, invest_amounts:    资金投入日期索引表，指示每个交易信号日期的资金投入额
+        2, cash_investment:   资金投入日期索引表，指示每个交易信号日期的资金投入额
         3, cash_inflation:    资金无风险利率索引表，指示每个交易信号日期的现金增长率
+        4, delivery_days:     交割周期索引表，指示每个交易信号日期的股票交割周期
+
 
     Parameters
     ----------
     operator: Operator
         用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
-    start_idx: int, Default: 0
-        模拟交易从交易清单的该序号开始循环
-    end_idx: int, Default: None
-        模拟交易到交易清单的该序号为止
     trade_price_list: object HistoryPanel
         完整历史价格清单，数据的频率由freq参数决定
     cash_plan: CashPlan: Default: None
@@ -2380,10 +2375,20 @@ def backtest_operator(operator: Operator,
     - op_list_bt_indices:  交易清单中实际参加回测的行序号
     """
     # 1，检查operator对象是否已经准备好，否则raise error
-
+    operator.is_ready(raise_error=False)
+    
+    share_count = len(operator.op_list_shares)
     # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
-
+    op_schedule = operator.group_timing_table
+    n_signals = operator.get_signal_count()
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
+    cash_investment_array, cash_inflation_array = create_cash_investment_and_inflation()
+    delivery_day_indicators = create_delivery_day_indicators()
+
+    own_cashes = np.zeros(shape=(n_signals + 1, share_count))
+    own_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
+    available_cashes = np.zeros(shape=(n_signals + 1, share_count))
+    available_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
 
