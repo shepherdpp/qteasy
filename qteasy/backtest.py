@@ -12,6 +12,7 @@
 import os
 import pandas as pd
 import numpy as np
+from warnings import warn
 from numba import njit  # try taichi, which might be even faster
 from typing import Any, Union
 
@@ -37,6 +38,116 @@ from qteasy.trading_util import (
 
 @njit(nogil=True, cache=True)
 def backtest_step(
+        signal_type: Union[int, np.int32, np.int64, np.ndarray],
+        op_signal: np.ndarray,
+        cash_inflation: np.ndarray,
+        is_delivery_day: bool,
+        own_cash: np.ndarray,
+        own_amounts: np.ndarray,
+        available_cash: np.ndarray,
+        available_amounts: np.ndarray,
+        trade_prices: np.ndarray,
+        cost_params: np.ndarray,
+        pt_buy_threshold: float,
+        pt_sell_threshold: float,
+        long_pos_limit: float,
+        short_pos_limit: float,
+        allow_sell_short: bool,
+        moq_buy: float,
+        moq_sell: float,
+        cash_delivery_queue: np.ndarray,
+        stock_delivery_queue: np.ndarray,
+        share_count: int,
+):
+    """ 完成一次完整的单步骤回测计算，包括下面三个步骤：
+    1，检查现金增值比例，如果大于0，则更新持有现金和可用现金
+    2，调用calculate_trade_results()函数计算本次交易结果
+    3，处理现金变动和持仓变动的交割，更新持有现金和可用现金，更新持有资产和可用资产
+
+    """
+
+    # 1，如果现金增值比例大于0，则更新持有现金和可用现金
+    if cash_inflation > 1.:
+        own_cash *= cash_inflation
+        available_cash *= cash_inflation
+        # DEBUG:
+        # print(f'- cash inflation applied: {cash_inflation}, new own_cash = {own_cash}\n')
+
+    # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
+    cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
+            signal_type=signal_type,
+            own_cash=own_cash,
+            own_amounts=own_amounts,
+            available_cash=available_cash,
+            available_amounts=available_amounts,
+            op_signal=op_signal,
+            prices=trade_prices,
+            cost_params=cost_params,
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            long_pos_limit=long_pos_limit,
+            short_pos_limit=short_pos_limit,
+            allow_sell_short=allow_sell_short,
+            moq_buy=moq_buy,
+            moq_sell=moq_sell
+    )
+    # DEBUG:
+    # print(f'- Calculated trade results for the end of step: \n'
+    #       f'  cash_gained = {cash_gained}, cash_spent = {cash_spent}\n'
+    #       f'  amount_purchased = {amount_purchased}, amount_sold = {amount_sold}\n'
+    #       f'  fees = {fees}\n')
+
+    # 3，处理现金变动和持仓变动的交割，输出交割数据
+    cash_delivery_queue, stock_delivery_queue, delivered_cash, delivered_stocks = process_backtest_delivery(
+            cash_delivery_queue=cash_delivery_queue,
+            stock_delivery_queue=stock_delivery_queue,
+            is_new_day=is_delivery_day,
+            new_cash=cash_gained.sum(),
+            new_stocks=amount_purchased,
+            share_count=share_count,
+    )
+    # DEBUG:
+    # print(f'- processed delivery at end of step: \n'
+    #       f'  delivered_cash = {delivered_cash}, delivered_stocks = {delivered_stocks}, \n'
+    #       f'  cash_delivery_queue = {cash_delivery_queue}, \n'
+    #       f'  stock_delivery_queue = {stock_delivery_queue}, \n')
+
+    # 4, 更新持有现金和可用现金
+    next_own_cash = own_cash + cash_gained.sum() + cash_spent.sum()
+    next_available_cash = available_cash + delivered_cash + cash_spent.sum()
+    # 更新持有资产和可用资产
+    next_own_amounts = own_amounts + amount_purchased + amount_sold
+    next_available_amounts = available_amounts + delivered_stocks + amount_sold
+
+    # DEBUG:
+    # print(f'- updated holdings at end of step: \n'
+    #       f'  next_own_cash({next_own_cash}) = own_cash({own_cash}) + cash_gained({cash_gained.sum()}) + '
+    #       f'cash_spent({cash_spent.sum()})\n'
+    #       f'  next_available_cash({next_available_cash}) = available_cash({available_cash}) + '
+    #       f'delivered_cash({delivered_cash}) + cash_spent({cash_spent.sum()})\n'
+    #       f'  next_own_amounts({next_own_amounts}) = own_amounts({own_amounts}) + '
+    #       f'amount_purchased({amount_purchased}) + amount_sold({amount_sold})\n'
+    #       f'  next_available_amounts({next_available_amounts}) = available_amounts({available_amounts}) + '
+    #       f'delivered_stocks({delivered_stocks}) + amount_sold({amount_sold})\n')
+
+    # 5, 记录交易记录和交易费用
+    current_trade_records = amount_purchased + amount_sold
+    current_trade_cost = fees
+
+    return (
+        next_own_cash,
+        next_available_cash,
+        next_own_amounts,
+        next_available_amounts,
+        current_trade_records,
+        current_trade_cost,
+        cash_delivery_queue,
+        stock_delivery_queue,
+    )
+
+
+@njit(nogil=True, cache=True)
+def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
         own_amounts: np.ndarray,
@@ -113,7 +224,6 @@ def backtest_step(
         amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
         fee:                ndarray, 本次交易每个个股的交易费用，包括卖出的费用和买入的费用
     """
-    # import pdb; pdb.set_trace()
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
@@ -150,9 +260,6 @@ def backtest_step(
     else:
         raise ValueError('Invalid signal_type')
 
-    # print('something')
-    # print(f'- got trade plan: \n'
-    #       f'  cash_to_spend = {cash_to_spend}, amounts_to_sell = {amounts_to_sell}\n')
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
@@ -171,7 +278,7 @@ def backtest_step(
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     abs_cash_to_spend = np.abs(cash_to_spend)
 
-    if np.all(abs_cash_to_spend < 0.01):
+    if np.all(abs_cash_to_spend < 0.001):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         # TODO: 所有的np.zeros_like()都需要提高效率，改为返回None或np.empty()
         return cash_gained, np.zeros_like(op_signal), np.zeros_like(op_signal), amount_sold, fee_selling
@@ -241,8 +348,6 @@ def backtest_batch_steps(
         allow_sell_short: bool,
         moq_buy: float,
         moq_sell: float,
-        cash_delivery_queue: np.ndarray,
-        stock_delivery_queue: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """批量处理多次交易的回测计算
 
@@ -299,10 +404,6 @@ def backtest_batch_steps(
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
     moq_sell: float:
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
-    cash_delivery_queue: np.ndarray
-        现金交割队列，记录每一个交易信号日之前的若干个交易信号日中提交的现金交割计划
-    stock_delivery_queue: np.ndarray
-        股票交割队列，记录每一个交易信号日之前的若干个交易信号日中提交的股票交割计划
 
     Returns
     -------
@@ -320,101 +421,61 @@ def backtest_batch_steps(
 
     signal_count = op_signals.shape[0]
     share_count = op_signals.shape[1]
-    print(f'backtest started, total {signal_count} steps to process, got {share_count} shares in total\n'
-          f'initial prices, cashes and stocks: \n'
-          f'trade prices = \n{trade_prices}\n'
-          f'own_cash = \n{own_cashes}\nown_amounts = \n{own_amounts_array} \n')
+    # print(f'backtest started, total {signal_count} steps to process, got {share_count} shares in total\n'
+    #       f'initial prices, cashes and stocks: \n'
+    #       f'trade prices = \n{trade_prices}\n'
+    #       f'own_cash = \n{own_cashes}\nown_amounts = \n{own_amounts_array} \n')
+
+    cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
+            cash_delivery_period=0,
+            stock_delivery_period=1,
+            share_count=share_count,
+    )
 
     # 开始循环处理op_signal中的每一条交易信号，获取其signal_type，执行下列步骤：
     for i in range(signal_count):
-        print(f'-------------------------------------\n'
-              f'- processing step {i}/{signal_count}')
-        signal_type = signal_types[i]
-        op_signal = op_signals[i]
-        price = trade_prices[i]
+
+        # print(f'Processing step {i}/{signal_count}, signal_type = {signal_types[i]}, '
+        #       f'op_signal = {op_signals[i]}\n'
+        #       f'trade_prices = {trade_prices[i]}\n')
+
         cash_investment = cash_investment_array[i]
-        cash_inflation = cash_inflation_array[i]
-        is_delivery_day = True if delivery_day_indicators[i] else False
-
-        print(f'- got operation parameters: \n'
-              f'  signal_type/signal = {signal_type}, {op_signal} \n'
-              f'  trading prices = {price} \n')
-
-        # own_cash = own_cashes[i]
-        # own_amounts = own_amounts_array[i]
-        # available_cash = available_cashes[i]
-        # available_amounts = available_amounts_array[i]
-
-        # 1，检查当天是否有现金投入，如果有的话，更新持有现金和可用现金
         if cash_investment > 0:
             own_cashes[i] += cash_investment
             available_cashes[i] += cash_investment
-            print(f'- cash investment added: {cash_investment}, new own_cash = {own_cashes[i]},'
-                  f' new available_cash = {available_cashes[i]}\n')
+            # DEBUG:
+            # print(f'- cash investment added: {cash_investment}, new own_cash = {own_cashes[i]},'
+            #       f' new available_cash = {available_cashes[i]}\n')
 
-        # 如果现金增值比例大于0，则更新持有现金和可用现金
-        if cash_inflation > 1.:
-            own_cashes[i] *= cash_inflation
-            available_cashes[i] *= cash_inflation
-            print(f'- cash inflation applied: {cash_inflation}, new own_cash = {own_cashes[i]}\n')
-
-        # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
-        cash_gained, cash_spent, amount_purchased, amount_sold, fees = backtest_step(
-                signal_type=signal_type,
-                own_cash=own_cashes[i],
-                own_amounts=own_amounts_array[i],
-                available_cash=available_cashes[i],
-                available_amounts=available_amounts_array[i],
-                op_signal=op_signal,
-                prices=price,
-                cost_params=cost_params,
-                pt_buy_threshold=pt_buy_threshold,
-                pt_sell_threshold=pt_sell_threshold,
-                long_pos_limit=long_pos_limit,
-                short_pos_limit=short_pos_limit,
-                allow_sell_short=allow_sell_short,
-                moq_buy=moq_buy,
-                moq_sell=moq_sell
+        (own_cashes[i+1],
+         available_cashes[i+1],
+         own_amounts_array[i+1],
+         available_amounts_array[i+1],
+         trade_records_array[i],
+         trade_cost_array[i],
+         cash_delivery_queue,
+         stock_delivery_queue) = backtest_step(
+            signal_type=signal_types[i],
+            op_signal=op_signals[i],
+            cash_inflation=cash_inflation_array[i],
+            is_delivery_day=True if delivery_day_indicators[i] else False,
+            own_cash=own_cashes[i],
+            own_amounts=own_amounts_array[i],
+            available_cash=available_cashes[i],
+            available_amounts=available_amounts_array[i],
+            trade_prices=trade_prices[i],
+            cost_params=cost_params,
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            long_pos_limit=long_pos_limit,
+            short_pos_limit=short_pos_limit,
+            allow_sell_short=allow_sell_short,
+            moq_buy=moq_buy,
+            moq_sell=moq_sell,
+            cash_delivery_queue=cash_delivery_queue,
+            stock_delivery_queue=stock_delivery_queue,
+            share_count=share_count,
         )
-        print(f'- Calculated trade results for the end of step {i}: \n'
-              f'  cash_gained = {cash_gained}, cash_spent = {cash_spent}\n'
-              f'  amount_purchased = {amount_purchased}, amount_sold = {amount_sold}\n'
-              f'  fees = {fees}\n')
-
-        # 3，处理现金变动和持仓变动的交割，输出交割数据
-        cash_delivery_queue, stock_delivery_queue, delivered_cash, delivered_stocks = process_backtest_delivery(
-                cash_delivery_queue=cash_delivery_queue,
-                stock_delivery_queue=stock_delivery_queue,
-                is_new_day=is_delivery_day,
-                new_cash=cash_gained.sum(),
-                new_stocks=amount_purchased,
-                share_count=share_count,
-        )
-        print(f'- processed delivery at end of step {i}: \n'
-              f'  delivered_cash = {delivered_cash}, delivered_stocks = {delivered_stocks}, \n'
-              f'  cash_delivery_queue = {cash_delivery_queue}, \n'
-              f'  stock_delivery_queue = {stock_delivery_queue}, \n')
-
-        # 4, 更新持有现金和可用现金
-        own_cashes[i + 1] = own_cashes[i] + cash_gained.sum() + cash_spent.sum()
-        available_cashes[i + 1] = available_cashes[i] + delivered_cash + cash_spent.sum()
-        # 更新持有资产和可用资产
-        own_amounts_array[i + 1] = own_amounts_array[i] + amount_purchased + amount_sold
-        available_amounts_array[i + 1] = available_amounts_array[i] + delivered_stocks + amount_sold
-
-        print(f'- updated holdings at end of step {i}: \n'
-              f'  own_cash({own_cashes[i+1]}) = own_cash({own_cashes[i]}) + cash_gained({cash_gained.sum()}) + '
-              f'cash_spent({cash_spent.sum()})\n'
-              f'  available_cash({available_cashes[i+1]}) = available_cash({available_cashes[i]}) + '
-              f'delivered_cash({delivered_cash}) + cash_spent({cash_spent.sum()})\n'
-              f'  own_amounts({own_amounts_array[i+1]}) = own_amounts({own_amounts_array[i]}) + '
-              f'amount_purchased({amount_purchased}) + amount_sold({amount_sold})\n'
-              f'  available_amounts({available_amounts_array[i+1]}) = available_amounts({available_amounts_array[i]}) + '
-              f'delivered_stocks({delivered_stocks}) + amount_sold({amount_sold})\n')
-
-        # 5, 记录交易记录和交易费用
-        trade_records_array[i] = amount_purchased + amount_sold
-        trade_cost_array[i] = fees
 
     # 完成全部交易信号的处理后，输出最终的持有现金清单、持有资产清单和交易费用清单
     return own_cashes, own_amounts_array, trade_records_array, trade_cost_array
@@ -774,7 +835,7 @@ def apply_loop(operator: Operator,
         #             amount_sold = np.zeros_like(current_op)
         #             fee = np.zeros_like(current_op)
         #         else:
-        #             cash_gained, cash_spent, amount_purchased, amount_sold, fee = backtest_step(
+        #             cash_gained, cash_spent, amount_purchased, amount_sold, fee = calculate_trade_results(
         #                     signal_type=signal_type,
         #                     own_cash=own_cash,
         #                     own_amounts=own_amounts,
@@ -960,6 +1021,8 @@ def apply_loop_core(share_count: int,
     #  这样就避免了使用list来动态添加和删除元素，提高了效率
 
     # 初始化计算结果列表
+
+    warnings.warn(DeprecationWarning, 'This function is deprecated and will be removed in future versions. ')
     own_cash = 0.  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     available_cash = 0.  # 每期可用现金总额
     own_amounts = np.zeros(shape=(share_count,))  # 投资组合中各个资产的持有数量，初始值为全0向量
@@ -1015,7 +1078,7 @@ def apply_loop_core(share_count: int,
                 amount_sold = np.zeros_like(current_op)
                 fee = np.zeros_like(current_op)
             else:
-                cash_gained, cash_spent, amount_purchased, amount_sold, fee = backtest_step(
+                cash_gained, cash_spent, amount_purchased, amount_sold, fee = calculate_trade_results(
                         signal_type=signal_type,
                         own_cash=own_cash,
                         own_amounts=own_amounts,

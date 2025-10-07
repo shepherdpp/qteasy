@@ -159,7 +159,7 @@ def get_cost_pamams(c: dict) -> np.ndarray:
                      c['slipage']])
 
 
-@njit
+@njit()
 def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying: bool = True,
                    calc_fees: bool = False) -> np.ndarray:
     """直接调用对象，计算交易费率或交易费用
