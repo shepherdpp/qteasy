@@ -586,6 +586,8 @@ def backtest_batch_steps(
         allow_sell_short: bool,
         moq_buy: float,
         moq_sell: float,
+        cash_delivery_period: int,
+        stock_delivery_period: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """批量处理多次交易的回测计算
 
@@ -642,6 +644,10 @@ def backtest_batch_steps(
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
     moq_sell: float:
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
 
     Returns
     -------
@@ -665,8 +671,8 @@ def backtest_batch_steps(
     #       f'own_cash = \n{own_cashes}\nown_amounts = \n{own_amounts_array} \n')
 
     cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
-            cash_delivery_period=0,
-            stock_delivery_period=1,
+            cash_delivery_period=cash_delivery_period,
+            stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
 
