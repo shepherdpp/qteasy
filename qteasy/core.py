@@ -2381,7 +2381,7 @@ def backtest_operator(operator: Operator,
     """
     # 1，检查operator对象是否已经准备好，否则raise error
     operator.is_ready(raise_error=False)
-    
+
     share_count = len(operator.op_list_shares)
     # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
     op_schedule = operator.group_timing_table

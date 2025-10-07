@@ -494,10 +494,8 @@ def _parse_vs_signals(signals: np.ndarray,
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-    - symbols: list of str, 产生交易信号的资产代码
-    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
-    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
-    - quantities: list of float, 所有交易信号的交易数量
+        cash_to_spend: np.ndarray, 买入资产的现金
+        amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
     # 计算各个资产的计划买入金额和计划卖出数量

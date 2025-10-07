@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from typing import Union, Any, Iterable, Mapping
+from typing import Generator, Optional, Union, Any, Iterable, Mapping
 
 from qteasy.strategy import BaseStrategy
 from qteasy.group import Group
@@ -1756,7 +1756,8 @@ class Operator:
                     print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
                           f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
-    def run_step(self, step_index):
+    def run_step(self, step_index) -> Generator[
+        Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
         """ 运行当前步骤的所有策略组，生成交易信号
 
         本函数是一个生成器函数，返回每个策略组在当前步骤的交易信号。
@@ -1810,7 +1811,7 @@ class Operator:
         if self.group_merge_type != 'None':
             yield signal_type, step_index, signal
 
-    def run(self, steps: Iterable):
+    def run(self, steps: Iterable) -> Iterable:
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
 
         Parameters
