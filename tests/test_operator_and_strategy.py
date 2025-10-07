@@ -17,6 +17,7 @@ import qteasy as qt
 import pandas as pd
 import numpy as np
 
+from qteasy.backtest import initialize_backtest_delivery_queue
 from qteasy.parameter import Parameter
 from qteasy.group import Group
 from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
@@ -3267,44 +3268,95 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(target_trade_records, trade_records_array))
         self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
+
         # 开始测试operator run/execute 使用stepwise模式（逐步创建交易信号并逐步回测，
         # 每次回测后更新operator的数据，因为operator的运行依赖回测数据）
 
         # 重新准备交易数据
-        # trade_price_data = trade_price_d_df.values
-        #
-        # cash_investment_array = np.zeros((op.get_signal_count(),), dtype=float)
-        # cash_investment_array[0] = 1000000.0  # 初始资金
-        # cash_inflation_array = np.zeros((op.get_signal_count(),), dtype=float)
-        # delivery_day_indicators = np.ones((op.get_signal_count(),), dtype=bool)
-        #
-        # trade_records_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
-        # trade_cost_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
-        #
-        # own_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
-        # available_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
-        # own_amounts = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
-        # available_amounts = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
-        #
+        trade_price_data = trade_price_d_df.values
+
+        cash_investment_array = np.zeros((op.get_signal_count(),), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((op.get_signal_count(),), dtype=float)
+        delivery_day_indicators = np.ones((op.get_signal_count(),), dtype=bool)
+
+        trade_records_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
+        trade_cost_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
+
+        own_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
+        available_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
+        own_amounts_array = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
+        available_amounts_array = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
+
+        cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
+                cash_delivery_period=0,
+                stock_delivery_period=2,
+                share_count=3,
+        )
         # # 逐步生成交易信号并逐步回测
-        # print(f'Executing backtest step by step with the generated trading signals\n')
-        #
-        # stypes = np.zeros(op.get_signal_count(), dtype=int)
-        # s_indices = np.zeros(op.get_signal_count(), dtype=int)
-        # signals = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
-        #
-        # from qteasy.backtest import calculate_trade_results
-        #
-        # for i in range(op.get_signal_count()):
-        #     initial_trade_records = trade_records_array[i, :].copy()
-        #     initial_trade_costs = trade_cost_array[i, :].copy()
-        #     initial_trade_prices = trade_price_data[i, :].copy()
-        #     op.prepare_dependent_data_buffer(
-        #             trade_records=initial_trade_records,
-        #             trade_costs=initial_trade_costs,
-        #             trade_prices=initial_trade_prices,
-        #     )
-        #     stype, s_index, signal = op.run_step(step_index=i)
+        print(f'Executing backtest step by step with the generated trading signals\n')
+
+        initial_trade_records = trade_records_array[0, :].copy()
+        initial_trade_costs = trade_cost_array[0, :].copy()
+        initial_trade_prices = trade_price_data[0, :].copy()
+
+        op.prepare_dependent_data_buffer(
+                trade_records=initial_trade_records,
+                trade_costs=initial_trade_costs,
+                trade_prices=initial_trade_prices,
+        )
+        from qteasy.backtest import backtest_step
+
+        for i in range(op.get_signal_count()):
+
+            cash_investment = cash_investment_array[i]
+            if cash_investment > 0:
+                own_cashes[i] += cash_investment
+                available_cashes[i] += cash_investment
+
+            # 生成operator交易信号
+            stype, s_index, signal = op.run_step(step_index=i)
+
+            (
+                own_cashes[i+1],
+                available_cashes[i+1],
+                own_amounts_array[i+1],
+                available_amounts_array[i+1],
+                trade_records_array[i],
+                trade_cost_array[i],
+                cash_delivery_queue,
+                stock_delivery_queue,
+            ) = backtest_step(
+                step_index=i,
+                signal_type=stype,
+                op_signal=signal,
+                cash_investment=cash_investment,
+                cash_inflation=cash_inflation_array[i],
+                delivery_day_indicator=delivery_day_indicators[i],
+                own_cash=own_cashes[i],
+                available_cash=available_cashes[i],
+                own_amounts=own_amounts[i, :],
+                available_amounts=available_amounts[i, :],
+                trade_prices=trade_price_data[i, :],
+                trade_records=trade_records_array[i, :],
+                trade_costs=trade_cost_array[i, :],
+                cost_params=np.array([0.0, 0.0, 0.0001, 0.0001, 5.0, 5.0]),
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=False,
+                moq_buy=10.,
+                moq_sell=1.,
+                cash_delivery_queue=cash_delivery_queue,
+                stock_delivery_queue=stock_delivery_queue,
+            )
+
+            op.prepare_dependent_data_buffer(
+                    trade_records=current_trade_records,
+                    trade_costs=current_trade_cost,
+                    trade_prices=trade_price_data[i],
+            )
 
 
 
