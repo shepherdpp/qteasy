@@ -20,6 +20,7 @@ class TestCost(unittest.TestCase):
     """ 测试所有跟交易成本计算相关的函数"""
     def setUp(self):
         self.amounts = np.array([10000., 20000., 10000.])
+        self.amounts_2 = np.array([10000., -20000., 0.])  # 用于测试买卖混合的交易?
         self.op = np.array([0., 1., -0.33333333])
         self.amounts_to_sell = np.array([0., 0., -3333.3333])
         self.cash_to_spend = np.array([0., 20000., 0.])
@@ -67,13 +68,13 @@ class TestCost(unittest.TestCase):
         # buy/sell rate calculation with fixed fees
         self.assertTrue(
                 np.allclose(
-                        calculate_fees(self.amounts, cost_params=fee_params, is_buying=True, fixed_fees=True),
+                        calculate_fees(self.amounts, cost_params=fee_params, is_buying=True, calc_fees=True),
                         [5., 5., 5.],
                 )
         )
         self.assertTrue(
                 np.allclose(
-                        calculate_fees(-self.amounts, cost_params=fee_params, is_buying=False, fixed_fees=True),
+                        calculate_fees(-self.amounts, cost_params=fee_params, is_buying=False, calc_fees=True),
                         [10., 10., 10.],
                 )
         )
@@ -104,6 +105,21 @@ class TestCost(unittest.TestCase):
                 np.allclose(
                         calculate_fees(-self.amounts, cost_params=fee_params, is_buying=False),
                         [.0015, .001, .0015],
+                )
+        )
+        # test trade values with some 0.s
+        res = calculate_fees(np.array([0., 20000., 10000.]), cost_params=fee_params, is_buying=False, calc_fees=False)
+        print(f'fee parames are: {fee_params}, results are {res}')
+        self.assertTrue(
+                np.allclose(
+                        calculate_fees(np.array([0., 20000., 10000.]), cost_params=fee_params, is_buying=True),
+                        [0., .003, 0.],
+                )
+        )
+        self.assertTrue(
+                np.allclose(
+                        calculate_fees(np.array([0., -20000., -10000.]), cost_params=fee_params, is_buying=False),
+                        [0., .001, 0.],
                 )
         )
 

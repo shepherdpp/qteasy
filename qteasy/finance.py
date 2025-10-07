@@ -161,12 +161,12 @@ def get_cost_pamams(c: dict) -> np.ndarray:
 
 @njit
 def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying: bool = True,
-                   fixed_fees: bool = False) -> np.ndarray:
+                   calc_fees: bool = False) -> np.ndarray:
     """直接调用对象，计算交易费率或交易费用
 
     采用两种模式计算：
-        当fixed_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
-        当fixed_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
+        当calc_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
+        当calc_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
 
     Parameters
     ----------
@@ -190,8 +190,8 @@ def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying:
             滑点
     is_buying: bool, optional, default: True:
         当前是否计算买入费用或费率, 默认True
-    fixed_fees: bool, optional, default: False:
-        当前是否采用固定费用模式计算, 默认False
+    calc_fees: bool, optional, default: False:
+        是否计算费用，默认False, 即计算费率
 
     Returns
     -------
@@ -200,10 +200,10 @@ def calculate_fees(trade_values: np.ndarray, cost_params: np.ndarray, is_buying:
     """
     if is_buying is None:
         is_buying = True
-    if fixed_fees is None:
-        fixed_fees = False
+    if calc_fees is None:
+        calc_fees = False
 
-    if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
+    if calc_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
         if is_buying:
             # buy_fix + slipage * trade_values ** 2
             return cost_params[0] + cost_params[6] * trade_values ** 2
@@ -269,11 +269,11 @@ def get_selling_result(prices: np.ndarray,
     sold_values = a_sold * prices
     sell_fix = cost_params[1]
     if sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-        rates = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, fixed_fees=False)
+        rates = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, calc_fees=False)
         cash_gained = (-1 * sold_values * (1 - rates))
         fees = -(sold_values * rates)
     else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
-        fixed_fees = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, fixed_fees=True)
+        fixed_fees = calculate_fees(trade_values=sold_values, cost_params=cost_params, is_buying=False, calc_fees=True)
         fees = np.where(a_sold, fixed_fees, 0)
         cash_gained = - sold_values - fees
     return a_sold, cash_gained, fees
@@ -315,7 +315,7 @@ def get_purchase_result(prices: np.ndarray,
         # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_min, 0, cash_to_spend)
-        rates = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, fixed_fees=False)
+        rates = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, calc_fees=False)
         # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
         if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
             a_purchased = np.where(prices,
@@ -333,7 +333,7 @@ def get_purchase_result(prices: np.ndarray,
         # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将绝对值小于buy_fix的金额置0
         # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
         cash_to_spend = np.where(np.abs(cash_to_spend) < buy_fix, 0, cash_to_spend)
-        fixed_fees = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, fixed_fees=True)
+        fixed_fees = calculate_fees(trade_values=cash_to_spend, cost_params=cost_params, is_buying=True, calc_fees=True)
         if moq == 0.:
             a_purchased = np.fmax(np.where(prices,
                                            (cash_to_spend - fixed_fees) / prices,

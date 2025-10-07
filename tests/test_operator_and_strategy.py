@@ -587,7 +587,6 @@ dtype_ref_data = np.array(
          [5483.41]]
 )
 
-
 trade_price_h_data = np.array(
         [[37.58, 32.50, 24.14],
          [38.65, 33.31, 23.80],
@@ -2523,7 +2522,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
         print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
         op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
-        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2, weighting='even')
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2,
+                         weighting='even')
         op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
         op.info(verbose=True)
 
@@ -2912,8 +2912,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "or"\n'
               f'Operator run schedule:\n'
               f'{op.group_timing_table}({len(op.group_timing_table)})\n'
-                f'signal_count\n'
-                f'{op.get_signal_count()}\n')
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
         # check that the signals are correct
         signals_target = [
             ('pt', 0, np.array([0., 0.333, 0.333])),
@@ -2984,8 +2984,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "And"\n'
               f'Operator run schedule:\n'
               f'{op.group_timing_table}({len(op.group_timing_table)})\n'
-                f'signal_count\n'
-                f'{op.get_signal_count()}\n')
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
         # check that the signals are correct
         signals_target = [
             ('pt', 0, np.array([0., 0.333, 0.333])),
@@ -3064,8 +3064,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # prepare data buffer
 
         data_buffer = {
-            'close_E_d':     close_d_df,
-            'reference_d':     close_ref_df,
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
         }
         op.prepare_data_buffer(
                 start_date='2023-01-11',
@@ -3126,7 +3126,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         交易信号生成后，送入backtest loop模块生成交易结果并更新交易持仓
         """
         # 创建一个测试交易策略，使用TestReferenceData类
-        op = qt.Operator(strategies=[TestReferenceData], signal_type='PS')
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
         # operator只有一个strategy, set up blender
         op.set_group_parameters(group='Group_1', blender_str='s0')
 
@@ -3139,8 +3139,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
         # prepare data buffer
         data_buffer = {
-            'close_E_d':     close_d_df,
-            'reference_d':     close_ref_df,
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
         }
         op.prepare_data_buffer(
                 start_date='2023-01-11',
@@ -3150,31 +3150,124 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # create_data_windows()
         op.create_data_windows()
-        signals = []
+        stypes = np.zeros(op.get_signal_count(), dtype=int)
+        s_indices = np.zeros(op.get_signal_count(), dtype=int)
+        signals = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
-            signals.append(signal)
+        stype_dict = {'pt': 0, 'ps': 1, 'px': 2}
+        for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
+            stypes[signal_index] = stype_dict[stype]
+            s_indices[signal_index] = s_index
+            signals[signal_index, :] = signal
             signal_index += 1
 
-        from qteasy.history import stack_dataframes
-        trade_price_data = stack_dataframes([trade_price_d_df], dataframe_as='htypes', htypes='price')
-        from qteasy.finance import CashPlan
-        cash_plan = CashPlan(
-                dates='2023-01-11',
-                amounts=[1000000],
-                interest_rate=0.0,
-        )
+        print(f'Generating trading signals completed\n'
+              f'signal_count = {op.get_signal_count()}\n'
+              f'stypes = {stypes}\n'
+              f's_indices = {s_indices}\n'
+              f'signals = {signals}\n')
+
+        trade_price_data = trade_price_d_df.values
+
+        cash_investment_array = np.zeros((op.get_signal_count(),), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((op.get_signal_count(),), dtype=float)
+        delivery_day_indicators = np.ones((op.get_signal_count(),), dtype=bool)
+
+        trade_records_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
+        trade_cost_array = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
+
+        own_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
+        available_cashes = np.zeros((op.get_signal_count() + 1,), dtype=float)
+        own_amounts = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
+        available_amounts = np.zeros((op.get_signal_count() + 1, len(close_d_df.columns)), dtype=float)
 
         # 执行回测
         print(f'Executing backtest with the generated trading signals\n')
-        from qteasy.backtest import apply_loop
-        res = apply_loop(
-                operator=op,
-                trade_price_list=trade_price_data,
-                start_idx=0,
-                end_idx=100,
-                cash_plan=cash_plan,
+        from qteasy.backtest import backtest_batch_steps
+        backtest_batch_steps(
+                signal_types=stypes,
+                op_signals=signals,
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                own_cashes=own_cashes,
+                available_cashes=available_cashes,
+                own_amounts_array=own_amounts,
+                available_amounts_array=available_amounts,
+                trade_prices=trade_price_data,
+                trade_records_array=trade_records_array,
+                trade_cost_array=trade_cost_array,
+                cost_params=np.array([0.0, 0.0, 0.0001, 0.0001, 5.0, 5.0]),
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=False,
+                moq_buy=10.,
+                moq_sell=1.,
+                cash_delivery_queue=np.zeros((1,)),
+                stock_delivery_queue=np.zeros((2, len(close_d_df.columns))),
         )
+
+        print(f'Backtest executed, results:\n'
+              f'  own cashes: \n{own_cashes}\n'
+              f'  own amounts: \n{own_amounts}\n'
+              f'  trade records:\n{trade_records_array}\n'
+              f'  trade costs:\n{trade_cost_array}\n')
+
+        target_own_cashes = np.array(
+                [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
+                 5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
+                 1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02],
+        )
+        target_own_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 0., 0.],
+                 [0., 7710., 10980.],
+                 [8740., 12730., 10980.],
+                 [8740., 12730., 0.],
+                 [10680., 0., 8340.],
+                 [13610., 0., 21350.],
+                 [13610., 0., 21147.],
+                 [13610., 140., 0.],
+                 [13720., 15740., 0.]]
+        )
+        target_trade_records = np.array(
+                [[13300., 15380., 0.],
+                 [0., 0., 0.],
+                 [0., -15380., 0.],
+                 [-13300., 7710., 10980.],
+                 [8740., 5020., 0.],
+                 [0., 0., -10980.],
+                 [1940., -12730., 8340.],
+                 [2930., 0., 13010.],
+                 [0., 0., -203.],
+                 [0., 140., -21147.],
+                 [110., 15600., 0.]],
+        )
+        target_fees = np.array(
+                [[49.9814, 49.985, 0.],
+                 [0., 0., 0.],
+                 [0., 52.5996, 0.],
+                 [51.0454, 26.2911, 26.2971],
+                 [33.9112, 17.11318, 0.],
+                 [0., 0., 28.50408],
+                 [7.55048, 43.82939, 20.96676],
+                 [11.44165, 0., 32.38189],
+                 [0., 0., 5.],
+                 [0., 5., 55.764639],
+                 [5., 55.302, 0.]],
+        )
+
+        self.assertTrue(np.allclose(target_own_cashes, own_cashes))
+        self.assertTrue(np.allclose(target_own_stocks, own_amounts))
+        self.assertTrue(np.allclose(target_trade_records, trade_records_array))
+        self.assertTrue(np.allclose(target_fees, trade_cost_array))
+
+        # raise NotImplementedError("Need to add checks for the backtest results")
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
@@ -3209,7 +3302,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
         print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
         op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
-        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2, weighting='even')
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2,
+                         weighting='even')
         op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
         op.info(verbose=True)
 
