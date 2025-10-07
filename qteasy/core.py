@@ -2440,7 +2440,7 @@ def backtest_operator_independently(
         signals[signal_index, :] = signal
         signal_index += 1
 
-    # 执行回测
+    # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
     from qteasy.backtest import backtest_batch_steps
     backtest_batch_steps(
             signal_types=stypes,
@@ -2463,10 +2463,7 @@ def backtest_operator_independently(
             allow_sell_short=False,
             moq_buy=10.,
             moq_sell=1.,
-            cash_delivery_queue=np.zeros((1,)),
-            stock_delivery_queue=np.zeros((2, len(close_d_df.columns))),
     )
-    # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
 
     # 3，返回完整的回测结果清单
 
