@@ -20,12 +20,11 @@ import numpy as np
 from qteasy.backtest import initialize_backtest_delivery_queue
 from qteasy.parameter import Parameter
 from qteasy.group import Group
-from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
-from qteasy.tafuncs import sma
+from qteasy.built_in import DMA, MACD, CDL
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 from qteasy.datatypes import DataType
 from qteasy.trading_util import _trade_time_index as tti
-from qteasy.core import get_backtest_data_package, get_backtest_start_end_dates
+from qteasy.qt_operator import SIGNAL_TYPE_ID
 
 # test parameters and datatypes:
 param1 = Parameter(
@@ -90,6 +89,12 @@ dtype_ref = DataType(
         name='close',
         freq='d',
         asset_type='IDX',
+)
+
+dtype_dep = DataType(
+        name='close',
+        freq='d',
+        asset_type='E',
 )
 
 # 测试数据的值不是来自于DataSource，而是直接设定，方便运算
@@ -895,6 +900,37 @@ class TestReferenceData(GeneralStg):
         print(f"signal = {signal}")
 
         return signal
+
+
+class TestDependentData(GeneralStg):
+    """用于Test测试的依赖性数据策略，基于GeneralStrategy策略生成
+
+        策略参数：param1(N): 股票变化率周期N，param2(M): 参考数据变化率周期
+        历史数据：close_E_d：小时收盘价x5天，trade_price：依赖性数据，上次交易价格x1天
+        输出信号：各个股票的持仓比例
+        策略逻辑：
+         - 计算：股票N日变化率 = (今收-N日前收)/今收
+         - 计算：当前价格胜率 = (今收-交易价格)/今收
+         - 判断：
+            - 当当前价格胜率 > 0时：选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+            - 当当前价格胜率 <= 0时：选择今日变化率最低的两支，设定投资比率50%，否则投资比例为0
+        """
+
+    def __init__(self, par_values: tuple = None, **kwargs):
+        super().__init__(
+                name='test_ref_data',
+                description='test reference data strategy',
+                pars=[
+                    Parameter((1, 5), name='N', par_type='int', value=5),
+                    Parameter((1, 7), name='M', par_type='int', value=7),
+                ],
+                data_types={'close_E_d': dtype_1, 'trade_price': dtype_ref},
+                use_latest_data_cycle=[False, False],
+                window_length=[5, 7],
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
 
 class TestOperatorAndStrategy(unittest.TestCase):
@@ -3156,9 +3192,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         s_indices = np.zeros(op.get_signal_count(), dtype=int)
         signals = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
         signal_index = 0
-        stype_dict = {'pt': 0, 'ps': 1, 'px': 2}
+
         for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
-            stypes[signal_index] = stype_dict[stype]
+            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
             signals[signal_index, :] = signal
             signal_index += 1
@@ -3271,6 +3307,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # 开始测试operator run/execute 使用stepwise模式（逐步创建交易信号并逐步回测，
         # 每次回测后更新operator的数据，因为operator的运行依赖回测数据）
+
+        # 初始化一个新的operator对象，生成一个需要依赖性数据的交易策略
+
 
         # 重新准备交易数据
         trade_price_data = trade_price_d_df.values

@@ -10,11 +10,11 @@
 # settings.
 # ======================================
 
-import re
 import pandas as pd
+import numpy as np
 from warnings import warn
 
-from typing import List, Dict, Any, Union
+from typing import Any, Union
 
 from qteasy import QT_DATA_SOURCE
 from qteasy.configure import ConfigDict
@@ -79,3 +79,68 @@ def parse_backtest_data_package(config, dtypes) -> dict:
 
     return data_package
 
+
+def parse_cash_investment_and_inflation(config) -> np.ndarray:
+    """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
+
+    Returns
+    -------
+    invest_cash: pd.Series
+        投资现金流，index为投资日期，value为投资金额
+    """
+    raise NotImplementedError
+
+
+def parse_delivery_day_indicators(config) -> np.ndarray:
+    """解析交割日相关的配置参数
+
+    Returns
+    -------
+    delivery_day_indicators: np.ndarray
+        交割日相关的指标字典
+    """
+    raise NotImplementedError
+
+
+def parse_cost_params(config) -> np.ndarray:
+    """解析交易成本相关的配置参数
+
+    Returns
+    -------
+    cost_params: np.ndarray
+        交易成本相关的参数
+    """
+    raise NotImplementedError
+
+
+def parse_signal_parsing_params(config) -> dict:
+    """解析信号处理相关的配置参数
+
+    Returns
+    -------
+    signal_parsing_params: dict
+        信号处理相关的参数字典
+    """
+    raise NotImplementedError
+
+
+def parse_trading_moq_params(config) -> dict:
+    """解析交易最小单位相关的配置参数
+
+    Returns
+    -------
+    trading_moq_params: dict
+        交易最小单位相关的参数字典
+    """
+    raise NotImplementedError
+
+
+def parse_trading_delivery_params(config) -> dict:
+    """解析交易交割相关的配置参数
+
+    Returns
+    -------
+    trading_delivery_params: dict
+        交易交割相关的参数字典
+    """
+    raise NotImplementedError

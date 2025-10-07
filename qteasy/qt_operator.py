@@ -33,6 +33,9 @@ from qteasy.built_in import (
 )
 
 
+SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
+
+
 class Operator:
     """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
 
@@ -1284,11 +1287,7 @@ class Operator:
             return all_blenders
         if group not in self.strategy_groups:
             return None
-        stg_id = self.get_strategy_id_by_group(group)
-        return human_blender(
-                self._stg_blender_strings[group],
-                strategy_ids=stg_id,
-        )
+        return self.groups[group].human_blender
 
     def set_parameter(self,
                       stg_id: Union[str, int],
@@ -1480,6 +1479,10 @@ class Operator:
                     setattr(group, key, value)
                 else:
                     raise ValueError(f'Invalid group parameter: {key}')
+
+    def check_dependent_data(self):
+        """ 检查operator对象是否包含交易依赖性数据类型以生成交易信号"""
+        raise NotImplementedError("This method is not implemented yet.")
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -1713,6 +1716,10 @@ class Operator:
                     raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
+
+    def prepare_dependent_data_buffer(self, *, trade_records, trade_costs, trade_prices):
+        """ position holder for function prepare_dependent_data_buffer"""
+        raise NotImplementedError("Function prepare_dependent_data_buffer() is not implemented yet.")
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.
