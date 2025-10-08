@@ -17,10 +17,9 @@ from warnings import warn
 import datetime
 
 import qteasy
-from qteasy.config_parser import parse_delivery_day_indicators
 from qteasy.finance import CashPlan
 from qteasy.configure import configure
-from qteasy.qt_operator import Operator, SIGNAL_TYPE_ID
+from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
 
 from qteasy.datatypes import (

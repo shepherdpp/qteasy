@@ -11,11 +11,10 @@
 # ======================================
 import unittest
 
-from numba.cuda import runtime
-
 import qteasy as qt
 import pandas as pd
 import numpy as np
+import time
 
 from qteasy.backtest import initialize_backtest_delivery_queue
 from qteasy.parameter import Parameter
@@ -880,24 +879,24 @@ class TestReferenceData(GeneralStg):
         n, m = self.get_pars('N'), self.get_pars('M')
         # close_d, ref_d = self.close_E_d, self.reference_d
         close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
-        print("ReferenceData is running")
-        print(f"param1(N) = {n}, param2(M) = {m}")
-        print(f"got datas:\n{close_d}\n and \n{ref_d}")
+        # print("ReferenceData is running")
+        # print(f"param1(N) = {n}, param2(M) = {m}")
+        # print(f"got datas:\n{close_d}\n and \n{ref_d}")
         # create signal according to class doc and print out step results
         dt1_change = (close_d[-1] - close_d[-n]) / close_d[-1]
         ref_change = (ref_d[-1] - ref_d[-m]) / ref_d[-1]
-        print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
-        print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
+        # print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
+        # print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
         # get top 2 stock indexes
         if ref_change > 0:
             top2_idx = dt1_change.argsort()[-2:][::-1]
-            print(f"ref_change > 0, top2 indexes = {top2_idx}")
+            # print(f"ref_change > 0, top2 indexes = {top2_idx}")
         else:
             top2_idx = dt1_change.argsort()[:2]
-            print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
+            # print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
         signal = np.zeros_like(dt1_change)
         signal[top2_idx] = 0.5
-        print(f"signal = {signal}")
+        # print(f"signal = {signal}")
 
         return signal
 
@@ -3245,6 +3244,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 allow_sell_short=False,
                 moq_buy=10.,
                 moq_sell=1.,
+                cash_delivery_period=0,
+                stock_delivery_period=1,
         )
 
         print(f'Backtest executed, results:\n'
@@ -3304,12 +3305,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(target_trade_records, trade_records_array))
         self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
-
         # 开始测试operator run/execute 使用stepwise模式（逐步创建交易信号并逐步回测，
         # 每次回测后更新operator的数据，因为operator的运行依赖回测数据）
 
         # 初始化一个新的operator对象，生成一个需要依赖性数据的交易策略
-
 
         # 重新准备交易数据
         trade_price_data = trade_price_d_df.values
@@ -3392,12 +3391,169 @@ class TestOperatorAndStrategy(unittest.TestCase):
             )
 
             op.prepare_dependent_data_buffer(
-                    trade_records=current_trade_records,
-                    trade_costs=current_trade_cost,
+                    trade_records=trade_records_array[i],
+                    trade_costs=trade_cost_array[i],
                     trade_prices=trade_price_data[i],
             )
 
+    def test_operator_run_and_execute_with_large_data_set_for_speed(self):
+        """ 使用一个随机生成的超大数据集(近7万行，1000列）测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
 
+        使用同样的数据集重复运行十次以测试运行速度（测试速度前先运行一次以完成函数的namba编译）
+        """
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
+        # 设置交易策略运行频率为5min，开始日期2020-01-01，结束日期2025-12-31，共69792行
+        op.set_parameter(stg_id='custom', run_freq='5min')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2020-01-15',
+                # end_date='2020-06-30',
+                end_date='2025-12-31',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n'
+              f'total steps = {len(op.group_timing_table)}\n')
+
+        # 准备一个超大的数据集
+        share_count = 1000
+
+        large_close = pd.DataFrame(
+                np.random.randint(10, size=(69792, share_count)).astype(float) + 30,
+                columns=[f's_{i}' for i in range(share_count)],
+                index=tti(start='2020-01-01', end='2025-12-31', freq='5min', include_start_am=False, include_start_pm=False)
+        )
+        large_ref = pd.DataFrame(
+                np.random.randint(10, size=(1477, 1)).astype(float) + 100,
+                columns=['ref'],
+                index=tti(start='2019-12-01', end='2025-12-31', freq='d', include_start_am=False, include_start_pm=False)
+        )
+        data_buffer = {
+            'close_E_d':   large_close,
+            'reference_d': large_ref,
+        }
+        op.prepare_data_buffer(
+                start_date='2020-01-03',
+                end_date='2025-12-31',
+                # end_date='2020-06-30',
+                data_package=data_buffer,
+        )
+
+        # 准备大量交易价格数据
+
+        signal_count = op.get_signal_count()
+
+        trade_price_data = pd.DataFrame(
+                np.random.randint(10, size=(signal_count, share_count)).astype(float) + 30,
+                columns=[f's_{i}' for i in range(share_count)],
+                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False, include_start_pm=False)
+        )
+        print(f'created random trade price data of shape {trade_price_data.shape}\n'
+              f'starting from {trade_price_data.index[0]} to {trade_price_data.index[-1]}\n,'
+              f'prepared data buffer with large data set of shape: {large_close.shape}\n'
+              f'starting from {large_close.index[0]} to {large_close.index[-1]}\n'
+              f'prepared reference data of shape: {large_ref.shape}\n'
+              f'starting from {large_ref.index[0]} to {large_ref.index[-1]}\n')
+
+        trade_price_data = trade_price_data.values
+
+        # 开始测试operator run/execute 使用batch模式（一次性创建所有交易信号并批量执行）
+        op.create_data_windows()
+        stypes = np.zeros(op.get_signal_count(), dtype=int)
+        s_indices = np.zeros(op.get_signal_count(), dtype=int)
+        signals = np.zeros((op.get_signal_count(), len(large_close.columns)), dtype=float)
+        signal_index = 0
+
+        st = time.time()
+        for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
+            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
+            s_indices[signal_index] = s_index
+            signals[signal_index, :] = signal
+            signal_index += 1
+        et = time.time()
+
+        print(f'Generated {op.get_signal_count()} trading signals in {et-st:.6f} seconds\n')
+
+        # 准备交易数据
+
+        cash_investment_array = np.zeros((signal_count,), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((signal_count,), dtype=float)
+        delivery_day_indicators = np.ones((signal_count,), dtype=bool)
+
+        trade_records_array = np.zeros((signal_count, share_count), dtype=float)
+        trade_cost_array = np.zeros((signal_count, share_count), dtype=float)
+
+        own_cashes = np.zeros((signal_count + 1,), dtype=float)
+        available_cashes = np.zeros((signal_count + 1,), dtype=float)
+        own_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
+        available_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
+
+        # 执行回测
+        from qteasy.backtest import backtest_batch_steps
+        st = time.time()
+        backtest_batch_steps(
+                signal_types=stypes,
+                op_signals=signals,
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                own_cashes=own_cashes,
+                available_cashes=available_cashes,
+                own_amounts_array=own_amounts,
+                available_amounts_array=available_amounts,
+                trade_prices=trade_price_data,
+                trade_records_array=trade_records_array,
+                trade_cost_array=trade_cost_array,
+                cost_params=np.array([0.0, 0.0, 0.0001, 0.0001, 5.0, 5.0]),
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=False,
+                moq_buy=10.,
+                moq_sell=1.,
+                cash_delivery_period=0,
+                stock_delivery_period=1,
+        )
+        et = time.time()
+        print(f'Backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n')
+
+        # 重复运行十次以精确测算回测的速度
+        print(f'Now repeating the backtest 10 times to measure speed...\n')
+        st = time.time()
+        for _ in range(10):
+            backtest_batch_steps(
+                    signal_types=stypes,
+                    op_signals=signals,
+                    cash_investment_array=cash_investment_array,
+                    cash_inflation_array=cash_inflation_array,
+                    delivery_day_indicators=delivery_day_indicators,
+                    own_cashes=own_cashes,
+                    available_cashes=available_cashes,
+                    own_amounts_array=own_amounts,
+                    available_amounts_array=available_amounts,
+                    trade_prices=trade_price_data,
+                    trade_records_array=trade_records_array,
+                    trade_cost_array=trade_cost_array,
+                    cost_params=np.array([0.0, 0.0, 0.0001, 0.0001, 5.0, 5.0]),
+                    pt_buy_threshold=0.0,
+                    pt_sell_threshold=0.0,
+                    long_pos_limit=1.0,
+                    short_pos_limit=-1.0,
+                    allow_sell_short=False,
+                    moq_buy=10.,
+                    moq_sell=1.,
+                    cash_delivery_period=0,
+                    stock_delivery_period=1,
+            )
+        et = time.time()
+        print(f'10 times backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n'
+              f'average {((et-st)/10):.6f} seconds per backtest\n')
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率

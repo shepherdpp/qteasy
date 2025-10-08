@@ -431,6 +431,10 @@ def initialize_backtest_delivery_queue(cash_delivery_period: int,
     return cash_delivery_queue, stock_delivery_queue
 
 
+# TODO: 测试一种新的交割队列处理方法，不需要移动队列中的元素，在队列的0/1位置设置
+#  交割起点和交割终点指针，通过移动指针实现交割，而不是移动队列中的元素，优点是可以
+#  避免元素移动，且可以实现静态数组传递，避免数组不断复制
+#
 @njit(nogil=True, cache=True)
 def process_backtest_delivery(cash_delivery_queue: np.ndarray,
                               stock_delivery_queue: np.ndarray,
@@ -564,7 +568,7 @@ def process_stock_delivery(stock_delivery_queue: np.ndarray,
     return stock_delivery_queue, stocks_delivered
 
 
-@njit()
+@njit(nogil=True, cache=True)
 def backtest_batch_steps(
         signal_types: np.ndarray,
         op_signals: np.ndarray,
