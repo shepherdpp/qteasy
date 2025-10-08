@@ -1601,7 +1601,8 @@ class Operator:
         """
 
         from qteasy.trading_util import _trade_time_index as tti
-        print('preparing group timing table')
+        # DEBUG:
+        # print('preparing group timing table')
         self.group_schedules = {}
 
         for group in self._groups:
@@ -1726,7 +1727,8 @@ class Operator:
         Also create data window indices for each strategy and its data types.
         data window indices are created according to group schedules.
         """
-        print('creating data windows')
+        # DEBUG:
+        # print('creating data windows')
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before creating data windows.")
 
@@ -1736,17 +1738,17 @@ class Operator:
                 self.data_window_views[strategy.strategy_id] = {}
                 self.data_window_indices[strategy.strategy_id] = {}
                 for data_type in strategy.data_types:
-                    # for debugging
-                    print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
-                          f'data type: {data_type}')
+                    # DEBUG:
+                    # print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
+                    #       f'data type: {data_type}')
                     window_length = strategy.data_window_lengths[data_type]
                     ulc = strategy.data_ulc[data_type]
                     buffered_data = self.data_buffers.get(data_type, None)
 
                     window = rolling_window(buffered_data.values, window=window_length, axis=0)
                     self.data_window_views[strategy.strategy_id][data_type] = window
-                    # for debugging
-                    print(f'Window shape for {strategy.strategy_id}/{strategy.name} on {data_type}: \n{window.shape}')
+                    # DEBUG:
+                    # print(f'Window shape for {strategy.strategy_id}/{strategy.name} on {data_type}: \n{window.shape}')
 
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
                     running_schedule = schedule.index
@@ -1759,9 +1761,9 @@ class Operator:
                         schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
                     self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
-                    # for debugging
-                    print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
-                          f'{self.data_window_indices[strategy.strategy_id][data_type]}')
+                    # DEBUG:
+                    # print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
+                    #       f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
     def run_step(self, step_index) -> Generator[
         Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
@@ -1791,7 +1793,8 @@ class Operator:
         signal_type = groups[0].signal_type if groups else None
 
         signal = 0 if self.group_merge_type == 'Or' else 1
-        print(f'In current op run step, following groups are running: {groups}')
+        # DEBUG:
+        # print(f'In current op run step, following groups are running: {groups}')
         for group in groups:
             # ----set up data window for each strategy
             for strategy in group.members:
@@ -1837,7 +1840,8 @@ class Operator:
         self.is_ready(raise_error=True)
 
         for step in steps:
-            print(f'Running step {step} for operator {self.name}')
+            # DEBUG:
+            # print(f'Running step {step} for operator {self.name}')
             for result in self.run_step(step):
                 yield result
 
