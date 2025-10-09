@@ -1701,13 +1701,13 @@ class Operator:
 
         for data_type in self.all_strategy_data_types:
             if data_type.dtype_id not in data_package:
-                # import pdb; pdb.set_trace()
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
             else:
                 dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
                 if len(data_package[data_type.dtype_id]) < dtype_max_window:
-                    raise ValueError(f"Not enough data for data type '{data_type}' to create data windows. "
-                                     f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
+                    msg = (f"Not enough data for data type '{data_type}' to create data windows. "
+                           f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
+                    raise ValueError(msg)
                 if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(start_date).date():
                     # 确保数据有足够的前置量
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"

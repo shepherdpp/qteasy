@@ -42,51 +42,99 @@ def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
+    定义一个交易策略，需要包含四大要素：
+
+    1，交易策略的运行时机和运行频率，决定了策略在实盘运行时的运行时间点，交易员对象将在这些时间点调用策略
+        的realize()方法生成交易信号。
+        交易时机和运行频率是通过run_timing和run_freq两个参数来确定的，这两个参数通常在策略初始化时指定
+
+    2，策略的可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
+        策略的可调参数通过Parameter对象来定义，每个Parameter对象包含参数的名称、类型、取值范围和默认值
+        定义好Parameter对象后，可调参数可以通过策略对象的pars属性设置，而参数的值可以通过par_values参
+        数在策略初始化后进行设置
+
+    3，生成交易信号所需的历史数据，历史数据通过指定数据类型名称、数据的频率和时间窗口长度来确定。
+        一个交易策略可以使用多种不同的历史数据类型，各种数据类型的频率和窗口长度可以不同
+
+    4，策略的运行逻辑，即如何根据历史数据生成交易信号，这个逻辑通过重写策略的realize()方法来实现
+        在realize()方法中，可以使用get_pars()和get_data()方法来获取策略的参数和历史数据来计算交易信号
+
+    如果要创建一个自定义交易策略对象，使用下面的方法：
+    ```python
+    class MyStrategy(BaseStrategy):
+
+        def __init__(self, par_values=(<parameter values>), **kwargs):
+            super().__init__(
+                name='<strategy name>',
+                description='<strategy description>',
+                stg_type='BASE',
+                run_freq='<strategy run frequency>',  # 定义策略运行频率
+                run_timing='<strategy run timing>',  # 定义策略运行时机
+                pars=[<list of Parameter objects>],  # 定义策略的可调参数类型和取值范围
+                data_types=[<list of DataType objects>],  # 定义策略使用的数据类型，关于更多细节见qteasy文档
+                **kwargs,
+            )
+            if par_values:
+                self.update_par_values(par_values)
+
+        def realize(self):
+            '''实现策略的交易逻辑，生成交易信号'''
+            # 获取策略参数
+            param1, param2 = self.get_pars('param1', 'param2')
+            # 获取历史数据
+            price_data = self.get_data('price')
+            # 计算交易信号
+            signals = ...  # 根据参数和数据计算交易信号
+            return signals
+
+    需要注意，交易策略的输出交易信号并不是真正的交易指令，而是一个实数类型的交易信号，在后续的交易执行环节中，
+    这个信号将被解析为具体的交易指令。交易信号的类型由策略对象的signal_type属性决定，交易信号的类型有三种，
+    分别是：
+
+        - 'VS'：数量买卖信号，最简单直接的信号类型。这个实数代表的是买入或卖出相应数量的股票：
+            例如10表示买入10股股票，-5表示卖出5股股票
+        - 'PT'：仓位比例信号，这个实数代表的是目标持仓比例，通过买入或卖出股票使当前持仓比例达到目标持仓比例，
+            例如0.5表示持有50%的多头仓位，如果目前持有20%的多头，则需要买入30%的股票，
+            如果目前持有70%的多头，则需要卖出20%的股票
+        - 'PS'：比例买卖信号，这个实数代表的是买入或卖出相应比例的股票：
+            例如0.5表示使用当前总投资额的50%买入股票，如果当前总投资额为10000元，则买入5000元的股票
+
+    不同交易信号在三种信号类型下的含义示例见下表：
+
+            signal\type |         PT           |            PS           |       VS
+            ------------------------------------------------------------------------------------
+                1.5     | 持有多头仓位比例150%*   |  买入总投资额150%的股票    | 多头买入1.5股或1.5份
+                0.5     |   持有多头仓位比例50%   |  买入总投资额50%的股票     | 多头买入0.5股或0.5份
+                0.0     |    调整持仓比例至0      |     不进行任何操作        |     不进行任何操作
+               -0.5     |  持有空头仓位比例至50%   |     卖出当前持仓的50%     | 卖出当前持仓0.5股或0.5份
+               -1.5     | 持有空头仓位比例至150%*  | 卖出当前全部持仓并持50%空仓 | 卖出1.5股或1.5份或空头买入
+
     Properties
     ----------
-    pars: any
-        策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。
-    opt_tag: int {0, 1}
-        策略的优化标签，0表示不参与优化，1表示参与优化
-    par_count: int
-        策略可调参数的个数
-    par_types: [list, str]
-        策略可调参数的类型，可以是一个列表，也可以是一个字符串，如果是字符串，则表示所有参数的类型都相同
-    par_range: [list, tuple]
-        策略可调参数的取值范围，可以是一个列表，也可以是一个元组，如果是列表，则表示所有参数的取值范围都相同
-    stg_type: str
-        策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
     name: str
-        策略名称，用户自定义，用于区分不同的策略
+        策略名称，用户自定义，用于区分不同的策略一个
     description: str
         策略描述，用户自定义，用于描述策略的基本原理
-    data_freq: str
-        策略所使用的数据的频率，可以是以下几种类型：
-        'd'：日线数据
-        'w'：周线数据
-        'm'：月线数据
-    sample_freq: str
-        策略的采样频率，可以是以下几种类型：
-        'd'：日线数据
-        'w'：周线数据
-        'm'：月线数据
-    window_length: int
-        策略所使用的数据的长度，即策略所使用的数据的长度，例如策略所使用的均线的长度
-    data_types: [str, list]
-        策略所使用的数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
-    reference_data_types: [str, list]
-        策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
-    bt_price_type: str
-        策略回测时的价格类型，可以是以下几种类型：
-        'open'：开盘价
-        'high'：最高价
-        'low'：最低价
-        'close'：收盘价
+    strategy_id: str
+        策略的唯一ID，在策略运行时由系统分配
+    group_id: str
+        策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略，该ID由系统分配
+    par_values: tuple
+        策略参数，元组，每个策略都包含若干个可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
+    signal_type: str
+        策略生成的交易信号类型，不同的信号类型将被解析为不同的交易指令
+        - 'pt'表示仓位比例，
+        - 'ps'表示买卖信号，
+        - 'vs'表示持仓变化量
 
     Methods
     -------
-    generate(data: np.ndarray, pars: any = None)
-        生成策略信号，该方法是策略的核心方法，所有的策略都必须实现该方法
+    get_pars(*par_names)
+        获取策略参数的值，可以获取多个参数
+    get_data(*data_type_ids)
+        获取历史数据，可以获取多个数据类型的数据
+    realize()
+        生成策略信号，抽象方法，在几种不同的子类中实现
 
     """
     __metaclass__ = ABCMeta
@@ -781,167 +829,13 @@ class BaseStrategy:
 
 
 class GeneralStg(BaseStrategy):
-    """ 通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。
+    """ 通用交易策略类，用户需要完整定义策略的所有交易逻辑，并在realize()方法中定义策略
+    的信号输出。
 
-        策略的实现
-        要创建一个通用交易策略，需要创建一个GeneralStg策略类，并重写realize()方法，在其中定义交易信号
-        的生成规则，并在策略属性中定义相关的数据类型和策略的运行参数。这样就可以将策略用于实盘或回测了。
+    realize()方法的输出：
+    realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
 
-        推荐使用下面的方法创建策略类：
-
-        ```
-            Class ExampleStrategy(GeneralStg):
-
-                def realize(self, h, r=None, t=None, pars=None):
-
-                    # 在这里编写信号生成逻辑
-                    ...
-                    result = ...
-                    # result代表策略的输出
-
-                    return result
-        ```
-
-        用下面的方法创建一个策略对象：
-        ```
-            example_strategy = ExampleStrategy(pars=<example pars>,
-                                               name='example',
-                                               description='example strategy',
-                                               data_types='close'
-                                               ...
-                                               )
-        ```
-            在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-        GeneralStg通用策略的参数如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
-
-            pars: tuple,            策略参数
-            opt_tag: int,           优化标记，策略是否参与参数优化
-            name: str,              策略名称
-            description: str,       策略简介
-            par_count: int,         策略参数个数
-            par_types: tuple/list,  策略参数类型
-            par_range:              策略参数取值范围
-            data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
-            run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
-            window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-            strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-            reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等。
-
-        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-        realize()的定义：
-
-            def realize(self):
-
-        realize()中获取策略参数：
-
-                par_1, par_2, ..., par_n = self.pars
-
-        realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-
-            - h(history): 历史数据片段，shape为(M, N, L)，即：
-
-                - M层：   股票类型
-
-                - N行：   交易日期/时间轴
-
-                - L列：   历史数据类型轴
-
-                在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
-                例如：设定：
-                        - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                        - data_freq = 'd'
-                        - window_length = 100
-                        - data_types = "open, high, low, close, pe"
-
-                    以下例子都基于前面给出的参数设定
-                    例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                        close_last_day = h_seg[:, -1, 3]
-                        close_10_day = h_seg[:, -10, 3]
-                        rate_10 = (close_last_day / close_10_day) - 1
-
-                    例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                        max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
-                        close_last_day = h_seg[:, -1, 3]
-                        penetrate = close_last_day > max_10_day
-
-                    例3, 获取股票最近10日市盈率的平均值
-                        pe_10_days = h_seg[:, -10:-1, 4]
-                        avg_pe = pe_10_days.mean(axis=1)
-
-                    例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                        close_10_days = h_seg[:, -10:-1, 3]
-                        close_50_days = h_seg[:, -50:-1, 3]
-                        ma_10 = close_10_days.mean(axis=1)
-                        ma_50 = close_10_days.mean(axis=1)
-
-            - r(reference):参考历史数据，默认为None，shape为(N, L)
-                与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-                宏观经济数据等，
-
-                - N行, 交易日期/时间轴
-
-                - L列，参考数据类型轴
-
-                以下是获取参考数据的几个例子：
-                    设定：
-                        - reference_data_types = "000300.SH.close, 000001.SH.close"
-
-                    例1: 获取最近一天的沪深300收盘价：
-                        close_300 = r[-1, 0]
-                    例2: 获取五天前的上证指数收盘价:
-                        close_SH = r[-5, 1]
-
-            - t(trade):交易历史数据，默认为None，shape为(N, 5)
-                最近几次交易的结果数据，2D数据。包含N行5列数据
-                如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-                数据的结构如下
-
-                - N行， 股票/证券类型轴
-                    每一列代表一只个股或证券
-
-                - 5列,  交易数据类型轴
-                    - 0, own_amounts:              当前持有每种股票的份额
-                    - 1, available_amounts:        当前可用的每种股票的份额
-                    - 2, current_prices:           当前的股票价格
-                    - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                    - 4, recent_trade_prices:      最近一次成交价格
-
-                示例：以下是在策略中获取交易数据的几个例子：
-
-                    例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                        volume = t[:, 3]
-                        trade_prices = t[:, 4]
-                        或者:
-                        t = t.T
-                        volume = t[3]
-                        trade_prices = t[4]
-                    例2: 获取当前持有股票数量:
-                        own_amounts = t[:, 0]
-                        或者:
-                        t = t.T
-                        own_amounts = t[0]
-
-
-        realize()方法的输出：
-        realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
-        ndarray中每个元素代表相应股票的操作信号。在不同的信号类型时，交易信号的含义不同：
-
-             signal type   |         PT           |            PS           |       VS
-            ------------------------------------------------------------------------------------
-                sig > 1    |         N/A          |           N/A           | Buy in sig shares
-             1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
-                sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
-             0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
-               sig < -1    |         N/A          |           N/A           |  Sell sig shares
-
-        按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
-        中，并产生交易信号了。
-
-        关于GeneralStg类的更详细说明，请参见qteasy的文档。
+    关于GeneralStg类的更详细说明，请参见qteasy的文档。
     """
     __metaclass__ = ABCMeta
 
@@ -982,46 +876,8 @@ class FactorSorter(BaseStrategy):
     策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
     因子的筛选排序取舍逻辑了。
 
-    推荐使用下面的方法创建策略类：
+    这六个选股参数如下：
 
-        Class ExampleStrategy(FactorSorter):
-
-            def realize(self, h, r=None, t=None, pars=None):
-
-                # 在这里编写信号生成逻辑
-                ...
-                factor = ...
-                # factor代表策略输出的选股因子，用于进一步选股
-
-                return factor
-
-    用下面的方法创建一个策略对象：
-
-        example_strategy = ExampleStrategy(pars=<example pars>,
-                                           name='example',
-                                           description='example strategy',
-                                           data_types='close'
-                                           ...
-                                           )
-        在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-    与通用策略类不同，FactorSorter策略需要几个特殊属性用于确定选股行为（以下*者）
-    策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
-
-        pars:               tuple,  策略参数
-        opt_tag:            int,    优化标记，策略是否参与参数优化
-        name:               str,    策略名称
-        description:        str,    策略简介
-        par_count:          int,    策略参数个数
-        par_types:          tuple,  策略参数类型
-        par_range:          tuple,  策略参数取值范围
-        data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-        run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
-        window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-        data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-        strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-        reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等。
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
         *condition:         str ,   确定股票的筛选条件，默认值'any'
                                     'any'        :默认值，选择所有可用股票
@@ -1039,20 +895,6 @@ class FactorSorter(BaseStrategy):
                                     'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
                                     'proportion' :权重与股票的因子分值成正比
 
-    - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-    realize()的定义：
-
-        def realize():
-
-    realize()中获取策略参数：
-
-        self.par_1, self.par_2, ..., self.par_n = self.pars
-
-    realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-
-        self.dtype_id
-
     realize()方法的输出：
     FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
     自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。
@@ -1069,15 +911,6 @@ class FactorSorter(BaseStrategy):
         时，上述因子的选股结果为:
                 np.array[0.0, 0.0, 0.5, 0.5]
 
-    在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:
-
-         signal type   |         PT prefered type     |
-        -----------------------------------------------
-            sig > 1    |              N/A             |
-         1 >= sig > 0  |      Buy to sig position     |
-            sig = 0    |      Sell to hold 0 share    |
-         0 > sig >= -1 |             N/A              |
-           sig < -1    |             N/A              |
     关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
@@ -1269,98 +1102,22 @@ class FactorSorter(BaseStrategy):
 class RuleIterator(BaseStrategy):
     """ 规则迭代策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时迭代应用到所有的股票上。
 
+    RuleIterator策略类的特殊功能是可以对同一套交易规则，将不同的参数应用到投资组合中的不同股票上。
+    例如，用户可以设计一个均线交叉策略，并将其应用到投资组合中的所有股票上，同时可以为每只股票
+    设定不同的均线周期参数。
+
+    例如，用户可以为投资组合中的股票分别设定不同的均线参数：
+        stock1: short_window=5, long_window=20
+        stock2: short_window=10, long_window=50
+        stock3: short_window=20, long_window=100
+        stock4: short_window=30, long_window=200
+
+    这样，用户只需要编写一套均线交叉的交易规则，就可以将其应用到投资组合中的所有股票上，同时
+    还可以为每只股票设定不同的均线参数。这种特殊的交易策略，需要用到RuleIterator类的
+    multi_pars属性。
+
     这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则，
     策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。
-
-    Properties
-    ----------
-    pars:               tuple,
-        策略参数
-    opt_tag:            int,
-        优化标记，策略是否参与参数优化
-    name:               str,
-        策略名称
-    description:        str,
-        策略简介
-    par_count:          int,
-        策略参数个数
-    par_types:          tuple,
-        策略参数类型
-    par_range:          tuple,
-        策略参数取值范围
-    data_freq:          str:
-        数据频率，用于生成策略输出所需的历史数据的频率
-    run_freq:
-        策略运行采样频率，即相邻两次策略生成的间隔频率。
-    window_length:
-        历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    data_types:
-        静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-    strategy_run_timing:
-        策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-    reference_data_types:
-        参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有
-        的股票的信号生成，如指数、宏观经济数据等。
-
-    Examples
-    --------
-        Class ExampleStrategy(RuleIterator):
-
-            def realize(self):
-
-                # 在这里编写信号生成逻辑
-                ...
-                result = ...
-                # result代表策略的输出
-
-                return result
-
-    用下面的方法创建一个策略对象：
-
-        example_strategy = ExampleStrategy(pars=<example pars>,
-                                           name='example',
-                                           description='example strategy',
-                                           data_types='close'
-                                           ...
-                                           )
-        在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-    - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-    realize()的定义：
-
-        def realize(self):
-
-    realize()中获取策略参数：
-
-            par_1, par_2, ..., par_n = self.pars
-
-    realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-
-            示例：
-                以下例子都基于前面给出的参数设定
-                例1，计算最近的收盘价相对于10天前的涨跌幅：
-                    close_last_day = h_seg[-1, 3]
-                    close_10_day = h_seg[-10, 3]
-                    rate_10 = (close_last_day / close_10_day) - 1
-
-                例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                    max_10_day = h_seg[-10:-1, 1].max(axis=1)
-                    close_last_day = h_seg[-1, 3]
-                    penetrate = close_last_day > max_10_day
-
-                例3, 获取股票最近10日市盈率的平均值
-                    pe_10_days = h_seg[-10:-1, 4]
-                    avg_pe = pe_10_days.mean(axis=1)
-
-                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                    close_10_days = h_seg[-10:-1, 3]
-                    close_50_days = h_seg[-50:-1, 3]
-                    ma_10 = close_10_days.mean(axis=1)
-                    ma_50 = close_10_days.mean(axis=1)
-
-        :output
-        signals: 一个代表交易信号的数字，dtype为float
 
     realize()方法的输出：
     realize()方法的输出就是交易信号，该交易信号是一个数字，策略会将其推广到整个投资组合：
@@ -1370,16 +1127,6 @@ class RuleIterator(BaseStrategy):
         投资组合： [share1, share2, share3, share4]
                     |        |       |       |
                  [ int1,    int2,   int3,   int4] -> np.array[ int1,    int2,   int3,   int4]
-
-    在不同的信号类型下，信号的含义不同。
-
-         signal type   |         PT           |            PS           |       VS
-        ------------------------------------------------------------------------------------
-            sig > 1    |         N/A          |           N/A           | Buy in sig shares
-         1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
-            sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
-         0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
-           sig < -1    |         N/A          |           N/A           |  Sell sig shares
 
     按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
     中，并产生交易信号了。
