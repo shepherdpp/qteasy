@@ -89,9 +89,16 @@ class TestStrategy(unittest.TestCase):
                 name='TestStrategy',
                 run_freq='d',
                 run_timing='close',
-                pars=[self.param1, self.param2, self.param3, self.param4],
-                data_types=[self.dtype_1, self.dtype_2, self.dtype_3, self.dtype_4
-                    , self.dtype_5],
+                pars=[self.param1.copy(),
+                      self.param2.copy(),
+                      self.param3.copy(),
+                      self.param4.copy()],
+                data_types=[self.dtype_1.copy(),
+                            self.dtype_2.copy(),
+                            self.dtype_3.copy(),
+                            self.dtype_4.copy(),
+                            self.dtype_5.copy(),
+                            ],
                 window_length=[3, 7, 5, 8, 6],
                 use_latest_data_cycle=False,
         )
@@ -103,21 +110,21 @@ class TestStrategy(unittest.TestCase):
             包含两个可调参数: `param1` 和 `param2`，用于测试参数传递和使用。
             使用三种不同的数据类型: 'price@5minx30', 'volume@hx10', 'indicator@dx5'，用于测试数据类型的处理。
             """
-            param1 = self.param1
-            param2 = self.param2
-            dtype_1 = self.dtype_1
-            dtype_3 = self.dtype_3
+            param1 = self.param1.copy()
+            param2 = self.param2.copy()
+            dtype_1 = self.dtype_1.copy()
+            dtype_3 = self.dtype_3.copy()
 
             def __init__(self, par_values: tuple = None):
+                self.data_1 = None
+                self.data_2 = None
                 super().__init__(
                         name='test_gen',
                         description='test general strategy',
                         run_freq='d',
                         run_timing='close',
-                        # TODO: user-defined parameter names should also be allowed
                         pars=[self.param1, self.param2],
-                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
-                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        data_types={'data_1': self.dtype_1, 'data_2': self.dtype_3},
                         use_latest_data_cycle=[True, False],
                         window_length=[7, 9],
                 )
@@ -128,9 +135,9 @@ class TestStrategy(unittest.TestCase):
             def realize(self):
 
                 print("GeneralStg realized")
-                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
-                dt1_avg = np.mean(self.close_E_d, axis=0)
-                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"got datas:\n{self.data_1}\n and \n{self.data_2}")
+                dt1_avg = np.mean(self.data_1, axis=0)
+                dt2_avg = np.mean(self.data_2, axis=0)
                 print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
                 avg = dt1_avg * self.param1 + dt2_avg * self.param2
                 print(f'avg = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
@@ -148,14 +155,16 @@ class TestStrategy(unittest.TestCase):
             dtype_3 = self.dtype_3
 
             def __init__(self, par_values=None, **kwargs):
+                self.par1 = None
+                self.par2 = None
+                self.close_E_d = None
+                self.close_E_5min = None
                 super().__init__(
                         name='test_factor_sorter',
                         description='test factor sorter strategy',
                         run_freq='d',
                         run_timing='close',
-                        # TODO: user-defined parameter names should also be allowed
-                        pars=[self.param1, self.param2],
-                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
+                        pars={'par1': self.param1.copy(), 'par2': self.param2.copy()},
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
                         window_length=[7, 9],
@@ -171,28 +180,30 @@ class TestStrategy(unittest.TestCase):
                 dt1_avg = np.mean(self.close_E_d, axis=0)
                 dt2_avg = np.mean(self.close_E_5min, axis=0)
                 print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
-                avg = dt1_avg * self.param1 + dt2_avg * self.param2
+                avg = dt1_avg * self.par1 + dt2_avg * self.par2
                 print(f'signal sorter = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
 
                 return avg
 
         class RuleIteratorStg(RuleIterator):
 
-            param1 = self.param1
-            param2 = self.param2
-            dtype_1 = self.dtype_1
-            dtype_3 = self.dtype_3
+            param1 = self.param1.copy()
+            param2 = self.param2.copy()
+            dtype_1 = self.dtype_1.copy()
+            dtype_3 = self.dtype_3.copy()
 
             def __init__(self, par_values=None):
+
+                self.data_type_1 = None
+                self.data_type_2 = None
+
                 super().__init__(
                         name='test_rule_iterator',
                         description='test rule iterator strategy',
                         run_freq='d',
                         run_timing='close',
-                        # TODO: user-defined parameter names should also be allowed
                         pars=[self.param1, self.param2],
-                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
-                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        data_types={'data_type_1': self.dtype_1.copy(), 'data_type_2': self.dtype_3},
                         use_latest_data_cycle=[True, False],
                         window_length=[7, 9],
                 )
@@ -202,9 +213,9 @@ class TestStrategy(unittest.TestCase):
 
             def realize(self):
                 print("RuleIterator realized")
-                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
-                dt1_avg = np.mean(self.close_E_d, axis=0)
-                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"got datas:\n{self.data_type_1}\n and \n{self.data_type_2}")
+                dt1_avg = np.mean(self.data_type_1, axis=0)
+                dt2_avg = np.mean(self.data_type_2, axis=0)
                 print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
                 criteria = dt1_avg * self.param1 >= dt2_avg * self.param2
                 print(f'criteria = avg1 * {self.param1} >= avg2 * {self.param2} = {criteria}')
@@ -508,6 +519,10 @@ class TestStrategy(unittest.TestCase):
             'close_E_5min':  rolling_window(self.test_data['close_E_5min'], 5),
             'close_E_15min': rolling_window(self.test_data['close_E_15min'], 8),
             'close_E_w':     rolling_window(self.test_data['close_E_w'], 6),
+            'data_type_1':   rolling_window(self.test_data['close_E_d'], 3),
+            'data_type_2':   rolling_window(self.test_data['close_E_5min'], 5),
+            'data_1':   rolling_window(self.test_data['close_E_d'], 3),
+            'data_2':   rolling_window(self.test_data['close_E_5min'], 5),
         }
 
         self.window_indices = {
@@ -516,6 +531,10 @@ class TestStrategy(unittest.TestCase):
             'close_E_5min':  np.arange(15) + 3,
             'close_E_15min': np.arange(15) + 1,
             'close_E_w':     np.arange(15) + 2,
+            'data_type_1':   np.arange(15) + 5,
+            'data_type_2':   np.arange(15) + 3,
+            'data_1':   np.arange(15) + 5,
+            'data_2':   np.arange(15) + 3,
         }
 
     def test_creation(self):
@@ -532,7 +551,7 @@ class TestStrategy(unittest.TestCase):
         # test creating strategy with parameters
         stg = self.gen_stg
 
-        self.assertEqual(stg.par_values, (10, 0.6))
+        self.assertEqual(stg.par_values, (50, 0.5))
         print(stg.__str__())
         print(stg.__repr__())
 
@@ -1099,13 +1118,13 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.description, 'test general strategy')
         self.assertEqual(stg.par_values, (50, 0.5))
         self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
-        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
+        self.assertEqual(stg.data_types, {'data_2': self.dtype_3, 'data_1': self.dtype_1})
 
         # test if parameters are correct:
         self.assertEqual(stg.param1, 50)
         self.assertEqual(stg.param2, 0.5)
-        self.assertEqual(stg.close_E_d, None)
-        self.assertEqual(stg.close_E_5min, None)
+        self.assertEqual(stg.data_1, None)
+        self.assertEqual(stg.data_2, None)
 
         # update parameter and data windows before start generate()
         stg.update_par_values(3, 0.75)
@@ -1118,10 +1137,16 @@ class TestStrategy(unittest.TestCase):
         # check if parameters and data windows are set:
         self.assertEqual(stg.param1, 3)
         self.assertEqual(stg.param2, 0.75)
-        self.assertIsInstance(stg.close_E_d, np.ndarray)
-        self.assertIsInstance(stg.close_E_5min, np.ndarray)
-        self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5]))
-        self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][3]))
+        self.assertEqual(stg.get_pars('param1'), 3)
+        self.assertEqual(stg.get_pars('param2'), 0.75)
+        self.assertIsInstance(stg.data_1, np.ndarray)
+        self.assertIsInstance(stg.data_2, np.ndarray)
+        self.assertIsInstance(stg.get_data('data_1'), np.ndarray)
+        self.assertIsInstance(stg.get_data('data_2'), np.ndarray)
+        self.assertTrue(np.allclose(stg.data_1, self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg.data_2, self.data_windows['close_E_5min'][3]))
+        self.assertTrue(np.allclose(stg.get_data('data_1'), self.data_windows['close_E_d'][5]))
+        self.assertTrue(np.allclose(stg.get_data('data_2'), self.data_windows['close_E_5min'][3]))
 
         # run strategy.generate()
         res = stg.generate()
@@ -1134,10 +1159,10 @@ class TestStrategy(unittest.TestCase):
                 window_indices=self.window_indices,
                 window_index=1,  # run the first step of the indices
         )
-        self.assertIsInstance(stg.close_E_d, np.ndarray)
-        self.assertIsInstance(stg.close_E_5min, np.ndarray)
-        self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][6]))
-        self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][4]))
+        self.assertIsInstance(stg.data_1, np.ndarray)
+        self.assertIsInstance(stg.data_2, np.ndarray)
+        self.assertTrue(np.allclose(stg.data_1, self.data_windows['data_1'][6]))
+        self.assertTrue(np.allclose(stg.data_2, self.data_windows['data_2'][4]))
 
         print(f'running result in step 2: {stg.generate()}')
 
@@ -1147,8 +1172,8 @@ class TestStrategy(unittest.TestCase):
                     window_indices=self.window_indices,
                     window_index=step
             )
-            self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5 + step]))
-            self.assertTrue(np.allclose(stg.close_E_5min, self.data_windows['close_E_5min'][3 + step]))
+            self.assertTrue(np.allclose(stg.data_1, self.data_windows['data_1'][5 + step]))
+            self.assertTrue(np.allclose(stg.data_2, self.data_windows['data_2'][3 + step]))
 
             print(f'running result in step {step}: {stg.generate()}')
 
@@ -1172,14 +1197,18 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.stg_type, 'FACTOR')
         self.assertEqual(stg.description, 'test factor sorter strategy')
         self.assertEqual(stg.par_values, (10, 0.6))
-        self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
+        self.assertEqual(stg.pars, {'par1': self.param1, 'par2': self.param2})
         self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
 
         # test if parameters are correct:
-        self.assertEqual(stg.param1, 10)
-        self.assertEqual(stg.param2, 0.6)
+        self.assertEqual(stg.par1, 10)
+        self.assertEqual(stg.par2, 0.6)
+        self.assertEqual(stg.get_pars('par1'), 10)
+        self.assertEqual(stg.get_pars('par2'), 0.6)
         self.assertEqual(stg.close_E_d, None)
         self.assertEqual(stg.close_E_5min, None)
+        self.assertEqual(stg.get_data('close_E_d'), None)
+        self.assertEqual(stg.get_data('close_E_5min'), None)
 
         # update parameter and data windows before start generate()
         stg.update_par_values(3, 0.75)
@@ -1190,8 +1219,8 @@ class TestStrategy(unittest.TestCase):
         )
 
         # check if parameters and data windows are set:
-        self.assertEqual(stg.param1, 3)
-        self.assertEqual(stg.param2, 0.75)
+        self.assertEqual(stg.par1, 3)
+        self.assertEqual(stg.par2, 0.75)
         self.assertIsInstance(stg.close_E_d, np.ndarray)
         self.assertIsInstance(stg.close_E_5min, np.ndarray)
         self.assertTrue(np.allclose(stg.close_E_d, self.data_windows['close_E_d'][5]))
@@ -1314,13 +1343,13 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.description, 'test rule iterator strategy')
         self.assertEqual(stg.par_values, (10, 0.6))
         self.assertEqual(stg.pars, {'param1': self.param1, 'param2': self.param2})
-        self.assertEqual(stg.data_types, {'close_E_5min': self.dtype_3, 'close_E_d': self.dtype_1})
+        self.assertEqual(stg.data_types, {'data_type_2': self.dtype_3, 'data_type_1': self.dtype_1})
 
         # test if parameters are correct:
         self.assertEqual(stg.param1, 10)
         self.assertEqual(stg.param2, 0.6)
-        self.assertEqual(stg.close_E_d, None)
-        self.assertEqual(stg.close_E_5min, None)
+        self.assertEqual(stg.data_type_1, None)
+        self.assertEqual(stg.data_type_2, None)
 
         # update parameter and data windows before start generate()
         stg.update_par_values(5, 6)
@@ -1333,10 +1362,10 @@ class TestStrategy(unittest.TestCase):
         # check if parameters and data windows are set:
         self.assertEqual(stg.param1, 5)
         self.assertEqual(stg.param2, 6)
-        self.assertIsInstance(stg._data_windows['close_E_d'], np.ndarray)
-        self.assertIsInstance(stg._data_windows['close_E_5min'], np.ndarray)
-        self.assertTrue(np.allclose(stg._data_windows['close_E_d'], self.data_windows['close_E_d'][5]))
-        self.assertTrue(np.allclose(stg._data_windows['close_E_5min'], self.data_windows['close_E_5min'][3]))
+        self.assertIsInstance(stg._data_windows['data_type_1'], np.ndarray)
+        self.assertIsInstance(stg._data_windows['data_type_2'], np.ndarray)
+        self.assertTrue(np.allclose(stg._data_windows['data_type_1'], self.data_windows['data_type_1'][5]))
+        self.assertTrue(np.allclose(stg._data_windows['data_type_2'], self.data_windows['data_type_2'][3]))
 
         self.assertEqual(stg.allow_multi_par, True)
         self.assertEqual(stg.multi_pars, None)
@@ -1358,10 +1387,10 @@ class TestStrategy(unittest.TestCase):
 
         self.assertEqual(stg.param1, 5)
         self.assertEqual(stg.param2, 6)
-        self.assertIsInstance(stg._data_windows['close_E_d'], np.ndarray)
-        self.assertIsInstance(stg._data_windows['close_E_5min'], np.ndarray)
-        self.assertTrue(np.allclose(stg._data_windows['close_E_d'], self.data_windows['close_E_d'][5]))
-        self.assertTrue(np.allclose(stg._data_windows['close_E_5min'], self.data_windows['close_E_5min'][3]))
+        self.assertIsInstance(stg._data_windows['data_type_1'], np.ndarray)
+        self.assertIsInstance(stg._data_windows['data_type_2'], np.ndarray)
+        self.assertTrue(np.allclose(stg._data_windows['data_type_1'], self.data_windows['data_type_1'][5]))
+        self.assertTrue(np.allclose(stg._data_windows['data_type_2'], self.data_windows['data_type_2'][3]))
 
         self.assertEqual(stg.allow_multi_par, True)
         self.assertEqual(stg.multi_pars, ((5, 5), (6, 1), (2, 4)))

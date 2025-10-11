@@ -427,19 +427,19 @@ class BaseStrategy:
         return self._share_names
 
     def get_use_latest_data_cycle(self, data_type: str = None) -> bool:
-        """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
+        """ 根据dtype_id获取历史数据的最新周期使用参数"""
         return self._data_ULC[data_type]
 
     def get_data_ulc(self, data_type: str = None) -> bool:
-        """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
+        """ 根据dtype_id获取历史数据的最新周期使用参数"""
         return self._data_ULC[data_type]
 
     def get_window_length(self, data_type: str = None) -> int:
-        """策略依赖的历史数据窗口长度"""
+        """根据dtype_id获取历史数据窗口长度"""
         return self._data_WL[data_type]
 
     def get_data_name(self, data_type: str = None) -> str:
-        """ 获取数据类型的名称"""
+        """ 根据dtype_id获取数据类型的名称"""
         return self.data_names[data_type]
 
     def __str__(self):
@@ -563,14 +563,19 @@ class BaseStrategy:
                 raise TypeError(f'pars should be a list of Parameter objects, got {type(pars)} instead')
             pars = {par.name: par for par in pars}
         elif isinstance(pars, dict):
-            pass
+            # 确保每一个par.name与key一致
+            for key, par in pars.items():
+                if not isinstance(par, Parameter):
+                    raise TypeError(f'pars should be a dict of Parameter objects, got {type(pars)} instead')
+                if key != par.name:
+                    par.name = key
         else:
             raise TypeError(f'pars is in invalid type! ({type(pars)})')
 
         if not _dict_par_format_is_valid('pars', pars, Parameter, 'name'):
             raise ValueError(f'pars is invalid! ({pars})')
 
-        self._pars = {name: par.copy() for name, par in pars.items()}
+        self._pars = {name: par for name, par in pars.items()}
 
         for name, par in pars.items():
             par.name = name
@@ -672,8 +677,7 @@ class BaseStrategy:
             self.__setattr__(dtype_id, None)
 
     def get_data(self, *dtype_id):
-        """get historical data by data_id, alias as operator.dtype_id
-        multiple datatypes can be got at one time"""
+        """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
         return self._get_pars_or_data(*dtype_id)
 
     def update_data_types(self,
