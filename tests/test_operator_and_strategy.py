@@ -931,6 +931,9 @@ class TestDependentData(GeneralStg):
         if par_values:
             self.update_par_values(*par_values)
 
+    def realize(self):
+        raise NotImplementedError
+
 
 class TestOperatorAndStrategy(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：

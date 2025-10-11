@@ -598,6 +598,12 @@ class DataType:
         """ hash of data type is equal to hash of datatype.__str__()"""
         return hash(str(self))
 
+    def __copy__(self):
+        return DataType(name=self.name, freq=self.freq, asset_type=self.asset_type)
+
+    def copy(self):
+        return self.__copy__()
+
     # 真正的顶层数据获取API接口函数
     def get_data_from_source(
             self, datasource, *,

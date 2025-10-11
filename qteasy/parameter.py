@@ -221,6 +221,31 @@ class Parameter:
         else:  # self.par_type == 'int'
             return self._lbound <= item <= self._ubound and float(item).is_integer()
 
+    def __eq__(self, other):
+        """判断两个参数对象是否相等
+        两个参数对象，只要它们的类型、范围、形状都相等，则认为它们是相等的
+        两个相等的参数对象可以有不同的当前值和名称
+        """
+        if not isinstance(other, Parameter):
+            return False
+        return (self.par_type == other.par_type and
+                self.par_range == other.par_range and
+                self.shape == other.shape)
+
+    def __copy__(self):
+        """返回参数对象的一个浅拷贝"""
+        if self.par_type in ['int_array', 'float_array']:
+            new_par = Parameter(
+                    self.par_range,
+                    name=self.name,
+                    par_type=f'{self.par_type}[{",".join(str(i) for i in self.shape)}]',
+                    value=self.value
+            )
+        else:
+            new_par = Parameter(self.par_range, name=self.name, par_type=self.par_type, value=self.value)
+
+        return new_par
+
     @property
     def value(self):
         """返回参数的当前值
@@ -362,17 +387,7 @@ class Parameter:
 
     def copy(self):
         """返回参数对象的一个浅拷贝"""
-        if self.par_type in ['int_array', 'float_array']:
-            new_par = Parameter(
-                    self.par_range,
-                    name=self.name,
-                    par_type=f'{self.par_type}[{",".join(str(i) for i in self.shape)}]',
-                    value=self.value
-            )
-        else:
-            new_par = Parameter(self.par_range, name=self.name, par_type=self.par_type, value=self.value)
-
-        return new_par
+        return self.__copy__()
 
     def enum_values(self):
         """一个生成器函数，生成参数的枚举值或者离散参数的所有可能值，如果参数是连续型，报错
