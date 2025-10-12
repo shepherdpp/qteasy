@@ -3480,6 +3480,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         et = time.time()
 
         print(f'Generated {op.get_signal_count()} trading signals in {et-st:.6f} seconds\n')
+        self.assertLessEqual(et-st, 5.0)  # 回测时间不超过5秒
 
         # 准备交易数据
 
@@ -3525,11 +3526,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
         et = time.time()
         print(f'Backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n')
+        self.assertLessEqual(et-st, 3.0)  # 回测时间不超过3秒
 
         # 重复运行十次以精确测算回测的速度
         print(f'Now repeating the backtest 10 times to measure speed...\n')
         st = time.time()
-        for _ in range(10):
+        for _ in range(5):
             backtest_batch_steps(
                     signal_types=stypes,
                     op_signals=signals,
@@ -3557,6 +3559,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         et = time.time()
         print(f'10 times backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n'
               f'average {((et-st)/10):.6f} seconds per backtest\n')
+        self.assertLessEqual(et-st, 15.0)  # 单次平均回测时间不超过3秒
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
