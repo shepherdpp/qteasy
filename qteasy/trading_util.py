@@ -146,7 +146,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
 
         # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
         for stg_id, stg in operator.get_strategy_id_pairs():
-            timing = stg.strategy_run_timing
+            timing = stg.run_timing
             freq = stg.run_freq
             if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
                 # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
