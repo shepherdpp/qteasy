@@ -221,7 +221,7 @@ def backtest_step(
     )
 
 
-# @njit(nogil=True, cache=True)
+@njit(nogil=True, cache=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -788,41 +788,41 @@ def _get_complete_hist(looped_value: pd.DataFrame,
         looped_value[share_price_column_names] = looped_history[shares]
     return looped_value
 
-
-def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
-    """将完成的交易信号清单与现金投资计划合并：
-
-    检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
-    信号，以便使op_list中存在相应的日期。
-
-    注意，在目前的设计中，要求invest中的所有投资日期都为交易日（意思是说，投资日期当天资产价格不为np.nan）
-    否则，将会导致回测失败（回测当天取到np.nan作为价格，引起总资产计算失败，引起连锁反应所有的输出结果均为np.nan。
-
-    需要在CashPlan投资计划类中增加合法性判断
-
-    Parameters
-    ----------
-    op_list: pd.DataFrame
-        交易信号清单，一个DataFrame。index为Timestamp类型
-    invest: qt.CashPlan
-        CashPlan对象，投资日期和投资金额
-    Returns
-    -------
-    op_list: pd.DataFrame
-        合并后的交易信号清单
-    """
-    if not isinstance(op_list, pd.DataFrame):
-        raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
-    if not isinstance(invest, CashPlan):
-        raise TypeError(f'invest plan should be a qteasy CashPlan, got {type(invest)} instead')
-    for date in invest.dates:
-        try:
-            op_list.loc[date]
-        except Exception:
-            op_list.loc[date] = 0
-    op_list.sort_index(inplace=True)
-    return op_list
-
+#
+# def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
+#     """将完成的交易信号清单与现金投资计划合并：
+#
+#     检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
+#     信号，以便使op_list中存在相应的日期。
+#
+#     注意，在目前的设计中，要求invest中的所有投资日期都为交易日（意思是说，投资日期当天资产价格不为np.nan）
+#     否则，将会导致回测失败（回测当天取到np.nan作为价格，引起总资产计算失败，引起连锁反应所有的输出结果均为np.nan。
+#
+#     需要在CashPlan投资计划类中增加合法性判断
+#
+#     Parameters
+#     ----------
+#     op_list: pd.DataFrame
+#         交易信号清单，一个DataFrame。index为Timestamp类型
+#     invest: qt.CashPlan
+#         CashPlan对象，投资日期和投资金额
+#     Returns
+#     -------
+#     op_list: pd.DataFrame
+#         合并后的交易信号清单
+#     """
+#     if not isinstance(op_list, pd.DataFrame):
+#         raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
+#     if not isinstance(invest, CashPlan):
+#         raise TypeError(f'invest plan should be a qteasy CashPlan, got {type(invest)} instead')
+#     for date in invest.dates:
+#         try:
+#             op_list.loc[date]
+#         except Exception:
+#             op_list.loc[date] = 0
+#     op_list.sort_index(inplace=True)
+#     return op_list
+#
 
 # TODO: 此函数将被core.py中的函数backtest_operator()所取代
 # def apply_loop(operator: Operator,

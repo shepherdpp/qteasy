@@ -2741,6 +2741,98 @@ class TestTradingUtilFuncs(unittest.TestCase):
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""
         # test parsing pt buy long signal with only one symbol
+        # test parsing pt signals with pt_buy_threshold = 0. and pt_sell_threshold = 0.
+
+        pt_buy_threshold = 0.
+        pt_sell_threshold = 0.
+        prices = np.array([10.])
+
+        # test parsing pt signals with holdings = 0 and cash = 10000 in 3 cases
+        own_amounts = np.array([0.0])
+        own_cash = 10000.0
+
+        signals = np.array([0])  # case 1: no action
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])  # case 2: buy long
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])  # case 3: sell long
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing pt signals with holdings = 500 and cash = 5000 in 5 cases
+        own_amounts = np.array([500.0])
+        own_cash = 5000.0
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=False
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=False
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([1.0])
+        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=False
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
         signals = np.array([1])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
