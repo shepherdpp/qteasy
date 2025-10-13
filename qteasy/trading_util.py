@@ -363,7 +363,7 @@ def parse_trade_signal(signals,
 def _parse_pt_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
-                      own_cash: Union[float, np.float64],
+                      own_cash: Union[float, np.float64, np.int64, np.ndarray],
                       pt_buy_threshold: float,
                       pt_sell_threshold: float,
                       allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
@@ -389,8 +389,8 @@ def _parse_pt_signals(signals: np.ndarray,
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-        cash_to_spend: np.ndarray, 买入资产的现金
-        amounts_to_sell: np.ndarray, 卖出资产的数量
+        cash_to_spend: np.ndarray, 买入资产的现金金额，正数表示买入多头，负数表示买入空头
+        amounts_to_sell: np.ndarray, 卖出资产的数量，正数表示卖出空头，负数表示卖出多头
     """
 
     # 计算当前总资产
@@ -402,11 +402,11 @@ def _parse_pt_signals(signals: np.ndarray,
     previous_pos = own_amounts * prices / total_value
     position_diff = signals - previous_pos
     # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-    # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
+    # 当持有份额大于零且交易信号为负时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
     amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
                                position_diff / previous_pos * own_amounts,
                                0.)
-    # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
+    # 当持有份额不小于0且交易信号为正时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
     cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
                              position_diff * total_value,
                              0.)
@@ -429,7 +429,7 @@ def _parse_pt_signals(signals: np.ndarray,
 def _parse_ps_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
-                      own_cash: Union[float, np.float64],
+                      own_cash: Union[float, np.float64, np.ndarray],
                       allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PS类型的交易信号
 
@@ -449,8 +449,8 @@ def _parse_ps_signals(signals: np.ndarray,
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-        cash_to_spend: np.ndarray, 买入资产的现金
-        amounts_to_sell: np.ndarray, 卖出资产的数量
+        cash_to_spend: np.ndarray, 买入资产的现金金额，正数表示买入多头，负数表示买入空头
+        amounts_to_sell: np.ndarray, 卖出资产的数量，正数表示卖出空头，负数表示卖出多头
     """
 
     # 计算当前总资产
@@ -499,9 +499,9 @@ def _parse_vs_signals(signals: np.ndarray,
     """
 
     # 计算各个资产的计划买入金额和计划卖出数量
-    # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
+    # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals, 0.)
-    # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
+    # 当持有份额不小于0且信号为正时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
     cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
 
     # 当允许买空卖空时，允许开启空头头寸：

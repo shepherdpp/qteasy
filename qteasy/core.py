@@ -2292,7 +2292,7 @@ def run_mode_2(operator, config, benchmark_data_type):
     return optimal_pars
 
 
-# TODO: 将此函数移到core.py，改造为专司backtest的函数。专门处理operator的信号生成以及信号回测
+# TODO: 此函数专司backtest的函数。专门处理operator的信号生成以及信号回测
 #  同时可以考虑将此函数一分为二，一个是处理operator信号生成不需要依赖回测数据的，可以一次性生成
 #  operator信号后，统一调用apply_loop_core返回回测结果，另一个处理operator信号生成依赖回测数据
 #  的，此时operator信号需要利用初始回测数据，然后在回测过程中逐步生成。该函数处理交易信号以及回测的
@@ -2349,7 +2349,6 @@ def backtest_operator(operator: Operator,
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
     from qteasy.config_parser import (
         parse_cash_investment_and_inflation,
-        parse_backtest_cash_plan,
         parse_delivery_day_indicators,
         parse_cost_params,
         parse_signal_parsing_params,
@@ -2375,7 +2374,10 @@ def backtest_operator(operator: Operator,
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
     if operator.check_dependent_data():
-        backtest_operator_independently(
+        (own_cashes,
+         own_amounts_array,
+         trade_records_array,
+         trade_cost_array) = backtest_operator_independently(
                 op=operator,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
@@ -2395,11 +2397,31 @@ def backtest_operator(operator: Operator,
         )
     # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
     else:
-        pass
+        (own_cashes,
+         own_amounts_array,
+         trade_records_array,
+         trade_cost_array) = backtest_operator_dependently(
+                op=operator,
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                own_cashes=own_cashes,
+                available_cashes=available_cashes,
+                own_amounts_array=own_amounts_array,
+                available_amounts_array=available_amounts_array,
+                trade_price_data=trade_price_data,
+                trade_records_array=trade_records_array,
+                trade_cost_array=trade_cost_array,
+                cost_params=cost_params,
+                share_count=share_count,
+                **signal_parsing_params,
+                **trading_moq_params,
+                **trading_delivery_params,
+        )
 
     # 6，返回回测结果，包括日期时间索引、持仓数据、现金数据、
-
-    raise NotImplementedError
+    return (own_amounts_array, available_amounts_array, own_cashes, available_cashes,
+            trade_records_array, trade_cost_array)
 
 
 def backtest_operator_independently(
