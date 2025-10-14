@@ -300,6 +300,7 @@ def calculate_trade_results(
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
+    empty_array = np.zeros_like(op_signal)
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:  # PT信号
@@ -321,6 +322,13 @@ def calculate_trade_results(
                 own_cash=own_cash,
                 allow_sell_short=allow_sell_short
         )
+        # 如果是全零信号，则直接返回空结果
+        if np.all(cash_to_spend == 0) and np.all(amounts_to_sell == 0):
+            return (empty_array,
+                    empty_array,
+                    empty_array,
+                    empty_array,
+                    empty_array)
 
     elif signal_type == 2:  # VS信号
         cash_to_spend, amounts_to_sell = _parse_vs_signals(
@@ -329,6 +337,13 @@ def calculate_trade_results(
                 own_amounts=own_amounts,
                 allow_sell_short=allow_sell_short
         )
+        # 如果是全零信号，则直接返回空结果
+        if np.all(cash_to_spend == 0) and np.all(amounts_to_sell == 0):
+            return (empty_array,
+                    empty_array,
+                    empty_array,
+                    empty_array,
+                    empty_array)
 
     else:
         raise ValueError('Invalid signal_type')
@@ -353,8 +368,7 @@ def calculate_trade_results(
 
     if np.all(abs_cash_to_spend < 0.001):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
-        # TODO: 所有的np.zeros_like()都需要提高效率，改为返回None或np.empty()
-        return cash_gained, np.zeros_like(op_signal), np.zeros_like(op_signal), amount_sold, fee_selling
+        return cash_gained, empty_array, empty_array, amount_sold, fee_selling
 
     # 分别处理买入金额中的多头买入和空头买入部分，分别计算当前持有的多头和空头仓位
     pos_cash_to_spend = np.where(cash_to_spend > 0.01, cash_to_spend, 0)
