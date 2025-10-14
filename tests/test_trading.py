@@ -1676,13 +1676,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
         stg = op.strategies[0]
         stg.run_freq = 'h'
-        stg.strategy_run_timing = 'open'
+        stg.run_timing = 'open'
         stg = op.strategies[1]
         stg.run_freq = '30min'
-        stg.strategy_run_timing = 'open'
+        stg.run_timing = 'open'
         stg = op.strategies[2]
         stg.run_freq = 'd'
-        stg.strategy_run_timing = '10:30'
+        stg.run_timing = '10:30'
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',

@@ -13,12 +13,25 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from typing import Union, Any
+from warnings import warn
 
 from qteasy.utilfuncs import ALL_COST_PARAMETERS
 
 
+# TODO: 未来可以删除buy_fix及sell_fix两个参数，因为这两个参数的功能可以通过设置
+#  buy/sell_rate=0 同时 buy/sell_min = buy_fix来实现
+#  而且还可以删除掉validate_cost_dict中关于fix与rate/min之间冲突的检测，一举
+#  多得
+
 def validate_cost_dict(cost: dict) -> None:
     """ 检查成本参数是否合法
+
+    合法的成本参数包括：
+    1，成本参数是一个dict
+    2，成本参数包含所有必须的参数，即ALL_COST_PARAMETERS中的参数
+    3，所有的参数必须为数字且大于等于零
+    4，如果设置了buy_fix，则buy_rate和buy_min会被忽略（警告）
+    5，如果设置了sell_fix，则sell_rate和sell_min会被忽略（警告）
 
     Parameters
     ----------
@@ -36,12 +49,23 @@ def validate_cost_dict(cost: dict) -> None:
     KeyError
         如果cost中包含非法的成本参数
     """
-    if not isinstance(cost, dict):
+    if not isinstance(cost, dict):  # check for type
         msg = f'Cost should be a dict, got {type(cost)} instead'
         raise TypeError(msg)
-    if any(k not in ALL_COST_PARAMETERS for k in cost.keys()):
-        invalid_keys = [k for k in cost.keys() if k not in ALL_COST_PARAMETERS]
-        raise KeyError(f'Invalid cost parameters: {invalid_keys}')
+    if any(k not in cost.keys() for k in ALL_COST_PARAMETERS):  # check for missing param
+        invalid_keys = [k for k in ALL_COST_PARAMETERS if k not in cost.keys()]
+        raise KeyError(f'Missing cost parameters: {invalid_keys}')
+    # check for numbers
+    for k, v in cost.items():
+        if not isinstance(v, (int, float, np.integer, np.floating)):
+            raise TypeError(f'Cost parameter {k} should be a number, got {type(v)} instead')
+        if v < 0:
+            raise ValueError(f'Cost parameter {k} should be non-negative, got {v} instead')
+    # warn if buy_fix exists with buy_rate and buy_min
+    if cost['buy_fix'] > 0 and (cost['buy_rate'] > 0 or cost['buy_min'] > 0):
+        warn('Warning: buy_fix is set, buy_rate and buy_min will be ignored', UserWarning)
+    if cost['sell_fix'] > 0 and (cost['sell_rate'] > 0 or cost['sell_min'] > 0):
+        warn('Warning: sell_fix is set, sell_rate and sell_min will be ignored', UserWarning)
     return None
 
 
@@ -421,7 +445,7 @@ class CashPlan:
     CashPlan(['20200101', '20200201', '20200304', '20200404'], [10000, 20000, 10000, 20000], 0.0)
     """
 
-    def __init__(self, dates, amounts: (int, float, [int], [float]), interest_rate: float = 0.0):
+    def __init__(self, dates, amounts: Union[int, float, list[int], list[float]], interest_rate: float = 0.0):
         """ 初始化投资计划
 
         Parameters
@@ -713,7 +737,7 @@ class CashPlan:
         except Exception as e:
             print(f'{e}, ')
 
-    def to_dict(self, keys: [list, tuple, np.ndarray] = None):
+    def to_dict(self, keys: Union[list, tuple, np.ndarray] = None):
         """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
 
         Parameters
