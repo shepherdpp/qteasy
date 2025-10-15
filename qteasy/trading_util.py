@@ -457,9 +457,9 @@ def _parse_ps_signals(signals: np.ndarray,
     total_value = np.sum(prices * own_amounts) + own_cash
 
     # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-    # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
+    # 当持有份额大于零时，平多仓：卖出数量 = 交易信号 * 持仓份额，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals * own_amounts, 0.)
-    # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
+    # 当持有份额不小于0时，开多仓：买入金额 = 交易信号 * 当前总资产，此时不能持有空头头寸
     cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * total_value, 0.)
 
     # 当允许买空卖空时，允许开启空头头寸：

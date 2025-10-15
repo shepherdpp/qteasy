@@ -10,12 +10,15 @@
 # ======================================
 
 import os
+from textwrap import shorten
+
 import pandas as pd
 import numpy as np
 from warnings import warn
-from numba import njit  # try taichi, which might be even faster
+from numba import njit, short  # try taichi, which might be even faster
 from typing import Any, Union
 
+from numexpr.expressions import long_
 from numpy import bool_, dtype, ndarray
 
 import qteasy
@@ -221,7 +224,7 @@ def backtest_step(
     )
 
 
-@njit(nogil=True, cache=True)
+# @njit(nogil=True, cache=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -301,9 +304,12 @@ def calculate_trade_results(
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
     empty_array = np.zeros_like(op_signal)
+    share_count = len(op_signal)
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:  # PT信号
+        # TODO: 可以在parse_pt_signals中增加对long/short_pos_limit的处理，直接使
+        #  PT信号的范围不超过long/short_pos_limit
         cash_to_spend, amounts_to_sell = _parse_pt_signals(
                 signals=op_signal,
                 prices=prices,
@@ -348,13 +354,28 @@ def calculate_trade_results(
     else:
         raise ValueError('Invalid signal_type')
 
-    # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
+    # 3, 根据可用股票数量或多空持仓限额调整卖出计划。
 
-    # 如果不允许卖空交易，则需要更新股票卖出计划数量
+    # 如果不允许卖空交易，则根据可用股份数量调整卖出计划，确保卖出数量不超过可用数量，
+    # 此时忽略long_pos_limit与short_pos_limit，因为pos_limit被可用金额自动限制在0～1之间
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
+    else:  # 如果允许卖空交易，则检查卖出计划是否超过own_amounts，将超过的部分转化为相应的空头/多头买入
+        excesive_long_amounts_to_sell = np.where(
+                (amounts_to_sell < 0) & (own_amounts + amounts_to_sell < 0),
+                own_amounts + amounts_to_sell,
+                0
+        )
+        cash_to_spend += excesive_long_amounts_to_sell * prices
+        excesive_short_amounts_to_sell = np.where(
+                (amounts_to_sell > 0) & (own_amounts + amounts_to_sell > 0),
+                own_amounts + amounts_to_sell,
+                0
+        )
+        cash_to_spend += excesive_short_amounts_to_sell * prices
+        amounts_to_sell -= excesive_long_amounts_to_sell + excesive_short_amounts_to_sell
 
-    # 批量提交股份卖出计划，计算实际卖出份额和交易费用
+    # 4，批量提交股份卖出计划，计算实际卖出份额和交易费用
     amount_sold, cash_gained, fee_selling = get_selling_result(
             prices=prices,
             a_to_sell=amounts_to_sell,
@@ -362,42 +383,42 @@ def calculate_trade_results(
             cost_params=cost_params,
     )
 
-    # 调整处理cash_to_spend
-    # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-    abs_cash_to_spend = np.abs(cash_to_spend)
-
-    if np.all(abs_cash_to_spend < 0.001):
+    if np.all(np.abs(cash_to_spend) < 0.001):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         return cash_gained, empty_array, empty_array, amount_sold, fee_selling
 
-    # 分别处理买入金额中的多头买入和空头买入部分，分别计算当前持有的多头和空头仓位
-    pos_cash_to_spend = np.where(cash_to_spend > 0.01, cash_to_spend, 0)
-    total_pos_cash_to_spend = pos_cash_to_spend.sum()
-    neg_cash_to_spend = np.where(cash_to_spend < -0.01, cash_to_spend, 0)
-    total_neg_cash_to_spend = neg_cash_to_spend.sum()
-    next_own_amounts = own_amounts + amount_sold
+    # 5，根据可用现金数量或多空持仓限额调整买入计划
 
-    # 计算允许用于买入多头份额的最大金额
-    current_long_pos = np.where(next_own_amounts > 0, next_own_amounts * prices, 0).sum() / total_value
-    max_pos_cash_to_spend = (long_pos_limit - current_long_pos) * total_value
+    # 如果不允许卖空交易，则根据可用现金调整买入计划，确保买入总金额不超过可用现金
+    # 此时自动保证交易后的持仓比例在0～1之间
+    if not allow_sell_short:
+        # 忽略cash_to_spend中的空头买入部分（不允许卖空时无意义）
+        cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
+        # 确保总现金买入金额不超过可用现金，如果超过则按比例调降
+        if cash_to_spend.sum() > available_cash:
+            cash_to_spend *= available_cash / cash_to_spend.sum()
+    else:
+        # 分别处理买入金额产生的多头总仓位和空头总仓位
+        next_own_amounts = own_amounts + amount_sold
+        long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
+        total_long_cash_to_spend = long_cash_to_spend.sum()
+        max_long_pos_to_buy = long_pos_limit * total_value - np.where(
+                cash_to_spend > 0.001, next_own_amounts * prices, 0).sum()
 
-    if long_pos_limit <= 1.0:
-        max_pos_cash_to_spend = min(max_pos_cash_to_spend, available_cash)
+        short_cash_to_spend = np.where(cash_to_spend < -0.001, cash_to_spend, 0)
+        total_short_cash_to_spend = short_cash_to_spend.sum()
+        max_short_pos_to_buy = short_pos_limit * total_value - np.where(
+                cash_to_spend < -0.001, next_own_amounts * prices, 0).sum()
 
-    if total_pos_cash_to_spend > max_pos_cash_to_spend:
-        # 如果计划买入多头现金超过允许买入最大金额，按比例降低分配给每个拟买入多头资产的现金
-        pos_cash_to_spend = pos_cash_to_spend / total_pos_cash_to_spend * max_pos_cash_to_spend
+        if total_long_cash_to_spend > max_long_pos_to_buy:
+            # 如果计划买入多头现金超过允许买入最大金额，按比例降低分配给每个拟买入多头资产的现金
+            long_cash_to_spend *= max_long_pos_to_buy / total_long_cash_to_spend
 
-    if allow_sell_short:
-        # 只有当allow_sell_short的时候才去考察允许持有的空头仓位限制
-        current_short_pos = np.where(next_own_amounts < 0, next_own_amounts * prices, 0).sum() / total_value
-        max_neg_cash_to_spend = (short_pos_limit - current_short_pos) * total_value
-
-        if total_neg_cash_to_spend < max_neg_cash_to_spend:
+        if total_short_cash_to_spend < max_short_pos_to_buy:
             # 如果计划买入空头现金超过允许买入最大金额，按比例调降拟买入空头资产的现金
-            neg_cash_to_spend = neg_cash_to_spend / total_neg_cash_to_spend * max_neg_cash_to_spend
+            short_cash_to_spend *= max_short_pos_to_buy / total_short_cash_to_spend
 
-    cash_to_spend = pos_cash_to_spend + neg_cash_to_spend
+        cash_to_spend = long_cash_to_spend + short_cash_to_spend
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况

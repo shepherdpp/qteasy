@@ -1886,16 +1886,19 @@ class TestBacktest(unittest.TestCase):
         # ----------------------------------
         # start testing signal type = PT (0)
         print(f'\nNow testing with signal type = PT (0), own_amount=0, available_amount=0, price=10.')
-        signal = np.array([0.])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=10000,
                 own_amounts=np.array([0.]),
                 available_cash=10000,
                 available_amounts=np.array([0.]),
+        )
+        signal = np.array([0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=np.array([0.]),
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -1908,14 +1911,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([0.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=np.array([0.5]),  # buy signal
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -1928,14 +1928,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-0.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -1948,14 +1945,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-0.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -1966,16 +1960,13 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([0.]))
         self.assertEqual(fee, np.array([0.]))
 
-        signal = np.array([1.5])  # sell short allowed
+        signal = np.array([1.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.]),
+                op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -1988,14 +1979,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.5]),  # buy signal
+                op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2008,14 +1996,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2028,14 +2013,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2047,17 +2029,19 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(fee, np.array([0.]))
 
         print(f'\nNow testing with signal type = PT (0), own_amount=500, own_cash=5000, price=10.')
-
-        signal = np.array([1.5])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=5000,
                 own_amounts=np.array([500.]),
                 available_cash=5000,
-                available_amounts=np.array([500.]),
+                available_amounts=np.array([500.])
+        )
+        signal = np.array([1.5])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2070,56 +2054,52 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([20000.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([-2000.]))
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([15000.]))
+        self.assertEqual(a_p, np.array([-1500.]))
+        self.assertEqual(a_s, np.array([-500.]))
         self.assertEqual(fee, np.array([0.]))
 
         print(f'\nNow testing with signal type = PT (0), own_amount=-500, own_cash=15000, price=10.')
-
-        signal = np.array([1.5])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=15000,
                 own_amounts=np.array([-500.]),
                 available_cash=15000,
                 available_amounts=np.array([-500.]),
+        )
+        signal = np.array([1.5])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([20000.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([-2000.]))
+        self.assertEqual(c_g, np.array([-5000.]))
+        self.assertEqual(c_s, np.array([-15000.]))
+        self.assertEqual(a_p, np.array([1500.]))
+        self.assertEqual(a_s, np.array([500.]))
         self.assertEqual(fee, np.array([0.]))
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2129,8 +2109,6 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_p, np.array([-1000.]))
         self.assertEqual(a_s, np.array([0.]))
         self.assertEqual(fee, np.array([0.]))
-
-        raise NotImplementedError
 
     def test_ps_calculata_trade_results_basic_cases(self):
         """ test the function calculate_trade_results() with basic simple but comprehensive cases
@@ -2169,16 +2147,19 @@ class TestBacktest(unittest.TestCase):
         # ----------------------------------
         # start testing signal type = PS (1)
         print(f'\nNow testing with signal type = PS (1), own_amount=0, available_amount=0, price=10.')
-        signal = np.array([0.])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=10000,
                 own_amounts=np.array([0.]),
                 available_cash=10000,
                 available_amounts=np.array([0.]),
+        )
+        signal = np.array([0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=np.array([0.]),
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2191,14 +2172,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([0.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=np.array([0.5]),  # buy signal
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2209,16 +2187,13 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([0.]))
         self.assertEqual(fee, np.array([0.]))
 
-        signal = np.array([-0.5])  # sell short allowed
+        signal = np.array([-0.5])  # sell short not allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2231,14 +2206,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-0.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2251,14 +2223,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.]),
+                op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2271,14 +2240,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.5]),  # buy signal
+                op_signal=signal,  # buy signal
                 long_pos_limit=2.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2291,14 +2257,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2311,14 +2274,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2330,17 +2290,19 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(fee, np.array([0.]))
 
         print(f'\nNow testing with signal type = PS (1), own_amount=500, own_cash=5000, price=10.')
-
-        signal = np.array([0.])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=5000,
                 own_amounts=np.array([500.]),
                 available_cash=5000,
                 available_amounts=np.array([500.]),
+        )
+        signal = np.array([0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2351,16 +2313,13 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([0.]))
         self.assertEqual(fee, np.array([0.]))
 
-        signal = np.array([1.0])  # sell short allowed
+        signal = np.array([1.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2373,14 +2332,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.0])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2393,14 +2349,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-0.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2413,14 +2366,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2433,56 +2383,103 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([0.]))
+        self.assertEqual(a_p, np.array([0.]))
+        self.assertEqual(a_s, np.array([-500.]))
+        self.assertEqual(fee, np.array([0.]))
+
+        signal = np.array([-1.5])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([5000.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
+        self.assertEqual(c_s, np.array([2500.]))
+        self.assertEqual(a_p, np.array([-250.]))
         self.assertEqual(a_s, np.array([-500.]))
         self.assertEqual(fee, np.array([0.]))
 
-        signal = np.array([-1.5])
+        signal = np.array([-5.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
-                short_pos_limit=-2.,
+                short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([7500.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([-750.]))
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([10000.]))
+        self.assertEqual(a_p, np.array([-1000.]))
+        self.assertEqual(a_s, np.array([-500.]))
         self.assertEqual(fee, np.array([0.]))
 
-        print(f'\nNow testing with signal type = PS (1), own_amount=-500, own_cash=15000, price=10.')
-
-        signal = np.array([0.])
+        signal = np.array([-5.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-1.5,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([15000.]))
+        self.assertEqual(a_p, np.array([-1500.]))
+        self.assertEqual(a_s, np.array([-500.]))
+        self.assertEqual(fee, np.array([0.]))
+
+        signal = np.array([-5.0])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([20000.]))
+        self.assertEqual(a_p, np.array([-2000.]))
+        self.assertEqual(a_s, np.array([-500.]))
+        self.assertEqual(fee, np.array([0.]))
+
+        print(f'\nNow testing with signal type = PS (1), own_amount=-500, own_cash=15000, price=10.')
+        holdings = dict(
+                own_cash=15000,
+                own_amounts=np.array([-500.]),
+                available_cash=15000,
+                available_amounts=np.array([-500.]),
+        )
+        signal = np.array([0.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-2.,
+                allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2495,14 +2492,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2515,14 +2509,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1.0])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2535,14 +2526,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([0.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2555,14 +2543,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2575,14 +2560,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
-                long_pos_limit=2.,
+                long_pos_limit=0.0,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2595,25 +2577,20 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1.5])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([-7500.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([750.]))
+        self.assertEqual(c_g, np.array([-5000.]))
+        self.assertEqual(c_s, np.array([-2500.]))
+        self.assertEqual(a_p, np.array([250.]))
+        self.assertEqual(a_s, np.array([500.]))
         self.assertEqual(fee, np.array([0.]))
-
-        raise NotImplementedError
 
     def test_vs_calculata_trade_results_basic_cases(self):
         """ test the function calculate_trade_results() with basic simple but comprehensive cases
@@ -2652,16 +2629,19 @@ class TestBacktest(unittest.TestCase):
         # ----------------------------------
         # start testing signal type = VS (2)
         print(f'\nNow testing with signal type = VS (2), own_amount=0, available_amount=0, price=10.')
-        signal = np.array([0.])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=10000,
                 own_amounts=np.array([0.]),
                 available_cash=10000,
                 available_amounts=np.array([0.]),
+        )
+        signal = np.array([0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=np.array([0.]),
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2674,14 +2654,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.5]),  # buy signal
+                op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2694,14 +2671,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2714,14 +2688,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2734,14 +2705,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.]),
+                op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2754,14 +2722,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
-                op_signal=np.array([0.5]),  # buy signal
+                op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2774,14 +2739,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2794,14 +2756,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1500.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=10000,
-                own_amounts=np.array([0.]),
-                available_cash=10000,
-                available_amounts=np.array([0.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2813,17 +2772,19 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(fee, np.array([0.]))
 
         print(f'\nNow testing with signal type = VS (2), own_amount=500, own_cash=5000, price=10.')
-
-        signal = np.array([0.])  # sell short allowed
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=5000,
                 own_amounts=np.array([500.]),
                 available_cash=5000,
                 available_amounts=np.array([500.]),
+        )
+        signal = np.array([0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2836,14 +2797,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1000.0])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2856,14 +2814,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1000.0])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2876,14 +2831,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-250.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2896,14 +2848,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-500.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2916,14 +2865,28 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1000.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([5000.]))
+        self.assertEqual(a_p, np.array([-500.]))
+        self.assertEqual(a_s, np.array([-500.]))
+        self.assertEqual(fee, np.array([0.]))
+
+        signal = np.array([-1000.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2936,36 +2899,35 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1000.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([10000.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([-1000.]))
+        self.assertEqual(c_g, np.array([5000.]))
+        self.assertEqual(c_s, np.array([5000.]))
+        self.assertEqual(a_p, np.array([-500.]))
+        self.assertEqual(a_s, np.array([-500.]))
         self.assertEqual(fee, np.array([0.]))
 
         print(f'\nNow testing with signal type = VS (2), own_amount=-500, own_cash=15000, price=10.')
-
-        signal = np.array([0.])
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+        holdings = dict(
                 own_cash=15000,
                 own_amounts=np.array([-500.]),
                 available_cash=15000,
                 available_amounts=np.array([-500.]),
+        )
+        signal = np.array([0.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2978,14 +2940,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1000.0])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=1.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -2998,14 +2957,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([-1000.0])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -3018,14 +2974,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([250.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=15000,
-                own_amounts=np.array([-500.]),
-                available_cash=15000,
-                available_amounts=np.array([-500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -3038,14 +2991,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([500.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
                 long_pos_limit=2.,
                 short_pos_limit=-2.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -3058,14 +3008,11 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1000.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
-                long_pos_limit=2.,
+                long_pos_limit=0.,
                 short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
@@ -3078,25 +3025,37 @@ class TestBacktest(unittest.TestCase):
 
         signal = np.array([1000.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
-                own_cash=5000,
-                own_amounts=np.array([500.]),
-                available_cash=5000,
-                available_amounts=np.array([500.]),
                 op_signal=signal,
-                long_pos_limit=2.,
-                short_pos_limit=-2.,
+                long_pos_limit=0.5,
+                short_pos_limit=-1.,
                 allow_sell_short=True,
+                **holdings,
                 **fixed_kwargs_parameters,
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
-        self.assertEqual(c_g, np.array([-10000.]))
-        self.assertEqual(c_s, np.array([0.]))
-        self.assertEqual(a_p, np.array([0.]))
-        self.assertEqual(a_s, np.array([1000.]))
+        self.assertEqual(c_g, np.array([-5000.]))
+        self.assertEqual(c_s, np.array([-5000.]))
+        self.assertEqual(a_p, np.array([500.]))
+        self.assertEqual(a_s, np.array([500.]))
         self.assertEqual(fee, np.array([0.]))
 
-        raise NotImplementedError
+        signal = np.array([1500.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-2.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        self.assertEqual(c_g, np.array([-5000.]))
+        self.assertEqual(c_s, np.array([-10000.]))
+        self.assertEqual(a_p, np.array([1000.]))
+        self.assertEqual(a_s, np.array([500.]))
+        self.assertEqual(fee, np.array([0.]))
 
     def test_calculate_trade_results_pt_short(self):
         """ test loop step PT-signal, sell first"""
