@@ -224,7 +224,7 @@ def backtest_step(
     )
 
 
-# @njit(nogil=True, cache=True)
+@njit(nogil=True, cache=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -304,7 +304,6 @@ def calculate_trade_results(
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
     empty_array = np.zeros_like(op_signal)
-    share_count = len(op_signal)
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:  # PT信号

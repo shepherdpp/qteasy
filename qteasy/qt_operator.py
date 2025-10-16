@@ -1720,7 +1720,6 @@ class Operator:
 
     def prepare_dependent_data_buffer(self, *, trade_records, trade_costs, trade_prices):
         """ position holder for function prepare_dependent_data_buffer"""
-        import pdb; pdb.set_trace()
         raise NotImplementedError("Function prepare_dependent_data_buffer() is not implemented yet.")
 
     def create_data_windows(self):
