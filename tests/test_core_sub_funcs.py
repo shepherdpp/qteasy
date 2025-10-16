@@ -215,14 +215,14 @@ class TestCoreSubFuncs(unittest.TestCase):
         print(res)
         print('wrong date')
         self.assertRaises(ValueError,
-                          qt.get_history_data,
+                          get_history_data,
                           htypes='open, close, vol',
                           shares='missing_code, 513100.SH',
                           start='20220101',
                           end='20210101'
                           )
         self.assertRaises(Exception,
-                          qt.get_history_data,
+                          get_history_data,
                           htypes='open, close, vol',
                           shares='missing_code, 513100.SH',
                           start='wrong_date',
@@ -230,21 +230,21 @@ class TestCoreSubFuncs(unittest.TestCase):
                           )
         print('wrong freq')
         self.assertRaises(Exception,
-                          qt.get_history_data,
+                          get_history_data,
                           htypes='open, close, vol',
                           shares='missing_code, 513100.SH',
                           freq='wrong_freq'
                           )
         print('wrong asset_type')
         self.assertRaises(Exception,
-                          qt.get_history_data,
+                          get_history_data,
                           htypes='open, close, vol',
                           shares='missing_code, 513100.SH',
                           asset_type='wrong_type'
                           )
         print('wrong adj')
         self.assertRaises(Exception,
-                          qt.get_history_data,
+                          get_history_data,
                           htypes='open, close, vol',
                           shares='missing_code, 513100.SH',
                           adj='wrong_adj'

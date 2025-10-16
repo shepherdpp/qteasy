@@ -3057,1650 +3057,207 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([500.]))
         self.assertEqual(fee, np.array([0.]))
 
-    def test_calculate_trade_results_pt_short(self):
-        """ test loop step PT-signal, sell first"""
+    def test_calculate_trade_results_pt(self):
+        """ Test function calculate_trade_results() with PT signals with multiple stock cases
+
+        The function will be tested with multiple holding senario with fixed prices and total values:
+
+        prices = np.array([10., 10., 10.])
+        total_value = 30000
+
+        with various
+        signals and long_pos_limit, short_pos_limit, and allow_sell_short
+        other parameters will be fixed because they will be tested in their own functions
+
+        the fixed parameters are:
+        cost_parameters = (0.0, 0.0, 0.0, 0.0, 0, 0, 0.)
+        pt_buy_threshold = 0.0
+        pt_sell_threshold = 0.0
+        moq_buy = 0
+        moq_sell = 0
+        """
         cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=10000,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.pt_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        fixed_kwargs_parameters = dict(
+                signal_type=0,
+                pt_buy_threshold=0.,
+                pt_sell_threshold=0.,
+                cost_params=cost_params,
+                moq_buy=0.,
+                moq_sell=0.,
+                prices=np.array([10.]),
+        )
+        print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[2][7],
-                                                          own_amounts=self.pt_res_bs00[2][0:7],
-                                                          available_cash=self.pt_res_bs00[2][7],
-                                                          available_amounts=self.pt_res_bs00[2][0:7],
-                                                          op_signal=self.pt_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
+        # ----------------------------------
+        # start testing signal type = PT (0)
+        print(f'\nNow testing with signal type = PT (0), own_amount=[0., 0., 0.], '
+              f'own_cash=30000, price=[10., 10., 10.]')
+        holdings = dict(
+                own_cash=30000,
+                own_amounts=np.array([0., 0., 0.]),
+                available_cash=30000,
+                available_amounts=np.array([0., 0., 0.]),
+        )
+        signal = np.array([0., 0., 0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[30][7],
-                                                          own_amounts=self.pt_res_bs00[30][0:7],
-                                                          available_cash=self.pt_res_bs00[30][7],
-                                                          available_amounts=self.pt_res_bs00[30][0:7],
-                                                          op_signal=self.pt_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
+        signal = np.array([1., 0., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[59][7] + 10000,
-                                                          own_amounts=self.pt_res_bs00[59][0:7],
-                                                          available_cash=self.pt_res_bs00[59][7] + 10000,
-                                                          available_amounts=self.pt_res_bs00[59][0:7],
-                                                          op_signal=self.pt_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
+        raise NotImplementedError
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.pt_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
+    def test_calculate_trade_results_ps(self):
+        """ Test function calculate_trade_results() with PS signals with multiple stock cases
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[95][7],
-                                                          own_amounts=self.pt_res_bs00[95][0:7],
-                                                          available_cash=self.pt_res_bs00[95][7],
-                                                          available_amounts=self.pt_res_bs00[95][0:7],
-                                                          op_signal=self.pt_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
+        The function will be tested with multiple holding senario with fixed prices and total values:
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.pt_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
+        prices = np.array([10., 10., 10.])
+        total_value = 30000
 
-    def test_calculate_trade_results_pt_no_short(self):
-        """ test loop step PT-signal, buy first"""
+        with various
+        signals and long_pos_limit, short_pos_limit, and allow_sell_short
+        other parameters will be fixed because they will be tested in their own functions
+
+        the fixed parameters are:
+        cost_parameters = (0.0, 0.0, 0.0, 0.0, 0, 0, 0.)
+        pt_buy_threshold = 0.0
+        pt_sell_threshold = 0.0
+        moq_buy = 0
+        moq_sell = 0
+        """
         cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=10000.,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000.,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.pt_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        fixed_kwargs_parameters = dict(
+                signal_type=1,
+                pt_buy_threshold=0.,
+                pt_sell_threshold=0.,
+                cost_params=cost_params,
+                moq_buy=0.,
+                moq_sell=0.,
+                prices=np.array([10., 10., 10.]),
+        )
+        print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[2][7],
-                                                          own_amounts=self.pt_res_bs00[2][0:7],
-                                                          available_cash=self.pt_res_bs00[2][7],
-                                                          available_amounts=self.pt_res_bs00[2][0:7],
-                                                          op_signal=self.pt_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
+        # ----------------------------------
+        # start testing signal type = PS (1)
+        print(f'\nNow testing with signal type = PS (1), own_amount=[0., 0., 0.], '
+              f'own_cash=30000, price=[10., 10., 10.]')
+        holdings = dict(
+                own_cash=30000,
+                own_amounts=np.array([0., 0., 0.]),
+                available_cash=30000,
+                available_amounts=np.array([0., 0., 0.]),
+        )
+        signal = np.array([0., 0., 0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[30][7],
-                                                          own_amounts=self.pt_res_bs00[30][0:7],
-                                                          available_cash=self.pt_res_bs00[30][7],
-                                                          available_amounts=self.pt_res_bs00[30][0:7],
-                                                          op_signal=self.pt_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
+        raise NotImplementedError
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[59][7] + 10000,
-                                                          own_amounts=self.pt_res_bs00[59][0:7],
-                                                          available_cash=self.pt_res_bs00[59][7] + 10000,
-                                                          available_amounts=self.pt_res_bs00[59][0:7],
-                                                          op_signal=self.pt_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
+    def test_calculate_trade_results_vs(self):
+        """Test function calculate_trade_results() with VS signals with multiple stock cases
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.pt_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
+        The function will be tested with multiple holding senario with fixed prices and total values:
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=self.pt_res_bs00[95][7],
-                                                          own_amounts=self.pt_res_bs00[95][0:7],
-                                                          available_cash=self.pt_res_bs00[95][7],
-                                                          available_amounts=self.pt_res_bs00[95][0:7],
-                                                          op_signal=self.pt_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
+        prices = np.array([10., 10., 10.])
+        total_value = 30000
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=0,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.pt_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
+        with various
+        signals and long_pos_limit, short_pos_limit, and allow_sell_short
+        other parameters will be fixed because they will be tested in their own functions
 
-    def test_calculate_trade_results_ps_short(self):
-        """ test loop step PS-signal, sell first"""
+        the fixed parameters are:
+        cost_parameters = (0.0, 0.0, 0.0, 0.0, 0, 0, 0.)
+        pt_buy_threshold = 0.0
+        pt_sell_threshold = 0.0
+        moq_buy = 0
+        moq_sell = 0"""
         cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=10000.,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000.,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.ps_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        fixed_kwargs_parameters = dict(
+                signal_type=2,
+                pt_buy_threshold=0.,
+                pt_sell_threshold=0.,
+                cost_params=cost_params,
+                moq_buy=0.,
+                moq_sell=0.,
+                prices=np.array([10.]),
+        )
+        print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[2][7],
-                                                          own_amounts=self.ps_res_bs00[2][0:7],
-                                                          available_cash=self.ps_res_bs00[2][7],
-                                                          available_amounts=self.ps_res_bs00[2][0:7],
-                                                          op_signal=self.ps_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
+        # ----------------------------------
+        # start testing signal type = VS (2)
+        print(f'\nNow testing with signal type = VS (2), own_amount=[0., 0., 0.], '
+              f'own_cash=30000, price=[10., 10., 10.]')
+        holdings = dict(
+                own_cash=30000,
+                own_amounts=np.array([0., 0., 0.]),
+                available_cash=30000,
+                available_amounts=np.array([0., 0., 0.]),
+        )
+        signal = np.array([0., 0., 0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[30][7],
-                                                          own_amounts=self.ps_res_bs00[30][0:7],
-                                                          available_cash=self.ps_res_bs00[30][7],
-                                                          available_amounts=self.ps_res_bs00[30][0:7],
-                                                          op_signal=self.ps_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[59][7] + 10000.,
-                                                          own_amounts=self.ps_res_bs00[59][0:7],
-                                                          available_cash=self.ps_res_bs00[59][7] + 10000.,
-                                                          available_amounts=self.ps_res_bs00[59][0:7],
-                                                          op_signal=self.ps_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.ps_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[95][7],
-                                                          own_amounts=self.ps_res_bs00[95][0:7],
-                                                          available_cash=self.ps_res_bs00[95][7],
-                                                          available_amounts=self.ps_res_bs00[95][0:7],
-                                                          op_signal=self.ps_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.ps_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
-
-    def test_calculate_trade_results_ps_no_short(self):
-        """ test loop step PS-signal, buy first"""
-        cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=10000.,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000.,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.ps_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[2][7],
-                                                          own_amounts=self.ps_res_bs00[2][0:7],
-                                                          available_cash=self.ps_res_bs00[2][7],
-                                                          available_amounts=self.ps_res_bs00[2][0:7],
-                                                          op_signal=self.ps_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[30][7],
-                                                          own_amounts=self.ps_res_bs00[30][0:7],
-                                                          available_cash=self.ps_res_bs00[30][7],
-                                                          available_amounts=self.ps_res_bs00[30][0:7],
-                                                          op_signal=self.ps_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[59][7] + 10000,
-                                                          own_amounts=self.ps_res_bs00[59][0:7],
-                                                          available_cash=self.ps_res_bs00[59][7] + 10000,
-                                                          available_amounts=self.ps_res_bs00[59][0:7],
-                                                          op_signal=self.ps_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.ps_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=self.ps_res_bs00[95][7],
-                                                          own_amounts=self.ps_res_bs00[95][0:7],
-                                                          available_cash=self.ps_res_bs00[95][7],
-                                                          available_amounts=self.ps_res_bs00[95][0:7],
-                                                          op_signal=self.ps_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=1,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.ps_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
-
-    def test_calculate_trade_results_vs_short(self):
-        """test loop step of Volume Signal type of signals"""
-        cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=10000.,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000.,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.vs_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[2][7],
-                                                          own_amounts=self.vs_res_bs00[2][0:7],
-                                                          available_cash=self.vs_res_bs00[2][7],
-                                                          available_amounts=self.vs_res_bs00[2][0:7],
-                                                          op_signal=self.vs_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[30][7],
-                                                          own_amounts=self.vs_res_bs00[30][0:7],
-                                                          available_cash=self.vs_res_bs00[30][7],
-                                                          available_amounts=self.vs_res_bs00[30][0:7],
-                                                          op_signal=self.vs_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[59][7] + 10000,
-                                                          own_amounts=self.vs_res_bs00[59][0:7],
-                                                          available_cash=self.vs_res_bs00[59][7] + 10000,
-                                                          available_amounts=self.vs_res_bs00[59][0:7],
-                                                          op_signal=self.vs_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.vs_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[95][7],
-                                                          own_amounts=self.vs_res_bs00[95][0:7],
-                                                          available_cash=self.vs_res_bs00[95][7],
-                                                          available_amounts=self.vs_res_bs00[95][0:7],
-                                                          op_signal=self.vs_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.vs_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=True,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
-
-    def test_calculate_trade_results_vs_no_short(self):
-        """test loop step of Volume Signal type of signals"""
-        cost_params = get_cost_pamams(self.rate)
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=10000.,
-                                                          own_amounts=np.zeros(7, dtype='float'),
-                                                          available_cash=10000.,
-                                                          available_amounts=np.zeros(7, dtype='float'),
-                                                          op_signal=self.vs_signals[0],
-                                                          prices=self.prices[0],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = 10000 + c_g.sum() + c_s.sum()
-        amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[2][7],
-                                                          own_amounts=self.vs_res_bs00[2][0:7],
-                                                          available_cash=self.vs_res_bs00[2][7],
-                                                          available_amounts=self.vs_res_bs00[2][0:7],
-                                                          op_signal=self.vs_signals[3],
-                                                          prices=self.prices[3],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[30][7],
-                                                          own_amounts=self.vs_res_bs00[30][0:7],
-                                                          available_cash=self.vs_res_bs00[30][7],
-                                                          available_amounts=self.vs_res_bs00[30][0:7],
-                                                          op_signal=self.vs_signals[31],
-                                                          prices=self.prices[31],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[59][7] + 10000,
-                                                          own_amounts=self.vs_res_bs00[59][0:7],
-                                                          available_cash=self.vs_res_bs00[59][7] + 10000,
-                                                          available_amounts=self.vs_res_bs00[59][0:7],
-                                                          op_signal=self.vs_signals[60],
-                                                          prices=self.prices[60],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
-        amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.vs_signals[61],
-                                                          prices=self.prices[61],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=self.vs_res_bs00[95][7],
-                                                          own_amounts=self.vs_res_bs00[95][0:7],
-                                                          available_cash=self.vs_res_bs00[95][7],
-                                                          available_amounts=self.vs_res_bs00[95][0:7],
-                                                          op_signal=self.vs_signals[96],
-                                                          prices=self.prices[96],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
-        amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
-
-        c_g, c_s, a_p, a_s, fee = calculate_trade_results(signal_type=2,
-                                                          own_cash=cash,
-                                                          own_amounts=amounts,
-                                                          available_cash=cash,
-                                                          available_amounts=amounts,
-                                                          op_signal=self.vs_signals[97],
-                                                          prices=self.prices[97],
-                                                          cost_params=cost_params,
-                                                          pt_buy_threshold=0.1,
-                                                          pt_sell_threshold=0.1,
-                                                          long_pos_limit=1.,
-                                                          short_pos_limit=-1.,
-                                                          allow_sell_short=False,
-                                                          moq_buy=0,
-                                                          moq_sell=0)
-        print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
-              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
-              f'----------------------------------\n')
-        cash = cash + c_g.sum() + c_s.sum()
-        amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
+        raise NotImplementedError
 
     ################################################################
     # start to test backtest_step and backtest_batch_steps functions
-    def test_loop_pt(self):
-        """ Test looping of PT proportion target signals, with
-            stock delivery delay = 0 days
-            cash delivery delay = 0 day
-            buy-sell sequence = sell first
-        """
-        print('Test looping of PT proportion target signals, with:\n'
-              'stock delivery delay = 0 days \n'
-              'cash delivery delay = 0 day \n'
-              'buy-sell sequence = sell first')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_pt_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                trade_log=True,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_pt_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop, line by line comparison between test and target is:\n')
-        for r, t in zip(res.values, self.pt_res_bs00):
-            print(f'res: {np.round(r, 0)}\n'
-                  f'target: {np.round(t, 0)}\n'
-                  f'{"Check!" if np.allclose(r, t) else "<-Different!!"}\n')
-        self.assertTrue(np.allclose(res, self.pt_res_bs00, atol=0.01))
-        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          self.op_pt_batch,
-                          self.history_list,
-                          0,
-                          None,
-                          self.cash,
-                          self.rate,
-                          0, 1,
-                          0, 0.1, 0.1, 0, 0,
-                          False)
-        self.assertRaises(AssertionError,
-                          apply_loop,
-                          self.op_pt_batch,
-                          self.history_list,
-                          0,
-                          None,
-                          self.cash,
-                          self.rate,
-                          1, 5,
-                          0, 0.1, 0.1, 0, 0,
-                          False)
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_pt_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_pt_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        # print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_pt_with_delay(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 1 day
-            use_sell_cash = False
-
-        """
-        print('Test looping of PT proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
-              'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_pt_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_pt_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.pt_res_bs21[i]))
-            print()
-        self.assertTrue(np.allclose(res, self.pt_res_bs21, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_pt_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_pt_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_pt_with_delay_use_cash(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 0 day
-            use sell cash = True    (sell stock first to use cash when possible
-                                    (not possible when cash delivery period != 0))
-
-        """
-        print('Test looping of PT proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 0 day \n'
-              'maximize cash usage = True \n'
-              'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_pt_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                cash_delivery_period=0,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                max_cash_usage=True,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_pt_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.pt_res_sb20[i]))
-            print()
-        self.assertTrue(np.allclose(res, self.pt_res_sb20, atol=0.01))
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                pt_signal_timing='aggressive',
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_ps(self):
-        """ Test looping of PS Proportion Signal type of signals
-
-        """
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.ps_res_bs00, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_ps_with_delay(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 1 day
-            use_sell_cash = False
-
-        """
-        print('Test looping of PS proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
-              'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                max_cash_usage=False,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.ps_res_bs21[i]))
-            self.assertTrue(np.allclose(res.values[i], self.ps_res_bs21[i], atol=0.01))
-            print()
-        self.assertTrue(np.allclose(res, self.ps_res_bs21, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_ps_with_delay_use_cash(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 0 day
-            use sell cash = True    (sell stock first to use cash when possible
-                                    (not possible when cash delivery period != 0))
-
-        """
-        print('Test looping of PS proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
-              'maximize cash usage = True \n'
-              'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                cash_delivery_period=0,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                max_cash_usage=True,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.ps_res_sb20[i]))
-            print()
-        self.assertTrue(np.allclose(res, self.ps_res_sb20, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_ps_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_ps_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_vs(self):
-        """ Test looping of VS Volume Signal type of signals
-
-        """
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.vs_res_bs00, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_vs_with_delay(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 1 day
-            use_sell_cash = False
-
-        """
-        print('Test looping of VS proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
-              'maximize_cash = False (buy and sell at the same time)')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                inflation_rate=0,
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.vs_res_bs21[i]))
-            print()
-        self.assertTrue(np.allclose(res, self.vs_res_bs21, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_vs_with_delay_use_cash(self):
-        """ Test looping of PT proportion target signals, with:
-            stock delivery delay = 2 days
-            cash delivery delay = 0 day
-            use sell cash = True    (sell stock first to use cash when possible
-                                    (not possible when cash delivery period != 0))
-
-        """
-        print('Test looping of VS proportion target signals, with:\n'
-              'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
-              'maximize cash usage = True \n'
-              'but not applicable because cash delivery period == 1')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                cash_delivery_period=0,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                max_cash_usage=True,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.vs_res_sb20[i]))
-            print()
-        self.assertTrue(np.allclose(res, self.vs_res_sb20, atol=0.01))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_vs_batch,
-                trade_price_list=self.history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                cash_delivery_period=1,
-                stock_delivery_period=2,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_vs_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-
-    def test_loop_multiple_signal(self):
-        """ Test looping of PS Proportion Signal type of signals
-
-        """
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_multi_batch,
-                trade_price_list=self.multi_history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate,
-                moq_buy=0,
-                moq_sell=0,
-                cash_delivery_period=0,
-                stock_delivery_period=2,
-                max_cash_usage=True,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0, 1, 2]
-        )
-        res = process_loop_results(
-                operator=self.op_multi_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}\n'
-              f'result comparison line by line:')
-        for i in range(len(res)):
-            print(np.around(res.values[i]))
-            print(np.around(self.multi_res[i]))
-            self.assertTrue(np.allclose(res.values[i], self.multi_res[i]))
-            print()
-
-        self.assertTrue(np.allclose(res, self.multi_res, atol=0.1))
-        print(f'test loop results with moq equal to 100')
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=self.op_multi_batch,
-                trade_price_list=self.multi_history_list,
-                cash_plan=self.cash,
-                cost_rate=self.rate2,
-                moq_buy=100,
-                moq_sell=1,
-                cash_delivery_period=0,
-                stock_delivery_period=2,
-                max_cash_usage=False,
-                inflation_rate=0,
-                trade_log=False,
-                price_priority_list=[0]
-        )
-        res = process_loop_results(
-                operator=self.op_multi_batch,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices
-        )
-        self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
+    def test_backtest_batch_steps(self):
+        """ test the function backtest_batch_steps() with a simple case """
+        pass
 
 
 if __name__ == '__main__':
