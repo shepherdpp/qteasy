@@ -140,13 +140,12 @@ def update_cost(c: dict, **kwargs):
     for k, v in kwargs.items():
         if k not in ALL_COST_PARAMETERS:
             continue
-        # TODO: 此处应该validate输入值
         c[k] = v
 
     return c
 
 
-def get_cost_pamams(c: dict) -> np.ndarray:
+def get_cost_params(c: dict) -> np.ndarray:
     """ 返回成本参数
 
     Parameters

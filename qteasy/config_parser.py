@@ -79,6 +79,33 @@ def parse_backtest_data_package(config, dtypes) -> dict:
     return data_package
 
 
+def parse_trade_cost_params(config) -> dict:
+    """解析交易成本相关的配置参数:
+        buy_fix: float, 交易成本：固定买入费用
+        sell_fix: float, 交易成本：固定卖出费用
+        buy_rate: float, 交易成本：固定买入费率
+        sell_rate: float, 交易成本：固定卖出费率
+        buy_min: float, 交易成本：最低买入费用
+        sell_min: float, 交易成本：最低卖出费用
+        slipage: float, 交易成本：滑点
+
+    Returns
+    -------
+    trade_cost_params: dict
+        交易成本相关的参数字典
+    """
+    cost_params = {
+        'buy_fix': config.get('cost_fixed_buy', 0.0),
+        'sell_fix': config.get('cost_fixed_sell', 0.0),
+        'buy_rate': config.get('cost_rate_buy', 0.0),
+        'sell_rate': config.get('cost_rate_sell', 0.0),
+        'buy_min': config.get('cost_min_buy', 0.0),
+        'sell_min': config.get('cost_min_sell', 0.0),
+        'slipage': config.get('cost_slipage', 0.0),
+    }
+    return cost_params
+
+
 def parse_cash_investment_and_inflation(config) -> np.ndarray:
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
 

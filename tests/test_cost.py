@@ -13,7 +13,7 @@ import unittest
 import qteasy as qt
 import numpy as np
 
-from qteasy.finance import get_selling_result, get_purchase_result, calculate_fees, get_cost_pamams, update_cost
+from qteasy.finance import get_selling_result, get_purchase_result, calculate_fees, get_cost_params, update_cost
 
 
 class TestCost(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_fix'], 5.0, 'Item got is incorrect')
         self.assertEqual(self.r['sell_fix'], 10.0, 'Item got is incorrect')
 
-        fee_params = get_cost_pamams(self.r)
+        fee_params = get_cost_params(self.r)
         # basic buy/sell rate calculation
         self.assertTrue(
                 np.allclose(
@@ -85,7 +85,7 @@ class TestCost(unittest.TestCase):
                     )
         self.assertEqual(self.r['buy_min'], 50., 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 15., 'Item got is incorrect')
-        fee_params = get_cost_pamams(self.r)
+        fee_params = get_cost_params(self.r)
         # buy/sell rate calculation with min fees
         fees = calculate_fees(self.amounts, cost_params=fee_params, is_buying=True)
         print(fees)
@@ -132,7 +132,7 @@ class TestCost(unittest.TestCase):
         self.r['buy_min'] = 0.
         self.r['sell_min'] = 0.
         self.r['slipage'] = 0.
-        r = get_cost_pamams(self.r)
+        r = get_cost_params(self.r)
         print('\nSell result with fixed rate = 0.001 and moq = 0:')
         print(get_selling_result(self.prices, self.amounts_to_sell, 0, r))
         test_rate_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, r)
@@ -184,7 +184,7 @@ class TestCost(unittest.TestCase):
         self.r['buy_min'] = 300
         self.r['sell_min'] = 300
         self.r['slipage'] = 0.
-        r = get_cost_pamams(self.r)
+        r = get_cost_params(self.r)
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 0:')
         print(get_purchase_result(self.prices, self.cash_to_spend, 0, r))
         test_min_fee_result = get_purchase_result(self.prices, self.cash_to_spend, 0, r)
@@ -236,7 +236,7 @@ class TestCost(unittest.TestCase):
         self.r['buy_min'] = 300
         self.r['sell_min'] = 333
         self.r['slipage'] = 0.
-        r = get_cost_pamams(self.r)
+        r = get_cost_params(self.r)
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 0:')
         print(get_purchase_result(self.prices, self.cash_to_spend, 0, r))
         test_rate_with_min_result = get_purchase_result(self.prices, self.cash_to_spend, 0, r)
@@ -288,7 +288,7 @@ class TestCost(unittest.TestCase):
         self.r['buy_min'] = 0
         self.r['sell_min'] = 0
         self.r['slipage'] = 0
-        r = get_cost_pamams(self.r)
+        r = get_cost_params(self.r)
         print('\nselling result of fixed cost with fixed fee = 150 and moq=0:')
         print(get_selling_result(self.prices, self.amounts_to_sell, 0, r))
         test_fixed_fee_result = get_selling_result(self.prices, self.amounts_to_sell, 0, r)
@@ -327,7 +327,7 @@ class TestCost(unittest.TestCase):
         self.r['buy_rate'] = 0.003
         self.r['sell_rate'] = 0.001
         self.r['slipage'] = 1E-9
-        r = get_cost_pamams(self.r)
+        r = get_cost_params(self.r)
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 0:')
         print(get_purchase_result(self.prices, self.cash_to_spend, 0, r))
         print('\npurchase result of fixed rate = 0.003 and slipage = 1E-10 and moq = 100:')
