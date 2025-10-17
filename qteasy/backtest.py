@@ -224,7 +224,7 @@ def backtest_step(
     )
 
 
-@njit(nogil=True, cache=True)
+# @njit(nogil=True, cache=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -340,7 +340,8 @@ def calculate_trade_results(
                 signals=op_signal,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=allow_sell_short
+                allow_sell_short=allow_sell_short,
+                cost_params=cost_params,
         )
         # 如果是全零信号，则直接返回空结果
         if np.all(cash_to_spend == 0) and np.all(amounts_to_sell == 0):
@@ -396,8 +397,37 @@ def calculate_trade_results(
         # 确保总现金买入金额不超过可用现金，如果超过则按比例调降
         if cash_to_spend.sum() > available_cash:
             cash_to_spend *= available_cash / cash_to_spend.sum()
-    else:
-        # 分别处理买入金额产生的多头总仓位和空头总仓位
+    elif signal_type == 0:
+        # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
+        # 因为signal_type == 0，因此调整的比例以买入后仓位为基准
+        next_own_amounts = own_amounts + amount_sold
+        long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
+        long_own_positions = np.where(cash_to_spend > 0.001, next_own_amounts * prices, 0)
+        long_positions_to_be = long_cash_to_spend + long_own_positions
+        total_long_positions_to_be = long_positions_to_be.sum()
+        max_allowed_long_pos = long_pos_limit * total_value
+
+        short_cash_to_spend = np.where(cash_to_spend < -0.001, cash_to_spend, 0)
+        short_own_positions = np.where(cash_to_spend < -0.001, next_own_amounts * prices, 0)
+        short_positions_to_be = short_cash_to_spend + short_own_positions
+        total_short_positions_to_be = short_positions_to_be.sum()
+        max_allowed_short_pos = short_pos_limit * total_value
+
+        if total_long_positions_to_be > max_allowed_long_pos:
+            # 如果买入后多头仓位超过允许的最大仓位，按比例降低分配给每个拟买入多头资产的现金
+            long_cash_to_spend = long_positions_to_be * (max_allowed_long_pos / total_long_positions_to_be) - \
+                long_own_positions
+
+        if total_short_positions_to_be < max_allowed_short_pos:
+            # 如果买入后空头仓位超过允许的最大仓位，按比例降低分配给每个拟买入空头资产的现金
+            short_cash_to_spend = short_positions_to_be * (max_allowed_short_pos / total_short_positions_to_be) - \
+                short_own_positions
+
+        cash_to_spend = long_cash_to_spend + short_cash_to_spend
+
+    else:  # signal_type == 1 or signal_type == 2
+        # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
+        # 因为signal_type != 0，因此调整的比例以买入金额为准
         next_own_amounts = own_amounts + amount_sold
         long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
         total_long_cash_to_spend = long_cash_to_spend.sum()
@@ -419,7 +449,7 @@ def calculate_trade_results(
 
         cash_to_spend = long_cash_to_spend + short_cash_to_spend
 
-    # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
+    # 批量提交股份买入计划，计算实际买入的股票份额和交易费用dflasjdf
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     amount_purchased, cash_spent, fee_buying = get_purchase_result(
             prices=prices,

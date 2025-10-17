@@ -3098,6 +3098,7 @@ class TestBacktest(unittest.TestCase):
                 available_cash=30000,
                 available_amounts=np.array([0., 0., 0.]),
         )
+
         signal = np.array([0., 0., 0.])  # sell short allowed
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
@@ -3127,12 +3128,298 @@ class TestBacktest(unittest.TestCase):
         print(
             f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
         self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
-        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
-        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-30000., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([3000., 0., 0.])))
         self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
         self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
-        raise NotImplementedError
+        signal = np.array([1., 0., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-30000., 0., 30000.])))
+        self.assertTrue(np.allclose(a_p, np.array([3000., 0., -3000.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 0., -1.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=0.5,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-15000., 0., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([1500., 0., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 2., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=0.5,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-5000., -10000., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([500., 1000., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 2., 2.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=0.5,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-3000., -6000., -6000.])))
+        self.assertTrue(np.allclose(a_p, np.array([300., 600., 600.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([-2., -1., -3.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=0.5,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([8000., 4000., 12000.])))
+        self.assertTrue(np.allclose(a_p, np.array([-800., -400., -1200.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        print(f'\nNow testing with signal type = PT (0), own_amount=[500., 500., 500.], '
+              f'own_cash=15000, price=[10., 10., 10.]')
+        holdings = dict(
+                own_cash=15000,
+                own_amounts=np.array([500., 500., 500.]),
+                available_cash=15000,
+                available_amounts=np.array([500., 500., 500.]),
+        )
+        signal = np.array([0., 0., 0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([5000., 5000., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([-500., -500., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 1., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-7500., -7500., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([750., 750., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 1., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-10000., -10000., 30000.])))
+        self.assertTrue(np.allclose(a_p, np.array([1000., 1000., -3000.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 1., -1.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-25000., -25000., 30000.])))
+        self.assertTrue(np.allclose(a_p, np.array([2500., 2500., -3000.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([2., 3., -1.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-19000., -31000., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([1900., 3100., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 5., -1.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=0.8,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([1000., -15000., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([-100., 1500., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        print(f'\nNow testing with signal type = PT (0), own_amount=[-500., -500., 500.], '
+              f'own_cash=35000, price=[10., 10., 10.]')
+        holdings = dict(
+                own_cash=35000,
+                own_amounts=np.array([-500., -500., 500.]),
+                available_cash=35000,
+                available_amounts=np.array([-500., -500., 500.]),
+        )
+        signal = np.array([0., 0., 0.])  # sell short allowed
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([-5000., -5000., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([500., 500., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([0.5, 0.5, -0.5])  # 如果不允许卖空，则全部仓位清空不会再买入
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=False,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([-5000., -5000., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 0., 0.])))
+        self.assertTrue(np.allclose(a_s, np.array([500., 500., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([0.5, 0.5, -0.5])  # 如果允许卖空，则全部仓位清空后在买入相应头寸
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([-5000., -5000., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-15000., -15000., 15000.])))
+        self.assertTrue(np.allclose(a_p, np.array([1500., 1500., -1500.])))
+        self.assertTrue(np.allclose(a_s, np.array([500., 500., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([1., 1., 1.])  # 将全部空头平仓后买入相应多头
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=1.,
+                short_pos_limit=-1.,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([-5000., -5000., 0.])))
+        self.assertTrue(np.allclose(c_s, np.array([-10000., -10000., -5000.])))
+        self.assertTrue(np.allclose(a_p, np.array([1000., 1000., 500.])))
+        self.assertTrue(np.allclose(a_s, np.array([500., 500., 0.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
+
+        signal = np.array([2., 3., -1.])
+        c_g, c_s, a_p, a_s, fee = calculate_trade_results(
+                op_signal=signal,
+                long_pos_limit=2.,
+                short_pos_limit=-0.8,
+                allow_sell_short=True,
+                **holdings,
+                **fixed_kwargs_parameters,
+        )
+        print(
+            f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
+        self.assertTrue(np.allclose(c_g, np.array([-5000., -5000., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([-24000., -36000., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([2400., 3600., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([500., 500., -500.])))
+        self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
     def test_calculate_trade_results_ps(self):
         """ Test function calculate_trade_results() with PS signals with multiple stock cases
