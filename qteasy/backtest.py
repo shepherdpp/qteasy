@@ -29,7 +29,7 @@ from qteasy.finance import (
     CashPlan,
     get_selling_result,
     get_purchase_result,
-    get_cost_pamams,
+    get_cost_params,
 )
 
 from qteasy.trading_util import (
@@ -224,7 +224,7 @@ def backtest_step(
     )
 
 
-# @njit(nogil=True, cache=True)
+@njit(nogil=True, cache=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -989,7 +989,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 #     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
 #     invest_dict = cash_plan.to_dict(investment_date_pos)
 #     # 解析交易费率参数：
-#     cost_params = get_cost_pamams(cost_rate)
+#     cost_params = get_cost_params(cost_rate)
 #     # 确定是否属于PT+lazy的情形
 #     pt_and_lazy = (signal_type == 0) and (pt_signal_timing == 'lazy')
 #

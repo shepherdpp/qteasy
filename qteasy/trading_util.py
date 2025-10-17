@@ -12,7 +12,6 @@
 # ======================================
 
 import os
-from linecache import cache
 
 import pandas as pd
 import numpy as np
@@ -20,6 +19,7 @@ from typing import Union
 from numba import njit
 
 from qteasy.__init__ import logger_core as logger
+from qteasy.finance import get_cost_params
 from qteasy.qt_operator import Operator
 from qteasy.configure import QT_CONFIG
 from qteasy.utilfuncs import get_current_timezone_datetime, str_to_list
@@ -314,11 +314,14 @@ def parse_trade_signal(signals,
             allow_sell_short=config['allow_sell_short']
         )
     elif signal_type.lower() == 'vs':
+        from qteasy.config_parser import parse_trade_cost_params
+        cost_params = get_cost_params(parse_trade_cost_params(config))
         cash_to_spend, amounts_to_sell = _parse_vs_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
-            allow_sell_short=config['allow_sell_short']
+            allow_sell_short=config['allow_sell_short'],
+            cost_params=cost_params,
         )
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
