@@ -3318,7 +3318,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3328,7 +3330,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3338,7 +3342,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3348,7 +3354,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [-5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3361,7 +3369,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3371,7 +3381,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3381,7 +3393,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [-500.0])
 
@@ -3391,7 +3405,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [10000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3401,7 +3417,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [-1000.0])
 
@@ -3414,7 +3432,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3424,7 +3444,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [500.0])
 
@@ -3434,7 +3456,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [-5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3444,7 +3468,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [1000.0])
 
@@ -3454,7 +3480,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 prices=prices,
                 own_amounts=own_amounts,
                 allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [-10000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3467,8 +3495,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=False
+                allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -3481,8 +3511,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=False
+                allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [-500.0])
 
@@ -3495,12 +3527,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [-5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
-        # test parsing vs sell short signal with only one symbol
         signals = np.array([500])
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
@@ -3509,10 +3542,104 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [500.0])
+
+        # test parsing vs signals with different cost params
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([5.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5005.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([5.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5008.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.001, 0.003, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5005.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.001, 0.003, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5015.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.001, 0.003, 8.0, 20.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5008.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.001, 0.003, 8.0, 20.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5020.0])
+        self.assertEqual(amounts_to_sell, [0.0])
 
         # test parsing vs multi-type signal with multiple symbols
 
@@ -3524,8 +3651,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
