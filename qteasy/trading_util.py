@@ -477,7 +477,8 @@ def _parse_ps_signals(signals: np.ndarray,
 def _parse_vs_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
-                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
+                      allow_sell_short: bool,
+                      cost_params: np.ndarray,) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号
 
     Parameters
@@ -490,6 +491,16 @@ def _parse_vs_signals(signals: np.ndarray,
         当前持有的资产的数量
     allow_sell_short: bool
         是否允许卖空
+    cost_params: np.ndarray
+        VS信号类型直接给出交易数量，为了确保计算出的消耗现金数据准确，必须考虑交易成本
+        交易成本参数, 一个长度为7的数组，包含以下内容：
+        [0] - buy_fix: float, 交易成本：固定买入费用
+        [1] - sell_fix: float, 交易成本：固定卖出费用
+        [2] - buy_rate: float, 交易成本：固定买入费率
+        [3] - sell_rate: float, 交易成本：固定卖出费率
+        [4] - buy_min: float, 交易成本：最低买入费用
+        [5] - sell_min: float, 交易成本：最低卖出费用
+        [6] - slipage: float, 交易成本：滑点
 
     Returns
     -------
@@ -497,6 +508,9 @@ def _parse_vs_signals(signals: np.ndarray,
         cash_to_spend: np.ndarray, 买入资产的现金
         amounts_to_sell: np.ndarray, 卖出资产的数量
     """
+
+    buy_fix, sell_fix, buy_rate, sell_rate, buy_min, sell_min, slipage = cost_params
+    fixed_cost = (buy_fix > 0)
 
     # 计算各个资产的计划买入金额和计划卖出数量
     # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
@@ -510,6 +524,22 @@ def _parse_vs_signals(signals: np.ndarray,
         cash_to_spend += np.where((signals < 0) & (own_amounts <= 0), signals * prices, 0.)
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
+
+    # 计算交易成本对买入金额的影响
+    if fixed_cost:  # 如果有固定交易成本则忽略费率和最低费用
+        cash_to_spend += np.where(cash_to_spend > 0, buy_fix, 0.)
+        cash_to_spend -= np.where(cash_to_spend < 0, sell_fix, 0.)
+    else:  # 否则计算费率和最低费用
+        cash_to_spend += np.where(
+            cash_to_spend > 0,
+            np.fmax(buy_min, cash_to_spend * buy_rate),
+            0.
+        )
+        cash_to_spend -= np.where(
+            cash_to_spend < 0,
+            np.fmax(sell_min, -cash_to_spend * sell_rate),
+            0.
+        )
 
     return cash_to_spend, amounts_to_sell
 
