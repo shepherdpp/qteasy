@@ -82,7 +82,7 @@ TS_CODE_IDENTIFIER_CN_STOCK = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
 TS_CODE_IDENTIFIER_CN_INDEX = re.compile(r'^[0-9]{6}(\.SH|\.SZ)$')
 TS_CODE_IDENTIFIER_CN_FUND = re.compile(r'^[0-9]{6}(\.OF)$')
 TS_CODE_IDENTIFIER_ALL = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ|\.OF)$')
-ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
+ALL_COST_PARAMETERS = ['buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
 
 AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                           'proportion signal': 'ps',
