@@ -887,16 +887,12 @@ class TestBacktest(unittest.TestCase):
 
         # 设置回测参数
         self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
-        self.rate = qt.set_cost(buy_fix=0,
-                                sell_fix=0,
-                                buy_rate=0,
+        self.rate = qt.set_cost(buy_rate=0,
                                 sell_rate=0,
                                 buy_min=0,
                                 sell_min=0,
                                 slipage=0)
-        self.rate2 = qt.set_cost(buy_fix=0,
-                                 sell_fix=0,
-                                 buy_rate=0,
+        self.rate2 = qt.set_cost(buy_rate=0,
                                  sell_rate=0,
                                  buy_min=10,
                                  sell_min=5,
@@ -2644,8 +2640,8 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, '
+              f'got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))  # neutral signal, no trade
         self.assertEqual(c_s, np.array([0.]))
         self.assertEqual(a_p, np.array([0.]))
@@ -2661,8 +2657,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([-5000.]))
         self.assertEqual(a_p, np.array([500.]))
@@ -2678,8 +2673,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([0.]))
         self.assertEqual(a_p, np.array([0.]))
@@ -2695,8 +2689,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([5000.]))
         self.assertEqual(a_p, np.array([-500.]))
@@ -2712,8 +2705,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))  # neutral signal, no trade
         self.assertEqual(c_s, np.array([-10000.]))
         self.assertEqual(a_p, np.array([1000.]))
@@ -2729,8 +2721,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([-15000.]))
         self.assertEqual(a_p, np.array([1500.]))
@@ -2746,8 +2737,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([10000.]))
         self.assertEqual(a_p, np.array([-1000.]))
@@ -2763,8 +2753,7 @@ class TestBacktest(unittest.TestCase):
                 **holdings,
                 **fixed_kwargs_parameters,
         )
-        print(
-                f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
+        print(f'with signal: {signal}, got trade results: c_g={c_g[0]}, c_s={c_s[0]}, a_p={a_p[0]}, a_s={a_s[0]}, fee={fee[0]}')
         self.assertEqual(c_g, np.array([0.]))
         self.assertEqual(c_s, np.array([15000.]))
         self.assertEqual(a_p, np.array([-1500.]))
@@ -3809,6 +3798,7 @@ class TestBacktest(unittest.TestCase):
                 available_amounts=np.array([0., 0., 0.]),
         )
         signal = np.array([0., 0., 0.])  # sell short allowed
+        import pdb; pdb.set_trace()
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=1.,
