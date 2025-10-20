@@ -224,7 +224,7 @@ def backtest_step(
     )
 
 
-@njit(nogil=True, cache=True)
+@njit()
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],

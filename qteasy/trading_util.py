@@ -476,7 +476,7 @@ def _parse_ps_signals(signals: np.ndarray,
     return cash_to_spend, amounts_to_sell
 
 
-# @njit(cache=True)
+@njit(cache=True)
 def _parse_vs_signals(signals: np.ndarray,
                       prices: np.ndarray,
                       own_amounts: np.ndarray,
