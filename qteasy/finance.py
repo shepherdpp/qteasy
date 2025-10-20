@@ -229,24 +229,23 @@ def get_purchase_result(prices: np.ndarray,
     buy_min = cost_params[2]
 
     # 估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0，因为此时无法买入
-    # （因为在"allow_sell_short"模式下，cash_to_spend可能会小于零，代表买入负持仓）
-    abs_cash_to_spend = np.abs(cash_to_spend)
+    abs_cash_to_spend = np.abs(cash_to_spend)  # buy_short时cash_to_spend为负值
     cash_to_spend = np.where(abs_cash_to_spend < buy_min, 0, cash_to_spend)
     rates = cost_params[0] + cost_params[4] * cash_to_spend
-    pre_rates = np.where(cash_to_spend, np.fmax(rates, buy_min / (cash_to_spend - buy_min)), 0)
-    rated_prices = prices * (1 + pre_rates)  # 交易费用相当于提高了买入价格，计算该价格下能买入多少份额
+    pre_rates = np.where(cash_to_spend, np.fmax(rates, buy_min / (cash_to_spend - buy_min)), 0)  #
+    # 在买入时，交易费率相当于提高了买入价格，计算该价格下能买入多少份额，但买入空头时，不需要提高价格
+    rated_prices = np.where(cash_to_spend > 0, prices * (1 + pre_rates), prices)
     # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
     if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
         a_purchased = np.where(prices,
                                cash_to_spend / rated_prices,
                                0.)
     else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
-        # import pdb; pdb.set_trace()
         a_purchased = np.where(prices,
                                np.trunc(cash_to_spend / rated_prices / moq) * moq,
                                0.)
     # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
-    fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, buy_min), 0.)
+    fees = np.where(a_purchased, np.fmax(np.abs(a_purchased * prices * rates), buy_min), 0.)
     purchased_values = a_purchased * prices + fees
     cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
 

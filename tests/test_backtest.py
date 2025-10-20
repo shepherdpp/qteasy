@@ -1845,7 +1845,7 @@ class TestBacktest(unittest.TestCase):
 
     #################################################
     # start to test trade result calculation function
-    def test_pt_calculata_trade_results_basic_cases(self):
+    def test_pt_calculate_trade_results_basic_cases(self):
         """ test the function calculate_trade_results() with basic simple but comprehensive cases
 
         the function calculate_trade_results() should be tested in simple (1 stock) cases comprehensively
@@ -2106,7 +2106,7 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([0.]))
         self.assertEqual(fee, np.array([0.]))
 
-    def test_ps_calculata_trade_results_basic_cases(self):
+    def test_ps_calculate_trade_results_basic_cases(self):
         """ test the function calculate_trade_results() with basic simple but comprehensive cases
 
         the function calculate_trade_results() should be tested in simple (1 stock) cases comprehensively
@@ -2588,7 +2588,7 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(a_s, np.array([500.]))
         self.assertEqual(fee, np.array([0.]))
 
-    def test_vs_calculata_trade_results_basic_cases(self):
+    def test_vs_calculate_trade_results_basic_cases(self):
         """ test the function calculate_trade_results() with basic simple but comprehensive cases
 
         the function calculate_trade_results() should be tested in simple (1 stock) cases comprehensively
@@ -4107,7 +4107,7 @@ class TestBacktest(unittest.TestCase):
     # start to test backtest_step and backtest_batch_steps functions
     def test_backtest_batch_steps(self):
         """ test the function backtest_batch_steps() with a simple case """
-        pass
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
