@@ -3797,8 +3797,7 @@ class TestBacktest(unittest.TestCase):
                 available_cash=30000,
                 available_amounts=np.array([0., 0., 0.]),
         )
-        signal = np.array([0., 0., 0.])  # sell short allowed
-        import pdb; pdb.set_trace()
+        signal = np.array([0., 0., 0.])
         c_g, c_s, a_p, a_s, fee = calculate_trade_results(
                 op_signal=signal,
                 long_pos_limit=1.,
