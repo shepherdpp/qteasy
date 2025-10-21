@@ -22,7 +22,7 @@ from qteasy.group import Group
 from qteasy.built_in import DMA, MACD, CDL
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
 from qteasy.datatypes import DataType
-from qteasy.trading_util import _trade_time_index as tti
+from qteasy.trading_util import trade_time_index as tti
 from qteasy.qt_operator import SIGNAL_TYPE_ID
 
 # test parameters and datatypes:
@@ -3513,7 +3513,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 trade_prices=trade_price_data,
                 trade_records_array=trade_records_array,
                 trade_cost_array=trade_cost_array,
-                cost_params=np.array([0.0, 0.0, 0.0001, 0.0001, 5.0, 5.0]),
+                cost_params=np.array([0.0001, 0.0001, 5.0, 5.0, 0.0]),
                 pt_buy_threshold=0.0,
                 pt_sell_threshold=0.0,
                 long_pos_limit=1.0,

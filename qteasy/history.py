@@ -2394,9 +2394,9 @@ def _adjust_freq(hist_data: pd.DataFrame,
             target_freq = 'B'
 
     # 如果要求去掉非交易时段的数据
-    from qteasy.trading_util import _trade_time_index
+    from qteasy.trading_util import trade_time_index
     if trade_time_only:
-        expanded_index = _trade_time_index(
+        expanded_index = trade_time_index(
                 start=start,
                 end=end,
                 freq=target_freq,
