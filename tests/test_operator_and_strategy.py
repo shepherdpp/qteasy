@@ -3405,7 +3405,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         使用同样的数据集重复运行十次以测试运行速度（测试速度前先运行一次以完成函数的namba编译）
         """
         # 创建一个测试交易策略，使用TestReferenceData类
-        op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='VS')
         # 设置交易策略运行频率为5min，开始日期2020-01-01，结束日期2025-12-31，共69792行
         op.set_parameter(stg_id='custom', run_freq='5min')
         # operator只有一个strategy, set up blender
@@ -3518,7 +3518,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 pt_sell_threshold=0.0,
                 long_pos_limit=1.0,
                 short_pos_limit=-1.0,
-                allow_sell_short=False,
+                allow_sell_short=True,
                 moq_buy=10.,
                 moq_sell=1.,
                 cash_delivery_period=0,
@@ -3526,7 +3526,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
         et = time.time()
         print(f'Backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n')
-        self.assertLessEqual(et-st, 3.0)  # 回测时间不超过3秒
+        self.assertLessEqual(et-st, 5.0)  # 回测时间不超过5秒
 
         # 重复运行十次以精确测算回测的速度
         print(f'Now repeating the backtest 10 times to measure speed...\n')

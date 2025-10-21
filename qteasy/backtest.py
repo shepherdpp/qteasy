@@ -10,15 +10,11 @@
 # ======================================
 
 import os
-from textwrap import shorten
-
 import pandas as pd
 import numpy as np
-from warnings import warn
-from numba import njit, short  # try taichi, which might be even faster
+from numba import njit  # try taichi, which might be even faster
 from typing import Any, Union
 
-from numexpr.expressions import long_
 from numpy import bool_, dtype, ndarray
 
 import qteasy
@@ -26,16 +22,15 @@ from qteasy.history import HistoryPanel
 from qteasy.qt_operator import Operator
 
 from qteasy.finance import (
-    CashPlan,
     get_selling_result,
     get_purchase_result,
-    get_cost_params,
 )
 
 from qteasy.trading_util import (
     _parse_pt_signals,
     _parse_ps_signals,
     _parse_vs_signals,
+    _trim_pt_type_signals,
 )
 
 
@@ -307,10 +302,14 @@ def calculate_trade_results(
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:  # PT信号
-        # TODO: 可以在parse_pt_signals中增加对long/short_pos_limit的处理，直接使
-        #  PT信号的范围不超过long/short_pos_limit
+        # 限定PT信号在多空持仓限额范围内，这样就不需要在后续处理交易指令时调整交易数量了
+        trimmed_op_signal = _trim_pt_type_signals(
+                op_signals=op_signal,
+                long_pos_limit=long_pos_limit,
+                short_pos_limit=short_pos_limit,
+        )
         cash_to_spend, amounts_to_sell = _parse_pt_signals(
-                signals=op_signal,
+                signals=trimmed_op_signal,
                 prices=prices,
                 own_amounts=own_amounts,
                 own_cash=own_cash,
@@ -397,35 +396,8 @@ def calculate_trade_results(
         # 确保总现金买入金额不超过可用现金，如果超过则按比例调降
         if cash_to_spend.sum() > available_cash:
             cash_to_spend *= available_cash / cash_to_spend.sum()
-    elif signal_type == 0:
-        # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
-        # 因为signal_type == 0，因此调整的比例以买入后仓位为基准
-        next_own_amounts = own_amounts + amount_sold
-        long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
-        long_own_positions = np.where(cash_to_spend > 0.001, next_own_amounts * prices, 0)
-        long_positions_to_be = long_cash_to_spend + long_own_positions
-        total_long_positions_to_be = long_positions_to_be.sum()
-        max_allowed_long_pos = long_pos_limit * total_value
 
-        short_cash_to_spend = np.where(cash_to_spend < -0.001, cash_to_spend, 0)
-        short_own_positions = np.where(cash_to_spend < -0.001, next_own_amounts * prices, 0)
-        short_positions_to_be = short_cash_to_spend + short_own_positions
-        total_short_positions_to_be = short_positions_to_be.sum()
-        max_allowed_short_pos = short_pos_limit * total_value
-
-        if total_long_positions_to_be > max_allowed_long_pos:
-            # 如果买入后多头仓位超过允许的最大仓位，按比例降低分配给每个拟买入多头资产的现金
-            long_cash_to_spend = long_positions_to_be * (max_allowed_long_pos / total_long_positions_to_be) - \
-                long_own_positions
-
-        if total_short_positions_to_be < max_allowed_short_pos:
-            # 如果买入后空头仓位超过允许的最大仓位，按比例降低分配给每个拟买入空头资产的现金
-            short_cash_to_spend = short_positions_to_be * (max_allowed_short_pos / total_short_positions_to_be) - \
-                short_own_positions
-
-        cash_to_spend = long_cash_to_spend + short_cash_to_spend
-
-    else:  # signal_type == 1 or signal_type == 2
+    elif signal_type >= 1:
         # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
         # 因为signal_type != 0，因此调整的比例以买入金额为准
         next_own_amounts = own_amounts + amount_sold
@@ -448,6 +420,10 @@ def calculate_trade_results(
             short_cash_to_spend *= max_short_pos_to_buy / total_short_cash_to_spend
 
         cash_to_spend = long_cash_to_spend + short_cash_to_spend
+    else:
+        # 对于signal_type == 0，在生成买入数量前，仓位信号已经被限制在
+        # long_pos_limit和short_pos_limit之间了，因此不需要再调整
+        pass
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用dflasjdf
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况

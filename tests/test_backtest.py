@@ -3311,10 +3311,10 @@ class TestBacktest(unittest.TestCase):
         )
         print(
             f'with signal: {signal}, got trade results: c_g={c_g}, c_s={c_s}, a_p={a_p}, a_s={a_s}, fee={fee}')
-        self.assertTrue(np.allclose(c_g, np.array([0., 0., 5000.])))
-        self.assertTrue(np.allclose(c_s, np.array([1000., -15000., 24000.])))
-        self.assertTrue(np.allclose(a_p, np.array([-100., 1500., -2400.])))
-        self.assertTrue(np.allclose(a_s, np.array([0., 0., -500.])))
+        self.assertTrue(np.allclose(c_g, np.array([1000., 0., 5000.])))
+        self.assertTrue(np.allclose(c_s, np.array([0., -15000., 24000.])))
+        self.assertTrue(np.allclose(a_p, np.array([0., 1500., -2400.])))
+        self.assertTrue(np.allclose(a_s, np.array([-100., 0., -500.])))
         self.assertTrue(np.allclose(fee, np.array([0., 0., 0.])))
 
         print(f'\nNow testing with signal type = PT (0), own_amount=[-500., -500., 500.], '
