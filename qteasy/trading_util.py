@@ -292,8 +292,13 @@ def parse_trade_signal(signals,
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
+        trimmed_signals = _trim_pt_type_signals(
+            op_signals=signals,
+            long_pos_limit=config['long_position_limit'],
+            short_pos_limit=config['short_position_limit']
+        )
         cash_to_spend, amounts_to_sell = _parse_pt_signals(
-            signals=signals,
+            signals=trimmed_signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
@@ -347,21 +352,45 @@ def parse_trade_signal(signals,
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
 
-# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loop_step中直接引用这三个函数的返回值
-#  从而消除重复的代码
-# TODO: 考虑修改多空买卖信号的表示方式：当前的表示方式为：
-#  1. 多头买入信号：正数cash_to_spend
-#  2. 空头买入信号：负数cash_to_spend
-#  3. 多头卖出信号：负数amounts_to_sell，负数表示空头，与直觉相反
-#  4. 空头卖出信号：正数amounts_to_sell，正数表示多头，与直觉相反
-#  但是这种表示方式不够直观
-#  可以考虑将多头买入信号和空头卖出信号的表示方式统一为：
-#  1. 多头买入信号：正数cash_to_spend
-#  2. 空头买入信号：负数cash_to_spend
-#  3. 多头卖出信号：正数amounts_to_sell
-#  4. 空头卖出信号：负数amounts_to_sell
-#  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
-#  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
+@njit(cache=True)
+def _trim_pt_type_signals(op_signals: np.ndarray,
+                          long_pos_limit: float,
+                          short_pos_limit: float) -> np.ndarray:
+    """ 修剪PT类型的交易信号，使得交易信号不超过多头和空头的持仓限制
+
+    Parameters
+    ----------
+    op_signals: np.ndarray
+        交易信号
+    long_pos_limit: float
+        多头持仓限制
+    short_pos_limit: float
+        空头持仓限制
+
+    Returns
+    -------
+    trimmed_op_signals: np.ndarray
+        返回修改后的signals数组
+    """
+    # 分别计算多头和空头信号的总和
+    long_signals = np.where(op_signals > 0, op_signals, 0.)
+    short_signals = np.where(op_signals < 0, op_signals, 0.)
+
+    long_sum = np.sum(long_signals)
+    short_sum = np.sum(short_signals)
+
+    # 如果多头信号总和超过多头持仓限制，则按比例缩减多头信号
+    if long_sum > long_pos_limit:
+        long_signals = long_signals * long_pos_limit / long_sum
+    # 如果空头信号总和小于空头持仓限制，则按比例缩减空头信号
+    if short_sum < short_pos_limit:
+        short_signals = short_signals * short_pos_limit / short_sum
+
+    trimmed_op_signals = long_signals + short_signals
+
+    return trimmed_op_signals
+
+
 @njit(cache=True)
 def _parse_pt_signals(signals: np.ndarray,
                       prices: np.ndarray,
