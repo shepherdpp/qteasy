@@ -18,7 +18,7 @@ import numpy as np
 
 from qteasy.database import DataSource
 
-from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
+from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
 from qteasy.trading_util import calculate_cost_change
@@ -2752,7 +2752,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 10000.0
 
         signals = np.array([0])  # case 1: no action
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2765,7 +2765,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([0.5])  # case 2: buy long
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2778,7 +2778,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])  # case 3: sell long
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2795,7 +2795,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 5000.0
 
         signals = np.array([0])  # case 1: sell long
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2808,7 +2808,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [-500.0])
 
         signals = np.array([0.5])  # case 2: buy long
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2821,7 +2821,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([1.0])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2834,7 +2834,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2847,7 +2847,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [-1000.0])
 
         signals = np.array([1.5])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2864,7 +2864,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 15000.0
 
         signals = np.array([0])  # case 1
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2877,7 +2877,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [500.0])
 
         signals = np.array([0.5])  # case 2
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2890,7 +2890,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [1000.0])
 
         signals = np.array([-1.0])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2903,7 +2903,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2916,7 +2916,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-1.5])
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2937,7 +2937,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2957,7 +2957,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2977,7 +2977,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2997,7 +2997,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3018,7 +3018,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.1
         pt_sell_threshold = 0.1
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3031,7 +3031,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 155.0])
 
     def test_parse_ps_signals(self):
-        """ test _parse_ps_signals function """
+        """ test parse_ps_signals function """
         # test parsing ps signals with only one symbol
         prices = np.array([10.])
 
@@ -3040,7 +3040,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 10000.0
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3051,7 +3051,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3062,7 +3062,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3073,7 +3073,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3088,7 +3088,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 5000.0
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3099,7 +3099,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3110,7 +3110,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([1.0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3121,7 +3121,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3132,7 +3132,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [-250.0])
 
         signals = np.array([-1.0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3143,7 +3143,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [-500.0])
 
         signals = np.array([-1.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3158,7 +3158,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_cash = 15000.0
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3169,7 +3169,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3180,7 +3180,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [250.0])
 
         signals = np.array([1.0])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3191,7 +3191,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [500.0])
 
         signals = np.array([1.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3202,7 +3202,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [750.0])
 
         signals = np.array([-0.5])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3213,7 +3213,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-1.])
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3229,7 +3229,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3245,7 +3245,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3261,7 +3261,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3277,7 +3277,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([-500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3294,7 +3294,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, -500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3305,7 +3305,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
     def test_parse_vs_signals(self):
-        """ test _parse_vs_signals function """
+        """ test parse_vs_signals function """
         # test parsing vs signals with only one symbol
         prices = np.array([10.])
 
@@ -3313,7 +3313,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0])
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3325,7 +3325,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3337,7 +3337,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3349,7 +3349,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3364,7 +3364,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([500.0])
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3376,7 +3376,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3388,7 +3388,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3400,7 +3400,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [-500.0])
 
         signals = np.array([1000])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3412,7 +3412,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-1000])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3427,7 +3427,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([-500.0])
 
         signals = np.array([0])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3439,7 +3439,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3451,7 +3451,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [500.0])
 
         signals = np.array([-500])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3463,7 +3463,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([1000])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3475,7 +3475,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(amounts_to_sell, [1000.0])
 
         signals = np.array([-1000])
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3491,7 +3491,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3507,7 +3507,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3523,7 +3523,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3538,7 +3538,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3555,7 +3555,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([200.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3570,7 +3570,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3585,7 +3585,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([200.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3600,7 +3600,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3615,7 +3615,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([200.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3630,7 +3630,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -3647,7 +3647,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, -250.0, 0.0, -500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,

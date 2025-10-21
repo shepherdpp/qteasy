@@ -1600,7 +1600,7 @@ class Operator:
         None
         """
 
-        from qteasy.trading_util import _trade_time_index as tti
+        from qteasy.trading_util import trade_time_index as tti
         # DEBUG:
         # print('preparing group timing table')
         self.group_schedules = {}

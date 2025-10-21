@@ -17,7 +17,7 @@ from pandas import Timestamp
 import numpy as np
 from pymysql import connect
 
-from qteasy.trading_util import _trade_time_index
+from qteasy.trading_util import trade_time_index
 
 from qteasy.history import _adjust_freq
 
@@ -1544,7 +1544,7 @@ class TestDataSource(unittest.TestCase):
     def test_trade_time_index(self):
         """ 测试函数是否能正确生成交易时段的indexer"""
         print('create datetime index with freq "D" and keep non-trading days')
-        indexer = _trade_time_index('20200101', '20200105', freq='d', trade_days_only=False)
+        indexer = trade_time_index('20200101', '20200105', freq='d', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
@@ -1555,7 +1555,7 @@ class TestDataSource(unittest.TestCase):
                                          pd.to_datetime('20200105')])
 
         print('create datetime index with freq "D" without non-trading days')
-        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        indexer = trade_time_index('20200101', '20200105', freq='d')
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 2)
@@ -1563,7 +1563,7 @@ class TestDataSource(unittest.TestCase):
                                          pd.to_datetime('20200103')])
 
         print('create datetime index with freq "30min" with default trade time with non_trading days')
-        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=False)
+        indexer = trade_time_index('20200101', '20200103', freq='30min', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 18)
@@ -1581,7 +1581,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with freq "30min" with default trade time without non_trading days')
-        indexer = _trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True)
+        indexer = trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 9)
@@ -1595,7 +1595,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with freq "h" with default trade time without non_trading days')
-        indexer = _trade_time_index('20200101', '20200103', freq='h', trade_days_only=True)
+        indexer = trade_time_index('20200101', '20200103', freq='h', trade_days_only=True)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
@@ -1607,9 +1607,9 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('create datetime index with freq "h" not including start am')
-        indexer = _trade_time_index('20200101', '20200103', freq='h',
-                                    include_start_am=False,
-                                    trade_days_only=True)
+        indexer = trade_time_index('20200101', '20200103', freq='h',
+                                   include_start_am=False,
+                                   trade_days_only=True)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 4)
@@ -1621,7 +1621,7 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with freq "w" and check if all dates are Sundays (default)')
 
-        indexer = _trade_time_index('20200101', '20200201', freq='w', trade_days_only=False)
+        indexer = trade_time_index('20200101', '20200201', freq='w', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 4)
@@ -1630,7 +1630,7 @@ class TestDataSource(unittest.TestCase):
         )
 
         print('create datetime index with freq "w-Fri" and check if all dates are Fridays')
-        indexer = _trade_time_index('20200101', '20200201', freq='w-Fri', trade_days_only=False)
+        indexer = trade_time_index('20200101', '20200201', freq='w-Fri', trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
@@ -1639,7 +1639,7 @@ class TestDataSource(unittest.TestCase):
         )
 
         print('test datetime index with freq like "M-5" representing 5th of day of each Month - Not Implemented')
-        # indexer = _trade_time_index('20200101', '20200601', freq='M-5', trade_days_only=False)
+        # indexer = trade_time_index('20200101', '20200601', freq='M-5', trade_days_only=False)
         # print(f'the output is {indexer}')
         # self.assertIsInstance(indexer, pd.DatetimeIndex)
         # self.assertEqual(len(indexer), 6)
@@ -1651,7 +1651,7 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')
-        indexer = _trade_time_index(start='20200102', end='20200103', periods=49)
+        indexer = trade_time_index(start='20200102', end='20200103', periods=49)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
@@ -1663,7 +1663,7 @@ class TestDataSource(unittest.TestCase):
                               )
                          )
         print('when freq can NOT be inferred')
-        indexer = _trade_time_index(start='20200101', end='20200102', periods=50, trade_days_only=False)
+        indexer = trade_time_index(start='20200101', end='20200102', periods=50, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 8)
         self.assertEqual(list(indexer),
@@ -1680,7 +1680,7 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with start/periods/freq')
         # TODO: the periods=49 but the output is 9, to be improved
-        indexer = _trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
+        indexer = trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
         print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),

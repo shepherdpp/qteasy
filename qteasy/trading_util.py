@@ -123,7 +123,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
             the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
         else:
             raise ValueError(f'no next trade day of today({today})')
-        run_time_index = _trade_time_index(
+        run_time_index = trade_time_index(
                 start=a_trade_day,
                 end=the_next_day,
                 freq=config['live_price_acquire_freq'],
@@ -150,7 +150,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
             freq = stg.run_freq
             if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
                 # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
-                run_time_index = _trade_time_index(
+                run_time_index = trade_time_index(
                         start=a_trade_day,
                         end=the_next_day,
                         freq=freq,
@@ -292,12 +292,12 @@ def parse_trade_signal(signals,
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
-        trimmed_signals = _trim_pt_type_signals(
+        trimmed_signals = trim_pt_type_signals(
             op_signals=signals,
             long_pos_limit=config['long_position_limit'],
             short_pos_limit=config['short_position_limit']
         )
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
             signals=trimmed_signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -311,7 +311,7 @@ def parse_trade_signal(signals,
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
     elif signal_type.lower() == 'ps':
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -321,7 +321,7 @@ def parse_trade_signal(signals,
     elif signal_type.lower() == 'vs':
         from qteasy.config_parser import parse_trade_cost_params
         cost_params = get_cost_params(parse_trade_cost_params(config))
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
@@ -353,9 +353,9 @@ def parse_trade_signal(signals,
 
 
 @njit(cache=True)
-def _trim_pt_type_signals(op_signals: np.ndarray,
-                          long_pos_limit: float,
-                          short_pos_limit: float) -> np.ndarray:
+def trim_pt_type_signals(op_signals: np.ndarray,
+                         long_pos_limit: float,
+                         short_pos_limit: float) -> np.ndarray:
     """ 修剪PT类型的交易信号，使得交易信号不超过多头和空头的持仓限制
 
     Parameters
@@ -392,13 +392,13 @@ def _trim_pt_type_signals(op_signals: np.ndarray,
 
 
 @njit(cache=True)
-def _parse_pt_signals(signals: np.ndarray,
-                      prices: np.ndarray,
-                      own_amounts: np.ndarray,
-                      own_cash: Union[float, np.float64, np.int64, np.ndarray],
-                      pt_buy_threshold: float,
-                      pt_sell_threshold: float,
-                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
+def parse_pt_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     own_cash: Union[float, np.float64, np.int64, np.ndarray],
+                     pt_buy_threshold: float,
+                     pt_sell_threshold: float,
+                     allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PT类型的交易信号
 
     Parameters
@@ -458,11 +458,11 @@ def _parse_pt_signals(signals: np.ndarray,
 
 
 @njit(cache=True)
-def _parse_ps_signals(signals: np.ndarray,
-                      prices: np.ndarray,
-                      own_amounts: np.ndarray,
-                      own_cash: Union[float, np.float64, np.ndarray],
-                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
+def parse_ps_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     own_cash: Union[float, np.float64, np.ndarray],
+                     allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PS类型的交易信号
 
     Parameters
@@ -506,11 +506,11 @@ def _parse_ps_signals(signals: np.ndarray,
 
 
 @njit(cache=True)
-def _parse_vs_signals(signals: np.ndarray,
-                      prices: np.ndarray,
-                      own_amounts: np.ndarray,
-                      allow_sell_short: bool,
-                      cost_params: np.ndarray,) -> tuple[np.ndarray, np.ndarray]:
+def parse_vs_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     allow_sell_short: bool,
+                     cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号
 
     Parameters
@@ -1449,23 +1449,23 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     return shares, amounts_changed, trade_prices
 
 
-def _trade_time_index(start=None,
-                      end=None,
-                      periods=None,
-                      freq=None,
-                      trade_days_only=True,
-                      time_offset=None,
-                      market='SSE',
-                      include_start=True,
-                      include_end=True,
-                      start_am='9:30:00',
-                      end_am='11:30:00',
-                      include_start_am=True,
-                      include_end_am=True,
-                      start_pm='13:00:00',
-                      end_pm='15:00:00',
-                      include_start_pm=False,
-                      include_end_pm=True):
+def trade_time_index(start=None,
+                     end=None,
+                     periods=None,
+                     freq=None,
+                     trade_days_only=True,
+                     time_offset=None,
+                     market='SSE',
+                     include_start=True,
+                     include_end=True,
+                     start_am='9:30:00',
+                     end_am='11:30:00',
+                     include_start_am=True,
+                     include_end_am=True,
+                     start_pm='13:00:00',
+                     end_pm='15:00:00',
+                     include_start_pm=False,
+                     include_end_pm=True):
     """ 通过start/end/periods/freq生成一个符合交易时间段的datetime series，这个序列中的
     每一个时间都在交易时段内，排除所有的交易日
 
@@ -1513,10 +1513,10 @@ def _trade_time_index(start=None,
     Examples
     --------
     # target time index not in trading day
-    >>> _trade_time_index(start='2021-01-01', end='2021-01-02', freq='h')
+    >>> trade_time_index(start='2021-01-01', end='2021-01-02', freq='h')
     DatetimeIndex([], dtype='datetime64[ns]', freq=None)
     # target time index is in trading day
-    >>> _trade_time_index(start='2021-02-01', end='2021-02-02', freq='h')
+    >>> trade_time_index(start='2021-02-01', end='2021-02-02', freq='h')
     DatetimeIndex(['2020-02-01 09:30:00', '2020-02-01 10:30:00',
                    '2020-02-01 11:30:00', '2020-02-01 13:00:00',
                    '2020-02-01 14:00:00', '2020-02-01 15:00:00',
