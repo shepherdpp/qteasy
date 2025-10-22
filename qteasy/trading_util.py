@@ -287,7 +287,9 @@ def parse_trade_signal(signals,
             'cash_decimal_places': QT_CONFIG['cash_decimal_places'],
             'amount_decimal_places': QT_CONFIG['amount_decimal_places'],
             'trade_batch_size': QT_CONFIG['trade_batch_size'],
-            'sell_batch_size': QT_CONFIG['sell_batch_size']
+            'sell_batch_size': QT_CONFIG['sell_batch_size'],
+            'long_position_limit': QT_CONFIG['long_position_limit'],
+            'short_position_limit': QT_CONFIG['short_position_limit'],
         }
 
     # PT交易信号和PS/VS交易信号需要分开解析
@@ -554,15 +556,10 @@ def parse_vs_signals(signals: np.ndarray,
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
 
-    # 计算交易成本对买入金额的影响
+    # 计算交易成本对买入金额的影响，只有多头买入才需要考虑交易成本，因为空头买入的成本会从在收入的现金中扣除
     cash_to_spend += np.where(
         cash_to_spend > 0,
         np.fmax(buy_min, cash_to_spend * buy_rate),
-        0.
-    )
-    cash_to_spend -= np.where(
-        cash_to_spend < 0,
-        np.fmax(sell_min, -cash_to_spend * sell_rate),
         0.
     )
 
