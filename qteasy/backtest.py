@@ -758,7 +758,7 @@ def backtest_batch_steps(
             cash_delivery_queue=cash_delivery_queue,
             stock_delivery_queue=stock_delivery_queue,
             share_count=share_count,
-        )
+        )  # TODO: 这里可以把从cost_params到stock_delivery_queue的参数都打包成一个结构体传递，减少参数数量
 
     # 完成全部交易信号的处理后，输出最终的持有现金清单、持有资产清单和交易费用清单
     return own_cashes, own_amounts_array, trade_records_array, trade_cost_array
