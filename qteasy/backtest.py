@@ -169,11 +169,12 @@ def backtest_step(
     #       f'  fees = {fees}\n')
 
     # 3，处理现金变动和持仓变动的交割，输出交割数据
+    new_cash = cash_gained.sum()
     cash_delivery_queue, stock_delivery_queue, delivered_cash, delivered_stocks = process_backtest_delivery(
             cash_delivery_queue=cash_delivery_queue,
             stock_delivery_queue=stock_delivery_queue,
             is_new_day=is_delivery_day,
-            new_cash=cash_gained.sum(),
+            new_cash=new_cash,
             new_stocks=amount_purchased,
             share_count=share_count,
     )
@@ -730,6 +731,8 @@ def backtest_batch_steps(
             # print(f'- cash investment added: {cash_investment}, new own_cash = {own_cashes[i]},'
             #       f' new available_cash = {available_cashes[i]}\n')
 
+        is_delivery_day = bool(delivery_day_indicators[i])
+
         (own_cashes[i+1],
          available_cashes[i+1],
          own_amounts_array[i+1],
@@ -741,7 +744,7 @@ def backtest_batch_steps(
             signal_type=signal_types[i],
             op_signal=op_signals[i],
             cash_inflation=cash_inflation_array[i],
-            is_delivery_day=True if delivery_day_indicators[i] else False,
+            is_delivery_day=is_delivery_day,
             own_cash=own_cashes[i],
             own_amounts=own_amounts_array[i],
             available_cash=available_cashes[i],

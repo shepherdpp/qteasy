@@ -1480,8 +1480,8 @@ class Operator:
                 else:
                     raise ValueError(f'Invalid group parameter: {key}')
 
-    def check_dependent_data(self):
-        """ 检查operator对象是否包含交易依赖性数据类型以生成交易信号"""
+    def check_dynamic_data(self):
+        """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号"""
         raise NotImplementedError("This method is not implemented yet.")
 
     # =================================================
@@ -1718,9 +1718,10 @@ class Operator:
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
 
-    def prepare_dependent_data_buffer(self, *, trade_records, trade_costs, trade_prices):
-        """ position holder for function prepare_dependent_data_buffer"""
-        raise NotImplementedError("Function prepare_dependent_data_buffer() is not implemented yet.")
+    def prepare_dynamic_data_buffer(self, *, trade_records, trade_costs, trade_prices):
+        """ position holder for function prepare_dynamic_data_buffer"""
+        # the dynamic data might not be needed in qteasy, might even be removed permanently in future
+        pass
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.
