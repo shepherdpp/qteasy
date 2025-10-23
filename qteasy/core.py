@@ -2373,11 +2373,11 @@ def backtest_operator(operator: Operator,
     trade_price_data = trade_price_list.values
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
-    if operator.check_dependent_data():
+    if operator.check_dynamic_data():
         (own_cashes,
          own_amounts_array,
          trade_records_array,
-         trade_cost_array) = backtest_operator_independently(
+         trade_cost_array) = backtest_static_operator(
                 op=operator,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
@@ -2400,7 +2400,7 @@ def backtest_operator(operator: Operator,
         (own_cashes,
          own_amounts_array,
          trade_records_array,
-         trade_cost_array) = backtest_operator_dependently(
+         trade_cost_array) = backtest_dynamic_operator(
                 op=operator,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
@@ -2424,7 +2424,7 @@ def backtest_operator(operator: Operator,
             trade_records_array, trade_cost_array)
 
 
-def backtest_operator_independently(
+def backtest_static_operator(
         op: Operator,
         cash_investment_array: np.ndarray,
         cash_inflation_array: np.ndarray,
@@ -2448,7 +2448,7 @@ def backtest_operator_independently(
         cash_delivery_period: int,
         stock_delivery_period: int,
 ) -> tuple:
-    """处理operator的交易信号不依赖于回测数据的情况:
+    """处理operator的交易信号仅包含静态数据类型（不以来交易结果的数据）的情况:
 
     根据输入参数调用operator.run()生成完整的交易信号清单，然后调用backtest_batch_steps()进行回测
 
@@ -2501,7 +2501,7 @@ def backtest_operator_independently(
     return own_cashes, own_amounts, trade_records_array, trade_cost_array
 
 
-def backtest_operator_dependently(
+def backtest_dynamic_operator(
         op: Operator,
         cash_investment_array: np.ndarray,
         cash_inflation_array: np.ndarray,
@@ -2525,7 +2525,7 @@ def backtest_operator_dependently(
         cash_delivery_period: int,
         stock_delivery_period: int,
 ):
-    """处理operator的交易信号依赖于回测数据的情况:
+    """处理operator的交易信号包含动态数据类型(依赖交易结果的数据类型)的情况:
 
     根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
 
@@ -2534,7 +2534,7 @@ def backtest_operator_dependently(
     initial_trade_costs = trade_cost_array[0, :].copy()
     initial_trade_prices = trade_price_data[0, :].copy()
 
-    op.prepare_dependent_data_buffer(
+    op.prepare_dynamic_data_buffer(
             trade_records=initial_trade_records,
             trade_costs=initial_trade_costs,
             trade_prices=initial_trade_prices,
@@ -2557,7 +2557,8 @@ def backtest_operator_dependently(
             available_cashes[i] += cash_investment
 
         # 2，调用operator.run_step()生成当前交易信号
-        stype, s_index, signal = op.run_step(step_index=i)
+        stype, s_index, signal = tuple(op.run_step(step_index=i))[0]
+        is_delivery_day = bool(delivery_day_indicators[i])
 
         # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
         (
@@ -2570,19 +2571,15 @@ def backtest_operator_dependently(
             cash_delivery_queue,
             stock_delivery_queue,
         ) = backtest_step(
-                step_index=i,
                 signal_type=stype,
                 op_signal=signal,
-                cash_investment=cash_investment,
                 cash_inflation=cash_inflation_array[i],
-                delivery_day_indicator=delivery_day_indicators[i],
+                is_delivery_day=is_delivery_day,
                 own_cash=own_cashes[i],
-                available_cash=available_cashes[i],
                 own_amounts=own_amounts_array[i, :],
+                available_cash=available_cashes[i],
                 available_amounts=available_amounts_array[i, :],
                 trade_prices=trade_price_data[i, :],
-                trade_records=trade_records_array[i, :],
-                trade_costs=trade_cost_array[i, :],
                 cost_params=cost_params,
                 pt_buy_threshold=pt_buy_threshold,
                 pt_sell_threshold=pt_sell_threshold,
@@ -2593,10 +2590,11 @@ def backtest_operator_dependently(
                 moq_sell=moq_sell,
                 cash_delivery_queue=cash_delivery_queue,
                 stock_delivery_queue=stock_delivery_queue,
+                share_count=share_count,
         )
 
         # 4，更新operator中的依赖性历史数据
-        op.prepare_dependent_data_buffer(
+        op.prepare_dynamic_data_buffer(
                 trade_records=trade_records_array[i],
                 trade_costs=trade_cost_array[i],
                 trade_prices=trade_price_data[i],
