@@ -11,6 +11,8 @@
 # ======================================
 import unittest
 
+from anyio.lowlevel import cancel_shielded_checkpoint
+
 import qteasy as qt
 import pandas as pd
 import numpy as np
@@ -30,6 +32,7 @@ from qteasy.history import (
     stack_dataframes,
     dataframe_to_hp,
 )
+from qteasy.tsfuncs import cashflow
 
 
 class TestBacktest(unittest.TestCase):
@@ -1585,67 +1588,79 @@ class TestBacktest(unittest.TestCase):
         self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
         self.assertEqual(s_queue.ndim, 2)
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=0,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200., 300.]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=0,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 1000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 00., 0.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 0., 0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=1,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500, 600]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=0,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 2000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 2000., 0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[400., 500., 600.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=1,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200, 300]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=0,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 3000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 3000.,    0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=2,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500, 600]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=0,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
         self.assertTrue(np.allclose(c_queue, np.array([1000, 3000., 2000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertTrue(np.allclose(s_queue, np.array([[400., 500., 600.]])))
         self.assertAlmostEqual(c_delivered, 1000.)
         self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
 
@@ -1661,66 +1676,78 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(c_queue.ndim, 1)
         self.assertEqual(s_queue.ndim, 2)
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=0,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200, 300]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [100., 200., 300.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [0., 0., 0.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 1000.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=1,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500., 600]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [400., 500., 600.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [400., 500., 600.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 2000.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=1,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200., 300]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [500., 700., 900.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [500., 700., 900.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 1000.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=2,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500, 600]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
+        self.assertTrue(np.allclose(c_queue, np.array([2000.])))
         self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [500., 700., 900.], [400., 500., 600.]])))
         self.assertAlmostEqual(c_delivered, 2000.)
         self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
@@ -1735,61 +1762,73 @@ class TestBacktest(unittest.TestCase):
         self.assertTrue(np.allclose(c_queue, np.array([0., 0., 0.])))
         self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=0,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200, 300]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=2,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 0., 1000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [0., 0., 0.], [100., 200., 300.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 0., 0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [0., 0., 0.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=1,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500, 600]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=2,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 2000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [400., 500., 600.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 2000.,    0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [400., 500., 600.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=1,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200., 300.]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=2,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0., 1000., 3000.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.], [100., 200., 300.], [500., 700., 900.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000., 3000., 0.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.], [500., 700., 900.], [0., 0., 0.]])))
         self.assertAlmostEqual(c_delivered, 0.)
         self.assertTrue(np.allclose(a_delivered, np.array([0., 0., 0.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=2,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500., 600.]),
                 share_count=3,
+                cash_delivery_period=2,
+                stock_delivery_period=2,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
@@ -1811,35 +1850,41 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(c_queue.ndim, 1)
         self.assertEqual(s_queue.ndim, 2)
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=False,
+                day_num=0,
                 new_cash=1000.,
                 new_stocks=np.array([100., 200., 300.]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=0,
         )
         print(f'after process (not new day) cash delivery queue:\n{c_queue}')
         print(f'after process (not new day) amount delivery queue:\n{s_queue}')
         print(f'after process (not new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([1000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[100., 200., 300.]])))
         self.assertAlmostEqual(c_delivered, 1000.)
         self.assertTrue(np.allclose(a_delivered, np.array([100., 200., 300.])))
 
-        c_queue, s_queue, c_delivered, a_delivered = process_backtest_delivery(
+        c_delivered, a_delivered = process_backtest_delivery(
                 cash_delivery_queue=c_queue,
                 stock_delivery_queue=s_queue,
                 is_new_day=True,
+                day_num=1,
                 new_cash=2000.,
                 new_stocks=np.array([400., 500., 600.]),
                 share_count=3,
+                cash_delivery_period=0,
+                stock_delivery_period=0,
         )
         print(f'after process (new day) cash delivery queue:\n{c_queue}')
         print(f'after process (new day) amount delivery queue:\n{s_queue}')
         print(f'after process (new day) delivered cash: {c_delivered}, delivered amounts: {a_delivered}')
-        self.assertTrue(np.allclose(c_queue, np.array([0.])))
-        self.assertTrue(np.allclose(s_queue, np.array([[0., 0., 0.]])))
+        self.assertTrue(np.allclose(c_queue, np.array([2000.])))
+        self.assertTrue(np.allclose(s_queue, np.array([[400., 500., 600.]])))
         self.assertAlmostEqual(c_delivered, 2000.)
         self.assertTrue(np.allclose(a_delivered, np.array([400., 500., 600.])))
 

@@ -40,6 +40,7 @@ def backtest_step(
         op_signal: np.ndarray,
         cash_inflation: np.ndarray,
         is_delivery_day: bool,
+        day_num: Union[int, np.int32, np.int64],
         own_cash: np.ndarray,
         own_amounts: np.ndarray,
         available_cash: np.ndarray,
@@ -55,6 +56,8 @@ def backtest_step(
         moq_sell: float,
         cash_delivery_queue: np.ndarray,
         stock_delivery_queue: np.ndarray,
+        cash_delivery_period: int,
+        stock_delivery_period: int,
         share_count: int,
 ):
     """ 完成一次完整的单步骤回测计算，包括下面三个步骤：
@@ -75,7 +78,9 @@ def backtest_step(
     cash_inflation: float
         现金增值比例
     is_delivery_day: bool
-        是否为新的交割日
+        是否为新的交割日，用于确定是否需要更新交割队列
+    day_num: int
+        当前的天数，用于确定交割队列中的交割位置
     own_cash: float
         本次交易开始前持有的现金余额（包括交割中的现金）
     own_amounts: np.ndarray
@@ -112,6 +117,10 @@ def backtest_step(
         现金交割队列
     stock_delivery_queue: np.ndarray
         股票交割队列
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
     share_count: int
         交易的股票数量
 
@@ -170,12 +179,15 @@ def backtest_step(
 
     # 3，处理现金变动和持仓变动的交割，输出交割数据
     new_cash = cash_gained.sum()
-    cash_delivery_queue, stock_delivery_queue, delivered_cash, delivered_stocks = process_backtest_delivery(
+    delivered_cash, delivered_stocks = process_backtest_delivery(
             cash_delivery_queue=cash_delivery_queue,
             stock_delivery_queue=stock_delivery_queue,
             is_new_day=is_delivery_day,
+            day_num=day_num,
             new_cash=new_cash,
             new_stocks=amount_purchased,
+            cash_delivery_period=cash_delivery_period,
+            stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
     # DEBUG:
@@ -439,7 +451,7 @@ def calculate_trade_results(
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
 
-@njit(nogil=True, cache=True)
+# @njit(nogil=True, cache=True)  使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
 def initialize_backtest_delivery_queue(cash_delivery_period: int,
                                        stock_delivery_period: int,
                                        share_count: int):
@@ -469,17 +481,16 @@ def initialize_backtest_delivery_queue(cash_delivery_period: int,
     return cash_delivery_queue, stock_delivery_queue
 
 
-# TODO: 测试一种新的交割队列处理方法，不需要移动队列中的元素，在队列的0/1位置设置
-#  交割起点和交割终点指针，通过移动指针实现交割，而不是移动队列中的元素，优点是可以
-#  避免元素移动，且可以实现静态数组传递，避免数组不断复制
-#
-@njit(nogil=True, cache=True)
+# @njit(nogil=True, cache=True) 使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
 def process_backtest_delivery(cash_delivery_queue: np.ndarray,
                               stock_delivery_queue: np.ndarray,
                               is_new_day: bool,
+                              day_num: int,
                               new_cash: float,
                               new_stocks: np.ndarray,
-                              share_count: int) -> tuple[np.ndarray, np.ndarray, float, np.ndarray]:
+                              cash_delivery_period: int,
+                              stock_delivery_period: int,
+                              share_count: int) -> tuple[Any, np.ndarray]:
     """ 处理回测现金和股票交割队列，计算达到交割期的现金和股票，并更新可用现金和可用股票
 
     Parameters
@@ -490,10 +501,16 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
         股票交割队列
     is_new_day: bool
         是否为新的一天，用于判断是否需要更新交割队列
+    day_num: int
+        当前的天数，用于确定交割队列中的交割位置
     new_cash: float
         新增的现金，用于加入交割队列
     new_stocks: np.ndarray
         新增的股票，用于加入交割队列
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
     share_count: int
         股票数量
 
@@ -509,101 +526,34 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
         达到交割期的股票数量
     """
 
-    cash_delivery_queue, cash_delivered = process_cash_delivery(
-            cash_delivery_queue=cash_delivery_queue,
-            is_new_day=is_new_day,
-            new_cash=new_cash
-    )
+    # % 计算速度非常快，不需要区分is_new_day
+    cash_in_pos = day_num % (cash_delivery_period + 1)
+    stock_in_pos = day_num % (stock_delivery_period + 1)
+    cash_delivery_pos = (day_num + 1) % (cash_delivery_period + 1)
+    stock_delivery_pos = (day_num + 1) % (stock_delivery_period + 1)
 
-    stock_delivery_queue, stocks_delivered = process_stock_delivery(
-            stock_delivery_queue=stock_delivery_queue,
-            is_new_day=is_new_day,
-            new_stocks=new_stocks,
-            share_count=share_count
-    )
+    # if is_new_day:
+    #     cash_delivery_queue[cash_in_pos] = new_cash
+    #     stock_delivery_queue[stock_in_pos, :] = new_stocks
+    # else:
+    #     cash_delivery_queue[cash_in_pos] += new_cash
+    #     stock_delivery_queue[stock_in_pos, :] += new_stocks
 
-    return cash_delivery_queue, stock_delivery_queue, cash_delivered, stocks_delivered
+    if is_new_day or cash_delivery_period == 0:
+        cash_delivery_queue[cash_in_pos] = new_cash
+        cash_delivered = cash_delivery_queue[cash_delivery_pos]
+    else:
+        cash_delivery_queue[cash_in_pos] += new_cash
+        cash_delivered = 0.0
 
-
-@njit(nogil=True, cache=True)
-def process_cash_delivery(cash_delivery_queue: np.ndarray,
-                          is_new_day: bool,
-                          new_cash: float) -> tuple[np.ndarray, float]:
-    """ 处理回测现金交割队列，计算达到交割期的现金，并更新可用现金
-
-    Parameters
-    ----------
-    cash_delivery_queue: np.ndarray
-        现金交割队列
-    is_new_day: bool
-        是否为新的一天，用于判断是否需要更新交割队列
-    new_cash: float
-        新增的现金，用于加入交割队列
-
-    Returns
-    -------
-    cash_delivery_queue: np.ndarray
-        更新后的现金交割队列
-    cash_delivered: float
-        达到交割期的现金
-    """
-
-    if len(cash_delivery_queue) == 1:
-        # 如果现金交割周期为0，则直接将新增现金进行交割，并忽略交割队列
-        cash_delivered = new_cash
-
-    elif is_new_day:
-        # 处理现金交割
-        cash_delivery_queue = np.roll(cash_delivery_queue, -1)
-        cash_delivery_queue[-1] = new_cash
-        cash_delivered = cash_delivery_queue[0]
-
-    else:  # 不是新的一天，不进行滚动，不进行交割，现金累加入队列
-        cash_delivered = 0.
-        cash_delivery_queue[-1] += new_cash
-
-    return cash_delivery_queue, cash_delivered
-
-
-@njit(nogil=True, cache=True)
-def process_stock_delivery(stock_delivery_queue: np.ndarray,
-                           is_new_day: bool,
-                           new_stocks: np.ndarray,
-                           share_count: int) -> tuple[np.ndarray, np.ndarray]:
-    """ 处理回测股票交割队列，计算达到交割期的股票，并更新可用股票
-
-    Parameters
-    ----------
-    stock_delivery_queue: np.ndarray
-         股票交割队列
-    is_new_day: bool
-         是否为新的一天，用于判断是否需要更新交割队列
-    new_stocks: np.ndarray
-         新增的股票，用于加入交割队列
-    share_count: int
-         股票数量
-
-    Returns
-    -------
-    stock_delivery_queue: np.ndarray
-         更新后的股票交割队列
-    stocks_delivered: np.ndarray
-         达到交割期的股票数量
-    """
-
-    if stock_delivery_queue.shape[0] == 1:
-        # 如果股票交割周期为0，则直接将新增股票进行交割，并忽略交割队列
-        stocks_delivered = new_stocks
-    elif is_new_day:
-        # 处理股票交割
-        stock_delivery_queue = np.roll(stock_delivery_queue, -share_count)
-        stock_delivery_queue[-1, :] = new_stocks
-        stocks_delivered = stock_delivery_queue[0, :]
-    else:  # 不是新的一天，不进行滚动，不进行交割，
+    if is_new_day or stock_delivery_period == 0:
+        stock_delivery_queue[stock_in_pos, :] = new_stocks
+        stocks_delivered = stock_delivery_queue[stock_delivery_pos, :].copy()
+    else:
+        stock_delivery_queue[stock_in_pos, :] += new_stocks
         stocks_delivered = np.zeros(shape=(share_count,), dtype='float')
-        stock_delivery_queue[-1, :] += new_stocks
 
-    return stock_delivery_queue, stocks_delivered
+    return cash_delivered, stocks_delivered
 
 
 @njit(nogil=True, cache=True)
@@ -715,6 +665,7 @@ def backtest_batch_steps(
             stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
+    day_nums = delivery_day_indicators.cumsum().astype('int')
 
     # 开始循环处理op_signal中的每一条交易信号，获取其signal_type，执行下列步骤：
     for i in range(signal_count):
@@ -745,6 +696,7 @@ def backtest_batch_steps(
             op_signal=op_signals[i],
             cash_inflation=cash_inflation_array[i],
             is_delivery_day=is_delivery_day,
+            day_num=day_nums[i],
             own_cash=own_cashes[i],
             own_amounts=own_amounts_array[i],
             available_cash=available_cashes[i],
@@ -760,6 +712,8 @@ def backtest_batch_steps(
             moq_sell=moq_sell,
             cash_delivery_queue=cash_delivery_queue,
             stock_delivery_queue=stock_delivery_queue,
+            cash_delivery_period=cash_delivery_period,
+            stock_delivery_period=stock_delivery_period,
             share_count=share_count,
         )  # TODO: 这里可以把从cost_params到stock_delivery_queue的参数都打包成一个结构体传递，减少参数数量
 
