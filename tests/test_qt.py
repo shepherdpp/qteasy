@@ -954,7 +954,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1.,
                      mode=1,
                      trade_log=True)
-        op.set_parameter('long', par_values=())
+        op.set_parameter('long', par_values=None)
         op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 0.4),
                          run_freq='Q',
                          strategy_data_types='pe',
