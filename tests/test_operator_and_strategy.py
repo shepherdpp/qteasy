@@ -3323,6 +3323,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         cash_investment_array[0] = 1000000.0  # 初始资金
         cash_inflation_array = np.zeros((signal_count,), dtype=float)
         delivery_day_indicators = np.ones((signal_count,), dtype=bool)
+        day_nums = delivery_day_indicators.cumsum()
 
         trade_records_array = np.zeros((signal_count, share_count), dtype=float)
         trade_cost_array = np.zeros((signal_count, share_count), dtype=float)
@@ -3376,6 +3377,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 op_signal=signal,
                 cash_inflation=cash_inflation_array[i],
                 is_delivery_day=is_delivery_day,
+                day_num=day_nums[i],
                 own_cash=own_cashes[i],
                 own_amounts=own_amounts[i, :],
                 available_cash=available_cashes[i],
@@ -3391,6 +3393,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 moq_sell=1.,
                 cash_delivery_queue=cash_delivery_queue,
                 stock_delivery_queue=stock_delivery_queue,
+                cash_delivery_period=0,
+                stock_delivery_period=2,
                 share_count=share_count,
             )
 

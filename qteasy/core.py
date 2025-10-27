@@ -1868,7 +1868,7 @@ def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
 
 
 # noinspection PyTypeChecker
-def run(operator, **kwargs):
+def run(op: Operator, **kwargs):
     """ `qteasy`模块的主要入口函数
 
     接受`operator`交易员对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -2037,7 +2037,7 @@ def run(operator, **kwargs):
 
     Parameters
     ----------
-    operator : Operator
+    op : Operator
         策略执行器对象
     **kwargs:
         可用的kwargs包括所有合法的qteasy配置参数，参见qteasy文档
@@ -2069,7 +2069,7 @@ def run(operator, **kwargs):
             raise ValueError(msg)
 
         start_trader_ui(
-                operator=operator,
+                operator=op,
                 account_id=config['live_trade_account_id'],
                 user_name=config['live_trade_account_name'],
                 init_cash=config['live_trade_init_cash'],
@@ -2082,7 +2082,7 @@ def run(operator, **kwargs):
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
         return run_mode_1(
-                operator=operator,
+                operator=op,
                 config=config,
                 benchmark_data_type=benchmark_data_type,
         )
@@ -2090,7 +2090,7 @@ def run(operator, **kwargs):
     elif run_mode == 2 or run_mode == 'optimization':
         # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
         return run_mode_2(
-                operator=operator,
+                operator=op,
                 config=config,
                 benchmark_data_type=benchmark_data_type,
         )
@@ -2343,19 +2343,20 @@ def backtest_operator(operator: Operator,
     share_count = len(config['asset_pool'])
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
     from qteasy.config_parser import (
-        parse_cash_investment_and_inflation,
+        parse_cash_investment_and_inflation_arrays,
         parse_delivery_day_indicators,
         parse_cost_params,
         parse_signal_parsing_params,
         parse_trading_moq_params,
         parse_trading_delivery_params,
     )
-    cash_investment_array, cash_inflation_array = parse_cash_investment_and_inflation(config)
-    delivery_day_indicators = parse_delivery_day_indicators(config)
-    cost_params = parse_cost_params(config)
-    signal_parsing_params = parse_signal_parsing_params(config)
-    trading_moq_params = parse_trading_moq_params(config)
-    trading_delivery_params = parse_trading_delivery_params(config)
+    # 资金投入和无风险利率
+    cash_investment_array, cash_inflation_array = parse_cash_investment_and_inflation_arrays(config, op_schedule)
+    delivery_day_indicators = parse_delivery_day_indicators(config)  # 交易交割周期指标
+    cost_params = parse_cost_params(config)  # 交易成本参数
+    signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
+    trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
+    trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
 
     own_cashes = np.zeros(shape=(n_signals + 1, share_count))
     own_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
@@ -2541,6 +2542,7 @@ def backtest_dynamic_operator(
             stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
+    day_nums = delivery_day_indicators.cumsum()
 
     # 循环执行下面步骤，直至完整生成回测结果清单
     for i in range(op.get_signal_count()):
@@ -2570,6 +2572,7 @@ def backtest_dynamic_operator(
                 op_signal=signal,
                 cash_inflation=cash_inflation_array[i],
                 is_delivery_day=is_delivery_day,
+                day_num=day_nums[i],
                 own_cash=own_cashes[i],
                 own_amounts=own_amounts_array[i, :],
                 available_cash=available_cashes[i],
@@ -2585,6 +2588,8 @@ def backtest_dynamic_operator(
                 moq_sell=moq_sell,
                 cash_delivery_queue=cash_delivery_queue,
                 stock_delivery_queue=stock_delivery_queue,
+                cash_delivery_period=cash_delivery_period,
+                stock_delivery_period=stock_delivery_period,
                 share_count=share_count,
         )
 

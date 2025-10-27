@@ -11,14 +11,18 @@
 # ======================================
 import unittest
 import pandas as pd
+import numpy as np
 
 from qteasy import QT_DATA_SOURCE
 from qteasy.config_parser import (
     parse_backtest_start_end_dates,
     parse_backtest_data_package,
     parse_backtest_cash_plan,
+    parse_trade_cost_params,
+    parse_cash_investment_and_inflation_arrays,
 )
 from qteasy.datatypes import DataType
+from qteasy.trading_util import trade_time_index
 
 
 class TestConfigParser(unittest.TestCase):
@@ -175,6 +179,50 @@ class TestConfigParser(unittest.TestCase):
         self.assertIsInstance(data_package['close_E_d'], pd.DataFrame)
         self.assertIsInstance(data_package['pe_E_d'], pd.DataFrame)
         self.assertIsInstance(data_package['close_E_w'], pd.DataFrame)
+
+    def test_trade_cost_params(self):
+        """ test the function parse_trade_cost_params"""
+        config = {
+            'buy_cost_rate': 0.001,
+            'sell_cost_rate': 0.002,
+            'min_cost_per_trade': 5.0
+        }
+        cost_params = parse_trade_cost_params(config=config)
+        self.assertIsInstance(cost_params, dict)
+        self.assertIn('buy_rate', cost_params)
+        self.assertIn('sell_rate', cost_params)
+        self.assertIn('buy_min', cost_params)
+        self.assertIn('sell_min', cost_params)
+        self.assertIn('slipage', cost_params)
+        self.assertEqual(cost_params['buy_rate'], 0.001)
+        self.assertEqual(cost_params['sell_rate'], 0.002)
+        self.assertEqual(cost_params['buy_min'], 5.0)
+        self.assertEqual(cost_params['sell_min'], 5.0)
+        self.assertEqual(cost_params['slipage'], 0.0)
+
+    def test_parse_investment_and_inflation_arrays(self):
+        """ test the function parse_cash_investment_and_inflation_arrays"""
+        config = {
+            'invest_start': '20200101',
+            'invest_end': '20200131',
+            'cash_investment_dates': '20200102,20200106,20200112,20200115',
+            'cash_investment_amounts': [10000, 15000, 20000, 25000],
+            'inflation_adjustment_dates': '20200601,20201201',
+            'inflation_adjustment_rates': [0.02, 0.025]
+        }
+        op_schedule = trade_time_index(
+                start='2020-01-01',
+                end='2020-12-31',
+                freq='d',
+        )
+        investment_array, inflation_array = parse_cash_investment_and_inflation_arrays(
+                config=config,
+                op_schedule=op_schedule,
+        )
+        self.assertIsInstance(investment_array, np.ndarray)
+        self.assertIsInstance(inflation_array, np.ndarray)
+        self.assertTrue(np.allclose(investment_array.sum(), 70000))
+        self.assertTrue(np.allclose(inflation_array.max(), 0.025))
 
 
 if __name__ == '__main__':

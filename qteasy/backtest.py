@@ -40,7 +40,7 @@ def backtest_step(
         op_signal: np.ndarray,
         cash_inflation: np.ndarray,
         is_delivery_day: bool,
-        day_num: Union[int, np.int32, np.int64],
+        day_num: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: np.ndarray,
         own_amounts: np.ndarray,
         available_cash: np.ndarray,
@@ -451,7 +451,7 @@ def calculate_trade_results(
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
 
-# @njit(nogil=True, cache=True)  使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
+@njit()  # 使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
 def initialize_backtest_delivery_queue(cash_delivery_period: int,
                                        stock_delivery_period: int,
                                        share_count: int):
@@ -481,7 +481,7 @@ def initialize_backtest_delivery_queue(cash_delivery_period: int,
     return cash_delivery_queue, stock_delivery_queue
 
 
-# @njit(nogil=True, cache=True) 使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
+@njit(nogil=True, cache=True)  # 使用numba加速反而更慢，可能是因为函数体太简单，编译和调用开销大于计算开销
 def process_backtest_delivery(cash_delivery_queue: np.ndarray,
                               stock_delivery_queue: np.ndarray,
                               is_new_day: bool,
