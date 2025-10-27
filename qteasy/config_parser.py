@@ -81,8 +81,6 @@ def parse_backtest_data_package(config, dtypes) -> dict:
 
 def parse_trade_cost_params(config) -> dict:
     """解析交易成本相关的配置参数:
-        buy_fix: float, 交易成本：固定买入费用
-        sell_fix: float, 交易成本：固定卖出费用
         buy_rate: float, 交易成本：固定买入费率
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
@@ -95,11 +93,11 @@ def parse_trade_cost_params(config) -> dict:
         交易成本相关的参数字典
     """
     cost_params = {
-        'buy_rate': config.get('cost_rate_buy', 0.0),
-        'sell_rate': config.get('cost_rate_sell', 0.0),
-        'buy_min': config.get('cost_min_buy', 0.0),
-        'sell_min': config.get('cost_min_sell', 0.0),
-        'slipage': config.get('cost_slipage', 0.0),
+        'buy_rate': config['cost_rate_buy'],
+        'sell_rate': config['cost_rate_sell'],
+        'buy_min': config['cost_min_buy'],
+        'sell_min': config['cost_min_sell'],
+        'slipage': config['cost_slipage'],
     }
     return cost_params
 
@@ -122,24 +120,25 @@ def parse_cash_investment_and_inflation_arrays(config: dict, op_schedule: pd.Ind
         通胀率数组
     """
 
-    import pdb; pdb.set_trace()
-    invest_cash_plan: CashPlan = parse_backtest_cash_plan(config)
+    invest_cash_plan = parse_backtest_cash_plan(config)
     # 生成包含现金投资和现金通胀率数组的DataFrame
     cash_plan_df = pd.DataFrame(
-            {'investment': np.zeros(len(op_schedule)),
-             'inflation_rate': np.ones(len(op_schedule))},
+            {'investment': np.zeros_like(op_schedule),
+             'inflation_rate': np.ones_like(op_schedule)},
             index=op_schedule,
     )
-    investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.dates, side='left')
+    investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.plan.index, side='left')
     for pos, amount in zip(investment_positions, invest_cash_plan.amounts):
         if pos < len(cash_plan_df):
             cash_plan_df.iat[pos, 0] += amount  # 累加投资金额
 
     inflation_rate = invest_cash_plan.ir
-    op_schedule_dates = op_schedule.date()
-
+    day_diffs = (cash_plan_df.index - cash_plan_df.index[0]).days
+    cash_plan_df['inflation_rate'] += inflation_rate * day_diffs / 365  # 年化通胀率转换为日化通胀率
     cash_investment_array = cash_plan_df['investment'].to_numpy()
+    cash_inflation_array = cash_plan_df['inflation_rate'].to_numpy()
 
+    return cash_investment_array, cash_inflation_array
 
 
 def parse_delivery_day_indicators(config) -> np.ndarray:
