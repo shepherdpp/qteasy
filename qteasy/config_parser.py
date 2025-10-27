@@ -95,8 +95,6 @@ def parse_trade_cost_params(config) -> dict:
         交易成本相关的参数字典
     """
     cost_params = {
-        'buy_fix': config.get('cost_fixed_buy', 0.0),
-        'sell_fix': config.get('cost_fixed_sell', 0.0),
         'buy_rate': config.get('cost_rate_buy', 0.0),
         'sell_rate': config.get('cost_rate_sell', 0.0),
         'buy_min': config.get('cost_min_buy', 0.0),
@@ -106,15 +104,42 @@ def parse_trade_cost_params(config) -> dict:
     return cost_params
 
 
-def parse_cash_investment_and_inflation(config) -> np.ndarray:
+def parse_cash_investment_and_inflation_arrays(config: dict, op_schedule: pd.Index) -> tuple[np.ndarray, np.ndarray]:
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
+
+    Parameters
+    ----------
+    config: dict
+        配置参数字典
+    op_schedule: pd.Index
+        操作日时间索引, 用于生成对应长度的数组
 
     Returns
     -------
-    invest_cash: pd.Series
-        投资现金流，index为投资日期，value为投资金额
+    cash_investment_array: np.ndarray
+        现金投资数组
+    inflation_rate_array: np.ndarray
+        通胀率数组
     """
-    raise NotImplementedError
+
+    import pdb; pdb.set_trace()
+    invest_cash_plan: CashPlan = parse_backtest_cash_plan(config)
+    # 生成包含现金投资和现金通胀率数组的DataFrame
+    cash_plan_df = pd.DataFrame(
+            {'investment': np.zeros(len(op_schedule)),
+             'inflation_rate': np.ones(len(op_schedule))},
+            index=op_schedule,
+    )
+    investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.dates, side='left')
+    for pos, amount in zip(investment_positions, invest_cash_plan.amounts):
+        if pos < len(cash_plan_df):
+            cash_plan_df.iat[pos, 0] += amount  # 累加投资金额
+
+    inflation_rate = invest_cash_plan.ir
+    op_schedule_dates = op_schedule.date()
+
+    cash_investment_array = cash_plan_df['investment'].to_numpy()
+
 
 
 def parse_delivery_day_indicators(config) -> np.ndarray:
