@@ -205,14 +205,13 @@ class TestConfigParser(unittest.TestCase):
         config = {
             'invest_start': '20200101',
             'invest_end': '20200131',
-            'cash_investment_dates': '20200102,20200106,20200112,20200115',
-            'cash_investment_amounts': [10000, 15000, 20000, 25000],
-            'inflation_adjustment_dates': '20200601,20201201',
-            'inflation_adjustment_rates': [0.02, 0.025]
+            'invest_cash_dates': '20200102,20200106,20200112,20200115',
+            'invest_cash_amounts': [10000, 15000, 20000, 25000],
+            'riskfree_ir': 0.03,
         }
         op_schedule = trade_time_index(
                 start='2020-01-01',
-                end='2020-12-31',
+                end='2020-01-31',
                 freq='d',
         )
         investment_array, inflation_array = parse_cash_investment_and_inflation_arrays(
@@ -221,8 +220,12 @@ class TestConfigParser(unittest.TestCase):
         )
         self.assertIsInstance(investment_array, np.ndarray)
         self.assertIsInstance(inflation_array, np.ndarray)
-        self.assertTrue(np.allclose(investment_array.sum(), 70000))
-        self.assertTrue(np.allclose(inflation_array.max(), 0.025))
+        print(f'investment_array: {investment_array}')
+        print(f'inflation_array: {inflation_array}')
+        self.assertEqual(len(investment_array), len(op_schedule))
+        self.assertEqual(len(inflation_array), len(op_schedule))
+
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
