@@ -2348,17 +2348,18 @@ def backtest_operator(operator: Operator,
     share_count = len(config['asset_pool'])
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
     from qteasy.config_parser import (
-        parse_cash_investment_and_inflation_arrays,
-        parse_delivery_day_indicators,
-        parse_cost_params,
+        parse_cash_invest_and_delivery_arrays,
+        parse_trade_cost_params,
         parse_signal_parsing_params,
         parse_trading_moq_params,
         parse_trading_delivery_params,
     )
     # 资金投入和无风险利率
-    cash_investment_array, cash_inflation_array = parse_cash_investment_and_inflation_arrays(config, op_schedule)
-    delivery_day_indicators = parse_delivery_day_indicators(config)  # 交易交割周期指标
-    cost_params = parse_cost_params(config)  # 交易成本参数
+    (cash_investment_array,
+     cash_inflation_array,
+     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op_schedule)
+
+    cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数

@@ -522,7 +522,7 @@ def _valid_qt_kwargs():
                                         and 0 <= value < 1,
              'level':     1,
              'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算\n'
-                          '默认值为万分之，取值范围为[0, 1)'},
+                          '默认值为万分之三，取值范围为[0, 1)'},
 
         'cost_rate_sell':
             {'Default':   0.0001,
@@ -613,7 +613,7 @@ def _valid_qt_kwargs():
                           '余额，表示产生了借贷'},
 
         'short_position_limit':
-            {'Default':   -1.,
+            {'Default':  -1.,
              'Validator': lambda value: isinstance(value, float) and (value < 0),
              'level':     3,
              'text':      '回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的\n'
@@ -645,18 +645,6 @@ def _valid_qt_kwargs():
                           '          立即用于本次买入\n'
                           '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
                           '          次交易委托同时提交时，这是正常情况'},
-
-        'PT_signal_timing':
-            {'Default':   'lazy',
-             'Validator': lambda value: value.lower() in ['aggressive', 'lazy'],
-             'level':     3,
-             'text':      '回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易\n'
-                          '信号的时机，默认normal，取值范围如下：\n'
-                          '- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发\n'
-                          '              生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏\n'
-                          '              离，就产生信号\n'
-                          '- lazy:       只有在策略运行时间点上，当持仓比例发生变化时，才会产生交易\n'
-                          '              信号，不实时监控实际持仓与计划持仓的差异'},
 
         'PT_buy_threshold':
             {'Default':   0.,
