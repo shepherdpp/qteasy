@@ -99,10 +99,23 @@ def parse_trade_cost_params(config) -> dict:
         'sell_min': config['cost_min_sell'],
         'slipage': config['cost_slipage'],
     }
+    # raise if parameters are out of range or with wrong types
+    if not (isinstance(cost_params['buy_rate'], (float, int)) and 0 <= cost_params['buy_rate'] < 1):
+        raise ValueError('cost_rate_buy should be a float number between 0 and 1')
+    if not (isinstance(cost_params['sell_rate'], (float, int)) and 0 <= cost_params['sell_rate'] < 1):
+        raise ValueError('cost_rate_sell should be a float number between 0 and 1')
+    if not (isinstance(cost_params['buy_min'], (float, int)) and cost_params['buy_min'] >= 0):
+        raise ValueError('cost_min_buy should be a non-negative float number')
+    if not (isinstance(cost_params['sell_min'], (float, int)) and cost_params['sell_min'] >= 0):
+        raise ValueError('cost_min_sell should be a non-negative float number')
+    if not (isinstance(cost_params['slipage'], (float, int)) and 0 <= cost_params['slipage'] < 1):
+        raise ValueError('cost_slipage should be a float number between 0 and 1')
+
     return cost_params
 
 
-def parse_cash_investment_and_inflation_arrays(config: dict, op_schedule: pd.Index) -> tuple[np.ndarray, np.ndarray]:
+def parse_cash_invest_and_delivery_arrays(config: dict, op_schedule: pd.Index) -> (
+        tuple[np.ndarray, np.ndarray, np.ndarray]):
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
 
     Parameters
@@ -118,13 +131,15 @@ def parse_cash_investment_and_inflation_arrays(config: dict, op_schedule: pd.Ind
         现金投资数组
     inflation_rate_array: np.ndarray
         通胀率数组
+    delivery_day_indicators: np.ndarray
+        交割日指示数组, 非交割日为0，交割日为1
     """
 
     invest_cash_plan = parse_backtest_cash_plan(config)
     # 生成包含现金投资和现金通胀率数组的DataFrame
     cash_plan_df = pd.DataFrame(
-            {'investment': np.zeros_like(op_schedule),
-             'inflation_rate': np.ones_like(op_schedule)},
+            {'investment': np.zeros_like(op_schedule, dtype=float),
+             'inflation_rate': np.ones_like(op_schedule, dtype=float)},
             index=op_schedule,
     )
     investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.plan.index, side='left')
@@ -138,59 +153,121 @@ def parse_cash_investment_and_inflation_arrays(config: dict, op_schedule: pd.Ind
     cash_investment_array = cash_plan_df['investment'].to_numpy()
     cash_inflation_array = cash_plan_df['inflation_rate'].to_numpy()
 
-    return cash_investment_array, cash_inflation_array
+    day_changes = np.diff(day_diffs.values, prepend=-1)
+    day_changes[day_changes.nonzero()] = 1  # 将非零差值设为1，表示天数变化
 
-
-def parse_delivery_day_indicators(config) -> np.ndarray:
-    """解析交割日相关的配置参数
-
-    Returns
-    -------
-    delivery_day_indicators: np.ndarray
-        交割日相关的指标字典
-    """
-    raise NotImplementedError
-
-
-def parse_cost_params(config) -> np.ndarray:
-    """解析交易成本相关的配置参数
-
-    Returns
-    -------
-    cost_params: np.ndarray
-        交易成本相关的参数
-    """
-    raise NotImplementedError
+    return cash_investment_array, cash_inflation_array, day_changes
 
 
 def parse_signal_parsing_params(config) -> dict:
-    """解析信号处理相关的配置参数
+    """解析信号处理相关的配置参数:
+
+    pt_buy_threshold: float,
+        PT信号处理参数：买入信号触发阈值
+    pt_sell_threshold: float,
+        PT信号处理参数：卖出信号触发阈值
+    long_pos_limit: float, > 0
+        多头持仓比例上限
+    short_pos_limit: float, < 0
+        空头持仓比例上限
+    allow_sell_short: bool,
+        是否允许卖空操作
+
+    Parameters
+    ----------
+    config: dict
+        配置参数字典
 
     Returns
     -------
     signal_parsing_params: dict
         信号处理相关的参数字典
     """
-    raise NotImplementedError
+    signal_parsing_params = {
+        'pt_buy_threshold': config['pt_buy_threshold'],
+        'pt_sell_threshold': config['pt_sell_threshold'],
+        'long_pos_limit': config['long_pos_limit'],
+        'short_pos_limit': config['short_pos_limit'],
+        'allow_sell_short': config['allow_sell_short'],
+    }
+    # raise if parameters are out of range or with wrong types
+    if not (isinstance(signal_parsing_params['pt_buy_threshold'], (float, int)) and
+            0 <= signal_parsing_params['pt_buy_threshold'] < 1):
+        raise ValueError('pt_buy_threshold should be a float number between 0 and 1')
+    if not (isinstance(signal_parsing_params['pt_sell_threshold'], (float, int)) and
+            0 <= signal_parsing_params['pt_sell_threshold'] < 1):
+        raise ValueError('pt_sell_threshold should be a float number between 0 and 1')
+    if not (isinstance(signal_parsing_params['long_pos_limit'], (float, int)) and
+            signal_parsing_params['long_pos_limit'] > 0):
+        raise ValueError('long_pos_limit should be a positive float number')
+    if not (isinstance(signal_parsing_params['short_pos_limit'], (float, int)) and
+            signal_parsing_params['short_pos_limit'] < 0):
+        raise ValueError('short_pos_limit should be a negative float number')
+    if not isinstance(signal_parsing_params['allow_sell_short'], bool):
+        raise ValueError('allow_sell_short should be a boolean value')
+
+    return signal_parsing_params
 
 
 def parse_trading_moq_params(config) -> dict:
-    """解析交易最小单位相关的配置参数
+    """解析交易最小单位相关的配置参数:
+
+    moq_buy: float,
+        交易最小买入单位
+    moq_sell: float,
+        交易最小卖出单位
+
+    Parameters
+    ----------
+    config: dict
+        配置参数字典
 
     Returns
     -------
     trading_moq_params: dict
         交易最小单位相关的参数字典
     """
-    raise NotImplementedError
+    trading_moq_params = {
+        'moq_buy': config['trade_batch_size'],
+        'moq_sell': config['sell_batch_size'],
+    }
+    # raise if parameters are out of range or with wrong types
+    if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] > 0):
+        raise ValueError('moq_buy should be a positive float number')
+    if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] > 0):
+        raise ValueError('moq_sell should be a positive float number')
+
+    return trading_moq_params
 
 
 def parse_trading_delivery_params(config) -> dict:
-    """解析交易交割相关的配置参数
+    """解析交易交割相关的配置参数:
+
+    cash_delivery_period: int,
+        现金交割周期（交易日）
+    stock_delivery_period: int,
+        股票交割周期（交易日）
+
+    Parameters
+    ----------
+    config: dict
+        配置参数字典
 
     Returns
     -------
     trading_delivery_params: dict
         交易交割相关的参数字典
     """
-    raise NotImplementedError
+    trading_delivery_params = {
+        'cash_delivery_period': config['cash_delivery_period'],
+        'stock_delivery_period': config['stock_delivery_period'],
+    }
+    # raise if parameters are out of range or with wrong types
+    if not (isinstance(trading_delivery_params['cash_delivery_period'], int) and
+            trading_delivery_params['cash_delivery_period'] >= 0):
+        raise ValueError('cash_delivery_period should be a non-negative integer')
+    if not (isinstance(trading_delivery_params['stock_delivery_period'], int) and
+            trading_delivery_params['stock_delivery_period'] >= 0):
+        raise ValueError('stock_delivery_period should be a non-negative integer')
+
+    return trading_delivery_params
