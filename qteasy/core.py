@@ -1461,12 +1461,12 @@ def live_trade_accounts() -> pd.DataFrame:
 # =================================================
 # 以下是一些独立的函数, 用于检查和准备历史数据
 # =================================================
-def check_and_prepare_hist_data(oper, config, datasource):
+def check_and_prepare_hist_data(op, config, datasource):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     Parameters
     ----------
-    oper: Operator，
+    op: Operator，
         需要设置数据的Operator对象
     config: ConfigDict
         用于设置Operator对象的环境参数变量
@@ -1504,8 +1504,8 @@ def check_and_prepare_hist_data(oper, config, datasource):
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = oper.max_window_length
-    window_offset_freq = oper.op_data_freq
+    window_length = op.max_window_length
+    window_offset_freq = op.op_data_freq
     if isinstance(window_offset_freq, list):
         raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
                                   f'multiple data frequency in one operator is currently not supported')
@@ -1521,8 +1521,8 @@ def check_and_prepare_hist_data(oper, config, datasource):
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=oper.all_strategy_data_types,
-            freqs=oper.op_data_freq,
+            names=op.all_strategy_data_types,
+            freqs=op.op_data_freq,
             asset_types=config['asset_type'],
             adj=config['backtest_price_adj'],
             force_match_freq=True,
@@ -1532,7 +1532,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
             shares=config['asset_pool'],
             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
-            freq=oper.op_data_freq,
+            freq=op.op_data_freq,
             data_source=datasource,
     ) if run_mode == 2 else HistoryPanel()
 
@@ -1551,7 +1551,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
             names=config['benchmark_dtype'],
-            freqs=oper.op_data_freq,
+            freqs=op.op_data_freq,
             asset_types=config['benchmark_asset_type'],
             adj=config['backtest_price_adj'],
             force_match_freq=True,
@@ -1561,7 +1561,7 @@ def check_and_prepare_hist_data(oper, config, datasource):
             shares=config['benchmark_asset'],
             start=benchmark_start,
             end=benchmark_end,
-            freq=oper.op_data_freq,
+            freq=op.op_data_freq,
             data_source=datasource,
     ).slice_to_dataframe(htype=config['benchmark_dtype'])
 
@@ -1569,12 +1569,12 @@ def check_and_prepare_hist_data(oper, config, datasource):
         invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
-def check_and_prepare_live_trade_data(operator, config, datasource=None, live_prices=None):
+def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=None):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Parameters
     ----------
-    operator: Operator
+    op: Operator
         需要设置数据的Operator对象
     config: ConfigDict
         用于设置Operator对象的环境参数变量
@@ -1599,8 +1599,8 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
     #  而取消实时创建DataType对象
     data_types = infer_data_types(
-            names=operator.all_strategy_data_types,
-            freqs=operator.op_data_freq,
+            names=op.all_strategy_data_types,
+            freqs=op.op_data_freq,
             asset_types=config['asset_type'],
             adj='none',
             force_match_freq=True,
@@ -1608,8 +1608,8 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
     hist_op = get_history_panel(
             data_types=data_types,
             shares=config['asset_pool'],
-            rows=operator.max_window_length,
-            freq=operator.op_data_freq,
+            rows=op.max_window_length,
+            freq=op.op_data_freq,
             end='today',
             data_source=datasource,
     )
@@ -1618,7 +1618,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             (stg.run_freq.upper() in ['D', 'W', 'M']) and
             stg.use_latest_data_cycle
             for stg
-            in operator.strategies
+            in op.strategies
     ):  # 如果有任何一个策略需要估算当前周期的数据
         # 从hist_op的index中找到日期序列，最后一个日期是prev_cycle_end, 根据日期序列计算本cycle的开始和结束日期
         prev_cycle_date = hist_op.hdates[-1]
@@ -1643,7 +1643,7 @@ def check_and_prepare_live_trade_data(operator, config, datasource=None, live_pr
             live_kline_prices = fetch_real_time_klines(
                     channel='eastmoney',
                     qt_codes=hist_op.shares,
-                    freq=operator.op_data_freq,
+                    freq=op.op_data_freq,
                     matured_kline_only=False,  # 只获取成熟的K线数据(即已经收盘的K线数据)
             )
             live_kline_prices.set_index('ts_code', inplace=True)
@@ -1698,13 +1698,13 @@ def get_backtest_start_end_dates(config) -> tuple:
     return invest_start, invest_end
 
 
-def get_backtest_data_package(operator, config, datasource) -> dict:
+def get_backtest_data_package(op, config, datasource) -> dict:
     """ 在run_mode == 1的回测模式情况下生成operator对象的交易策略运行计划，
     从数据源中获取相应的历史数据、准备operator的数据滑窗，并获取交易价格
 
     Parameters
     ----------
-    operator: qteasy.Operator
+    op: qteasy.Operator
         交易员对象，包含投资策略信息
     config: qteasy.Config
         配置对象，存储qteasy的运行参数
@@ -1729,7 +1729,7 @@ def get_backtest_data_package(operator, config, datasource) -> dict:
     invest_start, invest_end = parse_backtest_start_end_dates(config=config)
 
     # 此时策略中定义的datatype的asset_type可能与config中的asset_type不一致，此时需要扩展
-    data_types = operator.all_strategy_data_types
+    data_types = op.all_strategy_data_types
     new_data_types = infer_data_types(
             names=[dtype.name for dtype in data_types],
             freqs=[dtype.freq for dtype in data_types],
@@ -1746,45 +1746,6 @@ def get_backtest_data_package(operator, config, datasource) -> dict:
     )
 
     return hist_data_package
-
-
-def get_backtest_invest_cash_plan(config) -> CashPlan:
-    """ 根据config参数字典中的资金投入计划参数，生成回测模式下的资金投入计划对象
-
-    Parameters
-    ----------
-    config: qteasy.Config
-        配置对象，存储qteasy的运行参数
-
-    Returns
-    -------
-    invest_cash_plan: qteasy.CashPlan
-        用于回测的资金投入计划
-    """
-
-    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    from qteasy.config_parser import parse_backtest_start_end_dates
-    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
-
-    if config['invest_cash_dates'] is None:
-        invest_start = next_market_trade_day(invest_start).strftime('%Y%m%d')
-        invest_cash_plan = CashPlan(invest_start,
-                                    config['invest_cash_amounts'][0],
-                                    config['riskfree_ir'])
-    else:
-        cash_dates = str_to_list(config['invest_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                    amounts=config['invest_cash_amounts'],
-                                    interest_rate=config['riskfree_ir'])
-        invest_start = regulate_date_format(invest_cash_plan.first_day)
-        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(
-                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                f' date will be used!',
-                RuntimeWarning)
-
-    return invest_cash_plan
 
 
 def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
@@ -2090,7 +2051,7 @@ def run(op: Operator, **kwargs):
     elif run_mode == 2 or run_mode == 'optimization':
         # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
         return run_mode_2(
-                operator=op,
+                op=op,
                 config=config,
                 benchmark_data_type=benchmark_data_type,
         )
@@ -2106,7 +2067,7 @@ def run_mode_0():
 def run_mode_1(operator, config, benchmark_data_type):
     """ run qteasy in mode 1: back test mode"""
     data_package = get_backtest_data_package(
-            operator=operator,
+            op=operator,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
@@ -2164,7 +2125,7 @@ def run_mode_1(operator, config, benchmark_data_type):
     return loop_result
 
 
-def run_mode_2(operator, config, benchmark_data_type):
+def run_mode_2(op, config, benchmark_data_type):
     """ run qteasy in mode 2: optimization mode"""
 
     from .optimization import _search_ga, _search_aco, _search_pso, _search_grid, _search_gradient
@@ -2179,7 +2140,7 @@ def run_mode_2(operator, config, benchmark_data_type):
                             6: _search_aco
                             }
     # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
-    assert operator.opt_space_par[0] != [], \
+    assert op.opt_space_par[0] != [], \
         f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
         f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
     (data_package,
@@ -2188,18 +2149,18 @@ def run_mode_2(operator, config, benchmark_data_type):
      opti_cash_plan,
      test_cash_plan
      ) = check_and_prepare_optimize_data(
-            operator=operator,
+            operator=op,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
     # 在生成交易信号之前准备运行计划及历史数据
-    operator.prepare_running_schedule()
-    operator.prepare_data_buffer(
+    op.prepare_running_schedule()
+    op.prepare_data_buffer(
             start_date='',
             end_date='',
             data_package=data_package,
     )
-    operator.create_data_windows()
+    op.create_data_windows()
     # 使用how确定优化方法并生成优化后的参数和性能数据
     how = config['opti_method']
 
@@ -2217,7 +2178,7 @@ def run_mode_2(operator, config, benchmark_data_type):
     result_pool = _evaluate_all_parameters(
             par_generator=optimal_pars,
             total=config['opti_output_count'],
-            op=operator,
+            op=op,
             trade_price_list=hist_opti_loop,
             benchmark_history_data=hist_benchmark,
             benchmark_history_data_type=benchmark_data_type,
@@ -2237,7 +2198,7 @@ def run_mode_2(operator, config, benchmark_data_type):
         result_pool = _evaluate_all_parameters(
                 par_generator=optimal_pars,
                 total=config['opti_output_count'],
-                op=operator,
+                op=op,
                 trade_price_list=opti_trade_prices,
                 benchmark_history_data=hist_benchmark,
                 benchmark_history_data_type=benchmark_data_type,
@@ -2259,7 +2220,7 @@ def run_mode_2(operator, config, benchmark_data_type):
             # 重新生成交易信号，并在模拟的历史数据上进行回测
             mock_hist = _create_mock_data(hist_opti)
             print(f'config.test_cash_dates is {config["test_cash_dates"]}')
-            operator.assign_hist_data(
+            op.assign_hist_data(
                     hist_data=mock_hist,
                     cash_plan=test_cash_plan,
             )
@@ -2267,7 +2228,7 @@ def run_mode_2(operator, config, benchmark_data_type):
             result_pool = _evaluate_all_parameters(
                     par_generator=optimal_pars,
                     total=config['opti_output_count'],
-                    op=operator,
+                    op=op,
                     trade_price_list=mock_hist,
                     benchmark_history_data=mock_hist_loop,
                     benchmark_history_data_type=benchmark_data_type,
@@ -2287,14 +2248,7 @@ def run_mode_2(operator, config, benchmark_data_type):
     return optimal_pars
 
 
-# TODO: 此函数专司backtest的函数。专门处理operator的信号生成以及信号回测
-#  同时可以考虑将此函数一分为二，一个是处理operator信号生成不需要依赖回测数据的，可以一次性生成
-#  operator信号后，统一调用apply_loop_core返回回测结果，另一个处理operator信号生成依赖回测数据
-#  的，此时operator信号需要利用初始回测数据，然后在回测过程中逐步生成。该函数处理交易信号以及回测的
-#  结果，交易信号和回测的结果是一系列可以提前准备好的表组成，这些表均在本函数中提前创建好，并且由持仓
-#  数据区、交易信号区、日期索引区、以及其他有用的索引区例如资金投入信号区、资金无风险利率区等组成，上
-#  述所有的表均为固定长度的ndarray方便后续操作
-def backtest_operator(operator: Operator,
+def backtest_operator(op: Operator,
                       trade_price_list: pd.DataFrame,
                       config: dict) -> tuple:
     """本函数接受一个operator对象以及回测运行参数（包括交易价格、资金计划、交易成本率等），根据这些参数
@@ -2318,7 +2272,7 @@ def backtest_operator(operator: Operator,
 
     Parameters
     ----------
-    operator: Operator
+    op: Operator
         用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
     trade_price_list: object HistoryPanel
         完整历史价格清单，数据的频率由freq参数决定
@@ -2334,12 +2288,12 @@ def backtest_operator(operator: Operator,
     - op_list_bt_indices:  交易清单中实际参加回测的行序号
     """
     # 1，检查operator对象是否已经准备好，否则raise error
-    operator.is_ready(raise_error=False)
+    op.is_ready(raise_error=False)
 
-    signal_count = operator.get_signal_count()
+    signal_count = op.get_signal_count()
     # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
-    op_schedule = operator.group_timing_table
-    n_signals = operator.get_signal_count()
+    op_schedule = op.group_timing_table
+    n_signals = op.get_signal_count()
     share_count = len(config['asset_pool'])
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
     from qteasy.config_parser import (
@@ -2370,12 +2324,12 @@ def backtest_operator(operator: Operator,
     trade_price_data = trade_price_list.values
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
-    if operator.check_dynamic_data():
+    if op.check_dynamic_data():
         (own_cashes,
          own_amounts_array,
          trade_records_array,
          trade_cost_array) = backtest_static_operator(
-                op=operator,
+                op=op,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
                 delivery_day_indicators=delivery_day_indicators,
@@ -2398,7 +2352,7 @@ def backtest_operator(operator: Operator,
          own_amounts_array,
          trade_records_array,
          trade_cost_array) = backtest_dynamic_operator(
-                op=operator,
+                op=op,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
                 delivery_day_indicators=delivery_day_indicators,
