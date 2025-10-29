@@ -1777,7 +1777,7 @@ class Trader(object):
         # 读取最新数据,设置operator的数据分配,创建trade_data
         self.send_message(f'preparing trade data...', debug=True)
         hist_op, hist_ref = check_and_prepare_live_trade_data(
-                operator=operator,
+                op=operator,
                 config=config,
                 datasource=self._datasource,
                 live_prices=self.live_price,
