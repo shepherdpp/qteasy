@@ -20,7 +20,6 @@ from qteasy.qt_operator import Operator
 from qteasy._arg_validators import ConfigDict
 
 from qteasy.backtest import (
-    apply_loop,
     process_loop_results,
     _get_complete_hist,
 )

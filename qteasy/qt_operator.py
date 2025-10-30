@@ -512,28 +512,34 @@ class Operator:
         message = [f'Operator readiness:  ']
         is_ready = True
 
+        # 确认operator对象中含有交易策略
         if self.strategy_count == 0:
             message.append(f'No strategy -- add strategies to Operator!\n')
             is_ready = False
 
+        # 确认operator对象所有策略组都设置了混合器
         group_no_blender = [g.name for g in self._groups if g.blender is None]
         if len(group_no_blender) > 0:
             message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
                            f'set!\n')
             is_ready = False
 
+        # 确认operator对象已经设置了数据缓存
         if len(self.data_buffers) == 0 or self.data_buffers is None:
             message.append(f'No data buffer -- data buffers are empty!\n')
             is_ready = False
 
+        # 确认operator对象运行所需的数据窗口已经全部创建好
         if len(self.data_window_views) == 0 or self.data_window_views is None:
             message.append(f'No data window -- data window views are not created!\n')
             is_ready = False
 
+        # 确认operator对象运行数据窗口的数据索引已经创建好
         if len(self.data_window_indices) == 0 or self.data_window_indices is None:
             message.append(f'No data indices -- data window indices are not set!\n')
             is_ready = False
 
+        # 确认operator对象运行数据窗口的数据索引是否合法
         if len(self.data_window_indices) > 0:
             for stg, data_window_indices in self.data_window_indices.items():
                 if not isinstance(data_window_indices, Mapping):
@@ -546,10 +552,12 @@ class Operator:
                                        f'data is not enough to cover start date of backtest!\n')
                         is_ready = False
 
+        # 确认operator对象的运行计划是否已经创建
         if self.group_timing_table is None:
             message.append(f'No group timing table -- group timing table is not created!\n')
             is_ready = False
 
+        # 确认operator对象的运行计划是否创建（group_schedules）
         if self.group_schedules == {} or self.group_schedules is None:
             message.append(f'No group running schedule -- group schedules are not set!\n')
             is_ready = False

@@ -2043,7 +2043,7 @@ def run(op: Operator, **kwargs):
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
         return run_mode_1(
-                operator=op,
+                op=op,
                 config=config,
                 benchmark_data_type=benchmark_data_type,
         )
@@ -2064,10 +2064,10 @@ def run_mode_0():
     raise NotImplementedError
 
 
-def run_mode_1(operator, config, benchmark_data_type):
+def run_mode_1(op, config, benchmark_data_type):
     """ run qteasy in mode 1: back test mode"""
     data_package = get_backtest_data_package(
-            op=operator,
+            op=op,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
@@ -2075,22 +2075,22 @@ def run_mode_1(operator, config, benchmark_data_type):
     cash_plan = get_backtest_invest_cash_plan(config=config)
 
     # 在生成交易信号之前准备运行计划及历史数据
-    operator.prepare_running_schedule(
+    op.prepare_running_schedule(
             start_date=start_date,
             end_date=end_date,
     )
-    operator.prepare_data_buffer(
+    op.prepare_data_buffer(
             start_date=start_date,
             end_date=end_date,
             data_package=data_package,
     )
-    operator.create_data_windows()
+    op.create_data_windows()
 
     # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    operator.is_ready(raise_error=True)
+    op.is_ready(raise_error=True)
 
     # 准备交易价格清单和业绩基准数据（用于执行交易计划）
-    trade_prices = operator.get_trade_price_list(
+    trade_prices = op.get_trade_price_list(
             start_date=start_date,
             end_date=end_date,
     )  # TODO: to be realized
@@ -2106,7 +2106,7 @@ def run_mode_1(operator, config, benchmark_data_type):
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     loop_result = _evaluate_one_parameter(
             par=None,
-            op=operator,
+            op=op,
             trade_price_list=trade_prices,
             benchmark_history_data=hist_benchmark,
             benchmark_history_data_type=benchmark_data_type,
@@ -2281,10 +2281,10 @@ def backtest_operator(op: Operator,
 
     Returns
     -------
-    tuple: (own_amounts, available_amounts, own_cash, available_cash))
-    - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
-    - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
-    - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
+    tuple: (backtest_results, op_log_matrix, op_summary_matrix, op_list_bt_indices))
+    - backtest_results: pd.DataFrame, 回测交易结果，包含回测过程的完整记录
+    - op_log_matrix: pd.DataFrame, 回测交易日志，以易于人类阅读的方式记录的历史交易日志
+    - op_summary_matrix: pd.DataFrame, 回测交易汇总，用汇总的方式记录所有的历史交易
     - op_list_bt_indices:  交易清单中实际参加回测的行序号
     """
     # 1，检查operator对象是否已经准备好，否则raise error
@@ -2295,7 +2295,6 @@ def backtest_operator(op: Operator,
     op_schedule = op.group_timing_table
     n_signals = op.get_signal_count()
     share_count = len(config['asset_pool'])
-    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种索引表
     from qteasy.config_parser import (
         parse_cash_invest_and_delivery_arrays,
         parse_trade_cost_params,
@@ -2303,7 +2302,7 @@ def backtest_operator(op: Operator,
         parse_trading_moq_params,
         parse_trading_delivery_params,
     )
-    # 资金投入和无风险利率
+    # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
     (cash_investment_array,
      cash_inflation_array,
      delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op_schedule)
@@ -2313,22 +2312,22 @@ def backtest_operator(op: Operator,
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
 
+    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种数据记录表
+    # 3.1 现金和股票持仓历史记录表
     own_cashes = np.zeros(shape=(n_signals + 1, share_count))
     own_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
     available_cashes = np.zeros(shape=(n_signals + 1, share_count))
     available_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
-
+    # 3.2 交易过程数据记录表，包括交易记录、交易成本等
     trade_records_array = np.zeros((signal_count, share_count), dtype=float)
     trade_cost_array = np.zeros((signal_count, share_count), dtype=float)
 
+    # 3.3 读取交易价格数据，TODO: 在读取前最好检查其合法性
     trade_price_data = trade_price_list.values
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
     if op.check_dynamic_data():
-        (own_cashes,
-         own_amounts_array,
-         trade_records_array,
-         trade_cost_array) = backtest_static_operator(
+        backtest_static_operator(
                 op=op,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
@@ -2348,10 +2347,7 @@ def backtest_operator(op: Operator,
         )
     # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
     else:
-        (own_cashes,
-         own_amounts_array,
-         trade_records_array,
-         trade_cost_array) = backtest_dynamic_operator(
+        backtest_dynamic_operator(
                 op=op,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
@@ -2371,8 +2367,9 @@ def backtest_operator(op: Operator,
         )
 
     # 6，返回回测结果，包括日期时间索引、持仓数据、现金数据、
-    return (own_amounts_array, available_amounts_array, own_cashes, available_cashes,
-            trade_records_array, trade_cost_array)
+    # TODO: 没有完，上面只是生成了交易过程的现金和持股变化表、交易记录和费用表，但是还需要继续生成其他报表（按需）
+    own_amounts_array, available_amounts_array, own_cashes, available_cashes,
+            trade_records_array, trade_cost_array
 
 
 def backtest_static_operator(
@@ -2398,7 +2395,7 @@ def backtest_static_operator(
         share_count: int,
         cash_delivery_period: int,
         stock_delivery_period: int,
-) -> tuple:
+) -> None:
     """处理operator的交易信号仅包含静态数据类型（不以来交易结果的数据）的情况:
 
     根据输入参数调用operator.run()生成完整的交易信号清单，然后调用backtest_batch_steps()进行回测
@@ -2419,10 +2416,7 @@ def backtest_static_operator(
 
     # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
     from qteasy.backtest import backtest_batch_steps
-    (own_cashes,
-     own_amounts,
-     trade_records_array,
-     trade_cost_array) = backtest_batch_steps(
+    backtest_batch_steps(
             signal_types=stypes,
             op_signals=signals,
             cash_investment_array=cash_investment_array,
@@ -2447,9 +2441,9 @@ def backtest_static_operator(
             stock_delivery_period=stock_delivery_period,
     )
 
-    # 3，返回完整的回测结果清单
+    # 3，完整的回测结果清单已经保存在作为参数传入的几个数组中
 
-    return own_cashes, own_amounts, trade_records_array, trade_cost_array
+    return None
 
 
 def backtest_dynamic_operator(
@@ -2475,7 +2469,7 @@ def backtest_dynamic_operator(
         share_count: int,
         cash_delivery_period: int,
         stock_delivery_period: int,
-):
+) -> None:
     """处理operator的交易信号包含动态数据类型(依赖交易结果的数据类型)的情况:
 
     根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
@@ -2555,7 +2549,6 @@ def backtest_dynamic_operator(
                 trade_prices=trade_price_data[i],
         )
 
-    # 5，返回完整的回测结果清单
-
-    return own_cashes, own_amounts_array, trade_records_array, trade_cost_array
+    # 5，返回None，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
+    return None
 
