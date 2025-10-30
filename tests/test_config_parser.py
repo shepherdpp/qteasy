@@ -20,6 +20,9 @@ from qteasy.config_parser import (
     parse_backtest_cash_plan,
     parse_trade_cost_params,
     parse_cash_invest_and_delivery_arrays,
+    parse_signal_parsing_params,
+    parse_trading_moq_params,
+    parse_trading_delivery_params,
 )
 from qteasy.datatypes import DataType
 from qteasy.trading_util import trade_time_index
@@ -230,7 +233,7 @@ class TestConfigParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_trade_cost_params(config=config)
 
-    def test_parse_investment_and_inflation_arrays(self):
+    def test_parse_investment_and_delivery_arrays(self):
         """ test the function parse_cash_invest_and_delivery_arrays"""
         config = {
             'invest_start':        '20200101',
@@ -244,22 +247,19 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-31',
                 freq='d',
         )
-        investment_array, inflation_array, day_indicators, day_count = parse_cash_invest_and_delivery_arrays(
+        investment_array, inflation_array, day_indicators = parse_cash_invest_and_delivery_arrays(
                 config=config,
                 op_schedule=op_schedule,
         )
         self.assertIsInstance(investment_array, np.ndarray)
         self.assertIsInstance(inflation_array, np.ndarray)
         self.assertIsInstance(day_indicators, np.ndarray)
-        self.assertIsInstance(day_count, np.ndarray)
         print(f'investment_array: {investment_array}')
         print(f'inflation_array: {inflation_array}')
         print(f'day_indicators: {day_indicators}')
-        print(f'day_count: {day_count}')
         self.assertEqual(len(investment_array), len(op_schedule))
         self.assertEqual(len(inflation_array), len(op_schedule))
         self.assertEqual(len(day_indicators), len(op_schedule))
-        self.assertEqual(len(day_count), len(op_schedule))
         # assert investment amounts on specific dates
         self.assertEqual(investment_array[op_schedule.get_loc('2020-01-02')], 10000)
         self.assertEqual(investment_array[op_schedule.get_loc('2020-01-06')], 15000)
@@ -272,8 +272,6 @@ class TestConfigParser(unittest.TestCase):
         self.assertTrue(np.allclose(inflation_array, target_inflation_array, atol=1e-8))
         target_day_indicators = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
         self.assertTrue(np.array_equal(day_indicators, target_day_indicators))
-        target_day_count = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        self.assertTrue(np.array_equal(day_count, target_day_count))
 
         # test op_schedule with hourly frequency
         config = {
@@ -288,22 +286,20 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-10',
                 freq='h',
         )
-        investment_array, inflation_array, day_indicator, day_count = parse_cash_invest_and_delivery_arrays(
+        investment_array, inflation_array, day_indicator= parse_cash_invest_and_delivery_arrays(
                 config=config,
                 op_schedule=op_schedule,
+
         )
         print(f'investment_array (hourly): {investment_array}')
         print(f'inflation_array (hourly): {inflation_array}')
         print(f'day_indicator (hourly): {day_indicator}')
-        print(f'day_count (hourly): {day_count}')
         self.assertIsInstance(investment_array, np.ndarray)
         self.assertIsInstance(inflation_array, np.ndarray)
         self.assertIsInstance(day_indicator, np.ndarray)
-        self.assertIsInstance(day_count, np.ndarray)
         self.assertEqual(len(investment_array), len(op_schedule))
         self.assertEqual(len(inflation_array), len(op_schedule))
         self.assertEqual(len(day_indicator), len(op_schedule))
-        self.assertEqual(len(day_count), len(op_schedule))
         # assert investment amounts on specific dates
         self.assertEqual(investment_array[op_schedule.get_loc('2020-01-02 09:30:00')], 10000)
         self.assertEqual(investment_array[op_schedule.get_loc('2020-01-06 09:30:00')], 15000)
@@ -323,14 +319,353 @@ class TestConfigParser(unittest.TestCase):
                                           1, 0, 0, 0, 0,
                                           1, 0, 0, 0, 0])
         self.assertTrue(np.array_equal(day_indicator, target_day_indicators))
-        # assert day_count values on specific dates
-        target_day_count = np.array([1, 1, 1, 1, 1,
-                                     2, 2, 2, 2, 2,
-                                     3, 3, 3, 3, 3,
-                                     4, 4, 4, 4, 4,
-                                     5, 5, 5, 5, 5,
-                                     6, 6, 6, 6, 6])
-        self.assertTrue(np.array_equal(day_count, target_day_count))
+
+
+class TestParseSignalParsingParams(unittest.TestCase):
+
+    def test_normal_case(self):
+        """测试正常情况下参数解析"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        result = parse_signal_parsing_params(config)
+        expected = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        self.assertEqual(result, expected)
+
+    def test_pt_buy_threshold_type_error(self):
+        """测试pt_buy_threshold类型错误的情况"""
+        config = {
+            'pt_buy_threshold': "invalid",
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_pt_buy_threshold_out_of_range_low(self):
+        """测试pt_buy_threshold低于有效范围的情况"""
+        config = {
+            'pt_buy_threshold': -0.1,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_pt_buy_threshold_out_of_range_high(self):
+        """测试pt_buy_threshold高于有效范围的情况"""
+        config = {
+            'pt_buy_threshold': 1.0,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_pt_sell_threshold_type_error(self):
+        """测试pt_sell_threshold类型错误的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': "invalid",
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_pt_sell_threshold_out_of_range_low(self):
+        """测试pt_sell_threshold低于有效范围的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': -0.1,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_pt_sell_threshold_out_of_range_high(self):
+        """测试pt_sell_threshold高于有效范围的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 1.0,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+
+    def test_long_pos_limit_type_error(self):
+        """测试long_pos_limit类型错误的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': "invalid",
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("long_pos_limit should be a positive float number", str(context.exception))
+
+    def test_long_pos_limit_not_positive(self):
+        """测试long_pos_limit不是正数的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("long_pos_limit should be a positive float number", str(context.exception))
+
+    def test_short_pos_limit_type_error(self):
+        """测试short_pos_limit类型错误的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': "invalid",
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("short_pos_limit should be a negative float number", str(context.exception))
+
+    def test_short_pos_limit_not_negative(self):
+        """测试short_pos_limit不是负数的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': 0,
+            'allow_sell_short': True
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("short_pos_limit should be a negative float number", str(context.exception))
+
+    def test_allow_sell_short_type_error(self):
+        """测试allow_sell_short类型错误的情况"""
+        config = {
+            'pt_buy_threshold': 0.5,
+            'pt_sell_threshold': 0.3,
+            'long_pos_limit': 1.0,
+            'short_pos_limit': -0.5,
+            'allow_sell_short': "invalid"
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_signal_parsing_params(config)
+        self.assertIn("allow_sell_short should be a boolean value", str(context.exception))
+
+
+class TestParseTradingMoqParams(unittest.TestCase):
+    """测试parse_trading_moq_params函数"""
+
+    def test_normal_case_with_positive_integers(self):
+        """TC001: 测试正常情况 - 输入合法的正整数参数"""
+        config = {
+            'trade_batch_size': 100,
+            'sell_batch_size': 50
+        }
+        expected_result = {
+            'moq_buy': 100,
+            'moq_sell': 50
+        }
+        result = parse_trading_moq_params(config)
+        self.assertEqual(result, expected_result)
+
+    def test_normal_case_with_positive_floats(self):
+        """TC002: 测试正常情况 - 输入合法的正浮点数参数"""
+        config = {
+            'trade_batch_size': 100.5,
+            'sell_batch_size': 50.25
+        }
+        expected_result = {
+            'moq_buy': 100.5,
+            'moq_sell': 50.25
+        }
+        result = parse_trading_moq_params(config)
+        self.assertEqual(result, expected_result)
+
+    def test_normal_case_with_mixed_types(self):
+        """TC003: 测试正常情况 - 输入混合整数和浮点数参数"""
+        config = {
+            'trade_batch_size': 100,
+            'sell_batch_size': 50.75
+        }
+        expected_result = {
+            'moq_buy': 100,
+            'moq_sell': 50.75
+        }
+        result = parse_trading_moq_params(config)
+        self.assertEqual(result, expected_result)
+
+    def test_exception_case_moq_buy_negative(self):
+        """TC004: 测试异常情况 - moq_buy为负数"""
+        config = {
+            'trade_batch_size': -100,
+            'sell_batch_size': 50
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_buy should be a positive float number', str(context.exception))
+
+    def test_exception_case_moq_buy_zero(self):
+        """TC005: 测试异常情况 - moq_buy为0"""
+        config = {
+            'trade_batch_size': 0,
+            'sell_batch_size': 50
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_buy should be a positive float number', str(context.exception))
+
+    def test_exception_case_moq_buy_non_numeric(self):
+        """TC006: 测试异常情况 - moq_buy为非数字类型"""
+        config = {
+            'trade_batch_size': 'invalid',
+            'sell_batch_size': 50
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_buy should be a positive float number', str(context.exception))
+
+    def test_exception_case_moq_sell_negative(self):
+        """TC007: 测试异常情况 - moq_sell为负数"""
+        config = {
+            'trade_batch_size': 100,
+            'sell_batch_size': -50
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_sell should be a positive float number', str(context.exception))
+
+    def test_exception_case_moq_sell_zero(self):
+        """TC008: 测试异常情况 - moq_sell为0"""
+        config = {
+            'trade_batch_size': 100,
+            'sell_batch_size': 0
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_sell should be a positive float number', str(context.exception))
+
+    def test_exception_case_moq_sell_non_numeric(self):
+        """TC009: 测试异常情况 - moq_sell为非数字类型"""
+        config = {
+            'trade_batch_size': 100,
+            'sell_batch_size': 'invalid'
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        self.assertIn('moq_sell should be a positive float number', str(context.exception))
+
+
+class TestParseTradingDeliveryParams(unittest.TestCase):
+    """测试 parse_trading_delivery_params 函数"""
+
+    def test_normal_case(self):
+        """测试正常情况：输入有效的非负整数参数"""
+        config = {
+            'cash_delivery_period': 2,
+            'stock_delivery_period': 3
+        }
+        expected = {
+            'cash_delivery_period': 2,
+            'stock_delivery_period': 3
+        }
+        result = parse_trading_delivery_params(config)
+        self.assertEqual(result, expected)
+
+    def test_boundary_values(self):
+        """测试边界值：参数为0的情况"""
+        config = {
+            'cash_delivery_period': 0,
+            'stock_delivery_period': 0
+        }
+        expected = {
+            'cash_delivery_period': 0,
+            'stock_delivery_period': 0
+        }
+        result = parse_trading_delivery_params(config)
+        self.assertEqual(result, expected)
+
+    def test_negative_cash_delivery_period(self):
+        """测试 cash_delivery_period 为负数的情况"""
+        config = {
+            'cash_delivery_period': -1,
+            'stock_delivery_period': 3
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_delivery_params(config)
+        self.assertIn('cash_delivery_period should be a non-negative integer', str(context.exception))
+
+    def test_non_integer_cash_delivery_period(self):
+        """测试 cash_delivery_period 为非整数类型的情况"""
+        config = {
+            'cash_delivery_period': '2',
+            'stock_delivery_period': 3
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_delivery_params(config)
+        self.assertIn('cash_delivery_period should be a non-negative integer', str(context.exception))
+
+    def test_negative_stock_delivery_period(self):
+        """测试 stock_delivery_period 为负数的情况"""
+        config = {
+            'cash_delivery_period': 2,
+            'stock_delivery_period': -1
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_delivery_params(config)
+        self.assertIn('stock_delivery_period should be a non-negative integer', str(context.exception))
+
+    def test_non_integer_stock_delivery_period(self):
+        """测试 stock_delivery_period 为非整数类型的情况"""
+        config = {
+            'cash_delivery_period': 2,
+            'stock_delivery_period': '3'
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_delivery_params(config)
+        self.assertIn('stock_delivery_period should be a non-negative integer', str(context.exception))
+
+    def test_missing_keys(self):
+        """测试缺少必要键的情况"""
+        config = {
+            'cash_delivery_period': 2
+            # 缺少 'stock_delivery_period' 键
+        }
+        with self.assertRaises(KeyError):
+            parse_trading_delivery_params(config)
 
 
 if __name__ == '__main__':
