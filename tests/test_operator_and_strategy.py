@@ -3253,7 +3253,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         print(f'Backtest executed in batch mode, results:\n'
               f'  own cashes: \n{own_cashes}\n'
+              f'  available cashes: \n{available_cashes}\n'
               f'  own amounts: \n{own_amounts}\n'
+              f'  available amounts: \n{available_amounts}\n'
               f'  trade records:\n{trade_records_array}\n'
               f'  trade costs:\n{trade_cost_array}\n')
 
@@ -3261,6 +3263,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
                  5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
                  1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02],
+        )
+        target_available_cashes = np.array(
+                [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
+                 5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
+                 1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02, ]
         )
         target_own_stocks = np.array(
                 [[0., 0., 0.],
@@ -3275,6 +3282,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [13610., 0., 21147.],
                  [13610., 140., 0.],
                  [13720., 15740., 0.]]
+        )
+        target_available_stocks = np.array(
+                [[0., 0., 0.,],
+                 [0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 0., 0],
+                 [0., 0., 0.],
+                 [0., 7710., 10980.],
+                 [8740., 12730., 0.],
+                 [8740., 0., 0.],
+                 [10680., 0., 8340.],
+                 [13610., 0., 21147.],
+                 [13610., 0., 0.],
+                 [13610., 140., 0.,]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
@@ -3304,7 +3325,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
 
         self.assertTrue(np.allclose(target_own_cashes, own_cashes))
+        self.assertTrue(np.allclose(target_available_cashes, available_cashes))
         self.assertTrue(np.allclose(target_own_stocks, own_amounts))
+        self.assertTrue(np.allclose(target_available_stocks, available_amounts))
         self.assertTrue(np.allclose(target_trade_records, trade_records_array))
         self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
@@ -3390,38 +3413,38 @@ class TestOperatorAndStrategy(unittest.TestCase):
             stype = SIGNAL_TYPE_ID[stype]
             is_delivery_day = True if delivery_day_indicators[i] else False
             (
-                own_cashes[i+1],
-                available_cashes[i+1],
-                own_amounts[i+1],
-                available_amounts[i+1],
+                own_cashes[i + 1],
+                available_cashes[i + 1],
+                own_amounts[i + 1],
+                available_amounts[i + 1],
                 trade_records_array[i],
                 trade_cost_array[i],
                 cash_delivery_queue,
                 stock_delivery_queue,
             ) = backtest_step(
-                signal_type=stype,
-                op_signal=signal,
-                cash_inflation=cash_inflation_array[i],
-                is_delivery_day=is_delivery_day,
-                day_num=day_nums[i],
-                own_cash=own_cashes[i],
-                own_amounts=own_amounts[i, :],
-                available_cash=available_cashes[i],
-                available_amounts=available_amounts[i, :],
-                trade_prices=trade_price_data[i, :],
-                cost_params=np.array([0.0001, 0.0001, 5.0, 5.0, 0.]),
-                pt_buy_threshold=0.0,
-                pt_sell_threshold=0.0,
-                long_pos_limit=1.0,
-                short_pos_limit=-1.0,
-                allow_sell_short=False,
-                moq_buy=10.,
-                moq_sell=1.,
-                cash_delivery_queue=cash_delivery_queue,
-                stock_delivery_queue=stock_delivery_queue,
-                cash_delivery_period=0,
-                stock_delivery_period=1,
-                share_count=share_count,
+                    signal_type=stype,
+                    op_signal=signal,
+                    cash_inflation=cash_inflation_array[i],
+                    is_delivery_day=is_delivery_day,
+                    day_num=day_nums[i],
+                    own_cash=own_cashes[i],
+                    own_amounts=own_amounts[i, :],
+                    available_cash=available_cashes[i],
+                    available_amounts=available_amounts[i, :],
+                    trade_prices=trade_price_data[i, :],
+                    cost_params=np.array([0.0001, 0.0001, 5.0, 5.0, 0.]),
+                    pt_buy_threshold=0.0,
+                    pt_sell_threshold=0.0,
+                    long_pos_limit=1.0,
+                    short_pos_limit=-1.0,
+                    allow_sell_short=False,
+                    moq_buy=10.,
+                    moq_sell=1.,
+                    cash_delivery_queue=cash_delivery_queue,
+                    stock_delivery_queue=stock_delivery_queue,
+                    cash_delivery_period=0,
+                    stock_delivery_period=1,
+                    share_count=share_count,
             )
 
             op.prepare_dynamic_data_buffer(
@@ -3432,7 +3455,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         print(f'Backtest executed in stepwise mode, results:\n'
               f'  own cashes: \n{own_cashes}\n'
+              f'  available cashes: \n{available_cashes}\n'
               f'  own amounts: \n{own_amounts}\n'
+              f'  available amounts: \n{available_amounts}\n'
               f'  trade records:\n{trade_records_array}\n'
               f'  trade costs:\n{trade_cost_array}\n')
 
@@ -3440,6 +3465,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
                  5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
                  1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02],
+        )
+        target_available_cashes = np.array(
+                [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
+                 5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
+                 1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02, ]
         )
         target_own_stocks = np.array(
                 [[0., 0., 0.],
@@ -3454,6 +3484,20 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [13610., 0., 21147.],
                  [13610., 140., 0.],
                  [13720., 15740., 0.]]
+        )
+        target_available_stocks = np.array(
+                [[0., 0., 0.,],
+                 [0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 0., 0],
+                 [0., 0., 0.],
+                 [0., 7710., 10980.],
+                 [8740., 12730., 0.],
+                 [8740., 0., 0.],
+                 [10680., 0., 8340.],
+                 [13610., 0., 21147.],
+                 [13610., 0., 0.],
+                 [13610., 140., 0.,]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
@@ -3483,7 +3527,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
 
         self.assertTrue(np.allclose(target_own_cashes, own_cashes))
+        self.assertTrue(np.allclose(target_available_cashes, available_cashes))
         self.assertTrue(np.allclose(target_own_stocks, own_amounts))
+        self.assertTrue(np.allclose(target_available_stocks, available_amounts))
         self.assertTrue(np.allclose(target_trade_records, trade_records_array))
         self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
@@ -3516,12 +3562,14 @@ class TestOperatorAndStrategy(unittest.TestCase):
         large_close = pd.DataFrame(
                 np.random.randint(10, size=(69792, share_count)).astype(float) + 30,
                 columns=[f's_{i}' for i in range(share_count)],
-                index=tti(start='2020-01-01', end='2025-12-31', freq='5min', include_start_am=False, include_start_pm=False)
+                index=tti(start='2020-01-01', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
         )
         large_ref = pd.DataFrame(
                 np.random.randint(10, size=(1477, 1)).astype(float) + 100,
                 columns=['ref'],
-                index=tti(start='2019-12-01', end='2025-12-31', freq='d', include_start_am=False, include_start_pm=False)
+                index=tti(start='2019-12-01', end='2025-12-31', freq='d', include_start_am=False,
+                          include_start_pm=False)
         )
         data_buffer = {
             'close_E_d':   large_close,
@@ -3541,7 +3589,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         trade_price_data = pd.DataFrame(
                 np.random.randint(10, size=(signal_count, share_count)).astype(float) + 30,
                 columns=[f's_{i}' for i in range(share_count)],
-                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False, include_start_pm=False)
+                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
         )
         print(f'created random trade price data of shape {trade_price_data.shape}\n'
               f'starting from {trade_price_data.index[0]} to {trade_price_data.index[-1]}\n,'
@@ -3567,8 +3616,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
             signal_index += 1
         et = time.time()
 
-        print(f'Generated {op.get_signal_count()} trading signals in {et-st:.6f} seconds\n')
-        self.assertLessEqual(et-st, 8.0)  # 交易信号生成时间不超过8秒
+        print(f'Generated {op.get_signal_count()} trading signals in {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 8.0)  # 交易信号生成时间不超过8秒
 
         # 准备交易数据
 
@@ -3614,8 +3663,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 stock_delivery_period=1,
         )
         et = time.time()
-        print(f'Backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n')
-        self.assertLessEqual(et-st, 5.0)  # 回测时间不超过5秒
+        print(f'Backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 5.0)  # 回测时间不超过5秒
 
         # 重复运行十次以精确测算回测的速度
         print(f'Now repeating the backtest 10 times to measure speed...\n')
@@ -3647,9 +3696,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
                     stock_delivery_period=1,
             )
         et = time.time()
-        print(f'10 times backtest executed for {op.get_signal_count()} signals in {et-st:.6f} seconds\n'
-              f'average {((et-st)/10):.6f} seconds per backtest\n')
-        self.assertLessEqual(et-st, 30.0)  # 单次平均回测时间不超过3秒
+        print(f'10 times backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n'
+              f'average {((et - st) / 10):.6f} seconds per backtest\n')
+        self.assertLessEqual(et - st, 30.0)  # 单次平均回测时间不超过3秒
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
