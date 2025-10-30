@@ -695,7 +695,7 @@ class TestGenStg(GeneralStg):
         super().__init__(
                 name='test_gen',
                 description='test general strategy',
-                pars=[param1, param2],
+                pars=[param1.copy(), param2.copy()],
                 data_types={'close_E_d': dtype_1, 'close_E_h': dtype_2},
                 use_latest_data_cycle=[False, False],
                 window_length=[4, 5],
@@ -750,7 +750,7 @@ class TestFactorSorter(FactorSorter):
         super().__init__(
                 name='test_factor_sorter',
                 description='test factor sorter strategy',
-                pars=[param1, param2],
+                pars=[param1.copy(), param2.copy()],
                 data_types={'close_E_d': dtype_1, 'close_E_w': dtype_5},
                 use_latest_data_cycle=[True, False],
                 window_length=[3, 1],
@@ -801,7 +801,7 @@ class TestRuleIter(RuleIterator):
         super().__init__(
                 name='test_rule_iterator',
                 description='test rule iterator strategy',
-                pars=[param3, param4],
+                pars=[param3.copy(), param4.copy()],
                 data_types={'close_E_h': dtype_2, 'close_E_15min': dtype_4},
                 use_latest_data_cycle=[True, False],
                 window_length=[5, 20],
@@ -3251,7 +3251,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 stock_delivery_period=1,
         )
 
-        print(f'Backtest executed, results:\n'
+        print(f'Backtest executed in batch mode, results:\n'
               f'  own cashes: \n{own_cashes}\n'
               f'  own amounts: \n{own_amounts}\n'
               f'  trade records:\n{trade_records_array}\n'
@@ -3308,10 +3308,36 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(target_trade_records, trade_records_array))
         self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
+    def test_operator_run_and_execute_stepwise(self):
         # 开始测试operator run/execute 使用stepwise模式（逐步创建交易信号并逐步回测，
         # 每次回测后更新operator的数据，因为operator的运行依赖回测数据）
 
         # 初始化一个新的operator对象，生成一个需要依赖性数据的交易策略
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-12',
+                end_date='2023-02-3',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        # prepare data buffer
+        data_buffer = {
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
+        )
+
+        # 开始测试operator run/execute 使用stepwise模式（生成一组交易信号并生成一组结果，循环执行直到生成全部结果）
+        op.create_data_windows()
 
         # 重新准备交易数据
         trade_price_data = trade_price_d_df.values
@@ -3330,8 +3356,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         own_cashes = np.zeros((signal_count + 1,), dtype=float)
         available_cashes = np.zeros((signal_count + 1,), dtype=float)
-        own_amounts_array = np.zeros((signal_count + 1, share_count), dtype=float)
-        available_amounts_array = np.zeros((signal_count + 1, share_count), dtype=float)
+        own_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
+        available_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
 
         cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
                 cash_delivery_period=0,
@@ -3366,8 +3392,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
             (
                 own_cashes[i+1],
                 available_cashes[i+1],
-                own_amounts_array[i+1],
-                available_amounts_array[i+1],
+                own_amounts[i+1],
+                available_amounts[i+1],
                 trade_records_array[i],
                 trade_cost_array[i],
                 cash_delivery_queue,
@@ -3394,7 +3420,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 cash_delivery_queue=cash_delivery_queue,
                 stock_delivery_queue=stock_delivery_queue,
                 cash_delivery_period=0,
-                stock_delivery_period=2,
+                stock_delivery_period=1,
                 share_count=share_count,
             )
 
@@ -3403,6 +3429,63 @@ class TestOperatorAndStrategy(unittest.TestCase):
                     trade_costs=trade_cost_array[i],
                     trade_prices=trade_price_data[i],
             )
+
+        print(f'Backtest executed in stepwise mode, results:\n'
+              f'  own cashes: \n{own_cashes}\n'
+              f'  own amounts: \n{own_amounts}\n'
+              f'  trade records:\n{trade_records_array}\n'
+              f'  trade costs:\n{trade_cost_array}\n')
+
+        target_own_cashes = np.array(
+                [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,
+                 5.10647800e+05, 3.52976020e+02, 2.85365272e+05, 4.38414425e+05,
+                 1.35201770e+02, 5.36354177e+03, 5.57981967e+05, 4.26865131e+02],
+        )
+        target_own_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 15380., 0.],
+                 [13300., 0., 0.],
+                 [0., 7710., 10980.],
+                 [8740., 12730., 10980.],
+                 [8740., 12730., 0.],
+                 [10680., 0., 8340.],
+                 [13610., 0., 21350.],
+                 [13610., 0., 21147.],
+                 [13610., 140., 0.],
+                 [13720., 15740., 0.]]
+        )
+        target_trade_records = np.array(
+                [[13300., 15380., 0.],
+                 [0., 0., 0.],
+                 [0., -15380., 0.],
+                 [-13300., 7710., 10980.],
+                 [8740., 5020., 0.],
+                 [0., 0., -10980.],
+                 [1940., -12730., 8340.],
+                 [2930., 0., 13010.],
+                 [0., 0., -203.],
+                 [0., 140., -21147.],
+                 [110., 15600., 0.]],
+        )
+        target_fees = np.array(
+                [[49.9814, 49.985, 0.],
+                 [0., 0., 0.],
+                 [0., 52.5996, 0.],
+                 [51.0454, 26.2911, 26.2971],
+                 [33.9112, 17.11318, 0.],
+                 [0., 0., 28.50408],
+                 [7.55048, 43.82939, 20.96676],
+                 [11.44165, 0., 32.38189],
+                 [0., 0., 5.],
+                 [0., 5., 55.764639],
+                 [5., 55.302, 0.]],
+        )
+
+        self.assertTrue(np.allclose(target_own_cashes, own_cashes))
+        self.assertTrue(np.allclose(target_own_stocks, own_amounts))
+        self.assertTrue(np.allclose(target_trade_records, trade_records_array))
+        self.assertTrue(np.allclose(target_fees, trade_cost_array))
 
     def test_operator_run_and_execute_with_large_data_set_for_speed(self):
         """ 使用一个随机生成的超大数据集(近7万行，1000列）测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
