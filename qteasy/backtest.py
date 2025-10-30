@@ -580,7 +580,7 @@ def backtest_batch_steps(
         moq_sell: float,
         cash_delivery_period: int,
         stock_delivery_period: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> None:
     """批量处理多次交易的回测计算
 
     输入数据为整个交易过程的交易信号、交易价格、初始持仓和现金等完整的持仓表，
@@ -641,15 +641,14 @@ def backtest_batch_steps(
 
     Returns
     -------
-    tuple: (own_cashes, own_amounts_array, trade_records_array, trade_cost_array)
-        own_cashes: np.ndarray
-            最终持有现金清单，完整记录整个回测过程中的持有现金
-        own_amounts_array: np.ndarray
-            最终持有资产清单，完整记录整个回测过程中的持有资产
-        trade_records_array: np.ndarray
-            交易记录清单，完整记录整个回测过程中的每只股票的买卖数量记录
-        trade_cost_array: np.ndarray
-            交易费用清单，完整记录整个回测过程中的交易费用
+    None,
+    交易的结果会被填充到传入的数组中
+        own_cashes: 最终持有现金清单，完整记录整个回测过程中的持有现金变动情况
+        available_cashes: 可用现金清单，完整记录整个回测过程中的可用现金变动情况
+        own_amounts_array: 最终持有资产清单，完整记录整个回测过程中的持有资产变动情况
+        available_amounts_array: 可用资产清单，完整记录整个回测过程中的可用资产变动情况
+        trade_records_array: 交易记录清单，完整记录整个回测过程中的每只股票的买卖数量记录
+        trade_cost_array: 交易费用清单，完整记录整个回测过程中的交易费用
 
     """
 
@@ -715,10 +714,10 @@ def backtest_batch_steps(
             cash_delivery_period=cash_delivery_period,
             stock_delivery_period=stock_delivery_period,
             share_count=share_count,
-        )  # TODO: 这里可以把从cost_params到stock_delivery_queue的参数都打包成一个结构体传递，减少参数数量
+        )
 
     # 完成全部交易信号的处理后，输出最终的持有现金清单、持有资产清单和交易费用清单
-    return own_cashes, own_amounts_array, trade_records_array, trade_cost_array
+    return None
 
 
 def _get_complete_hist(looped_value: pd.DataFrame,
