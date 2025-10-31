@@ -2368,8 +2368,7 @@ def backtest_operator(op: Operator,
 
     # 6，返回回测结果，包括日期时间索引、持仓数据、现金数据、
     # TODO: 没有完，上面只是生成了交易过程的现金和持股变化表、交易记录和费用表，但是还需要继续生成其他报表（按需）
-    own_amounts_array, available_amounts_array, own_cashes, available_cashes,
-            trade_records_array, trade_cost_array
+    pass
 
 
 def backtest_static_operator(

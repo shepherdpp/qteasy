@@ -208,11 +208,11 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(gp.name, 'new_group')
         self.assertEqual(gp.run_freq, None)
         self.assertEqual(gp.run_timing, None)
-        self.assertEqual(gp.signal_type, 'PS')
+        self.assertEqual(gp.signal_type, 'ps')
 
         # test creating groups with different parameters
         gp = Group(name='name', blender='s1 + s2')
-        self.assertEqual(gp.signal_type, 'PT')
+        self.assertEqual(gp.signal_type, 'pt')
         self.assertEqual(gp.members, [])
 
         # test creating groups with wrong parameters

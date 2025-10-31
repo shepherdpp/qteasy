@@ -335,8 +335,6 @@ def _evaluate_one_parameter(par,
     perf_list = []
     price_priority_list = op.get_bt_price_type_id_in_priority(priority=config.price_priority_OHLC)
     trade_cost = set_cost(
-            buy_fix=config.cost_fixed_buy,
-            sell_fix=config.cost_fixed_sell,
             buy_rate=config.cost_rate_buy,
             sell_rate=config.cost_rate_sell,
             buy_min=config.cost_min_buy,

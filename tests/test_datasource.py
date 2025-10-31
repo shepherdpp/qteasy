@@ -1728,7 +1728,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(next_main_freq('m', 'up'), 'W')
         self.assertEqual(next_main_freq('w', 'down'), 'ME')
         self.assertEqual(next_main_freq('m', 'down'), 'QE')
-        self.assertEqual(next_main_freq('d', 'down'), 'W')
+        self.assertEqual(next_main_freq('d', 'down'), 'w')
         self.assertEqual(next_main_freq('15min', 'down'), '30min')
         self.assertEqual(next_main_freq('30min', 'down'), 'h')
 

@@ -2314,6 +2314,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'sell_batch_size':   1.,
             'long_position_limit':  1.0,
             'short_position_limit': -1.0,
+            'cost_rade_buy': 0.0,
+            'cost_rate_sell': 0.0,
+            'cost_min_buy': 0.0,
+            'cost_min_sell': 0.0,
+            'slipage': 0.0,
         }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
