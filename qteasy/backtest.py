@@ -5,21 +5,16 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-03-12
 # Desc:
-#   Functions used for backtesting and
-# evaluation of trade results
+#   Functions used for backtesting.
 # ======================================
 
 import os
 import pandas as pd
 import numpy as np
-from numba import njit  # try taichi, which might be even faster
+from numba import njit
 from typing import Any, Union
 
 from numpy import bool_, dtype, ndarray
-
-import qteasy
-from qteasy.history import HistoryPanel
-from qteasy.qt_operator import Operator
 
 from qteasy.finance import (
     get_selling_result,
@@ -150,8 +145,6 @@ def backtest_step(
     if cash_inflation > 1.:
         own_cash *= cash_inflation
         available_cash *= cash_inflation
-        # DEBUG:
-        # print(f'- cash inflation applied: {cash_inflation}, new own_cash = {own_cash}\n')
 
     # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
     cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
@@ -171,11 +164,6 @@ def backtest_step(
             moq_buy=moq_buy,
             moq_sell=moq_sell
     )
-    # DEBUG:
-    # print(f'- Calculated trade results for the end of step: \n'
-    #       f'  cash_gained = {cash_gained}, cash_spent = {cash_spent}\n'
-    #       f'  amount_purchased = {amount_purchased}, amount_sold = {amount_sold}\n'
-    #       f'  fees = {fees}\n')
 
     # 3，处理现金变动和持仓变动的交割，输出交割数据
     new_cash = cash_gained.sum()
@@ -190,11 +178,6 @@ def backtest_step(
             stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
-    # DEBUG:
-    # print(f'- processed delivery at end of step: \n'
-    #       f'  delivered_cash = {delivered_cash}, delivered_stocks = {delivered_stocks}, \n'
-    #       f'  cash_delivery_queue = {cash_delivery_queue}, \n'
-    #       f'  stock_delivery_queue = {stock_delivery_queue}, \n')
 
     # 4, 更新持有现金和可用现金
     next_own_cash = own_cash + cash_gained.sum() + cash_spent.sum()
@@ -202,17 +185,6 @@ def backtest_step(
     # 更新持有资产和可用资产
     next_own_amounts = own_amounts + amount_purchased + amount_sold
     next_available_amounts = available_amounts + delivered_stocks + amount_sold
-
-    # DEBUG:
-    # print(f'- updated holdings at end of step: \n'
-    #       f'  next_own_cash({next_own_cash}) = own_cash({own_cash}) + cash_gained({cash_gained.sum()}) + '
-    #       f'cash_spent({cash_spent.sum()})\n'
-    #       f'  next_available_cash({next_available_cash}) = available_cash({available_cash}) + '
-    #       f'delivered_cash({delivered_cash}) + cash_spent({cash_spent.sum()})\n'
-    #       f'  next_own_amounts({next_own_amounts}) = own_amounts({own_amounts}) + '
-    #       f'amount_purchased({amount_purchased}) + amount_sold({amount_sold})\n'
-    #       f'  next_available_amounts({next_available_amounts}) = available_amounts({available_amounts}) + '
-    #       f'delivered_stocks({delivered_stocks}) + amount_sold({amount_sold})\n')
 
     # 5, 记录交易记录和交易费用
     current_trade_records = amount_purchased + amount_sold
@@ -532,13 +504,6 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
     cash_delivery_pos = (day_num + 1) % (cash_delivery_period + 1)
     stock_delivery_pos = (day_num + 1) % (stock_delivery_period + 1)
 
-    # if is_new_day:
-    #     cash_delivery_queue[cash_in_pos] = new_cash
-    #     stock_delivery_queue[stock_in_pos, :] = new_stocks
-    # else:
-    #     cash_delivery_queue[cash_in_pos] += new_cash
-    #     stock_delivery_queue[stock_in_pos, :] += new_stocks
-
     if is_new_day or cash_delivery_period == 0:
         cash_delivery_queue[cash_in_pos] = new_cash
         cash_delivered = cash_delivery_queue[cash_delivery_pos]
@@ -647,18 +612,14 @@ def backtest_batch_steps(
         available_cashes: 可用现金清单，完整记录整个回测过程中的可用现金变动情况
         own_amounts_array: 最终持有资产清单，完整记录整个回测过程中的持有资产变动情况
         available_amounts_array: 可用资产清单，完整记录整个回测过程中的可用资产变动情况
-        trade_records_array: 交易记录清单，完整记录整个回测过程中的每只股票的买卖数量记录
+        trade_records_array: 交易记录清单，完整记录整个回测过程中的每只股票的买卖数量变动记录
         trade_cost_array: 交易费用清单，完整记录整个回测过程中的交易费用
 
     """
 
     signal_count = op_signals.shape[0]
     share_count = op_signals.shape[1]
-    # print(f'backtest started, total {signal_count} steps to process, got {share_count} shares in total\n'
-    #       f'initial prices, cashes and stocks: \n'
-    #       f'trade prices = \n{trade_prices}\n'
-    #       f'own_cash = \n{own_cashes}\nown_amounts = \n{own_amounts_array} \n')
-
+    # 初始化现金和股票交割队列以及交割日计数器
     cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
             cash_delivery_period=cash_delivery_period,
             stock_delivery_period=stock_delivery_period,
@@ -668,21 +629,15 @@ def backtest_batch_steps(
 
     # 开始循环处理op_signal中的每一条交易信号，获取其signal_type，执行下列步骤：
     for i in range(signal_count):
-
-        # print(f'Processing step {i}/{signal_count}, signal_type = {signal_types[i]}, '
-        #       f'op_signal = {op_signals[i]}\n'
-        #       f'trade_prices = {trade_prices[i]}\n')
-
+        # 如果当期有现金投资，则更新持有现金和可用现金
         cash_investment = cash_investment_array[i]
         if cash_investment > 0:
             own_cashes[i] += cash_investment
             available_cashes[i] += cash_investment
-            # DEBUG:
-            # print(f'- cash investment added: {cash_investment}, new own_cash = {own_cashes[i]},'
-            #       f' new available_cash = {available_cashes[i]}\n')
 
         is_delivery_day = bool(delivery_day_indicators[i])
 
+        # 调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
         (own_cashes[i+1],
          available_cashes[i+1],
          own_amounts_array[i+1],
@@ -720,105 +675,169 @@ def backtest_batch_steps(
     return None
 
 
-def _get_complete_hist(looped_value: pd.DataFrame,
-                       h_list: HistoryPanel,
-                       benchmark_list: pd.DataFrame,
-                       with_price: bool = False) -> pd.DataFrame:
-    """完成历史交易回测后，填充完整的历史资产总价值清单，
-        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.benchmark_asset
-
-    Parameters
-    ----------
-    looped_value: pd.DataFrame
-        完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
-    h_list: pd.DataFrame
-        完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-    benchmark_list: pd.DataFrame
-        参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
-    with_price: boolean, default False
-        True时在返回的清单中包含历史价格，否则仅返回资产总价值
-
-    Returns
-    -------
-    looped_value: pd.DataFrame:
-    重新填充的完整历史交易日资产总价值清单，包含以下列：
-    - [share-x]:        多列，每种投资产品的持有份额数量
-    - cash:             期末现金金额
-    - fee:              当期交易费用（交易成本）
-    - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
+# 生成最基本的交易结果数据，以便用于结果的评价，
+def calculate_backtest_total_values(
+        trade_prices: np.ndarray,
+        own_cashes: np.ndarray,
+        own_amounts_array: np.ndarray,
+) -> np.ndarray:
+    """ 根据回测的结果，计算每个交易期间的总资产价值，可用于评价交易结果
     """
-    # 获取价格清单中的投资产品列表
-    shares = h_list.shares  # 获取资产清单
-    try:
-        start_date = looped_value.index[0]  # 开始日期
-    except:
-        raise IndexError('index 0 is out of bounds for axis 0 with size 0')
-    looped_history = h_list.segment(start_date)  # 回测历史数据区间 = [开始日期:]
-    # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
-    # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
-    hdates = looped_history.hdates
-    purchased_shares = looped_value[shares].reindex(hdates, method='ffill').fillna(0)
-    cashes = looped_value['cash'].reindex(hdates, method='ffill').fillna(0)
-    fees = looped_value['fee'].reindex(hdates).fillna(0)
-    looped_value = looped_value.reindex(hdates)
-    # 这里采用了一种看上去貌似比较奇怪的处理方式：
-    # 先为cashes、purchased_shares两个变量赋值，
-    # 然后再将上述两个变量赋值给looped_values的列中
-    # 这样看上去好像多此一举，为什么不能直接赋值，然而
-    # 经过测试，如果直接用下面的代码直接赋值，将无法起到
-    # 填充值的作用：
-    # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
-    looped_value[shares] = purchased_shares
-    looped_value.cash = cashes
-    looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
-    looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
-    # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
-    decisive_prices = looped_history[-1].squeeze(axis=2).T
-    looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
-    if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
-        share_price_column_names = [name + '_p' for name in shares]
-        looped_value[share_price_column_names] = looped_history[shares]
-    return looped_value
+    total_values = (trade_prices * own_amounts_array).sum(axis=1) + own_cashes
+    return total_values
 
 
-def process_loop_results(operator,
-                         loop_results=None,
-                         op_log_matrix=None,
-                         op_summary_matrix=None,
-                         op_list_bt_indices=None,
-                         trade_log=False,
-                         bt_price_priority_ohlc: str = 'OHLC'):
-    """ 接受apply_loop函数传回的计算结果，生成DataFrame型交易模拟结果数据，保存交易记录，并返回结果供下一步处理
-
-    Parameters
-    ----------
-    operator: Operator
-        交易操作对象
-    loop_results: tuple, optional
-        apply_loop函数返回的计算结果
-    op_log_matrix: np.ndarray, optional
-        交易记录矩阵，记录了模拟交易过程中每一笔交易的详细信息
-    op_summary_matrix: np.ndarray, optional
-        交易汇总矩阵，记录了模拟交易过程中每一笔交易的汇总信息
-    op_list_bt_indices: list, optional
-        交易记录矩阵中的交易日期索引
-    trade_log: bool, optional, default False
-        是否保存交易记录，默认为False
-    bt_price_priority_ohlc: str, optional, default 'OHLC'
-        交易记录中的价格优先级，可选'OHLC'、'HLOC'、'LOCH'、'LCOH'、'COHL'、'COLH'
+def create_value_records(
+        shares: list[str],
+        trade_datetimes: pd.Index,
+        own_cashes: np.ndarray,
+        own_amounts_array: np.ndarray,
+        trade_prices: np.ndarray,
+) -> pd.DataFrame:
+    """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式，并且可以保存为csv文件
 
     Returns
     -------
     value_history: pd.DataFrame
         交易模拟结果数据
     """
+
+    # 将向量化计算结果转化回DataFrame格式
+    values = calculate_backtest_total_values(
+            trade_prices=trade_prices,
+            own_cashes=own_cashes,
+            own_amounts_array=own_amounts_array,
+    )
+    value_history = pd.DataFrame(own_amounts_array,
+                                 index=trade_datetimes,
+                                 columns=shares)
+    # 填充标量计算结果
+    value_history['cash'] = own_cashes
+    value_history['value'] = values
+
+    return value_history
+
+
+# 根据回测结果生成交易日志，包含更加完整的交易记录，输出内容为DataFrame格式，并且可以保存为csv文件
+def create_trade_logs(
+        shares: list[str],
+        trade_datetimes: pd.DatetimeIndex,
+        trade_signals: np.ndarray,
+        trade_prices: np.ndarray,
+        cash_investment_array: np.ndarray,
+        own_cashes: np.ndarray,
+        available_cashes: np.ndarray,
+        own_amounts_array: np.ndarray,
+        available_amounts_array: np.ndarray,
+        trade_records_array: np.ndarray,
+        trade_cost_array: np.ndarray,
+        save_to_file_path: Union[str, None] = None,
+) -> pd.DataFrame:
+    """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
+    - 每一个交易期间包含8行数据，分别为：
+        '0, trade signal', 每一支股票的当期交易信号
+        '1, price', 每一支股票的当期交易价格
+        '2, traded amounts', 每一支股票的当期交易数量，如果没有交易则为0
+        '3, cash changed', 每一支股票的当期现金变动金额，买入为负数，卖出为正数
+        '4, trade cost', 每一支股票的当期交易费用
+        '5, own amounts', 每一支股票的当期末持有数量
+        '6, available amounts', 每一支股票的当期末可用数量
+        '7, summary', 当期每一支股票的持仓价值，同时包含汇总数据：当期末持有现金、可用现金、总资产价值
+    - 交易日志文件可以被保存为csv格式，文件名为'trade_log.csv'
+
+    Parameters
+    ----------
+    shares: list[str]
+        交易标的列表
+    trade_datetimes: pd.DatetimeIndex
+        交易时间索引
+    trade_signals: np.ndarray
+        交易信号矩阵
+    trade_prices: np.ndarray
+        交易价格矩阵
+    own_cashes: np.ndarray
+        持有现金数组
+    available_cashes: np.ndarray
+        可用现金数组
+    own_amounts_array: np.ndarray
+        持有资产矩阵
+    available_amounts_array: np.ndarray
+        可用资产矩阵
+    trade_records_array: np.ndarray
+        交易记录矩阵
+    trade_cost_array: np.ndarray
+        交易费用矩阵
+
+    Returns
+    -------
+    value_history: pd.DataFrame
+        交易模拟结果数据
+    """
+
+    # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
+    from qteasy import logger_core
+    trade_signal_df = pd.DataFrame(trade_signals, index=trade_datetimes, columns=shares)
+    trade_price_df = pd.DataFrame(trade_prices, index=trade_datetimes, columns=shares)
+    own_amounts_df = pd.DataFrame(own_amounts_array[1:], index=trade_datetimes, columns=shares)
+    available_amounts_df = pd.DataFrame(available_amounts_array[1:], index=trade_datetimes, columns=shares)
+    trade_records_df = pd.DataFrame(trade_records_array, index=trade_datetimes, columns=shares)
+    trade_cost_df = pd.DataFrame(trade_cost_array, index=trade_datetimes, columns=shares)
+    amounts_value_df = pd.DataFrame(trade_price_df * own_amounts_df[1:], index=trade_datetimes, columns=shares)
+
+    combined = pd.concat(
+            objs=[trade_signal_df,
+                  trade_price_df,
+                  trade_records_df,
+                  trade_cost_df,
+                  own_amounts_df,
+                  available_amounts_df,
+                  amounts_value_df, ],
+            keys=['0, trade signal',
+                  '1, price',
+                  '2, traded amounts',
+                  '4, trade cost',
+                  '5, own amounts',
+                  '6, available amounts',
+                  '7, summary'],
+    )
+    combined = combined.reorder_levels([1, 0]).sort_index(level=0)
+
+    # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
+    add_investments = pd.Series(cash_investment_array, index=trade_datetimes, name='add. invest')
+    own_cash_series = pd.Series(own_cashes[1:], index=trade_datetimes, name='own cash')
+    available_cash_series = pd.Series(available_cashes[1:], index=trade_datetimes, name='available cash')
+    total_values = calculate_backtest_total_values(
+            trade_prices=trade_prices,
+            own_cashes=own_cashes[1:],
+            own_amounts_array=own_amounts_array[1:],
+    )
+    total_value_series = pd.Series(total_values, index=trade_datetimes, name='value')
+    summary_df = pd.concat(
+            objs=[add_investments,
+                  own_cash_series,
+                  available_cash_series,
+                  total_value_series],
+            axis=1,
+    )
+
+    trade_log_df = summary_df.join(combined, how='right', sort=False)
+
+    return trade_log_df
+
+
+# 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
+def create_trade_summary(
+        shares: list[str],
+) -> pd.DataFrame:
+    """
+    """
+    raise NotImplementedError
     from qteasy import logger_core
     amounts_matrix, cashes, fees, values = loop_results
     shares = operator.op_list_shares
     complete_loop_dates = operator.op_list_hdates
     looped_dates = [complete_loop_dates[item] for item in op_list_bt_indices]
-
-    price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
+    trade_times = looped_dates.time()
 
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=looped_dates,
@@ -835,7 +854,6 @@ def process_loop_results(operator,
         logger_core.info(f'generating complete trading log ...')
         op_log_index = pd.MultiIndex.from_product(
                 [looped_dates,
-                 price_types_in_priority,
                  ['0, trade signal',
                   '1, price',
                   '2, traded amounts',
@@ -844,19 +862,19 @@ def process_loop_results(operator,
                   '5, own amounts',
                   '6, available amounts',
                   '7, summary']],
-                names=('date', 'trade_on', 'item')
+                names=('date', 'time', 'item')
         )
         op_sum_index = pd.MultiIndex.from_product(
                 [looped_dates,
-                 price_types_in_priority,
                  ['7, summary']],
-                names=('date', 'trade_on', 'item')
+                names=('date', 'trade_time', 'item')
         )
         op_log_columns = [str(s) for s in shares]
         op_log_df = pd.DataFrame(op_log_matrix, index=op_log_index, columns=op_log_columns)
         op_summary_df = pd.DataFrame(op_summary_matrix,
                                      index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
+        # 移除对qteasy的依赖
         log_file_path_name = os.path.join(qteasy.QT_TRADE_LOG_PATH, 'trade_log.csv')
         op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name, encoding='utf-8')
 

@@ -16,23 +16,20 @@ from anyio.lowlevel import cancel_shielded_checkpoint
 import qteasy as qt
 import pandas as pd
 import numpy as np
-from unittest.mock import patch, MagicMock
 
 from qteasy.finance import get_cost_params
 from qteasy.backtest import (
-    process_loop_results,
+    create_value_records,
+    calculate_backtest_total_values,
+    calculate_trade_results,
     initialize_backtest_delivery_queue,
     process_backtest_delivery,
-    calculate_trade_results,
-    backtest_step,
-    backtest_batch_steps,
 )
 
 from qteasy.history import (
     stack_dataframes,
     dataframe_to_hp,
 )
-from qteasy.tsfuncs import cashflow
 
 
 class TestBacktest(unittest.TestCase):
@@ -4154,6 +4151,101 @@ class TestBacktest(unittest.TestCase):
         """ test the function backtest_batch_steps() with a simple case """
         print('this test is not implemented yet!')
         pass
+
+
+class TestCreateValueRecords(unittest.TestCase):
+
+    def setUp(self):
+        """准备测试所需的基础数据"""
+        self.shares = ['AAPL', 'GOOG']
+        self.trade_datetimes = pd.DatetimeIndex(pd.to_datetime(['2023-01-01', '2023-01-02']))
+        self.own_cashes = np.array([1000.0, 1500.0])
+        self.own_amounts_array = np.array([[10, 5], [12, 6]])  # 每天两只股票的持仓量
+        self.trade_prices = np.array([[150.0, 2000.0], [155.0, 2100.0]])  # 每天两只股票的价格
+
+    def test_normal_case(self):
+        """测试正常情况下能否正确创建 DataFrame"""
+        result_df = create_value_records(
+                shares=self.shares,
+                trade_datetimes=self.trade_datetimes,
+                own_cashes=self.own_cashes,
+                own_amounts_array=self.own_amounts_array,
+                trade_prices=self.trade_prices
+        )
+        print(f'Resulting DataFrame:\n{result_df}')
+
+        # 验证列名是否正确
+        expected_columns = ['AAPL', 'GOOG', 'cash', 'value']
+        self.assertListEqual(list(result_df.columns), expected_columns)
+
+        # 验证索引是否正确
+        pd.testing.assert_index_equal(result_df.index, self.trade_datetimes)
+
+        # 验证各列的值是否正确
+        pd.testing.assert_series_equal(result_df['AAPL'], pd.Series([10, 12], index=self.trade_datetimes, name='AAPL'))
+        pd.testing.assert_series_equal(result_df['GOOG'], pd.Series([5, 6], index=self.trade_datetimes, name='GOOG'))
+        pd.testing.assert_series_equal(result_df['cash'],
+                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
+
+        # 验证value列计算是否正确
+        expected_values = calculate_backtest_total_values(
+                trade_prices=self.trade_prices,
+                own_cashes=self.own_cashes,
+                own_amounts_array=self.own_amounts_array
+        )
+        print(f'Expected total values: {expected_values}')
+        pd.testing.assert_series_equal(result_df['value'],
+                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
+
+    def test_empty_shares(self):
+        """测试当 shares 为空时的行为"""
+        result_df = create_value_records(
+                shares=[],
+                trade_datetimes=self.trade_datetimes,
+                own_cashes=self.own_cashes,
+                own_amounts_array=np.empty((2, 0)),  # 空的持仓数组
+                trade_prices=np.empty((2, 0))  # 空的价格数组
+        )
+
+        # 应该只有 cash 和 value 两列
+        expected_columns = ['cash', 'value']
+        self.assertListEqual(list(result_df.columns), expected_columns)
+        pd.testing.assert_series_equal(result_df['cash'],
+                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
+
+        # 验证value列计算是否正确（只有现金）
+        expected_values = calculate_backtest_total_values(
+                trade_prices=np.empty((2, 0)),
+                own_cashes=self.own_cashes,
+                own_amounts_array=np.empty((2, 0))
+        )
+        pd.testing.assert_series_equal(result_df['value'],
+                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
+
+    def test_single_share(self):
+        """测试只有一个股票的情况"""
+        result_df = create_value_records(
+                shares=['AAPL'],
+                trade_datetimes=self.trade_datetimes,
+                own_cashes=self.own_cashes,
+                own_amounts_array=np.array([[10], [12]]),
+                trade_prices=np.array([[150.0], [155.0]])
+        )
+
+        expected_columns = ['AAPL', 'cash', 'value']
+        self.assertListEqual(list(result_df.columns), expected_columns)
+        pd.testing.assert_series_equal(result_df['AAPL'], pd.Series([10, 12], index=self.trade_datetimes, name='AAPL'))
+        pd.testing.assert_series_equal(result_df['cash'],
+                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
+
+        # 验证value列计算是否正确
+        expected_values = calculate_backtest_total_values(
+                trade_prices=np.array([[150.0], [155.0]]),
+                own_cashes=self.own_cashes,
+                own_amounts_array=np.array([[10], [12]])
+        )
+        pd.testing.assert_series_equal(result_df['value'],
+                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
 
 
 if __name__ == '__main__':
