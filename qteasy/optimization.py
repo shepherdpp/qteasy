@@ -20,7 +20,7 @@ from qteasy.qt_operator import Operator
 from qteasy._arg_validators import ConfigDict
 
 from qteasy.backtest import (
-    process_loop_results,
+    process_backtest_results,
     _get_complete_hist,
 )
 
@@ -377,7 +377,7 @@ def _evaluate_one_parameter(par,
                 trade_log=log_backtest,
                 price_priority_list=price_priority_list
         )
-        looped_val = process_loop_results(
+        looped_val = process_backtest_results(
                 operator=op,
                 loop_results=loop_results,
                 op_log_matrix=op_log_matrix,
@@ -386,7 +386,7 @@ def _evaluate_one_parameter(par,
                 trade_log=log_backtest,
                 bt_price_priority_ohlc='OHLC'
         )
-        # TODO: 将_get_complete_hist() 与 process_loop_results()合并
+        # TODO: 将_get_complete_hist() 与 process_backtest_results()合并
         complete_values = _get_complete_hist(
                 looped_value=looped_val,
                 h_list=trade_price_list,

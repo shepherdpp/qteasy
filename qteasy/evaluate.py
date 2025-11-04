@@ -20,6 +20,11 @@ from qteasy.utilfuncs import (
 )
 
 
+# TODO: 改进evaluate.py，所有的评价函数都基于np.array计算，而不是pd.DataFrame，
+#  - 所有的评价函数都直接返回相关的计算结果，而不是修改传入数据框架。
+#  - 所有的函数都使用numba加速
+#  - 评价结果为一个对象，包含各种评价结果，可以输出各种评价结果的DataFrame
+
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame
 def performance_statistics(performances: list, stats='mean'):
     """ 输入几个不同的评价指标，对它们进行统计分析，并输出统计分析的结果
@@ -81,11 +86,6 @@ def performance_statistics(performances: list, stats='mean'):
 
     res = dict()
 
-    # try:
-    #     res['par'] = performances[0]['par']
-    # except:
-    #     print(f'\nERROR RAISED! \n'
-    #           f'in performance statistics: performances[0]:\n{performances[0]}')
     res['loop_start'] = performances[0]['loop_start']
     res['loop_end'] = performances[-1]['loop_end']
     # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
@@ -513,7 +513,6 @@ def eval_calmar(looped_value):
         ret = value[-1] / value[0] - 1
         calmar = ret / drawdown.max()
         looped_value['calmar'] = np.nan
-        # looped_value['calmar'].iloc[-1] = calmar  # Chained assignment is not allowed soon
         looped_value.at[looped_value.index[-1], 'calmar'] = calmar  # use .at to avoid chained assignment
         return calmar
 
