@@ -983,62 +983,62 @@ class Operator:
             if len(window_length) == 0:
                 raise ValueError(f'no strategy in operator uses data type {dtype}!')
             return max(window_length)
-
-    def get_bt_price_type_id_in_priority(self, priority=None):
-        """ 根据字符串priority输出正确的回测交易价格ID
-
-        Parameters
-        ----------
-        priority: str,
-            优先级字符串
-            例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
-            价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
-
-        Returns
-        -------
-        sequence: list of int
-            返回一个list，包含每一个交易策略在回测时的执行先后顺序
-        """
-        if priority is None:
-            priority = 'OHLCAN'
-        price_priority_list = []
-        price_type_table = {
-            'O': ['open'],
-            'H': ['high'],
-            'L': ['low'],
-            'C': ['close', 'unit_nav', 'accum_nav'],
-        }
-        price_types = self.strategy_groups
-        for p_type in priority.upper():
-            price_type_names = price_type_table[p_type]
-            if all(price_type_name not in price_types for price_type_name in price_type_names):
-                continue
-            found_price_type_name = [price_type_name
-                                     for
-                                     price_type_name in price_type_names
-                                     if
-                                     price_type_name in price_types][0]
-            price_priority_list.append(price_types.index(found_price_type_name))
-        return price_priority_list
-
-    def get_bt_price_types_in_priority(self, priority=None):
-        """ 根据字符串priority输出正确的回测交易价格
-
-        Parameters
-        ----------
-        priority: str,
-            优先级字符串
-            例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
-            价格执行顺序为['open', 'close'], 表示先处理open价格，再处理'close'价格
-
-        Returns
-        -------
-        sequence: list of str
-            返回一个list，包含每一个交易策略在回测时的执行先后顺序
-        """
-        price_types = self.strategy_groups
-        price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
-        return [price_types[i] for i in price_priority_list]
+    #
+    # def get_bt_price_type_id_in_priority(self, priority=None):
+    #     """ 根据字符串priority输出正确的回测交易价格ID
+    #
+    #     Parameters
+    #     ----------
+    #     priority: str,
+    #         优先级字符串
+    #         例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+    #         价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
+    #
+    #     Returns
+    #     -------
+    #     sequence: list of int
+    #         返回一个list，包含每一个交易策略在回测时的执行先后顺序
+    #     """
+    #     if priority is None:
+    #         priority = 'OHLCAN'
+    #     price_priority_list = []
+    #     price_type_table = {
+    #         'O': ['open'],
+    #         'H': ['high'],
+    #         'L': ['low'],
+    #         'C': ['close', 'unit_nav', 'accum_nav'],
+    #     }
+    #     price_types = self.strategy_groups
+    #     for p_type in priority.upper():
+    #         price_type_names = price_type_table[p_type]
+    #         if all(price_type_name not in price_types for price_type_name in price_type_names):
+    #             continue
+    #         found_price_type_name = [price_type_name
+    #                                  for
+    #                                  price_type_name in price_type_names
+    #                                  if
+    #                                  price_type_name in price_types][0]
+    #         price_priority_list.append(price_types.index(found_price_type_name))
+    #     return price_priority_list
+    #
+    # def get_bt_price_types_in_priority(self, priority=None):
+    #     """ 根据字符串priority输出正确的回测交易价格
+    #
+    #     Parameters
+    #     ----------
+    #     priority: str,
+    #         优先级字符串
+    #         例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+    #         价格执行顺序为['open', 'close'], 表示先处理open价格，再处理'close'价格
+    #
+    #     Returns
+    #     -------
+    #     sequence: list of str
+    #         返回一个list，包含每一个交易策略在回测时的执行先后顺序
+    #     """
+    #     price_types = self.strategy_groups
+    #     price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
+    #     return [price_types[i] for i in price_priority_list]
 
     def get_share_idx(self, share):
         """ 给定一个share（字符串）返回它对应的index

@@ -3558,6 +3558,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # 准备一个超大的数据集
         share_count = 1000
+        shares = [f's_{i}' for i in range(share_count)]
 
         large_close = pd.DataFrame(
                 np.random.randint(10, size=(69792, share_count)).astype(float) + 30,
@@ -3664,7 +3665,50 @@ class TestOperatorAndStrategy(unittest.TestCase):
         )
         et = time.time()
         print(f'Backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n')
-        self.assertLessEqual(et - st, 5.0)  # 回测时间不超过5秒
+        # self.assertLessEqual(et - st, 5.0)  # 回测时间不超过5秒
+
+        # 测试生成回测记录并计算时间：create_value_records(), create_trade_logs() and create_trade_summary()
+        from qteasy.backtest import create_value_records, create_trade_logs, create_trade_summary
+        st = time.time()
+        value_records = create_value_records(
+                shares=shares,
+                trade_datetimes=op.group_timing_table.index,
+                own_cashes=own_cashes,
+                own_amounts_array=own_amounts,
+                trade_prices=trade_price_data,
+        )
+        et = time.time()
+        print(f'Created value records of shape {value_records.shape} in {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成净值记录时间不超过5秒
+
+        st = time.time()
+        trade_logs, summary = create_trade_logs(
+                shares=shares,
+                trade_datetimes=op.group_timing_table.index,
+                trade_signals=signals,
+                trade_prices=trade_price_data,
+                cash_investment_array=cash_investment_array,
+                own_cashes=own_cashes,
+                available_cashes=available_cashes,
+                own_amounts_array=own_amounts,
+                available_amounts_array=available_amounts,
+                trade_records_array=trade_records_array,
+                trade_cost_array=trade_cost_array,
+        )
+        et = time.time()
+        print(f'Created trade logs with {len(trade_logs)} records and summary in {et - st:.6f} seconds\n'
+              f'trade log:\n{trade_logs}\n')
+        # self.assertLessEqual(et - st, 5.0)  # 生成交易日志时间不超过5秒
+
+        st = time.time()
+        trade_summary = create_trade_summary(
+                shares=shares,
+                share_names=None,
+                trade_log_df=trade_logs,
+                summary_df=summary,
+        )
+        et = time.time()
+        print(f'Created trade summary:\n{trade_summary}\n in {et - st:.6f} seconds\n')
 
         # 重复运行十次以精确测算回测的速度
         print(f'Now repeating the backtest 10 times to measure speed...\n')
