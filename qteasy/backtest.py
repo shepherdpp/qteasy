@@ -8,7 +8,6 @@
 #   Functions used for backtesting.
 # ======================================
 
-import os
 import logging
 import pandas as pd
 import numpy as np
@@ -732,8 +731,9 @@ def create_trade_logs(
         available_amounts_array: np.ndarray,
         trade_records_array: np.ndarray,
         trade_cost_array: np.ndarray,
+        logger: logging.Logger = None,
         save_to_file_path: Union[str, None] = None,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
         每一个交易期间包含8行数据，分别为：
             '0, trade signal', 每一支股票的当期交易信号
@@ -770,6 +770,10 @@ def create_trade_logs(
         交易记录矩阵
     trade_cost_array: np.ndarray
         交易费用矩阵
+    logger: logging.Logger, optional
+        用于记录日志的Logger对象，如果为None，则不记录日志，默认值为None
+    save_to_file_path: str, optional
+        如果提供了文件路径，则将交易日志保存为CSV文件，默认值为None
 
     Returns
     -------
@@ -785,12 +789,14 @@ def create_trade_logs(
     available_amounts_df = pd.DataFrame(available_amounts_array[1:], index=trade_datetimes, columns=shares)
     trade_records_df = pd.DataFrame(trade_records_array, index=trade_datetimes, columns=shares)
     trade_cost_df = pd.DataFrame(trade_cost_array, index=trade_datetimes, columns=shares)
-    amounts_value_df = pd.DataFrame(trade_price_df * own_amounts_df[1:], index=trade_datetimes, columns=shares)
+    cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - trade_cost_array, index=trade_datetimes, columns=shares)
+    amounts_value_df = pd.DataFrame(trade_price_df * own_amounts_array[1:], index=trade_datetimes, columns=shares)
 
     combined_data = pd.concat(
             objs=[trade_signal_df,
                   trade_price_df,
                   trade_records_df,
+                  cash_changed_df,
                   trade_cost_df,
                   own_amounts_df,
                   available_amounts_df,
@@ -798,6 +804,7 @@ def create_trade_logs(
             keys=['0, trade signal',
                   '1, price',
                   '2, traded amounts',
+                  '3, cash changed',
                   '4, trade cost',
                   '5, own amounts',
                   '6, available amounts',
@@ -832,24 +839,48 @@ def create_trade_logs(
     if save_to_file_path is not None:
         trade_log_df.to_csv(save_to_file_path, encoding='utf-8')
 
-    return trade_log_df
+    return trade_log_df, summary_df
 
 
 # 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
 def create_trade_summary(
         shares: list[str],
-        share_names: list[str],
+        share_names: Union[list[str], None],
         trade_log_df: pd.DataFrame,
         summary_df: pd.DataFrame,
-        logger: logging.Logger,
+        logger: logging.Logger = None,
         save_to_file_path: Union[str, None] = None,
 ) -> pd.DataFrame:
     """ 生成 trade summary 交易摘要表 (一个更加紧凑的交易汇总表，包含每次交易的关键信息，
-    以一种更加易于人类阅读的方式呈现，并过滤掉无交易的记录)
+    以一种更加易于人类阅读的方式呈现，并过滤掉无交易的记录)，函数的输入trade_log_df是函数
+    create_trade_logs()的返回值。
+
+    Parameters
+    ----------
+    shares: list[str]
+        交易标的列表
+    share_names: list[str], optional
+        交易标的名称列表, 如果为None，则使用“N/A”作为名称
+    trade_log_df: pd.DataFrame
+        交易日志DataFrame，是函数create_trade_logs()的返回值
+    logger: logging.Logger, optional
+        用于记录日志的Logger对象，如果为None，则不记录日志，默认值为None
+    save_to_file_path: str, optional
+        如果提供了文件路径，则将交易摘要表保存为CSV文件，默认值为None，不保存文件
     """
 
-    # create share trading logs:
-    logger.info(f'generating abstract trading log ...')
+    if logger is not None:
+        # create share trading logs:
+        logger.info(f'generating abstract trading log ...')
+    if len(shares) == 0:
+        raise ValueError('shares list is empty, cannot create trade summary!')
+    if any(share not in trade_log_df.columns for share in shares):
+        missing_share = [share for share in shares if share not in trade_log_df.columns]
+        raise KeyError(f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
+    # 处理share_names
+    if share_names is None:
+        share_names = ['N/A' for _ in shares]
+
     share_logs = []
     for share, share_name in zip(shares, share_names):
         share_df = trade_log_df[share].unstack()
@@ -869,9 +900,12 @@ def create_trade_summary(
                   '6, available amounts',
                   '7, summary']
     op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-    # TODO: 可以增加一个config属性来控制交易摘要表的生成规则：
-    #  如果how == 'left' 保留无交易日期的记录
-    #  如果how == 'right', 不显示无交易日期的记录
-    summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(save_to_file_path, encoding='utf-8')
+    summary_df.index = summary_df.index.levels[0]
+    summary_df = summary_df.join(op_log_shares_abs, how='right', sort=True)
+
+    if save_to_file_path is not None:
+        summary_df.to_csv(save_to_file_path, encoding='utf-8')
+        if logger is not None:
+            logger.info(f'trade summary saved to {save_to_file_path}')
 
     return summary_df
