@@ -683,7 +683,8 @@ def calculate_backtest_total_values(
 ) -> np.ndarray:
     """ 根据回测的结果，计算每个交易期间的总资产价值，可用于评价交易结果
     """
-    total_values = (trade_prices * own_amounts_array).sum(axis=1) + own_cashes
+
+    total_values = (trade_prices * own_amounts_array[1:]).sum(axis=1) + own_cashes[1:]
     return total_values
 
 
@@ -708,11 +709,12 @@ def create_value_records(
             own_cashes=own_cashes,
             own_amounts_array=own_amounts_array,
     )
-    value_history = pd.DataFrame(own_amounts_array,
+
+    value_history = pd.DataFrame(own_amounts_array[1:],
                                  index=trade_datetimes,
                                  columns=shares)
     # 填充标量计算结果
-    value_history['cash'] = own_cashes
+    value_history['cash'] = own_cashes[1:]
     value_history['value'] = values
 
     return value_history
@@ -781,6 +783,11 @@ def create_trade_logs(
         交易模拟结果数据
         :param cash_investment_array:
     """
+    if logger is not None:
+        # create share trading logs:
+        logger.info(f'generating detailed trading log ...')
+    if len(shares) == 0:
+        raise ValueError('shares list is empty, cannot create trade logs!')
 
     # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
     trade_signal_df = pd.DataFrame(trade_signals, index=trade_datetimes, columns=shares)
@@ -818,8 +825,8 @@ def create_trade_logs(
     available_cash_series = pd.Series(available_cashes[1:], index=trade_datetimes, name='available cash')
     total_values = calculate_backtest_total_values(
             trade_prices=trade_prices,
-            own_cashes=own_cashes[1:],
-            own_amounts_array=own_amounts_array[1:],
+            own_cashes=own_cashes,
+            own_amounts_array=own_amounts_array,
     )
     total_value_series = pd.Series(total_values, index=trade_datetimes, name='value')
     summary_df = pd.concat(
@@ -844,10 +851,10 @@ def create_trade_logs(
 
 # 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
 def create_trade_summary(
-        shares: list[str],
-        share_names: Union[list[str], None],
         trade_log_df: pd.DataFrame,
         summary_df: pd.DataFrame,
+        shares: list[str],
+        share_names: Union[list[str], None] = None,
         logger: logging.Logger = None,
         save_to_file_path: Union[str, None] = None,
 ) -> pd.DataFrame:
@@ -863,6 +870,8 @@ def create_trade_summary(
         交易标的名称列表, 如果为None，则使用“N/A”作为名称
     trade_log_df: pd.DataFrame
         交易日志DataFrame，是函数create_trade_logs()的返回值
+    summary_df: pd.DataFrame
+        交易摘要DataFrame，是函数create_trade_logs()的返回值
     logger: logging.Logger, optional
         用于记录日志的Logger对象，如果为None，则不记录日志，默认值为None
     save_to_file_path: str, optional
