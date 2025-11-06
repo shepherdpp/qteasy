@@ -519,20 +519,20 @@ class TestPool(unittest.TestCase):
         self.assertIsInstance(self.p, ResultPool)
 
     def test_operation(self):
-        self.p.in_pool(self.additional_result1[0], self.additional_result1[1])
+        self.p.push(self.additional_result1[0], self.additional_result1[1])
         self.p.cut()
         self.assertEqual(self.p.item_count, 1)
         self.assertEqual(self.p.items, ['abc'])
         for item, perf in zip(self.items, self.perfs):
-            self.p.in_pool(item, perf)
+            self.p.push(item, perf)
         self.assertEqual(self.p.item_count, 6)
         self.assertEqual(self.p.items, ['abc', 'first', 'second', (1, 2, 3), 'this', 24])
         self.p.cut()
         self.assertEqual(self.p.items, ['second', (1, 2, 3), 'this', 24, 'abc'])
         self.assertEqual(self.p.perfs, [2, 3, 4, 5, 12])
 
-        self.p.in_pool(self.additional_result2[0], self.additional_result2[1])
-        self.p.in_pool(self.additional_result3[0], self.additional_result3[1])
+        self.p.push(self.additional_result2[0], self.additional_result2[1])
+        self.p.push(self.additional_result3[0], self.additional_result3[1])
         self.assertEqual(self.p.item_count, 7)
         self.p.cut(keep_largest=False)
         self.assertEqual(self.p.items, [[1, 2], 'second', (1, 2, 3), 'this', 24])

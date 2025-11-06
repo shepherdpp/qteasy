@@ -521,10 +521,10 @@ def _search_grid(hist, benchmark, benchmark_type, op, config):
 def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
-        从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
-        与该算法相关的设置选项有：
-            sample_size:采样点数量，int 由于采样点的分布是随机的，因此采样点越多，越有可能
-                        接近全局最优值
+    从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
+    与该算法相关的设置选项有：
+        sample_size:采样点数量，int 由于采样点的分布是随机的，因此采样点越多，越有可能
+                    接近全局最优值
 
     Parameters
     ----------

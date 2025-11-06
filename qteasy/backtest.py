@@ -783,7 +783,7 @@ def create_trade_logs(
         交易模拟结果数据
         :param cash_investment_array:
     """
-    if logger is not None:
+    if logger:
         # create share trading logs:
         logger.info(f'generating detailed trading log ...')
     if len(shares) == 0:
@@ -845,6 +845,8 @@ def create_trade_logs(
 
     if save_to_file_path is not None:
         trade_log_df.to_csv(save_to_file_path, encoding='utf-8')
+        if logger:
+            logger.info(f'trade log saved to {save_to_file_path}')
 
     return trade_log_df, summary_df
 
