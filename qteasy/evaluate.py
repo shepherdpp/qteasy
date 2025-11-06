@@ -11,6 +11,8 @@
 import numpy as np
 import pandas as pd
 
+from numba import njit
+
 from qteasy.space import ResultPool
 from qteasy.finance import CashPlan
 
@@ -88,7 +90,7 @@ def performance_statistics(performances: list, stats='mean'):
 
     res['loop_start'] = performances[0]['loop_start']
     res['loop_end'] = performances[-1]['loop_end']
-    # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
+    # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法 —— 取消多重回测，因为多重回测似乎没有太大意义
     res['complete_values'] = performances[0]['complete_values']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
@@ -140,7 +142,7 @@ def evaluate(looped_values: pd.DataFrame,
         返回一个dict，包含所有需要的indicators
 
     这里生成的indicators包含：
-    - final_value:        回测区间最后一天的总资产金额
+    - final_value:       回测区间最后一天的总资产金额
     - loop_start:        回测区间起始日
     - loop_end:          回测区间终止日
     - complete_values:   完整的回测历史价格记录
@@ -169,7 +171,7 @@ def evaluate(looped_values: pd.DataFrame,
     - alpha:             回测区间的阿尔法值
     - info:              回测区间的信息比率
     - worst_drawdowns    一个DataFrame，五次最大的回撤记录
-    TODO: 增加Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
+    TODO: 增加Omega Ratio、Kalma Ratio、Stability、Tail Ratio、Daily value at risk
 
     Parameters
     ----------
@@ -350,7 +352,7 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         # 当回测期间小于1年时，填充空白alpha值
         looped_value['alpha'] = np.nan
         # looped_value['alpha'].iloc[-1] = alpha  # Chained assignment is not allowed soon
-        looped_value.at[looped_value.index[-1], 'alpha'] = alpha # use .at to avoid chained assignment
+        looped_value.at[looped_value.index[-1], 'alpha'] = alpha  # use .at to avoid chained assignment
         # following usage also works
         # looped_value.loc[looped_value.index[-1], 'alpha'] = alpha
         # or
@@ -723,11 +725,11 @@ def eval_operation(looped_value, cash_plan):
     holding_stocks.drop(columns=['cash', 'fee', 'value', 'reference'], inplace=True)
     # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
     holding_movements = holding_stocks - holding_stocks.shift(1)
-    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign（）以便后续方便加总统计数量
-    holding_long = np.where(holding_stocks>0, np.sign(holding_stocks), 0)
-    holding_short = np.where(holding_stocks<0, np.sign(holding_stocks), 0)
-    holding_inc = np.where(holding_movements>0, np.sign(holding_movements), 0)
-    holding_dec = np.where(holding_movements<0, np.sign(holding_movements), 0)
+    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign()以便后续方便加总统计数量
+    holding_long = np.where(holding_stocks > 0, np.sign(holding_stocks), 0)
+    holding_short = np.where(holding_stocks < 0, np.sign(holding_stocks), 0)
+    holding_inc = np.where(holding_movements > 0, np.sign(holding_movements), 0)
+    holding_dec = np.where(holding_movements < 0, np.sign(holding_movements), 0)
     # 统计数量
     sell_counts = -holding_dec.sum(axis=0)
     buy_counts = holding_inc.sum(axis=0)
