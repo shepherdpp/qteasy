@@ -7,8 +7,7 @@
 # Desc:
 #   Core functions and Classes of qteasy.
 # ======================================
-import operator
-
+import os
 import pandas as pd
 import numpy as np
 import time
@@ -21,12 +20,6 @@ from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
-
-from qteasy.backtest import (
-    create_value_records,
-    create_trade_logs,
-    create_trade_summary,
-)
 
 from qteasy.datatypes import (
     DataType,
@@ -2261,7 +2254,8 @@ def run_mode_2(op, config, benchmark_data_type):
 
 def backtest_operator(op: Operator,
                       trade_price_list: pd.DataFrame,
-                      config: dict) -> tuple:
+                      config: dict,
+                      logger: logging.Logger = None) -> tuple:
     """本函数接受一个operator对象以及回测运行参数（包括交易价格、资金计划、交易成本率等），根据这些参数
     创建用于存储交易回测结果的交易信号清单、持仓清单、现金清单等表格，并分别调用operator对象的run方法和
     backtest_core函数来生成交易信号和回测交易结果。返回持仓清单和现金清单作为回测结果。
@@ -2299,6 +2293,8 @@ def backtest_operator(op: Operator,
     """
     # 1，检查operator对象是否已经准备好，否则raise error
     op.is_ready(raise_error=False)
+    if logger:
+        logger.info('Start backtest operator...')
 
     signal_count = op.get_signal_count()
     # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
@@ -2350,11 +2346,15 @@ def backtest_operator(op: Operator,
             trade_records_array=trade_records_array,
             trade_cost_array=trade_cost_array,
     )
-
+    from qteasy import QT_TRADE_LOG_PATH
     backtest_result, trade_log, trade_summary = get_op_backtest_results(
             op=op,
             cost_params=cost_params,
             share_count=share_count,
+            shares=config['asset_pool'],
+            generate_trade_log=config['trade_log'],
+            save_to_file_path=QT_TRADE_LOG_PATH,
+            logger=logger,
             signal_parsing_params=signal_parsing_params,
             trading_moq_params=trading_moq_params,
             trading_delivery_params=trading_delivery_params,
@@ -2393,6 +2393,8 @@ def get_op_backtest_results(
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
     if op.check_dynamic_data():
+        if logger:
+            logger.info('Backtest operator with dynamic data dependence...')
         signals = backtest_static_operator(
                 op=op,
                 cost_params=cost_params,
@@ -2413,6 +2415,8 @@ def get_op_backtest_results(
         )
     # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
     else:
+        if logger:
+            logger.info('Backtest operator without dynamic data dependence...')
         signals = backtest_dynamic_operator(
                 op=op,
                 cost_params=cost_params,
@@ -2433,6 +2437,12 @@ def get_op_backtest_results(
         )
 
     # 3，生成DataFrame形式的回测结果
+    from qteasy.backtest import (
+        create_value_records,
+        create_trade_logs,
+        create_trade_summary,
+    )
+
     backtest_result = create_value_records(
             shares=shares,
             trade_datetimes=op.group_timing_table.index,
@@ -2440,6 +2450,8 @@ def get_op_backtest_results(
             own_amounts_array=own_amounts,
             trade_prices=trade_price_data,
     )
+    if logger:
+        logger.info('Backtest completed. backtest result generated.')
 
     if generate_trade_log:
         trade_log, summary = create_trade_logs(
@@ -2455,7 +2467,7 @@ def get_op_backtest_results(
                 trade_records_array=trade_records_array,
                 trade_cost_array=trade_cost_array,
                 logger=logger,
-                save_to_file_path=save_to_file_path,
+                save_to_file_path=os.path.join(save_to_file_path, 'trade_log.csv'),
         )
         trade_summary = create_trade_summary(
                 shares=shares,
@@ -2463,7 +2475,7 @@ def get_op_backtest_results(
                 trade_log_df=trade_log,
                 summary_df=summary,
                 logger=logger,
-                save_to_file_path=save_to_file_path,
+                save_to_file_path=os.path.join(save_to_file_path, 'trade_records.csv'),
         )
     else:
         trade_log = pd.DataFrame()
