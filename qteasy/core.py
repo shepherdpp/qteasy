@@ -16,6 +16,7 @@ from warnings import warn
 
 import datetime
 
+import qteasy
 from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
@@ -42,6 +43,10 @@ from qteasy.utilfuncs import (
     progress_bar,
     sec_to_duration,
     TIME_FREQ_STRINGS,
+)
+
+from qteasy.evaluate import (
+    evaluate,
 )
 
 from qteasy.visual import (
@@ -2103,25 +2108,30 @@ def run_mode_1(op, config, benchmark_data_type):
     )  # TODO: to be realized
 
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
-    loop_result = _evaluate_one_parameter(
-            par=None,
+    backtest_result, trade_log, trade_summary = backtest_operator(
             op=op,
             trade_price_list=trade_prices,
-            benchmark_history_data=hist_benchmark,
-            benchmark_history_data_type=benchmark_data_type,
             config=config,
-            stage='loop'
+            logger=qteasy.logger_core
     )
+    # 评价回测结果——根据交易结果生成交易结果的评价结果
+    backtest_result = evaluate(
+            looped_values=backtest_result,
+            hist_benchmark=hist_benchmark,
+            cash_plan=cash_plan,
+            indicators=config['test_indicators'],
+    )
+
     if config['report']:
         # 格式化输出回测结果
-        report = _loop_report_str(loop_result, config)
+        report = _loop_report_str(backtest_result)
         print(report)
-        loop_result['report'] = report
+        backtest_result['report'] = report
     if config['visual']:
         # 图表输出投资回报历史曲线
-        _plot_loop_result(loop_result, config)
+        _plot_loop_result(backtest_result)
 
-    return loop_result
+    return backtest_result
 
 
 def run_mode_2(op, config, benchmark_data_type):
@@ -2250,34 +2260,25 @@ def run_mode_2(op, config, benchmark_data_type):
 def backtest_operator(op: Operator,
                       trade_price_list: pd.DataFrame,
                       config: dict,
-                      logger: logging.Logger = None) -> tuple:
-    """本函数接受一个operator对象以及回测运行参数（包括交易价格、资金计划、交易成本率等），根据这些参数
-    创建用于存储交易回测结果的交易信号清单、持仓清单、现金清单等表格，并分别调用operator对象的run方法和
-    backtest_core函数来生成交易信号和回测交易结果。返回持仓清单和现金清单作为回测结果。
+                      logger: logging.Logger = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """ 对operator对象进行交易回测，以pd.DataFrame的形式生成交易回测结果
 
-    运行中需要用到的数据表包括：
-        0, op_signals:          交易信号表，N行M列，N为交易信号数量，M为交易品种数量
-        1, own_amounts:         持有资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
-        2, available_amounts:   可用资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
-        3, own_cash:            持有现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
-        4, available_cash:      可用现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
-
-    运行中需要用到的索引表包括：
-        0, op_datetime:       回测历史日期索引表，包含所有交易信号的交易日期时间
-        1, trade_indicators:  交易信号索引表，指示那些交易信号需要进行交易计算
-        2, cash_investment:   资金投入日期索引表，指示每个交易信号日期的资金投入额
-        3, cash_inflation:    资金无风险利率索引表，指示每个交易信号日期的现金增长率
-        4, delivery_days:     交割周期索引表，指示每个交易信号日期的股票交割周期
-
+    本函数接受一个operator对象以及回测运行参数作为入参，这个operator对象必须已经设置好交易参数以及交易
+    数据，即处于is_ready的状态。
+    函数还必须接受一个回测交易价格清单，这个价格清单包含所有交易品种在每个交易时间点上的回测交易价格
+    函数运行后，返回三个DataFrame对象，分别是回测交易结果、交易日志和交易汇总，其中交易日志和交易汇总是
+    可选的，根据config参数设置确定是否生成。
 
     Parameters
     ----------
     op: Operator
         用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
-    trade_price_list: object HistoryPanel
-        完整历史价格清单，数据的频率由freq参数决定
+    trade_price_list: pd.DataFrame
+        回测交易价格清单，清单中包含所有股票在每个交易时间点上的交易价格，用于执行回测交易
     config: dict
         回测运行参数，参见qteasy文档
+    logger: logging.Logger, optional
+        用于记录回测过程的日志对象
 
     Returns
     -------
@@ -2314,6 +2315,21 @@ def backtest_operator(op: Operator,
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
 
     # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种数据记录表
+    '''
+    运行中需要用到的数据表包括：
+        0, op_signals:          交易信号表，N行M列，N为交易信号数量，M为交易品种数量
+        1, own_amounts:         持有资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
+        2, available_amounts:   可用资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
+        3, own_cash:            持有现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
+        4, available_cash:      可用现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
+
+    运行中需要用到的索引表包括：
+        0, op_datetime:       回测历史日期索引表，包含所有交易信号的交易日期时间
+        1, trade_indicators:  交易信号索引表，指示那些交易信号需要进行交易计算
+        2, cash_investment:   资金投入日期索引表，指示每个交易信号日期的资金投入额
+        3, cash_inflation:    资金无风险利率索引表，指示每个交易信号日期的现金增长率
+        4, delivery_days:     交割周期索引表，指示每个交易信号日期的股票交割周期
+    '''
     # 3.1 现金和股票持仓历史记录表
     own_cashes = np.zeros(shape=(n_signals + 1, share_count))
     own_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
@@ -2390,7 +2406,7 @@ def get_op_backtest_results(
     if op.check_dynamic_data():
         if logger:
             logger.info('Backtest operator with dynamic data dependence...')
-        signals = backtest_static_operator(
+        signals = _backtest_static_operator(
                 op=op,
                 cost_params=cost_params,
                 share_count=share_count,
@@ -2412,7 +2428,7 @@ def get_op_backtest_results(
     else:
         if logger:
             logger.info('Backtest operator without dynamic data dependence...')
-        signals = backtest_dynamic_operator(
+        signals = _backtest_dynamic_operator(
                 op=op,
                 cost_params=cost_params,
                 share_count=share_count,
@@ -2479,7 +2495,7 @@ def get_op_backtest_results(
     return backtest_result, trade_log, trade_summary
 
 
-def backtest_static_operator(
+def _backtest_static_operator(
         op: Operator,
         cash_investment_array: np.ndarray,
         cash_inflation_array: np.ndarray,
@@ -2551,7 +2567,7 @@ def backtest_static_operator(
     return signals
 
 
-def backtest_dynamic_operator(
+def _backtest_dynamic_operator(
         op: Operator,
         cash_investment_array: np.ndarray,
         cash_inflation_array: np.ndarray,
@@ -2592,6 +2608,7 @@ def backtest_dynamic_operator(
     )
 
     from qteasy.backtest import backtest_step, initialize_backtest_delivery_queue
+
     cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
             cash_delivery_period=cash_delivery_period,
             stock_delivery_period=stock_delivery_period,

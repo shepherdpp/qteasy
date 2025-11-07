@@ -860,7 +860,7 @@ def _valid_qt_kwargs():
                           '               义的评价结果'},
 
         'test_indicators':
-            {'Default':   'years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
+            {'Default':   'years,fv,return,mdd,ref,alpha,beta,sharp,info',
              'Validator': lambda value: isinstance(value, str),
              'level':     2,
              'text':      '对优化后的策略参数进行测试评价的评价指标。\n'
@@ -869,7 +869,7 @@ def _valid_qt_kwargs():
                           '"fv"          - final values\n'
                           '"return"      - total return rate\n'
                           '"mdd"         - max draw down\n'
-                          '"ref"         - reference data return\n'
+                          '"benchmark"   - benchmark return\n'
                           '"alpha"       - alpha rate\n'
                           '"beta"        - beta rate\n'
                           '"sharp"       - sharp rate\n'

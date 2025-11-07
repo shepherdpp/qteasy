@@ -10,8 +10,7 @@
 
 import numpy as np
 import pandas as pd
-
-from numba import njit
+from typing import Union
 
 from qteasy.space import ResultPool
 from qteasy.finance import CashPlan
@@ -134,8 +133,7 @@ def performance_statistics(performances: list, stats='mean'):
 
 
 def evaluate(looped_values: pd.DataFrame,
-             hist_benchmark: pd.DataFrame,
-             benchmark_data: str,
+             hist_benchmark: Union[pd.DataFrame, pd.Series],
              cash_plan,
              indicators: str = 'final_value') -> dict:
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
@@ -171,16 +169,14 @@ def evaluate(looped_values: pd.DataFrame,
     - alpha:             回测区间的阿尔法值
     - info:              回测区间的信息比率
     - worst_drawdowns    一个DataFrame，五次最大的回撤记录
-    TODO: 增加Omega Ratio、Kalma Ratio、Stability、Tail Ratio、Daily value at risk
+    TODO: 增加Omega Ratio、Calmar Ratio、Stability、Tail Ratio、Daily value at risk
 
     Parameters
     ----------
     looped_values: pd.DataFrame:
         回测区间的历史价格记录
-    hist_benchmark: pd.DataFrame,
+    hist_benchmark: pd.DataFrame, pd.Series,
         参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
-    benchmark_data: str,
-        参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
     cash_plan: CashPlan,
         投资计划
     indicators: str, Default: 'final_value'
@@ -191,13 +187,12 @@ def evaluate(looped_values: pd.DataFrame,
     performance_dict: dict: 一个字典，每个指标的各种值
     """
     # validate input
-
-    if not isinstance(hist_benchmark, pd.DataFrame):
-        raise TypeError(f'reference value should be pandas DataFrame, got {type(hist_benchmark)} instead!')
+    if isinstance(hist_benchmark, pd.DataFrame):
+        hist_benchmark = hist_benchmark[hist_benchmark.columns[0]]
+    if not isinstance(hist_benchmark, pd.Series):
+        raise TypeError(f'reference value should be pandas Series, got {type(hist_benchmark)} instead!')
     if not isinstance(looped_values, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_values)} instead')
-    if benchmark_data not in hist_benchmark.columns:
-        raise KeyError(f'reference data type \'{benchmark_data}\' can not be found in reference data')
     if not isinstance(cash_plan, CashPlan):
         raise TypeError(f'Cash plan is not valid, got {type(cash_plan)} instead')
 
@@ -237,22 +232,23 @@ def evaluate(looped_values: pd.DataFrame,
         performance_dict['volatility'] = eval_volatility(looped_values)
     # 评价回测结果——计算参考数据收益率以及平均年化收益率
     if any(indicator in indicator_list for indicator in ['ref', 'ref_rtn', 'reference', 'ref_annual_rtn']):
-        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_benchmark, benchmark_data)
+        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_benchmark)
         performance_dict['ref_rtn'] = ref_rtn
         performance_dict['ref_annual_rtn'] = ref_annual_rtn
     # 评价回测结果——计算投资期间的beta贝塔系数
     if 'beta' in indicator_list:
-        performance_dict['beta'] = eval_beta(looped_values, hist_benchmark, benchmark_data)
+        performance_dict['beta'] = eval_beta(looped_values, hist_benchmark)
     # 评价回测结果——计算投资期间的夏普率
     if 'sharp' in indicator_list:
         interest_rate = cash_plan.ir
         performance_dict['sharp'] = eval_sharp(looped_values, interest_rate)
     # 评价回测结果——计算投资期间的alpha阿尔法系数
     if 'alpha' in indicator_list:
-        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark, benchmark_data)
+        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark)
     # 评价回测结果——计算投资回报的信息比率
     if 'info' in indicator_list:
-        performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark, benchmark_data)
+        performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark)
+    # 评价回测结果——计算投资回报的Calmar比率
     if 'calmar' in indicator_list:
         performance_dict['info'] = eval_calmar(looped_values)
     if bool(performance_dict):
@@ -289,14 +285,13 @@ def _get_yearly_span(value_df: pd.DataFrame) -> float:
     return total_year
 
 
-def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
+def eval_benchmark(looped_values, hist_benchmark):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
     Parameters
     ----------
     looped_values: pd.DataFrame
-    hist_benchmark: pd.DataFrame
-    benchmark_data: str
+    hist_benchmark: pd.Series
 
     Returns
     -------
@@ -304,7 +299,7 @@ def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
     """
     total_year = _get_yearly_span(looped_values)
     try:
-        rtn_data = hist_benchmark[benchmark_data]
+        rtn_data = hist_benchmark
         rtn = (rtn_data[looped_values.index[-1]] / rtn_data[looped_values.index[0]])
         return rtn - 1, rtn ** (1 / total_year) - 1.
     except Exception:
@@ -312,7 +307,7 @@ def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
         return 0., 0.
 
 
-def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.0035):
+def eval_alpha(looped_value, total_invest, benchmark_value, risk_free_ror: float = 0.0035):
     """ 回测结果评价函数：alpha系数
     阿尔法系数(α)是基金的超额收益和按照β系数计算的期望收益之间的差额。 其计算方法如下：超额收益是基金的实际收益减去无
     风险投资收益(例如1年期银行定期存款收益)；期望收益是贝塔系数β和市场超额收益的乘积，反映基金由于市场整体变动而获得的收益；
@@ -328,10 +323,8 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         回测结果
     total_invest: float
         总投资金额
-    reference_value: pd.DataFrame
+    benchmark_value: pd.Series
         参考标准
-    reference_data: str
-        参考标准数据名称
 
     Returns
     -------
@@ -340,14 +333,14 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     loop_len = len(looped_value)
     # 计算alpha的过程需要用到beta，如果beta不存在则需要先计算beta
     if 'beta' not in looped_value.columns:
-        b = eval_beta(looped_value, reference_value, reference_data)
+        b = eval_beta(looped_value, benchmark_value)
     if loop_len <= 250:
         # 计算年化收益，如果回测期间小于一年，直接计算平均年收益率
         total_year = _get_yearly_span(looped_value)
         final_value = eval_fv(looped_value)
         strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-        reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
-        b = eval_beta(looped_value, reference_value, reference_data)
+        reference_return, reference_yearly_return = eval_benchmark(looped_value, benchmark_value)
+        b = eval_beta(looped_value, benchmark_value)
         alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
         # 当回测期间小于1年时，填充空白alpha值
         looped_value['alpha'] = np.nan
@@ -360,14 +353,14 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     else:  # loop_len > 250
         # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
-        bench = reference_value[reference_data]
+        bench = benchmark_value
         bench_ret = (bench / bench.shift(250)) - 1
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
         alpha = looped_value['alpha'].mean()
     return alpha
 
 
-def eval_beta(looped_value, reference_value, reference_data):
+def eval_beta(looped_value, reference_value):
     """ 贝塔系数。考察投资组合与基准投资组合之间的相关性，它度量了投资组合相对于基准组合的风险大小或波动大小。
     贝塔系数越大，表示该投资组合相对于基准组合波动越大（通常使用市场平均水平作为基准）：
      - 当贝塔系数为1时，表示投资组合的波动等于市场平均水平
@@ -383,8 +376,6 @@ def eval_beta(looped_value, reference_value, reference_data):
         回测结果，需要计算Beta的股票价格或投资收益历史价格
     reference_value: pd.DataFrame,
         参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
-    reference_data: str:
-        参考结果的数据类型，如close, open, low 等
 
     Returns
     -------
@@ -394,7 +385,7 @@ def eval_beta(looped_value, reference_value, reference_data):
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = reference_value[reference_data]
+    ref = reference_value
     ref_ret = (ref / ref.shift(1)) - 1
     if len(looped_value) > 250:
         ret_dev = looped_value['pct_change'].rolling(250).var()
@@ -404,7 +395,6 @@ def eval_beta(looped_value, reference_value, reference_data):
         ret_dev = looped_value['pct_change'].var()
         beta = looped_value['pct_change'].cov(ref_ret) / ret_dev
         looped_value['beta'] = np.nan
-        # looped_value['beta'].iloc[-1] = beta  # Chained assignment is not allowed soon
         looped_value.at[looped_value.index[-1], 'beta'] = beta  # use .at to avoid chained assignment
         return beta
 
@@ -471,7 +461,7 @@ def eval_volatility(looped_value, logarithm: bool = True):
         return volatility
 
 
-def eval_info_ratio(looped_value, reference_value, reference_data):
+def eval_info_ratio(looped_value, benchmark_value):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
         information ratio = (portfolio return - reference return) / tracking error
 
@@ -479,13 +469,15 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
     ----------
     looped_value: pd.DataFrame,
         回测结果，需要计算info_ratio的股票价格或投资收益历史价格
+    benchmark_value: pd.Series,
+        基准结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
 
     Returns
     -------
     info_ratio: float
     """
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = reference_value[reference_data]
+    ref = benchmark_value
     ref_ret = (ref / ref.shift(1)) - 1
     track_error = (ref_ret - ret).std(
             ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
