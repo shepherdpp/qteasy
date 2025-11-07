@@ -882,7 +882,12 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     return data, parameter_string
 
 
-def _plot_loop_result(loop_results: dict, config):
+def _plot_loop_result(
+        loop_results: dict,
+        plot_title: str = 'Backtest Result',
+        show_positions: bool = True,
+        buy_sell_markers: bool = True,
+):
     """ 以图表的形式输出回测结果。"""
     # prepare looped_values dataframe
     if not isinstance(loop_results, dict):
@@ -951,14 +956,8 @@ def _plot_loop_result(loop_results: dict, config):
     ax7 = fig.add_axes([0.02, 0.04, 0.38, 0.16])
     ax8 = fig.add_axes([0.43, 0.04, 0.15, 0.16])
     ax9 = fig.add_axes([0.64, 0.04, 0.29, 0.16])
-    if isinstance(config.asset_pool, str):
-        title_asset_pool = config.asset_pool
-    else:
-        if len(config.asset_pool) > 3:
-            title_asset_pool = list_to_str_format(config.asset_pool[:3]) + '...'
-        else:
-            title_asset_pool = list_to_str_format(config.asset_pool)
-    fig.suptitle(f'Back Testing Result {title_asset_pool} - benchmark: {config.benchmark_asset}',
+
+    fig.suptitle(f'{plot_title}',
                  fontsize=14,
                  fontweight=10)
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
@@ -1018,7 +1017,7 @@ def _plot_loop_result(loop_results: dict, config):
 
     # 显示持股仓位区间（效果是在回测区间上用绿色带表示多头仓位，红色表示空头仓位，颜色越深仓位越高）
     # 查找每次买进和卖出的时间点并将他们存储在一个列表中，用于标记买卖时机
-    if config.show_positions:
+    if show_positions:
         position_bounds = [looped_values.index[0]]
         position_bounds.extend(looped_values.loc[change != 0].index)
         position_bounds.append(looped_values.index[-1])
@@ -1044,12 +1043,12 @@ def _plot_loop_result(loop_results: dict, config):
     # buy_point是当持股数量增加时为买点，sell_points是当持股数量下降时
     # 在买卖点当天写入的数据是参考数值，这是为了使用散点图画出买卖点的位置
     # 绘制买卖点散点图(效果是在ref线上使用红绿箭头标识买卖点)
-    if config.buy_sell_points:
-        buy_points = np.where(change > 0, ref_rate, np.nan)
-        sell_points = np.where(change < 0, ref_rate, np.nan)
-        ax1.scatter(looped_values.index, buy_points, color='green',
+    if buy_sell_markers:
+        buy_markers = np.where(change > 0, ref_rate, np.nan)
+        sell_markers = np.where(change < 0, ref_rate, np.nan)
+        ax1.scatter(looped_values.index, buy_markers, color='green',
                     label='Buy', marker='^', alpha=0.9)
-        ax1.scatter(looped_values.index, sell_points, color='red',
+        ax1.scatter(looped_values.index, sell_markers, color='red',
                     label='Sell', marker='v', alpha=0.9)
 
     # 使用箭头标记最大回撤区间，箭头从最高起点开始，指向最低点，第二个箭头从最低点开始，指向恢复点

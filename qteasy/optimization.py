@@ -180,7 +180,7 @@ def _evaluate_one_parameter(par,
     benchmark_history_data_type: str
         用于回测结果评价的参考历史数据种类，通常为收盘价close，但也可以是其他价格，例如开盘价open
     config: Config
-        参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
+        参数配置对象，用于保存相关配置，在所有的参数配置中，起作用的有下面N种：
         1, config.opti_type/test_type:
             优化或测试模式，决定如何利用回测区间
             single:     在整个回测区间上进行一次回测
