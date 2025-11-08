@@ -396,7 +396,6 @@ def _evaluate_one_parameter(par,
         perf = evaluate(
                 looped_values=complete_values,
                 hist_benchmark=benchmark_history_data,
-                benchmark_data=benchmark_history_data_type,
                 cash_plan=cash_plan,
                 indicators=indicators
         )
