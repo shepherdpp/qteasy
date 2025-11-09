@@ -2671,7 +2671,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -2756,7 +2756,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -2840,7 +2840,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -2926,7 +2926,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -2998,7 +2998,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -3070,7 +3070,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -3145,7 +3145,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
-        for signal in op.run(steps=range(len(op.group_timing_table))):
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
             print(signal, expected)
@@ -3195,7 +3195,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         signals = np.zeros((op.get_signal_count(), len(close_d_df.columns)), dtype=float)
         signal_index = 0
 
-        for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
+        for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
             signals[signal_index, :] = signal
@@ -3409,7 +3409,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 available_cashes[i] += cash_investment
 
             # 生成operator交易信号
-            stype, s_index, signal = tuple(op.run_step(step_index=i))[0]
+            stype, s_index, signal = tuple(op.run_strategy(step_index=i))[0]
             stype = SIGNAL_TYPE_ID[stype]
             is_delivery_day = True if delivery_day_indicators[i] else False
             (
@@ -3610,7 +3610,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         signal_index = 0
 
         st = time.time()
-        for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
+        for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
             signals[signal_index, :] = signal

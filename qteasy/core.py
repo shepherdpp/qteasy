@@ -2257,6 +2257,8 @@ def run_mode_2(op, config, benchmark_data_type):
     return optimal_pars
 
 
+# TODO: 这个函数应该被移动到qt_operator模块中，作为Operator类的一个方法，并取消直接传入config，
+#  而是使用Operator对象本身的config属性， 具体的config参数在core.py中解析完成
 def backtest_operator(op: Operator,
                       trade_price_list: pd.DataFrame,
                       config: dict,
@@ -2531,7 +2533,7 @@ def _backtest_static_operator(
     signal_index = 0
     from qteasy.qt_operator import SIGNAL_TYPE_ID
 
-    for stype, s_index, signal in op.run(steps=range(len(op.group_timing_table))):
+    for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
         stypes[signal_index] = SIGNAL_TYPE_ID[stype]
         s_indices[signal_index] = s_index
         signals[signal_index, :] = signal
@@ -2625,8 +2627,8 @@ def _backtest_dynamic_operator(
             own_cashes[i] += cash_investment
             available_cashes[i] += cash_investment
 
-        # 2，调用operator.run_step()生成当前交易信号
-        stype, s_index, signal = tuple(op.run_step(step_index=i))[0]
+        # 2，调用operator.run_strategy()生成当前交易信号
+        stype, s_index, signal = tuple(op.run_strategy(step_index=i))[0]
         is_delivery_day = bool(delivery_day_indicators[i])
         signals[i, :] = signal
 

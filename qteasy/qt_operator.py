@@ -35,6 +35,12 @@ from qteasy.built_in import (
 
 SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
 
+LIVE_TRADE = 0
+LIVE = 0
+BACKTEST = 1
+OPTIMIZE = 2
+OPTI = 2
+OPTIMIZATION = 2
 
 class Operator:
     """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
@@ -72,6 +78,7 @@ class Operator:
 
 
     """
+
 
     def __init__(self,
                  strategies: Union[str, list[Union[str, BaseStrategy, type]]] = None,
@@ -1774,7 +1781,7 @@ class Operator:
                     # print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
                     #       f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
-    def run_step(self, step_index) -> Generator[
+    def run_strategy(self, step_index) -> Generator[
         Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
         """ 运行当前步骤的所有策略组，生成交易信号
 
@@ -1830,7 +1837,7 @@ class Operator:
         if self.group_merge_type != 'None':
             yield signal_type, step_index, signal
 
-    def run(self, steps: Iterable) -> Iterable:
+    def run_strategies(self, steps: Iterable) -> Iterable:
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
 
         Parameters
@@ -1849,9 +1856,7 @@ class Operator:
         self.is_ready(raise_error=True)
 
         for step in steps:
-            # DEBUG:
-            # print(f'Running step {step} for operator {self.name}')
-            for result in self.run_step(step):
+            for result in self.run_strategy(step):
                 yield result
 
     def create_signals(self, start_date=None, end_date=None, data_package: dict = None):
@@ -1895,9 +1900,35 @@ class Operator:
         self._op_list_bt_indices = np.empty(shape=(signal_count,), dtype=int)
 
         signal_index = 0
-        for signal in self.run(range(total_run_steps)):
+        for signal in self.run_strategies(range(total_run_steps)):
             self._op_list_types[signal_index] = signal[0]  # the type of the signal
             self._op_list[signal_index] = signal[2]  # the array of the signals
             self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
             signal_index += 1
+
+    # ====== top level methods below ======
+
+    def run(self, mode: int, **kwargs):
+        """ placeholder for run method """
+        if mode == LIVE_TRADE:
+            return self.live_trade(**kwargs)
+        elif mode == BACKTEST:
+            return self.backtest(**kwargs)
+        elif mode == OPTIMIZE:
+            return self.optimize(**kwargs)
+        else:
+            raise ValueError(f'Invalid mode: {mode}')
+
+    def live_trade(self, **kwargs):
+        """ placeholder for live trade method """
+        raise NotImplementedError("This method is not implemented yet.")
+
+    def backtest(self, **kwargs):
+        """ placeholder for backtest method """
+        raise NotImplementedError("This method is not implemented yet.")
+
+    def optimize(self, **kwargs):
+        """ placeholder for optimize method """
+        raise NotImplementedError("This method is not implemented yet.")
+
 
