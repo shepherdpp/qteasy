@@ -17,7 +17,6 @@ import warnings
 
 from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
-    str_to_list,
     input_to_list,
 )
 from qteasy.datatypes import DataType
