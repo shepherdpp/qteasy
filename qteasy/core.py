@@ -2262,8 +2262,7 @@ def run_mode_2(op, config, benchmark_data_type):
     return optimal_pars
 
 
-# TODO: 这个函数应该被移动到qt_operator模块中，作为Operator类的一个方法，并取消直接传入config，
-#  而是使用Operator对象本身的config属性， 具体的config参数在core.py中解析完成
+# TODO: 将这个函数定义为一个Backtester类的方法，在backtest.py中定义，并由qt_operator中的Operator类调用
 def backtest_operator(op: Operator,
                       trade_price_list: pd.DataFrame,
                       config: dict,
@@ -2299,7 +2298,6 @@ def backtest_operator(op: Operator,
     if logger:
         logger.info('Start backtest operator...')
 
-    signal_count = op.get_signal_count()
     # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
     op_schedule = op.group_timing_table
     n_signals = op.get_signal_count()
@@ -2321,7 +2319,7 @@ def backtest_operator(op: Operator,
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
 
-    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种数据记录表
+    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种数据记录表，这些都是Backtester的属性
     '''
     运行中需要用到的数据表包括：
         0, op_signals:          交易信号表，N行M列，N为交易信号数量，M为交易品种数量
@@ -2343,71 +2341,11 @@ def backtest_operator(op: Operator,
     available_cashes = np.zeros(shape=(n_signals + 1, share_count))
     available_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
     # 3.2 交易过程数据记录表，包括交易记录、交易成本等
-    trade_records_array = np.zeros((signal_count, share_count), dtype=float)
-    trade_cost_array = np.zeros((signal_count, share_count), dtype=float)
+    trade_records_array = np.zeros((n_signals, share_count), dtype=float)
+    trade_cost_array = np.zeros((n_signals, share_count), dtype=float)
 
     # 3.3 读取交易价格数据，TODO: 在读取前最好检查其合法性
     trade_price_data = trade_price_list.values
-
-    # 3.4 创建集成参数对象，减少代码量
-    investment_params = dict(
-                cash_investment_array=cash_investment_array,
-                cash_inflation_array=cash_inflation_array,
-                delivery_day_indicators=delivery_day_indicators,
-    )
-    trade_record_arrays = dict(
-            own_cashes=own_cashes,
-            available_cashes=available_cashes,
-            own_amounts=own_amounts_array,
-            available_amounts=available_amounts_array,
-            trade_price_data=trade_price_data,
-            trade_records_array=trade_records_array,
-            trade_cost_array=trade_cost_array,
-    )
-    from qteasy import QT_TRADE_LOG_PATH
-    backtest_result, trade_log, trade_summary = get_op_backtest_results(
-            op=op,
-            cost_params=cost_params,
-            share_count=share_count,
-            shares=config['asset_pool'],
-            generate_trade_log=config['trade_log'],
-            save_to_file_path=QT_TRADE_LOG_PATH,
-            logger=logger,
-            signal_parsing_params=signal_parsing_params,
-            trading_moq_params=trading_moq_params,
-            trading_delivery_params=trading_delivery_params,
-            **investment_params,
-            **trade_record_arrays,
-    )
-
-    return backtest_result, trade_log, trade_summary
-
-
-def get_op_backtest_results(
-        op: Operator,
-        cash_investment_array: np.ndarray,
-        cash_inflation_array: np.ndarray,
-        delivery_day_indicators: np.ndarray,
-        own_cashes: np.ndarray,
-        available_cashes: np.ndarray,
-        own_amounts: np.ndarray,
-        available_amounts: np.ndarray,
-        trade_price_data: np.ndarray,
-        trade_records_array: np.ndarray,
-        trade_cost_array: np.ndarray,
-        cost_params: np.ndarray,
-        signal_parsing_params: dict,
-        trading_moq_params: dict,
-        trading_delivery_params: dict,
-        share_count: int,
-        shares: list = None,
-        logger: logging.Logger = None,
-        save_to_file_path: str = None,
-        generate_trade_log: bool = False,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-
-    """
 
     # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
     if op.check_dynamic_data():
@@ -2422,8 +2360,8 @@ def get_op_backtest_results(
                 delivery_day_indicators=delivery_day_indicators,
                 own_cashes=own_cashes,
                 available_cashes=available_cashes,
-                own_amounts=own_amounts,
-                available_amounts=available_amounts,
+                own_amounts=own_amounts_array,
+                available_amounts=available_amounts_array,
                 trade_price_data=trade_price_data,
                 trade_records_array=trade_records_array,
                 trade_cost_array=trade_cost_array,
@@ -2500,186 +2438,3 @@ def get_op_backtest_results(
         trade_summary = pd.DataFrame()
 
     return backtest_result, trade_log, trade_summary
-
-
-def _backtest_static_operator(
-        op: Operator,
-        cash_investment_array: np.ndarray,
-        cash_inflation_array: np.ndarray,
-        delivery_day_indicators: np.ndarray,
-        own_cashes: np.ndarray,
-        available_cashes: np.ndarray,
-        own_amounts: np.ndarray,
-        available_amounts: np.ndarray,
-        trade_price_data: np.ndarray,
-        trade_records_array: np.ndarray,
-        trade_cost_array: np.ndarray,
-        cost_params: np.ndarray,
-        pt_buy_threshold: float,
-        pt_sell_threshold: float,
-        long_pos_limit: float,
-        short_pos_limit: float,
-        allow_sell_short: bool,
-        moq_buy: float,
-        moq_sell: float,
-        share_count: int,
-        cash_delivery_period: int,
-        stock_delivery_period: int,
-) -> np.ndarray:
-    """处理operator的交易信号仅包含静态数据类型（不以来交易结果的数据）的情况:
-
-    根据输入参数调用operator.run()生成完整的交易信号清单，然后调用backtest_batch_steps()进行回测
-
-    """
-    # 1，调用operator.run()生成完整的交易信号清单
-    stypes = np.zeros(op.get_signal_count(), dtype=int)
-    s_indices = np.zeros(op.get_signal_count(), dtype=int)
-    signals = np.zeros((op.get_signal_count(), share_count), dtype=float)
-    signal_index = 0
-    from qteasy.qt_operator import SIGNAL_TYPE_ID
-
-    for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
-        stypes[signal_index] = SIGNAL_TYPE_ID[stype]
-        s_indices[signal_index] = s_index
-        signals[signal_index, :] = signal
-        signal_index += 1
-
-    # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
-    from qteasy.backtest import backtest_batch_steps
-    backtest_batch_steps(
-            signal_types=stypes,
-            op_signals=signals,
-            cash_investment_array=cash_investment_array,
-            cash_inflation_array=cash_inflation_array,
-            delivery_day_indicators=delivery_day_indicators,
-            own_cashes=own_cashes,
-            available_cashes=available_cashes,
-            own_amounts_array=own_amounts,
-            available_amounts_array=available_amounts,
-            trade_prices=trade_price_data,
-            trade_records_array=trade_records_array,
-            trade_cost_array=trade_cost_array,
-            cost_params=cost_params,
-            pt_buy_threshold=pt_buy_threshold,
-            pt_sell_threshold=pt_sell_threshold,
-            long_pos_limit=long_pos_limit,
-            short_pos_limit=short_pos_limit,
-            allow_sell_short=allow_sell_short,
-            moq_buy=moq_buy,
-            moq_sell=moq_sell,
-            cash_delivery_period=cash_delivery_period,
-            stock_delivery_period=stock_delivery_period,
-    )
-
-    return signals
-
-
-def _backtest_dynamic_operator(
-        op: Operator,
-        cash_investment_array: np.ndarray,
-        cash_inflation_array: np.ndarray,
-        delivery_day_indicators: np.ndarray,
-        own_cashes: np.ndarray,
-        available_cashes: np.ndarray,
-        own_amounts_array: np.ndarray,
-        available_amounts_array: np.ndarray,
-        trade_price_data: np.ndarray,
-        trade_records_array: np.ndarray,
-        trade_cost_array: np.ndarray,
-        cost_params: np.ndarray,
-        pt_buy_threshold: float,
-        pt_sell_threshold: float,
-        long_pos_limit: float,
-        short_pos_limit: float,
-        allow_sell_short: bool,
-        moq_buy: float,
-        moq_sell: float,
-        share_count: int,
-        cash_delivery_period: int,
-        stock_delivery_period: int,
-) -> np.ndarray:
-    """处理operator的交易信号包含动态数据类型(依赖交易结果的数据类型)的情况:
-
-    根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
-
-    # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
-    initial_trade_records = trade_records_array[0, :].copy()
-    initial_trade_costs = trade_cost_array[0, :].copy()
-    initial_trade_prices = trade_price_data[0, :].copy()
-    signals = np.zeros((op.get_signal_count(), share_count), dtype=float)
-
-    op.prepare_dynamic_data_buffer(
-            trade_records=initial_trade_records,
-            trade_costs=initial_trade_costs,
-            trade_prices=initial_trade_prices,
-    )
-
-    from qteasy.backtest import backtest_step, initialize_backtest_delivery_queue
-
-    cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
-            cash_delivery_period=cash_delivery_period,
-            stock_delivery_period=stock_delivery_period,
-            share_count=share_count,
-    )
-    day_nums = delivery_day_indicators.cumsum()
-
-    # 循环执行下面步骤，直至完整生成回测结果清单
-    for i in range(op.get_signal_count()):
-
-        # 1，判断是否有资金投入，如果有，更新持有现金和可用现金
-        cash_investment = cash_investment_array[i]
-        if cash_investment > 0:
-            own_cashes[i] += cash_investment
-            available_cashes[i] += cash_investment
-
-        # 2，调用operator.run_strategy()生成当前交易信号
-        stype, s_index, signal = tuple(op.run_strategy(step_index=i))[0]
-        is_delivery_day = bool(delivery_day_indicators[i])
-        signals[i, :] = signal
-
-        # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
-        (
-            own_cashes[i + 1],
-            available_cashes[i + 1],
-            own_amounts_array[i + 1],
-            available_amounts_array[i + 1],
-            trade_records_array[i],
-            trade_cost_array[i],
-            cash_delivery_queue,
-            stock_delivery_queue,
-        ) = backtest_step(
-                signal_type=stype,
-                op_signal=signal,
-                cash_inflation=cash_inflation_array[i],
-                is_delivery_day=is_delivery_day,
-                day_num=day_nums[i],
-                own_cash=own_cashes[i],
-                own_amounts=own_amounts_array[i, :],
-                available_cash=available_cashes[i],
-                available_amounts=available_amounts_array[i, :],
-                trade_prices=trade_price_data[i, :],
-                cost_params=cost_params,
-                pt_buy_threshold=pt_buy_threshold,
-                pt_sell_threshold=pt_sell_threshold,
-                long_pos_limit=long_pos_limit,
-                short_pos_limit=short_pos_limit,
-                allow_sell_short=allow_sell_short,
-                moq_buy=moq_buy,
-                moq_sell=moq_sell,
-                cash_delivery_queue=cash_delivery_queue,
-                stock_delivery_queue=stock_delivery_queue,
-                cash_delivery_period=cash_delivery_period,
-                stock_delivery_period=stock_delivery_period,
-                share_count=share_count,
-        )
-
-        # 4，更新operator中的依赖性历史数据
-        op.prepare_dynamic_data_buffer(
-                trade_records=trade_records_array[i],
-                trade_costs=trade_cost_array[i],
-                trade_prices=trade_price_data[i],
-        )
-
-    # 5，返回signals，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
-    return signals
-

@@ -12,9 +12,14 @@ import logging
 import pandas as pd
 import numpy as np
 from numba import njit
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 from numpy import bool_, dtype, ndarray
+
+from qteasy.qt_operator import (
+    Operator,
+    SIGNAL_TYPE_ID,
+)
 
 from qteasy.finance import (
     get_selling_result,
@@ -675,248 +680,410 @@ def backtest_batch_steps(
     return None
 
 
-# 生成最基本的交易结果数据，以便用于结果的评价，
-def calculate_backtest_total_values(
-        trade_prices: np.ndarray,
-        own_cashes: np.ndarray,
-        own_amounts_array: np.ndarray,
-) -> np.ndarray:
-    """ 根据回测的结果，计算每个交易期间的总资产价值，可用于评价交易结果
-    """
+# 定义一个Backtester类，该类包含一个operator对象，同时包含与operator回测相关的所有属性，同时提供回测结果的生成方法
+#
+class Backtester:
+    """ Backtester类用于对operator对象进行回测操作。
+    本类的属性包括回测计算中所需的所有参数，包括回测过程中产生的结果数据，这些结果数据以ndarray的形式
+    在对象的生命周期内长期保存，并可以反复刷新。
 
-    total_values = (trade_prices * own_amounts_array[1:]).sum(axis=1) + own_cashes[1:]
-    return total_values
+    这个类只有在operator对象被创建之后才能被实例化，因为Backtester类需要依赖operator对象来生成交易
+    信号和执行交易。典型用法如下：
+    ```
+        operator = Operator( ... )  # 创建Operator对象
+        backtested = Operator.backtest( signal_count=100, share_count=10, **kwargs ).run()  # 创建Backtester对象
+        # get backtest raw results:
+        backtested.cash_investment_array
+        backtested.own_cashes
+        ...
+        # get backtest results as DataFrame:
+        result_df = backtested.value_records()
+        trade_log_df = backtested.trade_logs()
+        trade_summary_df = backtested.trade_summary()
+    ```
 
-
-def create_value_records(
-        shares: list[str],
-        trade_datetimes: pd.Index,
-        own_cashes: np.ndarray,
-        own_amounts_array: np.ndarray,
-        trade_prices: np.ndarray,
-) -> pd.DataFrame:
-    """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式，并且可以保存为csv文件
-
-    Returns
-    -------
-    value_history: pd.DataFrame
-        交易模拟结果数据
-    """
-
-    # 将向量化计算结果转化回DataFrame格式
-    values = calculate_backtest_total_values(
-            trade_prices=trade_prices,
-            own_cashes=own_cashes,
-            own_amounts_array=own_amounts_array,
-    )
-
-    value_history = pd.DataFrame(own_amounts_array[1:],
-                                 index=trade_datetimes,
-                                 columns=shares)
-    # 填充标量计算结果
-    value_history['cash'] = own_cashes[1:]
-    value_history['value'] = values
-
-    return value_history
-
-
-# 根据回测结果生成交易日志，包含更加完整的交易记录，输出内容为DataFrame格式，并且可以保存为csv文件
-def create_trade_logs(
-        shares: list[str],
-        trade_datetimes: pd.DatetimeIndex,
-        trade_signals: np.ndarray,
-        trade_prices: np.ndarray,
-        cash_investment_array: np.ndarray,
-        own_cashes: np.ndarray,
-        available_cashes: np.ndarray,
-        own_amounts_array: np.ndarray,
-        available_amounts_array: np.ndarray,
-        trade_records_array: np.ndarray,
-        trade_cost_array: np.ndarray,
-        logger: logging.Logger = None,
-        save_to_file_path: Union[str, None] = None,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
-        每一个交易期间包含8行数据，分别为：
-            '0, trade signal', 每一支股票的当期交易信号
-            '1, price', 每一支股票的当期交易价格
-            '2, traded amounts', 每一支股票的当期交易数量，如果没有交易则为0
-            '3, cash changed', 每一支股票的当期现金变动金额，买入为负数，卖出为正数
-            '4, trade cost', 每一支股票的当期交易费用
-            '5, own amounts', 每一支股票的当期末持有数量
-            '6, available amounts', 每一支股票的当期末可用数量
-            '7, summary', 当期每一支股票的持仓价值，同时包含汇总数据：当期末持有现金、可用现金、总资产价值
-        交易日志文件可以被保存为csv格式，文件名为'trade_log.csv'
-
-    Parameters:
+    Attributes
     ----------
-    shares: list[str]
-        交易标的列表
-    trade_datetimes: pd.DatetimeIndex
-        交易时间索引
-    trade_signals: np.ndarray
-        交易信号矩阵
-    trade_prices: np.ndarray
-        交易价格矩阵
-    cash_investment_array: np.ndarray
-        现金投资数组
-    own_cashes: np.ndarray
-        持有现金数组
-    available_cashes: np.ndarray
-        可用现金数组
-    own_amounts_array: np.ndarray
-        持有资产矩阵
-    available_amounts_array: np.ndarray
-        可用资产矩阵
-    trade_records_array: np.ndarray
-        交易记录矩阵
-    trade_cost_array: np.ndarray
-        交易费用矩阵
-    logger: logging.Logger, optional
-        用于记录日志的Logger对象，如果为None，则不记录日志，默认值为None
-    save_to_file_path: str, optional
-        如果提供了文件路径，则将交易日志保存为CSV文件，默认值为None
+    op: Operator
+        交易操作对象，包含交易信号生成和交易执行的逻辑
 
-    Returns
-    -------
-    trade_log: pd.DataFrame
-        交易模拟结果数据
-        :param cash_investment_array:
     """
-    if logger:
-        # create share trading logs:
-        logger.info(f'generating detailed trading log ...')
-    if len(shares) == 0:
-        raise ValueError('shares list is empty, cannot create trade logs!')
 
-    # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
-    trade_signal_df = pd.DataFrame(trade_signals, index=trade_datetimes, columns=shares)
-    trade_price_df = pd.DataFrame(trade_prices, index=trade_datetimes, columns=shares)
-    own_amounts_df = pd.DataFrame(own_amounts_array[1:], index=trade_datetimes, columns=shares)
-    available_amounts_df = pd.DataFrame(available_amounts_array[1:], index=trade_datetimes, columns=shares)
-    trade_records_df = pd.DataFrame(trade_records_array, index=trade_datetimes, columns=shares)
-    trade_cost_df = pd.DataFrame(trade_cost_array, index=trade_datetimes, columns=shares)
-    cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - trade_cost_array, index=trade_datetimes, columns=shares)
-    amounts_value_df = pd.DataFrame(trade_price_df * own_amounts_array[1:], index=trade_datetimes, columns=shares)
+    def __init__(self,
+                 op: Operator,
+                 shares: list[str],
+                 cash_investment_array: np.ndarray,
+                 cash_inflation_array: np.ndarray,
+                 delivery_day_indicators: np.ndarray,
+                 cost_params: np.ndarray,  # 交易成本参数
+                 signal_parsing_params: dict,  # 交易信号解析参数
+                 trading_moq_params: dict,  # 交易最小单位参数
+                 trading_delivery_params: dict,  # 交易交割参数
+                 trade_price_data: np.ndarray,  # 交易价格数据
+                 logger: Optional[logging.Logger] = None):
+        """ 初始化Backtester对象，设置operator对象和回测参数，初始化回测结果存储表格
 
-    combined_data = pd.concat(
-            objs=[trade_signal_df,
-                  trade_price_df,
-                  trade_records_df,
-                  cash_changed_df,
-                  trade_cost_df,
-                  own_amounts_df,
-                  available_amounts_df,
-                  amounts_value_df, ],
-            keys=['0, trade signal',
-                  '1, price',
-                  '2, traded amounts',
-                  '3, cash changed',
-                  '4, trade cost',
-                  '5, own amounts',
-                  '6, available amounts',
-                  '7, summary'],
-    )
-    combined_data = combined_data.reorder_levels([1, 0]).sort_index(level=0)
+        Parameters
+        ----------
+        op: Operator
+            交易操作对象，包含交易信号生成和交易执行的逻辑
+        shares: list[str]
+            交易标的列表，包含所有交易标的的代码
+        cash_investment_array: np.ndarray
+            现金投资数组，记录每一个交易信号日的现金投资金额
+        cash_inflation_array: np.ndarray
+            现金增值数组，记录每一个交易信号日相对前一个交易信号日的现金增值幅度
+        delivery_day_indicators: np.ndarray
+            交割日指标数组，记录每一个交易信号日是否为新的交割日
+        cost_params: np.ndarray
+            交易成本参数，包括买入费率、卖出费率、最低买入费用、最低卖出费用、交易滑点
+            buy_rate: float, 交易成本：固定买入费率
+            sell_rate: float, 交易成本：固定卖出费率
+            buy_min: float, 交易成本：最低买入费用
+            sell_min: float, 交易成本：最低卖出费用
+            slipage: float, 交易成本：滑点
+        signal_parsing_params: dict
+            交易信号解析参数字典，包含解析交易信号所需的所有参数，通常是parse_signal_parsing_params()函数的输出
+        trading_moq_params: dict
+            交易最小单位参数字典，包含交易最小单位相关的所有参数，通常是parse_trading_moq_params()函数的输出
+        trading_delivery_params: dict
+            交易交割参数字典，包含交易交割相关的所有参数，通常是parse_trading_delivery_params()函数的输出
+        trade_price_data: np.ndarray
+            交易价格数据，记录每一个运行交易记录时间戳中的各个资产的交易价格
+        logger: Optional[logging.Logger]
+            可选的日志记录器对象，用于记录回测过程中的日志信息
+        """
+        self.op = op
+        self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
+        self.shares = shares
+        self.cash_investment_array = cash_investment_array
+        self.cash_inflation_array = cash_inflation_array
+        self.delivery_day_indicators = delivery_day_indicators
+        self.cost_params = cost_params
+        self.signal_parsing_params = signal_parsing_params
+        self.trading_moq_params = trading_moq_params
+        self.trading_delivery_params = trading_delivery_params
+        self.trade_price_data = trade_price_data
+        self.logger = logger
 
-    # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
-    add_investments = pd.Series(cash_investment_array, index=trade_datetimes, name='add. invest')
-    own_cash_series = pd.Series(own_cashes[1:], index=trade_datetimes, name='own cash')
-    available_cash_series = pd.Series(available_cashes[1:], index=trade_datetimes, name='available cash')
-    total_values = calculate_backtest_total_values(
-            trade_prices=trade_prices,
-            own_cashes=own_cashes,
-            own_amounts_array=own_amounts_array,
-    )
-    total_value_series = pd.Series(total_values, index=trade_datetimes, name='value')
-    summary_df = pd.concat(
-            objs=[add_investments,
-                  own_cash_series,
-                  available_cash_series,
-                  total_value_series],
-            axis=1,
-    )
-    summary_index = pd.MultiIndex.from_product(
-            [summary_df.index,
-                ['7, summary']],
-    )
-    summary_df.index = summary_index
-    trade_log_df = summary_df.join(combined_data, how='outer', sort=False)
-
-    if save_to_file_path is not None:
-        trade_log_df.to_csv(save_to_file_path, encoding='utf-8')
+        # 1，检查operator对象是否已经准备好，否则raise error
+        op.is_ready(raise_error=False)
         if logger:
-            logger.info(f'trade log saved to {save_to_file_path}')
+            logger.info('Start backtest operator...')
 
-    return trade_log_df, summary_df
+        # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
+        self.op_schedule = op.group_timing_table
+        self.n_signals = op.get_signal_count()
+        self.share_count = len(shares)
 
+        # 3.1 现金和股票持仓历史记录表
+        self.own_cashes = np.zeros(shape=(self.n_signals + 1, self.share_count))
+        self.own_amounts_array = np.zeros(shape=(self.n_signals + 1, self.share_count))
+        self.available_cashes = np.zeros(shape=(self.n_signals + 1, self.share_count))
+        self.available_amounts_array = np.zeros(shape=(self.n_signals + 1, self.share_count))
+        # 3.2 交易过程数据记录表，包括交易记录、交易成本等
+        self.trade_records_array = np.zeros((self.n_signals, self.share_count), dtype=float)
+        self.trade_cost_array = np.zeros((self.n_signals, self.share_count), dtype=float)
 
-# 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
-def create_trade_summary(
-        trade_log_df: pd.DataFrame,
-        summary_df: pd.DataFrame,
-        shares: list[str],
-        share_names: Union[list[str], None] = None,
-        logger: logging.Logger = None,
-        save_to_file_path: Union[str, None] = None,
-) -> pd.DataFrame:
-    """ 生成 trade summary 交易摘要表 (一个更加紧凑的交易汇总表，包含每次交易的关键信息，
-    以一种更加易于人类阅读的方式呈现，并过滤掉无交易的记录)，函数的输入trade_log_df是函数
-    create_trade_logs()的返回值。
+        # 4, 交易日志和交易汇总记录
+        self.trade_log_df: Optional[pd.DataFrame] = None
+        self.summary_df: Optional[pd.DataFrame] = None
 
-    Parameters
-    ----------
-    shares: list[str]
-        交易标的列表
-    share_names: list[str], optional
-        交易标的名称列表, 如果为None，则使用“N/A”作为名称
-    trade_log_df: pd.DataFrame
-        交易日志DataFrame，是函数create_trade_logs()的返回值
-    summary_df: pd.DataFrame
-        交易摘要DataFrame，是函数create_trade_logs()的返回值
-    logger: logging.Logger, optional
-        用于记录日志的Logger对象，如果为None，则不记录日志，默认值为None
-    save_to_file_path: str, optional
-        如果提供了文件路径，则将交易摘要表保存为CSV文件，默认值为None，不保存文件
-    """
+    def run(self) -> 'Backtester':
+        """ 执行回测计算，生成回测结果数据并存入对象属性中"""
 
-    if logger is not None:
-        # create share trading logs:
-        logger.info(f'generating abstract trading log ...')
-    if len(shares) == 0:
-        raise ValueError('shares list is empty, cannot create trade summary!')
-    if any(share not in trade_log_df.columns for share in shares):
-        missing_share = [share for share in shares if share not in trade_log_df.columns]
-        raise KeyError(f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
-    # 处理share_names
-    if share_names is None:
-        share_names = ['N/A' for _ in shares]
+        # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
+        if self.op.check_dynamic_data():
+            if self.logger:
+                self.logger.info('Backtest operator with dynamic data dependence...')
+            signals = self._backtest_static_operator()
+        # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
+        else:
+            if self.logger:
+                self.logger.info('Backtest operator without dynamic data dependence...')
+            signals = self._backtest_dynamic_operator()
 
-    share_logs = []
-    for share, share_name in zip(shares, share_names):
-        share_df = trade_log_df[share].unstack()
-        share_df = share_df[share_df['2, traded amounts'] != 0]
-        share_df['code'] = share
-        share_df['name'] = share_name
-        share_logs.append(share_df)
+        self.op_signals = signals
+        if self.logger:
+            self.logger.info('Backtest completed.')
 
-    re_columns = ['code',
-                  'name',
-                  '0, trade signal',
-                  '1, price',
-                  '2, traded amounts',
-                  '3, cash changed',
-                  '4, trade cost',
-                  '5, own amounts',
-                  '6, available amounts',
-                  '7, summary']
-    op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-    summary_df.index = summary_df.index.levels[0]
-    summary_df = summary_df.join(op_log_shares_abs, how='right', sort=True)
+        return self
 
-    if save_to_file_path is not None:
-        summary_df.to_csv(save_to_file_path, encoding='utf-8')
-        if logger is not None:
-            logger.info(f'trade summary saved to {save_to_file_path}')
+    def _backtest_static_operator(self) -> np.ndarray:
+        """处理operator的交易信号仅包含静态数据类型（不依赖交易结果的数据）的情况:
 
-    return summary_df
+        """
+        # 1，调用operator.run()生成完整的交易信号清单
+        stypes = np.zeros(self.op.get_signal_count(), dtype=int)
+        s_indices = np.zeros(self.op.get_signal_count(), dtype=int)
+        signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
+        signal_index = 0
+
+        for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
+            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
+            s_indices[signal_index] = s_index
+            signals[signal_index, :] = signal
+            signal_index += 1
+
+        # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
+        backtest_batch_steps(
+                signal_types=stypes,
+                op_signals=signals,
+                cash_investment_array=self.cash_investment_array,
+                cash_inflation_array=self.cash_inflation_array,
+                delivery_day_indicators=self.delivery_day_indicators,
+                own_cashes=self.own_cashes,
+                available_cashes=self.available_cashes,
+                own_amounts_array=self.own_amounts_array,
+                available_amounts_array=self.available_amounts_array,
+                trade_prices=self.trade_price_data,
+                trade_records_array=self.trade_records_array,
+                trade_cost_array=self.trade_cost_array,
+                cost_params=self.cost_params,
+                **self.signal_parsing_params,
+                **self.trading_moq_params,
+                **self.trading_delivery_params,
+        )
+
+        return signals
+
+    def _backtest_dynamic_operator(self) -> np.ndarray:
+        """处理operator的交易信号包含动态数据类型(依赖交易结果的数据类型)的情况:
+
+        根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
+
+        # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
+        initial_trade_records = self.trade_records_array[0, :].copy()
+        initial_trade_costs = self.trade_cost_array[0, :].copy()
+        initial_trade_prices = self.trade_price_data[0, :].copy()
+        signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
+
+        self.op.prepare_dynamic_data_buffer(
+                trade_records=initial_trade_records,
+                trade_costs=initial_trade_costs,
+                trade_prices=initial_trade_prices,
+        )
+
+        cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
+                share_count=self.share_count,
+                **self.trading_delivery_params,
+        )
+        day_nums = self.delivery_day_indicators.cumsum()
+
+        # 循环执行下面步骤，直至完整生成回测结果清单
+        for i in range(self.op.get_signal_count()):
+
+            # 1，判断是否有资金投入，如果有，更新持有现金和可用现金
+            cash_investment = self.cash_investment_array[i]
+            if cash_investment > 0:
+                self.own_cashes[i] += cash_investment
+                self.available_cashes[i] += cash_investment
+
+            # 2，调用operator.run_strategy()生成当前交易信号
+            stype, s_index, signal = tuple(self.op.run_strategy(step_index=i))[0]
+            is_delivery_day = bool(self.delivery_day_indicators[i])
+            signals[i, :] = signal
+
+            # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
+            (
+                self.own_cashes[i + 1],
+                self.available_cashes[i + 1],
+                self.own_amounts_array[i + 1],
+                self.available_amounts_array[i + 1],
+                self.trade_records_array[i],
+                self.trade_cost_array[i],
+                cash_delivery_queue,
+                stock_delivery_queue,
+            ) = backtest_step(
+                    signal_type=stype,
+                    op_signal=signal,
+                    cash_inflation=self.cash_inflation_array[i],
+                    is_delivery_day=is_delivery_day,
+                    day_num=day_nums[i],
+                    own_cash=self.own_cashes[i],
+                    own_amounts=self.own_amounts_array[i, :],
+                    available_cash=self.available_cashes[i],
+                    available_amounts=self.available_amounts_array[i, :],
+                    trade_prices=self.trade_price_data[i, :],
+                    cost_params=self.cost_params,
+                    **self.signal_parsing_params,
+                    **self.trading_moq_params,
+                    **self.trading_delivery_params,
+            )
+
+            # 4，更新operator中的依赖性历史数据
+            self.op.prepare_dynamic_data_buffer(
+                    trade_records=self.trade_records_array[i],
+                    trade_costs=self.trade_cost_array[i],
+                    trade_prices=self.trade_price_data[i],
+            )
+
+        # 5，返回signals，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
+        return signals
+
+    # 生成更加易于阅读的DataFrame型交易结果数据，以便用于结果的评价及后续处理，
+
+    def trade_records(self) -> pd.DataFrame:
+        """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式
+
+        Returns
+        -------
+        value_history: pd.DataFrame
+            交易模拟结果数据
+        """
+
+        value_history = pd.DataFrame(self.own_amounts_array[1:],
+                                     index=self.op_schedule,
+                                     columns=self.shares)
+        # 填充标量计算结果
+        value_history['cash'] = self.own_cashes[1:]
+        value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+
+        return value_history
+
+    # 根据回测结果生成交易日志，包含更加完整的交易记录，输出内容为DataFrame格式，并且可以保存为csv文件
+    def create_trade_logs(
+            self,
+            save_to_file_path: Union[str, None] = None,
+    ) -> None:
+        """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
+            每一个交易期间包含8行数据，分别为：
+                '0, trade signal', 每一支股票的当期交易信号
+                '1, price', 每一支股票的当期交易价格
+                '2, traded amounts', 每一支股票的当期交易数量，如果没有交易则为0
+                '3, cash changed', 每一支股票的当期现金变动金额，买入为负数，卖出为正数
+                '4, trade cost', 每一支股票的当期交易费用
+                '5, own amounts', 每一支股票的当期末持有数量
+                '6, available amounts', 每一支股票的当期末可用数量
+                '7, summary', 当期每一支股票的持仓价值，同时包含汇总数据：当期末持有现金、可用现金、总资产价值
+            交易日志文件可以被保存为csv格式，文件名为'trade_log.csv'
+
+        Parameters
+        ----------
+        save_to_file_path: str, optional
+            如果提供了文件路径，则将交易日志保存为CSV文件，默认值为None
+
+        Returns
+        -------
+        trade_log: pd.DataFrame
+            交易模拟结果数据
+        """
+        if self.logger:
+            # create share trading logs:
+            self.logger.info(f'generating detailed trading log ...')
+        if self.share_count == 0:
+            raise ValueError('shares list is empty, cannot create trade logs!')
+
+        # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
+        trade_signal_df = pd.DataFrame(self.op_signals, index=self.op_schedule, columns=self.shares)
+        trade_price_df = pd.DataFrame(self.trade_price_data, index=self.op_schedule, columns=self.shares)
+        own_amounts_df = pd.DataFrame(self.own_amounts_array[1:], index=self.op_schedule, columns=self.shares)
+        available_amounts_df = pd.DataFrame(self.available_amounts_array[1:], index=self.op_schedule, columns=self.shares)
+        trade_records_df = pd.DataFrame(self.trade_records_array, index=self.op_schedule, columns=self.shares)
+        trade_cost_df = pd.DataFrame(self.trade_cost_array, index=self.op_schedule, columns=self.shares)
+        cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - self.trade_cost_array, index=self.op_schedule, columns=self.shares)
+        amounts_value_df = pd.DataFrame(trade_price_df * self.own_amounts_array[1:], index=self.op_schedule, columns=self.shares)
+
+        combined_data = pd.concat(
+                objs=[trade_signal_df,
+                      trade_price_df,
+                      trade_records_df,
+                      cash_changed_df,
+                      trade_cost_df,
+                      own_amounts_df,
+                      available_amounts_df,
+                      amounts_value_df, ],
+                keys=['0, trade signal',
+                      '1, price',
+                      '2, traded amounts',
+                      '3, cash changed',
+                      '4, trade cost',
+                      '5, own amounts',
+                      '6, available amounts',
+                      '7, summary'],
+        )
+        combined_data = combined_data.reorder_levels([1, 0]).sort_index(level=0)
+
+        # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
+        add_investments = pd.Series(self.cash_investment_array, index=self.op_schedule, name='add. invest')
+        own_cash_series = pd.Series(self.own_cashes[1:], index=self.op_schedule, name='own cash')
+        available_cash_series = pd.Series(self.available_cashes[1:], index=self.op_schedule, name='available cash')
+        total_values = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+
+        total_value_series = pd.Series(total_values, index=self.op_schedule, name='value')
+
+        self.summary_df = pd.concat(
+                objs=[add_investments,
+                      own_cash_series,
+                      available_cash_series,
+                      total_value_series],
+                axis=1,
+        )
+        summary_index = pd.MultiIndex.from_product(
+                [self.summary_df.index,
+                    ['7, summary']],
+        )
+        self.summary_df.index = summary_index
+        self.trade_log_df = self.summary_df.join(combined_data, how='outer', sort=False)
+
+        if save_to_file_path is not None:
+            self.trade_log_df.to_csv(save_to_file_path, encoding='utf-8')
+            if self.logger:
+                self.logger.info(f'trade log saved to {save_to_file_path}')
+
+    # 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
+    def create_trade_summary(
+            self,
+            share_names: Union[list[str], None] = None,
+            save_to_file_path: Union[str, None] = None,
+    ) -> None:
+        """ 生成 trade summary 交易摘要表 (一个更加紧凑的交易汇总表，包含每次交易的关键信息，
+        以一种更加易于人类阅读的方式呈现，并过滤掉无交易的记录)，函数的输入trade_log_df是函数
+        create_trade_logs()的返回值。
+
+        Parameters
+        ----------
+        share_names: list[str], optional
+            交易标的名称列表, 如果为None，则使用“N/A”作为名称
+        save_to_file_path: str, optional
+            如果提供了文件路径，则将交易摘要表保存为CSV文件，默认值为None，不保存文件
+        """
+
+        if self.logger is not None:
+            # create share trading logs:
+            self.logger.info(f'generating abstract trading log ...')
+        if self.share_count == 0:
+            raise ValueError('shares list is empty, cannot create trade summary!')
+        if any(share not in self.trade_log_df.columns for share in self.shares):
+            missing_share = [share for share in self.shares if share not in self.trade_log_df.columns]
+            raise KeyError(f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
+        # 处理share_names
+        if share_names is None:
+            share_names = ['N/A' for _ in self.shares]
+
+        share_logs = []
+        for share, share_name in zip(self.shares, share_names):
+            share_df = self.trade_log_df[share].unstack()
+            share_df = share_df[share_df['2, traded amounts'] != 0]
+            share_df['code'] = share
+            share_df['name'] = share_name
+            share_logs.append(share_df)
+
+        re_columns = ['code',
+                      'name',
+                      '0, trade signal',
+                      '1, price',
+                      '2, traded amounts',
+                      '3, cash changed',
+                      '4, trade cost',
+                      '5, own amounts',
+                      '6, available amounts',
+                      '7, summary']
+        op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
+        self.summary_df.index = self.summary_df.index.levels[0]
+        self.summary_df = self.summary_df.join(op_log_shares_abs, how='right', sort=True)
+
+        if save_to_file_path is not None:
+            self.summary_df.to_csv(save_to_file_path, encoding='utf-8')
+            if self.logger is not None:
+                self.logger.info(f'trade summary saved to {save_to_file_path}')
