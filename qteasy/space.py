@@ -16,7 +16,6 @@ import warnings
 from typing import Union, Iterable
 
 from qteasy.utilfuncs import (
-    str_to_list,
     input_to_list,
 )
 from qteasy.parameter import Parameter

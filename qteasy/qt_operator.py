@@ -79,7 +79,6 @@ class Operator:
 
     """
 
-
     def __init__(self,
                  strategies: Union[str, list[Union[str, BaseStrategy, type]]] = None,
                  *,
@@ -1859,52 +1858,52 @@ class Operator:
             for result in self.run_strategy(step):
                 yield result
 
-    def create_signals(self, start_date=None, end_date=None, data_package: dict = None):
-        """ 一个集成方法，调用operator的相关方法，准备好数据缓冲区和数据窗口，并批量创建交易信号
-        生成可以用于回测的交易信号列表，以便后续的回测模块使用
-
-        Parameters
-        ----------
-        start_date: str or pd.Timestamp, optional
-            开始日期，默认为None，表示从数据源的起始日期开始
-        end_date: str or pd.Timestamp, optional
-            结束日期，默认为None，表示到数据源的结束日期为止
-        data_package: dict, optional
-            历史数据字典，包含提前准备好的所有需要的数据类型的数据缓存
-
-        Returns
-        -------
-        None
-        """
-        self.prepare_running_schedule(start_date=start_date, end_date=end_date)
-        self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_package=data_package)
-        self.create_data_windows()
-
-        # tentative parameter total_run_steps = 25
-        total_run_steps = 25
-        # create trade signals between start and end dates
-        self.prepare_data_buffer(
-                start_date=start_date,
-                end_date=end_date,
-                data_package=data_package,
-        )
-
-        self.prepare_running_schedule(start_date=start_date, end_date=end_date)
-
-        self.create_data_windows()
-
-        signal_count = self.get_signal_count(range(total_run_steps))
-
-        self._op_list = np.empty(shape=(signal_count, 3))
-        self._op_list_types = np.empty(shape=(signal_count,), dtype=int)  # signal type: 0/1/2 for pt/ps/vs
-        self._op_list_bt_indices = np.empty(shape=(signal_count,), dtype=int)
-
-        signal_index = 0
-        for signal in self.run_strategies(range(total_run_steps)):
-            self._op_list_types[signal_index] = signal[0]  # the type of the signal
-            self._op_list[signal_index] = signal[2]  # the array of the signals
-            self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
-            signal_index += 1
+    # def create_signals(self, start_date=None, end_date=None, data_package: dict = None):
+    #     """ 一个集成方法，调用operator的相关方法，准备好数据缓冲区和数据窗口，并批量创建交易信号
+    #     生成可以用于回测的交易信号列表，以便后续的回测模块使用
+    #
+    #     Parameters
+    #     ----------
+    #     start_date: str or pd.Timestamp, optional
+    #         开始日期，默认为None，表示从数据源的起始日期开始
+    #     end_date: str or pd.Timestamp, optional
+    #         结束日期，默认为None，表示到数据源的结束日期为止
+    #     data_package: dict, optional
+    #         历史数据字典，包含提前准备好的所有需要的数据类型的数据缓存
+    #
+    #     Returns
+    #     -------
+    #     None
+    #     """
+    #     self.prepare_running_schedule(start_date=start_date, end_date=end_date)
+    #     self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_package=data_package)
+    #     self.create_data_windows()
+    #
+    #     # tentative parameter total_run_steps = 25
+    #     total_run_steps = 25
+    #     # create trade signals between start and end dates
+    #     self.prepare_data_buffer(
+    #             start_date=start_date,
+    #             end_date=end_date,
+    #             data_package=data_package,
+    #     )
+    #
+    #     self.prepare_running_schedule(start_date=start_date, end_date=end_date)
+    #
+    #     self.create_data_windows()
+    #
+    #     signal_count = self.get_signal_count(range(total_run_steps))
+    #
+    #     self._op_list = np.empty(shape=(signal_count, 3))
+    #     self._op_list_types = np.empty(shape=(signal_count,), dtype=int)  # signal type: 0/1/2 for pt/ps/vs
+    #     self._op_list_bt_indices = np.empty(shape=(signal_count,), dtype=int)
+    #
+    #     signal_index = 0
+    #     for signal in self.run_strategies(range(total_run_steps)):
+    #         self._op_list_types[signal_index] = signal[0]  # the type of the signal
+    #         self._op_list[signal_index] = signal[2]  # the array of the signals
+    #         self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
+    #         signal_index += 1
 
     # ====== top level methods below ======
 
@@ -1919,16 +1918,21 @@ class Operator:
         else:
             raise ValueError(f'Invalid mode: {mode}')
 
-    def live_trade(self, **kwargs):
+    def live_trade(self, account_id, **kwargs):
         """ placeholder for live trade method """
-        raise NotImplementedError("This method is not implemented yet.")
+        from qteasy.trader import Trader
+        trader = Trader(account_id=account_id, operator=self, **kwargs)
+        return trader.run()
 
     def backtest(self, **kwargs):
         """ placeholder for backtest method """
-        raise NotImplementedError("This method is not implemented yet.")
+        from qteasy.backtest import Backtester
+        backtester = Backtester(op=self, **kwargs)
+        return backtester.run()
 
     def optimize(self, **kwargs):
         """ placeholder for optimize method """
         raise NotImplementedError("This method is not implemented yet.")
+
 
 
