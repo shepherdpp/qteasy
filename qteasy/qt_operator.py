@@ -42,6 +42,7 @@ OPTIMIZE = 2
 OPTI = 2
 OPTIMIZATION = 2
 
+
 class Operator:
     """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
 
@@ -88,6 +89,7 @@ class Operator:
                  group_merge_type: str = 'None',
                  run_freq: str = None,
                  run_timing: str = None,
+                 debug: bool = False,
                  ) -> None:
         """ 生成一个Operator对象
 
@@ -121,6 +123,8 @@ class Operator:
             同时设置Operator对象中所有交易策略的运行频率
         run_timing: str, default 'close'
             同时设置Operator对象中所有交易策略的运行时机
+        debug : bool, default False
+            是否开启调试模式，默认不开启。开启调试模式后，operator的is_ready()属性会强制设置为True
 
         Examples
         --------
@@ -137,6 +141,7 @@ class Operator:
 
         """
 
+        self.debug = debug
         self.name = name
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -494,7 +499,9 @@ class Operator:
         """ 属性，operator.is_ready()的另一种写法"""
         return self.is_ready()
 
-    def is_ready(self, tell_me_why: bool = False, raise_error: bool = False) -> bool:
+    def is_ready(self,
+                 tell_me_why: bool = False,
+                 raise_error: bool = False,) -> bool:
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
@@ -515,6 +522,10 @@ class Operator:
         -------
         bool, Operator对象是否已经准备好，可以开始生成交易信号
         """
+
+        if self.debug:
+            return True
+
         message = [f'Operator readiness:  ']
         is_ready = True
 
@@ -1932,7 +1943,9 @@ class Operator:
 
     def optimize(self, **kwargs):
         """ placeholder for optimize method """
-        raise NotImplementedError("This method is not implemented yet.")
+        from qteasy.optimization import Optimizer
+        optimizer = Optimizer(op=self, **kwargs)
+        return optimizer.run()
 
 
 

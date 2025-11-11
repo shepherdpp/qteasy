@@ -2054,7 +2054,6 @@ def run(op: Operator, **kwargs):
         return run_mode_1(
                 op=op,
                 config=config,
-                benchmark_data_type=benchmark_data_type,
         )
 
     elif run_mode == 2 or run_mode == 'optimization':
@@ -2062,7 +2061,6 @@ def run(op: Operator, **kwargs):
         return run_mode_2(
                 op=op,
                 config=config,
-                benchmark_data_type=benchmark_data_type,
         )
 
     return None
@@ -2073,7 +2071,7 @@ def run_mode_0():
     raise NotImplementedError
 
 
-def run_mode_1(op, config, benchmark_data_type):
+def run_mode_1(op, config):
     """ run qteasy in mode 1: back test mode"""
     data_package = get_backtest_data_package(
             op=op,
@@ -2106,19 +2104,50 @@ def run_mode_1(op, config, benchmark_data_type):
 
     hist_benchmark = get_backtest_benchmark_data(
             benchmark_asset=benchmark_data_type,
-            shares=config['asset_pool'],
             start=start_date,
             end=end_date,
             data_source=qteasy.QT_DATA_SOURCE,
     )  # TODO: to be realized
 
-    # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
-    backtest_result, trade_log, trade_summary = backtest_operator(
-            op=op,
-            trade_price_list=trade_prices,
-            config=config,
-            logger=qteasy.logger_core
+    from qteasy.config_parser import (
+        parse_cash_invest_and_delivery_arrays,
+        parse_trade_cost_params,
+        parse_signal_parsing_params,
+        parse_trading_moq_params,
+        parse_trading_delivery_params,
     )
+    # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
+    (cash_investment_array,
+     cash_inflation_array,
+     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op_schedule)
+
+    cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+    signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
+    trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
+    trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
+
+    # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
+    backtested = op.backtest(
+            shares=config['asset_pool'],
+            cash_investment_array=cash_investment_array,
+            cash_inflation_array=cash_inflation_array,
+            delivery_day_indicators=delivery_day_indicators,
+            cost_params=cost_params,
+            signal_parsing_params=signal_parsing_params,
+            trading_moq_params=trading_moq_params,
+            trading_delivery_params=trading_delivery_params,
+            trade_price_data=trade_prices.values,
+            logger=qteasy.logger_core,
+    )
+
+    backtest_result = backtested.trade_result_df()
+
+    if config['trade_log']:
+        backtested.generate_trade_logs(save_to_file_path=config['trade_log_path'])
+
+    if config['trade_summary']:
+        backtested.generate_trade_summary(save_to_file_path=config['trade_summary_path'])
+
     # 评价回测结果——根据交易结果生成交易结果的评价结果
     backtest_result = evaluate(
             looped_values=backtest_result,
@@ -2139,7 +2168,7 @@ def run_mode_1(op, config, benchmark_data_type):
     return backtest_result
 
 
-def run_mode_2(op, config, benchmark_data_type):
+def run_mode_2(op, config):
     """ run qteasy in mode 2: optimization mode"""
 
     from .optimization import _search_ga, _search_aco, _search_pso, _search_grid, _search_gradient
@@ -2195,7 +2224,6 @@ def run_mode_2(op, config, benchmark_data_type):
             op=op,
             trade_price_list=hist_opti_loop,
             benchmark_history_data=hist_benchmark,
-            benchmark_history_data_type=benchmark_data_type,
             config=config,
             stage='test-o'
     )
@@ -2215,7 +2243,6 @@ def run_mode_2(op, config, benchmark_data_type):
                 op=op,
                 trade_price_list=opti_trade_prices,
                 benchmark_history_data=hist_benchmark,
-                benchmark_history_data_type=benchmark_data_type,
                 config=config,
                 stage='test-t'
         )
@@ -2245,7 +2272,6 @@ def run_mode_2(op, config, benchmark_data_type):
                     op=op,
                     trade_price_list=mock_hist,
                     benchmark_history_data=mock_hist_loop,
-                    benchmark_history_data_type=benchmark_data_type,
                     config=config,
                     stage='test-t'
             )
@@ -2260,181 +2286,3 @@ def run_mode_2(op, config, benchmark_data_type):
                 pass
 
     return optimal_pars
-
-
-# TODO: 将这个函数定义为一个Backtester类的方法，在backtest.py中定义，并由qt_operator中的Operator类调用
-def backtest_operator(op: Operator,
-                      trade_price_list: pd.DataFrame,
-                      config: dict,
-                      logger: logging.Logger = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """ 对operator对象进行交易回测，以pd.DataFrame的形式生成交易回测结果
-
-    本函数接受一个operator对象以及回测运行参数作为入参，这个operator对象必须已经设置好交易参数以及交易
-    数据，即处于is_ready的状态。
-    函数还必须接受一个回测交易价格清单，这个价格清单包含所有交易品种在每个交易时间点上的回测交易价格
-    函数运行后，返回三个DataFrame对象，分别是回测交易结果、交易日志和交易汇总，其中交易日志和交易汇总是
-    可选的，根据config参数设置确定是否生成。
-
-    Parameters
-    ----------
-    op: Operator
-        用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
-    trade_price_list: pd.DataFrame
-        回测交易价格清单，清单中包含所有股票在每个交易时间点上的交易价格，用于执行回测交易
-    config: dict
-        回测运行参数，参见qteasy文档
-    logger: logging.Logger, optional
-        用于记录回测过程的日志对象
-
-    Returns
-    -------
-    tuple: (backtest_results, op_log_matrix, op_summary_matrix))
-    - backtest_results: pd.DataFrame, 回测交易结果，包含回测过程的完整记录
-    - op_log_matrix: pd.DataFrame, 交易日志，以流水账的方式记录的全部历史交易明细，包括每个交易区间的持仓变动及现金变动
-    - op_summary_matrix: pd.DataFrame, 交易汇总，用汇总且易于阅读的方式记录每一笔交易发生的时间点和交易结果，忽略没有交易发生的时间点
-    """
-    # 1，检查operator对象是否已经准备好，否则raise error
-    op.is_ready(raise_error=False)
-    if logger:
-        logger.info('Start backtest operator...')
-
-    # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
-    op_schedule = op.group_timing_table
-    n_signals = op.get_signal_count()
-    share_count = len(config['asset_pool'])
-    from qteasy.config_parser import (
-        parse_cash_invest_and_delivery_arrays,
-        parse_trade_cost_params,
-        parse_signal_parsing_params,
-        parse_trading_moq_params,
-        parse_trading_delivery_params,
-    )
-    # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
-    (cash_investment_array,
-     cash_inflation_array,
-     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op_schedule)
-
-    cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
-    signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
-    trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
-    trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
-
-    # 3，读取回测价格数据和资金投入计划、交易成本率等参数，生成用于回测的各种数据记录表，这些都是Backtester的属性
-    '''
-    运行中需要用到的数据表包括：
-        0, op_signals:          交易信号表，N行M列，N为交易信号数量，M为交易品种数量
-        1, own_amounts:         持有资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
-        2, available_amounts:   可用资产数量表, N+1行M列，N为交易信号数量，多出一行用于存储最后一个期末数据，M为交易品种数量
-        3, own_cash:            持有现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
-        4, available_cash:      可用现金数量表, N+1行1列，N为交易信号数量，多出一行用于存储最后一个期末数据
-
-    运行中需要用到的索引表包括：
-        0, op_datetime:       回测历史日期索引表，包含所有交易信号的交易日期时间
-        1, trade_indicators:  交易信号索引表，指示那些交易信号需要进行交易计算
-        2, cash_investment:   资金投入日期索引表，指示每个交易信号日期的资金投入额
-        3, cash_inflation:    资金无风险利率索引表，指示每个交易信号日期的现金增长率
-        4, delivery_days:     交割周期索引表，指示每个交易信号日期的股票交割周期
-    '''
-    # 3.1 现金和股票持仓历史记录表
-    own_cashes = np.zeros(shape=(n_signals + 1, share_count))
-    own_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
-    available_cashes = np.zeros(shape=(n_signals + 1, share_count))
-    available_amounts_array = np.zeros(shape=(n_signals + 1, share_count))
-    # 3.2 交易过程数据记录表，包括交易记录、交易成本等
-    trade_records_array = np.zeros((n_signals, share_count), dtype=float)
-    trade_cost_array = np.zeros((n_signals, share_count), dtype=float)
-
-    # 3.3 读取交易价格数据，TODO: 在读取前最好检查其合法性
-    trade_price_data = trade_price_list.values
-
-    # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
-    if op.check_dynamic_data():
-        if logger:
-            logger.info('Backtest operator with dynamic data dependence...')
-        signals = _backtest_static_operator(
-                op=op,
-                cost_params=cost_params,
-                share_count=share_count,
-                cash_investment_array=cash_investment_array,
-                cash_inflation_array=cash_inflation_array,
-                delivery_day_indicators=delivery_day_indicators,
-                own_cashes=own_cashes,
-                available_cashes=available_cashes,
-                own_amounts=own_amounts_array,
-                available_amounts=available_amounts_array,
-                trade_price_data=trade_price_data,
-                trade_records_array=trade_records_array,
-                trade_cost_array=trade_cost_array,
-                **signal_parsing_params,
-                **trading_moq_params,
-                **trading_delivery_params,
-        )
-    # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
-    else:
-        if logger:
-            logger.info('Backtest operator without dynamic data dependence...')
-        signals = _backtest_dynamic_operator(
-                op=op,
-                cost_params=cost_params,
-                share_count=share_count,
-                cash_investment_array=cash_investment_array,
-                cash_inflation_array=cash_inflation_array,
-                delivery_day_indicators=delivery_day_indicators,
-                own_cashes=own_cashes,
-                available_cashes=available_cashes,
-                own_amounts_array=own_amounts,
-                available_amounts_array=available_amounts,
-                trade_price_data=trade_price_data,
-                trade_records_array=trade_records_array,
-                trade_cost_array=trade_cost_array,
-                **signal_parsing_params,
-                **trading_moq_params,
-                **trading_delivery_params,
-        )
-
-    # 3，生成DataFrame形式的回测结果
-    from qteasy.backtest import (
-        create_value_records,
-        create_trade_logs,
-        create_trade_summary,
-    )
-
-    backtest_result = create_value_records(
-            shares=shares,
-            trade_datetimes=op.group_timing_table.index,
-            own_cashes=own_cashes,
-            own_amounts_array=own_amounts,
-            trade_prices=trade_price_data,
-    )
-    if logger:
-        logger.info('Backtest completed. backtest result generated.')
-
-    if generate_trade_log:
-        trade_log, summary = create_trade_logs(
-                shares=shares,
-                trade_datetimes=op.group_timing_table.index,
-                trade_signals=signals,
-                trade_prices=trade_price_data,
-                cash_investment_array=cash_investment_array,
-                own_cashes=own_cashes,
-                available_cashes=available_cashes,
-                own_amounts_array=own_amounts,
-                available_amounts_array=available_amounts,
-                trade_records_array=trade_records_array,
-                trade_cost_array=trade_cost_array,
-                logger=logger,
-                save_to_file_path=os.path.join(save_to_file_path, 'trade_log.csv'),
-        )
-        trade_summary = create_trade_summary(
-                shares=shares,
-                share_names=None,
-                trade_log_df=trade_log,
-                summary_df=summary,
-                logger=logger,
-                save_to_file_path=os.path.join(save_to_file_path, 'trade_records.csv'),
-        )
-    else:
-        trade_log = pd.DataFrame()
-        trade_summary = pd.DataFrame()
-
-    return backtest_result, trade_log, trade_summary

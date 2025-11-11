@@ -19,11 +19,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from qteasy.qt_operator import Operator
 from qteasy._arg_validators import ConfigDict
 
-from qteasy.backtest import (
-    process_backtest_results,
-    _get_complete_hist,
-)
-
 from qteasy.history import (
     HistoryPanel,
     stack_dataframes,
@@ -780,3 +775,21 @@ def _search_aco(hist, benchmark, benchmark_type, op, config):
     -------
     """
     raise NotImplementedError
+
+
+class Optimizer:
+    """ 最优参数搜索器对象
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+    def __init__(self, op, **kwargs):
+        self.op = op
+        pass
+
+    def run(self):
+        raise NotImplementedError
+
