@@ -19,14 +19,12 @@ import pandas as pd
 import numpy as np
 
 from qteasy.finance import get_cost_params
+from qteasy.qt_operator import Operator
 from qteasy.backtest import (
-    create_value_records,
-    calculate_backtest_total_values,
+    Backtester,
     calculate_trade_results,
     initialize_backtest_delivery_queue,
     process_backtest_delivery,
-    create_trade_logs,
-    create_trade_summary,
 )
 
 from qteasy.history import (
@@ -4156,630 +4154,228 @@ class TestBacktest(unittest.TestCase):
         pass
 
 
-class TestCreateValueRecords(unittest.TestCase):
+class TestBacktester(unittest.TestCase):
 
     def setUp(self):
-        """准备测试所需的基础数据"""
-        self.shares = ['AAPL', 'GOOG']
-        self.trade_datetimes = pd.DatetimeIndex(pd.to_datetime(['2023-01-01', '2023-01-02']))
-        self.own_cashes = np.array([1000.0, 1500.0])
-        self.own_amounts_array = np.array([[10, 5], [12, 6]])  # 每天两只股票的持仓量
-        self.trade_prices = np.array([[150.0, 2000.0], [155.0, 2100.0]])  # 每天两只股票的价格
+        """
+        准备测试所需的数据和对象
+        """
+        # 创建一个简单的Operator对象
+        self.operator = Operator()
+        self.operator.signal_count = 3
+        self.operator.group_timing_table = pd.DataFrame(np.array([[0, 1], [1, 0], [0, 1]]),
+                                                        columns=['group_id', 'timing_id'],
+                                                        index=pd.date_range('2023-01-01', periods=3))
+        self.operator.debug = True
 
-    def test_normal_case(self):
-        """测试正常情况下能否正确创建 DataFrame"""
-        result_df = create_value_records(
+        # 基本参数
+        self.shares = ['AAPL', 'GOOGL']
+        self.share_count = len(self.shares)
+        self.n_signals = 3
+
+        # 构造回测所需的各种数组
+        self.cash_investment_array = np.array([1000.0, 0.0, 500.0])
+        self.cash_inflation_array = np.array([1.0, 1.0, 1.0])
+        self.delivery_day_indicators = np.array([1, 0, 1])
+
+        # 成本参数: buy_rate, sell_rate, buy_min, sell_min, slipage
+        self.cost_params = np.array([0.001, 0.001, 5.0, 5.0, 0.0])
+
+        # 信号解析参数
+        self.signal_parsing_params = {
+            'pt_buy_threshold':  0.5,
+            'pt_sell_threshold': -0.5,
+            'long_pos_limit':    1.0,
+            'short_pos_limit':   -1.0,
+            'allow_sell_short':  False
+        }
+
+        # 交易最小单位参数
+        self.trading_moq_params = {
+            'moq_buy':  0.0,
+            'moq_sell': 0.0
+        }
+
+        # 交割参数
+        self.trading_delivery_params = {
+            'cash_delivery_period':  1,
+            'stock_delivery_period': 1
+        }
+
+        # 交易价格数据
+        self.trade_price_data = np.array([
+            [150.0, 2500.0],
+            [155.0, 2550.0],
+            [160.0, 2600.0]
+        ])
+
+        # 日志记录器
+        self.logger = logging.getLogger('TestBacktester')
+
+        # 创建Backtester实例
+        self.backtester = Backtester(
+                op=self.operator,
                 shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                own_cashes=self.own_cashes,
-                own_amounts_array=self.own_amounts_array,
-                trade_prices=self.trade_prices
-        )
-        print(f'Resulting DataFrame:\n{result_df}')
-
-        # 验证列名是否正确
-        expected_columns = ['AAPL', 'GOOG', 'cash', 'value']
-        self.assertListEqual(list(result_df.columns), expected_columns)
-
-        # 验证索引是否正确
-        pd.testing.assert_index_equal(result_df.index, self.trade_datetimes)
-
-        # 验证各列的值是否正确
-        pd.testing.assert_series_equal(result_df['AAPL'], pd.Series([10, 12], index=self.trade_datetimes, name='AAPL'))
-        pd.testing.assert_series_equal(result_df['GOOG'], pd.Series([5, 6], index=self.trade_datetimes, name='GOOG'))
-        pd.testing.assert_series_equal(result_df['cash'],
-                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
-
-        # 验证value列计算是否正确
-        expected_values = calculate_backtest_total_values(
-                trade_prices=self.trade_prices,
-                own_cashes=self.own_cashes,
-                own_amounts_array=self.own_amounts_array
-        )
-        print(f'Expected total values: {expected_values}')
-        pd.testing.assert_series_equal(result_df['value'],
-                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
-
-    def test_empty_shares(self):
-        """测试当 shares 为空时的行为"""
-        result_df = create_value_records(
-                shares=[],
-                trade_datetimes=self.trade_datetimes,
-                own_cashes=self.own_cashes,
-                own_amounts_array=np.empty((2, 0)),  # 空的持仓数组
-                trade_prices=np.empty((2, 0))  # 空的价格数组
-        )
-        print(f'Resulting DataFrame with empty shares:\n{result_df}')
-
-        # 应该只有 cash 和 value 两列
-        expected_columns = ['cash', 'value']
-        self.assertListEqual(list(result_df.columns), expected_columns)
-        pd.testing.assert_series_equal(result_df['cash'],
-                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
-
-        # 验证value列计算是否正确（只有现金）
-        expected_values = calculate_backtest_total_values(
-                trade_prices=np.empty((2, 0)),
-                own_cashes=self.own_cashes,
-                own_amounts_array=np.empty((2, 0))
-        )
-        print(f'Expected total values with empty shares: {expected_values}')
-        pd.testing.assert_series_equal(result_df['value'],
-                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
-
-    def test_single_share(self):
-        """测试只有一个股票的情况"""
-        result_df = create_value_records(
-                shares=['AAPL'],
-                trade_datetimes=self.trade_datetimes,
-                own_cashes=self.own_cashes,
-                own_amounts_array=np.array([[10], [12]]),
-                trade_prices=np.array([[150.0], [155.0]])
-        )
-        print(f'Resulting DataFrame with single share:\n{result_df}')
-
-        expected_columns = ['AAPL', 'cash', 'value']
-        self.assertListEqual(list(result_df.columns), expected_columns)
-        pd.testing.assert_series_equal(result_df['AAPL'], pd.Series([10, 12], index=self.trade_datetimes, name='AAPL'))
-        pd.testing.assert_series_equal(result_df['cash'],
-                                       pd.Series([1000.0, 1500.0], index=self.trade_datetimes, name='cash'))
-
-        # 验证value列计算是否正确
-        expected_values = calculate_backtest_total_values(
-                trade_prices=np.array([[150.0], [155.0]]),
-                own_cashes=self.own_cashes,
-                own_amounts_array=np.array([[10], [12]])
-        )
-        print(f'Expected total values with single share: {expected_values}')
-        pd.testing.assert_series_equal(result_df['value'],
-                                       pd.Series(expected_values, index=self.trade_datetimes, name='value'))
-
-
-class TestCreateTradeLogs(unittest.TestCase):
-    def setUp(self):
-        """设置测试所需的基础数据"""
-        self.shares = ['AAPL', 'GOOG']
-        self.trade_datetimes = pd.DatetimeIndex(
-                pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03'])
+                cash_investment_array=self.cash_investment_array,
+                cash_inflation_array=self.cash_inflation_array,
+                delivery_day_indicators=self.delivery_day_indicators,
+                cost_params=self.cost_params,
+                signal_parsing_params=self.signal_parsing_params,
+                trading_moq_params=self.trading_moq_params,
+                trading_delivery_params=self.trading_delivery_params,
+                trade_price_data=self.trade_price_data,
+                logger=self.logger
         )
 
-        # 创建示例数据，两个share，三次交易
-        self.trade_signals = np.array([[1.0, 0.0], [0.0, -1.0], [0.5, -0.3]])
-        self.trade_prices = np.array([[150.0, 2500.0], [155.0, 2490.0], [160.0, 2480.0]])
-        self.cash_investment_array = np.array([1000.0, 500.0, 0.0])
-        self.own_cashes = np.array([10000.0, 11000.0, 11500.0, 12000.0])
-        self.available_cashes = np.array([10000.0, 11000.0, 11500.0, 12000.0])
-        self.own_amounts_array = np.array([
+        # 设置一些回测结果数据用于测试
+        self.backtester.own_cashes = np.array([
             [0.0, 0.0],
-            [10.0, 0.0],
-            [10.0, 5.0],
-            [15.0, 3.0],
+            [1000.0, 1000.0],
+            [1000.0, 1000.0],
+            [1500.0, 1500.0]
         ])
-        self.available_amounts_array = np.array([
+
+        self.backtester.own_amounts_array = np.array([
             [0.0, 0.0],
-            [10.0, 0.0],
-            [10.0, 5.0],
-            [15.0, 3.0],
+            [2.0, 0.2],
+            [2.0, 0.2],
+            [3.0, 0.3]
         ])
-        self.trade_records_array = np.array([[10.0, 0.0], [-5.0, 0.0], [5.0, -2.0]])
-        self.trade_cost_array = np.array([[1.5, 0.0], [0.75, 0.0], [1.0, 0.5]])
 
-    def test_normal_case(self):
-        """测试正常情况下函数的行为"""
-        result, summary = create_trade_logs(
-                shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                trade_signals=self.trade_signals,
-                trade_prices=self.trade_prices,
-                cash_investment_array=self.cash_investment_array,
-                own_cashes=self.own_cashes,
-                available_cashes=self.available_cashes,
-                own_amounts_array=self.own_amounts_array,
-                available_amounts_array=self.available_amounts_array,
-                trade_records_array=self.trade_records_array,
-                trade_cost_array=self.trade_cost_array
-        )
-        print(f'Resulting DataFrame:\n{result}\n{summary}')
-
-        # 验证返回类型
-        self.assertIsInstance(result, pd.DataFrame)
-
-        # 验证索引结构
-        self.assertIsInstance(result.index, pd.MultiIndex)
-        self.assertEqual(result.index.nlevels, 2)
-
-        # 验证列是否存在
-        expected_columns = ['add. invest', 'own cash', 'available cash', 'value']
-        for col in expected_columns:
-            self.assertIn(col, result.columns)
-
-        # 验证数据形状
-        # 每个周期有7行数据（对应不同的数据项）
-        expected_rows = len(self.trade_datetimes) * 8  # 2个股票 * 8种数据项
-        self.assertEqual(len(result), expected_rows)
-
-        # 验证索引的第一层是股票交易周期
-        first_level_index_values = result.index.get_level_values(0).unique()
-        self.assertListEqual(sorted(first_level_index_values.tolist()), sorted(self.trade_datetimes))
-
-    def test_empty_data(self):
-        """测试空数据的情况"""
-        print(f'Testing with empty data inputs')
-        empty_shares = []
-        empty_trade_datetimes = pd.DatetimeIndex([])
-        empty_arrays = np.array([]).reshape(0, 0)
-        empty_cash_arrays = np.array([10000.0])  # 初始现金
-
-        result, summary = create_trade_logs(
-                shares=empty_shares,
-                trade_datetimes=empty_trade_datetimes,
-                trade_signals=empty_arrays,
-                trade_prices=empty_arrays,
-                cash_investment_array=np.array([]),
-                own_cashes=empty_cash_arrays,
-                available_cashes=empty_cash_arrays,
-                own_amounts_array=empty_arrays,
-                available_amounts_array=empty_arrays,
-                trade_records_array=empty_arrays,
-                trade_cost_array=empty_arrays
-        )
-        print(f'Resulting DataFrame with empty data:\n{result}\n{summary}')
-
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertEqual(len(result), 0)
-        # 即使没有数据，也应该有汇总列
-        expected_columns = ['add. invest', 'own cash', 'available cash', 'value']
-        for col in expected_columns:
-            self.assertIn(col, result.columns)
-
-    def test_single_stock_multi_period(self):
-        """测试单只股票单个周期的情况"""
-        print(f'Testing single stock over multiple periods')
-        single_share = ['AAPL']
-        multi_datetime = pd.DatetimeIndex(pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03']))
-        single_trade_signal = np.array([[1.0], [0.0], [0.5]])
-        single_trade_price = np.array([[150.0], [155.0], [160.0]])
-        single_cash_investment = np.array([1000.0, 0.0, 0.0])
-        single_own_cashes = np.array([10000.0, 11000.0, 11500.0, 12000.0])
-        single_available_cashes = np.array([10000.0, 11000.0, 11500.0, 12000.0])
-        single_own_amounts = np.array([[0.], [10.], [10.], [15.]])
-        single_available_amounts = np.array([[0.], [10.], [10.], [15.]])
-        single_trade_record = np.array([[10.], [0.], [5.]])
-        single_trade_cost = np.array([[1.5], [0.0], [1.0]])
-
-        result, summary = create_trade_logs(
-                shares=single_share,
-                trade_datetimes=multi_datetime,
-                trade_signals=single_trade_signal,
-                trade_prices=single_trade_price,
-                cash_investment_array=single_cash_investment,
-                own_cashes=single_own_cashes,
-                available_cashes=single_available_cashes,
-                own_amounts_array=single_own_amounts,
-                available_amounts_array=single_available_amounts,
-                trade_records_array=single_trade_record,
-                trade_cost_array=single_trade_cost
-        )
-        print(f'Resulting DataFrame for single stock multi-period:\n{result}\n{summary}')
-
-        self.assertIsInstance(result, pd.DataFrame)
-        # 单个股票应该有21行数据（对应不同的数据项）
-        self.assertEqual(len(result), 24)
-
-        # 验证索引的第一层是交易期间
-        first_level_index_values = result.index.get_level_values(0).unique()
-        self.assertListEqual(first_level_index_values.tolist(), multi_datetime.tolist())
-
-        # 验证第二层索引包含所有预期的数据项
-        second_level_index_values = result.index.get_level_values(1).unique()
-        expected_items = [
-            '0, trade signal', '1, price', '2, traded amounts', '3, cash changed',
-            '4, trade cost', '5, own amounts', '6, available amounts', '7, summary'
-        ]
-        self.assertListEqual(sorted(second_level_index_values.tolist()), sorted(expected_items))
-
-    def test_correctness_of_calculations(self):
-        """测试计算结果的正确性"""
-        result, summary = create_trade_logs(
-                shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                trade_signals=self.trade_signals,
-                trade_prices=self.trade_prices,
-                cash_investment_array=self.cash_investment_array,
-                own_cashes=self.own_cashes,
-                available_cashes=self.available_cashes,
-                own_amounts_array=self.own_amounts_array,
-                available_amounts_array=self.available_amounts_array,
-                trade_records_array=self.trade_records_array,
-                trade_cost_array=self.trade_cost_array
-        )
-        print(f'Resulting DataFrame for correctness test:\n{result}\n{summary}')
-
-        # 验证交易信号数据正确性
-        trade_signal_data = result.loc[(slice(None), '0, trade signal'), self.shares]
-        expected_trade_signals = pd.DataFrame(
-                self.trade_signals,
-                index=self.trade_datetimes,
-                columns=self.shares
-        )
-        pd.testing.assert_frame_equal(
-                trade_signal_data.droplevel(1),
-                expected_trade_signals
-        )
-
-        # 验证交易价格数据正确性
-        price_data = result.loc[(slice(None), '1, price'), self.shares]
-        expected_prices = pd.DataFrame(
-                self.trade_prices,
-                index=self.trade_datetimes,
-                columns=self.shares
-        )
-        pd.testing.assert_frame_equal(
-                price_data.droplevel(1),
-                expected_prices
-        )
-
-        # 验证交易记录数据正确性
-        trade_record_data = result.loc[(slice(None), '2, traded amounts'), self.shares]
-        expected_trade_records = pd.DataFrame(
-                self.trade_records_array,
-                index=self.trade_datetimes,
-                columns=self.shares
-        )
-
-        pd.testing.assert_frame_equal(
-                trade_record_data.droplevel(1),
-                expected_trade_records
-        )
-
-        # 验证交易费用数据正确性
-        trade_cost_data = result.loc[(slice(None), '4, trade cost'), self.shares]
-        expected_trade_costs = pd.DataFrame(
-                self.trade_cost_array,
-                index=self.trade_datetimes,
-                columns=self.shares
-        )
-        pd.testing.assert_frame_equal(
-                trade_cost_data.droplevel(1),
-                expected_trade_costs
-        )
-
-        # 验证持有数量数据正确性
-        own_amounts_data = result.loc[(slice(None), '5, own amounts'), self.shares]
-        expected_own_amounts = pd.DataFrame(
-                self.own_amounts_array[1:],  # 注意这里取的是[1:]部分
-                index=self.trade_datetimes,
-                columns=self.shares
-        )
-        pd.testing.assert_frame_equal(
-                own_amounts_data.droplevel(1),
-                expected_own_amounts
-        )
-
-        # 验证总资产价值计算正确性
-        calculated_values = calculate_backtest_total_values(
-                trade_prices=self.trade_prices,
-                own_cashes=self.own_cashes[1:],  # 注意这里取的是[1:]部分
-                own_amounts_array=self.own_amounts_array[1:]  # 注意这里取的是[1:]部分
-        )
-        value_series = result['value'].dropna().values
-        np.testing.assert_array_almost_equal(value_series, calculated_values)
-
-    def test_saving_file(self):
-        """测试计算结果的正确性"""
-        # check if the file already exists and remove it
-        if os.path.exists('test_trade_logs_output.csv'):
-            os.remove('test_trade_logs_output.csv')
-            print(f'Removed existing file: {"test_trade_logs_output.csv"}')
-
-        result, summary = create_trade_logs(
-                shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                trade_signals=self.trade_signals,
-                trade_prices=self.trade_prices,
-                cash_investment_array=self.cash_investment_array,
-                own_cashes=self.own_cashes,
-                available_cashes=self.available_cashes,
-                own_amounts_array=self.own_amounts_array,
-                available_amounts_array=self.available_amounts_array,
-                trade_records_array=self.trade_records_array,
-                trade_cost_array=self.trade_cost_array,
-                save_to_file_path='test_trade_logs_output.csv'
-        )
-        print(f'Resulting DataFrame for correctness test:\n{result}\n{summary}')
-
-        # test that the file is saved correctly
-        loaded_df = pd.read_csv('test_trade_logs_output.csv', index_col=[0,1])
-        datetime_index = pd.to_datetime(loaded_df.index.levels[0])
-        loaded_df.index = loaded_df.index.set_levels(datetime_index, level=0)
-
-        print(f'Loaded DataFrame from file:\n{loaded_df}')
-        pd.testing.assert_frame_equal(result, loaded_df)
-
-
-class TestCreateTradeSummary(unittest.TestCase):
-
-    def setUp(self):
-        """测试前准备"""
-        # 创建真实的logger
-        self.logger = logging.getLogger('test_logger')
-        self.logger.setLevel(logging.INFO)
-
-        # 创建示例股票数据
-        self.shares = ['000001', '000002']
-        self.share_names = ['平安银行', '万科A']
-
-        # 创建示例数据用于create_trade_logs
-        self.trade_datetimes = pd.DatetimeIndex(pd.to_datetime(['2023-01-01', '2023-01-02']))
-        self.trade_signals = np.array([[1.0, 0.0], [0.0, -1.0]])
-        self.trade_prices = np.array([[10.0, 0.0], [0.0, 15.0]])
-        self.cash_investment_array = np.array([1000.0, 500.0])
-        self.own_cashes = np.array([10000.0, 11000.0, 11500.0])
-        self.available_cashes = np.array([10000.0, 11000.0, 11500.0])
-        self.own_amounts_array = np.array([
-            [0, 0],
-            [100, 0],
-            [100, 50]
+        self.backtester.available_cashes = np.array([
+            [0.0, 0.0],
+            [900.0, 900.0],
+            [900.0, 900.0],
+            [1400.0, 1400.0]
         ])
-        self.available_amounts_array = np.array([
-            [0, 0],
-            [100, 0],
-            [100, 50]
+
+        self.backtester.available_amounts_array = np.array([
+            [0.0, 0.0],
+            [2.0, 0.2],
+            [2.0, 0.2],
+            [3.0, 0.3]
         ])
-        self.trade_records_array = np.array([[100, 0], [0, -50]])
-        self.trade_cost_array = np.array([[10.0, 0.0], [0.0, 5.0]])
 
-        # 使用create_trade_logs生成trade_log_df
-        self.trade_log_df, self.summary_df = create_trade_logs(
-                shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                trade_signals=self.trade_signals,
-                trade_prices=self.trade_prices,
-                cash_investment_array=self.cash_investment_array,
-                own_cashes=self.own_cashes,
-                available_cashes=self.available_cashes,
-                own_amounts_array=self.own_amounts_array,
-                available_amounts_array=self.available_amounts_array,
-                trade_records_array=self.trade_records_array,
-                trade_cost_array=self.trade_cost_array
-        )
+        self.backtester.trade_records_array = np.array([
+            [2.0, 0.2],
+            [0.0, 0.0],
+            [1.0, 0.1]
+        ])
 
-    def test_normal_case_with_trades(self):
-        """测试正常情况：多个股票有交易记录"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tmp:
-            temp_path = tmp.name
+        self.backtester.trade_cost_array = np.array([
+            [0.3, 0.5],
+            [0.0, 0.0],
+            [0.16, 0.26]
+        ])
 
-        try:
-            result = create_trade_summary(
-                    shares=self.shares,
-                    share_names=self.share_names,
-                    trade_log_df=self.trade_log_df,
-                    summary_df=self.summary_df,
-                    logger=self.logger,
-                    save_to_file_path=temp_path
-            )
+        self.backtester.op_signals = np.array([
+            [1.0, 0.5],
+            [0.0, 0.0],
+            [0.8, 0.3]
+        ])
 
-            # 验证返回结果不为空
-            self.assertIsInstance(result, pd.DataFrame)
+    def test_init(self):
+        """
+        测试Backtester的__init__方法
+        """
+        # 检查基本属性是否正确初始化
+        self.assertEqual(self.backtester.op, self.operator)
+        self.assertEqual(self.backtester.shares, self.shares)
+        np.testing.assert_array_equal(self.backtester.cash_investment_array, self.cash_investment_array)
+        np.testing.assert_array_equal(self.backtester.cash_inflation_array, self.cash_inflation_array)
+        np.testing.assert_array_equal(self.backtester.delivery_day_indicators, self.delivery_day_indicators)
+        np.testing.assert_array_equal(self.backtester.cost_params, self.cost_params)
+        self.assertEqual(self.backtester.signal_parsing_params, self.signal_parsing_params)
+        self.assertEqual(self.backtester.trading_moq_params, self.trading_moq_params)
+        self.assertEqual(self.backtester.trading_delivery_params, self.trading_delivery_params)
+        np.testing.assert_array_equal(self.backtester.trade_price_data, self.trade_price_data)
+        self.assertEqual(self.backtester.logger, self.logger)
 
-            # 验证文件被创建
-            self.assertTrue(os.path.exists(temp_path))
+        # 检查数组形状是否正确
+        self.assertEqual(self.backtester.own_cashes.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.own_amounts_array.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.available_cashes.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.available_amounts_array.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.trade_records_array.shape, (self.n_signals, self.share_count))
+        self.assertEqual(self.backtester.trade_cost_array.shape, (self.n_signals, self.share_count))
 
-            # 验证文件不为空
-            file_content = pd.read_csv(temp_path)
-            self.assertFalse(file_content.empty)
+    def test_trade_result_df(self):
+        """
+        测试trade_result_df方法
+        """
+        result_df = self.backtester.trade_result_df()
 
-            # 验证关键列存在
-            expected_columns = ['code', 'name', '0, trade signal', '1, price', '2, traded amounts']
-            for col in expected_columns:
-                self.assertIn(col, file_content.columns)
+        # 检查返回值类型
+        self.assertIsInstance(result_df, pd.DataFrame)
 
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+        # 检查列是否正确
+        expected_columns = self.shares + ['cash', 'value']
+        self.assertListEqual(list(result_df.columns), expected_columns)
 
-    def test_save_to_file_when_path_provided(self):
-        """测试提供保存路径时是否正确保存文件"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tmp:
-            temp_path = tmp.name
+        # 检查索引是否正确
+        pd.testing.assert_index_equal(result_df.index, self.operator._group_timing_table)
 
-        try:
-            create_trade_summary(
-                    shares=self.shares,
-                    share_names=self.share_names,
-                    trade_log_df=self.trade_log_df,
-                    summary_df=self.summary_df,
-                    logger=self.logger,
-                    save_to_file_path=temp_path
-            )
+        # 检查数据是否正确
+        expected_values = (
+                                  self.trade_price_data * self.backtester.own_amounts_array[1:]
+                          ).sum(axis=1) + self.backtester.own_cashes[1:]
 
-            # 验证文件存在
-            self.assertTrue(os.path.exists(temp_path))
+        np.testing.assert_array_almost_equal(result_df['value'].values, expected_values)
 
-            # 验证文件内容
-            df = pd.read_csv(temp_path)
-            self.assertIsInstance(df, pd.DataFrame)
+    def test_generate_trade_logs(self):
+        """
+        测试generate_trade_logs方法
+        """
+        trade_log_df = self.backtester.generate_trade_logs()
 
-            # 验证包含股票代码和名称
-            self.assertIn('平安银行', df['name'].values if 'name' in df.columns else [])
+        # 检查返回值类型
+        self.assertIsInstance(trade_log_df, pd.DataFrame)
 
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+        # 检查是否设置了trade_log_df属性
+        self.assertEqual(trade_log_df, self.backtester.trade_log_df)
 
-    def test_no_save_when_path_none(self):
-        """测试当保存路径为None时不尝试保存文件"""
-        # 不应该抛出异常
-        result = create_trade_summary(
-                shares=self.shares,
-                share_names=self.share_names,
-                trade_log_df=self.trade_log_df,
-                summary_df=self.summary_df,
-                logger=self.logger,
-                save_to_file_path=None
-        )
+        # 检查是否包含所有股票列
+        for share in self.shares:
+            self.assertIn(share, trade_log_df.columns)
 
-        # 验证返回结果
-        self.assertIsInstance(result, pd.DataFrame)
+        # 检查多级索引结构
+        self.assertEqual(trade_log_df.index.nlevels, 2)
 
-    def test_empty_shares_list(self):
-        """测试空股票列表的情况"""
-        with self.assertRaises(ValueError):
-            create_trade_summary(
-                shares=[],  # 空列表
-                share_names=[],
-                trade_log_df=self.trade_log_df,
-                summary_df=self.summary_df,
-                logger=self.logger,
-                save_to_file_path=None
-            )
+        # 检查是否包含汇总数据
+        summary_rows = trade_log_df[trade_log_df.index.get_level_values(1) == '7, summary']
+        self.assertFalse(summary_rows.empty)
 
-    def test_some_shares_without_trades(self):
-        """测试部分股票不在交易记录中的情况"""
-        # 添加一个没有交易记录的股票
-        shares = self.shares + ['000003']
-        share_names = self.share_names + ['新股票']
+    def test_generate_trade_summary(self):
+        """
+        测试generate_trade_summary方法
+        """
+        # 首先需要生成trade_log_df
+        self.backtester.generate_trade_logs()
 
-        with self.assertRaises(KeyError):
-            create_trade_summary(
-                    shares=shares,
-                    share_names=share_names,
-                    trade_log_df=self.trade_log_df,
-                    summary_df=self.summary_df,
-                    logger=self.logger,
-                    save_to_file_path=None
-            )
+        share_names = ['Apple Inc.', 'Alphabet Inc.']
+        trade_summary_df = self.backtester.generate_trade_summary(share_names=share_names)
 
-    def test_all_zero_trades_filtered_out(self):
-        """测试所有交易金额为0的记录被过滤掉"""
-        # 创建只有零交易的数据
-        zero_trade_signals = np.array([[0.0, 0.0], [0.0, 0.0]])
-        zero_trade_prices = np.array([[10.0, 20.0], [10.0, 20.0]])
-        zero_trade_records = np.array([[0, 0], [0, 0]])
-        zero_trade_cost = np.array([[0.0, 0.0], [0.0, 0.0]])
+        # 检查返回值类型
+        self.assertIsInstance(trade_summary_df, pd.DataFrame)
 
-        # 使用create_trade_logs生成零交易的trade_log_df
-        trade_log_df_no_trades, summary_df_no_trades = create_trade_logs(
-                shares=self.shares,
-                trade_datetimes=self.trade_datetimes,
-                trade_signals=zero_trade_signals,
-                trade_prices=zero_trade_prices,
-                cash_investment_array=np.array([0.0, 0.0]),
-                own_cashes=self.own_cashes,
-                available_cashes=self.available_cashes,
-                own_amounts_array=self.own_amounts_array,
-                available_amounts_array=self.available_amounts_array,
-                trade_records_array=zero_trade_records,
-                trade_cost_array=zero_trade_cost
-        )
+        # 检查是否设置了summary_df属性
+        self.assertEqual(trade_summary_df, self.backtester.summary_df)
 
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tmp:
-            temp_path = tmp.name
+        # 检查是否包含必要的列
+        required_columns = ['code', 'name', '0, trade signal', '1, price', '2, traded amounts',
+                            '3, cash changed', '4, trade cost', '5, own amounts',
+                            '6, available amounts', '7, summary']
+        for col in required_columns:
+            self.assertIn(col, trade_summary_df.columns)
 
-        try:
-            result = create_trade_summary(
-                    shares=self.shares,
-                    share_names=self.share_names,
-                    trade_log_df=trade_log_df_no_trades,
-                    summary_df=summary_df_no_trades,
-                    logger=self.logger,
-                    save_to_file_path=temp_path
-            )
+        # 检查是否包含交易数据(有交易记录的行)
+        self.assertGreater(len(trade_summary_df), 0)
 
-            # 验证返回结果
-            self.assertIsInstance(result, pd.DataFrame)
-
-            # 验证文件被创建
-            self.assertTrue(os.path.exists(temp_path))
-
-            # 读取文件内容，应该只有列头但没有数据行（因为所有交易都被过滤掉了）
-            file_content = pd.read_csv(temp_path)
-            # 注意：由于join操作，可能仍会有一些行，但交易相关列应该是空的
-
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
-
-    def test_column_order_in_result(self):
-        """测试结果DataFrame的列顺序是否正确"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tmp:
-            temp_path = tmp.name
-
-        try:
-            create_trade_summary(
-                    shares=self.shares,
-                    share_names=self.share_names,
-                    trade_log_df=self.trade_log_df,
-                    summary_df=self.summary_df,
-                    logger=self.logger,
-                    save_to_file_path=temp_path
-            )
-
-            # 读取保存的文件验证列顺序
-            saved_df = pd.read_csv(temp_path)
-
-            # 验证关键列是否存在
-            expected_columns = ['code', 'name', '0, trade signal', '1, price', '2, traded amounts']
-            for col in expected_columns:
-                self.assertIn(col, saved_df.columns)
-
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
-
-    def test_correct_data_extraction(self):
-        """测试正确提取交易数据"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tmp:
-            temp_path = tmp.name
-
-        try:
-            create_trade_summary(
-                    shares=self.shares,
-                    share_names=self.share_names,
-                    trade_log_df=self.trade_log_df,
-                    summary_df=self.summary_df,
-                    logger=self.logger,
-                    save_to_file_path=temp_path
-            )
-
-            # 读取保存的文件验证数据
-            saved_df = pd.read_csv(temp_path)
-
-            # 验证股票代码和名称正确
-            if not saved_df.empty:
-                # 检查是否包含预期的股票代码
-                codes_in_result = saved_df['code'].unique() if 'code' in saved_df.columns else []
-                # 应该至少包含有交易的股票代码
-                self.assertTrue(len(codes_in_result) >= 1)
-
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+        # 检查股票代码和名称是否正确
+        self.assertIn('AAPL', trade_summary_df['code'].values)
+        self.assertIn('GOOGL', trade_summary_df['code'].values)
+        self.assertIn('Apple Inc.', trade_summary_df['name'].values)
+        self.assertIn('Alphabet Inc.', trade_summary_df['name'].values)
 
 
 if __name__ == '__main__':

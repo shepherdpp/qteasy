@@ -15,6 +15,7 @@ from numba import njit
 from typing import Any, Union, Optional
 
 from numpy import bool_, dtype, ndarray
+from pandas import DataFrame
 
 from qteasy.qt_operator import (
     Operator,
@@ -681,7 +682,6 @@ def backtest_batch_steps(
 
 
 # 定义一个Backtester类，该类包含一个operator对象，同时包含与operator回测相关的所有属性，同时提供回测结果的生成方法
-#
 class Backtester:
     """ Backtester类用于对operator对象进行回测操作。
     本类的属性包括回测计算中所需的所有参数，包括回测过程中产生的结果数据，这些结果数据以ndarray的形式
@@ -691,7 +691,7 @@ class Backtester:
     信号和执行交易。典型用法如下：
     ```
         operator = Operator( ... )  # 创建Operator对象
-        backtested = Operator.backtest( signal_count=100, share_count=10, **kwargs ).run()  # 创建Backtester对象
+        backtested = Operator.backtest( signal_count=100, share_count=10, **kwargs)  # 创建Backtester对象
         # get backtest raw results:
         backtested.cash_investment_array
         backtested.own_cashes
@@ -753,6 +753,11 @@ class Backtester:
         logger: Optional[logging.Logger]
             可选的日志记录器对象，用于记录回测过程中的日志信息
         """
+
+        # 参数基础校验
+        assert isinstance(op, Operator), "op must be an instance of Operator"
+        assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
+
         self.op = op
         self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
         self.shares = shares
@@ -766,9 +771,9 @@ class Backtester:
         self.trade_price_data = trade_price_data
         self.logger = logger
 
-        # 1，检查operator对象是否已经准备好，否则raise error
-        op.is_ready(raise_error=False)
-        if logger:
+        # 1，检查operator对象是否已经准备好，否则raise error, TOOD: 是否有必要？
+        # op.is_ready(raise_error=True)
+        if logger is not None:
             logger.info('Start backtest operator...')
 
         # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
@@ -776,14 +781,30 @@ class Backtester:
         self.n_signals = op.get_signal_count()
         self.share_count = len(shares)
 
+        # 参数一致性校验
+        arrays_to_check = [
+            ("cash_investment_array", self.cash_investment_array, (self.n_signals,)),
+            ("cash_inflation_array", self.cash_inflation_array, (self.n_signals,)),
+            ("delivery_day_indicators", self.delivery_day_indicators, (self.n_signals,)),
+            ("trade_price_data", self.trade_price_data, (self.n_signals, self.share_count))
+        ]
+        for name, arr, shape in arrays_to_check:
+            if not isinstance(arr, np.ndarray):
+                raise TypeError(f"{name} must be a numpy array")
+            if arr.shape != shape:
+                raise ValueError(f"{name} should have shape {shape}, but got {arr.shape}")
+
         # 3.1 现金和股票持仓历史记录表
-        self.own_cashes = np.zeros(shape=(self.n_signals + 1, self.share_count))
-        self.own_amounts_array = np.zeros(shape=(self.n_signals + 1, self.share_count))
-        self.available_cashes = np.zeros(shape=(self.n_signals + 1, self.share_count))
-        self.available_amounts_array = np.zeros(shape=(self.n_signals + 1, self.share_count))
+        shape_assets = (self.n_signals + 1, self.share_count)
+        self.own_cashes = np.zeros(shape=shape_assets, dtype=float)
+        self.own_amounts_array = np.zeros(shape=shape_assets, dtype=float)
+        self.available_cashes = np.zeros(shape=shape_assets, dtype=float)
+        self.available_amounts_array = np.zeros(shape=shape_assets, dtype=float)
+
         # 3.2 交易过程数据记录表，包括交易记录、交易成本等
-        self.trade_records_array = np.zeros((self.n_signals, self.share_count), dtype=float)
-        self.trade_cost_array = np.zeros((self.n_signals, self.share_count), dtype=float)
+        shape_signals = (self.n_signals, self.share_count)
+        self.trade_records_array = np.zeros(shape_signals, dtype=float)
+        self.trade_cost_array = np.zeros(shape_signals, dtype=float)
 
         # 4, 交易日志和交易汇总记录
         self.trade_log_df: Optional[pd.DataFrame] = None
@@ -794,17 +815,17 @@ class Backtester:
 
         # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
         if self.op.check_dynamic_data():
-            if self.logger:
+            if self.logger is not None:
                 self.logger.info('Backtest operator with dynamic data dependence...')
             signals = self._backtest_static_operator()
         # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
         else:
-            if self.logger:
+            if self.logger is not None:
                 self.logger.info('Backtest operator without dynamic data dependence...')
             signals = self._backtest_dynamic_operator()
 
         self.op_signals = signals
-        if self.logger:
+        if self.logger is not None:
             self.logger.info('Backtest completed.')
 
         return self
@@ -923,7 +944,7 @@ class Backtester:
 
     # 生成更加易于阅读的DataFrame型交易结果数据，以便用于结果的评价及后续处理，
 
-    def trade_records(self) -> pd.DataFrame:
+    def trade_result_df(self) -> pd.DataFrame:
         """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式
 
         Returns
@@ -942,10 +963,10 @@ class Backtester:
         return value_history
 
     # 根据回测结果生成交易日志，包含更加完整的交易记录，输出内容为DataFrame格式，并且可以保存为csv文件
-    def create_trade_logs(
+    def generate_trade_logs(
             self,
             save_to_file_path: Union[str, None] = None,
-    ) -> None:
+    ) -> DataFrame:
         """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
             每一个交易期间包含8行数据，分别为：
                 '0, trade signal', 每一支股票的当期交易信号
@@ -1031,15 +1052,17 @@ class Backtester:
             if self.logger:
                 self.logger.info(f'trade log saved to {save_to_file_path}')
 
+        return self.trade_log_df
+
     # 根据回测结果生成交易汇总表，输出内容为DataFrame格式，并且可以保存为csv文件
-    def create_trade_summary(
+    def generate_trade_summary(
             self,
             share_names: Union[list[str], None] = None,
             save_to_file_path: Union[str, None] = None,
-    ) -> None:
+    ) -> pd.DataFrame:
         """ 生成 trade summary 交易摘要表 (一个更加紧凑的交易汇总表，包含每次交易的关键信息，
         以一种更加易于人类阅读的方式呈现，并过滤掉无交易的记录)，函数的输入trade_log_df是函数
-        create_trade_logs()的返回值。
+        generate_trade_logs()的返回值。
 
         Parameters
         ----------
@@ -1087,3 +1110,5 @@ class Backtester:
             self.summary_df.to_csv(save_to_file_path, encoding='utf-8')
             if self.logger is not None:
                 self.logger.info(f'trade summary saved to {save_to_file_path}')
+
+        return self.summary_df

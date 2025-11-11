@@ -1507,6 +1507,7 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'\n      ===========END OF REPORT=============\n')
 
 
+# TODO: 这个函数应该移到Backtester中
 def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> str:
     """ 生成单次回测的结果格式化输出，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致，输出结果可以直接打印到控制台或者写入文件

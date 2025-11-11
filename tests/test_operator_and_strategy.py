@@ -3667,7 +3667,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n')
         # self.assertLessEqual(et - st, 5.0)  # 回测时间不超过5秒
 
-        # 测试生成回测记录并计算时间：create_value_records(), create_trade_logs() and create_trade_summary()
+        # 测试生成回测记录并计算时间：create_value_records(), generate_trade_logs() and generate_trade_summary()
         from qteasy.backtest import create_value_records, create_trade_logs, create_trade_summary
         st = time.time()
         value_records = create_value_records(
