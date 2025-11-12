@@ -149,6 +149,7 @@ class TestEastmoney(unittest.TestCase):
         res = real_time_quote(qt_code=code)
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
+        self.assertFalse(res.empty)
 
 
 if __name__ == '__main__':
