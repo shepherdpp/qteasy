@@ -181,11 +181,11 @@ class Operator:
         self.data_window_indices = {}  # Dict——Operator对象的历史数据滑窗索引，保存所有策略所需的历史数据滑窗索引
 
         # batch模式下生成的交易清单以及交易清单的相关信息
-        self._op_list = None  # 在batch模式下，Operator生成的交易信号清单
-        self._op_list_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
-        self._op_list_bt_indices = None  # 在batch模式下生成交易信号清单后，需要回测交易的信号行序号，只有序号中的信号行会被回测
-        self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
-        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
+        self._op_signals = None  # 在batch模式下，Operator生成的交易信号清单
+        self._op_signal_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
+        self._op_list_bt_indices = None  # deprecated
+        self._op_signal_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
+        self._op_signal_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
 
         # stepwise模式下生成的单次交易信号以及相关信息
         # self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
@@ -195,7 +195,7 @@ class Operator:
         # self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
         # 设置operator的主要关键属性
-        self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
+        self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter deprecated
         self.add_strategies(stg, run_freq=run_freq, run_timing=run_timing)  # 添加strategy对象
 
         if signal_type:
@@ -436,7 +436,7 @@ class Operator:
         -------
         list, 交易清单，包含了所有交易信号，以及交易信号对应的交易价格
         """
-        return self._op_list
+        return self._op_signals
 
     @property
     def op_list_shares(self):
@@ -446,9 +446,9 @@ class Operator:
         -------
         list, 交易清单的shares序号，股票代码清单
         """
-        if self._op_list_shares == {}:
+        if self._op_signal_shares == {}:
             return
-        return list(self._op_list_shares.keys())
+        return list(self._op_signal_shares.keys())
 
     @property
     def op_list_hdates(self):
@@ -458,9 +458,9 @@ class Operator:
         -------
         list, 交易清单的hdates序号，交易清单的日期序号
         """
-        if self._op_list_hdates == {}:
+        if self._op_signal_hdates == {}:
             return
-        return list(self._op_list_hdates.keys())
+        return list(self._op_signal_hdates.keys())
 
     @property
     def op_list_types(self):
@@ -470,9 +470,9 @@ class Operator:
         -------
         list, 生成的交易清单的price_types，回测交易价格类型
         """
-        if self._op_list_types == {}:
+        if self._op_signal_types == {}:
             return
-        return list(self._op_list_types.keys())
+        return list(self._op_signal_types.keys())
 
     @property
     def op_list_shape(self):
@@ -483,12 +483,12 @@ class Operator:
         tuple, (op_list_shares, op_list_hdates, op_list_price_types)
             生成的交易清单的shape，包含三个维度的数据量
         """
-        if self._op_list_shares == {}:
+        if self._op_signal_shares == {}:
             return
         return (
-            len(self._op_list_shares),
-            len(self._op_list_hdates),
-            len(self._op_list_types)
+            len(self._op_signal_shares),
+            len(self._op_signal_hdates),
+            len(self._op_signal_types)
         )
 
     @property
@@ -1071,9 +1071,9 @@ class Operator:
         int
             返回一个整数，表示share对应的index
         """
-        if self._op_list_shares == {}:
+        if self._op_signal_shares == {}:
             return
-        return self._op_list_shares[share]
+        return self._op_signal_shares[share]
 
     def get_hdate_idx(self, hdate):
         """ 给定一个hdate（字符串）返回它对应的index
@@ -1088,9 +1088,9 @@ class Operator:
         int
             返回一个整数，表示hdate对应的index
         """
-        if self._op_list_hdates == {}:
+        if self._op_signal_hdates == {}:
             return
-        return self._op_list_hdates[hdate]
+        return self._op_signal_hdates[hdate]
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1869,53 +1869,6 @@ class Operator:
         for step in steps:
             for result in self.run_strategy(step):
                 yield result
-
-    # def create_signals(self, start_date=None, end_date=None, data_package: dict = None):
-    #     """ 一个集成方法，调用operator的相关方法，准备好数据缓冲区和数据窗口，并批量创建交易信号
-    #     生成可以用于回测的交易信号列表，以便后续的回测模块使用
-    #
-    #     Parameters
-    #     ----------
-    #     start_date: str or pd.Timestamp, optional
-    #         开始日期，默认为None，表示从数据源的起始日期开始
-    #     end_date: str or pd.Timestamp, optional
-    #         结束日期，默认为None，表示到数据源的结束日期为止
-    #     data_package: dict, optional
-    #         历史数据字典，包含提前准备好的所有需要的数据类型的数据缓存
-    #
-    #     Returns
-    #     -------
-    #     None
-    #     """
-    #     self.prepare_running_schedule(start_date=start_date, end_date=end_date)
-    #     self.prepare_data_buffer(start_date=start_date, end_date=end_date, data_package=data_package)
-    #     self.create_data_windows()
-    #
-    #     # tentative parameter total_run_steps = 25
-    #     total_run_steps = 25
-    #     # create trade signals between start and end dates
-    #     self.prepare_data_buffer(
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             data_package=data_package,
-    #     )
-    #
-    #     self.prepare_running_schedule(start_date=start_date, end_date=end_date)
-    #
-    #     self.create_data_windows()
-    #
-    #     signal_count = self.get_signal_count(range(total_run_steps))
-    #
-    #     self._op_list = np.empty(shape=(signal_count, 3))
-    #     self._op_list_types = np.empty(shape=(signal_count,), dtype=int)  # signal type: 0/1/2 for pt/ps/vs
-    #     self._op_list_bt_indices = np.empty(shape=(signal_count,), dtype=int)
-    #
-    #     signal_index = 0
-    #     for signal in self.run_strategies(range(total_run_steps)):
-    #         self._op_list_types[signal_index] = signal[0]  # the type of the signal
-    #         self._op_list[signal_index] = signal[2]  # the array of the signals
-    #         self._op_list_bt_indices[signal_index] = signal[1]  # the array of the signals
-    #         signal_index += 1
 
     # ====== top level methods below ======
 

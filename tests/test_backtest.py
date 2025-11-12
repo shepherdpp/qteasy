@@ -867,22 +867,22 @@ class TestBacktest(unittest.TestCase):
         # 不调用交易员Operator对象的create_signal()方法，直接设置相应交易员的交易信号列表
         # 注意，正常情况下应该使用operator.assign_hist_data()来设置分配历史数据，同时使用
         # operator.create_signal()方法来生成交易清单，这里直接设置的方法仅限测试时使用
-        self.op_pt_batch._op_list = self.pt_signal_hp.values
-        self.op_pt_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
-        self.op_pt_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_pt_batch._op_signals = self.pt_signal_hp.values
+        self.op_pt_batch._op_signal_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_pt_batch._op_signal_shares = {share: idx for share, idx in zip(self.shares, range(7))}
         self.op_pt_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
-        self.op_ps_batch._op_list = self.ps_signal_hp.values
-        self.op_ps_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
-        self.op_ps_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_batch._op_signals = self.ps_signal_hp.values
+        self.op_ps_batch._op_signal_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_ps_batch._op_signal_shares = {share: idx for share, idx in zip(self.shares, range(7))}
         self.op_ps_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
-        self.op_vs_batch._op_list = self.vs_signal_hp.values
-        self.op_vs_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
-        self.op_vs_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_batch._op_signals = self.vs_signal_hp.values
+        self.op_vs_batch._op_signal_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_vs_batch._op_signal_shares = {share: idx for share, idx in zip(self.shares, range(7))}
         self.op_vs_batch._op_list_price_types = {price: idx for price, idx in zip(['close'], range(1))}
-        self.op_multi_batch._op_list = self.multi_signal_hp.values
-        self.op_multi_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.multi_dates,
-                                                                                range(len(self.multi_dates)))}
-        self.op_multi_batch._op_list_shares = {share: idx for share, idx in zip(self.multi_shares, range(3))}
+        self.op_multi_batch._op_signals = self.multi_signal_hp.values
+        self.op_multi_batch._op_signal_hdates = {hdate: idx for hdate, idx in zip(self.multi_dates,
+                                                                                  range(len(self.multi_dates)))}
+        self.op_multi_batch._op_signal_shares = {share: idx for share, idx in zip(self.multi_shares, range(3))}
         self.op_multi_batch._op_list_price_types = {price: idx for price, idx in zip(['open', 'high', 'close'],
                                                                                      range(3))}
 

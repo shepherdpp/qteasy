@@ -1679,30 +1679,11 @@ def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=N
     return hist_op, hist_ref
 
 
-def get_backtest_start_end_dates(config) -> tuple:
-    """ 根据config参数字典中的invest_start、invest_end、invest_cash_dates等参数，确定回测的投资区间起止日期
-
-    Parameters
-    ----------
-    config: qteasy.Config
-        配置对象，存储qteasy的运行参数
-
-    Returns
-    -------
-    invest_start: str
-        回测投资区间的开始日期，格式为'YYYYMMDD'
-    invest_end: str
-        回测投资区间的结束日期，格式为'YYYYMMDD'
-    """
-
-    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    from qteasy.config_parser import parse_backtest_start_end_dates
-    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
-
-    return invest_start, invest_end
-
-
-def get_backtest_data_package(op, config, datasource) -> dict:
+def get_backtest_data_package(op: Operator,
+                              start: str,
+                              end: str,
+                              shares: list[str],
+                              datasource: DataSource) -> dict:
     """ 在run_mode == 1的回测模式情况下生成operator对象的交易策略运行计划，
     从数据源中获取相应的历史数据、准备operator的数据滑窗，并获取交易价格
 
@@ -1710,8 +1691,12 @@ def get_backtest_data_package(op, config, datasource) -> dict:
     ----------
     op: qteasy.Operator
         交易员对象，包含投资策略信息
-    config: qteasy.Config
-        配置对象，存储qteasy的运行参数
+    start: str
+        回测开始日期，格式为'YYYYMMDD'
+    end: str
+        回测结束日期，格式为'YYYYMMDD'
+    shares: list
+        回测资产池中的股票列表
     datasource: qteasy.DataSource
         数据源对象
 
@@ -1728,22 +1713,15 @@ def get_backtest_data_package(op, config, datasource) -> dict:
             用于回测的资金投入计划
     """
 
-    # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
-    from qteasy.config_parser import parse_backtest_start_end_dates
-    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
+    # 投资回测区间的开始日期及结束日期
+    invest_start, invest_end = start, end
 
     # 此时策略中定义的datatype的asset_type可能与config中的asset_type不一致，此时需要扩展
     data_types = op.all_strategy_data_types
-    new_data_types = infer_data_types(
-            names=[dtype.name for dtype in data_types],
-            freqs=[dtype.freq for dtype in data_types],
-            asset_types=config['asset_type'],
-            adj=config['backtest_price_adj'],
-    )
 
     hist_data_package = get_history_data_packages(
-            data_types=new_data_types,
-            shares=config['asset_pool'],
+            data_types=data_types,
+            shares=shares,
             start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
             end=invest_end,
             data_source=datasource,
@@ -2019,8 +1997,10 @@ def run(op: Operator, **kwargs):
     config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
 
-    # 赋值给参考数据和运行模式
-    benchmark_data_type = config['benchmark_asset']
+    # 检查operator对象是否准备好运行
+    op.is_ready(raise_error=True)
+
+    # 赋值给参考数据和运行模式的全局变量
     run_mode = config['mode']
 
     if run_mode == 0 or run_mode == 'live':
@@ -2068,13 +2048,27 @@ def run_mode_0():
 
 def run_mode_1(op, config):
     """ run qteasy in mode 1: back test mode"""
+
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+    op.is_ready(raise_error=True)
+
+    from qteasy.config_parser import (
+        parse_cash_invest_and_delivery_arrays,
+        parse_trade_cost_params,
+        parse_signal_parsing_params,
+        parse_trading_moq_params,
+        parse_trading_delivery_params,
+        parse_backtest_cash_plan,
+        parse_backtest_start_end_dates,
+        parse_backtest_data_package,
+    )
+
     data_package = get_backtest_data_package(
             op=op,
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
     )
-    start_date, end_date = get_backtest_start_end_dates(config=config)
-    cash_plan = get_backtest_invest_cash_plan(config=config)
+    start_date, end_date = parse_backtest_start_end_dates(config=config)
 
     # 在生成交易信号之前准备运行计划及历史数据
     op.prepare_running_schedule(
@@ -2087,9 +2081,6 @@ def run_mode_1(op, config):
             data_package=data_package,
     )
     op.create_data_windows()
-
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    op.is_ready(raise_error=True)
 
     # 准备交易价格清单和业绩基准数据（用于执行交易计划）
     trade_prices = op.get_trade_price_list(
@@ -2104,18 +2095,11 @@ def run_mode_1(op, config):
             data_source=qteasy.QT_DATA_SOURCE,
     )  # TODO: to be realized
 
-    from qteasy.config_parser import (
-        parse_cash_invest_and_delivery_arrays,
-        parse_trade_cost_params,
-        parse_signal_parsing_params,
-        parse_trading_moq_params,
-        parse_trading_delivery_params,
-    )
     # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
     (cash_investment_array,
      cash_inflation_array,
-     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op_schedule)
-
+     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
+    cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
     cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
@@ -2139,7 +2123,6 @@ def run_mode_1(op, config):
 
     if config['trade_log']:
         backtested.generate_trade_logs(save_to_file_path=config['trade_log_path'])
-
     if config['trade_summary']:
         backtested.generate_trade_summary(save_to_file_path=config['trade_summary_path'])
 
