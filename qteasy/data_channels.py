@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import time
 
+from typing import Union, Any
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -433,13 +434,13 @@ def fetch_batched_table_data(
 def fetch_real_time_klines(
         *,
         channel: str,
-        qt_codes: str or [str],
+        qt_codes: Union[str, list[str]],
         freq: str = 'd',
         parallel: bool = True,
         time_zone: str = 'local',
         verbose: bool = True,
         matured_kline_only: bool = False,
-        logger: any = None,
+        logger: Any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
     获取的数据仅包括当天的数据，如果当天不是交易日，返回空数据框。

@@ -89,7 +89,6 @@ class Operator:
                  group_merge_type: str = 'None',
                  run_freq: str = None,
                  run_timing: str = None,
-                 debug: bool = False,
                  ) -> None:
         """ 生成一个Operator对象
 
@@ -106,7 +105,7 @@ class Operator:
                 - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
                 - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
             在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见文档
-        op_type : str, {'batch', 'stepwise'}, default 'batch'
+        op_type : str, {'batch', 'stepwise'}, default 'batch'  deprecated
             运行类型，Operator对象有两种不同的运行类型：
                 - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
                                    不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
@@ -123,16 +122,14 @@ class Operator:
             同时设置Operator对象中所有交易策略的运行频率
         run_timing: str, default 'close'
             同时设置Operator对象中所有交易策略的运行时机
-        debug : bool, default False
-            是否开启调试模式，默认不开启。开启调试模式后，operator的is_ready()属性会强制设置为True
 
         Examples
         --------
         >>> import qteasy as qt
         >>> op = Operator('dma, macd')
-        Operator([dma, macd], 'pt', 'batch')
+        Operator([dma, macd], 'batch')
         >>> op = Operator(['dma', 'macd'])
-        Operator([dma, macd], 'pt', 'batch')
+        Operator([dma, macd], 'batch')
 
         >>> stg_dma = qt.built_in.DMA
         >>> stg_macd = qt.built_in.MACD
@@ -141,7 +138,7 @@ class Operator:
 
         """
 
-        self.debug = debug
+        self.debug = False  # debug模式下，Operator对象自动被认为是ready的
         self.name = name
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -212,7 +209,7 @@ class Operator:
         if self.strategy_count > 0:
             res.append(', '.join(self.strategy_ids))
         res.append('], ')
-        res.append(f'\'{self.op_type}\')')
+        res.append(f'name=\'{self.name}\')')
         return ''.join(res)
 
     @property
@@ -466,7 +463,7 @@ class Operator:
         return list(self._op_list_hdates.keys())
 
     @property
-    def op_list_price_types(self):
+    def op_list_types(self):
         """ 生成的交易清单的price_types，回测交易价格类型
 
         Returns
@@ -785,7 +782,11 @@ class Operator:
             if not isinstance(stg, (str, BaseStrategy, type)):
                 warnings.warn(f'WrongType! some of the items in strategies '
                               f'can not be added - got {stg}', RuntimeWarning, stacklevel=2)
-            self.add_strategy(stg, **kwargs)
+            try:
+                self.add_strategy(stg, **kwargs)
+            except Exception as e:
+                warnings.warn(f'Failed to add strategy {stg} to operator - {e}',
+                              RuntimeWarning, stacklevel=2)
 
     def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any], **kwargs):
 
