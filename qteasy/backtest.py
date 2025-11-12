@@ -777,7 +777,7 @@ class Backtester:
             logger.info('Start backtest operator...')
 
         # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
-        self.op_schedule = op.group_timing_table
+        self.op_schedule = op.group_timing_table.index
         self.n_signals = op.get_signal_count()
         self.share_count = len(shares)
 
@@ -952,7 +952,6 @@ class Backtester:
         value_history: pd.DataFrame
             交易模拟结果数据
         """
-
         value_history = pd.DataFrame(self.own_amounts_array[1:],
                                      index=self.op_schedule,
                                      columns=self.shares)

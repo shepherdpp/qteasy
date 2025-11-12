@@ -4228,12 +4228,7 @@ class TestBacktester(unittest.TestCase):
         )
 
         # 设置一些回测结果数据用于测试
-        self.backtester.own_cashes = np.array([
-            [0.0, 0.0],
-            [1000.0, 1000.0],
-            [1000.0, 1000.0],
-            [1500.0, 1500.0]
-        ])
+        self.backtester.own_cashes = np.array([0.0,1000.0,1000.0,1500.0])
 
         self.backtester.own_amounts_array = np.array([
             [0.0, 0.0],
@@ -4242,12 +4237,7 @@ class TestBacktester(unittest.TestCase):
             [3.0, 0.3]
         ])
 
-        self.backtester.available_cashes = np.array([
-            [0.0, 0.0],
-            [900.0, 900.0],
-            [900.0, 900.0],
-            [1400.0, 1400.0]
-        ])
+        self.backtester.available_cashes = np.array([0.0,900.0,900.0,1400.0])
 
         self.backtester.available_amounts_array = np.array([
             [0.0, 0.0],
@@ -4292,9 +4282,9 @@ class TestBacktester(unittest.TestCase):
         self.assertEqual(self.backtester.logger, self.logger)
 
         # 检查数组形状是否正确
-        self.assertEqual(self.backtester.own_cashes.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.own_cashes.shape, (self.n_signals + 1, ))
         self.assertEqual(self.backtester.own_amounts_array.shape, (self.n_signals + 1, self.share_count))
-        self.assertEqual(self.backtester.available_cashes.shape, (self.n_signals + 1, self.share_count))
+        self.assertEqual(self.backtester.available_cashes.shape, (self.n_signals + 1, ))
         self.assertEqual(self.backtester.available_amounts_array.shape, (self.n_signals + 1, self.share_count))
         self.assertEqual(self.backtester.trade_records_array.shape, (self.n_signals, self.share_count))
         self.assertEqual(self.backtester.trade_cost_array.shape, (self.n_signals, self.share_count))
@@ -4304,6 +4294,7 @@ class TestBacktester(unittest.TestCase):
         测试trade_result_df方法
         """
         result_df = self.backtester.trade_result_df()
+        print(f'generated trade result df:\n{result_df.to_string()}')
 
         # 检查返回值类型
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -4313,7 +4304,7 @@ class TestBacktester(unittest.TestCase):
         self.assertListEqual(list(result_df.columns), expected_columns)
 
         # 检查索引是否正确
-        pd.testing.assert_index_equal(result_df.index, self.operator._group_timing_table)
+        pd.testing.assert_index_equal(result_df.index, self.operator.group_timing_table.index)
 
         # 检查数据是否正确
         expected_values = (
@@ -4327,12 +4318,13 @@ class TestBacktester(unittest.TestCase):
         测试generate_trade_logs方法
         """
         trade_log_df = self.backtester.generate_trade_logs()
+        print(f'generated trade log df:\n{trade_log_df.to_string()}')
 
         # 检查返回值类型
         self.assertIsInstance(trade_log_df, pd.DataFrame)
 
         # 检查是否设置了trade_log_df属性
-        self.assertEqual(trade_log_df, self.backtester.trade_log_df)
+        pd.testing.assert_frame_equal(trade_log_df, self.backtester.trade_log_df)
 
         # 检查是否包含所有股票列
         for share in self.shares:
@@ -4354,12 +4346,13 @@ class TestBacktester(unittest.TestCase):
 
         share_names = ['Apple Inc.', 'Alphabet Inc.']
         trade_summary_df = self.backtester.generate_trade_summary(share_names=share_names)
+        print(f'generated trade summary df:\n{trade_summary_df.to_string()}')
 
         # 检查返回值类型
         self.assertIsInstance(trade_summary_df, pd.DataFrame)
 
         # 检查是否设置了summary_df属性
-        self.assertEqual(trade_summary_df, self.backtester.summary_df)
+        pd.testing.assert_frame_equal(trade_summary_df, self.backtester.summary_df)
 
         # 检查是否包含必要的列
         required_columns = ['code', 'name', '0, trade signal', '1, price', '2, traded amounts',
