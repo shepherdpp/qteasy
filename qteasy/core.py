@@ -1692,9 +1692,9 @@ def get_backtest_data_package(op: Operator,
     op: qteasy.Operator
         交易员对象，包含投资策略信息
     start: str
-        回测开始日期，格式为'YYYYMMDD'
+        回测开始日期，格式为 'YYYYMMDD'
     end: str
-        回测结束日期，格式为'YYYYMMDD'
+        回测结束日期，格式为 'YYYYMMDD'
     shares: list
         回测资产池中的股票列表
     datasource: qteasy.DataSource
@@ -2063,12 +2063,14 @@ def run_mode_1(op, config):
         parse_backtest_data_package,
     )
 
+    start_date, end_date = parse_backtest_start_end_dates(config=config)
     data_package = get_backtest_data_package(
             op=op,
-            config=config,
+            start=start_date,
+            end=end_date,
+            shares=config['asset_pool'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
-    start_date, end_date = parse_backtest_start_end_dates(config=config)
 
     # 在生成交易信号之前准备运行计划及历史数据
     op.prepare_running_schedule(

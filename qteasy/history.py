@@ -2425,8 +2425,8 @@ def get_history_data_packages(
         data_types,
         data_source,
         shares,
-        start,
-        end,
+        start=None,
+        end=None,
         rows=None,
 ) -> dict[str, pd.DataFrame]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并返回一个

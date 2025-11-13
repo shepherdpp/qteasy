@@ -1235,35 +1235,51 @@ class TestGetHistoryDataPackages(unittest.TestCase):
     def setUp(self):
         """设置测试环境，创建测试数据源和测试数据"""
         # 创建临时目录用于测试数据源
-        self.test_data_path = "./test_data"
+        self.test_data_path = "./temp_test_data"
         os.makedirs(self.test_data_path, exist_ok=True)
 
         # 创建测试数据源
         self.data_source = DataSource(
-                source_type='csv',
-                file_path=self.test_data_path,
-                frequency='daily'
+                source_type='file',
+                file_loc=self.test_data_path,
         )
-
-        # 创建测试数据
-        self.dates = pd.date_range('2023-01-01', '2023-01-10', freq='D')
+        # 创建测试数据close_E_d
+        self.dates = pd.date_range('2023-01-01', '2023-01-20', freq='D')
         self.shares = ['000001.SZ', '000002.SZ']
+        self.shares_and_index = ['000001.SZ', '000002.SZ', '000001.SH']
 
         # 为每只股票创建测试数据文件
         for share in self.shares:
             data = pd.DataFrame({
-                'date':   self.dates,
-                'open':   np.random.rand(10) * 100,
-                'high':   np.random.rand(10) * 100,
-                'low':    np.random.rand(10) * 100,
-                'close':  np.random.rand(10) * 100,
-                'volume': np.random.randint(1000, 10000, 10)
+                'trade_date':   self.dates,
+                'ts_code':      [share] * 20,
+                'open':   np.random.rand(20) * 100,
+                'high':   np.random.rand(20) * 100,
+                'low':    np.random.rand(20) * 100,
+                'close':  np.random.rand(20) * 100,
+                'vol': np.random.randint(1000, 10000, 20)
             })
-            data.to_csv(os.path.join(self.test_data_path, f"{share}.csv"), index=False)
+            self.data_source.update_table_data('stock_daily', df=data, merge_type='update')
+
+        # 创建指数（参考）数据文件（如指数数据）
+        index_data = pd.DataFrame({
+            'trade_date':   self.dates,
+            'ts_code':      ['000001.SH'] * 20,
+            'open':   np.random.rand(20) * 1000,
+            'high':   np.random.rand(20) * 1000,
+            'low':    np.random.rand(20) * 1000,
+            'close':  np.random.rand(20) * 1000,
+            'vol': np.random.randint(100000, 1000000, 20)
+        })
+        self.data_source.update_table_data('index_daily', df=index_data, merge_type='update')
+
+        # 检查确认数据已经存入datasource
+        self.data_source.get_table_info('stock_daily')
 
         # 创建DataType对象
         self.price_type = DataType('close', freq='d', asset_type='E')
         self.volume_type = DataType('volume', freq='d', asset_type='E')
+        self.index_close = DataType('close', freq='d', asset_type='IDX')
 
     def tearDown(self):
         """清理测试环境"""
@@ -1276,46 +1292,59 @@ class TestGetHistoryDataPackages(unittest.TestCase):
         result = get_history_data_packages(
                 data_types=self.price_type,
                 data_source=self.data_source,
-                shares=self.shares,
+                shares=self.shares_and_index,
                 start='2023-01-01',
                 end='2023-01-10'
         )
+        print(f'get data result is:\n{result}')
 
         # 验证返回值类型
         self.assertIsInstance(result, dict)
-        self.assertIn('close', result)
-        self.assertIsInstance(result['close'], pd.DataFrame)
+        self.assertIn('close_E_d', result)
+        self.assertIsInstance(result['close_E_d'], pd.DataFrame)
 
         # 验证DataFrame内容
-        df = result['close']
+        df = result['close_E_d']
         self.assertEqual(len(df), 10)  # 10个交易日
         self.assertEqual(len(df.columns), 2)  # 2只股票
         self.assertTrue(all(share in df.columns for share in self.shares))
 
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('stock_daily', shares=self.shares,
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        pd.testing.assert_series_equal(df['000001.SZ'], table_data[table_data['ts_code'] == '000001.SZ'].set_index('trade_date')['close'])
+
     def test_get_multiple_data_types_with_shares(self):
         """测试获取多个数据类型和指定股票的数据"""
         result = get_history_data_packages(
-                data_types=[self.price_type, self.volume_type],
+                data_types=[self.price_type, self.volume_type, self.index_close],
                 data_source=self.data_source,
                 shares=self.shares,
                 start='2023-01-01',
                 end='2023-01-10'
         )
+        print(f'get data result is:\n{result}')
 
         # 验证返回值
         self.assertIsInstance(result, dict)
-        self.assertIn('close', result)
-        self.assertIn('volume', result)
-        self.assertIsInstance(result['close'], pd.DataFrame)
-        self.assertIsInstance(result['volume'], pd.DataFrame)
+        self.assertIn('close_E_d', result)
+        self.assertIn('volume_E_d', result)
+        self.assertIn('close_IDX_d', result)
+        self.assertIsInstance(result['close_E_d'], pd.DataFrame)
+        self.assertIsInstance(result['volume_E_d'], pd.DataFrame)
+        self.assertIsInstance(result['close_IDX_d'], pd.DataFrame)
 
         # 验证DataFrame内容
-        price_df = result['close']
-        volume_df = result['volume']
+        price_df = result['close_E_d']
+        volume_df = result['volume_E_d']
+        index_df = result['close_IDX_d']
         self.assertEqual(len(price_df), 10)
         self.assertEqual(len(volume_df), 10)
+        self.assertEqual(len(index_df), 10)
         self.assertEqual(len(price_df.columns), 2)
         self.assertEqual(len(volume_df.columns), 2)
+        self.assertEqual(len(index_df.columns), 2)
 
     def test_get_data_with_date_range(self):
         """测试使用日期范围获取数据"""
@@ -1326,50 +1355,67 @@ class TestGetHistoryDataPackages(unittest.TestCase):
                 start='2023-01-03',
                 end='2023-01-07'
         )
+        print(f'get data result is:\n{result}')
 
-        df = result['close']
+        df = result['close_E_d']
         self.assertEqual(len(df), 5)  # 5个交易日
         self.assertTrue(pd.Timestamp('2023-01-03') in df.index)
         self.assertTrue(pd.Timestamp('2023-01-07') in df.index)
 
     def test_get_data_with_row_count(self):
         """测试使用行数限制获取数据"""
+        print(f'testing get data with start and row count')
         result = get_history_data_packages(
                 data_types=self.price_type,
                 data_source=self.data_source,
                 shares=self.shares,
-                start=None,
-                end=None,
-                rows=5
+                start='2023-01-05',
+                rows=5,
         )
+        print(f'get data result is:\n{result}')
 
-        df = result['close']
+        df = result['close_E_d']
         self.assertEqual(len(df), 5)  # 最近5个交易日
+        self.assertEqual(df.index[0], pd.Timestamp('2023-01-05'))
+
+        print(f'testing get data with end and row count')
+        result = get_history_data_packages(
+                data_types=self.price_type,
+                data_source=self.data_source,
+                shares=self.shares,
+                end='2023-01-07',
+                rows=5,
+        )
+        print(f'get data result is:\n{result}')
+
+        df = result['close_E_d']
+        self.assertEqual(len(df), 5)  # 最近5个交易日
+        self.assertEqual(df.index[-1], pd.Timestamp('2023-01-07'))
 
     def test_get_reference_data_without_shares(self):
         """测试获取无股票代码的参考数据"""
-        # 创建参考数据文件（如指数数据）
-        index_data = pd.DataFrame({
-            'date':   self.dates,
-            'close':  np.random.rand(10) * 1000,
-            'volume': np.random.randint(100000, 1000000, 10)
-        })
-        index_data.to_csv(os.path.join(self.test_data_path, "index.csv"), index=False)
 
         # 创建参考数据类型
-        index_type = DataType('index_close', domain='index', data_type='float', table_name='index')
+        index_type = DataType('close-000001.SH', freq='d', asset_type='IDX')
 
         result = get_history_data_packages(
                 data_types=index_type,
                 data_source=self.data_source,
                 shares=None,
-                start='2023-01-01',
-                end='2023-01-10'
+                start='2023-01-03',
+                end='2023-01-09'
         )
+        print(f'get data result is:\n{result}')
 
         self.assertIsInstance(result, dict)
-        self.assertIn('index_close', result)
-        self.assertIsInstance(result['index_close'], pd.DataFrame)
+        self.assertIn('close-000001.SH', result)
+        self.assertIsInstance(result['close-000001.SH'], pd.Series)
+        result_df = result['close-000001.SH']
+        self.assertEqual(result_df.shape, (7, ))  # 7个交易日，1列数据
+        self.assertEqual(result_df.name, 'close-000001.SH')  # 列名为'none'
+        self.assertEqual(result_df.index[0], pd.Timestamp('2023-01-03'))
+        self.assertEqual(result_df.index[-1], pd.Timestamp('2023-01-09'))
+
 
     def test_invalid_data_types(self):
         """测试无效的数据类型参数"""
@@ -1393,20 +1439,19 @@ class TestGetHistoryDataPackages(unittest.TestCase):
 
     def test_empty_result(self):
         """测试无数据返回的情况"""
-        # 使用不存在的日期范围
-        result = get_history_data_packages(
-                data_types=self.price_type,
-                data_source=self.data_source,
-                shares=self.shares,
-                start='2024-01-01',
-                end='2024-01-10'
-        )
 
-        # 应该返回空的DataFrame
-        self.assertIsInstance(result, dict)
-        self.assertIn('close', result)
-        self.assertIsInstance(result['close'], pd.DataFrame)
-        # 注意：根据实现，可能是空DataFrame或者特定处理
+        print(f'testing get data with date range that has no data')
+
+        # 当下载的数据为空时，raise RuntimeError:
+        with self.assertRaises(RuntimeError):
+            # 使用不存在的日期范围
+            get_history_data_packages(
+                    data_types=self.price_type,
+                    data_source=self.data_source,
+                    shares=self.shares,
+                    start='2024-01-01',
+                    end='2024-01-10'
+            )
 
 
 if __name__ == '__main__':

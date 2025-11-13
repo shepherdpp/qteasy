@@ -4164,25 +4164,28 @@ def get_history_data_from_source(
                          f'you should provide at least two of them')
 
     # calculate days offset between start and end based on row_count
-    if start is None and end is None:
+    if (start is None) and (end is None):
         raise ValueError(f'at least one of start or end should be given, both are None!')
-    if start is None:
-        # if end is Monday then start should be Friday (this is still temporary)
-        end = pd.to_datetime(end)
-        if end.weekday() == 0:
+    elif start is None:
+        # if end is Monday then start should be Friday (TODO: this is still temporary)
+        end_date = pd.to_datetime(end)
+        if end_date.weekday() == 0:
             trade_day_offset += 2
-        start = end - pd.Timedelta(days=trade_day_offset)
-    if end is None:
-        start = pd.to_datetime(start)
-        if start.weekday() == 4:
+        start_date = end_date - pd.Timedelta(days=trade_day_offset)
+    elif end is None:
+        start_date = pd.to_datetime(start)
+        if start_date.weekday() == 4:
             trade_day_offset += 2
         # start and row_count should be given in this case
-        end = start + pd.Timedelta(days=trade_day_offset)
+        end_date = start_date + pd.Timedelta(days=trade_day_offset)
+    else:
+        start_date = pd.to_datetime(start)
+        end_date = pd.to_datetime(end)
 
     # 调整start/end的时间，确保start的时间为00:00:01，end的时间为23:59:59，以便确保获取的数据与频率无关
-    start = pd.to_datetime(start).replace(hour=0, minute=0, second=1)
-    end = pd.to_datetime(end).replace(hour=23, minute=59, second=59)
-    print(f'adjusted start/end to {start} - {end}')
+    start_date = pd.to_datetime(start_date).replace(hour=0, minute=0, second=1)
+    end_date = pd.to_datetime(end_date).replace(hour=23, minute=59, second=59)
+    print(f'adjusted start/end to {start_date} - {end_date}')
 
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')
@@ -4193,7 +4196,7 @@ def get_history_data_from_source(
         if htype.freq == 'none' or htype.asset_type == 'none':
             raise ValueError(f'Invalid data type {htype.name}, not a history data type')
         # 从数据源获取数据，
-        df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start, ends=end)
+        df = htype.get_data_from_source(datasource, symbols=qt_codes, starts=start_date, ends=end_date)
         if not combine_asset_types:
             # 下载的数据不会按htype.name合并，而是分别按htype.dtype_id存储
             history_data_acquired[htype.dtype_id] = df
@@ -4211,7 +4214,7 @@ def get_history_data_from_source(
         err = RuntimeError(f'Empty data extracted from {datasource} with parameters:\n'
                            f'shares: {qt_codes}\n'
                            f'htypes: {htypes}\n'
-                           f'start/end/freq: {start}/{end}/"{freq}"\n'
+                           f'start/end/freq: {start_date}/{end_date}/"{freq}"\n'
                            f'To check data availability, use one of the following:\n'
                            f'Availability of all tables:     qt.get_table_overview()，or\n'
                            f'Availability of <table_name>:   qt.get_table_info(\'table_name\')\n'
@@ -4224,8 +4227,12 @@ def get_history_data_from_source(
 
     for htyp, df in history_data_acquired.items():
         df = df.reindex(columns=qt_codes)
-        if row_count:
+        # 当row_count起作用的时候，需要分辨用户给出了start还是end，据此决定取head还是tail
+        if row_count and (start is None):
             df = df.tail(row_count)
+        if row_count and (end is None):
+            df = df.head(row_count)
+
         history_data_acquired[htyp] = df
 
     return history_data_acquired

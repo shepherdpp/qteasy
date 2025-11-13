@@ -252,7 +252,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     except:
         return pd.DataFrame()
     data = json_response['data']
-    import pdb; pdb.set_trace()
+
     if data is None:
         return pd.DataFrame()
     klines = data['klines']
