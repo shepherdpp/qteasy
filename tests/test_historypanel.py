@@ -1270,18 +1270,20 @@ class TestGetHistoryDataPackages(unittest.TestCase):
                 'close':  np.random.rand(20) * 100,
                 'vol': np.random.randint(1000, 10000, 20)
             })
+            print(f'updating data for share {share}:\n{data}')
             self.data_source.update_table_data('stock_daily', df=data, merge_type='update')
 
         # 创建指数（参考）数据文件（如指数数据）
         index_data = pd.DataFrame({
             'trade_date':   self.dates,
             'ts_code':      ['000001.SH'] * 20,
-            'open':   np.random.rand(20) * 1000,
-            'high':   np.random.rand(20) * 1000,
-            'low':    np.random.rand(20) * 1000,
-            'close':  np.random.rand(20) * 1000,
+            'open':   np.random.rand(20) * 5000,
+            'high':   np.random.rand(20) * 5000,
+            'low':    np.random.rand(20) * 5000,
+            'close':  np.random.rand(20) * 5000,
             'vol': np.random.randint(100000, 1000000, 20)
         })
+        print(f'updating index data:\n{index_data}')
         self.data_source.update_table_data('index_daily', df=index_data, merge_type='update')
 
         # 检查确认数据已经存入datasource
@@ -1294,9 +1296,11 @@ class TestGetHistoryDataPackages(unittest.TestCase):
 
     def tearDown(self):
         """清理测试环境"""
+        print(f'tearing down test environment')
         # 删除临时目录
         if os.path.exists(self.test_data_path):
             shutil.rmtree(self.test_data_path)
+            print(f'deleted test data path: {self.test_data_path}')
 
     def test_get_single_data_type_with_shares(self):
         """测试获取单个数据类型和指定股票的数据"""
@@ -1317,21 +1321,24 @@ class TestGetHistoryDataPackages(unittest.TestCase):
         # 验证DataFrame内容
         df = result['close_E_d']
         self.assertEqual(len(df), 10)  # 10个交易日
-        self.assertEqual(len(df.columns), 2)  # 2只股票
+        self.assertEqual(len(df.columns), 3)  # 2只股票
         self.assertTrue(all(share in df.columns for share in self.shares))
 
         # 从datasource读取数据
         table_data = self.data_source.read_table_data('stock_daily', shares=self.shares,
                                                       start='2023-01-01', end='2023-01-10')
         print(f'table_data from data source:\n{table_data}')
-        pd.testing.assert_series_equal(df['000001.SZ'], table_data[table_data['ts_code'] == '000001.SZ'].set_index('trade_date')['close'])
+        self.assertTrue(np.allclose(df['000001.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SZ']['close'].values))
+        self.assertTrue(np.allclose(df['000002.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000002.SZ']['close'].values))
+
+        self.assertTrue(all(np.isnan(df['000001.SH'].values)))
 
     def test_get_multiple_data_types_with_shares(self):
         """测试获取多个数据类型和指定股票的数据"""
         result = get_history_data_packages(
                 data_types=[self.price_type, self.volume_type, self.index_close],
                 data_source=self.data_source,
-                shares=self.shares,
+                shares=self.shares_and_index,
                 start='2023-01-01',
                 end='2023-01-10'
         )
@@ -1353,9 +1360,28 @@ class TestGetHistoryDataPackages(unittest.TestCase):
         self.assertEqual(len(price_df), 10)
         self.assertEqual(len(volume_df), 10)
         self.assertEqual(len(index_df), 10)
-        self.assertEqual(len(price_df.columns), 2)
-        self.assertEqual(len(volume_df.columns), 2)
-        self.assertEqual(len(index_df.columns), 2)
+        self.assertEqual(len(price_df.columns), 3)
+        self.assertEqual(len(volume_df.columns), 3)
+        self.assertEqual(len(index_df.columns), 3)
+
+        # 验证DataFrame'close_E_d'内容
+        df = result['close_E_d']
+
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('stock_daily', shares=self.shares,
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        self.assertTrue(np.allclose(df['000001.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SZ']['close'].values))
+        self.assertTrue(np.allclose(df['000002.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000002.SZ']['close'].values))
+
+        # 验证DataFrame'close_IDX_d'内容
+        df = result['close_IDX_d']
+
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('index_daily', shares='000001.SH',
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        self.assertTrue(np.allclose(df['000001.SH'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SH']['close'].values))
 
     def test_get_data_with_date_range(self):
         """测试使用日期范围获取数据"""
@@ -1426,7 +1452,6 @@ class TestGetHistoryDataPackages(unittest.TestCase):
         self.assertEqual(result_df.name, 'close-000001.SH')  # 列名为'none'
         self.assertEqual(result_df.index[0], pd.Timestamp('2023-01-03'))
         self.assertEqual(result_df.index[-1], pd.Timestamp('2023-01-09'))
-
 
     def test_invalid_data_types(self):
         """测试无效的数据类型参数"""
