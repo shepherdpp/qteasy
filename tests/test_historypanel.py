@@ -965,13 +965,13 @@ class TestHistoryPanel(unittest.TestCase):
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           start='20210101', end='20210802', freq='m')
-        expected_htypes = ['wt_idx|000003.SH', 'close', 'wt_idx|000300.SH']
+        expected_htypes = ['wt_idx|000003.SH(d)', 'close(d)', 'close(m)', 'wt_idx|000300.SH(d)']
         expected_shares = ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH']
+        print(f'HistoryPanel obtained is:\n{hp}')
         self.assertTrue(all(i in expected_htypes for i in hp.htypes))
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
-        print(hp)
 
         print('test get history panel data without shares')
         data_types = infer_data_types(
@@ -984,11 +984,11 @@ class TestHistoryPanel(unittest.TestCase):
                                           drop_nan=True)
         expected_htypes = ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH']
         expected_shares = ['none']
+        print(f'HistoryPanel obtained is:\n{hp}')
         self.assertTrue(all(i in expected_htypes for i in hp.htypes))
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
-        print(hp)
 
         print('test get history panel data from converting multiple frequencies')
         data_types = infer_data_types(
@@ -1139,6 +1139,17 @@ class TestHistoryPanel(unittest.TestCase):
                           start='202101001',
                           end='20210115',
                           freq='d',)
+
+        print(f'test getting data with different freq but same asset type and name')
+        data_types = [qt.DataType('close', freq='d', asset_type='E'),
+                      qt.DataType('close', freq='w', asset_type='E'),
+                      qt.DataType('close', freq='m', asset_type='E')]
+        hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+                                          start='20210101', end='20210202', freq='m')
+        expected_htypes = ['wt_idx|000003.SH', 'close', 'wt_idx|000300.SH']
+        expected_shares = ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH']
+        print(f'hp htpyes: {hp.htypes}')
 
     def test_flatten_to_dataframe(self):
         """ 测试函数 flatten_to_dataframe() """
