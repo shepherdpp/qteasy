@@ -1815,6 +1815,7 @@ class TestDataTypes(unittest.TestCase):
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htype_names = 'pe,close|b,open,swing,strength'
         htype_names = str_to_list(htype_names)
+        htype_ids = ['pe(d)', 'close|b(d)', 'open(d)', 'swing(d)', 'strength(d)']
         start = '20210101'
         end = '20210301'
         asset_type = ['E', 'IDX', 'FD']
@@ -1831,7 +1832,7 @@ class TestDataTypes(unittest.TestCase):
                     continue
         shares = list_to_str_format(shares)
         print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_ids = [htype.id for htype in htypes]
+        htype_dtype_ids = [htype.dtype_id for htype in htypes]
 
         dfs = get_history_data_from_source(
                 self.ds,
@@ -1843,7 +1844,7 @@ class TestDataTypes(unittest.TestCase):
         )
         self.assertIsInstance(dfs, dict)
         self.assertEqual(len(dfs), len(htypes))
-        self.assertEqual(list(dfs.keys()), htype_ids)
+        self.assertEqual(list(dfs.keys()), htype_dtype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
@@ -1861,7 +1862,7 @@ class TestDataTypes(unittest.TestCase):
                 combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
@@ -1872,7 +1873,7 @@ class TestDataTypes(unittest.TestCase):
         start = '20230901'
         end = '20230910'
         freq = 'h'
-        htype_names = ['pe', 'close', 'open', 'swing', 'strength']
+        htype_ids = ['pe(d)', 'close(h)', 'open(h)', 'swing(d)', 'strength(d)']
         # 逐个生成htype并添加到htypes清单中
         h_types = [DataType(name='pe', freq='d', asset_type='E'),
                    DataType(name='close', freq='h', asset_type='E'),
@@ -1897,13 +1898,13 @@ class TestDataTypes(unittest.TestCase):
                 combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
 
         print(f'getting data with only row_count parameter without starts or ends')
-        htype_ids = [htype.id for htype in h_types]
+        htype_ids = ['pe(d)', 'close(h)', 'open(h)', 'swing(d)', 'strength(d)']
 
         dfs = get_history_data_from_source(
                 self.ds,
@@ -1915,7 +1916,7 @@ class TestDataTypes(unittest.TestCase):
                 combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel: \n{dfs}')
         for df in dfs:

@@ -2489,6 +2489,7 @@ def get_history_data_packages(
     return all_dfs
 
 
+# TODO: 这个函数似乎不再需要了？？？
 def get_history_panel(
         data_types,
         data_source,
@@ -2506,6 +2507,25 @@ def get_history_panel(
 ) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
     HistoryPanel数据对象
+
+    只要给出数据类型、数据源和证券代码，就可以直接获取所需的历史数据，这个函数存在的意义在于：
+    有些数据类型有相同的名字，但是对应不同的频率或资产类型，在读取数据时，这些不同的资产类型
+    会被分别处理并存储在不同的数据层中，但我们有时候需要将它们合并起来，例如，股票000001.SZ和
+    指数000001.SH都有close类型的数据，但它们是存储在不同的数据表中的不同数据类型。但我们有时候
+    希望在close数据层中同时看到股票和指数的close数据，这时就需要将它们合并到同一个数据层中。
+
+    这个函数在读取数据时，会根据数据类型的名字将不同的数据类型合并到一起，例如close_E_d的数据
+    会跟close_IDX_d的数据合并，成为同一层的数据并给它一个统一的标签'close'.这样就能在同一层
+    中同时看到股票和指数的close数据了。
+
+    同时，这个函数还会根据需要调整数据的频率，将所有不同频率的数据全部都统一为需要的频率输出。
+
+    不过，上面的做法在以前没有显式定义DataType的时候是可用的，现在由于DataType对象明确了数据
+    的资产类型和频率，那么就会出现下面这种情况，如果需要读取的两个DataType包含相同的name，asset_type
+    但是不同的频率，那么在读取的同一层数据中就会出现两列不同的数据拥有同一个symbol，
+    这会造成错误。例如：需要读取close_E_d和close_E_15min两个数据类型，那么它们都会被放置在
+    close层中，并且它们的symbol都是000001.SZ，这样就会造成冲突，无法区分到底是哪一个数据。
+    ，
 
     Parameters
     ----------
@@ -2633,7 +2653,7 @@ def get_history_panel(
             df = pd.DataFrame(df)
             df.columns = ['none']
         # find freq of the htyp:
-        htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
+        htype_freq = [d_type for d_type in data_types if d_type.id == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
             new_df = _adjust_freq(
                     df,

@@ -538,16 +538,20 @@ class DataType:
 
     @property
     def id(self):
-        return f'{self._name}({self._default_asset_type})'
+        """忽略资产类型的ID形如：close(d)，用于合并不同资产类型的数据"""
+        return f'{self._name}({self._default_freq})'
 
     @property
     def dtype_id(self):
+        """形如：close_E_d"""
         return self._dtype_id
 
     @dtype_id.setter
     def dtype_id(self, dtype_id:str):
+        """为什么会需要dtype_id.setter？dtype_id应该是固定的close_E_d之类的字符串，不应该被修改才对"""
         if not isinstance(dtype_id, str):
             raise TypeError(f'dtype_id must be a string, got {type(dtype_id)}')
+        warn('Dtype_id is derived from name, asset_type and freq, setting dtype_id directly is not recommended.',)
         self._dtype_id = dtype_id
 
     @property
@@ -608,8 +612,8 @@ class DataType:
     def get_data_from_source(
             self, datasource, *,
             symbols: str = None,
-            starts: str = None,
-            ends: str = None,
+            starts: Union[str, pd.Timestamp] = None,
+            ends: Union[str, pd.Timestamp] = None,
     ):
         """ Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出
 
@@ -4095,6 +4099,14 @@ def get_history_data_from_source(
     历史数据返回的结果为column为qt_codes，index为时间的DataFrame，因此只有htype的freq
     不是'none‘，且asset_type也不为'none'时，才能返回正确的数据
 
+    当输入的数据类型中有相同的htype_name但是不同的asset_type时，例如pe_IDX_d与pe_E_d，
+    可以通过combine_asset_types参数来选择是否将相同htype_name的数据合并在一起返回，如上面的
+    两个pe类型数据，如果选择合并，则返回的DataFrame中只有一个pe_d类型，同时包含IDX与E类型的数据。
+
+    但是要注意，在选择combine_asset_types=True时，如果两个数据类型的freq不同，则它们仍然会被
+    分开获取并返回，因为不同频率的数据无法合并在一起。如close_E_d与close_IDX_15min的数据是无法
+    合并在一起的。
+
     Parameters
     ----------
     datasource: DataSource
@@ -4202,12 +4214,12 @@ def get_history_data_from_source(
             history_data_acquired[htype.dtype_id] = df
         else:
             # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
-            original_df = history_data_acquired.get(htype.name)
+            original_df = history_data_acquired.get(htype.id)
             if original_df is None:
-                history_data_acquired[htype.name] = df
+                history_data_acquired[htype.id] = df
             else:
                 new_df = pd.concat([original_df, df], axis=1, copy=False)
-                history_data_acquired[htype.name] = new_df
+                history_data_acquired[htype.id] = new_df
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(df.empty for df in history_data_acquired.values()):
@@ -4250,7 +4262,7 @@ def get_reference_data_from_source(
 
     由于获取的数据是参考数据，因此数据是一个Series，index为时间，value为数据值，该数据
     并不针对具体的证券，因此普遍应该从不含证券代码的数据表中获取数据，如货币数据、国债数据等。
-    如果需要用某证券的数据作为参考数据，可以给出证券代码，但该证券代码会作为Series的name
+    如果需要用某证券的数据作为参考数据，可以给出证券代码如‘idx-000300.SH'，但该证券代码会作为Series的name
     而不会作为column返回。
 
     Parameters
