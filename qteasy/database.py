@@ -10,10 +10,12 @@
 # ======================================
 
 import os
-from os import path
 import pandas as pd
 import numpy as np
 import warnings
+
+from os import path
+from typing import Union
 
 from functools import lru_cache
 
@@ -1238,7 +1240,7 @@ class DataSource:
         )
 
     def read_table_data(self, table, *,
-                        shares: str = None,
+                        shares: Union[str, list] = None,
                         start: str = None,
                         end: str = None,
                         primary_key_in_index: bool = True,
@@ -1251,7 +1253,7 @@ class DataSource:
         ----------
         table: str
             数据表名称
-        shares: str
+        shares: str or list of str,
             ts_code筛选条件，逗号分隔字符串，为空时给出所有记录
         start: str，
             YYYYMMDD格式日期，为空时不筛选
