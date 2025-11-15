@@ -2489,7 +2489,6 @@ def get_history_data_packages(
     return all_dfs
 
 
-# TODO: 这个函数似乎不再需要了？？？
 def get_history_panel(
         data_types,
         data_source,
@@ -2506,7 +2505,9 @@ def get_history_panel(
         **kwargs
 ) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
-    HistoryPanel数据对象
+    HistoryPanel数据对象，该HistoryPanel的数据时间频率由参数指定，查找数据时会自动匹配相应
+    的数据类型，如果没有完全匹配频率的数据类型，则会找到最近的类型并通过升频或降频的方式调整为
+    所需频率输出。
 
     只要给出数据类型、数据源和证券代码，就可以直接获取所需的历史数据，这个函数存在的意义在于：
     有些数据类型有相同的名字，但是对应不同的频率或资产类型，在读取数据时，这些不同的资产类型
@@ -2653,7 +2654,7 @@ def get_history_panel(
             df = pd.DataFrame(df)
             df.columns = ['none']
         # find freq of the htyp:
-        htype_freq = [d_type for d_type in data_types if d_type.id == htyp][0]
+        htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
             new_df = _adjust_freq(
                     df,

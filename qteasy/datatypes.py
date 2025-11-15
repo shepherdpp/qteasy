@@ -11,6 +11,7 @@
 # collection of all built-in data types.
 # ======================================
 
+import numpy as np
 import pandas as pd
 from functools import lru_cache
 from typing import Union, List, Tuple, Dict
@@ -538,8 +539,8 @@ class DataType:
 
     @property
     def id(self):
-        """忽略资产类型的ID形如：close(d)，用于合并不同资产类型的数据"""
-        return f'{self._name}({self._default_freq})'
+        """忽略数据频率的ID形如：close(E)，用于标记不同资产类型的数据"""
+        return f'{self._name}({self._default_asset_type})'
 
     @property
     def dtype_id(self):
@@ -4123,7 +4124,7 @@ def get_history_data_from_source(
     end: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
     combine_asset_types: bool, optional, default False
-        在输入的数据类型中可能有相同的htype_names，例如pe(IDX)@'d'与pe(E)@'d'
+        在输入的数据类型中可能有相同的htype_names，例如'pe_IDX_d'与'pe_E_d'
         这两个htype的名称相同，只是数据类型不同。此时可以选择是否是否合并相同的htype name，
         如果为True，则下载的数据会被合并为一个pe类型，同时包含IDX与E类型的数据
         例如：
@@ -4131,13 +4132,13 @@ def get_history_data_from_source(
         2020-01-01      22.34,     18.00
         2020-01-01      22.35,     18.50
 
-        如果选择不合并，则pe(IDX)与pe(E)的数据会被分开罗列
+        如果选择不合并，则pe_IDX_d与pe_E_d的数据会被分开罗列
         例如：
 
-        pe(IDX):    000300.SH, 000001.SZ
+        pe_IDX_d:    000300.SH, 000001.SZ
         2020-01-01      22.34,       NaN
         2020-01-01      22.35,       NaN
-        pe(E):      000300.SH, 000001.SZ
+        pe_E_d:      000300.SH, 000001.SZ
         2020-01-01        NaN,     18.00
         2020-01-01        NaN,     18.50
 
@@ -4214,12 +4215,12 @@ def get_history_data_from_source(
             history_data_acquired[htype.dtype_id] = df
         else:
             # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
-            original_df = history_data_acquired.get(htype.id)
+            original_df = history_data_acquired.get(htype.name)
             if original_df is None:
-                history_data_acquired[htype.id] = df
+                history_data_acquired[htype.name] = df
             else:
                 new_df = pd.concat([original_df, df], axis=1, copy=False)
-                history_data_acquired[htype.id] = new_df
+                history_data_acquired[htype.name] = new_df
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(df.empty for df in history_data_acquired.values()):
@@ -4238,6 +4239,15 @@ def get_history_data_from_source(
     qt_codes = str_to_list(qt_codes)
 
     for htyp, df in history_data_acquired.items():
+        # 如果df的columns含有重复的qt_code，说明读取的数据包含重复的freq，此时应报错
+        if df.columns.duplicated().any():
+            duplicated_htypes = [htype.id for htype in htypes if htype.name == htyp]
+            duplicated_htypes = ', '.join([htype for htype in list(np.unique(duplicated_htypes))])
+            err = ValueError(f'Failed to create history panel with "combine_asset_types=True", '
+                             f'possible cause is that multiple freqs are given for same datatype: '
+                             f'[{duplicated_htypes}]\n'
+                             f'Please check your input datatypes.')
+            raise err
         df = df.reindex(columns=qt_codes)
         # 当row_count起作用的时候，需要分辨用户给出了start还是end，据此决定取head还是tail
         if row_count and (start is None):
