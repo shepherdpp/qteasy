@@ -1815,7 +1815,7 @@ class TestDataTypes(unittest.TestCase):
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htype_names = 'pe,close|b,open,swing,strength'
         htype_names = str_to_list(htype_names)
-        htype_ids = ['pe(d)', 'close|b(d)', 'open(d)', 'swing(d)', 'strength(d)']
+        htype_ids = ['pe', 'close|b', 'open', 'swing', 'strength']
         start = '20210101'
         end = '20210301'
         asset_type = ['E', 'IDX', 'FD']
@@ -1873,7 +1873,7 @@ class TestDataTypes(unittest.TestCase):
         start = '20230901'
         end = '20230910'
         freq = 'h'
-        htype_ids = ['pe(d)', 'close(h)', 'open(h)', 'swing(d)', 'strength(d)']
+        htype_ids = ['pe', 'close', 'open', 'swing', 'strength']
         # 逐个生成htype并添加到htypes清单中
         h_types = [DataType(name='pe', freq='d', asset_type='E'),
                    DataType(name='close', freq='h', asset_type='E'),
@@ -1904,7 +1904,7 @@ class TestDataTypes(unittest.TestCase):
         print(f'got history panel:\n{dfs}')
 
         print(f'getting data with only row_count parameter without starts or ends')
-        htype_ids = ['pe(d)', 'close(h)', 'open(h)', 'swing(d)', 'strength(d)']
+        htype_ids = ['pe', 'close', 'open', 'swing', 'strength']
 
         dfs = get_history_data_from_source(
                 self.ds,

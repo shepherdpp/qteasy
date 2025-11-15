@@ -957,8 +957,7 @@ def get_history_data(htypes=None,
                      as_data_frame=None,
                      group_by=None,
                      **kwargs):
-    """ 从本地data_source获取所需的数据并组装为适应于策略
-        需要的HistoryPanel数据对象
+    """ 从本地data_source获取所需的数据并组装为适应于策略需要的HistoryPanel数据对象
 
     需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数
     结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略
