@@ -10,6 +10,8 @@
 # ======================================
 
 
+from typing import Optional, Union
+
 from .utilfuncs import AVAILABLE_ASSET_TYPES
 
 
@@ -39,13 +41,18 @@ def _is_valid_code(code: str) -> bool:
     return True
 
 
-def _infer_symbol_market(code):
+def _infer_symbol_market(code) -> Optional[tuple[str, str]]:
     """ infer the symbol and market from the code as a tuple:
 
     Parameters
     ----------
-    (code, market) : tuple
-        tuple of code and market
+    code : str
+        code or symbol
+
+    Returns
+    -------
+    tuple(str, str), optional
+        symbol and market
     """
     # if the code splits into only one part, then it is the symbol
     parts = code.split('.')

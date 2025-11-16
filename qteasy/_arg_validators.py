@@ -461,12 +461,12 @@ def _valid_qt_kwargs():
              'Validator': lambda value: isinstance(value, str)
                                         and _validate_asset_symbol(value),
              'level':     1,
-             'text':      '用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数\n'
+             'text':      '回测结果评价的业绩比较基准，默认基准为沪深300指数\n'
                           '基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
-                          '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
+                          '绝对值以外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                           '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'benchmark_asset_type':
+        'benchmark_asset_type':  # TODO: Deprecate: 如果已经指定了benchmark_asset的qt_code，那么其asset_type已经隐含确定，应该不需要再指定该参数
             {'Default':   'IDX',
              'Validator': lambda value: _validate_asset_type(value),
              'level':     1,
@@ -476,7 +476,7 @@ def _valid_qt_kwargs():
                           'FT   : 期货\n'
                           'FD   : 基金'},
 
-        'benchmark_dtype':
+        'benchmark_dtype':  # TODO: Deprecate: benchmark_asset的价格类型应该根据Operator的运行时间表，自动从数据源中获取，而不需要用户指定
             {'Default':   'close',
              'Validator': lambda value: value.lower() in ['open',
                                                           'high',
