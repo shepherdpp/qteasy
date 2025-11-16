@@ -586,6 +586,30 @@ class Operator:
 
         return is_ready
 
+    def reset(self):
+        """ 重置Operator对象的运行状态，使其可以重新开始生成交易信号
+
+        Notes
+        -----
+        该方法会重置Operator对象的所有运行数据，包括历史数据缓存、数据窗口视图、数据窗口索引、交易信号等。
+        重置后，Operator对象可以重新开始生成交易信号。
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op.reset()
+        """
+        self.debug = False
+        self._next_stg_index = 0
+        self.data_buffers = {}
+        self.data_window_views = {}
+        self.data_window_indices = {}
+        self._op_signals = None
+        self._op_signal_types = None
+        self._op_signal_shares = {}
+        self._op_signal_hdates = {}
+        raise NotImplementedError
+
     def __getitem__(self, item):
         """ 根据策略的名称或序号返回子策略
 
