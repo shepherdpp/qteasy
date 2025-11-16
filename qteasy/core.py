@@ -13,6 +13,7 @@ import numpy as np
 import time
 import logging
 from warnings import warn
+from typing import Optional, Union, Any
 
 import datetime
 
@@ -1235,22 +1236,20 @@ def get_history_data(htypes=None,
 
     # 如果给出了data_types参数，确认结果正确后，忽略htypes/htype_names参数
     if data_types is not None:
-        assert isinstance(data_types, list)
-        assert all(isinstance(dtype, DataType) for dtype in data_types)
+        if not isinstance(data_types, list) or not all(isinstance(dt, DataType) for dt in data_types):
+            raise TypeError("data_types must be a list of DataType instances")
     else:
-        assert (htypes is not None) or (htype_names is not None), \
-            f'htypes and htype_names can not both be None if data_types is not given'
-
         if htypes is not None:
-            msg = f'htypes parameter is deprecated, please use htype_names instead'
-            warn(msg, DeprecationWarning)
+            warn("htypes parameter is deprecated, please use htype_names instead", DeprecationWarning)
             htype_names = htypes
+
+        if htype_names is None:
+            raise ValueError("Either data_types or htype_names must be provided")
 
         if isinstance(htype_names, str):
             htype_names = str_to_list(htype_names)
-        if isinstance(htype_names, list):
-            if not all(isinstance(item, str) for item in htype_names):
-                raise TypeError(f'all items in shares list should be a string, got otherwise')
+        if not all(isinstance(n, str) for n in htype_names):
+            raise TypeError("All elements in htype_names must be strings")
 
         # check parameter freq
         if freq is None:
@@ -1464,112 +1463,109 @@ def live_trade_accounts() -> pd.DataFrame:
 # =================================================
 # 以下是一些独立的函数, 用于检查和准备历史数据
 # =================================================
-def check_and_prepare_hist_data(op, config, datasource):
-    """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
-
-    Parameters
-    ----------
-    op: Operator，
-        需要设置数据的Operator对象
-    config: ConfigDict
-        用于设置Operator对象的环境参数变量
-    datasource: DataSource
-        用于下载数据的DataSource对象
-
-    Returns
-    -------
-    hist_op: HistoryPanel,
-        用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
-    hist_ref: HistoryPanel,
-        用于回测模式下投资策略生成的历史参考数据
-    back_trade_prices: HistoryPanel,
-        用于回测模式投资策略回测的交易价格数据
-    hist_opti: HistoryPanel,
-        用于优化模式下生成投资策略的历史数据，包含股票的历史数，时间上涵盖优化与测试区间
-    hist_opti_ref: HistoryPanel,
-        用于优化模式下生成投资策略的参考数据，包含所有股票、涵盖优化与测试区间
-    opti_trade_prices: pd.DataFrame,
-        用于策略优化模式下投资策略优化结果的回测，作为独立检验数据
-    hist_benchmark: pd.DataFrame,
-        用于评价回测结果的同期基准收益曲线，一般为股票指数如HS300指数同期收益曲线
-    invest_cash_plan: CashPlan,
-        用于回测模式的资金投入计划
-    opti_cash_plan: CashPlan,
-        用于优化模式下，策略优化区间的资金投入计划
-    test_cash_plan: CashPlan,
-        用于优化模式下，策略测试区间的资金投入计划
-    """
-    run_mode = config['mode']
-
-    current_datetime = datetime.datetime.now()
-    # 根据不同的运行模式，设定不同的运行历史数据起止日期
-    # ...
-    # 按照同样的逻辑设置优化区间和测试区间的起止日期
-
-    # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = op.max_window_length
-    window_offset_freq = op.op_data_freq
-    if isinstance(window_offset_freq, list):
-        raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
-                                  f'multiple data frequency in one operator is currently not supported')
-    if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
-        from qteasy.utilfuncs import parse_freq_string
-        duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
-        window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
-        window_offset_freq = base_unit
-    window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
-
-    # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=op.all_strategy_data_types,
-            freqs=op.op_data_freq,
-            asset_types=config['asset_type'],
-            adj=config['backtest_price_adj'],
-            force_match_freq=True,
-    )
-    hist_opti = get_history_panel(
-            data_types=data_types,
-            shares=config['asset_pool'],
-            start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
-            end=opti_test_end,
-            freq=op.op_data_freq,
-            data_source=datasource,
-    ) if run_mode == 2 else HistoryPanel()
-
-    opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
-    opti_trade_prices.fillinf(0)
-
-    # 生成参考历史数据，作为参考用于回测结果的评价
-    # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
-    all_starts = [pd.to_datetime(date_str) for date_str in [invest_start, opti_start, test_start]]
-    all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
-    benchmark_start = regulate_date_format(min(all_starts))
-    benchmark_end = regulate_date_format(max(all_ends))
-
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=config['benchmark_dtype'],
-            freqs=op.op_data_freq,
-            asset_types=config['benchmark_asset_type'],
-            adj=config['backtest_price_adj'],
-            force_match_freq=True,
-    )
-    hist_benchmark = get_history_panel(
-            data_types=data_types,
-            shares=config['benchmark_asset'],
-            start=benchmark_start,
-            end=benchmark_end,
-            freq=op.op_data_freq,
-            data_source=datasource,
-    ).slice_to_dataframe(htype=config['benchmark_dtype'])
-
-    return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
-        invest_cash_plan, opti_cash_plan, test_cash_plan
+# def check_and_prepare_hist_data(op, config, datasource):
+#     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
+#
+#     Parameters
+#     ----------
+#     op: Operator，
+#         需要设置数据的Operator对象
+#     config: ConfigDict
+#         用于设置Operator对象的环境参数变量
+#     datasource: DataSource
+#         用于下载数据的DataSource对象
+#
+#     Returns
+#     -------
+#     hist_op: HistoryPanel,
+#         用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
+#     hist_ref: HistoryPanel,
+#         用于回测模式下投资策略生成的历史参考数据
+#     back_trade_prices: HistoryPanel,
+#         用于回测模式投资策略回测的交易价格数据
+#     hist_opti: HistoryPanel,
+#         用于优化模式下生成投资策略的历史数据，包含股票的历史数，时间上涵盖优化与测试区间
+#     hist_opti_ref: HistoryPanel,
+#         用于优化模式下生成投资策略的参考数据，包含所有股票、涵盖优化与测试区间
+#     opti_trade_prices: pd.DataFrame,
+#         用于策略优化模式下投资策略优化结果的回测，作为独立检验数据
+#     hist_benchmark: pd.DataFrame,
+#         用于评价回测结果的同期基准收益曲线，一般为股票指数如HS300指数同期收益曲线
+#     invest_cash_plan: CashPlan,
+#         用于回测模式的资金投入计划
+#     opti_cash_plan: CashPlan,
+#         用于优化模式下，策略优化区间的资金投入计划
+#     test_cash_plan: CashPlan,
+#         用于优化模式下，策略测试区间的资金投入计划
+#     """
+#     run_mode = config['mode']
+#
+#     current_datetime = datetime.datetime.now()
+#     # 根据不同的运行模式，设定不同的运行历史数据起止日期
+#     # ...
+#     # 按照同样的逻辑设置优化区间和测试区间的起止日期
+#
+#     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
+#     window_length = op.max_window_length
+#     window_offset_freq = op.op_data_freq
+#     if isinstance(window_offset_freq, list):
+#         raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
+#                                   f'multiple data frequency in one operator is currently not supported')
+#     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
+#         from qteasy.utilfuncs import parse_freq_string
+#         duration, base_unit, _ = parse_freq_string(window_offset_freq, std_freq_only=True)
+#         window_length *= duration * 10  # 临时处理措施，由于交易时段不连续，仅仅前推一个周期可能会导致数据不足
+#         window_offset_freq = base_unit
+#     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
+#
+#     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
+#     # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
+#     #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
+#     #  而取消实时创建DataType对象
+#     data_types = infer_data_types(
+#             names=op.all_strategy_data_types,
+#             freqs=op.op_data_freq,
+#             asset_types=config['asset_type'],
+#             adj=config['backtest_price_adj'],
+#             force_match_freq=True,
+#     )
+#     hist_opti = get_history_panel(
+#             data_types=data_types,
+#             shares=config['asset_pool'],
+#             start=regulate_date_format(pd.to_datetime(opti_test_start) - window_offset),
+#             end=opti_test_end,
+#             freq=op.op_data_freq,
+#             data_source=datasource,
+#     ) if run_mode == 2 else HistoryPanel()
+#
+#     opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
+#     opti_trade_prices.fillinf(0)
+#
+#     # 生成参考历史数据，作为参考用于回测结果的评价
+#     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
+#     all_starts = [pd.to_datetime(date_str) for date_str in [invest_start, opti_start, test_start]]
+#     all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
+#     benchmark_start = regulate_date_format(min(all_starts))
+#     benchmark_end = regulate_date_format(max(all_ends))
+#
+#     data_types = infer_data_types(
+#             names=config['benchmark_dtype'],
+#             freqs=op.op_data_freq,
+#             asset_types=config['benchmark_asset_type'],
+#             adj=config['backtest_price_adj'],
+#             force_match_freq=True,
+#     )
+#     hist_benchmark = get_history_panel(
+#             data_types=data_types,
+#             shares=config['benchmark_asset'],
+#             start=benchmark_start,
+#             end=benchmark_end,
+#             freq=op.op_data_freq,
+#             data_source=datasource,
+#     ).slice_to_dataframe(htype=config['benchmark_dtype'])
+#
+#     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
+#         invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=None):
@@ -1678,46 +1674,47 @@ def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=N
     return hist_op, hist_ref
 
 
-def get_backtest_data_package(op: Operator,
-                              start: str,
-                              end: str,
-                              shares: list[str],
-                              datasource: DataSource) -> dict:
-    """ 在run_mode == 1的回测模式情况下生成operator对象的交易策略运行计划，
-    从数据源中获取相应的历史数据、准备operator的数据滑窗，并获取交易价格
+def check_and_prepare_backtest_data(op: Operator,
+                                    backtest_start: str,
+                                    backtest_end: str,
+                                    shares: Union[str, list[str]],
+                                    datasource: DataSource) -> dict[str, pd.DataFrame]:
+    """ 在run_mode == 1的回测模式情况下生成operator对象运行所需要的相关数据包，包括下面几部份：
+
+    1，回测所有交易策略所需的历史数据，遍历Operator对象中的所有交易策略，获取所有交易策略所需要的所有历史数据
+    2，回测所需的交易价格数据，根据Operator对象的运行计划，获取所有的股票在运行时间点上的历史价格，作为回测的交易价格
+    3，回测所需的业绩评价基准，根据config参数中的基准资产类型，获取该资产在运行时间点上的历史价格，作为回测结果的业绩评价基准
+
+    这个函数的重点在于根据Operator对象中的交易时间表和交易策略，推算出回测所需的的历史数据类型和时间区间，然后调用数
+    据源对象获取相应的数据，最后将这些数据打包返回。在获取交易策略历史数据时，需要获取关于所有交易数据类型的原始数据，
+    而获取交易价格和业绩评价基准时，则需要获取指定价格频率的数据，以便完全匹配回测的时间点。
 
     Parameters
     ----------
     op: qteasy.Operator
         交易员对象，包含投资策略信息
-    start: str
+    backtest_start: str
         回测开始日期，格式为 'YYYYMMDD'
-    end: str
+    backtest_end: str
         回测结束日期，格式为 'YYYYMMDD'
-    shares: list
+    shares: list of str
         回测资产池中的股票列表
     datasource: qteasy.DataSource
         数据源对象
 
     Returns
     -------
-    tuple: hist_data_package, trade_prices, benchmark_data, invest_cash_plan
-        hist_data_package: dict
-            包含回测所需的历史数据和资金计划的字典
-        trade_prices: pd.DataFrame
-            包含用于回测的交易价格数据
-        benchmark_data: pd.DataFrame
-            包含用于回测结果评价的基准数据
-        invest_cash_plan: qteasy.CashPlan
-            用于回测的资金投入计划
+    hist_data_package: dict{str, pd.DataFrame}
+        包含回测所需的历史数据和资金计划的字典，键为股票代码，值为对应的历史数据DataFrame
     """
 
-    # 投资回测区间的开始日期及结束日期
-    invest_start, invest_end = start, end
+    # 根据投资回测区间的开始日期及结束日期，确定需要获取的历史数据的起止日期（因为获取的数据必须覆盖交易策略的最大窗口长度）
+    invest_start, invest_end = backtest_start, backtest_end
 
-    # 此时策略中定义的datatype的asset_type可能与config中的asset_type不一致，此时需要扩展
+    # 获取回测所需历史数据的参数
     data_types = op.all_strategy_data_types
 
+    # 通过get_history_data_package函数获取数据类型的原始数据，所有数据的频率都不进行调整
     hist_data_package = get_history_data_packages(
             data_types=data_types,
             shares=shares,
@@ -1727,6 +1724,94 @@ def get_backtest_data_package(op: Operator,
     )
 
     return hist_data_package
+
+
+def check_and_prepare_trade_prices(op: Operator,
+                                   start: str,
+                                   end: str,
+                                   shares: Union[str, list[str]],
+                                   datasource: DataSource) -> pd.DataFrame:
+    """ 获取指定时间区间内的交易价格数据
+    Parameters
+    ----------
+    op: qteasy.Operator
+        交易员对象，包含投资策略信息
+    start: str
+        交易价格数据的开始日期，格式为 'YYYYMMDD'
+    end: str
+        交易价格数据的结束日期，格式为 'YYYYMMDD'
+    shares: list of str
+        资产池中的股票列表
+    datasource: qteasy.DataSource
+        数据源对象
+    Returns
+    -------
+    trade_prices: pd.DataFrame
+        包含用于回测的交易价格数据
+    """
+
+    # 获取交易价格和基准数据时，需要调用get_history_panel函数，强制获取指定频率的数据
+
+    # 生成回测交易价格的数据参数, 交易价格类型为'close|b'(股票/指数)'cumm_nav'(基金)，且价格应该是后复权价格
+    price_start, price_end = start, end
+    trade_price_freq = op.group_schedules.freq
+    data_types = infer_data_types('close', freqs=trade_price_freq, asset_types='ANY', adj='back')
+    trade_prices = get_history_panel(
+            data_types=data_types,
+            shares=shares,
+            freq=trade_price_freq,
+            start=price_start,
+            end=price_end,
+            data_source=datasource,
+            resample_method='ffill',
+            return_history_panel=False,
+    )
+    trade_prices = trade_prices['close:b']
+
+    return trade_prices
+
+
+def check_and_prepare_benchmark_data(op: Operator,
+                                        start: str,
+                                        end: str,
+                                        benchmark: str,
+                                        datasource: DataSource) -> pd.DataFrame:
+    """ 获取指定时间区间内的回测业绩评价基准数据
+    Parameters
+    ----------
+    op: qteasy.Operator
+        交易员对象，包含投资策略信息
+    start: str
+        业绩评价基准数据的开始日期，格式为 'YYYYMMDD'
+    end: str
+        业绩评价基准数据的结束日期，格式为 'YYYYMMDD'
+    benchmark: str
+        业绩评价基准资产代码
+    datasource: qteasy.DataSource
+        数据源对象
+
+    Returns
+    -------
+    benchmark_data: pd.DataFrame
+        包含用于回测结果评价的基准数据
+    """
+    # 生成回测业绩评价基准的数据参数, 基准价格类型为'close|b'(股票/指数)'cumm_nav'(基金)，且价格应该是后复权价格
+    benchmark_start, benchmark_end = start, end
+    benchmark_freq = op.group_schedules.freq
+    data_types = infer_data_types('close', freqs=benchmark_freq, asset_types='ANY', adj='back')
+    benchmark_data = get_history_panel(
+            data_types=data_types,
+            shares=[benchmark],
+            freq=benchmark_freq,
+            start=benchmark_start,
+            end=benchmark_end,
+            data_source=datasource,
+            resample_method='ffill',
+            return_history_panel=False,
+    )
+    benchmark_data = benchmark_data['close:b']
+
+    return benchmark_data
 
 
 def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
@@ -2048,9 +2133,6 @@ def run_mode_0():
 def run_mode_1(op, config):
     """ run qteasy in mode 1: back test mode"""
 
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    op.is_ready(raise_error=True)
-
     from qteasy.config_parser import (
         parse_cash_invest_and_delivery_arrays,
         parse_trade_cost_params,
@@ -2059,44 +2141,11 @@ def run_mode_1(op, config):
         parse_trading_delivery_params,
         parse_backtest_cash_plan,
         parse_backtest_start_end_dates,
-        parse_backtest_data_package,
     )
-
-    start_date, end_date = parse_backtest_start_end_dates(config=config)
-    data_package = get_backtest_data_package(
-            op=op,
-            start=start_date,
-            end=end_date,
-            shares=config['asset_pool'],
-            datasource=qteasy.QT_DATA_SOURCE,
-    )
-
-    # 在生成交易信号之前准备运行计划及历史数据
-    op.prepare_running_schedule(
-            start_date=start_date,
-            end_date=end_date,
-    )
-    op.prepare_data_buffer(
-            start_date=start_date,
-            end_date=end_date,
-            data_package=data_package,
-    )
-    op.create_data_windows()
-
-    # 准备交易价格清单和业绩基准数据（用于执行交易计划）
-    trade_prices = op.get_trade_price_list(
-            start_date=start_date,
-            end_date=end_date,
-    )  # TODO: to be realized
-
-    hist_benchmark = get_backtest_benchmark_data(
-            benchmark_asset=benchmark_data_type,
-            start=start_date,
-            end=end_date,
-            data_source=qteasy.QT_DATA_SOURCE,
-    )  # TODO: to be realized
 
     # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
+    start_date, end_date = parse_backtest_start_end_dates(config=config)  # 回测开始和结束日期
+    # 现金投入和交割数据表
     (cash_investment_array,
      cash_inflation_array,
      delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
@@ -2105,6 +2154,45 @@ def run_mode_1(op, config):
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
+
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+    op.is_ready(raise_error=True)
+
+    # 在生成交易信号之前准备运行计划及历史数据 TODO: why? the operator should be ready already
+    op.prepare_running_schedule(
+            start_date=start_date,
+            end_date=end_date,
+    )
+    data_package = check_and_prepare_backtest_data(
+            op=op,
+            backtest_start=start_date,
+            backtest_end=end_date,
+            shares=config['asset_pool'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    trade_prices = check_and_prepare_trade_prices(
+            op=op,
+            start=start_date,
+            end=end_date,
+            shares=config['asset_pool'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    hist_benchmark = check_and_prepare_benchmark_data(
+            op=op,
+            start=start_date,
+            end=end_date,
+            benchmark=config['benchmark_asset'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    op.prepare_data_buffer(
+            start_date=start_date,
+            end_date=end_date,
+            data_package=data_package,
+    )
+    op.create_data_windows()
 
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     backtested = op.backtest(
