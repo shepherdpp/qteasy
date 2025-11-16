@@ -71,23 +71,6 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
         return invest_cash_plan
 
 
-def parse_backtest_data_package(config, dtypes) -> dict:
-    """获取回测所需的数据包，数据类型由dtypes参数给出"""
-
-    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
-    data_source = config.get('data_source', QT_DATA_SOURCE)
-    # get data_package with another function in history module
-    data_package = get_history_data_packages(
-            data_types=dtypes,
-            shares=config['asset_pool'],
-            start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
-            end=invest_end,
-            data_source=data_source,
-    )
-
-    return data_package
-
-
 def parse_trade_cost_params(config) -> dict:
     """解析交易成本相关的配置参数:
         buy_rate: float, 交易成本：固定买入费率
