@@ -779,7 +779,7 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304" == '
                           '["20100104", "20100202", "20100304"]'},
 
-        'opti_type':
+        'opti_type':      # TODO: deprecate, 取消multiple选项，改为只支持single
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
              'level':     3,
@@ -789,13 +789,13 @@ def _valid_qt_kwargs():
                           '"multiple" - 在每一回合的优化测试中，将优化区间的数据划分为多个子区间，在这些子\n'
                           '             区间上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'},
 
-        'opti_sub_periods':
+        'opti_sub_periods':  # TODO: deprecate, 取消multiple选项，改为只支持single
             {'Default':   5,
              'Validator': lambda value: isinstance(value, int) and value >= 1,
              'level':     3,
              'text':      '仅对无监督优化有效。且仅当优化类型为"multiple"时有效。将优化区间切分为子区间的数量'},
 
-        'opti_sub_prd_length':
+        'opti_sub_prd_length':  # TODO: deprecate, 取消multiple选项，改为只支持single
             {'Default':   0.6,
              'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
              'level':     3,
@@ -844,7 +844,7 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304"'
                           '["20100104", "20100202", "20100304"]'},
 
-        'test_type':
+        'test_type':      # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and
                                         value in ['single', 'multiple', 'montecarlo'],
@@ -886,13 +886,13 @@ def _valid_qt_kwargs():
                           '3  - violin 类型\n'
                           '4  - box 类型'},
 
-        'test_sub_periods':
+        'test_sub_periods':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
             {'Default':   3,
              'Validator': lambda value: isinstance(value, int) and value >= 1,
              'level':     3,
              'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量，输入值为大于等于1的整数'},
 
-        'test_sub_prd_length':
+        'test_sub_prd_length':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
             {'Default':   0.75,
              'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
              'level':     3,

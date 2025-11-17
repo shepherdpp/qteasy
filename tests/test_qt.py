@@ -6,7 +6,7 @@
 # Created:  2020-02-12
 # Desc:
 #   Unittest for general functions of
-#   qteasy.
+# qteasy.
 # ======================================
 import unittest
 import sys
