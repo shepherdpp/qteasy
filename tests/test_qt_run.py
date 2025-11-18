@@ -35,9 +35,14 @@ class TestStrategy(BaseStrategy):
     """用于测试的简单策略类"""
 
     def __init__(self):
-        super().__init__()
-        self.data_types = ['close']
-        self.window_length = 10
+        super().__init__(
+                name='test_strategy',
+                description='A simple test strategy',
+                data_types=[DataType('close', freq='d'), DataType('volume', freq='d')],
+                window_length=5,
+                run_timing='close',
+                run_freq='d',
+        )
 
 
 class TestCheckAndPrepareBacktestData(unittest.TestCase):
@@ -54,17 +59,51 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         # 创建测试数据源
         self.datasource = DataSource(
                 source_type='file',
-                file_path=self.test_db_path,
-                file_type='csv'
+                file_loc=self.test_db_path
         )
 
         # 创建测试策略和Operator
         self.test_strategy = TestStrategy()
         self.operator = Operator(strategies=[self.test_strategy])
 
+        # 向data_source中填充测试数据，测试数据随机生成，包括股票日线价格数据（stock_daily）以及复权因子数据（stock_adj_factor)
+        # 数据从20200101到20201231，共365天，包含两只股票：000001.SZ和000002.SZ
+        stock_daily_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(365, 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_daily_df_000001['ts_code'] = '000001.SZ'
+        stock_daily_df_000002 = pd.DataFrame(
+                np.random.randint(20, 200, size=(365, 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_daily_df_000002['ts_code'] = '000002.SZ'
+        stock_daily_df = pd.concat([stock_daily_df_000001, stock_daily_df_000002])
+
+        stock_adj_factor_000001 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                columns=['adj_factor'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_adj_factor_000001['ts_code'] = '000001.SZ'
+        stock_adj_factor_000002 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                columns=['adj_factor'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_adj_factor_000002['ts_code'] = '000002.SZ'
+        stock_adj_factor = pd.concat([stock_adj_factor_000001, stock_adj_factor_000002])
+
+        self.datasource.update_table_data('stock_daily',
+                                          df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('stock_adj_factor',
+                                            df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
+
         # 测试日期
-        self.backtest_start = '20200101'
-        self.backtest_end = '20201231'
+        self.backtest_start = '20200201'
+        self.backtest_end = '20200301'
         self.shares_list = ['000001.SZ', '000002.SZ']
         self.single_share = '000001.SZ'
 
@@ -191,6 +230,9 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                 shares=self.shares_list,
                 datasource=self.datasource
         )
+        print(f'Result keys: {list(result.keys())}')
+        print(f'Result for 000001.SZ:\n{result["close_E_d"].head()}')
+        print(f'Result for 000002.SZ:\n{result["volume_E_d"].head()}')
 
         # 验证结果包含足够早的数据
         for share in self.shares_list:
@@ -281,13 +323,47 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         # 创建测试数据源
         self.datasource = DataSource(
                 source_type='file',
-                file_path=self.db_path,
-                file_type='csv'
+                file_loc=self.db_path,
         )
 
         # 创建测试策略和Operator
-        self.test_strategy = SimpleStrategy()
+        self.test_strategy = TestStrategy()
         self.operator = Operator(strategies=[self.test_strategy])
+
+        # 向data_source中填充测试数据，测试数据随机生成，包括股票日线价格数据（stock_daily）以及复权因子数据（stock_adj_factor)
+        # 数据从20200101到20201231，共365天，包含两只股票：000001.SZ和000002.SZ
+        stock_daily_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(365, 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_daily_df_000001['ts_code'] = '000001.SZ'
+        stock_daily_df_000002 = pd.DataFrame(
+                np.random.randint(20, 200, size=(365, 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_daily_df_000002['ts_code'] = '000002.SZ'
+        stock_daily_df = pd.concat([stock_daily_df_000001, stock_daily_df_000002])
+
+        stock_adj_factor_000001 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                columns=['adj_factor'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_adj_factor_000001['ts_code'] = '000001.SZ'
+        stock_adj_factor_000002 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                columns=['adj_factor'],
+                index=pd.date_range('20200101', periods=365, freq='D'),
+        )
+        stock_adj_factor_000002['ts_code'] = '000002.SZ'
+        stock_adj_factor = pd.concat([stock_adj_factor_000001, stock_adj_factor_000002])
+
+        self.datasource.update_table_data('stock_daily',
+                                          df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('stock_adj_factor',
+                                            df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
 
         # 测试日期
         self.start_date = '20200101'

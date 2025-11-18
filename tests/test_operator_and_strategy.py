@@ -999,10 +999,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
     def test_repr(self):
         """ test basic representation of Opeartor class"""
         op = qt.Operator()
-        self.assertEqual(op.__repr__(), 'Operator([], \'batch\')')
+        self.assertEqual(op.__repr__(), 'Operator([], name=\'None\')')
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
-        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'batch\')')
+        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], name=\'None\')')
         self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA, (12, 26, 9))')
         self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD, (12, 26, 9))')
         self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX, (12, 12))')

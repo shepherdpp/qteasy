@@ -16,7 +16,6 @@ import numpy as np
 from qteasy import QT_DATA_SOURCE
 from qteasy.config_parser import (
     parse_backtest_start_end_dates,
-    parse_backtest_data_package,
     parse_backtest_cash_plan,
     parse_trade_cost_params,
     parse_cash_invest_and_delivery_arrays,
