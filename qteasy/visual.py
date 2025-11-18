@@ -6,7 +6,7 @@
 # Created:  2020-08-23
 # Desc:
 #   Functions for visual output and
-#   effects.
+# effects.
 # ======================================
 
 import platform
