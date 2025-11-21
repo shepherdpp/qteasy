@@ -19,7 +19,7 @@ import tempfile
 from typing import List, Dict
 
 from qteasy.qt_operator import Operator
-from qteasy.strategy import BaseStrategy
+from qteasy.strategy import GeneralStg
 from qteasy.database import DataSource
 from qteasy.history import HistoryPanel
 from qteasy.datatypes import DataType
@@ -31,16 +31,47 @@ from qteasy.core import (
 )
 
 
-class TestStrategy(BaseStrategy):
+class TestStrategy(GeneralStg):
     """用于测试的简单策略类"""
 
     def __init__(self):
         super().__init__(
                 name='test_strategy',
                 description='A simple test strategy',
-                data_types=[DataType('close', freq='d'), DataType('volume', freq='d')],
-                window_length=5,
+                data_types=[DataType('close', freq='d'),
+                            DataType('volume', freq='d')],
+                window_length=[5, 8],
                 run_timing='close',
+                run_freq='d',
+        )
+
+
+class DummyStrategy(GeneralStg):
+    """用于测试的虚拟策略类"""
+
+    def __init__(self):
+        super().__init__(
+                name='dummy_strategy',
+                description='A dummy strategy for testing',
+                data_types=[DataType('close', freq='d', asset_type='E'),
+                            DataType('high', freq='d', asset_type='E')],
+                window_length=[10, 9],
+                run_freq='d',
+                run_timing='close',
+        )
+
+
+class SimpleStrategy(GeneralStg):
+    """用于测试的虚拟策略类"""
+
+    def __init__(self):
+        super().__init__(
+                name='dummy_strategy',
+                description='A dummy strategy for testing',
+                data_types=[DataType('open', freq='d', asset_type='E'),
+                            DataType('high', freq='d', asset_type='E'),
+                            DataType('low', freq='d', asset_type='E')],
+                window_length=10,
                 run_freq='d',
         )
 
@@ -99,7 +130,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         self.datasource.update_table_data('stock_daily',
                                           df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('stock_adj_factor',
-                                            df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
 
         # 测试日期
         self.backtest_start = '20200201'
@@ -123,40 +154,6 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             'list_date': ['19910403', '19910129'],
             'exchange':  ['SZSE', 'SZSE']
         })
-
-        # 创建交易日历数据
-        dates = pd.date_range('20191001', '20210101', freq='D')
-        # 过滤掉周末（简化处理，实际交易日历需要更精确）
-        trade_dates = dates[dates.weekday < 5]
-        trade_calendar_data = pd.DataFrame({
-            'date':    trade_dates.strftime('%Y%m%d'),
-            'is_open': 1
-        })
-
-        # 创建股票日线数据
-        date_range = pd.date_range('20191001', '20201231', freq='D')
-        # 过滤掉周末
-        trade_days = date_range[date_range.weekday < 5]
-
-        # 为每只股票创建价格数据
-        for stock in self.shares_list:
-            stock_data = pd.DataFrame({
-                'ts_code':    stock,
-                'trade_date': trade_days.strftime('%Y%m%d'),
-                'open':       np.random.uniform(10, 20, len(trade_days)),
-                'high':       np.random.uniform(10, 20, len(trade_days)) + 1,
-                'low':        np.random.uniform(10, 20, len(trade_days)) - 1,
-                'close':      np.random.uniform(10, 20, len(trade_days)),
-                'vol':        np.random.uniform(100000, 1000000, len(trade_days))
-            })
-
-            # 保存数据到数据源
-            table_name = f'{stock.replace(".", "_")}_daily'
-            stock_data.to_csv(f'{self.test_db_path}/{table_name}.csv', index=False)
-
-        # 保存基础数据
-        stock_basic_data.to_csv(f'{self.test_db_path}/stock_basic.csv', index=False)
-        trade_calendar_data.to_csv(f'{self.test_db_path}/trade_calendar.csv', index=False)
 
     def tearDown(self):
         """测试后的清理工作"""
@@ -231,14 +228,14 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                 datasource=self.datasource
         )
         print(f'Result keys: {list(result.keys())}')
-        print(f'Result for 000001.SZ:\n{result["close_E_d"].head()}')
-        print(f'Result for 000002.SZ:\n{result["volume_E_d"].head()}')
+        print(f'Result for "close_E_d":\n{result["close_E_d"].head()}')
+        print(f'Result for "volume_E_d":\n{result["volume_E_d"].head()}')
 
         # 验证结果包含足够早的数据
-        for share in self.shares_list:
-            if not result[share].empty:
+        for dtype in self.operator.op_data_types:
+            if not result[dtype.dtype_id].empty:
                 # 检查数据是否包含回测开始日期之前的数据
-                earliest_date = result[share].index.min()
+                earliest_date = result[dtype.dtype_id].index.min()
                 start_date = pd.to_datetime(self.backtest_start)
                 # 应该包含至少60天前的数据
                 self.assertLessEqual(earliest_date, start_date - pd.Timedelta(days=30))
@@ -363,7 +360,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.datasource.update_table_data('stock_daily',
                                           df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('stock_adj_factor',
-                                            df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
 
         # 测试日期
         self.start_date = '20200101'
@@ -626,18 +623,6 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(share, result.columns)
             self.assertFalse(result[share].empty)
-
-
-class DummyStrategy(BaseStrategy):
-    """用于测试的虚拟策略类"""
-
-    def __init__(self):
-        super().__init__()
-        self.name = 'dummy_strategy'
-        self.description = 'A dummy strategy for testing'
-        self.data_types = ['close']
-        self.window_length = 10
-        self.run_freq = 'd'
 
 
 class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
