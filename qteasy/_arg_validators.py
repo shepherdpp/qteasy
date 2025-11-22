@@ -624,16 +624,17 @@ def _valid_qt_kwargs():
         'backtest_price_adj':
             {'Default':   'none',
              'Validator': lambda value: isinstance(value, str)
-                                        and value.lower() in ['none', 'n', 'back', 'b', 'adj'],
+                                        and value.lower() in ['none', 'n', 'back', 'b',
+                                                              'forward', 'f', 'accu', 'adj'],
              'level':     4,
              'text':      '回测时的复权价格处理方法：\n'
                           '股票分红除权的处理，正常来说，应该在股票分红除权时计算分红和派息对持仓\n'
                           '数量和现金的影响，但是目前这种处理方法比较复杂，暂时先采用比较简单的方\n'
                           '法，即直接采用复权价格进行回测，取值范围如下：'
-                          '- none/n - 默认值，不使用复权价格，但也不处理派息，这只是临时处理，因\n'
-                          '           为长期回测不考虑除权派息将会导致回测结果与实际相差巨大\n'
-                          '- back/b - 使用后复权价格回测，可以弥补不考虑分红派股的不足\n'
-                          '- adj    - 使用前复权价格回测。'},
+                          '- none/n         - 默认值，不使用复权价格，但也不处理派息，\n'
+                          '                 长期回测不考虑除权派息将会导致回测结果与实际相差巨大；\n'
+                          '- back/b/adj     - 对于股票，使用后复权价格回测，对于基金，使用复权净值回测；\n'
+                          '- forward/f/accu - 对于股票，使用前复权价格回测，对于基金，使用复权净值回测'},
 
         'maximize_cash_usage':
             {'Default':   True,
