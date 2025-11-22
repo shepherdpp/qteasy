@@ -14,7 +14,7 @@
 import numpy as np
 import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Optional
 from warnings import warn
 from math import ceil
 
@@ -564,8 +564,43 @@ class DataType:
         return self._default_asset_type
 
     @property
+    def available_time(self) -> Optional[str]:
+        """ 数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间"""
+
+        # 高频数据没有可用时间
+        if self.freq not in ['d', 'w', 'm', 'q', 'y']:
+            return None
+        # 股票的开盘价在9:30可用
+        if self.asset_type == 'E':
+            if 'open' in self.name:
+                return '9:30:00'
+            # 其他日线数据在15:00可用
+            else:
+                return '15:00:00'
+        # 指数的开盘价在9:25可用
+        if self.asset_type == 'IDX':
+            if 'open' in self.name:
+                return '9:25:00'
+            # 其他日线数据在15:00可用
+            else:
+                return '15:00:00'
+        # 'nav'类型的基金数据在18:00可用
+        if self.asset_type == 'FD':
+            if 'nav' in self.name:
+                return '18:00:00'
+            else:
+                return '15:00:00'
+
+        return '15:00:00'
+
+    @property
     def unsymbolizer(self):
         return self._unsymbolizer
+
+    @property
+    def unsymbolized(self):
+        """ return True if this data type is unsymbolized data type (i.e. reference data type) """
+        return self._unsymbolizer is not None
 
     @property
     def available_freqs(self):
@@ -4351,16 +4386,14 @@ def get_reference_data_from_source(
         # 从数据源获取数据
         ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end)
 
-        ser.name = htype.name
+        ser.name = htype.dtype_id
 
-        already_ser = reference_data_acquired.get(htype.name)
+        already_ser = reference_data_acquired.get(htype.dtype_id)
         if already_ser is None:
-            reference_data_acquired[htype.name] = ser
+            reference_data_acquired[htype.dtype_id] = ser
         else:  # 如果尚未找到有意义的数据，则将新的数据赋值给reference_data_acquired
             if already_ser.empty:
-                reference_data_acquired[htype.name] = ser
-
-        # reference_data_to_be_refreqed[htype.name] = True if htype.freq != freq else False
+                reference_data_acquired[htype.dtype_id] = ser
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(ser.empty for ser in reference_data_acquired.values()):
