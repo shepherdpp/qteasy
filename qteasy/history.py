@@ -2430,7 +2430,16 @@ def get_history_data_packages(
         rows=None,
 ) -> dict[str, pd.DataFrame]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并返回一个
-    data_package（包含不同数据类型的区间数据），并可用于Operator对象创建历史数据缓存。
+    data_package（包含不同数据类型的区间数据），返回的数据类型为dict，包含每一个data_type
+    的历史数据，其columns包括所有的shares。其index为start到end之间的DatatimeIndex，同时
+    根据历史数据的类型，数据将被赋予正确的TimeOffset。
+
+    关于TimeOffset：当数据源中的数据频率低于等于日频时，其index标签都仅包含日期，当转换为包含
+    时间的index时，时间部分会被置为00:00:00，如20200101会被置为2020-01-01 00:00:00，这与
+    事实不符，因为2020-01-01的数据不会在当天0点就可用，因此需要手动设置一个Offset以确定该数据
+    的真正可用时间，如收盘价、最高价、最低价在每天的15:00可用，开盘价在每天9:30可用。因此如果读
+    取close_E_d的数据，其DatetimeIndex的时间部分应该为 "2020-01-01 15:00:00"，而
+    open_E_d的数据的DatetimeIndex应该为"2020-01-01 09:30:00"
 
     Parameters
     ----------
@@ -2448,7 +2457,7 @@ def get_history_data_packages(
     end: str
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间
     rows: int, optional
-        获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
+        获取的历史数据的行数
         如果rows为正整数，则获取最近的rows行历史数据，如果给出了start或end参数，则忽略rows参数
 
     Returns
@@ -2468,24 +2477,44 @@ def get_history_data_packages(
     if not all([isinstance(dt, DataType) for dt in data_types]):
         raise TypeError(f'all elements of data_types should be DataType, got {data_types} instead.')
 
-    if shares:
-        all_dfs = get_history_data_from_source(
+    if isinstance(shares, str):
+        shares = str_to_list(shares, sep_char=',')
+    if len(shares) == 0:
+        raise ValueError('shares can not be an empty list.')
+
+    symbolized_dtypes = [dt for dt in data_types if not dt.unsymbolized]
+    unsymbolized_dtypes = [dt for dt in data_types if dt.unsymbolized]
+
+    all_dfs = {}
+    # 获取针对shares的symbolized数据
+    if len(symbolized_dtypes) > 0:
+        all_dfs.update(get_history_data_from_source(
                 datasource=data_source,
-                htypes=data_types,
+                htypes=symbolized_dtypes,
                 qt_codes=list_to_str_format(shares),
                 start=start,
                 end=end,
                 row_count=rows,
-        )
-    else:
+        ))
+    # 获取无share的参考数据
+    if len(unsymbolized_dtypes) > 0:
         # 获取无share数据
-        all_dfs = get_reference_data_from_source(
+        all_dfs.update(get_reference_data_from_source(
                 datasource=data_source,
-                htypes=data_types,
+                htypes=unsymbolized_dtypes,
                 start=start,
                 end=end,
                 row_count=rows,
-        )
+        ))
+
+    # 根据数据类型设置数据日期时间的Offset值
+    for dt in data_types:
+        time_availability_offset = dt.available_time
+        if time_availability_offset is not None:
+            df = all_dfs[dt.dtype_id]
+            df.index = df.index + pd.Timedelta(time_availability_offset)
+            all_dfs[dt.dtype_id] = df
+
     return all_dfs
 
 
