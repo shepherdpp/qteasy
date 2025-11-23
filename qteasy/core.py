@@ -1607,11 +1607,15 @@ def check_and_prepare_backtest_data(op: Operator,
     # 获取回测所需历史数据的参数
     data_types = op.all_strategy_data_types
 
-    # 通过get_history_data_package函数获取数据类型的原始数据，所有数据的频率都不进行调整
+    # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
+    max_window_length = op.max_window_length
+    time_window_delta = pd.Timedelta(max_window_length * 3, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
+
+    # 通过get_history_data_package函数获取数据类型的原始数据
     hist_data_package = get_history_data_packages(
             data_types=data_types,
             shares=shares,
-            start=regulate_date_format(pd.to_datetime(invest_start) - pd.Timedelta(60, 'D')),
+            start=regulate_date_format(pd.to_datetime(invest_start) - time_window_delta),
             end=invest_end,
             data_source=datasource,
     )
@@ -1620,9 +1624,8 @@ def check_and_prepare_backtest_data(op: Operator,
 
 
 def check_and_prepare_trade_prices(op: Operator,
-                                   start: str,
-                                   end: str,
                                    shares: Union[str, list[str]],
+                                   price_adj: str,
                                    datasource: DataSource) -> pd.DataFrame:
     """ 获取指定时间区间内的交易价格数据。
 
@@ -1638,12 +1641,10 @@ def check_and_prepare_trade_prices(op: Operator,
     ----------
     op: qteasy.Operator
         交易员对象，包含投资策略信息
-    start: str
-        交易价格数据的开始日期，格式为 'YYYYMMDD'
-    end: str
-        交易价格数据的结束日期，格式为 'YYYYMMDD'
     shares: list of str
         资产池中的股票列表
+    price_adj: str
+        价格复权类型，'none' 表示不复权，'back' 表示后复权，'forward' 表示前复权，其余值将引发错误
     datasource: qteasy.DataSource
         数据源对象
     Returns
@@ -1651,26 +1652,74 @@ def check_and_prepare_trade_prices(op: Operator,
     trade_prices: pd.DataFrame
         包含用于回测的交易价格数据
     """
+    # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错
+    op_group_schedules = op.group_schedules  # 一个dict，每个group为key，一个DataFrame为value
 
-    # 获取交易价格和基准数据时，需要调用get_history_panel函数，强制获取指定频率的数据
+    all_run_freqs = [group.run_freq for group in op.groups.values()]
+    all_run_timings = [group.run_timing for group in op.groups.values()]
+    all_schedules = [sched.index for sched in op.group_schedules.values()]
+    price_start = min(sched[0] for sched in all_schedules).date()
+    price_end = max(sched[-1] for sched in all_schedules).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
 
-    # 生成回测交易价格的数据参数, 交易价格类型为'close|b'(股票/指数)'cumm_nav'(基金)，且价格应该是后复权价格
-    price_start, price_end = start, end
-    trade_price_freq = op.group_schedules.freq
-    data_types = infer_data_types('close', freqs=trade_price_freq, asset_types='ANY', adj='back')
-    trade_prices = get_history_panel(
-            data_types=data_types,
-            shares=shares,
-            freq=trade_price_freq,
-            start=price_start,
-            end=price_end,
-            data_source=datasource,
-            resample_method='ffill',
-            return_history_panel=False,
-    )
-    trade_prices = trade_prices['close:b']
+    trade_prices_per_group = {}
 
-    return trade_prices
+    for freq, timing, sched in zip(all_run_freqs, all_run_timings, all_schedules):
+        # 生成需要获取的数据的数据类型，以便使用get_history_panel函数获取数据
+        data_types = []
+        if any(symbol[-2:] in ['.OF'] for symbol in shares):  # 基金使用累计净值作为交易价格
+            price_data_type_name = 'accum_nav'
+        elif (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
+            price_data_type_name = 'open'
+        elif (timing == 'close') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的收盘价使用当日收盘价
+            price_data_type_name = 'close'
+        elif (timing not in ['open', 'close']) and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的其他时间点使用分钟线价格
+            price_data_type_name = timing
+        else:  # 其他情况使用当时的价格
+            price_data_type_name = 'close'
+
+        # 获取价格
+        data_types.extend(
+                infer_data_types(price_data_type_name, freqs=freq, asset_types='ANY', adj=price_adj)
+        )
+
+        # 生成回测交易价格的数据参数, 交易价格的复权类型根据price_adj参数确定
+        trade_prices = get_history_panel(
+                data_types=data_types,
+                data_source=datasource,
+                shares=shares,
+                freq=freq,
+                start=price_start,
+                end=price_end,
+                resample_method='ffill',
+                return_history_panel=False,
+        )
+        trade_prices = trade_prices[price_data_type_name]
+
+        # 调整日频及更低频率数据的时间点到对应的可用时间点上
+        if freq in ['d', 'w', 'm', 'q']:
+            # 从schedules中获取对应的时间可用偏移量
+            time_offset = sched[0] - pd.to_datetime(sched[0].date())
+            trade_prices.index = trade_prices.index + pd.Timedelta(time_offset)
+
+        trade_prices_per_group[freq] = trade_prices
+
+    # 当多个交易组存在时，合并各个交易组的交易价格数据，取并集
+    if len(trade_prices_per_group) > 1:
+        all_trade_price_indices = pd.Index([])
+        for sched in op_group_schedules.values():
+            all_trade_price_indices = all_trade_price_indices.union(sched.index)
+        all_trade_price_indices = all_trade_price_indices.sort_values()
+
+        combined_trade_prices = pd.concat(trade_prices_per_group.values())
+        combined_trade_prices = combined_trade_prices.groupby(level=0).first()
+        combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
+
+        # 对trade_prices进行前向填充
+        combined_trade_prices.fillna(method='ffill', inplace=True)
+    else:
+        combined_trade_prices = list(trade_prices_per_group.values())[0]
+
+    return combined_trade_prices
 
 
 def check_and_prepare_benchmark_data(op: Operator,
@@ -2079,9 +2128,8 @@ def run_mode_1(op, config):
 
     trade_prices = check_and_prepare_trade_prices(
             op=op,
-            start=start_date,
-            end=end_date,
             shares=config['asset_pool'],
+            price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
 
