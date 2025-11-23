@@ -1654,6 +1654,12 @@ def check_and_prepare_trade_prices(op: Operator,
     """
     # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错
     op_group_schedules = op.group_schedules  # 一个dict，每个group为key，一个DataFrame为value
+    if not op_group_schedules:
+        raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
+    if not isinstance(price_adj, str):
+        raise TypeError(f'price_adj should be a string, got {type(price_adj)} instead')
+    if price_adj.lower() not in ['none', 'back', 'forward']:
+        raise ValueError(f"invalid price_adj ({price_adj}), which should be anyone of ['none', 'back', 'forward']")
 
     all_run_freqs = [group.run_freq for group in op.groups.values()]
     all_run_timings = [group.run_timing for group in op.groups.values()]
@@ -1666,9 +1672,12 @@ def check_and_prepare_trade_prices(op: Operator,
     for freq, timing, sched in zip(all_run_freqs, all_run_timings, all_schedules):
         # 生成需要获取的数据的数据类型，以便使用get_history_panel函数获取数据
         data_types = []
-        if any(symbol[-2:] in ['.OF'] for symbol in shares):  # 基金使用累计净值作为交易价格
-            price_data_type_name = 'accum_nav'
-        elif (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
+        asset_types = 'E, IDX'
+
+        fund_shares = [symbol for symbol in shares if symbol[-2:] in ['OF']]
+        equity_shares = [symbol for symbol in shares if symbol not in fund_shares]
+
+        if (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
             price_data_type_name = 'open'
         elif (timing == 'close') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的收盘价使用当日收盘价
             price_data_type_name = 'close'
@@ -1677,9 +1686,18 @@ def check_and_prepare_trade_prices(op: Operator,
         else:  # 其他情况使用当时的价格
             price_data_type_name = 'close'
 
+        if fund_shares:  # 如果有场外基金，使用单位净值或复权作为交易价格
+            if price_adj == 'none':
+                price_data_type_name += ', unit_nav'
+            elif price_adj == 'back':
+                price_data_type_name += ', cumm_nav'
+            else:  # price_adj == 'forward'
+                price_data_type_name += ', adj_nav'
+            asset_types += ', FD'
+
         # 获取价格
         data_types.extend(
-                infer_data_types(price_data_type_name, freqs=freq, asset_types='ANY', adj=price_adj)
+                infer_data_types(price_data_type_name, freqs=freq, asset_types=asset_types, adj=price_adj)
         )
 
         # 生成回测交易价格的数据参数, 交易价格的复权类型根据price_adj参数确定
@@ -1693,7 +1711,21 @@ def check_and_prepare_trade_prices(op: Operator,
                 resample_method='ffill',
                 return_history_panel=False,
         )
-        trade_prices = trade_prices[price_data_type_name]
+
+        # 此时有两种情况，一种是获取的价格数据包含多个数据类型（如开盘价和累计净值），另一种是只包含一个数据类型
+        # 需要分别处理，如果包含多个数据类型，则需从两个DataFrame中选择合适的价格进行合并
+        if len(trade_prices) == 1:
+            price_data_type_name = list(trade_prices.keys())[0]
+            trade_prices = trade_prices[price_data_type_name]
+        elif len(trade_prices) == 2:  # 此时使用equity_shares与fund_shares分别从不同的数据类型中获取价格
+            price_data_type_names = list(trade_prices.keys())
+            fund_share_dtype_name = [name for name in price_data_type_names if 'nav' in name][0]
+            equity_share_dtype_name = [name for name in price_data_type_names if 'nav' not in name][0]
+            equity_share_trade_prices = trade_prices[equity_share_dtype_name][equity_shares]
+            fund_share_trade_prices = trade_prices[fund_share_dtype_name][fund_shares]
+            trade_prices = pd.concat([equity_share_trade_prices, fund_share_trade_prices], axis=1)
+        else:
+            raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
 
         # 调整日频及更低频率数据的时间点到对应的可用时间点上
         if freq in ['d', 'w', 'm', 'q']:
