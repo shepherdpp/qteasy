@@ -1704,20 +1704,22 @@ def check_and_prepare_trade_prices(op: Operator,
         trade_prices_per_group[freq] = trade_prices
 
     # 当多个交易组存在时，合并各个交易组的交易价格数据，取并集
+    all_trade_price_indices = pd.Index([])
+    for sched in op_group_schedules.values():
+        all_trade_price_indices = all_trade_price_indices.union(sched.index)
+    all_trade_price_indices = all_trade_price_indices.sort_values()
+
     if len(trade_prices_per_group) > 1:
-        all_trade_price_indices = pd.Index([])
-        for sched in op_group_schedules.values():
-            all_trade_price_indices = all_trade_price_indices.union(sched.index)
-        all_trade_price_indices = all_trade_price_indices.sort_values()
 
         combined_trade_prices = pd.concat(trade_prices_per_group.values())
         combined_trade_prices = combined_trade_prices.groupby(level=0).first()
-        combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
 
-        # 对trade_prices进行前向填充
-        combined_trade_prices.fillna(method='ffill', inplace=True)
     else:
         combined_trade_prices = list(trade_prices_per_group.values())[0]
+
+    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
+    combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
+    combined_trade_prices.fillna(method='ffill', inplace=True)
 
     return combined_trade_prices
 
