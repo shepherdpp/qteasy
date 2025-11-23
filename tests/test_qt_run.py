@@ -18,6 +18,8 @@ import shutil
 import tempfile
 from typing import Union
 
+from pymysql.constants.ER import OPEN_AS_READONLY
+
 from qteasy.qt_operator import Operator
 from qteasy.strategy import GeneralStg
 from qteasy.database import DataSource
@@ -34,7 +36,7 @@ from qteasy.core import (
 class DailyStrategy(GeneralStg):
     """用于测试的简单策略类"""
 
-    def __init__(self):
+    def __init__(self, run_timing='close'):
         super().__init__(
                 name='test_strategy',
                 description='A simple test strategy',
@@ -42,7 +44,7 @@ class DailyStrategy(GeneralStg):
                             DataType('close-000300.SH', freq='d', asset_type='IDX'),  # 指数收盘价作为参考数据
                             DataType('open', freq='d')],  # 不复权开盘价，测试不同的availability time
                 window_length=[5, 7, 8],
-                run_timing='close',
+                run_timing=run_timing,
                 run_freq='d',
         )
 
@@ -105,8 +107,8 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         # 数据从20200101到20201231，共365天，包含两只股票：000001.SZ和000002.SZ
         daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
         hourly_index = tti(start='20200101', end='20201231', freq='h')
-        print(f'generated daily index ({len(daily_index)}): \n{daily_index}')
-        print(f'generated hourly index ({len(hourly_index)}): \n{hourly_index}')
+        print(f'generated daily index ({len(daily_index)}): \n{daily_index[0:30]}')
+        print(f'generated hourly index ({len(hourly_index)}): \n{hourly_index[0:30]}')
 
         # 生成000001以及000002的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
@@ -115,6 +117,9 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                 index=daily_index,
         )
         stock_daily_df_000001['ts_code'] = '000001.SZ'
+        # 删除2020-06-15的数据，制造一个缺口
+        stock_daily_df_000001 = stock_daily_df_000001.drop(pd.to_datetime('2020-06-15'), errors='ignore')
+
         stock_daily_df_000002 = pd.DataFrame(
                 np.random.randint(20, 200, size=(len(daily_index), 6)),
                 columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
@@ -161,10 +166,6 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         )
         index_daily_df_000300['ts_code'] = '000300.SH'
 
-        # 引入一个空缺日期到000001的日线数据中，测试数据完整性处理
-        stock_daily_df = stock_daily_df.drop(stock_daily_df[(stock_daily_df['ts_code'] == '000001.SZ') &
-                                                       (stock_daily_df.index == pd.to_datetime('2020-06-15'))].index)
-
         self.datasource.update_table_data('stock_daily',
                                           df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('stock_hourly',
@@ -189,6 +190,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         self.datasource.allow_drop_table=True
         self.datasource.drop_table_data('stock_daily')
         self.datasource.drop_table_data('stock_hourly')
+        self.datasource.drop_table_data('index_daily')
         self.datasource.drop_table_data('stock_adj_factors')
 
     def test_normal_case_with_shares_list(self):
@@ -220,6 +222,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             print(f'for dtype ({dtype}) start_date({self.backtest_start}) is in the df index at '
                   f'pos ({start_index}): {df.index[start_index]}\n'
                   f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index-1]}')
+
             self.assertGreater(start_index, max_window_length)
             self.assertLessEqual(end_index, len(df.index))
 
@@ -312,7 +315,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                     backtest_start=self.backtest_start,
                     backtest_end=self.backtest_end,
                     shares='',
-                    datasource=self.datasource
+                    datasource=self.datasource,
             )
         # 测试backtest_start在可用数据范围但数据窗口不足，不会raise，但是数据会不足
         result = check_and_prepare_backtest_data(
@@ -320,9 +323,26 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                 backtest_start=self.out_of_range_start,
                 backtest_end=self.backtest_end,
                 shares=self.shares_list,
-                datasource=self.datasource
+                datasource=self.datasource,
         )
         print(f'got backtest data result with empty shares input:\n{result}')
+
+        # 测试获取的数据中包含缺口数据的情形（缺口数据在2020-06-15），不会raise
+        result = check_and_prepare_backtest_data(
+                op=self.operator,
+                backtest_start='20200613',
+                backtest_end='20200623',
+                shares=self.shares_list,
+                datasource=self.datasource,
+        )
+        print(f'got backtest data result with missing data range:\n{result}')
+        # 确认20200615当天000001.SZ的数据为NaN
+        for dtype, df in result.items():
+            if dtype == 'close|b_E_d':
+                self.assertTrue(np.isnan(df.loc[pd.to_datetime('2020-06-15 15:00:00'), '000001.SZ']))
+            elif dtype == 'open_E_d':
+                self.assertTrue(np.isnan(df.loc[pd.to_datetime('2020-06-15 09:30:00'), '000001.SZ']))
+
         max_window_length = self.operator.max_window_length
         for dtype, df in result.items():
             # 检查索引是否为日期类型
@@ -393,7 +413,21 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         - 当shares同时包含股票和指数时
         - 当shares包含股票、指数和ETF基金时
         - 当shares包含场外基金时（价格在每日收盘后更新到nav中）
-     - 当Operator的交易信号为混合频率
+     - 当Operator的交易信号清单包含不同频率时，获取相应频率的交易价格数据
+        - Operator包含日频和小时频率的策略
+        - Operator仅包含日频策略
+     - 当Operator的交易时机包含不同时间点时，获取相应时间点的交易价格数据
+        - run_timing='open'
+        - run_timing='close'
+        - run_timing='14:58:00' 任意时间从分钟K线中读取
+     - 当adjustment参数不同取值时，获取相应的交易价格数据
+        - adjustment='none'
+        - adjustment='forward'/'f'
+        - adjustment='backward'/'b'
+     - 检查返回数据的结构正确性，包括索引类型、列类型、数据类型和日期范围
+     - 错误情况处理：
+        - 空的股票列表
+        - Operator没有创建timing_table
 
      """
 
@@ -411,304 +445,572 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         )
 
         # 创建测试策略和Operator
-        self.test_strategy = TestStrategy()
-        self.operator = Operator(strategies=[self.test_strategy])
+        self.daily_strategy = DailyStrategy()
+        self.hourly_strategy = HourlyStrategy()
+        self.daily_open_stg = DailyStrategy(run_timing='open')
+        self.daily_timing_stg = DailyStrategy(run_timing='14:58')
+        self.op_complex = Operator(strategies=[self.daily_strategy, self.hourly_strategy])
+        self.op_simple = Operator(strategies=[self.daily_strategy])
+        self.op_open = Operator(strategies=[self.daily_open_stg, self.hourly_strategy])
+        self.op_timing = Operator(strategies=[self.daily_timing_stg, self.hourly_strategy])
+        self.op_not_ready = Operator(strategies=[self.daily_timing_stg, self.hourly_strategy])
 
-        # 向data_source中填充测试数据，测试数据随机生成，包括股票日线价格数据（stock_daily）以及复权因子数据（stock_adj_factor)
-        # 数据从20200101到20201231，共365天，包含两只股票：000001.SZ和000002.SZ
+        # 向data_source中填充测试数据，测试数据随机生成，包括20200101～20201231之间的下面数据：
+        # - 股票日线价格：000001.SZ, 000002.SZ两只股票
+        # - 股票分钟K线价格：000001.SZ, 000002.SZ两只股票，用于获取交易时机为任意交易时刻的交易价格
+        # - 股票复权因子：000001.SZ, 000002.SZ两只股票
+        # - 股票小时K线价格：000001.SZ, 000002.SZ两只股票
+        # - 指数日线价格：000300.SH指数
+        # - 指数分钟K线价格：000300.SH指数， 用于获取交易时机为任意交易时刻的交易价格
+        # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
+        daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
+        hourly_index = tti(start='20200101', end='20201231', freq='h')
+        min_index = tti(start='20200501', end='20200731', freq='1min', trade_days_only=True)
+
+        # 生成000001以及000002的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
-                np.random.randint(10, 100, size=(365, 6)),
+                np.random.randint(10, 100, size=(len(daily_index), 6)),
                 columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
-                index=pd.date_range('20200101', periods=365, freq='D'),
+                index=daily_index,
         )
         stock_daily_df_000001['ts_code'] = '000001.SZ'
+        # 删除2020-06-15的数据，制造一个缺口
+        stock_daily_df_000001 = stock_daily_df_000001.drop(pd.to_datetime('2020-06-15'), errors='ignore')
+
         stock_daily_df_000002 = pd.DataFrame(
-                np.random.randint(20, 200, size=(365, 6)),
+                np.random.randint(20, 200, size=(len(daily_index), 6)),
                 columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
-                index=pd.date_range('20200101', periods=365, freq='D'),
+                index=daily_index,
         )
         stock_daily_df_000002['ts_code'] = '000002.SZ'
         stock_daily_df = pd.concat([stock_daily_df_000001, stock_daily_df_000002])
 
+        # 生成000001/000002的stock_1min数据
+        stock_min_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(len(min_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=min_index,
+        )
+        stock_min_df_000001['ts_code'] = '000001.SZ'
+        # 删除2020-06-15的数据，制造一个缺口
+        stock_min_df_000001 = stock_min_df_000001.drop(pd.to_datetime('2020-06-15'), errors='ignore')
+
+        stock_min_df_000002 = pd.DataFrame(
+                np.random.randint(20, 200, size=(len(min_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=min_index,
+        )
+        stock_min_df_000002['ts_code'] = '000002.SZ'
+        stock_min_df = pd.concat([stock_min_df_000001, stock_daily_df_000002])
+
+        # 生成000001/000002的stock_hourly数据
+        stock_hourly_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        stock_hourly_df_000001['ts_code'] = '000001.SZ'
+        stock_hourly_df_000002 = pd.DataFrame(
+                np.random.randint(20, 200, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        stock_hourly_df_000002['ts_code'] = '000002.SZ'
+        stock_hourly_df = pd.concat([stock_hourly_df_000001, stock_hourly_df_000002])
+
+        # 生成000001/000002的adj_factor数据
         stock_adj_factor_000001 = pd.DataFrame(
-                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                np.random.uniform(0.8, 1.2, size=(len(daily_index), 1)),
                 columns=['adj_factor'],
-                index=pd.date_range('20200101', periods=365, freq='D'),
+                index=daily_index,
         )
         stock_adj_factor_000001['ts_code'] = '000001.SZ'
         stock_adj_factor_000002 = pd.DataFrame(
-                np.random.uniform(0.8, 1.2, size=(365, 1)),
+                np.random.uniform(0.8, 1.2, size=(len(daily_index), 1)),
                 columns=['adj_factor'],
-                index=pd.date_range('20200101', periods=365, freq='D'),
+                index=daily_index,
         )
         stock_adj_factor_000002['ts_code'] = '000002.SZ'
         stock_adj_factor = pd.concat([stock_adj_factor_000001, stock_adj_factor_000002])
 
+        # 添加000300.SH的日线数据到index_daily表中，供指数参考数据使用
+        index_daily_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        index_daily_df_000300['ts_code'] = '000300.SH'
+
+        # 添加000300.SH的分钟K线数据到index_1min表中，供指数参考数据使用
+        index_min_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(min_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=min_index,
+        )
+        index_min_df_000300['ts_code'] = '000300.SH'
+
+        # 添加161039.OF的场外基金净值数据到fund_nav表中
+        fund_nav_df_161039 = pd.DataFrame(
+                np.random.uniform(1.0, 2.0, size=(len(daily_index), 4)),
+                columns=['unit_nav', 'accum_nav', 'adj_nav', 'accum_div'],
+                index=daily_index,
+        )
+        fund_nav_df_161039['ts_code'] = '161039.OF'
+
         self.datasource.update_table_data('stock_daily',
                                           df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('stock_hourly',
+                                          df=stock_hourly_df.reset_index().rename(columns={'index': 'trade_time'}))
+        self.datasource.update_table_data('stock_1min',
+                                          df=stock_min_df.reset_index().rename(columns={'index': 'trade_time'}))
         self.datasource.update_table_data('stock_adj_factor',
                                           df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_daily',
+                                          df=index_daily_df_000300.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_1min',
+                                          df=index_min_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
+        self.datasource.update_table_data('fund_nav',
+                                          df=fund_nav_df_161039.reset_index().rename(columns={'index': 'nav_date'}))
 
-        # 测试日期
-        self.start_date = '20200101'
-        self.end_date = '20201231'
+        # 创建测试计划
+        self.op_simple.prepare_running_schedule(
+                start_date='20200525',
+                end_date='20200610',
+        )
+        self.op_complex.prepare_running_schedule(
+                start_date='20200610',
+                end_date='20200620',
+        )
+        self.op_open.prepare_running_schedule(
+                start_date='20200710',
+                end_date='20200715',
+        )
+        self.op_timing.prepare_running_schedule(
+                start_date='20200625',
+                end_date='20200710',
+        )
+
+        # 测试资产
         self.shares_list = ['000001.SZ', '000002.SZ']
         self.single_share = '000001.SZ'
-
-        # 创建测试数据
-        self._create_test_data()
-
-    def _create_test_data(self):
-        """创建测试用的历史数据"""
-        # 创建交易日历数据
-        dates = pd.date_range('20191201', '20210131', freq='D')
-        # 过滤掉周末（简化处理）
-        trade_dates = dates[dates.weekday < 5]
-        trade_calendar_data = pd.DataFrame({
-            'date':    trade_dates.strftime('%Y%m%d'),
-            'is_open': 1
-        })
-
-        # 创建股票基础信息表
-        stock_basic_data = pd.DataFrame({
-            'ts_code':   ['000001.SZ', '000002.SZ'],
-            'symbol':    ['000001', '000002'],
-            'name':      ['平安银行', '万科A'],
-            'area':      ['深圳', '深圳'],
-            'industry':  ['银行', '房地产'],
-            'market':    ['主板', '主板'],
-            'list_date': ['19910403', '19910129'],
-            'exchange':  ['SZSE', 'SZSE']
-        })
-
-        # 创建股票日线数据
-        date_range = pd.date_range('20191201', '20201231', freq='D')
-        # 过滤掉周末
-        trade_days = date_range[date_range.weekday < 5]
-
-        # 为每只股票创建价格数据
-        for stock in self.shares_list:
-            # 生成随机价格数据
-            n_days = len(trade_days)
-            open_prices = np.random.uniform(10, 20, n_days)
-            close_prices = open_prices + np.random.uniform(-0.5, 0.5, n_days)
-            high_prices = np.maximum(open_prices, close_prices) + np.random.uniform(0, 1, n_days)
-            low_prices = np.minimum(open_prices, close_prices) - np.random.uniform(0, 1, n_days)
-            volumes = np.random.uniform(100000, 1000000, n_days)
-
-            stock_data = pd.DataFrame({
-                'ts_code':    stock,
-                'trade_date': trade_days.strftime('%Y%m%d'),
-                'open':       open_prices,
-                'high':       high_prices,
-                'low':        low_prices,
-                'close':      close_prices,
-                'vol':        volumes,
-                'amount':     open_prices * volumes
-            })
-
-            # 保存数据到数据源
-            table_name = f'{stock.replace(".", "_")}_daily'
-            stock_data.to_csv(os.path.join(self.db_path, f'{table_name}.csv'), index=False)
-
-        # 保存基础数据
-        stock_basic_data.to_csv(os.path.join(self.db_path, 'stock_basic.csv'), index=False)
-        trade_calendar_data.to_csv(os.path.join(self.db_path, 'trade_calendar.csv'), index=False)
-
-        # 创建复权因子数据
-        for stock in self.shares_list:
-            adj_data = pd.DataFrame({
-                'ts_code':    stock,
-                'trade_date': trade_days.strftime('%Y%m%d'),
-                'adj_factor': np.ones(len(trade_days))  # 简化处理，复权因子为1
-            })
-            table_name = f'{stock.replace(".", "_")}_adj_factor'
-            adj_data.to_csv(os.path.join(self.db_path, f'{table_name}.csv'), index=False)
+        self.share_index_list = ['000001.SZ', '000300.SH']
+        self.share_index_fund_list = ['000001.SZ', '000300.SH', '161039.OF']
 
     def tearDown(self):
         """测试后的清理工作"""
         # 清理测试数据
-        import shutil
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self.datasource.allow_drop_table=True
+        self.datasource.drop_table_data('stock_daily')
+        self.datasource.drop_table_data('stock_hourly')
+        self.datasource.drop_table_data('index_daily')
+        self.datasource.drop_table_data('fund_nav')
+        self.datasource.drop_table_data('stock_adj_factors')
 
-    def test_normal_case_with_shares_list(self):
-        """测试用例：正常输入参数，shares为列表"""
-        # 执行被测函数
+    def test_share_list_with_simple_operator(self):
+        """测试用例：正常输入参数，简单operator，测试各种share组合"""
+        # 测试简单operator以及简单share_list的情形
         result = check_and_prepare_trade_prices(
-                op=self.operator,
+                op=self.op_simple,
                 shares=self.shares_list,
                 price_adj='none',
                 datasource=self.datasource
         )
+        print(f'got trade prices with simple operator and shares list:\n{result}')
 
-        # 验证结果
+        # 验证结果是DataFrame，且不为空
         self.assertIsInstance(result, pd.DataFrame)
         self.assertFalse(result.empty)
 
-        # 检查索引类型
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
         self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_simple.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
 
-        # 检查列
+        # 检查列包含所有的shares
         for share in self.shares_list:
             self.assertIn(share, result.columns)
 
-        # 检查数据类型
+        # 检查数据全部是数值类型且不含NaN
         for share in self.shares_list:
-            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32')])
-
-        # 检查日期范围
-        self.assertGreaterEqual(result.index.min(), pd.to_datetime(self.start_date))
-        self.assertLessEqual(result.index.max(), pd.to_datetime(self.end_date))
-
-    def test_single_share_string_input(self):
-        """测试用例：shares参数为单个股票字符串"""
-        # 执行被测函数
-        result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=self.single_share,
-                datasource=self.datasource
-        )
-
-        # 验证结果
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertFalse(result.empty)
-        self.assertIn(self.single_share, result.columns)
-        self.assertIsInstance(result.index, pd.DatetimeIndex)
-
-    def test_empty_shares_list(self):
-        """测试用例：空的shares列表"""
-        # 执行被测函数
-        result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=[],
-                datasource=self.datasource
-        )
-
-        # 验证结果
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertTrue(result.empty)
-
-    def test_date_range_validation(self):
-        """测试日期范围处理"""
-        # 执行被测函数
-        result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=self.shares_list,
-                datasource=self.datasource
-        )
-
-        # 验证日期范围
-        self.assertFalse(result.empty)
-        self.assertGreaterEqual(result.index.min(), pd.to_datetime(self.start_date))
-        self.assertLessEqual(result.index.max(), pd.to_datetime(self.end_date))
-
-    def test_result_data_structure(self):
-        """测试返回数据的结构是否正确"""
-        # 执行被测函数
-        result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=self.shares_list,
-                datasource=self.datasource
-        )
-
-        # 验证返回数据结构
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertFalse(result.empty)
-
-        # 检查索引
-        self.assertIsInstance(result.index, pd.DatetimeIndex)
-
-        # 检查列
-        for share in self.shares_list:
-            self.assertIn(share, result.columns)
-
-        # 检查数据完整性
-        self.assertFalse(result.isnull().all().all())
-
-        # 检查数据类型
-        for col in result.columns:
-            self.assertTrue(pd.api.types.is_numeric_dtype(result[col]))
-
-    def test_multiple_shares_data_consistency(self):
-        """测试多个股票数据的一致性"""
-        # 执行被测函数
-        result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=self.shares_list,
-                datasource=self.datasource
-        )
-
-        # 验证多个股票数据
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertEqual(len(result.columns), len(self.shares_list))
-
-        # 检查是否有共同的日期索引
-        self.assertFalse(result.empty)
-
-        # 检查所有股票都有数据
-        for share in self.shares_list:
-            self.assertIn(share, result.columns)
-            self.assertFalse(result[share].empty)
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
             self.assertFalse(result[share].isnull().all())
 
-    def test_operator_frequency_handling(self):
-        """测试Operator频率处理"""
-        # 创建不同频率的策略
-        daily_strategy = SimpleStrategy()
-        daily_strategy.run_freq = 'd'
-
-        weekly_strategy = SimpleStrategy()
-        weekly_strategy.run_freq = 'w'
-
-        operator_multi_freq = Operator(strategies=[daily_strategy, weekly_strategy])
-
-        # 执行被测函数
+    def test_share_list_with_complex_operator(self):
+        """测试用例：正常输入参数，shares为列表，复杂operator"""
+        # 测试简单operator以及简单share_list的情形
         result = check_and_prepare_trade_prices(
-                op=operator_multi_freq,
-                start=self.start_date,
-                end=self.end_date,
+                op=self.op_complex,
                 shares=self.shares_list,
+                price_adj='none',
                 datasource=self.datasource
         )
+        print(f'got trade prices with simple operator and shares list:\n{result}')
 
-        # 验证结果
+        # 验证结果是DataFrame，且不为空
         self.assertIsInstance(result, pd.DataFrame)
         self.assertFalse(result.empty)
 
-        # 检查列
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_complex.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
         for share in self.shares_list:
             self.assertIn(share, result.columns)
 
-    def test_data_source_integration(self):
-        """测试数据源集成"""
-        # 执行被测函数
+        # 检查数据全部是数值类型且不含NaN
+        for share in self.shares_list:
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_single_share_with_simple_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
         result = check_and_prepare_trade_prices(
-                op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                shares=self.shares_list,
+                op=self.op_simple,
+                shares=self.single_share,
+                price_adj='none',
                 datasource=self.datasource
         )
+        print(f'got trade prices with simple operator and single_share:\n{result}')
 
-        # 验证数据源正确集成
+        # 验证结果是DataFrame，且不为空
         self.assertIsInstance(result, pd.DataFrame)
         self.assertFalse(result.empty)
 
-        # 检查数据是否来自正确的数据源
-        for share in self.shares_list:
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_simple.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        self.assertIn(self.single_share, result.columns)
+
+        # 检查数据全部是数值类型且不含NaN
+        self.assertIn(result[self.single_share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                            np.dtype('int64'), np.dtype('int32')])
+        self.assertFalse(result[self.single_share].isnull().all())
+
+    def test_single_share_with_complex_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_complex,
+                shares=self.single_share,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with complex operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_complex.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        self.assertIn(self.single_share, result.columns)
+
+        # 检查数据全部是数值类型且不含NaN
+        self.assertIn(result[self.single_share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                            np.dtype('int64'), np.dtype('int32')])
+        self.assertFalse(result[self.single_share].isnull().all())
+
+    def test_share_index_with_simple_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_simple,
+                shares=self.share_index_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with simple operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_simple.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_list:
             self.assertIn(share, result.columns)
-            self.assertFalse(result[share].empty)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_with_complex_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_complex,
+                shares=self.share_index_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with complex operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_complex.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_simple_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_simple,
+                shares=self.share_index_fund_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with simple operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_simple.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_complex_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_complex,
+                shares=self.share_index_fund_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with complex operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_complex.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_open_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_open,
+                shares=self.share_index_fund_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with open-timing operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_open.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_timing_operator(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_timing,
+                shares=self.share_index_fund_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with 14:58-timing operator and single_share:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_timing.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_timing_operator_forward(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_timing,
+                shares=self.share_index_fund_list,
+                price_adj='forward',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with 14:58-timing operator with forward adj:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_timing.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_share_index_fund_with_timing_operator_backward(self):
+        """测试用例：shares参数为单个股票字符串"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_timing,
+                shares=self.share_index_fund_list,
+                price_adj='back',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with 14:58-timing operator with backward adj:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_timing.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.share_index_fund_list:
+            self.assertIn(share, result.columns)
+
+            # 检查数据全部是数值类型且不含NaN
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().all())
+
+    def test_with_problematic_parameters(self):
+        """测试有问题的输入参数"""
+        with self.assertRaises(ValueError):
+            check_and_prepare_trade_prices(
+                    op=self.op_not_ready,
+                    shares=self.shares_list,
+                    price_adj='none',
+                    datasource=self.datasource
+            )
+            check_and_prepare_trade_prices(
+                    op=self.op_simple,
+                    shares=[],
+                    price_adj='none',
+                    datasource=self.datasource
+            )
+            check_and_prepare_trade_prices(
+                    op=self.op_simple,
+                    shares=self.shares_list,
+                    price_adj='wrong adj type',
+                    datasource=self.datasource
+            )
+
+        self.op_not_ready.prepare_running_schedule(
+                start_date='20250101',
+                end_date='20250131',  # running schedule out of datasource coverage
+        )
+        with self.assertRaises(RuntimeError):
+            check_and_prepare_trade_prices(
+                    op=self.op_not_ready,
+                    shares=self.shares_list,
+                    price_adj='back',
+                    datasource=self.datasource
+            )
 
 
 class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
