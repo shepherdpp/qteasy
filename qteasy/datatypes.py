@@ -4420,9 +4420,18 @@ def get_reference_data_from_source(
 
     for htyp, ser in reference_data_acquired.items():
         if isinstance(ser, pd.DataFrame) and not ser.empty:
-            # import pdb
-            # pdb.set_trace()
+            import pdb
+            pdb.set_trace()
             pass
+        if row_count:
+            ser = ser.tail(row_count)
+        reference_data_acquired[htyp] = ser
+
+    # 找到reference_data_acquired中的空DataFrame，将这些key/value删除
+    keys_to_delete = [k for k, ser in reference_data_acquired.items() if isinstance(ser, pd.DataFrame) and ser.empty]
+    if keys_to_delete:
+        for key in keys_to_delete:
+            reference_data_acquired.pop(key)
 
     return reference_data_acquired
 
