@@ -582,7 +582,7 @@ class Operator:
             print(''.join(message))
 
         if (not is_ready) and raise_error:
-            raise RuntimeError('Operator is not ready! ' + ''.join(message))
+            raise RuntimeError(message)
 
         return is_ready
 

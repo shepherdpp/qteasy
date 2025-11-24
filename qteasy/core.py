@@ -1682,7 +1682,8 @@ def check_and_prepare_trade_prices(op: Operator,
         elif (timing == 'close') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的收盘价使用当日收盘价
             price_data_type_name = 'close'
         elif (timing not in ['open', 'close']) and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的其他时间点使用分钟线价格
-            price_data_type_name = timing
+            price_data_type_name = 'close'
+            freq = '1min'
         else:  # 其他情况使用当时的价格
             price_data_type_name = 'close'
 
@@ -1690,14 +1691,21 @@ def check_and_prepare_trade_prices(op: Operator,
             if price_adj == 'none':
                 price_data_type_name += ', unit_nav'
             elif price_adj == 'back':
-                price_data_type_name += ', cumm_nav'
+                price_data_type_name += ', accum_nav'
             else:  # price_adj == 'forward'
                 price_data_type_name += ', adj_nav'
             asset_types += ', FD'
 
         # 获取价格
         data_types.extend(
-                infer_data_types(price_data_type_name, freqs=freq, asset_types=asset_types, adj=price_adj)
+                infer_data_types(
+                        price_data_type_name,
+                        freqs=freq,
+                        asset_types=asset_types,
+                        adj=price_adj,
+                        allow_ignore_freq=True,
+                        allow_ignore_adj=True,
+                )
         )
 
         # 生成回测交易价格的数据参数, 交易价格的复权类型根据price_adj参数确定
@@ -1713,17 +1721,18 @@ def check_and_prepare_trade_prices(op: Operator,
         )
 
         # 此时有两种情况，一种是获取的价格数据包含多个数据类型（如开盘价和累计净值），另一种是只包含一个数据类型
-        # 需要分别处理，如果包含多个数据类型，则需从两个DataFrame中选择合适的价格进行合并
+        # 需要分别处理，如果包含多个数据类型，则需从多个DataFrame中选择合适的价格进行合并
         if len(trade_prices) == 1:
             price_data_type_name = list(trade_prices.keys())[0]
             trade_prices = trade_prices[price_data_type_name]
-        elif len(trade_prices) == 2:  # 此时使用equity_shares与fund_shares分别从不同的数据类型中获取价格
-            price_data_type_names = list(trade_prices.keys())
-            fund_share_dtype_name = [name for name in price_data_type_names if 'nav' in name][0]
-            equity_share_dtype_name = [name for name in price_data_type_names if 'nav' not in name][0]
-            equity_share_trade_prices = trade_prices[equity_share_dtype_name][equity_shares]
-            fund_share_trade_prices = trade_prices[fund_share_dtype_name][fund_shares]
-            trade_prices = pd.concat([equity_share_trade_prices, fund_share_trade_prices], axis=1)
+        elif len(trade_prices) > 1:  # 此时检查所有的数据列，删除全部为NaN的列，然后将剩下的列进行合并，并补齐缺少的列（这种情况说明有数据未读到，后面应报错）
+            for dtype_name, df in trade_prices.items():
+                all_nan_cols = df.columns[df.isna().all()].tolist()
+                if all_nan_cols:
+                    trade_prices[dtype_name] = df.drop(columns=all_nan_cols)
+            # 将trade_prices中剩下的DataFrame进行合并
+            trade_prices = pd.concat(list(trade_prices.values()), axis=1)
+            trade_prices.reindex(columns=shares)
         else:
             raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
 

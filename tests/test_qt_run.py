@@ -217,8 +217,8 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             # 检查索引是否为日期类型
             self.assertIsInstance(df.index, pd.DatetimeIndex)
             # 检查日期索引是否覆盖所有数据窗口长度
-            start_index = np.searchsorted(df.index, self.backtest_start)
-            end_index = np.searchsorted(df.index, self.backtest_end)
+            start_index = int(np.searchsorted(df.index, self.backtest_start))
+            end_index = int(np.searchsorted(df.index, self.backtest_end))
             print(f'for dtype ({dtype}) start_date({self.backtest_start}) is in the df index at '
                   f'pos ({start_index}): {df.index[start_index]}\n'
                   f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index-1]}')
@@ -275,11 +275,11 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             # 检查索引是否为日期类型
             self.assertIsInstance(df.index, pd.DatetimeIndex)
             # 检查日期索引是否覆盖所有数据窗口长度
-            start_index = np.searchsorted(df.index, self.backtest_start)
-            end_index = np.searchsorted(df.index, self.backtest_end)
+            start_index = int(np.searchsorted(df.index, self.backtest_start))
+            end_index = int(np.searchsorted(df.index, self.backtest_end))
             print(f'for dtype ({dtype}) start_date({self.backtest_start}) is in the df index at '
                   f'pos ({start_index}): {df.index[start_index]}\n'
-                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index-1]}')
+                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index - 1]}')
             self.assertGreater(start_index, max_window_length)
             self.assertLessEqual(end_index, len(df.index))
 
@@ -297,6 +297,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
                     else:
                         self.assertNotIn(col, df.columns)
 
+    # noinspection PyTypeChecker
     def test_problematic_parameters(self):
         """测试用例：空的shares列表，此时应该抱错"""
         # 测试raise ValueError: shares can not be an empty list
@@ -352,7 +353,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             end_index = np.searchsorted(df.index, self.backtest_end)
             print(f'for dtype ({dtype}) start_date({self.out_of_range_start}) is in the df index at '
                   f'pos ({start_index}): {df.index[start_index]}\n'
-                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index-1]}')
+                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index]}')
             self.assertLessEqual(start_index, max_window_length)
             self.assertLessEqual(end_index, len(df.index))
 

@@ -960,7 +960,7 @@ class TestHistoryPanel(unittest.TestCase):
                 freqs='m',
                 asset_types='any',
                 adj='none',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
@@ -995,7 +995,7 @@ class TestHistoryPanel(unittest.TestCase):
                 names='wt_idx|000003.SH, close, pe, eps, revenue_ps',
                 freqs='w',
                 asset_types='any',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
@@ -1036,7 +1036,7 @@ class TestHistoryPanel(unittest.TestCase):
                 names='open, high, close|b, pe',
                 freqs='h',
                 asset_types='E',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
@@ -1059,7 +1059,7 @@ class TestHistoryPanel(unittest.TestCase):
                 names='open, high, close|b, pe',
                 freqs='h',
                 asset_types='E',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
@@ -1082,7 +1082,7 @@ class TestHistoryPanel(unittest.TestCase):
                 freqs='m',
                 asset_types='any',
                 adj='none',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
