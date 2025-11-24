@@ -1677,7 +1677,7 @@ class TestDataTypes(unittest.TestCase):
                 ends = '2024-05-01'
 
             if table_name == 'stock_holder_trade':
-                shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ',]
+                shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ', ]
                 starts = '2024-04-01'
                 ends = '2024-05-01'
 
@@ -1716,7 +1716,7 @@ class TestDataTypes(unittest.TestCase):
                 pass
 
             if data.empty:
-                if freq in ['h', '30min', '15min', '5min', '1min',]:
+                if freq in ['h', '30min', '15min', '5min', '1min', ]:
                     continue
                 empty_count += 1
                 empty_types.append(k)
@@ -1940,7 +1940,7 @@ class TestDataTypes(unittest.TestCase):
                 print(f'failed to create htype with parameters: {htype_name}, {freq}')
                 continue
         print(f'getting simple reference data for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_names = [htype.name for htype in htypes]
+        htype_names = [htype.dtype_id for htype in htypes]
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -1973,7 +1973,10 @@ class TestDataTypes(unittest.TestCase):
                     print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
                     continue
         print(f'getting reference data with unsymbolizer for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_names = ['shibor|on', 'wz_cm', 'close|b-000651.SZ', 'close-000300.SH']
+        htype_names = ['shibor|on_None_d',
+                       'wz_cm_None_d',
+                       'close|b-000651.SZ_E_d',
+                       'close-000300.SH_IDX_d']
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -1982,6 +1985,7 @@ class TestDataTypes(unittest.TestCase):
                 end=end,
                 freq=freq,
         )
+        print(f'got reference data: \n{ser}')
         self.assertIsInstance(ser, dict)
         self.assertEqual(list(ser.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
@@ -2000,7 +2004,10 @@ class TestDataTypes(unittest.TestCase):
                    DataType(name='close-000300.SH', freq='5min', asset_type='IDX'),
                    ]
         print(f'getting re-freq reference data for htypes: \n{[at.__str__() for at in h_types]}')
-        htype_names = ['shibor|on', 'wz_cm', 'close|b-000651.SZ', 'close-000300.SH']
+        htype_names = ['shibor|on_None_d',
+                       'wz_cm_None_d',
+                       'close|b-000651.SZ_E_5min',
+                       'close-000300.SH_IDX_5min']
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -2016,12 +2023,12 @@ class TestDataTypes(unittest.TestCase):
         print(f'got history panel:\n{ser}')
 
         print(f'{"=" * 80}\ngetting data with only row_count parameter without starts and ends')
-        htype_names = [htype.name for htype in h_types]
+        htype_names = [htype.dtype_id for htype in h_types]
 
         dfs = get_reference_data_from_source(
                 self.ds,
                 htypes=h_types,
-                end=end,
+                end='20230620',
                 row_count=20,
                 freq=freq,
         )
@@ -2029,7 +2036,7 @@ class TestDataTypes(unittest.TestCase):
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.Series) for item in dfs.values() if not item.empty))
-        for df in dfs:
+        for df in dfs.values():
             self.assertLessEqual(len(df), 20)
 
     def test_infer_data_types(self):
@@ -2078,7 +2085,8 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
         # test infer data types with missing freq but force match freq
-        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types, allow_ignore_freq=True)
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types,
+                                      allow_ignore_freq=True)
         print(f'Inferred data types with missing freqs and force match freq: \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='E'),
@@ -2185,6 +2193,33 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='name', freq='None', asset_type='FT')
         ]
         self.assertEqual(len(data_types), 23)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with allow_ignore_adj = True
+        names = ['close', 'close|b', 'close|f']
+        freqs = ['d', 'h']
+        asset_types = ['E', 'IDX', 'FD']
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types,
+                                      allow_ignore_adj=True)
+        print(f'Inferred data types with allow_ignore_adj = True: \n{data_types}')
+        expected_data_types = [
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='FD'),
+            DataType(name='close', freq='h', asset_type='E'),
+            DataType(name='close', freq='h', asset_type='IDX'),
+            DataType(name='close', freq='h', asset_type='FD'),
+            DataType(name='close|b', freq='d', asset_type='E'),
+            DataType(name='close|b', freq='d', asset_type='FD'),
+            DataType(name='close|b', freq='h', asset_type='E'),
+            DataType(name='close|b', freq='h', asset_type='FD'),
+            DataType(name='close|f', freq='d', asset_type='E'),
+            DataType(name='close|f', freq='d', asset_type='FD'),
+            DataType(name='close|f', freq='h', asset_type='E'),
+            DataType(name='close|f', freq='h', asset_type='FD'),
+        ]
+        self.assertEqual(len(data_types), 14)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
