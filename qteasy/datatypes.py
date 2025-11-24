@@ -78,14 +78,15 @@ def get_dtype_map(include_user_defined=False, refresh_cache=False) -> pd.DataFra
 
 
 def infer_data_types(names, freqs, asset_types, adj=None,
-                     force_match_freq=False,
-                     force_match_asset_type=False) -> list:
+                     allow_ignore_freq=False,
+                     allow_ignore_asset_type=False,
+                     allow_ignore_adj=False) -> list:
     """ 根据输入的名称、频率和资产类型推断数据类型，如果某个name找不到匹配的freq或asset_type，则根据
     force_match_freq / force_match_asset_type的值确定如何操作：
 
-    如果force_match_freq为True，则强制性为无法匹配的names匹配一个存在的DataType
+    如果force_match_freq为True，则强制性为没有相应freq的names匹配一个存在的DataType
     否则忽略找不到freq的name
-    如果force_match_asset_type为True，则强制性为无法匹配的names匹配一个存在的
+    如果force_match_asset_type为True，则强制性为没有相应asset_type的names匹配一个存在的
     DataType，否则忽略无法匹配asset_type的name
 
     Parameters
@@ -96,12 +97,16 @@ def infer_data_types(names, freqs, asset_types, adj=None,
         一个包含可能的freq的列表，也可以以逗号分隔字符串形式给出
     asset_types: str or [str]
         一个包含可能的资产类型的列表，也可以以逗号分隔字符串形式给出
-    adj: str, optinal, deprecated
+    adj: str, optinal
         价格调整因子，如果给出，强制性调整价格类型
-    force_match_freq: bool, optional, default False
+    allow_ignore_freq: bool, optional, default False
         是否强制匹配freq，如果为True，则为某些无法找到匹配freq的数据类型强制匹配一个合法的freq
-    force_match_asset_type: bool, optional, default False
+    allow_ignore_asset_type: bool, optional, default False
         是否强制匹配资产类型，如果为True，则为某些无法找到匹配的资产类型的数据类型强制匹配一个合法的资产类型
+    allow_ignore_adj: bool, optional, default False
+        是否强制匹配价格调整因子，如果为True，则为某些无法找到匹配价格调整因子的数据类型强制匹配一个合法的价格调整因子,
+        例如，Asset_type为IDX的数据类型无法匹配价格调整因子，因为指数没有复权价格，如果force_match_adj为True，
+        则强制性为这些数据类型匹配一个合法的价格调整因子
 
     Return
     ------
@@ -141,9 +146,6 @@ def infer_data_types(names, freqs, asset_types, adj=None,
             warn(msg, DeprecationWarning)
         if adj in ['f', 'fw', 'forward']:
             names = [f'{n}|f' if n in price_types else n for n in names]
-            msg = f'Using parameter "adj" for price adjustment is deprecated, please use data types like ' \
-                  f'"close|f" instead of "adj=\'f\'" in the future.'
-            warn(msg, DeprecationWarning)
 
     # TODO: 需要优化：将force_match_freq / force_match_asset_type作为DataType的__init__()参数，那么这里就可以
     #  使用itertools.product以及列表推导式来简化代码了。
@@ -154,23 +156,31 @@ def infer_data_types(names, freqs, asset_types, adj=None,
                 try:
                     data_types.append(DataType(name=n, freq=f, asset_type=at))
                 except ValueError:
-                    if force_match_freq and force_match_asset_type:
+                    if allow_ignore_adj and n[-2:] in ['|b', '|f']:
+                        n_ = n[:-2]
+                    else:
+                        n_ = n
+
+                    if allow_ignore_freq and allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n))
+                            data_types.append(DataType(name=n_))
                         except ValueError:
                             pass
-                    elif force_match_freq:
+                    elif allow_ignore_freq:
                         try:
-                            data_types.append(DataType(name=n, asset_type=at))
+                            data_types.append(DataType(name=n_, asset_type=at))
                         except ValueError:
                             pass
-                    elif force_match_asset_type:
+                    elif allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n, freq=f))
+                            data_types.append(DataType(name=n_, freq=f))
                         except ValueError:
                             pass
                     else:
-                        pass
+                        try:
+                            data_types.append(DataType(name=n_, freq=f, asset_type=at))
+                        except ValueError:
+                            pass
     # remove all duplicated data types:
     data_types = list(set(data_types))
 
@@ -4250,6 +4260,8 @@ def get_history_data_from_source(
             history_data_acquired[htype.dtype_id] = df
         else:
             # 下载的数据会按htype.name合并，如果htype.name已经有了数据，则新的数据会被concat（按列）到已有的数据中
+            # 这里有个隐含的假设，即相同htype.name的数据频率是相同的，否则无法合并，为避免发生此类问题，必须在传入参数
+            # 前确认没有相同name不同freq的数据类型
             original_df = history_data_acquired.get(htype.name)
             if original_df is None:
                 history_data_acquired[htype.name] = df
@@ -4365,7 +4377,6 @@ def get_reference_data_from_source(
         raise err
 
     reference_data_acquired = {}
-    # reference_data_to_be_refreqed = {}
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:

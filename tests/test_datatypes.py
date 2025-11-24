@@ -2078,7 +2078,7 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
         # test infer data types with missing freq but force match freq
-        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types, force_match_freq=True)
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types, allow_ignore_freq=True)
         print(f'Inferred data types with missing freqs and force match freq: \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='E'),
@@ -2093,7 +2093,7 @@ class TestDataTypes(unittest.TestCase):
 
         # test infer data types with missing asset_type but forced match asset type
         data_types = infer_data_types(names=names, freqs=freqs, asset_types=missing_asset_types,
-                                      force_match_asset_type=True)
+                                      allow_ignore_asset_type=True)
         print(f'Inferred data types with missing asset types and forced match asset type: \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='IDX'),
@@ -2107,7 +2107,7 @@ class TestDataTypes(unittest.TestCase):
         # teset infer data types with adj parameter
         data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types,
                                       adj='back',
-                                      force_match_freq=True)
+                                      allow_ignore_freq=True)
         print(f'Inferred data types with adj = "b": \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='E'),
@@ -2156,8 +2156,8 @@ class TestDataTypes(unittest.TestCase):
         freqs = ['h', 'd', 'm']
         asset_types = ['E', 'IDX', 'FD']
         data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types,
-                                      force_match_freq=True,
-                                      force_match_asset_type=True)
+                                      allow_ignore_freq=True,
+                                      allow_ignore_asset_type=True)
         print(f'Inferred data types with multiple duplicated cases with forced freq and asset_type: \n{data_types}')
         expected_data_types = [
             DataType(name='close', freq='h', asset_type='E'),
