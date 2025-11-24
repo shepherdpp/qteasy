@@ -783,7 +783,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
             freqs=freq,
             asset_types=asset_type,
             adj=adj,
-            force_match_freq=True,
+            allow_ignore_freq=True,
     )
     data = get_history_panel(data_types=data_types, shares=stock, start=start_date, end=end_date, freq=freq,
                              data_source=data_source, resample_method='none').slice_to_dataframe(share=stock)

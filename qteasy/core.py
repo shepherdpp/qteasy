@@ -1497,7 +1497,7 @@ def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=N
             freqs=op.op_data_freq,
             asset_types=config['asset_type'],
             adj='none',
-            force_match_freq=True,
+            allow_ignore_freq=True,
     )
     hist_op = get_history_panel(
             data_types=data_types,
