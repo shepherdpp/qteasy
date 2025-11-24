@@ -953,7 +953,6 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         """ 测试是否能正确获取HistoryPanel"""
-        # TODO: 为了确保兼容性，首先使用infer_data_type()创建data_types，再传入get_history_panel()
         print('test get history panel data')
         data_types = infer_data_types(
                 names='wt_idx|000003.SH, close, wt_idx|000300.SH',

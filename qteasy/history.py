@@ -2557,6 +2557,10 @@ def get_history_panel(
     这时在输入处理阶段，程序会检查是否存在多个相同名字的数据类型，如果存在，则只保留频率最接近
     目标频率的那个数据类型，其他相同名字的数据类型会被忽略掉。
 
+    TODO: 将data_types参数改为data_type_names参数，只需要传入数据类型的名称列表即可，
+     由函数内部根据名称、频率和shares的资产类型，通过infer_asset_types()函数来自动匹配
+     合适的数据类型对象
+
     Parameters
     ----------
     data_types: [DataType]
