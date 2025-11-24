@@ -2549,15 +2549,18 @@ def get_history_panel(
     中同时看到股票和指数的close数据了。
 
     同时，这个函数还会根据需要调整数据的频率，将所有不同频率的数据全部都统一为需要的频率输出。
+    如果某些数据没有指定频率的数据类型，则会找到频率最接近的类型并通过升频或降频的方式调整为
+    需要的频率输出。
 
-    不过，如果选择合并数据类型，则必须确保输入测数据类型不包括多个相同名字不同频率的数据类型，因为
+    如果选择合并数据类型，则必须确保输入测数据类型不包括多个相同名字不同频率的数据类型，因为
     这种情况会导致错误：例如，输入数据类型包括close_E_d和close_E_h，
-    这时在读取的数据中会包括两组close_E数据，在重新调整频率的时候，这两种不同频率的数据会产生冲突
+    这时在输入处理阶段，程序会检查是否存在多个相同名字的数据类型，如果存在，则只保留频率最接近
+    目标频率的那个数据类型，其他相同名字的数据类型会被忽略掉。
 
     Parameters
     ----------
     data_types: [DataType]
-        需要获取的历史数据类型集合，必须是合法的DataType数据类型对象，
+        需要获取的历史数据类型的名称，
     data_source: DataSource
         数据源对象，用于获取数据
     shares: [str, list]
@@ -2649,6 +2652,9 @@ def get_history_panel(
         warn(f'All data will be converted to {freq} frequency!')
 
     if shares:
+        # 在这里获取有share的数据，但是注意，因为这里选择将相同name但是不同资产类型的数据合并到一起
+        # 但如果相同name的数据类型中有多个不同频率，则会在下面的函数中报错，此时应该检查输入的数据类型
+        # 并调整其频率，确保每一个name只有一个频率的数据类型
         normal_dfs = get_history_data_from_source(
                 datasource=data_source,
                 htypes=data_types,
