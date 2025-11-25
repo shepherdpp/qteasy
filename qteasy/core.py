@@ -1303,6 +1303,7 @@ def get_history_data(htypes=None,
             htype_names = htype_names
 
         # create data_types out of htype_names, freq, asset_types:
+        # TODO: 使用成熟的infer_data_type函数替代下面的代码
         from itertools import product
         data_types = []
         freqs = [freq, 'None']
@@ -1574,7 +1575,7 @@ def check_and_prepare_backtest_data(op: Operator,
                                     backtest_end: str,
                                     shares: Union[str, list[str]],
                                     datasource: DataSource) -> dict[str, pd.DataFrame]:
-    """ 下生成operator对象在回测模式下运行所需要的相关数据包，包括回测所有交易策略所需的历史数据，
+    """ 生成operator对象在回测模式下运行所需要的相关数据包，包括回测所有交易策略所需的历史数据，
     遍历Operator对象中的所有交易策略，获取所有交易策略所需要的所有历史数据。
 
     这个函数的要点在于解析operator对象中所有策略的数据窗口长度和数据频率，获取的数据必须可以生成足够的
@@ -1675,7 +1676,6 @@ def check_and_prepare_trade_prices(op: Operator,
         asset_types = 'E, IDX'
 
         fund_shares = [symbol for symbol in shares if symbol[-2:] in ['OF']]
-        equity_shares = [symbol for symbol in shares if symbol not in fund_shares]
 
         if (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
             price_data_type_name = 'open'
@@ -1696,7 +1696,7 @@ def check_and_prepare_trade_prices(op: Operator,
                 price_data_type_name += ', adj_nav'
             asset_types += ', FD'
 
-        # 获取价格
+        # 获取统一时间频率价格
         data_types.extend(
                 infer_data_types(
                         price_data_type_name,
@@ -1766,24 +1766,23 @@ def check_and_prepare_trade_prices(op: Operator,
 
 
 def check_and_prepare_benchmark_data(op: Operator,
-                                     start: str,
-                                     end: str,
-                                     benchmark: str,
+                                     benchmark_symbol: str,
                                      datasource: DataSource) -> pd.DataFrame:
     """ 获取指定时间区间内的回测业绩评价基准数据
 
-    这个函数的要点在于获取的数据频率应该固定为日频，因为回测业绩评价是基于日频数据计算的。另外，获取的数据类型
-    也应该是固定的，一般为后复权收盘价（'close|b'）或基金的累计净值（'cumm_nav'）。
+    本函数通过operator信息获取业绩评价基准数据。业绩评价基准可以是股票、指数或者基金，但是
+    只能包含单一资产的价格数据。业绩评价数据格式与参考数据类型一致，可以是一个DataFrame，索引为时间戳，
+    列为资产代码。也可以是一个Series，索引为时间戳，值为资产价格，如果资产类型为E或FD(场内基金），则
+    价格为后复权价格。如果资产类型为IDX，则价格为指数点位，如果资产类型为场外基金OF，则价格为基金的复权净值。
+
+    benchmark数据会被作为回测结果的业绩评价基准，在计算中需要与每一个交易时机的回测结果做比较，因此
+    benchmark数据的时间索引必须与 operator 的group_timing_table的时间索引对齐。
 
     Parameters
     ----------
     op: qteasy.Operator
         交易员对象，包含投资策略信息
-    start: str
-        业绩评价基准数据的开始日期，格式为 'YYYYMMDD'
-    end: str
-        业绩评价基准数据的结束日期，格式为 'YYYYMMDD'
-    benchmark: str
+    benchmark_symbol: str
         业绩评价基准资产代码
     datasource: qteasy.DataSource
         数据源对象
@@ -1793,13 +1792,41 @@ def check_and_prepare_benchmark_data(op: Operator,
     benchmark_data: pd.DataFrame
         包含用于回测结果评价的基准数据
     """
-    # 生成回测业绩评价基准的数据参数, 基准价格类型为'close|b'(股票/指数)'cumm_nav'(基金)，且价格应该是后复权价格
-    benchmark_start, benchmark_end = start, end
-    benchmark_freq = op.group_schedules.freq
-    data_types = infer_data_types('close', freqs=benchmark_freq, asset_types='ANY', adj='back')
+
+    # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错，如果已经创建，获取开始和结束日期
+    op_group_schedules = op.group_schedules  # 一个dict，每个group为key，一个DataFrame为value
+    if not op_group_schedules:
+        raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
+
+    benchmark_start = min(sched[0] for sched in op_group_schedules.values()).date()
+    benchmark_end = max(sched[-1] for sched in op_group_schedules.values()).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
+
+    # 检查Operator对象所有交易组的最高运行频率
+    all_run_freqs = [group.run_freq for group in op.groups.values()]
+    benchmark_freq = all_run_freqs[0]  # TODO: 这里简单取第一个频率作为最高频率，未来需要改进
+
+    # 解析benchmark_symbol，根据资产类型确定数据类型名称
+    if benchmark_symbol[-2:] in ['OF']:  # 场外基金
+        benchmark_data_type_name = 'adj_nav'
+        adj = 'none'
+        asset_types = 'FD'
+    elif benchmark_symbol[-2:] in ['SZ', 'SH', 'BJ']:  # 覆盖股票、场内基金或指数的情况
+        benchmark_data_type_name = 'close'
+        adj = 'back'
+        asset_types = 'E, IDX, FD'
+    else:
+        raise ValueError(f'Unsupported benchmark symbol: {benchmark_symbol}, please use stock, index or fund code!')
+
+    data_types = infer_data_types(benchmark_data_type_name,
+                                  freqs=benchmark_freq,
+                                  asset_types=asset_types,
+                                  adj=adj,
+                                  allow_ignore_freq=True,
+                                  allow_ignore_adj=True)
+
     benchmark_data = get_history_panel(
             data_types=data_types,
-            shares=[benchmark],
+            shares=[benchmark_symbol],
             freq=benchmark_freq,
             start=benchmark_start,
             end=benchmark_end,
@@ -1807,12 +1834,16 @@ def check_and_prepare_benchmark_data(op: Operator,
             resample_method='ffill',
             return_history_panel=False,
     )
-    benchmark_data = benchmark_data['close:b']
+
+    import pdb; pdb.set_trace()
+    benchmark_data = benchmark_data[data_types[0].name]  # 提取DataFrame
 
     return benchmark_data
 
 
-def check_and_prepare_optimize_data(operator, config, datasource) -> tuple:
+def check_and_prepare_optimize_data(operator: Operator,
+                                    config: dict,
+                                    datasource: DataSource) -> tuple:
     """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
 
     Parameters
@@ -2178,9 +2209,7 @@ def run_mode_1(op, config):
 
     hist_benchmark = check_and_prepare_benchmark_data(
             op=op,
-            start=start_date,
-            end=end_date,
-            benchmark=config['benchmark_asset'],
+            benchmark_symbol=config['benchmark_asset'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
 
@@ -2204,7 +2233,8 @@ def run_mode_1(op, config):
             trade_price_data=trade_prices.values,
             logger=qteasy.logger_core,
     )
-
+    # TODO: 实现 backtestd.evaluate() / backtested.report() / backtested.plot()
+    #  以后，就不需要调用backtest_result = backtested.trade_result_df() 了
     backtest_result = backtested.trade_result_df()
 
     if config['trade_log']:
@@ -2213,6 +2243,7 @@ def run_mode_1(op, config):
         backtested.generate_trade_summary(save_to_file_path=config['trade_summary_path'])
 
     # 评价回测结果——根据交易结果生成交易结果的评价结果
+    # TODO: 修改evaluate函数，使这里的调用格式为 backtester.evaluate(...), 将cashplan与hist_benchmark作为backtester的属性
     backtest_result = evaluate(
             looped_values=backtest_result,
             hist_benchmark=hist_benchmark,
@@ -2220,6 +2251,10 @@ def run_mode_1(op, config):
             indicators=config['test_indicators'],
     )
 
+    # TODO: 同理，这里的_loop_report_str() 以及 _plot_test_result() 函数也应该修改为
+    #  backtester.plot(...) 以及 backtester.report(...)
+    #  相应地，operator在优化过程中，应该创建一个Optimizer对象来管理优化过程
+    #  operator 对象在实盘运行过程中，也需要创建一个 Trader 对象来管理实盘交易过程
     if config['report']:
         # 格式化输出回测结果
         report = _loop_report_str(backtest_result)
