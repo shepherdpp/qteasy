@@ -192,6 +192,8 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         self.datasource.drop_table_data('stock_hourly')
         self.datasource.drop_table_data('index_daily')
         self.datasource.drop_table_data('stock_adj_factors')
+        if os.path.exists(self.test_db_path):
+            shutil.rmtree(self.test_db_path)
 
     def test_normal_case_with_shares_list(self):
         """测试用例：正常输入参数，shares为列表"""
@@ -603,9 +605,13 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.datasource.allow_drop_table=True
         self.datasource.drop_table_data('stock_daily')
         self.datasource.drop_table_data('stock_hourly')
+        self.datasource.drop_table_data('stock_1min')
         self.datasource.drop_table_data('index_daily')
+        self.datasource.drop_table_data('index_1min')
         self.datasource.drop_table_data('fund_nav')
         self.datasource.drop_table_data('stock_adj_factors')
+        if os.path.exists(self.db_path):
+            shutil.rmtree(self.db_path)
 
     def test_share_list_with_simple_operator(self):
         """测试用例：正常输入参数，简单operator，测试各种share组合"""
@@ -1015,97 +1021,55 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
 
 
 class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
-    """check_and_prepare_benchmark_data 函数的单元测试类（不使用Mock）"""
+    """check_and_prepare_benchmark_data 函数的单元测试类
+
+    测试通过operator信息获取业绩评价基准数据。业绩评价基准可以是股票、指数或者基金，但是
+    只能包含单一资产的价格数据。
+
+    测试用例：
+     - 测试数据源中包含一只股票、一个指数、一只场内基金和一只场外基金在2020年全年内的日K线数据以及小时K线数据，以及相关复权因子用于计算复权价格
+     - 测试Operator使用Daily/Hourly两个交易策略，生成的交易信号清单同时包含日频和小时频率的时间点，测试混合运行情况下的业绩基准数据获取
+
+    测试项目如下：
+     - 对于同一个running_timing_table，使用股票作为业绩基准，测试返回数据的正确性
+     - 对于同一个running_timing_table，使用指数作为业绩基准，测试返回数据的正确性
+     - 对于同一个running_timing_table，使用场内基金作为业绩基准，测试返回数据的正确性
+     - 对于同一个running_timing_table，使用场外基金作为业绩基准，测试返回数据的正确性
+    测试错误的输入参数处理：
+     - 测试空的benchmark代码处理
+     - 测试operator没有正确生成running_schedule时的处理
+     - 测试无法读到benchmark数据时的处理
+    """
 
     def setUp(self):
         """测试前的准备工作"""
         # 创建临时目录用于测试数据库
         self.test_dir = tempfile.mkdtemp()
-        self.db_path = os.path.join(self.test_dir, 'test_db')
-        os.makedirs(self.db_path)
+        self.test_db_path = os.path.join(self.test_dir, 'test_db')
+        os.makedirs(self.test_db_path)
 
         # 创建测试数据源
         self.datasource = DataSource(
                 source_type='file',
-                file_path=self.db_path,
-                file_type='csv'
+                file_loc=self.test_db_path
         )
 
         # 创建测试策略和Operator
-        self.test_strategy = DummyStrategy()
-        self.operator = Operator(strategies=[self.test_strategy])
+        self.daily_strategy = DailyStrategy()
+        self.hourly_strategy = HourlyStrategy()
+        self.operator = Operator(strategies=[self.daily_strategy, self.hourly_strategy])
 
         # 测试日期
-        self.start_date = '20200101'
-        self.end_date = '20201231'
-        self.benchmark_code = '000300.SH'
-
-        # 创建测试数据
-        self._create_test_data()
-
-    def _create_test_data(self):
-        """创建测试用的历史数据"""
-        # 创建交易日历数据
-        dates = pd.date_range('20191201', '20210131', freq='D')
-        # 过滤掉周末（简化处理）
-        trade_dates = dates[dates.weekday < 5]
-        trade_calendar_data = pd.DataFrame({
-            'date':    trade_dates.strftime('%Y%m%d'),
-            'is_open': 1
-        })
-
-        # 创建指数基础信息表
-        index_basic_data = pd.DataFrame({
-            'ts_code':   ['000300.SH'],
-            'name':      ['沪深300指数'],
-            'fullname':  ['沪深300指数'],
-            'publisher': ['中证公司'],
-            'category':  ['规模指数'],
-            'list_date': ['20050408'],
-            'exchange':  [' SSE']
-        })
-
-        # 创建指数日线数据
-        date_range = pd.date_range('20191201', '20201231', freq='D')
-        # 过滤掉周末
-        trade_days = date_range[date_range.weekday < 5]
-
-        # 生成指数价格数据
-        n_days = len(trade_days)
-        base_price = 4000.0
-        # 生成随机游走的价格序列
-        returns = np.random.normal(0, 0.01, n_days)
-        prices = [base_price]
-        for r in returns[1:]:
-            prices.append(prices[-1] * (1 + r))
-
-        index_data = pd.DataFrame({
-            'ts_code':    self.benchmark_code,
-            'trade_date': trade_days.strftime('%Y%m%d'),
-            'open':       [p * (1 + np.random.uniform(-0.005, 0.005)) for p in prices],
-            'high':       [p * (1 + np.random.uniform(0, 0.01)) for p in prices],
-            'low':        [p * (1 - np.random.uniform(0, 0.01)) for p in prices],
-            'close':      prices,
-            'vol':        np.random.uniform(1e9, 2e9, n_days),
-            'amount':     [p * v for p, v in zip(prices, np.random.uniform(1e9, 2e9, n_days))]
-        })
-
-        # 创建复权因子数据
-        adj_data = pd.DataFrame({
-            'ts_code':    self.benchmark_code,
-            'trade_date': trade_days.strftime('%Y%m%d'),
-            'adj_factor': np.ones(len(trade_days))  # 简化处理，复权因子为1
-        })
-
-        # 保存数据到数据源
-        index_data.to_csv(os.path.join(self.db_path, '000300_SH_daily.csv'), index=False)
-        adj_data.to_csv(os.path.join(self.db_path, '000300_SH_adj_factor.csv'), index=False)
-        index_basic_data.to_csv(os.path.join(self.db_path, 'index_basic.csv'), index=False)
-        trade_calendar_data.to_csv(os.path.join(self.db_path, 'trade_calendar.csv'), index=False)
+        self.benchmark_stock = '000001.SZ'
+        self.benchmark_index = '000300.SH'
+        self.benchmark_fund_in = '510050.SH'
+        self.benchmark_fund_out = '161039.OF'
 
     def tearDown(self):
         """测试后的清理工作"""
         # 清理测试数据
+        self.datasource.allow_drop_table = True
+        self.datasource.drop_table_data('stock_hourly')
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
@@ -1114,9 +1078,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark=self.benchmark_code,
+                benchmark_symbol=self.benchmark_code,
                 datasource=self.datasource
         )
 
@@ -1142,20 +1104,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         with self.assertRaises(Exception):  # 空代码应该导致异常
             check_and_prepare_benchmark_data(
                     op=self.operator,
-                    start=self.start_date,
-                    end=self.end_date,
-                    benchmark='',
-                    datasource=self.datasource
-            )
-
-    def test_invalid_date_format(self):
-        """测试用例：无效的日期格式"""
-        with self.assertRaises(ValueError):
-            check_and_prepare_benchmark_data(
-                    op=self.operator,
-                    start='invalid_date',
-                    end=self.end_date,
-                    benchmark=self.benchmark_code,
+                    benchmark_symbol='',
                     datasource=self.datasource
             )
 
@@ -1164,9 +1113,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark=self.benchmark_code,
+                benchmark_symbol=self.benchmark_code,
                 datasource=self.datasource
         )
 
@@ -1180,9 +1127,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark=self.benchmark_code,
+                benchmark_symbol=self.benchmark_code,
                 datasource=self.datasource
         )
 
@@ -1207,9 +1152,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark='NONEXIST.SH',
+                benchmark_symbol='NONEXIST.SH',
                 datasource=self.datasource
         )
 
@@ -1220,7 +1163,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
     def test_operator_frequency_handling(self):
         """测试Operator频率处理"""
         # 创建不同频率的策略
-        daily_strategy = DummyStrategy()
+        daily_strategy = DailyStrategy()
         daily_strategy.run_freq = 'd'
 
         operator_daily = Operator(strategies=[daily_strategy])
@@ -1228,9 +1171,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=operator_daily,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark=self.benchmark_code,
+                benchmark_symbol=self.benchmark_code,
                 datasource=self.datasource
         )
 
@@ -1244,9 +1185,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                start=self.start_date,
-                end=self.end_date,
-                benchmark=self.benchmark_code,
+                benchmark_symbol=self.benchmark_code,
                 datasource=self.datasource
         )
 
