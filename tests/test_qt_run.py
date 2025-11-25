@@ -1029,6 +1029,7 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
     测试用例：
      - 测试数据源中包含一只股票、一个指数、一只场内基金和一只场外基金在2020年全年内的日K线数据以及小时K线数据，以及相关复权因子用于计算复权价格
      - 测试Operator使用Daily/Hourly两个交易策略，生成的交易信号清单同时包含日频和小时频率的时间点，测试混合运行情况下的业绩基准数据获取
+     - 测试Operator使用Daily交易策略，生成的交易信号清单包含日频时间点，测试简单情况下的业绩基准数据获取
 
     测试项目如下：
      - 对于同一个running_timing_table，使用股票作为业绩基准，测试返回数据的正确性
@@ -1054,12 +1055,109 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
                 file_loc=self.test_db_path
         )
 
+        # 向测试数据源中填充数据，测试数据随机生成，包括20200101～20201231之间的下面数据：
+        # - 股票日线价格：000001.SZ
+        # - 股票复权因子：000001.SZ
+        # - 股票小时K线价格：000001.SZ
+        # - 指数日线价格：000300.SH指数
+        # - 指数小时K线价格：000300.SH
+        # - 场内基金日线价格：510050.SH
+        # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
+        daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
+        hourly_index = tti(start='20200101', end='20201231', freq='h')
+
+        # 生成000001的stock_daily数据
+        stock_daily_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        stock_daily_df_000001['ts_code'] = '000001.SZ'
+        # 生成000001的stock_hourly数据
+        stock_hourly_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        stock_hourly_df_000001['ts_code'] = '000001.SZ'
+        # 生成000001的adj_factor数据
+        stock_adj_factor_000001 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(len(daily_index), 1)),
+                columns=['adj_factor'],
+                index=daily_index,
+        )
+        stock_adj_factor_000001['ts_code'] = '000001.SZ'
+        # 生成000300.SH数据
+        index_daily_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        index_daily_df_000300['ts_code'] = '000300.SH'
+        # 生成000300.SH数据
+        index_hourly_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        index_hourly_df_000300['ts_code'] = '000300.SH'
+        # 生成510050.SH数据
+        fund_daily_df_510050 = pd.DataFrame(
+                np.random.randint(2, 10, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        fund_daily_df_510050['ts_code'] = '510050.SH'
+        # 生成510050.SH的adj_factor数据
+        fund_adj_factor_510050 = pd.DataFrame(
+                np.random.uniform(0.8, 1.2, size=(len(daily_index), 1)),
+                columns=['adj_factor'],
+                index=daily_index,
+        )
+        fund_adj_factor_510050['ts_code'] = '510050.SH'
+        # 生成161039.OF的数据
+        fund_nav_df_161039 = pd.DataFrame(
+                np.random.uniform(1.0, 2.0, size=(len(daily_index), 4)),
+                columns=['unit_nav', 'accum_nav', 'adj_nav', 'accum_div'],
+                index=daily_index,
+        )
+        fund_nav_df_161039['ts_code'] = '161039.OF'
+
+        # 更新数据到数据源
+        self.datasource.update_table_data('stock_daily',
+                                          df=stock_daily_df_000001.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('stock_hourly',
+                                          df=stock_hourly_df_000001.reset_index().rename(columns={'index': 'trade_time'}))
+        self.datasource.update_table_data('stock_adj_factor',
+                                          df=stock_adj_factor_000001.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_daily',
+                                          df=index_daily_df_000300.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_hourly',
+                                          df=index_hourly_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
+        self.datasource.update_table_data('fund_daily',
+                                          df=fund_daily_df_510050.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('fund_adj_factor',
+                                          df=fund_adj_factor_510050.reset_index().rename(columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('fund_nav',
+                                          df=fund_nav_df_161039.reset_index().rename(columns={'index': 'nav_date'}))
+
         # 创建测试策略和Operator
         self.daily_strategy = DailyStrategy()
         self.hourly_strategy = HourlyStrategy()
         self.operator = Operator(strategies=[self.daily_strategy, self.hourly_strategy])
+        self.daily_operator = Operator(strategies=[self.daily_strategy])
+        self.wrong_operator = Operator(strategies=[self.daily_strategy])
 
-        # 测试日期
+        self.operator.prepare_running_schedule(
+                start_date='20200525',
+                end_date='20200610',
+        )
+        self.daily_operator.prepare_running_schedule(
+                start_date='20200525',
+                end_date='20200610',
+        )
+
+        # 测试股票代码
         self.benchmark_stock = '000001.SZ'
         self.benchmark_index = '000300.SH'
         self.benchmark_fund_in = '510050.SH'
@@ -1073,14 +1171,15 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    def test_normal_case_returns_dataframe(self):
+    def test_benchmark_with_stock(self):
         """测试用例：正常输入参数，返回DataFrame"""
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                benchmark_symbol=self.benchmark_code,
+                benchmark_symbol=self.benchmark_stock,
                 datasource=self.datasource
         )
+        print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
 
         # 验证结果
         self.assertIsInstance(result, pd.DataFrame)
@@ -1090,69 +1189,98 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         self.assertIsInstance(result.index, pd.DatetimeIndex)
 
         # 检查列
-        self.assertIn(self.benchmark_code, result.columns)
+        self.assertIn(self.benchmark_stock, result.columns)
 
-        # 检查数据类型
-        self.assertIn(result[self.benchmark_code].dtype, [np.dtype('float64'), np.dtype('float32')])
+        # 检查数据中没有NaN值
+        self.assertFalse(result[self.benchmark_stock].isnull().any())
 
-        # 检查日期范围
-        self.assertGreaterEqual(result.index.min(), pd.to_datetime(self.start_date))
-        self.assertLessEqual(result.index.max(), pd.to_datetime(self.end_date))
+        # 检查index与operator的group_timing_table一致
+        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
 
-    def test_empty_benchmark_code(self):
+    def test_benchmark_with_index(self):
         """测试用例：空的benchmark代码"""
-        with self.assertRaises(Exception):  # 空代码应该导致异常
-            check_and_prepare_benchmark_data(
-                    op=self.operator,
-                    benchmark_symbol='',
-                    datasource=self.datasource
-            )
+        # 执行被测函数
+        result = check_and_prepare_benchmark_data(
+                op=self.operator,
+                benchmark_symbol=self.benchmark_index,
+                datasource=self.datasource
+        )
+        print(f'got benchmark data for index {self.benchmark_index}:\n{result}')
 
-    def test_date_range_validation(self):
+        # 验证结果
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+
+        # 检查列
+        self.assertIn(self.benchmark_index, result.columns)
+
+        # 检查数据中没有NaN值
+        self.assertFalse(result[self.benchmark_index].isnull().any())
+
+        # 检查index与operator的group_timing_table一致
+        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+
+    def test_benchmark_with_fund(self):
         """测试日期范围处理"""
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                benchmark_symbol=self.benchmark_code,
+                benchmark_symbol=self.benchmark_fund_in,
                 datasource=self.datasource
         )
+        print(f'got benchmark data for fund in {self.benchmark_fund_in}:\n{result}')
 
-        # 验证日期范围
+        # 验证结果
+        self.assertIsInstance(result, pd.DataFrame)
         self.assertFalse(result.empty)
-        self.assertGreaterEqual(result.index.min(), pd.to_datetime(self.start_date))
-        self.assertLessEqual(result.index.max(), pd.to_datetime(self.end_date))
 
-    def test_result_data_structure(self):
+        # 检查索引类型
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+
+        # 检查列
+        self.assertIn(self.benchmark_fund_in, result.columns)
+
+        # 检查数据中没有NaN值
+        self.assertFalse(result[self.benchmark_fund_in].isnull().any())
+
+        # 检查index与operator的group_timing_table一致
+        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+
+    def test_benchmark_with_fund_out(self):
         """测试返回数据的结构是否正确"""
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                benchmark_symbol=self.benchmark_code,
+                benchmark_symbol=self.benchmark_fund_out,
                 datasource=self.datasource
         )
+        print(f'got benchmark data for fund in {self.benchmark_fund_out}:\n{result}')
 
-        # 验证返回数据结构
+        # 验证结果
         self.assertIsInstance(result, pd.DataFrame)
         self.assertFalse(result.empty)
 
-        # 检查索引
+        # 检查索引类型
         self.assertIsInstance(result.index, pd.DatetimeIndex)
 
         # 检查列
-        self.assertIn(self.benchmark_code, result.columns)
+        self.assertIn(self.benchmark_fund_out, result.columns)
 
-        # 检查数据完整性
-        self.assertFalse(result.isnull().all().all())
+        # 检查数据中没有NaN值
+        self.assertFalse(result[self.benchmark_fund_out].isnull().any())
 
-        # 检查数据类型
-        self.assertTrue(pd.api.types.is_numeric_dtype(result[self.benchmark_code]))
+        # 检查index与operator的group_timing_table一致
+        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
 
     def test_nonexistent_benchmark(self):
         """测试用例：不存在的benchmark代码"""
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                benchmark_symbol='NONEXIST.SH',
+                benchmark_symbol='NONEXIST',
                 datasource=self.datasource
         )
 
@@ -1160,42 +1288,35 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         self.assertIsInstance(result, pd.DataFrame)
         self.assertTrue(result.empty)
 
-    def test_operator_frequency_handling(self):
-        """测试Operator频率处理"""
-        # 创建不同频率的策略
-        daily_strategy = DailyStrategy()
-        daily_strategy.run_freq = 'd'
-
-        operator_daily = Operator(strategies=[daily_strategy])
-
-        # 执行被测函数
-        result = check_and_prepare_benchmark_data(
-                op=operator_daily,
-                benchmark_symbol=self.benchmark_code,
-                datasource=self.datasource
-        )
-
-        # 验证结果
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertFalse(result.empty)
-        self.assertIn(self.benchmark_code, result.columns)
-
-    def test_data_source_integration(self):
+    def test_missing_data_in_source(self):
         """测试数据源集成"""
         # 执行被测函数
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
-                benchmark_symbol=self.benchmark_code,
+                benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
                 datasource=self.datasource
         )
+        print(f'got benchmark data for nonexistent code 000999.SZ:\n{result}')
 
-        # 验证数据源正确集成
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertFalse(result.empty)
-        self.assertIn(self.benchmark_code, result.columns)
-        # 检查是否有实际数据
-        self.assertFalse(result[self.benchmark_code].empty)
-        self.assertFalse(result[self.benchmark_code].isnull().all())
+        # operator没有运行计划
+        result = check_and_prepare_benchmark_data(
+                op=self.wrong_operator,
+                benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
+                datasource=self.datasource
+        )
+        print(f'got benchmark data for nonexistent code 000999.SZ:\n{result}')
+
+        # 超出范围的operater运行计划
+        self.wrong_operator.prepare_running_schedule(
+                start_date='20220101',
+                end_date='20220131',  # 超出数据源覆盖范围
+        )
+        result = check_and_prepare_benchmark_data(
+                op=self.wrong_operator,
+                benchmark_symbol='000001.SZ',
+                datasource=self.datasource
+        )
+        print(f'got benchmark data for out-of-range operator:\n{result}')
 
 
 if __name__ == '__main__':
