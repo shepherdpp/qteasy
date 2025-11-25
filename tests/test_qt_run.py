@@ -1171,6 +1171,32 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
+    def test_daily_benchmark_with_stock(self):
+        """测试用例：正常输入参数，返回DataFrame"""
+        # 执行被测函数
+        result = check_and_prepare_benchmark_data(
+                op=self.daily_operator,
+                benchmark_symbol=self.benchmark_stock,
+                datasource=self.datasource
+        )
+        print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
+
+        # 验证结果
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+
+        # 检查列
+        self.assertIn(self.benchmark_stock, result.columns)
+
+        # 检查数据中没有NaN值
+        self.assertFalse(result[self.benchmark_stock].isnull().any())
+
+        # 检查index与operator的group_timing_table一致
+        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+
     def test_benchmark_with_stock(self):
         """测试用例：正常输入参数，返回DataFrame"""
         # 执行被测函数
