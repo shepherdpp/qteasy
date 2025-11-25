@@ -1393,8 +1393,8 @@ class TestGetHistoryDataPackages(unittest.TestCase):
 
         df = result['close_E_d']
         self.assertEqual(len(df), 5)  # 5个交易日
-        self.assertTrue(pd.Timestamp('2023-01-03') in df.index)
-        self.assertTrue(pd.Timestamp('2023-01-07') in df.index)
+        self.assertTrue(pd.Timestamp('2023-01-03 15:00:00') in df.index)
+        self.assertTrue(pd.Timestamp('2023-01-07 15:00:00') in df.index)
 
     def test_get_data_with_row_count(self):
         """测试使用行数限制获取数据"""
