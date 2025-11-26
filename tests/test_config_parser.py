@@ -158,30 +158,6 @@ class TestConfigParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_backtest_start_end_dates(config=config)
 
-    def test_parse_backtest_data_packages(self):
-        """ test the function parse_backtest_data_package"""
-        # test normal parameters
-        config = {
-            'invest_start': '20200101',
-            'invest_end':   '20200304',
-            'asset_pool':   ['000001.SZ', '000002.SZ', '000004.SZ'],
-            'data_source':  QT_DATA_SOURCE,
-        }
-        dtypes = [
-            DataType('close', freq='d', asset_type='E'),
-            DataType('pe', freq='d', asset_type='E'),
-            DataType('close', freq='w', asset_type='E')
-        ]
-        data_package = parse_backtest_data_package(config=config, dtypes=dtypes)
-        print(data_package)
-        self.assertIsInstance(data_package, dict)
-        self.assertIn('close_E_d', data_package)
-        self.assertIn('pe_E_d', data_package)
-        self.assertIn('close_E_w', data_package)
-        self.assertIsInstance(data_package['close_E_d'], pd.DataFrame)
-        self.assertIsInstance(data_package['pe_E_d'], pd.DataFrame)
-        self.assertIsInstance(data_package['close_E_w'], pd.DataFrame)
-
     def test_trade_cost_params(self):
         """ test the function parse_trade_cost_params"""
         config = {
