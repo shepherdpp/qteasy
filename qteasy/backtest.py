@@ -9,6 +9,7 @@
 # ======================================
 
 import logging
+import time
 import pandas as pd
 import numpy as np
 from numba import njit
@@ -16,6 +17,8 @@ from typing import Any, Union, Optional
 
 from numpy import bool_, dtype, ndarray
 from pandas import DataFrame
+
+from qteasy.utilfuncs import str_to_list
 
 from qteasy.qt_operator import (
     Operator,
@@ -756,6 +759,8 @@ class Backtester:
 
         # 参数基础校验
         assert isinstance(op, Operator), "op must be an instance of Operator"
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
         assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
 
         self.op = op
@@ -770,6 +775,9 @@ class Backtester:
         self.trading_delivery_params = trading_delivery_params
         self.trade_price_data = trade_price_data
         self.logger = logger
+
+        self.op_run_time = 0.0  # operator运行时间，单位秒
+        self.backtest_run_time = 0.0  # 回测运行时间，单位秒
 
         # 1，检查operator对象是否已经准备好，否则raise error, TOOD: 是否有必要？
         # op.is_ready(raise_error=True)
@@ -796,9 +804,10 @@ class Backtester:
 
         # 3.1 现金和股票持仓历史记录表
         shape_assets = (self.n_signals + 1, self.share_count)
-        self.own_cashes = np.zeros(shape=shape_assets, dtype=float)
+        shape_cashes = (self.n_signals + 1,)
+        self.own_cashes = np.zeros(shape=shape_cashes, dtype=float)
         self.own_amounts_array = np.zeros(shape=shape_assets, dtype=float)
-        self.available_cashes = np.zeros(shape=shape_assets, dtype=float)
+        self.available_cashes = np.zeros(shape=shape_cashes, dtype=float)
         self.available_amounts_array = np.zeros(shape=shape_assets, dtype=float)
 
         # 3.2 交易过程数据记录表，包括交易记录、交易成本等
@@ -834,19 +843,23 @@ class Backtester:
         """处理operator的交易信号仅包含静态数据类型（不依赖交易结果的数据）的情况:
 
         """
-        # 1，调用operator.run()生成完整的交易信号清单
+        # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
         stypes = np.zeros(self.op.get_signal_count(), dtype=int)
         s_indices = np.zeros(self.op.get_signal_count(), dtype=int)
         signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
         signal_index = 0
 
+        st = time.time()
         for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
             signals[signal_index, :] = signal
             signal_index += 1
+        et = time.time()
+        self.op_run_time = et - st
 
         # 2，调用backtest_batch_steps()进行回测，填充回测结果清单
+        st = time.time()
         backtest_batch_steps(
                 signal_types=stypes,
                 op_signals=signals,
@@ -865,6 +878,8 @@ class Backtester:
                 **self.trading_moq_params,
                 **self.trading_delivery_params,
         )
+        et = time.time()
+        self.backtest_run_time = et - st
 
         return signals
 
@@ -891,6 +906,7 @@ class Backtester:
         )
         day_nums = self.delivery_day_indicators.cumsum()
 
+        st = time.time()
         # 循环执行下面步骤，直至完整生成回测结果清单
         for i in range(self.op.get_signal_count()):
 
@@ -939,6 +955,10 @@ class Backtester:
                     trade_prices=self.trade_price_data[i],
             )
 
+        et = time.time()
+        self.op_run_time = et - st
+        self.backtest_run_time = et - st
+
         # 5，返回signals，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
         return signals
 
@@ -958,6 +978,7 @@ class Backtester:
         # 填充标量计算结果
         value_history['cash'] = self.own_cashes[1:]
         value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+        value_history['fee'] = self.trade_cost_array.sum(axis=1).cumsum()
 
         return value_history
 
