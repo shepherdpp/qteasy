@@ -1195,7 +1195,9 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
         self.assertFalse(result[self.benchmark_stock].isnull().any())
 
         # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        print(f'operator timing table index:\n{self.daily_operator.group_timing_table.index}')
+        print(f'benchmark data index:\n{result.index}')
+        self.assertTrue(result.index.equals(self.daily_operator.group_timing_table.index))
 
     def test_benchmark_with_stock(self):
         """测试用例：正常输入参数，返回DataFrame"""
@@ -1304,45 +1306,41 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
     def test_nonexistent_benchmark(self):
         """测试用例：不存在的benchmark代码"""
         # 执行被测函数
-        result = check_and_prepare_benchmark_data(
-                op=self.operator,
-                benchmark_symbol='NONEXIST',
-                datasource=self.datasource
-        )
-
-        # 对于不存在的代码，应该返回空的DataFrame
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertTrue(result.empty)
+        with self.assertRaises(ValueError):
+            check_and_prepare_benchmark_data(
+                    op=self.operator,
+                    benchmark_symbol='NONEXIST',
+                    datasource=self.datasource
+            )
 
     def test_missing_data_in_source(self):
         """测试数据源集成"""
-        # 执行被测函数
-        result = check_and_prepare_benchmark_data(
-                op=self.operator,
-                benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                datasource=self.datasource
-        )
-        print(f'got benchmark data for nonexistent code 000999.SZ:\n{result}')
 
         # operator没有运行计划
-        result = check_and_prepare_benchmark_data(
-                op=self.wrong_operator,
-                benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                datasource=self.datasource
-        )
-        print(f'got benchmark data for nonexistent code 000999.SZ:\n{result}')
+        with self.assertRaises(ValueError):
+            check_and_prepare_benchmark_data(
+                    op=self.wrong_operator,
+                    benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
+                    datasource=self.datasource
+            )
 
         # 超出范围的operater运行计划
         self.wrong_operator.prepare_running_schedule(
                 start_date='20220101',
                 end_date='20220131',  # 超出数据源覆盖范围
         )
-        result = check_and_prepare_benchmark_data(
-                op=self.wrong_operator,
-                benchmark_symbol='000001.SZ',
-                datasource=self.datasource
-        )
-        print(f'got benchmark data for out-of-range operator:\n{result}')
+        # 由于symbol超范围或运行计划超范围，导致找不到benchmark数据
+        with self.assertRaises(RuntimeError):
+            check_and_prepare_benchmark_data(
+                    op=self.operator,
+                    benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
+                    datasource=self.datasource
+            )
+            check_and_prepare_benchmark_data(
+                    op=self.wrong_operator,
+                    benchmark_symbol='000001.SZ',
+                    datasource=self.datasource
+            )
 
 
 if __name__ == '__main__':
