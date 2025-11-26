@@ -861,20 +861,20 @@ def _valid_qt_kwargs():
                           '               义的评价结果'},
 
         'test_indicators':
-            {'Default':   'years,fv,return,mdd,ref,alpha,beta,sharp,info',
+            {'Default':   'r,m,v,b,alpha,beta,sharp,info',
              'Validator': lambda value: isinstance(value, str),
              'level':     2,
              'text':      '对优化后的策略参数进行测试评价的评价指标。\n'
                           '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出，取值范围如下：\n'
-                          '"years"       - total year\n'
-                          '"fv"          - final values\n'
-                          '"return"      - total return rate\n'
-                          '"mdd"         - max draw down\n'
-                          '"benchmark"   - benchmark return\n'
-                          '"alpha"       - alpha rate\n'
-                          '"beta"        - beta rate\n'
-                          '"sharp"       - sharp rate\n'
-                          '"info"        - info rate'},
+                          'r/rtn/return/total_return : 总收益率和年化收益率指标\n'
+                          'm/mdd/max_drawdown        : 最大回撤指标\n'
+                          'v/volatility              : 波动率指标\n'
+                          'b/benchmark_rtn/benchmark : 基准收益率指标\n'
+                          'beta                      : 贝塔系数指标\n'
+                          'sharp                     : 夏普率指标\n'
+                          'alpha                     : 阿尔法系数指标\n'
+                          'info                      : 信息比率指标\n'
+                          'calmar                    : Calmar比率指标'},
 
         'indicator_plot_type':
             {'Default':   'histo',
