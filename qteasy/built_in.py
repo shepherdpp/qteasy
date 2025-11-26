@@ -1957,7 +1957,7 @@ class MACD(RuleIterator):
         h = self.get_data('close_E_d')
 
         # 计算指数的指数移动平均价格
-        diff = ema(h[0], s) - ema(h[0], l)
+        diff = ema(h, s) - ema(h, l)
         dea = ema(diff, m)
         _macd = 2 * (diff - dea)
         cat = 1 if _macd[-1] > 0 else 0
@@ -3556,7 +3556,7 @@ class DMA(RuleIterator):
                 name='DMA',
                 description='Quick DMA strategy, determine long/short position according to differences of '
                             'moving average prices with simple timing strategy',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 **kwargs,
         )
 

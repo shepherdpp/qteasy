@@ -89,7 +89,7 @@ def parse_trade_cost_params(config) -> dict:
         'sell_rate': config['cost_rate_sell'],
         'buy_min': config['cost_min_buy'],
         'sell_min': config['cost_min_sell'],
-        'slipage': config['cost_slipage'],
+        'slippage': config['cost_slippage'],
     }
     # raise if parameters are out of range or with wrong types
     if not (isinstance(cost_params['buy_rate'], (float, int)) and 0 <= cost_params['buy_rate'] < 1):
@@ -100,7 +100,7 @@ def parse_trade_cost_params(config) -> dict:
         raise ValueError('cost_min_buy should be a non-negative float number')
     if not (isinstance(cost_params['sell_min'], (float, int)) and cost_params['sell_min'] >= 0):
         raise ValueError('cost_min_sell should be a non-negative float number')
-    if not (isinstance(cost_params['slipage'], (float, int)) and 0 <= cost_params['slipage'] < 1):
+    if not (isinstance(cost_params['slippage'], (float, int)) and 0 <= cost_params['slippage'] < 1):
         raise ValueError('cost_slipage should be a float number between 0 and 1')
 
     return cost_params
@@ -176,10 +176,10 @@ def parse_signal_parsing_params(config) -> dict:
         信号处理相关的参数字典
     """
     signal_parsing_params = {
-        'pt_buy_threshold': config['pt_buy_threshold'],
-        'pt_sell_threshold': config['pt_sell_threshold'],
-        'long_pos_limit': config['long_pos_limit'],
-        'short_pos_limit': config['short_pos_limit'],
+        'pt_buy_threshold': config['PT_buy_threshold'],
+        'pt_sell_threshold': config['PT_sell_threshold'],
+        'long_pos_limit': config['long_position_limit'],
+        'short_pos_limit': config['short_position_limit'],
         'allow_sell_short': config['allow_sell_short'],
     }
     # raise if parameters are out of range or with wrong types
@@ -224,9 +224,9 @@ def parse_trading_moq_params(config) -> dict:
         'moq_sell': config['sell_batch_size'],
     }
     # raise if parameters are out of range or with wrong types
-    if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] > 0):
+    if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] >= 0):
         raise ValueError('moq_buy should be a positive float number')
-    if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] > 0):
+    if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] >= 0):
         raise ValueError('moq_sell should be a positive float number')
 
     return trading_moq_params

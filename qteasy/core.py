@@ -1759,7 +1759,9 @@ def check_and_prepare_trade_prices(op: Operator,
         combined_trade_prices = list(trade_prices_per_group.values())[0]
 
     # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
-    combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
+    # import pdb; pdb.set_trace()
+    # combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
+    combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
     combined_trade_prices.fillna(method='ffill', inplace=True)
 
     return combined_trade_prices
@@ -1853,8 +1855,7 @@ def check_and_prepare_benchmark_data(op: Operator,
         time_offset = '15:00:00'  # 基准数据的时间点统一调整为15:00:00
         benchmark_data.index = benchmark_data.index + pd.Timedelta(time_offset)
 
-    # import pdb; pdb.set_trace()
-    # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对其，并进行ffill填充
+    # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对齐，并进行ffill填充
     re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
     benchmark_data = pd.DataFrame(benchmark_data.values[re_index], index=run_timing_indices, columns=benchmark_data.columns)
     benchmark_data.fillna(method='ffill', inplace=True)
@@ -2132,7 +2133,7 @@ def run(op: Operator, **kwargs):
     configure(config=config, **kwargs)
 
     # 检查operator对象是否准备好运行
-    op.is_ready(raise_error=True)
+    # op.is_ready(raise_error=True)
 
     # 赋值给参考数据和运行模式的全局变量
     run_mode = config['mode']
@@ -2195,6 +2196,13 @@ def run_mode_1(op, config):
 
     # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
     start_date, end_date = parse_backtest_start_end_dates(config=config)  # 回测开始和结束日期
+
+    # 在生成交易信号之前准备运行计划及历史数据
+    op.prepare_running_schedule(
+            start_date=start_date,
+            end_date=end_date,
+    )
+
     # 现金投入和交割数据表
     (cash_investment_array,
      cash_inflation_array,
@@ -2205,14 +2213,6 @@ def run_mode_1(op, config):
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
     trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
 
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    op.is_ready(raise_error=True)
-
-    # 在生成交易信号之前准备运行计划及历史数据 TODO: why? the operator should be ready already
-    op.prepare_running_schedule(
-            start_date=start_date,
-            end_date=end_date,
-    )
     data_package = check_and_prepare_backtest_data(
             op=op,
             backtest_start=start_date,
@@ -2241,6 +2241,9 @@ def run_mode_1(op, config):
     )
     op.create_data_windows()
 
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+    op.is_ready(raise_error=True)
+
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     backtested = op.backtest(
             shares=config['asset_pool'],
@@ -2256,21 +2259,28 @@ def run_mode_1(op, config):
     )
     # TODO: 实现 backtestd.evaluate() / backtested.report() / backtested.plot()
     #  以后，就不需要调用backtest_result = backtested.trade_result_df() 了
-    backtest_result = backtested.trade_result_df()
+    # backtest_result = backtested.trade_result_df()
 
     if config['trade_log']:
-        backtested.generate_trade_logs(save_to_file_path=config['trade_log_path'])
-    if config['trade_summary']:
-        backtested.generate_trade_summary(save_to_file_path=config['trade_summary_path'])
+        trade_log_file_name = f'trade_log_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        trade_log_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_log_file_name)
+
+        trade_summary_file_name = f'trade_summary_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        trade_summary_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_summary_file_name)
+
+        backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
+        backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
 
     # 评价回测结果——根据交易结果生成交易结果的评价结果
     # TODO: 修改evaluate函数，使这里的调用格式为 backtester.evaluate(...), 将cashplan与hist_benchmark作为backtester的属性
-    backtest_result = evaluate(
-            looped_values=backtest_result,
+    backtest_result:dict = evaluate(
+            looped_values=backtested.trade_result_df(),
             hist_benchmark=hist_benchmark,
             cash_plan=cash_plan,
             indicators=config['test_indicators'],
     )
+    backtest_result['op_run_time'] = backtested.op_run_time
+    backtest_result['loop_run_time'] = backtested.backtest_run_time
 
     # TODO: 同理，这里的_loop_report_str() 以及 _plot_test_result() 函数也应该修改为
     #  backtester.plot(...) 以及 backtester.report(...)
