@@ -1569,6 +1569,7 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
                         'empty': '{:.1%}'.format},
             justify='center',
             max_rows=20)
+    # TODO: some of the strings are optional because they might not be evaluated depending on user configs
     report_string += f'\n\n' \
                      f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}\n' \
                      f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n' \
@@ -1577,8 +1578,8 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
                      f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}\n' \
                      f'Skewness:                 {loop_results["skew"]:13.2f}\n' \
                      f'Kurtosis:                 {loop_results["kurtosis"]:13.2f}\n' \
-                     f'Benchmark return:         {loop_results["ref_rtn"]:13.2%} \n' \
-                     f'Benchmark Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}\n' \
+                     f'Benchmark return:         {loop_results["benchmark_rtn"]:13.2%} \n' \
+                     f'Benchmark Yearly return:  {loop_results["benchmark_a_rtn"]:13.2%}\n' \
                      f'\n------strategy loop_results indicators------ \n' \
                      f'alpha:                    {loop_results["alpha"]:13.3f}\n' \
                      f'Beta:                     {loop_results["beta"]:13.3f}\n' \
