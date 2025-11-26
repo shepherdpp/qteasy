@@ -1794,12 +1794,13 @@ def check_and_prepare_benchmark_data(op: Operator,
     """
 
     # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错，如果已经创建，获取开始和结束日期
-    op_group_schedules = op.group_schedules  # 一个dict，每个group为key，一个DataFrame为value
-    if not op_group_schedules:
+    run_timing_table = op.group_timing_table  # 一个dict，每个group为key，一个DataFrame为value
+    if run_timing_table is None or run_timing_table.empty:
         raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
+    run_timing_indices = run_timing_table.index
 
-    benchmark_start = min(sched[0] for sched in op_group_schedules.values()).date()
-    benchmark_end = max(sched[-1] for sched in op_group_schedules.values()).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
+    benchmark_start = min(run_timing_indices).date()
+    benchmark_end = max(run_timing_indices).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
 
     # 检查Operator对象所有交易组的最高运行频率
     all_run_freqs = [group.run_freq for group in op.groups.values()]
@@ -1835,8 +1836,28 @@ def check_and_prepare_benchmark_data(op: Operator,
             return_history_panel=False,
     )
 
-    import pdb; pdb.set_trace()
-    benchmark_data = benchmark_data[data_types[0].name]  # 提取DataFrame
+    # benchmark_data中可能存在空DataFrame，逐个检查后将空DataFrame删除，提取非空的DataFrame
+    dtype_name_to_drop = [dtype_name for dtype_name, df in benchmark_data.items() if df.empty]
+    for dtype_name in dtype_name_to_drop:
+        benchmark_data.pop(dtype_name)
+
+    if not benchmark_data:
+        raise ValueError(f'No benchmark data found for symbol {benchmark_symbol}!')
+
+    benchmark_data = benchmark_data[list(benchmark_data.keys())[0]]  # 提取DataFrame
+
+    # 如果benchmark_data的频率低于日频，调整日频及更低频率数据的时间点到对应的可用时间点上
+    sched = benchmark_data.index
+    if benchmark_freq in ['d', 'w', 'm', 'q']:
+        # 从schedules中获取对应的时间可用偏移量
+        time_offset = '15:00:00'  # 基准数据的时间点统一调整为15:00:00
+        benchmark_data.index = benchmark_data.index + pd.Timedelta(time_offset)
+
+    # import pdb; pdb.set_trace()
+    # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对其，并进行ffill填充
+    re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
+    benchmark_data = pd.DataFrame(benchmark_data.values[re_index], index=run_timing_indices, columns=benchmark_data.columns)
+    benchmark_data.fillna(method='ffill', inplace=True)
 
     return benchmark_data
 
