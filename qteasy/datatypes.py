@@ -10,6 +10,7 @@
 # that can be used by qteasy, and the
 # collection of all built-in data types.
 # ======================================
+from xml.sax.handler import property_dom_node
 
 import numpy as np
 import pandas as pd
@@ -313,7 +314,43 @@ def _parse_user_defined_type_id(name: str) -> tuple:
             matched_types.index.get_level_values('asset_type').unique()
 
 
-def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
+def _parse_dtype_description(search_name, name_par, freq, asset_type)-> str:
+    """ 根据正确的search_name， freq和asset_type查找数据类型的描述
+
+    Parameters
+    ----------
+    search_name: str
+        数据类型的名称
+    name_par: str
+        数据类型的参数
+    freq: str
+        数据的频率
+    asset_type: str
+        数据的资产类型
+
+    Returns
+    -------
+    description: str
+        数据类型的描述
+    """
+    data_map = DATA_TYPE_MAP
+
+    key = (search_name, freq, asset_type)
+    if key not in data_map:
+        raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+
+    description, _, _ = data_map[key]
+
+    # 如果name_par不为空，解析name_par并加入description或者kwargs中
+    if name_par is not None:
+        # 解析description中的参数
+        if '%' in description:
+            description = description.replace('%', name_par)
+
+    return description
+
+
+def _parse_acquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
     """ 根据正确的search_name， name_par， freq和asset_type查找数据类型的获取参数
     如果存在name_par，将name_par解析为参数的一部分，放入获取参数中
 
@@ -333,8 +370,6 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
     Returns
     -------
     tuple
-        description: str
-            数据类型的描述
         acquisition_type: str
             数据获取方式
         kwargs: dict
@@ -349,15 +384,12 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
     if key not in data_map:
         raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
-    description, acquisition_type, kwargs = data_map[key]
+    _, acquisition_type, kwargs = data_map[key]
 
-    kwargs=kwargs.copy()  # 因为dict是immutable变量，如果直接引用，会导致同样的dtype引用同一个kwargs对象
+    kwargs = kwargs.copy()  # 因为dict是immutable变量，如果直接引用，会导致同样的dtype引用同一个kwargs对象
 
     # 如果name_par不为空，解析name_par并加入description或者kwargs中
     if name_par is not None:
-        # 解析description中的参数
-        if '%' in description:
-            description = description.replace('%', name_par)
         # 解析kwargs中的参数
         for k, v in kwargs.items():
             if '%' in v and isinstance(v, str):
@@ -377,7 +409,7 @@ def _parse_aquisition_parameters(search_name, name_par, freq, asset_type, built_
             raise ValueError(f'name parameter in {search_name} must be '
                              f'"f"(forward) or "b"(backward), but got \"{kwargs["adj_type"]}\"')
 
-    return description, acquisition_type, kwargs
+    return acquisition_type, kwargs
 
 
 class DataType:
@@ -450,8 +482,12 @@ class DataType:
     def __init__(self,
                  name:str = '',
                  *,
-                 freq=None,
-                 asset_type=None):
+                 freq:str = None,
+                 asset_type:str = None):
+
+        # TODO: 允许用户输入多个资产类型，产生多资产数据类型。这样用户在调用该多资产数据类型
+        #  的get_data_from_source()方法时，可以分别从多张对应的数据表中获取数据，并组合成
+        #  一个DataFrame输出。怎么实现？可以这样：
         """
         根据用户输入的名称或完整参数实例化一个DataType对象。
 
@@ -459,7 +495,8 @@ class DataType:
         如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，如果找到多组匹配，
         则使用第一个匹配的类型生成DataType对象，如果找不到匹配，则报错。
 
-        用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据类型添加到DATA_TYPE_MAP中。
+        用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据
+        类型添加到DATA_TYPE_MAP中。
 
         Parameters
         ----------
@@ -516,28 +553,34 @@ class DataType:
 
         # 已经确认了name，freq和asset_type的合法性，现在可以生成DataType实例
         # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
-        description, acquisition_type, kwargs = _parse_aquisition_parameters(
-                search_name=search_name,
-                name_par=name_pars,
-                freq=default_freq,
-                asset_type=default_asset_type,
-                built_in_tables=built_in_freqs is not None,
+        description = _parse_dtype_description(
+            search_name=search_name,
+            name_par=name_pars,
+            freq=default_freq,
+            asset_type=default_asset_type,
         )
 
         self._name = name
-        self._name_pars = None
-        self._default_freq = default_freq
-        self._default_asset_type = default_asset_type
-        self._dtype_id = f'{self._name}_{self._default_asset_type}_{self._default_freq}'
-        self._all_built_in_freqs = None  # TODO: 允许用户创建同时支持多个资产类型的数据类型
-        self._all_built_in_asset_types = None
-        self._all_user_defined_freqs = None
-        self._all_user_defined_asset_types = None
-        self._description = description
-        self._acquisition_type = acquisition_type
+        self._search_name = search_name
+        self._name_pars = name_pars
         self._unsymbolizer = unsymbolizer
 
-        self._kwargs = kwargs
+        self._description = description
+
+        self._default_freq = default_freq
+        # TODO: Now make default asset type a sorted list of allowed asset
+        #  types, or a set of asset types, maybe?
+        self._default_asset_type = default_asset_type
+
+        self._dtype_id = f'{self._name}_{self._default_asset_type}_{self._default_freq}'
+        # self._all_built_in_freqs = built_in_freqs   # deprecated, 不需要缓存，可以在线查询
+        # self._all_built_in_asset_types = built_in_asset_types  # deprecated, 不需要缓存，可以在线查询
+        # self._all_user_defined_freqs = user_defined_freqs  # deprecated, 不需要缓存，可以在线查询
+        # self._all_user_defined_asset_types = user_defined_asset_types  # deprecated, 不需要缓存，可以在线查询
+
+        self._acquisition_type = None  # deprecated, 不需要缓存，可以在线查询
+
+        self._kwargs = None  # deprecated, 不需要缓存，可以在线查询 用来从众多数据表中获取数据的参数
 
     @property
     def name(self):
@@ -613,12 +656,32 @@ class DataType:
         return self._unsymbolizer is not None
 
     @property
+    def available_built_in_freqs(self):
+        built_in_freqs, built_in_asset_types = _parse_built_in_type_id(self._search_name)
+        return built_in_freqs
+
+    @property
+    def available_user_freqs(self):
+        user_defined_freqs, user_defined_asset_types = _parse_user_defined_type_id(self._search_name)
+        return user_defined_freqs
+
+    @property
     def available_freqs(self):
-        return self._all_built_in_asset_types.extend(self._all_user_defined_freqs)
+        return self.available_built_in_freqs.extend(self.available_user_freqs)
+
+    @property
+    def available_built_in_asset_types(self):
+        built_in_freqs, built_in_asset_types = _parse_built_in_type_id(self._search_name)
+        return built_in_asset_types
+
+    @property
+    def available_user_asset_types(self):
+        user_defined_freqs, user_defined_asset_types = _parse_user_defined_type_id(self._search_name)
+        return user_defined_asset_types
 
     @property
     def available_asset_types(self):
-        return self._all_built_in_asset_types.extend(self._all_user_defined_asset_types)
+        return self.available_built_in_asset_types.extend(self.available_user_asset_types)
 
     @property
     def description(self):
@@ -677,6 +740,14 @@ class DataType:
             结束日期, YYYYMMDD格式
 
         """
+
+        description, self._acquisition_type, self._kwargs = _parse_acquisition_parameters(
+                search_name=self._search_name,
+                name_par=self._name_pars,
+                freq=self._default_freq,
+                asset_type=self._default_asset_type,
+                built_in_tables=self._all_built_in_freqs is not None,
+        )
 
         acquisition_type = self.acquisition_type
 
@@ -4436,16 +4507,16 @@ def get_reference_data_from_source(
     return reference_data_acquired
 
 
-def get_data_type(htype, *, symbols=None, starts=None, ends=None, target_freq=None):
-    """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
-
-    如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
-
-    Parameters
-    ----------
-    htype: DataType
-    """
-    return htype.get_data_from_source(symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
+# def get_data_type(htype, *, symbols=None, starts=None, ends=None, target_freq=None):
+#     """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
+#
+#     如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
+#
+#     Parameters
+#     ----------
+#     htype: DataType
+#     """
+#     return htype.get_data_from_source(symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
 
 
 def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
