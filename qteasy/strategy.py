@@ -816,7 +816,6 @@ class BaseStrategy:
                 setattr(self, k, v)
             else:
                 raise KeyError(f'The strategy does not have property \'{k}\'')
-
     @abstractmethod
     def generate(self):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出

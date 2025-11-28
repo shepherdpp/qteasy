@@ -473,6 +473,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      trade_log=True,
+                     asset_pool='000651.SZ',  # was '000300.SH'
                      invest_cash_dates='20070604', )
         qt.run(self.op)
 
@@ -957,7 +958,7 @@ class TestQT(unittest.TestCase):
         op.set_parameter('long', par_values=None)
         op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 0.4),
                          run_freq='Q',
-                         strategy_data_types='pe',
+                         data_types=[DataType('pe', freq='d', asset_type='E')],
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
@@ -1242,15 +1243,4 @@ class TestQT(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # # get all stock prices from year 2020 to year 2022
-    # qt.refill_data_source(tables='stock_daily', data_source=qt.QT_DATA_SOURCE, start_date='20200101', end_date='20221231')
-    #
-    # # get index prices of 000300 and 399006 data from 2005 to year 2022
-    # qt.refill_data_source(tables='index_daily', data_source=qt.QT_DATA_SOURCE, start_date='20050101', end_date='20221231',
-    #                       symbols='000300,399006')
-    #
-    # # get hourly price data for a few stocks in year 2016
-    # qt.refill_data_source(data_source=qt.QT_DATA_SOURCE, tables='stock_hourly', start_date='20160101', end_date='20161231',
-    #                       symbols=['000001', '000002', '000005', '000006', '000007', '000918', '000819',
-    #                                   '000899'])
     unittest.main()
