@@ -3554,6 +3554,7 @@ class DMA(RuleIterator):
                     Parameter(par_range=(5, 250), par_type='int', name='diff')
                 ],
                 name='DMA',
+                window_length=270,
                 description='Quick DMA strategy, determine long/short position according to differences of '
                             'moving average prices with simple timing strategy',
                 data_types=DataType('close', freq='d', asset_type='ANY'),
