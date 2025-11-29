@@ -2063,7 +2063,7 @@ class TestDataTypes(unittest.TestCase):
         print(f'Getting data with multi-asset_type datatypes with multiple shares')
         multi_data_types = [DataType(name='pe', freq='d', asset_type='E, IDX'),
                             DataType(name='close', freq='h', asset_type='E, FD, IDX'),
-                            DataType(name='open', freq='h', asset_type='E, IDX'),
+                            DataType(name='open', freq='h', asset_type='ANY'),
                             ]
 
         dfs = get_history_data_from_source(
