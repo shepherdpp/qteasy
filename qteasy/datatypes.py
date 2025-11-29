@@ -10,12 +10,11 @@
 # that can be used by qteasy, and the
 # collection of all built-in data types.
 # ======================================
-from xml.sax.handler import property_dom_node
 
 import numpy as np
 import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Tuple, Dict, Optional
+from typing import Union, List, Dict, Optional
 from warnings import warn
 from math import ceil
 
@@ -250,7 +249,7 @@ def _parse_name_and_params(name: str) -> tuple:
         return name, None, unsymbolizer
 
 
-def _parse_built_in_freqs_and_asset_types(name: str) -> tuple:
+def _parse_built_in_freqs_and_asset_types(name: str) -> tuple[list[str], list[str]]:
     """ 根据客户输入的名称在内置数据类型中查找匹配的数据类型
     如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
@@ -277,13 +276,13 @@ def _parse_built_in_freqs_and_asset_types(name: str) -> tuple:
         raise KeyError(msg)
 
     if matched_types.empty:
-        return tuple(), tuple()
+        return list(), list()
     else:
-        return matched_types.index.get_level_values('freq').unique(), \
-            matched_types.index.get_level_values('asset_type').unique()
+        return list(matched_types.index.get_level_values('freq').unique()), \
+            list(matched_types.index.get_level_values('asset_type').unique())
 
 
-def _parse_user_defined_freqs_and_asset_types(name: str) -> tuple:
+def _parse_user_defined_freqs_and_asset_types(name: str) -> tuple[list[str], list[str]]:
     """ 根据客户输入的名称在用户自定义数据类型中查找匹配的数据类型
     如果正确匹配，返回数据类型以及可用的内置频率和资产类型，如果匹配不到，返回空tuple
 
@@ -303,18 +302,18 @@ def _parse_user_defined_freqs_and_asset_types(name: str) -> tuple:
     type_map = _get_user_data_type_map()
 
     if type_map.empty:
-        return tuple(), tuple()
+        return list(), list()
 
     matched_types = type_map.loc[(name, slice(None), slice(None))]
 
     if matched_types.empty:
-        return tuple(), tuple()
+        return list(), list()
     else:
-        return matched_types.index.get_level_values('freq').unique(), \
-            matched_types.index.get_level_values('asset_type').unique()
+        return list(matched_types.index.get_level_values('freq').unique()), \
+            list(matched_types.index.get_level_values('asset_type').unique())
 
 
-def _parse_dtype_description(search_name, name_par, freq, asset_type)-> str:
+def _parse_dtype_description(search_name: str, name_par: str, freq: str, asset_types: list[str])-> str:
     """ 根据正确的search_name， freq和asset_type查找数据类型的描述
 
     Parameters
@@ -325,7 +324,7 @@ def _parse_dtype_description(search_name, name_par, freq, asset_type)-> str:
         数据类型的参数
     freq: str
         数据的频率
-    asset_type: str
+    asset_types: list[str]
         数据的资产类型
 
     Returns
@@ -335,19 +334,24 @@ def _parse_dtype_description(search_name, name_par, freq, asset_type)-> str:
     """
     data_map = DATA_TYPE_MAP
 
-    key = (search_name, freq, asset_type)
-    if key not in data_map:
-        raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+    all_descriptions = []
+    for asset_type in asset_types:
+        key = (search_name, freq, asset_type)
+        if key not in data_map:
+            # import pdb; pdb.set_trace()
+            raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
-    description, _, _ = data_map[key]
+        description, _, _ = data_map[key]
 
-    # 如果name_par不为空，解析name_par并加入description或者kwargs中
-    if name_par is not None:
-        # 解析description中的参数
-        if '%' in description:
-            description = description.replace('%', name_par)
+        # 如果name_par不为空，解析name_par并加入description或者kwargs中
+        if name_par is not None:
+            # 解析description中的参数
+            if '%' in description:
+                description = description.replace('%', name_par)
 
-    return description
+        all_descriptions.append(description)
+
+    return ','.join(all_descriptions)
 
 
 def _parse_acquisition_parameters(search_name, name_par, freq, asset_type, built_in_tables=True) -> tuple:
@@ -967,6 +971,8 @@ class DataType:
             如果不给出此参数，将使用内置数据类型中的第一个频率
         asset_type: str
             数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权)
+            也可以输入混合资产类型，如 'E,IDX' 表示股票和指数两种资产类型
+            也可以输入 'ANY' 表示所有支持的资产类型
             如果给出此参数，必须匹配某一个内置数据类型的资产类型
             如果不给出此参数，将使用内置数据类型中的第一个资产类型
 
@@ -997,30 +1003,45 @@ class DataType:
         elif (freq in built_in_freqs) or (freq in user_defined_freqs):
             default_freq = freq
         else:
-            raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+            raise ValueError(f'Can not match any frequency with data type name {search_name}'
+                             f' in either built in or user defined data type maps. Please check'
+                             f' your input.')
 
+        # asset_types 是一个sorted list，存储所有设定的default asset types
+        # 而asset_type_str 是一个字符串，存储用户输入的asset_type参数，用于生成dtype_id等属性
+        # import pdb; pdb.set_trace()
         if asset_type is not None:
-            # asset_type = asset_type.upper()
             asset_types = str_to_list(asset_type)
-
-        if (asset_type is None) and len(built_in_asset_types) > 0:
-            default_asset_type = built_in_asset_types[0]
-        elif (asset_type is None) and len(user_defined_asset_types) > 0:
-            default_asset_type = user_defined_asset_types[0]
-        elif (asset_type in built_in_asset_types) or (asset_type in user_defined_asset_types):
-            default_asset_type = asset_type
-        elif asset_type == 'ANY':
-            default_asset_type = built_in_asset_types[0] if len(built_in_asset_types) > 0 else None
+            asset_types = [at.strip() for at in asset_types]
+            asset_types.sort()
+        elif len(built_in_asset_types) > 0:
+            asset_types = built_in_asset_types[0:1]
+        elif len(user_defined_asset_types) > 0:
+            asset_types = user_defined_asset_types[0:1]
         else:
-            raise ValueError(f'DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+            raise ValueError(f'Can not match any asset type with data typa name {search_name}'
+                             f' in either built in or user defined data type maps. Please check'
+                             f' your input.')
 
-        # 已经确认了name，freq和asset_type的合法性，现在可以生成DataType实例
+        # 确认asset_types中的每一个asset_type是否合法
+        if 'ANY' in asset_types:
+            asset_types = built_in_asset_types + user_defined_asset_types
+            asset_type_str = 'ANY'
+        elif all(at in built_in_asset_types + user_defined_asset_types for at in asset_types):
+            asset_type_str = ','.join(asset_types)
+        else:
+            unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
+            # import pdb; pdb.set_trace()
+            raise ValueError(f'Asset types {unmatched} not found in DATA_TYPE_MAP.'
+                             f' Please check your input.')
+
+        # 已经确认了name，freq和asset_types的合法性，现在可以生成DataType实例
         # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
         description = _parse_dtype_description(
             search_name=search_name,
             name_par=name_pars,
             freq=default_freq,
-            asset_type=default_asset_type,
+            asset_types=asset_types,
         )
 
         self._name = name
@@ -1033,30 +1054,31 @@ class DataType:
         self._default_freq = default_freq
         # TODO: Now make default asset type a sorted list of allowed asset
         #  types, or a set of asset types, maybe?
-        self._default_asset_type = default_asset_type
+        self._default_asset_types = asset_types
+        self._asset_type_str = asset_type_str
+        self._dtype_id = f'{self._name}_{self._asset_type_str}_{self._default_freq}'
 
-        self._dtype_id = f'{self._name}_{self._default_asset_type}_{self._default_freq}'
         self._all_built_in_freqs = built_in_freqs
         self._all_built_in_asset_types = built_in_asset_types
         self._all_user_defined_freqs = user_defined_freqs
         self._all_user_defined_asset_types = user_defined_asset_types
 
-        self._acquisition_type = None  # deprecated, 不需要缓存，可以在线查询
-
-        self._kwargs = None  # deprecated, 不需要缓存，可以在线查询 用来从众多数据表中获取数据的参数
+        # self._acquisition_type = None  # deprecated, 不需要缓存，可以在线查询
+        #
+        # self._kwargs = None  # deprecated, 不需要缓存，可以在线查询 用来从众多数据表中获取数据的参数
 
     @property
     def name(self):
         return self._name
 
-    @name.setter
+    @name.setter  # 为何要允许修改DataType的名称？是否为了创建交易策略的时候方便获取数据？
     def name(self, name):
         self._name = name
 
     @property
     def id(self):
         """忽略数据频率的ID形如：close(E)，用于标记不同资产类型的数据"""
-        return f'{self._name}({self._default_asset_type})'
+        return f'{self._name}({self._default_asset_types})'
 
     @property
     def dtype_id(self):
@@ -1076,38 +1098,19 @@ class DataType:
         return self._default_freq
 
     @property
-    def asset_type(self):
-        return self._default_asset_type
+    def asset_type(self) -> str:
+        """ 资产类型的字符串表示形式，如'E'或'E,IDX' """
+        return self._asset_type_str
 
     @property
-    def available_time(self) -> Optional[str]:
-        """ 数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间"""
+    def asset_type_str(self) -> str:
+        """ 资产类型的字符串表示形式，如'E'或'E,IDX' """
+        return self._asset_type_str
 
-        # 高频数据没有可用时间
-        if self.freq not in ['d', 'w', 'm', 'q', 'y']:
-            return None
-        # 股票的开盘价在9:30可用
-        if self.asset_type == 'E':
-            if 'open' in self.name:
-                return '9:30:00'
-            # 其他日线数据在15:00可用
-            else:
-                return '15:00:00'
-        # 指数的开盘价在9:25可用
-        if self.asset_type == 'IDX':
-            if 'open' in self.name:
-                return '9:25:00'
-            # 其他日线数据在15:00可用
-            else:
-                return '15:00:00'
-        # 'nav'类型的基金数据在18:00可用
-        if self.asset_type == 'FD':
-            if 'nav' in self.name:
-                return '18:00:00'
-            else:
-                return '15:00:00'
-
-        return '15:00:00'
+    @property
+    def asset_types(self) -> list:
+        """ 所用用户定义的资产类型列表 """
+        return self._default_asset_types
 
     @property
     def unsymbolizer(self):
@@ -1169,10 +1172,50 @@ class DataType:
         return hash(str(self))
 
     def __copy__(self):
-        return DataType(name=self.name, freq=self.freq, asset_type=self.asset_type)
+        return DataType(name=self.name, freq=self.freq, asset_type=self._asset_type_str)
 
     def copy(self):
         return self.__copy__()
+
+    def get_available_time(self, asset_type) -> Optional[str]:
+        """ 数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间
+
+        Properties
+        ----------
+        asset_type: str
+            资产类型，如'E'、'IDX'、'FD'等，因为现在支持多资产类型，所以需要指定资产类型以获取对应的可用时间
+        """
+
+        # 高频数据没有可用时间
+        if self.freq not in ['d', 'w', 'm', 'q', 'y']:
+            return None
+
+        # 因为现在支持多资产类型，所以如果asset_type为None，则使用第一个资产类型
+        if asset_type is None:
+            asset_type = self.asset_types[0]
+
+        # 股票的开盘价在9:30可用
+        if asset_type == 'E':
+            if 'open' in self.name:
+                return '9:30:00'
+            # 其他日线数据在15:00可用
+            else:
+                return '15:00:00'
+        # 指数的开盘价在9:25可用
+        if asset_type == 'IDX':
+            if 'open' in self.name:
+                return '9:25:00'
+            # 其他日线数据在15:00可用
+            else:
+                return '15:00:00'
+        # 'nav'类型的基金数据在18:00可用
+        if asset_type == 'FD':
+            if 'nav' in self.name:
+                return '18:00:00'
+            else:
+                return '15:00:00'
+
+        return '15:00:00'
 
     # 真正的顶层数据获取API接口函数
     def get_data_from_source(
@@ -1198,55 +1241,82 @@ class DataType:
 
         """
 
-        acquisition_type, kwargs = _parse_acquisition_parameters(
-                search_name=self._search_name,
-                name_par=self._name_pars,
-                freq=self._default_freq,
-                asset_type=self._default_asset_type,
-                built_in_tables=self._all_built_in_freqs is not None,
-        )
+        # 由于数据类型可能含有多种资产类型，因此需要分别获取数据后组合在一起
+        all_acquired_data = []
 
-        if acquisition_type == 'basics':
-            acquired_data = _get_basics(datasource, symbols=symbols, **kwargs)
-        elif acquisition_type == 'reference':
-            acquired_data = _get_reference(datasource, symbols=None, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'selection':
-            acquired_data = _get_selection(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'direct':
-            acquired_data = _get_direct(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'adjustment':
-            acquired_data = _get_adjustment(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'operation':
-            acquired_data = self._get_operation(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'relations':
-            acquired_data = self._get_relations(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'event_multi_stat':
-            acquired_data = _get_event_multi_stat(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'event_status':
-            acquired_data = _get_event_status(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'event_signal':
-            acquired_data = _get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'selected_events':
-            acquired_data = _get_selected_events(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'composition':
-            acquired_data = _get_composition(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
-        elif acquisition_type == 'category':
-            acquired_data = _get_category(datasource, symbols=symbols, **kwargs)
-        elif acquisition_type == 'complex':
-            acquired_data = self._get_complex(datasource, symbols=symbols, date=starts, **kwargs)
+        for asset_type in self._default_asset_types:
+            acquisition_type, kwargs = _parse_acquisition_parameters(
+                    search_name=self._search_name,
+                    name_par=self._name_pars,
+                    freq=self._default_freq,
+                    asset_type=asset_type,
+                    built_in_tables=self._all_built_in_freqs is not None,
+            )
+
+            if acquisition_type == 'basics':
+                acquired_data = _get_basics(datasource, symbols=symbols, **kwargs)
+            elif acquisition_type == 'reference':
+                acquired_data = _get_reference(datasource, symbols=None, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'selection':
+                acquired_data = _get_selection(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'direct':
+                acquired_data = _get_direct(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'adjustment':
+                acquired_data = _get_adjustment(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'operation':
+                acquired_data = self._get_operation(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'relations':
+                acquired_data = self._get_relations(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'event_multi_stat':
+                acquired_data = _get_event_multi_stat(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'event_status':
+                acquired_data = _get_event_status(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'event_signal':
+                acquired_data = _get_event_signal(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'selected_events':
+                acquired_data = _get_selected_events(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'composition':
+                acquired_data = _get_composition(datasource, symbols=symbols, starts=starts, ends=ends, **kwargs)
+            elif acquisition_type == 'category':
+                acquired_data = _get_category(datasource, symbols=symbols, **kwargs)
+            elif acquisition_type == 'complex':
+                acquired_data = self._get_complex(datasource, symbols=symbols, date=starts, **kwargs)
+            else:
+                raise ValueError(f'Unknown acquisition type: {acquisition_type}')
+
+            # basic data will be returned directly
+            if acquisition_type == 'basics':
+                all_acquired_data.append(acquired_data)
+                continue
+
+            if acquired_data.empty:
+                all_acquired_data.append(acquired_data)
+                continue
+
+            if self.unsymbolizer is not None:
+                all_acquired_data.append(self._unsymbolised(acquired_data, self.unsymbolizer))
+                continue
+
+            all_acquired_data.append(_symbolised(acquired_data))
+
+        # 合并所有获取到的数据
+        if len(all_acquired_data) == 1:
+            return all_acquired_data[0]
         else:
-            raise ValueError(f'Unknown acquisition type: {acquisition_type}')
-        # basic data will be returned directly
-        if acquisition_type == 'basics':
-            return acquired_data
-
-        if acquired_data.empty:
-            return acquired_data
-
-        if self.unsymbolizer is not None:
-            return self._unsymbolised(acquired_data, self.unsymbolizer)
-
-        return _symbolised(acquired_data)
+            # 如果是DataFrame，使用concat合并
+            if isinstance(all_acquired_data[0], pd.DataFrame):
+                combined_data = pd.concat(all_acquired_data, axis=1)
+                # 去除重复的columns
+                combined_data = combined_data.loc[:, ~combined_data.columns.duplicated()]
+                return combined_data
+            # 如果是Series，使用concat合并
+            elif isinstance(all_acquired_data[0], pd.Series):
+                combined_data = pd.concat(all_acquired_data, axis=0)
+                # 去除重复的index
+                combined_data = combined_data[~combined_data.index.duplicated()]
+                return combined_data
+            else:
+                raise TypeError(f'Unknown data type: {type(all_acquired_data[0])}')
 
     def _get_operation(self, datasource, *, symbols=None, starts=None, ends=None, **kwargs) -> pd.DataFrame:
         """数据操作型的数据获取方法"""
