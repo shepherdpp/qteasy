@@ -1026,8 +1026,10 @@ class DataType:
         # 确认asset_types中的每一个asset_type是否合法
         if 'ANY' in asset_types:
             asset_types = built_in_asset_types + user_defined_asset_types
+            asset_types.sort()
             asset_type_str = 'ANY'
         elif all(at in built_in_asset_types + user_defined_asset_types for at in asset_types):
+            asset_types.sort()
             asset_type_str = ','.join(asset_types)
         else:
             unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
@@ -4578,18 +4580,6 @@ def get_reference_data_from_source(
     return reference_data_acquired
 
 
-# def get_data_type(htype, *, symbols=None, starts=None, ends=None, target_freq=None):
-#     """ DataSource类的主要获取数据的方法，根据数据类型，获取数据并输出
-#
-#     如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据
-#
-#     Parameters
-#     ----------
-#     htype: DataType
-#     """
-#     return htype.get_data_from_source(symbols=symbols, starts=starts, ends=ends, target_freq=target_freq)
-
-
 def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
     """ 根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
     查找匹配的历史数据类型。
@@ -4768,7 +4758,9 @@ def get_tables_by_dtypes(
         dtypes: list[str] = None,
         freqs: list[str] = None,
         asset_types: list[str] = None) -> set:
-    """根据输入的数据类型反推相关的数据表名称
+    """根据输入的数据类型名称等参数反推相关的数据表名称
+
+    Deprecated，采用新的DataType对象后，其表单名称可以从数据表中直接读取出来，而不需要反推
 
     Parameters
     ----------

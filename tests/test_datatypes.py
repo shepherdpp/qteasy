@@ -22,9 +22,11 @@ from qteasy.utilfuncs import (
 
 from qteasy.datatypes import (
     DataType,
+    _parse_acquisition_parameters,
     get_history_data_from_source,
     get_reference_data_from_source,
-    get_tables_by_dtypes, infer_data_types,
+    get_tables_by_dtypes,
+    infer_data_types,
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
@@ -1261,7 +1263,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('libor_usd|3m', 'd', 'None'),
     ('libor_usd|6m', 'd', 'None'),
     ('libor_usd|12m', 'd', 'None'),
-    # ('libor_eur|on', 'd', 'None'),
+    # ('libor_eur|on', 'd', 'None'),  # EUR and GBP libor rates are not published
     # ('libor_eur|1w', 'd', 'None'),
     # ('libor_eur|1m', 'd', 'None'),
     # ('libor_eur|2m', 'd', 'None'),
@@ -1467,10 +1469,38 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     ('pe', 'd', 'IDX'),
     ('pe', 'd', 'E'),
     ('pe', None, 'E'),
+    ('close|b', 'd', None),
     ('ths_category', 'None', 'E'),
     ('weight_rule', 'None', 'IDX'),
     ('is_trade_day|SSE', 'd', 'None'),
     ('high-000300.SH', '5min', 'IDX'),
+]
+
+ALL_TYPES_TO_TEST_WITH_MULTI_ASSET_TYPES = [
+    ('close', 'd', 'E, IDX'),
+    ('close', 'd', 'IDX, FD'),
+    ('close', 'd', 'FD, E'),
+    ('close', 'd', 'E, FD, IDX'),
+    ('close', '5min', 'E, FT, FD'),
+    ('close', 'd', 'ANY'),
+]
+
+EXPECTED_MULTI_ASSET_TYPE_STRING_RESULTS = [
+    'E,IDX',
+    'FD,IDX',
+    'E,FD',  # alphabetical order
+    'E,FD,IDX',
+    'E,FD,FT',  # alphabetical order
+    'ANY',  # ANY resolves to all available types
+]
+
+EXPECTED_MULTI_ASSET_TYPES = [
+    ['E', 'IDX'],
+    ['FD', 'IDX'],
+    ['E', 'FD'],
+    ['E', 'FD', 'IDX'],
+    ['E', 'FD', 'FT'],
+    ['E', 'FD', 'FT', 'IDX', 'OPT'],  # ANY resolves to all available types
 ]
 
 
@@ -1510,13 +1540,11 @@ class TestDataTypes(unittest.TestCase):
             print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
                   f'name:     {dtype.name}\n'
                   f'freq:     {dtype.freq}\n'
-                  # f'all freqs: {dtype.available_freqs}\n'
+                  f'all freqs: {dtype.available_freqs}\n'
                   f'asset_type: {dtype.asset_type}\n'
-                  # f'all a_types: {dtype.available_asset_types}\n'
+                  f'all a_types: {dtype.available_asset_types}\n'
                   f'unsymbolizer: {dtype.unsymbolizer}\n'
-                  f'desc:     {dtype.description}\n'
-                  f'acq_type: {dtype.acquisition_type}\n'
-                  f'kwargs:   {dtype.kwargs}\n')
+                  f'desc:     {dtype.description}\n')
             self.assertIsInstance(dtype, DataType)
             self.assertEqual(dtype.name, name)
             if freq is not None:
@@ -1528,18 +1556,68 @@ class TestDataTypes(unittest.TestCase):
         d1 = DataType(name='close|b')
         d2 = DataType(name='close|f')
 
+        acquisition_type, kwargs = _parse_acquisition_parameters(
+                search_name=d1._search_name,
+                name_par=d1._name_pars,
+                freq=d1.freq,
+                asset_type=d1.asset_type,
+                built_in_tables=True,
+        )
+
         print(f'dtype 1: {d1}, and dtype 2: {d2}')
         self.assertEqual(d1.name, 'close|b')
-        self.assertEqual(d2.name, 'close|f')
-        d1_adj = d1.kwargs.get('adj_type')
-        d2_adj = d2.kwargs.get('adj_type')
+        d1_adj = kwargs.get('adj_type')
         self.assertEqual(d1_adj, 'b')
+
+        acquisition_type, kwargs = _parse_acquisition_parameters(
+                search_name=d2._search_name,
+                name_par=d2._name_pars,
+                freq=d2.freq,
+                asset_type=d2.asset_type,
+                built_in_tables=True,
+        )
+
+        self.assertEqual(d2.name, 'close|f')
+        d2_adj = kwargs.get('adj_type')
         self.assertEqual(d2_adj, 'f')
 
-        # TODO: test create datatypes with asset_type='ANY'
+        # TODO: test create datatypes like 'ANY' or 'E,IDX'
         #  this must be realized in the DataType class because
         #  we must allow users to define their strategies that
         #  can work with multiple types of assets.
+
+        for k, a_type_str, a_types in zip(ALL_TYPES_TO_TEST_WITH_MULTI_ASSET_TYPES,
+                                          EXPECTED_MULTI_ASSET_TYPE_STRING_RESULTS,
+                                          EXPECTED_MULTI_ASSET_TYPES):
+            if isinstance(k, tuple):
+                name, freq, asset_type = k
+            else:
+                name = k
+                freq = None
+                asset_type = None
+
+            dtype = DataType(
+                    name=name,
+                    freq=freq,
+                    asset_type=asset_type,
+            )
+
+            print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
+                  f'name:     {dtype.name}\n'
+                  f'freq:     {dtype.freq}\n'
+                  f'all freqs: {dtype.available_freqs}\n'
+                  f'asset_type: {dtype.asset_type}\n'
+                  f'all a_types: {dtype.available_asset_types}\n'
+                  f'unsymbolizer: {dtype.unsymbolizer}\n'
+                  f'desc:     {dtype.description}\n')
+            self.assertIsInstance(dtype, DataType)
+            self.assertEqual(dtype.name, name)
+            if freq is not None:
+                self.assertEqual(dtype.freq, freq)
+            if asset_type is not None:
+                self.assertEqual(dtype.asset_type, a_type_str)
+                self.assertEqual(dtype.asset_type_str, a_type_str)
+                self.assertEqual(dtype.asset_types, a_types)
 
     def test_all_types_with_full_id(self):
         ds = self.ds
@@ -1566,10 +1644,17 @@ class TestDataTypes(unittest.TestCase):
             self.assertEqual(dtype.freq, freq)
             self.assertEqual(dtype.asset_type, asset_type)
 
-            acq_type = dtype.acquisition_type
+            acq_type, kwargs = _parse_acquisition_parameters(
+                    search_name=dtype._search_name,
+                    name_par=dtype._name_pars,
+                    freq=dtype.freq,
+                    asset_type=dtype.asset_type,
+                    built_in_tables=True,
+
+            )
             desc = dtype.description
 
-            table_name = dtype.kwargs['table_name']
+            table_name = kwargs['table_name']
 
             shares = None
             starts = '2019-09-01'
@@ -1809,6 +1894,59 @@ class TestDataTypes(unittest.TestCase):
                  'index_hourly', 'index_5min', 'index_15min', 'index_30min', 'index_1min'}
         )
 
+    def test_get_data_from_source(self):
+        """ test the basic data acquiring function dtype.get_data_from_source() """
+        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
+        htype_names = 'pe,close|b,open,close'
+        htype_names = str_to_list(htype_names)
+        asset_type = ['E', 'IDX', 'FD']
+        freq = 'd'
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        for at in asset_type:
+            for htype_name in htype_names:
+                try:
+                    htype = DataType(name=htype_name, freq=freq, asset_type=at)
+                    htypes.append(htype)
+                except:
+                    print(f'  - failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    continue
+        shares = list_to_str_format(shares)
+        print(f'getting data for htypes: \n{[at.__str__() for at in htypes]}')
+
+        for htype in htypes:
+            print(f'getting data for dtype: {htype}')
+            df = htype.get_data_from_source(
+                    self.ds,
+                    symbols=shares,
+                    starts='20210101',
+                    ends='20210301',
+            )
+            print(f'got data:\n{df}')
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertFalse(df.empty)
+
+        # 生成multi_asset_type_htypes：
+        multi_asset_type_htypes = [
+            DataType(name='pe', freq='d', asset_type='E, IDX'),
+            DataType(name='close|b', freq='d', asset_type='E, FD'),
+            DataType(name='close', freq='h', asset_type='E, FD, IDX'),
+            DataType(name='open', freq='h', asset_type='E, IDX'),
+        ]
+        print(f'getting data for multi-asset_type htypes: \n{[at.__str__() for at in multi_asset_type_htypes]}')
+
+        for htype in multi_asset_type_htypes:
+            print(f'getting data for dtype: {htype}')
+            df = htype.get_data_from_source(
+                    self.ds,
+                    symbols=shares,
+                    starts='20210101',
+                    ends='20210301',
+            )
+            print(f'got data:\n{df}')
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertFalse(df.empty)
+
     def test_get_history_data(self):
         """ test getting arr, from real database """
         # test getting simple daily data with basic types without combination
@@ -1921,6 +2059,23 @@ class TestDataTypes(unittest.TestCase):
         print(f'got history panel: \n{dfs}')
         for df in dfs:
             self.assertLessEqual(len(df), 20)
+
+        print(f'Getting data with multi-asset_type datatypes with multiple shares')
+        multi_data_types = [DataType(name='pe', freq='d', asset_type='E, IDX'),
+                            DataType(name='close', freq='h', asset_type='E, FD, IDX'),
+                            DataType(name='open', freq='h', asset_type='E, IDX'),
+                            ]
+
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes=multi_data_types,
+                start=start,
+                end=end,
+                freq=freq,
+                combine_asset_types=True,
+        )
+        print(f'got history panel:\n{dfs}')
 
     def test_get_reference_data(self):
         """ test function get_reference_data()"""
@@ -2192,6 +2347,14 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='is_trade_day|SSE', freq='d', asset_type='None'),
             DataType(name='name', freq='None', asset_type='FT')
         ]
+        expected_dtype_ids = [dt.dtype_id for dt in expected_data_types]
+        expected_dtype_ids.sort()
+        dtype_ids = [dt.dtype_id for dt in data_types]
+        dtype_ids.sort()
+        for edi, di in zip(expected_dtype_ids, dtype_ids):
+            print(f'expected: {edi}, got: {di}')
+        # import pdb;
+        # pdb.set_trace()
         self.assertEqual(len(data_types), 23)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
