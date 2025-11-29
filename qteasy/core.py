@@ -1665,7 +1665,7 @@ def check_and_prepare_trade_prices(op: Operator,
     all_run_freqs = [group.run_freq for group in op.groups.values()]
     all_run_timings = [group.run_timing for group in op.groups.values()]
     all_schedules = [sched.index for sched in op.group_schedules.values()]
-    price_start = min(sched[0] for sched in all_schedules).date()
+    price_start = min(sched[0] for sched in all_schedules).date() - pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
     price_end = max(sched[-1] for sched in all_schedules).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
 
     trade_prices_per_group = {}
@@ -1748,7 +1748,7 @@ def check_and_prepare_trade_prices(op: Operator,
     all_trade_price_indices = pd.Index([])
     for sched in op_group_schedules.values():
         all_trade_price_indices = all_trade_price_indices.union(sched.index)
-    all_trade_price_indices = all_trade_price_indices.sort_values()
+    all_trade_price_indices = pd.to_datetime(all_trade_price_indices.sort_values())
 
     if len(trade_prices_per_group) > 1:
 
