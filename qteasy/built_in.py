@@ -316,7 +316,7 @@ class CROSSLINE(RuleIterator):
                 name='CROSSLINE',
                 description='Moving average crossline strategy, determine long/short position according '
                             'to the cross point of long and short term moving average prices ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -412,7 +412,7 @@ class SoftBBand(RuleIterator):
                 name='Soft Bolinger Band',
                 description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
                 window_length=200,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -469,7 +469,7 @@ class BBand(RuleIterator):
                 data_freq='d',
                 strategy_run_freq='d',
                 window_length=270,
-                data_types=[DataType('close', freq='d', asset_type='E')],  # single data input
+                data_types=[DataType('close', freq='d', asset_type='ANY')],  # single data input
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -527,7 +527,7 @@ class SCRSSMA(RuleIterator):
                 ],
                 name='SINGLE CROSSLINE - SMA',
                 description='Single moving average strategy that uses simple moving average as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -567,7 +567,7 @@ class SCRSDEMA(RuleIterator):
                 pars=Parameter((3, 250), name='rng', par_type='int'),
                 name='SINGLE CROSSLINE - DEMA',
                 description='Single moving average strategy that uses DEMA as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -609,7 +609,7 @@ class SCRSEMA(RuleIterator):
                 ],
                 name='SINGLE CROSSLINE - EMA',
                 description='Single moving average strategy that uses EMA as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -654,7 +654,7 @@ class SCRSHT(RuleIterator):
                 pars=[],
                 name='SINGLE CROSSLINE - HT',
                 description='Single moving average strategy that uses HT line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -696,7 +696,7 @@ class SCRSKAMA(RuleIterator):
                 name='SINGLE CROSSLINE - KAMA',
                 description='Single moving average strategy that uses KAMA line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -741,7 +741,7 @@ class SCRSMAMA(RuleIterator):
                 name='SINGLE CROSSLINE - MAMA',
                 description='Single moving average strategy that uses MAMA line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -785,7 +785,7 @@ class SCRST3(RuleIterator):
                 ],
                 name='SINGLE CROSSLINE - T3',
                 description='Single moving average strategy that uses T3 line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -828,7 +828,7 @@ class SCRSTEMA(RuleIterator):
                 name='SINGLE CROSSLINE - TEMA',
                 description='Single moving average strategy that uses TEMA line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -871,7 +871,7 @@ class SCRSTRIMA(RuleIterator):
                 name='SINGLE CROSSLINE - TRIMA',
                 description='Single moving average strategy that uses TRIMA line as the '
                             'trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -914,7 +914,7 @@ class SCRSWMA(RuleIterator):
                 name='SINGLE CROSSLINE - WMA',
                 description='Single moving average strategy that uses MAMA line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -967,7 +967,7 @@ class DCRSSMA(RuleIterator):
                 ],
                 name='SINGLE CROSSLINE - SMA',
                 description='Double moving average strategy that uses simple moving average as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1012,7 +1012,7 @@ class DCRSDEMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - DEMA',
                 description='Double moving average strategy that uses DEMA as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1102,7 +1102,7 @@ class DCRSKAMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - KAMA',
                 description='Double moving average strategy that uses KAMA line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1151,7 +1151,7 @@ class DCRSMAMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - MAMA',
                 description='Double moving average strategy that uses MAMA line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1245,7 +1245,7 @@ class DCRSTEMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - TEMA',
                 description='Double moving average strategy that uses TEMA line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1290,7 +1290,7 @@ class DCRSTRIMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - TRIMA',
                 description='Double moving average strategy that uses TRIMA line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1335,7 +1335,7 @@ class DCRSWMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - WMA',
                 description='Double moving average strategy that uses WMA line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1389,7 +1389,7 @@ class SLPSMA(RuleIterator):
                 ],
                 name='SLOPE - SMA',
                 description='Smoothed Curve Slope strategy that uses simple moving average as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1439,7 +1439,7 @@ class SLPDEMA(RuleIterator):
                 ],
                 name='SLOPE - DEMA',
                 description='Smoothed Curve Slope Strategy that uses DEMA as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1488,7 +1488,7 @@ class SLPEMA(RuleIterator):
                 ],
                 name='SLOPE - EMA',
                 description='Smoothed Curve Slope Strategy that uses EMA as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1540,7 +1540,7 @@ class SLPHT(RuleIterator):
                 name='SLOPE - HT',
                 description='Smoothed Curve Slope Strategy that uses HT line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1590,7 +1590,7 @@ class SLPKAMA(RuleIterator):
                 name='SLOPE - KAMA',
                 description='Smoothed Curve Slope Strategy that uses KAMA line as the '
                             'trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1641,7 +1641,7 @@ class SLPMAMA(RuleIterator):
                 ],
                 name='SLOPE - MAMA',
                 description='Smoothed Curve Slope Strategy that uses MAMA line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1692,7 +1692,7 @@ class SLPT3(RuleIterator):
                 ],
                 name='SLOPE - T3',
                 description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1741,7 +1741,7 @@ class SLPTEMA(RuleIterator):
                 ],
                 name='SLOPE - TEMA',
                 description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1790,7 +1790,7 @@ class SLPTRIMA(RuleIterator):
                 ],
                 name='SLOPE - TRIMA',
                 description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1839,7 +1839,7 @@ class SLPWMA(RuleIterator):
                 ],
                 name='SLOPE - WMA',
                 description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2045,9 +2045,9 @@ class ADX(RuleIterator):
                 description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2103,7 +2103,7 @@ class APO(RuleIterator):
                 name='APO',
                 description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
                 window_length=200,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2157,8 +2157,8 @@ class AROON(RuleIterator):
                 description='Aroon, determine buy/sell signals according to AROON Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2215,8 +2215,8 @@ class AROONOSC(RuleIterator):
                 description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2273,9 +2273,9 @@ class CCI(RuleIterator):
                 description='CCI, determine long/short positions according to CC Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2331,7 +2331,7 @@ class CMO(RuleIterator):
                 name='CMO',
                 description='CMO, determine long/short positions according to CMO Indicators',
                 window_length=200,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2393,7 +2393,7 @@ class MACDEXT(RuleIterator):
                 name='MACD Extension',
                 description='MACD Extension, determine long/short position according to extended MACD',
                 window_length=200,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2439,10 +2439,10 @@ class MFI(RuleIterator):
                 description='MFI, determine buy/sell signals according to MFI Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2494,9 +2494,9 @@ class DI(RuleIterator):
                 description='DI, determine long/short positions according to +/- DI Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2551,8 +2551,8 @@ class DM(RuleIterator):
                 description='DM, determine long/short positions according to +/- DM Indicators',
                 window_length=200,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2603,7 +2603,7 @@ class MOM(RuleIterator):
                 name='MOM',
                 description='MOM, determine long/short positions according to MOM Indicators',
                 window_length=100,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2657,7 +2657,7 @@ class PPO(RuleIterator):
                 name='PPO',
                 description='PPO, determine long/short positions according to PPO Indicators',
                 window_length=100,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2711,7 +2711,7 @@ class RSI(RuleIterator):
                 name='RSI',
                 description='RSI, determine long/short positions according to RSI Indicators',
                 window_length=100,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2769,9 +2769,9 @@ class STOCH(RuleIterator):
                 description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2826,9 +2826,9 @@ class STOCHF(RuleIterator):
                 description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2884,7 +2884,7 @@ class STOCHRSI(RuleIterator):
                 name='Stochastic RSI',
                 description='Stochastic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                 window_length=100,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -2941,9 +2941,9 @@ class ULTOSC(RuleIterator):
                 description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -2997,9 +2997,9 @@ class WILLR(RuleIterator):
                 description='Williams R, determine buy/sell signals according to Williams R',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -3052,10 +3052,10 @@ class AD(RuleIterator):
                 description='Accumulation Distribution Line Strategy',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
 
@@ -3106,10 +3106,10 @@ class ADOSC(RuleIterator):
                 description='Accumulation Distribution Line Oscillator',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -3163,8 +3163,8 @@ class OBV(RuleIterator):
                 description='On-Balance Volume Strategy',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -3230,9 +3230,9 @@ class ATR(RuleIterator):
                 description='Average True Range Strategy',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
@@ -3268,8 +3268,8 @@ class NATR(RuleIterator):
                 description='On-Balance Volume Strategy',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
 
@@ -3288,8 +3288,8 @@ class TRANGE(RuleIterator):
                 description='On-Balance Volume Strategy',
                 window_length=100,
                 strategy_data_types=[
-                    DataType('close', freq='d', asset_type='E'),
-                    DataType('volume', freq='d', asset_type='E'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
                 ],
         )
 
@@ -3362,7 +3362,7 @@ class SellRate(RuleIterator):
                     Parameter((1, 100), name='day', par_type='int'),
                     Parameter((-0.5, 0.5), name='change', par_type='float')
                 ],
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=100,
                 name='SELLRATE',
                 description='Generate selling signal when N-day change rate is over a certain value',
@@ -3418,7 +3418,7 @@ class BuyRate(RuleIterator):
                 window_length=100,
                 name='BUYRATE',
                 description='Generate buying signal when N-day change rate is over a certain value',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -3662,7 +3662,7 @@ class SelectingRandom(GeneralStg):
                 pars=[
                     Parameter((0, np.inf), name='pct', par_type='float')
                 ],
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=100,
                 name='RANDOM',
                 description='GeneralStg share Randomly and distribute weights evenly',
@@ -3862,7 +3862,7 @@ class SelectingNDayAvg(FactorSorter):
                 description='Select stocks by its N day average open price',
                 run_freq='M',
                 window_length=150,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -3923,7 +3923,7 @@ class SelectingNDayChange(FactorSorter):
                 description='Select stocks by its N day price change',
                 run_freq='M',
                 window_length=150,
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -3982,7 +3982,7 @@ class SelectingNDayRateChange(FactorSorter):
                 ],
                 name='N-DAY RATE',
                 description='Select stocks by its N day price change',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 run_freq='M',
                 window_length=150,
                 **kwargs,
@@ -4044,9 +4044,9 @@ class SelectingNDayVolatility(FactorSorter):
                 run_freq='M',
                 window_length=150,
                 data_types=[
-                    DataType('high', freq='d', asset_type='E'),
-                    DataType('low', freq='d', asset_type='E'),
-                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
                 ],
         )
         if par_values:
