@@ -2509,7 +2509,7 @@ def get_history_data_packages(
 
     # 根据数据类型设置数据日期时间的Offset值
     for dt in data_types:
-        time_availability_offset = dt.available_time
+        time_availability_offset = dt.get_available_time
         if time_availability_offset is not None:
             df = all_dfs[dt.dtype_id]
             df.index = df.index + pd.Timedelta(time_availability_offset)
