@@ -149,6 +149,9 @@ class Operator:
             stg = strategies
         else:
             stg = []
+
+        if not isinstance(run_freq, str):
+            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead.')
         if signal_type is None:
             signal_type = 'pt'
         if op_type is None:

@@ -324,7 +324,7 @@ class CROSSLINE(RuleIterator):
     def realize(self):
         s, l, m = self.get_pars('s', 'l', 'f')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         m = m * l
@@ -363,15 +363,15 @@ class CDL(RuleIterator):
                 description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
                 window_length=200,
                 data_types=[
-                    DataType('open', freq='d'),
-                    DataType('high', freq='d'),
-                    DataType('low', freq='d'),
-                    DataType('close', freq='d')
+                    DataType('open', freq='d', asset_type='ANY'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY')
                 ],
         )
 
     def realize(self):
-        o, h, l, c = self.get_data('open_E_d', 'high_E_d', 'low_E_d', 'close_E_d')
+        o, h, l, c = self.get_data('open_ANY_d', 'high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         cat = (cdldoji(o, h, l, c).cumsum() // 100)
 
         return float(cat[-1])
@@ -419,7 +419,7 @@ class SoftBBand(RuleIterator):
 
     def realize(self):
         p, u, d, m = self.get_pars('p', 'u', 'd', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
@@ -478,7 +478,7 @@ class BBand(RuleIterator):
         span, upper, lower = self.get_pars('span', 'upper', 'lower')
 
         # 计算指数的指数移动平均价格
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         price = h[0]
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断:
@@ -534,7 +534,7 @@ class SCRSSMA(RuleIterator):
 
     def realize(self):
         rng, = self.get_pars('rng')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (sma(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -574,7 +574,7 @@ class SCRSDEMA(RuleIterator):
 
     def realize(self):
         rng, = self.get_pars('rng')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (dema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -616,7 +616,7 @@ class SCRSEMA(RuleIterator):
 
     def realize(self):
         rng, = self.get_pars('rng')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (ema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -660,7 +660,7 @@ class SCRSHT(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (ht(h[0]) - h[0])[-1]
         if diff < 0:
             return 1
@@ -703,7 +703,7 @@ class SCRSKAMA(RuleIterator):
 
     def realize(self):
         rng, = self.get_pars('rng')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (kama(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
@@ -748,7 +748,7 @@ class SCRSMAMA(RuleIterator):
 
     def realize(self):
         f, s = self.get_pars('f', 's')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (mama(h[0], f, s)[0] - h[0])[-1]
         if diff < 0:
             return 1
@@ -792,7 +792,7 @@ class SCRST3(RuleIterator):
 
     def realize(self):
         p, v = self.get_pars('p', 'v')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (t3(h[0], p, v) - h[0])[-1]
         if diff < 0:
             return 1
@@ -835,7 +835,7 @@ class SCRSTEMA(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (tema(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -878,7 +878,7 @@ class SCRSTRIMA(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (trima(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -921,7 +921,7 @@ class SCRSWMA(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (wma(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -974,7 +974,7 @@ class DCRSSMA(RuleIterator):
 
     def realize(self):
         l, s = self.get_pars('l', 's')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1019,7 +1019,7 @@ class DCRSDEMA(RuleIterator):
 
     def realize(self):
         l, s = self.get_pars('l', 's')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1064,7 +1064,7 @@ class DCRSEMA(RuleIterator):
 
     def realize(self):
         l, s = self.get_pars('l', 's')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1109,7 +1109,7 @@ class DCRSKAMA(RuleIterator):
 
     def realize(self):
         l, s = self.get_pars('l', 's')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (kama(h[0], l) - kama(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -1158,7 +1158,7 @@ class DCRSMAMA(RuleIterator):
 
     def realize(self):
         lf, ls, sf, ss = self.get_pars('lf', 'ls', 'sf', 'ss')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
         if diff < 0:
             return 1
@@ -1207,7 +1207,7 @@ class DCRST3(RuleIterator):
 
     def realize(self):
         lp, lv, sp, sv = self.get_pars('lp', 'lv', 'sp', 'sv')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (t3(h[0], lp, lv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
             return 1
@@ -1252,7 +1252,7 @@ class DCRSTEMA(RuleIterator):
 
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (tema(h[0], lp) - tema(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -1297,7 +1297,7 @@ class DCRSTRIMA(RuleIterator):
 
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (trima(h[0], lp) - trima(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -1342,7 +1342,7 @@ class DCRSWMA(RuleIterator):
 
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = (wma(h[0], lp) - wma(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -1396,7 +1396,7 @@ class SLPSMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = sma(h[0], f)
         # TODO 取N个最近的curve点进行线性回归
         slope = curve[-1] - curve[-n]
@@ -1446,7 +1446,7 @@ class SLPDEMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = dema(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1488,6 +1488,7 @@ class SLPEMA(RuleIterator):
                 ],
                 name='SLOPE - EMA',
                 description='Smoothed Curve Slope Strategy that uses EMA as the trade line ',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1495,7 +1496,7 @@ class SLPEMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1540,6 +1541,7 @@ class SLPHT(RuleIterator):
                 name='SLOPE - HT',
                 description='Smoothed Curve Slope Strategy that uses HT line as the '
                             'trade line ',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1547,7 +1549,7 @@ class SLPHT(RuleIterator):
 
     def realize(self):
         n, = self.get_pars('N')
-        h = self.get_data('close_E_d').T
+        h = self.get_data('close_ANY_d').T
         curve = ht(h[0])
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1590,6 +1592,7 @@ class SLPKAMA(RuleIterator):
                 name='SLOPE - KAMA',
                 description='Smoothed Curve Slope Strategy that uses KAMA line as the '
                             'trade line ',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1597,7 +1600,7 @@ class SLPKAMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = kama(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1641,6 +1644,7 @@ class SLPMAMA(RuleIterator):
                 ],
                 name='SLOPE - MAMA',
                 description='Smoothed Curve Slope Strategy that uses MAMA line as the trade line ',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1648,7 +1652,7 @@ class SLPMAMA(RuleIterator):
 
     def realize(self):
         f, s, n = self.get_pars('f', 's', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = mama(h[0], f, s)[0]
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1692,6 +1696,7 @@ class SLPT3(RuleIterator):
                 ],
                 name='SLOPE - T3',
                 description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1699,7 +1704,7 @@ class SLPT3(RuleIterator):
 
     def realize(self):
         p, v, n = self.get_pars('p', 'v', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = t3(h[0], p, v)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1741,6 +1746,7 @@ class SLPTEMA(RuleIterator):
                 ],
                 name='SLOPE - TEMA',
                 description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1748,7 +1754,7 @@ class SLPTEMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1790,6 +1796,7 @@ class SLPTRIMA(RuleIterator):
                 ],
                 name='SLOPE - TRIMA',
                 description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1797,7 +1804,7 @@ class SLPTRIMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = trima(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1839,6 +1846,7 @@ class SLPWMA(RuleIterator):
                 ],
                 name='SLOPE - WMA',
                 description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
+                window_length=270,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
@@ -1846,7 +1854,7 @@ class SLPWMA(RuleIterator):
 
     def realize(self):
         f, n = self.get_pars('f', 'N')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         curve = wma(h[0], f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1900,7 +1908,7 @@ class SAREXT(RuleIterator):
 
     def realize(self):
         a, m = self.get_pars('a', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         sar = sarext(h[0], h[1], a, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
@@ -1946,7 +1954,8 @@ class MACD(RuleIterator):
                 name='MACD',
                 description='MACD strategy, determine long/short position according to differences of '
                             'exponential weighted moving average prices',
-                data_types=DataType('close')
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY')
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1954,7 +1963,7 @@ class MACD(RuleIterator):
     def realize(self):
         s, l, m = self.get_pars('slow', 'fast', 'mid')
 
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
 
         # 计算指数的指数移动平均价格
         diff = ema(h, s) - ema(h, l)
@@ -2004,7 +2013,7 @@ class TRIX(RuleIterator):
 
     def realize(self):
         s, m = self.get_pars('s', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
 
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
@@ -2055,7 +2064,7 @@ class ADX(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         res = adx(h[0], h[1], h[2], p)[-1]
         # TODO 策略:
         #  指标比较复杂，需要深入研究一下
@@ -2110,7 +2119,7 @@ class APO(RuleIterator):
 
     def realize(self):
         f, s, m = self.get_pars('f', 's', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = apo(h[0], f, s, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
@@ -2166,7 +2175,7 @@ class AROON(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('high_E_d', 'low_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d')
         ups, dns = aroon(h[0], h[1], p)
 
         if ups[-1] > dns[-1]:
@@ -2224,7 +2233,7 @@ class AROONOSC(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = aroonosc(h[0], h[1], p)[-1]
 
         if res > 0:
@@ -2283,7 +2292,7 @@ class CCI(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         res = cci(h[0], h[1], h[2], p)[-1]
 
         if res > 0:
@@ -2338,7 +2347,7 @@ class CMO(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = cmo(h[0], p)[-1]
 
         if 50 > res > 0:
@@ -2400,7 +2409,7 @@ class MACDEXT(RuleIterator):
 
     def realize(self):
         fp, ft, sp, st, p, t = self.get_pars('fp', 'ft', 'sp', 'st', 'p', 't')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)
         if m[-1] > 0:
             cat = 1
@@ -2450,7 +2459,7 @@ class MFI(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d', 'volume_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
         res = mfi(h[0], h[1], h[2], h[3], p)[-1]
 
         if res < 20:
@@ -2504,7 +2513,7 @@ class DI(RuleIterator):
 
     def realize(self):
         n, p, = self.get_pars('n', 'p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         ndi = minus_di(h[0], h[1], h[2], n)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
 
@@ -2560,7 +2569,7 @@ class DM(RuleIterator):
 
     def realize(self):
         n, p, = self.get_pars('n', 'p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         ndm = minus_dm(h[0], h[1], n)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
 
@@ -2610,7 +2619,7 @@ class MOM(RuleIterator):
 
     def realize(self):
         p, = self.get_pars('p')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = mom(h[0], p)[-1]
 
         if res > 0:
@@ -2664,7 +2673,7 @@ class PPO(RuleIterator):
 
     def realize(self):
         fp, sp, m = self.get_pars('fp', 'sp', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = ppo(h[0], fp, sp, m)[-1]
 
         if res > 0:
@@ -2718,7 +2727,7 @@ class RSI(RuleIterator):
 
     def realize(self):
         p, ulim, llim = self.get_pars('p', 'ulim', 'llim')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = rsi(h[0], p)[-1]
 
         if res > ulim:
@@ -2779,7 +2788,7 @@ class STOCH(RuleIterator):
 
     def realize(self):
         fk, sk, skm, sd, sdm = self.get_pars('fk', 'sk', 'skm', 'sd', 'sdm')
-        h = self.get_data('close_E_d', 'high_E_d', 'low_E_d')
+        h = self.get_data('close_ANY_d', 'high_EANYd', 'low_ANY_d')
         k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
 
         if k[-1] > 80:
@@ -2836,7 +2845,7 @@ class STOCHF(RuleIterator):
 
     def realize(self):
         fk, fd, fdm = self.get_pars('fk', 'fd', 'fdm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
 
         if k[-1] > 80:
@@ -2891,7 +2900,7 @@ class STOCHRSI(RuleIterator):
 
     def realize(self):
         p, fk, fd, fdm = self.get_pars('p', 'fk', 'fd', 'fdm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         k, d = stochrsi(h[0], p, fk, fd, fdm)
 
         if k[-1] > 0.8:
@@ -2951,7 +2960,7 @@ class ULTOSC(RuleIterator):
 
     def realize(self):
         p1, p2, p3, u, l = self.get_pars('p1', 'p2', 'p3', 'u', 'l')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         res = ultosc(h[0], h[1], h[2], p1, p2, p3)[-1]
 
         if res > u:
@@ -3007,7 +3016,7 @@ class WILLR(RuleIterator):
 
     def realize(self):
         p, u, l = self.get_pars('p', 'u', 'l')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         res = willr(h[0], h[1], h[2], p)[-1]
         if res > -l:
             sig = -0.3
@@ -3060,7 +3069,7 @@ class AD(RuleIterator):
         )
 
     def realize(self):
-        h = self.get_data('close_E_d', 'high_E_d', 'low_E_d', 'volume_E_d')
+        h = self.get_data('close_ANY_d', 'high_EANYd', 'low_ANY_d', 'volume_ANY_d')
         ad_val = ad(h[0], h[1], h[2], h[3])
         ad_last, ad_latest = ad_val[-2], ad_val[-1]
         if ad_last > ad_latest:
@@ -3117,7 +3126,7 @@ class ADOSC(RuleIterator):
 
     def realize(self):
         f, s = self.get_pars('f', 's')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d', 'volume_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
         res = adosc(h[0], h[1], h[2], h[3], f, s)[-1]
         if res > 0:
             sig = -0.3
@@ -3172,7 +3181,7 @@ class OBV(RuleIterator):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d', 'volume_E_d')
+        h = self.get_data('close_ANY_d', 'volume_ANY_d')
         close, volume = h[0], h[1]
         obv_ma = sma(obv(close, volume), n)
         close_ma = sma(close, n)
@@ -3240,7 +3249,7 @@ class ATR(RuleIterator):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
+        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         high, low, close = h[0], h[1], h[2]
         atr_value = atr(high, low, close, n)
         close_ma = sma(close, n)
@@ -3373,7 +3382,7 @@ class SellRate(RuleIterator):
     def realize(self):
 
         day, change = self.get_pars('day', 'change')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
 
         diff = h[-1] - h[-day]
         if (change >= 0) and (diff > change):
@@ -3425,7 +3434,7 @@ class BuyRate(RuleIterator):
 
     def realize(self):
         day, change = self.get_pars('day', 'change')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         diff = h[-1] - h[-day]
         if (change >= 0) and (diff > change):
             return 1
@@ -3567,7 +3576,7 @@ class DMA(RuleIterator):
     def realize(self):
         s, l, d = self.get_pars('slow', 'long', 'diff')
 
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         dma = sma(h, s) - sma(h, l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
@@ -3811,7 +3820,7 @@ class SelectingNDayLast(FactorSorter):
 
     def realize(self):
         n, = self.get_pars('n')
-        factors = self.get_data('close_E_d')[:, -n - 1, 0]
+        factors = self.get_data('close_ANY_d')[:, -n - 1, 0]
 
         return factors
 
@@ -3869,7 +3878,7 @@ class SelectingNDayAvg(FactorSorter):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         n_average = h[:, -n - 1:, 0].mean(axis=1)
         factors = n_average
 
@@ -3930,7 +3939,7 @@ class SelectingNDayChange(FactorSorter):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         current_price = h[:, -1, 0]
         n_previous = h[:, -n - 1, 0]
         factors = current_price - n_previous
@@ -3992,7 +4001,7 @@ class SelectingNDayRateChange(FactorSorter):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         current_price = h[:, -1, 0]
         n_previous = h[:, -n - 1, 0]
         factors = (current_price - n_previous) / n_previous
@@ -4055,7 +4064,7 @@ class SelectingNDayVolatility(FactorSorter):
     def realize(self):
         n, = self.get_pars('n')
 
-        high, low, close = self.get_data('high_E_d', 'low_E_d', 'close_E_d')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
         factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[:, -1]
