@@ -151,7 +151,7 @@ class BaseStrategy:
             pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
             data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
             use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
-            window_length: Union[int, List[int], Dict[str, int]] = 30,
+            window_length: Union[int, List[int], Dict[str, int]] = 270,
             opt_tag: int = 0,
             par_values: Union[Tuple[Any], List[Any]] = None,
     ):

@@ -1784,8 +1784,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
               f'mwl is {mwl}\n')
         print(f'before setting window_length the max_window_length by dtype "close_E_d" is '
               f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
-        print(f'before setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
+        print(f'before setting window_length the max_window_length by dtype "high_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 270)
         self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 270)
