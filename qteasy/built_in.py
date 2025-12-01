@@ -2004,8 +2004,8 @@ class TRIX(RuleIterator):
                 name='TRIX',
                 description='TRIX strategy, determine long/short position according to triple exponential '
                             'weighted moving average prices',
-                data_types=DataType('close'),
-                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=220,
                 **kwargs,
         )
         if par_values:
@@ -3813,7 +3813,7 @@ class SelectingNDayLast(FactorSorter):
                 description='Select stocks according their previous prices',
                 run_freq='m',
                 window_length=100,
-                data_types=DataType('close'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
