@@ -1410,7 +1410,7 @@ class TestGetHistoryDataPackages(unittest.TestCase):
 
         df = result['close_E_d']
         self.assertEqual(len(df), 5)  # 最近5个交易日
-        self.assertEqual(df.index[0], pd.Timestamp('2023-01-05'))
+        self.assertEqual(df.index[0], pd.Timestamp('2023-01-05 15:00:00'))
 
         print(f'testing get data with end and row count')
         result = get_history_data_packages(
@@ -1424,13 +1424,14 @@ class TestGetHistoryDataPackages(unittest.TestCase):
 
         df = result['close_E_d']
         self.assertEqual(len(df), 5)  # 最近5个交易日
-        self.assertEqual(df.index[-1], pd.Timestamp('2023-01-07'))
+        self.assertEqual(df.index[-1], pd.Timestamp('2023-01-07 15:00:00'))
 
     def test_get_reference_data_without_shares(self):
         """测试获取无股票代码的参考数据"""
 
         # 创建参考数据类型
         index_type = DataType('close-000001.SH', freq='d', asset_type='IDX')
+        print(f'Created data type that is unsymbolized: {index_type.unsymbolized}')
 
         result = get_history_data_packages(
                 data_types=index_type,
@@ -1442,13 +1443,13 @@ class TestGetHistoryDataPackages(unittest.TestCase):
         print(f'get data result is:\n{result}')
 
         self.assertIsInstance(result, dict)
-        self.assertIn('close-000001.SH', result)
-        self.assertIsInstance(result['close-000001.SH'], pd.Series)
-        result_df = result['close-000001.SH']
+        self.assertIn('close-000001.SH_IDX_d', result)
+        self.assertIsInstance(result['close-000001.SH_IDX_d'], pd.Series)
+        result_df = result['close-000001.SH_IDX_d']
         self.assertEqual(result_df.shape, (7, ))  # 7个交易日，1列数据
-        self.assertEqual(result_df.name, 'close-000001.SH')  # 列名为'none'
-        self.assertEqual(result_df.index[0], pd.Timestamp('2023-01-03'))
-        self.assertEqual(result_df.index[-1], pd.Timestamp('2023-01-09'))
+        self.assertEqual(result_df.name, 'close-000001.SH_IDX_d')  # 列名为'none'
+        self.assertEqual(result_df.index[0], pd.Timestamp('2023-01-03 15:00:00'))
+        self.assertEqual(result_df.index[-1], pd.Timestamp('2023-01-09 15:00:00'))
 
     def test_invalid_data_types(self):
         """测试无效的数据类型参数"""

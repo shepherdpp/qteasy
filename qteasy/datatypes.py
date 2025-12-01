@@ -4315,13 +4315,15 @@ def get_history_data_from_source(
     combine_asset_types: bool, optional, default False
         在输入的数据类型中可能有相同的htype_names，例如'pe_IDX_d'与'pe_E_d'
         这两个htype的名称相同，只是数据类型不同。此时可以选择是否是否合并相同的htype name，
-        如果为True，则下载的数据会被合并为一个pe类型，同时包含IDX与E类型的数据
+        如果为True，则下载的数据会被合并为一个pe类型，同时包含IDX与E类型的数据，返回的
+        DataFrame会以data_type.name作为key值，
         例如：
         pe:         000300.SH, 000001.SZ
         2020-01-01      22.34,     18.00
         2020-01-01      22.35,     18.50
 
-        如果选择不合并，则pe_IDX_d与pe_E_d的数据会被分开罗列
+        如果选择不合并，则pe_IDX_d与pe_E_d的数据会被分开罗列，并以data_types.dtype_id作为
+        返回结果的key值，
         例如：
 
         pe_IDX_d:    000300.SH, 000001.SZ
