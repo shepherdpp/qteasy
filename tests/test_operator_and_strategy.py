@@ -977,7 +977,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op['dma'].run_freq, '15min')
         self.assertEqual(op['macd'].run_freq, '15min')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
-        self.assertRaises(TypeError, qt.Operator, 'dma, macd', run_freq=15)
+        self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq=15)
         self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq='5hourly')
 
         op = qt.Operator('dma, macd', run_timing='open')
@@ -1675,31 +1675,31 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('macd, dma, trix')
         dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt_ids[0], 'close_E_d')
-        self.assertEqual(dt[0], DataType('close', freq='d', asset_type='E'))
+        self.assertEqual(dt_ids[0], 'close_ANY_d')
+        self.assertEqual(dt[0], DataType('close', freq='d', asset_type='ANY'))
 
         op = qt.Operator('macd, cdl')
         dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertIn('close_E_d', dt_ids)
-        self.assertIn('high_E_d', dt_ids)
-        self.assertIn('low_E_d', dt_ids)
-        self.assertIn('open_E_d', dt_ids)
-        self.assertIn(DataType('close', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('high', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('low', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('open', freq='d', asset_type='E'), dt)
+        self.assertIn('close_ANY_d', dt_ids)
+        self.assertIn('high_ANY_d', dt_ids)
+        self.assertIn('low_ANY_d', dt_ids)
+        self.assertIn('open_ANY_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='ANY'), dt)
         op.add_strategy('dma')
         dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertIn('close_E_d', dt_ids)
-        self.assertIn('high_E_d', dt_ids)
-        self.assertIn('low_E_d', dt_ids)
-        self.assertIn('open_E_d', dt_ids)
-        self.assertIn(DataType('close', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('high', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('low', freq='d', asset_type='E'), dt)
-        self.assertIn(DataType('open', freq='d', asset_type='E'), dt)
+        self.assertIn('close_ANY_d', dt_ids)
+        self.assertIn('high_ANY_d', dt_ids)
+        self.assertIn('low_ANY_d', dt_ids)
+        self.assertIn('open_ANY_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='ANY'), dt)
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
@@ -1782,14 +1782,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         mwl = op.max_window_length
         print(f'before setting window_length the value is 270:\n'
               f'mwl is {mwl}\n')
-        print(f'before setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
+        print(f'before setting window_length the max_window_length by dtype "close_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
         print(f'before setting window_length the max_window_length by dtype "high_ANY_d" is '
               f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 270)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 270)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 150)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 270)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 150)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('low_ANY_d'), 150)
 
         op.set_parameter('macd', window_length=300)
         op.set_parameter('ndayvol', window_length=350)
@@ -1797,35 +1798,36 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'after setting window_length the value is new set value:\n'
               f'mwl is {mwl}\n')
         print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
         print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 350)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 350)
 
         # update window_length with multiple values
         op.set_parameter('trix', window_length=(120,))
         op.set_parameter('macd', window_length=(90,))
+        op.set_parameter('dma', window_length=(30,))
         op.set_parameter('ndayvol', window_length=(90, 135, 45))
 
         print(f'set window_length again:')
-        self.assertEqual(op['trix'].window_lengths, {'close_E_d': 120})
-        self.assertEqual(op['macd'].window_lengths, {'close_E_d': 90})
-        self.assertEqual(op['dma'].window_lengths, {'close_E_d': 30})
-        self.assertEqual(op['ndayvol'].window_lengths, {'close_E_d': 45, 'high_E_d': 90, 'low_E_d': 135})
+        self.assertEqual(op['trix'].window_lengths, {'close_ANY_d': 120})
+        self.assertEqual(op['macd'].window_lengths, {'close_ANY_d': 90})
+        self.assertEqual(op['dma'].window_lengths, {'close_ANY_d': 30})
+        self.assertEqual(op['ndayvol'].window_lengths, {'close_ANY_d': 45, 'high_ANY_d': 90, 'low_ANY_d': 135})
         self.assertEqual(op.max_window_length, 135)
-        print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("close_E_d")}:')
-        print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("high_E_d")}:')
-        print(f'after setting window_length the max_window_length by dtype "low_E_d" is '
-              f'{op.get_max_window_length_by_dtype_id("low_E_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "close_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "high_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "low_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("low_ANY_d")}:')
 
-        self.assertEqual(op.get_max_window_length_by_dtype_id('close_E_d'), 120)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('high_E_d'), 90)
-        self.assertEqual(op.get_max_window_length_by_dtype_id('low_E_d'), 135)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 120)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 90)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('low_ANY_d'), 135)
 
     def test_property_set(self):
         """ test all property setters:

@@ -150,9 +150,6 @@ class Operator:
         else:
             stg = []
 
-        if run_freq is not None:
-            if not isinstance(run_freq, str):
-                raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead.')
         if signal_type is None:
             signal_type = 'pt'
         if op_type is None:
@@ -808,13 +805,13 @@ class Operator:
                                              f'should be a list of string, got {type(strategies)} instead'
         for stg in strategies:
             if not isinstance(stg, (str, BaseStrategy, type)):
-                warnings.warn(f'WrongType! some of the items in strategies '
-                              f'can not be added - got {stg}', RuntimeWarning, stacklevel=2)
+                msg = (f'WrongType! some of the items in strategies '
+                              f'can not be added - got {stg}')
+                raise TypeError(msg)
             try:
                 self.add_strategy(stg, **kwargs)
             except Exception as e:
-                warnings.warn(f'Failed to add strategy {stg} to operator - {e}',
-                              RuntimeWarning, stacklevel=2)
+                raise ValueError(f'Failed to add strategy {stg} to operator - {e}')
 
     def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any], **kwargs):
 
@@ -900,6 +897,8 @@ class Operator:
             run_freq = kwargs.pop('run_freq')
             if not isinstance(run_freq, str) and run_freq is not None:
                 raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
+            # if run_freq is not None:
+            #     import pdb; pdb.set_trace()
             strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
         if 'run_timing' in kwargs:
             run_timing = kwargs.pop('run_timing')
