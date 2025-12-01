@@ -2477,13 +2477,17 @@ def get_history_data_packages(
     if not all([isinstance(dt, DataType) for dt in data_types]):
         raise TypeError(f'all elements of data_types should be DataType, got {data_types} instead.')
 
+    if shares is None:
+        shares = []
     if isinstance(shares, str):
         shares = str_to_list(shares, sep_char=',')
-    if len(shares) == 0:
-        raise ValueError('shares can not be an empty list.')
 
     symbolized_dtypes = [dt for dt in data_types if not dt.unsymbolized]
     unsymbolized_dtypes = [dt for dt in data_types if dt.unsymbolized]
+
+    # 当我们使用unsymbolizer作为是否获取参考数据的依据时，shares就可以为空列表，但是前提是symbolized_dtypes为空
+    if len(shares) == 0 and len(symbolized_dtypes) > 0:
+        raise ValueError(f'shares can not be an empty list while symbolized data types are given: {symbolized_dtypes}.')
 
     all_dfs = {}
     # 获取针对shares的symbolized数据
@@ -2537,7 +2541,7 @@ def get_history_panel(
         trade_time_only=True,
         return_history_panel=True,
         **kwargs
-) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
+) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:  # TODO: 这个函数需要考虑是否还需要？
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
     HistoryPanel数据对象，该HistoryPanel的数据时间频率由参数指定，查找数据时会自动匹配相应
     的数据类型，如果没有完全匹配频率的数据类型，则会找到最近的类型并通过升频或降频的方式调整为
@@ -2695,6 +2699,8 @@ def get_history_panel(
             df = pd.DataFrame(df)
             df.columns = ['none']
         # find freq of the htyp:
+        if len([d_type for d_type in data_types if d_type.name == htyp]) == 0:
+            import pdb; pdb.set_trace()
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
             new_df = _adjust_freq(
