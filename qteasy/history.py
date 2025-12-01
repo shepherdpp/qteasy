@@ -2512,7 +2512,12 @@ def get_history_data_packages(
         time_availability_offset = dt.get_available_time
         if time_availability_offset is not None:
             df = all_dfs[dt.dtype_id]
-            df.index = df.index + pd.Timedelta(time_availability_offset)
+            try:
+                df.index = df.index + pd.Timedelta(time_availability_offset)
+            except:
+                # import pdb
+                # pdb.set_trace()
+                pass
             all_dfs[dt.dtype_id] = df
 
     return all_dfs

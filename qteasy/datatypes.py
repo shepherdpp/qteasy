@@ -1179,7 +1179,7 @@ class DataType:
     def copy(self):
         return self.__copy__()
 
-    def get_available_time(self, asset_type) -> Optional[str]:
+    def get_available_time(self, asset_type=None) -> Optional[str]:
         """ 数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间
 
         Properties
@@ -4564,8 +4564,8 @@ def get_reference_data_from_source(
 
     for htyp, ser in reference_data_acquired.items():
         if isinstance(ser, pd.DataFrame) and not ser.empty:
-            import pdb
-            pdb.set_trace()
+            # import pdb
+            # pdb.set_trace()
             pass
         if row_count:
             ser = ser.tail(row_count)
