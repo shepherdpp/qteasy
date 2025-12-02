@@ -185,16 +185,16 @@ def parse_signal_parsing_params(config) -> dict:
     # raise if parameters are out of range or with wrong types
     if not (isinstance(signal_parsing_params['pt_buy_threshold'], (float, int)) and
             0 <= signal_parsing_params['pt_buy_threshold'] < 1):
-        raise ValueError('pt_buy_threshold should be a float number between 0 and 1')
+        raise ValueError('PT_buy_threshold should be a float number between 0 and 1')
     if not (isinstance(signal_parsing_params['pt_sell_threshold'], (float, int)) and
             0 <= signal_parsing_params['pt_sell_threshold'] < 1):
-        raise ValueError('pt_sell_threshold should be a float number between 0 and 1')
+        raise ValueError('PT_sell_threshold should be a float number between 0 and 1')
     if not (isinstance(signal_parsing_params['long_pos_limit'], (float, int)) and
             signal_parsing_params['long_pos_limit'] > 0):
-        raise ValueError('long_pos_limit should be a positive float number')
+        raise ValueError('long_position_limit should be a positive float number')
     if not (isinstance(signal_parsing_params['short_pos_limit'], (float, int)) and
             signal_parsing_params['short_pos_limit'] < 0):
-        raise ValueError('short_pos_limit should be a negative float number')
+        raise ValueError('short_position_limit should be a negative float number')
     if not isinstance(signal_parsing_params['allow_sell_short'], bool):
         raise ValueError('allow_sell_short should be a boolean value')
 
@@ -225,9 +225,9 @@ def parse_trading_moq_params(config) -> dict:
     }
     # raise if parameters are out of range or with wrong types
     if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] >= 0):
-        raise ValueError('moq_buy should be a positive float number')
+        raise ValueError('moq_buy should be a positive float number or zero')
     if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] >= 0):
-        raise ValueError('moq_sell should be a positive float number')
+        raise ValueError('moq_sell should be a positive float number or zero')
 
     return trading_moq_params
 
