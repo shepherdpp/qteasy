@@ -473,7 +473,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      trade_log=True,
-                     asset_pool='000651.SZ',  # was '000300.SH'
+                     # asset_pool='000651.SZ',  # was '000300.SH'
                      invest_cash_dates='20070604', )
         qt.run(self.op)
 

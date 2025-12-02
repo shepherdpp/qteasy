@@ -4300,7 +4300,7 @@ class TestBacktester(unittest.TestCase):
         self.assertIsInstance(result_df, pd.DataFrame)
 
         # 检查列是否正确
-        expected_columns = self.shares + ['cash', 'value']
+        expected_columns = self.shares + ['cash', 'value', 'fee']
         self.assertListEqual(list(result_df.columns), expected_columns)
 
         # 检查索引是否正确
