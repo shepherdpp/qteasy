@@ -918,7 +918,7 @@ def _plot_loop_result(
     change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
     # 计算回测记录第一天的回测结果和参考指数价格，以此计算后续的收益率曲线
     start_point = looped_values['value'].iloc[0]
-    ref_start = looped_values['reference'].iloc[0]
+    ref_start = looped_values['benchmark'].iloc[0]
     # 计算回测结果的每日回报率
     ret = looped_values['value'] - looped_values['value'].shift(1)
     position = 1 - (looped_values['cash'] / looped_values['value'])
