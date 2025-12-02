@@ -2680,7 +2680,7 @@ def get_history_panel(
         )
         all_dfs = normal_dfs
     else:
-        # 获取无share数据
+        # 获取无share数据，且数据使用d_type.name为key分组
         reference_dfs = get_reference_data_from_source(
                 datasource=data_source,
                 htypes=data_types,
@@ -2688,6 +2688,7 @@ def get_history_panel(
                 end=end,
                 freq=freq,
                 row_count=rows,
+                group_by_dtype_name=True,
         )
         all_dfs = reference_dfs
 
@@ -2699,15 +2700,6 @@ def get_history_panel(
             df = pd.DataFrame(df)
             df.columns = ['none']
         # find freq of the htyp:
-        if len([d_type for d_type in data_types if d_type.name == htyp]) == 0:
-            # import pdb; pdb.set_trace()
-            # TODO: 需要修正这里的错误，使用get_reference/history_data_from_source之后，所有的数据到底应该按照
-            #  dtype.dtype_id来key，还是dtype.name来key？目前看来应该是dtype.dtype_id，但是这里的逻辑
-            #  需要修正
-            raise RuntimeError(f'Something went wrong here, the cata can be extracted from data source but could not be '
-                               f'acquired because the data are keyed by dtype.dtype_id while here trying to get'
-                               f'them by dtype.name, this is a TODO for the developer: \n'
-                               f'the acquired data (keys): {all_dfs.keys()}\n')
         htype_freq = [d_type for d_type in data_types if d_type.name == htyp][0]
         if (not b_days_only) or (not trade_time_only) or (freq != htype_freq.freq):
             new_df = _adjust_freq(

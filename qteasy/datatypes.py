@@ -4460,6 +4460,7 @@ def get_reference_data_from_source(
         end: str = None,
         freq: str = None,
         row_count: int = 100,
+        group_by_dtype_name: bool = False,
 ) -> Dict[str, pd.Series]:
     """ 根据给出的参考数据类型对象，获取相应的数据并组装成一个标准的Series-Dict并返回
 
@@ -4483,6 +4484,10 @@ def get_reference_data_from_source(
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的参考数据的结束日期/时间(如果可用)
     row_count: int, optional, default 100
         获取的参考数据的行数，如果指定了start和end，则忽略此参数
+    group_by_dtype_name: bool, optional, default False
+        是否将读取的数据按照data_type.name来分组(建立dict的key）
+         - False表示使用datatype.dtype_id为key分组
+         - True 表示使用datatype.name为key分组
 
     Returns
     -------
@@ -4543,14 +4548,15 @@ def get_reference_data_from_source(
         # 从数据源获取数据
         ser = htype.get_data_from_source(datasource, symbols=qt_code, starts=start, ends=end)
 
-        ser.name = htype.dtype_id
+        dict_key = htype.name if group_by_dtype_name else htype.dtype_id
+        ser.name = dict_key
 
-        already_ser = reference_data_acquired.get(htype.dtype_id)
+        already_ser = reference_data_acquired.get(ser.name)
         if already_ser is None:
-            reference_data_acquired[htype.dtype_id] = ser
+            reference_data_acquired[dict_key] = ser
         else:  # 如果尚未找到有意义的数据，则将新的数据赋值给reference_data_acquired
             if already_ser.empty:
-                reference_data_acquired[htype.dtype_id] = ser
+                reference_data_acquired[dict_key] = ser
 
     # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
     if all(ser.empty for ser in reference_data_acquired.values()):
