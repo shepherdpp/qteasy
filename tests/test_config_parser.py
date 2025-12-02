@@ -165,7 +165,7 @@ class TestConfigParser(unittest.TestCase):
             'cost_rate_sell': 0.002,
             'cost_min_buy':   5.0,
             'cost_min_sell':  5.0,
-            'cost_slipage':   0.0,
+            'cost_slippage':   0.0,
         }
         cost_params = parse_trade_cost_params(config=config)
         self.assertIsInstance(cost_params, dict)
@@ -173,12 +173,12 @@ class TestConfigParser(unittest.TestCase):
         self.assertIn('sell_rate', cost_params)
         self.assertIn('buy_min', cost_params)
         self.assertIn('sell_min', cost_params)
-        self.assertIn('slipage', cost_params)
+        self.assertIn('slippage', cost_params)
         self.assertEqual(cost_params['buy_rate'], 0.001)
         self.assertEqual(cost_params['sell_rate'], 0.002)
         self.assertEqual(cost_params['buy_min'], 5.0)
         self.assertEqual(cost_params['sell_min'], 5.0)
-        self.assertEqual(cost_params['slipage'], 0.0)
+        self.assertEqual(cost_params['slippage'], 0.0)
 
         # parse raise with missing parameters
         config = {}
@@ -192,7 +192,7 @@ class TestConfigParser(unittest.TestCase):
             'cost_rate_sell': 0.002,
             'cost_min_buy':   5.0,
             'cost_min_sell':  5.0,
-            'cost_slipage':   0.0,
+            'cost_slippage':   0.0,
         }
         with self.assertRaises(ValueError):
             parse_trade_cost_params(config=config)
@@ -203,7 +203,7 @@ class TestConfigParser(unittest.TestCase):
             'cost_rate_sell': 0.002,
             'cost_min_buy':   5.0,
             'cost_min_sell':  5.0,
-            'cost_slipage':   0.0,
+            'cost_slippage':   0.0,
         }
         with self.assertRaises(ValueError):
             parse_trade_cost_params(config=config)
@@ -301,10 +301,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_normal_case(self):
         """测试正常情况下参数解析"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         result = parse_signal_parsing_params(config)
@@ -317,52 +317,52 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         self.assertEqual(result, expected)
 
-    def test_pt_buy_threshold_type_error(self):
-        """测试pt_buy_threshold类型错误的情况"""
+    def test_PT_buy_threshold_type_error(self):
+        """测试PT_buy_threshold类型错误的情况"""
         config = {
-            'pt_buy_threshold': "invalid",
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': "invalid",
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_buy_threshold should be a float number between 0 and 1", str(context.exception))
 
-    def test_pt_buy_threshold_out_of_range_low(self):
-        """测试pt_buy_threshold低于有效范围的情况"""
+    def test_PT_buy_threshold_out_of_range_low(self):
+        """测试PT_buy_threshold低于有效范围的情况"""
         config = {
-            'pt_buy_threshold': -0.1,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': -0.1,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_buy_threshold should be a float number between 0 and 1", str(context.exception))
 
-    def test_pt_buy_threshold_out_of_range_high(self):
-        """测试pt_buy_threshold高于有效范围的情况"""
+    def test_PT_buy_threshold_out_of_range_high(self):
+        """测试PT_buy_threshold高于有效范围的情况"""
         config = {
-            'pt_buy_threshold': 1.0,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 1.0,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_buy_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_buy_threshold should be a float number between 0 and 1", str(context.exception))
 
     def test_pt_sell_threshold_type_error(self):
         """测试pt_sell_threshold类型错误的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': "invalid",
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': "invalid",
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -372,10 +372,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_pt_sell_threshold_out_of_range_low(self):
         """测试pt_sell_threshold低于有效范围的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': -0.1,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': -0.1,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -385,10 +385,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_pt_sell_threshold_out_of_range_high(self):
         """测试pt_sell_threshold高于有效范围的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 1.0,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 1.0,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -398,10 +398,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_long_pos_limit_type_error(self):
         """测试long_pos_limit类型错误的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': "invalid",
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': "invalid",
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -411,10 +411,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_long_pos_limit_not_positive(self):
         """测试long_pos_limit不是正数的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 0,
+            'short_position_limit': -0.5,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -424,10 +424,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_short_pos_limit_type_error(self):
         """测试short_pos_limit类型错误的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': "invalid",
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': "invalid",
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -437,10 +437,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_short_pos_limit_not_negative(self):
         """测试short_pos_limit不是负数的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': 0,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': 0,
             'allow_sell_short': True
         }
         with self.assertRaises(ValueError) as context:
@@ -450,10 +450,10 @@ class TestParseSignalParsingParams(unittest.TestCase):
     def test_allow_sell_short_type_error(self):
         """测试allow_sell_short类型错误的情况"""
         config = {
-            'pt_buy_threshold': 0.5,
-            'pt_sell_threshold': 0.3,
-            'long_pos_limit': 1.0,
-            'short_pos_limit': -0.5,
+            'PT_buy_threshold': 0.5,
+            'PT_sell_threshold': 0.3,
+            'long_position_limit': 1.0,
+            'short_position_limit': -0.5,
             'allow_sell_short': "invalid"
         }
         with self.assertRaises(ValueError) as context:
@@ -511,17 +511,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_buy should be a positive float number', str(context.exception))
-
-    def test_exception_case_moq_buy_zero(self):
-        """TC005: 测试异常情况 - moq_buy为0"""
-        config = {
-            'trade_batch_size': 0,
-            'sell_batch_size': 50
-        }
-        with self.assertRaises(ValueError) as context:
-            parse_trading_moq_params(config)
-        self.assertIn('moq_buy should be a positive float number', str(context.exception))
+        self.assertIn('moq_buy should be a positive float number or zero', str(context.exception))
 
     def test_exception_case_moq_buy_non_numeric(self):
         """TC006: 测试异常情况 - moq_buy为非数字类型"""
@@ -531,7 +521,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_buy should be a positive float number', str(context.exception))
+        self.assertIn('moq_buy should be a positive float number or zero', str(context.exception))
 
     def test_exception_case_moq_sell_negative(self):
         """TC007: 测试异常情况 - moq_sell为负数"""
@@ -541,17 +531,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_sell should be a positive float number', str(context.exception))
-
-    def test_exception_case_moq_sell_zero(self):
-        """TC008: 测试异常情况 - moq_sell为0"""
-        config = {
-            'trade_batch_size': 100,
-            'sell_batch_size': 0
-        }
-        with self.assertRaises(ValueError) as context:
-            parse_trading_moq_params(config)
-        self.assertIn('moq_sell should be a positive float number', str(context.exception))
+        self.assertIn('moq_sell should be a positive float number or zero', str(context.exception))
 
     def test_exception_case_moq_sell_non_numeric(self):
         """TC009: 测试异常情况 - moq_sell为非数字类型"""
