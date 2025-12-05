@@ -144,10 +144,11 @@ def parse_cash_invest_and_delivery_arrays(config: dict, op_schedule: pd.Index) -
     cash_plan_df['inflation_rate'] += inflation_rate * day_diffs / 365  # 年化通胀率转换为日化通胀率
     cash_investment_array = cash_plan_df['investment'].to_numpy()
     cash_inflation_array = cash_plan_df['inflation_rate'].to_numpy()
+    cash_inflation_array = cash_inflation_array / np.roll(cash_inflation_array, 1)
+    cash_inflation_array[0] = 1.0  # 第一天的通胀率设为1.0
 
     day_changes = np.diff(day_diffs.values, prepend=-1)
     day_changes[day_changes.nonzero()] = 1  # 将非零差值设为1，表示天数变化
-
     return cash_investment_array, cash_inflation_array, day_changes
 
 

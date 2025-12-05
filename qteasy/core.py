@@ -1857,7 +1857,7 @@ def check_and_prepare_benchmark_data(op: Operator,
 
     # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对齐，并进行ffill填充
     re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
-    benchmark_data = pd.DataFrame(benchmark_data.values[re_index], index=run_timing_indices, columns=benchmark_data.columns)
+    benchmark_data = pd.DataFrame(benchmark_data.values[re_index-1], index=run_timing_indices, columns=benchmark_data.columns)
     benchmark_data.fillna(method='ffill', inplace=True)
 
     return benchmark_data
@@ -2257,6 +2257,7 @@ def run_mode_1(op, config):
             trade_price_data=trade_prices.values,
             logger=qteasy.logger_core,
     )
+
     # TODO: 实现 backtestd.evaluate() / backtested.report() / backtested.plot()
     #  以后，就不需要调用backtest_result = backtested.trade_result_df() 了
     # backtest_result = backtested.trade_result_df()

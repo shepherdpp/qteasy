@@ -10,8 +10,9 @@
 # ======================================
 
 import platform
-
 import warnings
+from typing import Optional, Union
+from xxsubtype import bench
 
 import mplfinance as mpf
 import matplotlib.pyplot as plt
@@ -882,6 +883,7 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     return data, parameter_string
 
 
+# TODO: 这个函数被Backtester调用，成为Backtester.plot()方法
 def _plot_loop_result(
         loop_results: dict,
         plot_title: str = 'Backtest Result',
@@ -899,7 +901,7 @@ def _plot_loop_result(
     register_matplotlib_converters()
     # 计算在整个投资回测区间内每天的持股数量，通过持股数量的变化来推出买卖点
     result_columns = looped_values.columns
-    fixed_column_items = ['fee', 'cash', 'value', 'reference', 'ref', 'ret',
+    fixed_column_items = ['fee', 'cash', 'value', 'benchmark', 'ref', 'ret',
                           'invest', 'underwater', 'volatility', 'pct_change',
                           'beta', 'sharp', 'alpha']
     stock_holdings = [item for
@@ -917,8 +919,9 @@ def _plot_loop_result(
     # 持股数量变动量，当持股数量发生变动时，判断产生买卖行为
     change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
     # 计算回测记录第一天的回测结果和参考指数价格，以此计算后续的收益率曲线
+
     start_point = looped_values['value'].iloc[0]
-    ref_start = looped_values['benchmark'].iloc[0]
+    bench_start = looped_values['benchmark'].iloc[0]
     # 计算回测结果的每日回报率
     ret = looped_values['value'] - looped_values['value'].shift(1)
     position = 1 - (looped_values['cash'] / looped_values['value'])
@@ -930,10 +933,10 @@ def _plot_loop_result(
     drawdowns = loop_results['worst_drawdowns']
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
-    ref_rate = (looped_values.reference - ref_start) / ref_start * 100
+    ref_rate = (looped_values.benchmark - bench_start) / bench_start * 100
     # 将benchmark的起始资产总额调整到与回测资金初始值一致，一遍生成可以比较的benchmark资金曲线
     # 这个资金曲线用于显示"以对数比例显示的资金变化曲线"图
-    adjusted_bench_start = looped_values.reference / ref_start * start_point
+    adjusted_bench_start = looped_values.benchmark / bench_start * start_point
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
@@ -960,10 +963,11 @@ def _plot_loop_result(
     fig.suptitle(f'{plot_title}',
                  fontsize=14,
                  fontweight=10)
+
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
-                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}       '
+                          f'from: {loop_results["backtest_start"].date()} to {loop_results["backtest_end"].date()}       '
                           f'  time consumed:   signal creation: {sec_to_duration(loop_results["op_run_time"])};'
                           f'  back test:{sec_to_duration(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
@@ -982,8 +986,8 @@ def _plot_loop_result(
                          f'Max drawdown:', ha='right')
     fig.text(0.52, 0.90, f'{loop_results["rtn"]:3.2%}    \n'
                          f'{loop_results["annual_rtn"]:3.2%}    \n'
-                         f'{loop_results["ref_rtn"]:3.2%}    \n'
-                         f'{loop_results["ref_annual_rtn"]:3.2%}\n'
+                         f'{loop_results["benchmark_rtn"]:3.2%}    \n'
+                         f'{loop_results["benchmark_a_rtn"]:3.2%}\n'
                          f'{loop_results["mdd"]:3.1%}'
                          f' on {loop_results["valley_date"].date()}')
     fig.text(0.82, 0.90, f'alpha:\n'
@@ -1219,8 +1223,7 @@ def _plot_loop_result(
     plt.show()
 
 
-# TODO: like _print_test_result, take the evaluate results on both opti and test hist data
-#  and commit comparison base on these two data sets
+# TODO: 这个函数被Optimizer调用，成为Optimizer.plot()方法
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
                       config=None):
@@ -1458,6 +1461,7 @@ def _plot_test_result(opti_eval_res: list,
     plt.show()
 
 
+# TODO: 这个函数被Trader对象调用，成为Trader.report()方法
 def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, history_data=None):
     """打印实时信号生成模式的运行结果
     """
@@ -1507,8 +1511,8 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'\n      ===========END OF REPORT=============\n')
 
 
-# TODO: 这个函数应该移到Backtester中
-def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> str:
+# TODO: 这个函数被Backtester调用，是Backtester.report()方法
+def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> Optional[str]:
     """ 生成单次回测的结果格式化输出，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致，输出结果可以直接打印到控制台或者写入文件
 
@@ -1529,6 +1533,7 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
     """
     if loop_results is None:
         return
+
     looped_values = loop_results['complete_values']
     report_string = ''
     report_string += f'\n' \
@@ -1598,8 +1603,7 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
     return report_string
 
 
-# TODO: like _plot_test_result, take the evaluate results on both opti and test hist data
-#  and commit comparison base on these two data sets
+# TODO: 这个函数被Optimizer调用，成为Optimizer.report()方法
 def _print_test_result(result, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
