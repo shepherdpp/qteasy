@@ -13,7 +13,8 @@ import unittest
 import qteasy as qt
 import numpy as np
 
-from qteasy import QT_CONFIG
+from qteasy.parameter import Parameter
+from qteasy.datatypes import DataType
 
 
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
@@ -168,28 +169,34 @@ class IndexEnhancement(qt.GeneralStg):
 
 class GridTrading(qt.GeneralStg):
 
-    def __init__(self, pars: tuple = (2.0, 3.0, 0.3, 0.5, 300)):
+    def __init__(self, par_values: tuple = (2.0, 3.0, 0.3, 0.5, 300)):
         super().__init__(
-                pars=pars,
-                par_count=5,
-                par_types=['float', 'float', 'float', 'float', 'int'],
                 # 仓位配置的阈值：参数1:低仓位阈值，参数2: 高仓位阈值，参数3：低仓位比例，参数4:高仓位比例，参数5:计算天数
-                par_range=[(0.5, 3.0), (2.0, 10.), (0.01, 0.5), (0.5, 0.99), (10, 300)],
+                pars=[Parameter((0.5, 3.0), name='low_threshold', par_type='float'),
+                      Parameter((2.0, 10.0), name='high_threshold', par_type='float'),
+                      Parameter((0.01, 0.5), name='low_position', par_type='float'),
+                      Parameter((0.5, 0.99), name='high_position', par_type='float'),
+                      Parameter((10, 300), name='days', par_type='int')],
                 name='GridTrading',
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='1min',  # 每份钟执行一次调整
-                strategy_data_types='close',  # 使用份钟收盘价调整
-                data_freq='1min',  # 数据频率（包括股票数据和参考数据）
+                run_timing='close',  # 在周期结束（收盘）时运行
+                run_freq='1min',  # 每份钟执行一次调整
+                data_types=[DataType('close', freq='1min', asset_type='ANY')],  # 使用分钟收盘价调整
                 window_length=300,
                 use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
-                reference_data_types='',  # 不需要使用参考数据
         )
+        if par_values:
+            self.update_par_values(par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略输出PT信号，即仓位目标信号"""
 
-        low_threshold, high_threshold, low_pos, hi_pos, days = self.par_values
+        low_threshold, high_threshold, low_pos, hi_pos, days = self.get_pars('low_threshold',
+                                                                             'high_threshold',
+                                                                             'low_position',
+                                                                             'high_position',
+                                                                             'days')
+        h = self.get_data('close')
 
         # 读取最近N天的收盘价
         close = h[:, - days:, 0]  # 最新连续收盘价
