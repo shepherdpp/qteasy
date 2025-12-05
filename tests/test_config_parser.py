@@ -367,7 +367,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_sell_threshold should be a float number between 0 and 1", str(context.exception))
 
     def test_pt_sell_threshold_out_of_range_low(self):
         """测试pt_sell_threshold低于有效范围的情况"""
@@ -380,7 +380,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_sell_threshold should be a float number between 0 and 1", str(context.exception))
 
     def test_pt_sell_threshold_out_of_range_high(self):
         """测试pt_sell_threshold高于有效范围的情况"""
@@ -393,7 +393,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("pt_sell_threshold should be a float number between 0 and 1", str(context.exception))
+        self.assertIn("PT_sell_threshold should be a float number between 0 and 1", str(context.exception))
 
     def test_long_pos_limit_type_error(self):
         """测试long_pos_limit类型错误的情况"""
@@ -406,7 +406,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("long_pos_limit should be a positive float number", str(context.exception))
+        self.assertIn("long_position_limit should be a positive float number", str(context.exception))
 
     def test_long_pos_limit_not_positive(self):
         """测试long_pos_limit不是正数的情况"""
@@ -419,7 +419,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("long_pos_limit should be a positive float number", str(context.exception))
+        self.assertIn("long_position_limit should be a positive float number", str(context.exception))
 
     def test_short_pos_limit_type_error(self):
         """测试short_pos_limit类型错误的情况"""
@@ -432,7 +432,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("short_pos_limit should be a negative float number", str(context.exception))
+        self.assertIn("short_position_limit should be a negative float number", str(context.exception))
 
     def test_short_pos_limit_not_negative(self):
         """测试short_pos_limit不是负数的情况"""
@@ -445,7 +445,7 @@ class TestParseSignalParsingParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_signal_parsing_params(config)
-        self.assertIn("short_pos_limit should be a negative float number", str(context.exception))
+        self.assertIn("short_position_limit should be a negative float number", str(context.exception))
 
     def test_allow_sell_short_type_error(self):
         """测试allow_sell_short类型错误的情况"""
