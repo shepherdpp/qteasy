@@ -2270,16 +2270,6 @@ def run_mode_1(op, config):
     #  以后，就不需要调用backtest_result = backtested.trade_result_df() 了
     # backtest_result = backtested.trade_result_df()
 
-    if config['trade_log']:
-        trade_log_file_name = f'trade_log_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
-        trade_log_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_log_file_name)
-
-        trade_summary_file_name = f'trade_summary_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
-        trade_summary_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_summary_file_name)
-
-        backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
-        backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
-
     # 评价回测结果——根据交易结果生成交易结果的评价结果
     # TODO: 修改evaluate函数，使这里的调用格式为 backtester.evaluate(...), 将cashplan与hist_benchmark作为backtester的属性
     backtest_result: dict = evaluate(
@@ -2290,6 +2280,22 @@ def run_mode_1(op, config):
     )
     backtest_result['op_run_time'] = backtested.op_run_time
     backtest_result['loop_run_time'] = backtested.backtest_run_time
+
+    if config['trade_log']:
+        trade_log_file_name = f'trade_log_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        trade_log_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_log_file_name)
+
+        trade_summary_file_name = f'trade_summary_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        trade_summary_file_path = os.path.join(qteasy.QT_TRADE_LOG_PATH, trade_summary_file_name)
+
+        backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
+        backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
+
+        backtest_result['trade_log'] = trade_log_file_path
+        backtest_result['trade_summary'] = trade_summary_file_path
+    else:
+        backtest_result['trade_log'] = None
+        backtest_result['trade_summary'] = None
 
     # TODO: 同理，这里的_loop_report_str() 以及 _plot_test_result() 函数也应该修改为
     #  backtester.plot(...) 以及 backtester.report(...)
