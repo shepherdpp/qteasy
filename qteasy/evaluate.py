@@ -344,6 +344,7 @@ def eval_benchmark(looped_values, hist_benchmark):
     try:
         rtn_data = hist_benchmark
         rtn = (rtn_data[looped_values.index[-1]] / rtn_data[looped_values.index[0]])
+        looped_values['benchmark'] = rtn_data.loc[looped_values.index]
         return rtn - 1, rtn ** (1 / total_year) - 1.
     except Exception:
         pass
