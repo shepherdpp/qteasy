@@ -81,7 +81,7 @@ class Operator:
     """
 
     def __init__(self,
-                 strategies: Union[str, list[Union[str, BaseStrategy, type]]] = None,
+                 strategies: Union[str, BaseStrategy, type, list[Union[str, BaseStrategy, type]]] = None,
                  *,
                  name: str = None,
                  signal_type: str = 'pt',
