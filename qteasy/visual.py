@@ -1544,7 +1544,7 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
                      f'     ===================================='
     report_string += f'\nqteasy running mode: 1 - History back testing\n' \
           f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n' \
-          f'time consumption for operation back looping:  {sec_to_duration(loop_results["loop_run_time"])}\n'
+          f'time consumption for operation back testing:  {sec_to_duration(loop_results["loop_run_time"])}\n'
     report_string += f'investment starts on      {looped_values.index[0]}\n' \
           f'ends on                   {looped_values.index[-1]}\n' \
           f'Total looped periods:     {loop_results["years"]:.1f} years.'
