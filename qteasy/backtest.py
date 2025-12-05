@@ -978,7 +978,7 @@ class Backtester:
         # 填充标量计算结果
         value_history['cash'] = self.own_cashes[1:]
         value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
-        value_history['fee'] = self.trade_cost_array.sum(axis=1).cumsum()
+        value_history['fee'] = self.trade_cost_array.sum(axis=1)
 
         return value_history
 

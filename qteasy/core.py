@@ -1857,7 +1857,8 @@ def check_and_prepare_benchmark_data(op: Operator,
 
     # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对齐，并进行ffill填充
     re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
-    benchmark_data = pd.DataFrame(benchmark_data.values[re_index-1], index=run_timing_indices, columns=benchmark_data.columns)
+    benchmark_data = pd.DataFrame(benchmark_data.values[re_index - 1], index=run_timing_indices,
+                                  columns=benchmark_data.columns)
     benchmark_data.fillna(method='ffill', inplace=True)
 
     return benchmark_data
@@ -2202,12 +2203,19 @@ def run_mode_1(op, config):
             start_date=start_date,
             end_date=end_date,
     )
-
     # 现金投入和交割数据表
     (cash_investment_array,
      cash_inflation_array,
      delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
     cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
+    # 检查资金投入计划的第一个日期，如果这个日期不等于回测开始日期，则发出警告并报错，要求第一个日期等于回测开始日期
+    if pd.to_datetime(cash_plan.first_day) != pd.to_datetime(start_date):
+        err = RuntimeError(f'ConfigError, first cash investment date {cash_plan.first_day} must be equal to '
+                           f'backtest_start date {start_date} in backtest mode! \n'
+                           f'Make adjustment in following config settings:\n'
+                           f'- config["invest_start"] current setting: ({config["invest_start"]})\n'
+                           f'- config["invest_cash_dates"] current setting: ({config["invest_cash_dates"]})\n')
+        raise err
     cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
@@ -2274,7 +2282,7 @@ def run_mode_1(op, config):
 
     # 评价回测结果——根据交易结果生成交易结果的评价结果
     # TODO: 修改evaluate函数，使这里的调用格式为 backtester.evaluate(...), 将cashplan与hist_benchmark作为backtester的属性
-    backtest_result:dict = evaluate(
+    backtest_result: dict = evaluate(
             looped_values=backtested.trade_result_df(),
             hist_benchmark=hist_benchmark,
             cash_plan=cash_plan,

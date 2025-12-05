@@ -778,6 +778,7 @@ def eval_operation(looped_value, cash_plan):
     op_counts['long'] = long_percent
     op_counts['short'] = short_percent
     op_counts['empty'] = 1 - op_counts.long - op_counts.short
+
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
     # 返回所有输出变量
