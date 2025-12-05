@@ -664,10 +664,12 @@ def eval_return(looped_val, cash_plan):
     kurtosis: float，应用该评价方法对回测模拟结果的评价分数
     looped_val: pd.DataFrame，回测器生成输出的交易模拟记录
     """
+
     if looped_val.empty:
         return -np.inf, -np.inf, np.nan, np.nan, pd.DataFrame()
     invest_plan = cash_plan.plan
-    looped_val['invest'] = invest_plan.amount
+    looped_val['invest'] = 0
+    looped_val.iloc[np.searchsorted(looped_val.index, invest_plan.index), looped_val.columns.get_loc('invest')] = invest_plan.amount.values
     looped_val = looped_val.fillna(0)
     looped_val['invest'] = looped_val.invest.cumsum()
     looped_val['rtn'] = looped_val.value / looped_val['invest'] - 1
