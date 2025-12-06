@@ -23,8 +23,95 @@ from qteasy.finance import CashPlan
 from qteasy.history import get_history_data_packages, get_history_panel
 
 
+def parse_optimization_start_end_dates(config) -> tuple[str, str, str, str]:
+    """ Parse optimization and validation start and end date from config settings."""
+
+    opt_start = config.get('opt_start')
+    opt_end = config.get('opt_end')
+    val_start = config.get('test_start')
+    val_end = config.get('test_end')
+
+    if opt_end is None:
+        opt_end = regulate_date_format(pd.Timestamp.today() - pd.DateOffset(months=6), force_format='date')
+    else:
+        opt_end = regulate_date_format(opt_end, force_format='date')
+
+    if opt_start is None:  # start is end - 1 year
+        opt_start = regulate_date_format(pd.Timestamp(opt_end) - pd.DateOffset(years=1), force_format='date')
+    else:
+        opt_start = regulate_date_format(opt_start, force_format='date')
+
+    if val_end is None:
+        val_end = regulate_date_format(pd.Timestamp.today(), force_format='date')
+    else:
+        val_end = regulate_date_format(val_end, force_format='date')
+
+    if val_start is None:  # start is end - 6 months
+        val_start = regulate_date_format(pd.Timestamp(val_end) - pd.DateOffset(months=6), force_format='date')
+    else:
+        val_start = regulate_date_format(val_start, force_format='date')
+
+    if pd.to_datetime(opt_start) >= pd.to_datetime(opt_end):
+        raise ValueError(f'opt_start {opt_start} should be earlier than opt_end {opt_end}')
+    if pd.to_datetime(val_start) >= pd.to_datetime(val_end):
+        raise ValueError(f'val_start {val_start} should be earlier than val_end {val_end}')
+    if pd.to_datetime(opt_end) > pd.to_datetime(val_start):
+        raise ValueError(f'opt_end {opt_end} should be earlier than or equal to val_start {val_start}')
+
+    return opt_start, opt_end, val_start, val_end
+
+
+def parse_optimization_cash_plan(config: Union[dict, ConfigDict]) -> tuple[CashPlan, CashPlan]:
+    """Parse optimization and validation cash plans from config settings."""
+    opt_start, opt_end, val_start, val_end = parse_optimization_start_end_dates(config=config)
+
+    # optimization cash plan
+    if config['opt_cash_dates'] is None:
+        opt_start = next_market_trade_day(opt_start).strftime('%Y%m%d')
+        opt_cash_plan = CashPlan(opt_start,
+                                 config['opt_cash_amounts'][0],
+                                 config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['opt_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        opt_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                 amounts=config['opt_cash_amounts'],
+                                 interest_rate=config['riskfree_ir'])
+        opt_start = regulate_date_format(opt_cash_plan.first_day)
+        if pd.to_datetime(opt_start) != pd.to_datetime(config['opt_start']):
+            err = RuntimeError(f'first cash investment date {opt_start} must be equal to '
+                               f'opt_start date {config["opt_start"]} in optimization mode! \n'
+                               f'Make adjustment in following config settings:\n'
+                               f'- config["opt_start"] current setting: ({config["opt_start"]})\n'
+                               f'- config["opt_cash_dates"] current setting: ({config["opt_cash_dates"]})\n')
+            raise err
+
+    # validation cash plan
+    if config['val_cash_dates'] is None:
+        val_start = next_market_trade_day(val_start).strftime('%Y%m%d')
+        val_cash_plan = CashPlan(val_start,
+                                 config['val_cash_amounts'][0],
+                                 config['riskfree_ir'])
+    else:
+        cash_dates = str_to_list(config['val_cash_dates'])
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        val_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                 amounts=config['val_cash_amounts'],
+                                 interest_rate=config['riskfree_ir'])
+        val_start = regulate_date_format(val_cash_plan.first_day)
+        if pd.to_datetime(val_start) != pd.to_datetime(config['test_start']):
+            err = RuntimeError(f'first cash investment date {val_start} must be equal to '
+                               f'test_start date {config["test_start"]} in validation mode! \n'
+                               f'Make adjustment in following config settings:\n'
+                               f'- config["test_start"] current setting: ({config["test_start"]})\n'
+                               f'- config["val_cash_dates"] current setting: ({config["val_cash_dates"]})\n')
+            raise err
+
+    return opt_cash_plan, val_cash_plan
+
+
 def parse_backtest_start_end_dates(config) -> tuple[str, str]:
-    """Parse investment start and end date from config settings."""
+    """Parse backtest investment start and end date from config settings."""
 
     invest_start = config.get('invest_start')
     invest_end = config.get('invest_end')
@@ -61,12 +148,14 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
         invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                     amounts=config['invest_cash_amounts'],
                                     interest_rate=config['riskfree_ir'])
-        invest_start = regulate_date_format(invest_cash_plan.first_day)
-        if pd.to_datetime(invest_start) != pd.to_datetime(config['invest_start']):
-            warn(
-                f'first cash investment on {invest_start} differ from invest_start {config["invest_start"]}, first cash'
-                f' date will be used!',
-                RuntimeWarning)
+        first_invest_date = regulate_date_format(invest_cash_plan.first_day)
+        if pd.to_datetime(first_invest_date) != pd.to_datetime(invest_start):
+            err = RuntimeError(f'ConfigError, first cash investment date {first_invest_date} must be equal to '
+                               f'backtest_start date {invest_start} in backtest mode! \n'
+                               f'Make adjustment in following config settings:\n'
+                               f'- config["invest_start"] current setting: ({config["invest_start"]})\n'
+                               f'- config["invest_cash_dates"] current setting: ({config["invest_cash_dates"]})\n')
+            raise err
 
         return invest_cash_plan
 
