@@ -1751,7 +1751,7 @@ def check_and_prepare_trade_prices(op: Operator,
     # import pdb; pdb.set_trace()
     # combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
-    combined_trade_prices.fillna(method='ffill', inplace=True)
+    combined_trade_prices.ffill(inplace=True)
 
     return combined_trade_prices
 
