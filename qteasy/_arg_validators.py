@@ -508,13 +508,16 @@ def _valid_qt_kwargs():
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
-             'text':      '为True时在回测图表中显示买卖点，使用红色和绿色箭头标示出买卖点的位置'},
+             'text':      '在回测图表中是否在收益率曲线图上显示买卖点，如果设置为True，则在收益率曲\n'
+                          '线图上以红绿色小箭头标示出买卖点显示买卖点，使用红色和绿色箭头标示出买卖点的位置'},
 
         'show_positions':
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
-             'text':      '为True时在回测图表中用色带显示投资仓位'},
+             'text':      '在回测图表中是否显示持股仓位区间信息，如果设置为True，则在收益率曲线图上\n'
+                          '以红色/绿色条带显示区间的持仓类型（绿色表示持多仓，红色表示持\n'
+                          '空仓）颜色越深持仓比例越高'},
 
         'cost_rate_buy':
             {'Default':   0.0003,
@@ -555,7 +558,7 @@ def _valid_qt_kwargs():
              'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本，取值范围为[0, 1)'},
 
         'invest_start':
-            {'Default':   '20160405',
+            {'Default':   '20170605',
              'Validator': lambda value: isinstance(value, str)
                                         and _is_datelike(value),
              'level':     0,
@@ -613,7 +616,7 @@ def _valid_qt_kwargs():
                           '余额，表示产生了借贷'},
 
         'short_position_limit':
-            {'Default':  -1.,
+            {'Default':   -1.,
              'Validator': lambda value: isinstance(value, float) and (value < 0),
              'level':     3,
              'text':      '回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的\n'
@@ -780,7 +783,7 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304" == '
                           '["20100104", "20100202", "20100304"]'},
 
-        'opti_type':      # TODO: deprecate, 取消multiple选项，改为只支持single
+        'opti_type':  # TODO: deprecate, 取消multiple选项，改为只支持single
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
              'level':     3,
@@ -845,7 +848,7 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304"'
                           '["20100104", "20100202", "20100304"]'},
 
-        'test_type':      # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
+        'test_type':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
             {'Default':   'single',
              'Validator': lambda value: isinstance(value, str) and
                                         value in ['single', 'multiple', 'montecarlo'],
@@ -991,7 +994,7 @@ def _valid_qt_kwargs():
              'text':      '策略参数优化后输出的最优参数数量，取值范围为大于0的整数'},
 
         'ZH_font_name_MAC':  # v1.3.10新增
-            {'Default':   'pingfang HK',   # Use 'Songti SC' if 'pingfang HK' is not available,
+            {'Default':   'pingfang HK',  # Use 'Songti SC' if 'pingfang HK' is not available,
              'Validator': lambda value: isinstance(value, str),
              'level':     4,
              'text':      'Mac OS系统下的中文字体名称，用于绘图时显示中文'},
