@@ -12,7 +12,9 @@
 import pandas as pd
 import numpy as np
 from warnings import warn
-from typing import Union, Iterable, Any
+from typing import Union, Iterable, Any, Optional
+
+from qteasy.database import DataSource
 
 from qteasy.utilfuncs import (
     str_to_list,
@@ -2422,8 +2424,8 @@ def _adjust_freq(hist_data: pd.DataFrame,
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
 def get_history_data_packages(
-        data_types,
-        data_source,
+        data_types: list[DataType],
+        data_source: DataSource,
         shares,
         start=None,
         end=None,
@@ -2528,9 +2530,9 @@ def get_history_data_packages(
 
 
 def get_history_panel(
-        data_types,
-        data_source,
-        shares=None,
+        data_types: list[DataType],
+        data_source: DataSource,
+        shares: Optional[Union[str, list[str]]]=None,
         freq=None,
         start=None,
         end=None,
@@ -2541,7 +2543,7 @@ def get_history_panel(
         trade_time_only=True,
         return_history_panel=True,
         **kwargs
-) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:  # TODO: 这个函数需要考虑是否还需要？
+) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
     """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
     HistoryPanel数据对象，该HistoryPanel的数据时间频率由参数指定，查找数据时会自动匹配相应
     的数据类型，如果没有完全匹配频率的数据类型，则会找到最近的类型并通过升频或降频的方式调整为
@@ -2659,10 +2661,14 @@ def get_history_panel(
         return HistoryPanel()
 
     if data_source is None:
-        raise TypeError(f'data source should not be None!')
+        raise TypeError(f'A data source should be given to acquire data from!')
 
     if freq is not None:
-        warn(f'All data will be converted to {freq} frequency!')
+        different_freq_dtypes = [dtype for dtype in data_types if dtype.freq != freq]
+        if different_freq_dtypes:
+            warn(f'Some datatypes ({different_freq_dtypes}) do not match the frequency '
+                 f'you requested to acquire({freq}),\n'
+                 f'They will be re-sampled to match requested frequency!')
 
     if shares:
         # 在这里获取有share的数据，但是注意，因为这里选择将相同name但是不同资产类型的数据合并到一起
