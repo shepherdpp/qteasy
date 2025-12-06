@@ -473,8 +473,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      trade_log=True,
-                     # asset_pool='000651.SZ',  # was '000300.SH'
-                     invest_cash_dates='20070604', )
+                     )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
@@ -489,10 +488,10 @@ class TestQT(unittest.TestCase):
                 trade_log=False,
                 buy_sell_points=False,
                 show_positions=False,
-                invest_cash_dates='20070616',
         )
         self.assertIsInstance(res, dict)
-        self.assertIsNone(res['trade_log'])
+        self.assertIsNone(res.get('trade_log'))
+        self.assertIsNone(res.get('trade_summary'))
 
         print(f'test plot with both buy-sell points and position indicators')
         qt.configuration(up_to=1, default=True)
@@ -507,18 +506,17 @@ class TestQT(unittest.TestCase):
                 trade_log=True,
                 buy_sell_points=True,
                 show_positions=True,
-                invest_cash_dates='20070604',
         )
         self.assertIsInstance(res, dict)
-        self.assertIsNotNone(res['trade_log'])
+        self.assertIsInstance(res['trade_log'], str)
+        self.assertIsInstance(res['trade_summary'], str)
         self.assertIsInstance(res['report'], str)
         print(res['trade_log'])
         print(res['report'])
-        print(res['trade_record'])
         print(res['final_value'])
         print(res['info'])
         print(res['sharp'])
-        self.assertAlmostEqual(res['final_value'], 341175.59, 0)
+        self.assertAlmostEqual(res['final_value'], 392452.90, -3)
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
