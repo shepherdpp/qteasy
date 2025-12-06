@@ -1848,7 +1848,7 @@ def check_and_prepare_benchmark_data(op: Operator,
     re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
     benchmark_data = pd.DataFrame(benchmark_data.values[re_index - 1], index=run_timing_indices,
                                   columns=benchmark_data.columns)
-    benchmark_data.fillna(method='ffill', inplace=True)
+    benchmark_data.ffill(inplace=True)
 
     return benchmark_data
 
