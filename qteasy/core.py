@@ -46,17 +46,6 @@ from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
 )
 
-from qteasy.evaluate import (
-    evaluate,
-)
-
-from qteasy.visual import (
-    _plot_loop_result,
-    _loop_report_str,
-    _print_test_result,
-    _plot_test_result,
-)
-
 from qteasy._arg_validators import (
     QT_CONFIG,
     ConfigDict,
@@ -2255,6 +2244,8 @@ def run_mode_1(op, config):
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     backtested = op.backtest(
             shares=config['asset_pool'],
+            cash_plan=cash_plan,
+            benchmark_data=hist_benchmark,
             cash_investment_array=cash_investment_array,
             cash_inflation_array=cash_inflation_array,
             delivery_day_indicators=delivery_day_indicators,
@@ -2266,20 +2257,10 @@ def run_mode_1(op, config):
             logger=qteasy.logger_core,
     )
 
-    # TODO: 实现 backtestd.evaluate() / backtested.report() / backtested.plot()
-    #  以后，就不需要调用backtest_result = backtested.trade_result_df() 了
-    # backtest_result = backtested.trade_result_df()
-
     # 评价回测结果——根据交易结果生成交易结果的评价结果
-    # TODO: 修改evaluate函数，使这里的调用格式为 backtester.evaluate(...), 将cashplan与hist_benchmark作为backtester的属性
-    backtest_result: dict = evaluate(
-            looped_values=backtested.trade_result_df(),
-            hist_benchmark=hist_benchmark,
-            cash_plan=cash_plan,
+    backtested.evaluate_result(
             indicators=config['test_indicators'],
     )
-    backtest_result['op_run_time'] = backtested.op_run_time
-    backtest_result['loop_run_time'] = backtested.backtest_run_time
 
     if config['trade_log']:
         trade_log_file_name = f'trade_log_{op.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
@@ -2291,26 +2272,19 @@ def run_mode_1(op, config):
         backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
         backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
 
-        backtest_result['trade_log'] = trade_log_file_path
-        backtest_result['trade_summary'] = trade_summary_file_path
-    else:
-        backtest_result['trade_log'] = None
-        backtest_result['trade_summary'] = None
-
-    # TODO: 同理，这里的_loop_report_str() 以及 _plot_test_result() 函数也应该修改为
-    #  backtester.plot(...) 以及 backtester.report(...)
-    #  相应地，operator在优化过程中，应该创建一个Optimizer对象来管理优化过程
-    #  operator 对象在实盘运行过程中，也需要创建一个 Trader 对象来管理实盘交易过程
     if config['report']:
         # 格式化输出回测结果
-        report = _loop_report_str(backtest_result)
+        report = backtested.report_result()
         print(report)
-        backtest_result['report'] = report
     if config['visual']:
         # 图表输出投资回报历史曲线
-        _plot_loop_result(backtest_result)
+        backtested.plot_result(
+                plot_title='',
+                buy_sell_markers=config['buy_sell_points'],
+                show_positions=config['show_positions'],
+        )
 
-    return backtest_result
+    return backtested.backtest_result
 
 
 def run_mode_2(op, config):

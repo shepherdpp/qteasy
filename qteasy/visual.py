@@ -1532,7 +1532,10 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
     None
     """
     if loop_results is None:
-        return
+        return None
+
+    if loop_results == {}:
+        return None
 
     looped_values = loop_results['complete_values']
     report_string = ''
