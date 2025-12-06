@@ -26,8 +26,8 @@ from qteasy.history import get_history_data_packages, get_history_panel
 def parse_optimization_start_end_dates(config) -> tuple[str, str, str, str]:
     """ Parse optimization and validation start and end date from config settings."""
 
-    opt_start = config.get('opt_start')
-    opt_end = config.get('opt_end')
+    opt_start = config.get('opti_start')
+    opt_end = config.get('opti_end')
     val_start = config.get('test_start')
     val_end = config.get('test_end')
 
@@ -55,8 +55,6 @@ def parse_optimization_start_end_dates(config) -> tuple[str, str, str, str]:
         raise ValueError(f'opt_start {opt_start} should be earlier than opt_end {opt_end}')
     if pd.to_datetime(val_start) >= pd.to_datetime(val_end):
         raise ValueError(f'val_start {val_start} should be earlier than val_end {val_end}')
-    if pd.to_datetime(opt_end) > pd.to_datetime(val_start):
-        raise ValueError(f'opt_end {opt_end} should be earlier than or equal to val_start {val_start}')
 
     return opt_start, opt_end, val_start, val_end
 
@@ -66,45 +64,41 @@ def parse_optimization_cash_plan(config: Union[dict, ConfigDict]) -> tuple[CashP
     opt_start, opt_end, val_start, val_end = parse_optimization_start_end_dates(config=config)
 
     # optimization cash plan
-    if config['opt_cash_dates'] is None:
-        opt_start = next_market_trade_day(opt_start).strftime('%Y%m%d')
+    if config['opti_cash_dates'] is None:
         opt_cash_plan = CashPlan(opt_start,
-                                 config['opt_cash_amounts'][0],
+                                 config['opti_cash_amounts'][0],
                                  config['riskfree_ir'])
     else:
-        cash_dates = str_to_list(config['opt_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        opt_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                 amounts=config['opt_cash_amounts'],
+        cash_dates = str_to_list(config['opti_cash_dates'])
+        opt_cash_plan = CashPlan(dates=cash_dates,
+                                 amounts=config['opti_cash_amounts'],
                                  interest_rate=config['riskfree_ir'])
-        opt_start = regulate_date_format(opt_cash_plan.first_day)
-        if pd.to_datetime(opt_start) != pd.to_datetime(config['opt_start']):
-            err = RuntimeError(f'first cash investment date {opt_start} must be equal to '
-                               f'opt_start date {config["opt_start"]} in optimization mode! \n'
+        opt_first_cash_date = regulate_date_format(opt_cash_plan.first_day)
+        if pd.to_datetime(opt_start) != pd.to_datetime(opt_first_cash_date):
+            err = RuntimeError(f'first cash investment date {opt_first_cash_date} must be equal to '
+                               f'opt_start date {opt_start} in optimization mode! \n'
                                f'Make adjustment in following config settings:\n'
-                               f'- config["opt_start"] current setting: ({config["opt_start"]})\n'
-                               f'- config["opt_cash_dates"] current setting: ({config["opt_cash_dates"]})\n')
+                               f'- config["opt_start"] current setting: ({config["opti_start"]})\n'
+                               f'- config["opt_cash_dates"] current setting: ({config["opti_cash_dates"]})\n')
             raise err
 
     # validation cash plan
-    if config['val_cash_dates'] is None:
-        val_start = next_market_trade_day(val_start).strftime('%Y%m%d')
+    if config['test_cash_dates'] is None:
         val_cash_plan = CashPlan(val_start,
-                                 config['val_cash_amounts'][0],
+                                 config['test_cash_amounts'][0],
                                  config['riskfree_ir'])
     else:
-        cash_dates = str_to_list(config['val_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        val_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                 amounts=config['val_cash_amounts'],
+        cash_dates = str_to_list(config['test_cash_dates'])
+        val_cash_plan = CashPlan(dates=cash_dates,
+                                 amounts=config['test_cash_amounts'],
                                  interest_rate=config['riskfree_ir'])
-        val_start = regulate_date_format(val_cash_plan.first_day)
-        if pd.to_datetime(val_start) != pd.to_datetime(config['test_start']):
-            err = RuntimeError(f'first cash investment date {val_start} must be equal to '
-                               f'test_start date {config["test_start"]} in validation mode! \n'
+        val_first_cash_date = regulate_date_format(val_cash_plan.first_day)
+        if pd.to_datetime(val_start) != pd.to_datetime(val_first_cash_date):
+            err = RuntimeError(f'first cash investment date {val_first_cash_date} must be equal to '
+                               f'test_start date {val_start} in validation mode! \n'
                                f'Make adjustment in following config settings:\n'
                                f'- config["test_start"] current setting: ({config["test_start"]})\n'
-                               f'- config["val_cash_dates"] current setting: ({config["val_cash_dates"]})\n')
+                               f'- config["val_cash_dates"] current setting: ({config["test_cash_dates"]})\n')
             raise err
 
     return opt_cash_plan, val_cash_plan
@@ -138,16 +132,18 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
     invest_start, invest_end = parse_backtest_start_end_dates(config=config)
 
     if config['invest_cash_dates'] is None:
-        invest_start = next_market_trade_day(invest_start).strftime('%Y%m%d')
-        return CashPlan(invest_start,
-                                    config['invest_cash_amounts'][0],
-                                    config['riskfree_ir'])
+        return CashPlan(
+                invest_start,
+                config['invest_cash_amounts'][0],
+                config['riskfree_ir'],
+        )
     else:
         cash_dates = str_to_list(config['invest_cash_dates'])
-        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                    amounts=config['invest_cash_amounts'],
-                                    interest_rate=config['riskfree_ir'])
+        invest_cash_plan = CashPlan(
+                dates=cash_dates,
+                amounts=config['invest_cash_amounts'],
+                interest_rate=config['riskfree_ir'],
+        )
         first_invest_date = regulate_date_format(invest_cash_plan.first_day)
         if pd.to_datetime(first_invest_date) != pd.to_datetime(invest_start):
             err = RuntimeError(f'ConfigError, first cash investment date {first_invest_date} must be equal to '
@@ -174,11 +170,11 @@ def parse_trade_cost_params(config) -> dict:
         交易成本相关的参数字典
     """
     cost_params = {
-        'buy_rate': config['cost_rate_buy'],
+        'buy_rate':  config['cost_rate_buy'],
         'sell_rate': config['cost_rate_sell'],
-        'buy_min': config['cost_min_buy'],
-        'sell_min': config['cost_min_sell'],
-        'slippage': config['cost_slippage'],
+        'buy_min':   config['cost_min_buy'],
+        'sell_min':  config['cost_min_sell'],
+        'slippage':  config['cost_slippage'],
     }
     # raise if parameters are out of range or with wrong types
     if not (isinstance(cost_params['buy_rate'], (float, int)) and 0 <= cost_params['buy_rate'] < 1):
@@ -195,8 +191,8 @@ def parse_trade_cost_params(config) -> dict:
     return cost_params
 
 
-def parse_cash_invest_and_delivery_arrays(config: dict, op_schedule: pd.Index) -> (
-        tuple[np.ndarray, np.ndarray, np.ndarray]):
+def parse_cash_invest_and_delivery_arrays(config: dict,
+                                          op_schedule: pd.Index) -> (tuple[np.ndarray, np.ndarray, np.ndarray]):
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
 
     Parameters
@@ -219,7 +215,7 @@ def parse_cash_invest_and_delivery_arrays(config: dict, op_schedule: pd.Index) -
     invest_cash_plan = parse_backtest_cash_plan(config)
     # 生成包含现金投资和现金通胀率数组的DataFrame
     cash_plan_df = pd.DataFrame(
-            {'investment': np.zeros_like(op_schedule, dtype=float),
+            {'investment':     np.zeros_like(op_schedule, dtype=float),
              'inflation_rate': np.ones_like(op_schedule, dtype=float)},
             index=op_schedule,
     )
@@ -266,11 +262,11 @@ def parse_signal_parsing_params(config) -> dict:
         信号处理相关的参数字典
     """
     signal_parsing_params = {
-        'pt_buy_threshold': config['PT_buy_threshold'],
+        'pt_buy_threshold':  config['PT_buy_threshold'],
         'pt_sell_threshold': config['PT_sell_threshold'],
-        'long_pos_limit': config['long_position_limit'],
-        'short_pos_limit': config['short_position_limit'],
-        'allow_sell_short': config['allow_sell_short'],
+        'long_pos_limit':    config['long_position_limit'],
+        'short_pos_limit':   config['short_position_limit'],
+        'allow_sell_short':  config['allow_sell_short'],
     }
     # raise if parameters are out of range or with wrong types
     if not (isinstance(signal_parsing_params['pt_buy_threshold'], (float, int)) and
@@ -310,7 +306,7 @@ def parse_trading_moq_params(config) -> dict:
         交易最小单位相关的参数字典
     """
     trading_moq_params = {
-        'moq_buy': config['trade_batch_size'],
+        'moq_buy':  config['trade_batch_size'],
         'moq_sell': config['sell_batch_size'],
     }
     # raise if parameters are out of range or with wrong types
@@ -341,7 +337,7 @@ def parse_trading_delivery_params(config) -> dict:
         交易交割相关的参数字典
     """
     trading_delivery_params = {
-        'cash_delivery_period': config['cash_delivery_period'],
+        'cash_delivery_period':  config['cash_delivery_period'],
         'stock_delivery_period': config['stock_delivery_period'],
     }
     # raise if parameters are out of range or with wrong types
