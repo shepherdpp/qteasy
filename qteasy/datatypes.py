@@ -141,9 +141,6 @@ def infer_data_types(names, freqs, asset_types, adj=None,
         price_types = ['close', 'open', 'high', 'low']
         if adj in ['b', 'back']:
             names = [f'{n}|b' if n in price_types else n for n in names]
-            msg = f'Using parameter "adj" for price adjustment is deprecated, please use data types like ' \
-                  f'"close|b" instead of "adj=\'b\'" in the future.'
-            warn(msg, DeprecationWarning)
         if adj in ['f', 'fw', 'forward']:
             names = [f'{n}|f' if n in price_types else n for n in names]
 
