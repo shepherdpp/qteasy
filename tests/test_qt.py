@@ -963,7 +963,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=0.4)
-        op.set_parameter('signal_none', par_values=())
+        # op.set_parameter('signal_none', par_values=())
         op.set_blender('avg(s0, s1, s2)', 'ls')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')

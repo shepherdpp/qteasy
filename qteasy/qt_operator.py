@@ -1923,10 +1923,10 @@ class Operator:
         backtester = Backtester(op=self, **kwargs)
         return backtester.run()
 
-    def optimize(self, **kwargs):
+    def optimize(self, method, **kwargs):
         """ placeholder for optimize method """
         from qteasy.optimization import Optimizer
-        optimizer = Optimizer(op=self, **kwargs)
+        optimizer = Optimizer(op=self, method=method, **kwargs)
         return optimizer.run()
 
 
