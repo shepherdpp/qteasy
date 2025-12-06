@@ -2197,14 +2197,6 @@ def run_mode_1(op, config):
      cash_inflation_array,
      delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
     cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
-    # 检查资金投入计划的第一个日期，如果这个日期不等于回测开始日期，则发出警告并报错，要求第一个日期等于回测开始日期
-    if pd.to_datetime(cash_plan.first_day) != pd.to_datetime(start_date):
-        err = RuntimeError(f'ConfigError, first cash investment date {cash_plan.first_day} must be equal to '
-                           f'backtest_start date {start_date} in backtest mode! \n'
-                           f'Make adjustment in following config settings:\n'
-                           f'- config["invest_start"] current setting: ({config["invest_start"]})\n'
-                           f'- config["invest_cash_dates"] current setting: ({config["invest_cash_dates"]})\n')
-        raise err
     cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
     trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
@@ -2290,118 +2282,84 @@ def run_mode_1(op, config):
 def run_mode_2(op, config):
     """ run qteasy in mode 2: optimization mode"""
 
-    from .optimization import _search_ga, _search_aco, _search_pso, _search_grid, _search_gradient
-    from .optimization import _search_montecarlo, _search_incremental, _create_mock_data
+    from qteasy.config_parser import (
+        parse_cash_invest_and_delivery_arrays,
+        parse_trade_cost_params,
+        parse_signal_parsing_params,
+        parse_trading_moq_params,
+        parse_trading_delivery_params,
+        parse_optimization_start_end_dates,
+        parse_optimization_cash_plan
+    )
 
-    optimization_methods = {0: _search_grid,
-                            1: _search_montecarlo,
-                            2: _search_incremental,
-                            3: _search_ga,
-                            4: _search_gradient,
-                            5: _search_pso,
-                            6: _search_aco
-                            }
+    # 创建策略优化的优化区间和测试区间的开始和结束日期
+    opti_start, opti_end, test_start, test_end = parse_optimization_start_end_dates(config=config)  # 回测开始和结束日期
+
+    # 生成优化交易运行计划
+    op.prepare_running_schedule(
+            start_date=opti_start,
+            end_date=opti_end,
+    )
+
+    # 现金投入和交割数据表
+    (cash_investment_array,
+     cash_inflation_array,
+     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
+    opti_cash_plan, test_cash_plan = parse_optimization_cash_plan(config)  # 资金投入计划
+
+    # 解析交易相关参数
+    cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+    signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
+    trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
+    trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
+
     # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
     assert op.opt_space_par[0] != [], \
         f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
         f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
-    (data_package,
-     opti_trade_prices,
-     hist_benchmark,
-     opti_cash_plan,
-     test_cash_plan
-     ) = check_and_prepare_optimize_data(
-            operator=op,
-            config=config,
+
+    opti_data_package = check_and_prepare_backtest_data(
+            op=op,
+            backtest_start=opti_start,
+            backtest_end=opti_end,
+            shares=config['asset_pool'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
+
+    test_data_package = check_and_prepare_backtest_data(
+            op=op,
+            backtest_start=test_start,
+            backtest_end=test_end,
+            shares=config['asset_pool'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    trade_prices = check_and_prepare_trade_prices(
+            op=op,
+            shares=config['asset_pool'],
+            price_adj=config['backtest_price_adj'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    hist_benchmark = check_and_prepare_benchmark_data(
+            op=op,
+            benchmark_symbol=config['benchmark_asset'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
     # 在生成交易信号之前准备运行计划及历史数据
-    op.prepare_running_schedule()
     op.prepare_data_buffer(
             start_date='',
             end_date='',
-            data_package=data_package,
+            data_package=opti_data_package,
     )
     op.create_data_windows()
-    # 使用how确定优化方法并生成优化后的参数和性能数据
-    how = config['opti_method']
 
-        # 开始优化
-        optimal_pars, perfs = optimization_methods[how](
-                hist=hist_opti,
-                benchmark=hist_benchmark,
-                benchmark_type=benchmark_data_type,
-                op=operator,
-                config=config
-        )
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+    op.is_ready(raise_error=True)
 
-    # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
-    hist_opti_loop = hist_opti.fillna(0)
-    result_pool = _evaluate_all_parameters(
-            par_generator=optimal_pars,
-            total=config['opti_output_count'],
-            op=op,
-            trade_price_list=hist_opti_loop,
-            benchmark_history_data=hist_benchmark,
-            config=config,
-            stage='test-o'
+    optimized = op.optimize(
+            method=config['opti_method'],
     )
-    # 评价回测结果——计算参考数据收益率以及平均年化收益率
-    opti_eval_res = result_pool.extra
-    if config['report']:
-        _print_test_result(opti_eval_res, config=config)
-    if config['visual']:
-        pass
-        # _plot_test_result(opti_eval_res, config=config)
 
-    # 完成策略参数的寻优，在测试数据集上检验寻优的结果，此时operator的交易数据已经分配好，无需再次分配
-    if config['test_type'] in ['single', 'multiple']:
-        result_pool = _evaluate_all_parameters(
-                par_generator=optimal_pars,
-                total=config['opti_output_count'],
-                op=op,
-                trade_price_list=opti_trade_prices,
-                benchmark_history_data=hist_benchmark,
-                config=config,
-                stage='test-t'
-        )
-
-        # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        test_eval_res = result_pool.extra
-        if config['report']:
-            _print_test_result(test_eval_res, config)
-        if config['visual']:
-            _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
-
-    # TODO: Montecarlo模拟测试是否有必要存在？ v1.1版本后是否应该删除？
-    elif config['test_type'] == 'montecarlo':
-        for i in range(config['test_cycle_count']):
-            # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
-            # 重新生成交易信号，并在模拟的历史数据上进行回测
-            mock_hist = _create_mock_data(hist_opti)
-            print(f'config.test_cash_dates is {config["test_cash_dates"]}')
-            op.assign_hist_data(
-                    hist_data=mock_hist,
-                    cash_plan=test_cash_plan,
-            )
-            mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
-            result_pool = _evaluate_all_parameters(
-                    par_generator=optimal_pars,
-                    total=config['opti_output_count'],
-                    op=op,
-                    trade_price_list=mock_hist,
-                    benchmark_history_data=mock_hist_loop,
-                    config=config,
-                    stage='test-t'
-            )
-
-            # 评价回测结果——计算参考数据收益率以及平均年化收益率
-            test_eval_res = result_pool.extra
-            if config['report']:
-                # TODO: 应该有一个专门的函数print_montecarlo_test_report
-                _print_test_result(test_eval_res, config)
-            if config['visual']:  # 如果config.visual == True
-                # TODO: 应该有一个专门的函数plot_montecarlo_test_result
-                pass
-
-    return optimal_pars
+    return optimized.result_params_list
