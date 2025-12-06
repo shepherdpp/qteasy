@@ -19,15 +19,27 @@ from numpy import bool_, dtype, ndarray
 from pandas import DataFrame
 
 from qteasy.utilfuncs import str_to_list
+from qteasy.finance import CashPlan
 
 from qteasy.qt_operator import (
     Operator,
     SIGNAL_TYPE_ID,
 )
 
+from qteasy.evaluate import (
+    evaluate,
+)
+
 from qteasy.finance import (
     get_selling_result,
     get_purchase_result,
+)
+
+from qteasy.visual import (
+    _plot_loop_result,
+    _loop_report_str,
+    _print_test_result,
+    _plot_test_result,
 )
 
 from qteasy.trading_util import (
@@ -229,7 +241,7 @@ def calculate_trade_results(
         moq_buy: float,
         moq_sell: float,
 ) -> Union[tuple[ndarray, ndarray, ndarray, ndarray, ndarray],
-           tuple[ndarray, ndarray, ndarray, ndarray, ndarray[Any, dtype[bool_]]]]:
+tuple[ndarray, ndarray, ndarray, ndarray, ndarray[Any, dtype[bool_]]]]:
     """ 该函数用于批量计算股票交易结果，根据交易信号、价格和持仓情况，结合交易
     成本和仓位限制，计算出每只股票的买入卖出数量、现金变动及交易费用。支持多种
     交易信号类型（PT、PS、VS）和做空机制，并通过Numba加速计算。
@@ -255,8 +267,6 @@ def calculate_trade_results(
         本次交易发生时各个股票的交易价格
     cost_params: np.ndarray
         交易成本参数，包括固定买入费用、固定卖出费用、买入费率、卖出费率、最低买入费用、最低卖出费用
-        buy_fix: float, 交易成本：固定买入费用
-        sell_fix: float, 交易成本：固定卖出费用
         buy_rate: float, 交易成本：固定买入费率
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
@@ -647,37 +657,37 @@ def backtest_batch_steps(
         is_delivery_day = bool(delivery_day_indicators[i])
 
         # 调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
-        (own_cashes[i+1],
-         available_cashes[i+1],
-         own_amounts_array[i+1],
-         available_amounts_array[i+1],
+        (own_cashes[i + 1],
+         available_cashes[i + 1],
+         own_amounts_array[i + 1],
+         available_amounts_array[i + 1],
          trade_records_array[i],
          trade_cost_array[i],
          cash_delivery_queue,
          stock_delivery_queue) = backtest_step(
-            signal_type=signal_types[i],
-            op_signal=op_signals[i],
-            cash_inflation=cash_inflation_array[i],
-            is_delivery_day=is_delivery_day,
-            day_num=day_nums[i],
-            own_cash=own_cashes[i],
-            own_amounts=own_amounts_array[i],
-            available_cash=available_cashes[i],
-            available_amounts=available_amounts_array[i],
-            trade_prices=trade_prices[i],
-            cost_params=cost_params,
-            pt_buy_threshold=pt_buy_threshold,
-            pt_sell_threshold=pt_sell_threshold,
-            long_pos_limit=long_pos_limit,
-            short_pos_limit=short_pos_limit,
-            allow_sell_short=allow_sell_short,
-            moq_buy=moq_buy,
-            moq_sell=moq_sell,
-            cash_delivery_queue=cash_delivery_queue,
-            stock_delivery_queue=stock_delivery_queue,
-            cash_delivery_period=cash_delivery_period,
-            stock_delivery_period=stock_delivery_period,
-            share_count=share_count,
+                signal_type=signal_types[i],
+                op_signal=op_signals[i],
+                cash_inflation=cash_inflation_array[i],
+                is_delivery_day=is_delivery_day,
+                day_num=day_nums[i],
+                own_cash=own_cashes[i],
+                own_amounts=own_amounts_array[i],
+                available_cash=available_cashes[i],
+                available_amounts=available_amounts_array[i],
+                trade_prices=trade_prices[i],
+                cost_params=cost_params,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                long_pos_limit=long_pos_limit,
+                short_pos_limit=short_pos_limit,
+                allow_sell_short=allow_sell_short,
+                moq_buy=moq_buy,
+                moq_sell=moq_sell,
+                cash_delivery_queue=cash_delivery_queue,
+                stock_delivery_queue=stock_delivery_queue,
+                cash_delivery_period=cash_delivery_period,
+                stock_delivery_period=stock_delivery_period,
+                share_count=share_count,
         )
 
     # 完成全部交易信号的处理后，输出最终的持有现金清单、持有资产清单和交易费用清单
@@ -715,6 +725,8 @@ class Backtester:
     def __init__(self,
                  op: Operator,
                  shares: list[str],
+                 cash_plan: CashPlan,
+                 benchmark_data: Union[pd.DataFrame, pd.Series],
                  cash_investment_array: np.ndarray,
                  cash_inflation_array: np.ndarray,
                  delivery_day_indicators: np.ndarray,
@@ -732,6 +744,10 @@ class Backtester:
             交易操作对象，包含交易信号生成和交易执行的逻辑
         shares: list[str]
             交易标的列表，包含所有交易标的的代码
+        cash_plan: CashPlan,
+            现金投资计划
+        benchmark_data: pd.DataFrame or pd.Series
+            用于评价回测结果的业绩基准数据
         cash_investment_array: np.ndarray
             现金投资数组，记录每一个交易信号日的现金投资金额
         cash_inflation_array: np.ndarray
@@ -815,9 +831,14 @@ class Backtester:
         self.trade_records_array = np.zeros(shape_signals, dtype=float)
         self.trade_cost_array = np.zeros(shape_signals, dtype=float)
 
-        # 4, 交易日志和交易汇总记录
+        # 4, 回测交易最终结果：评价指标、交易日志和交易汇总记录
+        self.backtest_result: dict = {}
         self.trade_log_df: Optional[pd.DataFrame] = None
         self.summary_df: Optional[pd.DataFrame] = None
+
+        # 5, 其他相关属性（需要增加数据匹配性校验）
+        self.cash_plan = cash_plan
+        self.benchmark_data = benchmark_data
 
     def run(self) -> 'Backtester':
         """ 执行回测计算，生成回测结果数据并存入对象属性中"""
@@ -982,6 +1003,79 @@ class Backtester:
 
         return value_history
 
+    def evaluate_result(self, indicators: str) -> dict:
+        """生成交易结果的评价报告，保存在self.evaluate_result属性中
+
+        Parameters
+        ----------
+        indicators: str
+            回测结果评价指标，详情参见qteasy.evaluate.evaluate()函数
+
+        Returns
+        -------
+        """
+        self.backtest_result.update(
+                evaluate(
+                        looped_values=self.trade_result_df(),
+                        hist_benchmark=self.benchmark_data,
+                        cash_plan=self.cash_plan,
+                        indicators=indicators,
+                )
+        )
+
+        self.backtest_result['op_run_time'] = self.op_run_time
+        self.backtest_result['loop_run_time'] = self.backtest_run_time
+
+        return self.backtest_result
+
+    def report_result(self) -> str:
+        """ 生成回测结果的明细报告，报告为纯文本格式，可以使用print命令打印
+
+        Returns
+        -------
+        report_str: str
+            以打印格式排版的回测结果报告
+        """
+        if self.backtest_result.get('complete_values') is not None:
+            self.backtest_result['report'] = _loop_report_str(
+                    loop_results=self.backtest_result,
+            )
+            return self.backtest_result['report']
+        else:
+            return 'Complete evaluation of backtest result is not created!'
+
+    def plot_result(self, plot_title: str,
+                    show_positions: bool,
+                    buy_sell_markers: bool) -> None:
+        """ 以图表形式生成交易结果
+
+        Parameters
+        ----------
+        plot_title: str
+            图表的标题名称
+        show_positions: bool
+            是否显示持股仓位区间信息，如果设置为True，则在收益率曲线图上
+            以红色/绿色条带显示区间的持仓类型（绿色表示持多仓，红色表示持
+            空仓）颜色越深持仓比例越高
+        buy_sell_markers: bool
+            是否在收益率曲线图上显示买卖点，如果设置为True，则在收益率曲
+            线图上以红绿色小箭头标示出买卖点
+
+        Returns
+        -------
+        None
+        """
+        if self.backtest_result.get('complete_values') is not None:
+            _plot_loop_result(
+                    loop_results=self.backtest_result,
+                    plot_title=plot_title,
+                    show_positions=show_positions,
+                    buy_sell_markers=buy_sell_markers,
+            )
+        else:
+            err = RuntimeError('Complete evaluation of backtest result is not created!')
+            raise err
+
     # 根据回测结果生成交易日志，包含更加完整的交易记录，输出内容为DataFrame格式，并且可以保存为csv文件
     def generate_trade_logs(
             self,
@@ -1019,11 +1113,14 @@ class Backtester:
         trade_signal_df = pd.DataFrame(self.op_signals, index=self.op_schedule, columns=self.shares)
         trade_price_df = pd.DataFrame(self.trade_price_data, index=self.op_schedule, columns=self.shares)
         own_amounts_df = pd.DataFrame(self.own_amounts_array[1:], index=self.op_schedule, columns=self.shares)
-        available_amounts_df = pd.DataFrame(self.available_amounts_array[1:], index=self.op_schedule, columns=self.shares)
+        available_amounts_df = pd.DataFrame(self.available_amounts_array[1:], index=self.op_schedule,
+                                            columns=self.shares)
         trade_records_df = pd.DataFrame(self.trade_records_array, index=self.op_schedule, columns=self.shares)
         trade_cost_df = pd.DataFrame(self.trade_cost_array, index=self.op_schedule, columns=self.shares)
-        cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - self.trade_cost_array, index=self.op_schedule, columns=self.shares)
-        amounts_value_df = pd.DataFrame(trade_price_df * self.own_amounts_array[1:], index=self.op_schedule, columns=self.shares)
+        cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - self.trade_cost_array,
+                                       index=self.op_schedule, columns=self.shares)
+        amounts_value_df = pd.DataFrame(trade_price_df * self.own_amounts_array[1:], index=self.op_schedule,
+                                        columns=self.shares)
 
         combined_data = pd.concat(
                 objs=[trade_signal_df,
@@ -1062,7 +1159,7 @@ class Backtester:
         )
         summary_index = pd.MultiIndex.from_product(
                 [self.summary_df.index,
-                    ['7, summary']],
+                 ['7, summary']],
         )
         self.summary_df.index = summary_index
         self.trade_log_df = self.summary_df.join(combined_data, how='outer', sort=False)
@@ -1071,6 +1168,8 @@ class Backtester:
             self.trade_log_df.to_csv(save_to_file_path, encoding='utf-8')
             if self.logger:
                 self.logger.info(f'trade log saved to {save_to_file_path}')
+
+        self.backtest_result['trade_log'] = save_to_file_path  #
 
         return self.trade_log_df
 
@@ -1099,7 +1198,8 @@ class Backtester:
             raise ValueError('shares list is empty, cannot create trade summary!')
         if any(share not in self.trade_log_df.columns for share in self.shares):
             missing_share = [share for share in self.shares if share not in self.trade_log_df.columns]
-            raise KeyError(f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
+            raise KeyError(
+                f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
         # 处理share_names
         if share_names is None:
             share_names = ['N/A' for _ in self.shares]
@@ -1130,5 +1230,7 @@ class Backtester:
             self.summary_df.to_csv(save_to_file_path, encoding='utf-8')
             if self.logger is not None:
                 self.logger.info(f'trade summary saved to {save_to_file_path}')
+
+        self.backtest_result['trade_summary'] = save_to_file_path  #
 
         return self.summary_df
