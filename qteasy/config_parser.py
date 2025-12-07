@@ -396,3 +396,45 @@ def parse_market_trade_time_params(config) -> dict:
         raise ValueError('market trade time parameters should be strings in format "HH:MM:SS"') from e
 
     return market_trade_time_params
+
+
+def parse_optimization_params_grid(config) -> dict[str, list[Any]]:
+    """解析策略优化相关参数，优化算法为网格搜索法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_montecarlo(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为蒙特卡洛法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_incremental(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为递进优化法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_ga(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为遗传算法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_knn(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为K近邻法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_pso(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为粒子群优化算法时使用:
+    """
+    raise NotImplementedError
+
+
+def parse_optimization_params_aco(config) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为模拟退火法时使用:
+    """
+    raise NotImplementedError
