@@ -358,7 +358,7 @@ class Space:
                         return False
         return True
 
-    def from_point(self, point, distance: Union[int, float, list], ignore_enums=True):
+    def from_point(self, point, distance: Union[int, float, list, tuple], ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
 
         Parameters
