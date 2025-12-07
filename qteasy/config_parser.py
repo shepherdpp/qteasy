@@ -349,3 +349,50 @@ def parse_trading_delivery_params(config) -> dict:
         raise ValueError('stock_delivery_period should be a non-negative integer')
 
     return trading_delivery_params
+
+
+def parse_market_trade_time_params(config) -> dict:
+    """解析市场交易时间相关的配置参数:
+
+    market_open_time_am/pm: str,
+        市场开盘时间
+    market_close_time_am/pm: str,
+        市场收盘时间
+
+    Parameters
+    ----------
+    config: dict
+        配置参数字典
+
+    Returns
+    -------
+    market_trade_time_params: dict
+        市场交易时间相关的参数字典
+    """
+    market_trade_time_params = {
+        'market_open_time_am':  config['market_open_time_am'],
+        'market_close_time_am': config['market_close_time_am'],
+        'market_open_time_pm':  config['market_open_time_pm'],
+        'market_close_time_pm': config['market_close_time_pm'],
+    }
+    # raise if parameters are out of range or with wrong types
+    if not isinstance(market_trade_time_params['market_open_time_am'], str):
+        raise ValueError('market_open_time should be a string in format "HH:MM:SS"')
+    if not isinstance(market_trade_time_params['market_close_time_am'], str):
+        raise ValueError('market_close_time should be a string in format "HH:MM:SS"')
+    # raise if parameters are out of range or with wrong types
+    if not isinstance(market_trade_time_params['market_open_time_pm'], str):
+        raise ValueError('market_open_time should be a string in format "HH:MM:SS"')
+    if not isinstance(market_trade_time_params['market_close_time_pm'], str):
+        raise ValueError('market_close_time should be a string in format "HH:MM:SS"')
+
+    # raise if parameters can not be properly converted to time
+    try:
+        pd.to_datetime(market_trade_time_params['market_open_time_am'], format='%H:%M:%S').time()
+        pd.to_datetime(market_trade_time_params['market_close_time_am'], format='%H:%M:%S').time()
+        pd.to_datetime(market_trade_time_params['market_open_time_pm'], format='%H:%M:%S').time()
+        pd.to_datetime(market_trade_time_params['market_close_time_pm'], format='%H:%M:%S').time()
+    except Exception as e:
+        raise ValueError('market trade time parameters should be strings in format "HH:MM:SS"') from e
+
+    return market_trade_time_params
