@@ -1398,7 +1398,7 @@ msgid ""
 "set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为"
 "0，则将相应的参数赋值给strategy："
 msgstr ""
-"The set_opt_par function iterates through all the strategy functions in the Operator object, "
+"The set_opt_par_values function iterates through all the strategy functions in the Operator object, "
 "checks its opt_tag value, and assigns the corresponding parameter to strategy whenever it "
 "finds that the opt_tag is not zero:"
 
@@ -1448,7 +1448,7 @@ msgid ""
 "set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策"
 "略，则分配参数给这个策略"
 msgstr ""
-"The set_opt_par function iterates through all the strategy functions in the Operator object, "
+"The set_opt_par_values function iterates through all the strategy functions in the Operator object, "
 "checks its opt_tag value, and assigns parameters to the strategy for which opt_tag == 2"
 
 #: of qteasy.qt_operator.Operator.set_opt_par:50
