@@ -639,7 +639,7 @@ def _valid_qt_kwargs():
                           '- back/b/adj     - 对于股票，使用后复权价格回测，对于基金，使用复权净值回测；\n'
                           '- forward/f/accu - 对于股票，使用前复权价格回测，对于基金，使用复权净值回测'},
 
-        'maximize_cash_usage':
+        'maximize_cash_usage':  # deprecated
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
@@ -825,21 +825,6 @@ def _valid_qt_kwargs():
                           '"20100104,20100202,20100304"'
                           '["20100104", "20100202", "20100304"]'},
 
-        'test_type':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
-            {'Default':   'single',
-             'Validator': lambda value: isinstance(value, str) and
-                                        value in ['single', 'multiple', 'montecarlo'],
-             'level':     3,
-             'text':      '测试类型。指测试数据的利用方式，取值范围如下:\n'
-                          '"single"     - 在每一回合的优化测试中，在测试区间上进行覆盖整个区间的单次回测\n'
-                          '               并评价回测结果\n'
-                          '"multiple"   - 在每一回合的优化测试中，将测试区间的数据划分为多个子区间，在这\n'
-                          '               些子区间上分别测试，并根据所有测试的结果确定策略在整个区间上的\n'
-                          '               评价结果\n'
-                          '"montecarlo" - 蒙特卡洛测试，根据测试区间历史数据的统计性质，随机生成大量的模\n'
-                          '               拟价格变化数据，用这些数据对策略的表现进行评价，最后给出统计意\n'
-                          '               义的评价结果'},
-
         'test_indicators':
             {'Default':   'r,m,v,b,alpha,beta,sharp,info',
              'Validator': lambda value: isinstance(value, str),
@@ -867,19 +852,6 @@ def _valid_qt_kwargs():
                           '3  - violin 类型\n'
                           '4  - box 类型'},
 
-        'test_sub_periods':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
-            {'Default':   3,
-             'Validator': lambda value: isinstance(value, int) and value >= 1,
-             'level':     3,
-             'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量，输入值为大于等于1的整数'},
-
-        'test_sub_prd_length':  # TODO: deprecate, 取消multiple选项，改为只支持single和montecarlo
-            {'Default':   0.75,
-             'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
-             'level':     3,
-             'text':      '仅当测试类型为"multiple"时有效。每一个测试子区间长度占整个测试区间长度的比例\n'
-                          '例如，当测试区间长度为4年时，本参数0.75代表每个测试子区间长度为3年，取值范围[0, 1]'},
-
         'test_cycle_count':
             {'Default':   100,
              'Validator': lambda value: isinstance(value, int) and value >= 1,
@@ -888,30 +860,44 @@ def _valid_qt_kwargs():
                           '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果，输入值为大于等于1的整数'},
 
         'optimize_target':
-            {'Default':   'final_value',
+            {'Default':   'fv',
              'Validator': lambda value: isinstance(value, str)
-                                        and value in ['final_value', 'FV', 'SHARP'],
+                                        and value in ['fv', 'vol', 'mdd'],
              'level':     1,
              'text':      '策略的优化目标。即优化时以找到该指标最佳的策略为目标'},
 
-        'maximize_target':
-            {'Default':   True,
-             'Validator': lambda value: isinstance(value, bool),
+        'optimize_direction':
+            {'Default':   'maximize',
+             'Validator': lambda value: isinstance(value, str)
+                                        and value in ['maximize', 'minimize'],
              'level':     1,
-             'text':      '为True时寻找目标值最大的策略，为False时寻找目标值最低的策略'},
+             'text':      '策略优化方向，即是寻找最大值的策略还是最小值的策略'},
 
         'opti_method':
-            {'Default':   1,
-             'Validator': lambda value: isinstance(value, int)
-                                        and value <= 3,
+            {'Default':   'montecarlo',
+             'Validator': lambda value: isinstance(value, str)
+                                        and value in ['grid', 'montecarlo', 'incremental',
+                                                      'ga', 'gradient', 'knn', 'svm', 'pso', 'aco'],
              'level':     1,
              'text':      '策略优化算法，取值范围如下:\n'
-                          '0 - 网格法，按照一定间隔对整个向量空间进行网格搜索\n'
-                          '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略\n'
-                          '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子\n'
-                          '    空间，缩小步长进一步搜索\n'
-                          '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）\n'
-                          '4 - ML方法，基于机器学习的最佳策略搜索算法（To be Implemented）'},
+                            '- grid        : 穷举法，在给定的参数空间内以固定步长遍历所有可能的参数组合，找到最优解，\n'
+                            '                适用于参数数量较少的情况，否则计算量过大\n'
+                            '- montecarlo  : 蒙特卡洛法，在参数空间内随机采样一定数量的参数组合进行测试，找到最优解，\n'
+                            '                适用于参数数量较多的情况\n'
+                            '- incremental : 递进步长法，在参数空间内以较大步长进行初步搜索，找到较优解后，\n'
+                            '                缩小参数空间并以较小步长进行二次搜索，适用于参数数量较多的情况\n'
+                            '- ga          : 遗传算法，基于自然选择和遗传学原理，通过选择、交叉和变异等操作，\n'
+                            '                在参数空间内进化出更优的参数组合，适用于复杂的优化问题\n'
+                            # '- gradient    : 梯度下降法，基于目标函数的梯度信息，通过迭代更新参数组合以最小化或\n'
+                            # '                最大化目标函数，适用于可微分的优化问题\n'
+                            # '- knn         : K近邻法，通过在参数空间内寻找与当前参数组合最相似的K个邻居，\n'
+                            # '                并根据邻居的表现来调整参数组合，适用于参数空间较为平滑的情况\n'
+                            # '- svm         : 支持向量机法，基于支持向量机模型，通过构建超平面来划分参数空间，\n'
+                            # '                并寻找最优的参数组合，适用于分类问题的优化\n'
+                            '- pso         : 粒子群优化法，模拟鸟群觅食行为，通过粒子之间的信息交流和协作，\n'
+                            '                在参数空间内搜索最优解，适用于连续优化问题\n'
+                            '- aco         : 蚁群算法，模拟蚂蚁觅食行为，通过信息素的积累和挥发，\n'
+                            '                在参数空间内寻找最优解，适用于组合优化问题'},
 
         'opti_grid_size':
             {'Default':   1,
