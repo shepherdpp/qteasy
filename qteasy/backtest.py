@@ -779,6 +779,21 @@ class Backtester:
             shares = str_to_list(shares)
         assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
 
+        # 参数一致性校验
+        n_signals = op.get_signal_count()
+        share_count = len(shares)
+        arrays_to_check = [
+            ("cash_investment_array", cash_investment_array, (n_signals,)),
+            ("cash_inflation_array", cash_inflation_array, (n_signals,)),
+            ("delivery_day_indicators", delivery_day_indicators, (n_signals,)),
+            ("trade_price_data", trade_price_data, (n_signals, share_count))
+        ]
+        for name, arr, shape in arrays_to_check:
+            if not isinstance(arr, np.ndarray):
+                raise TypeError(f"{name} must be a numpy array")
+            if arr.shape != shape:
+                raise ValueError(f"{name} should have shape {shape}, but got {arr.shape}")
+
         self.op = op
         self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
         self.shares = shares
@@ -805,19 +820,6 @@ class Backtester:
         self.n_signals = op.get_signal_count()
         self.share_count = len(shares)
 
-        # 参数一致性校验
-        arrays_to_check = [
-            ("cash_investment_array", self.cash_investment_array, (self.n_signals,)),
-            ("cash_inflation_array", self.cash_inflation_array, (self.n_signals,)),
-            ("delivery_day_indicators", self.delivery_day_indicators, (self.n_signals,)),
-            ("trade_price_data", self.trade_price_data, (self.n_signals, self.share_count))
-        ]
-        for name, arr, shape in arrays_to_check:
-            if not isinstance(arr, np.ndarray):
-                raise TypeError(f"{name} must be a numpy array")
-            if arr.shape != shape:
-                raise ValueError(f"{name} should have shape {shape}, but got {arr.shape}")
-
         # 3.1 现金和股票持仓历史记录表
         shape_assets = (self.n_signals + 1, self.share_count)
         shape_cashes = (self.n_signals + 1,)
@@ -832,6 +834,7 @@ class Backtester:
         self.trade_cost_array = np.zeros(shape_signals, dtype=float)
 
         # 4, 回测交易最终结果：评价指标、交易日志和交易汇总记录
+        # self.backtest_final_value: float = 0.0  # fv 在evaluate中可以直接计算，但是为了节省时间，这个值可以计算出来并缓存
         self.backtest_result: dict = {}
         self.trade_log_df: Optional[pd.DataFrame] = None
         self.summary_df: Optional[pd.DataFrame] = None
@@ -839,6 +842,9 @@ class Backtester:
         # 5, 其他相关属性（需要增加数据匹配性校验）
         self.cash_plan = cash_plan
         self.benchmark_data = benchmark_data
+
+        if logger is not None:
+            logger.info('Start backtest operator...')
 
     def run(self) -> 'Backtester':
         """ 执行回测计算，生成回测结果数据并存入对象属性中"""
@@ -984,6 +990,25 @@ class Backtester:
         return signals
 
     # 生成更加易于阅读的DataFrame型交易结果数据，以便用于结果的评价及后续处理，
+    def trade_result_final_value(self):
+        """ 直接快速计算返回回测的终值结果"""
+        final_value = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+        return final_value[-1]
+
+    def trade_result_volatility(self):
+        """ 直接快速计算返回回测的波动率结果"""
+        value_history = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+        returns = value_history.pct_change().dropna()
+        volatility = returns.std() * np.sqrt(252)
+        return volatility
+
+    def trade_result_max_drawdown(self):
+        """ 直接快速计算返回回测的最大回撤结果"""
+        value_history = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+        rolling_max = value_history.cummax()
+        drawdown = (value_history - rolling_max) / rolling_max
+        max_drawdown = drawdown.min()
+        return max_drawdown
 
     def trade_result_df(self) -> pd.DataFrame:
         """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式
