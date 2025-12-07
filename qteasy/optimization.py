@@ -275,7 +275,7 @@ class Optimizer:
         self.best_parameters = None  # 最佳优化参数
         self.best_performance = None  # 最佳性能评分
 
-    def run(self):
+    def optimize(self):
         # 调用指定的优化方法进行最优参数搜索
 
         s_range, s_type = self.op.opt_space_par
@@ -290,6 +290,13 @@ class Optimizer:
         )
 
         return self
+
+    def validate(self):
+        # 验证optimize过程中产生的交易参数在测试区间的表现
+        # if self.result_pool.is_empty():
+        #     pass
+
+        raise NotImplementedError
 
     def _evaluate_parameter(self, par_values: tuple) -> float:
         """ 使用一组策略参数进行回测，并返回回测结果的评价指标字典
@@ -620,6 +627,7 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
+
         raise NotImplementedError
 
     def _search_gradient(self,
@@ -628,6 +636,42 @@ class Optimizer:
         """ 最优参数搜索算法5：梯度下降法
         在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
         最大步数为止，输出结果为最后N步的结果
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+        search_config: dict
+            用于存储交易相关参数的配置变量
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        raise NotImplementedError
+
+    def _search_knn(self,
+                    space: Space,
+                    search_config: dict) -> None:
+        """ K-Nearest Neighbors 最近邻算法
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+        search_config: dict
+            用于存储交易相关参数的配置变量
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        raise NotImplementedError
+
+    def _search_svm(self,
+                    space: Space,
+                    search_config: dict) -> None:
+        """ Support Vector Machine 支持向量机算法
 
         Parameters
         ----------
@@ -698,6 +742,8 @@ class Optimizer:
         'incremental': _search_incremental,
         'ga':          _search_ga,
         'gradient':    _search_gradient,
+        'knn':         _search_knn,
+        'svm':         _search_svm,
         'pso':         _search_pso,
         'aco':         _search_aco,
     }
