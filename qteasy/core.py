@@ -15,8 +15,6 @@ import logging
 from warnings import warn
 from typing import Optional, Union, Any
 
-import datetime
-
 import qteasy
 from qteasy.finance import CashPlan
 from qteasy.configure import configure
@@ -1478,85 +1476,8 @@ def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=N
     run_mode = config['mode']
     if run_mode != 0:
         raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
-    # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    # TODO, 为配合新的DataType对象，这里需要实时生成DataType对象以获取数据，以保持兼容性
-    #  但是未来Strategy/Operator使用新的架构以后，DataTypes应该内建到Strategy中去，从
-    #  而取消实时创建DataType对象
-    data_types = infer_data_types(
-            names=op.all_strategy_data_types,
-            freqs=op.op_data_freq,
-            asset_types=config['asset_type'],
-            adj='none',
-            allow_ignore_freq=True,
-    )
-    hist_op = get_history_panel(
-            data_types=data_types,
-            shares=config['asset_pool'],
-            rows=op.max_window_length,
-            freq=op.op_data_freq,
-            end='today',
-            data_source=datasource,
-    )
 
-    if any(
-            (stg.run_freq.upper() in ['D', 'W', 'M']) and
-            stg.use_latest_data_cycle
-            for stg
-            in op.strategies
-    ):  # 如果有任何一个策略需要估算当前周期的数据
-        # 从hist_op的index中找到日期序列，最后一个日期是prev_cycle_end, 根据日期序列计算本cycle的开始和结束日期
-        prev_cycle_date = hist_op.hdates[-1]
-
-        latest_cycle_date = next_market_trade_day(
-                prev_cycle_date,
-                nearest_only=False,
-        )
-
-        extended_op_values = np.zeros(shape=(hist_op.shape[0], 1, hist_op.shape[2]))
-        extended_ref_values = np.zeros(shape=(hist_ref.shape[0], 1, hist_ref.shape[2]))
-        # 如果需要估算当前的除open/high/low/close/volume以外的其他数据：
-        # 直接沿用上一周期的数据
-        # 将hist_op和ref最后一行的数据复制到extended_op_values和extended_ref_values中,作为默认值
-        extended_op_values[:, 0, :] = hist_op.values[:, -1, :]
-        if not hist_ref.is_empty:
-            extended_ref_values[:, 0, :] = hist_ref.values[:, -1, :]
-
-        # 如果没有给出live_prices，则获取当前周期的最新数据
-        if live_prices is None:
-            from qteasy.data_channels import fetch_real_time_klines
-            live_kline_prices = fetch_real_time_klines(
-                    channel='eastmoney',
-                    qt_codes=hist_op.shares,
-                    freq=op.op_data_freq,
-                    matured_kline_only=False,  # 只获取成熟的K线数据(即已经收盘的K线数据)
-            )
-            live_kline_prices.set_index('ts_code', inplace=True)
-        else:
-            live_kline_prices = live_prices
-        # 将live_kline_prices中的数据填充到extended_op_values和extended_ref_values中
-        live_kline_prices = live_kline_prices.reindex(index=hist_op.shares)
-        for i, htype in enumerate(hist_op.htypes):
-            if htype in live_kline_prices.columns:
-                extended_op_values[:, 0, i] = live_kline_prices[htype].values
-
-        # 将extended_hist_op和extended_hist_ref添加到hist_op和hist_ref中
-        extended_hist_op = HistoryPanel(
-                values=extended_op_values,
-                levels=hist_op.shares,
-                rows=[latest_cycle_date],
-                columns=hist_op.htypes,
-        )
-        hist_op = hist_op.join(extended_hist_op, same_shares=True, same_htypes=True)
-        if not hist_ref.is_empty:
-            extended_hist_ref = HistoryPanel(
-                    values=extended_ref_values,
-                    levels=hist_ref.shares,
-                    rows=[latest_cycle_date],
-                    columns=hist_ref.htypes,
-            )
-            hist_ref = hist_ref.join(extended_hist_ref, same_shares=True, same_htypes=True)
-
-    return hist_op, hist_ref
+    raise NotImplementedError
 
 
 def check_and_prepare_backtest_data(op: Operator,
