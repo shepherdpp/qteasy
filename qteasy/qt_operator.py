@@ -1119,7 +1119,7 @@ class Operator:
             return
         return self._op_signal_hdates[hdate]
 
-    def set_opt_par(self, opt_par):
+    def set_opt_par_values(self, par_values):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
         本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
@@ -1129,7 +1129,7 @@ class Operator:
 
         Parameters
         ----------
-        opt_par: Tuple
+        par_values: Tuple
             一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
 
         Returns
@@ -1185,13 +1185,13 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
-                stg.update_par_values(*opt_par[s:k])  # 使用update_pars更新参数，不检查参数的正确性
+                stg.update_par_values(*par_values[s:k])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
                 # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                stg.update_par_values(*opt_par[s])  # 使用update_pars更新参数，不检查参数的正确性
+                stg.update_par_values(*par_values[s])  # 使用update_pars更新参数，不检查参数的正确性
                 s = k
 
     def set_blender(self,
@@ -1535,7 +1535,7 @@ class Operator:
 
     def check_dynamic_data(self):
         """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号"""
-        warnings.warn("This method is not implemented yet.")
+        warnings.warn("The method check_dynamic_data of Operator is not implemented yet.")
         return True
 
     # =================================================
@@ -1647,7 +1647,8 @@ class Operator:
         end_date: str or pd.Timestamp, optional
             结束日期，默认为None，表示到数据源的结束日期为止
         kwargs: dict, optional
-            其他参数，包括：
+            其他参数，包括生成交易时间序列过程中所需的参数，如交易开始时间、结束时间等等。
+            详见qteasy.trading_util.trade_time_index()函数的参数说明
 
         Returns
         -------
@@ -1655,8 +1656,6 @@ class Operator:
         """
 
         from qteasy.trading_util import trade_time_index as tti
-        # DEBUG:
-        # print('preparing group timing table')
         self.group_schedules = {}
 
         for group in self._groups:
@@ -1820,8 +1819,8 @@ class Operator:
                     # print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
                     #       f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
-    def run_strategy(self, step_index) -> Generator[
-        Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
+    def run_strategy(self,
+                     step_index) -> Generator[Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
         """ 运行当前步骤的所有策略组，生成交易信号
 
         本函数是一个生成器函数，返回每个策略组在当前步骤的交易信号。
@@ -1918,7 +1917,9 @@ class Operator:
         return trader.run()
 
     def backtest(self, **kwargs):
-        """ placeholder for backtest method """
+        """ backtest method creates a Backtester object and runs backtest,
+         returning the backtest results.
+        """
         from qteasy.backtest import Backtester
         backtester = Backtester(op=self, **kwargs)
         return backtester.run()

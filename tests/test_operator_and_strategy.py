@@ -2495,7 +2495,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
-        print(f'--------- Testing setting Opt Pars: set_opt_par -------')
+        print(f'--------- Testing setting Opt Pars: set_opt_par_values -------')
         op = qt.Operator('dma, random, crossline')
         op.set_parameter('dma',
                          opt_tag=1,
@@ -2506,7 +2506,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
-        op.set_opt_par((58, 12, 90))
+        op.set_opt_par_values((58, 12, 90))
         self.assertEqual(op.strategies[0].par_values, (58, 12, 90))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
@@ -2517,17 +2517,17 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter('crossline',
                          par_values=(55, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
-        op.set_opt_par((60, 12, 99, 80, 26, 0.09))
+        op.set_opt_par_values((60, 12, 99, 80, 26, 0.09))
         self.assertEqual(op.strategies[0].par_values, (60, 12, 99))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
-        op.set_opt_par((90, 200, 155, 80, 26, 0.09, 5, 12, 9))
+        op.set_opt_par_values((90, 200, 155, 80, 26, 0.09, 5, 12, 9))
         self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
-        # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
+        # test set_opt_par_values when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
                          opt_tag=2,
                          window_length=10, )
@@ -2537,7 +2537,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (50, 10, 0.05))
-        op.set_opt_par((15, 12, 9, (18, 26, 0.09)))
+        op.set_opt_par_values((15, 12, 9, (18, 26, 0.09)))
         self.assertEqual(op.strategies[0].par_values, (15, 12, 9))
         self.assertEqual(op.strategies[1].par_values, (0.5,))
         self.assertEqual(op.strategies[2].par_values, (18, 26, 0.09))
