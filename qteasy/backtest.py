@@ -694,6 +694,50 @@ def backtest_batch_steps(
     return None
 
 
+def generate_cash_invest_and_delivery_arrays(invest_cash_plan: CashPlan,
+                                          op_schedule: pd.Index) -> (tuple[np.ndarray, np.ndarray, np.ndarray]):
+    """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
+
+    Parameters
+    ----------
+    invest_cash_plan: CashPlan
+        现金投资计划
+    op_schedule: pd.Index
+        操作日时间索引, 用于生成对应长度的数组
+
+    Returns
+    -------
+    cash_investment_array: np.ndarray
+        现金投资数组
+    inflation_rate_array: np.ndarray
+        通胀率数组
+    delivery_day_indicators: np.ndarray
+        交割日指示数组, 非交割日为0，交割日为1
+    """
+    # 生成包含现金投资和现金通胀率数组的DataFrame
+    cash_plan_df = pd.DataFrame(
+            {'investment':     np.zeros_like(op_schedule, dtype=float),
+             'inflation_rate': np.ones_like(op_schedule, dtype=float)},
+            index=op_schedule,
+    )
+    investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.plan.index, side='left')
+    for pos, amount in zip(investment_positions, invest_cash_plan.amounts):
+        if pos < len(cash_plan_df):
+            cash_plan_df.iat[pos, 0] += amount  # 累加投资金额
+
+    inflation_rate = invest_cash_plan.ir
+    day_diffs = (cash_plan_df.index - cash_plan_df.index[0]).days
+    cash_plan_df['inflation_rate'] += inflation_rate * day_diffs / 365  # 年化通胀率转换为日化通胀率
+    cash_investment_array = cash_plan_df['investment'].to_numpy()
+    cash_inflation_array = cash_plan_df['inflation_rate'].to_numpy()
+    cash_inflation_array = cash_inflation_array / np.roll(cash_inflation_array, 1)
+    cash_inflation_array[0] = 1.0  # 第一天的通胀率设为1.0
+
+    day_changes = np.diff(day_diffs.values, prepend=-1)
+    day_changes[day_changes.nonzero()] = 1  # 将非零差值设为1，表示天数变化
+    return cash_investment_array, cash_inflation_array, day_changes
+
+
 # 定义一个Backtester类，该类包含一个operator对象，同时包含与operator回测相关的所有属性，同时提供回测结果的生成方法
 class Backtester:
     """ Backtester类用于对operator对象进行回测操作。
@@ -726,7 +770,6 @@ class Backtester:
                  op: Operator,
                  shares: list[str],
                  cash_plan: CashPlan,
-                 benchmark_data: Union[pd.DataFrame, pd.Series],
                  cash_investment_array: np.ndarray,
                  cash_inflation_array: np.ndarray,
                  delivery_day_indicators: np.ndarray,
@@ -735,6 +778,7 @@ class Backtester:
                  trading_moq_params: dict,  # 交易最小单位参数
                  trading_delivery_params: dict,  # 交易交割参数
                  trade_price_data: np.ndarray,  # 交易价格数据
+                 benchmark_data: Optional[Union[pd.DataFrame, pd.Series]] = None,
                  logger: Optional[logging.Logger] = None):
         """ 初始化Backtester对象，设置operator对象和回测参数，初始化回测结果存储表格
 

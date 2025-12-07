@@ -19,8 +19,11 @@ from typing import Union, Optional, Generator
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from qteasy.qt_operator import Operator
-from qteasy._arg_validators import ConfigDict
-from qteasy.backtest import Backtester
+
+from qteasy.backtest import (
+    Backtester,
+    generate_cash_invest_and_delivery_arrays,
+)
 
 from qteasy.history import (
     HistoryPanel,
@@ -40,11 +43,6 @@ from qteasy.space import (
 
 from qteasy.finance import (
     CashPlan,
-)
-
-from qteasy.evaluate import (
-    evaluate,
-    performance_statistics,
 )
 
 
@@ -129,18 +127,10 @@ class Optimizer:
                  test_end_date: str,
                  opti_cash_plan: CashPlan,
                  test_cash_plan: CashPlan,
-                 opti_cash_investment_array: np.ndarray,
-                 opti_cash_inflation_array: np.ndarray,
-                 opti_delivery_day_indicators: np.ndarray,
-                 test_cash_investment_array: np.ndarray,
-                 test_cash_inflation_array: np.ndarray,
-                 test_delivery_day_indicators: np.ndarray,
                  cost_params: np.ndarray,  # 交易成本参数
                  signal_parsing_params: dict,  # 交易信号解析参数
                  trading_moq_params: dict,  # 交易最小单位参数
                  trading_delivery_params: dict,  # 交易交割参数
-                 opti_trade_price_data: np.ndarray,  # 交易价格数据
-                 test_trade_price_data: np.ndarray,  # 测试交易价格数据
                  logger: Optional[logging.Logger] = None):
         """初始化Optimizer对象，设置基本参数
 
@@ -177,18 +167,6 @@ class Optimizer:
             现金投资计划
         test_cash_plan: CashPlan,
             现金投资计划
-        opti_cash_investment_array: np.ndarray
-            用于优化过程的现金投资数组，记录每一个交易信号日的现金投资金额
-        opti_cash_inflation_array: np.ndarray
-            用于优化过程的现金增值数组，记录每一个交易信号日相对前一个交易信号日的现金增值幅度
-        opti_delivery_day_indicators: np.ndarray
-            用于优化过程的交割日指标数组，记录每一个交易信号日是否为新的交割日
-        test_cash_investment_array: np.ndarray
-            用于测试过程的现金投资数组，记录每一个交易信号日的现金投资金额
-        test_cash_inflation_array: np.ndarray
-            用于测试过程的现金增值数组，记录每一个交易信号日相对前一个交易信号日的现金增值幅度
-        test_delivery_day_indicators: np.ndarray
-            用于测试过程的交割日指标数组，记录每一个交易信号日是否为新的交割日
         cost_params: np.ndarray
             交易成本参数，包括买入费率、卖出费率、最低买入费用、最低卖出费用、交易滑点
             buy_rate: float, 交易成本：固定买入费率
@@ -202,10 +180,6 @@ class Optimizer:
             交易最小单位参数字典，包含交易最小单位相关的所有参数，通常是parse_trading_moq_params()函数的输出
         trading_delivery_params: dict
             交易交割参数字典，包含交易交割相关的所有参数，通常是parse_trading_delivery_params()函数的输出
-        opti_trade_price_data: np.ndarray
-            优化区间交易价格数据，记录每一个运行交易记录时间戳中的各个资产的交易价格
-        test_trade_price_data: np.ndarray
-            测试交易价格数据，记录每一个运行交易记录时间戳中的各个资产
         logger: Optional[logging.Logger]
             可选的日志记录器对象，用于记录回测过程中的日志信息"""
 
@@ -237,35 +211,27 @@ class Optimizer:
         self.opti_target = opti_target
         self.opti_direction = opti_direction
 
-        # Optimizer对象包含两个Backtester回测器对象，一个用于优化区间的回测，另一个用于测试区间的回测
-        self.opti_backtester = Backtester(
-                op=self.op,
-                shares=self.shares,
-                cash_plan=opti_cash_plan,
-                cash_investment_array=opti_cash_investment_array,
-                cash_inflation_array=opti_cash_inflation_array,
-                delivery_day_indicators=opti_delivery_day_indicators,
-                cost_params=cost_params,
-                signal_parsing_params=signal_parsing_params,
-                trading_moq_params=trading_moq_params,
-                trading_delivery_params=trading_delivery_params,
-                trade_price_data=opti_trade_price_data,
-                logger=logger,
-        )
-        self.test_backtester = Backtester(
-                op=self.op,
-                shares=self.shares,
-                cash_plan=test_cash_plan,
-                cash_investment_array=test_cash_investment_array,
-                cash_inflation_array=test_cash_inflation_array,
-                delivery_day_indicators=test_delivery_day_indicators,
-                cost_params=cost_params,
-                signal_parsing_params=signal_parsing_params,
-                trading_moq_params=trading_moq_params,
-                trading_delivery_params=trading_delivery_params,
-                trade_price_data=test_trade_price_data,
-                logger=logger,
-        )
+        self.opti_start = opti_start_date
+        self.opti_end = opti_end_date
+        self.test_start = test_start_date
+        self.test_end = test_end_date
+
+        self.opti_cash_plan = opti_cash_plan
+        self.test_cash_plan = test_cash_plan
+
+        self.cost_params = cost_params
+        self.signal_parsing_params = signal_parsing_params
+        self.trading_moq_params = trading_moq_params
+        self.trading_delivery_params = trading_delivery_params
+        # self.opti_data_package = opti_data_package
+        # self.test_data_package = test_data_package
+        # self.opti_trade_price_data = opti_trade_price_data
+        # self.test_trade_price_data = test_trade_price_data
+        self.logger = logger
+
+        # 2，回测器属性
+        self.opti_backtester: Optional[Backtester] = None  # 优化区间回测器对象
+        self.test_backtester: Optional[Backtester] = None  # 测试区间回测器对象
 
         # 用于存储优化结果参数的属性
         self.result_pool = ResultPool(capacity=pool_size)
@@ -275,8 +241,33 @@ class Optimizer:
         self.best_parameters = None  # 最佳优化参数
         self.best_performance = None  # 最佳性能评分
 
-    def optimize(self):
+    def optimize(self,
+                 trade_price_data:np.ndarray):
         # 调用指定的优化方法进行最优参数搜索
+
+        # 现金投入和交割数据表
+        (opti_cash_investment_array,
+         opti_cash_inflation_array,
+         opti_delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=self.opti_cash_plan,
+                op_schedule=self.op.group_timing_table.index,
+        )
+
+        # Optimizer对象包含两个Backtester回测器对象，一个用于优化区间的回测，另一个用于测试区间的回测
+        self.opti_backtester = Backtester(
+                op=self.op,
+                shares=self.shares,
+                cash_plan=self.opti_cash_plan,
+                cash_investment_array=opti_cash_investment_array,
+                cash_inflation_array=opti_cash_inflation_array,
+                delivery_day_indicators=opti_delivery_day_indicators,
+                cost_params=self.cost_params,
+                signal_parsing_params=self.signal_parsing_params,
+                trading_moq_params=self.trading_moq_params,
+                trading_delivery_params=self.trading_delivery_params,
+                trade_price_data=trade_price_data,
+                logger=self.logger,
+        )
 
         s_range, s_type = self.op.opt_space_par
         search_space = Space(s_range, s_type)  # 生成参数空间
@@ -291,10 +282,34 @@ class Optimizer:
 
         return self
 
-    def validate(self):
+    def validate(self,
+                 trade_price_data:np.ndarray):
         # 验证optimize过程中产生的交易参数在测试区间的表现
         # if self.result_pool.is_empty():
         #     pass
+
+        # 现金投入和交割数据表
+        (test_cash_investment_array,
+         test_cash_inflation_array,
+         test_delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=self.test_cash_plan,
+                op_schedule=self.op.group_timing_table.index,
+        )
+
+        self.test_backtester = Backtester(
+                op=self.op,
+                shares=self.shares,
+                cash_plan=self.test_cash_plan,
+                cash_investment_array=test_cash_investment_array,
+                cash_inflation_array=test_cash_inflation_array,
+                delivery_day_indicators=test_delivery_day_indicators,
+                cost_params=self.cost_params,
+                signal_parsing_params=self.signal_parsing_params,
+                trading_moq_params=self.trading_moq_params,
+                trading_delivery_params=self.trading_delivery_params,
+                trade_price_data=trade_price_data,
+                logger=self.logger,
+        )
 
         raise NotImplementedError
 
@@ -741,9 +756,9 @@ class Optimizer:
         'montecarlo':  _search_montecarlo,
         'incremental': _search_incremental,
         'ga':          _search_ga,
-        'gradient':    _search_gradient,
-        'knn':         _search_knn,
-        'svm':         _search_svm,
+        # 'gradient':    _search_gradient,
+        # 'knn':         _search_knn,
+        # 'svm':         _search_svm,
         'pso':         _search_pso,
         'aco':         _search_aco,
     }

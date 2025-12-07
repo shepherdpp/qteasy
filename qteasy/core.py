@@ -1617,7 +1617,7 @@ def check_and_prepare_trade_prices(op: Operator,
                                    shares: Union[str, list[str]],
                                    price_adj: str,
                                    datasource: DataSource) -> pd.DataFrame:
-    """ 获取指定时间区间内的交易价格数据。
+    """ 基于Operator对象已经生成的group_schedule，获取指定时间区间内的交易价格数据。
 
     这个函数的要点在于根据operator对象中交易策略的运行时间表，获取每个运行时间点上的历史价格。如果
     operator对象的交易策略有多个运行频率，产生的运行时间表是多个频率的时间点的并集，那么获取的交易价格数据
@@ -2175,14 +2175,14 @@ def run_mode_1(op, config):
     """ run qteasy in mode 1: back test mode"""
 
     from qteasy.config_parser import (
-        parse_cash_invest_and_delivery_arrays,
+        parse_backtest_cash_plan,
+        parse_backtest_start_end_dates,
         parse_trade_cost_params,
         parse_signal_parsing_params,
         parse_trading_moq_params,
         parse_trading_delivery_params,
-        parse_backtest_cash_plan,
-        parse_backtest_start_end_dates,
     )
+    from qteasy.backtest import generate_cash_invest_and_delivery_arrays
 
     # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
     start_date, end_date = parse_backtest_start_end_dates(config=config)  # 回测开始和结束日期
@@ -2193,9 +2193,13 @@ def run_mode_1(op, config):
             end_date=end_date,
     )
     # 现金投入和交割数据表
+    invest_cash_plan = parse_backtest_cash_plan(config)
     (cash_investment_array,
      cash_inflation_array,
-     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
+     delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+            invest_cash_plan,
+            op.group_timing_table.index,
+    )
     cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
     cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
     signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
@@ -2283,7 +2287,6 @@ def run_mode_2(op, config):
     """ run qteasy in mode 2: optimization mode"""
 
     from qteasy.config_parser import (
-        parse_cash_invest_and_delivery_arrays,
         parse_trade_cost_params,
         parse_signal_parsing_params,
         parse_trading_moq_params,
@@ -2291,20 +2294,8 @@ def run_mode_2(op, config):
         parse_optimization_start_end_dates,
         parse_optimization_cash_plan
     )
-
     # 创建策略优化的优化区间和测试区间的开始和结束日期
     opti_start, opti_end, test_start, test_end = parse_optimization_start_end_dates(config=config)  # 回测开始和结束日期
-
-    # 生成优化交易运行计划
-    op.prepare_running_schedule(
-            start_date=opti_start,
-            end_date=opti_end,
-    )
-
-    # 现金投入和交割数据表
-    (cash_investment_array,
-     cash_inflation_array,
-     delivery_day_indicators) = parse_cash_invest_and_delivery_arrays(config, op.group_timing_table.index)
     opti_cash_plan, test_cash_plan = parse_optimization_cash_plan(config)  # 资金投入计划
 
     # 解析交易相关参数
@@ -2334,23 +2325,35 @@ def run_mode_2(op, config):
             datasource=qteasy.QT_DATA_SOURCE,
     )
 
-    trade_prices = check_and_prepare_trade_prices(
-            op=op,
+    optimizer = op.optimize(
+            method=config['opti_method'],
             shares=config['asset_pool'],
-            price_adj=config['backtest_price_adj'],
-            datasource=qteasy.QT_DATA_SOURCE,
+            pool_size=config['opti_output_count'],
+            opti_target=config['optimize_target'],
+            opti_direction=config['optimize_direction'],
+            parallel=config['parallel'],
+            opti_start_date=opti_start,
+            opti_end_date=opti_end,
+            test_start_date=test_start,
+            test_end_date=test_end,
+            opti_cash_plan=opti_cash_plan,
+            test_cash_plan=test_cash_plan,
+            cost_params=cost_params,
+            signal_parsing_params=signal_parsing_params,
+            trading_moq_params=trading_moq_params,
+            trading_delivery_params=trading_delivery_params,
+            logger=qteasy.logger_core,
+    )
+    # 准备优化数据
+    # 生成优化交易运行计划
+    op.prepare_running_schedule(
+            start_date=opti_start,
+            end_date=opti_end,
     )
 
-    hist_benchmark = check_and_prepare_benchmark_data(
-            op=op,
-            benchmark_symbol=config['benchmark_asset'],
-            datasource=qteasy.QT_DATA_SOURCE,
-    )
-
-    # 在生成交易信号之前准备运行计划及历史数据
     op.prepare_data_buffer(
-            start_date='',
-            end_date='',
+            start_date=opti_start,
+            end_date=opti_end,
             data_package=opti_data_package,
     )
     op.create_data_windows()
@@ -2358,8 +2361,44 @@ def run_mode_2(op, config):
     # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
     op.is_ready(raise_error=True)
 
-    optimized = op.optimize(
-            method=config['opti_method'],
+    opti_trade_prices = check_and_prepare_trade_prices(
+            op=op,
+            shares=config['asset_pool'],
+            price_adj=config['backtest_price_adj'],
+            datasource=qteasy.QT_DATA_SOURCE,
     )
 
-    return optimized.result_params_list
+    optimizer.optimize(
+            trade_price_data=opti_trade_prices.values,
+    )
+
+    # ========  开始校验  =========
+    # 生成校验交易运行计划
+    op.prepare_running_schedule(
+            start_date=test_start,
+            end_date=test_end,
+            # TODO: 在这里应该引用config中的market_open_time等等属性，用于生成trade_time_index的时间点
+    )
+
+    op.prepare_data_buffer(
+            start_date=test_start,
+            end_date=test_end,
+            data_package=test_data_package,
+    )
+    op.create_data_windows()
+
+    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+    op.is_ready(raise_error=True)
+
+    test_trade_prices = check_and_prepare_trade_prices(
+            op=op,
+            shares=config['asset_pool'],
+            price_adj=config['backtest_price_adj'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
+    optimizer.validate(
+            trade_price_data=test_trade_prices.values,
+    )
+
+    return optimizer.result_params_list
