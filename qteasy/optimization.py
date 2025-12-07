@@ -131,6 +131,7 @@ class Optimizer:
                  signal_parsing_params: dict,  # 交易信号解析参数
                  trading_moq_params: dict,  # 交易最小单位参数
                  trading_delivery_params: dict,  # 交易交割参数
+                 search_config:dict,
                  logger: Optional[logging.Logger] = None):
         """初始化Optimizer对象，设置基本参数
 
@@ -233,6 +234,9 @@ class Optimizer:
         self.opti_backtester: Optional[Backtester] = None  # 优化区间回测器对象
         self.test_backtester: Optional[Backtester] = None  # 测试区间回测器对象
 
+        # 优化配置属性
+        self.search_config = search_config
+
         # 用于存储优化结果参数的属性
         self.result_pool = ResultPool(capacity=pool_size)
         self.result_pool_size = pool_size  # 优化结果池的大小
@@ -271,13 +275,9 @@ class Optimizer:
 
         s_range, s_type = self.op.opt_space_par
         search_space = Space(s_range, s_type)  # 生成参数空间
-        search_config = {
-            'maximize_target': True if self.opti_direction == 'maximize' else False,
-        }
 
         self.opti_func(
-                space=search_space,
-                search_config=search_config,
+                space=search_space
         )
 
         return self
@@ -430,8 +430,7 @@ class Optimizer:
         return self.result_pool
 
     def _search_grid(self,
-                     space: Space,
-                     search_config: dict) -> None:
+                     space: Space) -> None:
         """ 最优参数搜索算法1: 网格搜索法
 
         在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
@@ -445,8 +444,6 @@ class Optimizer:
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -454,20 +451,19 @@ class Optimizer:
         """
 
         # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
-        par_generator, total = space.extract(search_config.get('sample_count'))
+        par_generator, total = space.extract(self.search_config.get('sample_count'))
         st = time.time()
         pool = self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
                 parallel=self.parallel
         )
-        pool.cut(search_config.get('maximize_target'))
+        pool.cut(self.search_config.get('maximize_target'))
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
     def _search_montecarlo(self,
-                           space: Space,
-                           search_config: dict) -> None:
+                           space: Space) -> None:
         """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -479,8 +475,6 @@ class Optimizer:
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -488,20 +482,19 @@ class Optimizer:
         """
 
         # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
-        par_generator, total = space.extract(search_config.get('sample_count'), how='rand')
+        par_generator, total = space.extract(self.search_config.get('sample_count'), how='rand')
         st = time.time()
         pool = self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
                 parallel=self.parallel
         )
-        pool.cut(search_config.get('maximize_target'))
+        pool.cut(self.search_config.get('maximize_target'))
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
 
     def _search_incremental(self,
-                            space: Space,
-                            search_config: dict) -> None:
+                            space: Space) -> None:
         """ 最优参数搜索算法3: 增量递进搜索法
 
         TODO: 当numpy版本高于1.21时，这个算法在parallel==True时会有极大的效率损失，应优化
@@ -526,23 +519,20 @@ class Optimizer:
             max_rounds:         最大轮数，int，循环次数达到该值时结束循环
             min_volume:         最小体积，float，当参数空间的体积（Volume）小于该值时停止循环
 
-
         Parameters
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        sample_count = search_config.get('opti_r_sample_count')
-        min_volume = search_config.get('opti_min_volume')
-        max_rounds = search_config.get('opti_max_rounds')
-        reduce_ratio = search_config.get('opti_reduce_ratio')
-        parallel = search_config.get('parallel')
+        sample_count = self.search_config.get('opti_r_sample_count')
+        min_volume = self.search_config.get('opti_min_volume')
+        max_rounds = self.search_config.get('opti_max_rounds')
+        reduce_ratio = self.search_config.get('opti_reduce_ratio')
+        parallel = self.search_config.get('parallel')
 
         spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
         base_space = space
@@ -587,7 +577,7 @@ class Optimizer:
                         parallel=parallel,
                         epoch_id=epoch
                 )
-                pool.cut(search_config.get('maximize_target'))
+                pool.cut(self.search_config.get('maximize_target'))
             """
             为了生成新的子空间，计算下一轮子空间的半径大小
             为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
@@ -618,8 +608,7 @@ class Optimizer:
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
     def _search_ga(self,
-                   space: Space,
-                   search_config: dict) -> None:
+                   space: Space) -> None:
         """ 最优参数搜索算法4: 遗传算法
         遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
 
@@ -635,8 +624,6 @@ class Optimizer:
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -646,8 +633,7 @@ class Optimizer:
         raise NotImplementedError
 
     def _search_gradient(self,
-                         space: Space,
-                         search_config: dict) -> None:
+                         space: Space) -> None:
         """ 最优参数搜索算法5：梯度下降法
         在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
         最大步数为止，输出结果为最后N步的结果
@@ -656,8 +642,6 @@ class Optimizer:
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -666,16 +650,14 @@ class Optimizer:
         raise NotImplementedError
 
     def _search_knn(self,
-                    space: Space,
-                    search_config: dict) -> None:
+                    space: Space) -> None:
         """ K-Nearest Neighbors 最近邻算法
+
 
         Parameters
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -684,16 +666,13 @@ class Optimizer:
         raise NotImplementedError
 
     def _search_svm(self,
-                    space: Space,
-                    search_config: dict) -> None:
+                    space: Space) -> None:
         """ Support Vector Machine 支持向量机算法
 
         Parameters
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -702,16 +681,13 @@ class Optimizer:
         raise NotImplementedError
 
     def _search_pso(self,
-                    space: Space,
-                    search_config: dict) -> None:
+                    space: Space) -> None:
         """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
 
         Parameters
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
@@ -720,16 +696,13 @@ class Optimizer:
         raise NotImplementedError
 
     def _search_aco(self,
-                    space: Space,
-                    search_config: dict) -> None:
+                    space: Space) -> None:
         """ Ant Colony Optimization 蚁群优化算法，
 
         Parameters
         ----------
         space: qt.Space
             参数空间对象
-        search_config: dict
-            用于存储交易相关参数的配置变量
 
         Returns
         -------
