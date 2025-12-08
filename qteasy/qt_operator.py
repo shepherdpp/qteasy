@@ -1718,7 +1718,10 @@ class Operator:
         else:  # 'OR' or 'AND'
             return len(running_schedule)
 
-    def prepare_data_buffer(self, *, start_date, end_date, data_package):
+    def prepare_data_buffer(self, *,
+                            start_date:Union[str, pd.Timestamp],
+                            end_date:Union[str, pd.Timestamp],
+                            data_package:dict) -> None:
         """ 准备数据缓冲区，加载所有策略需要的数据
 
         数据缓冲区是一个字典，键为数据类型，值为对应的数据DataFrame，输入参数包括数据包的开始和结束日期，
@@ -1928,7 +1931,7 @@ class Operator:
         """ placeholder for optimize method """
         from qteasy.optimization import Optimizer
         optimizer = Optimizer(op=self, method=method, **kwargs)
-        return optimizer.run()
+        return optimizer
 
 
 
