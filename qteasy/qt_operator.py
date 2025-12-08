@@ -1535,7 +1535,7 @@ class Operator:
 
     def check_dynamic_data(self):
         """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号"""
-        warnings.warn("The method check_dynamic_data of Operator is not implemented yet.")
+        # warnings.warn("The method check_dynamic_data of Operator is not implemented yet.")
         return True
 
     # =================================================
