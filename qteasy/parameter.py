@@ -202,7 +202,8 @@ class Parameter:
         bool: True if item in self, False otherwise
         """
         if isinstance(item, (tuple, list, dict)):
-            raise TypeError(f'Parameters should be numbers or strings, got {type(item)}, please check your input: {item}')
+            raise TypeError(f'Incorrect par type {type(item)} for parameter (requested {self.par_type}), '
+                            f'please check your input: {item}')
 
         if self.par_type in ['float_array', 'int_array']:
             if not isinstance(item, np.ndarray):
