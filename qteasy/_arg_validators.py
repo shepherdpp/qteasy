@@ -912,14 +912,14 @@ def _valid_qt_kwargs():
              'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量，取值范围为大于0的整数'},
 
         'opti_r_sample_count':
-            {'Default':   16,
+            {'Default':   128,
              'Validator': lambda value: _num_or_seq_of_num(value)
                                         and value >= 0,
              'level':     3,
              'text':      '在使用递进步长法搜索最佳策略时有用，每一轮随机取样的数量，取值范围为大于等于0的整数'},
 
         'opti_reduce_ratio':
-            {'Default':   0.1,
+            {'Default':   0.3,
              'Validator': lambda value: isinstance(value, float)
                                         and 0 < value < 1,
              'level':     3,
