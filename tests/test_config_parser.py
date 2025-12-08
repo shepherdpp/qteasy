@@ -19,13 +19,13 @@ from qteasy.config_parser import (
     parse_backtest_start_end_dates,
     parse_backtest_cash_plan,
     parse_trade_cost_params,
-    parse_cash_invest_and_delivery_arrays,
     parse_signal_parsing_params,
     parse_trading_moq_params,
     parse_trading_delivery_params,
     parse_optimization_start_end_dates,
     parse_optimization_cash_plan,
 )
+from qteasy.backtest import generate_cash_invest_and_delivery_arrays
 
 from qteasy.trading_util import trade_time_index
 
@@ -235,8 +235,9 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-31',
                 freq='d',
         )
-        investment_array, inflation_array, day_indicators = parse_cash_invest_and_delivery_arrays(
-                config=config,
+        cash_plan = parse_backtest_cash_plan(config=config)
+        investment_array, inflation_array, day_indicators = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=cash_plan,
                 op_schedule=op_schedule,
         )
         self.assertIsInstance(investment_array, np.ndarray)
@@ -274,8 +275,9 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-10',
                 freq='h',
         )
-        investment_array, inflation_array, day_indicator = parse_cash_invest_and_delivery_arrays(
-                config=config,
+        cash_plan = parse_backtest_cash_plan(config=config)
+        investment_array, inflation_array, day_indicator = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=cash_plan,
                 op_schedule=op_schedule,
 
         )
