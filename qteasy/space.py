@@ -455,10 +455,12 @@ class ResultPool:
         capacity: int
             池中最多可以放入的结果数量
         """
-        self.__capacity = capacity  # 池中最多可以放入的结果数量
+        self.__capacity = 0  # 池中最多可以放入的结果数量
         self.__pool = []  # 用于存放被结果所评价的元素，如参数等
         self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
         self.__extra = []  # 用于存放额外的信息，与每个元素一一相关，在裁剪时会跟随元素被裁剪掉
+
+        self._set_capacity(capacity)
 
     @property
     def items(self):
@@ -476,6 +478,10 @@ class ResultPool:
     def capacity(self):
         return self.__capacity
 
+    @capacity.setter
+    def capacity(self, value):
+        self._set_capacity(value)
+
     @property
     def item_count(self):
         return len(self.items)
@@ -483,6 +489,12 @@ class ResultPool:
     @property
     def is_empty(self):
         return len(self.items) == 0
+
+    def _set_capacity(self, value):
+        """ 检查输入数据的合法性，设置结果池的容量"""
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError(f'Capacity should be a positive integer, got {value} instead')
+        self.__capacity = value
 
     def clear(self):
         """ 清空整个结果池
@@ -527,6 +539,9 @@ class ResultPool:
         -------
         None
         """
+        # perf必须是数值类型
+        if not isinstance(perf, (int, float)):
+            raise TypeError(f'Performance score must be a number, got {type(perf)} instead')
         self.__pool.append(item)  # 新元素入池
         self.__perfs.append(perf)  # 新元素评价分记录
         self.__extra.append(extra)
