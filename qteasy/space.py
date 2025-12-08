@@ -91,14 +91,14 @@ class Space:
     """
 
     def __init__(self,
-                 *pars: Union[Iterable, Parameter, list[Parameter]],
+                 *par_ranges: Union[Iterable, Parameter, list[Parameter]],
                  par_types: Union[list[str], str] = None
                  ):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         Parameters
         ----------
-        *pars: tuple, list of tuple, Parameter, list of Parameter
+        *par_ranges: tuple, list of tuple, Parameter, list of Parameter
             参数空间中包括的参数，可以输入参数对象，参数对象的列表或者参数的范围列表
             参数范围的列表和参数对象不能混合输入。
             如果输入参数对象，则生成一个包含这些参数对象的参数空间，此时不需要输入par_types参数
@@ -134,15 +134,15 @@ class Space:
         self._axis = []
         # import pdb; pdb.set_trace()
         # 处理输入，如果pars参数为Parameter对象，则直接使用
-        if any(isinstance(par, Parameter) for par in pars):
-            if not all(isinstance(par, Parameter) for par in pars):
+        if any(isinstance(par, Parameter) for par in par_ranges):
+            if not all(isinstance(par, Parameter) for par in par_ranges):
                 raise TypeError('All elements in pars should be Parameter objects if pars contains Parameter objects')
-            self._axis = list(pars)
+            self._axis = list(par_ranges)
             return
 
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
-        pars = list(pars)
-        par_dim = len(pars)
+        par_ranges = list(par_ranges)
+        par_dim = len(par_ranges)
         if par_types is None:
             par_types = []
         if isinstance(par_types, str):
@@ -167,7 +167,7 @@ class Space:
                 continue
                 # raise KeyError(f'Invalid parameter type: {par_types[i]}')
         # 逐一生成Axis对象并放入axes列表中
-        self._axis = [Parameter(par, par_type=par_type) for par, par_type in zip(pars, par_types)]
+        self._axis = [Parameter(par, par_type=par_type) for par, par_type in zip(par_ranges, par_types)]
 
     @property
     def dim(self):  # 空间的维度
