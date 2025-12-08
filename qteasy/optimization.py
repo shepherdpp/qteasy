@@ -203,7 +203,7 @@ class Optimizer:
 
         # 1，所有基本属性
         self.opti_method = method
-        self.opti_func = self.AVAILABLE_OPTIMIZERS[method]
+        # self.opti_func = self.AVAILABLE_OPTIMIZERS[method]
 
         self.op = op
         self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
@@ -231,8 +231,7 @@ class Optimizer:
         self.logger = logger
 
         # 2，回测器属性
-        self.opti_backtester: Optional[Backtester] = None  # 优化区间回测器对象
-        self.test_backtester: Optional[Backtester] = None  # 测试区间回测器对象
+        self.running_backtester: Optional[Backtester] = None  # 优化区间回测器对象
 
         # 优化配置属性
         self.search_config = search_config
@@ -240,6 +239,7 @@ class Optimizer:
         # 用于存储优化结果参数的属性
         self.result_pool = ResultPool(capacity=pool_size)
         self.result_pool_size = pool_size  # 优化结果池的大小
+        self.validated_pool = ResultPool(capacity=pool_size)
         self.parallel = parallel  # 是否启用多进程计算方式
         self.current_parameters = None  # 当前优化参数
         self.best_parameters = None  # 最佳优化参数
@@ -256,9 +256,10 @@ class Optimizer:
                 invest_cash_plan=self.opti_cash_plan,
                 op_schedule=self.op.group_timing_table.index,
         )
+        self.result_pool.clear()
 
         # Optimizer对象包含两个Backtester回测器对象，一个用于优化区间的回测，另一个用于测试区间的回测
-        self.opti_backtester = Backtester(
+        self.running_backtester = Backtester(
                 op=self.op,
                 shares=self.shares,
                 cash_plan=self.opti_cash_plan,
@@ -273,20 +274,35 @@ class Optimizer:
                 logger=self.logger,
         )
 
-        s_range, s_type = self.op.opt_space_par
-        search_space = Space(s_range, s_type)  # 生成参数空间
+        s_ranges, s_types = self.op.opt_space_par
+        search_space = Space(*s_ranges,
+                             par_types=s_types)  # 生成参数空间
 
-        self.opti_func(
-                space=search_space
-        )
+        if self.opti_method == 'grid':
+            self._search_grid(space=search_space)
+        elif self.opti_method == 'montecarlo':
+            self._search_montecarlo(space=search_space)
+        elif self.opti_method == 'incremental':
+            self._search_incremental(space=search_space)
+        elif self.opti_method == 'ga':
+            self._search_ga(space=search_space)
+        elif self.opti_method == 'pso':
+            self._search_pso(space=search_space)
+        elif self.opti_method == 'aco':
+            self._search_aco(space=search_space)
+        elif self.opti_method == 'gradient':
+            self._search_gradient(space=search_space)
+        elif self.opti_method == 'svm':
+            self._search_svm(space=search_space)
+        elif self.opti_method == 'knn':
+            self._search_knn(space=search_space)
+        else:
+            raise ValueError(f'Unsupported optimization method: {self.opti_method}')
 
         return self
 
     def validate(self,
                  trade_price_data:np.ndarray):
-        # 验证optimize过程中产生的交易参数在测试区间的表现
-        # if self.result_pool.is_empty():
-        #     pass
 
         # 现金投入和交割数据表
         (test_cash_investment_array,
@@ -296,7 +312,9 @@ class Optimizer:
                 op_schedule=self.op.group_timing_table.index,
         )
 
-        self.test_backtester = Backtester(
+        self.validated_pool.clear()
+
+        self.running_backtester = Backtester(
                 op=self.op,
                 shares=self.shares,
                 cash_plan=self.test_cash_plan,
@@ -311,7 +329,21 @@ class Optimizer:
                 logger=self.logger,
         )
 
-        raise NotImplementedError
+        optimized_par_list = self.result_pool.items.copy()
+        total = self.result_pool_size
+
+        st = time.time()
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=optimized_par_list,
+                result_pool=self.validated_pool,
+                parallel=self.parallel
+        )
+        et = time.time()
+        print(f'\nValidation completed, total time consumption: {sec_to_duration(et - st)}')
+
+        print(f'\nValidation Results:\n'
+              f'{self.validated_pool}')
 
     def _evaluate_parameter(self, par_values: tuple) -> float:
         """ 使用一组策略参数进行回测，并返回回测结果的评价指标字典
@@ -326,22 +358,23 @@ class Optimizer:
         """
         self.op.set_opt_par_values(par_values=par_values)
         # 在优化区间进行回测
-        self.opti_backtester.run()
+        self.running_backtester.run()
         if self.opti_target == 'fv':
-            return self.opti_backtester.trade_result_final_value()
+            return self.running_backtester.trade_result_final_value()
         elif self.opti_target == 'vol':
-            return self.opti_backtester.trade_result_volatility()
+            return self.running_backtester.trade_result_volatility()
         elif self.opti_target == 'mdd':
-            return self.opti_backtester.trade_result_max_drawdown()
+            return self.running_backtester.trade_result_max_drawdown()
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
 
     def _evaluate_parameters(self,
                              total: int,
                              par_value_list: Union[list, tuple, Generator],
+                             result_pool: ResultPool,
                              parallel: bool,
-                             epoch_id: int = 1) -> ResultPool:
-        """ 循环批量运行self._evaluate_parameter函数，生成结果后存入结果池中
+                             epoch_id: int = 1,) -> None:
+        """ 循环批量运行self._evaluate_parameter函数，生成结果后存入参数result_pool中
 
         Parameters
         ----------
@@ -349,6 +382,8 @@ class Optimizer:
             参数组合总数量，用于进度条显示
         par_value_list: list/tuple/Generator
             策略参数值列表或生成器，列表或生成器中的每一个元素都是一组策略参数值元组
+        result_pool: ResultPool
+            结果池对象，用于存储所有参数组合及其对应的评价结果
         parallel: bool
             是否启用多进程计算方式，如果是True，则启用多进程计算方式利用所有的CPU核心计算，
             否则使用单进程计算
@@ -367,6 +402,7 @@ class Optimizer:
             self._evaluate_parameters_parallel(
                     total=total,
                     par_value_list=par_value_list,
+                    result_pool=result_pool,
                     epoch_id=epoch_id,
             )
         # 禁用多进程计算方式，使用单进程计算
@@ -374,16 +410,16 @@ class Optimizer:
             self._evaluate_parameters_sequential(
                     total=total,
                     par_value_list=par_value_list,
+                    result_pool=result_pool,
                     epoch_id=epoch_id,
             )
-
-        return self.result_pool
 
     def _evaluate_parameters_parallel(self,
                                       total: int,
                                       par_value_list: Union[list, tuple, Generator],
-                                      epoch_id: int) -> ResultPool:
-        """ 并行循环批量运行evaluate_parameters()
+                                      result_pool: ResultPool,
+                                      epoch_id: int) -> None:
+        """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
         """
         i = 0
         best_so_far = 0
@@ -394,7 +430,7 @@ class Optimizer:
                        par_value_list}
         for f in as_completed(futures):
             target_value = f.result()
-            self.result_pool.push(item=futures[f], perf=target_value, extra=None)
+            result_pool.push(item=futures[f], perf=target_value, extra=None)
             i += 1
             if target_value > best_so_far:
                 best_so_far = target_value
@@ -404,20 +440,19 @@ class Optimizer:
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
         progress_bar(i, i)
 
-        return self.result_pool
-
     def _evaluate_parameters_sequential(self,
                                         total: int,
                                         par_value_list: Union[list, tuple, Generator],
-                                        epoch_id: int) -> ResultPool:
-        """ 顺序循环运行evaluate_parameters()方法
+                                        result_pool: ResultPool,
+                                        epoch_id: int) -> None:
+        """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
         """
         i = 0
         best_so_far = 0
 
         for par in par_value_list:
             target_value = self._evaluate_parameter(par_values=par)
-            self.result_pool.push(item=par, perf=target_value, extra=None)
+            result_pool.push(item=par, perf=target_value, extra=None)
             i += 1
             if target_value > best_so_far:
                 best_so_far = target_value
@@ -426,8 +461,6 @@ class Optimizer:
 
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
         progress_bar(i, i)
-
-        return self.result_pool
 
     def _search_grid(self,
                      space: Space) -> None:
@@ -453,12 +486,13 @@ class Optimizer:
         # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
         par_generator, total = space.extract(self.search_config.get('sample_count'))
         st = time.time()
-        pool = self._evaluate_parameters(
+        self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
+                result_pool=self.result_pool,
                 parallel=self.parallel
         )
-        pool.cut(self.search_config.get('maximize_target'))
+        self.result_pool.cut(self.search_config.get('maximize_target'))
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
@@ -484,12 +518,13 @@ class Optimizer:
         # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
         par_generator, total = space.extract(self.search_config.get('sample_count'), how='rand')
         st = time.time()
-        pool = self._evaluate_parameters(
+        self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
+                result_pool=self.result_pool,
                 parallel=self.parallel
         )
-        pool.cut(self.search_config.get('maximize_target'))
+        self.result_pool.cut(self.search_config.get('maximize_target'))
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
 
@@ -536,11 +571,10 @@ class Optimizer:
 
         spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
         base_space = space
-        base_volume = base_space.volume
         base_dimension = base_space.dim
         # 每一轮参数寻优后需要保留的参数组的数量
-        reduced_sample_count = int(sample_count * reduce_ratio)
-        pool = ResultPool(reduced_sample_count)  # 用于存储中间结果或最终结果的参数池对象
+        reduced_sample_count = int(sample_count * reduce_ratio)  # 每一轮保留的参数组数量为sample_count的一个比例
+        self.result_pool.capacity = reduced_sample_count  # 临时修改参数池的大小为reduced_sample_count
 
         spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
         space_count_in_round = 1  # 本轮运行子空间的数量
@@ -574,10 +608,11 @@ class Optimizer:
                 self._evaluate_parameters(
                         total=total,
                         par_value_list=par_generator,
+                        result_pool=self.result_pool,
                         parallel=parallel,
                         epoch_id=epoch
                 )
-                pool.cut(self.search_config.get('maximize_target'))
+                self.result_pool.cut(self.search_config.get('maximize_target'))
             """
             为了生成新的子空间，计算下一轮子空间的半径大小
             为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
@@ -598,12 +633,15 @@ class Optimizer:
             reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
             # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
             current_volume = 0
-            for point in pool.items:
+            for point in self.result_pool.items:
                 subspace = base_space.from_point(point=point, distance=reduced_size)
                 spaces.append(subspace)
                 current_volume += subspace.volume
             current_round += 1
             space_count_in_round = len(spaces)
+
+        self.result_pool.capacity = self.result_pool_size
+        self.result_pool.cut(self.search_config.get('maximize_target'))
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
