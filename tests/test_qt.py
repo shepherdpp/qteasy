@@ -522,9 +522,7 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20141231',
@@ -535,9 +533,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20141231',
@@ -548,9 +544,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in Montecarlo with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20141231',
@@ -561,9 +555,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in Montecarlo with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='multiple',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20141231',
