@@ -164,7 +164,7 @@ class TestSpace(unittest.TestCase):
         pars_list = [(0, 10), (0, 10)]
         types_list = ['int', 'int']
         s = Space(*pars_list, par_types=types_list)
-        extracted_int, count = s.extract(4, 'interval')
+        extracted_int, count = s.extract(16, 'interval')
         extracted_int_list = list(extracted_int)
         print('extracted int\n', extracted_int_list)
         self.assertEqual(count, 16, 'extraction count wrong!')
@@ -185,7 +185,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(0., 10), (0, 10)]
         s = Space(*pars_list, par_types=None)
-        extracted_int2, count = s.extract(4, 'interval')
+        extracted_int2, count = s.extract(16, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list2 = list(extracted_int2)
         self.assertEqual(extracted_int_list2,
@@ -217,7 +217,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(0., 10), ('a', 'b')]
         s = Space(*pars_list, par_types=['enum', 'enum'])
-        extracted_int3, count = s.extract(2, 'interval')
+        extracted_int3, count = s.extract(4, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list3 = list(extracted_int3)
         self.assertEqual(extracted_int_list3, [(0., 'a'), (0., 'b'), (10, 'a'), (10, 'b')],
@@ -262,7 +262,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = ((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)
         s = Space(*pars_list, par_types=['enum', 'discr'])
-        extracted_int5, count = s.extract(4, 'interval')
+        extracted_int5, count = s.extract(16, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list5 = list(extracted_int5)
         for item, item2 in extracted_int_list5:
@@ -284,7 +284,7 @@ class TestSpace(unittest.TestCase):
         print(f'test incremental extraction')
         pars_list = ((10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250))
         s = Space(*pars_list)
-        ext, count = s.extract(4, 'interval')
+        ext, count = s.extract(4096, 'interval')
         self.assertEqual(count, 4096)
         points = list(ext)
         # 已经取出所有的点，围绕其中10个点生成十个subspaces
@@ -295,7 +295,7 @@ class TestSpace(unittest.TestCase):
             self.assertTrue(subspace in s)
             self.assertEqual(subspace.dim, 6)
             self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
-            ext, count = subspace.extract(3)
+            ext, count = subspace.extract(1024)
             points = list(ext)
             self.assertGreaterEqual(count, 512)
             self.assertLessEqual(count, 4096)
