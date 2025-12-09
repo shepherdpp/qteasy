@@ -10,10 +10,10 @@
 # ======================================
 
 import numpy as np
-import itertools
 import warnings
 
 from typing import Union, Iterable
+from itertools import islice, product, zip_longest
 
 from qteasy.utilfuncs import (
     input_to_list,
@@ -294,15 +294,27 @@ class Space:
         interval_or_qty_list = input_to_list(pars=quantities,
                                              dim=self.dim,
                                              padder=[1])
+        if how in ['interval', 'intv', 'step']:
+            # interval模式下，根据需要提取的点总数计算每一个轴的步长，为了确保总数正确，采用开方的方式计算每个轴的点数
+            interval_or_qty_list = [int(np.ceil(intv ** (1 / self.dim))) for intv in interval_or_qty_list]
+
         axis_ranges = [ax.gen_values(qty, how) for ax, qty in zip(self.axis, interval_or_qty_list)]
         total = np.array(list(map(len, axis_ranges))).prod()
+
         if self.types == ['enum'] and isinstance(self.boes[0], tuple):
             # in this case, space is an enum of tuple parameters, no formation of tuple is needed
             return axis_ranges[0], len(axis_ranges[0])
         if how in ['interval', 'intv', 'step']:
-            return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
+            # 当how为interval时，由于每个axis都需要生成点，总的点数可能大于quantities，此时需要用islice切片
+            # 同时为了尽量均匀切片，切片的step为total//quantities
+            if total <= quantities:
+                return product(*axis_ranges), total
+            else:
+                slice_step = total // quantities
+                slice_ubound = slice_step * quantities
+                return islice(product(*axis_ranges), 0, slice_ubound, slice_step), quantities  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how in ['rand', 'random']:
-            return itertools.zip_longest(*axis_ranges), quantities  # 使用迭代器工具将所有点组合打包为点集
+            return zip_longest(*axis_ranges), quantities  # 使用迭代器工具将所有点组合打包为点集
         else:
             raise KeyError(f'Invalid extraction method: {how}\n'
                            f'Valid methods are: "interval" or "rand"')
