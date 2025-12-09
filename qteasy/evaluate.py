@@ -89,7 +89,6 @@ def performance_statistics(performances: list, stats='mean'):
 
     res['backtest_start'] = performances[0]['backtest_start']
     res['backtest_end'] = performances[-1]['backtest_end']
-    # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法 —— 取消多重回测，因为多重回测似乎没有太大意义
     res['complete_values'] = performances[0]['complete_values']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
@@ -226,10 +225,10 @@ def evaluate(looped_values: pd.DataFrame,
     - calmar:            回测区间的Calmar比率，并添加Calmar比率到complete_values中
     """
     # validate input
-    if isinstance(hist_benchmark, pd.DataFrame):
-        hist_benchmark = hist_benchmark[hist_benchmark.columns[0]]
-    if not isinstance(hist_benchmark, pd.Series):
-        raise TypeError(f'benchmark value should be pandas Series, got {type(hist_benchmark)} instead!')
+    # if isinstance(hist_benchmark, pd.DataFrame):
+    #     hist_benchmark = hist_benchmark[hist_benchmark.columns[0]]
+    # if not isinstance(hist_benchmark, pd.Series):
+    #     raise TypeError(f'benchmark value should be pandas Series, got {type(hist_benchmark)} instead!')
     if not isinstance(looped_values, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_values)} instead')
     if not isinstance(cash_plan, CashPlan):
@@ -404,7 +403,7 @@ def eval_alpha(looped_value, total_invest, benchmark_value, risk_free_ror: float
     return alpha
 
 
-def eval_beta(looped_value, benchmark_value):
+def eval_beta(looped_value, benchmark_value: pd.Series):
     """ 贝塔系数。考察投资组合与基准投资组合之间的相关性，它度量了投资组合相对于基准组合的风险大小或波动大小。
     贝塔系数越大，表示该投资组合相对于基准组合波动越大（通常使用市场平均水平作为基准）：
      - 当贝塔系数为1时，表示投资组合的波动等于市场平均水平
@@ -418,7 +417,7 @@ def eval_beta(looped_value, benchmark_value):
     ----------
     looped_value:pd.DataFrame,
         回测结果，需要计算Beta的股票价格或投资收益历史价格
-    benchmark_value: pd.DataFrame,
+    benchmark_value: pd.Series,
         参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
 
     Returns
@@ -429,11 +428,11 @@ def eval_beta(looped_value, benchmark_value):
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = benchmark_value
-    ref_ret = (ref / ref.shift(1)) - 1
+    ref_ret = benchmark_value.pct_change()
     if len(looped_value) > 250:
         ret_dev = looped_value['pct_change'].rolling(250).var()
-        looped_value['beta'] = looped_value['pct_change'].rolling(250).cov(ref_ret) / ret_dev
+        ret_cov = looped_value['pct_change'].rolling(250).cov(ref_ret)
+        looped_value['beta'] = ret_cov / ret_dev
         return looped_value['beta'].mean()
     else:
         ret_dev = looped_value['pct_change'].var()
