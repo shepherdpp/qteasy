@@ -38,7 +38,7 @@ from qteasy.finance import (
 from qteasy.visual import (
     _plot_loop_result,
     _loop_report_str,
-    _print_test_result,
+    opti_result_str,
     _plot_test_result,
 )
 
@@ -822,6 +822,14 @@ class Backtester:
         if isinstance(shares, str):
             shares = str_to_list(shares)
         assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
+        
+        # benchmark 必须是一个pd.Series，如果是DataFrame，则转换为Series
+        if isinstance(benchmark_data, pd.DataFrame):
+            if benchmark_data.shape[1] != 1:
+                raise ValueError("benchmark_data DataFrame must have only one column")
+            benchmark_data = benchmark_data.iloc[:, 0]
+        if benchmark_data is not None and not isinstance(benchmark_data, pd.Series):
+            raise TypeError("benchmark_data must be a pandas Series or DataFrame with one column")
 
         # 参数一致性校验
         n_signals = op.get_signal_count()
@@ -1042,14 +1050,16 @@ class Backtester:
     def trade_result_volatility(self):
         """ 直接快速计算返回回测的波动率结果"""
         value_history = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
-        returns = value_history.pct_change().dropna()
+        rolled_value_history = np.roll(value_history, 1)
+        returns = (value_history - rolled_value_history) / rolled_value_history
+        returns[0] = 0.0  # 第一天的收益率设为0.0
         volatility = returns.std() * np.sqrt(252)
         return volatility
 
     def trade_result_max_drawdown(self):
         """ 直接快速计算返回回测的最大回撤结果"""
         value_history = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
-        rolling_max = value_history.cummax()
+        rolling_max = np.maximum.accumulate(value_history)
         drawdown = (value_history - rolling_max) / rolling_max
         max_drawdown = drawdown.min()
         return max_drawdown
