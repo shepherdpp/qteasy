@@ -1607,7 +1607,7 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
 
 
 # TODO: 这个函数被Optimizer调用，成为Optimizer.report()方法
-def _print_test_result(result, config=None, columns=None, headers=None, formatter=None):
+def opti_result_str(result, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出

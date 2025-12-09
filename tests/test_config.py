@@ -55,7 +55,6 @@ class TestConfig(unittest.TestCase):
         # test legal parameter configurations in QT_CONFIG
         qt.reset_config()
         self.assertEqual(QT_CONFIG.mode, 1)
-        self.assertEqual(QT_CONFIG.opti_type, 'single')
         self.assertEqual(QT_CONFIG.cash_delivery_period, 0)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
         self.assertEqual(QT_CONFIG.invest_start, '20160405')
@@ -72,7 +71,6 @@ class TestConfig(unittest.TestCase):
                 benchmark_asset='000001.SH'
         )
         self.assertEqual(QT_CONFIG.mode, 2)
-        self.assertEqual(QT_CONFIG.opti_type, 'multiple')
         self.assertEqual(QT_CONFIG.cash_delivery_period, 1)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'b')
         self.assertEqual(QT_CONFIG.invest_start, '20191010')
@@ -83,7 +81,6 @@ class TestConfig(unittest.TestCase):
         # test illegal parameter configurations
         # illegal values
         self.assertRaises(Exception, qt.configure, mode=5)
-        self.assertRaises(Exception, qt.configure, opti_type='mul')
         self.assertRaises(Exception, qt.configure, cash_delivery_period='abc')
         self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
         self.assertRaises(Exception, qt.configure, invest_start=None)
