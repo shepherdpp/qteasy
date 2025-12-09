@@ -541,27 +541,29 @@ class TestQT(unittest.TestCase):
                test_end='20181130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-idx_range optimization')
+        print(f'strategy optimization in Montecarlo with mdd as opti target')
         qt.run(self.op,
                mode=2,
                opti_method='montecarlo',
                opti_sample_count=200,
+               optimize_target='mdd',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-idx_range testing')
+        print(f'strategy optimization in Montecarlo with volatility as opti target')
         qt.run(self.op,
                mode=2,
                opti_method='montecarlo',
                opti_sample_count=200,
+               optimize_target='vol',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
 
     def test_run_mode_2_montecarlo_visual(self):
