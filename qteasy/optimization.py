@@ -337,7 +337,8 @@ class Optimizer:
                 total=total,
                 par_value_list=optimized_par_list,
                 result_pool=self.validated_pool,
-                parallel=self.parallel
+                parallel=self.parallel,
+                deep_eval=True,
         )
         et = time.time()
         print(f'\nValidation completed, total time consumption: {sec_to_duration(et - st)}')
@@ -346,7 +347,7 @@ class Optimizer:
               f'{self.validated_pool}')
 
     def _evaluate_parameter(self, par_values: tuple) -> float:
-        """ 使用一组策略参数进行回测，并返回回测结果的评价指标字典
+        """ 使用一组策略参数进行回测，并返回回测结果的简易评价结果即一个数字评分
 
         Parameters
         ----------
@@ -368,12 +369,29 @@ class Optimizer:
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
 
+    def _deep_evaluate_parameter(self, par_values: tuple) -> tuple[float, dict]:
+        """ 使用一组策略参数进行回测，并返回回测结果的数字评价结果及评价指标字典
+
+        Parameters
+        ----------
+        par_values: tuple
+            策略参数值元组，元组中的每一个值对应策略空间中的一个参数
+
+        Returns
+        -------
+        """
+        perf = self._evaluate_parameter(par_values)
+        metrics = self.running_backtester.evaluate_result(indicators='r,v,m')
+
+        return perf, metrics
+
     def _evaluate_parameters(self,
                              total: int,
                              par_value_list: Union[list, tuple, Generator],
                              result_pool: ResultPool,
                              parallel: bool,
-                             epoch_id: int = 1,) -> None:
+                             epoch_id: int = 1,
+                             deep_eval: bool = False) -> None:
         """ 循环批量运行self._evaluate_parameter函数，生成结果后存入参数result_pool中
 
         Parameters
@@ -387,8 +405,10 @@ class Optimizer:
         parallel: bool
             是否启用多进程计算方式，如果是True，则启用多进程计算方式利用所有的CPU核心计算，
             否则使用单进程计算
-        epoch_id: int
+        epoch_id: optional int
             当前优化轮次编号，默认为1
+        deep_eval: optional bool
+            是否深入评价每一组参数的回测结果，如果是True，则返回评价指标字典，默认值为False
 
         Returns
         -------
@@ -404,6 +424,7 @@ class Optimizer:
                     par_value_list=par_value_list,
                     result_pool=result_pool,
                     epoch_id=epoch_id,
+                    deep_eval=deep_eval,
             )
         # 禁用多进程计算方式，使用单进程计算
         else:
@@ -412,28 +433,36 @@ class Optimizer:
                     par_value_list=par_value_list,
                     result_pool=result_pool,
                     epoch_id=epoch_id,
+                    deep_eval=deep_eval,
             )
 
     def _evaluate_parameters_parallel(self,
                                       total: int,
                                       par_value_list: Union[list, tuple, Generator],
                                       result_pool: ResultPool,
-                                      epoch_id: int) -> None:
+                                      epoch_id: int,
+                                      deep_eval: bool) -> None:
         """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
         """
         i = 0
         best_so_far = 0
 
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
-            futures = {proc_pool.submit(self._evaluate_parameter, par): par for par in
+            futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
         for f in as_completed(futures):
             target_value = f.result()
-            result_pool.push(item=futures[f], perf=target_value, extra=None)
+            if deep_eval:
+                perf, metrics = target_value
+            else:
+                perf, metrics = target_value, None
+            result_pool.push(item=futures[f], perf=perf, extra=metrics)
             i += 1
-            if target_value > best_so_far:
-                best_so_far = target_value
+            if perf > best_so_far:
+                best_so_far = perf
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}')
 
@@ -444,18 +473,24 @@ class Optimizer:
                                         total: int,
                                         par_value_list: Union[list, tuple, Generator],
                                         result_pool: ResultPool,
-                                        epoch_id: int) -> None:
+                                        epoch_id: int,
+                                        deep_eval: bool) -> None:
         """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
         """
         i = 0
         best_so_far = 0
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
 
         for par in par_value_list:
-            target_value = self._evaluate_parameter(par_values=par)
-            result_pool.push(item=par, perf=target_value, extra=None)
+            target_value = eval_func(par_values=par)
+            if deep_eval:
+                perf, metrics = target_value
+            else:
+                perf, metrics = target_value, None
+            result_pool.push(item=par, perf=perf, extra=metrics)
             i += 1
-            if target_value > best_so_far:
-                best_so_far = target_value
+            if perf > best_so_far:
+                best_so_far = perf
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}')
 
@@ -748,12 +783,15 @@ class Optimizer:
         """
         raise NotImplementedError
 
-    def report_result(self):
+    def report_result(self) -> str:
         """
 
             :return:
             """
-        pass
+        from qteasy.visual import opti_result_str
+        str = opti_result_str(
+                result=self.result_pool
+        )
 
     def plot_result(self):
         """
