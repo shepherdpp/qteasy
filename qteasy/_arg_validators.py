@@ -899,11 +899,11 @@ def _valid_qt_kwargs():
                             '- aco         : 蚁群算法，模拟蚂蚁觅食行为，通过信息素的积累和挥发，\n'
                             '                在参数空间内寻找最优解，适用于组合优化问题'},
 
-        'opti_grid_size':
-            {'Default':   1,
-             'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
-             'level':     3,
-             'text':      '使用穷举法搜索最佳策略时有用，搜索步长，取值范围为大于0的整数或list'},
+        # 'opti_grid_size':  # deprecated
+        #     {'Default':   1,
+        #      'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
+        #      'level':     3,
+        #      'text':      '使用穷举法搜索最佳策略时有用，搜索步长，取值范围为大于0的整数或list'},
 
         'opti_sample_count':
             {'Default':   256,
