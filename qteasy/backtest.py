@@ -918,6 +918,24 @@ class Backtester:
 
         return self
 
+    def clear_backtest_buffers(self):
+        """ 清除回测结果缓存数据，将回测结果数据重置为空数组，以便重新进行回测计算
+
+        Returns
+        -------
+        None
+        """
+        self.op_signals = None
+        self.own_cashes.fill(0.0)
+        self.own_amounts_array.fill(0.0)
+        self.available_cashes.fill(0.0)
+        self.available_amounts_array.fill(0.0)
+        self.trade_records_array.fill(0.0)
+        self.trade_cost_array.fill(0.0)
+        self.backtest_result.clear()
+        self.trade_log_df = None
+        self.summary_df = None
+
     def _backtest_static_operator(self) -> np.ndarray:
         """处理operator的交易信号仅包含静态数据类型（不依赖交易结果的数据）的情况:
 
