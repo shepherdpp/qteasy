@@ -594,9 +594,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
+               opti_method='grid',
                opti_grid_size=128,
                opti_start='20120404',
                opti_end='20141231',
@@ -607,9 +605,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
+               opti_method='grid',
                opti_grid_size=128,
                opti_start='20120404',
                opti_end='20141231',
@@ -620,10 +616,9 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='grid',
                opti_grid_size=128,
+               optimize_target='mdd',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -633,10 +628,9 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='multiple',
+               opti_method='grid',
                opti_grid_size=128,
+               optimize_target='vol',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -708,7 +702,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='incremental',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -723,7 +717,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='incremental',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -738,9 +732,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='incremental',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -750,14 +742,12 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
         print(f'strategy optimization in incremental with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='multiple',
+               opti_method='incremental',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -767,7 +757,7 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
 
     def test_run_mode_2_incremental_visual(self):
