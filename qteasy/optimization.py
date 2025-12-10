@@ -361,13 +361,16 @@ class Optimizer:
         # 在优化区间进行回测
         self.running_backtester.run()
         if self.opti_target == 'fv':
-            return self.running_backtester.trade_result_final_value()
+            result = self.running_backtester.trade_result_final_value()
         elif self.opti_target == 'vol':
-            return self.running_backtester.trade_result_volatility()
+            result = self.running_backtester.trade_result_volatility()
         elif self.opti_target == 'mdd':
-            return self.running_backtester.trade_result_max_drawdown()
+            result = self.running_backtester.trade_result_max_drawdown()
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
+
+        self.running_backtester.clear_backtest_buffers()
+        return result
 
     def _deep_evaluate_parameter(self, par_values: tuple) -> tuple[float, dict]:
         """ 使用一组策略参数进行回测，并返回回测结果的数字评价结果及评价指标字典
@@ -447,7 +450,9 @@ class Optimizer:
         i = 0
         best_so_far = 0
 
-        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        eval_func = self._evaluate_parameter
+        deep_eval = False
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
@@ -459,15 +464,16 @@ class Optimizer:
                 perf, metrics = target_value
             else:
                 perf, metrics = target_value, None
+
             result_pool.push(item=futures[f], perf=perf, extra=metrics)
             i += 1
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
-                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}')
+                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
 
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-        progress_bar(i, i)
+        # progress_bar(i, i)
 
     def _evaluate_parameters_sequential(self,
                                         total: int,
@@ -479,7 +485,10 @@ class Optimizer:
         """
         i = 0
         best_so_far = 0
-        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+
+        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        eval_func = self._evaluate_parameter
+        deep_eval = False
 
         for par in par_value_list:
             target_value = eval_func(par_values=par)
@@ -492,10 +501,10 @@ class Optimizer:
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
-                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}')
+                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
 
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-        progress_bar(i, i)
+        # progress_bar(i, i)
 
     def _search_grid(self,
                      space: Space) -> None:
@@ -602,7 +611,7 @@ class Optimizer:
         min_volume = self.search_config.get('opti_min_volume')
         max_rounds = self.search_config.get('opti_max_rounds')
         reduce_ratio = self.search_config.get('opti_reduce_ratio')
-        parallel = self.search_config.get('parallel')
+        parallel = self.parallel
 
         spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
         base_space = space
