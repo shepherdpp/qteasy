@@ -18,7 +18,7 @@ import qteasy as qt
 import pandas as pd
 import numpy as np
 
-from qteasy.finance import get_cost_params
+from qteasy.finance import get_cost_params, CashPlan
 from qteasy.qt_operator import Operator
 from qteasy.backtest import (
     Backtester,
@@ -4177,6 +4177,11 @@ class TestBacktester(unittest.TestCase):
         self.cash_investment_array = np.array([1000.0, 0.0, 500.0])
         self.cash_inflation_array = np.array([1.0, 1.0, 1.0])
         self.delivery_day_indicators = np.array([1, 0, 1])
+        self.cash_plan = CashPlan(
+                dates=['2023-01-01', '2023-01-03'],
+                amounts=[1000.0, 500.0],
+                interest_rate=0.0,
+        )
 
         # 成本参数: buy_rate, sell_rate, buy_min, sell_min, slipage
         self.cost_params = np.array([0.001, 0.001, 5.0, 5.0, 0.0])
@@ -4224,7 +4229,8 @@ class TestBacktester(unittest.TestCase):
                 trading_moq_params=self.trading_moq_params,
                 trading_delivery_params=self.trading_delivery_params,
                 trade_price_data=self.trade_price_data,
-                logger=self.logger
+                logger=self.logger,
+                cash_plan=self.cash_plan,
         )
 
         # 设置一些回测结果数据用于测试
