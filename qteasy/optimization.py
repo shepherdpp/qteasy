@@ -247,8 +247,6 @@ class Optimizer:
 
     def optimize(self,
                  trade_price_data:np.ndarray):
-        # 调用指定的优化方法进行最优参数搜索
-
         # 现金投入和交割数据表
         (opti_cash_investment_array,
          opti_cash_inflation_array,
@@ -298,6 +296,22 @@ class Optimizer:
             self._search_knn(space=search_space)
         else:
             raise ValueError(f'Unsupported optimization method: {self.opti_method}')
+
+        # deep evaluate all selected parameters on test set
+        par_value_list = self.result_pool.items
+        total = self.result_pool_size
+        self.result_pool.clear()
+
+        st = time.time()
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=par_value_list,
+                result_pool=self.result_pool,
+                parallel=self.parallel,
+                deep_eval=True,
+        )
+        et = time.time()
+        print(f'\nEvaluation completed, total time consumption: {sec_to_duration(et - st)}')
 
         return self
 
@@ -369,7 +383,13 @@ class Optimizer:
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
 
-        self.running_backtester.clear_backtest_buffers()
+        # DEBUG
+        sum_signals = np.nansum(np.abs(self.running_backtester.op_signals))
+        if sum_signals > 0:
+            print(f'[{pd.to_datetime("today")}]: parameter: {par_values} -> {result:.3f}, backtester id '
+                  f'{id(self.running_backtester)}, total signals in backtest: '
+                  f'{np.nansum(self.running_backtester.op_signals)}')
+
         return result
 
     def _deep_evaluate_parameter(self, par_values: tuple) -> tuple[float, dict]:
@@ -450,9 +470,9 @@ class Optimizer:
         i = 0
         best_so_far = 0
 
-        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        eval_func = self._evaluate_parameter
-        deep_eval = False
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        # eval_func = self._evaluate_parameter
+        # deep_eval = False
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
@@ -486,18 +506,20 @@ class Optimizer:
         i = 0
         best_so_far = 0
 
-        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        eval_func = self._evaluate_parameter
-        deep_eval = False
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        # eval_func = self._evaluate_parameter
+        # deep_eval = False
 
         for par in par_value_list:
-            target_value = eval_func(par_values=par)
+            self.running_backtester.clear_backtest_buffers()
+            target_value = eval_func(par)
             if deep_eval:
                 perf, metrics = target_value
             else:
                 perf, metrics = target_value, None
             result_pool.push(item=par, perf=perf, extra=metrics)
             i += 1
+            # import pdb; pdb.set_trace()
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
@@ -528,7 +550,7 @@ class Optimizer:
         """
 
         # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
-        par_generator, total = space.extract(self.search_config.get('sample_count'))
+        par_generator, total = space.extract(self.search_config['sample_count'])
         st = time.time()
         self._evaluate_parameters(
                 total=total,
@@ -536,7 +558,8 @@ class Optimizer:
                 result_pool=self.result_pool,
                 parallel=self.parallel
         )
-        self.result_pool.cut(self.search_config.get('maximize_target'))
+        # import pdb; pdb.set_trace()
+        self.result_pool.cut(keep_largest=self.search_config['maximize_target'])
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
@@ -560,7 +583,7 @@ class Optimizer:
         """
 
         # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
-        par_generator, total = space.extract(self.search_config.get('sample_count'), how='rand')
+        par_generator, total = space.extract(self.search_config['sample_count'], how='rand')
         st = time.time()
         self._evaluate_parameters(
                 total=total,
@@ -568,7 +591,7 @@ class Optimizer:
                 result_pool=self.result_pool,
                 parallel=self.parallel
         )
-        self.result_pool.cut(self.search_config.get('maximize_target'))
+        self.result_pool.cut(self.search_config['maximize_target'])
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
 
@@ -607,10 +630,10 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        sample_count = self.search_config.get('opti_r_sample_count')
-        min_volume = self.search_config.get('opti_min_volume')
-        max_rounds = self.search_config.get('opti_max_rounds')
-        reduce_ratio = self.search_config.get('opti_reduce_ratio')
+        sample_count = self.search_config['opti_r_sample_count']
+        min_volume = self.search_config['opti_min_volume']
+        max_rounds = self.search_config['opti_max_rounds']
+        reduce_ratio = self.search_config['opti_reduce_ratio']
         parallel = self.parallel
 
         spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
@@ -656,7 +679,7 @@ class Optimizer:
                         parallel=parallel,
                         epoch_id=epoch
                 )
-                self.result_pool.cut(self.search_config.get('maximize_target'))
+                self.result_pool.cut(self.search_config['maximize_target'])
             """
             为了生成新的子空间，计算下一轮子空间的半径大小
             为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
@@ -685,7 +708,7 @@ class Optimizer:
             space_count_in_round = len(spaces)
 
         self.result_pool.capacity = self.result_pool_size
-        self.result_pool.cut(self.search_config.get('maximize_target'))
+        self.result_pool.cut(self.search_config['maximize_target'])
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
