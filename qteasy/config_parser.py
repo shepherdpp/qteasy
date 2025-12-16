@@ -358,7 +358,7 @@ def parse_all_optimization_params(config: dict) -> dict[str, Any]:
     optimization_method = config['opti_method'].lower()
     opti_params = {
         'optimize_target': config['optimize_target'],
-        'optimize_direction': config['optimize_direction'],
+        'maximize_target': True if config['optimize_direction'].lower() == 'maximize' else False,
     }
 
     if optimization_method == 'grid':
