@@ -516,14 +516,22 @@ class ResultPool:
         self.__pool = []
         self.__perfs = []
 
-    def show_items(self):
+    def show_items(self, with_extra=False):
         """以表格的形式显示结果池中的所有元素"""
         print(f'Result Pool (capacity: {self.capacity}, current size: {self.item_count}):')
         # 打印表头
-        print(f'{"Index":<10}{"Item":<30}{"Perf":<15}{"Extra":<30}')
-        print('-' * 85)
-        for i, (item, perf, extra) in enumerate(zip(self.__pool, self.__perfs, self.__extra)):
-            print(f'{i:<10}{str(item):<30}{perf:<15.3f}{str(extra):<30}')
+        header = f'{"Index":<10}{"Item":<35}{"Perf":<20}'
+        if with_extra:
+            header += f'{"Extra":<30}'
+        print(header)
+        print('-' * 95)
+        # 打印每一行
+        if with_extra:
+            for i, (item, perf, extra) in enumerate(zip(self.__pool, self.__perfs, self.__extra)):
+                print(f'{i:<10}{str(item):<35}{perf:<20.3f}{str(extra):<30}')
+        else:
+            for i, (item, perf) in enumerate(zip(self.__pool, self.__perfs)):
+                print(f'{i:<10}{str(item):<35}{perf:<20.3f}')
 
     def in_pool(self, item, perf, extra=None):
         """将新的结果压入池中  # deprecated
