@@ -352,43 +352,81 @@ def parse_market_trade_time_params(config) -> dict:
     return market_trade_time_params
 
 
-def parse_optimization_params_grid(config) -> dict[str, list[Any]]:
+def parse_all_optimization_params(config: dict) -> dict[str, Any]:
+    """解析策略优化相关参数，依据不同的优化算法调用不同的解析函数:
+    """
+    optimization_method = config['opti_method'].lower()
+    opti_params = {
+        'optimize_target': config['optimize_target'],
+        'optimize_direction': config['optimize_direction'],
+    }
+
+    if optimization_method == 'grid':
+        opti_params.update(parse_optimization_params_grid(config))
+    elif optimization_method == 'montecarlo':
+        opti_params.update(parse_optimization_params_montecarlo(config))
+    elif optimization_method == 'incremental':
+        opti_params.update(parse_optimization_params_incremental(config))
+    elif optimization_method == 'ga':
+        opti_params.update(parse_optimization_params_ga(config))
+    elif optimization_method == 'knn':
+        opti_params.update(parse_optimization_params_knn(config))
+    elif optimization_method == 'pso':
+        opti_params.update(parse_optimization_params_pso(config))
+    elif optimization_method == 'aco':
+        opti_params.update(parse_optimization_params_aco(config))
+    else:
+        raise ValueError(f'Unsupported optimization method: {optimization_method}')
+
+    return opti_params
+
+
+def parse_optimization_params_grid(config: dict) -> dict[str, list[Any]]:
     """解析策略优化相关参数，优化算法为网格搜索法时使用:
     """
-    raise NotImplementedError
+    return {
+        'sample_count': config['opti_sample_count'],
+    }
 
 
-def parse_optimization_params_montecarlo(config) -> dict[str, Any]:
+def parse_optimization_params_montecarlo(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为蒙特卡洛法时使用:
     """
-    raise NotImplementedError
+    return {
+        'sample_count': config['opti_sample_count'],
+    }
 
 
-def parse_optimization_params_incremental(config) -> dict[str, Any]:
+def parse_optimization_params_incremental(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为递进优化法时使用:
     """
-    raise NotImplementedError
+    return {
+        'opti_r_sample_count': config['opti_r_sample_count'],
+        'opti_min_volume': config['opti_min_volume'],
+        'opti_max_rounds': config['opti_max_rounds'],
+        'opti_reduce_ratio': config['opti_reduce_ratio'],
+    }
 
 
-def parse_optimization_params_ga(config) -> dict[str, Any]:
+def parse_optimization_params_ga(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为遗传算法时使用:
     """
     raise NotImplementedError
 
 
-def parse_optimization_params_knn(config) -> dict[str, Any]:
+def parse_optimization_params_knn(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为K近邻法时使用:
     """
     raise NotImplementedError
 
 
-def parse_optimization_params_pso(config) -> dict[str, Any]:
+def parse_optimization_params_pso(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为粒子群优化算法时使用:
     """
     raise NotImplementedError
 
 
-def parse_optimization_params_aco(config) -> dict[str, Any]:
+def parse_optimization_params_aco(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为模拟退火法时使用:
     """
     raise NotImplementedError
