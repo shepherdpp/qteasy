@@ -830,6 +830,7 @@ def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_widt
         progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
     sys.stdout.write(progress_str)
     sys.stdout.flush()
+    # print(progress_str, end='\r')
 
 
 def get_current_timezone_datetime(time_zone='local'):

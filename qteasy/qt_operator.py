@@ -1932,6 +1932,3 @@ class Operator:
         from qteasy.optimization import Optimizer
         optimizer = Optimizer(op=self, method=method, **kwargs)
         return optimizer
-
-
-
