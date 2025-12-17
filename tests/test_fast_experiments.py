@@ -30,21 +30,28 @@ def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target
 
 class MultiFactors(qt.FactorSorter):
 
-    def __init__(self, pars: tuple = (0.5, 0.3, 0.7)):
+    def __init__(self, par_values: tuple = (0.5, 0.3, 0.7)):
         super().__init__(
-                pars=pars,
-                par_count=3,
-                par_types=['float', 'float', 'float'],  # 参数1:大小市值分类界限，参数2:小/中bp分界线，参数3，中/大bp分界线
-                par_range=[(0.01, 0.99), (0.01, 0.49), (0.50, 0.99)],
+                pars=[Parameter((0.01, 0.99), name='size_gate_percentile', par_type='float'),
+                      Parameter((0.01, 0.49), name='bp_small_percentile', par_type='float'),
+                      Parameter((0.50, 0.99), name='bp_large_percentile', par_type='float')],
+
+                # par_count=3,
+                # par_types=['float', 'float', 'float'],  # 参数1:大小市值分类界限，参数2:小/中bp分界线，参数3，中/大bp分界线
+                # par_range=[(0.01, 0.99), (0.01, 0.49), (0.50, 0.99)],
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='m',  # 每月执行一次选股（每周或每天都可以）
-                strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
+                run_timing='close',  # 在周期结束（收盘）时运行
+                run_freq='m',  # 每月执行一次选股（每周或每天都可以）
+                # strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
+                data_types=[DataType('pb', freq='d', asset_type='E'),
+                            DataType('total_mv', freq='d', asset_type='E'),
+                            DataType('close', freq='d', asset_type='E'),
+                            DataType('close-000300.SH', freq='d', asset_type='IDX')],
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,
                 use_latest_data_cycle=True,
-                reference_data_types='close-000300.SH',  # 选股需要用到市场收益率，作为参考数据传入
+                # reference_data_types='close-000300.SH',  # 选股需要用到市场收益率，作为参考数据传入
                 max_sel_count=10,  # 最多选出10支股票
                 sort_ascending=True,  # 选择因子最小的股票
                 condition='less',  # 仅选择因子小于某个值的股票
@@ -52,9 +59,10 @@ class MultiFactors(qt.FactorSorter):
                 ubound=0,  # 仅选择因子小于0的股票
         )
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
 
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.par_values
+        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate_percentile', 'bp_small_percentile', 'bp_large_percentile')
+        h = self.get_data()  # 获取策略数据
         # 读取投资组合的数据PB和total_MV的最新值
         pb = h[:, -1, 0]  # 当前所有股票的PB值
         mv = h[:, -1, 1]  # 当前所有股票的市值
@@ -121,25 +129,33 @@ class MultiFactors(qt.FactorSorter):
 
 class IndexEnhancement(qt.GeneralStg):
 
-    def __init__(self, pars: tuple = (0.35, 0.8, 5)):
+    def __init__(self, par_values: tuple = (0.35, 0.8, 5)):
         super().__init__(
-                pars=pars,
-                par_count=2,
-                par_types=['float', 'float', 'int'],  # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
-                par_range=[(0.01, 0.99), (0.51, 0.99), (2, 20)],
+                pars=[Parameter((0.01, 0.99), name='weight_threshold', par_type='float'),
+                      Parameter((0.51, 0.99), name='initial_weight', par_type='float'),
+                      Parameter((2, 20), name='price_days', par_type='int')],
+                # par_count=2,
+                # par_types=['float', 'float', 'int'],  # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
+                # par_range=[(0.01, 0.99), (0.51, 0.99), (2, 20)],
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='d',  # 每天执行一次选股
-                strategy_data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
+                run_timing='close',  # 在周期结束（收盘）时运行
+                run_freq='d',  # 每天执行一次选股
+                # data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
+                data_types=[DataType('wt-000300.SH', freq='d', asset_type='IDX'),
+                            DataType('close', freq='d', asset_type='ANY')],
+
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,
                 use_latest_data_cycle=True,
                 reference_data_types='',  # 不需要使用参考数据
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        weight_threshold, init_weight, price_days = self.par_values
+    def realize(self):
+        weight_threshold, init_weight, price_days = self.get_pars('weight_threshold', 'initial_weight', 'price_days')
+        h = self.get_data(['wt-000300.SH', 'close'])
         # 读取投资组合的权重wt和最近price_days天的收盘价
         wt = h[:, -1, 0]  # 当前所有股票的权重值
         pre_close = h[:, -price_days - 1:-1, 1]
@@ -186,7 +202,7 @@ class GridTrading(qt.GeneralStg):
                 use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
         )
         if par_values:
-            self.update_par_values(par_values)
+            self.update_par_values(*par_values)
 
     def realize(self):
         """策略输出PT信号，即仓位目标信号"""
