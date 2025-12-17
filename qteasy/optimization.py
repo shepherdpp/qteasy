@@ -223,14 +223,14 @@ class Optimizer:
         self.signal_parsing_params = signal_parsing_params
         self.trading_moq_params = trading_moq_params
         self.trading_delivery_params = trading_delivery_params
-        # self.opti_data_package = opti_data_package
-        # self.test_data_package = test_data_package
-        # self.opti_trade_price_data = opti_trade_price_data
-        # self.test_trade_price_data = test_trade_price_data
+
         self.logger = logger
 
-        # 2，回测器属性
-        self.running_backtester: Optional[Backtester] = None  # 优化区间回测器对象
+        # 2，回测器属性以及用于回测器的中间参数
+        self.cash_investment_array = None  # 现金投入数组
+        self.cash_inflation_array = None  # 现金通胀数组
+        self.delivery_day_indicators = None  # 交割日指标数组
+        self.running_backtester: Optional[Backtester] = None  # 优化区间或验证区间回测器对象
 
         # 优化配置属性
         self.search_config = search_config
@@ -244,25 +244,44 @@ class Optimizer:
         self.best_parameters = None  # 最佳优化参数
         self.best_performance = None  # 最佳性能评分
 
-    def optimize(self,
-                 trade_price_data:np.ndarray):
+    def generate_running_backtester(self,
+                                    stage: str,
+                                    trade_price_data: np.ndarray) -> None:
+        """ 根据指定的阶段生成对应的Backtester回测器对象
+
+        Parameters
+        ----------
+        stage: str
+            回测阶段，取值为 'optimization' 或 'validation'，分别表示优化区间回测器和验证区间回测器
+        trade_price_data: np.ndarray
+            交易价格数据数组，用于回测的价格数据
+
+        Returns
+        -------
+        None，生成的Backtester对象会被存储在self.running_backtester属性中
+        """
+        if stage == 'optimization':
+            cash_plan = self.opti_cash_plan
+        elif stage == 'validation':
+            cash_plan = self.test_cash_plan
+        else:
+            raise ValueError(f'Unsupported stage: {stage}')
+
         # 现金投入和交割数据表
-        (opti_cash_investment_array,
-         opti_cash_inflation_array,
-         opti_delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
-                invest_cash_plan=self.opti_cash_plan,
+        (self.cash_investment_array,
+         self.cash_inflation_array,
+         self.delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=cash_plan,
                 op_schedule=self.op.group_timing_table.index,
         )
-        self.result_pool.clear()
 
-        # Optimizer对象包含两个Backtester回测器对象，一个用于优化区间的回测，另一个用于测试区间的回测
         self.running_backtester = Backtester(
                 op=self.op,
                 shares=self.shares,
-                cash_plan=self.opti_cash_plan,
-                cash_investment_array=opti_cash_investment_array,
-                cash_inflation_array=opti_cash_inflation_array,
-                delivery_day_indicators=opti_delivery_day_indicators,
+                cash_plan=cash_plan,
+                cash_investment_array=self.cash_investment_array,
+                cash_inflation_array=self.cash_inflation_array,
+                delivery_day_indicators=self.delivery_day_indicators,
                 cost_params=self.cost_params,
                 signal_parsing_params=self.signal_parsing_params,
                 trading_moq_params=self.trading_moq_params,
@@ -270,6 +289,15 @@ class Optimizer:
                 trade_price_data=trade_price_data,
                 logger=self.logger,
         )
+
+    def optimize(self,
+                 trade_price_data:np.ndarray):
+        # 创建一个Backtester对象用于优化区间的回测
+        self.generate_running_backtester(
+                stage='optimization',
+                trade_price_data=trade_price_data,
+        )
+        self.result_pool.clear()
 
         s_ranges, s_types = self.op.opt_space_par
         search_space = Space(*s_ranges,
@@ -317,30 +345,12 @@ class Optimizer:
     def validate(self,
                  trade_price_data:np.ndarray):
 
-        # 现金投入和交割数据表
-        (test_cash_investment_array,
-         test_cash_inflation_array,
-         test_delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
-                invest_cash_plan=self.test_cash_plan,
-                op_schedule=self.op.group_timing_table.index,
-        )
-
-        self.validated_pool.clear()
-
-        self.running_backtester = Backtester(
-                op=self.op,
-                shares=self.shares,
-                cash_plan=self.test_cash_plan,
-                cash_investment_array=test_cash_investment_array,
-                cash_inflation_array=test_cash_inflation_array,
-                delivery_day_indicators=test_delivery_day_indicators,
-                cost_params=self.cost_params,
-                signal_parsing_params=self.signal_parsing_params,
-                trading_moq_params=self.trading_moq_params,
-                trading_delivery_params=self.trading_delivery_params,
+        # 创建一个Backtester对象用于验证区间的回测
+        self.generate_running_backtester(
+                stage='validation',
                 trade_price_data=trade_price_data,
-                logger=self.logger,
         )
+        self.validated_pool.clear()
 
         optimized_par_list = self.result_pool.items.copy()
         total = self.result_pool_size
@@ -381,13 +391,6 @@ class Optimizer:
             result = self.running_backtester.trade_result_max_drawdown()
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
-
-        # DEBUG
-        # sum_signals = np.nansum(np.abs(self.running_backtester.op_signals))
-        # if sum_signals > 0:
-        #     print(f'[{pd.to_datetime("today")}]: parameter: {par_values} -> {result:.3f}, backtester id '
-        #           f'{id(self.running_backtester)}, total signals in backtest: '
-        #           f'{np.nansum(self.running_backtester.op_signals)}')
 
         return result
 
