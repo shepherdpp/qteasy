@@ -413,7 +413,8 @@ class Optimizer:
                              result_pool: ResultPool,
                              parallel: bool,
                              epoch_id: int = 1,
-                             deep_eval: bool = False) -> None:
+                             deep_eval: bool = False,
+                             leave_progress_bar: bool = True) -> None:
         """ 循环批量运行self._evaluate_parameter函数，生成结果后存入参数result_pool中
 
         Parameters
@@ -431,6 +432,8 @@ class Optimizer:
             当前优化轮次编号，默认为1
         deep_eval: optional bool
             是否深入评价每一组参数的回测结果，如果是True，则返回评价指标字典，默认值为False
+        leave_progress_bar: optional bool, default True
+            是否在完成后保留进度条显示，默认值为True，对于多轮优化过程需要设置为False以减少屏幕输出
 
         Returns
         -------
@@ -447,6 +450,7 @@ class Optimizer:
                     result_pool=result_pool,
                     epoch_id=epoch_id,
                     deep_eval=deep_eval,
+                    leave_progress_bar=leave_progress_bar,
             )
         # 禁用多进程计算方式，使用单进程计算
         else:
@@ -456,6 +460,7 @@ class Optimizer:
                     result_pool=result_pool,
                     epoch_id=epoch_id,
                     deep_eval=deep_eval,
+                    leave_progress_bar=leave_progress_bar,
             )
 
     def _evaluate_parameters_parallel(self,
@@ -463,69 +468,67 @@ class Optimizer:
                                       par_value_list: Union[list, tuple, Generator],
                                       result_pool: ResultPool,
                                       epoch_id: int,
-                                      deep_eval: bool) -> None:
+                                      deep_eval: bool,
+                                      leave_progress_bar: bool) -> None:
         """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
         """
-        # i = 0
-        # best_so_far = 0
+        i = 0
+        best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        # eval_func = self._evaluate_parameter
-        # deep_eval = False
+        pbar_position = 1 if not leave_progress_bar else 0
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
-        for f in tqdm(as_completed(futures), desc=f'Searching epoch:{epoch_id}', total=total):
-            target_value = f.result()
-            if deep_eval:
-                perf, metrics = target_value
-            else:
-                perf, metrics = target_value, None
 
-            result_pool.push(item=futures[f], perf=perf, extra=metrics)
-            # i += 1
-            # if perf > best_so_far:
-            #     best_so_far = perf
-            # if i % 10 == 0:
-            #     progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
+        with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
-        # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-        # progress_bar(i, i)
+            for f in as_completed(futures):
+                target_value = f.result()
+                if deep_eval:
+                    perf, metrics = target_value
+                else:
+                    perf, metrics = target_value, None
+
+                result_pool.push(item=futures[f], perf=perf, extra=metrics)
+                i += 1
+                if perf > best_so_far:
+                    best_so_far = perf
+                pbar.set_description(desc=f'Epoch:{epoch_id}->{best_so_far:.3f}', )
+                pbar.update()
 
     def _evaluate_parameters_sequential(self,
                                         total: int,
                                         par_value_list: Union[list, tuple, Generator],
                                         result_pool: ResultPool,
                                         epoch_id: int,
-                                        deep_eval: bool) -> None:
+                                        deep_eval: bool,
+                                        leave_progress_bar: bool) -> None:
         """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
         """
-        # i = 0
-        # best_so_far = 0
+        i = 0
+        best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        # eval_func = self._evaluate_parameter
-        # deep_eval = False
+        pbar_position = 1 if not leave_progress_bar else 0
 
-        for par in tqdm(par_value_list, desc=f'Searching epoch:{epoch_id}', total=total, colour='green'):
-            self.running_backtester.clear_backtest_buffers()
-            target_value = eval_func(par)
-            if deep_eval:
-                perf, metrics = target_value
-            else:
-                perf, metrics = target_value, None
-            result_pool.push(item=par, perf=perf, extra=metrics)
-            # i += 1
-            # # import pdb; pdb.set_trace()
-            # if perf > best_so_far:
-            #     best_so_far = perf
-            # if i % 10 == 0:
-            #     progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
+        with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
-        # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-        # progress_bar(i, i)
+            for par in par_value_list:
+                self.running_backtester.clear_backtest_buffers()
+                target_value = eval_func(par)
+                if deep_eval:
+                    perf, metrics = target_value
+                else:
+                    perf, metrics = target_value, None
+                result_pool.push(item=par, perf=perf, extra=metrics)
+                i += 1
+                if perf > best_so_far:
+                    best_so_far = perf
+                pbar.set_description(desc=f'Epoch:{epoch_id}->{best_so_far:.3f}', )
+                pbar.update(1)
 
     def _search_grid(self,
                      space: Space) -> None:
@@ -666,7 +669,7 @@ class Optimizer:
         while current_volume >= min_volume and current_round < max_rounds:
             epoch += 1
             # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
-            for space in tqdm(spaces, desc=f'Searching space'):
+            for space in tqdm(spaces, desc=f'Searching space', total=max_rounds):
                 # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
                 # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
                 par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')
@@ -675,7 +678,8 @@ class Optimizer:
                         par_value_list=par_generator,
                         result_pool=self.result_pool,
                         parallel=parallel,
-                        epoch_id=epoch
+                        epoch_id=epoch,
+                        leave_progress_bar=False,
                 )
                 self.result_pool.cut(self.search_config['maximize_target'])
             """
