@@ -339,7 +339,7 @@ class DataSource:
         all_info = []
         print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
         total_table_count = len(all_table_names)
-        from .utilfuncs import progress_bar
+
         completed_reading_count = 0
 
         for table_name in tqdm(all_table_names,
