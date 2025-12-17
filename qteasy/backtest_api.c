@@ -4,9 +4,8 @@
 /* Contact:  jackie.pengzhao@gmail.com
 /* Created:  2024-03-31
 /* Desc:
-/*   fast APIs developed in C for
-/* backtesting in order to speed up the
-/* process.
+/* fast APIs written in C for backtesting
+/* in order to speed up the process.
 /* ====================================== */
 
 /* ====================================== */
