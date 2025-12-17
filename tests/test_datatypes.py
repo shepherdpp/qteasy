@@ -12,10 +12,10 @@
 import unittest
 
 import pandas as pd
+from tqdm import tqdm
 
 from qteasy.database import DataSource
 from qteasy.utilfuncs import (
-    progress_bar,
     str_to_list,
     list_to_str_format,
 )
@@ -1628,227 +1628,231 @@ class TestDataTypes(unittest.TestCase):
         empty_type_descs = []
         empty_type_acq_types = []
         all_tables = ds.all_data_tables
-        for k in ALL_TYPES_TO_TEST_WITH_FULL_ID:
-            self.assertIsInstance(k, tuple)
 
-            # create a new instance of the data type
-            name, freq, asset_type = k
+        with tqdm(total=total) as pbar:
+            for k in ALL_TYPES_TO_TEST_WITH_FULL_ID:
+                self.assertIsInstance(k, tuple)
 
-            dtype = DataType(
-                    name=name,
-                    freq=freq,
-                    asset_type=asset_type,
-            )
-            self.assertIsInstance(dtype, DataType)
-            self.assertEqual(dtype.name, name)
-            self.assertEqual(dtype.freq, freq)
-            self.assertEqual(dtype.asset_type, asset_type)
+                # create a new instance of the data type
+                name, freq, asset_type = k
 
-            acq_type, kwargs = _parse_acquisition_parameters(
-                    search_name=dtype._search_name,
-                    name_par=dtype._name_pars,
-                    freq=dtype.freq,
-                    asset_type=dtype.asset_type,
-                    built_in_tables=True,
+                dtype = DataType(
+                        name=name,
+                        freq=freq,
+                        asset_type=asset_type,
+                )
+                self.assertIsInstance(dtype, DataType)
+                self.assertEqual(dtype.name, name)
+                self.assertEqual(dtype.freq, freq)
+                self.assertEqual(dtype.asset_type, asset_type)
 
-            )
-            desc = dtype.description
+                acq_type, kwargs = _parse_acquisition_parameters(
+                        search_name=dtype._search_name,
+                        name_par=dtype._name_pars,
+                        freq=dtype.freq,
+                        asset_type=dtype.asset_type,
+                        built_in_tables=True,
 
-            table_name = kwargs['table_name']
+                )
+                desc = dtype.description
 
-            shares = None
-            starts = '2019-09-01'
-            ends = '2020-09-12'
+                table_name = kwargs['table_name']
 
-            type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition', 'category']
-            type_with_events = ['event_status', 'event_signal', 'event_multi_stat', 'selected_events']
-            if (acq_type in type_with_shares) and (asset_type == 'E'):
-                shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
-                if table_name == 'index_weight':
-                    starts = '2018-09-01'
-                    ends = '2020-12-31'
-                if table_name in ['money_flow', 'stock_limit', ]:
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
-                shares = ['000300.SH', '000001.SH']
-                if table_name == 'sw_industry_basic':
-                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
-                if table_name == 'ths_index_basic':
-                    shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
-                if table_name == 'ths_index_daily':
-                    shares = ['700001.TI', '700002.TI', '700003.TI', '700004.TI', '700005.TI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'ci_index_daily':
-                    shares = ['CI005001.CI', 'CI005005.CI', 'CI005010.CI', 'CI005014.CI', 'CI005015.CI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'sw_index_daily':
-                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'global_index_daily':
-                    shares = ['AS51', 'CKLSE', 'CSX5P', 'DJI', 'HKAH']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'FD'):
-                shares = ['515630.SH']
-            elif (acq_type in type_with_shares) and (asset_type == 'FT'):
-                shares = ['AG.SHF', 'A.DCE', 'CU.SHF', 'C.DCE']
-                if table_name in ['future_weekly', 'future_monthly']:
-                    starts = '2024-12-01'
-                    ends = '2025-02-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
-                shares = ['10000001.SH', '10001909.SH', '10001910.SH', '10001911.SH', '10007976.SH']
-            elif (acq_type in type_with_events) and (asset_type == 'E'):
-                shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '600009.SH']
-                starts = '2018-01-01'
-                ends = '2020-05-01'
-                # for special tables:
-                if table_name == 'stock_suspend':
-                    starts = '2020-03-10'
-                    ends = '2020-03-13'
-                elif table_name in ['top_list', 'hs_top10_stock', 'top_inst']:
+                shares = None
+                starts = '2019-09-01'
+                ends = '2020-09-12'
+
+                type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition', 'category']
+                type_with_events = ['event_status', 'event_signal', 'event_multi_stat', 'selected_events']
+                if (acq_type in type_with_shares) and (asset_type == 'E'):
                     shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
-                    starts = '2024-01-01'
-                    ends = '2024-05-01'
-                elif table_name in ['dividend']:
-                    shares = ['000001.SZ', '000007.SZ', '000003.SZ', '000017.SZ', '000009.SZ']
+                    if table_name == 'index_weight':
+                        starts = '2018-09-01'
+                        ends = '2020-12-31'
+                    if table_name in ['money_flow', 'stock_limit', ]:
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
+                    shares = ['000300.SH', '000001.SH']
+                    if table_name == 'sw_industry_basic':
+                        shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                    if table_name == 'ths_index_basic':
+                        shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
+                    if table_name == 'ths_index_daily':
+                        shares = ['700001.TI', '700002.TI', '700003.TI', '700004.TI', '700005.TI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'ci_index_daily':
+                        shares = ['CI005001.CI', 'CI005005.CI', 'CI005010.CI', 'CI005014.CI', 'CI005015.CI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'sw_index_daily':
+                        shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'global_index_daily':
+                        shares = ['AS51', 'CKLSE', 'CSX5P', 'DJI', 'HKAH']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'FD'):
+                    shares = ['515630.SH']
+                elif (acq_type in type_with_shares) and (asset_type == 'FT'):
+                    shares = ['AG.SHF', 'A.DCE', 'CU.SHF', 'C.DCE']
+                    if table_name in ['future_weekly', 'future_monthly']:
+                        starts = '2024-12-01'
+                        ends = '2025-02-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
+                    shares = ['10000001.SH', '10001909.SH', '10001910.SH', '10001911.SH', '10007976.SH']
+                elif (acq_type in type_with_events) and (asset_type == 'E'):
+                    shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '600009.SH']
                     starts = '2018-01-01'
-                    ends = '2025-01-01'
-            elif (acq_type in type_with_events) and (asset_type == 'FD'):
-                shares = ['000152.OF', '960032.OF']
-                starts = '2018-01-01'
-                ends = '2020-05-01'
+                    ends = '2020-05-01'
+                    # for special tables:
+                    if table_name == 'stock_suspend':
+                        starts = '2020-03-10'
+                        ends = '2020-03-13'
+                    elif table_name in ['top_list', 'hs_top10_stock', 'top_inst']:
+                        shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
+                        starts = '2024-01-01'
+                        ends = '2024-05-01'
+                    elif table_name in ['dividend']:
+                        shares = ['000001.SZ', '000007.SZ', '000003.SZ', '000017.SZ', '000009.SZ']
+                        starts = '2018-01-01'
+                        ends = '2025-01-01'
+                elif (acq_type in type_with_events) and (asset_type == 'FD'):
+                    shares = ['000152.OF', '960032.OF']
+                    starts = '2018-01-01'
+                    ends = '2020-05-01'
 
-            if (asset_type in 'E') and (freq[-3:] == 'min'):
-                starts = '2022-04-01'
-                ends = '2022-04-15'
-            elif (asset_type == 'FT') and (freq[-3:] == 'min'):
-                starts = '2023-08-25'
-                ends = '2023-08-27'
-            elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
-                starts = '2024-09-27'
-                ends = '2024-09-28'
-            elif (asset_type == 'FD') and (freq == 'h'):
-                starts = '2021-09-20'
-                ends = '2021-09-30'
-            elif freq[-3:] == 'min':
-                starts = '2022-04-01'
-                ends = '2022-04-15'
+                if (asset_type in 'E') and (freq[-3:] == 'min'):
+                    starts = '2022-04-01'
+                    ends = '2022-04-15'
+                elif (asset_type == 'FT') and (freq[-3:] == 'min'):
+                    starts = '2023-08-25'
+                    ends = '2023-08-27'
+                elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
+                    starts = '2024-09-27'
+                    ends = '2024-09-28'
+                elif (asset_type == 'FD') and (freq == 'h'):
+                    starts = '2021-09-20'
+                    ends = '2021-09-30'
+                elif freq[-3:] == 'min':
+                    starts = '2022-04-01'
+                    ends = '2022-04-15'
 
-            if table_name in ['hk_top10_stock']:
-                shares = ['00700.HK', '00857.HK', '00939.HK', '00941.HK', '01810.HK']
-                starts = '2024-04-02'
-                ends = '2024-04-05'
+                if table_name in ['hk_top10_stock']:
+                    shares = ['00700.HK', '00857.HK', '00939.HK', '00941.HK', '01810.HK']
+                    starts = '2024-04-02'
+                    ends = '2024-04-05'
 
-            if table_name in ['hs_money_flow', 'hibor', 'shibor', 'libor']:
-                starts = '2024-04-01'
-                ends = '2024-04-15'
-            if table_name in ['hibor', 'libor']:
-                starts = '2020-04-01'
-                ends = '2020-06-15'
-            if table_name in ['gz_index']:
-                starts = '2015-01-01'
-                ends = '2015-02-20'
-            if table_name in ['cn_gdp', 'cn_cpi', 'cn_ppi', 'cn_sf', 'cn_money', 'cn_pmi']:
-                starts = '2024-01-01'
-                ends = '2024-12-31'
+                if table_name in ['hs_money_flow', 'hibor', 'shibor', 'libor']:
+                    starts = '2024-04-01'
+                    ends = '2024-04-15'
+                if table_name in ['hibor', 'libor']:
+                    starts = '2020-04-01'
+                    ends = '2020-06-15'
+                if table_name in ['gz_index']:
+                    starts = '2015-01-01'
+                    ends = '2015-02-20'
+                if table_name in ['cn_gdp', 'cn_cpi', 'cn_ppi', 'cn_sf', 'cn_money', 'cn_pmi']:
+                    starts = '2024-01-01'
+                    ends = '2024-12-31'
 
-            if table_name in ['block_trade']:
-                shares = ['000603.SZ', '000723.SZ', '000783.SZ', '000796.SZ', '000895.SZ', '002203.SZ']
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name in ['block_trade']:
+                    shares = ['000603.SZ', '000723.SZ', '000783.SZ', '000796.SZ', '000895.SZ', '002203.SZ']
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'stock_holder_trade':
-                shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ', ]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'stock_holder_trade':
+                    shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'margin_detail':
-                shares = ['300978.SZ', '300979.SZ', '300980.SZ', '300981.SZ', '300982.SZ', '300983.SZ', ]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'margin_detail':
+                    shares = ['300978.SZ', '300979.SZ', '300980.SZ', '300981.SZ', '300982.SZ', '300983.SZ', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'stock_suspend':
-                shares = ['000005.SZ', '000599.SZ', '002490.SZ', '600375.SH', '872931.BJ', '600165.SH', ]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'stock_suspend':
+                    shares = ['000005.SZ', '000599.SZ', '002490.SZ', '600375.SH', '872931.BJ', '600165.SH', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            # print(f'testing dtype {dtype} with parameters: \n'
-            #       f'shares: {shares}\n'
-            #       f'starts/ends: {starts}/{ends}\n')
+                # print(f'testing dtype {dtype} with parameters: \n'
+                #       f'shares: {shares}\n'
+                #       f'starts/ends: {starts}/{ends}\n')
 
-            if shares is not None:
-                shares = list_to_str_format(shares)
-            if table_name in ['cn_money']:
-                # import pdb; pdb.set_trace()
-                pass
-            data = dtype.get_data_from_source(
-                    ds,
-                    symbols=shares,
-                    starts=starts,
-                    ends=ends,
-            )
+                if shares is not None:
+                    shares = list_to_str_format(shares)
+                if table_name in ['cn_money']:
+                    # import pdb; pdb.set_trace()
+                    pass
+                data = dtype.get_data_from_source(
+                        ds,
+                        symbols=shares,
+                        starts=starts,
+                        ends=ends,
+                )
 
-            acquired += 1
-            progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=120)
+                acquired += 1
+                pbar.set_description(f'{dtype} - {dtype.description}')
+                pbar.update()
+                # progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=120)
 
-            try:
-                all_tables.remove(table_name)
-            except ValueError:
-                pass
+                try:
+                    all_tables.remove(table_name)
+                except ValueError:
+                    pass
 
-            if data.empty:
-                if freq in ['h', '30min', '15min', '5min', '1min', ]:
+                if data.empty:
+                    if freq in ['h', '30min', '15min', '5min', '1min', ]:
+                        continue
+                    empty_count += 1
+                    empty_types.append(k)
+                    empty_type_descs.append(desc)
+                    empty_type_acq_types.append(acq_type)
+                    print(f'\nempty data for {dtype} - {dtype.description}')
                     continue
-                empty_count += 1
-                empty_types.append(k)
-                empty_type_descs.append(desc)
-                empty_type_acq_types.append(acq_type)
-                print(f'\nempty data for {dtype} - {dtype.description}')
-                continue
 
-            print(f'\ngot data for {dtype}: \n{data}')
+                print(f'\ngot data for {dtype}: \n{data}')
 
-            # checking the datatypes and start / end dates of the data
-            if acq_type in ['basics', 'category']:
-                # index are shares
-                self.assertIsInstance(data, pd.Series)
-                self.assertTrue(data.index.dtype == 'object')
-                self.assertTrue(all(share in shares for share in data.index))
-            elif (acq_type in ['reference']) or (dtype.unsymbolizer is not None):
-                self.assertIsInstance(data, pd.Series)
-                self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                starts = pd.to_datetime(starts)
-                ends = pd.to_datetime(ends)
-                self.assertTrue(all(date >= starts for date in data.index))
-                self.assertTrue(all(date <= ends for date in data.index))
-            elif (acq_type in type_with_shares) and (dtype.unsymbolizer is None):
-                self.assertIsInstance(data, pd.DataFrame)
-                if not data.empty:
-                    try:
-                        self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                        self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                        self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
-                    except AssertionError:
-                        # import pdb;
-                        # pdb.set_trace()
-                        pass
-            elif acq_type in type_with_events:
-                self.assertIsInstance(data, pd.DataFrame)
-                if not data.empty:
-                    try:
-                        self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                        self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                        self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
-                    except AssertionError:
-                        # import pdb
-                        # pdb.set_trace()
-                        pass
-            else:
-                self.assertIsInstance(data, pd.Series)
+                # checking the datatypes and start / end dates of the data
+                if acq_type in ['basics', 'category']:
+                    # index are shares
+                    self.assertIsInstance(data, pd.Series)
+                    self.assertTrue(data.index.dtype == 'object')
+                    self.assertTrue(all(share in shares for share in data.index))
+                elif (acq_type in ['reference']) or (dtype.unsymbolizer is not None):
+                    self.assertIsInstance(data, pd.Series)
+                    self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                    starts = pd.to_datetime(starts)
+                    ends = pd.to_datetime(ends)
+                    self.assertTrue(all(date >= starts for date in data.index))
+                    self.assertTrue(all(date <= ends for date in data.index))
+                elif (acq_type in type_with_shares) and (dtype.unsymbolizer is None):
+                    self.assertIsInstance(data, pd.DataFrame)
+                    if not data.empty:
+                        try:
+                            self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                            self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                            self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                        except AssertionError:
+                            # import pdb;
+                            # pdb.set_trace()
+                            pass
+                elif acq_type in type_with_events:
+                    self.assertIsInstance(data, pd.DataFrame)
+                    if not data.empty:
+                        try:
+                            self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                            self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                            self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                        except AssertionError:
+                            # import pdb
+                            # pdb.set_trace()
+                            pass
+                else:
+                    self.assertIsInstance(data, pd.Series)
 
         print(f'\n{empty_count} out of {total} empty data types (except those in min freq data tables):')
         emptys = pd.DataFrame({

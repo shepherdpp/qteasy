@@ -872,32 +872,34 @@ class TestQT(unittest.TestCase):
         total_count = len(all_built_ins)
         key_results = []
         print(f'testing all built-in strategies')
-        from qteasy.utilfuncs import progress_bar
-        for strategy in all_built_ins:
-            op = qt.Operator(strategies=[strategy])
-            res = qt.run(
-                    op,
-                    mode=1,
-                    asset_pool='000300.SH, 399006.SZ',  # 两个投资标的都是指数，asset_type='IDX'
-                    invest_start='20200101',
-                    invest_end='20211231',
-                    trade_log=False,
-                    visual=False,
-                    report=False,
-            )
-            tested_count += 1
-            progress_bar(tested_count, total_count, comments=f'testing: {strategy}')
+        with tqdm(total=len(all_built_ins)) as pbar:
+            for strategy in all_built_ins:
+                op = qt.Operator(strategies=[strategy])
+                res = qt.run(
+                        op,
+                        mode=1,
+                        asset_pool='000300.SH, 399006.SZ',  # 两个投资标的都是指数，asset_type='IDX'
+                        invest_start='20200101',
+                        invest_end='20211231',
+                        trade_log=False,
+                        visual=False,
+                        report=False,
+                )
+                tested_count += 1
+                pbar.set_description(f'testing: {strategy}')
+                pbar.update()
+                # progress_bar(tested_count, total_count, comments=f'testing: {strategy}')
 
-            key_results.append(
-                    [strategy,
-                     res['loop_run_time'],
-                     res['op_run_time'],
-                     res['total_invest'],
-                     res['final_value'],
-                     res['rtn'],
-                     res['mdd'],
-                     ]
-            )
+                key_results.append(
+                        [strategy,
+                         res['loop_run_time'],
+                         res['op_run_time'],
+                         res['total_invest'],
+                         res['final_value'],
+                         res['rtn'],
+                         res['mdd'],
+                         ]
+                )
 
         result = pd.DataFrame(key_results,
                               columns=['strategy',

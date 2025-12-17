@@ -860,42 +860,33 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         # progress_bar(0, total, comments=f'<{table}> estimating time left...')
 
         try:
-            for res in tqdm(fetch_batched_table_data(
-                    table=table,
-                    channel=channel,
-                    arg_list=arg_list,
-                    parallel=parallel,
-                    process_count=process_count,
-                    download_batch_size=download_batch_size,
-                    download_batch_interval=download_batch_interval,
-            ), desc=f'Downloading <{table}>', total=total, unit='task'):
-                completed += 1
-                kwargs = res['kwargs']
-                data = res['data']
-                if not data.empty:
-                    df_concat_list.append(data)
-                if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
-                    # 将下载的数据写入数据源
-                    rows_affected = data_source.update_table_data(
-                            table=table,
-                            df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                            merge_type=merge_type,
-                    )
-                    df_concat_list = []
-                    total_written += rows_affected
+            with tqdm(total=total, unit='task') as pbar:
+                for res in fetch_batched_table_data(
+                        table=table,
+                        channel=channel,
+                        arg_list=arg_list,
+                        parallel=parallel,
+                        process_count=process_count,
+                        download_batch_size=download_batch_size,
+                        download_batch_interval=download_batch_interval,
+                ):
+                    completed += 1
+                    kwargs = res['kwargs']
+                    data = res['data']
+                    if not data.empty:
+                        df_concat_list.append(data)
+                    if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
+                        # 将下载的数据写入数据源
+                        rows_affected = data_source.update_table_data(
+                                table=table,
+                                df=pd.concat(df_concat_list, copy=False, ignore_index=True),
+                                merge_type=merge_type,
+                        )
+                        df_concat_list = []
+                        total_written += rows_affected
+                    pbar.set_description(f'<{table}> {total_written} wrn')
+                    pbar.update()
 
-                # time_elapsed = time.time() - st
-                # time_remain = abs((total - completed) * time_elapsed / completed)
-                # time_remain = sec_to_duration(
-                #         time_remain,
-                #         estimation=True,
-                #         short_form=False
-                # )
-                # progress_bar(completed, total,
-                #              comments=f'<{table}> {total_written} written, time left: {time_remain}',
-                #              column_width=120,
-                #              cut_off_pos=1.0,
-                #              )
         except Exception as e:
             print(f'Error occurred when downloading data for table {table}: {e}')
             # import traceback
