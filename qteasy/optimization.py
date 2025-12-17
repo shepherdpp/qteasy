@@ -12,9 +12,9 @@
 import pandas as pd
 import numpy as np
 import time
-import math
 import logging
 from typing import Union, Optional, Generator
+from tqdm import tqdm
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -32,7 +32,6 @@ from qteasy.history import (
 
 from qteasy.utilfuncs import (
     sec_to_duration,
-    progress_bar,
     str_to_list,
 )
 
@@ -384,11 +383,11 @@ class Optimizer:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
 
         # DEBUG
-        sum_signals = np.nansum(np.abs(self.running_backtester.op_signals))
-        if sum_signals > 0:
-            print(f'[{pd.to_datetime("today")}]: parameter: {par_values} -> {result:.3f}, backtester id '
-                  f'{id(self.running_backtester)}, total signals in backtest: '
-                  f'{np.nansum(self.running_backtester.op_signals)}')
+        # sum_signals = np.nansum(np.abs(self.running_backtester.op_signals))
+        # if sum_signals > 0:
+        #     print(f'[{pd.to_datetime("today")}]: parameter: {par_values} -> {result:.3f}, backtester id '
+        #           f'{id(self.running_backtester)}, total signals in backtest: '
+        #           f'{np.nansum(self.running_backtester.op_signals)}')
 
         return result
 
@@ -467,8 +466,8 @@ class Optimizer:
                                       deep_eval: bool) -> None:
         """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
         """
-        i = 0
-        best_so_far = 0
+        # i = 0
+        # best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
         # eval_func = self._evaluate_parameter
@@ -478,7 +477,7 @@ class Optimizer:
         with ProcessPoolExecutor() as proc_pool:
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
-        for f in as_completed(futures):
+        for f in tqdm(as_completed(futures), desc=f'Searching epoch:{epoch_id}', total=total):
             target_value = f.result()
             if deep_eval:
                 perf, metrics = target_value
@@ -486,11 +485,11 @@ class Optimizer:
                 perf, metrics = target_value, None
 
             result_pool.push(item=futures[f], perf=perf, extra=metrics)
-            i += 1
-            if perf > best_so_far:
-                best_so_far = perf
-            if i % 10 == 0:
-                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
+            # i += 1
+            # if perf > best_so_far:
+            #     best_so_far = perf
+            # if i % 10 == 0:
+            #     progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
 
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
         # progress_bar(i, i)
@@ -503,14 +502,14 @@ class Optimizer:
                                         deep_eval: bool) -> None:
         """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
         """
-        i = 0
-        best_so_far = 0
+        # i = 0
+        # best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
         # eval_func = self._evaluate_parameter
         # deep_eval = False
 
-        for par in par_value_list:
+        for par in tqdm(par_value_list, desc=f'Searching epoch:{epoch_id}', total=total, colour='green'):
             self.running_backtester.clear_backtest_buffers()
             target_value = eval_func(par)
             if deep_eval:
@@ -518,12 +517,12 @@ class Optimizer:
             else:
                 perf, metrics = target_value, None
             result_pool.push(item=par, perf=perf, extra=metrics)
-            i += 1
-            # import pdb; pdb.set_trace()
-            if perf > best_so_far:
-                best_so_far = perf
-            if i % 10 == 0:
-                progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
+            # i += 1
+            # # import pdb; pdb.set_trace()
+            # if perf > best_so_far:
+            #     best_so_far = perf
+            # if i % 10 == 0:
+            #     progress_bar(i, total, comments=f'Epoch:{epoch_id}: best performance: {best_so_far:.3f}', column_width=120)
 
         # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
         # progress_bar(i, i)
@@ -667,8 +666,7 @@ class Optimizer:
         while current_volume >= min_volume and current_round < max_rounds:
             epoch += 1
             # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
-            while spaces:
-                space = spaces.pop()
+            for space in tqdm(spaces, desc=f'Searching space'):
                 # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
                 # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
                 par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')

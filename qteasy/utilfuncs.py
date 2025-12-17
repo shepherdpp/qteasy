@@ -793,44 +793,43 @@ def list_to_str_format(str_list: Union[list[str], str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_width: int = -1, cut_off_pos: float = 0.8):
-    """根据输入的数字生成进度条字符串并刷新
-
-    Parameters
-    ----------
-    prog: int
-        当前进度，用整数表示
-    total: int
-        总体进度，默认为100
-    comments: str, optional
-        需要显示在进度条中的文字信息
-    column_width: int, optional, default: -1
-        进度条的宽度，如果为-1则自动获取终端的宽度, 默认为-1
-        如果为0，则宽度不限制，输入其他整数则限制进度条的宽度
-    cut_off_pos: float, optional, default: 0.8
-        进度条的截断位置，当进度条长度超过column_width时，进度条将被从cut_off_pos位置截断，只显示前后部分
-    """
-    if column_width == -1:
-        column_width, _ = shutil.get_terminal_size()
-    if column_width < 20:
-        column_width = 20
-
-    if cut_off_pos > 1:
-        cut_off_pos = 1
-
-    if total <= 0:
-        return
-
-    if prog > total:
-        prog = total
-
-    progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
-    if column_width > 0:
-        progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
-    # print(progress_str, end='\r')
+# def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_width: int = -1, cut_off_pos: float = 0.8):
+#     """根据输入的数字生成进度条字符串并刷新
+#
+#     Parameters
+#     ----------
+#     prog: int
+#         当前进度，用整数表示
+#     total: int
+#         总体进度，默认为100
+#     comments: str, optional
+#         需要显示在进度条中的文字信息
+#     column_width: int, optional, default: -1
+#         进度条的宽度，如果为-1则自动获取终端的宽度, 默认为-1
+#         如果为0，则宽度不限制，输入其他整数则限制进度条的宽度
+#     cut_off_pos: float, optional, default: 0.8
+#         进度条的截断位置，当进度条长度超过column_width时，进度条将被从cut_off_pos位置截断，只显示前后部分
+#     """
+#     if column_width == -1:
+#         column_width, _ = shutil.get_terminal_size()
+#     if column_width < 20:
+#         column_width = 20
+#
+#     if cut_off_pos > 1:
+#         cut_off_pos = 1
+#
+#     if total <= 0:
+#         return
+#
+#     if prog > total:
+#         prog = total
+#
+#     progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
+#                    f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
+#     if column_width > 0:
+#         progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
+#     sys.stdout.write(progress_str)
+#     sys.stdout.flush()
 
 
 def get_current_timezone_datetime(time_zone='local'):

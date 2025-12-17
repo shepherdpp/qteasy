@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 import warnings
 
+from tqdm import tqdm
 from os import path
 from typing import Union
 
@@ -340,11 +341,14 @@ class DataSource:
         total_table_count = len(all_table_names)
         from .utilfuncs import progress_bar
         completed_reading_count = 0
-        for table_name in all_table_names:
-            progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
+
+        for table_name in tqdm(all_table_names,
+                               desc='Analyzing tables',
+                               total=total_table_count):
             all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True).values())
             completed_reading_count += 1
-        progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing completed!')
+
+        print(f'Analyzing completed!')
         all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size', 'records',
                                                    'pk1', 'records1', 'min1', 'max1',
                                                    'pk2', 'records2', 'min2', 'max2'])

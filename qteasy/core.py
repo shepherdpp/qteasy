@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import time
 import logging
+from tqdm import tqdm
 from warnings import warn
 from typing import Optional, Union, Any
 
@@ -842,10 +843,11 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         ))
 
         if not arg_list:  # 意味着该数据表无法从该渠道下载
-            progress_bar(0, 1, comments=f'<{table}> can\'t be fetched from channel:{channel}!\n',
-                         column_width=120,
-                         cut_off_pos=1.0,
-                         )
+            # progress_bar(0, 1, comments=f'<{table}> can\'t be fetched from channel:{channel}!\n',
+            #              column_width=120,
+            #              cut_off_pos=1.0,
+            #              )
+            print(f'<{table}> can\'t be fetched from channel:{channel}!')
             continue
 
         # 2.2, 批量下载数据
@@ -855,10 +857,10 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         st = time.time()
         df_concat_list = []
 
-        progress_bar(0, total, comments=f'<{table}> estimating time left...')
+        # progress_bar(0, total, comments=f'<{table}> estimating time left...')
 
         try:
-            for res in fetch_batched_table_data(
+            for res in tqdm(fetch_batched_table_data(
                     table=table,
                     channel=channel,
                     arg_list=arg_list,
@@ -866,7 +868,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                     process_count=process_count,
                     download_batch_size=download_batch_size,
                     download_batch_interval=download_batch_interval,
-            ):
+            ), desc=f'Downloading <{table}>', total=total, unit='task'):
                 completed += 1
                 kwargs = res['kwargs']
                 data = res['data']
@@ -882,18 +884,18 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                     df_concat_list = []
                     total_written += rows_affected
 
-                time_elapsed = time.time() - st
-                time_remain = abs((total - completed) * time_elapsed / completed)
-                time_remain = sec_to_duration(
-                        time_remain,
-                        estimation=True,
-                        short_form=False
-                )
-                progress_bar(completed, total,
-                             comments=f'<{table}> {total_written} written, time left: {time_remain}',
-                             column_width=120,
-                             cut_off_pos=1.0,
-                             )
+                # time_elapsed = time.time() - st
+                # time_remain = abs((total - completed) * time_elapsed / completed)
+                # time_remain = sec_to_duration(
+                #         time_remain,
+                #         estimation=True,
+                #         short_form=False
+                # )
+                # progress_bar(completed, total,
+                #              comments=f'<{table}> {total_written} written, time left: {time_remain}',
+                #              column_width=120,
+                #              cut_off_pos=1.0,
+                #              )
         except Exception as e:
             print(f'Error occurred when downloading data for table {table}: {e}')
             # import traceback
@@ -916,11 +918,12 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                 short_form=False,
         )
 
-        progress_bar(total, total,
-                     comments=f'<{table}> {total_written} wrtn in {strftime_elapsed}\n',
-                     column_width=120,
-                     cut_off_pos=1.0,
-                     )
+        # progress_bar(total, total,
+        #              comments=f'<{table}> {total_written} wrtn in {strftime_elapsed}\n',
+        #              column_width=120,
+        #              cut_off_pos=1.0,
+        #              )
+        print(f'<{table}> {total_written} wrtn in {strftime_elapsed}')
         table_filled += 1
         total_rows_written += total_written
 
