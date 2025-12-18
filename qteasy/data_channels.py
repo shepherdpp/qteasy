@@ -14,8 +14,9 @@
 import numpy as np
 import pandas as pd
 import time
+import logging
 
-from typing import Union, Any
+from typing import Generator, Union, Any
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -349,13 +350,13 @@ def fetch_batched_table_data(
         *,
         table: str,
         channel: str,
-        arg_list: any,
+        arg_list: Any,
         parallel: bool = True,
         process_count: int = None,
-        logger: any = None,
+        logger: logging.Logger = None,
         download_batch_size: int = 0,
         download_batch_interval: int = 0.,
-) -> pd.DataFrame:
+) -> Generator[dict[str, Any], Any, None]:
     """ 一个Generator，顺序循环批量获取同一张数据表的数据，支持并行下载并逐个返回数据
 
     Parameters
@@ -401,7 +402,8 @@ def fetch_batched_table_data(
             df = fetch_table_data(table, **kwargs)
             if (download_batch_interval != 0) and (completed % download_batch_size == 0):
                 time.sleep(download_batch_interval)
-            # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
+            if logger is not None:
+                logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
             yield {'kwargs': kwargs, 'data': df}
 
     else:  # parallel
@@ -425,6 +427,8 @@ def fetch_batched_table_data(
                 for f in as_completed(futures):
                     kwargs = futures[f]
                     completed += 1
+                    if logger is not None:
+                        logger.info(f'[{table}:{kwargs}] {len(f.result())} rows downloaded')
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
