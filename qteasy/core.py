@@ -2189,7 +2189,8 @@ def run_mode_2(op, config):
         parse_trading_moq_params,
         parse_trading_delivery_params,
         parse_optimization_start_end_dates,
-        parse_optimization_cash_plan
+        parse_optimization_cash_plan,
+        parse_all_optimization_params
     )
     # 创建策略优化的优化区间和测试区间的开始和结束日期
     opti_start, opti_end, test_start, test_end = parse_optimization_start_end_dates(config=config)  # 回测开始和结束日期
@@ -2205,6 +2206,8 @@ def run_mode_2(op, config):
     assert op.opt_space_par[0] != [], \
         f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
         f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
+
+    optimization_config = parse_all_optimization_params(config=config)
 
     opti_data_package = check_and_prepare_backtest_data(
             op=op,
@@ -2229,6 +2232,7 @@ def run_mode_2(op, config):
             opti_target=config['optimize_target'],
             opti_direction=config['optimize_direction'],
             parallel=config['parallel'],
+            search_config=optimization_config,
             opti_start_date=opti_start,
             opti_end_date=opti_end,
             test_start_date=test_start,
@@ -2243,59 +2247,86 @@ def run_mode_2(op, config):
     )
     # 准备优化数据
     # 生成优化交易运行计划
+    # debug
+    print(f'Preparing optimization data from {opti_start} to {opti_end}...')
     op.prepare_running_schedule(
             start_date=opti_start,
             end_date=opti_end,
+            # TODO: 在这里应该引用config中的market_open_time等等属性，用于生成trade_time_index的时间点
     )
 
+    # debug
+    print(f'preparing data buffer...')
     op.prepare_data_buffer(
             start_date=opti_start,
             end_date=opti_end,
             data_package=opti_data_package,
     )
+    print(f'creating data windows...')
     op.create_data_windows()
 
     # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
     op.is_ready(raise_error=True)
-
+    print(f'Preparing trade prices...')
     opti_trade_prices = check_and_prepare_trade_prices(
             op=op,
             shares=config['asset_pool'],
             price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
-
+    print(f'Starting optimization...')
     optimizer.optimize(
             trade_price_data=opti_trade_prices.values,
     )
+    print(f'Optimization finished, best parameters:\n')
+    optimizer.result_pool.show_items()
 
     # ========  开始校验  =========
     # 生成校验交易运行计划
+    print(f'Preparing test data from {test_start} to {test_end}...')
     op.prepare_running_schedule(
             start_date=test_start,
             end_date=test_end,
             # TODO: 在这里应该引用config中的market_open_time等等属性，用于生成trade_time_index的时间点
     )
-
+    print(f'preparing data buffer...')
     op.prepare_data_buffer(
             start_date=test_start,
             end_date=test_end,
             data_package=test_data_package,
     )
+    print(f'creating data windows...')
     op.create_data_windows()
 
     # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
     op.is_ready(raise_error=True)
-
+    print(f'Preparing trade prices for test...')
     test_trade_prices = check_and_prepare_trade_prices(
             op=op,
             shares=config['asset_pool'],
             price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
-
+    print(f'Starting validation on test data...')
     optimizer.validate(
             trade_price_data=test_trade_prices.values,
     )
 
-    return optimizer.result_params_list
+    # if config['report']:
+    #     # 输出优化结果报告
+    #     print(optimizer.report_result())
+    #
+    # if config['visual']:
+    #     # 图表输出优化结果
+    #     optimizer.plot_result(
+    #             plot_title='Optimization Result',
+    #     )
+    print(f'Validation finished, best parameters on test data:\n')
+    optimizer.validated_pool.show_items()
+
+    print(f'All done.\n'
+          f'==============================\n'
+          f'==============================\n'
+          f'\n')
+
+    return
