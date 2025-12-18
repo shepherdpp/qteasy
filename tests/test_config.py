@@ -57,7 +57,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(QT_CONFIG.mode, 1)
         self.assertEqual(QT_CONFIG.cash_delivery_period, 0)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
-        self.assertEqual(QT_CONFIG.invest_start, '20160405')
+        self.assertEqual(QT_CONFIG.invest_start, '20170605')
         self.assertEqual(QT_CONFIG.cost_rate_buy, 0.0003)
         self.assertEqual(QT_CONFIG.benchmark_asset, '000300.SH')
 
