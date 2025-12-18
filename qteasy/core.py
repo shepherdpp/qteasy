@@ -850,8 +850,10 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         total = len(arg_list)
         total_written = 0
         df_concat_list = []
+        interruption_error_string = ''
 
         with tqdm(total=total + 1, unit='task') as pbar:
+            try:
                 for res in fetch_batched_table_data(
                         table=table,
                         channel=channel,
@@ -863,6 +865,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                 ):
                     completed += 1
                     kwargs = res['kwargs']
+                    data = res['data'].dropna(axis=1, how='all')  # 删除全为空的列以便满足未来concat函数的要求，避免FutureWarning
                     if not data.empty:
                         df_concat_list.append(data)
                     if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
@@ -874,9 +877,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         )
                         df_concat_list = []
                         total_written += rows_affected
+                    pbar.set_description(f'<{table}>({kwargs}) {total_written} wrn')
                     pbar.update()
 
-        time_elapsed = time.time() - st
             except Exception as e:
                 # 如果下载过程中出现错误，则跳过并不打断pbar的显示，并将已下载的数据写入数据源
                 interruption_error_string = f' failed: {e}'
@@ -887,6 +890,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                     # 将下载的数据写入数据源
                     rows_affected = data_source.update_table_data(
                             table=table,
+                            df=pd.concat(df_concat_list, copy=False, ignore_index=True),
                             merge_type=merge_type,
                     )
                     total_written += rows_affected
