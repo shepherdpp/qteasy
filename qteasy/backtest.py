@@ -694,6 +694,154 @@ def backtest_batch_steps(
     return None
 
 
+@njit(nogil=True, cache=True)
+def backtest_flash_steps(
+        signal_types: np.ndarray,
+        op_signals: np.ndarray,
+        cash_investment_array: np.ndarray,
+        cash_inflation_array: np.ndarray,
+        delivery_day_indicators: np.ndarray,
+        trade_prices: np.ndarray,
+        cost_params: np.ndarray,
+        pt_buy_threshold: float,
+        pt_sell_threshold: float,
+        long_pos_limit: float,
+        short_pos_limit: float,
+        allow_sell_short: bool,
+        moq_buy: float,
+        moq_sell: float,
+        cash_delivery_period: int,
+        stock_delivery_period: int,
+) -> tuple[Union[float, Any], Union[ndarray[Any, dtype[Any]], Any]]:
+    """相比backtest_batch_steps()函数，以更快的速度批量处理多次交易的回测计算
+
+    该函数省略所有中间计算变量的存储，仅保存最终结果，同时省略与最终结果无关的数据存储，
+    从而提升计算速度、节省内存开销。
+
+    输入数据与backtest_batch_steps()函数相似，但是不包含用于记录现金、持股变动以及
+    交易记录和交易费用的整个数组。这些数据在函数内部仅仅作为中间变量，存储每一轮回测过
+    程的期初结果和期末结果，在完成全部交易信号的回测计算后，输出最后一轮回测的期末结果。
+
+    Parameters
+    ----------
+    signal_types: np.ndarray[int]
+        信号类型数组，所有交易信号的类型代码
+    op_signals: np.ndarray[float]
+        交易信号数组，所有交易信号
+    cash_investment_array: np.ndarray
+        现金投资数组，记录每一个交易信号日的现金投资金额
+    cash_inflation_array: np.ndarray
+        现金增值数组，记录每一个交易信号日相对前一个交易信号日的现金增值幅度
+    delivery_day_indicators: np.ndarray
+        交割日指标数组，记录每一个交易信号日是否为新的交割日
+    trade_prices: np.ndarray
+        交易价格清单，记录每一个运行交易记录时间戳中的各个资产的交易价格
+    cost_params: np.ndarray
+        交易成本参数，包括买入费率、卖出费率、最低买入费用、最低卖出费用、交易滑点
+        buy_rate: float, 交易成本：固定买入费率
+        sell_rate: float, 交易成本：固定卖出费率
+        buy_min: float, 交易成本：最低买入费用
+        sell_min: float, 交易成本：最低卖出费用
+        slipage: float, 交易成本：滑点
+    pt_buy_threshold: float
+        当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+    pt_sell_threshold: float
+        当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+    long_pos_limit: float
+        允许建立的多头总仓位与净资产的比值，默认值1.0，表示最多允许建立100%多头仓位
+    short_pos_limit: float
+        允许建立的空头总仓位与净资产的比值，默认值-1.0，表示最多允许建立100%空头仓位
+    allow_sell_short: bool
+        True:   允许买空卖空
+        False:  默认值，只允许买入多头仓位
+    moq_buy: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    moq_sell: float:
+        投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    cash_delivery_period: int
+        现金交割周期
+    stock_delivery_period: int
+        股票交割周期
+
+    Returns
+    -------
+    tuple(float, np.ndarray),
+    交易的结果保存在最终的计算结果中
+        closing_cash: 回测结束后最终持有现金清单
+        closing_amounts: 回测结束后最终持有资产清单
+
+    """
+
+    signal_count = op_signals.shape[0]
+    share_count = op_signals.shape[1]
+    # 初始化现金和股票交割队列以及交割日计数器
+    cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
+            cash_delivery_period=cash_delivery_period,
+            stock_delivery_period=stock_delivery_period,
+            share_count=share_count,
+    )
+    day_nums = delivery_day_indicators.cumsum().astype('int')
+    opening_cash = 0.0
+    opening_available_cash = 0.0
+    opening_amounts = np.zeros(shape=(share_count,), dtype='float')
+    opening_available_amounts = np.zeros(shape=(share_count,), dtype='float')
+
+    closing_cash = 0.0
+    closing_amounts = np.zeros(shape=(share_count,), dtype='float')
+
+    # 开始循环处理op_signal中的每一条交易信号，获取其signal_type，执行下列步骤：
+    for i in range(signal_count):
+        # 如果当期有现金投资，则更新持有现金和可用现金
+        cash_investment = cash_investment_array[i]
+        if cash_investment > 0:
+            opening_cash += cash_investment
+            opening_available_cash += cash_investment
+
+        is_delivery_day = bool(delivery_day_indicators[i])
+
+        # 调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
+        (closing_cash,
+         closing_available_cash,
+         closing_amounts,
+         closing_available_amounts,
+         _,
+         _,
+         cash_delivery_queue,
+         stock_delivery_queue) = backtest_step(
+                signal_type=signal_types[i],
+                op_signal=op_signals[i],
+                cash_inflation=cash_inflation_array[i],
+                is_delivery_day=is_delivery_day,
+                day_num=day_nums[i],
+                own_cash=opening_cash,
+                own_amounts=opening_amounts,
+                available_cash=opening_available_cash,
+                available_amounts=opening_available_amounts,
+                trade_prices=trade_prices[i],
+                cost_params=cost_params,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                long_pos_limit=long_pos_limit,
+                short_pos_limit=short_pos_limit,
+                allow_sell_short=allow_sell_short,
+                moq_buy=moq_buy,
+                moq_sell=moq_sell,
+                cash_delivery_queue=cash_delivery_queue,
+                stock_delivery_queue=stock_delivery_queue,
+                cash_delivery_period=cash_delivery_period,
+                stock_delivery_period=stock_delivery_period,
+                share_count=share_count,
+        )
+
+        opening_cash = closing_cash
+        opening_available_cash = closing_available_cash
+        opening_amounts = closing_amounts
+        opening_available_amounts = closing_available_amounts
+
+    # 完成全部交易信号的处理后，输出最终的持有现金清单、持有资产清单和交易费用清单
+    return closing_cash, closing_amounts
+
+
 def generate_cash_invest_and_delivery_arrays(invest_cash_plan: CashPlan,
                                           op_schedule: pd.Index) -> (tuple[np.ndarray, np.ndarray, np.ndarray]):
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
