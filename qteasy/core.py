@@ -40,7 +40,6 @@ from qteasy.utilfuncs import (
     next_market_trade_day,
     AVAILABLE_ASSET_TYPES,
     _partial_lev_ratio,
-    progress_bar,
     sec_to_duration,
     TIME_FREQ_STRINGS,
 )
@@ -843,10 +842,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         ))
 
         if not arg_list:  # 意味着该数据表无法从该渠道下载
-            # progress_bar(0, 1, comments=f'<{table}> can\'t be fetched from channel:{channel}!\n',
-            #              column_width=120,
-            #              cut_off_pos=1.0,
-            #              )
             print(f'<{table}> can\'t be fetched from channel:{channel}!')
             continue
 
@@ -854,13 +849,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         completed = 0
         total = len(arg_list)
         total_written = 0
-        st = time.time()
         df_concat_list = []
 
-        # progress_bar(0, total, comments=f'<{table}> estimating time left...')
-
-        try:
-            with tqdm(total=total, unit='task') as pbar:
+        with tqdm(total=total + 1, unit='task') as pbar:
                 for res in fetch_batched_table_data(
                         table=table,
                         channel=channel,
@@ -872,7 +863,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                 ):
                     completed += 1
                     kwargs = res['kwargs']
-                    data = res['data']
                     if not data.empty:
                         df_concat_list.append(data)
                     if (completed % chunk_size == 0) and (len(df_concat_list) > 0):
@@ -884,39 +874,27 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         )
                         df_concat_list = []
                         total_written += rows_affected
-                    pbar.set_description(f'<{table}> {total_written} wrn')
                     pbar.update()
 
-        except Exception as e:
-            print(f'Error occurred when downloading data for table {table}: {e}')
-            # import traceback
-            # traceback.print_exc()
-            continue
-
-        if df_concat_list:
-            # 将下载的数据写入数据源
-            rows_affected = data_source.update_table_data(
-                    table=table,
-                    df=pd.concat(df_concat_list, copy=False, ignore_index=True),
-                    merge_type=merge_type,
-            )
-            total_written += rows_affected
-
         time_elapsed = time.time() - st
-        strftime_elapsed = sec_to_duration(
-                time_elapsed,
-                estimation=True,
-                short_form=False,
-        )
+            except Exception as e:
+                # 如果下载过程中出现错误，则跳过并不打断pbar的显示，并将已下载的数据写入数据源
+                interruption_error_string = f' failed: {e}'
+                continue
 
-        # progress_bar(total, total,
-        #              comments=f'<{table}> {total_written} wrtn in {strftime_elapsed}\n',
-        #              column_width=120,
-        #              cut_off_pos=1.0,
-        #              )
-        print(f'<{table}> {total_written} wrtn in {strftime_elapsed}')
-        table_filled += 1
-        total_rows_written += total_written
+            finally:
+                if df_concat_list:
+                    # 将下载的数据写入数据源
+                    rows_affected = data_source.update_table_data(
+                            table=table,
+                            merge_type=merge_type,
+                    )
+                    total_written += rows_affected
+
+                pbar.set_description(f'<{table}> {total_written} wrn{interruption_error_string}')
+                pbar.update()
+                table_filled += 1
+                total_rows_written += total_written
 
     print(f'\nData refill completed! {total_rows_written} rows written into {table_filled}/{len(table_list)} table(s)!')
 
