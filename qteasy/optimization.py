@@ -18,11 +18,15 @@ from tqdm import tqdm
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from qteasy.qt_operator import Operator
+from qteasy.qt_operator import (
+    Operator,
+    SIGNAL_TYPE_ID,
+)
 
 from qteasy.backtest import (
     Backtester,
     generate_cash_invest_and_delivery_arrays,
+    backtest_flash_steps,
 )
 
 from qteasy.history import (
@@ -99,6 +103,77 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
                                  dataframe_as='shares',
                                  shares=history_data.shares)
     return mock_data
+
+
+def _flash_evaluate_parameter(
+        op,
+        share_count,
+        cash_investment_array,
+        cash_inflation_array,
+        delivery_day_indicators,
+        trade_price_data,
+        cost_params,
+        signal_parsing_params,
+        trading_moq_params,
+        trading_delivery_params,
+        par_values: tuple,
+) -> float:
+    """ 本质上实现了与_evaluate_parameter相同的功能，但不使用Backtester对象进行回测，
+    而是直接调用Operator的信号生成，同时调用backtest.backtest_batch_steps()函数进行回测。
+    以降低多进程计算时Backtester对象传输的开销。
+
+    Parameters
+    ----------
+    par_values: tuple
+        策略参数值元组，元组中的每一个值对应策略空间中的一个参数
+
+    Returns
+    -------
+    result: float
+    策略参数对应的回测结果评分
+    """
+    op.set_opt_par_values(par_values=par_values)
+    # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
+    signal_length = op.get_signal_count()
+    stypes = np.zeros(signal_length, dtype=int)
+    s_indices = np.zeros(signal_length, dtype=int)
+    signals = np.zeros((signal_length, share_count), dtype=float)
+    signal_index = 0
+
+    for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+        stypes[signal_index] = SIGNAL_TYPE_ID[stype]
+        s_indices[signal_index] = s_index
+        signals[signal_index, :] = signal
+        signal_index += 1
+
+    # 3，调用backtest_batch_steps()进行回测，填充回测结果清单
+    closing_cash, closing_amounts = backtest_flash_steps(
+            signal_types=stypes,
+            op_signals=signals,
+            cash_investment_array=cash_investment_array,
+            cash_inflation_array=cash_inflation_array,
+            delivery_day_indicators=delivery_day_indicators,
+            trade_prices=trade_price_data,
+            cost_params=cost_params,
+            **signal_parsing_params,
+            **trading_moq_params,
+            **trading_delivery_params,
+    )
+
+    # DEBUG
+    # print(f'evaluating parameter in op {id(op)} with trade_price_data: {id(trade_price_data)}')
+
+    opti_target = 'fv'
+    if opti_target == 'fv':
+        result = (trade_price_data[-1] * closing_amounts).sum() + closing_cash
+    elif opti_target == 'vol':
+        raise NotImplementedError('Volatility calculation without Backtester is not implemented yet')
+    elif opti_target == 'mdd':
+        raise NotImplementedError('Max Drawdown calculation without Backtester is not implemented yet')
+    else:
+        raise ValueError(f'Unsupported optimization target: {opti_target}')
+
+    return result
 
 
 class Optimizer:
@@ -207,6 +282,7 @@ class Optimizer:
         self.op = op
         self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
         self.shares = shares
+        self.share_count = len(shares)
         self.opti_method = method
         self.opti_target = opti_target
         self.opti_direction = opti_direction
@@ -230,6 +306,7 @@ class Optimizer:
         self.cash_investment_array = None  # 现金投入数组
         self.cash_inflation_array = None  # 现金通胀数组
         self.delivery_day_indicators = None  # 交割日指标数组
+        self.trade_price_data: Optional[np.ndarray] = None  # 回测使用的价格数据数组
         self.running_backtester: Optional[Backtester] = None  # 优化区间或验证区间回测器对象
 
         # 优化配置属性
@@ -293,6 +370,7 @@ class Optimizer:
     def optimize(self,
                  trade_price_data:np.ndarray):
         # 创建一个Backtester对象用于优化区间的回测
+        self.trade_price_data = trade_price_data
         self.generate_running_backtester(
                 stage='optimization',
                 trade_price_data=trade_price_data,
@@ -346,6 +424,7 @@ class Optimizer:
                  trade_price_data:np.ndarray):
 
         # 创建一个Backtester对象用于验证区间的回测
+        self.trade_price_data = trade_price_data
         self.generate_running_backtester(
                 stage='validation',
                 trade_price_data=trade_price_data,
@@ -379,16 +458,76 @@ class Optimizer:
 
         Returns
         -------
+        result: float
+        策略参数对应的回测结果评分
         """
         self.op.set_opt_par_values(par_values=par_values)
         # 在优化区间进行回测
         self.running_backtester.run()
+        # DEBUG
+        # print(f'evaluating parameter in {id(self)} with backtester: {id(self.running_backtester)}')
         if self.opti_target == 'fv':
             result = self.running_backtester.trade_result_final_value()
         elif self.opti_target == 'vol':
             result = self.running_backtester.trade_result_volatility()
         elif self.opti_target == 'mdd':
             result = self.running_backtester.trade_result_max_drawdown()
+        else:
+            raise ValueError(f'Unsupported optimization target: {self.opti_target}')
+
+        return result
+
+    def _evaluate_parameter_no_backtester(self, par_values: tuple) -> float:
+        """ 本质上实现了与_evaluate_parameter相同的功能，但不使用Backtester对象进行回测，
+        而是直接调用Operator的信号生成，同时调用backtest.backtest_batch_steps()函数进行回测。
+        以降低多进程计算时Backtester对象传输的开销。
+
+        TODO：这个函数起不到预计的作用
+
+        Parameters
+        ----------
+        par_values: tuple
+            策略参数值元组，元组中的每一个值对应策略空间中的一个参数
+
+        Returns
+        -------
+        result: float
+        策略参数对应的回测结果评分
+        """
+        self.op.set_opt_par_values(par_values=par_values)
+        # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
+        signal_length = self.op.get_signal_count()
+        stypes = np.zeros(signal_length, dtype=int)
+        s_indices = np.zeros(signal_length, dtype=int)
+        signals = np.zeros((signal_length, self.share_count), dtype=float)
+        signal_index = 0
+
+        for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
+            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
+            s_indices[signal_index] = s_index
+            signals[signal_index, :] = signal
+            signal_index += 1
+
+        # 3，调用backtest_batch_steps()进行回测，填充回测结果清单
+        closing_cash, closing_amounts = backtest_flash_steps(
+                signal_types=stypes,
+                op_signals=signals,
+                cash_investment_array=self.cash_investment_array,
+                cash_inflation_array=self.cash_inflation_array,
+                delivery_day_indicators=self.delivery_day_indicators,
+                trade_prices=self.trade_price_data,
+                cost_params=self.cost_params,
+                **self.signal_parsing_params,
+                **self.trading_moq_params,
+                **self.trading_delivery_params,
+        )
+
+        if self.opti_target == 'fv':
+            result = (self.trade_price_data[-1] * closing_amounts).sum() + closing_cash
+        elif self.opti_target == 'vol':
+            raise NotImplementedError('Volatility calculation without Backtester is not implemented yet')
+        elif self.opti_target == 'mdd':
+            raise NotImplementedError('Max Drawdown calculation without Backtester is not implemented yet')
         else:
             raise ValueError(f'Unsupported optimization target: {self.opti_target}')
 
@@ -444,6 +583,10 @@ class Optimizer:
 
         """
 
+        # DEBUG
+        import tracemalloc
+        # tracemalloc.start()
+
         # 启用多进程计算方式利用所有的CPU核心计算
         if parallel:
             # 启用并行计算
@@ -466,6 +609,11 @@ class Optimizer:
                     leave_progress_bar=leave_progress_bar,
             )
 
+        # DEBUG
+        # current, peak = tracemalloc.get_traced_memory()
+        # print(f"Current memory usage {current / 1e6}MB; Peak: {peak / 1e6}MB")
+        # tracemalloc.stop()
+
     def _evaluate_parameters_parallel(self,
                                       total: int,
                                       par_value_list: Union[list, tuple, Generator],
@@ -477,14 +625,37 @@ class Optimizer:
         """
         i = 0
         best_so_far = 0
-
+        # TODO: 在parallel的情况下，不管是使用flash_evaluate函数还是使用Backtester，在实际执行过程中都会
+        #  出现overhead开销过大的问题，影响整体计算效率，同时导致pbar无法显示（提交完成后，计算早就全部完成了
+        #  ），试过使用函数代替Backtester或减少内存消耗量，但是无济于事，最终结果都一样。最后一个办法是使用
+        #  SharedMemory来实现函数调用，需要探索
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter_no_backtester
+        # eval_func = self._deep_evaluate_parameter if deep_eval else _flash_evaluate_parameter
+        # eval_func = _flash_evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
+            # if deep_eval:
+            #     futures = {proc_pool.submit(self._deep_evaluate_parameter, par): par for par in
+            #                par_value_list}
+            # else:
+            #     futures = {proc_pool.submit(_flash_evaluate_parameter,
+            #                                 self.op,
+            #                                 self.share_count,
+            #                                 self.cash_investment_array,
+            #                                 self.cash_inflation_array,
+            #                                 self.delivery_day_indicators,
+            #                                 self.trade_price_data,
+            #                                 self.cost_params,
+            #                                 self.signal_parsing_params,
+            #                                 self.trading_moq_params,
+            #                                 self.trading_delivery_params,
+            #                                 par): par for par in
+            #                par_value_list}
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
@@ -515,6 +686,8 @@ class Optimizer:
         best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter_no_backtester
+        # eval_func = self._deep_evaluate_parameter if deep_eval else _flash_evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
@@ -523,9 +696,22 @@ class Optimizer:
                 self.running_backtester.clear_backtest_buffers()
                 target_value = eval_func(par)
                 if deep_eval:
-                    perf, metrics = target_value
+                    perf, metrics = self._deep_evaluate_parameter(par)
                 else:
                     perf, metrics = target_value, None
+                    # perf = _flash_evaluate_parameter(
+                    #     self.op,
+                    #     self.share_count,
+                    #     self.cash_investment_array,
+                    #     self.cash_inflation_array,
+                    #     self.delivery_day_indicators,
+                    #     self.trade_price_data,
+                    #     self.cost_params,
+                    #     self.signal_parsing_params,
+                    #     self.trading_moq_params,
+                    #     self.trading_delivery_params,
+                    #     par)
+                    # metrics = None
                 result_pool.push(item=par, perf=perf, extra=metrics)
                 i += 1
                 if perf > best_so_far:
