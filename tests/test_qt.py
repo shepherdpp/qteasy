@@ -12,6 +12,8 @@ import unittest
 import sys
 import pandas as pd
 import numba as nb
+from tqdm import tqdm
+
 import qteasy as qt
 import numpy as np
 
@@ -572,9 +574,7 @@ class TestQT(unittest.TestCase):
         qt.configuration(up_to=1, default=True)
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20140601',
@@ -583,7 +583,6 @@ class TestQT(unittest.TestCase):
                test_end='20181130',
                test_cash_dates='20120604',
                test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
-               # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
@@ -619,6 +618,7 @@ class TestQT(unittest.TestCase):
                opti_method='grid',
                opti_sample_count=128,
                optimize_target='mdd',
+               optimize_direction='minimize',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -759,7 +759,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='incremental',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -774,7 +774,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='incremental',
                opti_type='multiple',
                test_type='single',
                opti_r_sample_count=100,
