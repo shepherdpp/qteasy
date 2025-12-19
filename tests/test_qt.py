@@ -578,7 +578,7 @@ class TestQT(unittest.TestCase):
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20140601',
-               opti_cash_dates='20120407',
+               opti_cash_dates='20120404',
                test_start='20120604',
                test_end='20181130',
                test_cash_dates='20120604',
