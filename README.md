@@ -5,7 +5,7 @@
 ![PyPI](https://img.shields.io/pypi/v/qteasy)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/qteasy)
 [![Build Status](https://app.travis-ci.com/shepherdpp/qteasy.svg?branch=master)](https://app.travis-ci.com/shepherdpp/qteasy)
-[![Documentation Status](https://readthedocs.org/projects/qteasy/badge/?version=latest)](https://qteasy.readthedocs.io/zh-cn/latest/)
+[![Documentation Status](https://readthedocs.org/projects/qteasy/badge/?version=latest)](https://qteasy.readthedocs.io/zh-cn/latest/?badge=latest)
 ![GitHub](https://img.shields.io/github/license/shepherdpp/qteasy)
 ![GitHub repo size](https://img.shields.io/github/repo-size/shepherdpp/qteasy)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shepherdpp/qteasy)
@@ -48,7 +48,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `1.4.10`
+- Latest Version: `2.0.0`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
