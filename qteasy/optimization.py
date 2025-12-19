@@ -477,62 +477,6 @@ class Optimizer:
 
         return result
 
-    def _evaluate_parameter_no_backtester(self, par_values: tuple) -> float:
-        """ 本质上实现了与_evaluate_parameter相同的功能，但不使用Backtester对象进行回测，
-        而是直接调用Operator的信号生成，同时调用backtest.backtest_batch_steps()函数进行回测。
-        以降低多进程计算时Backtester对象传输的开销。
-
-        TODO：这个函数起不到预计的作用
-
-        Parameters
-        ----------
-        par_values: tuple
-            策略参数值元组，元组中的每一个值对应策略空间中的一个参数
-
-        Returns
-        -------
-        result: float
-        策略参数对应的回测结果评分
-        """
-        self.op.set_opt_par_values(par_values=par_values)
-        # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
-        signal_length = self.op.get_signal_count()
-        stypes = np.zeros(signal_length, dtype=int)
-        s_indices = np.zeros(signal_length, dtype=int)
-        signals = np.zeros((signal_length, self.share_count), dtype=float)
-        signal_index = 0
-
-        for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
-            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
-            s_indices[signal_index] = s_index
-            signals[signal_index, :] = signal
-            signal_index += 1
-
-        # 3，调用backtest_batch_steps()进行回测，填充回测结果清单
-        closing_cash, closing_amounts = backtest_flash_steps(
-                signal_types=stypes,
-                op_signals=signals,
-                cash_investment_array=self.cash_investment_array,
-                cash_inflation_array=self.cash_inflation_array,
-                delivery_day_indicators=self.delivery_day_indicators,
-                trade_prices=self.trade_price_data,
-                cost_params=self.cost_params,
-                **self.signal_parsing_params,
-                **self.trading_moq_params,
-                **self.trading_delivery_params,
-        )
-
-        if self.opti_target == 'fv':
-            result = (self.trade_price_data[-1] * closing_amounts).sum() + closing_cash
-        elif self.opti_target == 'vol':
-            raise NotImplementedError('Volatility calculation without Backtester is not implemented yet')
-        elif self.opti_target == 'mdd':
-            raise NotImplementedError('Max Drawdown calculation without Backtester is not implemented yet')
-        else:
-            raise ValueError(f'Unsupported optimization target: {self.opti_target}')
-
-        return result
-
     def _deep_evaluate_parameter(self, par_values: tuple) -> tuple[float, dict]:
         """ 使用一组策略参数进行回测，并返回回测结果的数字评价结果及评价指标字典
 
@@ -656,6 +600,7 @@ class Optimizer:
             #                                 self.trading_delivery_params,
             #                                 par): par for par in
             #                par_value_list}
+            print(f'Submitted all tasks, total time consumption: {sec_to_duration(time.time() - st)}')
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
@@ -831,8 +776,7 @@ class Optimizer:
         base_space = space
         base_dimension = base_space.dim
         # 每一轮参数寻优后需要保留的参数组的数量
-        reduced_sample_count = int(sample_count * reduce_ratio)  # 每一轮保留的参数组数量为sample_count的一个比例
-        self.result_pool.capacity = reduced_sample_count  # 临时修改参数池的大小为reduced_sample_count
+        self.result_pool.capacity = sample_count  # 临时修改参数池的大小为reduced_sample_count
 
         spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
         space_count_in_round = 1  # 本轮运行子空间的数量
@@ -857,20 +801,27 @@ class Optimizer:
         # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
         while current_volume >= min_volume and current_round < max_rounds:
             epoch += 1
+            print(f'starting optimization epoch {epoch}, there are {space_count_in_round} spaces to search...,'
+                  f'space volume: {current_volume:.6f}, space sizes are {[s.size for s in spaces]}')
             # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
-            for space in tqdm(spaces, desc=f'Searching space', total=max_rounds):
+            par_list = list()
+            round_total = 0
+            for space in spaces:
                 # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
                 # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
                 par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')
-                self._evaluate_parameters(
-                        total=total,
-                        par_value_list=par_generator,
-                        result_pool=self.result_pool,
-                        parallel=parallel,
-                        epoch_id=epoch,
-                        leave_progress_bar=False,
-                )
-                self.result_pool.cut(self.search_config['maximize_target'])
+                par_list.extend(par_generator)
+                round_total += total
+
+            self._evaluate_parameters(
+                    total=round_total,
+                    par_value_list=par_list,
+                    result_pool=self.result_pool,
+                    parallel=parallel,
+                    epoch_id=epoch,
+                    leave_progress_bar=False,
+            )
+            self.result_pool.cut(self.search_config['maximize_target'])
             """
             为了生成新的子空间，计算下一轮子空间的半径大小
             为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
@@ -887,10 +838,11 @@ class Optimizer:
                   S = Si * ((rr ** k) / m) ** (1/d)
                   distance = S / 2
             """
-            size_reduce_ratio = ((reduce_ratio ** current_round) / reduced_sample_count) ** (1 / base_dimension)
+            size_reduce_ratio = ((reduce_ratio ** current_round) / sample_count) ** (1 / base_dimension)
             reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
             # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
             current_volume = 0
+            spaces.clear()
             for point in self.result_pool.items:
                 subspace = base_space.from_point(point=point, distance=reduced_size)
                 spaces.append(subspace)
