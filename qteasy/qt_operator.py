@@ -1028,62 +1028,6 @@ class Operator:
             if len(window_length) == 0:
                 raise ValueError(f'no strategy in operator uses data type {dtype}!')
             return max(window_length)
-    #
-    # def get_bt_price_type_id_in_priority(self, priority=None):
-    #     """ 根据字符串priority输出正确的回测交易价格ID
-    #
-    #     Parameters
-    #     ----------
-    #     priority: str,
-    #         优先级字符串
-    #         例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
-    #         价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
-    #
-    #     Returns
-    #     -------
-    #     sequence: list of int
-    #         返回一个list，包含每一个交易策略在回测时的执行先后顺序
-    #     """
-    #     if priority is None:
-    #         priority = 'OHLCAN'
-    #     price_priority_list = []
-    #     price_type_table = {
-    #         'O': ['open'],
-    #         'H': ['high'],
-    #         'L': ['low'],
-    #         'C': ['close', 'unit_nav', 'accum_nav'],
-    #     }
-    #     price_types = self.strategy_groups
-    #     for p_type in priority.upper():
-    #         price_type_names = price_type_table[p_type]
-    #         if all(price_type_name not in price_types for price_type_name in price_type_names):
-    #             continue
-    #         found_price_type_name = [price_type_name
-    #                                  for
-    #                                  price_type_name in price_type_names
-    #                                  if
-    #                                  price_type_name in price_types][0]
-    #         price_priority_list.append(price_types.index(found_price_type_name))
-    #     return price_priority_list
-    #
-    # def get_bt_price_types_in_priority(self, priority=None):
-    #     """ 根据字符串priority输出正确的回测交易价格
-    #
-    #     Parameters
-    #     ----------
-    #     priority: str,
-    #         优先级字符串
-    #         例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
-    #         价格执行顺序为['open', 'close'], 表示先处理open价格，再处理'close'价格
-    #
-    #     Returns
-    #     -------
-    #     sequence: list of str
-    #         返回一个list，包含每一个交易策略在回测时的执行先后顺序
-    #     """
-    #     price_types = self.strategy_groups
-    #     price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
-    #     return [price_types[i] for i in price_priority_list]
 
     def get_share_idx(self, share):
         """ 给定一个share（字符串）返回它对应的index
@@ -1740,6 +1684,8 @@ class Operator:
             例如：{'price': price_df, 'volume': volume_df, ...}
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
         """
+        # 清除原有的data_buffers
+        self.data_buffers = {}
         # 针对所有data_type，检查数据包的key是否都是str
         for key in data_package.keys():
             if not isinstance(key, str):
@@ -1932,3 +1878,89 @@ class Operator:
         from qteasy.optimization import Optimizer
         optimizer = Optimizer(op=self, method=method, **kwargs)
         return optimizer
+
+
+# TODO: SimpleOperator class也许在未来有用：这个Operator被用于
+#  快速运行交易策略，在不需要完整Operator功能的情况下，保持最基本的
+#  策略运行功能，保存策略运行所需的数据结构。在Optimizer中用于并行
+#  快速运行策略并回测。
+class SimpleOperator:
+    """轻量级Operator，仅包含策略运行所需的核心信息"""
+
+    def __init__(self, strategy_info):
+        """从完整Operator中提取必要信息
+
+        Parameters
+        ----------
+        strategy_info : dict
+            包含策略运行所需信息的字典
+        """
+        # 提取策略组信息
+        self._groups = strategy_info['groups']
+        self._group_merge_type = strategy_info['group_merge_type']
+        self.group_timing_table = strategy_info['group_timing_table']
+
+        # 提取数据相关信息
+        self.data_window_views = strategy_info['data_window_views']
+        self.data_window_indices = strategy_info['data_window_indices']
+
+    def get_signal_count(self, steps=None):
+        """获取信号数量"""
+        if self.group_timing_table is None:
+            raise ValueError("Group timing table is not set.")
+        if steps is not None:
+            running_schedule = self.group_timing_table.iloc[steps]
+        else:
+            running_schedule = self.group_timing_table
+
+        if self._group_merge_type == 'None':
+            return running_schedule.sum().sum()
+        else:
+            return len(running_schedule)
+
+    def run_strategies(self, steps):
+        """运行策略生成信号"""
+        for step in steps:
+            yield from self._run_strategy(step)
+
+    def _run_strategy(self, step_index):
+        """运行单步策略"""
+        if self.group_timing_table is None:
+            raise ValueError("Group timing table is not set.")
+
+        group_timing = self.group_timing_table.iloc[step_index].values
+        group_count = len(self._groups)
+        groups = [self._groups[i] for i in range(group_count) if group_timing[i]]
+
+        signal = 0 if self._group_merge_type == 'Or' else 1
+
+        for group in groups:
+            # 更新策略数据窗口
+            for strategy in group['members']:
+                strategy_id = strategy['strategy_id']
+                # 更新数据窗口（这里需要根据实际数据结构调整）
+                strategy.update_running_data_window(
+                                    data_windows=self.data_window_views[strategy.strategy_id],
+                                    window_indices=self.data_window_indices[strategy.strategy_id],
+                                    window_index=step_index,
+                                )
+
+            signal_type = group['signal_type']
+            # 生成信号（这里需要根据实际数据结构调整）
+            # signals = [stg.generate() for stg in group['members']]
+
+            if self._group_merge_type == 'None':
+                # signal = group['blender'](signals)
+                yield signal_type, step_index, signal
+            elif self._group_merge_type == 'Or':
+                signal += 1  # placeholder
+            elif self._group_merge_type == 'And':
+                signal *= 1  # placeholder
+
+        if self._group_merge_type != 'None':
+            yield signal_type, step_index, signal
+
+    def set_opt_par_values(self, par_values):
+        """设置优化参数值"""
+        # 实现参数设置逻辑
+        pass
