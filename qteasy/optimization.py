@@ -49,6 +49,13 @@ from qteasy.finance import (
 )
 
 
+_shared_op: Optional[Operator] = None
+_shared_cash_investment_array: Optional[np.ndarray] = None
+_shared_cash_inflation_array: Optional[np.ndarray] = None
+_shared_delivery_day_indicators: Optional[np.ndarray] = None
+_shared_trade_price_data: Optional[np.ndarray] = None
+
+
 # TODO: 这个函数有潜在大量运行的可能，需要使用Numba加速
 def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
@@ -105,13 +112,25 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     return mock_data
 
 
+def _initialize_worker(op,
+                       cash_investment_array,
+                       cash_inflation_array,
+                       delivery_day_indicators,
+                       trade_price_data,
+                       ) -> None:
+    """ Initialize shared memory for parallel workers"""
+    global _shared_op, _shared_cash_inflation_array, _shared_cash_investment_array, \
+        _shared_delivery_day_indicators, _shared_trade_price_data
+
+    _shared_op = op
+    _shared_cash_investment_array = cash_investment_array
+    _shared_cash_inflation_array = cash_inflation_array
+    _shared_delivery_day_indicators = delivery_day_indicators
+    _shared_trade_price_data = trade_price_data
+
+
 def _flash_evaluate_parameter(
-        op,
         share_count,
-        cash_investment_array,
-        cash_inflation_array,
-        delivery_day_indicators,
-        trade_price_data,
         cost_params,
         signal_parsing_params,
         trading_moq_params,
@@ -132,15 +151,18 @@ def _flash_evaluate_parameter(
     result: float
     策略参数对应的回测结果评分
     """
-    op.set_opt_par_values(par_values=par_values)
+    global _shared_op, _shared_cash_inflation_array, _shared_cash_investment_array, \
+        _shared_delivery_day_indicators, _shared_trade_price_data
+
+    _shared_op.set_opt_par_values(par_values=par_values)
     # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
-    signal_length = op.get_signal_count()
+    signal_length = _shared_op.get_signal_count()
     stypes = np.zeros(signal_length, dtype=int)
     s_indices = np.zeros(signal_length, dtype=int)
     signals = np.zeros((signal_length, share_count), dtype=float)
     signal_index = 0
 
-    for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+    for stype, s_index, signal in _shared_op.run_strategies(steps=range(len(_shared_op.group_timing_table))):
         stypes[signal_index] = SIGNAL_TYPE_ID[stype]
         s_indices[signal_index] = s_index
         signals[signal_index, :] = signal
@@ -150,10 +172,10 @@ def _flash_evaluate_parameter(
     closing_cash, closing_amounts = backtest_flash_steps(
             signal_types=stypes,
             op_signals=signals,
-            cash_investment_array=cash_investment_array,
-            cash_inflation_array=cash_inflation_array,
-            delivery_day_indicators=delivery_day_indicators,
-            trade_prices=trade_price_data,
+            cash_investment_array=_shared_cash_investment_array,
+            cash_inflation_array=_shared_cash_inflation_array,
+            delivery_day_indicators=_shared_delivery_day_indicators,
+            trade_prices=_shared_trade_price_data,
             cost_params=cost_params,
             **signal_parsing_params,
             **trading_moq_params,
@@ -165,7 +187,7 @@ def _flash_evaluate_parameter(
 
     opti_target = 'fv'
     if opti_target == 'fv':
-        result = (trade_price_data[-1] * closing_amounts).sum() + closing_cash
+        result = (_shared_trade_price_data[-1] * closing_amounts).sum() + closing_cash
     elif opti_target == 'vol':
         raise NotImplementedError('Volatility calculation without Backtester is not implemented yet')
     elif opti_target == 'mdd':
@@ -528,7 +550,7 @@ class Optimizer:
         """
 
         # DEBUG
-        import tracemalloc
+        # import tracemalloc
         # tracemalloc.start()
 
         # 启用多进程计算方式利用所有的CPU核心计算
@@ -578,22 +600,30 @@ class Optimizer:
         # eval_func = self._deep_evaluate_parameter if deep_eval else _flash_evaluate_parameter
         # eval_func = _flash_evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
+        # _initialize_worker(self.op,
+        #                    self.cash_investment_array,
+        #                    self.cash_inflation_array,
+        #                    self.delivery_day_indicators,
+        #                    self.trade_price_data)
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
+        # with ProcessPoolExecutor(initializer=_initialize_worker,
+        #                          initargs=(self.op,
+        #                                    self.cash_investment_array,
+        #                                    self.cash_inflation_array,
+        #                                    self.delivery_day_indicators,
+        #                                    self.trade_price_data)) as proc_pool:
+            st = time.time()
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
+            # TODO: 检查使用flash_evaluate_parameter函数时的效率问题
             # if deep_eval:
             #     futures = {proc_pool.submit(self._deep_evaluate_parameter, par): par for par in
             #                par_value_list}
             # else:
             #     futures = {proc_pool.submit(_flash_evaluate_parameter,
-            #                                 self.op,
             #                                 self.share_count,
-            #                                 self.cash_investment_array,
-            #                                 self.cash_inflation_array,
-            #                                 self.delivery_day_indicators,
-            #                                 self.trade_price_data,
             #                                 self.cost_params,
             #                                 self.signal_parsing_params,
             #                                 self.trading_moq_params,
