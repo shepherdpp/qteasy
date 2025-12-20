@@ -2131,9 +2131,6 @@ def run_mode_1(op, config):
     )
     op.create_data_windows()
 
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    op.is_ready(raise_error=True)
-
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
     backtested = op.backtest(
             shares=config['asset_pool'],
