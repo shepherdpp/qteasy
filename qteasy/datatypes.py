@@ -4386,7 +4386,7 @@ def get_history_data_from_source(
     # 调整start/end的时间，确保start的时间为00:00:01，end的时间为23:59:59，以便确保获取的数据与频率无关
     start_date = pd.to_datetime(start_date).replace(hour=0, minute=0, second=1)
     end_date = pd.to_datetime(end_date).replace(hour=23, minute=59, second=59)
-    print(f'adjusted start/end to {start_date} - {end_date}')
+    # print(f'adjusted start/end to {start_date} - {end_date}')
 
     if not htypes:
         raise ValueError(f'at least one DataType should be given, 0 is given!')
