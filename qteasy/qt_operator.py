@@ -186,7 +186,7 @@ class Operator:
         self._op_signal_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
         self._op_list_bt_indices = None  # deprecated
         self._op_signal_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
-        self._op_signal_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
+        # self._op_signal_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
 
         # stepwise模式下生成的单次交易信号以及相关信息
         # self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
@@ -533,26 +533,37 @@ class Operator:
             is_ready = False
 
         # 确认operator对象所有策略组都设置了混合器
-        group_no_blender = [g.name for g in self._groups if g.blender is None]
+        group_no_blender = [g.name for g in self._groups if (g.blender is None) and (g.strategy_count > 1)]
         if len(group_no_blender) > 0:
             message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
                            f'set!\n')
             is_ready = False
 
-        # 确认operator对象已经设置了数据缓存
-        if len(self.data_buffers) == 0 or self.data_buffers is None:
-            message.append(f'No data buffer -- data buffers are empty!\n')
-            is_ready = False
+        # 确认operator中每一个策略都已经设置了share_count及share_names属性，且所有share_count与所有len(share_names)相等
+        for stg in self.strategies:
+            if (stg.share_count == 0) or (stg.share_names is None):
+                message.append(f'Strategy ({stg.strategy_id}) share info not set -- share_count or share_names is None!\n')
+                is_ready = False
+            elif stg.share_count != len(stg.share_names):
+                message.append(f'Strategy ({stg.strategy_id}) share info invalid -- share_count ({stg.share_count}) '
+                               f'not equal to len(share_names) ({len(stg.share_names)})!\n')
+                is_ready = False
 
-        # 确认operator对象运行所需的数据窗口已经全部创建好
-        if len(self.data_window_views) == 0 or self.data_window_views is None:
-            message.append(f'No data window -- data window views are not created!\n')
-            is_ready = False
+        if self.all_strategy_data_types:
+            # 确认operator对象已经设置了数据缓存
+            if len(self.data_buffers) == 0 or self.data_buffers is None:
+                message.append(f'No data buffer -- data buffers are empty!\n')
+                is_ready = False
 
-        # 确认operator对象运行数据窗口的数据索引已经创建好
-        if len(self.data_window_indices) == 0 or self.data_window_indices is None:
-            message.append(f'No data indices -- data window indices are not set!\n')
-            is_ready = False
+            # 确认operator对象运行所需的数据窗口已经全部创建好
+            if len(self.data_window_views) == 0 or self.data_window_views is None:
+                message.append(f'No data window -- data window views are not created!\n')
+                is_ready = False
+
+            # 确认operator对象运行数据窗口的数据索引已经创建好
+            if len(self.data_window_indices) == 0 or self.data_window_indices is None:
+                message.append(f'No data indices -- data window indices are not set!\n')
+                is_ready = False
 
         # 确认operator对象运行数据窗口的数据索引是否合法
         if len(self.data_window_indices) > 0:
@@ -608,7 +619,6 @@ class Operator:
         self._op_signals = None
         self._op_signal_types = None
         self._op_signal_shares = {}
-        self._op_signal_hdates = {}
         raise NotImplementedError
 
     def __getitem__(self, item):
@@ -1046,22 +1056,22 @@ class Operator:
             return
         return self._op_signal_shares[share]
 
-    def get_hdate_idx(self, hdate):
-        """ 给定一个hdate（字符串）返回它对应的index
-
-        Parameters
-        ----------
-        hdate: str
-            hdate为一个字符串，表示交易日期
-
-        Returns
-        -------
-        int
-            返回一个整数，表示hdate对应的index
-        """
-        if self._op_signal_hdates == {}:
-            return
-        return self._op_signal_hdates[hdate]
+    # def get_hdate_idx(self, hdate):
+    #     """ 给定一个hdate（字符串）返回它对应的index
+    #
+    #     Parameters
+    #     ----------
+    #     hdate: str
+    #         hdate为一个字符串，表示交易日期
+    #
+    #     Returns
+    #     -------
+    #     int
+    #         返回一个整数，表示hdate对应的index
+    #     """
+    #     if self._op_signal_hdates == {}:
+    #         return
+    #     return self._op_signal_hdates[hdate]
 
     def set_opt_par_values(self, par_values):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1403,6 +1413,27 @@ class Operator:
         # 设置其他自定义参数
         strategy.set_custom_pars(**kwargs)
 
+    def set_shares(self, shares: list[str]):
+        """ 设置operator对象的交易标的列表
+
+        Parameters
+        ----------
+        shares: list of str
+            一个字符串列表，表示交易标的代码列表
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(shares, list):
+            raise TypeError(f'shares should be a list of strings, got {type(shares)} instead')
+        for share in shares:
+            if not isinstance(share, str):
+                raise TypeError(f'share should be a string, got {type(share)} instead')
+        self._op_signal_shares = {share: idx for idx, share in enumerate(shares)}
+        for strategy in self.strategies:
+            strategy.update_shares(len(shares), shares)
+
     def set_group_parameters(self,
                             group: Union[str, int],
                             run_timing: str = None,
@@ -1736,8 +1767,6 @@ class Operator:
         Also create data window indices for each strategy and its data types.
         data window indices are created according to group schedules.
         """
-        # DEBUG:
-        # print('creating data windows')
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before creating data windows.")
 
@@ -1770,9 +1799,6 @@ class Operator:
                         schedule_indices = np.searchsorted(window_schedules, running_schedule) - 1
 
                     self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
-                    # DEBUG:
-                    # print(f'Window indices for {strategy.strategy_id}/{strategy.name} on {data_type}: \n'
-                    #       f'{self.data_window_indices[strategy.strategy_id][data_type]}')
 
     def run_strategy(self,
                      step_index) -> Generator[Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
@@ -1846,6 +1872,7 @@ class Operator:
             step_index: int, 当前步骤的索引
             signal: np.ndarray, 交易信号，一组数字，在不同信号类型模式下表示不同的含义
         """
+
         self.is_ready(raise_error=True)
 
         for step in steps:

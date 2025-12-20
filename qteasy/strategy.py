@@ -679,6 +679,26 @@ class BaseStrategy:
         """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
         return self._get_pars_or_data(*dtype_id)
 
+    def update_shares(self, share_count, share_names=None):
+        """ 更新策略的股票数量和股票名称列表
+
+        Parameters
+        ----------
+        share_count: int
+            股票数量
+        share_names: list of str, optional
+            股票名称列表，如果没有提供，则使用默认的股票名称列表
+
+        Returns
+        -------
+        None
+        """
+        self._share_count = share_count
+        if share_names is not None:
+            self._share_names = share_names
+        else:
+            self._share_names = [f'Share_{i+1}' for i in range(share_count)]
+
     def update_data_types(self,
                           dtype_id=None,
                           *,
@@ -802,12 +822,9 @@ class BaseStrategy:
 
     def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
         """ 将策略的历史数据更新为window_index指定的历史数据"""
-        data_window = None
         for dtype_name in self.data_types:
             data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
             setattr(self, dtype_name, data_window)
-        self._share_count = data_window.shape[1] if data_window is not None else 0
-        self._share_names = data_window.index.tolist() if isinstance(data_window, pd.DataFrame) else None
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -1249,8 +1266,6 @@ class RuleIterator(BaseStrategy):
         for dtype_name in self.data_types:
             data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
             self._data_windows[dtype_name] = data_window
-            self._share_count = data_window.shape[1] if data_window is not None else 0
-            self._share_names = data_window.index.tolist() if isinstance(data_window, pd.DataFrame) else None
 
     def generate(self):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开

@@ -1018,7 +1018,7 @@ class Backtester:
         # 2，从operator对象读取交易运行计划和时间表，获取交易信号长度，生成用于存储交易信号和持仓数据的表格
         self.op_schedule = op.group_timing_table.index
         self.n_signals = op.get_signal_count()
-        self.share_count = len(shares)
+        self.share_count = len(self.shares)
 
         # 3.1 现金和股票持仓历史记录表
         shape_assets = (self.n_signals + 1, self.share_count)
@@ -1048,13 +1048,14 @@ class Backtester:
 
     def run(self) -> 'Backtester':
         """ 执行回测计算，生成回测结果数据并存入对象属性中"""
+        self.op.set_shares(self.shares)
 
-        # 4，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
+        # 1，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
         if self.op.check_dynamic_data():
             if self.logger is not None:
                 self.logger.info('Backtest operator with dynamic data dependence...')
             signals = self._backtest_static_operator()
-        # 5，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
+        # 2，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
         else:
             if self.logger is not None:
                 self.logger.info('Backtest operator without dynamic data dependence...')
@@ -1098,7 +1099,10 @@ class Backtester:
         for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
-            signals[signal_index, :] = signal
+            try:
+                signals[signal_index, :] = signal
+            except:
+                import pdb; pdb.set_trace()
             signal_index += 1
         et = time.time()
         self.op_run_time = et - st
