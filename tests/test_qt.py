@@ -138,7 +138,7 @@ class Cross_SMA_PS(qt.RuleIterator):
                 ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=200,
         )
         if par_values:
@@ -775,8 +775,6 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method='incremental',
-               opti_type='multiple',
-               test_type='single',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -794,9 +792,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='grid',
                opti_output_count=20,
                opti_sample_count=200,
                opti_start='20120404',
@@ -808,9 +804,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='montecarlo',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -828,9 +822,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='grid',
                opti_output_count=20,
                opti_sample_count=200,
                opti_start='20120404',
@@ -842,9 +834,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='montecarlo',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -875,6 +865,7 @@ class TestQT(unittest.TestCase):
         with tqdm(total=len(all_built_ins)) as pbar:
             for strategy in all_built_ins:
                 op = qt.Operator(strategies=[strategy])
+                op.set_blender('s0', 'Group_1')  #TODO: blender can be missing if only one strategy?
                 res = qt.run(
                         op,
                         mode=1,
@@ -944,7 +935,7 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=0.4)
         # op.set_parameter('signal_none', par_values=())
-        op.set_blender('avg(s0, s1, s2)', 'ls')
+        op.set_blender('avg(s0, s1)', 'Group_1')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
@@ -1116,6 +1107,7 @@ class TestQT(unittest.TestCase):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
         op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
         op.set_parameter(0, par_values=(23, 100, 0.02))
+        op.set_blender('s0', group_id='Group_1')
         res = qt.run(op,
                      mode=1,
                      invest_start='20060101',
@@ -1216,6 +1208,7 @@ class TestQT(unittest.TestCase):
                          max_sel_count=300)
         res = qt.run(op,
                      mode=1,
+                     asset_pool=qt.filter_stock_codes(index='000300.SH', date='20220103'),
                      visual=True,
                      trade_log=True)
 

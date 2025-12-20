@@ -1524,7 +1524,7 @@ def trade_time_index(start=None,
     """
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
-        freq = str(freq).lower()
+        freq = str(freq)#.lower()
     # 检查时间序列区间的开闭状况
     closed = 'both'
     if include_start:
