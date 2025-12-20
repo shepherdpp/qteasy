@@ -2330,7 +2330,7 @@ def _adjust_freq(hist_data: pd.DataFrame,
         if target_freq in ['W', 'W-SUN']:
             target_freq = 'W-FRI'
         elif target_freq == 'M':
-            target_freq = 'BM'
+            target_freq = 'BME'
     # 如果hist_data的freq与target_freq一致，也可以直接返回
     # TODO: 这里有bug：强制start/end的情形需要排除
     if hist_data.index.freqstr == target_freq:
@@ -2666,9 +2666,10 @@ def get_history_panel(
     if freq is not None:
         different_freq_dtypes = [dtype for dtype in data_types if dtype.freq != freq]
         if different_freq_dtypes:
-            warn(f'Some datatypes ({different_freq_dtypes}) do not match the frequency '
-                 f'you requested to acquire({freq}),\n'
-                 f'They will be re-sampled to match requested frequency!')
+            #     warn(f'Some datatypes ({different_freq_dtypes}) do not match the frequency '
+            #          f'you requested to acquire({freq}),\n'
+            #          f'They will be re-sampled to match requested frequency!')
+            pass
 
     if shares:
         # 在这里获取有share的数据，但是注意，因为这里选择将相同name但是不同资产类型的数据合并到一起

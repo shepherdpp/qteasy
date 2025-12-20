@@ -322,11 +322,11 @@ class CROSSLINE(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        s, l, m = self.get_pars('s', 'l', 'f')
+        s, l, m = self.get_pars('s', 'l', 'm')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = self.get_data('close_ANY_d')
         # 计算长短均线之间的距离
-        diff = (sma(h[0], l) - sma(h[0], s))[-1]
+        diff = (sma(h, l) - sma(h, s))[-1]
         m = m * l
         if diff < -m:
             return 1
@@ -420,13 +420,13 @@ class SoftBBand(RuleIterator):
     def realize(self):
         p, u, d, m = self.get_pars('p', 'u', 'd', 'm')
         h = self.get_data('close_ANY_d')
-        hi, mid, low = bbands(h[0], p, u, d, m)
+        hi, mid, low = bbands(h, p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
         # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的33.3%
-        if h[0][-1] < low[-1]:
+        if h[-1] < low[-1]:
             sig = -0.333
-        elif h[0][-1] > hi[-1]:
+        elif h[-1] > hi[-1]:
             sig = 0.1
         else:
             sig = 0
@@ -466,8 +466,7 @@ class BBand(RuleIterator):
                 ],
                 name='BBand',
                 description='BBand strategy, determine long/short position according to Bollinger bands',
-                data_freq='d',
-                strategy_run_freq='d',
+                run_freq='d',
                 window_length=270,
                 data_types=[DataType('close', freq='d', asset_type='ANY')],  # single data input
         )
@@ -478,8 +477,7 @@ class BBand(RuleIterator):
         span, upper, lower = self.get_pars('span', 'upper', 'lower')
 
         # 计算指数的指数移动平均价格
-        h = self.get_data('close_ANY_d')
-        price = h[0]
+        price = self.get_data('close_ANY_d')
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断:
         # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
@@ -533,9 +531,9 @@ class SCRSSMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        rng, = self.get_pars('rng')
+        rng = self.get_pars('rng')
         h = self.get_data('close_ANY_d')
-        diff = (sma(h[0], rng) - h[0])[-1]
+        diff = (sma(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -573,9 +571,9 @@ class SCRSDEMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        rng, = self.get_pars('rng')
+        rng = self.get_pars('rng')
         h = self.get_data('close_ANY_d')
-        diff = (dema(h[0], rng) - h[0])[-1]
+        diff = (dema(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -615,9 +613,9 @@ class SCRSEMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        rng, = self.get_pars('rng')
+        rng = self.get_pars('rng')
         h = self.get_data('close_ANY_d')
-        diff = (ema(h[0], rng) - h[0])[-1]
+        diff = (ema(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -661,7 +659,7 @@ class SCRSHT(RuleIterator):
 
     def realize(self):
         h = self.get_data('close_ANY_d')
-        diff = (ht(h[0]) - h[0])[-1]
+        diff = (ht(h) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -702,9 +700,9 @@ class SCRSKAMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        rng, = self.get_pars('rng')
+        rng = self.get_pars('rng')
         h = self.get_data('close_ANY_d')
-        diff = (kama(h[0], rng) - h[0])[-1]
+        diff = (kama(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -749,7 +747,7 @@ class SCRSMAMA(RuleIterator):
     def realize(self):
         f, s = self.get_pars('f', 's')
         h = self.get_data('close_ANY_d')
-        diff = (mama(h[0], f, s)[0] - h[0])[-1]
+        diff = (mama(h, f, s)[0] - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -793,7 +791,7 @@ class SCRST3(RuleIterator):
     def realize(self):
         p, v = self.get_pars('p', 'v')
         h = self.get_data('close_ANY_d')
-        diff = (t3(h[0], p, v) - h[0])[-1]
+        diff = (t3(h, p, v) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -834,9 +832,9 @@ class SCRSTEMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
+        p = self.get_pars('p')
         h = self.get_data('close_ANY_d')
-        diff = (tema(h[0], p) - h[0])[-1]
+        diff = (tema(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -877,9 +875,9 @@ class SCRSTRIMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
+        p = self.get_pars('p')
         h = self.get_data('close_ANY_d')
-        diff = (trima(h[0], p) - h[0])[-1]
+        diff = (trima(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -920,9 +918,9 @@ class SCRSWMA(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
+        p = self.get_pars('p')
         h = self.get_data('close_ANY_d')
-        diff = (wma(h[0], p) - h[0])[-1]
+        diff = (wma(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -975,7 +973,7 @@ class DCRSSMA(RuleIterator):
     def realize(self):
         l, s = self.get_pars('l', 's')
         h = self.get_data('close_ANY_d')
-        diff = (sma(h[0], l) - sma(h[0], s))[-1]
+        diff = (sma(h, l) - sma(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1020,7 +1018,7 @@ class DCRSDEMA(RuleIterator):
     def realize(self):
         l, s = self.get_pars('l', 's')
         h = self.get_data('close_ANY_d')
-        diff = (dema(h[0], l) - dema(h[0], s))[-1]
+        diff = (dema(h, l) - dema(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1057,7 +1055,7 @@ class DCRSEMA(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - EMA',
                 description='Double moving average strategy that uses EMA as the trade line',
-                data_types='close',
+                data_types=[DataType('close', freq='d', asset_type='ANY')],
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1065,7 +1063,7 @@ class DCRSEMA(RuleIterator):
     def realize(self):
         l, s = self.get_pars('l', 's')
         h = self.get_data('close_ANY_d')
-        diff = (ema(h[0], l) - ema(h[0], s))[-1]
+        diff = (ema(h, l) - ema(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1110,7 +1108,7 @@ class DCRSKAMA(RuleIterator):
     def realize(self):
         l, s = self.get_pars('l', 's')
         h = self.get_data('close_ANY_d')
-        diff = (kama(h[0], l) - kama(h[0], s))[-1]
+        diff = (kama(h, l) - kama(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1159,7 +1157,7 @@ class DCRSMAMA(RuleIterator):
     def realize(self):
         lf, ls, sf, ss = self.get_pars('lf', 'ls', 'sf', 'ss')
         h = self.get_data('close_ANY_d')
-        diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
+        diff = (mama(h, lf, ls)[0] - mama(h, sf, ss)[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -1200,7 +1198,7 @@ class DCRST3(RuleIterator):
                 ],
                 name='DOUBLE CROSSLINE - T3',
                 description='Double moving average strategy that uses T3 line as the trade line',
-                data_types='close',
+                data_types=[DataType('close', freq='d', asset_type='ANY')],
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -1208,7 +1206,7 @@ class DCRST3(RuleIterator):
     def realize(self):
         lp, lv, sp, sv = self.get_pars('lp', 'lv', 'sp', 'sv')
         h = self.get_data('close_ANY_d')
-        diff = (t3(h[0], lp, lv) - t3(h[0], sp, sv))[-1]
+        diff = (t3(h, lp, lv) - t3(h, sp, sv))[-1]
         if diff < 0:
             return 1
         else:
@@ -1253,7 +1251,7 @@ class DCRSTEMA(RuleIterator):
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
         h = self.get_data('close_ANY_d')
-        diff = (tema(h[0], lp) - tema(h[0], sp))[-1]
+        diff = (tema(h, lp) - tema(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1298,7 +1296,7 @@ class DCRSTRIMA(RuleIterator):
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
         h = self.get_data('close_ANY_d')
-        diff = (trima(h[0], lp) - trima(h[0], sp))[-1]
+        diff = (trima(h, lp) - trima(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1343,7 +1341,7 @@ class DCRSWMA(RuleIterator):
     def realize(self):
         lp, sp = self.get_pars('lp', 'sp')
         h = self.get_data('close_ANY_d')
-        diff = (wma(h[0], lp) - wma(h[0], sp))[-1]
+        diff = (wma(h, lp) - wma(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1397,7 +1395,7 @@ class SLPSMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = sma(h[0], f)
+        curve = sma(h, f)
         # TODO 取N个最近的curve点进行线性回归
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1447,7 +1445,7 @@ class SLPDEMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = dema(h[0], f)
+        curve = dema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1497,7 +1495,7 @@ class SLPEMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = ema(h[0], f)
+        curve = ema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1548,9 +1546,9 @@ class SLPHT(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('N')
+        n = self.get_pars('N')
         h = self.get_data('close_ANY_d').T
-        curve = ht(h[0])
+        curve = ht(h)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1601,7 +1599,7 @@ class SLPKAMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = kama(h[0], f)
+        curve = kama(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1653,7 +1651,7 @@ class SLPMAMA(RuleIterator):
     def realize(self):
         f, s, n = self.get_pars('f', 's', 'N')
         h = self.get_data('close_ANY_d')
-        curve = mama(h[0], f, s)[0]
+        curve = mama(h, f, s)[0]
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1705,7 +1703,7 @@ class SLPT3(RuleIterator):
     def realize(self):
         p, v, n = self.get_pars('p', 'v', 'N')
         h = self.get_data('close_ANY_d')
-        curve = t3(h[0], p, v)
+        curve = t3(h, p, v)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1741,7 +1739,7 @@ class SLPTEMA(RuleIterator):
     def __init__(self, par_values=(6, 5)):
         super().__init__(
                 pars=[
-                    Parameter((2, 20), name='p', par_type='int'),
+                    Parameter((2, 20), name='f', par_type='int'),
                     Parameter((2, 20), name='N', par_type='int'),
                 ],
                 name='SLOPE - TEMA',
@@ -1755,7 +1753,7 @@ class SLPTEMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = ema(h[0], f)
+        curve = ema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1805,7 +1803,7 @@ class SLPTRIMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = trima(h[0], f)
+        curve = trima(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1855,7 +1853,7 @@ class SLPWMA(RuleIterator):
     def realize(self):
         f, n = self.get_pars('f', 'N')
         h = self.get_data('close_ANY_d')
-        curve = wma(h[0], f)
+        curve = wma(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1908,8 +1906,8 @@ class SAREXT(RuleIterator):
 
     def realize(self):
         a, m = self.get_pars('a', 'm')
-        h = self.get_data('close_ANY_d')
-        sar = sarext(h[0], h[1], a, m)[-1]
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        sar = sarext(high, low, a, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
         # 当指标小于0时，输出空头
@@ -2015,7 +2013,7 @@ class TRIX(RuleIterator):
         s, m = self.get_pars('s', 'm')
         h = self.get_data('close_ANY_d')
 
-        trx = trix(h[0], s) * 100
+        trx = trix(h, s) * 100
         matrix = sma(trx, m)
         if trx[-1] > matrix[-1]:
             return 1
@@ -2053,7 +2051,7 @@ class ADX(RuleIterator):
                 name='ADX',
                 description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2063,9 +2061,9 @@ class ADX(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
-        res = adx(h[0], h[1], h[2], p)[-1]
+        p = self.get_pars('p')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = adx(high, low, close, p)[-1]
         # TODO 策略:
         #  指标比较复杂，需要深入研究一下
         #  指标大于25时属于强趋势。。。未完待续
@@ -2120,7 +2118,7 @@ class APO(RuleIterator):
     def realize(self):
         f, s, m = self.get_pars('f', 's', 'm')
         h = self.get_data('close_ANY_d')
-        res = apo(h[0], f, s, m)[-1]
+        res = apo(h, f, s, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
         # 当指标小于0时，输出空头
@@ -2165,7 +2163,7 @@ class AROON(RuleIterator):
                 name='AROON',
                 description='Aroon, determine buy/sell signals according to AROON Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                 ],
@@ -2174,9 +2172,9 @@ class AROON(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
-        h = self.get_data('high_ANY_d', 'low_ANY_d')
-        ups, dns = aroon(h[0], h[1], p)
+        p = self.get_pars('p')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        ups, dns = aroon(high, low, p)
 
         if ups[-1] > dns[-1]:
             cat = 0.5
@@ -2223,7 +2221,7 @@ class AROONOSC(RuleIterator):
                 name='AROON Oscillator',
                 description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                 ],
@@ -2232,9 +2230,9 @@ class AROONOSC(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
-        h = self.get_data('close_ANY_d')
-        res = aroonosc(h[0], h[1], p)[-1]
+        p = self.get_pars('p')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        res = aroonosc(high, low, p)[-1]
 
         if res > 0:
             cat = 0.5
@@ -2281,7 +2279,7 @@ class CCI(RuleIterator):
                 name='CCI',
                 description='CCI, determine long/short positions according to CC Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2291,9 +2289,9 @@ class CCI(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
-        res = cci(h[0], h[1], h[2], p)[-1]
+        p = self.get_pars('p')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = cci(high, low, close, p)[-1]
 
         if res > 0:
             cat = 0.5
@@ -2346,9 +2344,9 @@ class CMO(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
+        p = self.get_pars('p')
         h = self.get_data('close_ANY_d')
-        res = cmo(h[0], p)[-1]
+        res = cmo(h, p)[-1]
 
         if 50 > res > 0:
             cat = 0.5
@@ -2410,7 +2408,7 @@ class MACDEXT(RuleIterator):
     def realize(self):
         fp, ft, sp, st, p, t = self.get_pars('fp', 'ft', 'sp', 'st', 'p', 't')
         h = self.get_data('close_ANY_d')
-        m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)
+        m, sig, hist = macdext(h, fp, ft, sp, st, p, t)
         if m[-1] > 0:
             cat = 1
         else:
@@ -2447,7 +2445,7 @@ class MFI(RuleIterator):
                 name='MFI',
                 description='MFI, determine buy/sell signals according to MFI Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2458,9 +2456,9 @@ class MFI(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
-        res = mfi(h[0], h[1], h[2], h[3], p)[-1]
+        p = self.get_pars('p')
+        high, low, close, volume = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        res = mfi(high, low, close, volume, p)[-1]
 
         if res < 20:
             sig = 0.1
@@ -2502,7 +2500,7 @@ class DI(RuleIterator):
                 name='DI',
                 description='DI, determine long/short positions according to +/- DI Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2513,9 +2511,9 @@ class DI(RuleIterator):
 
     def realize(self):
         n, p, = self.get_pars('n', 'p')
-        h = self.get_data('close_ANY_d')
-        ndi = minus_di(h[0], h[1], h[2], n)[-1]
-        pdi = plus_di(h[0], h[1], h[2], p)[-1]
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        ndi = minus_di(high, low, close, n)[-1]
+        pdi = plus_di(high, low, close, p)[-1]
 
         if pdi > ndi:
             cat = 1
@@ -2559,7 +2557,7 @@ class DM(RuleIterator):
                 name='DM',
                 description='DM, determine long/short positions according to +/- DM Indicators',
                 window_length=200,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                 ],
@@ -2569,9 +2567,9 @@ class DM(RuleIterator):
 
     def realize(self):
         n, p, = self.get_pars('n', 'p')
-        h = self.get_data('close_ANY_d')
-        ndm = minus_dm(h[0], h[1], n)[-1]
-        pdm = plus_dm(h[0], h[1], p)[-1]
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        ndm = minus_dm(high, low, n)[-1]
+        pdm = plus_dm(high, low, p)[-1]
 
         if pdm > ndm:
             cat = 1
@@ -2618,9 +2616,9 @@ class MOM(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        p, = self.get_pars('p')
+        p = self.get_pars('p')
         h = self.get_data('close_ANY_d')
-        res = mom(h[0], p)[-1]
+        res = mom(h, p)[-1]
 
         if res > 0:
             cat = 1
@@ -2674,7 +2672,7 @@ class PPO(RuleIterator):
     def realize(self):
         fp, sp, m = self.get_pars('fp', 'sp', 'm')
         h = self.get_data('close_ANY_d')
-        res = ppo(h[0], fp, sp, m)[-1]
+        res = ppo(h, fp, sp, m)[-1]
 
         if res > 0:
             cat = 1
@@ -2728,7 +2726,7 @@ class RSI(RuleIterator):
     def realize(self):
         p, ulim, llim = self.get_pars('p', 'ulim', 'llim')
         h = self.get_data('close_ANY_d')
-        res = rsi(h[0], p)[-1]
+        res = rsi(h, p)[-1]
 
         if res > ulim:
             cat = 1
@@ -2777,7 +2775,7 @@ class STOCH(RuleIterator):
                 name='Stochastic',
                 description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2788,8 +2786,8 @@ class STOCH(RuleIterator):
 
     def realize(self):
         fk, sk, skm, sd, sdm = self.get_pars('fk', 'sk', 'skm', 'sd', 'sdm')
-        h = self.get_data('close_ANY_d', 'high_EANYd', 'low_ANY_d')
-        k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        k, d = stoch(high, low, close, fk, sk, skm, sd, sdm)
 
         if k[-1] > 80:
             sig = -0.3
@@ -2834,7 +2832,7 @@ class STOCHF(RuleIterator):
                 name='Fast Stochastic',
                 description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2845,8 +2843,8 @@ class STOCHF(RuleIterator):
 
     def realize(self):
         fk, fd, fdm = self.get_pars('fk', 'fd', 'fdm')
-        h = self.get_data('close_ANY_d')
-        k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        k, d = stochf(high, low, close, fk, fd, fdm)
 
         if k[-1] > 80:
             sig = -0.3
@@ -2901,7 +2899,7 @@ class STOCHRSI(RuleIterator):
     def realize(self):
         p, fk, fd, fdm = self.get_pars('p', 'fk', 'fd', 'fdm')
         h = self.get_data('close_ANY_d')
-        k, d = stochrsi(h[0], p, fk, fd, fdm)
+        k, d = stochrsi(h, p, fk, fd, fdm)
 
         if k[-1] > 0.8:
             sig = -0.3
@@ -2949,7 +2947,7 @@ class ULTOSC(RuleIterator):
                 name='Ultimate Oscillator',
                 description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -2960,8 +2958,8 @@ class ULTOSC(RuleIterator):
 
     def realize(self):
         p1, p2, p3, u, l = self.get_pars('p1', 'p2', 'p3', 'u', 'l')
-        h = self.get_data('close_ANY_d')
-        res = ultosc(h[0], h[1], h[2], p1, p2, p3)[-1]
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = ultosc(high, low, close, p1, p2, p3)[-1]
 
         if res > u:
             sig = -0.3
@@ -3005,7 +3003,7 @@ class WILLR(RuleIterator):
                 name='Williams\' R',
                 description='Williams R, determine buy/sell signals according to Williams R',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -3016,8 +3014,8 @@ class WILLR(RuleIterator):
 
     def realize(self):
         p, u, l = self.get_pars('p', 'u', 'l')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
-        res = willr(h[0], h[1], h[2], p)[-1]
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = willr(high, low, close, p)[-1]
         if res > -l:
             sig = -0.3
         elif res < -u:
@@ -3060,7 +3058,7 @@ class AD(RuleIterator):
                 name='AD',
                 description='Accumulation Distribution Line Strategy',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -3069,8 +3067,8 @@ class AD(RuleIterator):
         )
 
     def realize(self):
-        h = self.get_data('close_ANY_d', 'high_EANYd', 'low_ANY_d', 'volume_ANY_d')
-        ad_val = ad(h[0], h[1], h[2], h[3])
+        high, low, close, vol = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        ad_val = ad(high, low, close, vol)
         ad_last, ad_latest = ad_val[-2], ad_val[-1]
         if ad_last > ad_latest:
             sig = -0.3
@@ -3114,7 +3112,7 @@ class ADOSC(RuleIterator):
                 name='A/D Oscillator',
                 description='Accumulation Distribution Line Oscillator',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -3126,8 +3124,8 @@ class ADOSC(RuleIterator):
 
     def realize(self):
         f, s = self.get_pars('f', 's')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
-        res = adosc(h[0], h[1], h[2], h[3], f, s)[-1]
+        high, low, close, vol = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        res = adosc(high, low, close, vol, f, s)[-1]
         if res > 0:
             sig = -0.3
         elif res < 0:
@@ -3171,7 +3169,7 @@ class OBV(RuleIterator):
                 name='OBV',
                 description='On-Balance Volume Strategy',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('close', freq='d', asset_type='ANY'),
                     DataType('volume', freq='d', asset_type='ANY'),
                 ],
@@ -3180,9 +3178,8 @@ class OBV(RuleIterator):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
-        h = self.get_data('close_ANY_d', 'volume_ANY_d')
-        close, volume = h[0], h[1]
+        n = self.get_pars('n')
+        close, volume = self.get_data('close_ANY_d', 'volume_ANY_d')
         obv_ma = sma(obv(close, volume), n)
         close_ma = sma(close, n)
         obv_trend_up = obv_ma[-1] <= obv_ma[-2]
@@ -3238,7 +3235,7 @@ class ATR(RuleIterator):
                 name='ATR',
                 description='Average True Range Strategy',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('high', freq='d', asset_type='ANY'),
                     DataType('low', freq='d', asset_type='ANY'),
                     DataType('close', freq='d', asset_type='ANY'),
@@ -3249,8 +3246,7 @@ class ATR(RuleIterator):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
-        high, low, close = h[0], h[1], h[2]
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         atr_value = atr(high, low, close, n)
         close_ma = sma(close, n)
         atr_trend_up = atr_value[-1] <= atr_value[-2]
@@ -3276,7 +3272,7 @@ class NATR(RuleIterator):
                 name='OBV',
                 description='On-Balance Volume Strategy',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('close', freq='d', asset_type='ANY'),
                     DataType('volume', freq='d', asset_type='ANY'),
                 ],
@@ -3296,7 +3292,7 @@ class TRANGE(RuleIterator):
                 name='OBV',
                 description='On-Balance Volume Strategy',
                 window_length=100,
-                strategy_data_types=[
+                data_types=[
                     DataType('close', freq='d', asset_type='ANY'),
                     DataType('volume', freq='d', asset_type='ANY'),
                 ],
@@ -3749,9 +3745,9 @@ class SelectingAvgIndicator(FactorSorter):
                 ],
                 name='FINANCE',
                 description='GeneralStg share_pool according to financial indicator PE',
-                run_freq='Y',
+                run_freq='M',
                 window_length=90,
-                data_types=DataType('pe'),
+                data_types=DataType('pe', freq='d', asset_type='ANY'),
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -3762,7 +3758,7 @@ class SelectingAvgIndicator(FactorSorter):
         #  因为数据的ID是可以由用户改变的
         dtype_id = self.data_type_ids
         h = self.get_data(dtype_id[0])
-        factors = np.nanmean(h, axis=1)
+        factors = np.nanmean(h, axis=0)
 
         return factors
 
@@ -3811,7 +3807,7 @@ class SelectingNDayLast(FactorSorter):
                 ],
                 name='N-DAY LAST',
                 description='Select stocks according their previous prices',
-                run_freq='m',
+                run_freq='M',
                 window_length=100,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
@@ -3819,8 +3815,8 @@ class SelectingNDayLast(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
-        factors = self.get_data('close_ANY_d')[:, -n - 1, 0]
+        n = self.get_pars('n')
+        factors = self.get_data('close_ANY_d')[-n - 1]
 
         return factors
 
@@ -3877,9 +3873,9 @@ class SelectingNDayAvg(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
-        n_average = h[:, -n - 1:, 0].mean(axis=1)
+        n_average = h[-n - 1:-1].mean(axis=0)
         factors = n_average
 
         return factors
@@ -3938,10 +3934,10 @@ class SelectingNDayChange(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
-        current_price = h[:, -1, 0]
-        n_previous = h[:, -n - 1, 0]
+        current_price = h[-1]
+        n_previous = h[-n - 1]
         factors = current_price - n_previous
 
         return factors
@@ -4000,10 +3996,10 @@ class SelectingNDayRateChange(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
-        current_price = h[:, -1, 0]
-        n_previous = h[:, -n - 1, 0]
+        current_price = h[-1]
+        n_previous = h[-n - 1]
         factors = (current_price - n_previous) / n_previous
 
         return factors
@@ -4062,12 +4058,12 @@ class SelectingNDayVolatility(FactorSorter):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
 
         high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
-        factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[:, -1]
+        factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[-1]
 
         return factors
 
