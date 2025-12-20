@@ -864,7 +864,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         download_batch_interval=download_batch_interval,
                 ):
                     completed += 1
-                    kwargs = res['kwargs']
+                    kwargs = tuple(res['kwargs'].values())
                     data = res['data'].dropna(axis=1, how='all')  # 删除全为空的列以便满足未来concat函数的要求，避免FutureWarning
                     if not data.empty:
                         df_concat_list.append(data)
@@ -877,7 +877,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         )
                         df_concat_list = []
                         total_written += rows_affected
-                    pbar.set_description(f'<{table}>({kwargs}) {total_written} wrn')
+                    pbar.set_description(f'<{table}>{kwargs} {total_written} wrn')
                     pbar.update()
 
             except Exception as e:
