@@ -48,7 +48,6 @@ from qteasy.finance import (
     CashPlan,
 )
 
-
 _shared_op: Optional[Operator] = None
 _shared_cash_investment_array: Optional[np.ndarray] = None
 _shared_cash_inflation_array: Optional[np.ndarray] = None
@@ -213,6 +212,7 @@ class Optimizer:
                  op: Operator,
                  method: str,
                  shares: list[str],
+                 benchmark: pd.DataFrame,
                  pool_size: int,
                  opti_target: str,
                  opti_direction: str,
@@ -227,8 +227,10 @@ class Optimizer:
                  signal_parsing_params: dict,  # 交易信号解析参数
                  trading_moq_params: dict,  # 交易最小单位参数
                  trading_delivery_params: dict,  # 交易交割参数
-                 search_config:dict,
-                 logger: Optional[logging.Logger] = None):
+                 search_config: dict,
+                 logger: Optional[logging.Logger] = None,
+                 evaluate_indicators: str = 'r,m,v,b',
+                 test_plot_type: str = 'histo'):
         """初始化Optimizer对象，设置基本参数
 
         Parameters
@@ -246,6 +248,8 @@ class Optimizer:
                 'aco'：蚁群优化算法
         shares: list[str]
             交易标的列表，包含所有交易标的的代码
+        benchmark: str
+            交易业绩评价基准数据类型，一个股票代码或基金代码
         pool_size: int
             优化结果池的大小，表示在优化过程中保存的最佳参数组合数量
         opti_target: str
@@ -278,7 +282,12 @@ class Optimizer:
         trading_delivery_params: dict
             交易交割参数字典，包含交易交割相关的所有参数，通常是parse_trading_delivery_params()函数的输出
         logger: Optional[logging.Logger]
-            可选的日志记录器对象，用于记录回测过程中的日志信息"""
+            可选的日志记录器对象，用于记录回测过程中的日志信息
+        evaluate_indicators: Optional[str], default 'r,m,v,b'
+            优化结果评价指标清单
+        test_plot_type: Optional[str], default 'histo'
+            优化结果图表显示类型
+            """
 
         # 参数基础校验
         assert isinstance(op, Operator), "op must be an instance of Operator"
@@ -305,6 +314,7 @@ class Optimizer:
         self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
         self.shares = shares
         self.share_count = len(shares)
+        self.benchmark = benchmark
         self.opti_method = method
         self.opti_target = opti_target
         self.opti_direction = opti_direction
@@ -333,6 +343,8 @@ class Optimizer:
 
         # 优化配置属性
         self.search_config = search_config
+        self.evaluate_indicators = evaluate_indicators
+        self.test_plot_type = test_plot_type
 
         # 用于存储优化结果参数的属性
         self.result_pool = ResultPool(capacity=pool_size)
@@ -342,9 +354,13 @@ class Optimizer:
         self.current_parameters = None  # 当前优化参数
         self.best_parameters = None  # 最佳优化参数
         self.best_performance = None  # 最佳性能评分
+        self.opti_time = 0.0  # 优化时间记录
+        self.eval_time = 0.0  # 优化结果评价时间记录
+        self.test_time = 0.0  # 测试时间记录
 
     def generate_running_backtester(self,
                                     stage: str,
+                                    benchmark_data: pd.DataFrame,
                                     trade_price_data: np.ndarray) -> None:
         """ 根据指定的阶段生成对应的Backtester回测器对象
 
@@ -352,6 +368,8 @@ class Optimizer:
         ----------
         stage: str
             回测阶段，取值为 'optimization' 或 'validation'，分别表示优化区间回测器和验证区间回测器
+        benchmark_data: pd.DataFrame
+            交易业绩评价基准数据，一组与输出信号等时段的价格变动表或收益率变动表
         trade_price_data: np.ndarray
             交易价格数据数组，用于回测的价格数据
 
@@ -386,15 +404,21 @@ class Optimizer:
                 trading_moq_params=self.trading_moq_params,
                 trading_delivery_params=self.trading_delivery_params,
                 trade_price_data=trade_price_data,
+                benchmark_data=benchmark_data,
                 logger=self.logger,
         )
 
     def optimize(self,
-                 trade_price_data:np.ndarray):
+                 benchmark_data: pd.DataFrame,
+                 trade_price_data: np.ndarray) -> 'Optimizer':
+
+        self.op.set_shares(self.shares)
+        self.op.is_ready(raise_error=True)
         # 创建一个Backtester对象用于优化区间的回测
         self.trade_price_data = trade_price_data
         self.generate_running_backtester(
                 stage='optimization',
+                benchmark_data=benchmark_data,
                 trade_price_data=trade_price_data,
         )
         self.result_pool.clear()
@@ -402,7 +426,7 @@ class Optimizer:
         s_ranges, s_types = self.op.opt_space_par
         search_space = Space(*s_ranges,
                              par_types=s_types)  # 生成参数空间
-
+        st = time.time()
         if self.opti_method == 'grid':
             self._search_grid(space=search_space)
         elif self.opti_method == 'montecarlo':
@@ -423,7 +447,7 @@ class Optimizer:
             self._search_knn(space=search_space)
         else:
             raise ValueError(f'Unsupported optimization method: {self.opti_method}')
-
+        self.opti_time = time.time() - st
         # deep evaluate all selected parameters on test set
         par_value_list = self.result_pool.items
         total = self.result_pool_size
@@ -437,18 +461,21 @@ class Optimizer:
                 parallel=self.parallel,
                 deep_eval=True,
         )
-        et = time.time()
-        print(f'\nEvaluation completed, total time consumption: {sec_to_duration(et - st)}')
+        self.eval_time = time.time() - st
 
         return self
 
     def validate(self,
-                 trade_price_data:np.ndarray):
+                 benchmark_data: pd.DataFrame,
+                 trade_price_data: np.ndarray) -> 'Optimizer':
 
+        self.op.set_shares(self.shares)
+        self.op.is_ready(raise_error=True)
         # 创建一个Backtester对象用于验证区间的回测
         self.trade_price_data = trade_price_data
         self.generate_running_backtester(
                 stage='validation',
+                benchmark_data=benchmark_data,
                 trade_price_data=trade_price_data,
         )
         self.validated_pool.clear()
@@ -464,11 +491,9 @@ class Optimizer:
                 parallel=self.parallel,
                 deep_eval=True,
         )
-        et = time.time()
-        print(f'\nValidation completed, total time consumption: {sec_to_duration(et - st)}')
+        self.test_time = time.time() - st
 
-        print(f'\nValidation Results:\n'
-              f'{self.validated_pool}')
+        return self
 
     def _evaluate_parameter(self, par_values: tuple) -> float:
         """ 使用一组策略参数进行回测，并返回回测结果的简易评价结果即一个数字评分
@@ -511,9 +536,26 @@ class Optimizer:
         -------
         """
         perf = self._evaluate_parameter(par_values)
-        metrics = self.running_backtester.evaluate_result(indicators='r,v,m')
+        metrics = self.running_backtester.evaluate_result(indicators=self.evaluate_indicators)
 
-        return perf, metrics
+        # 特殊处理回测评价结果，使其符合优化结果表的生成需要
+        metrics_to_pop = ['peak_date', 'valley_date', 'recover_date',
+                          'worst_drawdowns', 'return_df', 'skew', 'kurtosis']
+        for metric in metrics_to_pop:
+            if metric in metrics.keys():
+                metrics.pop(metric)
+
+        if 'oper_count' in metrics.keys():
+            oper_count = metrics.pop('oper_count')
+            metrics['sell_count'] = oper_count.sell.sum()
+            metrics['buy_count'] = oper_count.buy.sum()
+        else:
+            metrics['sell_count'] = 0
+            metrics['buy_count'] = 0
+
+        metrics['par'] = par_values
+
+        return perf, metrics.copy()
 
     def _evaluate_parameters(self,
                              total: int,
@@ -608,12 +650,12 @@ class Optimizer:
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
-        # with ProcessPoolExecutor(initializer=_initialize_worker,
-        #                          initargs=(self.op,
-        #                                    self.cash_investment_array,
-        #                                    self.cash_inflation_array,
-        #                                    self.delivery_day_indicators,
-        #                                    self.trade_price_data)) as proc_pool:
+            # with ProcessPoolExecutor(initializer=_initialize_worker,
+            #                          initargs=(self.op,
+            #                                    self.cash_investment_array,
+            #                                    self.cash_inflation_array,
+            #                                    self.delivery_day_indicators,
+            #                                    self.trade_price_data)) as proc_pool:
             st = time.time()
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
@@ -724,7 +766,7 @@ class Optimizer:
                 result_pool=self.result_pool,
                 parallel=self.parallel
         )
-        # import pdb; pdb.set_trace()
+
         self.result_pool.cut(keep_largest=self.search_config['maximize_target'])
         et = time.time()
         print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
@@ -764,8 +806,6 @@ class Optimizer:
     def _search_incremental(self,
                             space: Space) -> None:
         """ 最优参数搜索算法3: 增量递进搜索法
-
-        TODO: 当numpy版本高于1.21时，这个算法在parallel==True时会有极大的效率损失，应优化
 
         该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
         而且每一轮搜索都（大概率）更接近全局最优解。
@@ -988,22 +1028,45 @@ class Optimizer:
         """
         raise NotImplementedError
 
-    def report_result(self) -> str:
-        """
+    def report_result(self, stage: str) -> str:
+        """ 根据优化结果池生成优化结果报告字符串
 
-            :return:
-            """
+        Parameters
+        ----------
+        stage: str
+            报告阶段，取值为 'optimization' 或 'validation'，分别表示优化区间报告和验证区间报告
+
+        Returns
+        -------
+        report_string: str
+            优化结果报告字符串
+        """
         from qteasy.visual import opti_result_str
-        str = opti_result_str(
-                result=self.result_pool
+        result = self.result_pool.extra if stage == 'optimization' else self.validated_pool.extra
+        report_string = opti_result_str(
+                result=result,
+                name='Validation report' if stage == 'validation' else 'Optimization report',
+                benchmark=self.benchmark,
+                opti_time=self.opti_time,
+                eval_time=self.eval_time,
         )
 
-    def plot_result(self):
-        """
+        return report_string
 
-        :return:
+    def plot_result(self) -> None:
+        """ 根据优化结果池生成优化结果图表
+
+
         """
-        raise NotImplementedError
+        from qteasy.visual import _plot_test_result
+        _plot_test_result(
+                plot_type=self.test_plot_type,
+                opti_eval_res=self.result_pool.extra,
+                test_eval_res=self.validated_pool.extra,
+                opti_duration=self.opti_time,
+                eval_duration=self.eval_time,
+                test_duration=self.test_time,
+        )
 
     AVAILABLE_OPTIMIZERS = {
         'grid':        _search_grid,

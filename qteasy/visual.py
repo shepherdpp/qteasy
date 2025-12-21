@@ -43,7 +43,6 @@ from qteasy.tafuncs import (
     sma,
 )
 
-
 register_matplotlib_converters()
 
 ValidCandlePlotIndicators = ['macd',
@@ -883,7 +882,6 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     return data, parameter_string
 
 
-# TODO: 这个函数被Backtester调用，成为Backtester.plot()方法
 def _plot_loop_result(
         loop_results: dict,
         plot_title: str = 'Backtest Result',
@@ -1223,10 +1221,13 @@ def _plot_loop_result(
     plt.show()
 
 
-# TODO: 这个函数被Optimizer调用，成为Optimizer.plot()方法
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
-                      config=None):
+                      plot_title: str = 'Optimization & Validation',
+                      plot_type: str = '',
+                      opti_duration: float = 0.0,
+                      eval_duration: float = 0.0,
+                      test_duration: float = 0.0):
     """ 输出优化后参数的测试结果
 
     Parameters
@@ -1235,8 +1236,6 @@ def _plot_test_result(opti_eval_res: list,
         优化后参数的测试结果
     test_eval_res : list optional
         测试结果
-    config : dict optional
-        配置参数
 
     Returns
     -------
@@ -1260,8 +1259,8 @@ def _plot_test_result(opti_eval_res: list,
     test_complete_value_results = [result['complete_values'] for result in valid_test_eval_res]
     first_opti_looped_values = opti_complete_value_results[0]
     first_test_looped_values = test_complete_value_results[0]
-    opti_reference = first_opti_looped_values.reference
-    test_reference = first_test_looped_values.reference
+    opti_reference = first_opti_looped_values.benchmark
+    test_reference = first_test_looped_values.benchmark
     complete_reference = opti_reference.reindex(opti_reference.index.union(test_reference.index))
     complete_reference.loc[np.isnan(complete_reference)] = test_reference
     # matplotlib 所需固定操作
@@ -1273,22 +1272,30 @@ def _plot_test_result(opti_eval_res: list,
 
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle(f'Optimization Test Results - {result_count} sets of strategy parameters', fontsize=14, fontweight=10)
+    fig.suptitle(f'{plot_title} - {result_count} sets of strategy parameters', fontsize=14, fontweight=10)
 
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
-    fig.text(0.07, 0.91, f'opti periods: {valid_opti_eval_res[0]["years"]:.1f} years, '
-                         f'from: {valid_opti_eval_res[0]["loop_start"].date()} to '
-                         f'{valid_opti_eval_res[0]["loop_end"].date()}  '
+    opti_duration_str = parse_periods_string(
+            years=valid_opti_eval_res[0]["years"],
+            months=valid_opti_eval_res[0]["months"],
+            days=valid_opti_eval_res[0]["days"],
+    )
+    test_duration_str = parse_periods_string(
+            years=valid_test_eval_res[0]["years"],
+            months=valid_test_eval_res[0]["months"],
+            days=valid_test_eval_res[0]["days"],
+    )
+    fig.text(0.07, 0.91, f'opti periods: {opti_duration_str}'
+                         f'from: {valid_opti_eval_res[0]["backtest_start"].date()} to '
+                         f'{valid_opti_eval_res[0]["backtest_end"].date()}  '
+                         f'test periods: {test_duration_str}'
+                         f'from: {valid_test_eval_res[0]["backtest_start"].date()} to '
+                         f'{valid_test_eval_res[0]["backtest_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {sec_to_duration(valid_opti_eval_res[0]["op_run_time"])};'
-                         f'  back test:{sec_to_duration(valid_opti_eval_res[0]["loop_run_time"])}\n'
-                         f'test periods: {valid_test_eval_res[0]["years"]:.1f} years, '
-                         f'from: {valid_test_eval_res[0]["loop_start"].date()} to '
-                         f'{valid_test_eval_res[0]["loop_end"].date()}  '
-                         f'time consumed:'
-                         f'  signal creation: {sec_to_duration(valid_test_eval_res[0]["op_run_time"])};'
-                         f'  back test:{sec_to_duration(valid_test_eval_res[0]["loop_run_time"])}')
+                         f'  optimization: {sec_to_duration(opti_duration)};'
+                         f'  evaluation:{sec_to_duration(eval_duration)}\n'
+                         f'  testing: {sec_to_duration(test_duration)}')
 
     # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
@@ -1392,71 +1399,71 @@ def _plot_test_result(opti_eval_res: list,
             ax.set_ylabel(f'{name}')
             ax.yaxis.tick_right()
             # 根据config中设置的参数，选择生成三种不同类型的图表之一
-            p_type = config.indicator_plot_type
+            p_type = plot_type
             # 在图表中应该舍去np.inf值，暂时将inf作为na值处理，因此可以使用dropna()去除inf值
-            with pd.option_context('mode.use_inf_as_na', True):
-                # TODO: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version.
-                #  Convert inf values to NaN before operating instead.
-                opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
-                test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
-                opti_v = opti_indicator_df[name].fillna(np.nan)
-                test_v = test_indicator_df[name].fillna(np.nan)
-                if p_type == 0 or p_type == 'errorbar':
-                    max_v = np.nanmax(opti_v)
-                    min_v = np.nanmin(opti_v)
-                    mean = np.nanmean(opti_v)
-                    std = np.nanstd(opti_v)
-                    ax.errorbar(1, mean, std, fmt='ok', lw=3)
-                    ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
-                                label=opti_label)
-                    max_v = np.nanmax(test_v)
-                    min_v = np.nanmin(test_v)
-                    mean = np.nanmean(test_v)
-                    std = np.nanstd(test_v)
-                    ax.errorbar(2, mean, std, fmt='ok', lw=3)
-                    ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
-                                label=test_label)
-                    ax.set_xlim(0, 3)
-                    labels = ['opti', 'test']
-                    ax.set_xticks(np.arange(1, len(labels) + 1))
-                    ax.set_xticklabels(labels)
-                    ax.set_xlim(0.25, len(labels) + 0.75)
-                    ax.legend()
-                elif p_type == 1 or p_type == 'scatter':
-                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
-                        ax.scatter(opti_v, test_v,
-                                   label=name, marker='^', alpha=0.9)
-                    ax.set_title(opti_label)
-                    ax.set_ylabel(test_label)
-                    ax.legend()
-                elif p_type == 2 or p_type == 'histo':
-                    if not all(pd.isna(opti_v)):
-                        ax.hist(opti_v, bins=15, alpha=0.5,
-                                label=opti_label)
-                    if not all(pd.isna(test_v)):
-                        ax.hist(test_v, bins=15, alpha=0.5,
-                                label=test_label)
-                    ax.legend()
-                elif p_type == 3 or p_type == 'violin':
-                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
-                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
-                                               columns=[opti_label, test_label])
-                    ax.violinplot(data_df)
-                    labels = ['opti', 'test']
-                    ax.set_xticks(np.arange(1, len(labels) + 1))
-                    ax.set_xticklabels(labels)
-                    ax.set_xlim(0.25, len(labels) + 0.75)
-                    ax.legend()
-                else:
-                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
-                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
-                                               columns=[opti_label, test_label])
-                    ax.boxplot(data_df)
-                    labels = ['opti', 'test']
-                    ax.set_xticks(np.arange(1, len(labels) + 1))
-                    ax.set_xticklabels(labels)
-                    ax.set_xlim(0.25, len(labels) + 0.75)
-                    ax.legend()
+            opti_indicator_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+            test_indicator_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+            opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
+            test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
+            opti_v = opti_indicator_df[name].fillna(np.nan)
+            test_v = test_indicator_df[name].fillna(np.nan)
+            if p_type == 0 or p_type == 'errorbar':
+                max_v = np.nanmax(opti_v)
+                min_v = np.nanmin(opti_v)
+                mean = np.nanmean(opti_v)
+                std = np.nanstd(opti_v)
+                ax.errorbar(1, mean, std, fmt='ok', lw=3)
+                ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
+                            label=opti_label)
+                max_v = np.nanmax(test_v)
+                min_v = np.nanmin(test_v)
+                mean = np.nanmean(test_v)
+                std = np.nanstd(test_v)
+                ax.errorbar(2, mean, std, fmt='ok', lw=3)
+                ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
+                            label=test_label)
+                ax.set_xlim(0, 3)
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
+                ax.legend()
+            elif p_type == 1 or p_type == 'scatter':
+                if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                    ax.scatter(opti_v, test_v,
+                               label=name, marker='^', alpha=0.9)
+                ax.set_title(opti_label)
+                ax.set_ylabel(test_label)
+                ax.legend()
+            elif p_type == 2 or p_type == 'histo':
+                if not all(pd.isna(opti_v)):
+                    ax.hist(opti_v, bins=15, alpha=0.5,
+                            label=opti_label)
+                if not all(pd.isna(test_v)):
+                    ax.hist(test_v, bins=15, alpha=0.5,
+                            label=test_label)
+                ax.legend()
+            elif p_type == 3 or p_type == 'violin':
+                if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                    data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                           columns=[opti_label, test_label])
+                ax.violinplot(data_df)
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
+                ax.legend()
+            else:
+                if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                    data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                           columns=[opti_label, test_label])
+                ax.boxplot(data_df)
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
+                ax.legend()
 
     plt.show()
 
@@ -1511,7 +1518,6 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'\n      ===========END OF REPORT=============\n')
 
 
-# TODO: 这个函数被Backtester调用，是Backtester.report()方法
 def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> Optional[str]:
     """ 生成单次回测的结果格式化输出，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致，输出结果可以直接打印到控制台或者写入文件
@@ -1539,21 +1545,16 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
 
     looped_values = loop_results['complete_values']
     report_string = ''
-    report_string += f'\n' \
-                     f'     ====================================\n' \
-                     f'     |                                  |\n' \
-                     f'     |       BACK TESTING RESULT        |\n' \
-                     f'     |                                  |\n' \
-                     f'     ===================================='
+    report_string += report_header('Backtest Report')
     report_string += f'\nqteasy running mode: 1 - History back testing\n' \
-          f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n' \
-          f'time consumption for operation back testing:  {sec_to_duration(loop_results["loop_run_time"])}\n'
+                     f'time consumption for operate signal creation: {sec_to_duration(loop_results["op_run_time"])}\n' \
+                     f'time consumption for operation back testing:  {sec_to_duration(loop_results["loop_run_time"])}\n'
     report_string += f'investment starts on      {looped_values.index[0]}\n' \
-          f'ends on                   {looped_values.index[-1]}\n' \
-          f'Total looped periods:     {loop_results["years"]:.1f} years.'
+                     f'ends on                   {looped_values.index[-1]}\n' \
+                     f'Total looped periods:     {loop_results["years"]:.1f} years.'
     report_string += f'\n-------------operation summary:------------\n' \
-          f'Only non-empty shares are displayed, call \n' \
-          f'"loop_result["oper_count"]" for complete operation summary\n'
+                     f'Only non-empty shares are displayed, call \n' \
+                     f'"loop_result["oper_count"]" for complete operation summary\n'
     op_summary = loop_results['oper_count']
     op_summary = op_summary.loc[op_summary['empty'] != 1.0]
     report_string += op_summary.to_string(
@@ -1601,12 +1602,12 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
         report_string += f'\n    recovered on:         {loop_results["recover_date"].date()}\n'
     else:
         report_string += f'\n    recovered on:         Not recovered!\n'
-    report_string += f'\n===========END OF REPORT=============\n'
+    report_string += report_ending()
 
     return report_string
 
 
-def opti_result_str(result, config=None, columns=None, headers=None, formatter=None):
+def opti_result_str(result, *, name='optimization report', benchmark=None, opti_time=0., eval_time=0., formatter=None) -> str:
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出
@@ -1615,73 +1616,116 @@ def opti_result_str(result, config=None, columns=None, headers=None, formatter=N
     ----------
     result: dict
         回测结果
-    config: dict, optional
-        输出的列名
-    columns: list, optional, to be implemented
-        输出的列名
-    headers: list, optional, to be implemented
-        输出的表头
+    name: str, optional
+        报告名称
+    benchmark: str, optional
+        业绩回报基准名称
+    opti_time: float, optional, default=0.
+        优化运行时长，单位为秒
+    eval_time: float, optional, default=0.
+        评价运行时长，单位为秒
     formatter: list, optional, to be implemented
         输出的格式化函数
 
     Returns
     -------
-    None
+    report_string: str
+        格式化输出字符串
     """
     result = pd.DataFrame(result)
     first_res = result.iloc[0]
-    ref_rtn, ref_annual_rtn = first_res['ref_rtn'], first_res['ref_annual_rtn']
-    if config is None:
-        from qteasy import QT_CONFIG
-        config = QT_CONFIG
+    benchmark_rtn, benchmark_a_rtn = first_res['benchmark_rtn'], first_res['benchmark_a_rtn']
+    periods_string = parse_periods_string(result.years[0], result.months[0], result.days[0])
 
-    print(f'\n'
-          f'==================================== \n'
-          f'|                                  |\n'
-          f'|       OPTIMIZATION RESULT        |\n'
-          f'|                                  |\n'
-          f'====================================')
-    print(f'\nqteasy running mode: 2 - Strategy Parameter Optimization\n')
-    print(f'investment starts on {first_res["loop_start"]}\nends on {first_res["loop_end"]}\n'
-          f'Total looped periods: {result.years[0]:.1f} years.')
-    print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
-    print(f'Reference index type is {config.benchmark_asset} at {config.benchmark_asset_type}\n'
-          f'Total Benchmark rtn: {ref_rtn :.2%} \n'
-          f'Average Yearly Benchmark rtn rate: {ref_annual_rtn:.2%}')
-    print(f'statistical analysis of optimal strategy messages indicators: \n'
-          f'total return:        {result.rtn.mean():.2%} ±'
-          f' {result.rtn.std():.2%}\n'
-          f'annual return:       {result.annual_rtn.mean():.2%} ±'
-          f' {result.annual_rtn.std():.2%}\n'
-          f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
-          f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
-          f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'
-          f'Info ratio:          {result["info"].mean():.3f} ± {result["info"].std():.3f}\n'
-          f'250 day volatility:  {result.volatility.mean():.3f} ± {result.volatility.std():.3f}\n'
-          f'other messages indicators are listed in below table\n')
+    report_string = report_header(report_name=name)
+    report_string += (f'\nqteasy running mode: 2 - Strategy Parameter Optimization\n'
+                      f'time consumption for optimization: {sec_to_duration(opti_time)}\n'
+                      f'time consumption for evaluation:   {sec_to_duration(eval_time)}\n')
+    report_string += (f'investment starts on {first_res["backtest_start"]}\nends on {first_res["backtest_end"]}\n'
+                      f'Total looped periods: {periods_string}')
+    report_string += f'total investment amount: ¥{result.total_invest[0]:13,.2f}'
+    report_string += (f'Benchmark type is {benchmark}\n'
+                      f'Total Benchmark rtn: {benchmark_rtn :.2%} \n'
+                      f'Average Yearly Benchmark rtn rate: {benchmark_a_rtn:.2%}')
+    report_string += (f'statistical analysis of optimal strategy messages indicators: \n'
+                      f'total return:        {result.rtn.mean():.2%} ±'
+                      f' {result.rtn.std():.2%}\n'
+                      f'annual return:       {result.annual_rtn.mean():.2%} ±'
+                      f' {result.annual_rtn.std():.2%}\n'
+                      f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
+                      f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
+                      f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'
+                      f'Info ratio:          {result["info"].mean():.3f} ± {result["info"].std():.3f}\n'
+                      f'250 day volatility:  {result.volatility.mean():.3f} ± {result.volatility.std():.3f}\n'
+                      f'other messages indicators are listed in below table\n')
     # result.sort_values(by='final_value', ascending=False, inplace=True)
-    print(result.to_string(columns=["par",
-                                    "sell_count",
-                                    "buy_count",
-                                    "total_fee",
-                                    "final_value",
-                                    "rtn",
-                                    "ref_rtn",
-                                    "mdd"],
-                           header=["Strategy items",
-                                   "Sell-outs",
-                                   "Buy-ins",
-                                   "ttl-fee",
-                                   "FV",
-                                   "ROI",
-                                   "Benchmark rtn",
-                                   "MDD"],
-                           formatters={'total_fee':   '{:,.2f}'.format,
-                                       'final_value': '{:,.2f}'.format,
-                                       'rtn':         '{:.1%}'.format,
-                                       'mdd':         '{:.1%}'.format,
-                                       'ref_rtn':     '{:.1%}'.format,
-                                       'sell_count':  '{:.1f}'.format,
-                                       'buy_count':   '{:.1f}'.format},
-                           justify='center'))
-    print(f'\n===========END OF REPORT=============\n')
+    report_string += (result.to_string(columns=["par",
+                                                "sell_count",
+                                                "buy_count",
+                                                "total_fee",
+                                                "final_value",
+                                                "rtn",
+                                                "mdd"],
+                                       header=["Strategy items",
+                                               "Sell-outs",
+                                               "Buy-ins",
+                                               "ttl-fee",
+                                               "FV",
+                                               "ROI",
+                                               "MDD"],
+                                       formatters={'total_fee':   '{:,.2f}'.format,
+                                                   'final_value': '{:,.2f}'.format,
+                                                   'rtn':         '{:.1%}'.format,
+                                                   'mdd':         '{:.1%}'.format,
+                                                   'sell_count':  '{:.1f}'.format,
+                                                   'buy_count':   '{:.1f}'.format},
+                                       justify='center'))
+    report_string += report_ending()
+
+    return report_string
+
+
+def parse_periods_string(years: float, months: float, days: float) -> str:
+
+    if years > 1.0:
+        return f'{years:.1f} years.'
+    elif months > 1.0:
+        return f'{months:.1f} months.'
+    else:
+        return f'{days:.1f} days.'
+
+
+def report_header(report_name) -> str:
+    """ 生成报告标题字符串
+
+    Parameters
+    ----------
+    report_name: str
+        报告名称
+
+    Returns
+    -------
+    header_string: str
+        报告标题字符串
+    """
+    report_name = report_name.upper()
+    header_string = (f'\n'
+                     f'====================================\n'
+                     f'|                                  |\n'
+                     f'|{report_name:^34}|\n'
+                     f'|                                  |\n'
+                     f'====================================')
+    return header_string
+
+
+def report_ending() -> str:
+    """ 生成报告结尾字符串
+
+    Returns
+    -------
+    enning_string: str
+        报告结尾字符串
+    """
+    enning_string = (f'\n\n'
+                     f'{"END OF REPORT":=^50}\n')
+    return enning_string
