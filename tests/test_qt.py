@@ -151,11 +151,11 @@ class Cross_SMA_PS(qt.RuleIterator):
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度
         """
         f, s, m = self.get_pars('f', 's', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         # 计算长短均线的当前值和昨天的值
         sma = qt.tafuncs.sma
-        s_ma = sma(h[0], s)
-        f_ma = sma(h[0], f)
+        s_ma = sma(h, s)
+        f_ma = sma(h, f)
 
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
@@ -197,7 +197,7 @@ class Cross_SMA_PT(qt.RuleIterator):
                 ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types=DataType('close', freq='d', asset_type='E'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=200,
         )
         if par_values:
@@ -209,7 +209,7 @@ class Cross_SMA_PT(qt.RuleIterator):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
         f, s, m = self.get_pars('f', 's', 'm')
-        h = self.get_data('close_E_d')
+        h = self.get_data('close_ANY_d')
         # 计算长短均线的当前值
         sma = qt.tafuncs.sma
         s_ma = sma(h[0], s)[-1]
@@ -251,7 +251,7 @@ class MyStg(qt.RuleIterator):
                 ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                data_types=DataType('close'),
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=200,
         )
         if par_values:
@@ -264,10 +264,10 @@ class MyStg(qt.RuleIterator):
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
         f, s, m = self.get_pars('f', 's', 'm')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = self.get_data('close_E_d')  # 取最近200个交易日的数据进行计算
+        h = self.get_data('close_ANY_d')  # 取最近200个交易日的数据进行计算
         # 计算长短均线的当前值
-        s_ma = sma(h[0], s)[-1]
-        f_ma = sma(h[0], f)[-1]
+        s_ma = sma(h, s)[-1]
+        f_ma = sma(h, f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)
@@ -288,6 +288,7 @@ class StgBuyOpen(GeneralStg):
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='OPEN_BUY',
                 run_timing='open',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 use_latest_data_cycle=False,
         )
         if par_values:
@@ -295,9 +296,9 @@ class StgBuyOpen(GeneralStg):
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_day_price = h[-n]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全0
@@ -322,15 +323,16 @@ class StgSelClose(GeneralStg):
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='SELL_CLOSE',
                 run_timing='close',
+                data_types=DataType('close', freq='d', asset_type='ANY')
         )
         if par_values:
             self.update_par_values(*par_values)
 
     def realize(self):
         n, = self.get_pars('n')
-        h = self.get_data('close_E_d')
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_day_price = h[-n]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全-1
@@ -582,7 +584,6 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                test_cash_dates='20120604',
-               test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
@@ -1127,7 +1128,7 @@ class TestQT(unittest.TestCase):
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
         op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
-        op.set_parameter(0, (23, 100, 0.02))
+        op.set_parameter(0, par_values=(23, 100, 0.02))
         res = qt.run(op, mode=1,
                      invest_start='20060101',
                      allow_sell_short=False,

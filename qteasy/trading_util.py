@@ -532,7 +532,7 @@ def parse_vs_signals(signals: np.ndarray,
         [1] - sell_rate: float, 交易成本：固定卖出费率
         [2] - buy_min: float, 交易成本：最低买入费用
         [3] - sell_min: float, 交易成本：最低卖出费用
-        [4] - slipage: float, 交易成本：滑点
+        [4] - slippage: float, 交易成本：滑点
 
     Returns
     -------
@@ -541,7 +541,7 @@ def parse_vs_signals(signals: np.ndarray,
         amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
-    buy_rate, sell_rate, buy_min, sell_min, slipage = cost_params
+    buy_rate, sell_rate, buy_min, sell_min, slippage = cost_params
 
     # 计算各个资产的计划买入金额和计划卖出数量
     # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零

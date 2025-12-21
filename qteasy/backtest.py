@@ -111,7 +111,7 @@ def backtest_step(
         sell_rate: float, 交易成本：卖出费率
         buy_min: float, 交易成本：最低买入费用
         sell_min: float, 交易成本：最低卖出费用
-        slipage: float, 交易成本：交易滑点
+        slippage: float, 交易成本：交易滑点
     pt_buy_threshold: float
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: float
@@ -269,7 +269,7 @@ tuple[ndarray, ndarray, ndarray, ndarray, ndarray[Any, dtype[bool_]]]]:
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
         sell_min: float, 交易成本：最低卖出费用
-        slipage: float, 交易成本：滑点
+        slippage: float, 交易成本：滑点
     pt_buy_threshold: object Cost
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: object Cost
@@ -600,7 +600,7 @@ def backtest_batch_steps(
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
         sell_min: float, 交易成本：最低卖出费用
-        slipage: float, 交易成本：滑点
+        slippage: float, 交易成本：滑点
     pt_buy_threshold: float
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: float
@@ -740,7 +740,7 @@ def backtest_flash_steps(
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
         sell_min: float, 交易成本：最低卖出费用
-        slipage: float, 交易成本：滑点
+        slippage: float, 交易成本：滑点
     pt_buy_threshold: float
         当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
     pt_sell_threshold: float
@@ -950,7 +950,7 @@ class Backtester:
             sell_rate: float, 交易成本：固定卖出费率
             buy_min: float, 交易成本：最低买入费用
             sell_min: float, 交易成本：最低卖出费用
-            slipage: float, 交易成本：滑点
+            slippage: float, 交易成本：滑点
         signal_parsing_params: dict
             交易信号解析参数字典，包含解析交易信号所需的所有参数，通常是parse_signal_parsing_params()函数的输出
         trading_moq_params: dict

@@ -162,7 +162,7 @@ def parse_trade_cost_params(config) -> dict:
         sell_rate: float, 交易成本：固定卖出费率
         buy_min: float, 交易成本：最低买入费用
         sell_min: float, 交易成本：最低卖出费用
-        slipage: float, 交易成本：滑点
+        slippage: float, 交易成本：滑点
 
     Returns
     -------
@@ -186,7 +186,7 @@ def parse_trade_cost_params(config) -> dict:
     if not (isinstance(cost_params['sell_min'], (float, int)) and cost_params['sell_min'] >= 0):
         raise ValueError('cost_min_sell should be a non-negative float number')
     if not (isinstance(cost_params['slippage'], (float, int)) and 0 <= cost_params['slippage'] < 1):
-        raise ValueError('cost_slipage should be a float number between 0 and 1')
+        raise ValueError('cost_slippage should be a float number between 0 and 1')
 
     return cost_params
 

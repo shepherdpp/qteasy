@@ -1545,7 +1545,7 @@ def check_and_prepare_trade_prices(op: Operator,
         raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
     if not isinstance(price_adj, str):
         raise TypeError(f'price_adj should be a string, got {type(price_adj)} instead')
-    if price_adj.lower() not in ['none', 'back', 'forward']:
+    if price_adj.lower() not in ['none', 'n', 'back', 'b', 'forward', 'f', 'accu']:
         raise ValueError(f"invalid price_adj ({price_adj}), which should be anyone of ['none', 'back', 'forward']")
 
     all_run_freqs = [group.run_freq for group in op.groups.values()]
