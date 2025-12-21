@@ -642,10 +642,8 @@ class Optimizer:
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
-            st = time.time()
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
-            print(f'Submitted all tasks, total time consumption: {sec_to_duration(time.time() - st)}')
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
@@ -676,8 +674,6 @@ class Optimizer:
         best_so_far = 0
 
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter_no_backtester
-        # eval_func = self._deep_evaluate_parameter if deep_eval else _flash_evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
@@ -719,7 +715,6 @@ class Optimizer:
 
         # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
         par_generator, total = space.extract(self.search_config['sample_count'])
-        st = time.time()
         self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
@@ -728,8 +723,6 @@ class Optimizer:
         )
 
         self.result_pool.cut(keep_largest=self.search_config['maximize_target'])
-        et = time.time()
-        print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
     def _search_montecarlo(self,
                            space: Space) -> None:
@@ -752,7 +745,6 @@ class Optimizer:
 
         # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
         par_generator, total = space.extract(self.search_config['sample_count'], how='rand')
-        st = time.time()
         self._evaluate_parameters(
                 total=total,
                 par_value_list=par_generator,
@@ -760,8 +752,6 @@ class Optimizer:
                 parallel=self.parallel
         )
         self.result_pool.cut(self.search_config['maximize_target'])
-        et = time.time()
-        print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
 
     def _search_incremental(self,
                             space: Space) -> None:
@@ -810,7 +800,7 @@ class Optimizer:
 
         spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
         space_count_in_round = 1  # 本轮运行子空间的数量
-        current_round = 1  # 当前运行轮次
+        current_round = 0  # 当前运行轮次
         current_volume = base_space.volume  # 当前运行轮次子空间的总体积
         """
         估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
@@ -826,7 +816,7 @@ class Optimizer:
                            k > log(Vmin / Vi) / log(rr)
                因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
         """
-        st = time.time()
+
         # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
         while current_volume >= min_volume and current_round < max_rounds:
             # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
@@ -844,7 +834,7 @@ class Optimizer:
                     par_value_list=par_list,
                     result_pool=self.result_pool,
                     parallel=parallel,
-                    epoch_str=f'{current_round}/{max_rounds}',
+                    epoch_str=f'{current_round + 1}/{max_rounds}',
             )
             self.result_pool.cut(self.search_config['maximize_target'])
             """
@@ -877,8 +867,6 @@ class Optimizer:
 
         self.result_pool.capacity = self.result_pool_size
         self.result_pool.cut(self.search_config['maximize_target'])
-        et = time.time()
-        print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
 
     def _search_ga(self,
                    space: Space) -> None:

@@ -662,6 +662,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=True,
+               report=False,
                visual=True,
                indicator_plot_type=1)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
@@ -675,6 +676,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=True,
+               report=True,
                visual=True,
                indicator_plot_type=2)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
