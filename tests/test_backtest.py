@@ -892,12 +892,12 @@ class TestBacktest(unittest.TestCase):
                                 sell_rate=0,
                                 buy_min=0,
                                 sell_min=0,
-                                slipage=0)
+                                slippage=0)
         self.rate2 = qt.set_cost(buy_rate=0,
                                  sell_rate=0,
                                  buy_min=10,
                                  sell_min=5,
-                                 slipage=0)
+                                 slippage=0)
 
         # 模拟PT信号回测结果
         # PT信号，先买后卖，交割期为0
@@ -4183,7 +4183,7 @@ class TestBacktester(unittest.TestCase):
                 interest_rate=0.0,
         )
 
-        # 成本参数: buy_rate, sell_rate, buy_min, sell_min, slipage
+        # 成本参数: buy_rate, sell_rate, buy_min, sell_min, slippage
         self.cost_params = np.array([0.001, 0.001, 5.0, 5.0, 0.0])
 
         # 信号解析参数

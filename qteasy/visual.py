@@ -1642,22 +1642,22 @@ def opti_result_str(result, *, name='optimization report', benchmark=None, opti_
                       f'time consumption for optimization: {sec_to_duration(opti_time)}\n'
                       f'time consumption for evaluation:   {sec_to_duration(eval_time)}\n')
     report_string += (f'investment starts on {first_res["backtest_start"]}\nends on {first_res["backtest_end"]}\n'
-                      f'Total looped periods: {periods_string}')
-    report_string += f'total investment amount: ¥{result.total_invest[0]:13,.2f}'
+                      f'Total looped periods: {periods_string}\n')
+    report_string += f'total investment amount: ¥{result.total_invest[0]:13,.2f}\n'
     report_string += (f'Benchmark type is {benchmark}\n'
                       f'Total Benchmark rtn: {benchmark_rtn :.2%} \n'
-                      f'Average Yearly Benchmark rtn rate: {benchmark_a_rtn:.2%}')
-    report_string += (f'statistical analysis of optimal strategy messages indicators: \n'
-                      f'total return:        {result.rtn.mean():.2%} ±'
+                      f'Average Yearly Benchmark rtn rate: {benchmark_a_rtn:.2%}\n')
+    report_string += (f'Statistical analysis of optimal strategy messages indicators: \n'
+                      f'Total return:        {result.rtn.mean():.2%} ±'
                       f' {result.rtn.std():.2%}\n'
-                      f'annual return:       {result.annual_rtn.mean():.2%} ±'
+                      f'Annual return:       {result.annual_rtn.mean():.2%} ±'
                       f' {result.annual_rtn.std():.2%}\n'
-                      f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
+                      f'Alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
                       f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
                       f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'
                       f'Info ratio:          {result["info"].mean():.3f} ± {result["info"].std():.3f}\n'
                       f'250 day volatility:  {result.volatility.mean():.3f} ± {result.volatility.std():.3f}\n'
-                      f'other messages indicators are listed in below table\n')
+                      f'Other messages indicators are listed in below table\n')
     # result.sort_values(by='final_value', ascending=False, inplace=True)
     report_string += (result.to_string(columns=["par",
                                                 "sell_count",

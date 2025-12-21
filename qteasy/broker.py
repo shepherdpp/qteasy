@@ -516,7 +516,7 @@ class SimulatorBroker(Broker):
                  fee_min_sell=0.0,
                  fee_fix_buy=0.0,
                  fee_fix_sell=0.0,
-                 slipage=0.0,
+                 slippage=0.0,
                  moq_buy=0.0,
                  moq_sell=0.0,
                  delay=1.0,
@@ -539,8 +539,8 @@ class SimulatorBroker(Broker):
             买入操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
         fee_fix_sell: float, default 0.0
             卖出操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
-        slipage: float, default 0.0
-            交易滑点, 当交易数量很大时，交易费用会被放大 slipage * (qty / 100) ** 2 倍
+        slippage: float, default 0.0
+            交易滑点, 当交易数量很大时，交易费用会被放大 slippage * (qty / 100) ** 2 倍
         moq_buy: float, default 0.0
             买入操作最小数量
         moq_sell: float, default 0.0
@@ -563,7 +563,7 @@ class SimulatorBroker(Broker):
         self.fee_min_sell = fee_min_sell
         self.fee_fix_buy = fee_fix_buy
         self.fee_fix_sell = fee_fix_sell
-        self.slipage = slipage
+        self.slippage = slippage
         self.moq_buy = moq_buy
         self.moq_sell = moq_sell
         self.delay = delay
@@ -671,7 +671,7 @@ class SimulatorBroker(Broker):
                 else:
                     raise RuntimeError(f'invalid direction: {direction}')
                 # 模拟交易滑点, 交易数量越大，对交易费用产生的影响越大
-                if self.slipage > 0:
+                if self.slippage > 0:
                     transaction_fee *= (1 + self.slipage * (qty / 100) ** 2)
 
             # 成交类型为取消，成交数量为0，成交价格为0，交易费用为0

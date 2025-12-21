@@ -63,7 +63,6 @@ class TestConfig(unittest.TestCase):
 
         qt.configure(
                 mode=2,
-                opti_type='multiple',
                 cash_delivery_period=1,
                 backtest_price_adj='b',
                 invest_start='20191010',

@@ -70,7 +70,7 @@ def set_cost(**kwargs: Any):
         最低费用，则使用最低费用。例如：
             卖出100股股票，假设每股价格10元，交易费率为千分之一，最低费用为5元，则
             根据费率计算出交易费用为1元，但由于最低费用为5元，因而交易费用为5元
-    3,  slipage：type：float，交易滑点，或者叫二阶费率。
+    3,  slippage：type：float，交易滑点，或者叫二阶费率。
         用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
 
@@ -82,7 +82,7 @@ def set_cost(**kwargs: Any):
         - sell_rate: float, 卖出费率，实际卖出费用等于卖出金额乘以费率
         - buy_min: float, 最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
         - sell_min: float, 最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
-        - slipage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+        - slippage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
 
     Returns
     -------
@@ -93,7 +93,7 @@ def set_cost(**kwargs: Any):
                 sell_rate=0.001,
                 buy_min=5.0,
                 sell_min=0.0,
-                slipage=0.0)
+                slippage=0.0)
 
     update_cost(cost, **kwargs)
     return cost
@@ -112,7 +112,7 @@ def update_cost(c: dict, **kwargs: Any):
         - sell_rate: float, 卖出费率，实际卖出费用等于卖出金额乘以费率
         - buy_min: float, 最低买入费用，当按费率计算的费用小于该费用时，按最低费用计算
         - sell_min: float, 最低卖出费用，当按费率计算的费用小于该费用时，按最低费用计算
-        - slipage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
+        - slippage: float, 滑点，用于估算交易价格损失，金额为滑点乘以交易金额
 
     Returns
     -------
@@ -147,7 +147,7 @@ def get_cost_params(c: dict) -> np.ndarray:
             买入最低费用
         fee_params[3]: sell_min: float:
             卖出最低费用
-        fee_params[4]: slipage: float:
+        fee_params[4]: slippage: float:
             滑点
     """
     validate_cost_dict(c)
@@ -155,7 +155,7 @@ def get_cost_params(c: dict) -> np.ndarray:
                      c['sell_rate'],
                      c['buy_min'],
                      c['sell_min'],
-                     c['slipage']])
+                     c['slippage']])
 
 
 @njit()
@@ -176,7 +176,7 @@ def get_selling_result(prices: np.ndarray,
         - sell_rate: float, 卖出费率
         - buy_min: float, 买入最低费用
         - sell_min: float, 卖出最低费用
-        - slipage: float, 滑点
+        - slippage: float, 滑点
 
     Returns
     -------
@@ -216,7 +216,7 @@ def get_purchase_result(prices: np.ndarray,
         - sell_rate: float, 卖出费率
         - buy_min: float, 买入最低费用
         - sell_min: float, 卖出最低费用
-        - slipage: float, 滑点
+        - slippage: float, 滑点
 
     Returns
     -------

@@ -2543,7 +2543,7 @@ def start_trader_ui(
             "fee_min_sell":    config['cost_min_sell'],
             "fee_fix_buy":     config['cost_fixed_buy'],
             "fee_fix_sell":    config['cost_fixed_sell'],
-            "slipage":         config['cost_slippage'],
+            "slippage":        config['cost_slippage'],
             "moq_buy":         config['trade_batch_size'],
             "moq_sell":        config['sell_batch_size'],
             "delay":           1.0,
