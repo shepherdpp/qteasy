@@ -562,7 +562,7 @@ class Optimizer:
                              par_value_list: Union[list, tuple, Generator],
                              result_pool: ResultPool,
                              parallel: bool,
-                             epoch_id: int = 1,
+                             epoch_str: str = '1/1',
                              deep_eval: bool = False,
                              leave_progress_bar: bool = True) -> None:
         """ 循环批量运行self._evaluate_parameter函数，生成结果后存入参数result_pool中
@@ -578,8 +578,8 @@ class Optimizer:
         parallel: bool
             是否启用多进程计算方式，如果是True，则启用多进程计算方式利用所有的CPU核心计算，
             否则使用单进程计算
-        epoch_id: optional int
-            当前优化轮次编号，默认为1
+        epoch_str: optional str
+            用于显示当前优化轮次的标识字符串，默认值为空字符串
         deep_eval: optional bool
             是否深入评价每一组参数的回测结果，如果是True，则返回评价指标字典，默认值为False
         leave_progress_bar: optional bool, default True
@@ -602,7 +602,7 @@ class Optimizer:
                     total=total,
                     par_value_list=par_value_list,
                     result_pool=result_pool,
-                    epoch_id=epoch_id,
+                    epoch_str=epoch_str,
                     deep_eval=deep_eval,
                     leave_progress_bar=leave_progress_bar,
             )
@@ -612,7 +612,7 @@ class Optimizer:
                     total=total,
                     par_value_list=par_value_list,
                     result_pool=result_pool,
-                    epoch_id=epoch_id,
+                    epoch_str=epoch_str,
                     deep_eval=deep_eval,
                     leave_progress_bar=leave_progress_bar,
             )
@@ -626,7 +626,7 @@ class Optimizer:
                                       total: int,
                                       par_value_list: Union[list, tuple, Generator],
                                       result_pool: ResultPool,
-                                      epoch_id: int,
+                                      epoch_str: str,
                                       deep_eval: bool,
                                       leave_progress_bar: bool) -> None:
         """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
@@ -638,40 +638,13 @@ class Optimizer:
         #  ），试过使用函数代替Backtester或减少内存消耗量，但是无济于事，最终结果都一样。最后一个办法是使用
         #  SharedMemory来实现函数调用，需要探索
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
-        # eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter_no_backtester
-        # eval_func = self._deep_evaluate_parameter if deep_eval else _flash_evaluate_parameter
-        # eval_func = _flash_evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
-        # _initialize_worker(self.op,
-        #                    self.cash_investment_array,
-        #                    self.cash_inflation_array,
-        #                    self.delivery_day_indicators,
-        #                    self.trade_price_data)
 
         # 启用并行计算
         with ProcessPoolExecutor() as proc_pool:
-            # with ProcessPoolExecutor(initializer=_initialize_worker,
-            #                          initargs=(self.op,
-            #                                    self.cash_investment_array,
-            #                                    self.cash_inflation_array,
-            #                                    self.delivery_day_indicators,
-            #                                    self.trade_price_data)) as proc_pool:
             st = time.time()
             futures = {proc_pool.submit(eval_func, par): par for par in
                        par_value_list}
-            # TODO: 检查使用flash_evaluate_parameter函数时的效率问题
-            # if deep_eval:
-            #     futures = {proc_pool.submit(self._deep_evaluate_parameter, par): par for par in
-            #                par_value_list}
-            # else:
-            #     futures = {proc_pool.submit(_flash_evaluate_parameter,
-            #                                 self.share_count,
-            #                                 self.cost_params,
-            #                                 self.signal_parsing_params,
-            #                                 self.trading_moq_params,
-            #                                 self.trading_delivery_params,
-            #                                 par): par for par in
-            #                par_value_list}
             print(f'Submitted all tasks, total time consumption: {sec_to_duration(time.time() - st)}')
 
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
@@ -687,14 +660,14 @@ class Optimizer:
                 i += 1
                 if perf > best_so_far:
                     best_so_far = perf
-                pbar.set_description(desc=f'Epoch:{epoch_id}->{best_so_far:.3f}', )
+                pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
                 pbar.update()
 
     def _evaluate_parameters_sequential(self,
                                         total: int,
                                         par_value_list: Union[list, tuple, Generator],
                                         result_pool: ResultPool,
-                                        epoch_id: int,
+                                        epoch_str: str,
                                         deep_eval: bool,
                                         leave_progress_bar: bool) -> None:
         """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
@@ -716,24 +689,11 @@ class Optimizer:
                     perf, metrics = self._deep_evaluate_parameter(par)
                 else:
                     perf, metrics = target_value, None
-                    # perf = _flash_evaluate_parameter(
-                    #     self.op,
-                    #     self.share_count,
-                    #     self.cash_investment_array,
-                    #     self.cash_inflation_array,
-                    #     self.delivery_day_indicators,
-                    #     self.trade_price_data,
-                    #     self.cost_params,
-                    #     self.signal_parsing_params,
-                    #     self.trading_moq_params,
-                    #     self.trading_delivery_params,
-                    #     par)
-                    # metrics = None
                 result_pool.push(item=par, perf=perf, extra=metrics)
                 i += 1
                 if perf > best_so_far:
                     best_so_far = perf
-                pbar.set_description(desc=f'Epoch:{epoch_id}->{best_so_far:.3f}', )
+                pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
                 pbar.update(1)
 
     def _search_grid(self,
@@ -866,13 +826,9 @@ class Optimizer:
                            k > log(Vmin / Vi) / log(rr)
                因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
         """
-        epoch = 0
         st = time.time()
         # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
         while current_volume >= min_volume and current_round < max_rounds:
-            epoch += 1
-            print(f'starting optimization epoch {epoch}, there are {space_count_in_round} spaces to search...,'
-                  f'space volume: {current_volume:.6f}, space sizes are {[s.size for s in spaces]}')
             # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
             par_list = list()
             round_total = 0
@@ -888,8 +844,7 @@ class Optimizer:
                     par_value_list=par_list,
                     result_pool=self.result_pool,
                     parallel=parallel,
-                    epoch_id=epoch,
-                    leave_progress_bar=False,
+                    epoch_str=f'{current_round}/{max_rounds}',
             )
             self.result_pool.cut(self.search_config['maximize_target'])
             """
