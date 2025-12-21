@@ -476,15 +476,15 @@ class ResultPool:
 
     @property
     def items(self):
-        return self.__pool  # 只读属性，所有池中参数
+        return self.__pool.copy()  # 只读属性，所有池中参数
 
     @property
     def perfs(self):
-        return self.__perfs  # 只读属性，所有池中参数的评价分
+        return self.__perfs.copy()  # 只读属性，所有池中参数的评价分
 
     @property
     def extra(self):
-        return self.__extra  # 只读属性，所有池中参数的额外信息
+        return self.__extra.copy()  # 只读属性，所有池中参数的额外信息
 
     @property
     def capacity(self):
@@ -515,6 +515,7 @@ class ResultPool:
         """
         self.__pool = []
         self.__perfs = []
+        self.__extra = []
 
     def show_items(self, with_extra=False):
         """以表格的形式显示结果池中的所有元素"""

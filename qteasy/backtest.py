@@ -38,8 +38,6 @@ from qteasy.finance import (
 from qteasy.visual import (
     _plot_loop_result,
     _loop_report_str,
-    opti_result_str,
-    _plot_test_result,
 )
 
 from qteasy.trading_util import (
