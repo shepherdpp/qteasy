@@ -2225,6 +2225,7 @@ def run_mode_2(op, config):
     optimizer = op.optimize(
             method=config['opti_method'],
             shares=config['asset_pool'],
+            benchmark=config['benchmark_asset'],
             pool_size=config['opti_output_count'],
             opti_target=config['optimize_target'],
             opti_direction=config['optimize_direction'],
@@ -2241,6 +2242,8 @@ def run_mode_2(op, config):
             trading_moq_params=trading_moq_params,
             trading_delivery_params=trading_delivery_params,
             logger=qteasy.logger_core,
+            evaluate_indicators=config['test_indicators'],
+            test_plot_type=config['indicator_plot_type'],
     )
     # 准备优化数据
     # 生成优化交易运行计划
@@ -2262,8 +2265,6 @@ def run_mode_2(op, config):
     print(f'creating data windows...')
     op.create_data_windows()
 
-    # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
-    op.is_ready(raise_error=True)
     print(f'Preparing trade prices...')
     opti_trade_prices = check_and_prepare_trade_prices(
             op=op,
@@ -2271,12 +2272,23 @@ def run_mode_2(op, config):
             price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
+    print(f'Preparing benchmark data')
+    opti_benchmark = check_and_prepare_benchmark_data(
+            op=op,
+            benchmark_symbol=config['benchmark_asset'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
+
     print(f'Starting optimization...')
     optimizer.optimize(
+            benchmark_data=opti_benchmark,
             trade_price_data=opti_trade_prices.values,
     )
     print(f'Optimization finished, best parameters:\n')
-    optimizer.result_pool.show_items()
+
+    if config['report']:
+        # 输出优化结果报告
+        print(optimizer.report_result(stage='optimization'))
 
     # ========  开始校验  =========
     # 生成校验交易运行计划
@@ -2304,26 +2316,24 @@ def run_mode_2(op, config):
             price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
+    print(f'Preparing benchmark data...')
+    test_benchmark = check_and_prepare_benchmark_data(
+            op=op,
+            benchmark_symbol=config['benchmark_asset'],
+            datasource=qteasy.QT_DATA_SOURCE,
+    )
     print(f'Starting validation on test data...')
     optimizer.validate(
+            benchmark_data=test_benchmark,
             trade_price_data=test_trade_prices.values,
     )
 
-    # if config['report']:
-    #     # 输出优化结果报告
-    #     print(optimizer.report_result())
-    #
-    # if config['visual']:
-    #     # 图表输出优化结果
-    #     optimizer.plot_result(
-    #             plot_title='Optimization Result',
-    #     )
-    print(f'Validation finished, best parameters on test data:\n')
-    optimizer.validated_pool.show_items()
+    if config['report']:
+        # 输出优化结果报告
+        print(optimizer.report_result(stage='validation'))
 
-    print(f'All done.\n'
-          f'==============================\n'
-          f'==============================\n'
-          f'\n')
+    if config['visual']:
+        # 图表输出优化结果
+        optimizer.plot_result()
 
     return
