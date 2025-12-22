@@ -215,7 +215,7 @@ msgid ""
 msgstr ""
 
 #: of qteasy.core.run:115
-msgid "关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring"
+msgid "关于递进步长法的参数和输出，参见self._search_sa()函数的docstring"
 msgstr ""
 
 #: of qteasy.core.run:117
