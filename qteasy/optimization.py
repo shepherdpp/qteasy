@@ -432,7 +432,7 @@ class Optimizer:
         elif self.opti_method == 'montecarlo':
             self._search_montecarlo(space=search_space)
         elif self.opti_method == 'incremental':
-            self._search_incremental(space=search_space)
+            self._search_sa(space=search_space)
         elif self.opti_method == 'ga':
             self._search_ga(space=search_space)
         elif self.opti_method == 'pso':
@@ -753,9 +753,9 @@ class Optimizer:
         )
         self.result_pool.cut(self.search_config['maximize_target'])
 
-    def _search_incremental(self,
-                            space: Space) -> None:
-        """ 最优参数搜索算法3: 增量递进搜索法
+    def _search_sa(self,
+                   space: Space) -> None:
+        """ 最优参数搜索算法3: 模拟退火优化
 
         该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
         而且每一轮搜索都（大概率）更接近全局最优解。
@@ -910,55 +910,9 @@ class Optimizer:
         """
         raise NotImplementedError
 
-    def _search_knn(self,
-                    space: Space) -> None:
-        """ K-Nearest Neighbors 最近邻算法
-
-
-        Parameters
-        ----------
-        space: qt.Space
-            参数空间对象
-
-        Returns
-        -------
-        None，搜索的结果最佳值会被保存在self.result_pool属性中
-        """
-        raise NotImplementedError
-
-    def _search_svm(self,
-                    space: Space) -> None:
-        """ Support Vector Machine 支持向量机算法
-
-        Parameters
-        ----------
-        space: qt.Space
-            参数空间对象
-
-        Returns
-        -------
-        None，搜索的结果最佳值会被保存在self.result_pool属性中
-        """
-        raise NotImplementedError
-
     def _search_pso(self,
                     space: Space) -> None:
         """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
-
-        Parameters
-        ----------
-        space: qt.Space
-            参数空间对象
-
-        Returns
-        -------
-        None，搜索的结果最佳值会被保存在self.result_pool属性中
-        """
-        raise NotImplementedError
-
-    def _search_aco(self,
-                    space: Space) -> None:
-        """ Ant Colony Optimization 蚁群优化算法，
 
         Parameters
         ----------
@@ -1014,7 +968,7 @@ class Optimizer:
     AVAILABLE_OPTIMIZERS = {
         'grid':        _search_grid,
         'montecarlo':  _search_montecarlo,
-        'incremental': _search_incremental,
+        'incremental': _search_sa,
         'ga':          _search_ga,
         # 'gradient':    _search_gradient,
         # 'knn':         _search_knn,

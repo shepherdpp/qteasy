@@ -1867,7 +1867,7 @@ def run(op: Operator, **kwargs):
                 使用这种技术，在一个250*250*250的空间中，能够把搜索量从15,000,000降低到10,000左右,缩减到原来的1/1500，
                 却不太会影响最终搜索的效果。
 
-                关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
+                关于递进步长法的参数和输出，参见self._search_sa()函数的docstring
 
             4，Genetic_Algorithm                     遗传算法 （尚未实现）
 
