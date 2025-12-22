@@ -890,14 +890,14 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-
         raise NotImplementedError
 
     def _search_gradient(self,
                          space: Space) -> None:
-        """ 最优参数搜索算法5：梯度下降法
+        """ 最优参数搜索算法5：梯度下降法（多点同时梯度搜索）
+
         在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
-        最大步数为止，输出结果为最后N步的结果
+        最大步数为止。在参数空间中随机选择N个起点开始搜索，输出结果为最后一步的N个结果
 
         Parameters
         ----------
@@ -912,7 +912,28 @@ class Optimizer:
 
     def _search_pso(self,
                     space: Space) -> None:
-        """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
+        """ 最优参数搜索算法6: Particle Swarm Optimization 粒子群优化算法
+
+        在参数空间中随机选择N个起点作为粒子群的初始位置，每个粒子根据自身的历史最优位置和全局的历史最优位置
+        来调整自己的速度和位置，逐步向最优解靠近。经过多次迭代后，粒子群会收敛到全局最优解或近似最优解。
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        raise NotImplementedError
+
+    def _search_bayesian(self,
+                         space: Space) -> None:
+        """ 最优参数搜索算法6: 贝叶斯优化算法
+
+        贝叶斯优化是一种基于贝叶斯统计理论的全局优化方法，适用于高维、非凸、黑箱函数的优化问题。
+        它通过构建目标函数的概率模型（通常是高斯过程）来指导参数搜索过程，从而在有限的评估次数内找到最优解。
 
         Parameters
         ----------
@@ -968,11 +989,9 @@ class Optimizer:
     AVAILABLE_OPTIMIZERS = {
         'grid':        _search_grid,
         'montecarlo':  _search_montecarlo,
-        'incremental': _search_sa,
-        'ga':          _search_ga,
-        # 'gradient':    _search_gradient,
-        # 'knn':         _search_knn,
-        # 'svm':         _search_svm,
-        'pso':         _search_pso,
-        'aco':         _search_aco,
+        'SA':          _search_sa,
+        'GA':          _search_ga,
+        'gradient':    _search_gradient,
+        'PSO':         _search_pso,
+        'bayesian':    _search_bayesian,
     }
