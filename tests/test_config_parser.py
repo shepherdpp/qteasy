@@ -235,10 +235,16 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-31',
                 freq='d',
         )
+        timing_table = pd.DataFrame(
+                {'Group_1': [1.0] * len(op_schedule)},
+                index=op_schedule,
+        )
+
         cash_plan = parse_backtest_cash_plan(config=config)
         investment_array, inflation_array, day_indicators = generate_cash_invest_and_delivery_arrays(
                 invest_cash_plan=cash_plan,
-                op_schedule=op_schedule,
+                group_merge_type='OR',
+                timing_table=timing_table,
         )
         self.assertIsInstance(investment_array, np.ndarray)
         self.assertIsInstance(inflation_array, np.ndarray)
@@ -275,11 +281,15 @@ class TestConfigParser(unittest.TestCase):
                 end='2020-01-10',
                 freq='h',
         )
+        timing_table = pd.DataFrame(
+                {'Group_1': [1.0] * len(op_schedule)},
+                index=op_schedule,
+        )
         cash_plan = parse_backtest_cash_plan(config=config)
         investment_array, inflation_array, day_indicator = generate_cash_invest_and_delivery_arrays(
                 invest_cash_plan=cash_plan,
-                op_schedule=op_schedule,
-
+                group_merge_type='AND',
+                timing_table=timing_table,
         )
         print(f'investment_array (hourly): {investment_array}')
         print(f'inflation_array (hourly): {inflation_array}')
@@ -309,6 +319,72 @@ class TestConfigParser(unittest.TestCase):
                                           1, 0, 0, 0, 0,
                                           1, 0, 0, 0, 0])
         self.assertTrue(np.array_equal(day_indicator, target_day_indicators))
+
+        # test timing table with multiple groups with different run_timings
+        config = {
+            'invest_start':        '20200101',
+            'invest_end':          '20200131',
+            'invest_cash_dates':   '20200101,20200106,20200112,20200115',
+            'invest_cash_amounts': [10000, 15000, 20000, 25000],
+            'riskfree_ir':         0.03,
+        }
+        op_schedule = trade_time_index(
+                start='2020-01-01',
+                end='2020-01-31',
+                freq='d',
+        )
+        timing_table = pd.DataFrame(
+                {'Group_1': [1.0] * len(op_schedule),
+                 'Group_2': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+                             0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0],
+                 'Group_3': [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+                             1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]},
+                index=op_schedule,
+        )
+        op_signal_schedule = timing_table.index.repeat(timing_table.sum(axis=1).astype(int))
+        self.assertEqual(len(op_signal_schedule), 30)
+
+        cash_plan = parse_backtest_cash_plan(config=config)
+        investment_array, inflation_array, day_indicators = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=cash_plan,
+                group_merge_type='NONE',
+                timing_table=timing_table,
+        )
+        print(f'investment_array (hourly): {investment_array}')
+        print(f'inflation_array (hourly): {inflation_array}')
+        print(f'day_indicator (hourly): {day_indicators}')
+        self.assertIsInstance(investment_array, np.ndarray)
+        self.assertIsInstance(inflation_array, np.ndarray)
+        self.assertIsInstance(day_indicator, np.ndarray)
+        self.assertEqual(len(investment_array), 30)
+        self.assertEqual(len(inflation_array), 30)
+        self.assertEqual(len(day_indicator), 30)
+        # assert investment amounts on specific dates
+        print(f'cash investment on date "2020-01-01" is {investment_array[op_signal_schedule.get_loc("2020-01-02")]}')
+        self.assertTrue(np.allclose(investment_array[op_signal_schedule.get_loc('2020-01-02')], [10000, 0]))
+        print(f'cash investment on date "2020-01-06" is {investment_array[op_signal_schedule.get_loc("2020-01-06")]}')
+        self.assertTrue(np.allclose(investment_array[op_signal_schedule.get_loc('2020-01-06')], [15000, 0]))
+        print(f'cash investment on date "2020-01-13" is {investment_array[op_signal_schedule.get_loc("2020-01-13")]}')
+        self.assertTrue(np.allclose(investment_array[op_signal_schedule.get_loc('2020-01-13')], [20000, 0]))
+        print(f'cash investment on date "2020-01-15" is {investment_array[op_signal_schedule.get_loc("2020-01-15")]}')
+        self.assertTrue(np.allclose(investment_array[op_signal_schedule.get_loc('2020-01-15')], 25000))
+        # assert inflation array values on specific dates
+        print(f'cash investment and inflation arrays are as following dataframe:\n'
+              f'{pd.DataFrame({"investment": investment_array, "inflation": inflation_array, "day_change": day_indicators}, index=op_signal_schedule)}')
+        target_inflation_array = np.array([1., 1., 1.00008219, 1., 1.00024656, 1.,
+                                           1.00008216, 1.00008216, 1., 1.00008215, 1.00008214, 1.,
+                                           1.00024641, 1., 1.00008212, 1., 1.00008211, 1.0000821,
+                                           1., 1., 1.0000821, 1.00024627, 1., 1.,
+                                           1.00008207, 1.00008206, 1., 1., 1.00008206, 1., ])
+        self.assertTrue(np.allclose(inflation_array, target_inflation_array, atol=1e-8))
+        # assert day_indicator values on specific dates
+        target_day_indicators = np.array([1, 0, 1, 0, 1,
+                                          0, 1, 1, 0, 1,
+                                          1, 0, 1, 0, 1,
+                                          0, 1, 1, 0, 0,
+                                          1, 1, 0, 0, 1,
+                                          1, 0, 0, 1, 0])
+        self.assertTrue(np.array_equal(day_indicators, target_day_indicators))
 
 
 class TestParseSignalParsingParams(unittest.TestCase):
