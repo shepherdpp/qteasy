@@ -1111,9 +1111,6 @@ class Backtester:
         for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
-            try:
-                signals[signal_index, :] = signal
-            except:
             signals[signal_index, :] = signal
             signal_index += 1
         et = time.time()
@@ -1255,12 +1252,18 @@ class Backtester:
             交易模拟结果数据
         """
         value_history = pd.DataFrame(self.own_amounts_array[1:],
-                                     index=self.op_schedule,
+                                     index=self.op.op_signal_index,
                                      columns=self.shares)
         # 填充标量计算结果
         value_history['cash'] = self.own_cashes[1:]
         value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
         value_history['fee'] = self.trade_cost_array.sum(axis=1)
+
+        # TODO: 注意此时生成的交易信号可能存在重复索引，因为同一交易周期可能有不同的
+        #  策略组分别运行并分别生成交易信号，导致同一天有多条交易信号记录，应该记录同
+        #  一时刻最后一组交易信号的结果
+
+        value_history = value_history.groupby(value_history.index).last()
 
         return value_history
 
@@ -1371,16 +1374,16 @@ class Backtester:
             raise ValueError('shares list is empty, cannot create trade logs!')
 
         # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
-        trade_signal_df = pd.DataFrame(self.op_signals, index=self.op_schedule, columns=self.shares)
-        trade_price_df = pd.DataFrame(self.trade_price_data, index=self.op_schedule, columns=self.shares)
-        own_amounts_df = pd.DataFrame(self.own_amounts_array[1:], index=self.op_schedule, columns=self.shares)
-        available_amounts_df = pd.DataFrame(self.available_amounts_array[1:], index=self.op_schedule,
+        trade_signal_df = pd.DataFrame(self.op_signals, index=self.op.op_signal_index, columns=self.shares)
+        trade_price_df = pd.DataFrame(self.trade_price_data, index=self.op.op_signal_index, columns=self.shares)
+        own_amounts_df = pd.DataFrame(self.own_amounts_array[1:], index=self.op.op_signal_index, columns=self.shares)
+        available_amounts_df = pd.DataFrame(self.available_amounts_array[1:], index=self.op.op_signal_index,
                                             columns=self.shares)
-        trade_records_df = pd.DataFrame(self.trade_records_array, index=self.op_schedule, columns=self.shares)
-        trade_cost_df = pd.DataFrame(self.trade_cost_array, index=self.op_schedule, columns=self.shares)
+        trade_records_df = pd.DataFrame(self.trade_records_array, index=self.op.op_signal_index, columns=self.shares)
+        trade_cost_df = pd.DataFrame(self.trade_cost_array, index=self.op.op_signal_index, columns=self.shares)
         cash_changed_df = pd.DataFrame(-trade_price_df * trade_records_df - self.trade_cost_array,
-                                       index=self.op_schedule, columns=self.shares)
-        amounts_value_df = pd.DataFrame(trade_price_df * self.own_amounts_array[1:], index=self.op_schedule,
+                                       index=self.op.op_signal_index, columns=self.shares)
+        amounts_value_df = pd.DataFrame(trade_price_df * self.own_amounts_array[1:], index=self.op.op_signal_index,
                                         columns=self.shares)
 
         combined_data = pd.concat(
@@ -1404,12 +1407,12 @@ class Backtester:
         combined_data = combined_data.reorder_levels([1, 0]).sort_index(level=0)
 
         # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
-        add_investments = pd.Series(self.cash_investment_array, index=self.op_schedule, name='add. invest')
-        own_cash_series = pd.Series(self.own_cashes[1:], index=self.op_schedule, name='own cash')
-        available_cash_series = pd.Series(self.available_cashes[1:], index=self.op_schedule, name='available cash')
+        add_investments = pd.Series(self.cash_investment_array, index=self.op.op_signal_index, name='add. invest')
+        own_cash_series = pd.Series(self.own_cashes[1:], index=self.op.op_signal_index, name='own cash')
+        available_cash_series = pd.Series(self.available_cashes[1:], index=self.op.op_signal_index, name='available cash')
         total_values = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
 
-        total_value_series = pd.Series(total_values, index=self.op_schedule, name='value')
+        total_value_series = pd.Series(total_values, index=self.op.op_signal_index, name='value')
 
         self.summary_df = pd.concat(
                 objs=[add_investments,
@@ -1467,6 +1470,7 @@ class Backtester:
 
         share_logs = []
         for share, share_name in zip(self.shares, share_names):
+            import pdb; pdb.set_trace()
             share_df = self.trade_log_df[share].unstack()
             share_df = share_df[share_df['2, traded amounts'] != 0]
             share_df['code'] = share
