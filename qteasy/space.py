@@ -10,7 +10,6 @@
 # ======================================
 
 import numpy as np
-import warnings
 
 from typing import Union, Iterable
 from itertools import islice, product, zip_longest
@@ -22,15 +21,14 @@ from qteasy.parameter import Parameter
 
 
 class Space:
-    """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中
+    """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中。当Axis对象等同于交易策略的Parameter
+    参数的时候，Space对象就可以表示为一个交易策略的参数空间。优化器可以从参数空间中提取出一系列的参数点。
 
-    参数空间类用于生成并管理一个参数空间，从参数空间中根据一定的要求提取出一系列的参数点并组装成迭代器供优化器调用
-    参数空间包含一个或多个轴，每个轴代表参数空间的一个维度，从每个轴上取出一个数值作为参数空间中某个点的坐标，而这个坐标
-    就代表空间中的一个参数组合
-    参数空间支持三种不同的轴，整数轴、浮点轴，这两种都是数值型的轴，还有另一种枚举轴，包含不同对象的枚举，同样可以作为参数
-    空间的一个维度独立存在，与数值轴的操作方式相同
-    数值轴的定义方式为上下界定义，枚举轴的定义方式为枚举定义，数值轴的取值范围为上下界之间的合法数值，而枚举轴的取值为枚举
-    列表中的值
+    参数空间对象支持不同类型的参数轴，可以是整数轴、浮点轴、枚举轴以及数组轴。
+    参数空间对象提供了一系列的方法用于从空间中提取参数点、以及判断某个参数点是否在空间中等基本操作，除此以外，还提供了
+    高级操作例如计算两个点之间的距离、根据速度向量从某个点出发生成一个子空间、或者生成一个点的邻域空间或子空间等操作。
+
+    上面这些操作将被用于策略的优化过程，例如遗传算法、粒子群算法等优化算法中。
 
     Properties
     ----------
@@ -423,13 +421,8 @@ class Space:
 
 
 class ResultPool:
-    """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
-
-    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序
-    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序
-    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序
-    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右, 即使在结果池很小，总数据量很大的情况下，
-    循环排序的速度也慢于单次排序修剪
+    """结果池类，用于保存一组元素以及这组元素的评价分数和额外信息。同时提供多种方法对结果池内的元素进行处理
+    包括根据评价分数对结果进行排序、裁剪、筛选等等操作。
 
     Properties
     ----------
@@ -517,6 +510,26 @@ class ResultPool:
         self.__perfs = []
         self.__extra = []
 
+    def get_item_perfs(self, items: Iterable):
+        """获取结果池中元素及其对应评价分的字典表示
+
+        Returns
+        -------
+        dict
+            结果池中元素及其对应评价分的字典表示
+        """
+        raise NotImplementedError
+
+    def get_item_extra(self, items: Iterable):
+        """获取结果池中元素及其对应额外信息的字典表示
+
+        Returns
+        -------
+        dict
+            结果池中元素及其对应额外信息的字典表示
+        """
+        raise NotImplementedError
+
     def show_items(self, with_extra=False):
         """以表格的形式显示结果池中的所有元素"""
         print(f'Result Pool (capacity: {self.capacity}, current size: {self.item_count}):')
@@ -533,25 +546,6 @@ class ResultPool:
         else:
             for i, (item, perf) in enumerate(zip(self.__pool, self.__perfs)):
                 print(f'{i:<10}{str(item):<35}{perf:<20.3f}')
-
-    def in_pool(self, item, perf, extra=None):
-        """将新的结果压入池中  # deprecated
-
-        Parameters
-        ----------
-        item: object
-            需要放入结果池的参数对象
-        perf: float
-            放入结果池的参数评价分数
-        extra: object， optional
-            需要放入结果池的参数对象的额外信息
-
-        Returns
-        -------
-        None
-        """
-        warnings.warn(f'in_pool() is deprecated, use push() instead', DeprecationWarning)
-        self.push(item, perf, extra)
 
     def push(self, item, perf, extra=None):
         """将新的结果压入池中
