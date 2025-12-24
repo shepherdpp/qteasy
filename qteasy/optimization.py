@@ -315,7 +315,7 @@ class Optimizer:
         self.shares = shares
         self.share_count = len(shares)
         self.benchmark = benchmark
-        self.opti_method = method
+        self.opti_method = method.lower()
         self.opti_target = opti_target
         self.opti_direction = opti_direction
 
@@ -431,20 +431,14 @@ class Optimizer:
             self._search_grid(space=search_space)
         elif self.opti_method == 'montecarlo':
             self._search_montecarlo(space=search_space)
-        elif self.opti_method == 'incremental':
+        elif self.opti_method == 'sa':
             self._search_sa(space=search_space)
         elif self.opti_method == 'ga':
             self._search_ga(space=search_space)
         elif self.opti_method == 'pso':
             self._search_pso(space=search_space)
-        elif self.opti_method == 'aco':
-            self._search_aco(space=search_space)
         elif self.opti_method == 'gradient':
             self._search_gradient(space=search_space)
-        elif self.opti_method == 'svm':
-            self._search_svm(space=search_space)
-        elif self.opti_method == 'knn':
-            self._search_knn(space=search_space)
         else:
             raise ValueError(f'Unsupported optimization method: {self.opti_method}')
         self.opti_time = time.time() - st
