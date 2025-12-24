@@ -212,8 +212,8 @@ class Cross_SMA_PT(qt.RuleIterator):
         h = self.get_data('close_ANY_d')
         # 计算长短均线的当前值
         sma = qt.tafuncs.sma
-        s_ma = sma(h[0], s)[-1]
-        f_ma = sma(h[0], f)[-1]
+        s_ma = sma(h, s)[-1]
+        f_ma = sma(h, f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)
@@ -295,7 +295,7 @@ class StgBuyOpen(GeneralStg):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
         current_price = h[-1]
         n_day_price = h[-n]
@@ -303,10 +303,8 @@ class StgBuyOpen(GeneralStg):
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全0
         sig = np.zeros_like(factors)
-        # buy_pos = np.nanargmax(factors)
-        # sig[buy_pos] = 1
-        # return sig
-        if np.all(factors <= 0.002):
+
+        if np.all(factors <= 0.0001):
             # 如果所有的选股指标都小于0，则全部卖出
             # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
             return sig
@@ -323,7 +321,8 @@ class StgSelClose(GeneralStg):
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='SELL_CLOSE',
                 run_timing='close',
-                data_types=DataType('close', freq='d', asset_type='ANY')
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                use_latest_data_cycle=True,
         )
         if par_values:
             self.update_par_values(*par_values)
@@ -982,7 +981,7 @@ class TestQT(unittest.TestCase):
         op.set_parameter('long', par_values=())
         op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 30),
                          run_freq='Q',
-                         strategy_data_types='basic_eps',
+                         data_types=DataType('basic_eps'),
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
@@ -990,10 +989,10 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', par_values=())
-        op.set_blender('avg(s0, s1, s2)', 'close')
+        op.set_blender('avg(s0, s1, s2)', 'Group_1')
         # TODO: 这里运行大量股票选股策略时，从DataSource读取数据需要24分钟时间，这个
         #  时间太长，必须尽快优化
-        # qt.run(op, visual=False, trade_log=True)
+        qt.run(op, visual=False, trade_log=True)
 
     def test_op_stepwise(self):
         """测试stepwise模式下的operator的表，使用两个测试专用交易策略"""
@@ -1129,6 +1128,7 @@ class TestQT(unittest.TestCase):
         self.assertFalse(no_short_in_res)
         op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
         op.set_parameter(0, par_values=(23, 100, 0.02))
+        op.set_blender('s0', group_id='Group_1')
         res = qt.run(op, mode=1,
                      invest_start='20060101',
                      allow_sell_short=False,
@@ -1156,7 +1156,7 @@ class TestQT(unittest.TestCase):
                 run_freq='d',
                 window_length=50,
                 par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价变化率
+                data_types=DataType('close', freq='d', asset_type='ANY'),  # 考察收盘价变化率
                 run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
         )
         op.set_parameter(
@@ -1164,7 +1164,7 @@ class TestQT(unittest.TestCase):
                 run_freq='d',
                 window_length=50,
                 par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='E'),  # 考察收盘价的变化率
+                data_types=DataType('close', freq='d', asset_type='ANY'),  # 考察收盘价的变化率
                 run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
         )
         op.set_blender(blender='s0')
@@ -1212,6 +1212,8 @@ class TestQT(unittest.TestCase):
         res = qt.run(op,
                      mode=1,
                      asset_pool=qt.filter_stock_codes(index='000300.SH', date='20220103'),
+                     invest_start='20220203',
+                     invest_end='20220930',
                      visual=True,
                      trade_log=True)
 

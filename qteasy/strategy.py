@@ -776,6 +776,8 @@ class BaseStrategy:
             for par_name, par_value in zip(self.par_names, par_values):
                 self._pars[par_name].value = par_value
                 self.__setattr__(par_name, par_value)
+        elif self.par_count == 0:
+            pass
         else:  # 如果没有传入par_values，则必须传入kwargs参数
             if not kwargs:
                 raise ValueError('par_values is None, please provide par_values or kwargs to update parameters')
