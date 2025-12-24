@@ -18,6 +18,7 @@ from typing import Any, Union, Optional
 from numpy import bool_, dtype, ndarray
 from pandas import DataFrame
 
+from qteasy.blender import signal_blend
 from qteasy.utilfuncs import str_to_list
 from qteasy.finance import CashPlan
 
@@ -841,14 +842,19 @@ def backtest_flash_steps(
 
 
 def generate_cash_invest_and_delivery_arrays(invest_cash_plan: CashPlan,
-                                          op_schedule: pd.Index) -> (tuple[np.ndarray, np.ndarray, np.ndarray]):
+                                             group_merge_type: str,
+                                             timing_table: pd.DataFrame) -> (tuple[np.ndarray, np.ndarray, np.ndarray]):
     """ 获取现金投资和通胀率相关参数，生成投资和通胀率数组
 
     Parameters
     ----------
     invest_cash_plan: CashPlan
         现金投资计划
-    op_schedule: pd.Index
+    group_merge_type: str
+        投资策略组合并类型。如果该类型为'NONE'，则表示不进行组合并操作,则交易信号的
+        数量可能会大于timing_table的长度，否则交易信号的数量与timing_table的长度
+        相同
+    timing_table: pd.DataFrame
         操作日时间索引, 用于生成对应长度的数组
 
     Returns
@@ -860,13 +866,20 @@ def generate_cash_invest_and_delivery_arrays(invest_cash_plan: CashPlan,
     delivery_day_indicators: np.ndarray
         交割日指示数组, 非交割日为0，交割日为1
     """
+    if group_merge_type.upper() == 'NONE':
+        signal_length = int(timing_table.sum().sum())
+        cash_plan_index = timing_table.index.repeat(timing_table.sum(axis=1).values)
+    else:
+        signal_length = len(timing_table)
+        cash_plan_index = timing_table.index
+
     # 生成包含现金投资和现金通胀率数组的DataFrame
     cash_plan_df = pd.DataFrame(
-            {'investment':     np.zeros_like(op_schedule, dtype=float),
-             'inflation_rate': np.ones_like(op_schedule, dtype=float)},
-            index=op_schedule,
+            {'investment':     np.zeros(shape=(signal_length,), dtype=float),
+             'inflation_rate': np.ones(shape=(signal_length,), dtype=float)},
+            index=cash_plan_index,
     )
-    investment_positions = np.searchsorted(op_schedule.values, invest_cash_plan.plan.index, side='left')
+    investment_positions = np.searchsorted(cash_plan_index, invest_cash_plan.plan.index, side='left')
     for pos, amount in zip(investment_positions, invest_cash_plan.amounts):
         if pos < len(cash_plan_df):
             cash_plan_df.iat[pos, 0] += amount  # 累加投资金额
@@ -968,7 +981,7 @@ class Backtester:
         if isinstance(shares, str):
             shares = str_to_list(shares)
         assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
-        
+
         # benchmark 必须是一个pd.Series，如果是DataFrame，则转换为Series
         if isinstance(benchmark_data, pd.DataFrame):
             if benchmark_data.shape[1] != 1:
@@ -990,6 +1003,7 @@ class Backtester:
             if not isinstance(arr, np.ndarray):
                 raise TypeError(f"{name} must be a numpy array")
             if arr.shape != shape:
+                # import pdb; pdb.set_trace()
                 raise ValueError(f"{name} should have shape {shape}, but got {arr.shape}")
 
         self.op = op
@@ -1100,7 +1114,7 @@ class Backtester:
             try:
                 signals[signal_index, :] = signal
             except:
-                import pdb; pdb.set_trace()
+            signals[signal_index, :] = signal
             signal_index += 1
         et = time.time()
         self.op_run_time = et - st
@@ -1446,7 +1460,7 @@ class Backtester:
         if any(share not in self.trade_log_df.columns for share in self.shares):
             missing_share = [share for share in self.shares if share not in self.trade_log_df.columns]
             raise KeyError(
-                f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
+                    f'some shares ({missing_share}) are not in trade_log_df columns, cannot create trade summary!')
         # 处理share_names
         if share_names is None:
             share_names = ['N/A' for _ in self.shares]
