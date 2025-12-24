@@ -389,7 +389,7 @@ class Optimizer:
          self.cash_inflation_array,
          self.delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
                 invest_cash_plan=cash_plan,
-                op_schedule=self.op.group_timing_table.index,
+                timing_table=self.op.group_timing_table.index,
         )
 
         self.running_backtester = Backtester(

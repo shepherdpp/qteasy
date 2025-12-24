@@ -1496,6 +1496,7 @@ def check_and_prepare_backtest_data(op: Operator,
 
     # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
     max_window_length = op.max_window_length
+    import pdb; pdb.set_trace()
     time_window_delta = pd.Timedelta(max_window_length * 3, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
 
     # 通过get_history_data_package函数获取数据类型的原始数据
@@ -2012,8 +2013,9 @@ def run_mode_1(op, config):
     (cash_investment_array,
      cash_inflation_array,
      delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
-            invest_cash_plan,
-            op.group_timing_table.index,
+            invest_cash_plan=invest_cash_plan,
+            group_merge_type=op.group_merge_type,
+            timing_table=op.group_timing_table,
     )
     cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
     cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
@@ -2035,6 +2037,9 @@ def run_mode_1(op, config):
             price_adj=config['backtest_price_adj'],
             datasource=qteasy.QT_DATA_SOURCE,
     )
+    # 确保trade_prices包含所有交易时间点，并进行前向填充
+    trade_prices = trade_prices.reindex(index=op.op_signal_index)
+    trade_prices.ffill(inplace=True)
 
     hist_benchmark = check_and_prepare_benchmark_data(
             op=op,
