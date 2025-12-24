@@ -329,7 +329,7 @@ class StgSelClose(GeneralStg):
             self.update_par_values(*par_values)
 
     def realize(self):
-        n, = self.get_pars('n')
+        n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
         current_price = h[-1]
         n_day_price = h[-n]
@@ -699,7 +699,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -714,7 +714,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -729,7 +729,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -744,7 +744,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -762,7 +762,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -774,10 +774,10 @@ class TestQT(unittest.TestCase):
                test_end='20181130',
                parallel=True,
                visual=True)
-        print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
+        print(f'strategy optimization in sa with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method='incremental',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,

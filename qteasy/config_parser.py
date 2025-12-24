@@ -365,8 +365,8 @@ def parse_all_optimization_params(config: dict) -> dict[str, Any]:
         opti_params.update(parse_optimization_params_grid(config))
     elif optimization_method == 'montecarlo':
         opti_params.update(parse_optimization_params_montecarlo(config))
-    elif optimization_method == 'incremental':
-        opti_params.update(parse_optimization_params_incremental(config))
+    elif optimization_method == 'sa':
+        opti_params.update(parse_optimization_params_sa(config))
     elif optimization_method == 'ga':
         opti_params.update(parse_optimization_params_ga(config))
     elif optimization_method == 'knn':
@@ -397,7 +397,7 @@ def parse_optimization_params_montecarlo(config: dict) -> dict[str, Any]:
     }
 
 
-def parse_optimization_params_incremental(config: dict) -> dict[str, Any]:
+def parse_optimization_params_sa(config: dict) -> dict[str, Any]:
     """解析策略优化相关参数，优化算法为递进优化法时使用:
     """
     return {
