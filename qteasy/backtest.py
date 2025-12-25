@@ -1252,16 +1252,12 @@ class Backtester:
             交易模拟结果数据
         """
         value_history = pd.DataFrame(self.own_amounts_array[1:],
-                                     index=self.op.op_signal_index,
+                                     index=self.op.op_signal_index.get_level_values(0),
                                      columns=self.shares)
         # 填充标量计算结果
         value_history['cash'] = self.own_cashes[1:]
         value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
         value_history['fee'] = self.trade_cost_array.sum(axis=1)
-
-        # TODO: 注意此时生成的交易信号可能存在重复索引，因为同一交易周期可能有不同的
-        #  策略组分别运行并分别生成交易信号，导致同一天有多条交易信号记录，应该记录同
-        #  一时刻最后一组交易信号的结果
 
         value_history = value_history.groupby(value_history.index).last()
 
@@ -1355,6 +1351,7 @@ class Backtester:
                 '5, own amounts', 每一支股票的当期末持有数量
                 '6, available amounts', 每一支股票的当期末可用数量
                 '7, summary', 当期每一支股票的持仓价值，同时包含汇总数据：当期末持有现金、可用现金、总资产价值
+            以上信息以DataFrame形式保存，行索引为多级索引，第一/二层为时间/策略组索引，第三层为上述8个数据类别。
             交易日志文件可以被保存为csv格式，文件名为'trade_log.csv'
 
         Parameters
@@ -1404,7 +1401,7 @@ class Backtester:
                       '6, available amounts',
                       '7, summary'],
         )
-        combined_data = combined_data.reorder_levels([1, 0]).sort_index(level=0)
+        combined_data = combined_data.reorder_levels([1, 2, 0]).sort_index(level=0)
 
         # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
         add_investments = pd.Series(self.cash_investment_array, index=self.op.op_signal_index, name='add. invest')
@@ -1421,11 +1418,9 @@ class Backtester:
                       total_value_series],
                 axis=1,
         )
-        summary_index = pd.MultiIndex.from_product(
-                [self.summary_df.index,
-                 ['7, summary']],
-        )
-        self.summary_df.index = summary_index
+        self.summary_df = self.summary_df.assign(summary='7, summary').set_index('summary', append=True)
+        self.summary_df.index.names = [None, None, None]
+        # 上面将summary_df的索引变为多级索引，第三层为'7, summary'，与combined_data的第三层索引对应，以便join
         self.trade_log_df = self.summary_df.join(combined_data, how='outer', sort=False)
 
         if save_to_file_path is not None:
@@ -1469,8 +1464,8 @@ class Backtester:
             share_names = ['N/A' for _ in self.shares]
 
         share_logs = []
+        # trade_log_df_no_duplicate = self.trade_log_df[~self.trade_log_df.index.duplicated(keep='last')]
         for share, share_name in zip(self.shares, share_names):
-            import pdb; pdb.set_trace()
             share_df = self.trade_log_df[share].unstack()
             share_df = share_df[share_df['2, traded amounts'] != 0]
             share_df['code'] = share
@@ -1488,7 +1483,7 @@ class Backtester:
                       '6, available amounts',
                       '7, summary']
         op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-        self.summary_df.index = self.summary_df.index.levels[0]
+        self.summary_df.index = self.summary_df.index.droplevel(-1)  # 去掉index中的’7, summary‘层级以便join
         self.summary_df = self.summary_df.join(op_log_shares_abs, how='right', sort=True)
 
         if save_to_file_path is not None:
