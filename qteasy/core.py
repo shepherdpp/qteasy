@@ -1496,7 +1496,7 @@ def check_and_prepare_backtest_data(op: Operator,
 
     # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
     max_window_length = op.max_window_length
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     time_window_delta = pd.Timedelta(max_window_length * 3, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
 
     # 通过get_history_data_package函数获取数据类型的原始数据
@@ -2038,7 +2038,7 @@ def run_mode_1(op, config):
             datasource=qteasy.QT_DATA_SOURCE,
     )
     # 确保trade_prices包含所有交易时间点，并进行前向填充
-    trade_prices = trade_prices.reindex(index=op.op_signal_index)
+    trade_prices = trade_prices.reindex(index=op.op_signal_index.get_level_values(0))
     trade_prices.ffill(inplace=True)
 
     hist_benchmark = check_and_prepare_benchmark_data(
