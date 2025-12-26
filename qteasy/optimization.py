@@ -389,7 +389,8 @@ class Optimizer:
          self.cash_inflation_array,
          self.delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
                 invest_cash_plan=cash_plan,
-                timing_table=self.op.group_timing_table.index,
+                group_merge_type=self.op.group_merge_type,
+                timing_table=self.op.group_timing_table,
         )
 
         self.running_backtester = Backtester(
