@@ -1382,7 +1382,7 @@ class TestStrategy(unittest.TestCase):
         stg.update_shares(3, ['share1', 'share2', 'share3'])
         res = stg.generate()
         print(res)
-        import pdb; pdb.set_trace()
+
         self.assertIsInstance(res, np.ndarray)
         self.assertTrue(np.allclose(res, np.array([0, 0, 0])))
 
