@@ -4802,3 +4802,25 @@ def get_tables_by_dtypes(
                 )
 
     return tables_to_keep
+
+
+class StgDataType(DataType):
+    """用于表示策略数据类型的类，策略数据类型由DataType类型派生而来，相比DataType类型，增加
+    两个用于交易策略的属性: window_length以及use_latest_cycle(ULC)。
+
+    这个类只用在策略初始化过程中，为用户提供一种更加方便的设置window_length/ULC的方式，
+
+    Attributes
+    ----------
+    window_length: int
+        用于交易策略的工作参数，窗口长度，表示在计算该数据类型时，所需的历史数据行数
+    use_latest_data_cycle: bool
+        用于交易策略的工作参数，为True时表示使用策略运行时间点所在的最新周期数据，为False时表示使用
+        上一个周期的数据。
+    """
+
+    def __init__(self, name: str, freq: str, asset_type: str,
+                 window_length: int = None, use_latest_data_cycle: bool = None):
+        super().__init__(name, freq=freq, asset_type=asset_type)
+        self.window_length = window_length
+        self.use_latest_data_cycle = use_latest_data_cycle
