@@ -355,6 +355,7 @@ class TestQT(unittest.TestCase):
         # 准备测试所需数据，确保本地数据源有足够的数据
 
         self.op = qt.Operator(strategies=['dma', 'macd'])
+        self.op.group_merge_type = 'OR'
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
         print(' test environment information')
