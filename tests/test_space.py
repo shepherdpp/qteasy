@@ -345,6 +345,22 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(item in [1, 5, 7, 10, 'A', 'F']) for item in extracted]))
 
+        # test param object with array type
+        param = Parameter((0., 1.), par_type='array[2]')
+        self.assertIsInstance(param, Parameter)
+        self.assertEqual(param.par_type, 'float_array')
+        self.assertEqual(param.par_range, (0., 1.))
+        self.assertEqual(param.count, np.inf)
+        self.assertEqual(param.size, 1.0)
+        vals = param.gen_values(5, 'int')
+        self.assertEqual(len(vals), 5)
+        for val in vals:
+            print(f'generated array value: {val}')
+            self.assertTrue(isinstance(val, np.ndarray))
+            self.assertEqual(val.shape, (2,))
+            self.assertTrue(all([(0.0 <= item <= 1.0) for item in val]))
+
+
     def test_from_point(self):
         """测试从一个点生成一个space"""
         # 生成一个space，指定space中的一个点以及distance，生成一个sub-space
