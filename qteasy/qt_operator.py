@@ -1689,6 +1689,10 @@ class Operator:
             # 下面这种实现方式只能生成时间索引，但是存在重复索引：
             # self._op_signal_index = timing_table.index.repeat(timing_table.sum(axis=1).astype('int'))
         else:
+            # 在timing_table的index中增加一个level变成MultiIndex，并将Index的第二个level命名为'merged'
+            timing_table.index = pd.MultiIndex.from_product(
+                    [timing_table.index, ['merged']],
+            )
             self._op_signal_index = timing_table.index
 
     def get_signal_count(self, steps=None) -> int:
