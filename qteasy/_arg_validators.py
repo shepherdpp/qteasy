@@ -63,13 +63,15 @@ def _valid_qt_kwargs():
     vkwargs = {
         'mode':
             {'Default':   1,  # 运行模式
-             'Validator': lambda value: value in (0, 1, 2, 3),
+             'Validator': lambda value: value in (0, 1, 2, 3, 4,
+                                                  'live', 'backtest', 'optimize', 'trace', 'predict'),
              'level':     0,
              'text':      'qteasy 的运行模式，取值范围: \n'
-                          '0: 实盘运行模式\n'
-                          '1: 回测-评价模式\n'
-                          '2: 策略优化模式\n'
-                          '3: 统计预测模式\n'},
+                          '0 / live:        实盘模式\n'
+                          '1 / backtest:    回测模式\n'
+                          '2 / optimize:    优化模式\n'
+                          '3 / trace:       追踪模式\n'
+                          '4 / predict:     统计预测模式\n'},
 
         'time_zone':  # this parameter is now not used
             {'Default':   'local',
