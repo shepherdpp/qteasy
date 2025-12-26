@@ -19,7 +19,7 @@ from qteasy.strategy import (
     FactorSorter,
 )
 
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, StgDataType
 from qteasy.parameter import Parameter
 from qteasy.utilfuncs import rolling_window
 
@@ -55,10 +55,11 @@ class TestStrategy(unittest.TestCase):
                 value=np.array([1.0, 2.0, 3.0]),
         )
 
-        self.dtype_1 = DataType(
+        self.dtype_1 = StgDataType(
                 name='close',
                 freq='d',
                 asset_type='E',
+                window_length=7,
         )
 
         self.dtype_2 = DataType(
@@ -67,7 +68,7 @@ class TestStrategy(unittest.TestCase):
                 asset_type='E',
         )
 
-        self.dtype_3 = DataType(
+        self.dtype_3 = StgDataType(
                 name='close',
                 freq='5min',
                 asset_type='E',
@@ -126,7 +127,7 @@ class TestStrategy(unittest.TestCase):
                         pars=[self.param1, self.param2],
                         data_types={'data_1': self.dtype_1, 'data_2': self.dtype_3},
                         use_latest_data_cycle=[True, False],
-                        window_length=[7, 9],
+                        window_length=9,
                 )
 
                 if par_values:
@@ -167,7 +168,7 @@ class TestStrategy(unittest.TestCase):
                         pars={'par1': self.param1.copy(), 'par2': self.param2.copy()},
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
-                        window_length=[7, 9],
+                        window_length=9,
                         **kwargs,
                 )
 
@@ -554,6 +555,8 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.par_values, (50, 0.5))
         print(stg.__str__())
         print(stg.__repr__())
+
+        # test creating strategy with StgDataTypes
 
     def test_properties(self):
 
@@ -990,10 +993,10 @@ class TestStrategy(unittest.TestCase):
                                         'close_E_d':    False,
                                         'close_E_h':    False})
         self.assertEqual(stg.data_window_lengths, {'close_E_5min': 30,
-                                                   'close_E_d':    30,
+                                                   'close_E_d':    7,
                                                    'close_E_h':    30})
         self.assertEqual(stg.window_lengths, {'close_E_5min': 30,
-                                              'close_E_d':    30,
+                                              'close_E_d':    7,
                                               'close_E_h':    30})
         self.assertEqual(stg.share_count, 0)
         self.assertEqual(stg.share_names, [])
@@ -1083,9 +1086,9 @@ class TestStrategy(unittest.TestCase):
               f'close_E_5min: \n{stg.close_E_5min}\n'
               f'close_E_15min: \n{stg.close_E_15min}\n'
               f'close_E_w: \n{stg.close_E_w}\n')
-
+        stg.update_shares(3, ['share1', 'share2', 'share3'])
         self.assertEqual(stg.share_count, 3)
-        self.assertEqual(stg.share_names, [])
+        self.assertEqual(stg.share_names, ['share1', 'share2', 'share3'])
 
         stg.update_running_data_window(
                 data_windows=self.data_windows,
@@ -1376,8 +1379,10 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.multi_pars, None)
 
         # run strategy.generate()
+        stg.update_shares(3, ['share1', 'share2', 'share3'])
         res = stg.generate()
         print(res)
+        import pdb; pdb.set_trace()
         self.assertIsInstance(res, np.ndarray)
         self.assertTrue(np.allclose(res, np.array([0, 0, 0])))
 

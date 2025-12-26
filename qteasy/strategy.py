@@ -19,7 +19,11 @@ from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
     input_to_list,
 )
-from qteasy.datatypes import DataType
+from qteasy.datatypes import (
+    DataType,
+    StgDataType,
+)
+
 from qteasy.parameter import Parameter
 
 
@@ -223,9 +227,9 @@ class BaseStrategy:
                          f' par_types={self.par_types}, par_range={self.par_range}')
 
         self._data_types = None
-        self._data_ids = None
-        self._data_ULC = None
-        self._data_WL = None
+        self._data_ids = None  # 一个list，保存所有数据类型的data_id
+        self._data_ULC = None  # 一个dict，保存每个data的最新周期使用标志
+        self._data_WL = None  # 一个dict，保存每个data的窗口长度
         self.set_data_types(data_types, use_latest_data_cycle, window_length)
         logger_core.info(f'Strategy data types set:\n'
                          f'data_types={self.data_types}, data_ids={self._data_ids}, ')
@@ -655,6 +659,15 @@ class BaseStrategy:
             raise TypeError(f'parameter "use_latest_data_cycles" is invalid ({use_latest_data_cycle}), '
                             f'please check your input')
 
+        # 如果DataType中给出了ULC，则更新相应的ULC值
+        for dtype_id, dtype in data_types.items():
+            if not isinstance(dtype, StgDataType):
+                continue
+            if dtype.use_latest_data_cycle is not None:
+                if not isinstance(dtype.use_latest_data_cycle, bool):
+                    raise TypeError(f'use_latest_data_cycle should be a boolean, got {dtype.use_latest_data_cycle} instead')
+                self._data_ULC[dtype_id] = dtype.use_latest_data_cycle
+
         # 设置window lengths
         if isinstance(window_length, (int, float)):
             if window_length <= 0:
@@ -671,6 +684,15 @@ class BaseStrategy:
             self._data_WL = {d_name: 20 for d_name in self._data_ids}
         else:
             raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
+
+        # 如果DataType中给出了window_length，则更新相应的window_length值
+        for dtype_id, dtype in data_types.items():
+            if not isinstance(dtype, StgDataType):
+                continue
+            if dtype.window_length is not None:
+                if not isinstance(window_length, int) or dtype.window_length <= 0:
+                    raise ValueError(f'window_length should be a positive integer, got {dtype.window_length} instead')
+                self._data_WL[dtype_id] = dtype.window_length
 
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
