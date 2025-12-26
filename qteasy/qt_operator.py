@@ -172,9 +172,10 @@ class Operator:
         # Operator对象包含的交易策略组
         self._groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
         self._group_merge_type = None  # 交易策略组的合并方式，默认为None
-        self.group_timing_table = None  # 交易策略组的运行时间表
+        self.group_timing_table = None  # 交易策略组的运行时间表，一个DataFrame，每列代表一个策略组，1表示运行，0不运行
         self.group_merge_type = group_merge_type  # 交易策略组的合并方式，默认为None
         self.group_schedules = {}  # 交易策略组的运行时间表，包含每个组的运行时间和频率
+        self._op_signal_index = None  # 生成timing_table后，生成交易信号的index
 
         # Operator对象存储的历史数据缓存和窗口缓存：
         self.data_buffers = {}  # Dict——Operator对象的历史数据缓存，缓存所有策略所需的历史数据
@@ -288,6 +289,11 @@ class Operator:
     def op_ref_type_count(self) -> int:  # deprecated
         """ 返回operator对象生成交易清单所需的历史数据类型数量"""
         return len(self.op_ref_types)
+
+    @property
+    def op_signal_index(self) -> Optional[pd.Index]:
+        """ 返回operator对象生成交易信号的index"""
+        return self._op_signal_index
 
     @property
     def op_data_freq(self) -> Union[str, list[str]]:  # deprecated
@@ -451,17 +457,17 @@ class Operator:
             return
         return list(self._op_signal_shares.keys())
 
-    @property
-    def op_list_hdates(self):
-        """ 生成的交易清单的hdates序号，交易清单的日期序号
-
-        Returns
-        -------
-        list, 交易清单的hdates序号，交易清单的日期序号
-        """
-        if self._op_signal_hdates == {}:
-            return
-        return list(self._op_signal_hdates.keys())
+    # @property
+    # def op_list_hdates(self):
+    #     """ 生成的交易清单的hdates序号，交易清单的日期序号
+    #
+    #     Returns
+    #     -------
+    #     list, 交易清单的hdates序号，交易清单的日期序号
+    #     """
+    #     if self._op_signal_hdates == {}:
+    #         return
+    #     return list(self._op_signal_hdates.keys())
 
     @property
     def op_list_types(self):
@@ -533,7 +539,7 @@ class Operator:
             is_ready = False
 
         # 确认operator对象所有策略组都设置了混合器
-        group_no_blender = [g.name for g in self._groups if (g.blender is None) and (g.strategy_count > 1)]
+        group_no_blender = [g.name for g in self._groups if g.blender is None]
         if len(group_no_blender) > 0:
             message.append(f'No blender -- some of the strategy groups ({group_no_blender}) does not have blender '
                            f'set!\n')
@@ -1672,8 +1678,18 @@ class Operator:
                     index=schedule_index,
                     columns=['is_running'],
             )
-        self.group_timing_table = pd.concat(self.group_schedules.values(), axis=1)
-        self.group_timing_table = self.group_timing_table.fillna(0).astype('int')
+        timing_table = pd.concat(self.group_schedules.values(), axis=1)
+        timing_table.columns = self.group_schedules.keys()
+        self.group_timing_table = timing_table.fillna(0).astype('int')
+
+        if self.group_merge_type == 'None':
+            # 在这种情况下应该生成一个MultiIndex，同时包含时间和策略组信息
+            stacked_timing_table = self.group_timing_table.stack()
+            self._op_signal_index = stacked_timing_table[stacked_timing_table > 0].index
+            # 下面这种实现方式只能生成时间索引，但是存在重复索引：
+            # self._op_signal_index = timing_table.index.repeat(timing_table.sum(axis=1).astype('int'))
+        else:
+            self._op_signal_index = timing_table.index
 
     def get_signal_count(self, steps=None) -> int:
         """ 获取当前运行时间表中所有策略组生成的交易信号数量
@@ -1752,7 +1768,9 @@ class Operator:
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
                            f"Data package starts on {data_package[data_type.dtype_id].index[0]}, "
                            f"and start_date is {start_date}, \nbut the first available window starts on "
-                           f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]}. ")
+                           f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]} (window length: "
+                           f"{dtype_max_window}). ")
+                    # import pdb; pdb.set_trace()  # to solve problem of insufficient data when freq = 'Q'
                     raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
@@ -1844,8 +1862,13 @@ class Operator:
             signals = [stg.generate() for stg in group.members]
 
             if self.group_merge_type == 'None':
-                signal = group.blend(signals)
-                yield signal_type, step_index, signal
+                try:
+                    signal = group.blend(signals)
+                    yield signal_type, step_index, signal
+                except:
+                    import pdb; pdb.set_trace()
+                    group.blend(signals)
+                    raise RuntimeError()
             elif self.group_merge_type == 'Or':
                 signal += group.blend(signals)
             elif self.group_merge_type == 'And':
@@ -1917,83 +1940,83 @@ class Operator:
 #  快速运行交易策略，在不需要完整Operator功能的情况下，保持最基本的
 #  策略运行功能，保存策略运行所需的数据结构。在Optimizer中用于并行
 #  快速运行策略并回测。
-class SimpleOperator:
-    """轻量级Operator，仅包含策略运行所需的核心信息"""
-
-    def __init__(self, strategy_info):
-        """从完整Operator中提取必要信息
-
-        Parameters
-        ----------
-        strategy_info : dict
-            包含策略运行所需信息的字典
-        """
-        # 提取策略组信息
-        self._groups = strategy_info['groups']
-        self._group_merge_type = strategy_info['group_merge_type']
-        self.group_timing_table = strategy_info['group_timing_table']
-
-        # 提取数据相关信息
-        self.data_window_views = strategy_info['data_window_views']
-        self.data_window_indices = strategy_info['data_window_indices']
-
-    def get_signal_count(self, steps=None):
-        """获取信号数量"""
-        if self.group_timing_table is None:
-            raise ValueError("Group timing table is not set.")
-        if steps is not None:
-            running_schedule = self.group_timing_table.iloc[steps]
-        else:
-            running_schedule = self.group_timing_table
-
-        if self._group_merge_type == 'None':
-            return running_schedule.sum().sum()
-        else:
-            return len(running_schedule)
-
-    def run_strategies(self, steps):
-        """运行策略生成信号"""
-        for step in steps:
-            yield from self._run_strategy(step)
-
-    def _run_strategy(self, step_index):
-        """运行单步策略"""
-        if self.group_timing_table is None:
-            raise ValueError("Group timing table is not set.")
-
-        group_timing = self.group_timing_table.iloc[step_index].values
-        group_count = len(self._groups)
-        groups = [self._groups[i] for i in range(group_count) if group_timing[i]]
-
-        signal = 0 if self._group_merge_type == 'Or' else 1
-
-        for group in groups:
-            # 更新策略数据窗口
-            for strategy in group['members']:
-                strategy_id = strategy['strategy_id']
-                # 更新数据窗口（这里需要根据实际数据结构调整）
-                strategy.update_running_data_window(
-                                    data_windows=self.data_window_views[strategy.strategy_id],
-                                    window_indices=self.data_window_indices[strategy.strategy_id],
-                                    window_index=step_index,
-                                )
-
-            signal_type = group['signal_type']
-            # 生成信号（这里需要根据实际数据结构调整）
-            # signals = [stg.generate() for stg in group['members']]
-
-            if self._group_merge_type == 'None':
-                # signal = group['blender'](signals)
-                yield signal_type, step_index, signal
-            elif self._group_merge_type == 'Or':
-                signal += 1  # placeholder
-            elif self._group_merge_type == 'And':
-                signal *= 1  # placeholder
-
-        if self._group_merge_type != 'None':
-            yield signal_type, step_index, signal
-
-    def set_opt_par_values(self, par_values):
-        """设置优化参数值"""
-        # 实现参数设置逻辑
-        pass
+# class SimpleOperator:
+#     """轻量级Operator，仅包含策略运行所需的核心信息"""
+#
+#     def __init__(self, strategy_info):
+#         """从完整Operator中提取必要信息
+#
+#         Parameters
+#         ----------
+#         strategy_info : dict
+#             包含策略运行所需信息的字典
+#         """
+#         # 提取策略组信息
+#         self._groups = strategy_info['groups']
+#         self._group_merge_type = strategy_info['group_merge_type']
+#         self.group_timing_table = strategy_info['group_timing_table']
+#
+#         # 提取数据相关信息
+#         self.data_window_views = strategy_info['data_window_views']
+#         self.data_window_indices = strategy_info['data_window_indices']
+#
+#     def get_signal_count(self, steps=None):
+#         """获取信号数量"""
+#         if self.group_timing_table is None:
+#             raise ValueError("Group timing table is not set.")
+#         if steps is not None:
+#             running_schedule = self.group_timing_table.iloc[steps]
+#         else:
+#             running_schedule = self.group_timing_table
+#
+#         if self._group_merge_type == 'None':
+#             return running_schedule.sum().sum()
+#         else:
+#             return len(running_schedule)
+#
+#     def run_strategies(self, steps):
+#         """运行策略生成信号"""
+#         for step in steps:
+#             yield from self._run_strategy(step)
+#
+#     def _run_strategy(self, step_index):
+#         """运行单步策略"""
+#         if self.group_timing_table is None:
+#             raise ValueError("Group timing table is not set.")
+#
+#         group_timing = self.group_timing_table.iloc[step_index].values
+#         group_count = len(self._groups)
+#         groups = [self._groups[i] for i in range(group_count) if group_timing[i]]
+#
+#         signal = 0 if self._group_merge_type == 'Or' else 1
+#
+#         for group in groups:
+#             # 更新策略数据窗口
+#             for strategy in group['members']:
+#                 strategy_id = strategy['strategy_id']
+#                 # 更新数据窗口（这里需要根据实际数据结构调整）
+#                 strategy.update_running_data_window(
+#                                     data_windows=self.data_window_views[strategy.strategy_id],
+#                                     window_indices=self.data_window_indices[strategy.strategy_id],
+#                                     window_index=step_index,
+#                                 )
+#
+#             signal_type = group['signal_type']
+#             # 生成信号（这里需要根据实际数据结构调整）
+#             # signals = [stg.generate() for stg in group['members']]
+#
+#             if self._group_merge_type == 'None':
+#                 # signal = group['blender'](signals)
+#                 yield signal_type, step_index, signal
+#             elif self._group_merge_type == 'Or':
+#                 signal += 1  # placeholder
+#             elif self._group_merge_type == 'And':
+#                 signal *= 1  # placeholder
+#
+#         if self._group_merge_type != 'None':
+#             yield signal_type, step_index, signal
+#
+#     def set_opt_par_values(self, par_values):
+#         """设置优化参数值"""
+#         # 实现参数设置逻辑
+#         pass
