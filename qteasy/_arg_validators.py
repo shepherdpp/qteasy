@@ -1389,7 +1389,7 @@ def _is_datelike(value):
         return True
     if isinstance(value, str):
         try:
-            dt = pd.to_datetime(value)
+            _ = pd.to_datetime(value)
             return True
         except:
             return False
@@ -1403,7 +1403,7 @@ def _is_timelike(value):
         return True
     if isinstance(value, str):
         try:
-            dt = pd.to_datetime(value)
+            _ = pd.to_datetime(value)
             return True
         except:
             return False
@@ -1411,6 +1411,8 @@ def _is_timelike(value):
 
 
 def _num_or_seq_of_num(value):
+    """ return True if value is a number or a sequence of numbers
+    """
     return (isinstance(value, (int, float)) or
             (isinstance(value, (list, tuple, np.ndarray)) and
              all([isinstance(v, (int, float)) for v in value]))
