@@ -457,18 +457,6 @@ class Operator:
             return
         return list(self._op_signal_shares.keys())
 
-    # @property
-    # def op_list_hdates(self):
-    #     """ 生成的交易清单的hdates序号，交易清单的日期序号
-    #
-    #     Returns
-    #     -------
-    #     list, 交易清单的hdates序号，交易清单的日期序号
-    #     """
-    #     if self._op_signal_hdates == {}:
-    #         return
-    #     return list(self._op_signal_hdates.keys())
-
     @property
     def op_list_types(self):
         """ 生成的交易清单的price_types，回测交易价格类型
@@ -480,23 +468,6 @@ class Operator:
         if self._op_signal_types == {}:
             return
         return list(self._op_signal_types.keys())
-
-    @property
-    def op_list_shape(self):
-        """ 生成的交易清单的shape。
-
-        Returns
-        -------
-        tuple, (op_list_shares, op_list_hdates, op_list_price_types)
-            生成的交易清单的shape，包含三个维度的数据量
-        """
-        if self._op_signal_shares == {}:
-            return
-        return (
-            len(self._op_signal_shares),
-            len(self._op_signal_hdates),
-            len(self._op_signal_types)
-        )
 
     @property
     def ready(self):
@@ -548,7 +519,8 @@ class Operator:
         # 确认operator中每一个策略都已经设置了share_count及share_names属性，且所有share_count与所有len(share_names)相等
         for stg in self.strategies:
             if (stg.share_count == 0) or (stg.share_names is None):
-                message.append(f'Strategy ({stg.strategy_id}) share info not set -- share_count or share_names is None!\n')
+                message.append(f'Strategy ({stg.strategy_id}) share info not set -- '
+                               f'share_count or share_names not set!\n')
                 is_ready = False
             elif stg.share_count != len(stg.share_names):
                 message.append(f'Strategy ({stg.strategy_id}) share info invalid -- share_count ({stg.share_count}) '
@@ -1866,13 +1838,8 @@ class Operator:
             signals = [stg.generate() for stg in group.members]
 
             if self.group_merge_type == 'None':
-                try:
-                    signal = group.blend(signals)
-                    yield signal_type, step_index, signal
-                except:
-                    import pdb; pdb.set_trace()
-                    group.blend(signals)
-                    raise RuntimeError()
+                signal = group.blend(signals)
+                yield signal_type, step_index, signal
             elif self.group_merge_type == 'Or':
                 signal += group.blend(signals)
             elif self.group_merge_type == 'And':
