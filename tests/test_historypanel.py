@@ -1071,9 +1071,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
+        # here check that all idx data are nan and row count is correct (20)
         all_idx_data = hp[:, '000300.SH']
         self.assertTrue(np.all(np.isnan(all_idx_data)))
-        self.assertEqual(len(hp), 22)
+        self.assertEqual(len(hp), 20)
 
         print('test get history panel data')
         data_types = infer_data_types(
