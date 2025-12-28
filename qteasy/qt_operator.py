@@ -35,13 +35,6 @@ from qteasy.built_in import (
 
 SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
 
-LIVE_TRADE = 0
-LIVE = 0
-BACKTEST = 1
-OPTIMIZE = 2
-OPTI = 2
-OPTIMIZATION = 2
-
 
 class Operator:
     """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
@@ -239,12 +232,12 @@ class Operator:
         return [stg.strategy_id for stg in self.strategies]
 
     @property
-    def op_type(self):
+    def op_type(self):  # deprecated
         """ 返回operator对象的运行类型"""
         return self._op_type
 
     @op_type.setter
-    def op_type(self, op_type):
+    def op_type(self, op_type):  # deprecated
         """ 设置operator对象的运行类型"""
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
@@ -296,21 +289,12 @@ class Operator:
         return self._op_signal_index
 
     @property
-    def op_data_freq(self) -> Union[str, list[str]]:  # deprecated
+    def op_data_freq(self) -> dict:  # deprecated
         """返回operator对象所有策略子对象所需数据的采样频率
             如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
         """
-        d_freq = [stg.data_freq for stg in self.strategies]
-        d_freq = list(set(d_freq))
-        d_freq.sort()
-        if len(d_freq) == 0:
-            return ''
-        if len(d_freq) == 1:
-            return d_freq[0]
-        warnings.warn(f'there are multiple history data frequency required by strategies',
-        RuntimeWarning, stacklevel=2)
-        raise ValueError(f'In current version, the data freq of all strategies should be the same, got {d_freq}')
-        # return d_freq
+        d_freqs = {stg.strategy_id: stg.freq for stg in self.strategies}
+        return d_freqs
 
     @property
     def group_merge_type(self):
@@ -427,16 +411,16 @@ class Operator:
 
     @property
     def strategy_group_count(self):
-        """ 计算operator对象中所有子策略的不同回测价格类型的数量
+        """ 计算operator对象中所有交易策略组的数量
 
         Returns
         -------
-        int, operator对象中所有子策略的不同回测价格类型的数量
+        int, operator对象中所有交易策略组的数量
         """
         return len(self.strategy_groups)
 
     @property
-    def op_list(self):
+    def op_list(self):  # deprecated
         """ 生成的交易清单，包含了所有交易信号，以及交易信号对应的交易价格
 
         Returns
@@ -458,7 +442,7 @@ class Operator:
         return list(self._op_signal_shares.keys())
 
     @property
-    def op_list_types(self):
+    def op_list_types(self):  # deprecated
         """ 生成的交易清单的price_types，回测交易价格类型
 
         Returns
@@ -726,8 +710,30 @@ class Operator:
 
         return zip(self.strategy_ids, self.strategies)
 
-    def get_group_by_id(self, group_id):
-        """ 获取一个Group对象
+    def get_group(self, group_idx: Union[str, int]) -> Group:
+        """ 根据group_idx获取一个Group对象，等同于get_group_by_id方法
+
+        Parameters
+        ----------
+        group_idx: int or str
+            策略组的序号
+
+        Returns
+        -------
+        Group,
+
+        Examples
+        --------
+        >>> op = Operator('dma, macd')
+        >>> op.get_group(0)
+        Group(name=Group_1, members=[RULE-ITER(DMA), RULE-ITER(MACD)])
+        >>> op.get_group_by_id('Group_1')
+        Group(name=Group_1, members=[RULE-ITER(DMA), RULE-ITER(MACD)])
+        """
+        return self.get_group_by_id(group_id=group_idx)
+
+    def get_group_by_id(self, group_id: Union[str, int]) -> Group:
+        """ 根据group_id获取一个Group对象
 
         Parameters
         ----------
