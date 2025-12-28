@@ -2023,6 +2023,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Setting up data windows for strategies')
         op.create_data_windows()
         print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Setting up shares for operator')
+        op.set_shares(['share_1', 'share_2'])
+        print(f'operator is ready? "{op.ready}"')
         self.assertEqual(op.ready, True)
         print(f'checking why operator is not ready:\n')
         op.is_ready(
@@ -2614,8 +2623,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # generate trading signals
         print(f'Generating trading signals with all ULCs set to False\n'
-              f'Operator run schedule:\n'
-              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'Operator run schedule: length: ({len(op.group_timing_table)})\n'
+              f'{op.group_timing_table}\n'
               f'signal_count\n'
               f'{op.get_signal_count()}\n')
         # check that the signals are correct
@@ -2673,6 +2682,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
+        op.set_shares(['000001', '000002', '000003'])
         for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
@@ -3147,6 +3157,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         ]
         signals = []
         signal_index = 0
+        op.debug = True
         for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
             signals.append(signal)
             expected = signals_target[signal_index]
@@ -3169,6 +3180,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # 创建一个测试交易策略，使用TestReferenceData类
         op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
+        op.debug = True
         # operator只有一个strategy, set up blender
         op.set_group_parameters(group='Group_1', blender_str='s0')
 
