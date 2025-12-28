@@ -4804,7 +4804,7 @@ def get_tables_by_dtypes(
     return tables_to_keep
 
 
-class StgDataType(DataType):
+class StgData(DataType):
     """用于表示策略数据类型的类，策略数据类型由DataType类型派生而来，相比DataType类型，增加
     两个用于交易策略的属性: window_length以及use_latest_cycle(ULC)。
 

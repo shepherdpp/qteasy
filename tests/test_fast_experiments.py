@@ -14,7 +14,7 @@ import qteasy as qt
 import numpy as np
 
 from qteasy.parameter import Parameter
-from qteasy.datatypes import DataType
+from qteasy.datatypes import StgData
 
 
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
@@ -44,10 +44,10 @@ class MultiFactors(qt.FactorSorter):
                 run_timing='close',  # 在周期结束（收盘）时运行
                 run_freq='m',  # 每月执行一次选股（每周或每天都可以）
                 # strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
-                data_types=[DataType('pb', freq='d', asset_type='E'),
-                            DataType('total_mv', freq='d', asset_type='E'),
-                            DataType('close', freq='d', asset_type='E'),
-                            DataType('close-000300.SH', freq='d', asset_type='IDX')],
+                data_types=[StgData('pb', freq='d', asset_type='E'),
+                            StgData('total_mv', freq='d', asset_type='E'),
+                            StgData('close', freq='d', asset_type='E'),
+                            StgData('close-000300.SH', freq='d', asset_type='IDX')],
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,
                 use_latest_data_cycle=True,

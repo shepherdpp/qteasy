@@ -19,7 +19,7 @@ from qteasy.strategy import (
     FactorSorter,
 )
 
-from qteasy.datatypes import DataType, StgDataType
+from qteasy.datatypes import DataType, StgData
 from qteasy.parameter import Parameter
 from qteasy.utilfuncs import rolling_window
 
@@ -55,7 +55,7 @@ class TestStrategy(unittest.TestCase):
                 value=np.array([1.0, 2.0, 3.0]),
         )
 
-        self.dtype_1 = StgDataType(
+        self.dtype_1 = StgData(
                 name='close',
                 freq='d',
                 asset_type='E',
@@ -68,7 +68,7 @@ class TestStrategy(unittest.TestCase):
                 asset_type='E',
         )
 
-        self.dtype_3 = StgDataType(
+        self.dtype_3 = StgData(
                 name='close',
                 freq='5min',
                 asset_type='E',

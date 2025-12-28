@@ -3622,6 +3622,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         s_indices = np.zeros(op.get_signal_count(), dtype=int)
         signals = np.zeros((op.get_signal_count(), len(large_close.columns)), dtype=float)
         signal_index = 0
+        # 设置股票名称
+        op.set_shares([f's_{i}' for i in range(share_count)])
 
         st = time.time()
         for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):

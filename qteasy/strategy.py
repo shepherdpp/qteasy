@@ -21,7 +21,7 @@ from qteasy.utilfuncs import (
 )
 from qteasy.datatypes import (
     DataType,
-    StgDataType,
+    StgData,
 )
 
 from qteasy.parameter import Parameter
@@ -661,7 +661,7 @@ class BaseStrategy:
 
         # 如果DataType中给出了ULC，则更新相应的ULC值
         for dtype_id, dtype in data_types.items():
-            if not isinstance(dtype, StgDataType):
+            if not isinstance(dtype, StgData):
                 continue
             if dtype.use_latest_data_cycle is not None:
                 if not isinstance(dtype.use_latest_data_cycle, bool):
@@ -687,7 +687,7 @@ class BaseStrategy:
 
         # 如果DataType中给出了window_length，则更新相应的window_length值
         for dtype_id, dtype in data_types.items():
-            if not isinstance(dtype, StgDataType):
+            if not isinstance(dtype, StgData):
                 continue
             if dtype.window_length is not None:
                 if not isinstance(window_length, int) or dtype.window_length <= 0:
