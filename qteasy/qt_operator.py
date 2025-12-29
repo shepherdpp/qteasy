@@ -1256,7 +1256,7 @@ class Operator:
             return None
         return self.groups[group_name].blender
 
-    def view_blender(self, group: Optional[str, int] = None) -> Optional[dict, str]:
+    def view_blender(self, group: Union[str, int] = None) -> Union[dict, str]:
         """ 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
              版本，将s0等策略代码替换为策略ID，并进行适当格式化。
              如果不给出group参数，则返回所有策略组的blender可读版本

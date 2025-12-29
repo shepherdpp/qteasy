@@ -10,6 +10,8 @@
 # ======================================
 import unittest
 
+from numba.core.utils import benchmark
+
 import qteasy as qt
 import numpy as np
 
@@ -42,13 +44,12 @@ class MultiFactors(qt.FactorSorter):
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
                 run_timing='close',  # 在周期结束（收盘）时运行
-                run_freq='m',  # 每月执行一次选股（每周或每天都可以）
+                run_freq='M',  # 每月执一次选股（每周或每天都可以）
                 # strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
                 data_types=[StgData('pb', freq='d', asset_type='E'),
                             StgData('total_mv', freq='d', asset_type='E'),
                             StgData('close', freq='d', asset_type='E'),
                             StgData('close-000300.SH', freq='d', asset_type='IDX')],
-                data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,
                 use_latest_data_cycle=True,
                 # reference_data_types='close-000300.SH',  # 选股需要用到市场收益率，作为参考数据传入
@@ -62,16 +63,17 @@ class MultiFactors(qt.FactorSorter):
     def realize(self):
 
         size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate_percentile', 'bp_small_percentile', 'bp_large_percentile')
-        h = self.get_data()  # 获取策略数据
+        pb_data, mv_data, close_data = self.get_data('pb_E_d', 'total_mv_E_d', 'close_E_d')  # 获取策略数据
         # 读取投资组合的数据PB和total_MV的最新值
-        pb = h[:, -1, 0]  # 当前所有股票的PB值
-        mv = h[:, -1, 1]  # 当前所有股票的市值
-        pre_close = h[:, -2, 2]  # 当前所有股票的前收盘价
-        close = h[:, -1, 2]  # 当前所有股票的最新收盘价
+        pb = pb_data[-1]  # 当前所有股票的PB值
+        mv = mv_data[-1]  # 当前所有股票的市值
+        pre_close = close_data[-2]  # 当前所有股票的前收盘价
+        close = close_data[-1]  # 当前所有股票的最新收盘价
 
         # 读取参考数据(r)
-        market_pre_close = r[-2, 0]  # HS300的昨收价
-        market_close = r[-1, 0]  # HS300的收盘价
+        r = self.get_data('close-000300.SH_d_IDX')
+        market_pre_close = r[-2]  # HS300的昨收价
+        market_close = r[-1]  # HS300的收盘价
 
         # 计算账面市值比，为pb的倒数
         bp = pb ** -1
@@ -131,35 +133,29 @@ class IndexEnhancement(qt.GeneralStg):
 
     def __init__(self, par_values: tuple = (0.35, 0.8, 5)):
         super().__init__(
+                # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
                 pars=[Parameter((0.01, 0.99), name='weight_threshold', par_type='float'),
                       Parameter((0.51, 0.99), name='initial_weight', par_type='float'),
                       Parameter((2, 20), name='price_days', par_type='int')],
-                # par_count=2,
-                # par_types=['float', 'float', 'int'],  # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
-                # par_range=[(0.01, 0.99), (0.51, 0.99), (2, 20)],
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
                 run_timing='close',  # 在周期结束（收盘）时运行
                 run_freq='d',  # 每天执行一次选股
-                # data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
-                data_types=[DataType('wt-000300.SH', freq='d', asset_type='IDX'),
-                            DataType('close', freq='d', asset_type='ANY')],
-
-                data_freq='d',  # 数据频率（包括股票数据和参考数据）
-                window_length=20,
+                # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
+                data_types=[StgData('wt_idx|000300.SH', freq='d', asset_type='ANY', window_length=20),
+                            StgData('close', freq='d', asset_type='ANY', window_length=20, )],
                 use_latest_data_cycle=True,
-                reference_data_types='',  # 不需要使用参考数据
         )
         if par_values:
             self.update_par_values(*par_values)
 
     def realize(self):
         weight_threshold, init_weight, price_days = self.get_pars('weight_threshold', 'initial_weight', 'price_days')
-        h = self.get_data(['wt-000300.SH', 'close'])
+        h = self.get_data(['wt_idx|000300.SH_d_ANY', 'close_d_ANY'])
         # 读取投资组合的权重wt和最近price_days天的收盘价
-        wt = h[:, -1, 0]  # 当前所有股票的权重值
-        pre_close = h[:, -price_days - 1:-1, 1]
-        close = h[:, -price_days:, 1]  # 当前所有股票的最新连续收盘价
+        wt = h[-1]  # 当前所有股票的权重值
+        pre_close = h[-price_days - 1:-1]
+        close = h[-price_days:]  # 当前所有股票的最新连续收盘价
         # 计算连续price_days天的收益
         stock_returns = pre_close - close  # 连续p天的收益
 
@@ -197,7 +193,7 @@ class GridTrading(qt.GeneralStg):
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
                 run_timing='close',  # 在周期结束（收盘）时运行
                 run_freq='1min',  # 每份钟执行一次调整
-                data_types=[DataType('close', freq='1min', asset_type='ANY')],  # 使用分钟收盘价调整
+                data_types=[StgData('close', freq='1min', asset_type='ANY')],  # 使用分钟收盘价调整
                 window_length=300,
                 use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
         )
@@ -212,15 +208,15 @@ class GridTrading(qt.GeneralStg):
                                                                              'low_position',
                                                                              'high_position',
                                                                              'days')
-        h = self.get_data('close')
+        h = self.get_data('close_ANY_1min')
 
         # 读取最近N天的收盘价
-        close = h[:, - days:, 0]  # 最新连续收盘价
-        current_close = h[:, -1, 0]  # 当天的收盘价
+        close = h[- days:]  # 最新连续收盘价
+        current_close = h[-1]  # 当天的收盘价
 
         # 计算N天的平均价和标准差，并计算仓位阈值
-        close_mean = np.nanmean(close, axis=1)
-        close_std = np.nanstd(close, axis=1)
+        close_mean = np.nanmean(close)
+        close_std = np.nanstd(close)
         hi_positive = close_mean + high_threshold * close_std
         low_positive = close_mean + low_threshold * close_std
         low_negative = close_mean - low_threshold * close_std
@@ -229,9 +225,9 @@ class GridTrading(qt.GeneralStg):
         # 根据当前的实际价格确定目标仓位，并将目标仓位作为信号输出
         pos = np.zeros_like(close_mean)
         pos = np.where(current_close > hi_positive, hi_pos, pos)
-        pos = np.where(hi_positive >= current_close > low_positive, low_pos, pos)
-        pos = np.where(low_positive >= current_close > low_negative, 0, pos)
-        pos = np.where(low_negative >= current_close > hi_negative, - low_pos, pos)
+        pos = np.where((hi_positive >= current_close > low_positive), low_pos, pos)
+        pos = np.where((low_positive >= current_close > low_negative), 0, pos)
+        pos = np.where((low_negative >= current_close > hi_negative), - low_pos, pos)
         pos = np.where(current_close >= hi_negative, - hi_pos, pos)
 
         return pos
@@ -305,20 +301,20 @@ class FastExperiments(unittest.TestCase):
         alpha = GridTrading()
         op = qt.Operator(alpha, signal_type='PT')
 
-        op.op_type = 'batch'
-        op.set_blender("1.0*s0", 'close')
-        # op.run(
-        #         mode=1,
-        #         invest_start='20220401',
-        #         invest_end='20220731',
-        #         invest_cash_amounts=[1000000],
-        #         asset_type='IDX',
-        #         asset_pool=['000300.SH'],
-        #         trade_batch_size=0,
-        #         sell_batch_size=0,
-        #         trade_log=True,
-        #         allow_sell_short=True,
-        # )
+        op.set_blender("1.0*s0", 'Group_1')
+        qt.run(
+                op=op,
+                mode=1,
+                invest_start='20220401',
+                invest_end='20220731',
+                invest_cash_amounts=[1000000],
+                asset_type='IDX',
+                asset_pool=['000300.SH'],
+                trade_batch_size=0,
+                sell_batch_size=0,
+                trade_log=True,
+                allow_sell_short=True,
+        )
         self.assertTrue(True)
 
     def test_get_history_data(self):
