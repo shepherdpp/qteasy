@@ -32,7 +32,6 @@ from qteasy.built_in import (
     get_built_in_strategy,
 )
 
-
 SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
 
 
@@ -460,7 +459,7 @@ class Operator:
 
     def is_ready(self,
                  tell_me_why: bool = False,
-                 raise_error: bool = False,) -> bool:
+                 raise_error: bool = False, ) -> bool:
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号
 
         返回True，表明Operator的各项属性已经具备以下条件：
@@ -624,7 +623,7 @@ class Operator:
         if not (item_is_int or item_is_str):
             warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
             return
-        strategies = {stg_id:stg for stg_id, stg in zip(self.strategy_ids, self.strategies)}
+        strategies = {stg_id: stg for stg_id, stg in zip(self.strategy_ids, self.strategies)}
         all_ids = list(strategies.keys())
         if item_is_str:
             if item not in all_ids:
@@ -759,7 +758,8 @@ class Operator:
         """
         if isinstance(group_id, int):
             if group_id < 0 or group_id >= len(self.groups):
-                group_id = self.group_ids[group_id]
+                raise IndexError(f'group_id index ({group_id}) out of range!')
+            group_id = self.group_ids[group_id]
             return self.groups[group_id]
         elif isinstance(group_id, str):
             return self.groups[group_id]
@@ -800,7 +800,7 @@ class Operator:
         for stg in strategies:
             if not isinstance(stg, (str, BaseStrategy, type)):
                 msg = (f'WrongType! some of the items in strategies '
-                              f'can not be added - got {stg}')
+                       f'can not be added - got {stg}')
                 raise TypeError(msg)
             try:
                 self.add_strategy(stg, **kwargs)
@@ -975,7 +975,7 @@ class Operator:
             self._groups = []
         return
 
-    def get_strategies_by_group(self, group_id:str):
+    def get_strategies_by_group(self, group_id: str):
         """返回operator对象中的strategy对象, timing为一个可选参数，
         如果给出timing时，返回使用该timing的交易策略
 
@@ -986,15 +986,15 @@ class Operator:
         """
         return self.groups[group_id].members
 
-    def get_strategy_count_by_group(self, group_id:str):
+    def get_strategy_count_by_group(self, group_id: str):
         """返回策略组group_id中的所有策略数量"""
         return len(self.get_strategies_by_group(group_id))
 
-    def get_strategy_names_by_group(self, group_id:str):
+    def get_strategy_names_by_group(self, group_id: str):
         """返回策略组group_id中的所有策略名称"""
         return [stg.name for stg in self.get_strategies_by_group(group_id)]
 
-    def get_strategy_id_by_group(self, group_id:str):
+    def get_strategy_id_by_group(self, group_id: str):
         """返回策略组group_id中的所有策略ID"""
         return [stg.strategy_id for stg in self.get_strategies_by_group(group_id)]
 
@@ -1140,14 +1140,13 @@ class Operator:
         Parameters
         ----------
         blender: str or list of str or dict of str, optional
-            一个合法的交易信号混合表达式当price_type为None时，可以接受list为参数，
-            同时为所有的price_type设置混合表达式
+            一个合法的交易信号混合表达式当group为None时，可以接受list为参数，
+            同时为所有的group设置混合表达式
         group_id: str, optional
-            一个字符串，用于指定需要混合交易策略组
             如果给出group_id则设置该group的策略的混合表达式
-            如果group_id为None，则设置所有price_type的策略的混合表达式，此时：
-                如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
-                如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
+            如果group_id为None，则设置所有group的策略的混合表达式，此时：
+                如果给出的blender为一个字符串，则设置所有的group为相同的表达式
+                如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个group的混合表达式，
                 如果blender中的元素不足，则重复最后一个混合表达式
 
         Returns
@@ -1165,21 +1164,23 @@ class Operator:
 
         Examples
         --------
-        >>> op = Operator('dma, macd')
-        >>> op.set_parameter('dma', group='close')
-        >>> op.set_parameter('macd', group='open')
+        >>> op = Operator()
+        >>> op.add_strategy('dma', run_timing='close')  # 添加策略时指定run_timing，自动分配到第一个策略组Group_1
+        >>> op.add_strategy('trix', run_timing='close')  # 添加策略时指定run_timing，自动分配到第一个策略组Group_1
+        >>> op.add_strategy('macd', run_timing='open')  # 添加策略时指定run_timing，自动分配到第二个策略组Group_2
+        >>> op.add_strategy('bband', run_timing='open')  # 添加策略时指定run_timing，自动分配到第二个策略组Group_2
 
-        >>> # 设置open的策略混合模式
-        >>> op.set_blender('s1+s2', 'open')
+        >>> # 设置策略组1的混合模式
+        >>> op.set_blender('s0+s1', 'Group_1')
         >>> op.get_blender()
-        >>> {'open': ['+', 's2', 's1']}
+        >>> {'Group_1': ['+', 's1', 's2']}
 
         >>> # 给所有的交易价格策略设置同样的混合表达式
-        >>> op.set_blender('s1 + s2')
+        >>> op.set_blender('s0 + s1')
         >>> op.get_blender()
-        >>> {'close': ['+', 's2', 's1'], 'open':  ['+', 's2', 's1']}
+        >>> {'Group_1': ['+', 's2', 's1'], 'Group_2':  ['+', 's2', 's1']}
 
-        >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
+        >>> # 通过一个列表给不同的策略组设置不同的混合表达式（策略组按顺序排列）
         >>> op.set_blender(['s1 + s2', 's3*s4'], None)
         >>> op.get_blender()
         >>> {'close': ['+', 's2', 's1'], 'open':  ['*', 's4', 's3']}
@@ -1255,30 +1256,31 @@ class Operator:
             return None
         return self.groups[group_name].blender
 
-    def view_blender(self, group=None):
+    def view_blender(self, group: Optional[str, int] = None) -> Optional[dict, str]:
         """ 返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串的更加可读的
-             版本，将s0等策略代码替换为策略ID，将blender string的各个token识别出来并添加空格分隔
+             版本，将s0等策略代码替换为策略ID，并进行适当格式化。
+             如果不给出group参数，则返回所有策略组的blender可读版本
 
         Parameters
         ----------
         group: str
-            一个可用的run_timing
+            一个可用的group的ID或index
 
         """
 
         from qteasy.blender import human_blender
         if group is None:
             all_blenders = {}
-            for group in self.strategy_groups:
+            for group in self.groups:
                 stg_ids = self.get_strategy_id_by_group(group)
                 all_blenders[group] = human_blender(
-                        group._stg_blender_strings[group],
+                        group.blender_str,
                         strategy_ids=stg_ids,
                 )
             return all_blenders
         if group not in self.strategy_groups:
-            return None
-        return self.groups[group].human_blender
+            raise KeyError(f'No such strategy group with ID ({group})!')
+        return self.get_group(group).human_blender
 
     def set_parameter(self,
                       stg_id: Union[str, int],
@@ -1392,7 +1394,7 @@ class Operator:
                 strategy._group_id = group.name
             else:
                 raise RuntimeError(f'Internal error: more than one target group found for strategy {stg_id} '
-                                      f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
+                                   f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
 
         # 设置其他自定义参数
         strategy.set_custom_pars(**kwargs)
@@ -1419,12 +1421,12 @@ class Operator:
             strategy.update_shares(len(shares), shares)
 
     def set_group_parameters(self,
-                            group: Union[str, int],
-                            run_timing: str = None,
-                            run_freq: str = None,
-                            signal_type: str = None,
-                            blender_str: str = None,
-                            **kwargs):
+                             group: Union[str, int],
+                             run_timing: str = None,
+                             run_freq: str = None,
+                             signal_type: str = None,
+                             blender_str: str = None,
+                             **kwargs):
         """ 设置或修改一个策略组的参数
         Parameters
         ----------
@@ -1432,6 +1434,8 @@ class Operator:
             策略组的ID
         run_timing: str, optional
             策略组的运行时机，修改运行时机时，修改策略组中所有交易策略的运行时机
+        run_freq: str, optional
+            策略组的运行频率，修改运行频率时，修改策略组
         signal_type: str, optional
             策略组的交易信号类型，默认为'PT'，即百分比持仓目标
         blender_str: str, optional
@@ -1475,8 +1479,8 @@ class Operator:
                 group.run_freq = new_run_freq
                 group.run_timing = new_run_timing
                 for strategy in group.member_strategies:
-                    strategy.run_timing=new_run_timing
-                    strategy.run_freq=new_run_freq
+                    strategy.run_timing = new_run_timing
+                    strategy.run_freq = new_run_freq
 
         if signal_type is not None:
             group.signal_type = signal_type
@@ -1520,31 +1524,31 @@ class Operator:
             'vs': 'Value trade signal, represent tha amount of stocks to be sold/bought'
         }
         op_type_description = {
-            'batch': 'All history operation signals are generated before back testing',
+            'batch':    'All history operation signals are generated before back testing',
             'stepwise': 'History op signals are generated one by one, every piece of signal will be back tested before '
                         'the next signal being generated.'
         }
         data_freq_name = {
-            'y': 'year',
-            'Y': 'year',
-            'ye': 'year end',
-            'q': 'quarter',
-            'Q': 'quarter',
-            'qe': 'quarter end',
-            'QE': 'quarter end',
-            'M': 'month',
-            'm': 'month',
-            'ME': 'month end',
-            'me': 'month end',
-            'W': 'week',
-            'w': 'week',
-            'd': 'days',
-            'min': 'min',
-            '1min': 'min',
-            '5min': '5min',
+            'y':     'year',
+            'Y':     'year',
+            'ye':    'year end',
+            'q':     'quarter',
+            'Q':     'quarter',
+            'qe':    'quarter end',
+            'QE':    'quarter end',
+            'M':     'month',
+            'm':     'month',
+            'ME':    'month end',
+            'me':    'month end',
+            'W':     'week',
+            'w':     'week',
+            'd':     'days',
+            'min':   'min',
+            '1min':  'min',
+            '5min':  '5min',
             '15min': '15min',
             '30min': '30min',
-            'h': 'hours',
+            'h':     'hours',
         }
         rprint(f'{"Operator Information":=^{info_width}}\n'
                f'Name:        {self.name}\n'
@@ -1594,7 +1598,7 @@ class Operator:
                                  start_date=None,
                                  end_date=None,
                                  **kwargs,
-    ):
+                                 ):
         """ Running Schedule也就是策略运行时间表，包含每个策略的运行时间和频率等信息
 
         在运行策略之前，必须先准备好运行时间表，这个时间表根据交易员中每个策略组的运行时机参数确定。
@@ -1628,11 +1632,11 @@ class Operator:
                 raise ValueError(f"Group {group.name} has no run timing or frequency defined.")
             if group.run_freq in ['1min', '5min', '15min', '30min', 'h']:
                 schedule_index = tti(
-                                start=start_date,
-                                end=end_date,
-                                freq=group.run_freq,
-                                **kwargs,
-                        ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
+                        start=start_date,
+                        end=end_date,
+                        freq=group.run_freq,
+                        **kwargs,
+                ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
             elif group.run_freq in ['d', 'w', 'M', 'ME', 'Q', 'QE', 'Y', 'YE']:
                 # 运行时间设定为15:00 - close 及 09:30 - open
                 if group.run_timing == 'close':
@@ -1643,12 +1647,12 @@ class Operator:
                     time_offset = group.run_timing
 
                 schedule_index = tti(
-                            start=start_date,
-                            end=end_date,
-                            freq=group.run_freq,
-                            time_offset=time_offset,
-                            **kwargs,
-                    )
+                        start=start_date,
+                        end=end_date,
+                        freq=group.run_freq,
+                        time_offset=time_offset,
+                        **kwargs,
+                )
             else:  # for other unexpected cases
                 raise ValueError(f"Unsupported frequency '{group.run_freq}' for group '{group.name}'.")
             self.group_schedules[group.name] = pd.DataFrame(
@@ -1698,9 +1702,9 @@ class Operator:
             return len(running_schedule)
 
     def prepare_data_buffer(self, *,
-                            start_date:Union[str, pd.Timestamp],
-                            end_date:Union[str, pd.Timestamp],
-                            data_package:dict) -> None:
+                            start_date: Union[str, pd.Timestamp],
+                            end_date: Union[str, pd.Timestamp],
+                            data_package: dict) -> None:
         """ 准备数据缓冲区，加载所有策略需要的数据
 
         数据缓冲区是一个字典，键为数据类型，值为对应的数据DataFrame，输入参数包括数据包的开始和结束日期，
@@ -1745,7 +1749,8 @@ class Operator:
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. "
                            f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
                     raise ValueError(msg)
-                if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(start_date).date():
+                if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(
+                        start_date).date():
                     # 确保数据有足够的前置量
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
                            f"Data package starts on {data_package[data_type.dtype_id].index[0]}, "
@@ -1801,7 +1806,8 @@ class Operator:
                     self.data_window_indices[strategy.strategy_id][data_type] = schedule_indices
 
     def run_strategy(self,
-                     step_index) -> Generator[Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
+                     step_index) -> Generator[
+        Union[tuple[Any, int, Any], tuple[Optional[Any], int, Union[int, Any]]], Any, None]:
         """ 运行当前步骤的所有策略组，生成交易信号
 
         本函数是一个生成器函数，返回每个策略组在当前步骤的交易信号。
@@ -1834,9 +1840,9 @@ class Operator:
             # ----set up data window for each strategy
             for strategy in group.members:
                 strategy.update_running_data_window(
-                    data_windows=self.data_window_views[strategy.strategy_id],
-                    window_indices=self.data_window_indices[strategy.strategy_id],
-                    window_index=step_index,
+                        data_windows=self.data_window_views[strategy.strategy_id],
+                        window_indices=self.data_window_indices[strategy.strategy_id],
+                        window_index=step_index,
                 )
 
             # ---- end setting up data windows
@@ -1911,7 +1917,6 @@ class Operator:
     #     from qteasy.optimization import Optimizer
     #     optimizer = Optimizer(op=self, method=method, **kwargs)
     #     return optimizer
-
 
 # TODO: SimpleOperator class也许在未来有用：这个Operator被用于
 #  快速运行交易策略，在不需要完整Operator功能的情况下，保持最基本的
