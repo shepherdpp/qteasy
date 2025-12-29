@@ -161,7 +161,7 @@ class Group:
         return signal_blend(op_signals=signals, blender=self._blender)
 
     def __repr__(self):
-        return f"{self.name}({self.signal_type}) with {self.strategy_count} stgs"
+        return f"Group({self.name}, {self.signal_type}, {self.blender_str})"
 
     def __str__(self):
-        return f"{self.name}({self.strategy_count}IN{self.signal_type})@{self.run_freq}/{self.run_timing}"
+        return f"{self.name}@{self.run_freq}/{self.run_timing}:{[stg.strategy_id for stg in self.members]}"
