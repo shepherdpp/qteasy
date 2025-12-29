@@ -293,7 +293,7 @@ class Operator:
         """返回operator对象所有策略子对象所需数据的采样频率
             如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
         """
-        d_freqs = {stg.strategy_id: stg.freq for stg in self.strategies}
+        d_freqs = {dtype.dtype_id: dtype.freq for dtype in self.all_strategy_data_types}
         return d_freqs
 
     @property
@@ -1881,36 +1881,36 @@ class Operator:
 
     # ====== top level methods below ======
 
-    def run(self, mode: int, **kwargs):
-        """ placeholder for run method """
-        if mode == LIVE_TRADE:
-            return self.live_trade(**kwargs)
-        elif mode == BACKTEST:
-            return self.backtest(**kwargs)
-        elif mode == OPTIMIZE:
-            return self.optimize(**kwargs)
-        else:
-            raise ValueError(f'Invalid mode: {mode}')
+    # def run(self, mode: int, **kwargs):  # deprecated
+    #     """ placeholder for run method """
+    #     if mode == 0:
+    #         return self.live_trade(**kwargs)
+    #     elif mode == 1:
+    #         return self.backtest(**kwargs)
+    #     elif mode == 2:
+    #         return self.optimize(**kwargs)
+    #     else:
+    #         raise ValueError(f'Invalid mode: {mode}')
+    #
+    # def live_trade(self, account_id, **kwargs):  # deprecated
+    #     """ placeholder for live trade method """
+    #     from qteasy.trader import Trader
+    #     trader = Trader(account_id=account_id, operator=self, **kwargs)
+    #     return trader.run()
 
-    def live_trade(self, account_id, **kwargs):
-        """ placeholder for live trade method """
-        from qteasy.trader import Trader
-        trader = Trader(account_id=account_id, operator=self, **kwargs)
-        return trader.run()
+    # def backtest(self, **kwargs):  # deprecated
+    #     """ backtest method creates a Backtester object and runs backtest,
+    #      returning the backtest results.
+    #     """
+    #     from qteasy.backtest import Backtester
+    #     backtester = Backtester(op=self, **kwargs)
+    #     return backtester.run()
 
-    def backtest(self, **kwargs):
-        """ backtest method creates a Backtester object and runs backtest,
-         returning the backtest results.
-        """
-        from qteasy.backtest import Backtester
-        backtester = Backtester(op=self, **kwargs)
-        return backtester.run()
-
-    def optimize(self, method, **kwargs):
-        """ placeholder for optimize method """
-        from qteasy.optimization import Optimizer
-        optimizer = Optimizer(op=self, method=method, **kwargs)
-        return optimizer
+    # def optimize(self, method, **kwargs):  # deprecated
+    #     """ placeholder for optimize method """
+    #     from qteasy.optimization import Optimizer
+    #     optimizer = Optimizer(op=self, method=method, **kwargs)
+    #     return optimizer
 
 
 # TODO: SimpleOperator class也许在未来有用：这个Operator被用于

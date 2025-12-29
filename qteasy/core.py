@@ -10,14 +10,11 @@
 import os
 import pandas as pd
 import numpy as np
-import time
-import logging
 from tqdm import tqdm
 from warnings import warn
-from typing import Optional, Union, Any
+from typing import Optional, Union
 
 import qteasy
-from qteasy.finance import CashPlan
 from qteasy.configure import configure
 from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
@@ -37,10 +34,8 @@ from qteasy.utilfuncs import (
     str_to_list,
     regulate_date_format,
     match_ts_code,
-    next_market_trade_day,
     AVAILABLE_ASSET_TYPES,
     _partial_lev_ratio,
-    sec_to_duration,
     TIME_FREQ_STRINGS,
 )
 
@@ -1945,7 +1940,9 @@ def run_backtest_mode(op, config):
     op.create_data_windows()
 
     # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
-    backtested = op.backtest(
+    from qteasy.backtest import Backtester
+    backtested = Backtester(
+            op=op,
             shares=config['asset_pool'],
             cash_plan=cash_plan,
             benchmark_data=hist_benchmark,
@@ -1958,7 +1955,7 @@ def run_backtest_mode(op, config):
             trading_delivery_params=trading_delivery_params,
             trade_price_data=trade_prices.values,
             logger=qteasy.logger_core,
-    )
+    ).run()
 
     # 评价回测结果——根据交易结果生成交易结果的评价结果
     backtested.evaluate_result(
@@ -2035,7 +2032,9 @@ def run_optimize_mode(op, config):
             datasource=qteasy.QT_DATA_SOURCE,
     )
 
-    optimizer = op.optimize(
+    from qteasy.optimization import Optimizer
+    optimizer = Optimizer(
+            op=op,
             method=config['opti_method'],
             shares=config['asset_pool'],
             benchmark=config['benchmark_asset'],

@@ -262,15 +262,16 @@ class FastExperiments(unittest.TestCase):
 
         op.op_type = 'stepwise'
         op.set_blender("0.8*s0", 'close')
-        # op.run(mode=1,
-        #        invest_start='20210101',
-        #        invest_end='20220501',
-        #        asset_type='E',
-        #        invest_cash_amounts=[1000000],
-        #        asset_pool=shares,
-        #        trade_batch_size=100,
-        #        sell_batch_size=1,
-        #        trade_log=True)
+        qt.run(op=op,
+               mode=1,
+               invest_start='20210101',
+               invest_end='20220501',
+               asset_type='E',
+               invest_cash_amounts=[1000000],
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=True)
         self.assertTrue(True)
 
     def test_index_enhancement(self):
@@ -285,15 +286,16 @@ class FastExperiments(unittest.TestCase):
 
         op.op_type = 'stepwise'
         op.set_blender("0.8*s0", 'close')
-        # op.run(mode=1,
-        #        invest_start='20210101',
-        #        invest_end='20220501',
-        #        asset_type='E',
-        #        invest_cash_amounts=[1000000],
-        #        asset_pool=shares,
-        #        trade_batch_size=100,
-        #        sell_batch_size=1,
-        #        trade_log=True)
+        qt.run(op=op,
+               mode=1,
+               invest_start='20210101',
+               invest_end='20220501',
+               asset_type='E',
+               invest_cash_amounts=[1000000],
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=True)
         self.assertTrue(True)
 
     def test_grid_trading(self):
