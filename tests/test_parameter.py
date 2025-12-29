@@ -744,6 +744,11 @@ class TestParameter(unittest.TestCase):
         blender_exp = 'max(s0, s1/s0)+s1^0.5*s6'
         self.assertRaises(IndexError, human_blender, blender_exp, strategy_ids)
 
+        # false case
+        self.assertEqual(human_blender(None, strategy_ids), '')
+        self.assertRaises(TypeError, human_blender, 123, strategy_ids)
+        self.assertRaises(TypeError, human_blender, blender_exp, None)
+
     def test_parameter_copy(self):
         p1 = Parameter((0, 10), name='par21', par_type='int', value=5)
         p2 = p1.copy()
