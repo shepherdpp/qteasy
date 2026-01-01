@@ -1407,5 +1407,322 @@ class TestStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(res, np.array([1, 1, 0])))
 
 
+class TestSetPars(unittest.TestCase):
+    """测试BaseStrategy.set_pars方法"""
+
+    def setUp(self):
+        """测试前准备"""
+        self.strategy = BaseStrategy()
+
+    def test_set_pars_with_none(self):
+        """测试输入None值的情况"""
+        # 调用方法
+        result = self.strategy.set_pars(None)
+
+        # 验证结果
+        self.assertTrue(result)  # set_pars应该返回True
+        self.assertEqual(self.strategy._pars, {})
+        self.assertEqual(self.strategy.par_count, 0)
+
+    def test_set_pars_with_single_parameter(self):
+        """测试输入单个Parameter对象的情况"""
+        # 创建一个Parameter对象
+        param = Parameter(par_range=(0, 100), name='test_param', value=10)
+
+        # 调用方法
+        result = self.strategy.set_pars(param)
+
+        # 验证结果
+        self.assertTrue(result)
+        self.assertEqual(self.strategy._pars, {'test_param': param})
+        self.assertEqual(self.strategy.par_count, 1)
+        self.assertEqual(self.strategy.test_param, 10)
+
+    def test_set_pars_with_parameter_list(self):
+        """测试输入Parameter列表的情况"""
+        # 创建Parameter对象列表
+        param1 = Parameter(par_range=(0, 100), name='param1', value=10)
+        param2 = Parameter(par_range=(0, 100), name='param2', value=20)
+        param_list = [param1, param2]
+
+        # 调用方法
+        result = self.strategy.set_pars(param_list)
+
+        # 验证结果
+        self.assertTrue(result)
+        expected_dict = {'param1': param1, 'param2': param2}
+        self.assertEqual(self.strategy._pars, expected_dict)
+        self.assertEqual(self.strategy.par_count, 2)
+        self.assertEqual(self.strategy.param1, 10)
+        self.assertEqual(self.strategy.param2, 20)
+
+    def test_set_pars_with_parameter_tuple(self):
+        """测试输入Parameter元组的情况"""
+        # 创建Parameter对象元组
+        param1 = Parameter(par_range=(0, 100), name='param1', value=10)
+        param2 = Parameter(par_range=(0, 100), name='param2', value=20)
+        param_tuple = (param1, param2)
+
+        # 调用方法
+        result = self.strategy.set_pars(param_tuple)
+
+        # 验证结果
+        self.assertTrue(result)
+        expected_dict = {'param1': param1, 'param2': param2}
+        self.assertEqual(self.strategy._pars, expected_dict)
+        self.assertEqual(self.strategy.par_count, 2)
+        self.assertEqual(self.strategy.param1, 10)
+        self.assertEqual(self.strategy.param2, 20)
+
+    def test_set_pars_with_parameter_dict(self):
+        """测试输入Parameter字典的情况"""
+        # 创建Parameter对象字典
+        param1 = Parameter(par_range=(0, 100), name='param1', value=10)
+        param2 = Parameter(par_range=(0, 100), name='param2', value=20)
+        param_dict = {'param1': param1, 'param2': param2}
+
+        # 调用方法
+        result = self.strategy.set_pars(param_dict)
+
+        # 验证结果
+        self.assertTrue(result)
+        self.assertEqual(self.strategy._pars, param_dict)
+        self.assertEqual(self.strategy.par_count, 2)
+        self.assertEqual(self.strategy.param1, 10)
+        self.assertEqual(self.strategy.param2, 20)
+
+    def test_set_pars_with_dict_key_mismatch(self):
+        """测试字典中key与Parameter.name不匹配的情况"""
+        # 创建Parameter对象，name与字典key不匹配
+        param = Parameter(par_range=(0, 100), name='original_name', value=10)
+        param_dict = {'new_name': param}
+
+        # 调用方法
+        result = self.strategy.set_pars(param_dict)
+
+        # 验证结果
+        self.assertTrue(result)
+        self.assertEqual(param.name, 'new_name')
+        self.assertEqual(self.strategy._pars, {'new_name': param})
+        self.assertEqual(self.strategy.new_name, 10)
+        self.assertEqual(self.strategy.par_count, 1)
+
+    def test_set_pars_with_invalid_type(self):
+        """测试输入无效类型的情况"""
+        # 尝试输入无效类型
+        with self.assertRaises(TypeError) as context:
+            self.strategy.set_pars("invalid_type")
+
+        self.assertIn('pars is in invalid type!', str(context.exception))
+
+    def test_set_pars_with_invalid_list_items(self):
+        """测试输入包含非Parameter对象的列表"""
+        # 创建包含非Parameter对象的列表
+        invalid_list = [Parameter(par_range=(0, 100), name='param1', value=10), "not_a_parameter"]
+
+        # 尝试调用方法，应该抛出TypeError
+        with self.assertRaises(TypeError) as context:
+            self.strategy.set_pars(invalid_list)
+
+        self.assertIn('pars should be a list of Parameter objects', str(context.exception))
+
+    def test_set_pars_with_invalid_tuple_items(self):
+        """测试输入包含非Parameter对象的元组"""
+        # 创建包含非Parameter对象的元组
+        invalid_tuple = (Parameter(par_range=(0, 100), name='param1', value=10), "not_a_parameter")
+
+        # 尝试调用方法，应该抛出TypeError
+        with self.assertRaises(TypeError) as context:
+            self.strategy.set_pars(invalid_tuple)
+
+        self.assertIn('pars should be a list of Parameter objects', str(context.exception))
+
+    def test_set_pars_with_invalid_dict_values(self):
+        """测试输入包含非Parameter对象的字典"""
+        # 创建包含非Parameter对象的字典
+        invalid_dict = {'param1': Parameter(par_range=(0, 100), name='param1', value=10), 'param2': "not_a_parameter"}
+
+        # 尝试调用方法，应该抛出TypeError
+        with self.assertRaises(TypeError) as context:
+            self.strategy.set_pars(invalid_dict)
+
+        self.assertIn('pars should be a dict of Parameter objects', str(context.exception))
+
+    def test_set_pars_with_empty_list(self):
+        """测试输入空列表的情况"""
+        result = self.strategy.set_pars([])
+        self.assertTrue(result)
+        self.assertEqual(self.strategy._pars, {})
+        self.assertEqual(self.strategy.par_count, 0)
+
+    def test_set_pars_with_empty_tuple(self):
+        """测试输入空元组的情况"""
+        result = self.strategy.set_pars(())
+        self.assertTrue(result)
+        self.assertEqual(self.strategy._pars, {})
+        self.assertEqual(self.strategy.par_count, 0)
+
+    def test_set_pars_with_empty_dict(self):
+        """测试输入空字典的情况"""
+        result = self.strategy.set_pars({})
+        self.assertTrue(result)
+        self.assertEqual(self.strategy._pars, {})
+        self.assertEqual(self.strategy.par_count, 0)
+
+    def test_set_pars_multiple_calls(self):
+        """测试多次调用set_pars的情况"""
+        # 第一次设置参数
+        param1 = Parameter(par_range=(0, 100), name='param1', value=10)
+        self.strategy.set_pars(param1)
+        self.assertEqual(self.strategy.par_count, 1)
+        self.assertEqual(self.strategy.param1, 10)
+        self.assertEqual(self.strategy.get_pars('param1'), 10)
+
+        # 第二次设置参数，应该覆盖之前的参数
+        param2 = Parameter(par_range=(0, 100), name='param2', value=20)
+        param3 = Parameter(par_range=(0, 100), name='param3', value=30)
+        self.strategy.set_pars([param2, param3])
+        self.assertEqual(self.strategy.par_count, 2)
+        self.assertEqual(self.strategy.param2, 20)
+        self.assertEqual(self.strategy.param3, 30)
+        # param1应该不再存在但属性strategy.param1仍然存在
+        print(self.strategy.param1)
+        with self.assertRaises(KeyError):
+            _ = self.strategy.get_pars('param1')
+
+
+class TestUpdateParRanges(unittest.TestCase):
+    """测试BaseStrategy.update_par_ranges方法"""
+
+    def setUp(self):
+        """测试前准备"""
+        self.strategy = BaseStrategy()
+        # 设置一些参数用于测试
+        param1 = Parameter(name='param1', value=10, par_range=(0, 20))
+        param2 = Parameter(name='param2', value=20, par_range=(10, 30))
+        param3 = Parameter(name='param3', value=30, par_range=(20, 40))
+        self.strategy.set_pars([param1, param2, param3])
+
+    def test_update_par_ranges_with_positional_args(self):
+        """测试使用位置参数更新参数范围"""
+        # 更新前检查初始范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (0, 20))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (10, 30))
+        self.assertEqual(self.strategy._pars['param3'].par_range, (20, 40))
+
+        # 使用位置参数更新范围
+        self.strategy.update_par_ranges((5, 25), (15, 35))
+
+        # 验证更新后的范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (5, 25))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (15, 35))
+        # param3的范围应该保持不变
+        self.assertEqual(self.strategy._pars['param3'].par_range, (20, 40))
+
+    def test_update_par_ranges_with_kwargs(self):
+        """测试使用关键字参数更新参数范围"""
+        # 更新前检查初始范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (0, 20))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (10, 30))
+        self.assertEqual(self.strategy._pars['param3'].par_range, (20, 40))
+
+        # 使用关键字参数更新范围
+        self.strategy.update_par_ranges(param1=(2, 18), param3=(25, 45))
+
+        # 验证更新后的范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (2, 18))
+        # param2的范围应该保持不变
+        self.assertEqual(self.strategy._pars['param2'].par_range, (10, 30))
+        self.assertEqual(self.strategy._pars['param3'].par_range, (25, 45))
+
+    def test_update_par_ranges_too_many_positional_args(self):
+        """测试传入过多位置参数时抛出ValueError"""
+        with self.assertRaises(ValueError) as context:
+            # 策略有3个参数，但传入4个范围
+            self.strategy.update_par_ranges((1, 2), (3, 4), (5, 6), (7, 8))
+
+        self.assertIn('Number of par_ranges should not exceed', str(context.exception))
+
+    def test_update_par_ranges_with_invalid_param_name_in_kwargs(self):
+        """测试在kwargs中使用无效参数名时抛出KeyError"""
+        with self.assertRaises(KeyError) as context:
+            self.strategy.update_par_ranges(invalid_param=(1, 2))
+
+        self.assertIn('parameter invalid_param is not defined', str(context.exception))
+
+    def test_update_par_ranges_without_args_or_kwargs(self):
+        """测试不传入任何参数时抛出ValueError"""
+        with self.assertRaises(ValueError) as context:
+            self.strategy.update_par_ranges()
+
+        self.assertIn('par_ranges is None, please provide par_ranges or kwargs', str(context.exception))
+
+    def test_update_par_ranges_with_empty_positional_args(self):
+        """测试传入空的位置参数但有kwargs"""
+        # 更新前检查初始范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (0, 20))
+
+        # 使用空的位置参数和kwargs更新范围
+        self.strategy.update_par_ranges(*(), param1=(5, 15))
+
+        # 验证更新后的范围
+        self.assertEqual(self.strategy._pars['param1'].par_range, (5, 15))
+
+    def test_update_par_ranges_single_param_with_positional(self):
+        """测试只更新单个参数范围（使用位置参数）"""
+        self.assertEqual(self.strategy._pars['param1'].par_range, (0, 20))
+
+        # 只更新第一个参数的范围
+        self.strategy.update_par_ranges((1, 19))
+
+        # 验证只有第一个参数的范围被更新
+        self.assertEqual(self.strategy._pars['param1'].par_range, (1, 19))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (10, 30))
+        self.assertEqual(self.strategy._pars['param3'].par_range, (20, 40))
+
+    def test_update_par_ranges_single_param_with_kwargs(self):
+        """测试只更新单个参数范围（使用关键字参数）"""
+        self.assertEqual(self.strategy._pars['param2'].par_range, (10, 30))
+
+        # 只更新第二个参数的范围
+        self.strategy.update_par_ranges(param2=(12, 32))
+
+        # 验证只有第二个参数的范围被更新
+        self.assertEqual(self.strategy._pars['param1'].par_range, (0, 20))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (12, 32))
+        self.assertEqual(self.strategy._pars['param3'].par_range, (20, 40))
+
+    def test_update_par_ranges_with_none_values(self):
+        """测试传入None值作为参数范围"""
+        # 测试使用None值更新
+        self.assertRaises(TypeError, self.strategy.update_par_ranges, None)
+
+    def test_update_par_ranges_with_various_range_types(self):
+        """测试使用不同类型的范围值"""
+        # 测试使用列表形式的范围
+        self.strategy.update_par_ranges(param1=[1, 10])
+        self.assertEqual(self.strategy._pars['param1'].par_range, (1, 10))
+
+        # 使用字典形式的范围会报错
+        self.assertRaises(TypeError, self.strategy.update_par_ranges, param2={'min': 5, 'max': 15})
+
+    def test_update_par_ranges_partial_update_mixed(self):
+        """测试部分更新，只更新部分参数"""
+        original_ranges = {
+            'param1': self.strategy._pars['param1'].par_range,
+            'param2': self.strategy._pars['param2'].par_range,
+            'param3': self.strategy._pars['param3'].par_range
+        }
+
+        # 只更新前两个参数
+        self.strategy.update_par_ranges((1, 15), (11, 29))
+
+        # 验证更新结果
+        self.assertEqual(self.strategy._pars['param1'].par_range, (1, 15))
+        self.assertEqual(self.strategy._pars['param2'].par_range, (11, 29))
+        # 第三个参数应该保持原值
+        self.assertEqual(self.strategy._pars['param3'].par_range, original_ranges['param3'])
+
+
 if __name__ == '__main__':
     unittest.main()

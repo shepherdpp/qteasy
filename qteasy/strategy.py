@@ -221,7 +221,7 @@ class BaseStrategy:
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
         if par_values:
-            self.update_par_values(par_values)
+            self.update_par_values(*par_values)
 
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
                          f' par_types={self.par_types}, par_range={self.par_range}')
@@ -370,10 +370,17 @@ class BaseStrategy:
     @data_types.setter
     def data_types(self, data_types: Union[DataType, List[DataType], Dict[str, DataType]]):
         """设置策略依赖的历史数据类型"""
+        if isinstance(data_types, StgData):
+            use_latest_data_cycle = data_types.use_latest_data_cycle
+            window_length = data_types.window_length
+        else:
+            use_latest_data_cycle = False
+            window_length = 30
+
         self.set_data_types(
                 data_types,
-                False,
-                30,
+                use_latest_data_cycle=use_latest_data_cycle,
+                window_length=window_length,
         )
 
     @property
@@ -542,9 +549,8 @@ class BaseStrategy:
             if extra_info:
                 rprint(extra_info)
 
-    def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> None:
-        """ 设置参数字典，设置par对象的名字，设置策略的attribute
-        不设定参数的值
+    def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> bool:
+        """ 设置交易策略的可调参数，不设定参数的值，设置成功返回True，否则返回False或Raise
 
         Parameters
         ----------
@@ -553,7 +559,7 @@ class BaseStrategy:
 
         Returns
         -------
-        None
+        True: 当参数设置成功时
         """
 
         if pars is None:
@@ -573,7 +579,7 @@ class BaseStrategy:
                 if key != par.name:
                     par.name = key
         else:
-            raise TypeError(f'pars is in invalid type! ({type(pars)})')
+            raise TypeError(f'pars should be a list or a dict of Parameter Objects! got {type(pars)} instead')
 
         if not _dict_par_format_is_valid('pars', pars, Parameter, 'name'):
             raise ValueError(f'pars is invalid! ({pars})')
@@ -584,7 +590,7 @@ class BaseStrategy:
             par.name = name
             self.__setattr__(name, par.value)
 
-        return
+        return True
 
     def get_pars(self, *par_names):
         """get the value of parameter by its name or id, alias as operator.par_name
