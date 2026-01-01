@@ -158,8 +158,6 @@ class Operator:
         # Operator对象的工作变量
         self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
-        # self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
-        # self._strategies = {}  # Dict——保存实际的交易策略对象
 
         # Operator对象包含的交易策略组
         self._groups = []  # 交易策略组，所有同时同频运行的策略会被归为同一组
@@ -167,7 +165,6 @@ class Operator:
         self.group_timing_table = None  # 交易策略组的运行时间表，一个DataFrame，每列代表一个策略组，1表示运行，0不运行
         self.group_merge_type = group_merge_type  # 交易策略组的合并方式，默认为None
         self.group_schedules = {}  # 交易策略组的运行时间表，包含每个组的运行时间和频率
-        self._op_signal_index = None  # 生成timing_table后，生成交易信号的index
 
         # Operator对象存储的历史数据缓存和窗口缓存：
         self.data_buffers = {}  # Dict——Operator对象的历史数据缓存，缓存所有策略所需的历史数据
@@ -177,7 +174,7 @@ class Operator:
         # batch模式下生成的交易清单以及交易清单的相关信息
         self._op_signals = None  # 在batch模式下，Operator生成的交易信号清单
         self._op_signal_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
-        self._op_list_bt_indices = None  # deprecated
+        self._op_signal_index = None  # 生成timing_table后，生成交易信号的index
         self._op_signal_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
         # self._op_signal_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
 
@@ -420,16 +417,16 @@ class Operator:
 
     @property
     def op_list(self):  # deprecated
-        """ 生成的交易清单，包含了所有交易信号，以及交易信号对应的交易价格
+        """ 生成的交易清单，包含了所有交易信号
 
         Returns
         -------
-        list, 交易清单，包含了所有交易信号，以及交易信号对应的交易价格
+        list, 交易清单，包含了所有交易信号
         """
         return self._op_signals
 
     @property
-    def op_list_shares(self):
+    def op_list_shares(self):  # deprecated
         """ 生成的交易清单的shares序号，股票代码清单
 
         Returns
@@ -441,16 +438,16 @@ class Operator:
         return list(self._op_signal_shares.keys())
 
     @property
-    def op_list_types(self):  # deprecated
-        """ 生成的交易清单的price_types，回测交易价格类型
+    def op_list_types(self):
+        """ 生成的交易清单的signal_types。因为生成的交易信号可能是由不同的策略组生成的
+        而不同的策略组有自己的信号类型（PT/ST/VT)，因此每一行交易信号都有可能有不同的交易
+        信号类型，本属性返回一个list，其中包含了op_signal_list中每一行的signal_list
 
         Returns
         -------
         list, 生成的交易清单的price_types，回测交易价格类型
         """
-        if self._op_signal_types == {}:
-            return
-        return list(self._op_signal_types.keys())
+        raise NotImplementedError
 
     @property
     def ready(self):
@@ -582,7 +579,7 @@ class Operator:
         self._op_signal_shares = {}
         raise NotImplementedError
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Union[str, int]) -> BaseStrategy:
         """ 根据策略的名称或序号返回子策略
 
         Parameters
@@ -594,11 +591,16 @@ class Operator:
         -------
         Strategy, 子策略
 
+        Raises
+        ------
+        TypeError: 当item类型不正确时
+        KeyError: 当需要返回的item不匹配任何strategy id或超过范围时
+
         Notes
         -----
         1，当item为int时，返回的是第item个策略
         2，当item为str时，返回的是名称为item的策略
-        3，当item不符合要求时，返回最后一个策略
+        3，当item不符合要求时，报错
 
         Examples
         --------
@@ -621,22 +623,20 @@ class Operator:
         item_is_int = isinstance(item, int)
         item_is_str = isinstance(item, str)
         if not (item_is_int or item_is_str):
-            warnings.warn(f'strategy id should be either an integer or a string, got {type(item)} instead!')
-            return
+            err = TypeError(f'strategy id should be either an integer or a string, got {type(item)} instead!')
+            raise err
         strategies = {stg_id: stg for stg_id, stg in zip(self.strategy_ids, self.strategies)}
         all_ids = list(strategies.keys())
         if item_is_str:
             if item not in all_ids:
-                warnings.warn(f'No such strategy with ID ({item}) in {all_ids}!',
-                              RuntimeWarning, stacklevel=2)
-                return
+                err = KeyError(f'No such strategy with ID ({item}) in {all_ids}!')
+                raise err
             return strategies[item]
         strategy_count = self.strategy_count
-        if item >= strategy_count - 1:
-            # 当输入的item明显不符合要求时，仍然返回结果，是否不合理？
-            item = strategy_count - 1
-        elif item < 0:
-            item = 0
+        if (item > strategy_count - 1) or (item < 0):
+            err = KeyError(f'Strategy index out of range: {item + 1} out of total {strategy_count} strategies')
+            raise err
+
         return strategies[all_ids[item]]
 
     def get_stg(self, stg_id):
@@ -858,8 +858,9 @@ class Operator:
             strategy = get_built_in_strategy(stg)
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, BaseStrategy):
-            if stg in available_built_in_strategies:
-                stg_id_index = list(available_built_in_strategies).index(stg)
+            stg_type = type(stg)
+            if stg_type in available_built_in_strategies:
+                stg_id_index = list(available_built_in_strategies).index(stg_type)
                 stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
             else:
                 stg_id = 'custom'
@@ -941,22 +942,32 @@ class Operator:
         next_id = 'Group' + "_" + str(max(group_id_stripped) + 1) if group_id_stripped else 'Group_1'
         return next_id
 
-    def remove_strategy(self, id_or_pos=None):
+    def remove_strategy(self, id_or_pos: Optional[Union[str, int]] = None) -> None:
         """从Operator对象中移除一个交易策略, 删除时可以给出策略的id或者策略在Operator中的位置"""
-        pos = -1
+
+        if self.strategy_count == 0:
+            raise IndexError("There's no strategy to be removed from operator")
+
+        pos = self.strategy_count
+
         if id_or_pos is None:
-            pos = -1
-        if isinstance(id_or_pos, int):
-            if id_or_pos < self.strategy_count:
+            pos -= 1
+        elif isinstance(id_or_pos, int):
+            if 0 <= id_or_pos < self.strategy_count:
                 pos = id_or_pos
-            else:
-                pos = -1
-        if isinstance(id_or_pos, str):
+            elif id_or_pos < 0:
+                pos = max(self.strategy_count + id_or_pos, 0)
+            else:  # id_or_pos >= self.strategy_count
+                pos = self.strategy_count - 1
+        elif isinstance(id_or_pos, str):
             all_ids = self.strategy_ids
             if id_or_pos not in all_ids:
                 raise ValueError(f'the strategy {id_or_pos} is not in operator')
             else:
                 pos = all_ids.index(id_or_pos)
+        else:  # other wrong types
+            err = TypeError(f'Must give the position or id of strategy as int or string, got {type(id_or_pos)}')
+            raise err
         # 删除strategy的时候，不需要实际删除某个strategy，只需要删除该strategy所在group中的members
         strategy = self[pos]
         group = self.groups[strategy._group_id]
@@ -1023,7 +1034,7 @@ class Operator:
                 raise ValueError(f'no strategy in operator uses data type {dtype}!')
             return max(window_length)
 
-    def get_share_idx(self, share):
+    def get_share_idx(self, share):  # deprecated
         """ 给定一个share（字符串）返回它对应的index
 
         Parameters
@@ -1218,9 +1229,8 @@ class Operator:
         if isinstance(group_id, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
             if group_id not in self.group_ids:
-                msg = f'Strategy group "{group_id}" is not valid in current Operator: {self.group_ids}!\n'
-                warnings.warn(msg, RuntimeWarning, stacklevel=2)
-                return
+                msg = f"Strategy group '{group_id}' is not valid in current Operator: {self.group_ids}!"
+                raise KeyError(msg)
             if isinstance(blender, str):
                 try:
                     group = self.strategy_groups[group_id]
@@ -1233,7 +1243,7 @@ class Operator:
                 # self._stg_blender_strings[group] = None
                 # self._stg_blender[group] = []
         else:
-            raise TypeError(f'group should be a string, got {type(group)} instead')
+            raise TypeError(f'group should be a string, got {type(group_id)} instead')
         return
 
     def get_blender(self, group_name=None):
@@ -1271,10 +1281,10 @@ class Operator:
         from qteasy.blender import human_blender
         if group is None:
             all_blenders = {}
-            for group in self.groups:
-                stg_ids = self.get_strategy_id_by_group(group)
-                all_blenders[group] = human_blender(
-                        group.blender_str,
+            for group_id, stg_group in self.groups.items():
+                stg_ids = self.get_strategy_id_by_group(group_id)
+                all_blenders[group_id] = human_blender(
+                        stg_group.blender_str,
                         strategy_ids=stg_ids,
                 )
             return all_blenders
@@ -1291,7 +1301,7 @@ class Operator:
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
                       par_values: Union[tuple, list] = None,
-                      par_range: Union[tuple, list] = None,
+                      par_range: Union[tuple, list, dict[str, tuple]] = None,
                       run_freq: str = None,
                       run_timing: str = None,
                       **kwargs):
@@ -1320,7 +1330,7 @@ class Operator:
             是否使用最新的数据周期
         par_values: tuple or list,
             策略参数的具体取值
-        par_range: tuple or list,
+        par_range: tuple or list, or dict of tuples,
             策略参数的取值范围
         run_freq: str, optional
             如果给出该参数，则修改策略的运行频率，修改运行频率会导致将策略从策略组中移除，并重新分配到一个新的策略组中
@@ -1339,7 +1349,7 @@ class Operator:
         # 逐一修改该策略对象的各个参数
         if pars is not None:  # 设置策略参数
             if not strategy.set_pars(pars):
-                raise ValueError(f'parameter setting error')
+                raise ValueError(f'parameter setting error: {pars}')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
         if data_types is not None:  # 设置策略的数据类型
@@ -1360,12 +1370,15 @@ class Operator:
             strategy.update_par_values(*par_values)
 
         if par_range is not None:  # 设置策略参数的取值范围
-            if not isinstance(par_range, (list, tuple)):
-                raise TypeError(f'par_range should be a list or a tuple, got {type(par_range)} instead!')
+            if not isinstance(par_range, (list, tuple, dict)):
+                raise TypeError(f'par_range should be a tuple or dict of tuples, got {type(par_range)} instead!')
             if len(par_range) != strategy.par_count:
                 raise ValueError(f'par_range should have the same length as the number of strategy parameters, '
                                  f'expected {strategy.par_count}, got {len(par_range)} instead!')
-            strategy.update_par_ranges(*par_range)
+            if isinstance(par_range, (tuple, list)):
+                strategy.update_par_ranges(*par_range)
+            else:  # par_range is a dict
+                strategy.update_par_ranges(**par_range)
 
         if run_freq is not None or run_timing is not None:  # 设置策略的运行频率和运行时机
             old_group_id = strategy._group_id
@@ -1393,7 +1406,7 @@ class Operator:
                 group.add_strategy(strategy)
                 strategy._group_id = group.name
             else:
-                raise RuntimeError(f'Internal error: more than one target group found for strategy {stg_id} '
+                raise RuntimeError(f'more than one target group found for strategy {stg_id} '
                                    f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
 
         # 设置其他自定义参数
@@ -1726,19 +1739,24 @@ class Operator:
         # 清除原有的data_buffers
         self.data_buffers = {}
         # 针对所有data_type，检查数据包的key是否都是str
-        for key in data_package.keys():
+        for key, data in data_package.items():
             if not isinstance(key, str):
                 raise TypeError(f"Data package keys must be strings, got {type(key)} instead.")
-        # 针对所有data_type，检查数据框的数据列是否相同且顺序一致（排除ref型数据（只有一列数据且名为'ref'））
-        data_columns = [data_package[key].columns for key in data_package.keys()]
-        # 允许data_columns出现两种情况：一种是所有数据列都相同，另一种是只有一个数据列且名为'ref'
-        data_columns_no_ref = [cols for cols in data_columns if not (len(cols) == 1 and cols[0] == 'ref')]
-        if len(data_columns_no_ref) > 1:
-            first_cols = data_columns_no_ref[0]
-            for cols in data_columns_no_ref[1:]:
+            if not isinstance(data, (pd.DataFrame, pd.Series)):
+                raise TypeError(f"Data package values must be pandas DataFrame or Series, got {type(data)} instead.")
+        all_hist_data_keys = [key for key, data in data_package.items() if isinstance(data, pd.DataFrame)]
+        all_ref_data_keys = [key for key, data in data_package.items() if isinstance(data, pd.Series)]
+        if len(all_hist_data_keys) > 0:
+            # 针对所有data_type，检查数据框的数据列是否相同且顺序一致（排除ref型数据（只有一列数据且名为'ref'））
+            data_columns = [data_package[key].columns for key in all_hist_data_keys]
+            first_cols = data_columns[0]
+            for cols in data_columns[1:]:
                 if not first_cols.equals(cols):
                     raise ValueError("Data package columns must be the same and in the same order for all data types, "
                                      f"got {first_cols} and {cols} instead.")
+        if len(all_ref_data_keys) > 0:
+            # 针对所有ref型数据，检查数据索引是否相同且顺序一致
+            pass
 
         for data_type in self.all_strategy_data_types:
             if data_type.dtype_id not in data_package:
