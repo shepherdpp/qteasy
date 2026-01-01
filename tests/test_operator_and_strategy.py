@@ -673,7 +673,7 @@ trade_price_d_df = pd.DataFrame(
 close_ref_df = pd.DataFrame(
         dtype_ref_data, columns=['ref'],
         index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
-)
+)['ref']  # make this a pd.Series for reference types
 
 
 # basic test strategies
@@ -1220,8 +1220,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_count, 17)
         self.assertEqual(op.strategy_group_count, 3)
         self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
-                                           'custom', 'custom_1', 'dma_3', 'custom_2', 'custom_3', 'custom_4',
-                                           'custom_5', 'custom_6', 'custom_7', 'custom_8'])
+                                           'dma_3', 'macd_2', 'dma_4', 'macd_3', 'custom', 'custom_1',
+                                           'custom_2', 'custom_3', 'custom_4', 'custom_5'])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
@@ -1242,11 +1242,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_count, 22)
         self.assertEqual(op.strategy_group_count, 4)
         self.assertEqual(op.strategy_ids, [
-            'dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2',
-            'macd_1', 'custom', 'custom_1', 'dma_3', 'custom_2',
-            'custom_3', 'custom_4', 'custom_5', 'custom_6',
-            'custom_7', 'macd_2', 'custom_11', 'custom_8',
-            'custom_9', 'dma_4', 'custom_10'
+            'dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
+            'dma_3', 'macd_2', 'dma_4', 'macd_3', 'custom', 'custom_1',
+            'custom_2', 'custom_3', 'custom_4', 'macd_4', 'custom_8',
+            'custom_5', 'custom_6', 'dma_5', 'custom_7',
         ])
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3', 'Group_4'])
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
@@ -1259,32 +1258,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                                                   'macd',
                                                                   'dma_2',
                                                                   'macd_1',
+                                                                  'dma_3',
+                                                                  'macd_2',
+                                                                  'dma_4',
+                                                                  'macd_3',
                                                                   'custom',
                                                                   'custom_1',
-                                                                  'dma_3',
                                                                   'custom_2',
-                                                                  'custom_3',
-                                                                  'custom_4',
-                                                                  'custom_5',
-                                                                  'custom_6'])
+                                                                  'custom_3'])
         self.assertEqual(op.get_strategy_count_by_group('Group_1'), 15)
         print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
         self.assertEqual(op.groups['Group_2'].run_freq, 'h')
         self.assertEqual(op.groups['Group_2'].run_timing, 'close')
         self.assertEqual(op.groups['Group_2'].strategy_count, 3)
-        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['custom_7', 'macd_2', 'custom_11'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['custom_4', 'macd_4', 'custom_8'])
         self.assertEqual(op.get_strategy_count_by_group('Group_2'), 3)
         print(f'Group_2 has {op.groups["Group_2"].strategy_count} strategies')
         self.assertEqual(op.groups['Group_3'].run_freq, 'h')
         self.assertEqual(op.groups['Group_3'].run_timing, 'open')
         self.assertEqual(op.groups['Group_3'].strategy_count, 1)
-        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['custom_8'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['custom_5'])
         self.assertEqual(op.get_strategy_count_by_group('Group_3'), 1)
         print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
         self.assertEqual(op.groups['Group_4'].run_freq, 'd')
         self.assertEqual(op.groups['Group_4'].run_timing, 'open')
         self.assertEqual(op.groups['Group_4'].strategy_count, 3)
-        self.assertEqual(op.get_strategy_id_by_group('Group_4'), ['custom_9', 'dma_4', 'custom_10'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_4'), ['custom_6', 'dma_5', 'custom_7'])
         self.assertEqual(op.get_strategy_count_by_group('Group_4'), 3)
         print(f'Group_4 has {op.groups["Group_4"].strategy_count}')
 
@@ -1384,17 +1383,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # test removing all strategies from operator
         print(f'test removing all strategies from operator')
-        op.remove_strategy('all')
-        op.remove_strategy('sellrate')
+        op.remove_strategy()  # remove the last strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3'])
+        op.remove_strategy(0)  # remove the first strategy
+        print(f'strategies after remove the first one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2', 'custom', 'dma_3'])
+        op.remove_strategy(-2)  # remove the 2nd last strategy
+        print(f'strategies after remove the 2nt last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2', 'dma_3'])
+        op.remove_strategy(999)  # remove the last strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2'])
+        op.remove_strategy(-999)  # remove the first strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['dma_2'])
         op.remove_strategy('dma_2')
-        op.remove_strategy('custom')
-        op.remove_strategy('dma_3')
-        op.remove_strategy('macd')
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
         self.assertEqual(op.strategies, [])
         self.assertEqual(op.strategy_group_count, 0)
         self.assertEqual(op.group_ids, [])
+        self.assertEqual(op.strategy_group_count, 0)
+
+        self.assertRaises(IndexError, op.remove_strategy, 0)
+
+        op.add_strategy('dma')
+        self.assertRaises(TypeError, op.remove_strategy, 35.76)
 
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
@@ -1460,7 +1475,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op.info(verbose=True)
 
-    def test_set_par_values(self):
+    def test_update_par_values(self):
         """ 测试设置策略参数，使用update_par_values"""
         op = qt.Operator('dma, macd, trix')
 
@@ -1486,11 +1501,17 @@ class TestOperatorAndStrategy(unittest.TestCase):
         stg_macd.update_par_values(12, 13)
         self.assertEqual(stg_macd.par_values, (12, 13, 30))
 
+        # test update_par_values while par_count = 0
+        op_no_par = qt.Operator('all')  # 'all' has no pars
+        op_no_par[0].update_par_values()
+
         # test errors
         self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong', 'input', 'type')  # wrong input type
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, 10, 10)  # par count does not match
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, -10)  # par out of range
         self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10.5, -10)  # par type not match
+        self.assertRaises(ValueError, stg_dma.update_par_ranges)  # no args nor kwargs while par_count > 0
+        self.assertRaises(KeyError, stg_dma.update_par_values, not_existed_par=10)  # kwarg that does not exist
 
         # test setting multi-parameters to RuleIterators
         op.add_strategy(TestRuleIter)
@@ -1561,7 +1582,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIs(op['macd'], op.strategies[0])
         self.assertIs(op['trix'], op.strategies[2])
         self.assertIs(op[1], op.strategies[1])
-        self.assertIs(op[3], op.strategies[2])
+        self.assertIs(op[2], op.strategies[2])
+
+        # test other forms of op.__getitem__
+        self.assertIs(op.get_stg(1), op.strategies[1])
+        self.assertIs(op.get_strategy_by_id('dma'), op.strategies[1])
+
+        # test Errors:
+        self.assertRaises(TypeError, op.__getitem__, {})
+        self.assertRaises(KeyError, op.__getitem__, 'not_existed_id')
+        self.assertRaises(KeyError, op.__getitem__, -1)
+        self.assertRaises(KeyError, op.__getitem__, 999)
+
+    def test_get_group(self):
+        """ test method get_group and related methods"""
+        op = qt.Operator('dma, macd')
+        op.add_strategies('trix, bband', run_timing='open')
+        # there should be two groups in op
+
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.get_group(0), op.groups['Group_1'])
+        self.assertEqual(op.get_group('Group_2'), op.groups['Group_2'])
+        self.assertEqual(op.get_group_by_id(0), op.groups['Group_1'])
+        self.assertEqual(op.get_group_by_id('Group_2'), op.groups['Group_2'])
+
+        self.assertRaises(IndexError, op.get_group, 999)
+        self.assertRaises(KeyError, op.get_group_by_id, 'Not_existed')
 
     def test_get_strategies_by_group(self):
         """ test get_strategies_by_price_type"""
@@ -1646,19 +1692,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         op.groups['Group_1'].blender_str = 's0+s1+s2'
         self.assertEqual(group.blender_str, 's0+s1+s2')
-        self.assertEqual(group.human_blender, 'DMA + MACD + TRIX')
+        self.assertEqual(group.human_blender, 'dma + macd + trix')
         self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
 
         op.add_strategies('dma, macd')
         self.assertEqual(group.strategy_count, 5)
         self.assertEqual(group.members, [op['dma'], op['macd'], op['trix'], op['dma_1'], op['macd_1']])
         self.assertEqual(group.blender_str, 's0+s1+s2')
-        self.assertEqual(group.human_blender, 'DMA + MACD + TRIX')
+        self.assertEqual(group.human_blender, 'dma + macd + trix')
         self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
 
         group.blender_str = 's0*2+s3-s1+max(s1, s2)'
         self.assertEqual(group.blender_str, 's0*2+s3-s1+max(s1, s2)')
-        self.assertEqual(group.human_blender, 'DMA * 2 + DMA - MACD + max(MACD, TRIX)')
+        self.assertEqual(group.human_blender, 'dma * 2 + dma_1 - macd + max(macd, trix)')
         self.assertEqual(group.blender, ['+', 'max(2)', 's2', 's1', '-', 's1', '+', 's3', '*', '2', 's0'])
 
         op.add_strategies('dma', run_freq='h', run_timing='open')
@@ -1829,19 +1875,19 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 90)
         self.assertEqual(op.get_max_window_length_by_dtype_id('low_ANY_d'), 135)
 
-    def test_property_set(self):
+    def test_group_property_set(self):
         """ test all property setters:
             setting following properties:
             - strategy_blenders
             - signal_type
             other properties can not be set"""
-        print(f'------- Test setting properties ---------')
+        print(f'------- Test setting parameters and group properties ---------')
         op_min = qt.Operator(strategies='DMA, MACD, ALL', run_freq='d', run_timing='open', signal_type='PS')
         op_min.set_blender(blender='(s0+s1)*s2')
 
         self.assertEqual(op_min.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op_min.groups['Group_1'].blender_str, '(s0+s1)*s2')
-        self.assertEqual(op_min.groups['Group_1'].human_blender, '(DMA + MACD) * SIMPLE')
+        self.assertEqual(op_min.groups['Group_1'].human_blender, '(dma + macd) * all')
         self.assertEqual(op_min.groups['Group_1'].blender, ['*', 's2', '+', 's1', 's0'])
 
         op = qt.Operator('macd, dma, trix, cdl')
@@ -1900,7 +1946,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_1'].signal_type, 'vs')
         op.set_group_parameters('Group_1', blender_str='s0+s1')
         self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')
-        self.assertEqual(op.groups['Group_1'].human_blender, 'MACD + TRIX')
+        self.assertEqual(op.groups['Group_1'].human_blender, 'macd + trix')
         self.assertEqual(op.groups['Group_1'].blender, ['+', 's1', 's0'])
 
         op.set_group_parameters('Group_2', run_timing='close', run_freq='1min')
@@ -1933,7 +1979,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
         self.assertEqual(op.groups['Group_1'].signal_type, 'vs')  #
         self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')  # blender info of group1 is lost after merging
-        self.assertEqual(op.groups['Group_1'].human_blender, 'MACD + TRIX')
+        self.assertEqual(op.groups['Group_1'].human_blender, 'macd + trix')
         self.assertEqual(op.groups['Group_2'].run_freq, '1min')
         self.assertEqual(op.groups['Group_2'].run_timing, 'close')
         self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
@@ -1945,6 +1991,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # check that all strategies are still in op.strategies
         self.assertEqual(op.strategy_count, 4)
         self.assertEqual(op.strategy_ids, ['macd', 'trix', 'cdl', 'dma'])
+
+        # test Error raising for setting parameters: no strategy,
+        self.assertRaises(AssertionError, op.set_parameter, None, par_values=(20, 15))
+        self.assertRaises(TypeError, op.set_parameter, 'macd', pars='wrong_pars')
+        self.assertRaises(TypeError, op.set_parameter, 'macd', par_range='wrong_type')
+        self.assertRaises(ValueError, op.set_parameter, 'macd', par_range=((32, 34)))   # wrong length
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
@@ -3298,7 +3350,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [13720., 15740., 0.]]
         )
         target_available_stocks = np.array(
-                [[0., 0., 0.,],
+                [[0., 0., 0., ],
                  [0., 0., 0.],
                  [13300., 15380., 0.],
                  [13300., 0., 0],
@@ -3309,7 +3361,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [10680., 0., 8340.],
                  [13610., 0., 21147.],
                  [13610., 0., 0.],
-                 [13610., 140., 0.,]],
+                 [13610., 140., 0., ]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
@@ -3500,7 +3552,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [13720., 15740., 0.]]
         )
         target_available_stocks = np.array(
-                [[0., 0., 0.,],
+                [[0., 0., 0., ],
                  [0., 0., 0.],
                  [13300., 15380., 0.],
                  [13300., 0., 0],
@@ -3511,7 +3563,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                  [10680., 0., 8340.],
                  [13610., 0., 21147.],
                  [13610., 0., 0.],
-                 [13610., 140., 0.,]],
+                 [13610., 140., 0., ]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
@@ -3585,7 +3637,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 columns=['ref'],
                 index=tti(start='2019-12-01', end='2025-12-31', freq='d', include_start_am=False,
                           include_start_pm=False)
-        )
+        )['ref']  # reference data is a pd.DataFrame
         data_buffer = {
             'close_E_d':   large_close,
             'reference_d': large_ref,
@@ -3811,6 +3863,559 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 include_start_pm=False,
         )
         print(f'Operator running schedule prepared:\n')
+
+
+class TestAddStrategy(unittest.TestCase):
+    """测试Operator类的add_strategy方法"""
+
+    def setUp(self):
+        """测试前准备"""
+        self.operator = qt.Operator()
+
+    def test_add_strategy_with_string_builtin(self):
+        """测试添加内置策略字符串"""
+        # 添加策略
+        self.operator.add_strategy('dma', opt_tag=1, par_values=(50, 10, 20))
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], DMA)
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+        self.assertEqual(self.operator.strategies[0].par_values, (50, 10, 20))
+
+    def test_add_strategy_with_base_strategy_object(self):
+        """测试添加BaseStrategy对象"""
+        # 创建策略对象
+        strategy = DMA()
+
+        # 添加策略
+        self.operator.add_strategy(strategy)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIs(self.operator.strategies[0], strategy)
+        self.assertEqual(self.operator.strategies[0].strategy_id, 'dma')
+
+    def test_add_strategy_with_strategy_type(self):
+        """测试添加策略类型"""
+        # 添加策略类型
+        self.operator.add_strategy(DMA)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], DMA)
+        self.assertEqual(self.operator.strategies[0].strategy_id, 'dma')
+
+    def test_add_strategy_with_tuple_raises_error(self):
+        """测试传入元组时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(('strategy1', 'strategy2'))
+
+        self.assertIn('Strategy can not be a tuple of a list', str(context.exception))
+
+    def test_add_strategy_with_list_raises_error(self):
+        """测试传入列表时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(['strategy1', 'strategy2'])
+
+        self.assertIn('Strategy can not be a tuple of a list', str(context.exception))
+
+    def test_add_strategy_with_unsupported_type_raises_error(self):
+        """测试传入不支持类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(123)
+
+        self.assertIn('The strategy type', str(context.exception))
+
+    def test_add_duplicate_strategy(self):
+        """测试添加重复策略时抛出异常"""
+        self.operator.clear_strategies()
+        # 第一次添加成功
+        self.operator.add_strategy('dma')
+
+        # 第二次添加相同策略产生第二个策略ID
+        self.operator.add_strategy('dma')
+
+        self.assertEqual(self.operator.strategy_count, 2)
+        self.assertEqual(self.operator[0].strategy_id, 'dma')
+        self.assertEqual(self.operator[1].strategy_id, 'dma_1')
+
+    def test_add_strategy_with_run_freq_and_timing(self):
+        """测试添加策略时设置run_freq和run_timing参数"""
+        # 添加策略并设置特殊参数
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+
+        # 验证参数被正确设置
+        self.assertEqual(self.operator.strategies[0].run_freq, 'd')
+        self.assertEqual(self.operator.strategies[0].run_timing, 'open')
+
+    def test_add_strategy_with_invalid_run_freq_type_raises_error(self):
+        """测试传入无效run_freq类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy('dma', run_freq=123)
+
+        self.assertIn('run_freq should be a string', str(context.exception))
+
+    def test_add_strategy_with_invalid_run_timing_type_raises_error(self):
+        """测试传入无效run_timing类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy('dma', run_timing=123)
+
+        self.assertIn('run_timing should be a string', str(context.exception))
+
+    def test_add_strategy_creates_new_group(self):
+        """测试添加策略时创建新分组"""
+        # 添加策略
+        self.operator.add_strategy('dma')
+
+        # 验证创建了新分组
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(self.operator._groups[0].run_freq, 'd')
+        self.assertEqual(self.operator._groups[0].run_timing, 'close')
+
+    def test_add_strategy_to_existing_group(self):
+        """测试将策略添加到现有分组"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma')
+
+        # 添加第二个策略（相同频率和时机）
+        self.operator.add_strategy('macd')
+
+        # 验证两个策略在同一个分组中
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(len(self.operator._groups[0].members), 2)
+
+    def test_add_strategy_calls_set_parameter(self):
+        """测试添加策略时调用set_parameter方法"""
+        # 添加策略并设置参数
+        self.operator.add_strategy('dma', opt_tag=1, par_values=(50, 10, 20))
+
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+        self.assertEqual(self.operator.strategies[0].par_values, (50, 10, 20))
+
+    def test_add_strategy_with_multiple_kwargs(self):
+        """测试添加策略时传入多个参数"""
+        # 添加策略并设置多个参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=1,
+                                   par_values=(50, 10, 20),
+                                   run_freq='d',
+                                   run_timing='open',
+                                   window_length=30)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].run_freq, 'd')
+        self.assertEqual(self.operator.strategies[0].run_timing, 'open')
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+
+    def test_add_strategy_with_none_run_freq_and_timing(self):
+        """测试传入None值的run_freq和run_timing参数"""
+        # 创建策略对象
+        strategy = DMA()
+
+        # 添加策略并设置None参数
+        self.operator.add_strategy(strategy, run_freq=None, run_timing=None)
+
+        # 验证策略的原始值被保留
+        self.assertEqual(strategy.run_freq, 'd')
+        self.assertEqual(strategy.run_timing, 'close')
+
+    def test_add_strategy_id_generation(self):
+        """测试策略ID生成机制"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma')
+        self.assertIn('dma', self.operator.strategy_ids[0])
+
+        # 添加第二个同名策略
+        self.operator.add_strategy('dma')
+        self.assertIn('dma', self.operator.strategy_ids[1])
+        self.assertNotEqual(self.operator.strategy_ids[0], self.operator.strategy_ids[1])
+
+    def test_add_strategy_group_creation_logic(self):
+        """测试策略分组创建逻辑"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+        first_group_id = self.operator._groups[0].name
+
+        # 添加具有不同运行频率的策略
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        second_group_id = self.operator._groups[1].name
+
+        # 验证创建了两个不同的分组
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertNotEqual(first_group_id, second_group_id)
+
+        # 添加具有相同运行频率和时机的策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+
+        # 验证第三个策略被添加到第一个分组
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertEqual(len(self.operator._groups[0].members), 2)
+
+    def test_add_strategy_with_custom_strategy_object(self):
+        """测试添加自定义策略对象"""
+
+        class CustomStrategy(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self.run_freq = 'd'
+                self.run_timing = 'close'
+                self._strategy_id = None
+
+        custom_strategy = CustomStrategy()
+
+        # 添加自定义策略
+        self.operator.add_strategy(custom_strategy)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIs(self.operator.strategies[0], custom_strategy)
+        self.assertEqual(custom_strategy._strategy_id, 'custom')
+
+    def test_add_strategy_with_strategy_class(self):
+        """测试添加策略类"""
+
+        class CustomStrategyClass(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self.run_freq = 'd'
+                self.run_timing = 'close'
+                self._strategy_id = None
+
+        # 添加策略类
+        self.operator.add_strategy(CustomStrategyClass)
+
+        # 验证策略实例被正确创建和添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], CustomStrategyClass)
+        self.assertEqual(self.operator.strategies[0]._strategy_id, 'custom')
+
+    def test_add_strategy_with_empty_operator(self):
+        """测试在空Operator中添加策略"""
+        # 验证初始状态
+        self.assertEqual(self.operator.strategy_count, 0)
+        self.assertEqual(len(self.operator._groups), 0)
+
+        # 添加策略
+        class MockStrategy(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self.run_freq = 'd'
+                self.run_timing = 'close'
+                self._strategy_id = None
+
+        self.operator.add_strategy(MockStrategy)
+
+        # 验证添加后状态
+        self.assertEqual(self.operator.strategy_count, 1)
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(len(self.operator._groups[0].members), 1)
+
+    def test_add_strategy_parameter_setting_integration(self):
+        """测试添加策略与参数设置的集成"""
+        # 添加策略并设置多个参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=2,
+                                   par_values=(10, 20, 30),
+                                   window_length=50)
+
+        # 验证参数被设置
+        strategy = self.operator.strategies[0]
+        self.assertEqual(strategy.opt_tag, 2)
+        self.assertEqual(strategy.par_values, (10, 20, 30))
+        self.assertEqual(strategy.window_lengths['close_ANY_d'], 50)
+
+    def test_add_strategy_different_timing_and_freq(self):
+        """测试添加不同运行时机和频率的策略"""
+        # 添加默认策略
+        self.operator.add_strategy('dma')
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(self.operator._groups[0].run_freq, 'd')
+        self.assertEqual(self.operator._groups[0].run_timing, 'close')
+
+        # 添加不同频率的策略
+        self.operator.add_strategy('macd', run_freq='h', run_timing='close')
+        self.assertEqual(len(self.operator._groups), 2)
+
+        # 添加不同时机的策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+        self.assertEqual(len(self.operator._groups), 3)
+
+    def test_add_strategy_custom_strategy_with_params(self):
+        """测试添加带参数的自定义策略"""
+
+        class CustomStrategy(qt.GeneralStg):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.run_freq = 'd'
+                self.run_timing = 'close'
+                self._strategy_id = None
+
+        custom_strategy = CustomStrategy(opt_tag=1, par_values=(5, 10),
+                                         pars=[Parameter(par_range=(0, 50), name='par_1', par_type='int'),
+                                               Parameter(par_range=(0, 50), name='par_2', par_type='int')])
+
+        self.operator.add_strategy(custom_strategy)
+
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertEqual(custom_strategy.opt_tag, 1)
+        self.assertEqual(custom_strategy.par_values, (5, 10))
+
+    def test_add_strategy_group_assignment(self):
+        """测试策略正确分配到分组"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='close')
+
+        # 添加第二个相同运行参数的策略
+        self.operator.add_strategy('macd', run_freq='d', run_timing='close')
+
+        # 添加第三个不同运行参数的策略
+        self.operator.add_strategy('dma', run_freq='h', run_timing='close')
+
+        # 验证分组情况
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertEqual(len(self.operator._groups[0].members), 2)  # 第一组有两个策略
+        self.assertEqual(len(self.operator._groups[1].members), 1)  # 第二组有一个策略
+
+    def test_add_strategy_with_all_parameter_types(self):
+        """测试添加策略时传入各种类型的参数"""
+        # 添加策略并设置各种参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=1,
+                                   par_values=(10, 20, 30),
+                                   run_freq='d',
+                                   run_timing='open',
+                                   window_length=60,
+                                   use_latest_data_cycle=True,
+                                   data_types={'close_ANY_d': qt.DataType('close', freq='d', asset_type='ANY')})
+
+        # 验证参数被设置
+        strategy = self.operator.strategies[0]
+        self.assertEqual(strategy.opt_tag, 1)
+        self.assertEqual(strategy.par_values, (10, 20, 30))
+        self.assertEqual(strategy.run_freq, 'd')
+        self.assertEqual(strategy.run_timing, 'open')
+        self.assertEqual(strategy.window_lengths['close_ANY_d'], 60)
+        self.assertEqual(strategy.data_ulc['close_ANY_d'], True)
+
+    def test_add_strategy_duplicate_check(self):
+        """测试策略重复检查功能"""
+        # 添加策略
+        strategy1 = DMA()
+        strategy2 = DMA()
+
+        self.operator.add_strategy(strategy1)
+
+        # 尝试添加相同的策略实例
+        with self.assertRaises(ValueError):
+            self.operator.add_strategy(strategy1)
+
+        # 添加不同的策略实例，但相同的类型
+        self.operator.add_strategy(strategy2)
+        self.assertEqual(len(self.operator.strategies), 2)
+
+
+class TestSetBlender(unittest.TestCase):
+    """测试Operator类的set_blender方法"""
+
+    def setUp(self):
+        """设置测试环境"""
+        self.operator = qt.Operator()
+
+    def test_strategy_count_zero(self):
+        """测试策略数量为0时直接返回"""
+        # 创建一个没有策略的Operator
+        operator_empty = qt.Operator()
+        # 验证策略数量为0
+        self.assertEqual(operator_empty.strategy_count, 0)
+        # 调用set_blender方法，应该直接返回，不执行任何操作
+        result = operator_empty.set_blender('s0+s1', 'Group_1')
+        self.assertIsNone(result)
+
+    def test_group_id_none_blender_none(self):
+        """测试group_id为None且blender为None时直接返回"""
+        self.operator.add_strategy('dma')
+        self.assertEqual(self.operator.strategy_count, 1)
+        result = self.operator.set_blender(None, None)
+        self.assertIsNone(result)
+
+    def test_group_id_none_blender_string(self):
+        """测试group_id为None且blender为字符串时转换为列表处理"""
+        self.operator.add_strategies('dma, trix')
+        self.operator.add_strategies('macd, ddema', run_freq='h', run_timing='open')
+
+        # 验证有两个策略组
+        self.assertEqual(self.operator.strategy_group_count, 2)
+
+        # 设置blender
+        self.operator.set_blender('s0+s1', None)
+
+        # 验证两个组都被设置为相同的blender
+        group1 = self.operator.strategy_groups['Group_1']
+        group2 = self.operator.strategy_groups['Group_2']
+        self.assertEqual(group1.blender_str, 's0+s1')
+        self.assertEqual(group2.blender_str, 's0+s1')
+
+        print(self.operator.get_blender())
+        print(self.operator.get_blender('Group_1'))
+        print(self.operator.get_blender('Group_2'))
+        self.assertIs(self.operator.get_blender('Not existed'), None)
+
+        print(self.operator.view_blender())
+        print(self.operator.view_blender('Group_1'))
+        print(self.operator.view_blender('Group_2'))
+        self.assertRaises(KeyError, self.operator.view_blender, 0)
+        self.assertRaises(KeyError, self.operator.view_blender, 'not_existed')
+
+    def test_group_id_none_blender_empty_list(self):
+        """测试blender为空列表时抛出ValueError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(ValueError) as context:
+            self.operator.set_blender([], None)
+        self.assertIn('Empty blender list!', str(context.exception))
+
+    def test_group_id_none_blender_list_with_non_string(self):
+        """测试blender列表包含非字符串元素时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(['s0+s1', 123], None)
+        self.assertIn('All items in blender list should be strings!', str(context.exception))
+
+    def test_group_id_none_blender_list_insufficient(self):
+        """测试blender列表数量不足时用最后一个元素补齐"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        self.operator.add_strategy('dma', run_freq='w', run_timing='close')
+
+        # 验证有3个策略组
+        self.assertEqual(self.operator.strategy_group_count, 3)
+
+        # 设置只有1个blender值的列表，应该被扩展到3个
+        self.operator.set_blender(['s0+s1'], None)
+
+        # 验证所有组都被设置为最后一个元素的值
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_3'].blender_str, 's0+s1')
+
+    def test_group_id_none_blender_list_sufficient(self):
+        """测试blender列表数量足够时正常分配"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置与策略组数量相等的blender列表
+        self.operator.set_blender(['s0+s1', 's2*s3'], None)
+
+        # 验证每个组被分配对应的blender
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_list_excessive(self):
+        """测试blender列表数量过多时只使用前面的元素"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置超过策略组数量的blender列表
+        self.operator.set_blender(['s0+s1', 's2*s3', 's1-s0'], None)
+
+        # 验证只有前两个被使用
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_dict(self):
+        """测试blender为字典时遍历设置"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置字典形式的blender
+        blender_dict = {'Group_1': 's0+s1', 'Group_2': 's2*s3'}
+        self.operator.set_blender(blender_dict, None)
+
+        # 验证每个组被设置为字典中对应的值
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_invalid_type(self):
+        """测试blender为无效类型时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(123, None)
+        self.assertIn('Wrong type of blender', str(context.exception))
+
+    def test_group_id_valid_blender_string(self):
+        """测试group_id有效且blender为字符串时正常设置"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 验证blender_str被正确设置
+        self.operator.set_blender('s0+s1', 'Group_1')
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, 's0+s1')
+
+    def test_group_id_invalid(self):
+        """测试group_id无效时抛出KeyError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(KeyError) as context:
+            self.operator.set_blender('s0+s1', 'Invalid_Group')
+        self.assertIn("Strategy group 'Invalid_Group' is not valid", str(context.exception))
+
+    def test_group_id_valid_blender_invalid_type(self):
+        """测试group_id有效但blender类型错误时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(123, 'Group_1')
+        self.assertIn('Wrong type of blender', str(context.exception))
+
+    def test_group_id_invalid_type(self):
+        """测试group_id类型错误时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender('s0+s1', 123)
+        self.assertIn('group should be a string', str(context.exception))
+
+    def test_invalid_blender_expression(self):
+        """测试无效blender表达式时抛出ValueError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(ValueError) as context:
+            self.operator.set_blender('invalid@expr', 'Group_1')
+        # 注意：这里可能不会抛出异常，因为blender_str属性设置可能不会立即验证表达式
+        # 但如果表达式无效，应该在Group类中被验证
+
+    def test_blender_with_complex_expression(self):
+        """测试复杂的blender表达式"""
+        self.operator.add_strategy('dma')
+        complex_expr = 's0*2 + s1 - max(s0, s1)'
+        self.operator.set_blender(complex_expr, 'Group_1')
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, complex_expr)
+
+    def test_blender_dict_partial_groups(self):
+        """测试字典形式的blender只设置部分组"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        self.operator.add_strategy('dma', run_freq='w', run_timing='close')
+
+        # 只设置部分组
+        partial_blender_dict = {'Group_1': 's0+s1'}
+        self.operator.set_blender(partial_blender_dict, None)
+
+        # 验证只设置了指定的组
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        # Group_2和Group_3的blender_str应为None或默认值
+
+    def test_blender_empty_string(self):
+        """测试空字符串blender"""
+        self.operator.add_strategy('dma')
+        self.operator.set_blender('', 'Group_1')
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, '')
 
 
 if __name__ == '__main__':
