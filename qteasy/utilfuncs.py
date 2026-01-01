@@ -772,7 +772,7 @@ def list_to_str_format(str_list: Union[list[str], str]) -> str:
     return res[0:-1]
 
 
-def get_current_timezone_datetime(time_zone='local'):
+def get_current_timezone_datetime(time_zone: str = 'local') -> pd.Timestamp:
     """ 获取指定时区的当前时间，同时确保返回的时间是tz_naive的
 
     如果time_zone为'local', 获取当前时区的当前时间。
