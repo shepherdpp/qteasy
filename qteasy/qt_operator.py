@@ -9,7 +9,7 @@
 # ======================================
 
 
-import warnings
+import os
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,13 @@ from typing import Generator, Optional, Union, Any, Iterable, Mapping
 from qteasy.strategy import BaseStrategy
 from qteasy.group import Group
 from qteasy.datatypes import DataType
+
+from qteasy.history import (
+    check_and_prepare_live_trade_data,
+    check_and_prepare_trade_prices,
+    check_and_prepare_benchmark_data,
+    check_and_prepare_backtest_data,
+)
 
 from qteasy.utilfuncs import (
     AVAILABLE_OP_TYPES,
@@ -1877,3 +1884,310 @@ class Operator:
         for step in steps:
             for result in self.run_strategy(step):
                 yield result
+
+    def run_live_trade(self, config):
+        """ 在实盘模式下运行operator"""
+        # 进入实时信号生成模式:
+        from qteasy.trader import start_trader_ui
+        from qteasy import QT_DATA_SOURCE
+        # 实盘运行模式📄支持asset_type = 'E'的情况，因此需要检查并排除其他情况
+        if config['asset_type'] != 'E':
+            msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
+                  f'please set asset_type="E" with: qt.configure(asset_type="E")'
+            raise ValueError(msg)
+
+        start_trader_ui(
+                operator=self,
+                account_id=config['live_trade_account_id'],
+                user_name=config['live_trade_account_name'],
+                init_cash=config['live_trade_init_cash'],
+                init_holdings=config['live_trade_init_holdings'],
+                config=config,
+                datasource=QT_DATA_SOURCE,
+                debug=config['live_trade_debug_mode'],
+        )
+
+    def run_backtest(self, config, datasource=None, trade_log_path=None, logger=None):
+        """ 在回测模式下运行operator"""
+
+        from qteasy.config_parser import (
+            parse_backtest_cash_plan,
+            parse_backtest_start_end_dates,
+            parse_trade_cost_params,
+            parse_signal_parsing_params,
+            parse_trading_moq_params,
+            parse_trading_delivery_params,
+        )
+        from qteasy.backtest import generate_cash_invest_and_delivery_arrays
+
+        # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
+        start_date, end_date = parse_backtest_start_end_dates(config=config)  # 回测开始和结束日期
+
+        # 在生成交易信号之前准备运行计划及历史数据
+        self.prepare_running_schedule(
+                start_date=start_date,
+                end_date=end_date,
+        )
+        # 现金投入和交割数据表
+        invest_cash_plan = parse_backtest_cash_plan(config)
+        (cash_investment_array,
+         cash_inflation_array,
+         delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=invest_cash_plan,
+                group_merge_type=self.group_merge_type,
+                timing_table=self.group_timing_table,
+        )
+        cash_plan = parse_backtest_cash_plan(config)  # 资金投入计划
+        cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+        signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
+        trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
+        trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
+
+        data_package = check_and_prepare_backtest_data(
+                op=self,
+                backtest_start=start_date,
+                backtest_end=end_date,
+                shares=config['asset_pool'],
+                datasource=datasource,
+        )
+
+        trade_prices = check_and_prepare_trade_prices(
+                op=self,
+                shares=config['asset_pool'],
+                price_adj=config['backtest_price_adj'],
+                datasource=datasource,
+        )
+        # 确保trade_prices包含所有交易时间点，并进行前向填充
+        trade_prices = trade_prices.reindex(index=self.op_signal_index.get_level_values(0))
+        trade_prices.ffill(inplace=True)
+
+        hist_benchmark = check_and_prepare_benchmark_data(
+                op=self,
+                benchmark_symbol=config['benchmark_asset'],
+                datasource=datasource,
+        )
+
+        self.prepare_data_buffer(
+                start_date=start_date,
+                end_date=end_date,
+                data_package=data_package,
+        )
+        self.create_data_windows()
+
+        # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
+        from qteasy.backtest import Backtester
+        backtested = Backtester(
+                op=self,
+                shares=config['asset_pool'],
+                cash_plan=cash_plan,
+                benchmark_data=hist_benchmark,
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                cost_params=cost_params,
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                trade_price_data=trade_prices.values,
+                logger=logger,
+        ).run()
+
+        # 评价回测结果——根据交易结果生成交易结果的评价结果
+        backtested.evaluate_result(
+                indicators=config['test_indicators'],
+        )
+
+        if config['trade_log']:
+            if trade_log_path is None:
+                raise ValueError(f'trade_log_path should be given to save trade log and trade summary')
+            trade_log_file_name = f'trade_log_{self.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            trade_log_file_path = os.path.join(trade_log_path, trade_log_file_name)
+
+            trade_summary_file_name = f'trade_summary_{self.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            trade_summary_file_path = os.path.join(trade_log_path, trade_summary_file_name)
+
+            backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
+            backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
+
+        if config['report']:
+            # 格式化输出回测结果
+            report = backtested.report_result()
+            print(report)
+        if config['visual']:
+            # 图表输出投资回报历史曲线
+            backtested.plot_result(
+                    plot_title='',
+                    buy_sell_markers=config['buy_sell_points'],
+                    show_positions=config['show_positions'],
+            )
+
+        return backtested.backtest_result
+
+    def run_optimization(self, config, datasource=None, logger=None):
+        """ 在优化模式下运行operator"""
+
+        from qteasy.config_parser import (
+            parse_trade_cost_params,
+            parse_signal_parsing_params,
+            parse_trading_moq_params,
+            parse_trading_delivery_params,
+            parse_optimization_start_end_dates,
+            parse_optimization_cash_plan,
+            parse_all_optimization_params
+        )
+        # 创建策略优化的优化区间和测试区间的开始和结束日期
+        opti_start, opti_end, test_start, test_end = parse_optimization_start_end_dates(config=config)  # 回测开始和结束日期
+        opti_cash_plan, test_cash_plan = parse_optimization_cash_plan(config)  # 资金投入计划
+
+        # 解析交易相关参数
+        cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+        signal_parsing_params = parse_signal_parsing_params(config)  # 交易信号解析参数
+        trading_moq_params = parse_trading_moq_params(config)  # 交易最小单位参数
+        trading_delivery_params = parse_trading_delivery_params(config)  # 交易交割参数
+
+        # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
+        assert self.opt_space_par[0] != [], \
+            f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
+            f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
+
+        optimization_config = parse_all_optimization_params(config=config)
+
+        opti_data_package = check_and_prepare_backtest_data(
+                op=self,
+                backtest_start=opti_start,
+                backtest_end=opti_end,
+                shares=config['asset_pool'],
+                datasource=datasource,
+        )
+
+        test_data_package = check_and_prepare_backtest_data(
+                op=self,
+                backtest_start=test_start,
+                backtest_end=test_end,
+                shares=config['asset_pool'],
+                datasource=datasource,
+        )
+
+        from qteasy.optimization import Optimizer
+        optimizer = Optimizer(
+                op=self,
+                method=config['opti_method'],
+                shares=config['asset_pool'],
+                benchmark=config['benchmark_asset'],
+                pool_size=config['opti_output_count'],
+                opti_target=config['optimize_target'],
+                opti_direction=config['optimize_direction'],
+                parallel=config['parallel'],
+                search_config=optimization_config,
+                opti_start_date=opti_start,
+                opti_end_date=opti_end,
+                test_start_date=test_start,
+                test_end_date=test_end,
+                opti_cash_plan=opti_cash_plan,
+                test_cash_plan=test_cash_plan,
+                cost_params=cost_params,
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                logger=logger,
+                evaluate_indicators=config['test_indicators'],
+                test_plot_type=config['indicator_plot_type'],
+        )
+        # 准备优化数据
+        # 生成优化交易运行计划
+        # debug
+        print(f'Preparing optimization data from {opti_start} to {opti_end}...')
+        self.prepare_running_schedule(
+                start_date=opti_start,
+                end_date=opti_end,
+                # TODO: 在这里应该引用config中的market_open_time等等属性，用于生成trade_time_index的时间点
+        )
+
+        # debug
+        print(f'preparing data buffer...')
+        self.prepare_data_buffer(
+                start_date=opti_start,
+                end_date=opti_end,
+                data_package=opti_data_package,
+        )
+        print(f'creating data windows...')
+        self.create_data_windows()
+
+        print(f'Preparing trade prices...')
+        opti_trade_prices = check_and_prepare_trade_prices(
+                op=self,
+                shares=config['asset_pool'],
+                price_adj=config['backtest_price_adj'],
+                datasource=datasource,
+        )
+        print(f'Preparing benchmark data')
+        opti_benchmark = check_and_prepare_benchmark_data(
+                op=self,
+                benchmark_symbol=config['benchmark_asset'],
+                datasource=datasource,
+        )
+
+        print(f'Starting optimization...')
+        optimizer.optimize(
+                benchmark_data=opti_benchmark,
+                trade_price_data=opti_trade_prices.values,
+        )
+        print(f'Optimization finished, best parameters:\n')
+
+        if config['report']:
+            # 输出优化结果报告
+            print(optimizer.report_result(stage='optimization'))
+
+        # ========  开始校验  =========
+        # 生成校验交易运行计划
+        print(f'Preparing test data from {test_start} to {test_end}...')
+        self.prepare_running_schedule(
+                start_date=test_start,
+                end_date=test_end,
+                # TODO: 在这里应该引用config中的market_open_time等等属性，用于生成trade_time_index的时间点
+        )
+        print(f'preparing data buffer...')
+        self.prepare_data_buffer(
+                start_date=test_start,
+                end_date=test_end,
+                data_package=test_data_package,
+        )
+        print(f'creating data windows...')
+        self.create_data_windows()
+
+        # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise error
+        self.is_ready(raise_error=True)
+        print(f'Preparing trade prices for test...')
+        test_trade_prices = check_and_prepare_trade_prices(
+                op=self,
+                shares=config['asset_pool'],
+                price_adj=config['backtest_price_adj'],
+                datasource=datasource,
+        )
+        print(f'Preparing benchmark data...')
+        test_benchmark = check_and_prepare_benchmark_data(
+                op=self,
+                benchmark_symbol=config['benchmark_asset'],
+                datasource=datasource,
+        )
+        print(f'Starting validation on test data...')
+        optimizer.validate(
+                benchmark_data=test_benchmark,
+                trade_price_data=test_trade_prices.values,
+        )
+
+        if config['report']:
+            # 输出优化结果报告
+            print(optimizer.report_result(stage='validation'))
+
+        if config['visual']:
+            # 图表输出优化结果
+            optimizer.plot_result()
+
+        return optimizer.result_pool
+
+    def run_tracing(self, config):
+        """ 在追踪模式下运行operator"""
+
+    def run_prediction(self, config):
+        """ 在与测模式下运行operator"""
