@@ -11,7 +11,6 @@
 
 import pandas as pd
 import numpy as np
-from warnings import warn
 from typing import Union, Iterable, Any, Optional
 
 from qteasy.database import DataSource
@@ -25,12 +24,14 @@ from qteasy.utilfuncs import (
     fill_nan_data,
     fill_inf_data,
     pandas_freq_alias_version_conversion,
+    regulate_date_format,
 )
 
 from qteasy.datatypes import (
     DataType,
     get_history_data_from_source,
     get_reference_data_from_source,
+    infer_data_types,
 )
 
 
@@ -2736,3 +2737,330 @@ def get_history_panel(
         return result_hp
     else:
         return all_dfs
+
+
+# =================================================
+# 以下是一些独立的函数, 用于检查和准备历史数据
+# =================================================
+def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=None):
+    """ 在run_mode == 0的情况下准备相应的历史数据
+
+    Parameters
+    ----------
+    op: Operator
+        需要设置数据的Operator对象
+    config: ConfigDict
+        用于设置Operator对象的环境参数变量
+    datasource: DataSource
+        用于下载数据的DataSource对象
+    live_prices: pd.DataFrame, optional
+        用于实盘交易的最新价格数据，如果不提供，则从datasource中下载获取
+
+    Returns
+    -------
+    hist_op: HistoryPanel
+        用于回测的历史数据，包含用于计算交易结果的所有历史价格种类
+    hist_ref: HistoryPanel
+        用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
+    """
+
+    run_mode = config['mode']
+    if run_mode != 0:
+        raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
+
+    raise NotImplementedError
+
+
+def check_and_prepare_backtest_data(op,
+                                    backtest_start: str,
+                                    backtest_end: str,
+                                    shares: Union[str, list[str]],
+                                    datasource: DataSource) -> dict[str, pd.DataFrame]:
+    """ 生成operator对象在回测模式下运行所需要的相关数据包，包括回测所有交易策略所需的历史数据，
+    遍历Operator对象中的所有交易策略，获取所有交易策略所需要的所有历史数据。
+
+    这个函数的要点在于解析operator对象中所有策略的数据窗口长度和数据频率，获取的数据必须可以生成足够的
+    历史数据窗口以覆盖回测开始日期到回测结束日期之间的所有数据。例如：
+    假设回测区间为20200101到20201231，某个策略需要20天的日线数据窗口，那么获取的历史数据起始日期
+    应该至少为20191211，以保证在20200101日可以获取到20天的历史数据窗口。
+
+    Parameters
+    ----------
+    op: qteasy.Operator
+        交易员对象，包含投资策略信息
+    backtest_start: str
+        回测开始日期，格式为 'YYYYMMDD'
+    backtest_end: str
+        回测结束日期，格式为 'YYYYMMDD'
+    shares: list of str
+        回测资产池中的股票列表
+    datasource: qteasy.DataSource
+        数据源对象
+
+    Returns
+    -------
+    hist_data_package: dict{str, pd.DataFrame}
+        包含回测所需的历史数据和资金计划的字典，键为股票代码，值为对应的历史数据DataFrame
+    """
+
+    # 根据投资回测区间的开始日期及结束日期，确定需要获取的历史数据的起止日期（因为获取的数据必须覆盖交易策略的最大窗口长度）
+    invest_start, invest_end = backtest_start, backtest_end
+
+    # 获取回测所需历史数据的参数
+    data_types = op.all_strategy_data_types
+
+    # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
+    max_window_length = op.max_window_length
+    # import pdb; pdb.set_trace()
+    time_window_delta = pd.Timedelta(max_window_length * 3, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
+
+    # 通过get_history_data_package函数获取数据类型的原始数据
+    hist_data_package = get_history_data_packages(
+            data_types=data_types,
+            shares=shares,
+            start=regulate_date_format(pd.to_datetime(invest_start) - time_window_delta),
+            end=invest_end,
+            data_source=datasource,
+    )
+
+    return hist_data_package
+
+
+def check_and_prepare_trade_prices(op,
+                                   shares: Union[str, list[str]],
+                                   price_adj: str,
+                                   datasource: DataSource) -> pd.DataFrame:
+    """ 基于Operator对象已经生成的group_schedule，获取指定时间区间内的交易价格数据。
+
+    这个函数的要点在于根据operator对象中交易策略的运行时间表，获取每个运行时间点上的历史价格。如果
+    operator对象的交易策略有多个运行频率，产生的运行时间表是多个频率的时间点的并集，那么获取的交易价格数据
+    也必须覆盖所有这些时间点。此时应该根据运行时间表推测最高频率，获取最高频率交易价格后，再通过search_sorted
+    的方式获取所有运行时间点上的交易价格。
+
+    需要注意的是日频以及更低频率的交易价格，必须考虑到这些价格的可用时间，例如收盘价在当天15:00可用，开盘价在当天
+    09:30可用。因此在获取日频或更低的交易价格时，需要将价格的时间点调整到对应的可用时间点上。
+
+    Parameters
+    ----------
+    op: qteasy.Operator
+        交易员对象，包含投资策略信息
+    shares: list of str
+        资产池中的股票列表
+    price_adj: str
+        价格复权类型，'none' 表示不复权，'back' 表示后复权，'forward' 表示前复权，其余值将引发错误
+    datasource: qteasy.DataSource
+        数据源对象
+    Returns
+    -------
+    trade_prices: pd.DataFrame
+        包含用于回测的交易价格数据
+    """
+    # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错
+    op_group_schedules = op.group_schedules  # 一个dict，每个group为key，一个DataFrame为value
+    if not op_group_schedules:
+        raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
+    if not isinstance(price_adj, str):
+        raise TypeError(f'price_adj should be a string, got {type(price_adj)} instead')
+    if price_adj.lower() not in ['none', 'n', 'back', 'b', 'forward', 'f', 'accu']:
+        raise ValueError(f"invalid price_adj ({price_adj}), which should be anyone of ['none', 'back', 'forward']")
+
+    all_run_freqs = [group.run_freq for group in op.groups.values()]
+    all_run_timings = [group.run_timing for group in op.groups.values()]
+    all_schedules = [sched.index for sched in op.group_schedules.values()]
+    price_start = min(sched[0] for sched in all_schedules).date() - pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
+    price_end = max(sched[-1] for sched in all_schedules).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
+
+    trade_prices_per_group = {}
+
+    for freq, timing, sched in zip(all_run_freqs, all_run_timings, all_schedules):
+        # 生成需要获取的数据的数据类型，以便使用get_history_panel函数获取数据
+        data_types = []
+        asset_types = 'E, IDX'
+
+        fund_shares = [symbol for symbol in shares if symbol[-2:] in ['OF']]
+
+        if (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
+            price_data_type_name = 'open'
+        elif (timing == 'close') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的收盘价使用当日收盘价
+            price_data_type_name = 'close'
+        elif (timing not in ['open', 'close']) and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的其他时间点使用分钟线价格
+            price_data_type_name = 'close'
+            freq = '1min'
+        else:  # 其他情况使用当时的价格
+            price_data_type_name = 'close'
+
+        if fund_shares:  # 如果有场外基金，使用单位净值或复权作为交易价格
+            if price_adj == 'none':
+                price_data_type_name += ', unit_nav'
+            elif price_adj == 'back':
+                price_data_type_name += ', accum_nav'
+            else:  # price_adj == 'forward'
+                price_data_type_name += ', adj_nav'
+            asset_types += ', FD'
+
+        # 获取统一时间频率价格
+        data_types.extend(
+                infer_data_types(
+                        price_data_type_name,
+                        freqs=freq,
+                        asset_types=asset_types,
+                        adj=price_adj,
+                        allow_ignore_freq=True,
+                        allow_ignore_adj=True,
+                )
+        )
+
+        # 生成回测交易价格的数据参数, 交易价格的复权类型根据price_adj参数确定
+        trade_prices = get_history_panel(
+                data_types=data_types,
+                data_source=datasource,
+                shares=shares,
+                freq=freq,
+                start=price_start,
+                end=price_end,
+                resample_method='ffill',
+                return_history_panel=False,
+        )
+
+        # 此时有两种情况，一种是获取的价格数据包含多个数据类型（如开盘价和累计净值），另一种是只包含一个数据类型
+        # 需要分别处理，如果包含多个数据类型，则需从多个DataFrame中选择合适的价格进行合并
+        if len(trade_prices) == 1:
+            price_data_type_name = list(trade_prices.keys())[0]
+            trade_prices = trade_prices[price_data_type_name]
+        elif len(trade_prices) > 1:  # 此时检查所有的数据列，删除全部为NaN的列，然后将剩下的列进行合并，并补齐缺少的列（这种情况说明有数据未读到，后面应报错）
+            for dtype_name, df in trade_prices.items():
+                all_nan_cols = df.columns[df.isna().all()].tolist()
+                if all_nan_cols:
+                    trade_prices[dtype_name] = df.drop(columns=all_nan_cols)
+            # 将trade_prices中剩下的DataFrame进行合并
+            trade_prices = pd.concat(list(trade_prices.values()), axis=1)
+            trade_prices.reindex(columns=shares)
+        else:
+            raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
+
+        # 调整日频及更低频率数据的时间点到对应的可用时间点上
+        if freq in ['d', 'w', 'm', 'q']:
+            # 从schedules中获取对应的时间可用偏移量
+            time_offset = sched[0] - pd.to_datetime(sched[0].date())
+            trade_prices.index = trade_prices.index + pd.Timedelta(time_offset)
+
+        trade_prices_per_group[freq] = trade_prices
+
+    # 当多个交易组存在时，合并各个交易组的交易价格数据，取并集
+    all_trade_price_indices = pd.Index([])
+    for sched in op_group_schedules.values():
+        all_trade_price_indices = all_trade_price_indices.union(sched.index)
+    all_trade_price_indices = pd.to_datetime(all_trade_price_indices.sort_values())
+
+    if len(trade_prices_per_group) > 1:
+
+        combined_trade_prices = pd.concat(trade_prices_per_group.values())
+        combined_trade_prices = combined_trade_prices.groupby(level=0).first()
+
+    else:
+        combined_trade_prices = list(trade_prices_per_group.values())[0]
+
+    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
+    # import pdb; pdb.set_trace()
+    # combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
+    combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
+    combined_trade_prices.ffill(inplace=True)
+
+    return combined_trade_prices
+
+
+def check_and_prepare_benchmark_data(op,
+                                     benchmark_symbol: str,
+                                     datasource: DataSource) -> pd.DataFrame:
+    """ 获取指定时间区间内的回测业绩评价基准数据
+
+    本函数通过operator信息获取业绩评价基准数据。业绩评价基准可以是股票、指数或者基金，但是
+    只能包含单一资产的价格数据。业绩评价数据格式与参考数据类型一致，可以是一个DataFrame，索引为时间戳，
+    列为资产代码。也可以是一个Series，索引为时间戳，值为资产价格，如果资产类型为E或FD(场内基金），则
+    价格为后复权价格。如果资产类型为IDX，则价格为指数点位，如果资产类型为场外基金OF，则价格为基金的复权净值。
+
+    benchmark数据会被作为回测结果的业绩评价基准，在计算中需要与每一个交易时机的回测结果做比较，因此
+    benchmark数据的时间索引必须与 operator 的group_timing_table的时间索引对齐。
+
+    Parameters
+    ----------
+    op: qteasy.Operator
+        交易员对象，包含投资策略信息
+    benchmark_symbol: str
+        业绩评价基准资产代码
+    datasource: qteasy.DataSource
+        数据源对象
+
+    Returns
+    -------
+    benchmark_data: pd.DataFrame
+        包含用于回测结果评价的基准数据
+    """
+
+    # 检查Operator对象是否已经创建了交易时间表，如果还没有创建时间表，则报错，如果已经创建，获取开始和结束日期
+    run_timing_table = op.group_timing_table  # 一个dict，每个group为key，一个DataFrame为value
+    if run_timing_table is None or run_timing_table.empty:
+        raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
+    run_timing_indices = run_timing_table.index
+
+    benchmark_start = min(run_timing_indices).date()
+    benchmark_end = max(run_timing_indices).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
+
+    # 检查Operator对象所有交易组的最高运行频率
+    all_run_freqs = [group.run_freq for group in op.groups.values()]
+    benchmark_freq = all_run_freqs[0]  # TODO: 这里简单取第一个频率作为最高频率，未来需要改进
+
+    # 解析benchmark_symbol，根据资产类型确定数据类型名称
+    if benchmark_symbol[-2:] in ['OF']:  # 场外基金
+        benchmark_data_type_name = 'adj_nav'
+        adj = 'none'
+        asset_types = 'FD'
+    elif benchmark_symbol[-2:] in ['SZ', 'SH', 'BJ']:  # 覆盖股票、场内基金或指数的情况
+        benchmark_data_type_name = 'close'
+        adj = 'back'
+        asset_types = 'E, IDX, FD'
+    else:
+        raise ValueError(f'Unsupported benchmark symbol: {benchmark_symbol}, please use stock, index or fund code!')
+
+    data_types = infer_data_types(benchmark_data_type_name,
+                                  freqs=benchmark_freq,
+                                  asset_types=asset_types,
+                                  adj=adj,
+                                  allow_ignore_freq=True,
+                                  allow_ignore_adj=True)
+
+    benchmark_data = get_history_panel(
+            data_types=data_types,
+            shares=[benchmark_symbol],
+            freq=benchmark_freq,
+            start=benchmark_start,
+            end=benchmark_end,
+            data_source=datasource,
+            resample_method='ffill',
+            return_history_panel=False,
+    )
+
+    # benchmark_data中可能存在空DataFrame，逐个检查后将空DataFrame删除，提取非空的DataFrame
+    dtype_name_to_drop = [dtype_name for dtype_name, df in benchmark_data.items() if df.empty]
+    for dtype_name in dtype_name_to_drop:
+        benchmark_data.pop(dtype_name)
+
+    if not benchmark_data:
+        raise ValueError(f'No benchmark data found for symbol {benchmark_symbol}!')
+
+    benchmark_data = benchmark_data[list(benchmark_data.keys())[0]]  # 提取DataFrame
+
+    # 如果benchmark_data的频率低于日频，调整日频及更低频率数据的时间点到对应的可用时间点上
+    sched = benchmark_data.index
+    if benchmark_freq in ['d', 'w', 'm', 'q']:
+        # 从schedules中获取对应的时间可用偏移量
+        time_offset = '15:00:00'  # 基准数据的时间点统一调整为15:00:00
+        benchmark_data.index = benchmark_data.index + pd.Timedelta(time_offset)
+
+    # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对齐，并进行ffill填充
+    re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
+    benchmark_data = pd.DataFrame(benchmark_data.values[re_index - 1], index=run_timing_indices,
+                                  columns=benchmark_data.columns)
+    benchmark_data.ffill(inplace=True)
+
+    return benchmark_data
