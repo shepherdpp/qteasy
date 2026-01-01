@@ -176,14 +176,6 @@ class Operator:
         self._op_signal_types = None  # Operator交易信号的类型清单，一个list或者ndarray: 表示每一行信号的类型（PT/PS/VS）
         self._op_signal_index = None  # 生成timing_table后，生成交易信号的index
         self._op_signal_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
-        # self._op_signal_hdates = {}  # Operator交易信号清单的日期，一个dict: {hdate: idx}
-
-        # stepwise模式下生成的单次交易信号以及相关信息
-        # self._op_signal_index = 0  # 在stepwise模式下，Operator生成的混合后交易信号的日期序号
-        # self._op_signal = None  # 在stepwise模式下，Operator生成的交易信号（已经混合好的交易信号）
-        # self._op_signals_by_price_type_idx = {}  # 在stepwise模式下，各个strategy最近分别生成的交易信号
-        # self._op_signal_indices_by_price_type_idx = {}  # 在stepwise模式下，每个strategy最近交易信号的日期序号
-        # self._op_signal_price_type_idx = None  # 在stepwise模式下，Operator交易信号的价格类型序号
 
         # 设置operator的主要关键属性
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter deprecated
@@ -266,18 +258,18 @@ class Operator:
         """
         return len(self.op_data_types)
 
-    @property
-    def op_ref_types(self) -> list:  # deprecated
-        """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
-        ref_types = [typ for item in self.strategies for typ in item.ref_types]
-        ref_types = list(set(ref_types))
-        ref_types.sort()
-        return ref_types
+    # @property  # deprecated
+    # def op_ref_types(self) -> list:  # deprecated
+    #     """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
+    #     ref_types = [typ for item in self.strategies for typ in item.ref_types]
+    #     ref_types = list(set(ref_types))
+    #     ref_types.sort()
+    #     return ref_types
 
-    @property
-    def op_ref_type_count(self) -> int:  # deprecated
-        """ 返回operator对象生成交易清单所需的历史数据类型数量"""
-        return len(self.op_ref_types)
+    # @property  # deprecated
+    # def op_ref_type_count(self) -> int:  # deprecated
+    #     """ 返回operator对象生成交易清单所需的历史数据类型数量"""
+    #     return len(self.op_ref_types)
 
     @property
     def op_signal_index(self) -> Optional[pd.Index]:
@@ -1050,23 +1042,6 @@ class Operator:
         if self._op_signal_shares == {}:
             return
         return self._op_signal_shares[share]
-
-    # def get_hdate_idx(self, hdate):
-    #     """ 给定一个hdate（字符串）返回它对应的index
-    #
-    #     Parameters
-    #     ----------
-    #     hdate: str
-    #         hdate为一个字符串，表示交易日期
-    #
-    #     Returns
-    #     -------
-    #     int
-    #         返回一个整数，表示hdate对应的index
-    #     """
-    #     if self._op_signal_hdates == {}:
-    #         return
-    #     return self._op_signal_hdates[hdate]
 
     def set_opt_par_values(self, par_values):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1902,121 +1877,3 @@ class Operator:
         for step in steps:
             for result in self.run_strategy(step):
                 yield result
-
-    # ====== top level methods below ======
-
-    # def run(self, mode: int, **kwargs):  # deprecated
-    #     """ placeholder for run method """
-    #     if mode == 0:
-    #         return self.live_trade(**kwargs)
-    #     elif mode == 1:
-    #         return self.backtest(**kwargs)
-    #     elif mode == 2:
-    #         return self.optimize(**kwargs)
-    #     else:
-    #         raise ValueError(f'Invalid mode: {mode}')
-    #
-    # def live_trade(self, account_id, **kwargs):  # deprecated
-    #     """ placeholder for live trade method """
-    #     from qteasy.trader import Trader
-    #     trader = Trader(account_id=account_id, operator=self, **kwargs)
-    #     return trader.run()
-
-    # def backtest(self, **kwargs):  # deprecated
-    #     """ backtest method creates a Backtester object and runs backtest,
-    #      returning the backtest results.
-    #     """
-    #     from qteasy.backtest import Backtester
-    #     backtester = Backtester(op=self, **kwargs)
-    #     return backtester.run()
-
-    # def optimize(self, method, **kwargs):  # deprecated
-    #     """ placeholder for optimize method """
-    #     from qteasy.optimization import Optimizer
-    #     optimizer = Optimizer(op=self, method=method, **kwargs)
-    #     return optimizer
-
-# TODO: SimpleOperator class也许在未来有用：这个Operator被用于
-#  快速运行交易策略，在不需要完整Operator功能的情况下，保持最基本的
-#  策略运行功能，保存策略运行所需的数据结构。在Optimizer中用于并行
-#  快速运行策略并回测。
-# class SimpleOperator:
-#     """轻量级Operator，仅包含策略运行所需的核心信息"""
-#
-#     def __init__(self, strategy_info):
-#         """从完整Operator中提取必要信息
-#
-#         Parameters
-#         ----------
-#         strategy_info : dict
-#             包含策略运行所需信息的字典
-#         """
-#         # 提取策略组信息
-#         self._groups = strategy_info['groups']
-#         self._group_merge_type = strategy_info['group_merge_type']
-#         self.group_timing_table = strategy_info['group_timing_table']
-#
-#         # 提取数据相关信息
-#         self.data_window_views = strategy_info['data_window_views']
-#         self.data_window_indices = strategy_info['data_window_indices']
-#
-#     def get_signal_count(self, steps=None):
-#         """获取信号数量"""
-#         if self.group_timing_table is None:
-#             raise ValueError("Group timing table is not set.")
-#         if steps is not None:
-#             running_schedule = self.group_timing_table.iloc[steps]
-#         else:
-#             running_schedule = self.group_timing_table
-#
-#         if self._group_merge_type == 'None':
-#             return running_schedule.sum().sum()
-#         else:
-#             return len(running_schedule)
-#
-#     def run_strategies(self, steps):
-#         """运行策略生成信号"""
-#         for step in steps:
-#             yield from self._run_strategy(step)
-#
-#     def _run_strategy(self, step_index):
-#         """运行单步策略"""
-#         if self.group_timing_table is None:
-#             raise ValueError("Group timing table is not set.")
-#
-#         group_timing = self.group_timing_table.iloc[step_index].values
-#         group_count = len(self._groups)
-#         groups = [self._groups[i] for i in range(group_count) if group_timing[i]]
-#
-#         signal = 0 if self._group_merge_type == 'Or' else 1
-#
-#         for group in groups:
-#             # 更新策略数据窗口
-#             for strategy in group['members']:
-#                 strategy_id = strategy['strategy_id']
-#                 # 更新数据窗口（这里需要根据实际数据结构调整）
-#                 strategy.update_running_data_window(
-#                                     data_windows=self.data_window_views[strategy.strategy_id],
-#                                     window_indices=self.data_window_indices[strategy.strategy_id],
-#                                     window_index=step_index,
-#                                 )
-#
-#             signal_type = group['signal_type']
-#             # 生成信号（这里需要根据实际数据结构调整）
-#             # signals = [stg.generate() for stg in group['members']]
-#
-#             if self._group_merge_type == 'None':
-#                 # signal = group['blender'](signals)
-#                 yield signal_type, step_index, signal
-#             elif self._group_merge_type == 'Or':
-#                 signal += 1  # placeholder
-#             elif self._group_merge_type == 'And':
-#                 signal *= 1  # placeholder
-#
-#         if self._group_merge_type != 'None':
-#             yield signal_type, step_index, signal
-#
-#     def set_opt_par_values(self, par_values):
-#         """设置优化参数值"""
-#         # 实现参数设置逻辑
-#         pass
