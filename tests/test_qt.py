@@ -1019,9 +1019,9 @@ class TestQT(unittest.TestCase):
                 trade_log=False
         )
         print('backtest in batch mode:')
-        res_batch = op_batch.run(mode=1)
+        res_batch = qt.run(op=op_batch, mode=1)
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(mode=1)
+        res_stepwise = qt.run(op=op_stepwise, mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
@@ -1036,13 +1036,15 @@ class TestQT(unittest.TestCase):
                          res_stepwise['final_value'])
 
         print('backtest in batch mode:')
-        res_batch = op_batch.run(
+        res_batch = qt.run(
+                op=op_batch,
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
         )
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(
+        res_stepwise = qt.run(
+                op=op_stepwise,
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
@@ -1090,9 +1092,9 @@ class TestQT(unittest.TestCase):
         print('output result back testing with test data')
 
         print('backtest in batch mode:')
-        res_batch = op_batch.run(mode=1)
+        res_batch = qt.run(op=op_batch, mode=1)
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(mode=1)
+        res_stepwise = qt.run(op=op_stepwise,mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
@@ -1101,9 +1103,9 @@ class TestQT(unittest.TestCase):
               f'{val_stepwise}')
 
         print('backtest in batch mode in optimization mode:')
-        op_batch.run(mode=2)
+        qt.run(op=op_batch, mode=2)
         print('backtest in stepwise mode in optimization mode')
-        op_stepwise.run(mode=2)
+        qt.run(op=op_stepwise, mode=2)
 
         print('test stepwise mode with different sample freq')
 
