@@ -1371,29 +1371,30 @@ class Backtester:
             raise ValueError('shares list is empty, cannot create trade logs!')
 
         # 生成 trade log 详细表的股票持仓变化详情部分 （每支股票每期的交易信号、价格、交易数量、交易费用、期末持有数量、期末可用数量、持仓价值等）
+        op_signal_index = self.op.op_signal_index
         trade_signal_df = pd.DataFrame(self.op_signals,
-                                       index=self.op.op_signal_index,
+                                       index=op_signal_index,
                                        columns=self.shares)
         trade_price_df = pd.DataFrame(np.round(self.trade_price_data, 3),
-                                      index=self.op.op_signal_index,
+                                      index=op_signal_index,
                                       columns=self.shares)
         own_amounts_df = pd.DataFrame(np.round(self.own_amounts_array[1:], 3),
-                                      index=self.op.op_signal_index,
+                                      index=op_signal_index,
                                       columns=self.shares)
         available_amounts_df = pd.DataFrame(np.round(self.available_amounts_array[1:], 3),
-                                            index=self.op.op_signal_index,
+                                            index=op_signal_index,
                                             columns=self.shares)
         trade_records_df = pd.DataFrame(np.round(self.trade_records_array, 3),
-                                        index=self.op.op_signal_index,
+                                        index=op_signal_index,
                                         columns=self.shares)
         trade_cost_df = pd.DataFrame(np.round(self.trade_cost_array, 3),
-                                     index=self.op.op_signal_index,
+                                     index=op_signal_index,
                                      columns=self.shares)
         cash_changed_df = pd.DataFrame(np.round(-trade_price_df * trade_records_df - self.trade_cost_array, 3),
-                                       index=self.op.op_signal_index,
+                                       index=op_signal_index,
                                        columns=self.shares)
         amounts_value_df = pd.DataFrame(np.round(trade_price_df * self.own_amounts_array[1:], 3),
-                                        index=self.op.op_signal_index,
+                                        index=op_signal_index,
                                         columns=self.shares)
 
         combined_data = pd.concat(
@@ -1418,18 +1419,18 @@ class Backtester:
 
         # 生成 trade log 详细表的每期汇总数据部分（当期现金投入、期末持有现金、期末可用现金、期末总价值）
         add_investments = pd.Series(self.cash_investment_array,
-                                    index=self.op.op_signal_index,
+                                    index=op_signal_index,
                                     name='add. invest')
         own_cash_series = pd.Series(np.round(self.own_cashes[1:], 3),
-                                    index=self.op.op_signal_index,
+                                    index=op_signal_index,
                                     name='own cash')
         available_cash_series = pd.Series(np.round(self.available_cashes[1:], 3),
-                                          index=self.op.op_signal_index,
+                                          index=op_signal_index,
                                           name='available cash')
         total_values = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
 
         total_value_series = pd.Series(np.round(total_values, 3),
-                                       index=self.op.op_signal_index,
+                                       index=op_signal_index,
                                        name='value')
 
         self.summary_df = pd.concat(
