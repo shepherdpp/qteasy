@@ -266,23 +266,18 @@ class Operator:
         """
         return len(self.op_data_types)
 
-    # @property  # deprecated
-    # def op_ref_types(self) -> list:  # deprecated
-    #     """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
-    #     ref_types = [typ for item in self.strategies for typ in item.ref_types]
-    #     ref_types = list(set(ref_types))
-    #     ref_types.sort()
-    #     return ref_types
-
-    # @property  # deprecated
-    # def op_ref_type_count(self) -> int:  # deprecated
-    #     """ 返回operator对象生成交易清单所需的历史数据类型数量"""
-    #     return len(self.op_ref_types)
-
     @property
     def op_signal_index(self) -> Optional[pd.Index]:
         """ 返回operator对象生成交易信号的index"""
-        return self._op_signal_index
+        if self.group_merge_type == 'None':
+            # 在这种情况下应该生成一个MultiIndex，同时包含时间和策略组信息
+            stacked_timing_table = self.group_timing_table.stack()
+            return stacked_timing_table[stacked_timing_table > 0].index
+        else:
+            # 在timing_table的index中增加一个level变成MultiIndex，并将Index的第二个level命名为'merged'
+            return pd.MultiIndex.from_product(
+                    [self.group_timing_table.index, ['merged']],
+            )
 
     @property
     def op_data_freq(self) -> dict:  # deprecated
@@ -340,11 +335,6 @@ class Operator:
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
         all_types = set(self.op_data_types)
         return list(all_types)
-
-    # @property
-    # def op_data_type_list(self):
-    #     """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
-    #     return [stg.data_types for stg in self.strategies]
 
     @property
     def opt_space_par(self):
@@ -416,29 +406,7 @@ class Operator:
         return len(self.strategy_groups)
 
     @property
-    def op_list(self):  # deprecated
-        """ 生成的交易清单，包含了所有交易信号
-
-        Returns
-        -------
-        list, 交易清单，包含了所有交易信号
-        """
-        return self._op_signals
-
-    @property
-    def op_list_shares(self):  # deprecated
-        """ 生成的交易清单的shares序号，股票代码清单
-
-        Returns
-        -------
-        list, 交易清单的shares序号，股票代码清单
-        """
-        if self._op_signal_shares == {}:
-            return
-        return list(self._op_signal_shares.keys())
-
-    @property
-    def op_list_types(self):
+    def op_signal_types(self) -> list:
         """ 生成的交易清单的signal_types。因为生成的交易信号可能是由不同的策略组生成的
         而不同的策略组有自己的信号类型（PT/ST/VT)，因此每一行交易信号都有可能有不同的交易
         信号类型，本属性返回一个list，其中包含了op_signal_list中每一行的signal_list
@@ -447,7 +415,33 @@ class Operator:
         -------
         list, 生成的交易清单的price_types，回测交易价格类型
         """
-        raise NotImplementedError
+
+        group_signal_type_schedules = {}
+        for group, schedule in self.group_schedules.items():
+            group_signal_type_schedules[group] = pd.DataFrame(
+                    data=self.groups[group].signal_type,
+                    index=schedule.index,
+                    columns=['signal_type']
+            )
+        signal_type_table = pd.concat(group_signal_type_schedules.values(), axis=1)
+
+        if self.group_merge_type == 'None':
+            # 将signal_type_table stack起来后，直接可以得到每个交易日的所有asset 类型
+            return signal_type_table.stack().to_list()
+        else:
+            # 当group_merge_type不是None时，同时运行的group将会被merge起来，但是如果
+            # 此时被merge的group有不同的signal type，这时就会产生混乱，到底以哪一个group
+            # 的signal Type为准？因此这时需要报错给用户提示。
+            unique_asset_types = signal_type_table.stack().groupby(level=0).unique()
+            if any(unique_asset_types.apply(len) > 1):
+                conflict_rows = unique_asset_types[unique_asset_types.apply(len) > 1].head()
+                err = RuntimeError(f'You are trying to run multiple strategy groups that are generating '
+                                   f'different types of signals, which will result in ambiguous results:. \n'
+                                   f'{conflict_rows}\n'
+                                   f'Please make sure all groups are having same signal type settings or '
+                                   f'set operator.group_merge_type = "None"')
+                raise err
+            return unique_asset_types.explode().to_list()
 
     @property
     def ready(self):
@@ -1363,7 +1357,9 @@ class Operator:
             else:  # par_range is a dict
                 strategy.update_par_ranges(**par_range)
 
-        if run_freq is not None or run_timing is not None:  # 设置策略的运行频率和运行时机
+        if ((run_freq is not None) and (run_freq != strategy.run_freq)) or \
+            ((run_timing is not None) and (run_timing != strategy.run_timing)):  # 设置策略的运行频率和运行时机
+            # 因为涉及到groups的调整，所以只有当run_freq/run_timing与原有不一致时，才重新设置
             old_group_id = strategy._group_id
             old_group = self.groups[old_group_id]
             old_group.members.remove(strategy)
@@ -1594,7 +1590,7 @@ class Operator:
                                  start_date=None,
                                  end_date=None,
                                  **kwargs,
-                                 ):
+                                 ) -> None:
         """ Running Schedule也就是策略运行时间表，包含每个策略的运行时间和频率等信息
 
         在运行策略之前，必须先准备好运行时间表，这个时间表根据交易员中每个策略组的运行时机参数确定。
@@ -1633,7 +1629,8 @@ class Operator:
                         freq=group.run_freq,
                         **kwargs,
                 ) + pd.Timedelta(hours=0)  # Adjust days to datetime,
-            elif group.run_freq in ['d', 'w', 'M', 'ME', 'Q', 'QE', 'Y', 'YE']:
+            elif (group.run_freq[0] in ['d', 'W', 'w', 'M', 'Q', 'Y']) or \
+                    (group.run_freq[0:2] in ['ME', 'MS', 'QS', 'QE', 'YS', 'YE']):
                 # 运行时间设定为15:00 - close 及 09:30 - open
                 if group.run_timing == 'close':
                     time_offset = "15:00"
@@ -1656,22 +1653,12 @@ class Operator:
                     index=schedule_index,
                     columns=['is_running'],
             )
+
         timing_table = pd.concat(self.group_schedules.values(), axis=1)
         timing_table.columns = self.group_schedules.keys()
         self.group_timing_table = timing_table.fillna(0).astype('int')
 
-        if self.group_merge_type == 'None':
-            # 在这种情况下应该生成一个MultiIndex，同时包含时间和策略组信息
-            stacked_timing_table = self.group_timing_table.stack()
-            self._op_signal_index = stacked_timing_table[stacked_timing_table > 0].index
-            # 下面这种实现方式只能生成时间索引，但是存在重复索引：
-            # self._op_signal_index = timing_table.index.repeat(timing_table.sum(axis=1).astype('int'))
-        else:
-            # 在timing_table的index中增加一个level变成MultiIndex，并将Index的第二个level命名为'merged'
-            timing_table.index = pd.MultiIndex.from_product(
-                    [timing_table.index, ['merged']],
-            )
-            self._op_signal_index = timing_table.index
+        return
 
     def get_signal_count(self, steps=None) -> int:
         """ 获取当前运行时间表中所有策略组生成的交易信号数量
