@@ -81,7 +81,7 @@ class Group:
 
     @property
     def human_blender(self):
-        strategy_ids = [stg.strategy_id for stg in self.members]
+        strategy_ids = [stg.strategy_id if stg.strategy_id is not None else stg.name for stg in self.members]
         return human_blender(self.blender_str, strategy_ids)
 
     @property
