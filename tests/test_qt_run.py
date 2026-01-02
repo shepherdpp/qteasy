@@ -26,7 +26,7 @@ from qteasy.database import DataSource
 from qteasy.datatypes import DataType
 from qteasy.trading_util import trade_time_index as tti
 
-from qteasy.core import (
+from qteasy.history import (
     check_and_prepare_backtest_data,
     check_and_prepare_trade_prices,
     check_and_prepare_benchmark_data,
