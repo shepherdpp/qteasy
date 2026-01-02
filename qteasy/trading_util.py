@@ -16,13 +16,20 @@ import os
 import pandas as pd
 import numpy as np
 from typing import Union
+
+from akshare import news_report_time_baidu
 from numba import njit
 
 from qteasy.__init__ import logger_core as logger
 from qteasy.finance import get_cost_params
 from qteasy.qt_operator import Operator
 from qteasy.configure import QT_CONFIG
-from qteasy.utilfuncs import get_current_timezone_datetime, str_to_list
+from qteasy.utilfuncs import (
+    get_current_timezone_datetime,
+    regulate_date_format, str_to_list,
+    nearest_market_trade_day,
+    next_market_trade_day,
+)
 
 from qteasy.trade_recording import (
     read_trade_order,
@@ -1464,7 +1471,7 @@ def trade_time_index(start=None,
                      include_start_pm=False,
                      include_end_pm=True):
     """ 通过start/end/periods/freq生成一个符合交易时间段的datetime series，这个序列中的
-    每一个时间都在交易时段内，排除所有的交易日
+    每一个时间都在交易时段内，排除所有的非交易日以及非交易时间的序列
 
     Parameters
     ----------
@@ -1474,10 +1481,10 @@ def trade_time_index(start=None,
         日期时间序列的终止日期/时间
     periods: int
         日期时间序列的分段数量
-    freq: str, {'min', 'h', 'd', 'M'}
-        日期时间序列的频率
+    freq: str, {'min', 'h', 'D', 'W', 'M', 'Q', 'Y'}
+        日期时间序列的频率，支持特殊频率如W-FRI, MS(月初), ME(月末), QE-5(季度末倒数第五天)等
     trade_days_only: bool, Default True
-        是否剔除所有非交易日，默认True，如果为False，则保留所有的非交易日
+        是否仅返回交易日，如果频率高于日频，则偏移到最近的交易日
     time_offset: str, Default None
         时间偏移量，代表时间的字符串，"00:00"到"23:59"之间，当freq低于等于一天('d', 'w', ...)时有效
     market: str, {'SSE', 'SZSE', 'SHFE', ...}, Default 'SSE'
@@ -1522,45 +1529,64 @@ def trade_time_index(start=None,
                    '2020-02-02 14:00:00', '2020-02-02 15:00:00'],
                     dtype='datetime64[ns]', freq=None)
     """
+
+    day_delta = None
+    low_frequency = False
+
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
-        freq = str(freq)#.lower()
-    # 检查时间序列区间的开闭状况
-    closed = 'both'
-    if include_start:
-        closed = 'left'
-    if include_end:
-        closed = 'right'
-    if include_start and include_end:
-        closed = 'both'
+        freq = str(freq)
 
-    '''
-    here temp code for parsing version of pandas
-    - if version is less than 1.4.0, use closed parameter
-    - if version is greater than 1.4.0, use inclusive parameter
-    '''
-    if pd.__version__ < '1.4.0':
-        # noinspection PyTypeChecker
-        closed = None if closed == 'both' else closed
-        time_index = pd.date_range(
-                start=start,
-                end=end,
-                periods=periods,
-                freq=freq,
-                closed=closed,  # closed parameter is deprecated since version 1.4.0
-        )
-    else:
-        # noinspection PyTypeChecker
-        time_index = pd.date_range(
-                start=start,
-                end=end,
-                periods=periods,
-                freq=freq,
-                inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
-        )
+        # 判断freq是大于日频还是小于日频
+        if freq[0] in 'WMQY':
+            low_frequency = True
 
-    if trade_days_only:
-        # 剔除time_index中的non-trade day
+        # 解析M/Q/Y-num类型的偏移数据，调整低频数据的日期偏移值
+        if ('-' in freq) and (freq[0] in 'MQY'):
+            try:
+                # ME-5或M-5表示从月底向前偏移5天即月底前五天，MS-3表示从月初向后偏移3天即月初第三天
+                day_offset = int(freq.split('-')[-1]) - 1
+                day_offset_direction = 1 if freq[1] == 'S' else -1
+                freq = '-'.join(freq.split('-')[:-1])
+                if 0 < day_offset < 27:
+                    day_delta = day_offset_direction * pd.Timedelta(day_offset, 'd')
+            except:
+                # 这种情况通常由Y-JAN / Q-NOV等freq引起的，此时不需要调整
+                pass
+
+        # 如果需要偏移日期，起止日期也需要同样偏移
+        if day_delta is not None:
+            if start is not None:
+                start = regulate_date_format(pd.to_datetime(start) - day_delta)
+            if end is not None:
+                end = regulate_date_format(pd.to_datetime(end) - day_delta)
+
+    # 获取基准区间，基准区间包括开始和结束日期
+    time_index = pd.date_range(
+            start=start,
+            end=end,
+            periods=periods,
+            freq=freq,
+    )
+    if len(time_index) == 0:
+        err = ValueError('No time index can be extracted with given start/end/freq/periods parameters, '
+                         'please check your input')
+        raise err
+
+    # 处理日期偏移
+    if day_delta is not None:
+        time_index += day_delta
+
+    if trade_days_only and low_frequency:
+        # 因为数据频率小于日频，因此不能直接剔除非交易日，而应该将其偏移到最近的交易日，偏移的规则为
+        # - 如果基准日期是在周/月/季/年初，则偏移到下一个交易日
+        # - 如果基准日期是在周/月/季/年末，则偏移到前一个交易日
+        if (len(freq) > 1) and (freq[1] == 'S'):
+            time_index = pd.DatetimeIndex(map(next_market_trade_day, time_index))
+        else:
+            time_index = pd.DatetimeIndex(map(nearest_market_trade_day, time_index))
+    elif trade_days_only:
+        # 当时间频率高于或等于日频时，剔除time_index中的非交易日
         from qteasy import QT_TRADE_CALENDAR as calendar
         calendar = calendar.is_open.unstack(level='exchange')
         try:
@@ -1579,11 +1605,11 @@ def trade_time_index(start=None,
 
     # 判断time_index的freq，确定频率低于等于1天(d/w/m)还是高于1天(h/min)
     if time_index.freqstr is not None:
-        freq_str = time_index.freqstr.lower().split('-')[0]
+        freq_str = time_index.freqstr.split('-')[0]
     else:
         freq_str = time_index.inferred_freq
-        if freq_str is not None:
-            freq_str = freq_str.lower()
+        if isinstance(freq_str, str):
+            freq_str = freq_str
         else:
             time_delta = time_index[1] - time_index[0]
             if time_delta < pd.Timedelta(1, 'd'):
@@ -1591,17 +1617,17 @@ def trade_time_index(start=None,
             else:
                 freq_str = 'd'
     ''' freq_str有以下几种不同的情况：
-        min:        T
+        min:        T/min
         hour:       H
         day:        D
-        week:       W-SUN/...
-        month:      M
-        quarter:    Q-DEC/...
-        year:       A-DEC/...
-        由于周、季、年三种情况存在复合字符串，因此需要split
+        week:       W/W-SUN/...
+        month:      MS/ME/M-1/...
+        quarter:    QS/QE/QE-DEC/...
+        year:       YS/YE-DEC/...
+        由于周、月、季、年三种情况存在复合字符串，因此需要split
     '''
     # 当freq小于一天时，需要按交易时段去掉不在交易时段以内的时间点
-    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
+    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:].lower() in ['min']):
         # 在这里还有一处细节需要处理：当freq=‘h'的时候，生成的时间是整点如：
         # 09:00:00 / 10:00:00 / 11:00:00
         # 然而，如果start_am或者start_pm不是整点而是半点时，如start_am=09:30:00，
@@ -1635,7 +1661,8 @@ def trade_time_index(start=None,
                 time_index_am[idx_am],
                 time_index_pm[idx_pm],
         )
-        return pd.to_datetime(time_index_am_pm)
+        time_index = pd.to_datetime(time_index_am_pm)
+
     else:  # 当freq大于等于一天时，需查看是否需要对时间进行偏移
         if time_offset is not None:
             from qteasy.utilfuncs import time_string_to_hour_float
@@ -1645,13 +1672,20 @@ def trade_time_index(start=None,
             except Exception as e:
                 raise ValueError(f'Invalid time_offset {time_offset}, {e}')
             time_index = time_index + offset
-            # 偏移后，可能会出现不在交易时段内的时间点，因此需要剔除不在交易时段内的时间点
-            if include_end:
-                time_index = time_index[np.where(time_index <= pd.to_datetime(end))]
-            else:
-                time_index = time_index[np.where(time_index < pd.to_datetime(end))]
 
-        return time_index
+    # 最后的处理：检查是否出现不在用户指定start/end时间段内的时间点，剔除超过范围的时间点
+    if end is not None:
+        if include_end:
+            time_index = time_index[np.where(time_index <= pd.to_datetime(end))]
+        else:
+            time_index = time_index[np.where(time_index < pd.to_datetime(end))]
+    if start is not None:
+        if include_start:
+            time_index = time_index[np.where(time_index >= pd.to_datetime(start))]
+        else:
+            time_index = time_index[np.where(time_index > pd.to_datetime(start))]
+
+    return time_index
 
 
 def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: bool = False):
