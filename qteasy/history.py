@@ -2879,12 +2879,13 @@ def check_and_prepare_trade_prices(op,
     all_run_freqs = [group.run_freq for group in op.groups.values()]
     all_run_timings = [group.run_timing for group in op.groups.values()]
     all_schedules = [sched.index for sched in op.group_schedules.values()]
+    all_group_ids = [group.name for group in op.groups.values()]
     price_start = min(sched[0] for sched in all_schedules).date() - pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
     price_end = max(sched[-1] for sched in all_schedules).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
 
     trade_prices_per_group = {}
 
-    for freq, timing, sched in zip(all_run_freqs, all_run_timings, all_schedules):
+    for freq, timing, sched, group_id in zip(all_run_freqs, all_run_timings, all_schedules, all_group_ids):
         # 生成需要获取的数据的数据类型，以便使用get_history_panel函数获取数据
         data_types = []
         asset_types = 'E, IDX'
@@ -2959,7 +2960,7 @@ def check_and_prepare_trade_prices(op,
             time_offset = sched[0] - pd.to_datetime(sched[0].date())
             trade_prices.index = trade_prices.index + pd.Timedelta(time_offset)
 
-        trade_prices_per_group[freq] = trade_prices
+        trade_prices_per_group[group_id] = trade_prices
 
     # 当多个交易组存在时，合并各个交易组的交易价格数据，取并集
     all_trade_price_indices = pd.Index([])
