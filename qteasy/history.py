@@ -2811,8 +2811,20 @@ def check_and_prepare_backtest_data(op,
 
     # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
     max_window_length = op.max_window_length
-    # import pdb; pdb.set_trace()
-    time_window_delta = pd.Timedelta(max_window_length * 3, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
+    time_offset_multipliers = {
+        '1min':     3/240,
+        '5min':     3/48,
+        '15min':    2/16,
+        '30min':    2/8,
+        'h':        2/4,
+        'd':        1.5,
+        'w':        9.,
+        'm':        35.,
+        'q':        130.,
+        'y':        360.,
+    }
+    max_multiplier = int(np.ceil(max(time_offset_multipliers.get(dt.freq, 1.) for dt in data_types)))
+    time_window_delta = pd.Timedelta(max_window_length * max_multiplier * 2, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
 
     # 通过get_history_data_package函数获取数据类型的原始数据
     hist_data_package = get_history_data_packages(
