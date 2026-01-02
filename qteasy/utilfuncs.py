@@ -25,10 +25,13 @@ from functools import wraps, lru_cache
 TIME_FREQ_LEVELS = {
     'Y':     10,
     'YE':    10,
+    'YS':    10,
     'Q':     20,
     'QE':    20,
+    'QS':    20,
     'M':     30,
     'ME':    30,
+    'MS':    30,
     'W':     40,
     'w':     40,
     'D':     50,

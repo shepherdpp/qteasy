@@ -343,7 +343,11 @@ class BaseStrategy:
         # check if run_freq is valid
         if not isinstance(run_freq, str):
             raise TypeError(f'sample_freq should be a string, got {type(run_freq)} instead')
-        if run_freq not in TIME_FREQ_STRINGS:
+        if '-' in run_freq:
+            main_freq = run_freq.split('-')[0]
+        else:
+            main_freq = run_freq
+        if main_freq not in TIME_FREQ_STRINGS:
             raise ValueError(f'run_freq should be one of {TIME_FREQ_STRINGS}, got {run_freq} instead')
         self._run_freq = run_freq
 
