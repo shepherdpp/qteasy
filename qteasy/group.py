@@ -92,9 +92,6 @@ class Group:
     def run_freq(self, value: str):
         if not isinstance(value, str):
             raise TypeError(f'run_freq should be a string, got {type(value)} instead')
-        run_freq = value
-        if run_freq not in TIME_FREQ_STRINGS:
-            raise ValueError(f'sample_freq should be one of {TIME_FREQ_STRINGS}, got {value} instead')
         self._run_freq = value
 
     @property
