@@ -1155,12 +1155,12 @@ class TestQT(unittest.TestCase):
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
         op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+
         op.set_parameter(
                 0,
                 run_freq='d',
                 window_length=50,
                 par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='ANY'),  # 考察收盘价变化率
                 run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
         )
         op.set_parameter(
@@ -1168,9 +1168,13 @@ class TestQT(unittest.TestCase):
                 run_freq='d',
                 window_length=50,
                 par_values=(20,),
-                data_types=DataType('close', freq='d', asset_type='ANY'),  # 考察收盘价的变化率
                 run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
         )
+        self.assertEqual(len(op.groups), 2)
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
         op.set_blender(blender='s0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
