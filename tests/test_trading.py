@@ -1619,7 +1619,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 26)
+        self.assertEqual(len(agenda), 27)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
@@ -1655,7 +1655,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 31)
+        self.assertEqual(len(agenda), 32)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd']))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
@@ -1698,7 +1698,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 22)
+        self.assertEqual(len(agenda), 23)
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd', 'rsi']))
@@ -2437,6 +2437,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'sell_batch_size':      0.,
             'long_position_limit':  1.0,
             'short_position_limit': -1.0,
+            'cost_rate_buy':        0.000,
+            'cost_rate_sell':       0.000,
+            'cost_min_buy':         0.0,
+            'cost_min_sell':        0.0,
+            'cost_slippage':        0.0,
         }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
@@ -4292,13 +4297,19 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertRaises(ValueError, trade_time_index, freq='d', end='20200103')  # two of start/end/freq/periods
 
         self.assertRaises(ValueError, trade_time_index, start='20200105', end='20200101', freq='d')  # start after end
-        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101', freq='d')  # wrong date format
-        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101', freq='not a freq')  # wrong freq
-        self.assertRaises(TypeError, trade_time_index, start='2020010505', end='20200101', periods='wrong')  # wrong periods
-        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='d', time_offset='wrong_offset')  # wrong timeoffset
-        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='h', start_am='wrong_time')  # wrong time
+        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101',
+                          freq='d')  # wrong date format
+        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101',
+                          freq='not a freq')  # wrong freq
+        self.assertRaises(TypeError, trade_time_index, start='2020010505', end='20200101',
+                          periods='wrong')  # wrong periods
+        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='d',
+                          time_offset='wrong_offset')  # wrong timeoffset
+        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='h',
+                          start_am='wrong_time')  # wrong time
 
-        self.assertRaises(RuntimeError, trade_time_index, start='20200101', end='20200105', freq='d', market='WRONG_MKT')  # wrong periods
+        self.assertRaises(RuntimeError, trade_time_index, start='20200101', end='20200105', freq='d',
+                          market='WRONG_MKT')  # wrong periods
 
 
 if __name__ == '__main__':

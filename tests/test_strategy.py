@@ -1089,6 +1089,10 @@ class TestStrategy(unittest.TestCase):
         stg.update_shares(3, ['share1', 'share2', 'share3'])
         self.assertEqual(stg.share_count, 3)
         self.assertEqual(stg.share_names, ['share1', 'share2', 'share3'])
+        # update shares without list
+        stg.update_shares(3)
+        self.assertEqual(stg.share_count, 3)
+        self.assertEqual(stg.share_names, ['Share_1', 'Share_2', 'Share_3'])
 
         stg.update_running_data_window(
                 data_windows=self.data_windows,
