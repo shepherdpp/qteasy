@@ -2878,14 +2878,17 @@ def check_and_prepare_trade_prices(op,
         asset_types = 'E, IDX'
 
         fund_shares = [symbol for symbol in shares if symbol[-2:] in ['OF']]
+        dtype_freq = freq
 
-        if (timing == 'open') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的开盘价使用前一交易日的
+        if (timing == 'open') and freq[0].lower() in ['d', 'w', 'm', 'q', 'y']:  # 日频及更低频率的开盘价使用前一交易日的
             price_data_type_name = 'open'
-        elif (timing == 'close') and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的收盘价使用当日收盘价
+            dtype_freq = 'd'
+        elif (timing == 'close') and freq[0].lower() in ['d', 'w', 'm', 'q', 'y']:  # 日频及更低频率的收盘价使用当日收盘价
             price_data_type_name = 'close'
-        elif (timing not in ['open', 'close']) and freq in ['d', 'w', 'm', 'q']:  # 日频及更低频率的其他时间点使用分钟线价格
+            dtype_freq = 'd'
+        elif (timing not in ['open', 'close']) and freq[0].lower() in ['d', 'w', 'm', 'q']:  # 日频及更低频率的其他时间点使用分钟线价格
             price_data_type_name = 'close'
-            freq = '1min'
+            dtype_freq = '1min'
         else:  # 其他情况使用当时的价格
             price_data_type_name = 'close'
 
@@ -2902,7 +2905,7 @@ def check_and_prepare_trade_prices(op,
         data_types.extend(
                 infer_data_types(
                         price_data_type_name,
-                        freqs=freq,
+                        freqs=dtype_freq,
                         asset_types=asset_types,
                         adj=price_adj,
                         allow_ignore_freq=True,
@@ -2939,7 +2942,7 @@ def check_and_prepare_trade_prices(op,
             raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
 
         # 调整日频及更低频率数据的时间点到对应的可用时间点上
-        if freq in ['d', 'w', 'm', 'q']:
+        if freq[0].lower() in ['d', 'w', 'm', 'q', 'y']:
             # 从schedules中获取对应的时间可用偏移量
             time_offset = sched[0] - pd.to_datetime(sched[0].date())
             trade_prices.index = trade_prices.index + pd.Timedelta(time_offset)
@@ -2961,10 +2964,13 @@ def check_and_prepare_trade_prices(op,
         combined_trade_prices = list(trade_prices_per_group.values())[0]
 
     # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
-    # import pdb; pdb.set_trace()
-    # combined_trade_prices = combined_trade_prices.loc[all_trade_price_indices]
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
     combined_trade_prices.ffill(inplace=True)
+
+    # combined_trade_prices 可能仍然有全NaN的数据，此时假设这些数据不需要使用，但为了避免出
+    # 现问题，将它们填充为1.0（不填充为0.0的原因是为了避免Divide_by_zero错误）这个问题在发现问题的地方处理
+    # if any(np.isnan(combined_trade_prices)):
+    #     combined_trade_prices.fillna(1.0, inplace=True)
 
     return combined_trade_prices
 

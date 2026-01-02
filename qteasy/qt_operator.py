@@ -10,6 +10,7 @@
 
 
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -1922,7 +1923,6 @@ class Operator:
 
         # 创建回测交易所需的各种参数和辅助参数，包括现金投入和交割所需数据表
         start_date, end_date = parse_backtest_start_end_dates(config=config)  # 回测开始和结束日期
-
         # 在生成交易信号之前准备运行计划及历史数据
         self.prepare_running_schedule(
                 start_date=start_date,
@@ -1960,6 +1960,12 @@ class Operator:
         # 确保trade_prices包含所有交易时间点，并进行前向填充
         trade_prices = trade_prices.reindex(index=self.op_signal_index.get_level_values(0))
         trade_prices.ffill(inplace=True)
+
+        # 如果trace_price存在完全为NaN的列，说明有可能数据不完整，或者数据不需要使用
+        if any(np.isnan(trade_prices)):
+            warnings.warn('There are all-NaN columns in trade_prices, that means missing data or '
+                          'unnecessary shares', UserWarning)
+            trade_prices.fillna(1.0, inplace=True)
 
         hist_benchmark = check_and_prepare_benchmark_data(
                 op=self,
