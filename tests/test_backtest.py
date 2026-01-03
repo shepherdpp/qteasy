@@ -4174,10 +4174,7 @@ class TestBacktester(unittest.TestCase):
                                                         columns=['Group_1', 'Group_2'],
                                                         index=pd.date_range('2023-01-01', periods=3))
         self.operator.group_timing_table = timing_table
-        timing_table.index = pd.MultiIndex.from_product(
-                [timing_table.index, ['merged']],
-        )
-        self.operator._op_signal_index = timing_table.index
+        # self.operator._op_signal_index = timing_table.index
         self.operator.debug = True
         self.operator.group_merge_type = 'OR'
         # 第一种情形：operator.group_merge_type != None
@@ -4294,9 +4291,6 @@ class TestBacktester(unittest.TestCase):
 
         # 第二种情形：operator.group_merge_type == None，此时会产生五组交易信号，其中第一天和最后一天分别有两组交易信号
         self.operator_no_merge.group_merge_type = 'None'
-        no_merge_timing_table = self.operator_no_merge.group_timing_table.unstack()
-        no_merge_timing_table = no_merge_timing_table.reorder_levels([1, 0]).sort_index(level=0)
-        self.operator_no_merge._op_signal_index = no_merge_timing_table[no_merge_timing_table == 1].index
 
         # 基本参数
         self.shares = ['AAPL', 'GOOGL']

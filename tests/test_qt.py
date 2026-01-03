@@ -20,7 +20,7 @@ import numpy as np
 from qteasy.parameter import Parameter
 from qteasy.tafuncs import bbands
 from qteasy.tafuncs import sma
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, StgData
 
 from qteasy.strategy import RuleIterator, GeneralStg
 
@@ -991,9 +991,9 @@ class TestQT(unittest.TestCase):
                          lbound=0,
                          max_sel_count=30)
         op.set_parameter('signal_none', par_values=())
-        op.set_blender('avg(s0, s1, s2)', 'Group_1')
-        # TODO: 这里运行大量股票选股策略时，从DataSource读取数据需要24分钟时间，这个
-        #  时间太长，必须尽快优化
+        op.set_blender('avg(s0, s1)', 'Group_1')
+        op.set_blender('s0', group_id='Group_2')
+        op.group_merge_type = 'OR'
         qt.run(op, visual=False, trade_log=True)
 
     def test_op_stepwise(self):
@@ -1213,7 +1213,7 @@ class TestQT(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',
-                         data_types=DataType('wt_idx|000300.SH', freq='d', asset_type='E'),
+                         data_types=StgData('wt_idx|000300.SH', freq='d', asset_type='E', window_length=1),
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)
