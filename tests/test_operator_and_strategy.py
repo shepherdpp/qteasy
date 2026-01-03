@@ -16,14 +16,15 @@ import pandas as pd
 import numpy as np
 import time
 
-from qteasy.backtest import initialize_backtest_delivery_queue
+from qteasy.backtest import Backtester, initialize_backtest_delivery_queue
 from qteasy.parameter import Parameter
 from qteasy.group import Group
 from qteasy.built_in import DMA, MACD, CDL
 from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, StgData
 from qteasy.trading_util import trade_time_index as tti
 from qteasy.qt_operator import SIGNAL_TYPE_ID
+from qteasy.finance import CashPlan
 
 # test parameters and datatypes:
 param1 = Parameter(
@@ -3757,6 +3758,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False,
                           include_start_pm=False)
         )
+
+        benchmark_data = pd.Series(
+                np.random.randint(10, size=(signal_count,)).astype(float) + 30,
+                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
+        )
         print(f'created random trade price data of shape {trade_price_data.shape}\n'
               f'starting from {trade_price_data.index[0]} to {trade_price_data.index[-1]}\n,'
               f'prepared data buffer with large data set of shape: {large_close.shape}\n'
@@ -3775,19 +3782,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # 设置股票名称
         op.set_shares([f's_{i}' for i in range(share_count)])
 
-        st = time.time()
-        for stype, s_index, signal in op.run_strategies(steps=range(len(op.group_timing_table))):
-            stypes[signal_index] = SIGNAL_TYPE_ID[stype]
-            s_indices[signal_index] = s_index
-            signals[signal_index, :] = signal
-            signal_index += 1
-        et = time.time()
-
-        print(f'Generated {op.get_signal_count()} trading signals in {et - st:.6f} seconds\n')
-        self.assertLessEqual(et - st, 8.0)  # 交易信号生成时间不超过8秒
-
         # 准备交易数据
-
         cash_investment_array = np.zeros((signal_count,), dtype=float)
         cash_investment_array[0] = 1000000.0  # 初始资金
         cash_inflation_array = np.zeros((signal_count,), dtype=float)
@@ -3801,114 +3796,95 @@ class TestOperatorAndStrategy(unittest.TestCase):
         own_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
         available_amounts = np.zeros((signal_count + 1, share_count), dtype=float)
 
-        # 执行回测
-        from qteasy.backtest import backtest_batch_steps
         cost_params = np.array([0.0001, 0.0001, 5.0, 5.0, 0.0])
-        st = time.time()
-        backtest_batch_steps(
-                signal_types=stypes,
-                op_signals=signals,
-                cash_investment_array=cash_investment_array,
-                cash_inflation_array=cash_inflation_array,
-                delivery_day_indicators=delivery_day_indicators,
-                own_cashes=own_cashes,
-                available_cashes=available_cashes,
-                own_amounts_array=own_amounts,
-                available_amounts_array=available_amounts,
-                trade_prices=trade_price_data,
-                trade_records_array=trade_records_array,
-                trade_cost_array=trade_cost_array,
-                cost_params=cost_params,
+        signal_parsing_params = dict(
                 pt_buy_threshold=0.0,
                 pt_sell_threshold=0.0,
                 long_pos_limit=1.0,
                 short_pos_limit=-1.0,
                 allow_sell_short=True,
+        )
+        trading_moq_params = dict(
                 moq_buy=10.,
                 moq_sell=1.,
+        )
+        trading_delivery_params = dict(
                 cash_delivery_period=0,
                 stock_delivery_period=1,
         )
-        et = time.time()
-        print(f'Backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n')
-        # self.assertLessEqual(et - st, 5.0)  # 回测时间不超过5秒
 
-        # 测试生成回测记录并计算时间：create_value_records(), generate_trade_logs() and generate_trade_summary()
-        from qteasy.backtest import create_value_records, create_trade_logs, create_trade_summary
-        st = time.time()
-        value_records = create_value_records(
+        # 使用Backtester对象执行回测并计算回测时间
+        backtested = Backtester(
+                op=op,
                 shares=shares,
-                trade_datetimes=op.group_timing_table.index,
-                own_cashes=own_cashes,
-                own_amounts_array=own_amounts,
-                trade_prices=trade_price_data,
-        )
+                cash_plan=CashPlan(dates=['2020-01-15'], amounts=[1000000.0], interest_rate=0.0),
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                cost_params=cost_params,
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                trade_price_data=trade_price_data,
+                benchmark_data=benchmark_data,
+        ).run()
+
+        signal_time = backtested.op_run_time
+        print(f'Generated {op.get_signal_count()} trading signals in {signal_time:.6f} seconds\n')
+        self.assertLessEqual(signal_time, 8.0)  # 交易信号生成时间不超过8秒
+        backtest_time = backtested.backtest_run_time
+        print(f'Backtested {op.get_signal_count()} and created trading tables in {backtest_time:.6f} seconds\n')
+        self.assertLessEqual(backtest_time, 8.0)  # 回测时间不超过8秒
+
+        # 测试计算回测最终结果的时间（包括计算三种回测分析结果）
+        st = time.time()
+        final_value = backtested.trade_result_final_value()
+        mdd = backtested.trade_result_max_drawdown()
+        volatility = backtested.trade_result_volatility()
         et = time.time()
-        print(f'Created value records of shape {value_records.shape} in {et - st:.6f} seconds\n')
+        print(f'Calculated backtest numaric results: \n'
+              f' - fv:          {final_value:.3f}\n'
+              f' - mdd:         {mdd:.2%}\n'
+              f' - volatility:  {volatility:.3f}\n'
+              f' in {et - st:.6f} seconds\n')
         self.assertLessEqual(et - st, 5.0)  # 生成净值记录时间不超过5秒
 
+        # 测试生成回测记录的完整评价指标并计算时间：
         st = time.time()
-        trade_logs, summary = create_trade_logs(
-                shares=shares,
-                trade_datetimes=op.group_timing_table.index,
-                trade_signals=signals,
-                trade_prices=trade_price_data,
-                cash_investment_array=cash_investment_array,
-                own_cashes=own_cashes,
-                available_cashes=available_cashes,
-                own_amounts_array=own_amounts,
-                available_amounts_array=available_amounts,
-                trade_records_array=trade_records_array,
-                trade_cost_array=trade_cost_array,
-        )
+        backtested.evaluate_result(indicators='r,m,v,b,info,alpha,beta,sharp')
         et = time.time()
-        print(f'Created trade logs with {len(trade_logs)} records and summary in {et - st:.6f} seconds\n'
-              f'trade log:\n{trade_logs}\n')
-        # self.assertLessEqual(et - st, 5.0)  # 生成交易日志时间不超过5秒
+        print(f'Complete evaluation of backtest results took {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成完整评价记录时间不超过5秒
 
+        # 测试生成基本交易结果DataFrame的时间
         st = time.time()
-        trade_summary = create_trade_summary(
-                shares=shares,
-                share_names=None,
-                trade_log_df=trade_logs,
-                summary_df=summary,
-        )
+        result_df = backtested.trade_result_df()
         et = time.time()
-        print(f'Created trade summary:\n{trade_summary}\n in {et - st:.6f} seconds\n')
+        print(f'Created basic trade result dataframe with {len(result_df)} records in {et - st:.6f} seconds\n'
+              f'trade log:\n{result_df.head()}\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成交易日志时间不超过5秒
+
+        # 测试生成完整交易日志DataFrame的时间
+        st = time.time()
+        trade_log = backtested.generate_trade_logs()
+        et = time.time()
+        print(f'Created trade log:\n{trade_log.head()}\n in {et - st:.6f} seconds\n')
+
+        # 测试生成完整交易汇总表DataFrame的时间
+        st = time.time()
+        trade_summary = backtested.generate_trade_summary()
+        et = time.time()
+        print(f'Created trade summary:\n{trade_summary.head()}\n in {et - st:.6f} seconds\n')
 
         # 重复运行十次以精确测算回测的速度
-        print(f'Now repeating the backtest 10 times to measure speed...\n')
-        cost_params = np.array([0.0001, 0.0001, 5.0, 5.0, 0.0])
+        print(f'Now repeating the backtest 5 times to measure speed...\n')
         st = time.time()
         for _ in range(5):
-            backtest_batch_steps(
-                    signal_types=stypes,
-                    op_signals=signals,
-                    cash_investment_array=cash_investment_array,
-                    cash_inflation_array=cash_inflation_array,
-                    delivery_day_indicators=delivery_day_indicators,
-                    own_cashes=own_cashes,
-                    available_cashes=available_cashes,
-                    own_amounts_array=own_amounts,
-                    available_amounts_array=available_amounts,
-                    trade_prices=trade_price_data,
-                    trade_records_array=trade_records_array,
-                    trade_cost_array=trade_cost_array,
-                    cost_params=cost_params,
-                    pt_buy_threshold=0.0,
-                    pt_sell_threshold=0.0,
-                    long_pos_limit=1.0,
-                    short_pos_limit=-1.0,
-                    allow_sell_short=False,
-                    moq_buy=10.,
-                    moq_sell=1.,
-                    cash_delivery_period=0,
-                    stock_delivery_period=1,
-            )
+            backtested.run()
         et = time.time()
-        print(f'10 times backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n'
-              f'average {((et - st) / 10):.6f} seconds per backtest\n')
-        self.assertLessEqual(et - st, 30.0)  # 单次平均回测时间不超过3秒
+        print(f'5 times backtest executed for {op.get_signal_count()} signals in {et - st:.6f} seconds\n'
+              f'average {((et - st) / 5):.6f} seconds per backtest\n')
+        self.assertLessEqual((et - st) / 5, 8.0)  # 单次平均回测时间不超过8秒
 
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
@@ -3917,7 +3893,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',
-                         data_types=DataType('wt_idx|000300.SH', freq='d', asset_type='E'),
+                         data_types=StgData('wt_idx|000300.SH', freq='d', asset_type='E', window_length=1),
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)
