@@ -643,7 +643,7 @@ class BaseStrategy:
                 if not isinstance(dtype, DataType):
                     raise TypeError(f'pars should be a dict of DataType objects, got {type(data_types)} instead')
                 if key != dtype.dtype_id:
-                    dtype.dtype_id = key
+                    dtype._dtype_id = key
         else:
             raise TypeError(f'pars is invalid! ({data_types})')
 
