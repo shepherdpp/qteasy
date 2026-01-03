@@ -1074,7 +1074,7 @@ class DataType:
                 freq=default_freq,
                 asset_types=asset_types,
             )
-            dtype_id = f'{self._name}_{asset_type_str}_{default_freq}'
+            dtype_id = f'{name}_{asset_type_str}_{default_freq}'
 
         self._name = name
         self._search_name = search_name
