@@ -675,7 +675,8 @@ class BaseStrategy:
                 continue
             if dtype.use_latest_data_cycle is not None:
                 if not isinstance(dtype.use_latest_data_cycle, bool):
-                    raise TypeError(f'use_latest_data_cycle should be a boolean, got {dtype.use_latest_data_cycle} instead')
+                    raise TypeError(f'use_latest_data_cycle should be a boolean, '
+                                    f'got {dtype.use_latest_data_cycle} instead')
                 self._data_ULC[dtype_id] = dtype.use_latest_data_cycle
 
         # 设置window lengths
@@ -700,8 +701,9 @@ class BaseStrategy:
             if not isinstance(dtype, StgData):
                 continue
             if dtype.window_length is not None:
-                if not isinstance(window_length, int) or dtype.window_length <= 0:
-                    raise ValueError(f'window_length should be a positive integer, got {dtype.window_length} instead')
+                if not isinstance(dtype.window_length, int) or dtype.window_length <= 0:
+                    raise ValueError(f'window_length should be a positive integer, got '
+                                     f'{dtype.window_length}({type(dtype.window_length)}) instead')
                 self._data_WL[dtype_id] = dtype.window_length
 
         for dtype_id in data_types:

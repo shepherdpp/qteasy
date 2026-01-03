@@ -1950,8 +1950,8 @@ class Operator:
 
         # 如果trace_price存在完全为NaN的列，说明有可能数据不完整，或者数据不需要使用
         if any(np.isnan(trade_prices)):
-            warnings.warn('There are all-NaN columns in trade_prices, that means missing data or '
-                          'unnecessary shares', UserWarning)
+            # warnings.warn('There are all-NaN columns in trade_prices, that means missing data or '
+            #               'unnecessary shares', UserWarning)
             trade_prices.fillna(1.0, inplace=True)
 
         hist_benchmark = check_and_prepare_benchmark_data(
