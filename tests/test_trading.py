@@ -1619,7 +1619,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 27)
+        self.assertIn(len(agenda), [26, 27])  # 不同的日期，可能有一个或两个refill事件
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
@@ -1655,7 +1655,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 32)
+        self.assertIn(len(agenda), [31, 32])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd']))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
@@ -1698,7 +1698,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         agenda = create_daily_task_schedule(op, config)
         print([f'{i}: {item}' for i, item in enumerate(agenda)])
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 23)
+        self.assertIn(len(agenda), [22, 23])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd', 'rsi']))

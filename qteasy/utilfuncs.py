@@ -329,44 +329,6 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
     return deco_retry
 
 
-def mask_to_signal(lst):
-    """将持仓蒙板转化为交易信号.
-
-    转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
-    则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
-    生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
-    signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
-        现金总额不足，则按比例调降买入比率，直到用尽现金。
-    signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
-    signal = 0时，表示不进行任何操作
-
-    Parameters
-    ----------
-    lst: ndarray
-        持仓蒙板
-
-    Returns
-    -------
-    op，ndarray，交易信号矩阵
-    """
-    np.seterr(divide='ignore', invalid='ignore')
-    if lst.ndim == 2:  # 如果输入信号是2D的，则逐行操作（axis=0）
-        # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
-        # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%
-        op = (lst - np.roll(lst, shift=1, axis=0))
-        # 差额小于0者需要计算差额与上期持仓数之比，作为卖出信号的强度，如上期为0.7，本期为0.35，差额为-0.35，则卖出信号强度
-        # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
-        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=0)), op)
-        # 补齐因为计算差额导致的第一行数据为NaN值的问题
-        # print(f'creating operation signals, first signal is {lst[0]}')
-        op[0] = lst[0]
-    else:  # 如果输入信号是3D的，同样逐行操作，但Axis和2D情形不同(axis=1)
-        op = (lst - np.roll(lst, shift=1, axis=1))
-        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=1)), op)
-        op[:, 0, :] = lst[:, 0, :]
-    return op.clip(-1, 1)
-
-
 def unify(arr):
     """调整输入矩阵每一行的元素，通过等比例缩小（或放大）后使得所有元素的和为1
 

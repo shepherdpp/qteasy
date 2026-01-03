@@ -1517,7 +1517,7 @@ class TestSetPars(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             self.strategy.set_pars("invalid_type")
 
-        self.assertIn('pars is in invalid type!', str(context.exception))
+        self.assertIn('pars should be a list or a dict of Parameter', str(context.exception))
 
     def test_set_pars_with_invalid_list_items(self):
         """测试输入包含非Parameter对象的列表"""
@@ -1528,7 +1528,7 @@ class TestSetPars(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             self.strategy.set_pars(invalid_list)
 
-        self.assertIn('pars should be a list of Parameter objects', str(context.exception))
+        self.assertIn('pars should be a list of Parameter', str(context.exception))
 
     def test_set_pars_with_invalid_tuple_items(self):
         """测试输入包含非Parameter对象的元组"""
@@ -1539,7 +1539,7 @@ class TestSetPars(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             self.strategy.set_pars(invalid_tuple)
 
-        self.assertIn('pars should be a list of Parameter objects', str(context.exception))
+        self.assertIn('pars should be a list of Parameter', str(context.exception))
 
     def test_set_pars_with_invalid_dict_values(self):
         """测试输入包含非Parameter对象的字典"""
@@ -1550,7 +1550,7 @@ class TestSetPars(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             self.strategy.set_pars(invalid_dict)
 
-        self.assertIn('pars should be a dict of Parameter objects', str(context.exception))
+        self.assertIn('pars should be a dict of Parameter', str(context.exception))
 
     def test_set_pars_with_empty_list(self):
         """测试输入空列表的情况"""

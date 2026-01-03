@@ -2809,6 +2809,9 @@ def check_and_prepare_backtest_data(op,
     # 获取回测所需历史数据的参数
     data_types = op.all_strategy_data_types
 
+    if not data_types:
+        return {}
+
     # 计算数据窗口偏移长度，这个长度需要扣除非交易日，并考虑到低频率数据的影响
     max_window_length = op.max_window_length
     time_offset_multipliers = {
