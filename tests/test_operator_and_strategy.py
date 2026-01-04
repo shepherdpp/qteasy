@@ -927,7 +927,9 @@ class TestDependentData(GeneralStg):
                 data_types={'close_E_d': dtype_1,
                             'reference_d': dtype_ref,
                             'holding_positions': DataType('op_holding_positions'),
-                            'trade_prices': DataType('op_trade_prices')},
+                            'trade_prices': DataType('op_trade_prices'),
+                            'op_cashes': DataType('op_cashes'),
+                            'op_trade_volumes': DataType('op_trade_volumes')},
                 use_latest_data_cycle=[False, False],
                 window_length=[5, 7],
                 **kwargs,
@@ -939,7 +941,6 @@ class TestDependentData(GeneralStg):
         """实现策略逻辑，在策略中需要用到holding和trade_price两种数据， singaltype = VS"""
         # n, m = self.param1, self.param2
         n, m = self.get_pars('N'), self.get_pars('M')
-        # close_d, ref_d = self.close_E_d, self.reference_d
         close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
         # print("ReferenceData is running")
         # print(f"param1(N) = {n}, param2(M) = {m}")
@@ -957,15 +958,17 @@ class TestDependentData(GeneralStg):
             top2_idx = dt1_change.argsort()[:2]
             # print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
         signal = np.zeros_like(dt1_change)
-        signal[top2_idx] *= 0.5  # 再买入
+        signal[top2_idx] = 0.5  # 再买入
         # print(f"signal = {signal}")
         holding, prices = self.get_data('holding_positions', 'trade_prices')
+        cashes, trade_volumes = self.get_data('op_cashes', 'op_trade_volumes')
+        # print(f'got holding data:\n{holding}\n and trade prices:\n{prices}')
         # holding 和 prices 只是导入，做一些没有意义的计算，策略
         # 输出结果与TestReferenceData是一样的
-        holding = holding[-1]
-        sum_holding = holding.sum()
-        prices = prices[-1]
-        mean_price = prices.mean()
+        # print(f'got position holdings: {holding}')
+        # print(f'got trade prices:  {prices}')
+        # print(f'got cashes: {cashes}')
+        # print(f'got trade volumes: {trade_volumes}')
 
         return signal
 
@@ -3429,7 +3432,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 benchmark_data=close_ref_df,
         ).run()
 
-        print(f'Backtest executed in batch mode, results:\n'
+        print(f'Backtest executed in batch mode, \n'
+              f'  op_run_time: {backtested.op_run_time:.6f}\n'
+              f'  backtest_time: {backtested.backtest_run_time:.6f}\n '
+              f'results:\n'
               f'  own cashes: \n{backtested.own_cashes}\n'
               f'  available cashes: \n{backtested.available_cashes}\n'
               f'  own amounts: \n{backtested.own_amounts_array}\n'
@@ -3530,6 +3536,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         data_buffer = {
             'close_E_d':   close_d_df,
             'reference_d': close_ref_df,
+            'op_holding_positions': None,
+            'op_trade_prices': None,
+            'op_trade_volumes': None,
+            'op_cashes': None,
         }
         op.prepare_data_buffer(
                 start_date='2023-01-11',
@@ -3578,7 +3588,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 benchmark_data=close_ref_df,
         ).run()
 
-        print(f'Backtest executed in stepwise mode, results:\n'
+        print(f'Backtest executed in stepwise mode, \n'
+              f'  op_run_time: {backtested.op_run_time:.6f}\n'
+              f'  backtest_time: {backtested.backtest_run_time:.6f}\n'
+              f'results:\n'
               f'  own cashes: \n{backtested.own_cashes}\n'
               f'  available cashes: \n{backtested.available_cashes}\n'
               f'  own amounts: \n{backtested.own_amounts_array}\n'

@@ -18,9 +18,12 @@ from typing import Any, Union, Optional
 from numpy import bool_, dtype, ndarray
 from pandas import DataFrame
 
-from qteasy.blender import signal_blend
-from qteasy.utilfuncs import str_to_list
 from qteasy.finance import CashPlan
+
+from qteasy.utilfuncs import (
+    str_to_list,
+    FunctionTimer,
+)
 
 from qteasy.qt_operator import (
     Operator,
@@ -1042,8 +1045,9 @@ class Backtester:
 
         # 3.2 交易过程数据记录表，包括交易记录、交易成本等
         shape_signals = (self.n_signals, self.share_count)
-        self.trade_records_array = np.zeros(shape_signals, dtype=float)
-        self.trade_cost_array = np.zeros(shape_signals, dtype=float)
+        self.trade_records_array = np.zeros(shape_signals, dtype=float)  # 记录每次交易的买卖数量
+        self.trade_cost_array = np.zeros(shape_signals, dtype=float)  # 记录每次交易的交易成本
+        self.trade_price_array = np.zeros(shape_signals, dtype=float)  # 记录每次交易的成交价格，未成交为0，dynamic数据类型的operator需要用到
 
         # 4, 回测交易最终结果：评价指标、交易日志和交易汇总记录
         # self.backtest_final_value: float = 0.0  # fv 在evaluate中可以直接计算，但是为了节省时间，这个值可以计算出来并缓存
@@ -1063,14 +1067,14 @@ class Backtester:
         self.op.set_shares(self.shares)
 
         # 1，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
-        if self.op.check_dynamic_data():
+        if not self.op.check_dynamic_data():
             if self.logger is not None:
-                self.logger.info('Backtest operator with dynamic data dependence...')
+                self.logger.info('Backtest operator with only static data...')
             signals = self._backtest_static_operator()
         # 2，如果operator的交易信号依赖于回测数据，调用函数backtest_operator_dependently()处理回测信号
         else:
             if self.logger is not None:
-                self.logger.info('Backtest operator without dynamic data dependence...')
+                self.logger.info('Backtest operator with dynamic data dependence...')
             signals = self._backtest_dynamic_operator()
 
         self.op_signals = signals
@@ -1147,15 +1151,15 @@ class Backtester:
         根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
 
         # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
-        initial_trade_records = self.trade_records_array[0, :].copy()
-        initial_trade_costs = self.trade_cost_array[0, :].copy()
-        initial_trade_prices = self.trade_price_data[0, :].copy()
         signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
 
         self.op.prepare_dynamic_data_buffer(
-                trade_records=initial_trade_records,
-                trade_costs=initial_trade_costs,
-                trade_prices=initial_trade_prices,
+                trade_records=self.trade_records_array,  # 成交量
+                trade_prices=self.trade_price_array,  # 成交价格
+                own_cashes=self.own_cashes,  # 持有现金
+                available_cashes=self.available_cashes,
+                holding_positions=self.own_amounts_array,
+                available_positions=self.available_amounts_array,
         )
 
         cash_delivery_queue, stock_delivery_queue = initialize_backtest_delivery_queue(
@@ -1164,7 +1168,7 @@ class Backtester:
         )
         day_nums = self.delivery_day_indicators.cumsum()
 
-        st = time.time()
+        timer = FunctionTimer()
         # 循环执行下面步骤，直至完整生成回测结果清单
         for i in range(self.op.get_signal_count()):
 
@@ -1175,7 +1179,10 @@ class Backtester:
                 self.available_cashes[i] += cash_investment
 
             # 2，调用operator.run_strategy()生成当前交易信号
-            stype, s_index, signal = tuple(self.op.run_strategy(step_index=i))[0]
+            result = timer.time_function('op_run', self.op.run_strategy, step_index=i)
+            stype, s_index, signal = tuple(result)[0]
+
+            signal_type = SIGNAL_TYPE_ID[stype]
             is_delivery_day = bool(self.delivery_day_indicators[i])
             signals[i, :] = signal
 
@@ -1189,8 +1196,10 @@ class Backtester:
                 self.trade_cost_array[i],
                 cash_delivery_queue,
                 stock_delivery_queue,
-            ) = backtest_step(
-                    signal_type=stype,
+            ) = timer.time_function(
+                    'backtest',
+                    backtest_step,
+                    signal_type=signal_type,
                     op_signal=signal,
                     cash_inflation=self.cash_inflation_array[i],
                     is_delivery_day=is_delivery_day,
@@ -1201,21 +1210,20 @@ class Backtester:
                     available_amounts=self.available_amounts_array[i, :],
                     trade_prices=self.trade_price_data[i, :],
                     cost_params=self.cost_params,
+                    cash_delivery_queue=cash_delivery_queue,
+                    stock_delivery_queue=stock_delivery_queue,
+                    share_count=self.share_count,
                     **self.signal_parsing_params,
                     **self.trading_moq_params,
                     **self.trading_delivery_params,
             )
 
-            # 4，更新operator中的依赖性历史数据
-            self.op.prepare_dynamic_data_buffer(
-                    trade_records=self.trade_records_array[i],
-                    trade_costs=self.trade_cost_array[i],
-                    trade_prices=self.trade_price_data[i],
-            )
+            # # 4，更新operator中的依赖性历史数据，主要是trade_prices_array数据（成交价格数据，因为这个价格需要计算出来）
+            self.trade_price_array[:] = np.abs(np.sign(self.trade_records_array)) * self.trade_price_data
 
-        et = time.time()
-        self.op_run_time = et - st
-        self.backtest_run_time = et - st
+        time = timer.get_stats()
+        self.op_run_time = time['op_run']
+        self.backtest_run_time = time['backtest']
 
         # 5，返回signals，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
         return signals

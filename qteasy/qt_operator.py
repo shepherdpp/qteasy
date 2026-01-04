@@ -19,7 +19,7 @@ from typing import Generator, Optional, Union, Any, Iterable, Mapping
 
 from qteasy.strategy import BaseStrategy
 from qteasy.group import Group
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, TRADE_OPERATION_DATA_TYPES
 
 from qteasy.history import (
     check_and_prepare_live_trade_data,
@@ -32,6 +32,7 @@ from qteasy.utilfuncs import (
     AVAILABLE_OP_TYPES,
     str_to_list,
     rolling_window,
+    SlideView,
 )
 
 from qteasy.built_in import (
@@ -176,6 +177,7 @@ class Operator:
 
         # Operator对象存储的历史数据缓存和窗口缓存：
         self.data_buffers = {}  # Dict——Operator对象的历史数据缓存，缓存所有策略所需的历史数据
+        self.dynamic_data_buffers = {}  # Dict——Operator对象的动态历史数据缓存，缓存所有策略所需的动态历史数据
         self.data_window_views = {}  # Dict——Operator对象的历史数据滑窗视图，保存所有策略所需的历史数据滑窗
         self.data_window_indices = {}  # Dict——Operator对象的历史数据滑窗索引，保存所有策略所需的历史数据滑窗索引
 
@@ -275,6 +277,7 @@ class Operator:
             return stacked_timing_table[stacked_timing_table > 0].index
         else:
             # 在timing_table的index中增加一个level变成MultiIndex，并将Index的第二个level命名为'merged'
+            # TODO: 返回的index中应该指明Group_id，只有同时出现多个group的时候才标注merged
             return pd.MultiIndex.from_product(
                     [self.group_timing_table.index, ['merged']],
             )
@@ -335,6 +338,12 @@ class Operator:
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
         all_types = set(self.op_data_types)
         return list(all_types)
+
+    @property
+    def all_dynamic_dtypes(self):
+        """ 返回operator对象所有策略自对象的动态历史数据类型ID的集合"""
+        all_dynamic_dtype_ids = {d.dtype_id:d for d in self.all_strategy_data_types if d.name in TRADE_OPERATION_DATA_TYPES}
+        return all_dynamic_dtype_ids
 
     @property
     def opt_space_par(self):
@@ -1489,9 +1498,15 @@ class Operator:
                     raise ValueError(f'Invalid group parameter: {key}')
 
     def check_dynamic_data(self):
-        """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号"""
-        # warnings.warn("The method check_dynamic_data of Operator is not implemented yet.")
-        return True
+        """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号
+
+        Returns
+        -------
+        bool
+            如果operator对象包含动态数据类型，则返回True，否则返回False
+        """
+
+        return len(self.all_dynamic_dtypes) > 0
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -1708,7 +1723,11 @@ class Operator:
         """
         # 清除原有的data_buffers
         self.data_buffers = {}
-        # 针对所有data_type，检查数据包的key是否都是str
+        # 将data_package中的数据区分为data_package以及operation_data_packages
+        from qteasy.datatypes import TRADE_OPERATION_DATA_TYPES
+        dynamic_data_package = {k:data_package[k] for k in data_package if k in TRADE_OPERATION_DATA_TYPES}
+        data_package = {k:data_package[k] for k in data_package if k not in TRADE_OPERATION_DATA_TYPES}
+        # 针对所有data_type，检查数据包的key是否都是str且value都是DataFrame或
         for key, data in data_package.items():
             if not isinstance(key, str):
                 raise TypeError(f"Data package keys must be strings, got {type(key)} instead.")
@@ -1729,9 +1748,13 @@ class Operator:
             pass
 
         for data_type in self.all_strategy_data_types:
-            if data_type.dtype_id not in data_package:
+            if (data_type.dtype_id not in data_package) and (data_type.name not in dynamic_data_package):
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
+            elif data_type.name in dynamic_data_package:
+                # 处理在operation_data_package中的数据类型（这部分数据需要在op.prepare_dynamic_data_buffer，因此全部为None）
+                self.dynamic_data_buffers[data_type.dtype_id] = None
             else:
+                # 处理剩下的在data_package中的数据类型
                 dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
                 if len(data_package[data_type.dtype_id]) < dtype_max_window:
                     msg = (f"Not enough data for data type '{data_type}' to create data windows. "
@@ -1750,10 +1773,38 @@ class Operator:
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
 
-    def prepare_dynamic_data_buffer(self, *, trade_records, trade_costs, trade_prices):
+    def prepare_dynamic_data_buffer(self, *,
+                                    trade_records: np.ndarray,
+                                    trade_prices: np.ndarray,
+                                    own_cashes: np.ndarray,
+                                    available_cashes: np.ndarray,
+                                    holding_positions: np.ndarray,
+                                    available_positions: np.ndarray) -> None:
         """ position holder for function prepare_dynamic_data_buffer"""
-        # the dynamic data might not be needed in qteasy, might even be removed permanently in future
-        pass
+        # 检查需要的数据类型并准备相应的数据缓冲区
+
+        if self.dynamic_data_buffers is None:
+            err = RuntimeError(f'There are no dynamic data types defined, please check your strategy data types!')
+            raise err
+        dtype_id_to_name = {d.dtype_id:d.name for d in self.all_dynamic_dtypes.values()}
+        name_to_data = {
+            'op_trade_volumes': trade_records,
+            'op_trade_prices': trade_prices,
+            'op_cashes': own_cashes,
+            'op_available_cashes': available_cashes,
+            'op_holding_positions': holding_positions,
+            'op_available_positions': available_positions,
+        }
+
+        for group in self._groups:
+            for strategy in group.members:
+                for data_type in strategy.data_types:
+                    if data_type not in dtype_id_to_name:
+                        continue
+                    # data_type is a dynamic data type
+                    slider = SlideView(name_to_data[dtype_id_to_name[data_type]])
+                    self.data_window_views[strategy.strategy_id][data_type] = slider
+                    self.data_window_indices[strategy.strategy_id][data_type] = np.arange(len(slider))
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.
@@ -1769,17 +1820,16 @@ class Operator:
                 self.data_window_views[strategy.strategy_id] = {}
                 self.data_window_indices[strategy.strategy_id] = {}
                 for data_type in strategy.data_types:
-                    # DEBUG:
-                    # print(f'Creating data window for strategy: {strategy.strategy_id}/{strategy.name}, '
-                    #       f'data type: {data_type}')
+                    # DYNAMIC_DATA_TYPES 不需要创建rolling window
+                    if data_type in self.all_dynamic_dtypes:
+                        # dynamic data types 在 prepare_dynamic_data_buffer 中处理
+                        continue
                     window_length = strategy.data_window_lengths[data_type]
                     ulc = strategy.data_ulc[data_type]
                     buffered_data = self.data_buffers.get(data_type, None)
 
                     window = rolling_window(buffered_data.values, window=window_length, axis=0)
                     self.data_window_views[strategy.strategy_id][data_type] = window
-                    # DEBUG:
-                    # print(f'Window shape for {strategy.strategy_id}/{strategy.name} on {data_type}: \n{window.shape}')
 
                     total_window_indices = np.arange(len(buffered_data) - window_length + 1) + window_length - 1
                     running_schedule = schedule.index
