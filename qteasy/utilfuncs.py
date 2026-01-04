@@ -1860,6 +1860,65 @@ def rolling_window(arr, window, axis=0):
                       writeable=False)
 
 
+class SlideView:
+    def __init__(self, array: np.ndarray):
+        """
+        创建一个滑动视图，使得 slide[i] 返回 array[:i] 的视图
+
+        参数:
+            array: 输入的numpy数组
+        """
+        self.array = np.asarray(array)
+
+    def __getitem__(self, index):
+        """
+        实现索引访问，返回 array[:index] 的视图
+        """
+        if index < 0:
+            # 如果索引小于0，则从末位开始计数
+            return self.array[0:index]
+        else:
+            return self.array[:index + 1]
+
+    def __len__(self):
+        """
+        返回视图的长度，等于原数组长度+1（因为包括了从0到整个数组的所有切片）
+        """
+        return len(self.array) + 1
+
+
+class FunctionTimer:
+    def __init__(self):
+        self.timers = {}
+
+    def start_timer(self, func_name):
+        """开始计时"""
+        if func_name not in self.timers:
+            self.timers[func_name] = 0
+        return time.perf_counter()
+
+    def end_timer(self, func_name, start_time):
+        """结束计时并累加"""
+        elapsed = time.perf_counter() - start_time
+        self.timers[func_name] += elapsed
+
+    def time_function(self, func_name, func, *args, **kwargs):
+        """包装函数调用进行计时"""
+        start = self.start_timer(func_name)
+        result = func(*args, **kwargs)
+        self.end_timer(func_name, start)
+        return result
+
+    def get_stats(self):
+        """获取计时统计"""
+        return self.timers.copy()
+
+    def print_stats(self):
+        """打印计时统计"""
+        for func_name, total_time in self.timers.items():
+            print(f"{func_name} 总耗时: {total_time:.4f} 秒")
+
+
 def reindent(s, num_spaces: int = 4) -> str:
     """ 给定一个（通常多行）的string，在每一行前面添加空格形成缩进效果
 
