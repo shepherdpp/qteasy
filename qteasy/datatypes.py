@@ -4291,9 +4291,10 @@ TRADE_OPERATION_DATA_TYPES = {
     'op_trade_prices':      'Trade prices at which stocks are bought or sold',
     'op_holding_positions': 'Security position holding history',
     'op_settled_positions': 'Settled security positions history',
-    'op_cash':              'Owned cashes history',
-    'op_settled_cash':      'Settled cashes that can be used',
+    'op_cashes':            'Owned cashes history',
+    'op_settled_cashes':    'Settled cashes that can be used',
 }
+
 
 def _expand_df_index(df: pd.DataFrame, starts: str, ends: str) -> pd.DataFrame:
     """将DataFrame的索引扩展到包含开始和结束日期"""
