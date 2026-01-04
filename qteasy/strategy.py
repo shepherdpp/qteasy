@@ -239,6 +239,16 @@ class BaseStrategy:
         self._share_names = None
         self._strategy_id = None  # 策略的唯一ID，在策略运行时由系统分配
         self._group_id = None  # 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
+        # 交易策略追踪相关参数 -- 用户可以在realize()方法中定义变量追踪，将变量值存储在_trace_data中
+        self._trace_enabled = False
+        self._trace_data = {}
+        self._trace_max_steps = 0
+        self._trace_step = 0
+
+        # 策略的其他可设置参数
+        self.debug = False  # 是否开启调试模式
+        self.trace_mode = False  # 是否开启追踪模式
+        self.logger = None  # 策略的日志记录器
 
     @property
     def name(self):
@@ -869,6 +879,75 @@ class BaseStrategy:
                 setattr(self, k, v)
             else:
                 raise KeyError(f'The strategy does not have property \'{k}\'')
+
+    def disable_tracing(self):
+        """ 禁用最交易策略追踪功能"""
+        self._trace_enabled = False
+        self._trace_data = {}
+        self._trace_max_steps = 0
+        self._trace_step = 0
+
+    def enable_tracing(self, max_steps: int):
+        """ 启用最交易策略追踪功能"""
+        self._trace_enabled = True
+        self._trace_data = {}
+        self._trace_max_steps = max_steps
+        self._trace_step = 0
+
+    def trace(self, var, name: str = 'default', comments: str = ''):
+        """ 在realize方法中调用此方法追踪变量值
+
+        Parameters
+        ----------
+        var: any
+            需要追踪的变量，可以是任何类型的数据
+        name: str, default 'default'
+            变量的名称，用于区分不同的变量
+        comments: str, default ''
+            变量的备注信息，可以是任何字符串
+        """
+
+        if self._trace_enabled:
+            if name not in self._trace_data:
+                # 根据变量类型选择最优数据类型
+                if isinstance(var, (int, np.integer)):
+                    dtype = np.int64
+                elif isinstance(var, (float, np.floating)):
+                    dtype = np.float64
+                elif isinstance(var, (bool, np.bool_)):
+                    dtype = np.bool_
+                else:
+                    dtype = object
+
+                # 预分配数组
+                self._trace_data[name] = {
+                    'values': np.empty(self._trace_max_steps, dtype=dtype),
+                    'steps': np.empty(self._trace_max_steps, dtype=int),
+                    'comments': np.empty(self._trace_max_steps, dtype=object),
+                    'current_idx': 0
+                }
+
+            trace_info = self._trace_data[name]
+            idx = trace_info['current_idx']
+
+            if idx < self._trace_max_steps:
+                trace_info['values'][idx] = var
+                trace_info['steps'][idx] = self._trace_step
+                trace_info['comments'][idx] = comments
+                trace_info['current_idx'] += 1
+
+    def get_trace_data(self):
+        """获取实际追踪的数据"""
+        result = {}
+        for name, data in self._trace_data.items():
+            actual_count = data['current_idx']
+            result[name] = {
+                'values': data['values'][:actual_count],
+                'steps': data['steps'][:actual_count],
+                'comments': data['comments'][:actual_count]
+            }
+        return result
+
     @abstractmethod
     def generate(self):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
@@ -881,6 +960,7 @@ class BaseStrategy:
         stg_signal: np.ndarray
             策略运行的输出，包括交易信号、交易指令等
         """
+        pass
 
 
 class GeneralStg(BaseStrategy):
