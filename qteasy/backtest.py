@@ -1169,57 +1169,61 @@ class Backtester:
         day_nums = self.delivery_day_indicators.cumsum()
 
         timer = FunctionTimer()
+        bt_step = 0
         # 循环执行下面步骤，直至完整生成回测结果清单
-        for i in range(self.op.get_signal_count()):
+        for i in range(len(self.op.group_timing_table)):
 
-            # 1，判断是否有资金投入，如果有，更新持有现金和可用现金
-            cash_investment = self.cash_investment_array[i]
-            if cash_investment > 0:
-                self.own_cashes[i] += cash_investment
-                self.available_cashes[i] += cash_investment
+            # 1，调用operator.run_strategy()生成当前交易信号，注意同一时刻可能会有多组信号生成
+            print(f'running / backtest step {i+1}/{bt_step + 1}...')
+            for result in timer.time_function('op_run', self.op.run_strategy, step_index=i):
+                print(f'got result from op.run_strategy: {result}')
+                stype, s_index, signal = result
 
-            # 2，调用operator.run_strategy()生成当前交易信号
-            result = timer.time_function('op_run', self.op.run_strategy, step_index=i)
-            stype, s_index, signal = tuple(result)[0]
+                # 2，开始回测，判断是否有资金投入，如果有，更新持有现金和可用现金
+                cash_investment = self.cash_investment_array[bt_step]
+                if cash_investment > 0:
+                    self.own_cashes[bt_step] += cash_investment
+                    self.available_cashes[bt_step] += cash_investment
 
-            signal_type = SIGNAL_TYPE_ID[stype]
-            is_delivery_day = bool(self.delivery_day_indicators[i])
-            signals[i, :] = signal
+                signal_type = SIGNAL_TYPE_ID[stype]
+                is_delivery_day = bool(self.delivery_day_indicators[bt_step])
+                signals[bt_step, :] = signal
 
-            # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
-            (
-                self.own_cashes[i + 1],
-                self.available_cashes[i + 1],
-                self.own_amounts_array[i + 1],
-                self.available_amounts_array[i + 1],
-                self.trade_records_array[i],
-                self.trade_cost_array[i],
-                cash_delivery_queue,
-                stock_delivery_queue,
-            ) = timer.time_function(
-                    'backtest',
-                    backtest_step,
-                    signal_type=signal_type,
-                    op_signal=signal,
-                    cash_inflation=self.cash_inflation_array[i],
-                    is_delivery_day=is_delivery_day,
-                    day_num=day_nums[i],
-                    own_cash=self.own_cashes[i],
-                    own_amounts=self.own_amounts_array[i, :],
-                    available_cash=self.available_cashes[i],
-                    available_amounts=self.available_amounts_array[i, :],
-                    trade_prices=self.trade_price_data[i, :],
-                    cost_params=self.cost_params,
-                    cash_delivery_queue=cash_delivery_queue,
-                    stock_delivery_queue=stock_delivery_queue,
-                    share_count=self.share_count,
-                    **self.signal_parsing_params,
-                    **self.trading_moq_params,
-                    **self.trading_delivery_params,
-            )
+                # 3，调用backtest_step()回测当前交易信号的结果，生成当前交易回测结果
+                (
+                    self.own_cashes[bt_step + 1],
+                    self.available_cashes[bt_step + 1],
+                    self.own_amounts_array[bt_step + 1],
+                    self.available_amounts_array[bt_step + 1],
+                    self.trade_records_array[bt_step],
+                    self.trade_cost_array[bt_step],
+                    cash_delivery_queue,
+                    stock_delivery_queue,
+                ) = timer.time_function(
+                        'backtest',
+                        backtest_step,
+                        signal_type=signal_type,
+                        op_signal=signal,
+                        cash_inflation=self.cash_inflation_array[bt_step],
+                        is_delivery_day=is_delivery_day,
+                        day_num=day_nums[bt_step],
+                        own_cash=self.own_cashes[bt_step],
+                        own_amounts=self.own_amounts_array[bt_step, :],
+                        available_cash=self.available_cashes[bt_step],
+                        available_amounts=self.available_amounts_array[bt_step, :],
+                        trade_prices=self.trade_price_data[bt_step, :],
+                        cost_params=self.cost_params,
+                        cash_delivery_queue=cash_delivery_queue,
+                        stock_delivery_queue=stock_delivery_queue,
+                        share_count=self.share_count,
+                        **self.signal_parsing_params,
+                        **self.trading_moq_params,
+                        **self.trading_delivery_params,
+                )
+                bt_step += 1
 
-            # # 4，更新operator中的依赖性历史数据，主要是trade_prices_array数据（成交价格数据，因为这个价格需要计算出来）
-            self.trade_price_array[:] = np.abs(np.sign(self.trade_records_array)) * self.trade_price_data
+                # # 4，更新operator中的依赖性历史数据，主要是trade_prices_array数据（成交价格数据，因为这个价格需要计算出来）
+                self.trade_price_array[:] = np.abs(np.sign(self.trade_records_array)) * self.trade_price_data
 
         time = timer.get_stats()
         self.op_run_time = time['op_run']
