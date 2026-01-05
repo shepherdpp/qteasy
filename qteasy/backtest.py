@@ -1174,9 +1174,9 @@ class Backtester:
         for i in range(len(self.op.group_timing_table)):
 
             # 1，调用operator.run_strategy()生成当前交易信号，注意同一时刻可能会有多组信号生成
-            print(f'running / backtest step {i+1}/{bt_step + 1}...')
+            # print(f'running / backtest step {i+1}/{bt_step + 1}...')
             for result in timer.time_function('op_run', self.op.run_strategy, step_index=i):
-                print(f'got result from op.run_strategy: {result}')
+                # print(f'got result from op.run_strategy: {result}')
                 stype, s_index, signal = result
 
                 # 2，开始回测，判断是否有资金投入，如果有，更新持有现金和可用现金
