@@ -10,17 +10,14 @@
 # ======================================
 
 import unittest
-from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
 import os
 import shutil
 import tempfile
-from typing import Union
-
-from pymysql.constants.ER import OPEN_AS_READONLY
 
 from qteasy.qt_operator import Operator
+from qteasy.group import Group
 from qteasy.strategy import GeneralStg
 from qteasy.database import DataSource
 from qteasy.datatypes import DataType
@@ -62,6 +59,448 @@ class HourlyStrategy(GeneralStg):
                 window_length=6,
                 run_freq='h',
         )
+
+
+class TestOperatorPrepareRunningSchedule(unittest.TestCase):
+
+    def setUp(self):
+        """设置测试环境"""
+        self.operator = Operator()
+        self.operator._groups = []
+
+        # 创建测试用的策略组
+        self.group1 = Group(name='group1')
+        self.group1._run_freq = 'd'
+        self.group1._run_timing = 'close'
+
+        self.group2 = Group(name='group2')
+        self.group2._run_freq = 'h'  # 修改为小时频率
+        self.group2._run_timing = 'open'
+
+        self.group3 = Group(name='group3')
+        self.group3._run_freq = 'w'
+        self.group3._run_timing = 'close'
+
+    def test_prepare_running_schedule_daily_freq(self):
+        """测试日频策略组的时间表生成"""
+        # 设置operator的策略组
+        self.operator._groups = [self.group1]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Daily frequency running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含group1
+        self.assertIn('group1', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['group1']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIsInstance(timing_table, pd.DataFrame)
+        self.assertIn('group1', timing_table.columns)
+        self.assertTrue((timing_table['group1'] == 1).all())
+        self.assertEqual(timing_table.index.name, None)
+
+        print(f'timing_table.index: {timing_table.index}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 15:00:00', '2023-03-02 15:00:00',
+                                           '2023-03-03 15:00:00', '2023-03-06 15:00:00',
+                                           '2023-03-07 15:00:00', '2023-03-08 15:00:00',
+                                           '2023-03-09 15:00:00'])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+
+    def test_prepare_running_schedule_hourly_freq(self):
+        """测试小时级策略组的时间表生成"""
+        # 设置operator的策略组
+        self.operator._groups = [self.group2]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Hourly frequency running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含group2
+        self.assertIn('group2', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['group2']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIn('group2', timing_table.columns)
+        self.assertTrue((timing_table['group2'] == 1).all())
+
+        print(f'timing_table.index: {timing_table.index}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 09:30:00', '2023-03-01 10:30:00',
+                                           '2023-03-01 11:30:00', '2023-03-01 14:00:00',
+                                           '2023-03-01 15:00:00', '2023-03-02 09:30:00',
+                                           '2023-03-02 10:30:00', '2023-03-02 11:30:00',
+                                           '2023-03-02 14:00:00', '2023-03-02 15:00:00',
+                                           '2023-03-03 09:30:00', '2023-03-03 10:30:00',
+                                           '2023-03-03 11:30:00', '2023-03-03 14:00:00',
+                                           '2023-03-03 15:00:00', '2023-03-06 09:30:00',
+                                           '2023-03-06 10:30:00', '2023-03-06 11:30:00',
+                                           '2023-03-06 14:00:00', '2023-03-06 15:00:00',
+                                           '2023-03-07 09:30:00', '2023-03-07 10:30:00',
+                                           '2023-03-07 11:30:00', '2023-03-07 14:00:00',
+                                           '2023-03-07 15:00:00', '2023-03-08 09:30:00',
+                                           '2023-03-08 10:30:00', '2023-03-08 11:30:00',
+                                           '2023-03-08 14:00:00', '2023-03-08 15:00:00',
+                                           '2023-03-09 09:30:00', '2023-03-09 10:30:00',
+                                           '2023-03-09 11:30:00', '2023-03-09 14:00:00',
+                                           '2023-03-09 15:00:00'])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+
+    def test_prepare_running_schedule_weekly_freq(self):
+        """测试周频策略组的时间表生成"""
+        # 设置operator的策略组
+        self.operator._groups = [self.group3]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-18')
+
+        # 打印结果
+        print("Weekly frequency running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含group3
+        self.assertIn('group3', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['group3']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIn('group3', timing_table.columns)
+        self.assertTrue((timing_table['group3'] == 1).all())
+
+        print(f'timing_table.index: {timing_table.index}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-03 15:00:00', '2023-03-10 15:00:00'])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+
+    def test_prepare_running_schedule_multiple_groups(self):
+        """测试多个策略组的时间表生成"""
+        # 设置operator的策略组
+        self.operator._groups = [self.group1, self.group2, self.group3]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-11')
+
+        # 打印结果
+        print("Multiple groups running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证所有策略组都被包含
+        self.assertIn('group1', self.operator.group_schedules)
+        self.assertIn('group2', self.operator.group_schedules)
+        self.assertIn('group3', self.operator.group_schedules)
+
+        # 验证最终的时间表包含所有组
+        timing_table = self.operator.group_timing_table
+        self.assertIn('group1', timing_table.columns)
+        self.assertIn('group2', timing_table.columns)
+        self.assertIn('group3', timing_table.columns)
+
+        print(f'timing_table.index: {timing_table.index}')
+        print(f'timing_table.values: {timing_table.values}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 09:30:00', '2023-03-01 10:30:00',
+                                           '2023-03-01 11:30:00', '2023-03-01 14:00:00',
+                                           '2023-03-01 15:00:00', '2023-03-02 09:30:00',
+                                           '2023-03-02 10:30:00', '2023-03-02 11:30:00',
+                                           '2023-03-02 14:00:00', '2023-03-02 15:00:00',
+                                           '2023-03-03 09:30:00', '2023-03-03 10:30:00',
+                                           '2023-03-03 11:30:00', '2023-03-03 14:00:00',
+                                           '2023-03-03 15:00:00', '2023-03-06 09:30:00',
+                                           '2023-03-06 10:30:00', '2023-03-06 11:30:00',
+                                           '2023-03-06 14:00:00', '2023-03-06 15:00:00',
+                                           '2023-03-07 09:30:00', '2023-03-07 10:30:00',
+                                           '2023-03-07 11:30:00', '2023-03-07 14:00:00',
+                                           '2023-03-07 15:00:00', '2023-03-08 09:30:00',
+                                           '2023-03-08 10:30:00', '2023-03-08 11:30:00',
+                                           '2023-03-08 14:00:00', '2023-03-08 15:00:00',
+                                           '2023-03-09 09:30:00', '2023-03-09 10:30:00',
+                                           '2023-03-09 11:30:00', '2023-03-09 14:00:00',
+                                           '2023-03-09 15:00:00', '2023-03-10 09:30:00',
+                                           '2023-03-10 10:30:00', '2023-03-10 11:30:00',
+                                           '2023-03-10 14:00:00', '2023-03-10 15:00:00'])
+
+        expected_values = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 1],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0]])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+        self.assertTrue(np.allclose(timing_table.values, expected_values))
+
+    def test_prepare_running_schedule_missing_run_freq(self):
+        """测试缺少运行频率参数时的错误处理"""
+        # 创建一个缺少run_freq的策略组
+        invalid_group = Group(name='invalid_group')
+        invalid_group._run_freq = None
+        invalid_group._run_timing = 'close'
+        self.operator._groups = [invalid_group]
+
+        # 验证抛出ValueError
+        with self.assertRaises(ValueError) as context:
+            self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        self.assertIn("has no run timing or frequency defined", str(context.exception))
+
+    def test_prepare_running_schedule_custom_timing(self):
+        """测试自定义时间偏移"""
+        # 创建使用自定义时间的策略组
+        custom_group = Group(name='custom_group')
+        custom_group._run_freq = 'd'
+        custom_group._run_timing = '10:30'
+        self.operator._groups = [custom_group]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Custom timing running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含custom_group
+        self.assertIn('custom_group', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['custom_group']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIn('custom_group', timing_table.columns)
+        self.assertTrue((timing_table['custom_group'] == 1).all())
+
+        print(f'timing_table.index: {timing_table.index}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 10:30:00', '2023-03-02 10:30:00',
+                                           '2023-03-03 10:30:00', '2023-03-06 10:30:00',
+                                           '2023-03-07 10:30:00', '2023-03-08 10:30:00',
+                                           '2023-03-09 10:30:00'])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+
+        # 检查生成的group_timing_table的index是否正确
+        self.assertIsInstance(timing_table.index, pd.DatetimeIndex)
+
+    def test_prepare_running_schedule_open_timing(self):
+        """测试开盘时间设置"""
+        # 创建使用开盘时间的策略组
+        open_group = Group(name='open_group')
+        open_group._run_freq = 'd'
+        open_group._run_timing = 'open'
+        self.operator._groups = [open_group]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Open timing running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含open_group
+        self.assertIn('open_group', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['open_group']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIn('open_group', timing_table.columns)
+        self.assertTrue((timing_table['open_group'] == 1).all())
+
+        print(f'timing_table.index: {timing_table.index}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 09:30:00', '2023-03-02 09:30:00',
+                                           '2023-03-03 09:30:00', '2023-03-06 09:30:00',
+                                           '2023-03-07 09:30:00', '2023-03-08 09:30:00',
+                                           '2023-03-09 09:30:00'])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+
+        # 检查生成的group_timing_table的index是否正确
+        self.assertIsInstance(timing_table.index, pd.DatetimeIndex)
+
+    def test_prepare_running_schedule_close_and_custom_timing(self):
+        """测试收盘时间设置"""
+        # 创建使用收盘时间的策略组
+        # 创建使用自定义时间的策略组
+        custom_group = Group(name='custom_group')
+        custom_group._run_freq = 'd'
+        custom_group._run_timing = '10:30'
+        close_group = Group(name='close_group')
+        close_group._run_freq = 'd'
+        close_group._run_timing = 'close'
+        self.operator._groups = [close_group, custom_group]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Close timing running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证属性是否被设置
+        self.assertIsNotNone(self.operator.group_schedules)
+        self.assertIsNotNone(self.operator.group_timing_table)
+
+        # 验证group_schedules中是否包含close_group
+        self.assertIn('close_group', self.operator.group_schedules)
+
+        # 验证时间表结构
+        schedule_df = self.operator.group_schedules['close_group']
+        self.assertIsInstance(schedule_df, pd.DataFrame)
+        self.assertIn('is_running', schedule_df.columns)
+        self.assertTrue((schedule_df['is_running'] == 1).all())
+
+        # 验证最终的时间表
+        timing_table = self.operator.group_timing_table
+        self.assertIn('close_group', timing_table.columns)
+        self.assertIn('custom_group', timing_table.columns)
+
+        print(f'timing_table.index: {timing_table.index}')
+        print(f'timing_table.values: {timing_table.values}')
+
+        expected_index = pd.DatetimeIndex(['2023-03-01 10:30:00', '2023-03-01 15:00:00',
+                                           '2023-03-02 10:30:00', '2023-03-02 15:00:00',
+                                           '2023-03-03 10:30:00', '2023-03-03 15:00:00',
+                                           '2023-03-06 10:30:00', '2023-03-06 15:00:00',
+                                           '2023-03-07 10:30:00', '2023-03-07 15:00:00',
+                                           '2023-03-08 10:30:00', '2023-03-08 15:00:00',
+                                           '2023-03-09 10:30:00', '2023-03-09 15:00:00'])
+
+        expected_values = np.array([[0, 1], [1, 0], [0, 1], [1, 0], [0, 1], [1, 0], [0, 1],
+                                    [1, 0], [0, 1], [1, 0], [0, 1], [1, 0], [0, 1], [1, 0]])
+
+        # 检查生成的group_timing_table的index是否正确
+        pd.testing.assert_index_equal(timing_table.index, expected_index)
+        self.assertTrue(np.allclose(timing_table.values, expected_values))
+
+    def test_prepare_running_schedule_data_types(self):
+        """测试生成的数据类型正确性"""
+        # 设置operator的策略组
+        self.operator._groups = [self.group1]
+
+        # 调用方法
+        self.operator.prepare_running_schedule(start_date='2023-03-01', end_date='2023-03-10')
+
+        # 打印结果
+        print("Data types running schedule:")
+        print("Group schedules:")
+        for group_name, schedule in self.operator.group_schedules.items():
+            print(f"  {group_name}:")
+            print(f"    {schedule}")
+        print("Timing table:")
+        print(f"  {self.operator.group_timing_table}")
+
+        # 验证数据类型
+        timing_table = self.operator.group_timing_table
+        self.assertTrue(timing_table.dtypes.apply(lambda x: np.issubdtype(x, np.integer)).all())
+
+        # 验证值的范围
+        self.assertTrue((timing_table >= 0).all().all())
+        self.assertTrue((timing_table <= 1).all().all())
+
+        # 检查生成的group_timing_table的index是否正确
+        self.assertIsInstance(timing_table.index, pd.DatetimeIndex)
 
 
 class TestCheckAndPrepareBacktestData(unittest.TestCase):
@@ -173,7 +612,8 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         self.datasource.update_table_data('stock_adj_factor',
                                           df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('index_daily',
-                                          df=index_daily_df_000300.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=index_daily_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
 
         # 测试日期
         self.backtest_start = '20200201'
@@ -187,7 +627,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
     def tearDown(self):
         """测试后的清理工作"""
         # 清理测试数据源
-        self.datasource.allow_drop_table=True
+        self.datasource.allow_drop_table = True
         self.datasource.drop_table_data('stock_daily')
         self.datasource.drop_table_data('stock_hourly')
         self.datasource.drop_table_data('index_daily')
@@ -223,7 +663,7 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
             end_index = int(np.searchsorted(df.index, self.backtest_end))
             print(f'for dtype ({dtype}) start_date({self.backtest_start}) is in the df index at '
                   f'pos ({start_index}): {df.index[start_index]}\n'
-                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index-1]}')
+                  f'end_date({self.backtest_end}) is in the df index at pos ({end_index}): {df.index[end_index - 1]}')
 
             self.assertGreater(start_index, max_window_length)
             self.assertLessEqual(end_index, len(df.index))
@@ -569,7 +1009,8 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.datasource.update_table_data('stock_adj_factor',
                                           df=stock_adj_factor.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('index_daily',
-                                          df=index_daily_df_000300.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=index_daily_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
         self.datasource.update_table_data('index_1min',
                                           df=index_min_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
         self.datasource.update_table_data('fund_nav',
@@ -602,7 +1043,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
     def tearDown(self):
         """测试后的清理工作"""
         # 清理测试数据
-        self.datasource.allow_drop_table=True
+        self.datasource.allow_drop_table = True
         self.datasource.drop_table_data('stock_daily')
         self.datasource.drop_table_data('stock_hourly')
         self.datasource.drop_table_data('stock_1min')
@@ -704,7 +1145,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
 
         # 检查数据全部是数值类型且不含NaN
         self.assertIn(result[self.single_share].dtype, [np.dtype('float64'), np.dtype('float32'),
-                                            np.dtype('int64'), np.dtype('int32')])
+                                                        np.dtype('int64'), np.dtype('int32')])
         self.assertFalse(result[self.single_share].isnull().all())
 
     def test_single_share_with_complex_operator(self):
@@ -734,7 +1175,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
 
         # 检查数据全部是数值类型且不含NaN
         self.assertIn(result[self.single_share].dtype, [np.dtype('float64'), np.dtype('float32'),
-                                            np.dtype('int64'), np.dtype('int32')])
+                                                        np.dtype('int64'), np.dtype('int32')])
         self.assertFalse(result[self.single_share].isnull().all())
 
     def test_share_index_with_simple_operator(self):
@@ -1020,7 +1461,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             )
 
 
-class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
+class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
     """check_and_prepare_benchmark_data 函数的单元测试类
 
     测试通过operator信息获取业绩评价基准数据。业绩评价基准可以是股票、指数或者基金，但是
@@ -1125,19 +1566,25 @@ class TestCheckAndPrepareBenchmarkDataWithoutMock(unittest.TestCase):
 
         # 更新数据到数据源
         self.datasource.update_table_data('stock_daily',
-                                          df=stock_daily_df_000001.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=stock_daily_df_000001.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
         self.datasource.update_table_data('stock_hourly',
-                                          df=stock_hourly_df_000001.reset_index().rename(columns={'index': 'trade_time'}))
+                                          df=stock_hourly_df_000001.reset_index().rename(
+                                                  columns={'index': 'trade_time'}))
         self.datasource.update_table_data('stock_adj_factor',
-                                          df=stock_adj_factor_000001.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=stock_adj_factor_000001.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
         self.datasource.update_table_data('index_daily',
-                                          df=index_daily_df_000300.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=index_daily_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
         self.datasource.update_table_data('index_hourly',
-                                          df=index_hourly_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
+                                          df=index_hourly_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_time'}))
         self.datasource.update_table_data('fund_daily',
                                           df=fund_daily_df_510050.reset_index().rename(columns={'index': 'trade_date'}))
         self.datasource.update_table_data('fund_adj_factor',
-                                          df=fund_adj_factor_510050.reset_index().rename(columns={'index': 'trade_date'}))
+                                          df=fund_adj_factor_510050.reset_index().rename(
+                                                  columns={'index': 'trade_date'}))
         self.datasource.update_table_data('fund_nav',
                                           df=fund_nav_df_161039.reset_index().rename(columns={'index': 'nav_date'}))
 
