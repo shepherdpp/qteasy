@@ -17,7 +17,7 @@ import pandas as pd
 
 from typing import Generator, Optional, Union, Any, Iterable, Mapping
 
-from qteasy.strategy import BaseStrategy
+from qteasy.strategy import BaseStrategy, RuleIterator
 from qteasy.group import Group
 from qteasy.datatypes import DataType, TRADE_OPERATION_DATA_TYPES
 
@@ -1286,7 +1286,7 @@ class Operator:
                       data_type_ids: Union[str, list] = None,
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
-                      par_values: Union[tuple, list] = None,
+                      par_values: Union[tuple, list, dict[str, Union[tuple, list]]] = None,
                       par_range: Union[tuple, list, dict[str, tuple]] = None,
                       run_freq: str = None,
                       run_timing: str = None,
@@ -1353,7 +1353,11 @@ class Operator:
                     use_latest_data_cycle=use_latest_data_cycle,
             )
         if par_values is not None:  # 设置策略参数的具体取值
-            strategy.update_par_values(*par_values)
+            if isinstance(par_values, dict) and isinstance(strategy, RuleIterator):
+                # 如果par_values为一个字典，并且strategy是一个RuleIterator类型的策略，则调用update_par_values时使用关键字参数
+                strategy.update_par_values(par_values)
+            else:  # isinstance(par_values, (tuple, list)):
+                strategy.update_par_values(*par_values)
 
         if par_range is not None:  # 设置策略参数的取值范围
             if not isinstance(par_range, (list, tuple, dict)):
@@ -1505,7 +1509,8 @@ class Operator:
         bool
             如果operator对象包含动态数据类型，则返回True，否则返回False
         """
-
+        if self.op_type == 'stepwise':
+            return True
         return len(self.all_dynamic_dtypes) > 0
 
     # =================================================
@@ -1865,6 +1870,7 @@ class Operator:
         """
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
+        print(f'taking step index: {step_index} from group_timing_table with shape {self.group_timing_table.shape}')
         group_timing = self.group_timing_table.iloc[step_index].values
         group_count = len(self.groups)
         groups = [self.groups_by_index[i] for i in range(group_count) if group_timing[i]]
