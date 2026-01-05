@@ -1538,7 +1538,7 @@ def trade_time_index(start=None,
         freq = str(freq)
 
         # 判断freq是大于日频还是小于日频
-        if freq[0] in 'WMQY':
+        if freq[0] in 'wWMQY':
             low_frequency = True
 
         # 解析M/Q/Y-num类型的偏移数据，调整低频数据的日期偏移值
@@ -1610,12 +1610,14 @@ def trade_time_index(start=None,
         freq_str = time_index.inferred_freq
         if isinstance(freq_str, str):
             freq_str = freq_str
-        else:
+        elif len(time_index) >= 2:
             time_delta = time_index[1] - time_index[0]
             if time_delta < pd.Timedelta(1, 'd'):
                 freq_str = 'h'
             else:
                 freq_str = 'd'
+        else:  # len(time_index) == 1
+            freq_str = 'd'
     ''' freq_str有以下几种不同的情况：
         min:        T/min
         hour:       H
@@ -1673,7 +1675,7 @@ def trade_time_index(start=None,
                 raise ValueError(f'Invalid time_offset {time_offset}, {e}')
             time_index = time_index + offset
 
-    # 最后的处理：检查是否出现不在用户指定start/end时间段内的时间点，剔除超过范围的时间点
+    # 最后的处理1：检查是否出现不在用户指定start/end时间段内的时间点，剔除超过范围的时间点
     if end is not None:
         if include_end:
             time_index = time_index[np.where(time_index <= pd.to_datetime(end))]
@@ -1684,6 +1686,9 @@ def trade_time_index(start=None,
             time_index = time_index[np.where(time_index >= pd.to_datetime(start))]
         else:
             time_index = time_index[np.where(time_index > pd.to_datetime(start))]
+
+    # 最后的处理2：检查index中是否存在重复的时间点，如果存在，则剔除重复的时间点
+    time_index = pd.DatetimeIndex(sorted(set(time_index)))
 
     return time_index
 
