@@ -1870,7 +1870,7 @@ class Operator:
         """
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
-        print(f'taking step index: {step_index} from group_timing_table with shape {self.group_timing_table.shape}')
+        # print(f'taking step index: {step_index} from group_timing_table with shape {self.group_timing_table.shape}')
         group_timing = self.group_timing_table.iloc[step_index].values
         group_count = len(self.groups)
         groups = [self.groups_by_index[i] for i in range(group_count) if group_timing[i]]
