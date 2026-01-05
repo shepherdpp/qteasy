@@ -60,7 +60,7 @@ class TestLSStrategy(RuleIterator):
 
     def realize(self):
         n, price = self.get_pars('n', 'price')
-        h = self.get_data('close_E_d, open_E_d', 'high_E_d, low_E_d')
+        h = self.get_data('close_E_d', 'open_E_d', 'high_E_d', 'low_E_d')
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
 
@@ -102,12 +102,11 @@ class TestSelStrategy(GeneralStg):
         pass
 
     def realize(self):
-        h = self.get_data('close_E_d, high_E_d', 'low_E_d')
-        avg = np.nanmean(h, axis=(1, 2))
-        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
-        dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
+        close, high, low = self.get_data('close_E_d', 'high_E_d', 'low_E_d')
+        avg = np.nanmean(close + high + low, axis=0) / 3
+        dif = (close - np.roll(close, 1, axis=0))[-1]
 
-        difper = dif_no_nan / avg
+        difper = dif / avg
         large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
@@ -1004,6 +1003,7 @@ class TestQT(unittest.TestCase):
         for op in [op_batch, op_stepwise]:
             op.set_parameter(0, window_length=100, par_values=(12, 26, 9))
             op.set_parameter(1, window_length=100, par_values=(12, 26, 9))
+            op.set_blender('avg(s0, s1)', group_id='Group_1')
 
         qt.configure(
                 benchmark_asset='000300.SH',
@@ -1056,12 +1056,14 @@ class TestQT(unittest.TestCase):
         self.assertEqual(res_batch['final_value'],
                          res_stepwise['final_value'])
 
-        # test operator that utilizes trade data
+        # test operator that runs at different frequencies
+        print('test operator that runs at different frequencies')
         stg1 = TestLSStrategy()
         stg2 = TestSelStrategy()
         stg1.window_length = 100
         stg2.window_length = 100
-        stg2.run_freq = '2w'
+
+        stg2.run_freq = 'W'  # TODO: test freq like '2W', '3D'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
         op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
         par_stg1 = {'000100': (20, 10),
@@ -1069,8 +1071,10 @@ class TestQT(unittest.TestCase):
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_stepwise]:
-            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
-            op.set_parameter(1, pars=par_stg2, opt_tag=1)
+            op.set_blender('s0', group_id='Group_1')
+            op.set_blender('s0', group_id='Group_2')
+            op.set_parameter(0, par_values=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
+            op.set_parameter(1, par_values=par_stg2, opt_tag=1)
 
         qt.configure(
                 benchmark_asset='000300.SH',
@@ -1101,6 +1105,7 @@ class TestQT(unittest.TestCase):
               f'{val_batch}\n'
               f'and the result of stepwise operation is\n'
               f'{val_stepwise}')
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
 
         print('backtest in batch mode in optimization mode:')
         qt.run(op=op_batch, mode=2)
