@@ -109,13 +109,13 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['group1']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
         self.assertIsInstance(timing_table, pd.DataFrame)
         self.assertIn('group1', timing_table.columns)
-        self.assertTrue((timing_table['group1'] == 1).all())
+        self.assertTrue(np.all(timing_table['group1'] == 1))
         self.assertEqual(timing_table.index.name, None)
 
         print(f'timing_table.index: {timing_table.index}')
@@ -156,12 +156,12 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['group2']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
         self.assertIn('group2', timing_table.columns)
-        self.assertTrue((timing_table['group2'] == 1).all())
+        self.assertTrue(np.all(timing_table['group2'] == 1))
 
         print(f'timing_table.index: {timing_table.index}')
 
@@ -215,12 +215,12 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['group3']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
         self.assertIn('group3', timing_table.columns)
-        self.assertTrue((timing_table['group3'] == 1).all())
+        self.assertTrue(np.all(timing_table['group3'] == 1))
 
         print(f'timing_table.index: {timing_table.index}')
 
@@ -343,12 +343,12 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['custom_group']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
         self.assertIn('custom_group', timing_table.columns)
-        self.assertTrue((timing_table['custom_group'] == 1).all())
+        self.assertTrue(np.all(timing_table['custom_group'] == 1))
 
         print(f'timing_table.index: {timing_table.index}')
 
@@ -394,12 +394,12 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['open_group']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
         self.assertIn('open_group', timing_table.columns)
-        self.assertTrue((timing_table['open_group'] == 1).all())
+        self.assertTrue(np.all(timing_table['open_group'] == 1))
 
         print(f'timing_table.index: {timing_table.index}')
 
@@ -449,7 +449,7 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         schedule_df = self.operator.group_schedules['close_group']
         self.assertIsInstance(schedule_df, pd.DataFrame)
         self.assertIn('is_running', schedule_df.columns)
-        self.assertTrue((schedule_df['is_running'] == 1).all())
+        self.assertTrue(np.all(schedule_df['is_running'] == 1))
 
         # 验证最终的时间表
         timing_table = self.operator.group_timing_table
