@@ -889,25 +889,34 @@ class BaseStrategy:
 
     def enable_tracing(self, max_steps: int):
         """ 启用最交易策略追踪功能"""
+        if not isinstance(max_steps, int) or max_steps <= 0:
+            raise ValueError(f'max_steps should be a positive integer, got {max_steps} instead')
+
         self._trace_enabled = True
         self._trace_data = {}
         self._trace_max_steps = max_steps
         self._trace_step = 0
 
-    def trace(self, var, name: str = 'default', comments: str = ''):
-        """ 在realize方法中调用此方法追踪变量值
+    def next_trace_step(self):
+        """ 前进到下一个追踪步骤"""
+        if self._trace_enabled:
+            self._trace_step += 1
+
+    def trace(self, name: str, var: Union[int, float, bool, str]) -> None:
+        """ 在策略的realize()方法中调用此方法可以追踪策略中间变量的值，或者可以记录一条备注信息
 
         Parameters
         ----------
+        name: str
+            追踪记录的名称，用于区分不同的追踪变量
         var: any
-            需要追踪的变量，可以是任何类型的数据
-        name: str, default 'default'
-            变量的名称，用于区分不同的变量
-        comments: str, default ''
-            变量的备注信息，可以是任何字符串
+            需要追踪的变量或者需要记录的备注信息，可以是int/float/bool类型的数据，也可以是一条字符串备注信息
         """
 
         if self._trace_enabled:
+            if name is None:
+                err = RuntimeError(f'When tracing variable, name must be given and can not be None!')
+                raise err
             if name not in self._trace_data:
                 # 根据变量类型选择最优数据类型
                 if isinstance(var, (int, np.integer)):
@@ -922,30 +931,20 @@ class BaseStrategy:
                 # 预分配数组
                 self._trace_data[name] = {
                     'values': np.empty(self._trace_max_steps, dtype=dtype),
-                    'steps': np.empty(self._trace_max_steps, dtype=int),
-                    'comments': np.empty(self._trace_max_steps, dtype=object),
-                    'current_idx': 0
                 }
 
             trace_info = self._trace_data[name]
-            idx = trace_info['current_idx']
+            idx = self._trace_step
 
             if idx < self._trace_max_steps:
                 trace_info['values'][idx] = var
-                trace_info['steps'][idx] = self._trace_step
-                trace_info['comments'][idx] = comments
-                trace_info['current_idx'] += 1
 
     def get_trace_data(self):
-        """获取实际追踪的数据"""
-        result = {}
+        """获取实际追踪数据的DataFrame形式"""
+        result = pd.DataFrame(index=range(self._trace_max_steps))
         for name, data in self._trace_data.items():
-            actual_count = data['current_idx']
-            result[name] = {
-                'values': data['values'][:actual_count],
-                'steps': data['steps'][:actual_count],
-                'comments': data['comments'][:actual_count]
-            }
+            col_name = self.strategy_id + '_' + name
+            result[col_name] = data['values']
         return result
 
     @abstractmethod
