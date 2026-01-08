@@ -1490,7 +1490,6 @@ def run(op: Operator, **kwargs):
         return op.run_backtest(
                 config=config,
                 datasource=qteasy.QT_DATA_SOURCE,
-                trade_log_path=qteasy.QT_TRADE_LOG_PATH,
                 logger=qteasy.logger_core,
         )
 
@@ -1502,14 +1501,7 @@ def run(op: Operator, **kwargs):
                 logger=qteasy.logger_core,
         )
 
-    elif run_mode == 3 or run_mode == 'trace':
-        # 进入追踪模式，跟踪策略在历史数据区间内的各变量变化情况
-
-        return op.run_tracing(
-                config=config,
-        )
-
-    elif run_mode == 4 or run_mode == 'predict':
+    elif run_mode == 3 or run_mode == 'predict':
         # 进入预测评价模式，使用随机生成的历史数据对策略进行性能预测评价
 
         return op.run_prediction(
