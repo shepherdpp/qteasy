@@ -1672,7 +1672,7 @@ def trade_time_index(start=None,
                 offset_hour = time_string_to_hour_float(time_offset)
                 offset = pd.Timedelta(hours=offset_hour)
             except Exception as e:
-                raise ValueError(f'Invalid time_offset {time_offset}, {e}')
+                raise ValueError(f'Invalid time_offset {time_offset}, should be format like "HH:MM", {e}')
             time_index = time_index + offset
 
     # 最后的处理1：检查是否出现不在用户指定start/end时间段内的时间点，剔除超过范围的时间点
