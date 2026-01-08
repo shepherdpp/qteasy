@@ -458,6 +458,13 @@ def _valid_qt_kwargs():
              'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
                           '包括交易信号以及每一步骤的交易结果'},
 
+        'trace_log':
+            {'Default':   True,
+             'Validator': lambda value: isinstance(value, bool),
+             'level':     1,
+             'text':      '是否生成回测信号过程追踪，以pd.DataFrame形式给出回测过程中交易信号\n'
+                          '中间过程变量的变化情况，便于交易策略的调试和分析'},
+
         'benchmark_asset':
             {'Default':   '000300.SH',  # TODO: 未来版本支持多个基准
              'Validator': lambda value: isinstance(value, str)
