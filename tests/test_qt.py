@@ -159,14 +159,19 @@ class Cross_SMA_PS(qt.RuleIterator):
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
 
+        self.trace('s_today', s_today)
+        self.trace('f_today', f_today)
+
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_today * (1 + m)
         s_ma_l = s_today * (1 - m)
 
         # 根据观望模式在不同的点位产生交易信号
         if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
+            self.trace('signal', f'f_last:{f_last}, f_today:{f_today}, s_ma_u:{s_ma_u}, fast crossed upwards upper bound, signal is 1')
             return 1.
         elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
+            self.trace('signal2', f'f_last:{f_last}, f_today:{f_today}, s_ma_u:{s_ma_u}, fast crossed downwards upper bound, signal is -1')
             return -1.
         elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
             return -1.
@@ -1107,12 +1112,40 @@ class TestQT(unittest.TestCase):
               f'{val_stepwise}')
         self.assertTrue(np.allclose(val_batch, val_stepwise))
 
-        print('backtest in batch mode in optimization mode:')
-        qt.run(op=op_batch, mode=2)
-        print('backtest in stepwise mode in optimization mode')
-        qt.run(op=op_stepwise, mode=2)
+        # print('backtest in batch mode in optimization mode:')
+        # qt.run(op=op_batch, mode=2)
+        # print('backtest in stepwise mode in optimization mode')
+        # qt.run(op=op_stepwise, mode=2)
 
         print('test stepwise mode with different sample freq')
+
+    def test_op_tracing(self):
+        """test an multi-group op with tracing enabled with short period of data"""
+        # 创建一个Operator包含三个交易策略组
+        op = qt.Operator(strategies=Cross_SMA_PS, run_freq='d', signal_type='PS')
+        op.add_strategy(Cross_SMA_PS, run_freq='W')
+        op.add_strategy(Cross_SMA_PS, run_freq='d', run_timing='10:30')
+        op.set_blender('s0')
+
+        qt.configure(
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20250301',
+                invest_end='20250501',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True,
+                trade_log=True,
+                trace_log=True,
+        )
+        # test with group merge type is None
+        qt.run(op=op, mode=1)
+
+        op.group_merge_type = 'AND'
+        qt.run(op=op, mode=1)
 
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
