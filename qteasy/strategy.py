@@ -889,12 +889,12 @@ class BaseStrategy:
 
     def enable_tracing(self, max_steps: int):
         """ 启用最交易策略追踪功能"""
-        if not isinstance(max_steps, int) or max_steps <= 0:
-            raise ValueError(f'max_steps should be a positive integer, got {max_steps} instead')
+        if not isinstance(max_steps, (int, np.integer, float, np.floating)) or (max_steps <= 0):
+            raise ValueError(f'max_steps should be a positive integer, got {max_steps}({type(max_steps)}) instead')
 
         self._trace_enabled = True
         self._trace_data = {}
-        self._trace_max_steps = max_steps
+        self._trace_max_steps = int(max_steps)
         self._trace_step = 0
 
     def next_trace_step(self):
@@ -915,7 +915,7 @@ class BaseStrategy:
 
         if self._trace_enabled:
             if name is None:
-                err = RuntimeError(f'When tracing variable, name must be given and can not be None!')
+                err = RuntimeError(f'When trace variables, name must be given and can not be None!')
                 raise err
             if name not in self._trace_data:
                 # 根据变量类型选择最优数据类型
@@ -925,8 +925,12 @@ class BaseStrategy:
                     dtype = np.float64
                 elif isinstance(var, (bool, np.bool_)):
                     dtype = np.bool_
-                else:
+                elif isinstance(var, (str, np.str_)):
                     dtype = object
+                else:
+                    err = TypeError(f'When trace variables, only int, float, bool, str types are supported, '
+                                    f'got {type(var)} instead!')
+                    raise err
 
                 # 预分配数组
                 self._trace_data[name] = {

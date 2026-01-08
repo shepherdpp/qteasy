@@ -144,7 +144,7 @@ class Operator:
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
             stg = str_to_list(strategies)
-        elif isinstance(strategies, BaseStrategy):
+        elif isinstance(strategies, (BaseStrategy, type)):
             stg = [strategies]
         elif isinstance(strategies, list):
             stg = strategies

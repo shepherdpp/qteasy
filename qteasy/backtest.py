@@ -1286,7 +1286,7 @@ class Backtester:
 
         return value_history
 
-    def trace_result_df(self) -> DataFrame:
+    def trace_result_df(self) -> Optional[DataFrame]:
         """ 根据回测结果生成交易过程记录，输出内容为DataFrame格式
 
         Returns
@@ -1294,17 +1294,18 @@ class Backtester:
         trade_trace: pd.DataFrame
             交易模拟过程数据
         """
-        trace_dfs = []
-        for group in self.op.groups:
-            for strategy in group.members:
-                trace_dfs.append(strategy.get_trace_data())
+        if self.enable_tracing:
+            trace_dfs = []
+            for group in self.op.groups.values():
+                for strategy in group.members:
+                    trace_dfs.append(strategy.get_trace_data())
 
-        trade_trace = pd.concat(trace_dfs, axis=0)
-        trade_trace.index = self.op.op_signal_index
+            trade_trace = pd.concat(trace_dfs, axis=1)
+            trade_trace.index = self.op.op_signal_index
 
-        self.trace_df = trade_trace
+            self.trace_df = trade_trace
 
-        return trade_trace
+        return self.trace_df
 
     def evaluate_result(self, indicators: str) -> dict:
         """生成交易结果的评价报告，保存在self.evaluate_result属性中
@@ -1477,11 +1478,15 @@ class Backtester:
                                        index=op_signal_index,
                                        name='value')
 
+        summary_data = [add_investments, own_cash_series, available_cash_series, total_value_series]
+
+        if self.enable_tracing:
+            trace_df = self.trace_result_df()
+            if trace_df is not None:
+                summary_data.append(trace_df)
+
         self.summary_df = pd.concat(
-                objs=[add_investments,
-                      own_cash_series,
-                      available_cash_series,
-                      total_value_series],
+                objs=summary_data,
                 axis=1,
         )
         self.summary_df = self.summary_df.assign(summary='7, summary').set_index('summary', append=True)
