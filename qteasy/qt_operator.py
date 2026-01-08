@@ -191,6 +191,9 @@ class Operator:
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter deprecated
         self.add_strategies(stg, run_freq=run_freq, run_timing=run_timing)  # 添加strategy对象
 
+        # 其他相关属性
+        self._trace_enabled = False
+
         if signal_type:
             # change signal_types of all groups to the new signal_type
             for group in self._groups:
@@ -1606,6 +1609,34 @@ class Operator:
                 print('=' * info_width)
 
     # Adding functions for the new operator class
+    def enable_tracing(self):
+        """ 启用Operator对象中所有strategy的跟踪功能
+
+        启用跟踪功能后，Operator对象在运行过程中会记录更多的调试信息，便于后续分析和调试
+
+        Returns
+        -------
+        None
+        """
+        self._trace_enabled = True
+        trace_steps = self.get_signal_count()
+
+        for stg in self.strategies:
+            stg.enable_tracing(max_steps=trace_steps)
+
+    def disable_tracing(self):
+        """ 禁用Operator对象中所有strategy的跟踪功能
+
+        禁用跟踪功能后，Operator对象在运行过程中不会记录调试信息，从而提高运行效率
+
+        Returns
+        -------
+        None
+        """
+        self._trace_enabled = False
+        for stg in self.strategies:
+            stg.disable_tracing()
+
     def prepare_running_schedule(self,
                                  start_date=None,
                                  end_date=None,
@@ -1893,6 +1924,11 @@ class Operator:
             signal_type = group.signal_type
             signals = [stg.generate() for stg in group.members]
 
+            # ---- take care of tracing if enabled
+            if self._trace_enabled:
+                for stg in group.members:
+                    stg.next_trace_step()
+
             if self.group_merge_type == 'None':
                 signal = group.blend(signals)
                 yield signal_type, step_index, signal
@@ -1929,7 +1965,7 @@ class Operator:
             for result in self.run_strategy(step):
                 yield result
 
-    def run_live_trade(self, config):
+    def run_live_trade(self, config, datasource=None, logger=None):
         """ 在实盘模式下运行operator"""
         # 进入实时信号生成模式:
         from qteasy.trader import start_trader_ui
@@ -1951,8 +1987,23 @@ class Operator:
                 debug=config['live_trade_debug_mode'],
         )
 
-    def run_backtest(self, config, datasource=None, trade_log_path=None, logger=None):
-        """ 在回测模式下运行operator"""
+    def run_backtest(self, config, datasource=None, logger=None):
+        """ 在回测模式下运行operator, 使用历史数据进行交易策略的回测并生成回测结果
+
+        Parameters
+        ----------
+        config: dict
+            回测配置参数字典
+        datasource: DataSource, optional
+            数据源对象，默认为None，表示使用全局默认数据源
+        logger: Logger, optional
+            日志记录器对象，默认为None，表示不使用日志记录器
+
+        Returns
+        -------
+        backtest_result: BacktestResult
+            回测结果对象，包含回测的各种结果数据
+        """
 
         from qteasy.config_parser import (
             parse_backtest_cash_plan,
@@ -2038,6 +2089,7 @@ class Operator:
                 trading_moq_params=trading_moq_params,
                 trading_delivery_params=trading_delivery_params,
                 trade_price_data=trade_prices.values,
+                enable_tracing=config['trace_log'],
                 logger=logger,
         ).run()
 
@@ -2047,13 +2099,12 @@ class Operator:
         )
 
         if config['trade_log']:
-            if trade_log_path is None:
-                raise ValueError(f'trade_log_path should be given to save trade log and trade summary')
+            from qteasy import QT_TRADE_LOG_PATH
             trade_log_file_name = f'trade_log_{self.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
-            trade_log_file_path = os.path.join(trade_log_path, trade_log_file_name)
+            trade_log_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
 
             trade_summary_file_name = f'trade_summary_{self.name}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
-            trade_summary_file_path = os.path.join(trade_log_path, trade_summary_file_name)
+            trade_summary_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_summary_file_name)
 
             backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
             backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
@@ -2234,9 +2285,6 @@ class Operator:
             optimizer.plot_result()
 
         return optimizer.result_pool
-
-    def run_tracing(self, config):
-        """ 在追踪模式下运行operator"""
 
     def run_prediction(self, config):
         """ 在与测模式下运行operator"""
