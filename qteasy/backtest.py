@@ -941,6 +941,7 @@ class Backtester:
                  trading_delivery_params: dict,  # 交易交割参数
                  trade_price_data: np.ndarray,  # 交易价格数据
                  benchmark_data: Optional[Union[pd.DataFrame, pd.Series]] = None,
+                 enable_tracing: bool = False,
                  logger: Optional[logging.Logger] = None):
         """ 初始化Backtester对象，设置operator对象和回测参数，初始化回测结果存储表格
 
@@ -975,6 +976,8 @@ class Backtester:
             交易交割参数字典，包含交易交割相关的所有参数，通常是parse_trading_delivery_params()函数的输出
         trade_price_data: np.ndarray
             交易价格数据，记录每一个运行交易记录时间戳中的各个资产的交易价格
+        enable_tracing: bool, optional, default=False
+            是否启用回测过程的性能追踪功能，默认值为False
         logger: Optional[logging.Logger]
             可选的日志记录器对象，用于记录回测过程中的日志信息
         """
@@ -1054,10 +1057,12 @@ class Backtester:
         self.backtest_result: dict = {}
         self.trade_log_df: Optional[pd.DataFrame] = None
         self.summary_df: Optional[pd.DataFrame] = None
+        self.trace_df: Optional[pd.DataFrame] = None
 
         # 5, 其他相关属性（需要增加数据匹配性校验）
         self.cash_plan = cash_plan
         self.benchmark_data = benchmark_data
+        self.enable_tracing = enable_tracing
 
         if logger is not None:
             logger.info('Start backtest operator...')
@@ -1065,6 +1070,11 @@ class Backtester:
     def run(self) -> 'Backtester':
         """ 执行回测计算，生成回测结果数据并存入对象属性中"""
         self.op.set_shares(self.shares)
+
+        if self.enable_tracing:
+            self.op.enable_tracing()
+        else:
+            self.op.disable_tracing()
 
         # 1，如果operator的交易信号不依赖于回测数据，调用函数backtest_operator_independently()处理回测信号
         if not self.op.check_dynamic_data():
@@ -1232,7 +1242,7 @@ class Backtester:
         # 5，返回signals，因为完整的回测结果清单已经保存在作为参数传入的几个数组中
         return signals
 
-    # 生成更加易于阅读的DataFrame型交易结果数据，以便用于结果的评价及后续处理，
+    # 生成回测结果的各种评价指标，直接快速计算返回回测的各项结果指标
     def trade_result_final_value(self):
         """ 直接快速计算返回回测的终值结果"""
         final_value = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
@@ -1255,6 +1265,7 @@ class Backtester:
         max_drawdown = drawdown.min()
         return max_drawdown
 
+    # 生成更加结构化的DataFrame型交易结果数据，以便用于结果的评价及后续处理，
     def trade_result_df(self) -> pd.DataFrame:
         """ 根据回测结果生成资产价值记录，输出内容为DataFrame格式
 
@@ -1274,6 +1285,26 @@ class Backtester:
         value_history = value_history.groupby(value_history.index).last()
 
         return value_history
+
+    def trace_result_df(self) -> DataFrame:
+        """ 根据回测结果生成交易过程记录，输出内容为DataFrame格式
+
+        Returns
+        -------
+        trade_trace: pd.DataFrame
+            交易模拟过程数据
+        """
+        trace_dfs = []
+        for group in self.op.groups:
+            for strategy in group.members:
+                trace_dfs.append(strategy.get_trace_data())
+
+        trade_trace = pd.concat(trace_dfs, axis=0)
+        trade_trace.index = self.op.op_signal_index
+
+        self.trace_df = trade_trace
+
+        return trade_trace
 
     def evaluate_result(self, indicators: str) -> dict:
         """生成交易结果的评价报告，保存在self.evaluate_result属性中
@@ -1300,6 +1331,7 @@ class Backtester:
 
         return self.backtest_result
 
+    # 生成回测结果的明细报告，包括纯文本形式的报告和图表形式的报告
     def report_result(self) -> str:
         """ 生成回测结果的明细报告，报告为纯文本格式，可以使用print命令打印
 
