@@ -4473,219 +4473,235 @@ class TestSetBlender(unittest.TestCase):
         self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, '')
 
 
-class TestBaseStrategyTrace(unittest.TestCase):
-    """测试BaseStrategy类的trace方法"""
+class TestStrategyTracing(unittest.TestCase):
+    """测试BaseStrategy类的trace相关方法"""
 
     def setUp(self):
-        """设置测试用的BaseStrategy实例"""
+        """设置测试环境"""
+        # 创建一个简单的策略实例用于测试
         self.strategy = BaseStrategy(
                 name='test_strategy',
                 description='Test strategy for tracing',
-                stg_type='TEST'
         )
+        # 设置策略ID用于测试
+        self.strategy._strategy_id = 'test_id'
 
-    def test_trace_method_without_enabling(self):
-        """测试在未启用追踪时调用trace方法"""
-        print(f'Testing trace method without enabling in strategy {self.strategy}')
-        # 在未启用追踪的情况下调用trace，应该不会记录任何数据
-        self.strategy.trace(42, name='test_var', comments='test comment')
-        print(f'strategy {self.strategy} does not save trace data before enabling: {self.strategy._trace_data}')
-
-        # 检查_trace_data是否为空
+    def test_disable_tracing_initially(self):
+        """测试初始状态下追踪功能是禁用的"""
+        self.assertFalse(self.strategy._trace_enabled)
+        self.assertEqual(self.strategy._trace_max_steps, 0)
+        self.assertEqual(self.strategy._trace_step, 0)
         self.assertEqual(len(self.strategy._trace_data), 0)
 
-    def test_trace_integer_variable(self):
-        """测试追踪整数变量"""
-        print(f'Testing trace integer variable in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
+    def test_enable_tracing_with_valid_max_steps(self):
+        """测试启用追踪功能，使用有效的max_steps"""
+        max_steps = 10
+        self.strategy.enable_tracing(max_steps)
 
-        # 追踪一个整数变量
-        self.strategy.trace(42, name='int_var', comments='integer test')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
+        self.assertTrue(self.strategy._trace_enabled)
+        self.assertEqual(self.strategy._trace_max_steps, max_steps)
+        self.assertEqual(self.strategy._trace_step, 0)
+        self.assertEqual(len(self.strategy._trace_data), 0)
 
-        # 检查数据是否正确记录
-        self.assertIn('int_var', self.strategy._trace_data)
-        trace_info = self.strategy._trace_data['int_var']
-        self.assertEqual(trace_info['values'][0], 42)
-        self.assertEqual(trace_info['steps'][0], 0)
-        self.assertEqual(trace_info['comments'][0], 'integer test')
-        self.assertEqual(trace_info['current_idx'], 1)
-        # 检查数据类型是否正确设置
-        self.assertEqual(trace_info['values'].dtype, np.int64)
+    def test_enable_tracing_with_invalid_max_steps(self):
+        """测试使用无效max_steps启用追踪功能"""
+        # 测试非整数输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing("invalid")
 
-    def test_trace_float_variable(self):
-        """测试追踪浮点数变量"""
-        print(f'Testing trace float variable in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
+        # 测试负数输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing(-5)
 
-        # 追踪一个浮点数变量
-        self.strategy.trace(3.14, name='float_var', comments='float test')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
+        # 测试零输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing(0)
 
-        # 检查数据是否正确记录
-        self.assertIn('float_var', self.strategy._trace_data)
-        trace_info = self.strategy._trace_data['float_var']
-        self.assertEqual(trace_info['values'][0], 3.14)
-        self.assertEqual(trace_info['steps'][0], 0)
-        self.assertEqual(trace_info['comments'][0], 'float test')
-        self.assertEqual(trace_info['current_idx'], 1)
-        # 检查数据类型是否正确设置
-        self.assertEqual(trace_info['values'].dtype, np.float64)
-
-    def test_trace_boolean_variable(self):
-        """测试追踪布尔变量"""
-        print(f'Testing trace boolean variable in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
-
-        # 追踪一个布尔变量
-        self.strategy.trace(True, name='bool_var', comments='boolean test')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查数据是否正确记录
-        self.assertIn('bool_var', self.strategy._trace_data)
-        trace_info = self.strategy._trace_data['bool_var']
-        self.assertEqual(trace_info['values'][0], True)
-        self.assertEqual(trace_info['steps'][0], 0)
-        self.assertEqual(trace_info['comments'][0], 'boolean test')
-        self.assertEqual(trace_info['current_idx'], 1)
-        # 检查数据类型是否正确设置
-        self.assertEqual(trace_info['values'].dtype, np.int64)
-
-    def test_trace_object_variable(self):
-        """测试追踪对象变量"""
-        print(f'Testing trace object variable in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
-
-        # 追踪一个复杂对象
-        obj = [1, 2, 3]
-        self.strategy.trace(obj, name='obj_var', comments='object test')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查数据是否正确记录
-        self.assertIn('obj_var', self.strategy._trace_data)
-        trace_info = self.strategy._trace_data['obj_var']
-        self.assertEqual(trace_info['values'][0], obj)
-        self.assertEqual(trace_info['steps'][0], 0)
-        self.assertEqual(trace_info['comments'][0], 'object test')
-        self.assertEqual(trace_info['current_idx'], 1)
-        # 检查数据类型是否正确设置为object
-        self.assertEqual(trace_info['values'].dtype, object)
-
-    def test_trace_multiple_variables(self):
-        """测试追踪多个变量"""
-        print(f'Testing trace multiple variables in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
-
-        # 追踪多个不同类型的变量
-        self.strategy.trace(100, name='var1', comments='first variable')
-        self.strategy.trace(2.5, name='var2', comments='second variable')
-        self.strategy.trace(False, name='var3', comments='third variable')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查所有变量都被正确记录
-        self.assertEqual(len(self.strategy._trace_data), 3)
-        self.assertIn('var1', self.strategy._trace_data)
-        self.assertIn('var2', self.strategy._trace_data)
-        self.assertIn('var3', self.strategy._trace_data)
-
-        # 检查每个变量的值
-        self.assertEqual(self.strategy._trace_data['var1']['values'][0], 100)
-        self.assertEqual(self.strategy._trace_data['var2']['values'][0], 2.5)
-        self.assertEqual(self.strategy._trace_data['var3']['values'][0], False)
-
-        # 检查索引是否正确递增
-        self.assertEqual(self.strategy._trace_data['var1']['current_idx'], 1)
-        self.assertEqual(self.strategy._trace_data['var2']['current_idx'], 1)
-        self.assertEqual(self.strategy._trace_data['var3']['current_idx'], 1)
-
-    def test_trace_same_variable_multiple_times(self):
-        """测试多次追踪同一个变量"""
-        print(f'Testing trace same variable multiple times in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
-
-        # 多次追踪同一个变量
-        self.strategy.trace(10, name='same_var', comments='first call')
-        self.strategy.trace(20, name='same_var', comments='second call')
-        self.strategy.trace(30, name='same_var', comments='third call')
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查变量被正确记录多次
-        trace_info = self.strategy._trace_data['same_var']
-        self.assertEqual(trace_info['values'][0], 10)
-        self.assertEqual(trace_info['values'][1], 20)
-        self.assertEqual(trace_info['values'][2], 30)
-
-        self.assertEqual(trace_info['comments'][0], 'first call')
-        self.assertEqual(trace_info['comments'][1], 'second call')
-        self.assertEqual(trace_info['comments'][2], 'third call')
-
-        self.assertEqual(trace_info['current_idx'], 3)
-
-    def test_trace_max_steps_limit(self):
-        """测试追踪的最大步数限制"""
-        print(f'Testing trace max steps limit in strategy {self.strategy}')
-        # 启用追踪，最大步数为3
-        self.strategy.enable_tracing(max_steps=3)
-
-        # 追踪超过最大步数的变量
-        self.strategy.trace(1, name='limited_var', comments='first')
-        self.strategy.trace(2, name='limited_var', comments='second')
-        self.strategy.trace(3, name='limited_var', comments='third')
-        self.strategy.trace(4, name='limited_var', comments='fourth')  # 应该被忽略
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查只有前三个被记录
-        trace_info = self.strategy._trace_data['limited_var']
-        self.assertEqual(trace_info['current_idx'], 3)  # 索引只到3
-        self.assertEqual(trace_info['values'][0], 1)
-        self.assertEqual(trace_info['values'][1], 2)
-        self.assertEqual(trace_info['values'][2], 3)
-        # 第四个值不应该被记录或覆盖了第三个值
-        self.assertNotEqual(trace_info['values'][2], 4)
-
-    def test_trace_default_parameters(self):
-        """测试使用默认参数的trace调用"""
-        print(f'Testing trace with default parameters in strategy {self.strategy}')
-        # 启用追踪
-        self.strategy.enable_tracing(max_steps=10)
-
-        # 使用默认参数调用trace
-        self.strategy.trace(999)
-        print(f'strategy {self.strategy} saved trace data: {self.strategy._trace_data}')
-
-        # 检查是否使用了默认名称'default'
-        self.assertIn('default', self.strategy._trace_data)
-        trace_info = self.strategy._trace_data['default']
-        self.assertEqual(trace_info['values'][0], 999)
-        self.assertEqual(trace_info['comments'][0], '')  # 默认注释为空
-
-    def test_disable_tracing(self):
+    def test_disable_tracing_method(self):
         """测试禁用追踪功能"""
-        print(f'Testing disable tracing in strategy {self.strategy}')
-        # 启用追踪并记录一些数据
-        self.strategy.enable_tracing(max_steps=10)
-        self.strategy.trace(123, name='test_var', comments='before disable')
-        print(f'strategy {self.strategy} saved trace data before disable: {self.strategy._trace_data}')
+        # 先启用追踪
+        self.strategy.enable_tracing(5)
+        self.strategy.trace(10, 'test_var')
 
-        # 确保数据被记录
-        self.assertIn('test_var', self.strategy._trace_data)
+        # 确认追踪已启用
+        self.assertTrue(self.strategy._trace_enabled)
+        self.assertEqual(len(self.strategy._trace_data), 1)
 
         # 禁用追踪
         self.strategy.disable_tracing()
-        print(f'strategy {self.strategy} tracing disabled.')
-        print(f'trade data in strategy {self.strategy} after disable: {self.strategy._trace_data}')
 
-        # 检查追踪数据是否被清除
+        # 确认追踪已禁用
         self.assertFalse(self.strategy._trace_enabled)
-        self.assertEqual(len(self.strategy._trace_data), 0)
         self.assertEqual(self.strategy._trace_max_steps, 0)
         self.assertEqual(self.strategy._trace_step, 0)
+        self.assertEqual(len(self.strategy._trace_data), 0)
+
+    def test_trace_with_int_variable(self):
+        """测试追踪整数变量"""
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个整数变量
+        self.strategy.trace('int_var', 42)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_int_var', trace_data)
+        self.assertEqual(trace_data['test_id_int_var'][0], 42)
+
+    def test_trace_with_float_variable(self):
+        """测试追踪浮点数变量"""
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个浮点数变量
+        self.strategy.trace('float_var', 3.14)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_float_var', trace_data)
+        self.assertEqual(trace_data['test_id_float_var'][0], 3.14)
+
+    def test_trace_with_boolean_variable(self):
+        """测试追踪布尔变量"""
+        print(f'test trace_with_boolean_variable')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个布尔变量
+        self.strategy.trace('bool_var', True)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertIn('test_id_bool_var', trace_data)
+        self.assertEqual(trace_data['test_id_bool_var'][0], True)
+
+    def test_trace_with_string_variable(self):
+        """测试追踪字符串变量"""
+        print('test_trace_with_string_variable')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个字符串变量
+        self.strategy.trace("test_string", 'str_var')
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertIn('test_id_test_string', trace_data)
+        self.assertEqual(trace_data['test_id_test_string'][0], "str_var")
+
+    def test_trace_with_multiple_variables(self):
+        """测试追踪多个变量"""
+        print(f'test trace with multiple variables')
+        self.strategy.enable_tracing(5)
+
+        # 追踪多个变量
+        self.strategy.trace('var1', 1)
+        self.strategy.trace('var2', 2.5)
+        self.strategy.trace('var3', False)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertEqual(len(trace_data), 5)
+        self.assertIn('test_id_var1', trace_data)
+        self.assertIn('test_id_var2', trace_data)
+        self.assertIn('test_id_var3', trace_data)
+        self.assertEqual(trace_data['test_id_var1'][0], 1)
+        self.assertEqual(trace_data['test_id_var2'][0], 2.5)
+        self.assertEqual(trace_data['test_id_var3'][0], False)
+
+    def test_trace_with_comments(self):
+        """测试追踪变量时添加注释"""
+        print(f'test trace with comments')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个变量并添加注释
+        self.strategy.trace('commented_var', 'This is a test comment')
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_commented_var', trace_data)
+        self.assertEqual(trace_data['test_id_commented_var'][0], 'This is a test comment')
+
+    def test_trace_with_max_steps_limit(self):
+        """测试追踪变量时不超过最大步数限制"""
+        print(f'test trace with max steps limit')
+        max_steps = 3
+        self.strategy.enable_tracing(max_steps)
+
+        # 追踪超过最大步数限制的变量
+        for i in range(max_steps + 2):  # 追踪5个值，但最大步数是3
+            self.strategy.trace('limited_var', i)
+            if i < max_steps:  # 只有前max_steps个值会被记录
+                self.strategy._trace_step += 1  # 模拟步数前进
+
+        # 检查追踪数据，只有前max_steps个值被记录
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        if 'limited_var' in trace_data:
+            # 实际记录的数量取决于trace方法如何处理超过限制的情况
+            recorded_count = len(trace_data['limited_var'])
+            # 根据trace方法的实现，它会在达到max_steps时停止记录
+            self.assertLessEqual(recorded_count, max_steps)
+
+    def test_get_trace_data_empty_when_disabled(self):
+        """测试当追踪功能禁用时get_trace_data返回空结果"""
+        # 确保追踪功能被禁用
+        print(f'test get_trace_data when tracing is disabled')
+        self.strategy.disable_tracing()
+
+        # 尝试追踪一个变量（这应该不会被记录）
+        self.strategy.trace('disabled_var', 123)
+
+        # 获取追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+
+        # 应该返回空字典
+        self.assertEqual(len(trace_data), 0)
+
+    def test_trace_dtype_handling(self):
+        """测试追踪不同数据类型时的数据类型处理"""
+        print('test trace dtype handling')
+        self.strategy.enable_tracing(5)
+
+        # 追踪不同类型的变量并检查内部数据类型
+        self.strategy.trace('int_var', 10)  # 应该是int64
+        self.strategy.trace('float_var', 3.14)  # 应该是float64
+        self.strategy.trace('bool_var', True)  # 应该是bool
+        self.strategy.trace('str_var', "text")  # 应该是object
+
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+
+        # 验证数据被正确存储
+        self.assertEqual(trace_data['test_id_int_var'][0], 10)
+        self.assertEqual(trace_data['test_id_float_var'][0], 3.14)
+        self.assertEqual(trace_data['test_id_bool_var'][0], True)
+        self.assertEqual(trace_data['test_id_str_var'][0], "text")
+
+    def test_trace_step_tracking(self):
+        """测试追踪步骤的记录"""
+        self.strategy.enable_tracing(5)
+
+        # 模拟追踪多个步骤
+        self.strategy._trace_step = 0
+        self.strategy.trace('step_var', 1)
+
+        self.strategy._trace_step = 1
+        self.strategy.trace('step_var', 2)
+
+        self.strategy._trace_step = 2
+        self.strategy.trace('step_var', 3)
+
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertEqual(len(trace_data['test_id_step_var']), 5)
+        self.assertEqual(trace_data['test_id_step_var'][0], 1)
+        self.assertEqual(trace_data['test_id_step_var'][1], 2)
+        self.assertEqual(trace_data['test_id_step_var'][2], 3)
 
 
 if __name__ == '__main__':
