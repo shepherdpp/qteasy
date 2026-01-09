@@ -2983,11 +2983,6 @@ def check_and_prepare_trade_prices(op,
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
     combined_trade_prices.ffill(inplace=True)
 
-    # combined_trade_prices 可能仍然有全NaN的数据，此时假设这些数据不需要使用，但为了避免出
-    # 现问题，将它们填充为1.0（不填充为0.0的原因是为了避免Divide_by_zero错误）这个问题在发现问题的地方处理
-    # if any(np.isnan(combined_trade_prices)):
-    #     combined_trade_prices.fillna(1.0, inplace=True)
-
     return combined_trade_prices
 
 
@@ -3025,13 +3020,12 @@ def check_and_prepare_benchmark_data(op,
         raise ValueError(f'Operator object has no group schedules, please run op.create_group_schedules() first!')
     run_timing_indices = run_timing_table.index
 
-    benchmark_start = min(run_timing_indices).date()
+    benchmark_start = min(run_timing_indices).date() - pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
     benchmark_end = max(run_timing_indices).date() + pd.Timedelta(1, 'd')  # 多取一天以防止时间点在当天的情况
 
     # 检查Operator对象所有交易组的最高运行频率
     all_run_freqs = [group.run_freq for group in op.groups.values()]
     benchmark_freq = all_run_freqs[0]  # TODO: 这里简单取第一个频率作为最高频率，未来需要改进
-
     # 解析benchmark_symbol，根据资产类型确定数据类型名称
     if benchmark_symbol[-2:] in ['OF']:  # 场外基金
         benchmark_data_type_name = 'adj_nav'
@@ -3080,7 +3074,7 @@ def check_and_prepare_benchmark_data(op,
         benchmark_data.index = benchmark_data.index + pd.Timedelta(time_offset)
 
     # 获取operator running_timing_table的时间索引,将benchmark_data的时间索引与之对齐，并进行ffill填充
-    re_index = np.searchsorted(benchmark_data.index, run_timing_indices)
+    re_index = np.searchsorted(benchmark_data.index, run_timing_indices, side='right')
     benchmark_data = pd.DataFrame(benchmark_data.values[re_index - 1], index=run_timing_indices,
                                   columns=benchmark_data.columns)
     benchmark_data.ffill(inplace=True)
