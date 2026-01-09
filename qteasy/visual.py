@@ -917,7 +917,6 @@ def _plot_loop_result(
     # 持股数量变动量，当持股数量发生变动时，判断产生买卖行为
     change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
     # 计算回测记录第一天的回测结果和参考指数价格，以此计算后续的收益率曲线
-
     start_point = looped_values['value'].iloc[0]
     bench_start = looped_values['benchmark'].iloc[0]
     # 计算回测结果的每日回报率
