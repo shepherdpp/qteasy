@@ -19,25 +19,21 @@ import time
 import numpy as np
 import pandas as pd
 
+from typing import Union, Optional
 from queue import Queue
+
 from rich.text import Text
 
-from .__init__ import __version__ as qteasy_version
 from .configure import ConfigDict, QT_CONFIG
 from .database import DataSource
 from .datatypes import get_tables_by_dtypes
+from .history import check_and_prepare_live_trade_data
 from .qt_operator import Operator
 from .broker import Broker
 from .data_channels import fetch_real_time_klines
-from .core import (
-    check_and_prepare_live_trade_data,
-    get_history_data,
-    refill_data_source,
-)
 
 from .trade_recording import (
     get_account,
-    get_account_position_availabilities,
     get_account_position_details,
     get_account_cash_availabilities,
     query_trade_orders,
@@ -51,7 +47,6 @@ from .trading_util import (
     cancel_order,
     create_daily_task_schedule,
     get_position_by_id,
-    get_last_trade_result_summary,
     get_symbol_names,
     process_account_delivery,
     parse_trade_signal,
@@ -170,13 +165,13 @@ class Trader(object):
         err = None
         if not isinstance(account_id, int):
             err = TypeError(f'account_id must be int, got {type(account_id)} instead')
-        if not isinstance(operator, Operator):
+        elif not isinstance(operator, Operator):
             err = TypeError(f'operator must be Operator, got {type(operator)} instead')
-        if not isinstance(broker, Broker):
+        elif not isinstance(broker, Broker):
             err = TypeError(f'broker must be Broker, got {type(broker)} instead')
-        if not isinstance(config, dict):
+        elif not isinstance(config, dict):
             err = TypeError(f'config must be dict, got {type(config)} instead')
-        if not isinstance(datasource, DataSource):
+        elif not isinstance(datasource, DataSource):
             err = TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
         if err:
@@ -322,11 +317,12 @@ class Trader(object):
             start_date = (today - pd.Timedelta(days=7)).strftime('%Y%m%d')
             end_date = today.strftime('%Y%m%d')
             try:
+                from qteasy.core import get_history_data
                 current_prices = get_history_data(
                         shares=positions.index.tolist(),
                         htypes='close',
                         asset_type='E',
-                        freq=self.operator.op_data_freq,
+                        freq='d',
                         start=start_date,
                         end=end_date,
                 )['close'].iloc[-1]
@@ -404,7 +400,7 @@ class Trader(object):
         else:
             return self._config
 
-    def update_config(self, key=None, value=None) -> dict:
+    def update_config(self, key=None, value=None) -> Optional[dict]:
         """ 更新交易系统的配置信息 """
         if key not in self._config:
             return None
@@ -525,6 +521,7 @@ class Trader(object):
                         self.send_message(f'got new result from broker for order {result["order_id"]}, '
                                           f'adding process_result task to queue')
                     self.add_task('process_result', result)
+                    self.broker.result_queue.task_done()
                 # 检查broker的message_queue中是否有消息，如果有，则处理消息，通常情况将消息添加到消息队列中
                 if not self.broker.broker_messages.empty():
                     message = self.broker.broker_messages.get()
@@ -585,6 +582,7 @@ class Trader(object):
         trader_info_dict = {}
 
         if system:
+            from qteasy import __version__ as qteasy_version
             # System Info
             trader_info_dict['python'] = sys.version
             trader_info_dict['qteasy'] = qteasy_version
@@ -615,7 +613,7 @@ class Trader(object):
             trader_info_dict['Live price update freq'] = \
                 self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]
             trader_info_dict['Strategy'] = self.operator.strategies
-            trader_info_dict['Strategy run frequency'] = self.operator.op_data_freq
+            trader_info_dict['Run frequency'] = [gp.run_freq for gp in self.operator.groups.values()]
             trader_info_dict['trade batch size'] = self.get_config("trade_batch_size")["trade_batch_size"]
             trader_info_dict['sell batch size'] = self.get_config("sell_batch_size")["sell_batch_size"]
             trader_info_dict['cash delivery period'] = self.get_config("cash_delivery_period")["cash_delivery_period"]
@@ -773,7 +771,7 @@ class Trader(object):
         """
         raise NotImplementedError
 
-    def history_orders(self, with_trade_results=True):
+    def history_orders(self, with_trade_results=True) -> pd.DataFrame:
         """ 账户的历史订单详细信息
 
         Parameters
@@ -1062,6 +1060,30 @@ class Trader(object):
             self.watched_prices = live_prices
 
         return self.watched_prices
+
+    def refresh_datasource_price_data(self, unit: str) -> None:
+        """ 从data_channel中下载最新的价格数据，并更新到数据源中，确保实盘运行前交易策略可以获取到最新的数据"""
+        table_to_update = UNIT_TO_TABLE[unit.lower()]
+        # 这里不能将不完整的实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
+        real_time_data = fetch_real_time_klines(
+                freq=unit.lower(),
+                channel=self.live_price_channel,
+                qt_codes=self.asset_pool,
+                verbose=False,
+                matured_kline_only=True,  # 这里确保只获取成熟的K线数据
+        )
+        # 将real_time_data写入DataSource
+        self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
+                                  f'{real_time_data.to_string()}\n'
+                                  f'writing data to datasource: {self.datasource}...', debug=True)
+
+        rows_written = self._datasource.update_table_data(
+                table=table_to_update,
+                df=real_time_data,
+                merge_type='update',
+        )
+        self.send_message(message=f'{rows_written} rows real-time price data written to'
+                                  f'data source: {self.datasource}', debug=True)
 
 # ============= functions related to trade config and logging ====================
 
@@ -1700,7 +1722,7 @@ class Trader(object):
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, *strategy_ids) -> int:
+    def _run_strategy(self, step_index) -> int:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
@@ -1711,8 +1733,8 @@ class Trader(object):
 
         Parameters
         ----------
-        strategy_ids: list of str
-            交易策略ID列表
+        step_index: int
+            当前运行的任务步骤索引，对应于self.task_daily_schedule中的索引
 
         Returns
         -------
@@ -1720,166 +1742,128 @@ class Trader(object):
             提交的交易订单数量
         """
 
-        self.send_message(f'running task run strategy: {strategy_ids}', debug=True)
+        self.send_message(f'running task run strategy: {step_index}', debug=True)
         operator = self._operator
-        signal_type = operator.signal_type
+
         shares = self.asset_pool
         own_amounts = self.account_positions['qty']
         available_amounts = self.account_positions['available_qty']
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
         config = self._config
-        # window_length = self._operator.max_window_length
-        #
-        # # 下载最小所需实时历史数据
-        # data_end_time = self.get_current_tz_datetime()  # 产生本地时间
-        max_strategy_freq = 'T'
-        for strategy_id in strategy_ids:
-            strategy = operator[strategy_id]
-            freq = strategy.run_freq.upper()
-            if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
-                max_strategy_freq = freq
-        # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
+
+        today = self.get_current_tz_datetime().strftime('%Y-%m-%d')
+
+        # 下载最小所需实时历史数据
+        max_run_freq = 'T'
+        group_timing = operator.group_timing_table.iloc[step_index].values
+        group_count = len(operator.groups)
+        groups_to_run = [operator.groups_by_index[i] for i in range(group_count) if group_timing[i]]
+        signal_type = groups_to_run[0].signal_type
+
+        for group in groups_to_run:
+            for strategy in group.members:
+                freq = strategy.run_freq.upper()
+                if freq in TIME_FREQ_LEVELS and TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_run_freq]:
+                    max_run_freq = freq
+        # 解析strategy_run的运行频率，根据频率确定是否更新数据源中的数据
         self.send_message(f'getting live price data for strategy run...', debug=True)
         # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
-        duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
+        duration, unit, _ = parse_freq_string(max_run_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时价格
-            # TODO: 实时价格不应该使用fetch_realtime_price_data方法，而应该使用fetch_realtime_quote方法
-            table_to_update = UNIT_TO_TABLE[unit.lower()]
-            # 这里不能将实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
-            real_time_data = fetch_real_time_klines(
-                    freq=unit.lower(),
-                    channel=self.live_price_channel,
-                    qt_codes=self.asset_pool,
-                    verbose=False,
-                    matured_kline_only=True,  # 这里确保只获取成熟的K线数据
-            )
-            # 将real_time_data写入DataSource
-            self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
-                                      f'{real_time_data.to_string()}\n'
-                                      f'writing data to datasource: {self.datasource}...', debug=True)
-
-            rows_written = self._datasource.update_table_data(
-                    table=table_to_update,
-                    df=real_time_data,
-                    merge_type='update',
-            )
-            self.send_message(message=f'{rows_written} rows real-time price data written to'
-                                      f'data source: {self.datasource}', debug=True)
-
+            self.refresh_datasource_price_data(unit=unit)
+        # TODO: 由于此时下载的是完整的K线数据，对应着DataType的ULC属性为False的情形，如果ULC为True，则需要继续下载不完整的K线
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
         else:
             pass
-        # 读取最新数据,设置operator的数据分配,创建trade_data
+
+        # 从dataSource中读取最新数据,组装成data_package
         self.send_message(f'preparing trade data...', debug=True)
-        hist_op, hist_ref = check_and_prepare_live_trade_data(
+        data_packages = check_and_prepare_live_trade_data(
                 op=operator,
-                config=config,
+                trade_date=today,
                 datasource=self._datasource,
                 live_prices=self.live_price,
         )
         self.send_message(f'read real time data and set operator data allocation', debug=True)
-        operator.assign_hist_data(
-                hist_data=hist_op,
-                reference_data=hist_ref,
-                live_mode=True,
-                live_running_stgs=list(strategy_ids)
+        operator.prepare_data_buffer(
+                start_date=self.get_current_tz_datetime(),
+                end_date=self.get_current_tz_datetime(),
+                data_package=data_packages,
         )
+        operator.create_data_windows()
 
-        # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
-        trade_data = np.zeros(shape=(len(shares), 5))
-        position_availabilities = get_account_position_availabilities(
-                account_id=self.account_id,
-                shares=shares,
-                data_source=self._datasource,
-        )
-        # 当前价格是hist_op的最后一行, 如果需要用latest_data_cycle，最新的实时数据已经包含在hist_op中了
-        timing_type = operator[strategy_ids[0]].strategy_timing
-        current_prices = hist_op[timing_type, :, -1].squeeze()
-        if current_prices.ndim == 0:
-            current_prices = np.array([current_prices])
-        last_trade_result_summary = get_last_trade_result_summary(
-                account_id=self.account_id,
-                shares=shares,
-                data_source=self._datasource,
-        )
-        self.send_message(f'Generating trade data from position availabilities...', debug=True)
-        trade_data[:, 0] = position_availabilities[1]
-        trade_data[:, 1] = position_availabilities[2]
-        trade_data[:, 2] = current_prices
-        trade_data[:, 3] = last_trade_result_summary[1]
-        trade_data[:, 4] = last_trade_result_summary[2]
+        # 如果策略需要用到交易过程数据，则准备交易过程数据
+        if self.operator.check_dynamic_data():
+            # TODO: implement this function
+            raise NotImplementedError
 
-        if operator.op_type == 'batch':
-            raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
-                           f'"Operator.op_type = "step"')
-        else:
-            op_signal = operator.create_signal(
-                    trade_data=trade_data,
-                    sample_idx=0,
-                    price_type_idx=0
-            )  # 生成交易清单
-        self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
-
-        # 解析交易信号
-        symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
-                signals=op_signal,
-                signal_type=signal_type,
-                shares=shares,
-                prices=current_prices,
-                own_amounts=own_amounts,
-                own_cash=own_cash,
-                available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
-                available_cash=available_cash,
-                config=config
-        )
-        names = get_symbol_names(self._datasource, symbols)
+        # 开始运行交易策略，逐个生成交易信号
         submitted_qty = 0
-        self.send_message(f'generated trade signals:\n'
-                          f'symbols: {symbols}\n'
-                          f'positions: {positions}\n'
-                          f'directions: {directions}\n'
-                          f'quantities: {quantities}\n'
-                          f'current_prices: {quoted_prices}\n',
-                          debug=True)
-        for sym, name, pos, d, qty, price, remark in zip(
-                symbols,
-                names,
-                positions,
-                directions,
-                quantities,
-                quoted_prices,
-                remarks,
-        ):
-            if remark:
-                self.send_message(remark)
-            if qty <= 0.001:
-                continue
+        self._update_live_price()
+        current_prices = self.live_price
+        for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
+            self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
 
-            trade_order = self.submit_trade_order(
-                    symbol=sym,
-                    position=pos,
-                    direction=d,
-                    order_type='market',
-                    qty=qty,
-                    price=price,
+            # 解析交易信号
+            symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
+                    signals=op_signal,
+                    signal_type=signal_type,
+                    shares=shares,
+                    prices=current_prices,
+                    own_amounts=own_amounts,
+                    own_cash=own_cash,
+                    available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
+                    available_cash=available_cash,
+                    config=config
             )
+            names = get_symbol_names(self._datasource, symbols)
+            self.send_message(f'generated trade signals:\n'
+                              f'symbols: {symbols}\n'
+                              f'positions: {positions}\n'
+                              f'directions: {directions}\n'
+                              f'quantities: {quantities}\n'
+                              f'current_prices: {quoted_prices}\n',
+                              debug=True)
+            for sym, name, pos, d, qty, price, remark in zip(
+                    symbols,
+                    names,
+                    positions,
+                    directions,
+                    quantities,
+                    quoted_prices,
+                    remarks,
+            ):
+                if remark:
+                    self.send_message(remark)
+                if qty <= 0.001:
+                    continue
 
-            if trade_order:
-                order_id = trade_order['order_id']
-                self._broker.order_queue.put(trade_order)
-                # format the message depending on buy/sell orders
-                msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
-                if d == 'buy':  # red for buy
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
-                else:  # green for sell
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
-                # 记录已提交的交易数量
-                self.send_message(msg)
-                submitted_qty += 1
+                trade_order = self.submit_trade_order(
+                        symbol=sym,
+                        position=pos,
+                        direction=d,
+                        order_type='market',
+                        qty=qty,
+                        price=price,
+                )
 
-        self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
+                if trade_order:
+                    order_id = trade_order['order_id']
+                    self._broker.order_queue.put(trade_order)
+                    # format the message depending on buy/sell orders
+                    msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
+                    if d == 'buy':  # red for buy
+                        msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
+                    else:  # green for sell
+                        msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
+                    # 记录已提交的交易数量
+                    self.send_message(msg)
+                    submitted_qty += 1
+
+            self.send_message(f'<RAN STRATEGY {groups_to_run}>: {submitted_qty} orders submitted in total.')
+
         return submitted_qty
 
     def _process_result(self, result) -> None:
@@ -2046,16 +2030,16 @@ class Trader(object):
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.send_message(f'Canceled unfilled order: {order_id}')
 
-    def _change_date(self) -> None:
-        """ 改变日期，在日期改变（午夜）前执行的操作，包括：
-
-        - 处理前一日交易的交割
-        - 处理前一日获取的实时数据、并准备下一日的实时数据
-        - 检查下一日是否是交易日，并更新相关的运行参数
-        - 重新生成agenda
-        - 生成消息发送到消息队列
-        """
-        raise NotImplementedError
+    # def _change_date(self) -> None:
+    #     """ 改变日期，在日期改变（午夜）前执行的操作，包括：
+    #
+    #     - 处理前一日交易的交割
+    #     - 处理前一日获取的实时数据、并准备下一日的实时数据
+    #     - 检查下一日是否是交易日，并更新相关的运行参数
+    #     - 重新生成agenda
+    #     - 生成消息发送到消息队列
+    #     """
+    #     raise NotImplementedError
 
     def _market_open(self) -> None:
         """ 开市时操作：
@@ -2114,6 +2098,8 @@ class Trader(object):
         refill_data_batch_size = self.config['live_trade_data_refill_batch_size']
         refill_data_batch_interval = self.config['live_trade_data_refill_batch_interval']
 
+        from qteasy.core import refill_data_source
+
         refill_data_source(
                 tables=tables,
                 channel=channel,
@@ -2150,7 +2136,7 @@ class Trader(object):
             'run_strategy':       self._run_strategy,
             'process_result':     self._process_result,
             'acquire_live_price': self._update_live_price,
-            'change_date':        self._change_date,
+            # 'change_date':        self._change_date,
             'start':              self._start,
             'stop':               self._stop,
             'sleep':              self._sleep,
@@ -2213,7 +2199,7 @@ class Trader(object):
             'run_strategy':       self._run_strategy,
             'process_result':     self._process_result,
             'acquire_live_price': self._update_live_price,
-            'change_date':        self._change_date,
+            # 'change_date':        self._change_date,
             'start':              self._start,
             'stop':               self._stop,
             'sleep':              self._sleep,
@@ -2426,7 +2412,7 @@ class Trader(object):
         real_time_data = fetch_real_time_klines(
                 qt_codes=self.asset_pool,
                 channel=self.live_price_channel,
-                freq=self.operator.op_data_freq,
+                freq='1MIN',
                 verbose=False,
         )
         if real_time_data.empty:
@@ -2642,12 +2628,12 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
 
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
         asset_types = config['asset_type']
-        if asset_types != 'IDX':
+        if 'IDX' not in asset_types:
             # add index to make sure indices are downloaded
             asset_types += ', IDX'
         start_date = last_available_date
         end_date = trader.get_current_tz_datetime()
-
+        from qteasy.core import refill_data_source
         refill_data_source(
                 data_source=datasource,
                 channel='tushare',
