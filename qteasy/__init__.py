@@ -204,6 +204,17 @@ py_version = sys.version_info
 py_ver_major = py_version.major
 py_ver_minor = py_version.minor
 
+# qteasy的全局常量
+# 运行模式常量
+LIVE_TRADE_MODE = 0
+LIVE_MODE = 0
+BACKTEST_MODE = 1
+OPTIMIZE_MODE = 2
+OPTI_MODE = 2
+OPTIMIZATION_MODE = 2
+PREDICT_MODE = 3
+PREDICTION_MODE = 3
+
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
@@ -216,5 +227,6 @@ __all__ = [
     'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG', 'utilfuncs', 'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts', 'delete_account',
+    'logger_core', 'live_trade_accounts', 'delete_account', 'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
+    'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
 ]
