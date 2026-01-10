@@ -1226,28 +1226,43 @@ class DataType:
         if asset_type is None:
             asset_type = self.asset_types[0]
 
-        # 股票的开盘价在9:30可用
         if asset_type == 'E':
+            # 股票的开盘价在9:30可用
             if 'open' in self.name:
                 return '9:30:00'
-            # 其他日线数据在15:00可用
-            else:
+            # 股票的其他量价数据在15:00可用
+            elif (('high' in self.name) or ('low' in self.name) or ('close' in self.name) or
+                  ('volume' in self.name) or ('amount' in self.name)):
                 return '15:00:00'
-        # 指数的开盘价在9:25可用
+            # 其他日线数据在18:00可用
+            else:
+                return '18:00:00'
         if asset_type == 'IDX':
+            # 指数的开盘价在9:25可用
             if 'open' in self.name:
                 return '9:25:00'
-            # 其他日线数据在15:00可用
-            else:
+            # 其他量价数据在15:00可用
+            elif (('high' in self.name) or ('low' in self.name) or ('close' in self.name) or
+                  ('volume' in self.name) or ('amount' in self.name)):
                 return '15:00:00'
-        # 'nav'类型的基金数据在18:00可用
+            # 其他日线数据在18:00可用
+            else:
+                return '18:00:00'
         if asset_type == 'FD':
+            # 场内基金的开盘价在9:30可用
+            if 'open' in self.name:
+                return '9:30:00'
+            # 其他量价数据在15:00可用
+            elif (('high' in self.name) or ('low' in self.name) or ('close' in self.name) or
+                  ('volume' in self.name) or ('amount' in self.name)):
+                return '15:00:00'
             if 'nav' in self.name:
+                # 'nav'类型的基金数据在18:00可用
                 return '18:00:00'
             else:
-                return '15:00:00'
+                return '18:00:00'
 
-        return '15:00:00'
+        return '18:00:00'
 
     # 真正的顶层数据获取API接口函数
     def get_data_from_source(
