@@ -2742,15 +2742,18 @@ def get_history_panel(
 # =================================================
 # 以下是一些独立的函数, 用于检查和准备历史数据
 # =================================================
-def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=None):
+def check_and_prepare_live_trade_data(op,
+                                      trade_date: Union[str, pd.Timestamp],
+                                      datasource: DataSource,
+                                      live_prices: pd.DataFrame = None) -> dict[str, pd.DataFrame]:
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Parameters
     ----------
     op: Operator
         需要设置数据的Operator对象
-    config: ConfigDict
-        用于设置Operator对象的环境参数变量
+    trade_date: str, pd.Timestamp
+        交易日期
     datasource: DataSource
         用于下载数据的DataSource对象
     live_prices: pd.DataFrame, optional
@@ -2763,10 +2766,6 @@ def check_and_prepare_live_trade_data(op, config, datasource=None, live_prices=N
     hist_ref: HistoryPanel
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
-
-    run_mode = config['mode']
-    if run_mode != 0:
-        raise ValueError(f'run_mode should be 0, but {run_mode} is given!')
 
     raise NotImplementedError
 
@@ -2827,7 +2826,7 @@ def check_and_prepare_backtest_data(op,
         'y':        360.,
     }
     max_multiplier = int(np.ceil(max(time_offset_multipliers.get(dt.freq, 1.) for dt in data_types)))
-    time_window_delta = pd.Timedelta(max_window_length * max_multiplier * 2, 'D')  # TODO, 这里简单乘以3来估算时间窗口长度，未来需要改进
+    time_window_delta = pd.Timedelta(max_window_length * max_multiplier * 2, 'D')
 
     # 通过get_history_data_package函数获取数据类型的原始数据
     hist_data_package = get_history_data_packages(
