@@ -1977,7 +1977,6 @@ class Operator:
         """ 在实盘模式下运行operator"""
         # 进入实时信号生成模式:
         from qteasy.trader import start_trader_ui
-        from qteasy import QT_DATA_SOURCE
         # 实盘运行模式📄支持asset_type = 'E'的情况，因此需要检查并排除其他情况
         if config['asset_type'] != 'E':
             msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
@@ -1991,7 +1990,7 @@ class Operator:
                 init_cash=config['live_trade_init_cash'],
                 init_holdings=config['live_trade_init_holdings'],
                 config=config,
-                datasource=QT_DATA_SOURCE,
+                datasource=datasource,
                 debug=config['live_trade_debug_mode'],
         )
 
