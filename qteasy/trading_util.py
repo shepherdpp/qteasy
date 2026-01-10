@@ -53,7 +53,6 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-# TODO: 这个功能应该利用operator的create_run_schedule()方法来实现，应该直接调用operator的方法
 def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
@@ -83,6 +82,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     task_agenda = []
 
     today = get_current_timezone_datetime().date()
+    tomorrow = today + pd.Timedelta(days=1)
 
     market_open_time_am = config['market_open_time_am']
     market_close_time_am = config['market_close_time_am']
@@ -114,14 +114,6 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
                      pd.Timedelta(minutes=data_source_delay)).strftime('%H:%M:%S')
 
     if is_trade_day:
-        # 添加交易市场开市和收市任务，早晚收盘和午间休市时时产生open_market/close_market任务
-        task_agenda.append((market_open_time, 'open_market'))
-        task_agenda.append((pre_open_time, 'pre_open'))
-        task_agenda.append((sleep_time_am, 'close_market'))
-        task_agenda.append((wakeup_time_pm, 'open_market'))
-        task_agenda.append((market_close_time, 'close_market'))
-        task_agenda.append((post_close_time, 'post_close'))
-
         # 根据config中的live_price_acquire参数，生成获取实时价格的任务
         # 数据获取频率是分钟级别的，根据交易市场的开市时间和收市时间，生成获取实时价格的任务时间
         from qteasy.utilfuncs import next_market_trade_day
@@ -130,7 +122,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
             the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
         else:
             raise ValueError(f'no next trade day of today({today})')
-        run_time_index = trade_time_index(
+        price_filling_time_index = trade_time_index(
                 start=a_trade_day,
                 end=the_next_day,
                 freq=config['live_price_acquire_freq'],
@@ -147,70 +139,61 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
         #  数据库数据的写入实际上是在strategy_run()任务中进行的，同时trader会自动定期隐式执行
         #  update_live_price()任务，因此这里的update_live_price()任务可以不添加？
         # 将实时价格的更新时间添加到任务日程，生成价格更新日程，因为价格更新的任务优先级更低，因此每个任务都推迟5秒执行
-        for t in run_time_index:
+        for t in price_filling_time_index:
             t = (pd.to_datetime(t) + pd.Timedelta(seconds=5)).strftime('%H:%M:%S')
             task_agenda.append((t, 'acquire_live_price'))
 
-        # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
-        for stg_id, stg in operator.get_strategy_id_pairs():
-            timing = stg.run_timing
-            freq = stg.run_freq
-            if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
-                # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
-                run_time_index = trade_time_index(
-                        start=a_trade_day,
-                        end=the_next_day,
-                        freq=freq,
-                        start_am=market_open_time_am,
-                        end_am=market_close_time_am,
-                        include_start_am=True,
-                        include_end_am=True,
-                        start_pm=market_open_time_pm,
-                        end_pm=market_close_time_pm,
-                        include_start_pm=True,
-                        include_end_pm=True,
-                ).strftime('%H:%M:%S').tolist()
-            else:
-                if timing == 'open':
-                    # 'open'表示开盘时运行策略即在开盘时运行
-                    stg_run_time = (pd.to_datetime(market_open_time_am))
-                elif timing == 'close':
-                    # 'close' 表示收盘时运行策略即在收盘时运行
-                    stg_run_time = (pd.to_datetime(market_close_time_pm))
-                else:
-                    # 其他情况，直接使用timing参数, 除非timing参数不是时间字符串，或者timing参数不在交易市场的开市时间内
-                    try:
-                        stg_run_time = pd.to_datetime(timing)
-                    except ValueError:
-                        raise ValueError(f'Invalid strategy_run_timing: {timing}')
-                run_time_index = [stg_run_time.strftime('%H:%M:%S')]
+        # 从Operator对象中直接读取运行时间表
+        operator.prepare_running_schedule(
+                start_date=today,
+                end_date=tomorrow,
+                trade_days_only=False,
+                start_am=market_open_time_am,
+                end_am=market_close_time_am,
+                include_start_am=True,
+                include_end_am=True,
+                start_pm=market_open_time_pm,
+                end_pm=market_close_time_pm,
+                include_start_pm=True,
+                include_end_pm=True,
+        )
+        stg_run_time_index = operator.group_timing_table.index.strftime('%H:%M:%S').tolist()
 
-            # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
-            strategy_open_close_timing_offset = config['strategy_open_close_timing_offset']
-            for idx in range(len(run_time_index)):
-                stg_run_time = pd.to_datetime(run_time_index[idx])
-                market_open_time = pd.to_datetime(market_open_time_am)
-                market_close_time = pd.to_datetime(market_close_time_pm)
-                if stg_run_time <= market_open_time:
-                    # timing 在交易市场的开盘时间或以前，此时调整timing为开盘后1分钟
-                    stg_run_time = market_open_time + pd.Timedelta(minutes=strategy_open_close_timing_offset)
-                    run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+        # 将策略的运行时间添加到任务日程，生成任务日程
+        for signal_index, t in enumerate(stg_run_time_index):
+            task_agenda.append((t, 'run_strategy', signal_index))
+
+        # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
+        open_close_timing_offset = int(config['strategy_open_close_timing_offset'])
+        if open_close_timing_offset > 0:
+            offset_task_agenda = []
+
+            market_open_dt = pd.to_datetime(market_open_time)
+            market_close_dt = pd.to_datetime(market_close_time)
+
+            for task in task_agenda:
+                task_time = pd.to_datetime(task[0])
+                task_type = task[1]
+                if task_type not in ['run_strategy']:
+                    offset_task_agenda.append(task)
                     continue
-                if stg_run_time >= market_close_time:
-                    # timing 在交易市场的收盘时间或以后，此时调整timing为收盘前1分钟
-                    stg_run_time = market_close_time - pd.Timedelta(minutes=strategy_open_close_timing_offset)
-                    run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+                if task_time <= market_open_dt:
+                    task_time = task_time + pd.Timedelta(minutes=open_close_timing_offset)
+                elif task_time >= market_close_dt:
+                    task_time = task_time - pd.Timedelta(minutes=open_close_timing_offset)
+                # 更新任务时间
+                task = (task_time.strftime('%H:%M:%S'),) + task[1:]
+                offset_task_agenda.append(task)
 
-            # 将策略的运行时间添加到任务日程，生成任务日程
-            for t in run_time_index:
-                if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')):
-                    # 如果同时发生的'run_stg'任务已经存在，则修改该任务，将stg_id添加到列表中
-                    task_to_update = [item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')]
-                    task_idx_to_update = task_agenda.index(task_to_update[0])
-                    task_agenda[task_idx_to_update][2].append(stg_id)
-                else:
-                    # 否则，则直接添加任务
-                    task_agenda.append((t, 'run_strategy', [stg_id]))
+            task_agenda = offset_task_agenda
+
+        # 添加交易市场开市和收市任务，早晚收盘和午间休市时时产生open_market/close_market任务
+        task_agenda.append((market_open_time, 'open_market'))
+        task_agenda.append((pre_open_time, 'pre_open'))
+        task_agenda.append((sleep_time_am, 'close_market'))
+        task_agenda.append((wakeup_time_pm, 'open_market'))
+        task_agenda.append((market_close_time, 'close_market'))
+        task_agenda.append((post_close_time, 'post_close'))
 
     # 添加补充DataSource数据库的任务（根据config中的live_trade_daily/weekly/monthly_refill_tables参数）
     daily_refill_tables = config['live_trade_daily_refill_tables']
@@ -226,8 +209,12 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     if today.day == 1 and monthly_refill_tables:  # 每月1号运行
         task_agenda.append((data_source_refilling_time, 'refill', (monthly_refill_tables, 31)))
 
-    # 对任务日程进行排序 （其实排序并不一定需要）
-    task_agenda.sort(key=lambda x: x[0])
+    # 对任务日程进行排序
+    try:
+        task_agenda.sort(key=lambda x: x[0])
+    except:
+        import pdb
+        pdb.set_trace()
 
     return task_agenda
 

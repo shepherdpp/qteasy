@@ -1684,9 +1684,17 @@ class Operator:
                     (group.run_freq[0:2] in ['ME', 'MS', 'QS', 'QE', 'YS', 'YE']):
                 # 运行时间设定为15:00 - close 及 09:30 - open
                 if group.run_timing == 'close':
-                    time_offset = "15:00"
+                    if 'end_pm' in kwargs:
+                        close_time = kwargs['end_pm']  # market_close_time_pm
+                        time_offset = pd.to_datetime(close_time).strftime("%H:%M")
+                    else:
+                        time_offset = "15:00"
                 elif group.run_timing == 'open':
-                    time_offset = "9:30"
+                    if 'start_am' in kwargs:
+                        open_time = kwargs['start_am']  # market_open_time_am
+                        time_offset = pd.to_datetime(open_time).strftime("%H:%M")
+                    else:
+                        time_offset = "9:30"
                 else:
                     time_offset = group.run_timing
 
