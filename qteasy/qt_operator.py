@@ -1673,7 +1673,7 @@ class Operator:
         for group in self._groups:
             if group.run_timing is None or group.run_freq is None:
                 raise ValueError(f"Group {group.name} has no run timing or frequency defined.")
-            if group.run_freq in ['1min', '5min', '15min', '30min', 'h']:
+            if group.run_freq in ['1min', '5min', '15min', '30min', 'h', 'H']:
                 schedule_index = tti(
                         start=start_date,
                         end=end_date,

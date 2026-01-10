@@ -2338,11 +2338,7 @@ class Trader(object):
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         self.send_message('initializing agenda...', debug=True)
-        # 如果不是交易日，直接返回
-        # TODO: 不判断交易日，将交易日判断放到create_daily_task_schedule中进行
-        # if not self.is_trade_day:
-        #     self.send_message('not a trade day, no need to initialize agenda', debug=True)
-        #     return
+
         if self.task_daily_schedule:
             # 如果任务日程非空列表，直接返回
             self.send_message('task agenda is not empty, no need to initialize agenda', debug=True)

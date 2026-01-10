@@ -35,7 +35,7 @@ class TestTrader(unittest.TestCase):
         operator.set_parameter(
                 stg_id='dma',
                 window_length=20,
-                run_freq='H'
+                run_freq='h'
         )
         operator.set_parameter(
                 stg_id='macd',
@@ -1239,85 +1239,88 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.is_trade_day, True)
         ts._initialize_schedule(sim_time)  # should generate complete agenda
         print('\n========generated task agenda before morning market open========\n')
-        print(ts.task_daily_schedule)
+        for task in ts.task_daily_schedule:
+            print(task)
         target_agenda = [
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
-            ('09:31:00', 'run_strategy', ['macd', 'dma']),
+            ('09:31:00', 'run_strategy', 0),
             ('09:45:05', 'acquire_live_price'),
-            ('10:00:00', 'run_strategy', ['macd']),
+            ('10:00:00', 'run_strategy', 1),
             ('10:00:05', 'acquire_live_price'),
             ('10:15:05', 'acquire_live_price'),
-            ('10:30:00', 'run_strategy', ['macd', 'dma']),
+            ('10:30:00', 'run_strategy', 2),
             ('10:30:05', 'acquire_live_price'),
             ('10:45:05', 'acquire_live_price'),
-            ('11:00:00', 'run_strategy', ['macd']),
+            ('11:00:00', 'run_strategy', 3),
             ('11:00:05', 'acquire_live_price'),
             ('11:15:05', 'acquire_live_price'),
-            ('11:30:00', 'run_strategy', ['macd', 'dma']),
+            ('11:30:00', 'run_strategy', 4),
             ('11:30:05', 'acquire_live_price'),
             ('11:35:00', 'close_market'),
             ('12:55:00', 'open_market'),
-            ('13:00:00', 'run_strategy', ['macd', 'dma']),
+            ('13:00:00', 'run_strategy', 5),
             ('13:15:05', 'acquire_live_price'),
-            ('13:30:00', 'run_strategy', ['macd']),
+            ('13:30:00', 'run_strategy', 6),
             ('13:30:05', 'acquire_live_price'),
             ('13:45:05', 'acquire_live_price'),
-            ('14:00:00', 'run_strategy', ['macd', 'dma']),
+            ('14:00:00', 'run_strategy', 7),
             ('14:00:05', 'acquire_live_price'),
             ('14:15:05', 'acquire_live_price'),
-            ('14:30:00', 'run_strategy', ['macd']),
+            ('14:30:00', 'run_strategy', 8),
             ('14:30:05', 'acquire_live_price'),
             ('14:45:05', 'acquire_live_price'),
-            ('15:00:00', 'run_strategy', ['macd', 'dma']),
+            ('15:00:00', 'run_strategy', 9),
             ('15:00:05', 'acquire_live_price'),
             ('15:15:05', 'acquire_live_price'),
-            ('15:29:00', 'run_strategy', ['macd']),
+            ('15:29:00', 'run_strategy', 10),
             ('15:30:00', 'close_market'),
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
-            ('16:00:00', 'refill', ('stock_1min', 1)),
+            ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)),
         ]
         self.assertEqual(ts.task_daily_schedule, target_agenda)
         schedule_string = ts.get_schedule_string()
         print(schedule_string)
-        self.assertEqual(schedule_string[-20:], 'ill  (stock_1min, 1)')
+        self.assertEqual(schedule_string[-20:], '1min, stock_5min, 1)')
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_schedule = []
+        ts._check_trade_day(sim_date)
         ts._initialize_schedule(sim_time)
         print('\n========generated task agenda at 10:35:27========')
-        print(ts.task_daily_schedule)
+        for task in ts.task_daily_schedule:
+            print(task)
         target_agenda = [
             ('09:15:00', 'pre_open'),
             ('09:30:00', 'open_market'),
             ('10:45:05', 'acquire_live_price'),
-            ('11:00:00', 'run_strategy', ['macd']),
+            ('11:00:00', 'run_strategy', 3),
             ('11:00:05', 'acquire_live_price'),
             ('11:15:05', 'acquire_live_price'),
-            ('11:30:00', 'run_strategy', ['macd', 'dma']),
+            ('11:30:00', 'run_strategy', 4),
             ('11:30:05', 'acquire_live_price'),
             ('11:35:00', 'close_market'),
             ('12:55:00', 'open_market'),
-            ('13:00:00', 'run_strategy', ['macd', 'dma']),
+            ('13:00:00', 'run_strategy', 5),
             ('13:15:05', 'acquire_live_price'),
-            ('13:30:00', 'run_strategy', ['macd']),
+            ('13:30:00', 'run_strategy', 6),
             ('13:30:05', 'acquire_live_price'),
             ('13:45:05', 'acquire_live_price'),
-            ('14:00:00', 'run_strategy', ['macd', 'dma']),
+            ('14:00:00', 'run_strategy', 7),
             ('14:00:05', 'acquire_live_price'),
             ('14:15:05', 'acquire_live_price'),
-            ('14:30:00', 'run_strategy', ['macd']),
+            ('14:30:00', 'run_strategy', 8),
             ('14:30:05', 'acquire_live_price'),
             ('14:45:05', 'acquire_live_price'),
-            ('15:00:00', 'run_strategy', ['macd', 'dma']),
+            ('15:00:00', 'run_strategy', 9),
             ('15:00:05', 'acquire_live_price'),
             ('15:15:05', 'acquire_live_price'),
-            ('15:29:00', 'run_strategy', ['macd']),
+            ('15:29:00', 'run_strategy', 10),
             ('15:30:00', 'close_market'),
             ('15:30:05', 'acquire_live_price'),
             ('15:45:00', 'post_close'),
-            ('16:00:00', 'refill', ('stock_1min', 1))
+            ('16:00:00', 'refill', ('stock_1min, stock_5min', 1))
         ]
         self.assertEqual(ts.task_daily_schedule, target_agenda)
         ts.task_queue.empty()  # clear task queue
@@ -1357,10 +1360,10 @@ class TestTrader(unittest.TestCase):
         time.sleep(1)  # wait 1 second to avoid the trader generating agenda again
         ts.task_daily_schedule = [
             (test_sim_times[0].strftime('%H:%M:%S'), 'open_market'),
-            (test_sim_times[1].strftime('%H:%M:%S'), 'run_strategy', ['macd', 'dma']),
+            (test_sim_times[1].strftime('%H:%M:%S'), 'run_strategy', 0),
             (test_sim_times[2].strftime('%H:%M:%S'), 'sleep'),
             (test_sim_times[3].strftime('%H:%M:%S'), 'wakeup'),
-            (test_sim_times[4].strftime('%H:%M:%S'), 'run_strategy', ['macd']),
+            (test_sim_times[4].strftime('%H:%M:%S'), 'run_strategy', 1),
             (test_sim_times[5].strftime('%H:%M:%S'), 'close_market'),
             (test_sim_times[6].strftime('%H:%M:%S'), 'post_close'),
             (test_sim_times[7].strftime('%H:%M:%S'), 'refill', ('index_1min', 1)),
@@ -1368,10 +1371,10 @@ class TestTrader(unittest.TestCase):
         print(f'task agenda manually created: {ts.task_daily_schedule}')
         target_agenda_tasks = [
             ('open_market', ),
-            ('run_strategy', ['macd', 'dma']),
+            ('run_strategy', 0),
             ('sleep', ),
             ('wakeup', ),
-            ('run_strategy', ['macd']),
+            ('run_strategy', 1),
             ('close_market', ),
             ('post_close', ),
             ('refill', ('index_1min', 1)),
