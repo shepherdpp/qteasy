@@ -743,7 +743,7 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=False,
+               parallel=True,
                visual=False)
         print(f'strategy optimization in incremental with multiple sub-idx_range testing')
         qt.run(self.op,
@@ -758,7 +758,7 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=False,
+               parallel=True,
                visual=False)
 
     def test_run_mode_2_incremental_visual(self):
