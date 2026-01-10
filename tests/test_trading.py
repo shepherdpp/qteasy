@@ -1599,7 +1599,9 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
     def test_create_daily_task_agenda(self):
         """ test function create_daily_task_schedule """
-        # test create daily task agenda with only one strategy, run_freq='d', group='close'
+
+        # test create daily task agenda with only one strategy, run_freq='d', only one group
+        print(f'\ntest create daily task agenda with only one strategy, run_freq="d", run_timing="close"\n')
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
         self.assertEqual(stg.run_freq, 'd')
@@ -1611,13 +1613,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am':              '11:30:00',
             'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
+            # 'live_price_acquire_freq':           'h',
             'live_price_acquire_freq':           '15min',
             'live_trade_daily_refill_tables':    'stock_1min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
         agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
         self.assertIn(len(agenda), [26, 27])  # 不同的日期，可能有一个或两个refill事件
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
@@ -1629,17 +1633,15 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[11], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[12], ('13:15:05', 'acquire_live_price'))
         self.assertEqual(agenda[19], ('15:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', 0))
         self.assertEqual(agenda[22], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[23], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[24], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[25], ('16:00:00', 'refill', ('stock_1min', 1)))
 
-        # test create daily task agenda with only one strategy, run_freq='h', group='open'
-        op = qt.Operator(strategies='macd')
-        stg = op.strategies[0]
-        stg.run_freq = 'h'
-        stg.strategy_run_timing = 'open'
+        # test create daily task agenda with only one strategy, run_freq='H', run_timing='open'
+        print(f'\ntest create daily task agenda with only one strategy, run_freq="H", run_timing="open"\n')
+        op = qt.Operator(strategies='macd', run_freq='h', run_timing='open')
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',
@@ -1653,36 +1655,34 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
         agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
         self.assertIn(len(agenda), [31, 32])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd']))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
+        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', 0))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
         self.assertEqual(agenda[3], ('09:45:05', 'acquire_live_price'))
-        self.assertEqual(agenda[6], ('10:30:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[11], ('11:30:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[6], ('10:30:00', 'run_strategy', 1))
+        self.assertEqual(agenda[11], ('11:30:00', 'run_strategy', 2))
         self.assertEqual(agenda[13], ('11:35:00', 'close_market'))
         self.assertEqual(agenda[14], ('12:55:00', 'open_market'))
-        self.assertEqual(agenda[15], ('13:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[19], ('14:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[24], ('15:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[15], ('13:00:00', 'run_strategy', 3))
+        self.assertEqual(agenda[19], ('14:00:00', 'run_strategy', 4))
+        self.assertEqual(agenda[24], ('15:00:00', 'run_strategy', 5))
         self.assertEqual(agenda[27], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[28], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[29], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[30], ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)))
 
-        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', group='//10:30'
-        op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
-        stg = op.strategies[0]
-        stg.run_freq = 'h'
-        stg.run_timing = 'open'
-        stg = op.strategies[1]
-        stg.run_freq = '30min'
-        stg.run_timing = 'open'
-        stg = op.strategies[2]
-        stg.run_freq = 'd'
-        stg.run_timing = '10:30'
+        # test create daily task agenda with multiple strategy groups, run_freq='h'/'30min'/'d', run_timing='//10:30'
+        op = qt.Operator()  # strategies=['macd', 'rsi', 'dma']
+        op.add_strategy('macd', run_timing='open', run_freq='h')
+        op.add_strategy('rsi', run_timing='open', run_freq='30min')
+        op.add_strategy('dma', run_timing='10:30', run_freq='d')
+        print(f'\ntest create daily task agenda with multiple strategy groups, '
+              f'run_freq="h"/"30min"/"d", run_timing="//10:30"\n')
+
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',
@@ -1696,28 +1696,45 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
         agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
+        strategy_lists = op.group_timing_table.copy()
+        strategy_lists.loc[strategy_lists['Group_1'] == 1, 'Group_1'] = 'macd'
+        strategy_lists.loc[strategy_lists['Group_2'] == 1, 'Group_2'] = 'rsi'
+        strategy_lists.loc[strategy_lists['Group_3'] == 1, 'Group_3'] = 'dma'
+
         self.assertIn(len(agenda), [22, 23])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', 0))
+        self.assertEqual(strategy_lists.iloc[0].to_list(), ['macd', 'rsi', 0])
+        self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', 1))
+        self.assertEqual(strategy_lists.iloc[1].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[4], ('10:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[5], ('10:30:00', 'run_strategy', ['macd', 'rsi', 'dma']))
-        self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[5], ('10:30:00', 'run_strategy', 2))
+        self.assertEqual(strategy_lists.iloc[2].to_list(), ['macd', 'rsi', 'dma'])
+        self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', 3))
+        self.assertEqual(strategy_lists.iloc[3].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[7], ('11:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', 4))
+        self.assertEqual(strategy_lists.iloc[4].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[9], ('11:35:00', 'close_market'))
         self.assertEqual(agenda[10], ('12:55:00', 'open_market'))
-        self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', 5))
+        self.assertEqual(strategy_lists.iloc[5].to_list(), ['macd', 'rsi', 0])
+        self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', 6))
+        self.assertEqual(strategy_lists.iloc[6].to_list(), [0, 'rsi', 0])
+        self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', 7))
+        self.assertEqual(strategy_lists.iloc[7].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[14], ('14:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[15], ('14:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[16], ('15:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[15], ('14:30:00', 'run_strategy', 8))
+        self.assertEqual(strategy_lists.iloc[8].to_list(), [0, 'rsi', 0])
+        self.assertEqual(agenda[16], ('15:00:00', 'run_strategy', 9))
+        self.assertEqual(strategy_lists.iloc[9].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[17], ('15:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', 10))
+        self.assertEqual(strategy_lists.iloc[10].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[19], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[20], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[21], ('16:00:00', 'refill', ('stock_1min', 1)))
