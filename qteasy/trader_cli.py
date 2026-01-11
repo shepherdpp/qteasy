@@ -370,7 +370,7 @@ class TraderShell(Cmd):
         'strategies': dict(prog='', description='Show or change strategy parameters',
                            usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
                                  '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
-                                 '[--timing TIMING]'),
+                                 '[--group GROUP]'),
         'schedule':   dict(prog='', description='Show trade agenda',
                            usage='schedule [-h]'),
         'refill':     dict(prog='', description='Refill data to datasource',
@@ -433,7 +433,7 @@ class TraderShell(Cmd):
                        ('--detail', '-d'),
                        ('--set-par', '--set', '-s'),
                        ('--blender', '-b'),
-                       ('--timing', '-t')],
+                       ('--group', '-g')],
         'schedule':   [],
         'refill':     [('tables',),
                        ('--coverage', '-c'),
@@ -587,7 +587,7 @@ class TraderShell(Cmd):
                         'help':    'set blender for strategies'},
                        {'action':  'store',
                         'default': '',
-                        'help':    'The strategy run timing of the strategies whose blender is set'}],
+                        'help':    'The strategy group whose blender is set'}],
         'schedule':   [],
         'refill':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '+',  # nargs='+' will require at least one argument
@@ -2032,7 +2032,7 @@ class TraderShell(Cmd):
         strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
         detail = args.detail
         set_val = [tuple(val_list) for val_list in args.set_val] if args.set_val else []
-        timing = args.timing
+        group = args.group
         blender = args.blender
 
         if not strategies and not blender:
@@ -2055,7 +2055,7 @@ class TraderShell(Cmd):
             return
 
         elif strategies and set_val:
-            # set the parameters of each strategy
+            # update parameter values of each strategy
 
             # count of strategies should match that of set_val
             if len(strategies) != len(set_val):
@@ -2066,7 +2066,8 @@ class TraderShell(Cmd):
                 try:
                     # correct par type before setting
                     op = self.trader.operator
-                    op.set_parameter(stg_id=stg, pars=val)
+                    val = tuple(int(v) for v in val)
+                    op.set_parameter(stg_id=stg, par_values=val)
                     print(f'Parameter {val} has been set to strategy {stg}.')
                 except Exception as e:
                     print(f'Can not set {val} to {stg}, Error: {e}')
@@ -2075,12 +2076,12 @@ class TraderShell(Cmd):
                         traceback.print_exc()
                     return False
 
-        elif timing and blender:
+        elif group and blender:
             try:
-                self.trader.operator.set_blender(blender=blender, run_timing=timing)
-                print(f'Blender {blender} has been set to run timing {timing}')
+                self.trader.operator.set_blender(blender=blender, group_id=group)
+                print(f'Blender {blender} has been set to run timing {group}')
             except Exception as e:
-                print(f'Can not set {blender} to {timing}, Error: {e}')
+                print(f'Can not set {blender} to {group}, Error: {e}')
                 if self.trader.debug:
                     import traceback
                     traceback.print_exc()
