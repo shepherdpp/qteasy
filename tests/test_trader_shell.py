@@ -936,7 +936,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertEqual(tss.trader.operator['macd'].par_values, (43, 44, 45))
 
         print('\ntesting setting blender to timing')
-        self.assertIsNone(tss.do_strategies('-b s0*s1 -t close'))
+        self.assertIsNone(tss.do_strategies('-b s0*s1 -g Group_1'))
 
         print(f'\ntesting getting help and returns False')
         self.assertFalse(tss.do_strategies('-h'))
@@ -948,9 +948,9 @@ class TestTraderShell(unittest.TestCase):
         self.assertFalse(tss.do_strategies('dma -s 1 2 3'))  # out of range pars
         self.assertFalse(tss.do_strategies('dma -s 44 44 44 44'))  # too many pars
         self.assertFalse(tss.do_strategies('dma macd -s 44 44 44'))  # value not match strategy
-        self.assertFalse(tss.do_strategies('-d blender -s 44 44 44'))  # blender without timing
-        self.assertFalse(tss.do_strategies('-d blender -t wrong_timing'))
-        self.assertFalse(tss.do_strategies('-d wrong_blender -t wrong_timing'))
+        self.assertFalse(tss.do_strategies('-d blender -s 44 44 44'))  # blender without group
+        self.assertFalse(tss.do_strategies('-d blender -g wrong_group'))
+        self.assertFalse(tss.do_strategies('-d wrong_blender -g wrong_group'))
 
     def test_command_schedule(self):
         """ test schedule command"""

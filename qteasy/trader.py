@@ -622,8 +622,6 @@ class Trader(object):
             trader_info_dict['cash delivery period'] = self.get_config("cash_delivery_period")["cash_delivery_period"]
             trader_info_dict['stock delivery period'] = \
                 self.get_config("stock_delivery_period")["stock_delivery_period"]
-            trader_info_dict['buy_fix'] = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
-            trader_info_dict['sell_fix'] = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
             trader_info_dict['buy_rate'] = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
             trader_info_dict['sell_rate'] = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
             trader_info_dict['buy_min'] = float(self.get_config('cost_min_buy')['cost_min_buy'])
