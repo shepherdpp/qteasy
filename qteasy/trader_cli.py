@@ -22,6 +22,7 @@ import time
 import numpy as np
 import pandas as pd
 
+from typing import Optional
 from cmd import Cmd
 from threading import Timer
 from rich.text import Text
@@ -136,16 +137,12 @@ def pack_status_info(trader_info, width=80):
     sell_fix = trader_info["sell_fix"]
     buy_rate = trader_info["buy_rate"]
     sell_rate = trader_info["sell_rate"]
-    buy_min = trader_info["buy_min"]
-    sell_min = trader_info["sell_min"]
 
     if (buy_fix > 0) or (sell_fix > 0):
         trader_info += f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}' \
                        f'¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}\n'
     if (buy_rate > 0) or (sell_rate > 0):
         trader_info += f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}\n'
-    if (buy_min > 0) or (sell_min > 0):
-        trader_info += f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}\n'
     info_str += f'{"Market time (open/close)":<{semi_width - 20}}' \
                    f'{trader_info["market_open_am"]} / ' \
                    f'{trader_info["market_close_pm"]}\n'
@@ -685,7 +682,7 @@ class TraderShell(Cmd):
     def filter_order_details(self,
                              order_details: pd.DataFrame,
                              *,
-                             symbols: [str] = None,
+                             symbols: list[str] = None,
                              status: str = None,
                              order_time: str = None,
                              order_type: str = None,
@@ -817,7 +814,7 @@ class TraderShell(Cmd):
                     raise RuntimeError(f'Error: failed to add argument {arg} to parser for command {command}\n'
                                        f'pars: {arg_property}')
 
-    def parse_args(self, command, args=None) -> argparse.Namespace or None:
+    def parse_args(self, command, args=None) -> Optional[argparse.Namespace]:
         """ 解析命令行参数
 
         Parameters
