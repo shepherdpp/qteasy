@@ -78,6 +78,41 @@ UNIT_TO_TABLE = {
 }
 
 
+def run_sync_task(task_func, *args) -> None:
+    """ 以同步方式执行任务
+
+    Parameters
+    ----------
+    task_func: func
+        任务名称
+    *args: tuple
+        任务参数
+    """
+
+    if args:
+        task_func(*args)
+    else:
+        task_func()
+
+
+def run_async_task(task_func, *args) -> None:
+    """ 以异步方式执行任务
+
+    Parameters
+    ----------
+    task_func: func
+        任务名称
+    *args: tuple
+        任务参数
+    """
+    from threading import Thread
+    if args:
+        t = Thread(target=task_func, args=args, daemon=True)
+    else:
+        t = Thread(target=task_func, daemon=True)
+    t.start()
+
+
 class Trader(object):
     """ Trader是交易系统的核心，它负责调度交易任务，根据交易日历和策略规则生成交易订单并提交给Broker
 
@@ -144,7 +179,21 @@ class Trader(object):
         'available_cash',  # 20, 变动后的可用现金
     ]
 
-    def __init__(self, account_id, operator, broker, config, datasource, debug=False):
+    def __init__(self,
+                 operator: Operator,
+                 account_id: int,
+                 broker: Broker,
+                 datasource: DataSource,
+                 asset_pool: Union[str, list],
+                 asset_type: str = 'E',
+                 time_zone: str = 'local',
+                 exchange: str = 'SSE',
+                 live_price_channel: str = 'tushare',
+                 live_price_freq: str = '1min',
+                 benchmark_asset: str = '000300.SH',
+                 live_sys_logger: logging.Logger = None,
+                 config: ConfigDict = None,
+                 debug=False):
         """ 初始化Trader
 
         Parameters
@@ -155,8 +204,6 @@ class Trader(object):
             交易员对象，包含所有的交易策略，管理交易策略，控制策略的运行方式和合并方式
         broker: Broker
             交易所对象，接受交易订单并返回交易结果
-        config: dict
-            交易系统的配置信息
         datasource: DataSource
             数据源对象，从数据源获取数据
         debug: bool, default False
@@ -169,8 +216,6 @@ class Trader(object):
             err = TypeError(f'operator must be Operator, got {type(operator)} instead')
         elif not isinstance(broker, Broker):
             err = TypeError(f'broker must be Broker, got {type(broker)} instead')
-        elif not isinstance(config, dict):
-            err = TypeError(f'config must be dict, got {type(config)} instead')
         elif not isinstance(datasource, DataSource):
             err = TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
@@ -184,8 +229,6 @@ class Trader(object):
         self._config.update(QT_CONFIG.copy())
         self._config.update(config)
         self._datasource = datasource
-        asset_pool = self._config['asset_pool']
-        asset_type = self._config['asset_type']
         if isinstance(asset_pool, str):
             asset_pool = str_to_list(asset_pool)
         self._asset_pool = asset_pool
@@ -195,28 +238,28 @@ class Trader(object):
         self.message_queue = Queue()
 
         self.task_daily_schedule = []
-        self.time_zone = config['time_zone']
+        self.time_zone = time_zone
         self.init_datetime = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
 
-        self.next_task = ''
-        self.count_down_to_next_task = 0
+        self.next_task = ''  # TODO: make this a dynamic property
+        self.count_down_to_next_task = 0  # TODO: make this a dynamic property
 
-        self.is_trade_day = False
         self.is_market_open = False
         self._status = 'stopped'
         self._prev_status = None
 
-        self.live_price_channel = self._config['live_price_acquire_channel']
-        self.live_price_freq = self._config['live_price_acquire_freq']
+        self.exchange = exchange
+        self.live_price_channel = live_price_channel
+        self.live_price_freq = live_price_freq
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
-        self.watched_price_refresh_interval = self._config['live_price_acquire_freq']
+        self.watched_price_refresh_interval = live_price_freq
         self.watched_prices = None  # 用于存储被监视的股票的最新价格，用于监视价格变动
-        benchmark_list = self._config['benchmark_asset']
+        benchmark_list = benchmark_asset
         if isinstance(benchmark_list, str):
             benchmark_list = str_to_list(benchmark_list)
         self.watch_list = benchmark_list + self._asset_pool
 
-        self.live_sys_logger = None
+        self.live_sys_logger = live_sys_logger
 
         self.account = get_account(self.account_id, data_source=self._datasource)
 
@@ -381,6 +424,25 @@ class Trader(object):
     def break_point_file_exists(self) -> bool:
         """ 返回交易设置文件是否存在 """
         return os.path.exists(break_point_file_path_name(self.account_id, self.datasource))
+
+    @property
+    def is_trade_day(self, current_date=None) -> None:
+        """ 检查当前日期是否是交易日  TODO: make this method a property of Trader class self.is_trade_day
+
+        Parameters
+        ----------
+        current_date: datetime.date, optional
+            当前日期，默认为None，即当前日期为今天，指定日期用于测试
+
+        Returns
+        -------
+        None
+        """
+        if current_date is None:
+            current_date = self.get_current_tz_datetime().date()  # 产生本地时间
+        from qteasy.utilfuncs import is_market_trade_day
+
+        return is_market_trade_day(current_date, self.exchange)
 
     # ================== methods ==================
     def get_current_tz_datetime(self) -> pd.Timestamp:
@@ -1760,7 +1822,6 @@ class Trader(object):
         group_timing = operator.group_timing_table.iloc[step_index].values
         group_count = len(operator.groups)
         groups_to_run = [operator.groups_by_index[i] for i in range(group_count) if group_timing[i]]
-        signal_type = groups_to_run[0].signal_type
 
         for group in groups_to_run:
             for strategy in group.members:
@@ -2159,104 +2220,15 @@ class Trader(object):
 
         task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price', 'run_strategy']  # ‘proces_result’ was in the list before
-        # TODO: 观察改进效果
-        #  这里将'process_result'任务从new_thread_tasks中移除，因为process_result任务不能在单独的线程
-        #  中运行，因为如果同时有多个交易结果需要处理，可能会导致多个数据被同时写入数据库，引起数据冲突导致
-        #  数据结果不一致。这种不一致现在在一个订单分批同时成交时观察到了：当一个500股的买入订单分两批成交，
-        #  第一批300股，第二批200股时，实际记录到数据库中的交易结果只有第二次成交记录，第一次成交记录丢失。
-        #  从而引起数据混乱。现在修改后待观察是否还会出现这种情况。
-        if (not run_in_main_thread) and (task in new_thread_tasks):
-            from threading import Thread
-            if args:
-                t = Thread(target=task_func, args=args, daemon=True)
-            else:
-                t = Thread(target=task_func, daemon=True)
-            self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
-            t.start()
+        async_tasks = ['acquire_live_price', 'run_strategy']
+        if (not run_in_main_thread) and (task in async_tasks):
+            self.send_message(f'will run async task: {task} with args: {args}', debug=True)
+            run_async_task(task_func, *args)
         else:
-            self.send_message(f'running task: {task} with args: {args}', debug=True)
-            if args:
-                task_func(*args)
-            else:
-                task_func()
-
-    def run_async_task(self, task, *args) -> None:
-        """ 以异步方式执行任务
-
-        Parameters
-        ----------
-        task: str
-            任务名称
-        *args: tuple
-            任务参数
-        """
-
-        available_tasks = {
-            'pre_open':           self._pre_open,
-            'open_market':        self._market_open,
-            'close_market':       self._market_close,
-            'post_close':         self._post_close,
-            'run_strategy':       self._run_strategy,
-            'process_result':     self._process_result,
-            'acquire_live_price': self._update_live_price,
-            # 'change_date':        self._change_date,
-            'start':              self._start,
-            'stop':               self._stop,
-            'sleep':              self._sleep,
-            'wakeup':             self._wakeup,
-            'pause':              self._pause,
-            'resume':             self._resume,
-            'refill':             self._refill,
-        }
-
-        if task is None:
-            return
-        if not isinstance(task, str):
-            err = ValueError(f'task must be a string, got {type(task)} instead.')
-            raise err
-
-        if task not in available_tasks.keys():
-            err = ValueError(f'Invalid task name: {task}')
-            raise err
-
-        task_func = available_tasks[task]
-
-        async_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
-
-        if task not in async_tasks:
-            err = ValueError(f'Invalid task name: {task}, only the following tasks can be run asynchronously: '
-                             f'{async_tasks}')
-            raise err
-
-        from threading import Thread
-        if args:
-            t = Thread(target=task_func, args=args, daemon=True)
-        else:
-            t = Thread(target=task_func, daemon=True)
-        self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
-        t.start()
+            self.send_message(f'running sync task: {task} with args: {args}', debug=True)
+            run_sync_task(task_func, *args)
 
     # =============== internal methods =================
-
-    def _check_trade_day(self, current_date=None) -> None:
-        """ 检查当前日期是否是交易日
-
-        Parameters
-        ----------
-        current_date: datetime.date, optional
-            当前日期，默认为None，即当前日期为今天，指定日期用于测试
-
-        Returns
-        -------
-        None
-        """
-        if current_date is None:
-            current_date = self.get_current_tz_datetime().date()  # 产生本地时间
-        from qteasy.utilfuncs import is_market_trade_day
-        # exchange = self._config['exchange']  # TODO: should we add exchange to config?
-        exchange = 'SSE'
-        self.is_trade_day = is_market_trade_day(current_date, exchange)
 
     def _add_task_to_queue(self, task) -> None:
         """ 添加任务到任务队列
