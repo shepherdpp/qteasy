@@ -55,14 +55,28 @@ class TestTrader(unittest.TestCase):
             'stock_delivery_period': 0,
             'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
             'asset_type':           'E',
-            'PT_buy_threshold':     0.05,
-            'PT_sell_threshold':    0.05,
+            'pt_buy_threshold':     0.05,
+            'pt_sell_threshold':    0.05,
             'allow_sell_short':     False,
             'invest_start':         '2018-01-01',
             'opti_start':           '2018-01-01',
             'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
+        }
+        trader_kwargs = {
+            'market_open_time_am':   '09:30:00',
+            'market_close_time_pm':  '15:30:00',
+            'market_open_time_pm':   '13:00:00',
+            'market_close_time_am':  '11:30:00',
+            'exchange':              'SSE',
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+            'asset_pool':            '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+            'asset_type':            'E',
+            'pt_buy_threshold':      0.05,
+            'pt_sell_threshold':     0.05,
+            'allow_sell_short':      False,
         }
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
@@ -73,17 +87,6 @@ class TestTrader(unittest.TestCase):
                 file_loc=data_test_dir,
                 allow_drop_table=True,
         )
-        # from qteasy import QT_CONFIG, QT_DATA_SOURCE
-        # test_ds = DataSource(
-        #         'db',
-        #         host=QT_CONFIG['test_db_host'],
-        #         port=QT_CONFIG['test_db_port'],
-        #         user=QT_CONFIG['test_db_user'],
-        #         password=QT_CONFIG['test_db_password'],
-        #         db_name=QT_CONFIG['test_db_name'],
-        #         allow_drop_table=True,
-        # )
-        # test_ds.reconnect()
         # 清空测试数据源中的所有相关表格数据
         for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results',
                       'stock_daily']:
@@ -152,9 +155,9 @@ class TestTrader(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config.copy(),
                 datasource=test_ds,
                 debug=False,
+                **trader_kwargs,
         )
         self.ts.renew_trade_log_file()
         self.ts.init_system_logger()
@@ -289,7 +292,7 @@ class TestTrader(unittest.TestCase):
         print('generated execution result and delivered results')
         # order 8 is canceled
         cancel_order(8, test_ds, delivery_config)
-        deliver_results = process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        deliver_results = process_account_delivery(account_id=1, data_source=test_ds)
 
         print('creating Trader object...')
         # 生成Trader对象
@@ -297,9 +300,9 @@ class TestTrader(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config,
                 datasource=test_ds,
                 debug=False,
+                **trader_kwargs,
         )
         self.ts.init_trade_log_file()
         self.ts.init_system_logger()
