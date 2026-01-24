@@ -67,4 +67,4 @@ if __name__ == '__main__':
             live_trade_broker_params=None,
     )
 
-    op.run()
+    qt.run(op)

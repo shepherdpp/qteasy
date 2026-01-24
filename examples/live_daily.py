@@ -40,9 +40,7 @@ if __name__ == '__main__':
     beta = qt.get_built_in_strategy('finance')
 
     beta.run_freq = 'd'  # 每日运行
-    beta.data_types = 'pe'  # 数据类型为市盈率
-    beta.data_freq = 'd'  # 日频数据
-    beta.window_length = 20  # 数据窗口长度
+    beta.data_types = qt.StgData('pe', freq='d', asset_type='E', window_length=20),  # 数据类型为市盈率
     beta.sort_ascending = True  # 优先选择市盈率较低的股票
     beta.condition = 'between'  # 筛选出市盈率介于某两个值之间的股票，避免选中市盈率过高或过低
     beta.lbound = 1.0  # 市盈率下限
@@ -80,4 +78,4 @@ if __name__ == '__main__':
             watched_price_refresh_interval=10,
     )
 
-    op.run()
+    qt.run(op)
