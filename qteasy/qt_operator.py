@@ -1973,6 +1973,64 @@ class Operator:
             for result in self.run_strategy(step):
                 yield result
 
+    # ================= High level running functions ===================
+
+    def run(self, config, datasource=None, logger=None):
+        """ 根据配置参数运行operator，支持实盘和回测两种模式
+
+        Parameters
+        ----------
+        config: dict
+            运行配置参数字典
+        datasource: DataSource, optional
+            数据源对象，默认为None，表示使用全局默认数据源
+        logger: Logger, optional
+            日志记录器对象，默认为None，表示不使用日志记录器
+
+        Returns
+        -------
+        backtest_result: BacktestResult, optional
+            如果运行模式为回测，则返回回测结果对象，包含回测的各种结果数据
+            如果运行模式为实盘，则不返回任何结果
+        """
+        run_mode = config['mode']
+
+        if run_mode == 0 or run_mode == 'live':
+            # 进入实盘交易模式，获取实时行情数据，生成交易信号并执行交易
+            return self.run_live_trade(
+                    config=config,
+                    datasource=datasource,
+                    logger=logger,
+            )
+
+        elif run_mode == 1 or run_mode == 'backtest':
+            # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
+            return self.run_backtest(
+                    config=config,
+                    datasource=datasource,
+                    logger=logger,
+            )
+
+        elif run_mode == 2 or run_mode == 'optimize':
+            # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
+            return self.run_optimization(
+                    config=config,
+                    datasource=datasource,
+                    logger=logger,
+            )
+
+        elif run_mode == 3 or run_mode == 'predict':
+            # 进入预测评价模式，使用随机生成的历史数据对策略进行性能预测评价
+
+            return self.run_prediction(
+                    config=config,
+                    datasource=datasource,
+                    logger=logger,
+            )
+
+        else:
+            raise ValueError(f'Invalid run mode: {run_mode}')
+
     def run_live_trade(self, config, datasource=None, logger=None):
         """ 在实盘模式下运行operator"""
         # 进入实时信号生成模式:
@@ -2293,5 +2351,6 @@ class Operator:
 
         return optimizer.result_pool
 
-    def run_prediction(self, config):
+    def run_prediction(self, config, datasource=None, logger=None):
         """ 在与测模式下运行operator"""
+        raise NotImplementedError

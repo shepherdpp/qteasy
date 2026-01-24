@@ -1476,36 +1476,10 @@ def run(op: Operator, **kwargs):
     config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
 
-    # 赋值给参考数据和运行模式的全局变量
-    run_mode = config['mode']
-
-    if run_mode == 0 or run_mode == 'live':
-        # 进入实盘交易模式，获取实时行情数据，生成交易信号并执行交易
-        return op.run_live_trade(
-                config=config,
-        )
-
-    elif run_mode == 1 or run_mode == 'backtest':
-        # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
-        return op.run_backtest(
-                config=config,
-                datasource=qteasy.QT_DATA_SOURCE,
-                logger=qteasy.logger_core,
-        )
-
-    elif run_mode == 2 or run_mode == 'optimize':
-        # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
-        return op.run_optimization(
-                config=config,
-                datasource=qteasy.QT_DATA_SOURCE,
-                logger=qteasy.logger_core,
-        )
-
-    elif run_mode == 3 or run_mode == 'predict':
-        # 进入预测评价模式，使用随机生成的历史数据对策略进行性能预测评价
-
-        return op.run_prediction(
-                config=config,
-        )
+    op.run(
+            config=config,
+            datasource=qteasy.QT_DATA_SOURCE,
+            logger=qteasy.logger_core,
+    )
 
     return None
