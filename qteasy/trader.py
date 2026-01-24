@@ -188,11 +188,24 @@ class Trader(object):
                  asset_type: str = 'E',
                  time_zone: str = 'local',
                  exchange: str = 'SSE',
+                 market_open_time_am: str = '09:30:00',
+                 market_close_time_am: str = '11:30:00',
+                 market_open_time_pm: str = '13:00:00',
+                 market_close_time_pm: str = '15:00:00',
                  live_price_channel: str = 'tushare',
                  live_price_freq: str = '1min',
                  benchmark_asset: str = '000300.SH',
                  live_sys_logger: logging.Logger = None,
-                 config: ConfigDict = None,
+                 cost_params: np.ndarray = None,
+                 pt_buy_threshold: float = 0.02,
+                 pt_sell_threshold: float = 0.02,
+                 allow_sell_short: bool = False,
+                 trade_batch_size: int = 100,
+                 sell_batch_size: int = 1,
+                 long_position_limit: float = 1.0,
+                 short_position_limit: float = 0.0,
+                 stock_delivery_period: int = 1,
+                 cash_delivery_period: int = 0,
                  debug=False):
         """ 初始化Trader
 
@@ -225,9 +238,9 @@ class Trader(object):
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = ConfigDict()
-        self._config.update(QT_CONFIG.copy())
-        self._config.update(config)
+        # self._config = ConfigDict()
+        # self._config.update(QT_CONFIG.copy())
+        # self._config.update(config)
         self._datasource = datasource
         if isinstance(asset_pool, str):
             asset_pool = str_to_list(asset_pool)
@@ -247,8 +260,25 @@ class Trader(object):
         self.is_market_open = False
         self._status = 'stopped'
         self._prev_status = None
-
+        # ---------------- trade market related -----------------
         self.exchange = exchange
+        self.cost_params = cost_params
+        self.pt_buy_threshold = pt_buy_threshold
+        self.pt_sell_threshold = pt_sell_threshold
+        self.allow_sell_short = allow_sell_short
+        self.trade_batch_size = trade_batch_size
+        self.sell_batch_size = sell_batch_size
+        self.long_position_limit = long_position_limit
+        self.short_position_limit = short_position_limit
+        self.stock_delivery_period = stock_delivery_period
+        self.cash_delivery_period = cash_delivery_period
+
+        self.market_open_time_am = market_open_time_am
+        self.market_close_time_am = market_close_time_am
+        self.market_open_time_pm = market_open_time_pm
+        self.market_close_time_pm = market_close_time_pm
+
+        # ---------------- live price related -----------------
         self.live_price_channel = live_price_channel
         self.live_price_freq = live_price_freq
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
@@ -389,7 +419,11 @@ class Trader(object):
 
     @property
     def config(self) -> dict:
-        return self._config
+        """ create trader related config properties, not the complete
+        QT_CONFIG to prevent from changing qt config in trader"""
+        # TODO: create a config dict with related properties only
+        # return self._config
+        raise NotImplementedError
 
     @property
     def trade_log_file_is_valid(self) -> bool:
@@ -426,8 +460,8 @@ class Trader(object):
         return os.path.exists(break_point_file_path_name(self.account_id, self.datasource))
 
     @property
-    def is_trade_day(self, current_date=None) -> None:
-        """ 检查当前日期是否是交易日  TODO: make this method a property of Trader class self.is_trade_day
+    def is_trade_day(self, current_date=None) -> bool:
+        """ 检查当前日期是否是交易日
 
         Parameters
         ----------
@@ -458,18 +492,18 @@ class Trader(object):
     def get_config(self, key=None) -> dict:
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
-            return {key: self._config.get(key)}
+            return {key: self.config.get(key)}
         else:
-            return self._config
+            return self.config
 
     def update_config(self, key=None, value=None) -> Optional[dict]:
         """ 更新交易系统的配置信息 """
-        if key not in self._config:
+        if key not in self.config:
             return None
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
-        _update_config_kwargs(self._config, new_kwarg, raise_if_key_not_existed=True)
-        return self._config[key]
+        _update_config_kwargs(self.config, new_kwarg, raise_if_key_not_existed=True)
+        return self.config[key]
 
     def get_schedule_string(self, rich_form=True) -> str:
         """ 返回当前的任务日程，以DataFrame.to_string()的形式返回
@@ -573,7 +607,6 @@ class Trader(object):
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
                 # TODO: move these operations to a task "change_date"
                 if current_date != pre_date:
-                    self._check_trade_day()
                     self._initialize_schedule(current_time)
 
                 # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
@@ -1728,8 +1761,9 @@ class Trader(object):
             #     self.send_message('Loaded broker from break point!')
 
             config = break_point.get('config', None)
-            if config:
-                self._config.update(config)
+            if config and isinstance(config, dict):
+                for key, value in config.items():
+                    self.update_config(key=key, value=value)
                 self.send_message('Loaded configurations from break point!')
         else:
             self.send_message('No break point found, will using default configurations...')
@@ -1737,7 +1771,6 @@ class Trader(object):
         # 初始化trader的状态，初始化任务计划
         self.status = 'sleeping'
         self.send_message('Checking trade day and initializing schedule...')
-        self._check_trade_day()
         self._initialize_schedule()
 
         # 启动broker
@@ -1810,7 +1843,7 @@ class Trader(object):
         available_amounts = self.account_positions['available_qty']
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
-        config = self._config
+        # config = self._config
 
         today = self.get_current_tz_datetime().strftime('%Y-%m-%d')
 
@@ -1875,7 +1908,14 @@ class Trader(object):
                     own_cash=own_cash,
                     available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
                     available_cash=available_cash,
-                    config=config
+                    cost_params=self.cost_params,
+                    pt_buy_threshold=self.pt_buy_threshold,
+                    pt_sell_threshold=self.pt_sell_threshold,
+                    allow_sell_short=self.allow_sell_short,
+                    trade_batch_size=self.trade_batch_size,
+                    sell_batch_size=self.sell_batch_size,
+                    long_position_limit=self.long_position_limit,
+                    short_position_limit=self.short_position_limit,
             )
             names = get_symbol_names(self._datasource, symbols)
             self.send_message(f'generated trade signals:\n'
@@ -1964,8 +2004,8 @@ class Trader(object):
         deliver_result = deliver_trade_result(
                 result_id=result_id,
                 account_id=self.account_id,
-                stock_delivery_period=self._config['stock_delivery_period'],
-                cash_delivery_period=self._config['cash_delivery_period'],
+                stock_delivery_period=self.stock_delivery_period,
+                cash_delivery_period=self.cash_delivery_period,
                 data_source=self._datasource,
         )
 
@@ -1986,7 +2026,6 @@ class Trader(object):
 
         self.send_message(f'Checking Trader and Broker connections...')
         datasource = self._datasource
-        config = self._config
         operator = self._operator
 
         self.send_message(f'Reconnecting to datasource...')
@@ -2003,7 +2042,6 @@ class Trader(object):
         refill_missing_datasource_data(
                 operator=operator,
                 trader=self,
-                config=config,
                 datasource=datasource,
         )
 
@@ -2012,7 +2050,8 @@ class Trader(object):
         delivery_results = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
-                config=self._config,
+                stock_delivery_period=self.stock_delivery_period,
+                cash_delivery_period=self.cash_delivery_period,
         )
 
         # 生成交割结果信息推送到信息队列
@@ -2313,16 +2352,20 @@ class Trader(object):
 
         self.task_daily_schedule = create_daily_task_schedule(
                 operator=self.operator,
-                config=self._config,
                 is_trade_day=self.is_trade_day,
+                market_open_time_am=self.market_open_time_am,
+                market_close_time_am=self.market_close_time_am,
+                market_open_time_pm=self.market_open_time_pm,
+                market_close_time_pm=self.market_close_time_pm,
+                live_price_frequency=self.live_price_freq
         )
         self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}',
                           debug=True)
         # 根据当前时间删除过期的任务
-        moa = pd.to_datetime(self._config['market_open_time_am']).time()
-        mca = pd.to_datetime(self._config['market_close_time_am']).time()
-        moc = pd.to_datetime(self._config['market_open_time_pm']).time()
-        mcc = pd.to_datetime(self._config['market_close_time_pm']).time()
+        moa = pd.to_datetime(self.market_open_time_am).time()
+        mca = pd.to_datetime(self.market_close_time_am).time()
+        moc = pd.to_datetime(self.market_open_time_pm).time()
+        mcc = pd.to_datetime(self.market_close_time_pm).time()
         if current_time < moa:
             # before market morning open, keep all tasks
             self.send_message('before market morning open, keeping all tasks', debug=True)
@@ -2511,7 +2554,6 @@ def start_trader_ui(
             account_id=account_id,
             operator=operator,
             broker=broker,
-            config=config,
             datasource=datasource,
             debug=debug,
     )
@@ -2521,7 +2563,6 @@ def start_trader_ui(
     refill_missing_datasource_data(
             operator=operator,
             trader=trader,
-            config=config,
             datasource=datasource,
     )
 
@@ -2537,7 +2578,9 @@ def start_trader_ui(
         raise err
 
 
-def refill_missing_datasource_data(operator, trader, config, datasource) -> None:
+def refill_missing_datasource_data(operator,
+                                   trader,
+                                   datasource) -> None:
     """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
 
     在trader运行过程中，为了避免数据缺失，检查当前Datasource中的数据是否已经填充到最新日期，
@@ -2549,8 +2592,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
         Operator交易员对象
     trader: Trader
         Trader交易对象
-    config: qt.Config
-        Config配置对象
     datasource: qt.Datasource
         Datasource数据源对象
 
@@ -2562,7 +2603,7 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     # find out datasource availabilities, refill data source if table data not available
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
-    asset_types = config['asset_type']
+    asset_types = trader.asset_type
     if isinstance(asset_types, str):
         asset_types = str_to_list(asset_types)
     related_tables = get_tables_by_dtypes(
@@ -2587,13 +2628,10 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
-        if isinstance(config['asset_pool'], str):
-            symbol_list = str_to_list(config['asset_pool'])
-        else:
-            symbol_list = config['asset_pool'].copy()  # to prevent from changing the config
+        symbol_list = trader.asset_pool.copy()  # to prevent from changing the config
 
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
-        asset_types = config['asset_type']
+        asset_types = trader.asset_type
         if 'IDX' not in asset_types:
             # add index to make sure indices are downloaded
             asset_types += ', IDX'

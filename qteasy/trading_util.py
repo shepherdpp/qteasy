@@ -53,7 +53,15 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-def create_daily_task_schedule(operator, config=None, is_trade_day=True):
+def create_daily_task_schedule(operator,
+                               is_trade_day: bool = True,
+                               exchange_market: str = 'SSE',
+                               market_open_time_am: str = '09:30:00',
+                               market_close_time_am: str = '11:30:00',
+                               market_open_time_pm: str = '13:00:00',
+                               market_close_time_pm: str = '15:00:00',
+                               live_price_frequency: str = '1min',
+                               ) -> list[tuple]:
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
     每日任务日程包括含 sleep / wake_up / run_stg 等所有有效任务类型的任务列表，
@@ -63,10 +71,20 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     ----------
     operator: Operator
         交易策略的Operator对象
-    config: dict, optional
-        qteasy的配置环境变量, 如果为None, 则使用qteasy.QT_CONFIG
     is_trade_day: bool, optional
         是否是交易日, 默认为True
+    exchange_market: str, optional, default 'SSE'
+        交易市场, 默认为'SSE'
+    market_open_time_am: str, optional, default '09:30:00'
+        交易市场上午开盘时间, 格式为'HH:MM:SS'
+    market_close_time_am: str, optional, default '11:30:00'
+        交易市场上午收盘时间, 格式为'HH:MM:SS'
+    market_open_time_pm: str, optional, default '13:00:00'
+        交易市场下午开盘时间, 格式为'HH:MM:SS'
+    market_close_time_pm: str, optional, default '15:00:00'
+        交易市场下午收盘时间, 格式为'HH:MM:SS'
+    live_price_frequency: str, optional, default '1min'
+        实时价格获取频率, 格式为pandas的时间频率字符串, 如'1min', '5min', '15min'等
 
     Returns
     -------
@@ -76,20 +94,11 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     # 检查输入数据的类型是否正确
     if not isinstance(operator, Operator):
         raise TypeError(f'operator must be an Operator object, got {type(operator)} instead.')
-    if not isinstance(config, dict):
-        raise TypeError(f'config must be a dict object, got {type(config)} instead.')
 
     task_agenda = []
 
     today = get_current_timezone_datetime().date()
     tomorrow = today + pd.Timedelta(days=1)
-
-    market_open_time_am = config['market_open_time_am']
-    market_close_time_am = config['market_close_time_am']
-    market_open_time_pm = config['market_open_time_pm']
-    market_close_time_pm = config['market_close_time_pm']
-    # exchange_market = config['exchange']
-    exchange_market = 'SSE'
 
     # 调整任务时间，开盘任务在开盘时执行，收盘任务在收盘时执行，sleep和wakeup任务在开盘前后5分钟执行
     # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的
@@ -125,7 +134,7 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
         price_filling_time_index = trade_time_index(
                 start=a_trade_day,
                 end=the_next_day,
-                freq=config['live_price_acquire_freq'],
+                freq=live_price_frequency,
                 start_am=market_open_time_am,
                 end_am=market_close_time_am,
                 include_start_am=False,
@@ -229,7 +238,15 @@ def parse_trade_signal(signals,
                        own_cash,
                        available_amounts=None,
                        available_cash=None,
-                       config=None):
+                       cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
+                       pt_buy_threshold: float = 0.0,
+                       pt_sell_threshold: float = 0.0,
+                       allow_sell_short: bool = False,
+                       trade_batch_size: int = 0,
+                       sell_batch_size: int = 0,
+                       long_position_limit: float = 1.0,
+                       short_position_limit: float = -1.0,
+                       ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易订单元素，包括
     资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
@@ -251,8 +268,27 @@ def parse_trade_signal(signals,
         股票可用持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
     available_cash: float
         账户可用资金总额
-    config: dict
-        交易信号的配置
+    cost_params: np.ndarray, default=get_cost_params()
+        交易成本参数, 一个长度为5的数组，包含以下内容：
+        [0] - buy_rate: float, 交易成本：固定买入费率
+        [1] - sell_rate: float, 交易成本：固定卖出费率
+        [2] - buy_min: float, 交易成本：最低买入费用
+        [3] - sell_min: float, 交易成本：最低卖出费用
+        [4] - slippage: float, 交易成本：滑点
+    pt_buy_threshold: float, default=0.0
+        PT买入阈值
+    pt_sell_threshold: float, default=0.0
+        PT卖出阈值
+    allow_sell_short: bool, default=False
+        是否允许卖空
+    trade_batch_size: int, default=0
+        买入交易批量大小
+    sell_batch_size: int, default=0
+        卖出交易批量大小
+    long_position_limit: float, default=1.0
+        多头持仓限制
+    short_position_limit: float, default=-1.0
+        空头持仓限制
 
     Returns
     -------
@@ -264,7 +300,6 @@ def parse_trade_signal(signals,
         quoted_prices: list of float, 交易信号对应的交易价格
     """
 
-    # TODO: 还需要考虑交易批量的限制，如只能买卖整数股或整百股等
     # 处理optional参数:
     # 如果没有提供可用资金和持仓数量，使用当前的资金和持仓数量
     if available_amounts is None:
@@ -272,35 +307,22 @@ def parse_trade_signal(signals,
     if available_cash is None:
         available_cash = own_cash
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
-    if config is None:
-        from qteasy import QT_CONFIG
-        config = {
-            'PT_buy_threshold': QT_CONFIG['PT_buy_threshold'],
-            'PT_sell_threshold': QT_CONFIG['PT_sell_threshold'],
-            'allow_sell_short': QT_CONFIG['allow_sell_short'],
-            'cash_decimal_places': QT_CONFIG['cash_decimal_places'],
-            'amount_decimal_places': QT_CONFIG['amount_decimal_places'],
-            'trade_batch_size': QT_CONFIG['trade_batch_size'],
-            'sell_batch_size': QT_CONFIG['sell_batch_size'],
-            'long_position_limit': QT_CONFIG['long_position_limit'],
-            'short_position_limit': QT_CONFIG['short_position_limit'],
-        }
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
         trimmed_signals = trim_pt_type_signals(
             op_signals=signals,
-            long_pos_limit=config['long_position_limit'],
-            short_pos_limit=config['short_position_limit']
+            long_pos_limit=long_position_limit,
+            short_pos_limit=short_position_limit,
         )
         cash_to_spend, amounts_to_sell = parse_pt_signals(
             signals=trimmed_signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
-            pt_buy_threshold=config['PT_buy_threshold'],
-            pt_sell_threshold=config['PT_sell_threshold'],
-            allow_sell_short=config['allow_sell_short']
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            allow_sell_short=allow_sell_short,
         )
     # 解析PT交易信号：
     # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
@@ -312,16 +334,14 @@ def parse_trade_signal(signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
-            allow_sell_short=config['allow_sell_short']
+            allow_sell_short=allow_sell_short
         )
     elif signal_type.lower() == 'vs':
-        from qteasy.config_parser import parse_trade_cost_params
-        cost_params = get_cost_params(parse_trade_cost_params(config))
         cash_to_spend, amounts_to_sell = parse_vs_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
-            allow_sell_short=config['allow_sell_short'],
+            allow_sell_short=allow_sell_short,
             cost_params=cost_params,
         )
     else:
@@ -341,9 +361,9 @@ def parse_trade_signal(signals,
         prices=prices,
         available_cash=available_cash,
         available_amounts=available_amounts,
-        moq_buy=config['trade_batch_size'],
-        moq_sell=config['sell_batch_size'],
-        allow_sell_short=config['allow_sell_short'],
+        moq_buy=trade_batch_size,
+        moq_sell=sell_batch_size,
+        allow_sell_short=allow_sell_short,
     )
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
@@ -870,7 +890,10 @@ def cancel_order(order_id, data_source=None, config=None) -> int:
     return order_id
 
 
-def process_account_delivery(account_id, data_source=None, config=None) -> list:
+def process_account_delivery(account_id,
+                             data_source=None,
+                             stock_delivery_period=0,
+                             cash_delivery_period=0) -> list:
     """ 处理account_id账户中所有持仓和现金的交割
 
     从交易历史中读取尚未交割的现金和持仓，根据config中的设置值 'cash_delivery_period' 和
@@ -883,7 +906,10 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
         账户的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    config: dict, optional
+    stock_delivery_period: int, default 0
+        股票交割周期，单位为天
+    cash_delivery_period: int, default 0
+        现金交割周期，单位为天
 
 
     Returns
@@ -894,13 +920,6 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
 
     if not isinstance(account_id, (int, np.int64)):
         raise TypeError('account_id must be an int')
-    if config is None:
-        config = {
-            'cash_delivery_period': 0,
-            'stock_delivery_period': 0,
-        }
-    if not isinstance(config, dict):
-        raise TypeError('config must be a dict')
 
     delivery_result = []
 
@@ -918,8 +937,8 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
                 result_id=int(result_id),
                 account_id=account_id,
                 result=result.to_dict(),
-                stock_delivery_period=config['stock_delivery_period'],
-                cash_delivery_period=config['cash_delivery_period'],
+                stock_delivery_period=stock_delivery_period,
+                cash_delivery_period=cash_delivery_period,
                 data_source=data_source,
         )
         delivery_result.append(res)
