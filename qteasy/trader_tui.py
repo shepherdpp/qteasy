@@ -931,7 +931,7 @@ class TraderApp(App):
         """Actions to perform before exiting the app.
         """
         # stop the trader, broker and the trader event loop
-        self.trader.run_task('stop')
+        self.trader._run_task('stop')
         time.sleep(0.1)
 
         self.status = 'stopped'

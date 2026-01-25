@@ -2154,7 +2154,7 @@ class TraderShell(Cmd):
 
         # make tables back to comma-separated string
         tables = list_to_str_format(tables)
-        self.trader.run_task('refill', tables, coverage, channel)
+        self.trader._run_task('refill', tables, coverage, channel)
         return False
 
     def do_run(self, arg):
@@ -2218,7 +2218,7 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', *strategies, run_in_main_thread=True)
+                self.trader._run_task('run_strategy', *strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
@@ -2233,7 +2233,7 @@ class TraderShell(Cmd):
                 return False
             try:
                 task_args = tuple(task_args)
-                self.trader.run_task(task, *task_args, run_in_main_thread=True)
+                self.trader._run_task(task, *task_args, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')
