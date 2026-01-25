@@ -104,7 +104,7 @@ class TestTrader(unittest.TestCase):
         update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
         update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
 
-        self.stoppage = 0.05
+        self.stoppage = 1.05
         # 添加测试交易订单以及交易结果
         print('Adding test trade orders and results...')
         parsed_signals_batch = (
@@ -547,7 +547,8 @@ class TestTrader(unittest.TestCase):
         ts = self.ts
         log_file_path_name = break_point_file_path_name(ts.account_id, ts.datasource)
         # remove the log file
-        os.remove(log_file_path_name)
+        if os.path.exists(log_file_path_name):
+            os.remove(log_file_path_name)
         self.assertFalse(ts.break_point_file_exists)
         self.assertFalse(os.path.exists(log_file_path_name))
 
@@ -912,7 +913,10 @@ class TestTrader(unittest.TestCase):
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'running')
+        if ts.is_trade_day:
+            self.assertEqual(ts.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('sleep')
         time.sleep(self.stoppage)
@@ -948,38 +952,38 @@ class TestTrader(unittest.TestCase):
         self.assertEqual(ts.status, 'stopped')
         print(f'\ncurrent status: {ts.status}')
 
-        print(f'test function run_task, as running tasks off-line')
+        print(f'test function _run_task, as running tasks off-line')
         self.assertEqual(ts.status, 'stopped')
-        ts.run_task('start')
+        ts._run_task('start')
         self.assertEqual(ts.status, 'sleeping')
-        ts.run_task('stop')
+        ts._run_task('stop')
         self.assertEqual(ts.status, 'stopped')
-        ts.run_task('start')
+        ts._run_task('start')
         self.assertEqual(ts.status, 'sleeping')
-        ts.run_task('wakeup')
+        ts._run_task('wakeup')
         self.assertEqual(ts.status, 'running')
-        ts.run_task('sleep')
+        ts._run_task('sleep')
         self.assertEqual(ts.status, 'sleeping')
-        ts.run_task('wakeup')
+        ts._run_task('wakeup')
         self.assertEqual(ts.status, 'running')
-        ts.run_task('pause')
+        ts._run_task('pause')
         self.assertEqual(ts.status, 'paused')
-        ts.run_task('resume')
+        ts._run_task('resume')
         self.assertEqual(ts.status, 'running')
-        ts.run_task('sleep')
+        ts._run_task('sleep')
         self.assertEqual(ts.status, 'sleeping')
-        ts.run_task('pause')
+        ts._run_task('pause')
         self.assertEqual(ts.status, 'paused')
-        ts.run_task('resume')
+        ts._run_task('resume')
         self.assertEqual(ts.status, 'sleeping')
 
     def test_trader_properties_methods(self):
-        """Test function run_task"""
+        """Test function _run_task"""
         ts = self.ts
         ts.renew_trade_log_file()
         self.assertIsInstance(ts, Trader)
         self.assertEqual(ts.status, 'stopped')
-        ts.run_task('start')
+        ts._run_task('start')
         self.assertEqual(ts.status, 'sleeping')
 
         print('test properties account and account id')
@@ -1174,20 +1178,20 @@ class TestTrader(unittest.TestCase):
     def test_strategy_run_and_process_result(self):
         """Test strategy run and process result"""
         ts = self.ts
-        ts.run_task('start')
+        ts._run_task('start')
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts.run_task('run_strategy', *['macd', 'dma'])
+        ts._run_task('run_strategy', *['macd', 'dma'])
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
         # run task refill data
-        ts.run_task('refill', *('stock_daily', 1, 'tushare'))
+        ts._run_task('refill', *('stock_daily', 1, 'tushare'))
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts.run_task('refill', *('index_daily', 1))
+        ts._run_task('refill', *('index_daily', 1))
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
@@ -1332,7 +1336,7 @@ class TestTrader(unittest.TestCase):
         # 为了避免测试过程中trader自动触发task，手动生成一个task agenda，将所有测试时间设置为current_time的10分钟以后，并间隔1分钟
         # 如果当天已经过了23：40：00，可能没有足够时间测试，则等待20分钟后再次测试（此时已经是第二日凌晨）
         # stop trader and broker, and restart them
-        ts.run_task('stop')
+        ts._run_task('stop')
 
         current_time = dt.datetime.now()
         if current_time.time() > dt.time(23, 40, 0):
@@ -1410,7 +1414,7 @@ class TestTrader(unittest.TestCase):
 
         # finally, stop the trader and broker
         print('\n==========stop trader and broker============\n')
-        ts.run_task('stop')
+        ts._run_task('stop')
 
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')

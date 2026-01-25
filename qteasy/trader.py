@@ -151,7 +151,7 @@ class Trader(object):
         交易系统的main loop
     add_task(task) -> None
         添加任务到任务队列
-    run_task(task) -> None
+    _run_task(task) -> None
         执行任务
     """
 
@@ -589,7 +589,7 @@ class Trader(object):
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
 
-        self.run_task('start')
+        self._run_task('start')
 
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
@@ -626,9 +626,9 @@ class Trader(object):
                         continue
                     try:
                         if args:
-                            self.run_task(task_name, *args)
+                            self._run_task(task_name, *args)
                         else:
-                            self.run_task(task_name)
+                            self._run_task(task_name)
                     # error handling: (TODO: if there's connection problem, reconnect or hold the trader?)
                     except RuntimeError as e:
                         import traceback
@@ -672,7 +672,7 @@ class Trader(object):
                                   f'{"=" * 20}\n')
         except KeyboardInterrupt:
             self.send_message('KeyboardInterrupt, stopping trader...')
-            self.run_task('stop')
+            self._run_task('stop')
         except Exception as e:
             self.send_message(f'error occurred when running trader, error: {e}')
             import traceback
@@ -896,18 +896,6 @@ class Trader(object):
             task = (task, (kwargs, ))
         self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
-
-    def add_async_task(self, task, kwargs=None) -> None:
-        """ 添加异步任务到任务队列，异步任务将以异步形式在主线程以外的子线程执行
-
-        Parameters
-        ----------
-        task: str
-            任务名称
-        **kwargs: dict
-            任务参数
-        """
-        raise NotImplementedError
 
     def history_orders(self, with_trade_results=True) -> pd.DataFrame:
         """ 账户的历史订单详细信息
@@ -2192,7 +2180,7 @@ class Trader(object):
         """
         self.send_message('running task: market open', debug=True)
         self.is_market_open = True
-        self.run_task('wakeup')
+        self._run_task('wakeup')
         self.send_message('market is open, trader is running, broker is running')
 
     def _market_close(self) -> None:
@@ -2203,7 +2191,7 @@ class Trader(object):
         """
         self.send_message('running task: market close', debug=True)
         self.is_market_open = False
-        self.run_task('sleep')
+        self._run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
     def _refill(self, tables: str, duration: int = 1, channel=None) -> None:
@@ -2257,8 +2245,8 @@ class Trader(object):
         )
 
     # ================ task operations =================
-    def run_task(self, task, *args, run_in_main_thread=False) -> None:
-        """ 运行任务
+    def _run_task(self, task, *args, run_in_main_thread=False) -> None:
+        """ 运行任务，这个API不应该开放给用户使用，而是应该在trader的主循环中被调用
 
         Parameters
         ----------
