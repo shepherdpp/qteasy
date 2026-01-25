@@ -13,6 +13,7 @@
 import os
 import pandas as pd
 import numpy as np
+from typing import Union
 
 from qteasy.database import DataSource
 
@@ -1064,7 +1065,13 @@ def read_trade_order_detail(order_id, data_source=None) -> dict:
     return trade_order_detail
 
 
-def save_parsed_trade_orders(account_id, symbols, positions, directions, quantities, prices, data_source=None):
+def save_parsed_trade_orders(account_id: int,
+                             symbols: list[str],
+                             positions: list[str],
+                             directions: list[str],
+                             quantities: list[Union[float, int]],
+                             prices: list[Union[float, int]],
+                             data_source: DataSource) -> list[int]:
     """ 根据parse_trade_signal的结果，将交易订单要素组装成完整的交易订单dict，并将交易信号保存到数据库
 
     Parameters
