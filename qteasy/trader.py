@@ -254,9 +254,6 @@ class Trader(object):
         self.time_zone = time_zone
         self.init_datetime = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
 
-        self.next_task = ''  # TODO: make this a dynamic property
-        self.count_down_to_next_task = 0  # TODO: make this a dynamic property
-
         self.is_market_open = False
         self._status = 'stopped'
         self._prev_status = None
@@ -311,6 +308,51 @@ class Trader(object):
     @property
     def prev_status(self) -> str:
         return self._prev_status
+
+    def _get_next_scheduled_task_and_countdown(self, current_time=None):
+        """ 计算 task_daily_schedule 中下一个未到点任务及距其的秒数，供 next_task、count_down_to_next_task 使用。
+
+        Parameters
+        ----------
+        current_time : datetime.time, optional
+            当前时间；为 None 时使用 get_current_tz_datetime().time()。便于单测传入固定时间。
+
+        Returns
+        -------
+        tuple
+            (next_task, count_down_seconds)
+            - next_task: 下一个满足 task_time > current_time 且距离最近的任务元组 (time_str, task_name, *opt)，无则 None
+            - count_down_seconds: 到该任务时间的秒数；无下一个任务时为到当日 23:59:59 的秒数（至少为 1）
+        """
+        import datetime as dt
+        if current_time is None:
+            current_time = self.get_current_tz_datetime().time()
+        convenience_date = dt.datetime(2000, 1, 1)
+        current_datetime = dt.datetime.combine(convenience_date, current_time)
+        end_of_the_day = dt.datetime.combine(convenience_date, dt.time(23, 59, 59))
+        count_down = (end_of_the_day - current_datetime).total_seconds()
+        if count_down <= 0:
+            count_down = 1
+        next_task = None
+        for task in self.task_daily_schedule:
+            task_time = pd.to_datetime(task[0], utc=True).time()
+            if task_time > current_time:
+                task_datetime = dt.datetime.combine(convenience_date, task_time)
+                sec = (task_datetime - current_datetime).total_seconds()
+                if sec < count_down:
+                    count_down = sec
+                    next_task = task
+        return (next_task, count_down)
+
+    @property
+    def next_task(self):
+        """ 下一个计划执行的任务：task_daily_schedule 中第一个 task_time > 当前时间的任务元组，无则 None。"""
+        return self._get_next_scheduled_task_and_countdown(None)[0]
+
+    @property
+    def count_down_to_next_task(self):
+        """ 到下一个计划任务的倒计时秒数；无下一任务时为到当日 23:59:59 的秒数（至少 1）。"""
+        return self._get_next_scheduled_task_and_countdown(None)[1]
 
     @property
     def operator(self) -> Operator:
@@ -2288,15 +2330,6 @@ class Trader(object):
         """
         if current_time is None:
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
-        task_added = False  # 是否添加了任务
-        next_task = 'None'
-        import datetime as dt
-        convenience_date = dt.datetime(2000, 1, 1)
-        current_datetime = dt.datetime.combine(convenience_date, current_time)
-        end_of_the_day = dt.datetime.combine(convenience_date, dt.time(23, 59, 59))
-        count_down_to_next_task = (end_of_the_day - current_datetime).total_seconds()  # 到下一个最近任务的倒计时，单位为秒
-        if count_down_to_next_task <= 0:
-            count_down_to_next_task = 1
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
         for idx, task in enumerate(self.task_daily_schedule):
             task_time = pd.to_datetime(task[0], utc=True).time()
@@ -2315,17 +2348,6 @@ class Trader(object):
                 self.send_message(f'current time {current_time} >= task time {task_time}, '
                                       f'adding task: {task} from agenda', debug=True)
                 self._add_task_to_queue(task)
-                task_added = True
-            # 计算count_down_to_next_task秒数
-            else:
-                task_datetime = dt.datetime.combine(convenience_date, task_time)
-                count_down_sec = (task_datetime - current_datetime).total_seconds()
-                if count_down_sec < count_down_to_next_task:
-                    count_down_to_next_task = count_down_sec
-                    next_task = task
-        if not task_added:
-            self.next_task = next_task
-            self.count_down_to_next_task = count_down_to_next_task
 
     def _initialize_schedule(self, current_time=None) -> None:
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：

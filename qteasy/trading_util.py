@@ -60,6 +60,10 @@ def create_daily_task_schedule(operator,
                                market_close_time_am: str = '11:30:00',
                                market_open_time_pm: str = '13:00:00',
                                market_close_time_pm: str = '15:00:00',
+                               open_close_timing_offset: int = 0,
+                               daily_refill_tables: str = '',
+                               weekly_refill_tables: str = '',
+                               monthly_refill_tables: str = '',
                                live_price_frequency: str = '1min',
                                ) -> list[tuple]:
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
@@ -83,6 +87,14 @@ def create_daily_task_schedule(operator,
         交易市场下午开盘时间, 格式为'HH:MM:SS'
     market_close_time_pm: str, optional, default '15:00:00'
         交易市场下午收盘时间, 格式为'HH:MM:SS'
+    open_close_timing_offset: int, optional, default 0
+        交易市场开收盘时间偏移量, 单位为分钟, 默认为0
+    daily_refill_tables: str, optional, default ''
+        每日补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
+    weekly_refill_tables: str, optional, default ''
+        每周补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
+    monthly_refill_tables: str, optional, default ''
+        每月补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
     live_price_frequency: str, optional, default '1min'
         实时价格获取频率, 格式为pandas的时间频率字符串, 如'1min', '5min', '15min'等
 
@@ -173,7 +185,7 @@ def create_daily_task_schedule(operator,
             task_agenda.append((t, 'run_strategy', signal_index))
 
         # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
-        open_close_timing_offset = int(config['strategy_open_close_timing_offset'])
+        open_close_timing_offset = int(open_close_timing_offset)
         if open_close_timing_offset > 0:
             offset_task_agenda = []
 
@@ -204,11 +216,7 @@ def create_daily_task_schedule(operator,
         task_agenda.append((market_close_time, 'close_market'))
         task_agenda.append((post_close_time, 'post_close'))
 
-    # 添加补充DataSource数据库的任务（根据config中的live_trade_daily/weekly/monthly_refill_tables参数）
-    daily_refill_tables = config['live_trade_daily_refill_tables']
-    weekly_refill_tables = config['live_trade_weekly_refill_tables']
-    monthly_refill_tables = config['live_trade_monthly_refill_tables']
-
+    # 添加补充DataSource数据库的任务（根据daily_refill_tables/weekly_refill_tables/monthly_refill_tables参数）
     if daily_refill_tables and is_trade_day:  # 每个交易日运行
         task_agenda.append((data_source_refilling_time, 'refill', (daily_refill_tables, 1)))
 
