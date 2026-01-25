@@ -575,8 +575,8 @@ class TraderApp(App):
 
             next_task = self.trader.next_task
             count_down = sec_to_duration(self.trader.count_down_to_next_task, estimation=True)
-
-            system_log.border_title = f"System Log - Next Task: {next_task} in {count_down}"
+            next_task_string = next_task[1] if next_task else 'None'
+            system_log.border_title = f"System Log - Next Task: {next_task_string} in {count_down}"
             display.border_title = f"{self.status}: {current_time}"
 
             # check the message queue of the trader
