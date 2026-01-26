@@ -46,6 +46,23 @@ class TestTraderShell(unittest.TestCase):
             'invest_start':          '2018-01-01',
             'opti_start':            '2018-01-01',
         }
+        trader_kwargs = {
+            'time_zone':             'local',
+            'market_open_time_am':   '09:30:00',
+            'market_close_time_pm':  '15:30:00',
+            'market_open_time_pm':   '13:00:00',
+            'market_close_time_am':  '11:30:00',
+            'exchange':              'SSE',
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+            'asset_pool':            '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+            'asset_type':            'E',
+            'trade_batch_size':      100,
+            'sell_batch_size':       100,
+            'pt_buy_threshold':      0.05,
+            'pt_sell_threshold':     0.05,
+            'allow_sell_short':      False,
+        }
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
         # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
@@ -110,9 +127,10 @@ class TestTraderShell(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config,
                 datasource=test_ds,
-                debug=False,)
+                debug=False,
+                **trader_kwargs,
+        )
         self.ts.debug = True
         self.ts.renew_trade_log_file()
 
@@ -442,15 +460,15 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_config('user_defined_key'))
         self.assertIsNone(tss.do_config('user_defined_key -d'))
         print(f'testing running with values to set to config key')
-        self.assertEqual(tss.trader.config['mode'], 0)
-        self.assertIsNone(tss.do_config('mode -s 1'))
-        self.assertEqual(tss.trader.config['mode'], 1)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertIsNone(tss.do_config('sell_batch_size -s 1'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1)
         self.assertEqual(tss.trader.config['time_zone'], 'local')
-        self.assertIsNone(tss.do_config('mode time_zone -s 0 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s 0 Asia/Shanghai'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
-        self.assertIsNone(tss.do_config('mode time_zone -s 35 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Shanghai'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_config('-h'))
@@ -526,7 +544,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        2,
@@ -536,7 +554,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -546,7 +564,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        4,
@@ -556,7 +574,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        5,
@@ -566,7 +584,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -576,7 +594,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        6,
@@ -586,7 +604,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        7,
@@ -596,7 +614,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        9,
@@ -606,10 +624,10 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         # order 8 is canceled
         time.sleep(self.stoppage)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
 
         print('testing history command that runs normally and returns None')
         self.assertIsNone(tss.do_history(''))
@@ -665,7 +683,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 2 is filled
         raw_trade_result = {
@@ -676,7 +694,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 3 is partially-filled
         raw_trade_result = {
@@ -687,7 +705,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 4 is partially-filled
         raw_trade_result = {
@@ -698,7 +716,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 5 is canceled
         raw_trade_result = {

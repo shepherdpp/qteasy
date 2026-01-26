@@ -297,6 +297,8 @@ class Trader(object):
         self.watched_prices = None  # 用于存储被监视的股票的最新价格，用于监视价格变动
         if isinstance(benchmark_asset, str):
             benchmark_list = str_to_list(benchmark_asset)
+        elif isinstance(benchmark_asset, list):
+            benchmark_list = copy(benchmark_asset)
         self.benchmark = benchmark_asset
         self.watch_list = benchmark_list + self._asset_pool
 
@@ -478,7 +480,6 @@ class Trader(object):
     def config(self) -> dict:
         """ create trader related config properties, not the complete
         QT_CONFIG to prevent from changing qt config in trader"""
-        # TODO: create a config dict with related properties only
         trader_config = {
             'time_zone':                            self.time_zone,
             'live_price_acquire_channel':           self.live_price_channel,
@@ -502,7 +503,13 @@ class Trader(object):
             'live_trade_data_refill_batch_size':    self.live_data_batch_size,
             'live_trade_data_refill_batch_interval':self.live_data_batch_interval,
             'live_trade_data_refill_channel':       self.live_data_channel,
-
+            'cost_rate_buy':                        self.cost_params[0] if self.cost_params is not None else 0.,
+            'cost_rate_sell':                       self.cost_params[1] if self.cost_params is not None else 0.,
+            'cost_min_buy':                         self.cost_params[2] if self.cost_params is not None else 0.,
+            'cost_min_sell':                        self.cost_params[3] if self.cost_params is not None else 0.,
+            'slippage':                             self.cost_params[4] if self.cost_params is not None else 0.,
+            'PT_buy_threshold':                     self.pt_buy_threshold,
+            'PT_sell_threshold':                    self.pt_sell_threshold,
         }
         return trader_config
 

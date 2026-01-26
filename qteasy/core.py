@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from warnings import warn
-from typing import Optional, Union
+from typing import Optional, Union, Iterable
 
 import qteasy
 from qteasy.configure import configure
@@ -21,18 +21,14 @@ from qteasy.database import DataSource
 
 from qteasy.datatypes import (
     DataType,
-    infer_data_types,
 )
 
 from qteasy.history import (
     get_history_panel,
-    get_history_data_packages,
-    HistoryPanel,
 )
 
 from qteasy.utilfuncs import (
     str_to_list,
-    regulate_date_format,
     match_ts_code,
     AVAILABLE_ASSET_TYPES,
     _partial_lev_ratio,
@@ -1420,7 +1416,7 @@ def live_trade_accounts() -> pd.DataFrame:
 
 
 # noinspection PyTypeChecker
-def run(op: Operator, **kwargs):
+def run(op: Operator, **kwargs) -> Iterable:
     """ `qteasy`模块的主要入口函数
 
     接受`operator`交易员对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -1476,10 +1472,8 @@ def run(op: Operator, **kwargs):
     config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
 
-    op.run(
+    return op.run(
             config=config,
             datasource=qteasy.QT_DATA_SOURCE,
             logger=qteasy.logger_core,
     )
-
-    return None
