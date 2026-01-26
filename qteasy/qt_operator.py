@@ -10,7 +10,6 @@
 
 
 import os
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,6 @@ from qteasy.group import Group
 from qteasy.datatypes import DataType, TRADE_OPERATION_DATA_TYPES
 
 from qteasy.history import (
-    check_and_prepare_live_trade_data,
     check_and_prepare_trade_prices,
     check_and_prepare_benchmark_data,
     check_and_prepare_backtest_data,
