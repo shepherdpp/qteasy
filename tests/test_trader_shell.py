@@ -460,7 +460,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_config('user_defined_key'))
         self.assertIsNone(tss.do_config('user_defined_key -d'))
         print(f'testing running with values to set to config key')
-        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 100)
         self.assertIsNone(tss.do_config('sell_batch_size -s 1'))
         self.assertEqual(tss.trader.config['sell_batch_size'], 1)
         self.assertEqual(tss.trader.config['time_zone'], 'local')
@@ -468,7 +468,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertEqual(tss.trader.config['sell_batch_size'], 0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
         self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 100)
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_config('-h'))
