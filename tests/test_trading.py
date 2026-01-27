@@ -1848,7 +1848,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2337,6 +2337,23 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'cost_min_sell':        0.0,
             'cost_slippage':        0.0,
         }
+        cost_params = np.array([
+            test_config['cost_rate_buy'],
+            test_config['cost_rate_sell'],
+            test_config['cost_min_buy'],
+            test_config['cost_min_sell'],
+            test_config['cost_slippage'],
+        ])
+        parse_trade_signal_kwargs = {
+            'cost_params': cost_params,
+            'pt_buy_threshold': test_config['PT_buy_threshold'],
+            'pt_sell_threshold': test_config['PT_sell_threshold'],
+            'allow_sell_short': test_config['allow_sell_short'],
+            'trade_batch_size': test_config['trade_batch_size'],
+            'sell_batch_size': test_config['sell_batch_size'],
+            'long_position_limit': test_config['long_position_limit'],
+            'short_position_limit': test_config['short_position_limit'],
+        }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
         parsed_signal_elements = parse_trade_signal(
@@ -2348,7 +2365,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2365,7 +2382,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2384,7 +2401,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2401,7 +2418,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2420,7 +2437,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2437,7 +2454,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2460,6 +2477,23 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'cost_min_sell':        0.0,
             'cost_slippage':        0.0,
         }
+        cost_params = np.array([
+            test_config['cost_rate_buy'],
+            test_config['cost_rate_sell'],
+            test_config['cost_min_buy'],
+            test_config['cost_min_sell'],
+            test_config['cost_slippage'],
+        ])
+        parse_trade_signal_kwargs = {
+            'cost_params': cost_params,
+            'pt_buy_threshold': test_config['PT_buy_threshold'],
+            'pt_sell_threshold': test_config['PT_sell_threshold'],
+            'allow_sell_short': test_config['allow_sell_short'],
+            'trade_batch_size': test_config['trade_batch_size'],
+            'sell_batch_size': test_config['sell_batch_size'],
+            'long_position_limit': test_config['long_position_limit'],
+            'short_position_limit': test_config['short_position_limit'],
+        }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
         parsed_signal_elements = parse_trade_signal(
@@ -2471,7 +2505,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2489,7 +2523,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {ps_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2507,7 +2541,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])

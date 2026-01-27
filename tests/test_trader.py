@@ -80,9 +80,9 @@ class TestTrader(unittest.TestCase):
             'live_price_freq':                  '15min',
             'live_data_batch_size':             0,
             'live_data_batch_interval':         0,
-            'daily_refill_tables':   'stock_1min, stock_5min',
-            'weekly_refill_tables':  'stock_15min',
-            'monthly_refill_tables': 'stock_daily',
+            'daily_refill_tables':              'stock_1min, stock_5min',
+            'weekly_refill_tables':             'stock_15min',
+            'monthly_refill_tables':            'stock_daily',
 
         }
         # 创建测试数据源
