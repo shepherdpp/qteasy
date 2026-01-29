@@ -672,7 +672,7 @@ class SimulatorBroker(Broker):
                     raise RuntimeError(f'invalid direction: {direction}')
                 # 模拟交易滑点, 交易数量越大，对交易费用产生的影响越大
                 if self.slippage > 0:
-                    transaction_fee *= (1 + self.slipage * (qty / 100) ** 2)
+                    transaction_fee *= (1 + self.slippage * (qty / 100) ** 2)
 
             # 成交类型为取消，成交数量为0，成交价格为0，交易费用为0
             elif result_type in ['canceled']:  # result_type == 'canceled'

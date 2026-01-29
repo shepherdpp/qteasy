@@ -38,8 +38,8 @@ if __name__ == '__main__':
 
     op = Operator(strategies=[alpha, beta], signal_type='PT', op_type='step')
 
-    op.set_parameter('alpha', (32, 16, 9))
-    op.set_parameter('beta', (10, 50, 10))
+    op.set_parameter('alpha', par_values=(32, 16, 9))
+    op.set_parameter('beta', par_values=(10, 50, 10))
 
     asset_pool = ['000651.SZ', '688609.SH', '000550.SZ', '301215.SZ', '002676.SZ', '603726.SH']
 
