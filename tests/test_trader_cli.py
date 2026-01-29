@@ -1,12 +1,11 @@
 # coding=utf-8
 # ======================================
-# File:     test_trader_shell.py
+# File:     test_trader_cli.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-03-04
 # Desc:
-#   Unittest for trader shell properties
-# and commands.
+#   Unittest for trader CLI.
 # ======================================
 
 import unittest
@@ -22,7 +21,7 @@ from qteasy.trade_recording import get_or_create_position, get_position_by_id, g
 from qteasy.broker import SimulatorBroker
 
 
-class TestTraderShell(unittest.TestCase):
+class TestTraderCLI(unittest.TestCase):
 
     def setUp(self):
 

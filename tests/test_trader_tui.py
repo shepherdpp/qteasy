@@ -1,11 +1,11 @@
 # coding=utf-8
 # ======================================
-# File:     test_tui.py
+# File:     test_trader_tui.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-04-09
 # Desc:
-#   Unittest for the TUI
+#   Unittest for the Trader TUI
 # ======================================
 
 import unittest
@@ -16,7 +16,7 @@ from qteasy.trader_tui import TraderApp
 from qteasy.broker import SimulatorBroker
 
 
-class TestTUI(unittest.TestCase):
+class TestTraderTUI(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up test fixtures, if any."""
