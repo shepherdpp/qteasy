@@ -15,9 +15,9 @@ import numpy as np
 
 在选股之前，需要检查需要的历史数据
 
-EV/EBITDA数据并不直接存在于qteasy定义的数据类型中，需要通过几个数据组合计算出来
+EV/EBITDA数据并不直接存在于`qteasy`定义的数据类型中，需要通过几个数据组合计算出来
 
-EV/EBITDA = (Market Capitalization + Total Debt - Total Cash) / EBITDA
+`EV/EBITDA = (Market Capitalization + Total Debt - Total Cash) / EBITDA`
 
 上面几个数据分别代表总市值、总负债、总现金及现金等价物，这些数据需要从`qteasy`内置的数据类型中分别提取，并使用上面的公式计算后，作为选股因子。排除掉小于0的因子后，将所有选股因子从小到大排列，选出因子排在最前的30支股票，将手中的全部资金平均分配投入到所有选中的股票中持有一个月，直到下一次选股为止。
 
@@ -38,8 +38,9 @@ df['ev_to_ebitda'] = (df.total_mv + df.total_liab - df.c_cash_equ_end_period) / 
 ```
 输出结果如下
 
-
-    ['000001.SZ', '000002.SZ', '000063.SZ', '000066.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ', '000301.SZ', '000333.SZ']
+```
+['000001.SZ', '000002.SZ', '000063.SZ', '000066.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ', '000301.SZ', '000333.SZ']
+```
 
 有了上面的数据定义，我们就可以创建这样的选股策略了。
 
