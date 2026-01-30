@@ -2032,25 +2032,86 @@ class Operator:
     def run_live_trade(self, config, datasource=None, logger=None):
         """ 在实盘模式下运行operator"""
         # 进入实时信号生成模式:
-        from qteasy.trader import start_trader_ui
-        # 实盘运行模式📄支持asset_type = 'E'的情况，因此需要检查并排除其他情况
+        # 实盘运行模式只支持asset_type = 'E'的情况，因此需要检查并排除其他情况
         if config['asset_type'] != 'E':
             msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
                   f'please set asset_type="E" with: qt.configure(asset_type="E")'
             raise ValueError(msg)
 
-        start_trader_ui(
+        init_holdings = config['live_trade_init_holdings']
+        account_id = config['live_trade_account_id']
+        # if init_holdings is not None then add holdings to account
+        from qteasy.trade_recording import get_or_create_position, update_position
+        if init_holdings is not None:
+            if not isinstance(init_holdings, dict):
+                err = ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
+                raise err
+            for symbol, amount in init_holdings.items():
+                pos_id = get_or_create_position(
+                        account_id=account_id,
+                        symbol=symbol,
+                        position_type='long' if amount > 0 else 'short',
+                        data_source=datasource,
+                )
+                update_position(
+                        position_id=pos_id,
+                        data_source=datasource,
+                        **{
+                            'qty_change':           abs(amount),
+                            'available_qty_change': abs(amount),
+                        }
+                )
+
+        # if account is ready then create trader and broker
+        broker_type = config['live_trade_broker_type']
+        broker_params = config['live_trade_broker_params']
+        if (broker_type == 'simulator') and (broker_params is None):
+            broker_params = {
+                "fee_rate_buy":    config['cost_rate_buy'],
+                "fee_rate_sell":   config['cost_rate_sell'],
+                "fee_min_buy":     config['cost_min_buy'],
+                "fee_min_sell":    config['cost_min_sell'],
+                "slippage":        config['cost_slippage'],
+                "moq_buy":         config['trade_batch_size'],
+                "moq_sell":        config['sell_batch_size'],
+                "delay":           1.0,
+                "price_deviation": 0.001,
+                "probabilities":   (0.5, 0.45, 0.05),  # originally: (0.9, 0.08, 0.02)
+            }
+
+        from qteasy.broker import get_broker
+        from qteasy.trader import Trader
+        broker = get_broker(broker_type, broker_params)
+
+        trader = Trader(
+                account_id=account_id,
                 operator=self,
-                account_id=config['live_trade_account_id'],
-                user_name=config['live_trade_account_name'],
-                init_cash=config['live_trade_init_cash'],
-                init_holdings=config['live_trade_init_holdings'],
-                config=config,
+                broker=broker,
                 datasource=datasource,
-                debug=config['live_trade_debug_mode'],
+                debug=False,
+        )
+        trader.register_broker(debug=trader.debug)
+
+        # find out datasource availabilities, refill data source if table data not available
+        from qteasy.trader import refill_missing_datasource_data
+        refill_missing_datasource_data(
+                operator=self,
+                trader=trader,
+                datasource=datasource,
         )
 
-    def run_backtest(self, config, datasource=None, logger=None):
+        ui_type = config['live_trade_ui_type']
+        if ui_type.lower() == 'cli':
+            from .trader_cli import TraderShell
+            TraderShell(trader).run()
+        elif ui_type.lower() == 'tui':
+            from .trader_tui import TraderApp
+            TraderApp(trader).run()
+        else:
+            err = TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
+            raise err
+
+    def run_backtest(self, config, datasource=None, logger=None) -> dict:
         """ 在回测模式下运行operator, 使用历史数据进行交易策略的回测并生成回测结果
 
         Parameters
@@ -2186,7 +2247,7 @@ class Operator:
 
         return backtested.backtest_result
 
-    def run_optimization(self, config, datasource=None, logger=None):
+    def run_optimization(self, config, datasource=None, logger=None) -> dict:
         """ 在优化模式下运行operator"""
 
         from qteasy.config_parser import (
@@ -2349,6 +2410,6 @@ class Operator:
 
         return optimizer.result_pool
 
-    def run_prediction(self, config, datasource=None, logger=None):
+    def run_prediction(self, config, datasource=None, logger=None) -> dict:
         """ 在与测模式下运行operator"""
         raise NotImplementedError

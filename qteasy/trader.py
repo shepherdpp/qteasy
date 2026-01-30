@@ -298,7 +298,10 @@ class Trader(object):
         if isinstance(benchmark_asset, str):
             benchmark_list = str_to_list(benchmark_asset)
         elif isinstance(benchmark_asset, list):
-            benchmark_list = copy(benchmark_asset)
+            benchmark_list = benchmark_asset[:]
+        else:
+            err = TypeError(f'benchmark_asset must be str or list, got {type(benchmark_asset)} instead')
+            raise err
         self.benchmark = benchmark_asset
         self.watch_list = benchmark_list + self._asset_pool
 
@@ -507,7 +510,7 @@ class Trader(object):
             'cost_rate_sell':                       self.cost_params[1] if self.cost_params is not None else 0.,
             'cost_min_buy':                         self.cost_params[2] if self.cost_params is not None else 0.,
             'cost_min_sell':                        self.cost_params[3] if self.cost_params is not None else 0.,
-            'slippage':                             self.cost_params[4] if self.cost_params is not None else 0.,
+            'cost_slippage':                        self.cost_params[4] if self.cost_params is not None else 0.,
             'PT_buy_threshold':                     self.pt_buy_threshold,
             'PT_sell_threshold':                    self.pt_sell_threshold,
         }
@@ -705,6 +708,7 @@ class Trader(object):
                     self._initialize_schedule(current_time)
 
                 # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
+                # TODO: 不要在trader中操作broker的所有Queue，而应该调用broker的API来获取交易结果
                 if not self.broker.result_queue.empty():
                     result = self.broker.result_queue.get()
                     if self.broker.debug:
@@ -713,6 +717,7 @@ class Trader(object):
                     self.add_task('process_result', result)
                     self.broker.result_queue.task_done()
                 # 检查broker的message_queue中是否有消息，如果有，则处理消息，通常情况将消息添加到消息队列中
+                # TODO: 不要在trader中操作broker的message Queue，应该调用broker的API来获取消息
                 if not self.broker.broker_messages.empty():
                     message = self.broker.broker_messages.get()
                     self.send_message(message)
@@ -1872,11 +1877,13 @@ class Trader(object):
         msg = Text('Putting Trader to sleep', style='bold red')
         self.send_message(message=msg)
         self.status = 'sleeping'
+        # TODO: 不应该在trader中操作broker的状态
         self.broker.status = 'paused'
 
     def _wakeup(self) -> None:
         """ 唤醒交易系统 """
         self.status = 'running'
+        # TODO: 不应该在trader中操作broker的状态
         self.broker.status = 'running'
         msg = Text('Trader is awake, broker is running', style='bold red')
         self.send_message(message=msg)
@@ -2167,6 +2174,7 @@ class Trader(object):
         #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
         #   result_queue中的结果全部处理完毕，或者超过一定时间
         if not order_queue.empty():
+            # TODO: 不应该在trader中操作broker的order_queue，应该通过broker的API获取order的信息
             self.send_message('unprocessed orders found, these orders will be canceled')
             while not order_queue.empty():
                 order = order_queue.get()
@@ -2510,139 +2518,6 @@ class Trader(object):
                      'open_market', 'post_close', 'refill'],
         'paused':   ['resume', 'stop'],
     }
-
-
-def start_trader_ui(
-        operator: Operator,
-        account_id: int = None,
-        user_name: str = None,
-        init_cash: float = None,
-        init_holdings: dict = None,
-        datasource: DataSource = None,
-        config: dict = None,
-        debug: bool = False,
-) -> None:
-    """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
-
-    Parameters
-    ----------
-    operator: Operator
-        交易员 object
-    account_id: int, optional
-        交易账户ID, 如果ID小于0或者未给出，则需要新建一个账户
-    user_name: str, optional
-        交易账户用户名，如果未给出账户ID或为空，则需要新建一个账户，此时必须给出用户名
-    init_cash: float, optional
-        初始资金，只有创建新账户时有效
-    init_holdings: dict of {str: int}, optional
-        初始持仓股票代码和数量的字典{'symbol': amount}，只有创建新账户时有效
-    datasource: DataSource, optional
-        数据源 object
-    config: dict, optional, default None
-        配置信息字典
-    debug: bool, optional, default False
-        是否进入debug模式
-
-    Returns
-    -------
-    None
-    """
-    if not isinstance(operator, Operator):
-        err = ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
-        raise err
-    # if account_id is None then create a new account
-    if (account_id is None) or (account_id < 0):
-        if (user_name is None) or (user_name == ''):
-            err = ValueError(f'Account_id is not given, Choose a valid account or create a new one:\n'
-                             f'- to view all existing accounts, call: \'qt.live_trade_accounts()\'\n'
-                             f'- to choose an existed account, set: \'live_trade_account_id=<ID>\'\n'
-                             f'- to create a new account, set: \'live_trade_account_name="your_account_name"\'')
-            raise err
-        account_id = new_account(
-                user_name=user_name,
-                cash_amount=init_cash,
-                data_source=datasource,
-        )
-    try:
-        _ = get_account(account_id, data_source=datasource)
-    except Exception as e:
-        err = ValueError(f'{e}\nFailed to use account({account_id}), Choose a valid account or create a new one:\n'
-                         f'- to choose an account, set: live_trade_account_id=<ID>\n'
-                         f'- to create a new account, set: live_trade_account_name="your_account_name"')
-        raise err
-
-    # now we know that account_id is valid
-
-    # if init_holdings is not None then add holdings to account
-    if init_holdings is not None:
-        if not isinstance(init_holdings, dict):
-            err = ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
-            raise err
-        for symbol, amount in init_holdings.items():
-            pos_id = get_or_create_position(
-                    account_id=account_id,
-                    symbol=symbol,
-                    position_type='long' if amount > 0 else 'short',
-                    data_source=datasource,
-            )
-            update_position(
-                    position_id=pos_id,
-                    data_source=datasource,
-                    **{
-                        'qty_change':           abs(amount),
-                        'available_qty_change': abs(amount),
-                    }
-            )
-
-    # if account is ready then create trader and broker
-    broker_type = config['live_trade_broker_type']
-    broker_params = config['live_trade_broker_params']
-    if (broker_type == 'simulator') and (broker_params is None):
-        broker_params = {
-            "fee_rate_buy":    config['cost_rate_buy'],
-            "fee_rate_sell":   config['cost_rate_sell'],
-            "fee_min_buy":     config['cost_min_buy'],
-            "fee_min_sell":    config['cost_min_sell'],
-            "fee_fix_buy":     config['cost_fixed_buy'],
-            "fee_fix_sell":    config['cost_fixed_sell'],
-            "slippage":        config['cost_slippage'],
-            "moq_buy":         config['trade_batch_size'],
-            "moq_sell":        config['sell_batch_size'],
-            "delay":           1.0,
-            "price_deviation": 0.001,
-            # TODO: the probabilities should be a parameter passed in
-            "probabilities":   (0.5, 0.45, 0.05),  # originally: (0.9, 0.08, 0.02)
-        }
-
-    from qteasy.broker import get_broker
-    broker = get_broker(broker_type, broker_params)
-
-    trader = Trader(
-            account_id=account_id,
-            operator=operator,
-            broker=broker,
-            datasource=datasource,
-            debug=debug,
-    )
-    trader.register_broker(debug=trader.debug)
-
-    # find out datasource availabilities, refill data source if table data not available
-    refill_missing_datasource_data(
-            operator=operator,
-            trader=trader,
-            datasource=datasource,
-    )
-
-    ui_type = config['live_trade_ui_type']
-    if ui_type.lower() == 'cli':
-        from .trader_cli import TraderShell
-        TraderShell(trader).run()
-    elif ui_type.lower() == 'tui':
-        from .trader_tui import TraderApp
-        TraderApp(trader).run()
-    else:
-        err = TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
-        raise err
 
 
 def refill_missing_datasource_data(operator,
