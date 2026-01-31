@@ -1376,31 +1376,39 @@ class Operator:
             # 因为涉及到groups的调整，所以只有当run_freq/run_timing与原有不一致时，才重新设置
             old_group_id = strategy._group_id
             old_group = self.groups[old_group_id]
-            old_group.members.remove(strategy)
-            if len(old_group.members) == 0:
-                self._groups.remove(old_group)
-            strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
-            strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
-            # 将修改了run_freq或run_timing的策略重新分配到一个新的group中
-            target_group = [
-                group for group in self._groups if
-                strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
-            ]
-            if len(target_group) == 0:
-                group_id = self._next_group_id()
-                new_group = Group(name=group_id,
-                                  signal_type='PT',
-                                  blender=None, )
-                new_group.add_strategy(strategy)
-                strategy._group_id = group_id
-                self._groups.append(new_group)
-            elif len(target_group) == 1:
-                group = target_group[0]
-                group.add_strategy(strategy)
-                strategy._group_id = group.name
+            if old_group.strategy_count == 1:
+                # 当需要修改的策略是它的group中的唯一一个strategy的时候，不需要新建group，直接修改其属性
+                old_group.run_freq = run_freq if run_freq is not None else strategy.run_freq
+                old_group.run_timing = run_timing if run_timing is not None else strategy.run_timing
+                strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
+                strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
             else:
-                raise RuntimeError(f'more than one target group found for strategy {stg_id} '
-                                   f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
+                # 当需要修改的策略不是它的group中的唯一一个strategy的时候，需要新建group并移动该strategy
+                old_group.members.remove(strategy)
+                if len(old_group.members) == 0:
+                    self._groups.remove(old_group)
+                strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
+                strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
+                # 将修改了run_freq或run_timing的策略重新分配到一个新的group中
+                target_group = [
+                    group for group in self._groups if
+                    strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
+                ]
+                if len(target_group) == 0:
+                    group_id = self._next_group_id()
+                    new_group = Group(name=group_id,
+                                    signal_type='PT',
+                                    blender=None, )
+                    new_group.add_strategy(strategy)
+                    strategy._group_id = group_id
+                    self._groups.append(new_group)
+                elif len(target_group) == 1:
+                    group = target_group[0]
+                    group.add_strategy(strategy)
+                    strategy._group_id = group.name
+                else:
+                    raise RuntimeError(f'more than one target group found for strategy {stg_id} '
+                                       f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
 
         # 设置其他自定义参数
         strategy.set_custom_pars(**kwargs)
