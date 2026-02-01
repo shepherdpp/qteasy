@@ -86,8 +86,8 @@ class Operator:
                  signal_type: str = 'pt',
                  op_type: str = 'batch',
                  group_merge_type: str = 'None',
-                 run_freq: str = None,
-                 run_timing: str = None,
+                 run_freq: str = 'd',
+                 run_timing: str = 'close',
                  ) -> None:
         """ 生成一个Operator对象
 
@@ -770,7 +770,10 @@ class Operator:
         else:
             raise TypeError(f'group_id should be an integer or a string, got {type(group_id)} instead!')
 
-    def add_strategies(self, strategies: Union[str, list[Union[str, BaseStrategy, type]]], **kwargs: Any):
+    def add_strategies(self, strategies: Union[str, list[Union[str, BaseStrategy, type]]],
+                       run_freq: str = 'd',
+                       run_timing: str = 'close',
+                       **kwargs: Any):
         """ 添加多个Strategy交易策略到Operator对象中
 
         使用这个方法，不能在添加交易策策略的同时修改交易策略的基本属性
@@ -782,6 +785,10 @@ class Operator:
         ----------
         strategies: stg or list of str or list of Strategy
             交易策略的名称或者交易策略对象
+        run_freq: str, optional
+            run_freq为策略的运行频率，可以为None，表示不指定运行频率
+        run_timing: str, optional
+            run_timing为策略的运行时机，可以为None，表示不指定运行时机
         **kwargs: Any
             添加的交易策略所共享的属性，一般如run_timing， run_freq等属性
 
@@ -807,11 +814,14 @@ class Operator:
                        f'can not be added - got {stg}')
                 raise TypeError(msg)
             try:
-                self.add_strategy(stg, **kwargs)
+                self.add_strategy(stg, run_freq=run_freq, run_timing=run_timing, **kwargs)
             except Exception as e:
                 raise ValueError(f'Failed to add strategy {stg} to operator - {e}')
 
-    def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any], **kwargs):
+    def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any],
+                     run_freq: str = 'd',
+                     run_timing: str = 'close',
+                     **kwargs):
 
         """ 添加一个strategy交易策略到operator对象中
 
@@ -821,6 +831,10 @@ class Operator:
         ----------
         stg: str or int or Strategy
             需要添加的交易策略，也可以是内置交易策略的策略id或策略名称
+        run_freq: str, Optional
+            run_freq为策略的运行频率，可以为None，表示不指定运行频率
+        run_timing: str, Optional
+            run_timing为策略的运行时机，可以为None，表示不指定运行时机
         kwargs:
             任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
             必须明确指定需要修改的属性名称，包含
@@ -891,35 +905,34 @@ class Operator:
         stg_id = self._next_stg_id(stg_id)
         strategy._strategy_id = stg_id
 
-        # 特殊处理run_freq和run_timings参数，如果这两个参数存在kwargs中，则需要单独修改strategy的这两个参数
+        # 从kwargs中提取run_freq和run_timing，用于策略组匹配（run_freq/run_timing仅存储在Group中）
         if 'run_freq' in kwargs:
             run_freq = kwargs.pop('run_freq')
             if not isinstance(run_freq, str) and run_freq is not None:
                 raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
-            # if run_freq is not None:
-            #     import pdb; pdb.set_trace()
-            strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
         if 'run_timing' in kwargs:
             run_timing = kwargs.pop('run_timing')
             if not isinstance(run_timing, str) and run_timing is not None:
                 raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
-            strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
 
+        # 使用run_freq和run_timing进行策略组匹配，而非从strategy读取（strategy的run_freq/run_timing从group委托）
         if len(self._groups) == 0 or not any(
-                strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
+                run_timing == group.run_timing and run_freq == group.run_freq
                 for group in self._groups
         ):  # create a new group if no existing group matches the strategy's timing and frequency
             group_id = self._next_group_id()
             new_group = Group(name=group_id,
                               signal_type='PT',
-                              blender=None, )
-            new_group.add_strategy(strategy)
-            strategy._group_id = group_id  # TODO: group里保存strategy，同时strategy里又保存group会造成信息冗余，可能出错
+                              blender=None,
+                              run_freq=run_freq,
+                              run_timing=run_timing, )
+            new_group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
+            strategy._group_id = group_id
             self._groups.append(new_group)
         else:  # add the strategy to an existing group
             for group in self._groups:
-                if strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq:
-                    group.add_strategy(strategy)
+                if run_timing == group.run_timing and run_freq == group.run_freq:
+                    group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
                     strategy._group_id = group.name
                     break
 
@@ -972,10 +985,10 @@ class Operator:
         else:  # other wrong types
             err = TypeError(f'Must give the position or id of strategy as int or string, got {type(id_or_pos)}')
             raise err
-        # 删除strategy的时候，不需要实际删除某个strategy，只需要删除该strategy所在group中的members
+        # 删除strategy时，通过Group.remove_strategy正确清除strategy._group引用
         strategy = self[pos]
         group = self.groups[strategy._group_id]
-        group.members.pop(group.members.index(strategy))
+        group.remove_strategy(strategy)
         # 如果该group中没有其他成员了，则删除该group
         if len(group.members) == 0:
             self._groups.remove(group)
@@ -1374,41 +1387,42 @@ class Operator:
         if ((run_freq is not None) and (run_freq != strategy.run_freq)) or \
             ((run_timing is not None) and (run_timing != strategy.run_timing)):  # 设置策略的运行频率和运行时机
             # 因为涉及到groups的调整，所以只有当run_freq/run_timing与原有不一致时，才重新设置
+            # run_freq/run_timing仅存储在Group中，Strategy从Group委托读取
             old_group_id = strategy._group_id
             old_group = self.groups[old_group_id]
+            new_run_freq = run_freq if run_freq is not None else old_group.run_freq
+            new_run_timing = run_timing if run_timing is not None else old_group.run_timing
             if old_group.strategy_count == 1:
-                # 当需要修改的策略是它的group中的唯一一个strategy的时候，不需要新建group，直接修改其属性
-                old_group.run_freq = run_freq if run_freq is not None else strategy.run_freq
-                old_group.run_timing = run_timing if run_timing is not None else strategy.run_timing
-                strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
-                strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
+                # 当需要修改的策略是它的group中的唯一一个strategy的时候，直接修改group属性
+                old_group.run_freq = new_run_freq
+                old_group.run_timing = new_run_timing
             else:
                 # 当需要修改的策略不是它的group中的唯一一个strategy的时候，需要新建group并移动该strategy
-                old_group.members.remove(strategy)
+                old_group.remove_strategy(strategy)
                 if len(old_group.members) == 0:
                     self._groups.remove(old_group)
-                strategy.run_freq = run_freq if run_freq is not None else strategy.run_freq
-                strategy.run_timing = run_timing if run_timing is not None else strategy.run_timing
-                # 将修改了run_freq或run_timing的策略重新分配到一个新的group中
+                # 查找或创建目标group
                 target_group = [
-                    group for group in self._groups if
-                    strategy.run_timing == group.run_timing and strategy.run_freq == group.run_freq
+                    g for g in self._groups if
+                    new_run_timing == g.run_timing and new_run_freq == g.run_freq
                 ]
                 if len(target_group) == 0:
                     group_id = self._next_group_id()
                     new_group = Group(name=group_id,
                                     signal_type='PT',
-                                    blender=None, )
-                    new_group.add_strategy(strategy)
+                                    blender=None,
+                                    run_freq=new_run_freq,
+                                    run_timing=new_run_timing, )
+                    new_group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
                     strategy._group_id = group_id
                     self._groups.append(new_group)
                 elif len(target_group) == 1:
                     group = target_group[0]
-                    group.add_strategy(strategy)
+                    group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
                     strategy._group_id = group.name
                 else:
                     raise RuntimeError(f'more than one target group found for strategy {stg_id} '
-                                       f'with run_timing={strategy.run_timing} and run_freq={strategy.run_freq}')
+                                       f'with run_timing={new_run_timing} and run_freq={new_run_freq}')
 
         # 设置其他自定义参数
         strategy.set_custom_pars(**kwargs)
@@ -1482,19 +1496,15 @@ class Operator:
             if len(target_group) > 0:
                 # move all strategies in current group to the target group and remove current group
                 target_group = target_group[0]
-                for strategy in group.member_strategies:
+                for strategy in list(group.member_strategies):
+                    group.remove_strategy(strategy)
                     strategy._group_id = target_group.name
-                    strategy.run_freq = new_run_freq
-                    strategy.run_timing = new_run_timing
-                    target_group.add_strategy(strategy)
+                    target_group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
                 self._groups.remove(group)
             else:
-                # update group and strategies in group
+                # update group (strategy的run_freq/run_timing从group委托读取，无需单独更新)
                 group.run_freq = new_run_freq
                 group.run_timing = new_run_timing
-                for strategy in group.member_strategies:
-                    strategy.run_timing = new_run_timing
-                    strategy.run_freq = new_run_freq
 
         if signal_type is not None:
             group.signal_type = signal_type
