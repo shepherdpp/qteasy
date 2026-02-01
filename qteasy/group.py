@@ -28,7 +28,8 @@ from qteasy.utilfuncs import (
 
 
 class Group:
-    def __init__(self, name: str, signal_type: str = 'pt', blender: str = None):
+    def __init__(self, name: str, signal_type: str = 'pt', blender: str = None,
+                 run_freq: str = None, run_timing: str = None):
 
         if not isinstance(name, str):
             raise TypeError(f'name should be a string, got {type(name)} instead')
@@ -46,8 +47,8 @@ class Group:
         self._blender = None
 
         self.members = []
-        self._run_timing = None
-        self._run_freq = None
+        self._run_timing = run_timing
+        self._run_freq = run_freq
 
         if blender:
             self.blender_str = blender
@@ -123,25 +124,36 @@ class Group:
     def strategy_count(self):
         return len(self.members)
 
-    def add_strategy(self, strategy: BaseStrategy):
+    @property
+    def group_id(self):
+        """Group 的 ID，与 name 相同，用于 Strategy.group_id 兼容"""
+        return self.name
+
+    def add_strategy(self, strategy: BaseStrategy, run_freq: str = None, run_timing: str = None):
 
         if len(self.members) == 0:
+            if run_freq is None or run_timing is None:
+                raise ValueError("run_freq and run_timing are required when adding the first strategy to a group.")
+            self.run_freq = run_freq
+            self.run_timing = run_timing
             self.members.append(strategy)
-            self.run_freq = strategy.run_freq
-            self.run_timing = strategy.run_timing
+            strategy._group = self
         else:
             if strategy in self.members:
                 raise ValueError(f"Strategy {strategy.name} is already a member of the group {self.name}.")
-            if strategy.run_timing != self.run_timing:
-                raise ValueError(f"Run timing of Strategy {strategy.name} ({strategy.run_timing}) "
-                                 f"if different from the group {self.name}.")
-            if strategy.run_freq != self.run_freq:
-                raise ValueError(f"Strategy {strategy.name} has a different run frequency than the group {self.name}.")
+            if run_freq is not None and run_freq != self.run_freq:
+                raise ValueError(f"Run freq of Strategy {strategy.name} ({run_freq}) "
+                                 f"is different from the group {self.name} ({self.run_freq}).")
+            if run_timing is not None and run_timing != self.run_timing:
+                raise ValueError(f"Run timing of Strategy {strategy.name} ({run_timing}) "
+                                 f"is different from the group {self.name} ({self.run_timing}).")
             self.members.append(strategy)
+            strategy._group = self
 
     def remove_strategy(self, strategy: BaseStrategy):
         if strategy in self.members:
             self.members.remove(strategy)
+            strategy._group = None
             if len(self.members) == 0:
                 self._run_freq = None
                 self._run_timing = None
@@ -149,6 +161,8 @@ class Group:
             raise ValueError(f"Strategy {strategy.name} is not a member of the group {self.name}.")
 
     def clear_strategies(self):
+        for strategy in self.members:
+            strategy._group = None
         self.members = []
         self._run_freq = None
         self._run_timing = None

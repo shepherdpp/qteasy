@@ -150,14 +150,15 @@ class BaseStrategy:
             name: str = '',
             description: str = '',
             stg_type: str = 'BASE',
-            run_freq: str = 'd',
-            run_timing: str = 'close',
+            # run_freq: str = 'd',  # deprecate: run_freq should be acquired from strategy group
+            # run_timing: str = 'close',  # deprecate: run_timing should be acquried from strategy group
             pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
             data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
             use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
             window_length: Union[int, List[int], Dict[str, int]] = 270,
             opt_tag: int = 0,
             par_values: Union[Tuple[Any], List[Any]] = None,
+            **kwargs,
     ):
         """ 初始化策略
 
@@ -169,19 +170,19 @@ class BaseStrategy:
             策略描述，用户自定义策略的描述，用于区分不同的策略
         stg_type: str
             策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
-        run_freq: str {'d', 'w', 'm', 'q', ’qe‘， 'y', 'ye'}, default: 'd'
-            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-            如果运行频率低于日频，可以通过'w_Fri' / 'm_15'(每月15日) / 'm_-2'(每月倒数第二天)等方式指定具体
-            哪一天运行
-        run_timing: datetime-like or str, default: 'close
-            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
-            例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
-            如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
-            例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
-            则策略运行时间为
-            ['09:30:00', '10:30:00',
-             '11:30:00', '13:00:00',
-             '14:00:00', '15:00:00',]
+        # run_freq: str {'d', 'w', 'm', 'q', ’qe‘， 'y', 'ye'}, default: 'd'
+        #     策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
+        #     如果运行频率低于日频，可以通过'w_Fri' / 'm_15'(每月15日) / 'm_-2'(每月倒数第二天)等方式指定具体
+        #     哪一天运行
+        # run_timing: datetime-like or str, default: 'close
+        #     策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
+        #     例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
+        #     如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
+        #     例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
+        #     则策略运行时间为
+        #     ['09:30:00', '10:30:00',
+        #      '11:30:00', '13:00:00',
+        #      '14:00:00', '15:00:00',]
         pars: Parameter, list of Parameter, dict {str: Parameter}, default None
             策略可调参数，Parameter对象，确定策略的可调参数，参数类型以及取值范围
         data_types: DataType, list of DataTypes, dict{str: DataType}
@@ -212,8 +213,8 @@ class BaseStrategy:
 
         self._stg_name = str(name)
         self._stg_description = str(description)
-        self._run_freq = run_freq
-        self._run_timing = run_timing
+        # self._run_freq = run_freq
+        # self._run_timing = run_timing
 
         self._pars = None
         self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
@@ -225,6 +226,12 @@ class BaseStrategy:
 
         logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
                          f' par_types={self.par_types}, par_range={self.par_range}')
+
+        # 接受并忽略已弃用的 run_freq/run_timing（仅存储在 Group 中，Strategy 从 Group 委托读取）
+        if 'run_freq' in kwargs:
+            kwargs.pop('run_freq')
+        if 'run_timing' in kwargs:
+            kwargs.pop('run_timing')
 
         self._data_types = None
         self._data_ids = None  # 一个list，保存所有数据类型的data_id
@@ -238,7 +245,8 @@ class BaseStrategy:
         self._share_count = 0
         self._share_names = None
         self._strategy_id = None  # 策略的唯一ID，在策略运行时由系统分配
-        self._group_id = None  # 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
+        self._group_id = None  # deprecate: 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
+        self._group = None   # 策略所在的策略组，使用self.assign_group()方法分配
         # 交易策略追踪相关参数 -- 用户可以在realize()方法中定义变量追踪，将变量值存储在_trace_data中
         self._trace_enabled = False
         self._trace_data = {}
@@ -264,8 +272,13 @@ class BaseStrategy:
         return self._strategy_id
 
     @property
+    def group(self):
+        return self._group
+
+    @property
     def group_id(self):
-        return self._group_id
+        """策略所属策略组的ID，策略加入Operator后由系统分配"""
+        return self._group.name if self._group is not None else self._group_id
 
     @property
     def description(self):
@@ -345,31 +358,24 @@ class BaseStrategy:
 
     @property
     def run_freq(self):
-        """策略生成的采样频率"""
-        return self._run_freq
-
-    @run_freq.setter
-    def run_freq(self, run_freq):
-        # check if run_freq is valid
-        if not isinstance(run_freq, str):
-            raise TypeError(f'sample_freq should be a string, got {type(run_freq)} instead')
-        if '-' in run_freq:
-            main_freq = run_freq.split('-')[0]
-        else:
-            main_freq = run_freq
-        if main_freq not in TIME_FREQ_STRINGS:
-            raise ValueError(f'run_freq should be one of {TIME_FREQ_STRINGS}, got {run_freq} instead')
-        self._run_freq = run_freq
+        """策略生成的采样频率，从所属Group读取。策略需先加入Operator才能访问此属性"""
+        if self._group is None:
+            raise AttributeError(
+                "Strategy must be added to an Operator (and thus a Group) before run_freq can be accessed. "
+                "Use op.add_strategy(stg, run_freq='d', run_timing='close') to add strategy to operator."
+            )
+        return self._group.run_freq
 
     @property
     def run_timing(self):
-        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        return self._run_timing
-
-    @run_timing.setter
-    def run_timing(self, run_timing):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        self._run_timing = run_timing
+        """策略的运行时机，从所属Group读取。策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型。
+        策略需先加入Operator才能访问此属性"""
+        if self._group is None:
+            raise AttributeError(
+                "Strategy must be added to an Operator (and thus a Group) before run_timing can be accessed. "
+                "Use op.add_strategy(stg, run_freq='d', run_timing='close') to add strategy to operator."
+            )
+        return self._group.run_timing
 
     @property
     def data_type_count(self):
