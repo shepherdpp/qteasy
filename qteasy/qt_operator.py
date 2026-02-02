@@ -27,6 +27,7 @@ from qteasy.history import (
 )
 
 from qteasy.utilfuncs import (
+    TIME_FREQ_STRINGS,
     AVAILABLE_OP_TYPES,
     str_to_list,
     rolling_window,
@@ -160,6 +161,16 @@ class Operator:
             group_merge_type = group_merge_type.lower()
             if group_merge_type not in ['none', 'and', 'or']:
                 raise ValueError(f'Invalid group_merge_type ({group_merge_type})')
+
+        # check if run_freq is valid
+        if not isinstance(run_freq, str):
+            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead')
+        if '-' in run_freq:
+            main_freq = run_freq.split('-')[0]
+        else:
+            main_freq = run_freq
+        if main_freq not in TIME_FREQ_STRINGS:
+            raise ValueError(f'run_freq should be one of {TIME_FREQ_STRINGS}, got {run_freq} instead')
 
         # 初始化Operator对象的"工作数据"或"运行数据"，以下属性由Operator自动设置，不允许用户手动设置：
         # Operator对象的工作变量
@@ -900,20 +911,16 @@ class Operator:
 
         if stg in self.strategies:
             raise ValueError(f'The strategy {stg} is already in operator, '
-                             f'please add a different strategy or its copy.')
+                             f'please add a different strategy or make a copy.')
 
         stg_id = self._next_stg_id(stg_id)
         strategy._strategy_id = stg_id
 
-        # 从kwargs中提取run_freq和run_timing，用于策略组匹配（run_freq/run_timing仅存储在Group中）
-        if 'run_freq' in kwargs:
-            run_freq = kwargs.pop('run_freq')
-            if not isinstance(run_freq, str) and run_freq is not None:
-                raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
-        if 'run_timing' in kwargs:
-            run_timing = kwargs.pop('run_timing')
-            if not isinstance(run_timing, str) and run_timing is not None:
-                raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
+        # 检查run_freq和run_timing，用于策略组匹配（run_freq/run_timing仅存储在Group中）
+        if not isinstance(run_freq, str) and run_freq is not None:
+            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
+        if not isinstance(run_timing, str) and run_timing is not None:
+            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
 
         # 使用run_freq和run_timing进行策略组匹配，而非从strategy读取（strategy的run_freq/run_timing从group委托）
         if len(self._groups) == 0 or not any(
@@ -927,13 +934,11 @@ class Operator:
                               run_freq=run_freq,
                               run_timing=run_timing, )
             new_group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
-            strategy._group_id = group_id
             self._groups.append(new_group)
         else:  # add the strategy to an existing group
             for group in self._groups:
                 if run_timing == group.run_timing and run_freq == group.run_freq:
                     group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
-                    strategy._group_id = group.name
                     break
 
         # 逐一修改该策略对象的各个参数
