@@ -711,8 +711,8 @@ class BaseStrategy:
         """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
         return self._get_pars_or_data(*dtype_id)
 
-    def update_shares(self, *,
-                      share_count: int = 0,
+    def update_shares(self,
+                      share_count: int,
                       share_names: Union[str, list[str]] = None):
         """ 更新策略的股票名称列表，或者仅给出share_count并自动生成虚拟股票名称列表
         如果给出了share_names，则忽略share_count，生成股票列表
@@ -736,6 +736,8 @@ class BaseStrategy:
                 raise TypeError(f'share_names should be a string or list of str, got{type(share_names)}')
             self._share_names = share_names
         else:
+            if not isinstance(share_count, int):
+                raise TypeError(f'share count should be a integer, got {type(share_count)} instead')
             if share_count <= 0:
                 raise ValueError(f'share count should be given and be larger than 0, got {share_count}')
             self._share_names = [f'Share_{i+1}' for i in range(share_count)]
