@@ -17,7 +17,7 @@ import warnings
 
 from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
-    input_to_list,
+    input_to_list, str_to_list,
 )
 from qteasy.datatypes import (
     DataType,
@@ -150,8 +150,6 @@ class BaseStrategy:
             name: str = '',
             description: str = '',
             stg_type: str = 'BASE',
-            # run_freq: str = 'd',  # deprecate: run_freq should be acquired from strategy group
-            # run_timing: str = 'close',  # deprecate: run_timing should be acquried from strategy group
             pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
             data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
             use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
@@ -170,19 +168,6 @@ class BaseStrategy:
             策略描述，用户自定义策略的描述，用于区分不同的策略
         stg_type: str
             策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
-        # run_freq: str {'d', 'w', 'm', 'q', ’qe‘， 'y', 'ye'}, default: 'd'
-        #     策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-        #     如果运行频率低于日频，可以通过'w_Fri' / 'm_15'(每月15日) / 'm_-2'(每月倒数第二天)等方式指定具体
-        #     哪一天运行
-        # run_timing: datetime-like or str, default: 'close
-        #     策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
-        #     例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
-        #     如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
-        #     例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
-        #     则策略运行时间为
-        #     ['09:30:00', '10:30:00',
-        #      '11:30:00', '13:00:00',
-        #      '14:00:00', '15:00:00',]
         pars: Parameter, list of Parameter, dict {str: Parameter}, default None
             策略可调参数，Parameter对象，确定策略的可调参数，参数类型以及取值范围
         data_types: DataType, list of DataTypes, dict{str: DataType}
@@ -213,8 +198,6 @@ class BaseStrategy:
 
         self._stg_name = str(name)
         self._stg_description = str(description)
-        # self._run_freq = run_freq
-        # self._run_timing = run_timing
 
         self._pars = None
         self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
@@ -242,7 +225,6 @@ class BaseStrategy:
                          f'data_types={self.data_types}, data_ids={self._data_ids}, ')
 
         # 以下是策略运行时产生的动态参数
-        self._share_count = 0
         self._share_names = None
         self._strategy_id = None  # 策略的唯一ID，在策略运行时由系统分配
         self._group_id = None  # deprecate: 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
@@ -278,7 +260,7 @@ class BaseStrategy:
     @property
     def group_id(self):
         """策略所属策略组的ID，策略加入Operator后由系统分配"""
-        return self._group.name if self._group is not None else self._group_id
+        return self.group.name if self._group is not None else None
 
     @property
     def description(self):
@@ -446,7 +428,7 @@ class BaseStrategy:
     @property
     def share_count(self):
         """运行时参数，策略运行时的股票数量，只有运行后才能确定"""
-        return self._share_count
+        return len(self._share_count)
 
     @property
     def share_names(self):
@@ -485,7 +467,7 @@ class BaseStrategy:
         """
         return f'{self._stg_type}({self.name}, {self.par_values})'
 
-    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None, extra_info = None) -> None:
+    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None, extra_info:str = None) -> None:
         """打印所有相关信息和主要属性
 
         Parameters
@@ -561,8 +543,8 @@ class BaseStrategy:
                         f'{adjust_string_length(str(dtype.description), description_width, hans_aware=True) :^{description_width}}'
                 )
         else:
-            par_info = f'{self.par_names}, {self.par_values}'
-            dtype_info = ', '.join([f'{dtype}@{window}d' for dtype, window in self.window_lengths.items()])
+            par_info = f'{self.par_names} = {self.par_values}'
+            dtype_info = ', '.join([f'{dtype} x {window}' for dtype, window in self.window_lengths.items()])
             rprint(f'Parameters: {par_info:<{value_width}}')
             rprint(f'Date Types: {dtype_info:<{value_width}}')
             # 打印额外信息
@@ -729,8 +711,12 @@ class BaseStrategy:
         """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
         return self._get_pars_or_data(*dtype_id)
 
-    def update_shares(self, share_count, share_names=None):
-        """ 更新策略的股票数量和股票名称列表
+    def update_shares(self, *,
+                      share_count: int = 0,
+                      share_names: Union[str, list[str]] = None):
+        """ 更新策略的股票名称列表，或者仅给出share_count并自动生成虚拟股票名称列表
+        如果给出了share_names，则忽略share_count，生成股票列表
+        如果没有给出share_names，则必须给出share_count，并生成虚拟名称列表
 
         Parameters
         ----------
@@ -743,10 +729,15 @@ class BaseStrategy:
         -------
         None
         """
-        self._share_count = share_count
         if share_names is not None:
+            if isinstance(share_names, str):
+                share_names = str_to_list(share_names)
+            if not isinstance(share_names, (str, list)):
+                raise TypeError(f'share_names should be a string or list of str, got{type(share_names)}')
             self._share_names = share_names
         else:
+            if share_count <= 0:
+                raise ValueError(f'share count should be given and be larger than 0, got {share_count}')
             self._share_names = [f'Share_{i+1}' for i in range(share_count)]
 
     def update_data_types(self,
@@ -1323,7 +1314,7 @@ class RuleIterator(BaseStrategy):
                 extra_info += f'\n{"Multi-parameter":<{info_width}}\n{multi_par_str}'
             else:  # print out brief multi_pars info
                 extra_info += f'\n{"Multi-parameter (pass verbose=True to view all multi pars)":<{info_width}}\n' \
-                              f'{self.multi_pars[self.multi_pars.values()[0]]}\n...'
+                              f'{self.multi_pars[self.multi_pars.values[0]]}\n...'
 
         super().info(verbose=verbose, stg_id=stg_id, extra_info=extra_info)
 
