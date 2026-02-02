@@ -4879,3 +4879,8 @@ class StgData(DataType):
         super().__init__(name, freq=freq, asset_type=asset_type)
         self.window_length = window_length
         self.use_latest_data_cycle = use_latest_data_cycle
+
+    def __repr__(self):
+        return (f'StgData(\'{self.name}\', \'{self.freq}\', \'{self.asset_type}\', '
+                f'window_length={self.window_length}, ULC={self.use_latest_data_cycle})')
+
