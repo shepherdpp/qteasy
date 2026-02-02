@@ -801,7 +801,8 @@ class Operator:
         run_timing: str, optional
             run_timing为策略的运行时机，可以为None，表示不指定运行时机
         **kwargs: Any
-            添加的交易策略所共享的属性，一般如run_timing， run_freq等属性
+            添加的交易策略所共享的属性，如 run_timing、run_freq、window_length、
+            use_latest_data_cycle、freq、asset_type、data_type_ids 等（会传入 add_strategy）
 
         Returns
         -------
@@ -859,6 +860,9 @@ class Operator:
             - window_length: int, 策略窗口长度
             - run_freq: str, 策略采样频率
             - data_types: list, 策略数据类型
+            - data_type_ids: str or list, 策略数据类型 ID（用于 update_data_types）
+            - freq: str or list or dict, 数据类型的频率（修改会替换对应 DataType）
+            - asset_type: str or list or dict, 数据类型的资产类型（修改会替换对应 DataType）
             - group: str, 策略运行时机
             - use_latest_data_cycle: bool, 策略是否使用最新数据周期
 
@@ -1305,6 +1309,8 @@ class Operator:
                       data_type_ids: Union[str, list] = None,
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
+                      freq: Union[str, list[str], tuple[str, ...], dict[str, str]] = None,
+                      asset_type: Union[str, list[str], tuple[str, ...], dict[str, str]] = None,
                       par_values: Union[tuple, list, dict[str, Union[tuple, list]]] = None,
                       par_range: Union[tuple, list, dict[str, tuple]] = None,
                       run_freq: str = None,
@@ -1333,6 +1339,10 @@ class Operator:
             窗口长度：策略计算的前视窗口长度
         use_latest_data_cycle: bool or list of bool or tuple of bool,
             是否使用最新的数据周期
+        freq: str or list of str or tuple of str or dict of str,
+            数据类型的频率，若给出则用新 DataType 替换对应项（dtype_id 会随之变化）
+        asset_type: str or list of str or tuple of str or dict of str,
+            数据类型的资产类型，若给出则用新 DataType 替换对应项（dtype_id 会随之变化）
         par_values: tuple or list,
             策略参数的具体取值
         par_range: tuple or list, or dict of tuples,
@@ -1364,12 +1374,15 @@ class Operator:
                     use_latest_data_cycle=use_latest_data_cycle,
             )
 
-        if (data_type_ids is not None) or (window_length is not None) or (use_latest_data_cycle is not None):
-            # 更新策略数据类型的ID或者其参数
+        if (data_type_ids is not None) or (window_length is not None) or (use_latest_data_cycle is not None)
+                or (freq is not None) or (asset_type is not None):
+            # 更新策略数据类型的ID或者其参数（含 freq/asset_type 替换）
             strategy.update_data_types(
                     dtype_id=data_type_ids,
                     window_length=window_length,
                     use_latest_data_cycle=use_latest_data_cycle,
+                    freq=freq,
+                    asset_type=asset_type,
             )
         if par_values is not None:  # 设置策略参数的具体取值
             if isinstance(par_values, dict) and isinstance(strategy, RuleIterator):
@@ -1451,7 +1464,7 @@ class Operator:
                 raise TypeError(f'share should be a string, got {type(share)} instead')
         self._op_signal_shares = {share: idx for idx, share in enumerate(shares)}
         for strategy in self.strategies:
-            strategy.update_shares(len(shares), shares)
+            strategy.update_shares(share_names=shares)
 
     def set_group_parameters(self,
                              group: Union[str, int],
