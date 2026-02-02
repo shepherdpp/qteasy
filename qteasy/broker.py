@@ -25,7 +25,7 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-def _verify_trade_result(trade_result, order_qty):
+def _verify_trade_result(trade_result, order_qty) -> bool:
     """ 检查result，确认是否符合基本要求:
     包括trade_result各个组份的类型是否正确、数据是否超过范围
 
@@ -38,6 +38,10 @@ def _verify_trade_result(trade_result, order_qty):
         fee: float
     order_qty: float
         订单的报价数量
+
+    Returns
+    -------
+    bool: 当result符合基本要求的时候，返回True
     """
     result_type, qty, filled_price, fee = trade_result
 
@@ -96,7 +100,7 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
-    # TODO: for v1.1:
+    # TODO: for v2.0:
     #  重构Broker类，使Broker基类提供通用的接口，如log_in, log_out, run, transaction等
     #  并将具体的交易所实现放在子类中，如SimulatorBroker, SimpleBroker等
     #  重构后的Broker类应该是一个抽象类，不能直接实例化，只能通过子类实例化
@@ -152,13 +156,6 @@ class Broker(object):
         # override this function if necessary
         self.is_registered = True
         self.debug = debug
-
-    def log_out_broker(self):
-        """ Broker对象在关闭前的处理过程。
-        Override这个函数，以添加更多处理
-        """
-        # override this function if necessary
-        pass
 
     def run(self):
         """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
@@ -424,6 +421,38 @@ class Broker(object):
         ('failed', 0, 0, 0)
         """
         pass
+
+    # --------- New APIs defined for new base broker class
+    def log_in_broker(self):
+        """登录"""
+        raise NotImplementedError
+
+    def log_out_broker(self):
+        """ Broker对象在关闭前的处理过程。
+        Override这个函数，以添加更多处理
+        """
+        # override this function if necessary
+        pass
+
+    def get_positions(self):
+        """ get positions from the broker"""
+        raise NotImplementedError
+
+    def get_orders(self):
+        """get ids of the orders submitted"""
+        raise NotImplementedError
+
+    def get_results(self, order_id):
+        """ get the order execution result with order id"""
+        raise NotImplementedError
+
+    def submit_order(self):
+        """交易挂单"""
+        raise NotImplementedError
+
+    def withdraw_order(self):
+        """交易撤单"""
+        raise NotImplementedError
 
 
 class SimpleBroker(Broker):
