@@ -1068,9 +1068,10 @@ class TestQT(unittest.TestCase):
         stg1.window_length = 100
         stg2.window_length = 100
 
-        stg2.run_freq = 'W'  # TODO: test freq like '2W', '3D'
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_batch.set_parameter('custom_1', run_freq='W')
         op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
+        op_stepwise.set_parameter('custom_1', run_freq='W')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
