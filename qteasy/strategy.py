@@ -746,10 +746,15 @@ class BaseStrategy:
                           dtype_id=None,
                           *,
                           use_latest_data_cycle: Union[bool, tuple[bool], list[bool], dict[str, bool]] = None,
-                          window_length: Union[int, tuple[int], list[int], dict[str, int]] = None) -> None:
+                          window_length: Union[int, tuple[int], list[int], dict[str, int]] = None,
+                          freq: Union[str, tuple[str], list[str], dict[str, str]] = None,
+                          asset_type: Union[str, tuple[str], list[str], dict[str, str]] = None) -> None:
         """ 更新交易策略的数据参数，可以更新单个数据类型的参数，也可以更新多个数据类型的参数
-        如果给出dtype_id，则更新单个参数，否则更新所有参数
+        如果给出dtype_id，则更新单个参数，否则更新所有参数。
+        支持更新 window_length、use_latest_data_cycle、freq、asset_type；
+        修改 freq 或 asset_type 会替换为新的 DataType 实例（因 dtype_id 由 name/freq/asset_type 派生）。
         """
+        # 1) 先更新 window_length 和 use_latest_data_cycle（在当前 dtype_id 上）
         if dtype_id is not None:
             if dtype_id not in self.data_types:
                 raise KeyError(f'data type {dtype_id} is not defined in the strategy')
@@ -795,6 +800,89 @@ class BaseStrategy:
                     self._data_WL.update(window_length)
                 else:
                     raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
+
+        # 2) 再处理 freq / asset_type：用新 DataType 替换旧项，保持 _data_ids 顺序
+        if freq is None and asset_type is None:
+            return
+
+        def _resolve_freq_asset(did: str):
+            dt = self._data_types[did]
+            new_f = freq
+            new_a = asset_type
+            if dtype_id is not None:
+                # 单条更新：freq/asset_type 为标量 str
+                if did != dtype_id:
+                    return None, None
+                if freq is not None:
+                    assert isinstance(freq, str), f'freq should be str when dtype_id is given, got {type(freq)}'
+                    new_f = freq
+                else:
+                    new_f = dt.freq
+                if asset_type is not None:
+                    assert isinstance(asset_type, str), f'asset_type should be str when dtype_id is given, got {type(asset_type)}'
+                    new_a = asset_type
+                else:
+                    new_a = dt.asset_type
+            else:
+                # 批量：freq/asset_type 可为标量、list、dict
+                if freq is not None:
+                    if isinstance(freq, str):
+                        new_f = freq
+                    elif isinstance(freq, (list, tuple)):
+                        idx = self._data_ids.index(did)
+                        new_f = freq[idx] if idx < len(freq) else dt.freq
+                    elif isinstance(freq, dict):
+                        new_f = freq.get(did, dt.freq)
+                    else:
+                        raise TypeError(f'freq should be str, list, tuple or dict, got {type(freq)}')
+                else:
+                    new_f = dt.freq
+                if asset_type is not None:
+                    if isinstance(asset_type, str):
+                        new_a = asset_type
+                    elif isinstance(asset_type, (list, tuple)):
+                        idx = self._data_ids.index(did)
+                        new_a = asset_type[idx] if idx < len(asset_type) else dt.asset_type
+                    elif isinstance(asset_type, dict):
+                        new_a = asset_type.get(did, dt.asset_type)
+                    else:
+                        raise TypeError(f'asset_type should be str, list, tuple or dict, got {type(asset_type)}')
+                else:
+                    new_a = dt.asset_type
+            return new_f, new_a
+
+        replacements = []  # (old_id, new_dtype, new_id)
+        for did in list(self._data_ids):
+            new_f, new_a = _resolve_freq_asset(did)
+            if new_f is None:
+                continue
+            dt = self._data_types[did]
+            if (new_f, new_a) == (dt.freq, dt.asset_type):
+                continue
+            try:
+                new_dtype = DataType(dt.name, freq=new_f, asset_type=new_a)
+            except Exception as e:
+                raise ValueError(f'Failed to create DataType({dt.name!r}, freq={new_f!r}, asset_type={new_a!r}): {e}')
+            new_id = new_dtype.dtype_id
+            replacements.append((did, new_dtype, new_id))
+
+        for old_id, new_dtype, new_id in replacements:
+            ulc_val = self._data_ULC[old_id]
+            wl_val = self._data_WL[old_id]
+            del self._data_types[old_id]
+            del self._data_ULC[old_id]
+            del self._data_WL[old_id]
+            if new_id not in self._data_types:
+                self._data_types[new_id] = new_dtype
+                self._data_ULC[new_id] = ulc_val
+                self._data_WL[new_id] = wl_val
+                self._data_ids = [new_id if x == old_id else x for x in self._data_ids]
+                self.__setattr__(new_id, None)
+            else:
+                # new_id 已存在：仅从列表中移除 old_id，并更新已有条目的 ULC/WL
+                self._data_ids = [x for x in self._data_ids if x != old_id]
+                self._data_ULC[new_id] = ulc_val
+                self._data_WL[new_id] = wl_val
 
     def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
         """ 快速更新策略的参数值

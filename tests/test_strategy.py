@@ -897,6 +897,78 @@ class TestStrategy(unittest.TestCase):
         self.assertRaises(TypeError, stg.update_data_types, use_latest_data_cycle='wrong_type')
         self.assertRaises(AssertionError, stg.update_data_types, window_length={'close_E_d': 'wrong_type'})
 
+        # test updating data types with freq: single dtype_id
+        stg = self.base_stg
+        self.assertEqual(stg.data_type_ids, [
+            'close_E_d', 'close_E_h', 'close_E_5min', 'close_E_15min', 'close_E_w',
+        ])
+        stg.update_data_types(dtype_id='close_E_15min', freq='30min')
+        self.assertIn('close_E_30min', stg.data_types)
+        self.assertNotIn('close_E_15min', stg.data_types)
+        self.assertEqual(stg.data_window_lengths['close_E_30min'], 8)
+        self.assertEqual(stg.data_freqs['close_E_30min'], '30min')
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_type_ids, [
+            'close_E_d', 'close_E_h', 'close_E_5min', 'close_E_30min', 'close_E_w',
+        ])
+
+        # test updating data types with asset_type: single dtype_id
+        stg.update_data_types(dtype_id='close_E_d', asset_type='IDX')
+        self.assertIn('close_IDX_d', stg.data_types)
+        self.assertNotIn('close_E_d', stg.data_types)
+        self.assertEqual(stg.data_freqs['close_IDX_d'], 'd')
+        self.assertEqual(stg.data_type_count, 5)
+        self.assertEqual(stg.data_type_ids[0], 'close_IDX_d')
+
+        # test updating freq with dict (no dtype_id): one entry changes freq and merges into existing
+        # use a fresh strategy that still has close_E_d (previous tests may have replaced it)
+        stg = BaseStrategy(
+                name='TestStrategyFreqDict',
+                run_freq='d',
+                run_timing='close',
+                pars=[self.param1.copy(), self.param2.copy(), self.param3.copy(), self.param4.copy()],
+                data_types=[self.dtype_1.copy(), self.dtype_2.copy(), self.dtype_3.copy(),
+                           self.dtype_4.copy(), self.dtype_5.copy()],
+                use_latest_data_cycle=False,
+                window_length=20,
+        )
+        stg.update_data_types(freq={'close_E_d': 'w'})
+        self.assertNotIn('close_E_d', stg.data_types)
+        self.assertIn('close_E_w', stg.data_types)
+        self.assertEqual(stg.data_type_count, 4)
+
+        # test wrong type for freq/asset_type when dtype_id is given (use fresh strategy)
+        stg = self.base_stg
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', freq=123)
+        stg = self.base_stg
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', asset_type=[])
+
+        # test invalid freq/asset_type leads to ValueError from DataType
+        stg = self.base_stg
+        self.assertRaises((ValueError, TypeError), stg.update_data_types, dtype_id='close_E_d', freq='invalid_freq')
+
+        # test Operator.add_strategy / set_parameter with freq and asset_type
+        stg = BaseStrategy(
+                name='TestStrategyOp',
+                run_freq='d',
+                run_timing='close',
+                pars=[self.param1.copy(), self.param2.copy(), self.param3.copy(), self.param4.copy()],
+                data_types=[self.dtype_1.copy(), self.dtype_2.copy(), self.dtype_3.copy(),
+                           self.dtype_4.copy(), self.dtype_5.copy()],
+                use_latest_data_cycle=False,
+                window_length=20,
+        )
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
+        stg_id = stg.strategy_id
+        self.assertIn('close_E_d', stg.data_types)
+        op.set_parameter(stg_id, data_type_ids='close_E_15min', freq='30min')
+        self.assertIn('close_E_30min', stg.data_types)
+        self.assertNotIn('close_E_15min', stg.data_types)
+        op.set_parameter(stg_id, data_type_ids='close_E_d', asset_type='IDX')
+        self.assertIn('close_IDX_d', stg.data_types)
+        self.assertNotIn('close_E_d', stg.data_types)
+
     def test_stg_attribute_get_and_set(self):
         """ 测试策略属性的获取和设置 """
         stg = self.base_stg
