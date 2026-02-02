@@ -860,7 +860,7 @@ class Operator:
             - window_length: int, 策略窗口长度
             - run_freq: str, 策略采样频率
             - data_types: list, 策略数据类型
-            - data_type_ids: str or list, 策略数据类型 ID（用于 update_data_types）
+            - data_type_id: str, 策略数据类型 ID（用于 update_data_types）
             - freq: str or list or dict, 数据类型的频率（修改会替换对应 DataType）
             - asset_type: str or list or dict, 数据类型的资产类型（修改会替换对应 DataType）
             - group: str, 策略运行时机
@@ -946,7 +946,11 @@ class Operator:
                     break
 
         # 逐一修改该策略对象的各个参数
-        self.set_parameter(stg_id=stg_id, **kwargs)
+        try:
+            self.set_parameter(stg_id=stg_id, **kwargs)
+        except Exception as e:
+            self.remove_strategy(stg_id)
+            raise RuntimeError(f'{e} - strategy {stg_id} addition rolled back.')
 
     def _next_stg_id(self, stg_id: str):
         """ 为一个交易策略生成一个新的id"""
@@ -1306,7 +1310,7 @@ class Operator:
                       pars: Union[tuple, dict] = None,
                       opt_tag: int = None,
                       data_types: Union[DataType, list[DataType], dict[str, DataType]] = None,
-                      data_type_ids: Union[str, list] = None,
+                      data_type_id: str = None,
                       window_length: Union[int, tuple[int, ...], list[int]] = None,
                       use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
                       freq: Union[str, list[str], tuple[str, ...], dict[str, str]] = None,
@@ -1333,7 +1337,7 @@ class Operator:
             2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
         data_types: DataType or list of DataType or dict of str, optional
             策略计算所需历史数据的数据类型，如果给出，则更新这个数据类型的参数
-        data_type_ids: str or list of str,
+        data_type_id: str,
             策略计算所需历史数据的数据类型的ID，给出该ID表明更新这个数据类型的参数
         window_length: int or list of int or tuple of int,
             窗口长度：策略计算的前视窗口长度
@@ -1374,11 +1378,11 @@ class Operator:
                     use_latest_data_cycle=use_latest_data_cycle,
             )
 
-        if (data_type_ids is not None) or (window_length is not None) or (use_latest_data_cycle is not None)
+        if (data_type_id is not None) or (window_length is not None) or (use_latest_data_cycle is not None) \
                 or (freq is not None) or (asset_type is not None):
             # 更新策略数据类型的ID或者其参数（含 freq/asset_type 替换）
             strategy.update_data_types(
-                    dtype_id=data_type_ids,
+                    dtype_id=data_type_id,
                     window_length=window_length,
                     use_latest_data_cycle=use_latest_data_cycle,
                     freq=freq,
@@ -1442,7 +1446,7 @@ class Operator:
                     raise RuntimeError(f'more than one target group found for strategy {stg_id} '
                                        f'with run_timing={new_run_timing} and run_freq={new_run_freq}')
 
-        # 设置其他自定义参数
+        # 设置其他自定义参数，如果修改参数时出现错误，则删除刚刚添加的strategy
         strategy.set_custom_pars(**kwargs)
 
     def set_shares(self, shares: list[str]):
