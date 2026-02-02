@@ -1099,11 +1099,11 @@ class TestStrategy(unittest.TestCase):
               f'close_E_5min: \n{stg.close_E_5min}\n'
               f'close_E_15min: \n{stg.close_E_15min}\n'
               f'close_E_w: \n{stg.close_E_w}\n')
-        stg.update_shares(3, ['share1', 'share2', 'share3'])
+        stg.update_shares(share_count=3, share_names=['share1', 'share2', 'share3'])
         self.assertEqual(stg.share_count, 3)
         self.assertEqual(stg.share_names, ['share1', 'share2', 'share3'])
         # update shares without list
-        stg.update_shares(3)
+        stg.update_shares(share_count=3)
         self.assertEqual(stg.share_count, 3)
         self.assertEqual(stg.share_names, ['Share_1', 'Share_2', 'Share_3'])
 
@@ -1402,7 +1402,7 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(stg.multi_pars, None)
 
         # run strategy.generate()
-        stg.update_shares(3, ['share1', 'share2', 'share3'])
+        stg.update_shares(share_count=3, share_names=['share1', 'share2', 'share3'])
         res = stg.generate()
         print(res)
 
