@@ -1027,7 +1027,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op['dma'].run_freq, '15min')
         self.assertEqual(op['macd'].run_freq, '15min')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
-        self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq=15)
+        self.assertRaises(TypeError, qt.Operator, 'dma, macd', run_freq=15)
         self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq='5hourly')
 
         op = qt.Operator('dma, macd', run_timing='open')
@@ -1142,7 +1142,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.group_ids, [])
 
         print(f'add a strategy with default run freq and run timing')
-        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 1)
         self.assertEqual(op.strategy_group_count, 1)
@@ -1154,7 +1154,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
 
         print(f'add a strategy with run freq h and run timing close')
-        op.add_strategy(TestRuleIter(run_freq='h', run_timing='close'))
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='close')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 2)
         self.assertEqual(op.strategy_group_count, 2)
@@ -1166,7 +1166,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
 
         print(f'add a strategy again with run freq d and run timing close')
-        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 3)
         self.assertEqual(op.strategy_group_count, 2)
@@ -1185,7 +1185,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
 
         print(f'test adding strategy with run freq h and run timing open')
-        op.add_strategy(TestRuleIter(run_freq='h', run_timing='open'))
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='open')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 4)
         self.assertEqual(op.strategy_group_count, 3)
@@ -1264,9 +1264,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.strategy_group_count, 1)
         self.assertEqual(op.groups, {'Group_1': op._groups[0]})
         print('test adding multiple strategies with different run freq and run timing')
-        op.add_strategies([TestRuleIter(run_freq='d', run_timing='close'),
-                           TestRuleIter(run_freq='h', run_timing='close'),
-                           TestRuleIter(run_freq='h', run_timing='open')])
+        op.add_strategy(TestRuleIter(),run_freq='d', run_timing='close')
+        op.add_strategy(TestRuleIter(),run_freq='h', run_timing='close')
+        op.add_strategy(TestRuleIter(),run_freq='h', run_timing='open')
         self.assertEqual(op.strategy_count, 17)
         self.assertEqual(op.strategy_group_count, 3)
         self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
@@ -4073,7 +4073,7 @@ class TestAddStrategy(unittest.TestCase):
         strategy = DMA()
 
         # 添加策略并设置None参数
-        self.operator.add_strategy(strategy, run_freq=None, run_timing=None)
+        self.operator.add_strategy(strategy)
 
         # 验证策略的原始值被保留
         self.assertEqual(strategy.run_freq, 'd')
@@ -4117,8 +4117,6 @@ class TestAddStrategy(unittest.TestCase):
         class CustomStrategy(qt.GeneralStg):
             def __init__(self):
                 super().__init__()
-                self.run_freq = 'd'
-                self.run_timing = 'close'
                 self._strategy_id = None
 
         custom_strategy = CustomStrategy()
@@ -4137,8 +4135,6 @@ class TestAddStrategy(unittest.TestCase):
         class CustomStrategyClass(qt.GeneralStg):
             def __init__(self):
                 super().__init__()
-                self.run_freq = 'd'
-                self.run_timing = 'close'
                 self._strategy_id = None
 
         # 添加策略类
@@ -4159,8 +4155,6 @@ class TestAddStrategy(unittest.TestCase):
         class MockStrategy(qt.GeneralStg):
             def __init__(self):
                 super().__init__()
-                self.run_freq = 'd'
-                self.run_timing = 'close'
                 self._strategy_id = None
 
         self.operator.add_strategy(MockStrategy)
@@ -4206,8 +4200,6 @@ class TestAddStrategy(unittest.TestCase):
         class CustomStrategy(qt.GeneralStg):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
-                self.run_freq = 'd'
-                self.run_timing = 'close'
                 self._strategy_id = None
 
         custom_strategy = CustomStrategy(opt_tag=1, par_values=(5, 10),

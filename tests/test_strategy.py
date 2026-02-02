@@ -18,6 +18,7 @@ from qteasy.strategy import (
     RuleIterator,
     FactorSorter,
 )
+from qteasy.qt_operator import Operator
 
 from qteasy.datatypes import DataType, StgData
 from qteasy.parameter import Parameter
@@ -544,6 +545,9 @@ class TestStrategy(unittest.TestCase):
 
         self.assertIsInstance(stg, BaseStrategy)
         self.assertEqual(stg.name, 'TestStrategy')
+        # run_freq/run_timing 从 Group 委托读取，需先加入 Operator
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
         self.assertEqual(stg.run_freq, 'd')
         self.assertEqual(stg.run_timing, 'close')
         stg.info()
@@ -896,6 +900,9 @@ class TestStrategy(unittest.TestCase):
     def test_stg_attribute_get_and_set(self):
         """ 测试策略属性的获取和设置 """
         stg = self.base_stg
+        # run_freq/run_timing 从 Group 委托读取，需先加入 Operator
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
         # print out all available parameters of the strategy:
         print(f'strategy parameters\n'
               f'stg_type: {stg.stg_type}\n'
@@ -933,8 +940,8 @@ class TestStrategy(unittest.TestCase):
             'param2': self.param2,
         }
         stg.par_values = (55, 0.55)
-        stg.run_freq = '5min'
-        stg.run_timing = 'open'
+        # run_freq/run_timing 通过 Operator.set_parameter 修改 Group 的属性
+        op.set_parameter(stg.strategy_id, run_freq='5min', run_timing='open')
         stg.data_types = [self.dtype_3, self.dtype_1, self.dtype_2]
 
         # print out all parameters again and assert their values:
@@ -1030,6 +1037,12 @@ class TestStrategy(unittest.TestCase):
 
         self.assertRaises(KeyError, stg.set_custom_pars, wrong_arg='wrong arg')
 
+    def test_run_freq_timing_requires_group(self):
+        """run_freq/run_timing 从 Group 委托读取，未加入 Operator 的策略访问会抛出 AttributeError"""
+        stg = BaseStrategy(name='Standalone', pars=[], data_types=[])
+        self.assertRaises(AttributeError, lambda: stg.run_freq)
+        self.assertRaises(AttributeError, lambda: stg.run_timing)
+
     def test_methods(self):
         """ test all methods of strategy class"""
         stg = self.base_stg
@@ -1111,6 +1124,8 @@ class TestStrategy(unittest.TestCase):
         """ 测试第一种基础策略类General Strategy"""
         stg = self.gen_stg
         stg.update_par_values(50, 0.5)
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
 
         # test info method
         stg.info()
@@ -1191,6 +1206,8 @@ class TestStrategy(unittest.TestCase):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
         stg = self.factor_sorter_stg
         stg.update_par_values(10, 0.6)
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
 
         # test info method
         stg.info()
@@ -1336,6 +1353,8 @@ class TestStrategy(unittest.TestCase):
         """测试rule_iterator类型策略"""
         stg = self.rule_iterator_stg
         stg.update_par_values(10, 0.6)
+        op = Operator()
+        op.add_strategy(stg, run_freq='d', run_timing='close')
 
         # test info method
         stg.info()
