@@ -4696,5 +4696,394 @@ class TestStrategyTracing(unittest.TestCase):
         self.assertEqual(trace_data['test_id_step_var'][2], 3)
 
 
+class TestOperatorSetParameter(unittest.TestCase):
+    """完整测试 Operator.set_parameter 的全部参数与边界条件，不使用 Mock。"""
+
+    def setUp(self):
+        self.op = qt.Operator()
+        self.op.add_strategies('dma, macd', run_freq='d', run_timing='close')
+        self.dma_id = self.op.strategy_ids[0]
+        self.macd_id = self.op.strategy_ids[1]
+
+    # ---------- stg_id 边界 ----------
+    def test_set_parameter_stg_id_valid_str(self):
+        self.op.set_parameter(self.dma_id, par_values=(50, 10, 20))
+        self.assertEqual(self.op[self.dma_id].par_values, (50, 10, 20))
+
+    def test_set_parameter_stg_id_valid_int(self):
+        self.op.set_parameter(0, par_values=(50, 10, 20))
+        self.assertEqual(self.op[0].par_values, (50, 10, 20))
+        self.op.set_parameter(1, par_values=(11, 27, 8))
+        self.assertEqual(self.op[1].par_values, (11, 27, 8))
+
+    def test_set_parameter_stg_id_int_negative_raises(self):
+        """stg_id 为负整数（如 -1）时应报错，不支持“最后一个策略”的语义。"""
+        self.assertRaises(KeyError, self.op.set_parameter, -1, par_values=(11, 27, 8))
+
+    def test_set_parameter_stg_id_none_raises(self):
+        self.assertRaises(AssertionError, self.op.set_parameter, None, par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_wrong_type_raises(self):
+        self.assertRaises(AssertionError, self.op.set_parameter, 1.5, par_values=(1, 2, 3))
+        self.assertRaises(AssertionError, self.op.set_parameter, [], par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_nonexistent_str_raises(self):
+        self.assertRaises(KeyError, self.op.set_parameter, 'nonexistent_id', par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_int_out_of_range_raises(self):
+        self.assertRaises(KeyError, self.op.set_parameter, 10, par_values=(1, 2, 3))
+        self.assertRaises(KeyError, self.op.set_parameter, -10, par_values=(1, 2, 3))
+
+    # ---------- pars ----------
+    def test_set_parameter_pars_single_parameter(self):
+        from qteasy.parameter import Parameter
+        new_par = Parameter(par_range=(5, 100), par_type='int', name='slow')
+        self.op.set_parameter(self.dma_id, pars=new_par)
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (5, 100))
+
+    def test_set_parameter_pars_list(self):
+        from qteasy.parameter import Parameter
+        pars = [
+            Parameter(par_range=(5, 100), par_type='int', name='slow'),
+            Parameter(par_range=(5, 100), par_type='int', name='long'),
+            Parameter(par_range=(5, 100), par_type='int', name='diff'),
+        ]
+        self.op.set_parameter(self.dma_id, pars=pars)
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (5, 100))
+
+    def test_set_parameter_pars_wrong_type_raises(self):
+        self.assertRaises(TypeError, self.op.set_parameter, self.dma_id, pars='not_a_par')
+
+    # ---------- opt_tag ----------
+    def test_set_parameter_opt_tag_0_1_2(self):
+        self.op.set_parameter(self.dma_id, opt_tag=0)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 0)
+        self.op.set_parameter(self.dma_id, opt_tag=1)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 1)
+        self.op.set_parameter(self.dma_id, opt_tag=2)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 2)
+
+    # ---------- data_types ----------
+    def test_set_parameter_data_types_single(self):
+        self.op.set_parameter(
+            self.dma_id,
+            data_types=DataType('close', freq='d', asset_type='ANY'),
+            window_length=100,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths.get('close_ANY_d'), 100)
+
+    def test_set_parameter_data_types_list(self):
+        self.op.set_parameter(
+            self.dma_id,
+            data_types=[DataType('close', freq='d', asset_type='ANY')],
+            window_length=80,
+        )
+        self.assertEqual(self.op[self.dma_id].max_window_length, 80)
+
+    # ---------- data_type_id + window_length + use_latest_data_cycle ----------
+    def test_set_parameter_data_type_id_window_length(self):
+        self.op.set_parameter(
+            self.dma_id,
+            data_type_id='close_ANY_d',
+            window_length=120,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 120)
+
+    def test_set_parameter_data_type_id_use_latest_data_cycle(self):
+        self.op.set_parameter(
+            self.dma_id,
+            data_type_id='close_ANY_d',
+            use_latest_data_cycle=True,
+        )
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_data_type_id_nonexistent_raises(self):
+        self.assertRaises(
+            KeyError,
+            self.op.set_parameter,
+            self.dma_id,
+            data_type_id='wrong_dtype_id',
+            window_length=10,
+        )
+
+    def test_set_parameter_window_length_scalar(self):
+        self.op.set_parameter(self.dma_id, window_length=50)
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 50)
+
+    def test_set_parameter_window_length_dict(self):
+        self.op.set_parameter(self.dma_id, window_length={'close_ANY_d': 88})
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 88)
+
+    def test_set_parameter_use_latest_data_cycle_scalar(self):
+        self.op.set_parameter(self.dma_id, use_latest_data_cycle=True)
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_use_latest_data_cycle_dict(self):
+        self.op.set_parameter(self.dma_id, use_latest_data_cycle={'close_ANY_d': False})
+        self.assertFalse(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    # ---------- freq + asset_type（需多数据类型策略）----------
+    def test_set_parameter_freq_asset_type_with_multi_dtype_strategy(self):
+        stg = BaseStrategy(
+            name='MultiDtypeStg',
+            run_freq='d',
+            run_timing='close',
+            pars=[param1.copy(), param2.copy()],
+            data_types=[dtype_1.copy(), dtype_2.copy(), dtype_4.copy()],
+            use_latest_data_cycle=False,
+            window_length=20,
+        )
+        self.op.add_strategy(stg, run_freq='d', run_timing='close')
+        stg_id = stg.strategy_id
+        self.assertIn('close_E_d', self.op[stg_id].data_types)
+        self.op.set_parameter(stg_id, data_type_id='close_E_15min', freq='30min')
+        self.assertIn('close_E_30min', self.op[stg_id].data_types)
+        self.assertNotIn('close_E_15min', self.op[stg_id].data_types)
+        self.op.set_parameter(stg_id, data_type_id='close_E_d', asset_type='IDX')
+        self.assertIn('close_IDX_d', self.op[stg_id].data_types)
+        self.assertNotIn('close_E_d', self.op[stg_id].data_types)
+
+    # ---------- par_values ----------
+    def test_set_parameter_par_values_tuple(self):
+        self.op.set_parameter(self.dma_id, par_values=(20, 30, 10))
+        self.assertEqual(self.op[self.dma_id].par_values, (20, 30, 10))
+
+    def test_set_parameter_par_values_list(self):
+        self.op.set_parameter(self.macd_id, par_values=[14, 28, 7])
+        self.assertEqual(self.op[self.macd_id].par_values, (14, 28, 7))
+
+    def test_set_parameter_par_values_kwargs_rule_iterator(self):
+        """按名字设置单组参数：par_values 为 {参数名: 值} 时按 kwargs 传入。"""
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={'slow': 15, 'long': 25, 'diff': 8},
+        )
+        self.assertEqual(self.op[self.dma_id].par_values, (15, 25, 8))
+
+    def test_set_parameter_par_values_multi_par_with_default(self):
+        """multi_par 标准格式：{stock_id: (par_tuple), 'default': (par_tuple)}；按 share_id/default 解析后与 share_names 同序。"""
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000002': (12, 26, 27),
+                'default': (12, 24, 26),
+            },
+        )
+        stg = self.op[self.dma_id]
+        self.assertTrue(stg.allow_multi_par)
+        self.assertIsNotNone(stg.multi_pars)
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
+        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
+        self.assertEqual(stg.multi_pars[2], (12, 24, 26), '000003 应使用 default 参数')
+
+    def test_set_parameter_par_values_multi_par_without_default(self):
+        """multi_par 不包含 default：仅对部分股票指定参数，未指定者使用策略默认 par_values。"""
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000002': (12, 26, 27),
+            },
+        )
+        stg = self.op[self.dma_id]
+        self.assertIsNotNone(stg.multi_pars)
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
+        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
+        self.assertEqual(stg.multi_pars[2], (12, 26, 9), '000003 无 default 时使用策略默认 (12,26,9)')
+
+    def test_set_parameter_par_values_multi_par_share_mismatch(self):
+        """multi_par 中股票代码与 share_names 不完全匹配：仅按 share_names 解析，未出现的 share_id 忽略。"""
+        shares = ['000001', '000002']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000003': (12, 26, 27),
+                'default': (12, 24, 26),
+            },
+        )
+        stg = self.op[self.dma_id]
+        self.assertIsNotNone(stg.multi_pars)
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
+        self.assertEqual(stg.multi_pars[1], (12, 24, 26), '000002 不在 dict 中应使用 default；000003 在 dict 中但不在 share_names 中应忽略')
+
+    def test_set_parameter_par_values_multi_par_only_default_raises(self):
+        """multi_par 仅含 default 时应报错：至少有一个非 default 的 stock_id。"""
+        self.op.set_shares(['000001', '000002'])
+        self.assertRaises(
+            ValueError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_multi_par_disallowed_raises(self):
+        """allow_multi_par=False 时传入 multi_par 应报错。"""
+        op = qt.Operator()
+        stg = DMA(allow_multi_par=False)
+        op.add_strategy(stg, run_freq='d', run_timing='close')
+        stg_id = stg.strategy_id
+        op.set_shares(['000001', '000002'])
+        self.assertRaises(
+            (ValueError, TypeError),
+            op.set_parameter,
+            stg_id,
+            par_values={'000001': (12, 5, 4), '000002': (12, 6, 7), 'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_wrong_length_raises(self):
+        self.assertRaises(
+            ValueError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_values=(1, 2),
+        )
+        self.assertRaises(
+            ValueError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_values=(1, 2, 3, 4),
+        )
+
+    # ---------- par_range ----------
+    def test_set_parameter_par_range_tuple(self):
+        self.op.set_parameter(
+            self.dma_id,
+            par_range=((15, 100), (15, 100), (5, 80)),
+        )
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (15, 100))
+        self.assertEqual(self.op[self.dma_id].pars['diff'].par_range, (5, 80))
+
+    def test_set_parameter_par_range_dict(self):
+        self.op.set_parameter(
+            self.dma_id,
+            par_range={'slow': (20, 150), 'long': (20, 150), 'diff': (8, 120)},
+        )
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (20, 150))
+
+    def test_set_parameter_par_range_wrong_type_raises(self):
+        self.assertRaises(
+            TypeError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_range='not_list_or_dict',
+        )
+
+    def test_set_parameter_par_range_wrong_length_raises(self):
+        self.assertRaises(
+            ValueError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_range=((10, 250), (10, 250)),
+        )
+
+    # ---------- run_freq / run_timing ----------
+    def test_set_parameter_run_freq_same_value_no_move(self):
+        g0 = self.op[self.dma_id]._group_id
+        self.op.set_parameter(self.dma_id, run_freq='d')
+        self.assertEqual(self.op[self.dma_id]._group_id, g0)
+        self.assertEqual(self.op[self.dma_id].run_freq, 'd')
+
+    def test_set_parameter_run_freq_change_strategy_alone_in_group(self):
+        self.assertEqual(len(self.op.groups), 1)
+        self.assertEqual(len(self.op.groups['Group_1'].members), 2)
+        op2 = qt.Operator()
+        op2.add_strategy(DMA(), run_freq='d', run_timing='close')
+        self.assertEqual(len(op2.groups['Group_1'].members), 1)
+        op2.set_parameter(op2.strategy_ids[0], run_freq='h')
+        self.assertEqual(op2[str(op2.strategy_ids[0])].run_freq, 'h')
+        self.assertEqual(op2.groups['Group_1'].run_freq, 'h')
+
+    def test_set_parameter_run_freq_change_strategy_not_alone(self):
+        self.op.set_parameter(self.dma_id, run_freq='h', run_timing='close')
+        self.assertEqual(self.op[self.dma_id].run_freq, 'h')
+        self.assertEqual(self.op[self.macd_id].run_freq, 'd')
+        self.assertEqual(len(self.op.groups), 2)
+        g_d = [g for g in self.op.groups.values() if g.run_freq == 'd'][0]
+        g_h = [g for g in self.op.groups.values() if g.run_freq == 'h'][0]
+        self.assertEqual(len(g_d.members), 1)
+        self.assertEqual(len(g_h.members), 1)
+
+    def test_set_parameter_run_timing_change(self):
+        self.op.set_parameter(self.dma_id, run_timing='open')
+        self.assertEqual(self.op[self.dma_id].run_timing, 'open')
+        self.assertEqual(self.op[self.macd_id].run_timing, 'close')
+
+    def test_set_parameter_run_freq_change_merges_two_groups(self):
+        """两 Group 各一个 Strategy，修改其中一个的 run_freq/run_timing 与另一 Group 相同，应合并为一 Group。"""
+        op = qt.Operator()
+        op.add_strategy(DMA(), run_freq='d', run_timing='close')
+        op.add_strategy(MACD(), run_freq='h', run_timing='close')
+        self.assertEqual(len(op.groups), 2)
+        self.assertEqual(len(op.groups['Group_1'].members), 1)
+        self.assertEqual(len(op.groups['Group_2'].members), 1)
+        dma_id = op.strategy_ids[0]
+        macd_id = op.strategy_ids[1]
+        self.assertEqual(op[dma_id].run_freq, 'd')
+        self.assertEqual(op[macd_id].run_freq, 'h')
+        op.set_parameter(macd_id, run_freq='d', run_timing='close')
+        self.assertEqual(len(op.groups), 1)
+        only_group = list(op.groups.values())[0]
+        self.assertEqual(only_group.strategy_count, 2)
+        self.assertEqual(only_group.run_freq, 'd')
+        self.assertEqual(only_group.run_timing, 'close')
+        self.assertEqual(op[dma_id]._group_id, op[macd_id]._group_id)
+        self.assertEqual(op[dma_id].run_freq, 'd')
+        self.assertEqual(op[macd_id].run_freq, 'd')
+        self.assertEqual(op[dma_id].run_timing, 'close')
+        self.assertEqual(op[macd_id].run_timing, 'close')
+
+    # ---------- kwargs -> set_custom_pars ----------
+    def test_set_parameter_custom_pars_valid_attr(self):
+        self.op[self.dma_id]._test_attr = 0
+        self.op.set_parameter(self.dma_id, _test_attr=99)
+        self.assertEqual(self.op[self.dma_id]._test_attr, 99)
+
+    def test_set_parameter_custom_pars_invalid_attr_raises(self):
+        self.assertRaises(
+            KeyError,
+            self.op.set_parameter,
+            self.dma_id,
+            nonexistent_attr=1,
+        )
+
+    # ---------- 组合多参数 ----------
+    def test_set_parameter_combined_multiple_params(self):
+        self.op.set_parameter(
+            self.dma_id,
+            opt_tag=1,
+            par_values=(18, 28, 9),
+            window_length=100,
+            use_latest_data_cycle=True,
+        )
+        self.assertEqual(self.op[self.dma_id].opt_tag, 1)
+        self.assertEqual(self.op[self.dma_id].par_values, (18, 28, 9))
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 100)
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_combined_data_types_and_update(self):
+        self.op.set_parameter(
+            self.dma_id,
+            data_types=DataType('close', freq='d', asset_type='ANY'),
+            window_length=90,
+            use_latest_data_cycle=False,
+        )
+        self.op.set_parameter(
+            self.dma_id,
+            data_type_id='close_ANY_d',
+            window_length=95,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 95)
+
+
 if __name__ == '__main__':
     unittest.main()
