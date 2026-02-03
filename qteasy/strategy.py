@@ -428,7 +428,9 @@ class BaseStrategy:
     @property
     def share_count(self):
         """运行时参数，策略运行时的股票数量，只有运行后才能确定"""
-        return len(self._share_count)
+        if self._share_names is None:
+            return 0
+        return len(self._share_names)
 
     @property
     def share_names(self):
@@ -712,7 +714,7 @@ class BaseStrategy:
         return self._get_pars_or_data(*dtype_id)
 
     def update_shares(self,
-                      share_count: int,
+                      share_count: int = None,
                       share_names: Union[str, list[str]] = None):
         """ 更新策略的股票名称列表，或者仅给出share_count并自动生成虚拟股票名称列表
         如果给出了share_names，则忽略share_count，生成股票列表
@@ -720,7 +722,7 @@ class BaseStrategy:
 
         Parameters
         ----------
-        share_count: int
+        share_count: int, optional
             股票数量
         share_names: list of str, optional
             股票名称列表，如果没有提供，则使用默认的股票名称列表
@@ -736,6 +738,8 @@ class BaseStrategy:
                 raise TypeError(f'share_names should be a string or list of str, got{type(share_names)}')
             self._share_names = share_names
         else:
+            if share_count is None:
+                raise ValueError('Either share_names or share_count should be given')
             if not isinstance(share_count, int):
                 raise TypeError(f'share count should be a integer, got {type(share_count)} instead')
             if share_count <= 0:
