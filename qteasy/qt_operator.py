@@ -649,7 +649,7 @@ class Operator:
             return strategies[item]
         strategy_count = self.strategy_count
         if (item > strategy_count - 1) or (item < 0):
-            err = KeyError(f'Strategy index out of range: {item + 1} out of total {strategy_count} strategies')
+            err = KeyError(f'Strategy index out of range: {item} out of total {strategy_count} strategies')
             raise err
 
         return strategies[all_ids[item]]
@@ -1337,7 +1337,7 @@ class Operator:
             2: 以枚举类型参加优化，在策略优化过程中仅从给定的参数组合种选取最优的参数组合
         data_types: DataType or list of DataType or dict of str, optional
             策略计算所需历史数据的数据类型，如果给出，则更新这个数据类型的参数
-        data_type_id: str,
+        data_type_id: str, optional
             策略计算所需历史数据的数据类型的ID，给出该ID表明更新这个数据类型的参数
         window_length: int or list of int or tuple of int,
             窗口长度：策略计算的前视窗口长度
@@ -1390,8 +1390,28 @@ class Operator:
             )
         if par_values is not None:  # 设置策略参数的具体取值
             if isinstance(par_values, dict) and isinstance(strategy, RuleIterator):
-                # 如果par_values为一个字典，并且strategy是一个RuleIterator类型的策略，则调用update_par_values时使用关键字参数
-                strategy.update_par_values(par_values)
+                # 区分：参数名→值（kwargs） vs 股票→参数元组（multi_par）
+                par_names = set(getattr(strategy, 'par_names', ()))
+                keys_only_default = set(par_values.keys()) == {'default'}
+                # kwargs：键均为参数名、无 default，且值均为标量或单元素（非“参数元组”）
+                is_kwargs = (
+                    par_names
+                    and set(par_values.keys()) <= par_names
+                    and 'default' not in par_values
+                    and all(
+                        not isinstance(v, (tuple, list)) or len(v) <= 1
+                        for v in par_values.values()
+                    )
+                )
+                if is_kwargs:
+                    strategy.update_par_values(**par_values)
+                else:
+                    # multi_par：至少有一个非 default 的 stock_id
+                    if keys_only_default:
+                        raise ValueError(
+                            'multi_par中应该至少有一个不同于default的stock_id'
+                        )
+                    strategy.update_par_values(par_values)
             else:  # isinstance(par_values, (tuple, list)):
                 strategy.update_par_values(*par_values)
 
@@ -1415,9 +1435,22 @@ class Operator:
             new_run_freq = run_freq if run_freq is not None else old_group.run_freq
             new_run_timing = run_timing if run_timing is not None else old_group.run_timing
             if old_group.strategy_count == 1:
-                # 当需要修改的策略是它的group中的唯一一个strategy的时候，直接修改group属性
-                old_group.run_freq = new_run_freq
-                old_group.run_timing = new_run_timing
+                # 当策略单独成组时，先检查是否存在相同 (run_freq, run_timing) 的其他组，可合并
+                target_group = [
+                    g for g in self._groups
+                    if g is not old_group and g.run_timing == new_run_timing and g.run_freq == new_run_freq
+                ]
+                if len(target_group) == 1:
+                    # 合并：移出当前组，加入目标组
+                    old_group.remove_strategy(strategy)
+                    self._groups.remove(old_group)
+                    group = target_group[0]
+                    group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
+                    strategy._group_id = group.name
+                else:
+                    # 无目标组，原地更新
+                    old_group.run_freq = new_run_freq
+                    old_group.run_timing = new_run_timing
             else:
                 # 当需要修改的策略不是它的group中的唯一一个strategy的时候，需要新建group并移动该strategy
                 old_group.remove_strategy(strategy)
