@@ -4861,7 +4861,8 @@ class TestOperatorSetParameter(unittest.TestCase):
         self.assertEqual(self.op[self.dma_id].par_values, (15, 25, 8))
 
     def test_set_parameter_par_values_multi_par_with_default(self):
-        """multi_par 标准格式：{stock_id: (par_tuple), 'default': (par_tuple)}；按 share_id/default 解析后与 share_names 同序。"""
+        """multi_par 标准格式：{stock_id: (par_tuple), 'default': (par_tuple)}；按 share_id/default 解析后与 share_names 同序，
+        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。"""
         shares = ['000001', '000002', '000003']
         self.op.set_shares(shares)
         self.op.set_parameter(
@@ -4879,6 +4880,25 @@ class TestOperatorSetParameter(unittest.TestCase):
         self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
         self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
         self.assertEqual(stg.multi_pars[2], (12, 24, 26), '000003 应使用 default 参数')
+
+    def test_set_parameter_par_values_multi_par_dict_key_order_follows_share_names(self):
+        """解析顺序以 share_names 为准，与 dict 的 key 顺序无关。"""
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={
+                'default': (12, 24, 26),
+                '000002': (12, 26, 27),
+                '000001': (12, 25, 24),
+                '000003': (12, 23, 25),
+            },
+        )
+        stg = self.op[self.dma_id]
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 按 share_names 顺序')
+        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 按 share_names 顺序')
+        self.assertEqual(stg.multi_pars[2], (12, 23, 25), '000003 按 share_names 顺序')
 
     def test_set_parameter_par_values_multi_par_without_default(self):
         """multi_par 不包含 default：仅对部分股票指定参数，未指定者使用策略默认 par_values。"""
@@ -4898,6 +4918,23 @@ class TestOperatorSetParameter(unittest.TestCase):
         self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
         self.assertEqual(stg.multi_pars[2], (12, 26, 9), '000003 无 default 时使用策略默认 (12,26,9)')
 
+    def test_set_parameter_par_values_multi_par_multiple_shares_use_default(self):
+        """多只 share 未在 dict 中显式出现时，均使用 default。"""
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                'default': (12, 24, 26),
+            },
+        )
+        stg = self.op[self.dma_id]
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 显式指定')
+        self.assertEqual(stg.multi_pars[1], (12, 24, 26), '000002 使用 default')
+        self.assertEqual(stg.multi_pars[2], (12, 24, 26), '000003 使用 default')
+
     def test_set_parameter_par_values_multi_par_share_mismatch(self):
         """multi_par 中股票代码与 share_names 不完全匹配：仅按 share_names 解析，未出现的 share_id 忽略。"""
         shares = ['000001', '000002']
@@ -4916,6 +4953,20 @@ class TestOperatorSetParameter(unittest.TestCase):
         self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
         self.assertEqual(stg.multi_pars[1], (12, 24, 26), '000002 不在 dict 中应使用 default；000003 在 dict 中但不在 share_names 中应忽略')
 
+    def test_set_parameter_par_values_multi_par_before_set_shares_raises(self):
+        """先 set_parameter(multi_par) 后 set_shares 时应报错：share_count 未定无法解析。"""
+        # TODO(B): 若实现改为“延后解析”：先接受并暂存 dict，在 set_shares 或 generate 时再按 share_names 解析，
+        # 则本用例应改为断言：先 set_parameter(multi_par) 再 set_shares 后，len(stg.multi_pars)==share_count。
+        op = qt.Operator()
+        op.add_strategy(DMA(), run_freq='d', run_timing='close')
+        stg_id = op.strategy_ids[0]
+        self.assertRaises(
+            (ValueError, TypeError, KeyError),
+            op.set_parameter,
+            stg_id,
+            par_values={'000001': (12, 5, 4), 'default': (12, 4, 6)},
+        )
+
     def test_set_parameter_par_values_multi_par_only_default_raises(self):
         """multi_par 仅含 default 时应报错：至少有一个非 default 的 stock_id。"""
         self.op.set_shares(['000001', '000002'])
@@ -4924,6 +4975,16 @@ class TestOperatorSetParameter(unittest.TestCase):
             self.op.set_parameter,
             self.dma_id,
             par_values={'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_multi_par_value_length_mismatch_raises(self):
+        """multi_par 中某 value 长度与 par_count 不一致时应报错。"""
+        self.op.set_shares(['000001', '000002'])
+        self.assertRaises(
+            (ValueError, TypeError),
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={'000001': (12, 5), '000002': (12, 6, 7), 'default': (12, 4, 6)},
         )
 
     def test_set_parameter_par_values_multi_par_disallowed_raises(self):
@@ -4939,6 +5000,16 @@ class TestOperatorSetParameter(unittest.TestCase):
             stg_id,
             par_values={'000001': (12, 5, 4), '000002': (12, 6, 7), 'default': (12, 4, 6)},
         )
+
+    def test_set_parameter_par_values_tuple_list_not_multi_par(self):
+        """tuple/list 形式的 par_values 解析为普通位置参数，不作为 multi_par；multi_par 仅接受 dict。"""
+        self.op.set_shares(['000001', '000002'])
+        self.op.set_parameter(
+            self.dma_id,
+            par_values=[(12, 5, 4), (12, 6, 7)],
+        )
+        stg = self.op[self.dma_id]
+        self.assertIsNone(stg.multi_pars, 'tuple/list 不应被当作 multi_par 设置')
 
     def test_set_parameter_par_values_wrong_length_raises(self):
         self.assertRaises(
