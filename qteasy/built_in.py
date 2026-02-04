@@ -11,7 +11,7 @@
 import numpy as np
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 from qteasy.parameter import Parameter
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, StgData
 # commonly used ta-lib funcs that have a None ta-lib version
 from qteasy.tafuncs import (
     sma,
@@ -3987,9 +3987,8 @@ class SelectingNDayRateChange(FactorSorter):
                 ],
                 name='N-DAY RATE',
                 description='Select stocks by its N day price change',
-                data_types=DataType('close', freq='d', asset_type='ANY'),
+                data_types=StgData('close', freq='d', asset_type='ANY', window_length=150),
                 run_freq='M',
-                window_length=150,
                 **kwargs,
         )
         if par_values:
