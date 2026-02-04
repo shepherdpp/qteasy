@@ -4951,7 +4951,8 @@ class TestOperatorSetParameter(unittest.TestCase):
         self.assertIsNotNone(stg.multi_pars)
         self.assertEqual(len(stg.multi_pars), len(shares))
         self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
-        self.assertEqual(stg.multi_pars[1], (12, 24, 26), '000002 不在 dict 中应使用 default；000003 在 dict 中但不在 share_names 中应忽略')
+        self.assertEqual(stg.multi_pars[1], (12, 24, 26),
+                         '000002 不在 dict 中应使用 default；000003 在 dict 中但不在 share_names 中应忽略')
 
     def test_set_parameter_par_values_multi_par_before_set_shares_raises(self):
         """先 set_parameter(multi_par) 后 set_shares 时应报错：share_count 未定无法解析。"""
