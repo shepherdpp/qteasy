@@ -26,17 +26,11 @@ if __name__ == '__main__':
     # 内置交易策略，使用macd执行交易
     alpha = qt.get_built_in_strategy('macd')
 
-    alpha.run_freq = '10min'  # 每10分钟运行
-    alpha.data_freq = '10min'  # 10min数据
-    alpha.window_length = 100  # 数据窗口长度
-
     beta = qt.get_built_in_strategy('dma')
 
-    beta.run_freq = '30min'  # 每30分钟运行
-    beta.data_freq = '30min'  # 30min数据
-    beta.window_length = 100  # 数据窗口长度
-
-    op = Operator(strategies=[alpha, beta], signal_type='PT', op_type='step')
+    op = Operator(signal_type='PT', op_type='step')
+    op.add_strategy(alpha, run_freq='10min', freq='5min', window_length=50)  # 每10分钟运行
+    op.add_strategy(beta, run_freq='30min', freq='30min', window_length=50)  # 每30分钟运行
 
     op.set_parameter('alpha', par_values=(32, 16, 9))
     op.set_parameter('beta', par_values=(10, 50, 10))

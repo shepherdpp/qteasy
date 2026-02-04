@@ -23,6 +23,7 @@ from argparse import Namespace
 from qteasy.trade_recording import delete_account
 from qteasy.qt_operator import Operator
 from qteasy.visual import candle
+from qteasy.parameter import Parameter
 
 from qteasy.core import (
     run,
@@ -220,7 +221,7 @@ __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
-    'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config',
+    'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config', 'Parameter',
     'get_table_info', 'get_table_overview', 'get_start_up_settings', 'find_history_data', 'DataType', 'StgData',
     'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
