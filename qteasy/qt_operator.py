@@ -1644,7 +1644,8 @@ class Operator:
         for group_id, group in self.groups.items():
             rprint(f'{group_id:-^{info_width}}\n'
                    f'Signal Type: {group.signal_type} - {signal_type_descriptions[group.signal_type]}\n'
-                   f'Run Timing:  {group.run_timing} @ {group.run_freq} - {data_freq_name[group.run_freq]}\n'
+                   f'Run Timing:  {group.run_timing} @ {group.run_freq} - '
+                   f'{data_freq_name.get(group.run_freq, group.run_freq)}\n'
                    f'Strategies ({group.strategy_count}): {self.get_strategy_id_by_group(group_id)}'
                    )
             if group.blender_str:
