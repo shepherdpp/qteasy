@@ -18,6 +18,7 @@ from typing import Generator, Optional, Union, Any, Iterable, Mapping
 
 from qteasy.strategy import BaseStrategy, RuleIterator
 from qteasy.group import Group
+from qteasy.parameter import Parameter
 from qteasy.datatypes import DataType, TRADE_OPERATION_DATA_TYPES
 
 from qteasy.history import (
@@ -1307,15 +1308,15 @@ class Operator:
 
     def set_parameter(self,
                       stg_id: Union[str, int],
-                      pars: Union[tuple, dict] = None,
+                      pars: Union[Parameter, tuple, list, dict] = None,
                       opt_tag: int = None,
                       data_types: Union[DataType, list[DataType], dict[str, DataType]] = None,
                       data_type_id: str = None,
-                      window_length: Union[int, tuple[int, ...], list[int]] = None,
-                      use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...]] = None,
+                      window_length: Union[int, tuple[int, ...], list[int], dict[str, int]] = None,
+                      use_latest_data_cycle: Union[bool, list[bool], tuple[bool, ...], dict[str, bool]] = None,
                       freq: Union[str, list[str], tuple[str, ...], dict[str, str]] = None,
                       asset_type: Union[str, list[str], tuple[str, ...], dict[str, str]] = None,
-                      par_values: Union[tuple, list, dict[str, Union[tuple, list]]] = None,
+                      par_values: Union[tuple, list, dict[str, Any]] = None,
                       par_range: Union[tuple, list, dict[str, tuple]] = None,
                       run_freq: str = None,
                       run_timing: str = None,
