@@ -49,7 +49,8 @@ class BaseStrategy:
 
     1，交易策略的运行时机和运行频率，决定了策略在实盘运行时的运行时间点，交易员对象将在这些时间点调用策略
         的realize()方法生成交易信号。
-        交易时机和运行频率是通过run_timing和run_freq两个参数来确定的，这两个参数通常在策略初始化时指定
+        交易时机和运行频率由策略所属的 Group 管理，策略通过 Group 委托读取。
+        使用 op.add_strategy(stg, run_freq='d', run_timing='close') 添加策略时指定运行频率和时机。
 
     2，策略的可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
         策略的可调参数通过Parameter对象来定义，每个Parameter对象包含参数的名称、类型、取值范围和默认值
@@ -71,14 +72,16 @@ class BaseStrategy:
                 name='<strategy name>',
                 description='<strategy description>',
                 stg_type='BASE',
-                run_freq='<strategy run frequency>',  # 定义策略运行频率
-                run_timing='<strategy run timing>',  # 定义策略运行时机
                 pars=[<list of Parameter objects>],  # 定义策略的可调参数类型和取值范围
                 data_types=[<list of DataType objects>],  # 定义策略使用的数据类型，关于更多细节见qteasy文档
                 **kwargs,
             )
             if par_values:
                 self.update_par_values(par_values)
+            
+            # 注意：run_freq 和 run_timing 不再在策略构造函数中指定
+            # 它们由策略所属的 Group 管理，策略通过 Group 委托读取
+            # 使用 op.add_strategy(stg, run_freq='d', run_timing='close') 添加策略时指定
 
         def realize(self):
             '''实现策略的交易逻辑，生成交易信号'''
@@ -1425,15 +1428,19 @@ class RuleIterator(BaseStrategy):
             super().update_par_values(**kwargs)
             return
 
+        # 只有当第一个参数是 dict 时，才可能是 multi_par
+        # tuple/list 形式的 par_values 不应被当作 multi_par
         if isinstance(par_values[0], dict):
             # par values中有multi_par，更新multi_par
-            par_values = par_values[0]
-            self._update_multi_pars(par_values)
+            par_values_dict = par_values[0]
+            self._update_multi_pars(par_values_dict)
             # 将第一个参数值写入par_values
             par_values = self.multi_pars[0]
             super().update_par_values(*par_values)
         else:
             # par_values是一个tuple或list，直接更新参数值
+            # 确保 multi_pars 不会被设置（tuple/list 形式不应设置 multi_pars）
+            # 注意：这里不修改 multi_pars，保持其原有值（通常为 None）
             super().update_par_values(*par_values)
 
     def _update_multi_pars(self, multi_pars):
@@ -1441,28 +1448,71 @@ class RuleIterator(BaseStrategy):
 
         Parameters
         ----------
-        multi_pars: tuple, list, ndarray, or dict {str: tuple, list, ndarray}
-            策略参数列表，或者None
+        multi_pars: dict {str: tuple, list, ndarray}
+            策略参数字典，key为股票代码或'default'，value为参数的值元组
 
         Returns
         -------
-        multi_pars: tuple
-            返回一个元组，包含每个股票的参数，如果multi_pars为None，则返回一个空元组
+        None
         """
         if not self.allow_multi_par:
             # 如果不允许多参数，则直接返回一个空元组
             self.multi_pars = None
             raise ValueError('multi_pars is not allowed, you need to set allow_multi_par to True first')
 
-        # 将tuple/list形式的multi_pars转化为dict形式，key为股票代码，value为参数的值元组
-        if multi_pars is None:
-            self.multi_pars = None
-        elif isinstance(multi_pars, (tuple, list)):
-            self.multi_pars = tuple(multi_pars)
-        elif isinstance(multi_pars, dict):
-            self.multi_pars = tuple(multi_pars.values())
-        else:
-            raise TypeError(f'multi_pars should be a tuple, list, or dict, not {type(multi_pars)}')
+        # multi_par 仅接受 dict 形式
+        if not isinstance(multi_pars, dict):
+            raise TypeError(f'multi_pars should be a dict, not {type(multi_pars)}')
+
+        # 检查 share_count：如果为 0，说明还未 set_shares，应报错
+        if self.share_count == 0:
+            raise ValueError(
+                '无法设置 multi_par：share_count 为 0，请先调用 set_shares() 设置股票列表'
+            )
+
+        # 获取 default 值和策略默认参数
+        default_value = multi_pars.get('default', None)
+        strategy_default = self.par_values  # 策略默认参数
+
+        # 按 share_names 顺序解析，而非按 dict 的 key 顺序
+        result = []
+        for share_name in self.share_names:
+            if share_name in multi_pars:
+                # 如果 dict 中存在该 share_id，使用对应值
+                par_tuple = multi_pars[share_name]
+            elif default_value is not None:
+                # 如果不存在但存在 'default'，使用 default 值
+                par_tuple = default_value
+            else:
+                # 如果都不存在，使用策略默认 par_values
+                par_tuple = strategy_default
+
+            # 确保 par_tuple 是 tuple 或 list
+            if not isinstance(par_tuple, (tuple, list)):
+                raise TypeError(
+                    f'参数值必须是 tuple 或 list，got {type(par_tuple)} for share {share_name}'
+                )
+
+            # 转换为 tuple
+            par_tuple = tuple(par_tuple)
+
+            # 校验参数元组长度必须等于 par_count
+            if len(par_tuple) != self.par_count:
+                raise ValueError(
+                    f'参数元组长度必须等于 par_count ({self.par_count})，'
+                    f'got {len(par_tuple)} for share {share_name}'
+                )
+
+            result.append(par_tuple)
+
+        # 校验解析后的 multi_pars 长度必须等于 share_count
+        if len(result) != self.share_count:
+            raise ValueError(
+                f'解析后的 multi_pars 长度必须等于 share_count ({self.share_count})，'
+                f'got {len(result)}'
+            )
+
+        self.multi_pars = tuple(result)
 
     def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
         """ 将策略的历史数据更新为window_index指定的历史数据，对Rule_iterator来说数据不能直接保存到"""
