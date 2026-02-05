@@ -466,7 +466,6 @@ class BBand(RuleIterator):
                 ],
                 name='BBand',
                 description='BBand strategy, determine long/short position according to Bollinger bands',
-                run_freq='d',
                 window_length=270,
                 data_types=[DataType('close', freq='d', asset_type='ANY')],  # single data input
         )
@@ -3745,7 +3744,6 @@ class SelectingAvgIndicator(FactorSorter):
                 ],
                 name='FINANCE',
                 description='GeneralStg share_pool according to financial indicator PE',
-                run_freq='M',
                 window_length=90,
                 data_types=DataType('pe', freq='d', asset_type='ANY'),
         )
@@ -3807,7 +3805,6 @@ class SelectingNDayLast(FactorSorter):
                 ],
                 name='N-DAY LAST',
                 description='Select stocks according their previous prices',
-                run_freq='M',
                 window_length=100,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
@@ -3865,7 +3862,6 @@ class SelectingNDayAvg(FactorSorter):
                 ],
                 name='N-DAY AVG',
                 description='Select stocks by its N day average open price',
-                run_freq='M',
                 window_length=150,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
@@ -3926,7 +3922,6 @@ class SelectingNDayChange(FactorSorter):
                 ],
                 name='N-DAY CHANGE',
                 description='Select stocks by its N day price change',
-                run_freq='M',
                 window_length=150,
                 data_types=DataType('close', freq='d', asset_type='ANY'),
         )
@@ -3988,7 +3983,6 @@ class SelectingNDayRateChange(FactorSorter):
                 name='N-DAY RATE',
                 description='Select stocks by its N day price change',
                 data_types=StgData('close', freq='d', asset_type='ANY', window_length=150),
-                run_freq='M',
                 **kwargs,
         )
         if par_values:
@@ -4045,7 +4039,6 @@ class SelectingNDayVolatility(FactorSorter):
                 pars=[Parameter((2, 150), name='n', par_type='int')],
                 name='N-DAY VOL',
                 description='Select stocks by its N day price change',
-                run_freq='M',
                 window_length=150,
                 data_types=[
                     DataType('high', freq='d', asset_type='ANY'),

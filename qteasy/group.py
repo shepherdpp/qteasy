@@ -137,7 +137,7 @@ class Group:
         """Group 的 ID，与 name 相同，用于 Strategy.group_id 兼容"""
         return self.name
 
-    def add_strategy(self, strategy: BaseStrategy, run_freq: str = 'd', run_timing: str = 'close') -> None:
+    def add_strategy(self, strategy: BaseStrategy) -> None:
         """Add a strategy to the group.
         If the run frequency or run timing is different from the group, raise an error.
 
@@ -145,10 +145,6 @@ class Group:
         ----------
         strategy: BaseStrategy
             The strategy to add to the group.
-        run_freq: str, optional
-            The run frequency of the strategy.
-        run_timing: str, optional
-            The run timing of the strategy.
 
         Returns
         -------
@@ -166,12 +162,6 @@ class Group:
 
         if strategy in self.members:
             raise ValueError(f"Strategy {strategy.name} is already a member of the group {self.name}.")
-        if run_freq is not None and run_freq != self.run_freq:
-            raise ValueError(f"Run freq ({run_freq}) "
-                             f"is different from the group {self.name} ({self.run_freq}).")
-        if run_timing is not None and run_timing != self.run_timing:
-            raise ValueError(f"Run timing ({run_timing}) "
-                             f"is different from the group {self.name} ({self.run_timing}).")
         self.members.append(strategy)
         strategy._group = self
         strategy._group_id = self.group_id
