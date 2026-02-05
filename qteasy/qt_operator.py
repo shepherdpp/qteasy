@@ -355,7 +355,8 @@ class Operator:
     @property
     def all_dynamic_dtypes(self):
         """ 返回operator对象所有策略自对象的动态历史数据类型ID的集合"""
-        all_dynamic_dtype_ids = {d.dtype_id:d for d in self.all_strategy_data_types if d.name in TRADE_OPERATION_DATA_TYPES}
+        all_dynamic_dtype_ids = {d.dtype_id: d for d in self.all_strategy_data_types if
+                                 d.name in TRADE_OPERATION_DATA_TYPES}
         return all_dynamic_dtype_ids
 
     @property
@@ -829,6 +830,8 @@ class Operator:
             try:
                 self.add_strategy(stg, run_freq=run_freq, run_timing=run_timing, **kwargs)
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 raise ValueError(f'Failed to add strategy {stg} to operator - {e}')
 
     def add_strategy(self, stg: Union[str, BaseStrategy, type, tuple, list, Any],
@@ -927,9 +930,9 @@ class Operator:
         if run_timing is None:
             run_timing = 'close'
         if not isinstance(run_freq, str):
-            raise ValueError(f'run_freq should be a string, got {type(run_freq)} instead!')
+            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
         if not isinstance(run_timing, str):
-            raise ValueError(f'run_timing should be a string, got {type(run_timing)} instead!')
+            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
 
         # 使用run_freq和run_timing进行策略组匹配，而非从strategy读取（strategy的run_freq/run_timing从group委托）
         if len(self._groups) == 0 or not any(
@@ -942,12 +945,12 @@ class Operator:
                               blender=None,
                               run_freq=run_freq,
                               run_timing=run_timing, )
-            new_group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
+            new_group.add_strategy(strategy)
             self._groups.append(new_group)
         else:  # add the strategy to an existing group
             for group in self._groups:
                 if run_timing == group.run_timing and run_freq == group.run_freq:
-                    group.add_strategy(strategy, run_freq=run_freq, run_timing=run_timing)
+                    group.add_strategy(strategy)
                     break
 
         # 逐一修改该策略对象的各个参数
@@ -1400,13 +1403,13 @@ class Operator:
                 keys_only_default = set(par_values.keys()) == {'default'}
                 # kwargs：键均为参数名、无 default，且值均为标量或单元素（非“参数元组”）
                 is_kwargs = (
-                    par_names
-                    and set(par_values.keys()) <= par_names
-                    and 'default' not in par_values
-                    and all(
+                        par_names
+                        and set(par_values.keys()) <= par_names
+                        and 'default' not in par_values
+                        and all(
                         not isinstance(v, (tuple, list)) or len(v) <= 1
                         for v in par_values.values()
-                    )
+                )
                 )
                 if is_kwargs:
                     strategy.update_par_values(**par_values)
@@ -1414,7 +1417,7 @@ class Operator:
                     # multi_par：至少有一个非 default 的 stock_id
                     if keys_only_default:
                         raise ValueError(
-                            'multi_par中应该至少有一个不同于default的stock_id'
+                                'multi_par中应该至少有一个不同于default的stock_id'
                         )
                     strategy.update_par_values(par_values)
             else:  # isinstance(par_values, (tuple, list)):
@@ -1432,7 +1435,7 @@ class Operator:
                 strategy.update_par_ranges(**par_range)
 
         if ((run_freq is not None) and (run_freq != strategy.run_freq)) or \
-            ((run_timing is not None) and (run_timing != strategy.run_timing)):  # 设置策略的运行频率和运行时机
+                ((run_timing is not None) and (run_timing != strategy.run_timing)):  # 设置策略的运行频率和运行时机
             # 因为涉及到groups的调整，所以只有当run_freq/run_timing与原有不一致时，才重新设置
             # run_freq/run_timing仅存储在Group中，Strategy从Group委托读取
             old_group_id = strategy._group_id
@@ -1450,7 +1453,7 @@ class Operator:
                     old_group.remove_strategy(strategy)
                     self._groups.remove(old_group)
                     group = target_group[0]
-                    group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
+                    group.add_strategy(strategy)
                     strategy._group_id = group.name
                 else:
                     # 无目标组，原地更新
@@ -1469,16 +1472,16 @@ class Operator:
                 if len(target_group) == 0:
                     group_id = self._next_group_id()
                     new_group = Group(name=group_id,
-                                    signal_type='PT',
-                                    blender=None,
-                                    run_freq=new_run_freq,
-                                    run_timing=new_run_timing, )
-                    new_group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
+                                      signal_type='PT',
+                                      blender=None,
+                                      run_freq=new_run_freq,
+                                      run_timing=new_run_timing, )
+                    new_group.add_strategy(strategy)
                     strategy._group_id = group_id
                     self._groups.append(new_group)
                 elif len(target_group) == 1:
                     group = target_group[0]
-                    group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
+                    group.add_strategy(strategy)
                     strategy._group_id = group.name
                 else:
                     raise RuntimeError(f'more than one target group found for strategy {stg_id} '
@@ -1559,7 +1562,7 @@ class Operator:
                 for strategy in list(group.member_strategies):
                     group.remove_strategy(strategy)
                     strategy._group_id = target_group.name
-                    target_group.add_strategy(strategy, run_freq=new_run_freq, run_timing=new_run_timing)
+                    target_group.add_strategy(strategy)
                 self._groups.remove(group)
             else:
                 # update group (strategy的run_freq/run_timing从group委托读取，无需单独更新)
@@ -1846,8 +1849,8 @@ class Operator:
         self.data_buffers = {}
         # 将data_package中的数据区分为data_package以及operation_data_packages
         from qteasy.datatypes import TRADE_OPERATION_DATA_TYPES
-        dynamic_data_package = {k:data_package[k] for k in data_package if k in TRADE_OPERATION_DATA_TYPES}
-        data_package = {k:data_package[k] for k in data_package if k not in TRADE_OPERATION_DATA_TYPES}
+        dynamic_data_package = {k: data_package[k] for k in data_package if k in TRADE_OPERATION_DATA_TYPES}
+        data_package = {k: data_package[k] for k in data_package if k not in TRADE_OPERATION_DATA_TYPES}
         # 针对所有data_type，检查数据包的key是否都是str且value都是DataFrame或
         for key, data in data_package.items():
             if not isinstance(key, str):
@@ -1907,13 +1910,13 @@ class Operator:
         if self.dynamic_data_buffers is None:
             err = RuntimeError(f'There are no dynamic data types defined, please check your strategy data types!')
             raise err
-        dtype_id_to_name = {d.dtype_id:d.name for d in self.all_dynamic_dtypes.values()}
+        dtype_id_to_name = {d.dtype_id: d.name for d in self.all_dynamic_dtypes.values()}
         name_to_data = {
-            'op_trade_volumes': trade_records,
-            'op_trade_prices': trade_prices,
-            'op_cashes': own_cashes,
-            'op_available_cashes': available_cashes,
-            'op_holding_positions': holding_positions,
+            'op_trade_volumes':       trade_records,
+            'op_trade_prices':        trade_prices,
+            'op_cashes':              own_cashes,
+            'op_available_cashes':    available_cashes,
+            'op_holding_positions':   holding_positions,
             'op_available_positions': available_positions,
         }
 
