@@ -29,7 +29,7 @@ from qteasy.utilfuncs import (
 
 class Group:
     def __init__(self, name: str, signal_type: str = 'pt', blender: str = None,
-                 run_freq: str = None, run_timing: str = None):
+                 run_freq: str = 'd', run_timing: str = 'close'):
 
         if not isinstance(name, str):
             raise TypeError(f'name should be a string, got {type(name)} instead')
@@ -40,6 +40,14 @@ class Group:
         signal_type = signal_type.lower()
         if signal_type not in ['pt', 'ps', 'vs']:
             raise ValueError()
+
+        # 校验运行频率和运行时机（不能为空，必须为字符串）
+        if run_freq is None or run_timing is None:
+            raise ValueError('run_freq and run_timing must not be None')
+        if not isinstance(run_freq, str):
+            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead')
+        if not isinstance(run_timing, str):
+            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead')
 
         self.name = name
         self._signal_type = signal_type
@@ -172,9 +180,6 @@ class Group:
         if strategy in self.members:
             self.members.remove(strategy)
             strategy._group = None
-            if len(self.members) == 0:
-                self._run_freq = None
-                self._run_timing = None
         else:
             raise ValueError(f"Strategy {strategy.name} is not a member of the group {self.name}.")
 
@@ -182,8 +187,6 @@ class Group:
         for strategy in self.members:
             strategy._group = None
         self.members = []
-        self._run_freq = None
-        self._run_timing = None
 
     def blend(self, signals: Iterable):
         """Set the blender for the group."""
