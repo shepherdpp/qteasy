@@ -921,11 +921,15 @@ class Operator:
         stg_id = self._next_stg_id(stg_id)
         strategy._strategy_id = stg_id
 
-        # 检查run_freq和run_timing，用于策略组匹配（run_freq/run_timing仅存储在Group中）
-        if not isinstance(run_freq, str) and run_freq is not None:
-            raise TypeError(f'run_freq should be a string, got {type(run_freq)} instead!')
-        if not isinstance(run_timing, str) and run_timing is not None:
-            raise TypeError(f'run_timing should be a string, got {type(run_timing)} instead!')
+        # 规范化并检查 run_freq / run_timing（Group 为唯一来源）
+        if run_freq is None:
+            run_freq = 'd'
+        if run_timing is None:
+            run_timing = 'close'
+        if not isinstance(run_freq, str):
+            raise ValueError(f'run_freq should be a string, got {type(run_freq)} instead!')
+        if not isinstance(run_timing, str):
+            raise ValueError(f'run_timing should be a string, got {type(run_timing)} instead!')
 
         # 使用run_freq和run_timing进行策略组匹配，而非从strategy读取（strategy的run_freq/run_timing从group委托）
         if len(self._groups) == 0 or not any(

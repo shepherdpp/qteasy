@@ -211,10 +211,10 @@ class BaseStrategy:
                          f' par_types={self.par_types}, par_range={self.par_range}')
 
         # 接受并忽略已弃用的 run_freq/run_timing（仅存储在 Group 中，Strategy 从 Group 委托读取）
-        if 'run_freq' in kwargs:
-            kwargs.pop('run_freq')
-        if 'run_timing' in kwargs:
-            kwargs.pop('run_timing')
+        # if 'run_freq' in kwargs:
+        #     kwargs.pop('run_freq')
+        # if 'run_timing' in kwargs:
+        #     kwargs.pop('run_timing')
 
         self._data_types = None
         self._data_ids = None  # 一个list，保存所有数据类型的data_id
