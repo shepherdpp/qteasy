@@ -202,16 +202,18 @@ class TestGroup(unittest.TestCase):
         self.iterator_stg_d_930 = RuleIteratorStg(run_freq='d', run_timing='9:30')
 
     def test_creation(self):
-        gp = Group('new_group', signal_type='PS', blender='')
+        """Group 必须在创建时就有合法的 run_freq / run_timing。"""
+        # 正常创建：必须传 run_freq / run_timing
+        gp = Group('new_group', signal_type='PS', blender='', run_freq='d', run_timing='close')
 
         self.assertIsInstance(gp, Group)
         self.assertEqual(gp.name, 'new_group')
-        self.assertEqual(gp.run_freq, None)
-        self.assertEqual(gp.run_timing, None)
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
         self.assertEqual(gp.signal_type, 'ps')
 
         # test creating groups with different parameters
-        gp = Group(name='name', blender='s1 + s2')
+        gp = Group(name='name', blender='s1 + s2', run_freq='d', run_timing='close')
         self.assertEqual(gp.signal_type, 'pt')
         self.assertEqual(gp.members, [])
 
@@ -221,19 +223,30 @@ class TestGroup(unittest.TestCase):
         self.assertRaises(TypeError, Group, 'name', signal_type=24)
         self.assertRaises(ValueError, Group, 'name', blender='wrong blender')
 
+        # 不允许缺失或为 None 的 run_freq / run_timing
+        self.assertRaises((TypeError, ValueError), Group, 'no_freq_timing')
+        self.assertRaises((TypeError, ValueError), Group, 'name', run_freq=None, run_timing='close')
+        self.assertRaises((TypeError, ValueError), Group, 'name', run_freq='d', run_timing=None)
+
     def test_add_strategy(self):
-        gp = Group('new_group')
+        """Group 的 run_freq/run_timing 由构造确定，Strategy 只通过 Group 委托读取。"""
+        gp = Group('new_group', run_freq='d', run_timing='close')
 
         self.assertEqual(gp.name, 'new_group')
-        self.assertEqual(gp.run_freq, None)
-        self.assertEqual(gp.run_timing, None)
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
         self.assertEqual(gp.blender, None)
         self.assertEqual(gp.human_blender, '')
 
         gp.add_strategy(self.gen_stg_d_close)
 
+        # Group 的 freq/timing 不因添加策略而改变
         self.assertEqual(gp.run_freq, 'd')
         self.assertEqual(gp.run_timing, 'close')
+        # Strategy 的 run_freq/run_timing 从 Group 委托读取
+        self.assertEqual(self.gen_stg_d_close.run_freq, 'd')
+        self.assertEqual(self.gen_stg_d_close.run_timing, 'close')
+
         self.assertEqual(gp.blender_str, '')
         self.assertEqual(gp.human_blender, '')
         gp.blender_str = 's0 + 3'
@@ -241,26 +254,35 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(gp.blender, ['+', '3', 's0'])
 
         gp.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(self.factor_sorter_d_close.run_freq, 'd')
+        self.assertEqual(self.factor_sorter_d_close.run_timing, 'close')
 
         gp.blender_str = 's0 + s1'
         self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter')
         self.assertEqual(gp.blender, ['+', 's1', 's0'])
 
+        # 仍然禁止与 group 频率/时机不一致的策略加入
         self.assertRaises(ValueError, gp.add_strategy, self.factor_sorter_h_open)
         self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
 
     def test_blender(self):
-        gp = Group('new_group')
+        """Group 的 run_freq/run_timing 完全由 Group 提供，成员策略通过委托获得。"""
+        gp = Group('new_group', run_freq='d', run_timing='close')
 
         self.assertEqual(gp.name, 'new_group')
-        self.assertEqual(gp.run_freq, None)
-        self.assertEqual(gp.run_timing, None)
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
         self.assertEqual(gp.blender, None)
         self.assertEqual(gp.human_blender, '')
 
         gp.add_strategy(self.gen_stg_d_close)
         gp.add_strategy(self.factor_sorter_d_close)
         gp.add_strategy(self.iterator_stg_d_close)
+
+        # 所有成员策略的 freq/timing 都应从 group 委托读取
+        self.assertTrue(all(stg.run_freq == 'd' for stg in gp.members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in gp.members))
 
         gp.blender_str = 's0 + s1 + s2'
         self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter + test_rule_iterator')
@@ -298,6 +320,21 @@ class TestGroup(unittest.TestCase):
             print(f'Testing blender: {gp.human_blender}, \nblender: {gp.blender}\nresult\n{gp.blend(signals)}')
             self.assertIsInstance(gp.blender, list)
             self.assertTrue(all(isinstance(item, str) for item in gp.blender))
+
+    def test_strategy_run_freq_timing_changes_with_group(self):
+        """同一策略在不同 Group 间移动时，其 run_freq/run_timing 应随 Group 改变。"""
+        gp1 = Group('g1', run_freq='d', run_timing='close')
+        gp2 = Group('g2', run_freq='h', run_timing='open')
+        stg = self.gen_stg_d_close
+
+        gp1.add_strategy(stg)
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+
+        gp1.remove_strategy(stg)
+        gp2.add_strategy(stg)
+        self.assertEqual(stg.run_freq, 'h')
+        self.assertEqual(stg.run_timing, 'open')
 
 
 if __name__ == '__main__':
