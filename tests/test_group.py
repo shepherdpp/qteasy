@@ -51,12 +51,10 @@ class TestGroup(unittest.TestCase):
                 asset_type='E',
             )
 
-            def __init__(self, par_values: tuple = None, *, run_timing='close', run_freq='d'):
+            def __init__(self, par_values: tuple = None):
                 super().__init__(
                         name='test_gen',
                         description='test general strategy',
-                        run_freq=run_freq,
-                        run_timing=run_timing,
                         pars=[self.param1, self.param2],
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
@@ -106,12 +104,10 @@ class TestGroup(unittest.TestCase):
                 asset_type='E',
             )
 
-            def __init__(self, par_values=None, *, run_timing='d', run_freq='close', **kwargs):
+            def __init__(self, par_values=None, **kwargs):
                 super().__init__(
                         name='test_factor_sorter',
                         description='test factor sorter strategy',
-                        run_freq=run_freq,
-                        run_timing=run_timing,
                         pars=[self.param1, self.param2],
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
@@ -189,9 +185,9 @@ class TestGroup(unittest.TestCase):
                     return 0
 
         # 实例化测试策略类
-        self.gen_stg_d_close = GenStg(run_freq='d', run_timing='close')
-        self.gen_stg_h_close = GenStg(par_values=(50, 20), run_freq='h', run_timing='close')
-        self.gen_stg_h_open = GenStg(par_values=(50, 15), run_freq='h', run_timing='open')
+        self.gen_stg_d_close = GenStg()
+        self.gen_stg_h_close = GenStg(par_values=(50, 20), run_freq='h', run_timing='c)
+        self.gen_stg_h_open = GenStg(par_values=(50, open')
 
         self.factor_sorter_d_close = FactorSorterStg(par_values=(10, 14), run_freq='d', run_timing='close')
         self.factor_sorter_h_close = FactorSorterStg(par_values=(10, 15), run_freq='h', run_timing='close')
