@@ -1082,9 +1082,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op._next_group_id(), 'Group_1')
 
         # test getting next group id in missing indexes
-        op._groups = [Group('Group_1'),
-                      Group('Group_3'),
-                      Group('Group_5')]
+        op._groups = [Group('Group_1', run_freq='d', run_timing='close'),
+                      Group('Group_3', run_freq='d', run_timing='close'),
+                      Group('Group_5', run_freq='d', run_timing='close')]
         self.assertEqual(op._next_group_id(), 'Group_6')
 
     def test_operator_add_strategy(self):

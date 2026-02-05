@@ -68,18 +68,10 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         self.operator = Operator()
         self.operator._groups = []
 
-        # 创建测试用的策略组
-        self.group1 = Group(name='group1')
-        self.group1._run_freq = 'd'
-        self.group1._run_timing = 'close'
-
-        self.group2 = Group(name='group2')
-        self.group2._run_freq = 'h'  # 修改为小时频率
-        self.group2._run_timing = 'open'
-
-        self.group3 = Group(name='group3')
-        self.group3._run_freq = 'w'
-        self.group3._run_timing = 'close'
+        # 创建测试用的策略组（直接在构造时指定运行频率和时机）
+        self.group1 = Group(name='group1', run_freq='d', run_timing='close')
+        self.group2 = Group(name='group2', run_freq='h', run_timing='open')  # 小时频率
+        self.group3 = Group(name='group3', run_freq='w', run_timing='close')
 
     def test_prepare_running_schedule_daily_freq(self):
         """测试日频策略组的时间表生成"""
