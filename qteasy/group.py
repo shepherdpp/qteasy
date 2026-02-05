@@ -139,7 +139,9 @@ class Group:
 
     def add_strategy(self, strategy: BaseStrategy) -> None:
         """Add a strategy to the group.
-        If the run frequency or run timing is different from the group, raise an error.
+        
+        The strategy's run_freq and run_timing will be delegated from this group.
+        Group is the single source of truth for run_freq and run_timing.
 
         Parameters
         ----------
@@ -154,10 +156,6 @@ class Group:
         ------
         ValueError
             If the strategy is already a member of the group.
-        ValueError
-            If the run frequency is different from the group.
-        ValueError
-            If the run timing is different from the group.
         """
 
         if strategy in self.members:
