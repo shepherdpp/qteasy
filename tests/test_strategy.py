@@ -89,8 +89,6 @@ class TestStrategy(unittest.TestCase):
 
         self.base_stg = BaseStrategy(
                 name='TestStrategy',
-                run_freq='d',
-                run_timing='close',
                 pars=[self.param1.copy(),
                       self.param2.copy(),
                       self.param3.copy(),
@@ -123,8 +121,6 @@ class TestStrategy(unittest.TestCase):
                 super().__init__(
                         name='test_gen',
                         description='test general strategy',
-                        run_freq='d',
-                        run_timing='close',
                         pars=[self.param1, self.param2],
                         data_types={'data_1': self.dtype_1, 'data_2': self.dtype_3},
                         use_latest_data_cycle=[True, False],
@@ -164,8 +160,6 @@ class TestStrategy(unittest.TestCase):
                 super().__init__(
                         name='test_factor_sorter',
                         description='test factor sorter strategy',
-                        run_freq='d',
-                        run_timing='close',
                         pars={'par1': self.param1.copy(), 'par2': self.param2.copy()},
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
@@ -202,8 +196,6 @@ class TestStrategy(unittest.TestCase):
                 super().__init__(
                         name='test_rule_iterator',
                         description='test rule iterator strategy',
-                        run_freq='d',
-                        run_timing='close',
                         pars=[self.param1, self.param2],
                         data_types={'data_type_1': self.dtype_1.copy(), 'data_type_2': self.dtype_3},
                         use_latest_data_cycle=[True, False],
@@ -905,6 +897,7 @@ class TestStrategy(unittest.TestCase):
         stg.update_data_types(dtype_id='close_E_15min', freq='30min')
         self.assertIn('close_E_30min', stg.data_types)
         self.assertNotIn('close_E_15min', stg.data_types)
+        stg.update_data_types('close_E_30min', window_length=8)
         self.assertEqual(stg.data_window_lengths['close_E_30min'], 8)
         self.assertEqual(stg.data_freqs['close_E_30min'], '30min')
         self.assertEqual(stg.data_type_count, 5)
@@ -924,11 +917,9 @@ class TestStrategy(unittest.TestCase):
         # use a fresh strategy that still has close_E_d (previous tests may have replaced it)
         stg = BaseStrategy(
                 name='TestStrategyFreqDict',
-                run_freq='d',
-                run_timing='close',
                 pars=[self.param1.copy(), self.param2.copy(), self.param3.copy(), self.param4.copy()],
                 data_types=[self.dtype_1.copy(), self.dtype_2.copy(), self.dtype_3.copy(),
-                           self.dtype_4.copy(), self.dtype_5.copy()],
+                            self.dtype_4.copy(), self.dtype_5.copy()],
                 use_latest_data_cycle=False,
                 window_length=20,
         )
@@ -939,22 +930,20 @@ class TestStrategy(unittest.TestCase):
 
         # test wrong type for freq/asset_type when dtype_id is given (use fresh strategy)
         stg = self.base_stg
-        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', freq=123)
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_h', freq=123)
         stg = self.base_stg
-        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_d', asset_type=[])
+        self.assertRaises(AssertionError, stg.update_data_types, dtype_id='close_E_h', asset_type=[])
 
         # test invalid freq/asset_type leads to ValueError from DataType
         stg = self.base_stg
-        self.assertRaises((ValueError, TypeError), stg.update_data_types, dtype_id='close_E_d', freq='invalid_freq')
+        self.assertRaises((ValueError, TypeError), stg.update_data_types, dtype_id='close_E_h', freq='invalid_freq')
 
         # test Operator.add_strategy / set_parameter with freq and asset_type
         stg = BaseStrategy(
                 name='TestStrategyOp',
-                run_freq='d',
-                run_timing='close',
                 pars=[self.param1.copy(), self.param2.copy(), self.param3.copy(), self.param4.copy()],
                 data_types=[self.dtype_1.copy(), self.dtype_2.copy(), self.dtype_3.copy(),
-                           self.dtype_4.copy(), self.dtype_5.copy()],
+                            self.dtype_4.copy(), self.dtype_5.copy()],
                 use_latest_data_cycle=False,
                 window_length=20,
         )
@@ -962,10 +951,10 @@ class TestStrategy(unittest.TestCase):
         op.add_strategy(stg, run_freq='d', run_timing='close')
         stg_id = stg.strategy_id
         self.assertIn('close_E_d', stg.data_types)
-        op.set_parameter(stg_id, data_type_ids='close_E_15min', freq='30min')
+        op.set_parameter(stg_id, data_type_id='close_E_15min', freq='30min')
         self.assertIn('close_E_30min', stg.data_types)
         self.assertNotIn('close_E_15min', stg.data_types)
-        op.set_parameter(stg_id, data_type_ids='close_E_d', asset_type='IDX')
+        op.set_parameter(stg_id, data_type_id='close_E_d', asset_type='IDX')
         self.assertIn('close_IDX_d', stg.data_types)
         self.assertNotIn('close_E_d', stg.data_types)
 

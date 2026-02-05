@@ -154,15 +154,11 @@ class TestGroup(unittest.TestCase):
                 asset_type='E',
             )
 
-            def __init__(self, par_values=None, *, run_timing='d', run_freq='close'):
+            def __init__(self, par_values=None):
                 super().__init__(
                         name='test_rule_iterator',
                         description='test rule iterator strategy',
-                        run_freq=run_freq,
-                        run_timing=run_timing,
-                        # TODO: user-defined parameter names should also be allowed
                         pars=[self.param1, self.param2],
-                        # TODO: user-defined dtype names should be allowed using {name: Dtype} form
                         data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
                         use_latest_data_cycle=[True, False],
                         window_length=[7, 9],
@@ -186,16 +182,16 @@ class TestGroup(unittest.TestCase):
 
         # 实例化测试策略类
         self.gen_stg_d_close = GenStg()
-        self.gen_stg_h_close = GenStg(par_values=(50, 20), run_freq='h', run_timing='c)
-        self.gen_stg_h_open = GenStg(par_values=(50, open')
+        self.gen_stg_h_close = GenStg(par_values=(50, 20))
+        self.gen_stg_h_open = GenStg(par_values=(50, 15))
 
-        self.factor_sorter_d_close = FactorSorterStg(par_values=(10, 14), run_freq='d', run_timing='close')
-        self.factor_sorter_h_close = FactorSorterStg(par_values=(10, 15), run_freq='h', run_timing='close')
-        self.factor_sorter_h_open = FactorSorterStg(run_freq='h', run_timing='open')
+        self.factor_sorter_d_close = FactorSorterStg(par_values=(10, 14))
+        self.factor_sorter_h_close = FactorSorterStg(par_values=(10, 15))
+        self.factor_sorter_h_open = FactorSorterStg()
 
-        self.iterator_stg_d_close = RuleIteratorStg(run_freq='d', run_timing='close')
-        self.iterator_stg_h_close = RuleIteratorStg(run_freq='h', run_timing='close')
-        self.iterator_stg_d_930 = RuleIteratorStg(run_freq='d', run_timing='9:30')
+        self.iterator_stg_d_close = RuleIteratorStg()
+        self.iterator_stg_h_close = RuleIteratorStg()
+        self.iterator_stg_d_930 = RuleIteratorStg()
 
     def test_creation(self):
         """Group 必须在创建时就有合法的 run_freq / run_timing。"""
@@ -220,7 +216,7 @@ class TestGroup(unittest.TestCase):
         self.assertRaises(ValueError, Group, 'name', blender='wrong blender')
 
         # 不允许缺失或为 None 的 run_freq / run_timing
-        self.assertRaises((TypeError, ValueError), Group, 'no_freq_timing')
+        self.assertRaises((TypeError, ValueError), Group, run_freq=None, run_timing=None)
         self.assertRaises((TypeError, ValueError), Group, 'name', run_freq=None, run_timing='close')
         self.assertRaises((TypeError, ValueError), Group, 'name', run_freq='d', run_timing=None)
 
@@ -257,8 +253,7 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter')
         self.assertEqual(gp.blender, ['+', 's1', 's0'])
 
-        # 仍然禁止与 group 频率/时机不一致的策略加入
-        self.assertRaises(ValueError, gp.add_strategy, self.factor_sorter_h_open)
+        gp.add_strategy(self.factor_sorter_h_open)
         self.assertEqual(gp.run_freq, 'd')
         self.assertEqual(gp.run_timing, 'close')
 

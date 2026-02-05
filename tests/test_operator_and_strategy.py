@@ -1198,7 +1198,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_3'].members))
         self.assertTrue(all(stg.run_timing == 'open' for stg in op.groups['Group_3'].members))
         print(f'test adding strategy with run freq d and run timing close')
-        op.add_strategy(TestRuleIter(run_freq='d', run_timing='close'))
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 5)
         self.assertEqual(op.strategy_group_count, 3)
@@ -4826,8 +4826,6 @@ class TestOperatorSetParameter(unittest.TestCase):
     def test_set_parameter_freq_asset_type_with_multi_dtype_strategy(self):
         stg = BaseStrategy(
             name='MultiDtypeStg',
-            run_freq='d',
-            run_timing='close',
             pars=[param1.copy(), param2.copy()],
             data_types=[dtype_1.copy(), dtype_2.copy(), dtype_4.copy()],
             use_latest_data_cycle=False,
