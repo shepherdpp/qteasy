@@ -39,8 +39,6 @@ class MultiFactors(qt.FactorSorter):
                       Parameter((0.50, 0.99), name='bp_large_percentile', par_type='float')],
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
-                run_timing='close',  # 在周期结束（收盘）时运行
-                run_freq='M',  # 每月执一次选股（每周或每天都可以）
                 data_types=[StgData('pb', freq='d', asset_type='E'),
                             StgData('total_mv', freq='d', asset_type='E'),
                             StgData('close', freq='d', asset_type='E'),
@@ -138,8 +136,6 @@ class IndexEnhancement(qt.GeneralStg):
                       Parameter((2, 20), name='price_days', par_type='int')],
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
-                run_timing='close',  # 在周期结束（收盘）时运行
-                run_freq='d',  # 每天执行一次选股
                 # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
                 data_types=[StgData('wt_idx|000300.SH', freq='d', asset_type='ANY', window_length=1),
                             StgData('close', freq='d', asset_type='ANY', window_length=20, )],
@@ -194,8 +190,6 @@ class GridTrading(qt.GeneralStg):
                       Parameter((10, 300), name='days', par_type='int')],
                 name='GridTrading',
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
-                run_timing='close',  # 在周期结束（收盘）时运行
-                run_freq='1min',  # 每份钟执行一次调整
                 data_types=[StgData('close', freq='1min', asset_type='ANY')],  # 使用分钟收盘价调整
                 window_length=300,
                 use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
@@ -257,7 +251,11 @@ class FastExperiments(unittest.TestCase):
         print(len(shares), shares[:10])
 
         alpha = MultiFactors()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha,
+                         signal_type='PT',
+                         run_timing='close',  # 在周期结束（收盘）时运行
+                         run_freq='M',  # 每月执一次选股（每周或每天都可以）
+                         )
 
         op.set_blender("0.8*s0", 'Group_1')
         qt.run(op=op,
@@ -280,7 +278,11 @@ class FastExperiments(unittest.TestCase):
         print(len(shares), shares[:10])
 
         alpha = IndexEnhancement()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha,
+                         signal_type='PT',
+                         run_timing='close',  # 在周期结束（收盘）时运行
+                         run_freq='d',  # 每天执行一次选股
+                         )
 
         op.op_type = 'stepwise'
         op.set_blender("0.8*s0", 'Group_1')
@@ -301,7 +303,7 @@ class FastExperiments(unittest.TestCase):
         self.assertEqual(1, 1)
 
         alpha = GridTrading()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha, signal_type='PT', run_timing='close', run_freq='1min')
 
         op.set_blender("1.0*s0", 'Group_1')
         qt.run(

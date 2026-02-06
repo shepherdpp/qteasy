@@ -33,7 +33,7 @@ from qteasy.history import (
 class DailyStrategy(GeneralStg):
     """用于测试的简单策略类"""
 
-    def __init__(self, run_timing='close'):
+    def __init__(self):
         super().__init__(
                 name='test_strategy',
                 description='A simple test strategy',
@@ -41,8 +41,6 @@ class DailyStrategy(GeneralStg):
                             DataType('close-000300.SH', freq='d', asset_type='IDX'),  # 指数收盘价作为参考数据
                             DataType('open', freq='d')],  # 不复权开盘价，测试不同的availability time
                 window_length=[5, 7, 8],
-                run_timing=run_timing,
-                run_freq='d',
         )
 
 
@@ -57,7 +55,6 @@ class HourlyStrategy(GeneralStg):
                             DataType('high|f', freq='h', asset_type='E'),  # 前复权最高价，频率相同但需复权
                             DataType('low', freq='h', asset_type='E')],  # 不复权最低价
                 window_length=6,
-                run_freq='h',
         )
 
 
@@ -528,6 +525,8 @@ class TestCheckAndPrepareBacktestData(unittest.TestCase):
         self.hourly_strategy = HourlyStrategy()
         self.operator = Operator(strategies=[self.daily_strategy,
                                              self.hourly_strategy])
+        self.operator.set_parameter(stg_id=0, run_freq='d', run_timing='close')
+        self.operator.set_parameter(stg_id=1, run_freq='h', run_timing='close')
 
         # 预计结果
         self.expected_dtypes = ['close|b_E_d', 'close_E_d', 'open_E_d', 'high|f_E_h',
@@ -882,13 +881,21 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         # 创建测试策略和Operator
         self.daily_strategy = DailyStrategy()
         self.hourly_strategy = HourlyStrategy()
-        self.daily_open_stg = DailyStrategy(run_timing='open')
-        self.daily_timing_stg = DailyStrategy(run_timing='14:58')
+        self.daily_open_stg = DailyStrategy()
+        self.daily_timing_stg = DailyStrategy()
         self.op_complex = Operator(strategies=[self.daily_strategy, self.hourly_strategy])
-        self.op_simple = Operator(strategies=[self.daily_strategy])
+        self.op_complex.set_parameter(stg_id=0, run_freq='d', run_timing='close')
+        self.op_complex.set_parameter(stg_id=1, run_freq='h', run_timing='close')
+        self.op_simple = Operator(strategies=[self.daily_strategy], run_freq='d', run_timing='close')
         self.op_open = Operator(strategies=[self.daily_open_stg, self.hourly_strategy])
+        self.op_open.set_parameter(stg_id=0, run_freq='d', run_timing='open')
+        self.op_open.set_parameter(stg_id=1, run_freq='h', run_timing='close')
         self.op_timing = Operator(strategies=[self.daily_timing_stg, self.hourly_strategy])
+        self.op_timing.set_parameter(stg_id=0, run_freq='d', run_timing='14:58')
+        self.op_timing.set_parameter(stg_id=1, run_freq='h', run_timing='close')
         self.op_not_ready = Operator(strategies=[self.daily_timing_stg, self.hourly_strategy])
+        self.op_not_ready.set_parameter(stg_id=0, run_freq='d', run_timing='14:58')
+        self.op_not_ready.set_parameter(stg_id=1, run_freq='h', run_timing='close')
 
         # 向data_source中填充测试数据，测试数据随机生成，包括20200101～20201231之间的下面数据：
         # - 股票日线价格：000001.SZ, 000002.SZ两只股票
@@ -1584,6 +1591,8 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         self.daily_strategy = DailyStrategy()
         self.hourly_strategy = HourlyStrategy()
         self.operator = Operator(strategies=[self.daily_strategy, self.hourly_strategy])
+        self.operator.set_parameter(stg_id=0, run_freq='d', run_timing='close')
+        self.operator.set_parameter(stg_id=1, run_freq='h', run_timing='close')
         self.daily_operator = Operator(strategies=[self.daily_strategy])
         self.wrong_operator = Operator(strategies=[self.daily_strategy])
 
