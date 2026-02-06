@@ -1575,6 +1575,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([2., 3., 4.])))
 
         self.assertEqual(stg_rule.allow_multi_par, True)
+        stg_rule.update_shares(share_names=['000001', '000002', '000003'])
         stg_rule.update_par_values(
                 {'000001': ('option1', np.array([1, 4, 5])),
                  '000002': ('option2', np.array([2, 4, 5])),

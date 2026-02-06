@@ -96,7 +96,6 @@ class TestSelStrategy(GeneralStg):
                     DataType('high', freq='d', asset_type='E'),
                     DataType('low', freq='d', asset_type='E'),
                 ],
-                run_freq='10d',
                 window_length=5,
         )
         pass
@@ -291,7 +290,6 @@ class StgBuyOpen(GeneralStg):
         super().__init__(
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='OPEN_BUY',
-                run_timing='open',
                 data_types=DataType('close', freq='d', asset_type='ANY'),
                 use_latest_data_cycle=False,
         )
@@ -1193,22 +1191,19 @@ class TestQT(unittest.TestCase):
         print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
-        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        op = qt.Operator(signal_type='ps')
+        op.add_strategy(stg_sel,
+                        run_freq='d',
+                        run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+                        window_length=50,
+                        par_values=(20,),)
+        op.add_strategy(stg_buy,
+                        run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
+                        run_freq='d',
+                        window_length=50,
+                        par_values=(20,),
+                        )
 
-        op.set_parameter(
-                0,
-                run_freq='d',
-                window_length=50,
-                par_values=(20,),
-                run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
-        )
-        op.set_parameter(
-                1,
-                run_freq='d',
-                window_length=50,
-                par_values=(20,),
-                run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
-        )
         self.assertEqual(len(op.groups), 2)
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_2'].run_freq, 'd')
