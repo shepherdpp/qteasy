@@ -1472,7 +1472,9 @@ class TestStrategy(unittest.TestCase):
 
         # test run strategy with different stock parameters
         stg.allow_multi_par = True
-        stg._update_multi_pars([(5, 5), (6, 1), (2, 4)])
+        stg.update_shares(3)
+        stg._update_multi_pars({'Share_1': (5, 5), 'Share_2': (6, 1), 'Share_3': (2, 4)})
+
 
         self.assertEqual(stg.param1, 5)
         self.assertEqual(stg.param2, 6)

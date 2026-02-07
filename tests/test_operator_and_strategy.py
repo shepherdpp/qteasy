@@ -4887,6 +4887,8 @@ class TestOperatorSetParameter(unittest.TestCase):
         len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。
         """
         shares = ['000001', '000002', '000003']
+        print(f'before setting multi_pars: '
+              f'par_values: {self.op[self.dma_id].par_values}, multi_pars: {self.op[self.dma_id].multi_pars}')
         self.op.set_shares(shares)
         self.op.set_parameter(
             self.dma_id,
@@ -4898,32 +4900,69 @@ class TestOperatorSetParameter(unittest.TestCase):
             },
         )
         stg = self.op[self.dma_id]
+        print(f'par_values: {stg.par_values}, multi_pars: {stg.multi_pars}')
         self.assertEqual(len(stg.multi_pars), len(shares))
         self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 按 share_names 顺序')
         self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 按 share_names 顺序')
         self.assertEqual(stg.multi_pars[2], (12, 23, 25), '000003 按 share_names 顺序')
+        self.assertEqual(stg.par_values, (12, 25, 24), '整体 par_values 为最新的multi_pars')
 
-    def test_set_parameter_par_values_multi_par_without_default(self):
-        """multi_par 不包含 default：仅对部分股票指定参数，未指定者使用策略默认 par_values。
-        如果默认 par_values 为 None，则报错。
-        
-        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。
+    def test_set_parameter_par_values_multi_par_wrong_par_values(self):
+        """multi_par 中某股票的 par_tuple 类型错误时应报错。
+
+        约定：每个 (par_tuple) 必须为 tuple 或 list, 且可以被正确设置为par_values
         """
-        shares = ['000001', '000002', '000003']
+        shares = ['000001', '000002']
         self.op.set_shares(shares)
-        self.op.set_parameter(
+        self.assertRaises(
+            (ValueError, TypeError),
+            self.op.set_parameter,
             self.dma_id,
             par_values={
                 '000001': (12, 25, 24),
-                '000002': (12, 26, 27),
+                '000002': 'not_a_tuple',
+                'default': (12, 24, 26),
             },
         )
-        stg = self.op[self.dma_id]
-        self.assertIsNotNone(stg.multi_pars)
-        self.assertEqual(len(stg.multi_pars), len(shares))
-        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
-        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
-        self.assertEqual(stg.multi_pars[2], (12, 26, 9), '000003 无 default 时使用策略默认 (12,26,9)')
+        self.assertRaises(
+            KeyError,
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+            },
+
+        )
+
+        self.assertRaises(
+            (ValueError, TypeError),
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000002': (12, 26),  # 长度错误
+            },
+        )
+
+        self.assertRaises(
+            (ValueError, TypeError),
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000002': (12, 0, 6),  # 范围超限
+            },
+        )
+
+        self.assertRaises(
+            (ValueError, TypeError),
+            self.op.set_parameter,
+            self.dma_id,
+            par_values={
+                '000001': (12, 25, 24),
+                '000002': (12, 3.14, 6),  # dtype错误
+            },
+        )
 
     def test_set_parameter_par_values_multi_par_multiple_shares_use_default(self):
         """多只 share 未在 dict 中显式出现时，均使用 default。
