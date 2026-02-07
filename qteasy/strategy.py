@@ -1472,11 +1472,10 @@ class RuleIterator(BaseStrategy):
 
         # 获取 default 值和策略默认参数
         default_value = multi_pars.get('default', None)
-        strategy_default = self.par_values  # 策略默认参数
 
         # 按 share_names 顺序解析，而非按 dict 的 key 顺序
         result = []
-        for share_name in self.share_names:
+        for share_name in self.share_names[::-1]:
             if share_name in multi_pars:
                 # 如果 dict 中存在该 share_id，使用对应值
                 par_tuple = multi_pars[share_name]
@@ -1485,12 +1484,14 @@ class RuleIterator(BaseStrategy):
                 par_tuple = default_value
             else:
                 # 如果都不存在，使用策略默认 par_values
-                par_tuple = strategy_default
+                raise KeyError(f'par_value of {share_name} is not provided in multi_pars and default '
+                               f'value is not given, please provide par_value for {share_name} or '
+                               f'set a default value like "default": (par1, par2, ...) in multi_pars')
 
             # 确保 par_tuple 是 tuple 或 list
             if not isinstance(par_tuple, (tuple, list)):
                 raise TypeError(
-                    f'参数值必须是 tuple 或 list，got {type(par_tuple)} for share {share_name}'
+                    f'par values must be tuple or list，got {type(par_tuple)} for share {share_name}'
                 )
 
             # 转换为 tuple
@@ -1499,16 +1500,19 @@ class RuleIterator(BaseStrategy):
             # 校验参数元组长度必须等于 par_count
             if len(par_tuple) != self.par_count:
                 raise ValueError(
-                    f'参数元组长度必须等于 par_count ({self.par_count})，'
+                    f'par values count should be equal to par_count ({self.par_count})，'
                     f'got {len(par_tuple)} for share {share_name}'
                 )
+
+            # Make sure that par_tuple is valid by setting the first par_tuple to the strategy parameters
+            self.update_par_values(*par_tuple)
 
             result.append(par_tuple)
 
         # 校验解析后的 multi_pars 长度必须等于 share_count
         if len(result) != self.share_count:
             raise ValueError(
-                f'解析后的 multi_pars 长度必须等于 share_count ({self.share_count})，'
+                f'length of multi_pars must equal to share_count ({self.share_count})，'
                 f'got {len(result)}'
             )
 
