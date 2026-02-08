@@ -2378,16 +2378,18 @@ class Trader(object):
         if current_time is None:
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
-        for idx, task in enumerate(self.task_daily_schedule):
-            task_time = pd.to_datetime(task[0], utc=True).time()
+        # 从后向前遍历，避免 pop(idx) 后后续索引错位导致漏处理
+        for idx in range(len(self.task_daily_schedule) - 1, -1, -1):
+            task_tuple = self.task_daily_schedule[idx]
+            task_time = pd.to_datetime(task_tuple[0], utc=True).time()
             # 当task_time小于等于current_time时，添加task，同时删除该task
             if task_time <= current_time:
-                task_tuple = self.task_daily_schedule.pop(idx)
+                self.task_daily_schedule.pop(idx)
                 self.send_message(f'adding task: {task_tuple} from agenda', debug=True)
                 if len(task_tuple) == 3:
                     task = task_tuple[1:3]
                 elif len(task_tuple) == 2:
-                    task = task[1]
+                    task = task_tuple[1]
                 else:
                     err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                     raise err
