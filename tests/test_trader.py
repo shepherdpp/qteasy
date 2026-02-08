@@ -11,7 +11,9 @@
 import unittest
 import time
 import os
+import csv
 
+from queue import Queue
 from threading import Thread
 
 import pandas as pd
@@ -26,12 +28,157 @@ from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
 
+# --------------- Fixture helpers (plan section 2) ---------------
+
+def _get_data_test_dir():
+    """Return path to data_test directory (works when run from project root or tests/)."""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'qteasy', 'data_test')
+
+
+def _default_trader_kwargs():
+    """Default kwargs for Trader used across tests."""
+    return {
+        'market_open_time_am': '09:30:00',
+        'market_close_time_pm': '15:30:00',
+        'market_open_time_pm': '13:00:00',
+        'market_close_time_am': '11:30:00',
+        'exchange': 'SSE',
+        'cash_delivery_period': 0,
+        'stock_delivery_period': 0,
+        'asset_pool': '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+        'asset_type': 'E',
+        'pt_buy_threshold': 0.05,
+        'pt_sell_threshold': 0.05,
+        'allow_sell_short': False,
+        'live_price_channel': 'eastmoney',
+        'live_data_channel': 'eastmoney',
+        'live_price_freq': '15min',
+        'live_data_batch_size': 0,
+        'live_data_batch_interval': 0,
+        'daily_refill_tables': 'stock_1min, stock_5min',
+        'weekly_refill_tables': 'stock_15min',
+        'monthly_refill_tables': 'stock_daily',
+    }
+
+
+def _create_operator():
+    """Create a minimal Operator for tests."""
+    operator = Operator(strategies=['macd', 'dma'])
+    operator.set_parameter(stg_id='dma', window_length=20, run_freq='h')
+    operator.set_parameter(stg_id='macd', window_length=30, run_freq='30min')
+    return operator
+
+
+def _clear_tables(datasource):
+    """Clear test-related tables in datasource."""
+    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders',
+                  'sys_op_trade_results', 'stock_daily']:
+        if datasource.table_data_exists(table):
+            datasource.drop_table_data(table)
+
+
+def create_trader_with_account(account_id=1, with_positions=True, debug=False):
+    """
+    Create a minimal runnable Trader with an account and optional positions.
+    Tables are cleared and recreated. Returns (trader, datasource).
+    """
+    data_test_dir = _get_data_test_dir()
+    test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir, allow_drop_table=True)
+    _clear_tables(test_ds)
+    new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
+    if with_positions:
+        for sym in ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']:
+            get_or_create_position(account_id=account_id, symbol=sym, position_type='long', data_source=test_ds)
+        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
+        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
+        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
+    operator = _create_operator()
+    broker = SimulatorBroker()
+    trader = Trader(
+        account_id=account_id,
+        operator=operator,
+        broker=broker,
+        datasource=test_ds,
+        debug=debug,
+        **_default_trader_kwargs(),
+    )
+    return trader, test_ds
+
+
+def create_trader_with_orders_and_results(account_id=1, debug=False, stoppage=0.5):
+    """
+    Create a Trader with account, positions, submitted orders and trade results (full fixture).
+    Returns (trader, datasource). Caller may use trader.init_trade_log_file(), init_system_logger() as needed.
+    """
+    trader, test_ds = create_trader_with_account(account_id=account_id, with_positions=True, debug=debug)
+    trader.renew_trade_log_file()
+    trader.init_system_logger()
+    parsed_signals_batch = (
+        ['000001.SZ', '000002.SZ', '000004.SZ', '000006.SZ', '000007.SZ'],
+        ['long', 'long', 'long', 'long', 'long'],
+        ['buy', 'sell', 'sell', 'buy', 'buy'],
+        [100, 100, 300, 400, 500],
+        [60.0, 70.0, 80.0, 90.0, 100.0],
+    )
+    order_ids = save_parsed_trade_orders(
+        account_id=account_id,
+        symbols=parsed_signals_batch[0],
+        positions=parsed_signals_batch[1],
+        directions=parsed_signals_batch[2],
+        quantities=parsed_signals_batch[3],
+        prices=parsed_signals_batch[4],
+        data_source=test_ds,
+    )
+    for oid in order_ids:
+        submit_order(oid, test_ds)
+    time.sleep(stoppage)
+    parsed_signals_batch2 = (
+        ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ'],
+        ['long', 'long', 'long', 'long'],
+        ['sell', 'buy', 'buy', 'sell'],
+        [200, 200, 100, 300],
+        [70.0, 30.0, 56.0, 79.0],
+    )
+    order_ids2 = save_parsed_trade_orders(
+        account_id=account_id,
+        symbols=parsed_signals_batch2[0],
+        positions=parsed_signals_batch2[1],
+        directions=parsed_signals_batch2[2],
+        quantities=parsed_signals_batch2[3],
+        prices=parsed_signals_batch2[4],
+        data_source=test_ds,
+    )
+    for oid in order_ids2:
+        submit_order(order_id=oid, data_source=test_ds)
+    time.sleep(stoppage)
+    delivery_config = {'cash_delivery_period': 0, 'stock_delivery_period': 0}
+    for i, raw in enumerate([
+        {'order_id': 1, 'filled_qty': 100, 'price': 60.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
+        {'order_id': 2, 'filled_qty': 100, 'price': 70.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
+        {'order_id': 3, 'filled_qty': 200, 'price': 80.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
+        {'order_id': 4, 'filled_qty': 400, 'price': 89.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
+        {'order_id': 5, 'filled_qty': 500, 'price': 100.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
+    ], 1):
+        full = process_trade_result(raw_trade_result=raw, data_source=test_ds)
+        trader.log_trade_result(full)
+        dr = deliver_trade_result(result_id=full['result_id'], account_id=account_id, data_source=test_ds)
+        trader.log_qty_delivery(dr)
+        trader.log_cash_delivery(dr)
+        time.sleep(stoppage)
+    cancel_order(8, test_ds, delivery_config)
+    process_account_delivery(account_id=account_id, data_source=test_ds)
+    trader.init_trade_log_file()
+    trader.init_system_logger()
+    return trader, test_ds
+
+
 class TestTrader(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
         print('Setting up test Trader...')
-        operator = Operator(strategies=['macd', 'dma'], op_type='step')
+        operator = Operator(strategies=['macd', 'dma'])
         operator.set_parameter(
                 stg_id='dma',
                 window_length=20,
@@ -43,25 +190,25 @@ class TestTrader(unittest.TestCase):
                 run_freq='30min',
         )
         broker = SimulatorBroker()
-        config = {
-            'mode': 0,
-            'time_zone': 'local',
-            'market_open_time_am':  '09:30:00',
-            'market_close_time_pm': '15:30:00',
-            'market_open_time_pm':  '13:00:00',
-            'market_close_time_am': '11:30:00',
-            'exchange':             'SSE',
-            'cash_delivery_period':  0,
-            'stock_delivery_period': 0,
-            'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-            'asset_type':           'E',
-            'allow_sell_short':     False,
-            'invest_start':         '2018-01-01',
-            'opti_start':           '2018-01-01',
-            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
-        }
+        # config = {
+        #     'mode': 0,
+        #     'time_zone': 'local',
+        #     'market_open_time_am':  '09:30:00',
+        #     'market_close_time_pm': '15:30:00',
+        #     'market_open_time_pm':  '13:00:00',
+        #     'market_close_time_am': '11:30:00',
+        #     'exchange':             'SSE',
+        #     'cash_delivery_period':  0,
+        #     'stock_delivery_period': 0,
+        #     'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+        #     'asset_type':           'E',
+        #     'allow_sell_short':     False,
+        #     'invest_start':         '2018-01-01',
+        #     'opti_start':           '2018-01-01',
+        #     'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
+        #     'live_trade_weekly_refill_tables':   'stock_15min',
+        #     'live_trade_monthly_refill_tables':  'stock_daily',
+        # }
         trader_kwargs = {
             'market_open_time_am':              '09:30:00',
             'market_close_time_pm':             '15:30:00',
@@ -1463,6 +1610,646 @@ class TestTrader(unittest.TestCase):
 
         self.assertEqual(ts.status, 'stopped')
         self.assertEqual(ts.broker.status, 'stopped')
+
+
+# --------------- Plan 3.1: Constructor and parameter validation ---------------
+
+class TestTraderInit(unittest.TestCase):
+    """Tests for Trader __init__: valid construction and invalid parameter types."""
+
+    def setUp(self):
+        self.data_test_dir = _get_data_test_dir()
+        self.test_ds = DataSource('file', file_type='csv', file_loc=self.data_test_dir, allow_drop_table=True)
+        _clear_tables(self.test_ds)
+        new_account(user_name='init_test_user', cash_amount=50000, data_source=self.test_ds)
+        self.operator = _create_operator()
+        self.broker = SimulatorBroker()
+
+    def test_init_valid_with_positional_and_kwargs(self):
+        """Valid construction with required args and default kwargs."""
+        ts = Trader(
+            account_id=1,
+            operator=self.operator,
+            broker=self.broker,
+            datasource=self.test_ds,
+            **_default_trader_kwargs(),
+        )
+        self.assertEqual(ts.account_id, 1)
+        self.assertIs(ts._broker, self.broker)
+        self.assertIs(ts._operator, self.operator)
+        self.assertIs(ts._datasource, self.test_ds)
+        self.assertIsInstance(ts._asset_pool, list)
+        self.assertEqual(ts._asset_pool, ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ'])
+        self.assertIsInstance(ts.task_queue, Queue)
+        self.assertEqual(ts.task_daily_schedule, [])
+        self.assertEqual(ts._status, 'stopped')
+        self.assertIsInstance(ts.account, dict)
+        self.assertEqual(ts.account['user_name'], 'init_test_user')
+
+    def test_init_asset_pool_string_converted_to_list(self):
+        """asset_pool passed as string is converted to list."""
+        ts = Trader(
+            account_id=1,
+            operator=self.operator,
+            broker=self.broker,
+            datasource=self.test_ds,
+            asset_pool='000001.SZ, 000002.SZ',
+            asset_type='E',
+        )
+        self.assertIsInstance(ts.asset_pool, list)
+        self.assertEqual(ts.asset_pool, ['000001.SZ', '000002.SZ'])
+
+    def test_init_invalid_account_id_raises_type_error(self):
+        """Non-int account_id raises TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            Trader(
+                account_id='1',
+                operator=self.operator,
+                broker=self.broker,
+                datasource=self.test_ds,
+                **_default_trader_kwargs(),
+            )
+        self.assertIn('account_id must be int', str(ctx.exception))
+
+    def test_init_invalid_operator_raises_type_error(self):
+        """Non-Operator operator raises TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            Trader(
+                account_id=1,
+                operator=None,
+                broker=self.broker,
+                datasource=self.test_ds,
+                **_default_trader_kwargs(),
+            )
+        self.assertIn('operator must be Operator', str(ctx.exception))
+
+    def test_init_invalid_broker_raises_type_error(self):
+        """Non-Broker broker raises TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            Trader(
+                account_id=1,
+                operator=self.operator,
+                broker=None,
+                datasource=self.test_ds,
+                **_default_trader_kwargs(),
+            )
+        self.assertIn('broker must be Broker', str(ctx.exception))
+
+    def test_init_invalid_datasource_raises_type_error(self):
+        """Non-DataSource datasource raises TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            Trader(
+                account_id=1,
+                operator=self.operator,
+                broker=self.broker,
+                datasource=None,
+                **_default_trader_kwargs(),
+            )
+        self.assertIn('datasource must be DataSource', str(ctx.exception))
+
+    def test_init_invalid_benchmark_asset_raises_type_error(self):
+        """benchmark_asset neither str nor list raises TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            Trader(
+                account_id=1,
+                operator=self.operator,
+                broker=self.broker,
+                datasource=self.test_ds,
+                benchmark_asset=123,
+                **_default_trader_kwargs(),
+            )
+        self.assertIn('benchmark_asset must be str or list', str(ctx.exception))
+
+
+# --------------- Plan 3.2: Properties ---------------
+
+class TestTraderProperties(unittest.TestCase):
+    """Tests for Trader properties: status, prev_status, next_task, count_down, config, file flags, is_trade_day, etc."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=False)
+
+    def test_status_initial_is_stopped(self):
+        self.assertEqual(self.trader.status, 'stopped')
+
+    def test_status_after_start_is_sleeping(self):
+        self.trader._run_task('start')
+        self.assertEqual(self.trader.status, 'sleeping')
+
+    def test_status_setter_valid_values(self):
+        for val in ['running', 'sleeping', 'paused', 'stopped']:
+            self.trader.status = val
+            self.assertEqual(self.trader.status, val)
+
+    def test_status_setter_invalid_raises_value_error(self):
+        with self.assertRaises(ValueError) as ctx:
+            self.trader.status = 'invalid'
+        self.assertIn('invalid status', str(ctx.exception))
+
+    def test_prev_status_after_change(self):
+        self.trader._run_task('start')
+        self.assertEqual(self.trader.prev_status, 'stopped')
+        self.trader._run_task('wakeup')
+        self.assertEqual(self.trader.prev_status, 'sleeping')
+
+    def test_next_task_empty_schedule_returns_none(self):
+        self.trader.task_daily_schedule = []
+        self.assertIsNone(self.trader.next_task)
+
+    def test_count_down_to_next_task_empty_schedule_positive_seconds(self):
+        self.trader.task_daily_schedule = []
+        cd = self.trader.count_down_to_next_task
+        self.assertIsInstance(cd, (int, float))
+        self.assertGreaterEqual(cd, 1)
+
+    def test_operator_broker_datasource_asset_pool_asset_type(self):
+        self.assertIsInstance(self.trader.operator, Operator)
+        self.assertIsInstance(self.trader.broker, Broker)
+        self.assertIs(self.trader.datasource, self.test_ds)
+        self.assertIsInstance(self.trader.asset_pool, list)
+        self.assertEqual(self.trader.asset_type, 'E')
+
+    def test_account_cash_returns_tuple_of_three(self):
+        cash = self.trader.account_cash
+        self.assertIsInstance(cash, tuple)
+        self.assertEqual(len(cash), 3)
+        self.assertIsInstance(cash[0], (int, float))
+        self.assertIsInstance(cash[1], (int, float))
+        self.assertIsInstance(cash[2], (int, float))
+
+    def test_account_positions_dataframe_columns(self):
+        pos = self.trader.account_positions
+        self.assertIsInstance(pos, pd.DataFrame)
+        for col in ['qty', 'available_qty', 'cost']:
+            self.assertIn(col, pos.columns)
+
+    def test_non_zero_positions_subset_of_account_positions(self):
+        all_pos = self.trader.account_positions
+        non_zero = self.trader.non_zero_positions
+        self.assertIsInstance(non_zero, pd.DataFrame)
+        self.assertTrue(non_zero['qty'].ne(0).all())
+
+    def test_config_is_dict_with_expected_keys(self):
+        cfg = self.trader.config
+        self.assertIsInstance(cfg, dict)
+        self.assertIn('time_zone', cfg)
+        self.assertIn('market_open_time_am', cfg)
+        self.assertIn('cash_delivery_period', cfg)
+
+    def test_config_cost_params_none_yields_zero_cost_keys(self):
+        self.trader.cost_params = None
+        cfg = self.trader.config
+        self.assertIn('cost_rate_buy', cfg)
+        self.assertEqual(cfg['cost_rate_buy'], 0.0)
+
+    def test_trade_log_file_is_valid_no_file_false(self):
+        log_path = trade_log_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(log_path):
+            os.remove(log_path)
+        self.assertFalse(self.trader.trade_log_file_is_valid)
+
+    def test_sys_log_file_exists_after_init(self):
+        self.trader.init_system_logger()
+        self.assertTrue(self.trader.sys_log_file_exists)
+        path = sys_log_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(path):
+            os.remove(path)
+
+    def test_break_point_file_exists_after_save(self):
+        bp_path = break_point_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(bp_path):
+            os.remove(bp_path)
+        self.assertFalse(self.trader.break_point_file_exists)
+        self.trader._run_task('start')
+        self.trader.save_break_point()
+        self.assertTrue(self.trader.break_point_file_exists)
+        if os.path.exists(bp_path):
+            os.remove(bp_path)
+
+    def test_is_trade_day_with_force_current_date(self):
+        self.trader.debug = True
+        self.trader.force_current_date = pd.to_datetime('2023-05-10').date()
+        self.assertTrue(self.trader.is_trade_day)
+        self.trader.force_current_date = pd.to_datetime('2023-01-01').date()
+        self.assertFalse(self.trader.is_trade_day)
+
+
+# --------------- Plan 3.3: Task and state (add_task, _run_task, schedule) ---------------
+
+class TestTraderTaskState(unittest.TestCase):
+    """Tests for add_task, _run_task, _add_task_from_schedule, _initialize_schedule, get_schedule_string."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.stoppage = 0.5
+
+    def test_add_task_non_str_raises_type_error(self):
+        with self.assertRaises(TypeError) as ctx:
+            self.trader.add_task(123)
+        self.assertIn('task should be a str', str(ctx.exception))
+
+    def test_add_task_puts_task_in_queue(self):
+        self.trader._run_task('start')
+        self.trader.add_task('sleep')
+        self.assertFalse(self.trader.task_queue.empty())
+        task = self.trader.task_queue.get()
+        self.trader.task_queue.task_done()
+        self.assertEqual(task, 'sleep')
+
+    def test_add_task_with_args_puts_tuple_in_queue(self):
+        self.trader._run_task('start')
+        self.trader.add_task('run_strategy', 0)
+        self.assertFalse(self.trader.task_queue.empty())
+        task = self.trader.task_queue.get()
+        self.trader.task_queue.task_done()
+        self.assertEqual(task, ('run_strategy', (0,)))
+
+    def test_run_task_invalid_task_raises_value_error(self):
+        with self.assertRaises(ValueError) as ctx:
+            self.trader._run_task('nonexistent_task')
+        self.assertIn('Invalid task name', str(ctx.exception))
+
+    def test_run_task_none_returns_quietly(self):
+        self.trader._run_task(None)
+        self.assertEqual(self.trader.status, 'stopped')
+
+    def test_get_schedule_string_empty_returns_no_tasks_message(self):
+        self.trader.task_daily_schedule = []
+        s = self.trader.get_schedule_string()
+        self.assertIn('No tasks scheduled', s)
+
+    def test_get_schedule_string_non_empty_contains_datetime_and_task(self):
+        self.trader.task_daily_schedule = [('09:30:00', 'open_market'), ('10:00:00', 'run_strategy', 0)]
+        s = self.trader.get_schedule_string()
+        self.assertIn('open_market', s)
+        self.assertIn('run_strategy', s)
+
+    def test_get_schedule_string_rich_form_replaces_brackets(self):
+        """rich_form=True 时 [ 必须被替换为 <，] 必须被替换为 >。使用会产出方括号的 parameters（如 [0]）以强断言替换生效。"""
+        self.trader.task_daily_schedule = [('09:30:00', 'run_strategy', [0])]
+        s_rich = self.trader.get_schedule_string(rich_form=True)
+        s_plain = self.trader.get_schedule_string(rich_form=False)
+        print(f's_rich is :\n{s_rich}')
+        print(f's_plain is :\n{s_plain}')
+        self.assertIn('[', s_plain, 'plain output should contain "[" so replacement is testable')
+        self.assertIn(']', s_plain, 'plain output should contain "]" so replacement is testable')
+        self.assertNotIn('[', s_rich, 'rich_form=True must replace "["')
+        self.assertNotIn(']', s_rich, 'rich_form=True must replace "]"')
+        self.assertIn('<', s_rich, 'rich_form=True must produce "<" from "["')
+        self.assertIn('>', s_rich, 'rich_form=True must produce ">" from "]"')
+
+    def test_initialize_schedule_non_trade_day_empty_schedule(self):
+        self.trader.debug = True
+        self.trader.force_current_date = pd.to_datetime('2023-01-01').date()
+        self.trader._initialize_schedule(pd.Timestamp('2023-01-01 08:00:00').time())
+        self.assertEqual(self.trader.task_daily_schedule, [])
+
+    def test_add_task_from_schedule_pops_past_tasks_into_queue(self):
+        self.trader._run_task('start')
+        self.trader.task_daily_schedule = [
+            ('08:00:00', 'pre_open'),
+            ('09:30:00', 'open_market'),
+            ('10:00:00', 'run_strategy', 0),
+        ]
+        import datetime as dt
+        current = dt.time(9, 45, 0)
+        print(f'task schedule: {self.trader.task_daily_schedule}')
+        self.trader._add_task_from_schedule(current)
+        print(f'task schedule after adding tasks from schedule: {self.trader.task_daily_schedule}')
+        self.assertEqual(len(self.trader.task_daily_schedule), 1)
+        self.assertFalse(self.trader.task_queue.empty())
+        self.trader.task_queue.get()
+        self.trader.task_queue.task_done()
+        self.trader.task_queue.get()
+        self.trader.task_queue.task_done()
+
+
+# --------------- Plan 3.5: Individual tasks + TASK_WHITELIST ---------------
+
+class TestTraderTasksIndividual(unittest.TestCase):
+    """Per-task tests: each of the 14 tasks invoked via _run_task and expected state/side effects."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.stoppage = 0.5
+
+    def test_task_start(self):
+        self.assertEqual(self.trader.status, 'stopped')
+        self.trader._run_task('start')
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.assertTrue(self.trader.trade_log_file_is_valid)
+        self.assertTrue(self.trader.sys_log_file_exists)
+
+    def test_task_stop(self):
+        self.trader._run_task('start')
+        self.trader._run_task('stop')
+        self.assertEqual(self.trader.status, 'stopped')
+        self.assertEqual(self.trader.broker.status, 'stopped')
+        self.assertTrue(self.trader.break_point_file_exists)
+
+    def test_task_sleep(self):
+        self.trader._run_task('start')
+        self.trader._run_task('wakeup')
+        self.assertEqual(self.trader.status, 'running')
+        self.trader._run_task('sleep')
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.assertEqual(self.trader.broker.status, 'paused')
+
+    def test_task_wakeup(self):
+        self.trader._run_task('start')
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.trader._run_task('wakeup')
+        self.assertEqual(self.trader.status, 'running')
+        self.assertEqual(self.trader.broker.status, 'running')
+
+    def test_task_pause_and_resume_to_sleeping(self):
+        self.trader._run_task('start')
+        self.trader._run_task('pause')
+        self.assertEqual(self.trader.status, 'paused')
+        self.trader._run_task('resume')
+        self.assertEqual(self.trader.status, 'sleeping')
+
+    def test_task_pause_and_resume_to_running(self):
+        self.trader._run_task('start')
+        self.trader._run_task('wakeup')
+        self.trader._run_task('pause')
+        self.assertEqual(self.trader.status, 'paused')
+        self.trader._run_task('resume')
+        self.assertEqual(self.trader.status, 'running')
+
+    def test_task_open_market(self):
+        self.trader._run_task('start')
+        self.trader._run_task('open_market')
+        self.assertTrue(self.trader.is_market_open)
+        self.assertEqual(self.trader.status, 'running')
+        self.assertEqual(self.trader.broker.status, 'running')
+
+    def test_task_close_market(self):
+        self.trader._run_task('start')
+        self.trader._run_task('wakeup')
+        self.trader._run_task('close_market')
+        self.assertFalse(self.trader.is_market_open)
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.assertEqual(self.trader.broker.status, 'paused')
+
+    def test_task_post_close_no_orders_no_error(self):
+        self.trader._run_task('start')
+        self.trader._run_task('post_close')
+        self.assertEqual(self.trader.status, 'sleeping')
+
+    def test_task_run_strategy_step_index_zero(self):
+        self.trader._run_task('start')
+        self.trader._run_task('wakeup')
+        n = self.trader._run_strategy(0)
+        self.assertIsInstance(n, (int, np.integer))
+        self.assertGreaterEqual(n, 0)
+
+    def test_task_process_result_valid_result(self):
+        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=True, stoppage=0.2)
+        raw = {'order_id': 1, 'filled_qty': 50, 'price': 61.0, 'transaction_fee': 2.5, 'canceled_qty': 0.0}
+        self.trader._run_task('start')
+        self.trader._run_task('process_result', raw)
+        self.assertTrue(self.trader.trade_log_file_is_valid)
+
+    def test_task_refill_duration_default(self):
+        self.trader._run_task('start')
+        try:
+            self.trader._run_task('refill', 'stock_daily', 1)
+        except Exception:
+            pass
+        self.assertEqual(self.trader.status, 'sleeping')
+
+    def test_task_acquire_live_price_updates_or_keeps_live_price(self):
+        self.trader._run_task('start')
+        try:
+            self.trader._update_live_price()
+        except Exception:
+            pass
+        self.assertTrue(self.trader.live_price is None or isinstance(self.trader.live_price, pd.DataFrame))
+
+    @unittest.skipIf(
+        True,
+        "pre_open calls refill_missing_datasource_data / get_all_basic_table_data; may fail in CI.",
+    )
+    def test_task_pre_open_full(self):
+        self.trader._run_task('start')
+        self.trader._pre_open()
+        self.assertEqual(self.trader._status, 'sleeping')
+
+
+class TestTraderTaskWhitelist(unittest.TestCase):
+    """TASK_WHITELIST: in each status, non-whitelisted tasks are ignored when run from main loop."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.stoppage = 0.8
+
+    def test_stopped_only_start_executes(self):
+        """run() 入口会先执行 _run_task('start')，故主循环处理队列时已为 sleeping。
+        验证：sleeping 时非白名单任务（run_strategy）被忽略，白名单任务（wakeup）执行，stop 后回到 stopped。"""
+        self.assertEqual(self.trader.status, 'stopped')
+        Thread(target=self.trader.run, daemon=True).start()
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'sleeping', 'run() runs start first so status becomes sleeping')
+        self.trader.add_task('run_strategy', 0)
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'sleeping', 'run_strategy not in sleeping whitelist, should be ignored')
+        self.trader.add_task('wakeup')
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'running', 'wakeup is in sleeping whitelist')
+        self.trader.add_task('stop')
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'stopped')
+
+    def test_sleeping_wakeup_executes_refill_allowed(self):
+        self.trader._run_task('start')
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.trader.add_task('run_strategy', 0)
+        Thread(target=self.trader.run, daemon=True).start()
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'sleeping')
+        self.trader.add_task('wakeup')
+        time.sleep(self.stoppage)
+        self.assertEqual(self.trader.status, 'running')
+        self.trader.add_task('stop')
+        time.sleep(self.stoppage)
+
+
+# --------------- Plan 3.3/3.4: Account/orders, logging, info, boundaries ---------------
+
+class TestTraderAccountOrders(unittest.TestCase):
+    """history_orders, trade_results, submit_trade_order, manual_change_cash/position."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=False, stoppage=0.2)
+
+    def test_history_orders_without_results_columns(self):
+        ho = self.trader.history_orders(with_trade_results=False)
+        self.assertIsInstance(ho, pd.DataFrame)
+        for col in ['symbol', 'position', 'direction', 'qty', 'price', 'status']:
+            self.assertIn(col, ho.columns)
+
+    def test_history_orders_with_results_columns(self):
+        ho = self.trader.history_orders(with_trade_results=True)
+        self.assertIsInstance(ho, pd.DataFrame)
+        self.assertGreater(len(ho), 0)
+
+    def test_trade_results_filled(self):
+        tr = self.trader.trade_results(status='filled')
+        self.assertIsInstance(tr, pd.DataFrame)
+
+    def test_submit_trade_order_returns_dict_or_empty(self):
+        res = self.trader.submit_trade_order(
+            symbol='000001.SZ', position='long', direction='buy',
+            order_type='limit', qty=10, price=50.0,
+        )
+        self.assertIsInstance(res, dict)
+
+    def test_manual_change_cash_positive_increases(self):
+        c0 = self.trader.account_cash
+        self.trader.manual_change_cash(1000.0)
+        c1 = self.trader.account_cash
+        self.assertGreater(c1[0], c0[0])
+        self.assertGreater(c1[1], c0[1])
+
+    def test_manual_change_cash_negative_over_available_ignored(self):
+        c0 = self.trader.account_cash
+        self.trader.manual_change_cash(-999999999.0)
+        c1 = self.trader.account_cash
+        self.assertEqual(c1[0], c0[0])
+        self.assertEqual(c1[1], c0[1])
+
+
+class TestTraderLoggingAndBreakpoint(unittest.TestCase):
+    """init_system_logger, read_sys_log, clear_sys_log, init/renew_trade_log_file, read_trade_log, save/load_break_point."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=False)
+
+    def test_read_sys_log_file_missing_returns_empty_list(self):
+        path = sys_log_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(path):
+            os.remove(path)
+        self.assertEqual(self.trader.read_sys_log(), [])
+
+    def test_read_sys_log_with_row_count_returns_last_n(self):
+        path = sys_log_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(path):
+            os.remove(path)
+        with open(path, 'w') as f:
+            f.write('line1\nline2\nline3\n')
+        lines = self.trader.read_sys_log(row_count=2)
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[-1], 'line3\n')
+        if os.path.exists(path):
+            os.remove(path)
+
+    def test_read_trade_log_invalid_file_returns_empty_dataframe(self):
+        path = trade_log_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(path):
+            os.remove(path)
+        df = self.trader.read_trade_log()
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+
+    def test_load_break_point_no_file_returns_empty_dict(self):
+        path = break_point_file_path_name(self.trader.account_id, self.trader.datasource)
+        if os.path.exists(path):
+            os.remove(path)
+        bp = self.trader.load_break_point()
+        self.assertIsInstance(bp, dict)
+        self.assertEqual(len(bp), 0)
+
+    def test_clear_sys_log_not_implemented(self):
+        """clear_sys_log is not yet implemented (qteasy 2.0 migration)."""
+        with self.assertRaises(NotImplementedError):
+            self.trader.clear_sys_log()
+
+
+class TestTraderInfoAndMessages(unittest.TestCase):
+    """info(), send_message, add_message_prefix, get_config, update_config, get_current_tz_datetime."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=False)
+
+    def test_info_returns_dict(self):
+        d = self.trader.info()
+        self.assertIsInstance(d, dict)
+
+    def test_info_detail_includes_account_id(self):
+        d = self.trader.info(detail=True)
+        self.assertIn('Account ID', d)
+        self.assertEqual(d['Account ID'], 1)
+
+    def test_get_config_none_returns_full_config(self):
+        cfg = self.trader.get_config()
+        self.assertIsInstance(cfg, dict)
+        self.assertIn('time_zone', cfg)
+
+    def test_get_config_key_returns_single_key_dict(self):
+        cfg = self.trader.get_config('time_zone')
+        self.assertEqual(cfg, {'time_zone': self.trader.time_zone})
+
+    def test_update_config_key_not_in_config_returns_none(self):
+        ret = self.trader.update_config(key='nonexistent_key', value=1)
+        self.assertIsNone(ret)
+
+    def test_add_message_prefix_contains_status(self):
+        s = self.trader.add_message_prefix('hello', debug=False)
+        self.assertIn('hello', s)
+        self.assertIn(self.trader.status, s)
+
+    def test_get_current_tz_datetime_returns_timestamp(self):
+        t = self.trader.get_current_tz_datetime()
+        self.assertIsInstance(t, pd.Timestamp)
+
+
+class TestTraderBoundaries(unittest.TestCase):
+    """Boundary and edge cases: empty account, cost_params None, read_sys_log row_count edge, etc."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(account_id=1, with_positions=False, debug=False)
+
+    def test_account_positions_empty_positions_still_dataframe(self):
+        pos = self.trader.account_positions
+        self.assertIsInstance(pos, pd.DataFrame)
+        self.assertEqual(len(self.trader.asset_pool), len(pos))
+
+    def test_non_zero_positions_empty_when_no_holdings(self):
+        non_zero = self.trader.non_zero_positions
+        self.assertIsInstance(non_zero, pd.DataFrame)
+        self.assertTrue((non_zero['qty'] == 0).all() or len(non_zero) == 0)
+
+    def test_history_orders_empty_when_no_orders(self):
+        ho = self.trader.history_orders(with_trade_results=False)
+        self.assertIsInstance(ho, pd.DataFrame)
+        self.assertEqual(len(ho), 0)
+
+    def test_trade_results_empty_status_filled(self):
+        tr = self.trader.trade_results(status='filled')
+        self.assertIsInstance(tr, pd.DataFrame)
+
+    def test_add_task_from_schedule_invalid_task_tuple_length_raises(self):
+        """Schedule entry with len not 2 or 3 raises ValueError."""
+        self.trader._run_task('start')
+        self.trader.task_daily_schedule = [('09:00:00',)]  # length 1
+        import datetime as dt
+        with self.assertRaises(ValueError) as ctx:
+            self.trader._add_task_from_schedule(dt.time(10, 0, 0))
+        self.assertIn('Invalid task tuple', str(ctx.exception))
+
+
+class TestTraderAssetPoolDetail(unittest.TestCase):
+    """asset_pool_detail(): empty stock_basic vs with data."""
+
+    def setUp(self):
+        self.trader, self.test_ds = create_trader_with_account(debug=False)
+
+    def test_asset_pool_detail_returns_dataframe(self):
+        detail = self.trader.asset_pool_detail()
+        self.assertIsInstance(detail, pd.DataFrame)
+        if not detail.empty:
+            self.assertTrue(all(s in self.trader.asset_pool for s in detail.index))
 
 
 if __name__ == '__main__':

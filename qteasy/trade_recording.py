@@ -596,8 +596,11 @@ def get_account_positions(account_id, data_source=None):
             'sys_op_positions',
             **{'account_id': account_id},
     )
+    _empty_canonical = pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
     if positions is None:
-        return pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
+        return _empty_canonical
+    if positions.empty or not positions.columns.tolist() or 'symbol' not in positions.columns:
+        return _empty_canonical
 
     return positions
 
