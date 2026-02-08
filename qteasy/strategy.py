@@ -1475,7 +1475,7 @@ class RuleIterator(BaseStrategy):
 
         # 按 share_names 顺序解析，而非按 dict 的 key 顺序
         result = []
-        for share_name in self.share_names[::-1]:
+        for share_name in self.share_names:
             if share_name in multi_pars:
                 # 如果 dict 中存在该 share_id，使用对应值
                 par_tuple = multi_pars[share_name]
