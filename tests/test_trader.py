@@ -77,6 +77,34 @@ def _clear_tables(datasource):
             datasource.drop_table_data(table)
 
 
+def _write_minimal_stock_daily(datasource, symbols=None, start_date='2023-02-01', end_date='2023-05-10'):
+    """Write minimal daily bars for run_strategy tests. Covers symbols and date range with >= 30 rows per symbol.
+    Uses bars schema: ts_code, trade_date, open, high, low, close, pre_close, change, pct_chg, vol, amount.
+    """
+    if symbols is None:
+        symbols = ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ']
+    dates = pd.bdate_range(start=start_date, end=end_date)
+    rows = []
+    for ts_code in symbols:
+        for i, d in enumerate(dates):
+            price = 10.0 + (i % 100) * 0.1
+            rows.append({
+                'ts_code': ts_code,
+                'trade_date': d.strftime('%Y-%m-%d'),
+                'open': price,
+                'high': price + 0.5,
+                'low': price - 0.5,
+                'close': price + 0.1,
+                'pre_close': price - 0.1,
+                'change': 0.1,
+                'pct_chg': 1.0,
+                'vol': 1000000.0,
+                'amount': 10000000.0,
+            })
+    df = pd.DataFrame(rows)
+    datasource.write_table_data(df, 'stock_daily')
+
+
 def create_trader_with_account(account_id=1, with_positions=True, debug=False):
     """
     Create a minimal runnable Trader with an account and optional positions.
@@ -190,25 +218,6 @@ class TestTrader(unittest.TestCase):
                 run_freq='30min',
         )
         broker = SimulatorBroker()
-        # config = {
-        #     'mode': 0,
-        #     'time_zone': 'local',
-        #     'market_open_time_am':  '09:30:00',
-        #     'market_close_time_pm': '15:30:00',
-        #     'market_open_time_pm':  '13:00:00',
-        #     'market_close_time_am': '11:30:00',
-        #     'exchange':             'SSE',
-        #     'cash_delivery_period':  0,
-        #     'stock_delivery_period': 0,
-        #     'asset_pool':           '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-        #     'asset_type':           'E',
-        #     'allow_sell_short':     False,
-        #     'invest_start':         '2018-01-01',
-        #     'opti_start':           '2018-01-01',
-        #     'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
-        #     'live_trade_weekly_refill_tables':   'stock_15min',
-        #     'live_trade_monthly_refill_tables':  'stock_daily',
-        # }
         trader_kwargs = {
             'market_open_time_am':              '09:30:00',
             'market_close_time_pm':             '15:30:00',
@@ -1724,7 +1733,8 @@ class TestTraderInit(unittest.TestCase):
 # --------------- Plan 3.2: Properties ---------------
 
 class TestTraderProperties(unittest.TestCase):
-    """Tests for Trader properties: status, prev_status, next_task, count_down, config, file flags, is_trade_day, etc."""
+    """Tests for Trader properties: status, prev_status, next_task, count_down,
+    config, file flags, is_trade_day, etc."""
 
     def setUp(self):
         self.trader, self.test_ds = create_trader_with_account(debug=False)
@@ -1998,8 +2008,25 @@ class TestTraderTasksIndividual(unittest.TestCase):
         self.assertEqual(self.trader.status, 'sleeping')
 
     def test_task_run_strategy_step_index_zero(self):
+        # Ensure run schedule and group_timing_table exist (is_trade_day=True)
+        self.trader.force_current_date = pd.to_datetime('2023-05-10').date()
+        # Provide minimal daily data for operator strategies (MACD/DMA need close_ANY_d, window 20/30)
+        _write_minimal_stock_daily(
+            self.test_ds,
+            start_date='2023-02-01',
+            end_date='2023-05-10',
+        )
         self.trader._run_task('start')
         self.trader._run_task('wakeup')
+        # Avoid dependency on live price fetch; give valid current prices for parse_trade_signal
+        symbols = self.trader.asset_pool if isinstance(self.trader.asset_pool, list) else [
+            s.strip() for s in self.trader.asset_pool.split(',')
+        ]
+        self.trader.live_price = pd.DataFrame(
+            [[12.0] * len(symbols)],
+            columns=symbols,
+            index=pd.DatetimeIndex([pd.Timestamp('2023-05-10 10:00:00')]),
+        )
         n = self.trader._run_strategy(0)
         self.assertIsInstance(n, (int, np.integer))
         self.assertGreaterEqual(n, 0)
