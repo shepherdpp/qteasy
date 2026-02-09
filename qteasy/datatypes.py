@@ -4589,7 +4589,8 @@ def get_reference_data_from_source(
             raise err
         if (htype.asset_type != 'None') and (htype.unsymbolizer is None):
             err = TypeError(f'data type ({htype.__str__()}) is a history data, not a reference data, '
-                            f'consider using unsymbolizer, to convert it to reference data, such as "close-000651.SZ"')
+                            f'Thus symbols must be given to specify the data: "shares=\'000651.SZ\'"; '
+                            f'or using unsymbolizer to convert it to reference data, such as "close-000651.SZ"')
             raise err
 
         if htype.unsymbolizer is not None:
