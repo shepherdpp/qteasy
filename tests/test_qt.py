@@ -1244,6 +1244,7 @@ class TestQT(unittest.TestCase):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
         print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
         op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_blender(blender='s0')
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',

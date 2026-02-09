@@ -382,7 +382,7 @@ TABLE_MASTERS = {
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', '', '', ''],
 
     'index_weight':
-        ['index_weight', '指数成分', 'comp', 'IDX', 'd', '', '', ''],
+        ['index_weight', '指数成分', 'comp', 'IDX', 'm', '', '', ''],
 
     'income':
         ['income', '上市公司利润表', 'report', 'E', 'q', '', '', ''],
