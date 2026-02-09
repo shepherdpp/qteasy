@@ -2504,6 +2504,20 @@ class Trader(object):
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
+
+            # 如果下载失败且当前不存在有效实时价格，则为资产池创建占位价格数据
+            if not isinstance(self.live_price, pd.DataFrame) or self.live_price.empty:
+                if isinstance(self.asset_pool, str):
+                    from .utilfuncs import str_to_list as _qt_str_to_list
+                    symbols = _qt_str_to_list(self.asset_pool)
+                else:
+                    symbols = list(self.asset_pool)
+                fallback_df = pd.DataFrame(
+                        index=symbols,
+                        data={'price': np.nan},
+                )
+                self.live_price = fallback_df
+
             return
         real_time_data.set_index('ts_code', inplace=True)
         # 将real_time_data 赋值给self.live_price
