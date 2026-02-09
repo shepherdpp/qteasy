@@ -1276,8 +1276,12 @@ class TestTrader(unittest.TestCase):
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
         # 新的trader创建后，如果当前是交易时段，status为running，否则为sleeping，因此这里的status可能是running或者sleeping，需要根据market_open判断
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        if ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
 
         ts.add_task('pre_open')
         time.sleep(self.stoppage)
@@ -1285,8 +1289,12 @@ class TestTrader(unittest.TestCase):
         print('added task pre_open')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        if ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
         broker_prev_status = 'running'
         prev_status = 'running'
 
@@ -1436,8 +1444,12 @@ class TestTrader(unittest.TestCase):
         print(f'broker status: {ts.broker.status}')
         print(f'is_trade_day: {ts.is_trade_day}')
         print(f'task daily schedule: {ts.task_daily_schedule}')
-        # self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'init')
+        if ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'init')
         self.assertEqual(ts.is_trade_day, False)
         self.assertEqual(ts.task_daily_schedule, [])
 
@@ -2077,7 +2089,10 @@ class TestTraderTaskWhitelist(unittest.TestCase):
         self.assertEqual(self.trader.status, 'stopped')
         Thread(target=self.trader.run, daemon=True).start()
         time.sleep(self.stoppage)
-        self.assertEqual(self.trader.status, 'sleeping', 'run() runs start first so status becomes sleeping')
+        if self.trader.is_market_open:
+            self.assertEqual(self.trader.status, 'running', 'run() runs start first so status becomes running')
+        else:
+            self.assertEqual(self.trader.status, 'sleeping', 'run() runs start first so status becomes sleeping')
         self.trader.add_task('run_strategy', 0)
         time.sleep(self.stoppage)
         self.assertEqual(self.trader.status, 'sleeping', 'run_strategy not in sleeping whitelist, should be ignored')
@@ -2090,7 +2105,10 @@ class TestTraderTaskWhitelist(unittest.TestCase):
 
     def test_sleeping_wakeup_executes_refill_allowed(self):
         self.trader._run_task('start')
-        self.assertEqual(self.trader.status, 'sleeping')
+        if self.trader.is_market_open:
+            self.assertEqual(self.trader.status, 'running')
+        else:
+            self.assertEqual(self.trader.status, 'sleeping')
         self.trader.add_task('run_strategy', 0)
         Thread(target=self.trader.run, daemon=True).start()
         time.sleep(self.stoppage)
