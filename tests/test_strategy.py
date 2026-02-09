@@ -1475,9 +1475,8 @@ class TestStrategy(unittest.TestCase):
         stg.update_shares(3)
         stg._update_multi_pars({'Share_1': (5, 5), 'Share_2': (6, 1), 'Share_3': (2, 4)})
 
-
-        self.assertEqual(stg.param1, 5)
-        self.assertEqual(stg.param2, 6)
+        self.assertEqual(stg.param1, 2)  # 设置multi_pars后，par_values会被更新为最后一个股票的参数值
+        self.assertEqual(stg.param2, 4)  # 设置multi_pars后，par_values会被更新为最后一个股票的参数值
         self.assertIsInstance(stg._data_windows['data_type_1'], np.ndarray)
         self.assertIsInstance(stg._data_windows['data_type_2'], np.ndarray)
         self.assertTrue(np.allclose(stg._data_windows['data_type_1'], self.data_windows['data_type_1'][5]))

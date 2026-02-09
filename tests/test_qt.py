@@ -322,7 +322,6 @@ class StgSelClose(GeneralStg):
         super().__init__(
                 pars=[Parameter((0, 100), par_type='int', name='n')],
                 name='SELL_CLOSE',
-                run_timing='close',
                 data_types=DataType('close', freq='d', asset_type='ANY'),
                 use_latest_data_cycle=True,
         )
@@ -1075,6 +1074,7 @@ class TestQT(unittest.TestCase):
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_stepwise]:
+            op.set_shares(['000100', '000200', '000300'])
             op.set_blender('s0', group_id='Group_1')
             op.set_blender('s0', group_id='Group_2')
             op.set_parameter(0, par_values=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
@@ -1192,17 +1192,17 @@ class TestQT(unittest.TestCase):
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
         op = qt.Operator(signal_type='ps')
-        op.add_strategy(stg_sel,
-                        run_freq='d',
-                        run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
-                        window_length=50,
-                        par_values=(20,),)
         op.add_strategy(stg_buy,
                         run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
                         run_freq='d',
                         window_length=50,
                         par_values=(20,),
                         )
+        op.add_strategy(stg_sel,
+                        run_freq='d',
+                        run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+                        window_length=50,
+                        par_values=(20,),)
 
         self.assertEqual(len(op.groups), 2)
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
