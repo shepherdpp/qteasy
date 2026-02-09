@@ -2470,7 +2470,7 @@ class Trader(object):
                                                      'open_market',
                                                      'close_market'])]
         elif mcc < current_time:
-            # after market close, remove all task before current time except pre_open and post_close
+            # after market close, remove all tasks before current time except pre_open and post_close
             self.send_message('market closed, removing all tasks before current time except '
                               'pre_open and post_close',
                               debug=True)

@@ -1647,7 +1647,7 @@ class Operator:
         rprint(f'{"Operator Information":=^{info_width}}\n'
                f'Name:        {self.name}\n'
                f'Run Mode:    {self.op_type} - {op_type_description[self.op_type]}\n'
-               f'Groups:      {self.strategy_group_count} Groups, {self.strategy_count} Strategies\n')
+               f'Groups:      {self.strategy_count} Strategy(s) in {self.strategy_group_count} Group(s)\n')
         # 依次打印各个Group的信息：
         for group_id, group in self.groups.items():
             rprint(f'{group_id:-^{info_width}}\n'
