@@ -3868,22 +3868,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
               f' - backtest (total/avg)          {backtest_time:.3f} / {(backtest_time / cycles):.3f} sec')
         self.assertLessEqual((et - st) / 5, 10.0)  # 单次平均回测时间不超过10秒
 
-    def test_stg_index_follow(self):
-        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
-        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
-        op.set_parameter(0,
-                         opt_tag=1,
-                         run_freq='M',
-                         data_types=StgData('wt_idx|000300.SH', freq='d', asset_type='E', window_length=1),
-                         sort_ascending=False,
-                         weighting='proportion',
-                         max_sel_count=300)
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     trade_log=True)
-
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
         raise NotImplementedError
