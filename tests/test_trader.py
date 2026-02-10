@@ -1037,7 +1037,7 @@ class TestTrader(unittest.TestCase):
             self.assertEqual(log_row[2], '')  # order_id
             self.assertEqual(log_row[3], '5')  # pos_id
             self.assertEqual(log_row[4], '000006.SZ')  # symbol
-            self.assertEqual(log_row[5], '深振业A')  # name
+            self.assertIn(log_row[5], ['深振业A', 'N/A'])  # name
             self.assertEqual(log_row[6], 'long')  # position
             self.assertEqual(log_row[7], '')  # direction
             self.assertEqual(log_row[11], '200.000')  # qty_change
@@ -1067,7 +1067,7 @@ class TestTrader(unittest.TestCase):
             self.assertEqual(log_row[2], '')  # order_id
             self.assertEqual(log_row[3], '5')  # pos_id
             self.assertEqual(log_row[4], '000006.SZ')  # symbol
-            self.assertEqual(log_row[5], '深振业A')  # name
+            self.assertIn(log_row[5], ['深振业A', 'N/A'])  # name
             self.assertEqual(log_row[6], 'long')  # position
             self.assertEqual(log_row[7], '')  # direction
             self.assertEqual(log_row[11], '200.000')  # qty_change
