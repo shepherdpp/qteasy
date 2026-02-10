@@ -1613,13 +1613,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_am':              '11:30:00',
             'exchange':                          'SSE',
             'strategy_open_close_timing_offset': 1,
-            # 'live_price_acquire_freq':           'h',
-            'live_price_acquire_freq':           '15min',
+            'live_price_acquire_freq':           'h',
+            # 'live_price_acquire_freq':           '15min',
             'live_trade_daily_refill_tables':    'stock_1min',
             'live_trade_weekly_refill_tables':   'stock_15min',
             'live_trade_monthly_refill_tables':  'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
+        agenda = create_daily_task_schedule(op, **config)
         for i, item in enumerate(agenda):
             print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
