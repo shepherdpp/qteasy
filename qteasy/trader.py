@@ -19,12 +19,11 @@ import time
 import numpy as np
 import pandas as pd
 
-from typing import Union, Optional
+from typing import Union, Optional, Any
 from queue import Queue
 
 from rich.text import Text
 
-from .configure import ConfigDict, QT_CONFIG
 from .database import DataSource
 from .datatypes import get_tables_by_dtypes
 from .history import check_and_prepare_live_trade_data
@@ -39,8 +38,6 @@ from .trade_recording import (
     query_trade_orders,
     record_trade_order,
     get_or_create_position,
-    new_account,
-    update_position,
 )
 
 from .trading_util import (
@@ -1926,7 +1923,7 @@ class Trader(object):
         """
 
         # DEBUG
-        print(f'Running _run_strategy with step_index: {step_index}')
+        # print(f'Running _run_strategy with step_index: {step_index}')
 
         self.send_message(f'running task run strategy: {step_index}', debug=True)
         operator = self._operator
@@ -1937,6 +1934,9 @@ class Trader(object):
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
         # config = self._config
+        # DEBUG
+        # print(f'shares: {shares}, \nown_amounts: {own_amounts}, \navailable_amounts: {available_amounts}, '
+        #       f'\nown_cash: {own_cash}, \navailable_cash: {available_cash}')
 
         today = self.get_current_tz_datetime().strftime('%Y-%m-%d')
 
@@ -1945,6 +1945,8 @@ class Trader(object):
         group_timing = operator.group_timing_table.iloc[step_index].values
         group_count = len(operator.groups)
         groups_to_run = [operator.groups_by_index[i] for i in range(group_count) if group_timing[i]]
+        # DEBUG
+        # print(f'group_timing: {group_timing}, \ngroups_to_run: {groups_to_run}')
 
         for group in groups_to_run:
             for strategy in group.members:
@@ -1972,6 +1974,8 @@ class Trader(object):
                 shares=self.asset_pool,
                 live_prices=self.live_price,
         )
+        # DEBUG
+        # print(f'got data_packages: \n{data_packages}')
         self.send_message(f'read real time data and set operator data allocation', debug=True)
         operator.prepare_data_buffer(
                 start_date=self.get_current_tz_datetime(),
@@ -1979,6 +1983,8 @@ class Trader(object):
                 data_package=data_packages,
         )
         operator.create_data_windows()
+        # DEBUG
+        # print(f'prepared data buffer and created data windows for operator, now preparing current prices...')
 
         # 如果策略需要用到交易过程数据，则准备交易过程数据
         if self.operator.check_dynamic_data():
@@ -1990,9 +1996,14 @@ class Trader(object):
         # 更新最新实时价格，self.live_price的格式为index为symbols，列为['price']
         self._update_live_price()
         current_prices = self.live_price['price'].values
+        # DEBUG
+        # print(f'current_prices: {current_prices}')
 
         for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
             self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
+            # DEBUG
+            # print(f'got signal from operator.run_strategy: signal_type: {signal_type}, '
+            #       f'step_index: {step_index}, op_signal: {op_signal}')
 
             # 解析交易信号
             symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
@@ -2014,6 +2025,9 @@ class Trader(object):
                     short_position_limit=self.short_position_limit,
             )
             names = get_symbol_names(self._datasource, symbols)
+            # DEBUG
+            # print(f'parsed trade signals: \nsymbols: {symbols}, \npositions: {positions}, \ndirections: {directions}, '
+            #       f'\nquantities: {quantities}, \nquoted_prices: {quoted_prices}, \nremarks: {remarks}')
             self.send_message(f'generated trade signals:\n'
                               f'symbols: {symbols}\n'
                               f'positions: {positions}\n'
@@ -2311,7 +2325,7 @@ class Trader(object):
         )
 
     # ================ task operations =================
-    def _run_task(self, task, *args, run_in_main_thread=False) -> None:
+    def _run_task(self, task, *args: Any, run_in_main_thread=False) -> None:
         """ 运行任务，这个API不应该开放给用户使用，而是应该在trader的主循环中被调用
 
         Parameters

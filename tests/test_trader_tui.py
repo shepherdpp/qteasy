@@ -34,7 +34,7 @@ class TestTraderTUI(unittest.TestCase):
         )
         broker = SimulatorBroker()
         config = {
-            'mode':                  0,
+            # 'mode':                  0,
             'time_zone':             'local',
             'market_open_time_am':   '09:30:00',
             'market_close_time_pm':  '15:30:00',
@@ -45,11 +45,11 @@ class TestTraderTUI(unittest.TestCase):
             'stock_delivery_period': 0,
             'asset_pool':            '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
             'asset_type':            'E',
-            'PT_buy_threshold':      0.05,
-            'PT_sell_threshold':     0.05,
+            'pt_buy_threshold':      0.05,
+            'pt_sell_threshold':     0.05,
             'allow_sell_short':      False,
-            'invest_start':          '2018-01-01',
-            'opti_start':            '2018-01-01',
+            # 'invest_start':          '2018-01-01',
+            # 'opti_start':            '2018-01-01',
         }
         # 创建测试数据源
         data_test_dir = '../qteasy/data_test/'
@@ -60,8 +60,8 @@ class TestTraderTUI(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config,
                 datasource=test_ds,
+                **config,
         )
 
     def test_action_toggle_dark(self):

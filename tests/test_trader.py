@@ -1375,10 +1375,7 @@ class TestTrader(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         # 根据Trader的asset_pool配置生成预期symbols列表
-        if isinstance(self.ts.asset_pool, str):
-            symbols_expected = [s.strip() for s in self.ts.asset_pool.split(',')]
-        else:
-            symbols_expected = list(self.ts.asset_pool)
+        symbols_expected = list(self.ts.asset_pool)
         symbols_acquired = df.index.tolist()
         print(f'expected symbols: {symbols_expected}')
         print(f'acquired symbols: {symbols_acquired}')
@@ -1398,7 +1395,8 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts._run_task('run_strategy', *['macd', 'dma'])
+        import pdb; pdb.set_trace()
+        ts._run_task('run_strategy', 0)
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
@@ -1407,7 +1405,7 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        ts._run_task('refill', *('index_daily', 1))
+        ts._run_task('refill', *('index_daily', 1, 'tushare'))
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
@@ -1604,7 +1602,7 @@ class TestTrader(unittest.TestCase):
             (test_sim_times[4].strftime('%H:%M:%S'), 'run_strategy', 1),
             (test_sim_times[5].strftime('%H:%M:%S'), 'close_market'),
             (test_sim_times[6].strftime('%H:%M:%S'), 'post_close'),
-            (test_sim_times[7].strftime('%H:%M:%S'), 'refill', ('index_1min', 1)),
+            (test_sim_times[7].strftime('%H:%M:%S'), 'refill', ('index_daily', 1, 'tushare')),
         ]
         print(f'task agenda manually created: {ts.task_daily_schedule}')
         target_agenda_tasks = [
@@ -2049,9 +2047,7 @@ class TestTraderTasksIndividual(unittest.TestCase):
         self.trader._run_task('start')
         self.trader._run_task('wakeup')
         # Avoid dependency on live price fetch; give valid current prices for parse_trade_signal
-        symbols = self.trader.asset_pool if isinstance(self.trader.asset_pool, list) else [
-            s.strip() for s in self.trader.asset_pool.split(',')
-        ]
+        symbols = self.trader.asset_pool
         # 根据Trader._update_live_price的设计，live_price应当以symbols为index，以price为列保存当前价格
         self.trader.live_price = pd.DataFrame(
             index=symbols,
