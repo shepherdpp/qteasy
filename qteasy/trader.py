@@ -244,9 +244,10 @@ class Trader(object):
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        # self._config = ConfigDict()
-        # self._config.update(QT_CONFIG.copy())
-        # self._config.update(config)
+
+        self.debug = debug
+        self.force_current_date = None  # 用于测试，强制当前日期
+
         self._datasource = datasource
         if isinstance(asset_pool, str):
             asset_pool = str_to_list(asset_pool)
@@ -263,6 +264,7 @@ class Trader(object):
         self.is_market_open = False
         self._status = 'stopped'
         self._prev_status = None
+
         # ---------------- trade market related -----------------
         self.exchange = exchange
         self.cost_params = cost_params
@@ -308,9 +310,6 @@ class Trader(object):
         self.live_sys_logger = live_sys_logger
 
         self.account = get_account(self.account_id, data_source=self._datasource)
-
-        self.debug = debug
-        self.force_current_date = None  # 用于测试，强制当前日期
 
     # ================== properties ==================
     @property
@@ -465,7 +464,9 @@ class Trader(object):
                 self.send_message(f'Error in getting current prices: {e}', debug=True)
                 current_prices = pd.Series(index=positions.index, data=np.nan)
         else:
-            current_prices = self.live_price['close'].reindex(index=positions.index).astype('float')
+            # 在交易日，使用self.live_price中保存的最新实时价格
+            # self.live_price的格式为：index为symbols，列为['price']
+            current_prices = self.live_price['price'].reindex(index=positions.index).astype('float')
 
         positions['name'] = positions['name'].fillna('')
         positions['current_price'] = current_prices
@@ -577,7 +578,11 @@ class Trader(object):
 
     # ================== methods ==================
     def get_current_tz_datetime(self) -> pd.Timestamp:
-        """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
+        """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间
+        如果设置了force_current_date, 则返回force_current_date对应的datetime，主要用于测试
+        """
+        if self.force_current_date is not None:
+            return pd.to_datetime(self.force_current_date)
 
         tz_time = get_current_timezone_datetime(self.time_zone)
         # if tz_time is very close to local time, then set time_zone to local and return local time
@@ -1924,8 +1929,8 @@ class Trader(object):
         operator = self._operator
 
         shares = self.asset_pool
-        own_amounts = self.account_positions['qty']
-        available_amounts = self.account_positions['available_qty']
+        own_amounts = self.account_positions['qty'].values
+        available_amounts = self.account_positions['available_qty'].values
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
         # config = self._config
@@ -1956,7 +1961,7 @@ class Trader(object):
             pass
 
         # 从dataSource中读取最新数据,组装成data_package
-        self.send_message(f'preparing trade data...', debug=True)
+        self.send_message(f'preparing data package...', debug=True)
         data_packages = check_and_prepare_live_trade_data(
                 op=operator,
                 trade_date=today,
@@ -1979,8 +1984,10 @@ class Trader(object):
 
         # 开始运行交易策略，逐个生成交易信号
         submitted_qty = 0
+        # 更新最新实时价格，self.live_price的格式为index为symbols，列为['price']
         self._update_live_price()
-        current_prices = self.live_price
+        current_prices = self.live_price['price'].values
+
         for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
             self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
 
@@ -2490,7 +2497,13 @@ class Trader(object):
     def _update_live_price(self) -> None:
         """获取实时数据，并将实时数据更新到self.live_price中
 
-        注：此函数并不将读取的数据写入datasource，且可能出现Timeout或运行失败"""
+        生成的live_price数据格式如下：
+        live_price = pd.DataFrame(
+            index=symbols,
+            data={'price': prices},
+        )
+        其中symbols是资产池中的资产代码，与self.asset_pool中的代码一致，prices是对应的实时价格数据
+        """
         self.send_message(f'Acquiring live price data', debug=True)
         real_time_data = fetch_real_time_klines(
                 qt_codes=self.asset_pool,
@@ -2516,9 +2529,28 @@ class Trader(object):
                 self.live_price = fallback_df
 
             return
-        real_time_data.set_index('ts_code', inplace=True)
-        # 将real_time_data 赋值给self.live_price
-        self.live_price = real_time_data
+
+        # 从实时K线数据中提取每个标的的最新价格，生成符合docstring描述格式的DataFrame：
+        # live_price = pd.DataFrame(index=symbols, data={'price': prices})
+        # 其中prices使用实时K线中的收盘价close列
+        try:
+            price_series = real_time_data.set_index('ts_code')['close'].astype(float)
+        except KeyError:
+            # 如果没有close列，退而求其次使用最后一列作为价格，避免因外部接口变化导致崩溃
+            temp = real_time_data.set_index('ts_code')
+            price_series = temp.iloc[:, -1].astype(float)
+
+        if isinstance(self.asset_pool, str):
+            from .utilfuncs import str_to_list as _qt_str_to_list
+            symbols = _qt_str_to_list(self.asset_pool)
+        else:
+            symbols = list(self.asset_pool)
+
+        live_price_df = pd.DataFrame(
+                index=symbols,
+                data={'price': price_series.reindex(symbols)},
+        )
+        self.live_price = live_price_df
         self.send_message(f'acquired live price data, live prices updated!', debug=True)
         return
 

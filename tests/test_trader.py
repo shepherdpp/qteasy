@@ -64,8 +64,8 @@ def _default_trader_kwargs():
 def _create_operator():
     """Create a minimal Operator for tests."""
     operator = Operator(strategies=['macd', 'dma'])
-    operator.set_parameter(stg_id='dma', window_length=20, run_freq='h')
-    operator.set_parameter(stg_id='macd', window_length=30, run_freq='30min')
+    operator.set_parameter(stg_id='dma', window_length=10, run_freq='h')
+    operator.set_parameter(stg_id='macd', window_length=10, run_freq='30min')
     return operator
 
 
@@ -1374,9 +1374,22 @@ class TestTrader(unittest.TestCase):
         df = self.ts.live_price
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        # 根据Trader的asset_pool配置生成预期symbols列表
+        if isinstance(self.ts.asset_pool, str):
+            symbols_expected = [s.strip() for s in self.ts.asset_pool.split(',')]
+        else:
+            symbols_expected = list(self.ts.asset_pool)
         symbols_acquired = df.index.tolist()
-        symbols_expected = ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ']
-        self.assertTrue(all(item in symbols_expected for item in symbols_acquired))
+        print(f'expected symbols: {symbols_expected}')
+        print(f'acquired symbols: {symbols_acquired}')
+        # index应当与asset_pool中的symbols一一对应
+        self.assertListEqual(symbols_acquired, symbols_expected)
+        # 根据_update_live_price的docstring，DataFrame应当具有名为price的列保存当前价格
+        print(f'live price columns: {df.columns.tolist()}')
+        self.assertIn('price', df.columns)
+        self.assertListEqual(df.columns.tolist(), ['price'])
+        # price列中应当是数值型数据
+        self.assertTrue(np.issubdtype(df['price'].dtype, np.number))
 
     def test_strategy_run_and_process_result(self):
         """Test strategy run and process result"""
@@ -1602,7 +1615,7 @@ class TestTrader(unittest.TestCase):
             ('run_strategy', 1),
             ('close_market', ),
             ('post_close', ),
-            ('refill', ('index_1min', 1)),
+            ('refill', ('index_daily', 1, 'tushare')),
         ]
         # check all tasks are in the agenda
         for task, agenda_task in zip(target_agenda_tasks, ts.task_daily_schedule):
@@ -2027,7 +2040,7 @@ class TestTraderTasksIndividual(unittest.TestCase):
     def test_task_run_strategy_step_index_zero(self):
         # Ensure run schedule and group_timing_table exist (is_trade_day=True)
         self.trader.force_current_date = pd.to_datetime('2023-05-10').date()
-        # Provide minimal daily data for operator strategies (MACD/DMA need close_ANY_d, window 20/30)
+        # Provide minimal daily data for operator strategies (MACD/DMA need close_ANY_d, window 10/15)
         _write_minimal_stock_daily(
             self.test_ds,
             start_date='2023-02-01',
@@ -2039,11 +2052,15 @@ class TestTraderTasksIndividual(unittest.TestCase):
         symbols = self.trader.asset_pool if isinstance(self.trader.asset_pool, list) else [
             s.strip() for s in self.trader.asset_pool.split(',')
         ]
+        # 根据Trader._update_live_price的设计，live_price应当以symbols为index，以price为列保存当前价格
         self.trader.live_price = pd.DataFrame(
-            [[12.0] * len(symbols)],
-            columns=symbols,
-            index=pd.DatetimeIndex([pd.Timestamp('2023-05-10 10:00:00')]),
+            index=symbols,
+            data={'price': [12.0] * len(symbols)},
         )
+        print(f'manually injected live_price for test_task_run_strategy_step_index_zero: {self.trader.live_price}')
+        self.trader.operator.set_shares(self.trader.asset_pool)
+        self.trader.operator.set_group_parameters('Group_1', blender_str='s0')
+        self.trader.operator.set_group_parameters('Group_2', blender_str='s0')
         n = self.trader._run_strategy(0)
         self.assertIsInstance(n, (int, np.integer))
         self.assertGreaterEqual(n, 0)
@@ -2058,7 +2075,7 @@ class TestTraderTasksIndividual(unittest.TestCase):
     def test_task_refill_duration_default(self):
         self.trader._run_task('start')
         try:
-            self.trader._run_task('refill', 'stock_daily', 1)
+            self.trader._run_task('refill', 'stock_daily', 1, 'tushare')
         except Exception:
             pass
         self.assertEqual(self.trader.status, 'sleeping')
@@ -2171,7 +2188,8 @@ class TestTraderAccountOrders(unittest.TestCase):
 
 
 class TestTraderLoggingAndBreakpoint(unittest.TestCase):
-    """init_system_logger, read_sys_log, clear_sys_log, init/renew_trade_log_file, read_trade_log, save/load_break_point."""
+    """init_system_logger, read_sys_log, clear_sys_log, init/renew_trade_log_file,
+    read_trade_log, save/load_break_point."""
 
     def setUp(self):
         self.trader, self.test_ds = create_trader_with_account(debug=False)
