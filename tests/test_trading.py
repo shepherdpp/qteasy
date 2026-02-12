@@ -1611,13 +1611,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           'h',
-            # 'live_price_acquire_freq':           '15min',
-            'live_trade_daily_refill_tables':    'stock_1min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            # 'live_price_frequency':              'h',
+            'live_price_frequency':              '15min',
+            'daily_refill_tables':               'stock_1min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
         agenda = create_daily_task_schedule(op, **config)
         for i, item in enumerate(agenda):
@@ -1647,14 +1647,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           '15min',
-            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            'live_price_frequency':              '15min',
+            'daily_refill_tables':               'stock_1min, stock_5min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
+        agenda = create_daily_task_schedule(op, **config)
         for i, item in enumerate(agenda):
             print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
@@ -1688,14 +1688,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           '60min',
-            'live_trade_daily_refill_tables':    'stock_1min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            'live_price_frequency':              '60min',
+            'daily_refill_tables':               'stock_1min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
+        agenda = create_daily_task_schedule(op, **config)
         for i, item in enumerate(agenda):
             print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
