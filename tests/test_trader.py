@@ -2258,6 +2258,68 @@ class TestTraderInfoAndMessages(unittest.TestCase):
         ret = self.trader.update_config(key='nonexistent_key', value=1)
         self.assertIsNone(ret)
 
+    def test_update_config_all_keys_reflected_in_config(self):
+        """update_config(key, value) 对每个 config key 写入后，self.config[key] 应返回新值。"""
+        # 覆盖 Trader.config 中全部 key 的合法测试值（不测试错误类型）
+        all_key_values = {
+            'time_zone': 'Asia/Shanghai',
+            'live_price_acquire_channel': 'tushare',
+            'live_price_acquire_freq': '5min',
+            'market_open_time_am': '09:00:00',
+            'market_close_time_am': '11:00:00',
+            'market_open_time_pm': '13:30:00',
+            'market_close_time_pm': '15:00:00',
+            'benchmark_asset': '000300.SH',
+            'trade_batch_size': 2.0,
+            'sell_batch_size': 2.0,
+            'cash_delivery_period': 1,
+            'stock_delivery_period': 2,
+            'allow_sell_short': True,
+            'long_position_limit': 0.8,
+            'short_position_limit': -0.5,
+            'strategy_open_close_timing_offset': 2,
+            'live_trade_daily_refill_tables': 'table_daily',
+            'live_trade_weekly_refill_tables': 'table_weekly',
+            'live_trade_monthly_refill_tables': 'table_monthly',
+            'live_trade_data_refill_batch_size': 100,
+            'live_trade_data_refill_batch_interval': 60,
+            'live_trade_data_refill_channel': 'akshare',
+            'cost_rate_buy': 0.001,
+            'cost_rate_sell': 0.0005,
+            'cost_min_buy': 10.0,
+            'cost_min_sell': 10.0,
+            'cost_slippage': 0.001,
+            'PT_buy_threshold': 0.02,
+            'PT_sell_threshold': 0.03,
+        }
+        for key, value in all_key_values.items():
+            self.trader.update_config(key=key, value=value)
+            actual = self.trader.config[key]
+            if isinstance(value, float):
+                self.assertAlmostEqual(actual, value, msg=f'key={key}')
+            else:
+                self.assertEqual(actual, value, msg=f'key={key}')
+            print(f'update_config key={key} value={value} -> config[key]={actual}')
+
+    def test_update_config_cost_params_shape_and_values(self):
+        """更新 5 个 cost_* key 后，cost_params 为长度 5 的数组且 config 与实例一致。"""
+        self.trader.cost_params = None
+        self.assertEqual(self.trader.config['cost_rate_buy'], 0.0)
+        self.trader.update_config('cost_rate_buy', 0.002)
+        self.assertIsNotNone(self.trader.cost_params)
+        self.assertEqual(len(self.trader.cost_params), 5)
+        self.assertAlmostEqual(self.trader.config['cost_rate_buy'], 0.002)
+        self.assertAlmostEqual(float(self.trader.cost_params[0]), 0.002)
+        self.trader.update_config('cost_rate_sell', 0.001)
+        self.trader.update_config('cost_min_buy', 5.0)
+        self.trader.update_config('cost_min_sell', 5.0)
+        self.trader.update_config('cost_slippage', 0.0005)
+        self.assertAlmostEqual(self.trader.config['cost_rate_sell'], 0.001)
+        self.assertAlmostEqual(self.trader.config['cost_min_buy'], 5.0)
+        self.assertAlmostEqual(self.trader.config['cost_min_sell'], 5.0)
+        self.assertAlmostEqual(self.trader.config['cost_slippage'], 0.0005)
+        print('cost_params after all cost_* updates:', self.trader.cost_params)
+
     def test_add_message_prefix_contains_status(self):
         s = self.trader.add_message_prefix('hello', debug=False)
         self.assertIn('hello', s)

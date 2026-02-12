@@ -514,6 +514,50 @@ class Trader(object):
         }
         return trader_config
 
+    def _update_config(self, key, value) -> None:
+        """ 更新交易系统的配置信息
+
+        该方法根据给定的配置项名称，将值直接写入 Trader 的对应属性中。
+        假定 key 和 value 均已完成参数校验。
+        """
+        # 成本相关参数单独处理：映射到 self.cost_params 的对应位置
+        cost_param_index_map = {
+            'cost_rate_buy': 0,
+            'cost_rate_sell': 1,
+            'cost_min_buy': 2,
+            'cost_min_sell': 3,
+            'cost_slippage': 4,
+        }
+        if key in cost_param_index_map:
+            idx = cost_param_index_map[key]
+            # 如果尚未初始化成本参数，先创建一个包含 5 个元素的数组
+            if self.cost_params is None:
+                self.cost_params = np.array([0., 0., 0., 0., 0.], dtype=float)
+            else:
+                # 复制一份，避免在原数组上原地修改带来潜在副作用
+                self.cost_params = np.array(self.cost_params, dtype=float)
+            self.cost_params[idx] = value
+            return
+
+        # 其他配置项直接映射到 Trader 的实例属性
+        config_key_to_attr = {
+            'live_price_acquire_channel':            'live_price_channel',
+            'live_price_acquire_freq':               'live_price_freq',
+            'benchmark_asset':                       'benchmark',
+            'strategy_open_close_timing_offset':     'open_close_timing_offset',
+            'live_trade_daily_refill_tables':        'daily_refill_tables',
+            'live_trade_weekly_refill_tables':       'weekly_refill_tables',
+            'live_trade_monthly_refill_tables':      'monthly_refill_tables',
+            'live_trade_data_refill_batch_size':     'live_data_batch_size',
+            'live_trade_data_refill_batch_interval': 'live_data_batch_interval',
+            'live_trade_data_refill_channel':        'live_data_channel',
+            'PT_buy_threshold':                      'pt_buy_threshold',
+            'PT_sell_threshold':                     'pt_sell_threshold',
+        }
+        attr_name = config_key_to_attr.get(key, key)
+        if hasattr(self, attr_name):
+            setattr(self, attr_name, value)
+
     @property
     def trade_log_file_is_valid(self) -> bool:
         """ 返回交易记录文件是否存在
@@ -599,9 +643,14 @@ class Trader(object):
         """ 更新交易系统的配置信息 """
         if key not in self.config:
             return None
+        trader_config = self.config.copy()
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
-        _update_config_kwargs(self.config, new_kwarg, raise_if_key_not_existed=True)
+        _update_config_kwargs(trader_config, new_kwarg, raise_if_key_not_existed=True)
+        # 现在将trader_config赋值给self.config，但是self.config是一个静态属性，因此需要
+        # 从self.config中找到key对应的属性，并将value赋值给该属性
+        for k, v in trader_config.items():
+            self._update_config(k, v)
         return self.config[key]
 
     def get_schedule_string(self, rich_form=True) -> str:

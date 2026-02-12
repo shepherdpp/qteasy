@@ -1639,9 +1639,10 @@ class TraderShell(Cmd):
                 try:
                     self.trader.update_config(key, value)
                     rich.print(f'[bold green]configure key "{key}" has been changed to "{value}".[bold green]')
-                except:
-                    rich.print(f'[bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
+                except Exception as e:
+                    rich.print(f'{e}, [bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
                     continue
+        return None
 
     def do_history(self, arg):
         """usage: history [SYMBOL] [-h]
