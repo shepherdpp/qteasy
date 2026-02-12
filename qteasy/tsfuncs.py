@@ -884,7 +884,6 @@ def realtime_min(ts_code, freq):
 
     pro = ts.pro_api()
     res = pro.rt_min(ts_code=ts_code, freq=freq)
-    # import pdb; pdb.set_trace()
     res.index = pd.to_datetime(res['trade_time'])
     res = res.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 

@@ -1892,7 +1892,7 @@ class Operator:
                            f"and start_date is {start_date}, \nbut the first available window starts on "
                            f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]} (window length: "
                            f"{dtype_max_window}). ")
-                    # import pdb; pdb.set_trace()  # to solve problem of insufficient data when freq = 'Q'
+                    # to solve problem of insufficient data when freq = 'Q'
                     raise ValueError(msg)
                 # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
                 self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]

@@ -348,7 +348,6 @@ def _parse_dtype_description(search_name: str, name_par: str, freq: str, asset_t
     for asset_type in asset_types:
         key = (search_name, freq, asset_type)
         if key not in data_map:
-            # import pdb; pdb.set_trace()
             raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
         description, _, _ = data_map[key]
@@ -1038,7 +1037,7 @@ class DataType:
 
             # asset_types 是一个sorted list，存储所有设定的default asset types
             # 而asset_type_str 是一个字符串，存储用户输入的asset_type参数，用于生成dtype_id等属性
-            # import pdb; pdb.set_trace()
+
             if asset_type is not None:
                 asset_types = str_to_list(asset_type)
                 asset_types = [at.strip() for at in asset_types]
@@ -1062,7 +1061,7 @@ class DataType:
                 asset_type_str = ','.join(asset_types)
             else:
                 unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
-                # import pdb; pdb.set_trace()
+
                 raise ValueError(f'Asset types {unmatched} not found in DATA_TYPE_MAP.'
                                  f' Please check your input.')
 
