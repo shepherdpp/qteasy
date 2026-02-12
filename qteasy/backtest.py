@@ -1009,7 +1009,6 @@ class Backtester:
             if not isinstance(arr, np.ndarray):
                 raise TypeError(f"{name} must be a numpy array")
             if arr.shape != shape:
-                # import pdb; pdb.set_trace()
                 raise ValueError(f"{name} should have shape {shape}, but got {arr.shape}")
 
         self.op = op

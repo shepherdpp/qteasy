@@ -2106,7 +2106,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'operator is ready? "{op.ready}"')
         self.assertEqual(op.ready, False)
         print(f'checking why operator is not ready:\n')
-        # import pdb; pdb.set_trace()
         op.is_ready(
                 tell_me_why=True,
         )
@@ -2380,7 +2379,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Data Windows created for all strategies')
         self.assertEqual(len(op.data_window_views), 3)
         self.assertEqual(len(op.data_window_indices), 3)
-        # import pdb; pdb.set_trace()
         data_window_shapes = {
             'custom':   {
                 'close_E_d': (22, 4, 3),
@@ -2603,7 +2601,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
                 self.assertEqual(data_window.shape[1],
                                  op[stg_id].window_lengths[dtype])
-                # import pdb; pdb.set_trace()
+
                 self.assertEqual(data_window.shape[2],
                                  3)
                 # check that the data indices are correct
@@ -2689,7 +2687,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
                 self.assertEqual(data_window.shape[1],
                                  op[stg_id].window_lengths[dtype])
-                # import pdb; pdb.set_trace()
+
                 self.assertEqual(data_window.shape[2],
                                  3)
                 # check that the data indices are correct

@@ -130,7 +130,6 @@ class Space:
         <(1.0, 5.0),(3, 10),(5, 6)>
         """
         self._axis = []
-        # import pdb; pdb.set_trace()
         # 处理输入，如果pars参数为Parameter对象，则直接使用
         if any(isinstance(par, Parameter) for par in par_ranges):
             if not all(isinstance(par, Parameter) for par in par_ranges):

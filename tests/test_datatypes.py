@@ -1847,7 +1847,6 @@ class TestDataTypes(unittest.TestCase):
                 if shares is not None:
                     shares = list_to_str_format(shares)
                 if table_name in ['cn_money']:
-                    # import pdb; pdb.set_trace()
                     pass
                 data = dtype.get_data_from_source(
                         ds,

@@ -1395,7 +1395,6 @@ class TestTrader(unittest.TestCase):
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')
         self.assertEqual(ts.broker.status, 'init')
-        import pdb; pdb.set_trace()
         ts._run_task('run_strategy', 0)
         time.sleep(self.stoppage)
         self.assertEqual(ts.status, 'sleeping')

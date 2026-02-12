@@ -147,7 +147,6 @@ class IndexEnhancement(qt.GeneralStg):
     def realize(self):
         weight_threshold, init_weight, price_days = self.get_pars('weight_threshold', 'initial_weight', 'price_days')
         index_weight, prices = self.get_data('wt_idx|000300.SH_ANY_d', 'close_ANY_d')
-        # import pdb; pdb.set_trace()
         # 读取投资组合的权重wt和最近price_days天的收盘价
         wt = index_weight[-1]  # 当前所有股票的权重值
         pre_close = prices[-price_days - 1:-1]
