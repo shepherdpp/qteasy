@@ -466,8 +466,9 @@ class TestTraderCLI(unittest.TestCase):
         self.assertIsNone(tss.do_config('sell_batch_size time_zone -s 0 Asia/Shanghai'))
         self.assertEqual(tss.trader.config['sell_batch_size'], 0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
-        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['sell_batch_size'], 100)
+        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Hong_Kong'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertEqual(tss.trader.config['time_zone'], 'Asia/Hong_Kong')
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_config('-h'))
