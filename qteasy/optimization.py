@@ -1110,6 +1110,9 @@ class Optimizer:
         在参数空间中随机选择N个起点作为粒子群的初始位置，每个粒子根据自身的历史最优位置和全局的历史最优位置
         来调整自己的速度和位置，逐步向最优解靠近。经过多次迭代后，粒子群会收敛到全局最优解或近似最优解。
 
+        数值表示使用 space.point_to_vector / space.vector_to_point，在编码向量空间内做速度与位置更新，
+        再映射回合法参数点。惯性权重 w=0.7，个体系数 c1=1.5，社会系数 c2=1.5。
+
         Parameters
         ----------
         space: qt.Space
@@ -1119,7 +1122,109 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        raise NotImplementedError
+        population_size = self.search_config['population_size']
+        max_iterations = self.search_config['max_iterations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+
+        # PSO 超参数（常量，暂不从 config 暴露）
+        w = 0.7
+        c1 = 1.5
+        c2 = 1.5
+
+        par_iter, total = space.extract(population_size, how='rand')
+        positions = list(par_iter)
+        if not positions:
+            return
+
+        # 编码向量长度与各轴跨度（用于速度初始化）
+        vec_len = space.point_to_vector(positions[0]).size
+        sizes = space.vector_axis_sizes
+        dim = space.dim
+        offsets = [0]
+        for s in sizes:
+            offsets.append(offsets[-1] + s)
+        span_per_elem = np.zeros(vec_len)
+        for d in range(dim):
+            ax = space.axis[d]
+            boe = space.boes[d]
+            s, e = offsets[d], offsets[d + 1]
+            if ax.par_type in ['int', 'float']:
+                span = float(ax.ubound - ax.lbound) or 1.0
+                span_per_elem[s:e] = span
+            elif ax.par_type == 'enum':
+                enum_list = list(boe) if isinstance(boe, tuple) else boe
+                span = float(max(1, len(enum_list) - 1))
+                span_per_elem[s:e] = span
+            else:
+                span = float(ax.ubound - ax.lbound) or 1.0
+                span_per_elem[s:e] = span
+
+        # 初始化速度：小范围随机，与各维跨度成比例
+        velocities = [
+            np.random.uniform(-0.1 * span_per_elem, 0.1 * span_per_elem)
+            for _ in range(len(positions))
+        ]
+
+        # 评估初始位置，初始化 pbest 与 gbest
+        pbest_points = list(positions)
+        pbest_perfs = [None] * len(positions)
+        tmp_pool = ResultPool(capacity=len(positions))
+        self._evaluate_parameters(
+            total=len(positions),
+            par_value_list=positions,
+            result_pool=tmp_pool,
+            parallel=parallel,
+            epoch_str='1/1',
+            leave_progress_bar=False,
+        )
+        for i, (point, perf) in enumerate(zip(tmp_pool.items, tmp_pool.perfs)):
+            pbest_perfs[i] = perf
+        if maximize_target:
+            gbest_idx = max(range(len(pbest_perfs)), key=lambda j: pbest_perfs[j] if pbest_perfs[j] is not None else float('-inf'))
+        else:
+            gbest_idx = min(range(len(pbest_perfs)), key=lambda j: pbest_perfs[j] if pbest_perfs[j] is not None else float('inf'))
+        gbest_point = pbest_points[gbest_idx]
+        gbest_perf = pbest_perfs[gbest_idx]
+
+        for iteration in range(max_iterations - 1):
+            gbest_vec = space.point_to_vector(gbest_point)
+            for i in range(len(positions)):
+                x_vec = space.point_to_vector(positions[i])
+                pbest_vec = space.point_to_vector(pbest_points[i])
+                r1, r2 = np.random.random(), np.random.random()
+                v = velocities[i]
+                v = w * v + c1 * r1 * (pbest_vec - x_vec) + c2 * r2 * (gbest_vec - x_vec)
+                velocities[i] = v
+                x_new_vec = x_vec + v
+                new_point = space.vector_to_point(x_new_vec)
+                positions[i] = new_point
+
+            tmp_pool = ResultPool(capacity=len(positions))
+            self._evaluate_parameters(
+                total=len(positions),
+                par_value_list=positions,
+                result_pool=tmp_pool,
+                parallel=parallel,
+                epoch_str=f'{iteration + 2}/{max_iterations}',
+                leave_progress_bar=False,
+            )
+            for i, (point, perf) in enumerate(zip(tmp_pool.items, tmp_pool.perfs)):
+                if perf is None:
+                    continue
+                better = (perf > pbest_perfs[i]) if maximize_target else (perf < pbest_perfs[i])
+                if pbest_perfs[i] is None or better:
+                    pbest_perfs[i] = perf
+                    pbest_points[i] = point
+                gbest_better = (perf > gbest_perf) if maximize_target else (perf < gbest_perf)
+                if gbest_perf is None or gbest_better:
+                    gbest_perf = perf
+                    gbest_point = point
+
+        for point, perf in zip(pbest_points, pbest_perfs):
+            if perf is not None:
+                self.result_pool.push(item=point, perf=perf)
+        self.result_pool.cut(keep_largest=maximize_target)
 
     def _search_bayesian(self,
                          space: Space) -> None:

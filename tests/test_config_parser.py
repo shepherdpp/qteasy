@@ -24,6 +24,7 @@ from qteasy.config_parser import (
     parse_trading_delivery_params,
     parse_optimization_start_end_dates,
     parse_optimization_cash_plan,
+    parse_optimization_params_pso,
 )
 from qteasy.backtest import generate_cash_invest_and_delivery_arrays
 
@@ -1000,6 +1001,31 @@ class TestParseOptimizationCashPlan(unittest.TestCase):
         # 验证总金额
         self.assertAlmostEqual(sum(result[0].amounts), 100000, places=2)
         self.assertAlmostEqual(sum(result[1].amounts), 100000, places=2)
+
+    def test_parse_optimization_params_pso(self):
+        """测试 parse_optimization_params_pso：返回 population_size、max_iterations"""
+        # opti_population + opti_max_rounds
+        config = {'opti_population': 30, 'opti_max_rounds': 10}
+        result = parse_optimization_params_pso(config)
+        self.assertIn('population_size', result)
+        self.assertIn('max_iterations', result)
+        self.assertEqual(result['population_size'], 30)
+        self.assertEqual(result['max_iterations'], 10)
+        print(f'parse_optimization_params_pso(opti_population=30, opti_max_rounds=10): {result}')
+
+        # 无 opti_population 时使用 opti_sample_count
+        config = {'opti_sample_count': 15, 'opti_max_rounds': 5}
+        result = parse_optimization_params_pso(config)
+        self.assertEqual(result['population_size'], 15)
+        self.assertEqual(result['max_iterations'], 5)
+        print(f'parse_optimization_params_pso(opti_sample_count=15, opti_max_rounds=5): {result}')
+
+        # 缺省与边界：population_size 至少 1，max_iterations 至少 1
+        config = {}
+        result = parse_optimization_params_pso(config)
+        self.assertGreaterEqual(result['population_size'], 1)
+        self.assertGreaterEqual(result['max_iterations'], 1)
+        print(f'parse_optimization_params_pso(empty config): {result}')
 
 
 if __name__ == '__main__':
