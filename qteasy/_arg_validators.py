@@ -944,7 +944,7 @@ def _valid_qt_kwargs():
 
         'opti_population':
             {'Default':   1000.0,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (int, float))
                                         and value >= 0,
              'level':     3,
              'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量，取值范围为大于等于0的整数'},
