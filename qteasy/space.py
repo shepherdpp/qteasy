@@ -600,7 +600,7 @@ class Space:
                     new_point = list(point)
                     new_point[axis_index] = new_arr
                     cand = tuple(new_point)
-                    if cand in self and cand not in candidates:
+                    if cand in self and any(np.array_equal(cand, c) for c in candidates):
                         candidates.append(cand)
                     if len(candidates) >= k:
                         break
