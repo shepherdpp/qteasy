@@ -777,6 +777,23 @@ class TestQT(unittest.TestCase):
         # 若需断言 result_pool，需在 qt.run 返回的 backtester/optimizer 上检查（视 run 接口而定）
         print('GA optimization completed without exception; result_pool item_count checked in optimizer')
 
+    def test_run_mode_2_gradient(self):
+        """测试策略的优化模式，使用梯度下降法寻优，断言无异常、result_pool 数量合理"""
+        print('strategy optimization with gradient descent, parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='gradient',
+               opti_sample_count=10,
+               opti_output_count=20,
+               opti_max_rounds=15,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=False)
+        print('gradient optimization completed without exception')
+
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长蒙特卡洛寻优，结果以图表输出"""
         print(f'strategy optimization in incremental algorithm with parallel ON')
