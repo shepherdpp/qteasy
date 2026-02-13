@@ -25,6 +25,8 @@ from qteasy.config_parser import (
     parse_optimization_start_end_dates,
     parse_optimization_cash_plan,
     parse_optimization_params_pso,
+    parse_optimization_params_bayesian,
+    parse_all_optimization_params,
 )
 from qteasy.backtest import generate_cash_invest_and_delivery_arrays
 
@@ -1026,6 +1028,37 @@ class TestParseOptimizationCashPlan(unittest.TestCase):
         self.assertGreaterEqual(result['population_size'], 1)
         self.assertGreaterEqual(result['max_iterations'], 1)
         print(f'parse_optimization_params_pso(empty config): {result}')
+
+    def test_parse_optimization_params_bayesian(self):
+        """测试 parse_optimization_params_bayesian：返回 init_sample_count、max_iterations"""
+        config = {'opti_sample_count': 15, 'opti_max_rounds': 25}
+        result = parse_optimization_params_bayesian(config)
+        self.assertIn('init_sample_count', result)
+        self.assertIn('max_iterations', result)
+        self.assertEqual(result['init_sample_count'], 15)
+        self.assertEqual(result['max_iterations'], 25)
+        print(f'parse_optimization_params_bayesian(opti_sample_count=15, opti_max_rounds=25): {result}')
+
+        config = {}
+        result = parse_optimization_params_bayesian(config)
+        self.assertGreaterEqual(result['init_sample_count'], 1)
+        self.assertGreaterEqual(result['max_iterations'], 1)
+        print(f'parse_optimization_params_bayesian(empty config): {result}')
+
+    def test_parse_all_optimization_params_bayesian_branch(self):
+        """测试 parse_all_optimization_params 在 opti_method='bayesian' 时合并 bayesian 参数"""
+        config = {
+            'opti_method': 'bayesian',
+            'optimize_target': 'fv',
+            'optimize_direction': 'maximize',
+            'opti_sample_count': 8,
+            'opti_max_rounds': 12,
+        }
+        result = parse_all_optimization_params(config)
+        self.assertEqual(result['init_sample_count'], 8)
+        self.assertEqual(result['max_iterations'], 12)
+        self.assertTrue(result['maximize_target'])
+        print(f'parse_all_optimization_params(bayesian): init_sample_count={result["init_sample_count"]}, max_iterations={result["max_iterations"]}')
 
 
 if __name__ == '__main__':

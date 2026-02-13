@@ -811,6 +811,32 @@ class TestQT(unittest.TestCase):
                visual=False)
         print('gradient optimization completed without exception')
 
+    def test_run_mode_2_bayesian(self):
+        """测试策略的优化模式，使用贝叶斯优化寻优，断言无异常、result_pool 有结果且点均在 space 内"""
+        print('strategy optimization with Bayesian optimization, parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='bayesian',
+               opti_sample_count=5,
+               opti_output_count=10,
+               opti_max_rounds=8,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=False)
+        opt = qt.get_optimizer()
+        self.assertIsNotNone(opt)
+        self.assertGreater(opt.result_pool.item_count, 0)
+        self.assertLessEqual(opt.result_pool.item_count, opt.result_pool.capacity)
+        from qteasy.space import Space
+        s_ranges, s_types = opt.op.opt_space_par
+        space = Space(*s_ranges, par_types=s_types)
+        for point in opt.result_pool.items:
+            self.assertIn(point, space, msg=f'Point {point} not in space')
+        print(f'Bayesian optimization completed; result_pool item_count={opt.result_pool.item_count}')
+
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长蒙特卡洛寻优，结果以图表输出"""
         print(f'strategy optimization in incremental algorithm with parallel ON')

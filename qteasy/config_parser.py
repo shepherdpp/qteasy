@@ -375,6 +375,8 @@ def parse_all_optimization_params(config: dict) -> dict[str, Any]:
         opti_params.update(parse_optimization_params_knn(config))
     elif optimization_method == 'pso':
         opti_params.update(parse_optimization_params_pso(config))
+    elif optimization_method == 'bayesian':
+        opti_params.update(parse_optimization_params_bayesian(config))
     elif optimization_method == 'aco':
         opti_params.update(parse_optimization_params_aco(config))
     else:
@@ -467,6 +469,24 @@ def parse_optimization_params_pso(config: dict) -> dict[str, Any]:
         max_iterations = 50
     return {
         'population_size': population_size,
+        'max_iterations': max_iterations,
+    }
+
+
+def parse_optimization_params_bayesian(config: dict) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为贝叶斯优化时使用。
+
+    沿用已有配置键 opti_sample_count（初始随机采样数）、opti_max_rounds（贝叶斯迭代轮数），
+    返回 init_sample_count 与 max_iterations。首版不新增必须字段。
+    """
+    init_sample_count = config.get('opti_sample_count', 10)
+    if not isinstance(init_sample_count, int) or init_sample_count < 1:
+        init_sample_count = 10
+    max_iterations = config.get('opti_max_rounds', 30)
+    if not isinstance(max_iterations, int) or max_iterations < 1:
+        max_iterations = 30
+    return {
+        'init_sample_count': init_sample_count,
         'max_iterations': max_iterations,
     }
 
