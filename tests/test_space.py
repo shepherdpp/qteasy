@@ -521,6 +521,207 @@ class TestSpace(unittest.TestCase):
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
 
+    def test_vector_axis_sizes(self):
+        """测试 vector_axis_sizes 属性：标量轴为 1，数组轴为 np.prod(shape)。"""
+        # int + float + enum -> [1, 1, 1]
+        s = Space((1, 10), (3., 10.), (5, 6, 7, 8, 9))
+        sizes = s.vector_axis_sizes
+        self.assertEqual(sizes, [1, 1, 1], 'vector_axis_sizes for int/float/enum should be [1,1,1]')
+        print('vector_axis_sizes int/float/enum:', sizes)
+
+        # 含 array 轴
+        s2 = Space((0., 1.), (0., 1.), par_types=['float_array[2]', 'float_array[2, 2]'])
+        sizes2 = s2.vector_axis_sizes
+        self.assertEqual(sizes2, [2, 4], 'vector_axis_sizes for array[2] and array[2,2] should be [2, 4]')
+        print('vector_axis_sizes with array axes:', sizes2)
+
+    def test_point_to_vector_and_vector_to_point(self):
+        """测试 point_to_vector / vector_to_point 双向映射及 round-trip。"""
+        # int, float, enum
+        s = Space((1, 10), (3., 10.), (5, 6, 7, 8, 9))
+        p = (5, 6.5, 7)
+        self.assertIn(p, s)
+        v = s.point_to_vector(p)
+        self.assertIsInstance(v, np.ndarray)
+        self.assertEqual(v.dtype, np.float64)
+        self.assertEqual(v.shape, (3,))
+        self.assertEqual(v[0], 5.0)
+        self.assertEqual(v[1], 6.5)
+        enum_list = list(s.boes[2])
+        self.assertEqual(v[2], float(enum_list.index(7)))
+        print('point_to_vector result:', v)
+
+        p2 = s.vector_to_point(v)
+        self.assertIsInstance(p2, tuple)
+        self.assertEqual(len(p2), 3)
+        self.assertEqual(p2[0], 5)
+        self.assertEqual(p2[1], 6.5)
+        self.assertEqual(p2[2], 7)
+        self.assertIn(p2, s)
+        print('vector_to_point round-trip:', p2)
+
+        # 越界向量解码后应被 clip 到合法范围
+        v_oob = np.array([100.0, -1.0, 0.0])
+        p3 = s.vector_to_point(v_oob)
+        self.assertEqual(p3[0], 10)
+        self.assertEqual(p3[1], 3.0)
+        self.assertEqual(p3[2], 5)
+        self.assertIn(p3, s)
+        print('vector_to_point with out-of-bound vector (clipped):', p3)
+
+        # 含 array 轴的空间
+        s_arr = Space((0., 1.), (0., 1.), par_types=['float_array[2]', 'float_array[2, 2]'])
+        pt_arr = (np.array([0.2, 0.8]), np.array([[0.1, 0.2], [0.3, 0.4]]))
+        self.assertIn(pt_arr, s_arr)
+        v_arr = s_arr.point_to_vector(pt_arr)
+        self.assertEqual(v_arr.size, 2 + 4)
+        self.assertAlmostEqual(v_arr[0], 0.2)
+        self.assertAlmostEqual(v_arr[1], 0.8)
+        pt_arr2 = s_arr.vector_to_point(v_arr)
+        self.assertIn(pt_arr2, s_arr)
+        np.testing.assert_array_almost_equal(np.asarray(pt_arr2[0]), np.asarray(pt_arr[0]))
+        np.testing.assert_array_almost_equal(np.asarray(pt_arr2[1]), np.asarray(pt_arr[1]))
+        print('point_to_vector / vector_to_point with array axes: OK')
+
+        # 点不在空间内应报错
+        self.assertRaises(AssertionError, s.point_to_vector, (0, 0, 0))  # 0 不在 enum 中
+        self.assertRaises(AssertionError, s.point_to_vector, (100, 5, 7))  # 100 超出 int 范围
+
+    def test_neighbors(self):
+        """测试 neighbors：仅指定轴变化，返回合法邻域点列表。"""
+        s = Space((1, 10), (3., 10.), (5, 6, 7, 8, 9))
+        p = (5, 6.5, 7)
+
+        # float 维（axis_index=1）：应得到 ±step 两个候选（若与当前不同）
+        nb1 = s.neighbors(p, 1, step=1.0)
+        self.assertIsInstance(nb1, list)
+        for q in nb1:
+            self.assertIn(q, s)
+            self.assertEqual(q[0], p[0])
+            self.assertEqual(q[2], p[2])
+            self.assertNotEqual(q[1], p[1])
+        print('neighbors float axis:', nb1)
+
+        # int 维（axis_index=0）
+        nb0 = s.neighbors(p, 0)
+        self.assertIsInstance(nb0, list)
+        for q in nb0:
+            self.assertIn(q, s)
+            self.assertEqual(q[1], p[1])
+            self.assertEqual(q[2], p[2])
+        self.assertTrue(any(q[0] == 4 for q in nb0) or any(q[0] == 6 for q in nb0))
+        print('neighbors int axis:', nb0)
+
+        # enum 维（axis_index=2）
+        nb2 = s.neighbors(p, 2, count=2)
+        self.assertIsInstance(nb2, list)
+        for q in nb2:
+            self.assertIn(q, s)
+            self.assertEqual(q[0], p[0])
+            self.assertEqual(q[1], p[1])
+            self.assertNotEqual(q[2], p[2])
+            self.assertIn(q[2], (5, 6, 8, 9))
+        print('neighbors enum axis:', nb2)
+
+        # 边界点：int 在 1 时只有 +1 邻域
+        p_edge = (1, 5.0, 5)
+        nb_edge = s.neighbors(p_edge, 0)
+        self.assertIn((2, 5.0, 5), nb_edge)
+        print('neighbors at int boundary:', nb_edge)
+
+        # float_array 维（axis_index=1）：邻域为同形状数组且仅该维与 point 不同
+        s_farr = Space((0, 5), (0., 1.), par_types=['int', 'float_array[2]'])
+        p_farr = (2, np.array([0.3, 0.7]))
+        self.assertIn(p_farr, s_farr)
+        nb_farr = s_farr.neighbors(p_farr, 1, count=3)
+        self.assertIsInstance(nb_farr, list)
+        for q in nb_farr:
+            self.assertIn(q, s_farr)
+            self.assertEqual(q[0], p_farr[0])
+            self.assertEqual(np.asarray(q[1]).shape, (2,))
+            self.assertFalse(np.array_equal(np.asarray(q[1]), np.asarray(p_farr[1])))
+        print('neighbors float_array axis:', [tuple(np.asarray(x[1]) for x in nb_farr)])
+
+        # int_array 维（axis_index=1）：同上，仅该维为整型数组且与 point 不同
+        s_iarr = Space((0, 5), (0, 10), par_types=['int', 'int_array[2]'])
+        p_iarr = (2, np.array([3, 7]))
+        self.assertIn(p_iarr, s_iarr)
+        nb_iarr = s_iarr.neighbors(p_iarr, 1, count=3)
+        self.assertIsInstance(nb_iarr, list)
+        for q in nb_iarr:
+            self.assertIn(q, s_iarr)
+            self.assertEqual(q[0], p_iarr[0])
+            self.assertEqual(np.asarray(q[1]).shape, (2,))
+            self.assertFalse(np.array_equal(np.asarray(q[1]), np.asarray(p_iarr[1])))
+        print('neighbors int_array axis:', [tuple(np.asarray(x[1]) for x in nb_iarr)])
+
+    def test_sample_subspace(self):
+        """测试 sample_subspace：在中心邻域内采样 count 个点。"""
+        s = Space((0, 10), (0., 10.))
+        center = (5, 5.0)
+        pts = s.sample_subspace(center, radius=2, count=5)
+        self.assertIsInstance(pts, list)
+        self.assertEqual(len(pts), 5)
+        for q in pts:
+            self.assertIn(q, s)
+            self.assertGreaterEqual(q[0], 3)
+            self.assertLessEqual(q[0], 7)
+            self.assertGreaterEqual(q[1], 3.0)
+            self.assertLessEqual(q[1], 7.0)
+        print('sample_subspace int/float:', pts)
+
+        # 含 enum：ignore_enums=True 时 enum 维保持全枚举
+        s2 = Space((0, 5), (0., 5.), ('a', 'b', 'c'))
+        center2 = (2, 2.5, 'b')
+        pts2 = s2.sample_subspace(center2, radius=1, count=4, ignore_enums=True)
+        self.assertEqual(len(pts2), 4)
+        for q in pts2:
+            self.assertIn(q, s2)
+            self.assertIn(q[2], ('a', 'b', 'c'))
+        print('sample_subspace with enum (ignore_enums=True):', pts2)
+
+        # 中心不在空间内应报错
+        self.assertRaises(AssertionError, s.sample_subspace, (100, 5.0), 1, 3)
+
+        # float_array：子空间为每元素在 center±radius 内裁剪到轴边界
+        s_fa = Space((0., 1.), (0., 1.), par_types=['float_array[2]', 'float_array[2, 2]'])
+        center_fa = (np.array([0.3, 0.7]), np.array([[0.2, 0.3], [0.4, 0.5]]))
+        self.assertIn(center_fa, s_fa)
+        pts_fa = s_fa.sample_subspace(center_fa, radius=0.2, count=5)
+        self.assertEqual(len(pts_fa), 5)
+        for q in pts_fa:
+            self.assertIn(q, s_fa)
+            a1, a2 = np.asarray(q[0]), np.asarray(q[1])
+            self.assertEqual(a1.shape, (2,))
+            self.assertEqual(a2.shape, (2, 2))
+            # 元素应在 [center - 0.2, center + 0.2] 裁剪到 [0, 1] 内
+            self.assertTrue(np.all(a1 >= 0) and np.all(a1 <= 1))
+            self.assertTrue(np.all(a2 >= 0) and np.all(a2 <= 1))
+        print('sample_subspace float_array:', tuple(np.asarray(x[0]) for x in pts_fa))
+
+        # int_array：标量 radius，子空间为每元素在 center±radius 内裁剪
+        s_ia = Space((0, 10), (0, 10), par_types=['int_array[2]', 'int_array[2]'])
+        center_ia = (np.array([4, 6]), np.array([2, 8]))
+        self.assertIn(center_ia, s_ia)
+        pts_ia = s_ia.sample_subspace(center_ia, radius=2, count=4)
+        self.assertEqual(len(pts_ia), 4)
+        for q in pts_ia:
+            self.assertIn(q, s_ia)
+            a1, a2 = np.asarray(q[0]), np.asarray(q[1])
+            self.assertEqual(a1.shape, (2,))
+            self.assertEqual(a2.shape, (2,))
+            self.assertTrue(np.all(a1 >= 2) and np.all(a1 <= 8))
+            self.assertTrue(np.all(a2 >= 0) and np.all(a2 <= 10))
+        print('sample_subspace int_array:', tuple(np.asarray(x[0]) for x in pts_ia))
+
+        # 按维 radius（list）：对 array 维使用对应半径
+        radius_per_dim = [0.15, 0.25]  # 两维均为 array
+        pts_fa2 = s_fa.sample_subspace(center_fa, radius=radius_per_dim, count=3)
+        self.assertEqual(len(pts_fa2), 3)
+        for q in pts_fa2:
+            self.assertIn(q, s_fa)
+        print('sample_subspace float_array with list radius:', len(pts_fa2))
+
 
 class TestPool(unittest.TestCase):
     def setUp(self):
@@ -557,3 +758,4 @@ class TestPool(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    
