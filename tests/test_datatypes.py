@@ -25,7 +25,6 @@ from qteasy.datatypes import (
     _parse_acquisition_parameters,
     get_history_data_from_source,
     get_reference_data_from_source,
-    get_tables_by_dtypes,
     infer_data_types,
 )
 
@@ -1927,37 +1926,6 @@ class TestDataTypes(unittest.TestCase):
               f'{"=" * 80}\n')
         for table in all_tables:
             print(ds.get_table_info(table))
-
-    def test_get_tables_by_dtypes(self):
-        """ test module function get_tables_by_dtypes()"""
-        tables = get_tables_by_dtypes(
-                dtypes=['close', 'high', 'low'],
-                freqs=['d', 'w', 'm'],
-                asset_types=['E', 'IDX'],
-        )
-        print(f'\n{len(tables)} tables are covered by the data types:')
-        print(tables)
-        self.assertEqual(len(tables), 6)
-        self.assertEqual(
-                tables,
-                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily'}
-        )
-
-        tables = get_tables_by_dtypes(
-                dtypes=['close', 'high', 'low'],
-                freqs=None,
-                asset_types=['E', 'IDX'],
-        )
-
-        print(f'\n{len(tables)} tables are covered by the data types:')
-        print(tables)
-        self.assertEqual(len(tables), 16)
-        self.assertEqual(
-                tables,
-                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily',
-                 'stock_1min', 'index_1min', 'stock_hourly', 'stock_5min', 'stock_15min', 'stock_30min',
-                 'index_hourly', 'index_5min', 'index_15min', 'index_30min', 'index_1min'}
-        )
 
     def test_get_data_from_source(self):
         """ test the basic data acquiring function dtype.get_data_from_source() """
