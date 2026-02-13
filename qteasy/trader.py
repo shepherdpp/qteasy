@@ -25,7 +25,6 @@ from queue import Queue
 from rich.text import Text
 
 from .database import DataSource
-from .datatypes import get_tables_by_dtypes
 from .history import check_and_prepare_live_trade_data
 from .qt_operator import Operator
 from .broker import Broker
@@ -193,6 +192,7 @@ class Trader(object):
                  live_data_batch_size: int = 0,
                  live_data_batch_interval: int = 0,
                  live_data_channel: str = 'tushare',
+                 watched_price_refresh_interval: int = 5,
                  benchmark_asset: str = '000300.SH',
                  live_sys_logger: logging.Logger = None,
                  cost_params: np.ndarray = None,
@@ -292,7 +292,7 @@ class Trader(object):
         self.live_data_batch_size = live_data_batch_size
         self.live_data_batch_interval = live_data_batch_interval
         self.live_data_channel = live_data_channel
-        self.watched_price_refresh_interval = live_price_freq
+        self.watched_price_refresh_interval = watched_price_refresh_interval
         self.watched_prices = None  # 用于存储被监视的股票的最新价格，用于监视价格变动
         if isinstance(benchmark_asset, str):
             benchmark_list = str_to_list(benchmark_asset)
@@ -504,6 +504,7 @@ class Trader(object):
             'live_trade_data_refill_batch_size':    self.live_data_batch_size,
             'live_trade_data_refill_batch_interval':self.live_data_batch_interval,
             'live_trade_data_refill_channel':       self.live_data_channel,
+            'watched_price_refresh_interval':       self.watched_price_refresh_interval,
             'cost_rate_buy':                        self.cost_params[0] if self.cost_params is not None else 0.,
             'cost_rate_sell':                       self.cost_params[1] if self.cost_params is not None else 0.,
             'cost_min_buy':                         self.cost_params[2] if self.cost_params is not None else 0.,
@@ -2653,15 +2654,10 @@ def refill_missing_datasource_data(operator,
     # find out datasource availabilities, refill data source if table data not available
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
-    asset_types = trader.asset_type
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    related_tables = get_tables_by_dtypes(
-            dtypes=op_data_types,
-            freqs=[op_data_freq],
-            asset_types=asset_types,
-    )
-    related_tables = [table for table in related_tables]
+    related_tables = []
+    for dtype in op_data_types:
+        related_tables.extend(dtype.data_table_names)
+
     if len(related_tables) == 0:
         related_tables = ['stock_daily']
     elif len(related_tables) >= 1:
@@ -2672,6 +2668,7 @@ def refill_missing_datasource_data(operator,
         last_available_date = pd.to_datetime(last_available_date)
     except:
         last_available_date = trader.get_current_tz_datetime() - pd.Timedelta(value=100, unit='d')
+
     from qteasy.utilfuncs import prev_market_trade_day
     today = trader.get_current_tz_datetime().strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
@@ -2692,9 +2689,6 @@ def refill_missing_datasource_data(operator,
                 data_source=datasource,
                 channel='tushare',
                 tables=related_tables,
-                dtypes=op_data_types,
-                freqs=op_data_freq,
-                asset_types=asset_types,
                 start_date=start_date.strftime('%Y%m%d'),
                 end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
                 symbols=symbol_list,

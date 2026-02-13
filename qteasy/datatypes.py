@@ -903,7 +903,7 @@ class DataType:
 
     """
 
-    aquisition_types = [
+    acquisition_types = [
         'trade_operation',
         # 交易运行数据类型，特殊的数据类型，只能在交易运行过程中实时生成的数据，这些数据并不能从
         # 数据源中获取，是一种特殊的运行数据，在DataType对象中被特殊处理。这些数据包括：
@@ -1094,10 +1094,6 @@ class DataType:
         self._all_user_defined_freqs = user_defined_freqs
         self._all_user_defined_asset_types = user_defined_asset_types
 
-        # self._acquisition_type = None  # deprecated, 不需要缓存，可以在线查询
-        #
-        # self._kwargs = None  # deprecated, 不需要缓存，可以在线查询 用来从众多数据表中获取数据的参数
-
     @property
     def name(self):
         return self._name
@@ -1142,6 +1138,20 @@ class DataType:
     def asset_types(self) -> list:
         """ 所用用户定义的资产类型列表 """
         return self._default_asset_types
+
+    @property
+    def data_table_names(self):
+        """ 获取数据表名称，优先使用用户定义的数据表名称，如果没有用户定义的数据表名称，则使用内置数据表名称 """
+        data_table_names = []
+        for atype in self.asset_types:
+            _, kwargs = _parse_acquisition_parameters(
+                search_name=self._search_name,
+                name_par=self._name_pars,
+                freq=self.freq,
+                asset_type=atype,
+            )
+            data_table_names.append(kwargs.get('table_name'))
+        return data_table_names
 
     @property
     def unsymbolizer(self):
@@ -4814,49 +4824,49 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     return list(data_table_map.index)
 
 
-def get_tables_by_dtypes(
-        dtypes: list[str] = None,
-        freqs: list[str] = None,
-        asset_types: list[str] = None) -> set:
-    """根据输入的数据类型名称等参数反推相关的数据表名称
-
-    Deprecated，采用新的DataType对象后，其表单名称可以从数据表中直接读取出来，而不需要反推
-
-    Parameters
-    ----------
-    dtypes: list of str, optional
-        数据类型名称列表，如果为None，则表示所有数据类型
-    freqs: list of str, optional
-        数据频率列表，如果为None，则表示所有频率
-    asset_types: list of str, optional
-        证券类型列表，如果为None，则表示所有证券类型
-    """
-
-    # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
-    # 数据类型，反推需要下载的数据表
-    dtype_slice = [slice(None)] if dtypes is None else dtypes
-    freq_slice = [slice(None)] if freqs is None else freqs
-    asset_slice = [slice(None)] if asset_types is None else asset_types
-
-    from itertools import product
-    dtype_filters = product(dtype_slice, freq_slice, asset_slice)
-
-    tables_to_keep = set()
-    for dtype_filter in dtype_filters:
-        # find out the table name from dtype definition
-        dtype_map = _get_built_in_data_type_map()
-        matched_kwargs = dtype_map.loc[dtype_filter].kwargs
-        # 此时如果只有一个match，会返回dict，否则是一个series，需要分别处理
-        if isinstance(matched_kwargs, dict):
-            tables_to_keep.add(matched_kwargs['table_name'])
-        else:
-            # 此时返回一个Series，包含多个dict，需要逐个处理
-            for kw in matched_kwargs:
-                tables_to_keep.update(
-                        [kw['table_name']]
-                )
-
-    return tables_to_keep
+# def get_tables_by_dtypes(
+#         dtypes: list[str] = None,
+#         freqs: list[str] = None,
+#         asset_types: list[str] = None) -> set:  # deprecated
+#     """根据输入的数据类型名称等参数反推相关的数据表名称
+#
+#     Deprecated，采用新的DataType对象后，其表单名称可以从数据表中直接读取出来，而不需要反推
+#
+#     Parameters
+#     ----------
+#     dtypes: list of str, optional
+#         数据类型名称列表，如果为None，则表示所有数据类型
+#     freqs: list of str, optional
+#         数据频率列表，如果为None，则表示所有频率
+#     asset_types: list of str, optional
+#         证券类型列表，如果为None，则表示所有证券类型
+#     """
+#
+#     # 如果给出了dtypes，freq、asset_types中的任意一个，将用这三个参数作为
+#     # 数据类型，反推需要下载的数据表
+#     dtype_slice = [slice(None)] if dtypes is None else dtypes
+#     freq_slice = [slice(None)] if freqs is None else freqs
+#     asset_slice = [slice(None)] if asset_types is None else asset_types
+#
+#     from itertools import product
+#     dtype_filters = product(dtype_slice, freq_slice, asset_slice)
+#
+#     tables_to_keep = set()
+#     for dtype_filter in dtype_filters:
+#         # find out the table name from dtype definition
+#         dtype_map = _get_built_in_data_type_map()
+#         matched_kwargs = dtype_map.loc[dtype_filter].kwargs
+#         # 此时如果只有一个match，会返回dict，否则是一个series，需要分别处理
+#         if isinstance(matched_kwargs, dict):
+#             tables_to_keep.add(matched_kwargs['table_name'])
+#         else:
+#             # 此时返回一个Series，包含多个dict，需要逐个处理
+#             for kw in matched_kwargs:
+#                 tables_to_keep.update(
+#                         [kw['table_name']]
+#                 )
+#
+#     return tables_to_keep
 
 
 class StgData(DataType):

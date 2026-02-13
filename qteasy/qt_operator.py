@@ -16,6 +16,7 @@ import pandas as pd
 
 from typing import Generator, Optional, Union, Any, Iterable, Mapping
 
+import qteasy
 from qteasy.strategy import BaseStrategy, RuleIterator
 from qteasy.group import Group
 from qteasy.parameter import Parameter
@@ -2113,6 +2114,11 @@ class Operator:
 
     def run_live_trade(self, config, datasource=None, logger=None):
         """ 在实盘模式下运行operator"""
+
+        from qteasy.config_parser import (
+            parse_trade_cost_params,
+        )
+
         # 进入实时信号生成模式:
         # 实盘运行模式只支持asset_type = 'E'的情况，因此需要检查并排除其他情况
         if config['asset_type'] != 'E':
@@ -2165,15 +2171,45 @@ class Operator:
         from qteasy.trader import Trader
         broker = get_broker(broker_type, broker_params)
 
+        cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+
         trader = Trader(
-                account_id=account_id,
                 operator=self,
+                account_id=account_id,
                 broker=broker,
                 datasource=datasource,
+                asset_pool=config['asset_pool'],
+                time_zone=config['time_zone'],
+                exchange='SSE',
+                market_open_time_am=config['market_open_time_am'],
+                market_open_time_pm=config['market_open_time_pm'],
+                market_close_time_am=config['market_close_time_am'],
+                market_close_time_pm=config['market_close_time_pm'],
+                live_price_channel=config['live_price_acquire_channel'],
+                live_price_freq=config['live_price_acquire_freq'],
+                live_data_channel=config['live_trade_data_refill_channel'],
+                live_data_batch_size=config['live_trade_data_refill_batch_size'],
+                live_data_batch_interval=config['live_trade_data_refill_batch_interval'],
+                watched_price_refresh_interval=config['watched_price_refresh_interval'],
+                benchmark_asset=config['benchmark_asset'],
+                live_sys_logger=None,
+                cost_params=cost_params,
+                pt_buy_threshold=config['PT_buy_threshold'],
+                pt_sell_threshold=config['PT_sell_threshold'],
+                allow_sell_short=config['allow_sell_short'],
+                trade_batch_size=config['trade_batch_size'],
+                sell_batch_size=config['sell_batch_size'],
+                long_position_limit=config['long_position_limit'],
+                short_position_limit=config['short_position_limit'],
+                stock_delivery_period=config['stock_delivery_period'],
+                cash_delivery_period=config['cash_delivery_period'],
+                open_close_timing_offset=config['strategy_open_close_timing_offset'],
+                daily_refill_tables=config['live_trade_daily_refill_tables'],
+                weekly_refill_tables=config['live_trade_weekly_refill_tables'],
+                monthly_refill_tables=config['live_trade_monthly_refill_tables'],
                 debug=False,
         )
         trader.register_broker(debug=trader.debug)
-
         # find out datasource availabilities, refill data source if table data not available
         from qteasy.trader import refill_missing_datasource_data
         refill_missing_datasource_data(
