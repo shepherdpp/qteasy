@@ -666,7 +666,14 @@ class Space:
                 ub = min(space_ub, coord + dis)
                 pars.append((lb, ub))
 
-        subspace = Space(*pars, par_types=self.types)
+        # 数组轴需要带 shape 的类型串（如 float_array[2,2]），否则 Parameter 会得到 par_shape=None
+        par_types_with_shape = []
+        for ax in self.axis:
+            if ax.par_type in ['int_array', 'float_array'] and getattr(ax, 'shape', None):
+                par_types_with_shape.append(f'{ax.par_type}[{",".join(map(str, ax.shape))}]')
+            else:
+                par_types_with_shape.append(ax.par_type)
+        subspace = Space(*pars, par_types=par_types_with_shape)
         par_iter, total = subspace.extract(count, how='rand')
         return list(par_iter)
 
