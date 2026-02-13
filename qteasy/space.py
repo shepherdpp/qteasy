@@ -11,7 +11,7 @@
 
 import numpy as np
 
-from typing import Union, Iterable
+from typing import Union, Iterable, Optional
 from itertools import islice, product, zip_longest
 
 from qteasy.utilfuncs import (
@@ -417,6 +417,258 @@ class Space:
                     ubound = min((enum_pos + dis), len(boe))
                     pars.append(boe[lbound:ubound])
         return Space(*pars, par_types=self.types)
+
+    def _vector_axis_sizes(self) -> list:
+        """返回编码向量中每一轴占用的元素个数，用于 point_to_vector / vector_to_point。
+
+        Returns
+        -------
+        list of int
+            标量轴（int/float/enum）为 1，数组轴为 np.prod(axis.shape)。
+        """
+        sizes = []
+        for ax in self.axis:
+            if ax.par_type in ['int', 'float', 'enum']:
+                sizes.append(1)
+            elif ax.par_type in ['int_array', 'float_array']:
+                sizes.append(int(np.prod(ax.shape)))
+            else:
+                sizes.append(1)
+        return sizes
+
+    @property
+    def vector_axis_sizes(self) -> list:
+        """编码向量中每一轴占用的元素个数（只读），供优化算法做按段交叉等操作。"""
+        return self._vector_axis_sizes()
+
+    def point_to_vector(self, point: Union[tuple, list]) -> np.ndarray:
+        """将参数空间中的点编码为定长数值向量，供 GA/PSO/gradient/bayesian 等算法复用。
+
+        编码规则：int/float 维各 1 个元素；enum 维为枚举下标（0 到 len-1）；
+        int_array/float_array 维按 C 顺序展平为一段标量。
+
+        Parameters
+        ----------
+        point : tuple or list
+            空间内的合法点，满足 point in space。
+
+        Returns
+        -------
+        np.ndarray
+            一维浮点数组，长度等于各轴编码长度之和。
+        """
+        assert point in self, f'ValueError, point {point} is not in space!'
+        sizes = self._vector_axis_sizes()
+        parts = []
+        for d, (coord, ax, sz) in enumerate(zip(point, self.axis, sizes)):
+            t = ax.par_type
+            if t == 'int':
+                parts.append(np.array([float(coord)], dtype=float))
+            elif t == 'float':
+                parts.append(np.array([float(coord)], dtype=float))
+            elif t == 'enum':
+                boe = self.boes[d]
+                idx = list(boe).index(coord) if isinstance(boe, tuple) else boe.index(coord)
+                parts.append(np.array([float(idx)], dtype=float))
+            elif t in ['int_array', 'float_array']:
+                arr = np.asarray(coord, dtype=float).ravel(order='C')
+                parts.append(arr)
+            else:
+                parts.append(np.array([float(coord)], dtype=float))
+        return np.concatenate(parts).astype(float)
+
+    def vector_to_point(self, vec: Union[np.ndarray, list]) -> tuple:
+        """将数值向量解码为参数空间内的合法点。
+
+        解码时对 float 维 clip、int 维 round 后 clip、enum 维下标 clip 后取枚举值、
+        int_array/float_array 维 reshape 并逐元素 clip（int_array 取整）。
+
+        Parameters
+        ----------
+        vec : np.ndarray or list
+            与 point_to_vector 输出同长的数值向量。
+
+        Returns
+        -------
+        tuple
+            合法参数点，满足 point in space。
+        """
+        vec = np.asarray(vec, dtype=float).ravel()
+        sizes = self._vector_axis_sizes()
+        assert vec.size == sum(sizes), (
+            f'Vector length {vec.size} does not match space encoding size {sum(sizes)}'
+        )
+        out = []
+        offset = 0
+        for d, (ax, sz) in enumerate(zip(self.axis, sizes)):
+            t = ax.par_type
+            seg = vec[offset:offset + sz]
+            offset += sz
+            lb, ub = ax.lbound, ax.ubound
+            if t == 'int':
+                val = int(np.clip(np.round(seg[0]), lb, ub))
+                out.append(val)
+            elif t == 'float':
+                val = float(np.clip(seg[0], lb, ub))
+                out.append(val)
+            elif t == 'enum':
+                boe = self.boes[d]
+                enum_list = list(boe) if isinstance(boe, tuple) else boe
+                idx = int(np.clip(np.round(seg[0]), 0, len(enum_list) - 1))
+                out.append(enum_list[idx])
+            elif t == 'int_array':
+                a = np.clip(seg, lb, ub).astype(int)
+                out.append(a.reshape(ax.shape))
+            elif t == 'float_array':
+                a = np.clip(seg, lb, ub).astype(float)
+                out.append(a.reshape(ax.shape))
+            else:
+                out.append(float(np.clip(seg[0], lb, ub)))
+        return tuple(out)
+
+    def neighbors(self,
+                  point: Union[tuple, list],
+                  axis_index: int,
+                  count: Optional[int] = None,
+                  step: Optional[Union[float, int]] = None) -> list:
+        """生成仅在第 axis_index 维上与 point 不同的邻域候选点列表，供梯度搜索与贝叶斯候选使用。
+
+        对 float 维：当前值 ± step（或默认步长），clip 到边界；
+        对 int 维：当前值 ±1（或 ±step 若给出）；
+        对 enum 维：除当前值外的若干枚举值（随机或全部）；
+        对 int_array/float_array 维：逐元素 ±step 或整轴随机重采样若干次。
+
+        Parameters
+        ----------
+        point : tuple or list
+            空间内的点。
+        axis_index : int
+            要扰动的轴索引。
+        count : int, optional
+            对 enum/array 维生成的候选个数；对 int/float 若不指定则生成 ±step 两个候选。
+        step : float or int, optional
+            对 int/float/array 的扰动步长；不指定时 float 用轴 size 的 10%，int 用 1。
+
+        Returns
+        -------
+        list of tuple
+            仅第 axis_index 维与 point 不同的合法点列表（不含 point 自身）。
+        """
+        assert point in self, f'ValueError, point {point} is not in space!'
+        assert 0 <= axis_index < self.dim, f'axis_index {axis_index} out of range [0, {self.dim})'
+        ax = self.axis[axis_index]
+        t = ax.par_type
+        coord = point[axis_index]
+        boe = self.boes[axis_index]
+        lb, ub = (boe[0], boe[1]) if t != 'enum' else (None, None)
+        candidates = []
+
+        if t == 'float':
+            step_val = step if step is not None else max(1e-9, (ub - lb) * 0.1)
+            for delta in (step_val, -step_val):
+                v = np.clip(float(coord) + delta, lb, ub)
+                if v != coord:
+                    new_point = list(point)
+                    new_point[axis_index] = v
+                    candidates.append(tuple(new_point))
+        elif t == 'int':
+            step_val = int(step) if step is not None else 1
+            for delta in (step_val, -step_val):
+                v = int(np.clip(int(coord) + delta, lb, ub))
+                if v != coord:
+                    new_point = list(point)
+                    new_point[axis_index] = v
+                    candidates.append(tuple(new_point))
+        elif t == 'enum':
+            enum_list = list(boe) if isinstance(boe, tuple) else boe
+            others = [x for x in enum_list if x != coord]
+            k = count if count is not None else min(2, len(others))
+            if k <= 0 or not others:
+                return []
+            indices = np.random.choice(len(others), size=min(k, len(others)), replace=False)
+            for i in indices:
+                new_point = list(point)
+                new_point[axis_index] = others[i]
+                candidates.append(tuple(new_point))
+        elif t in ['int_array', 'float_array']:
+            arr = np.asarray(coord)
+            k = count if count is not None else 2
+            gen = list(ax.gen_values(k + 1, 'rand'))  # 多取一个避免全与 coord 相同
+            for g in gen:
+                new_arr = np.asarray(g)
+                if not np.array_equal(new_arr, arr):
+                    new_point = list(point)
+                    new_point[axis_index] = new_arr
+                    cand = tuple(new_point)
+                    if cand in self and cand not in candidates:
+                        candidates.append(cand)
+                    if len(candidates) >= k:
+                        break
+        else:
+            return []
+
+        return [c for c in candidates if tuple(c) in self]
+
+    def sample_subspace(self,
+                        center: Union[tuple, list],
+                        radius: Union[int, float, list, tuple],
+                        count: int,
+                        ignore_enums: bool = True) -> list:
+        """在以 center 为中心、半径为 radius 的子空间内随机采样 count 个点。
+
+        封装“邻域子空间 + 随机采样”：对 int/float 维使用 center±radius 裁剪到原边界；
+        对 enum 维若 ignore_enums 为 True 则保留全枚举，否则在中心下标邻域内；
+        对 array 维使用标量半径：子空间为每元素在 [min(center)-r, max(center)+r] 内裁剪到轴边界。
+
+        Parameters
+        ----------
+        center : tuple or list
+            中心点，必须在空间内。
+        radius : int, float, or list/tuple of length dim
+            每维的半径（标量或按维）。
+        count : int
+            采样点数量。
+        ignore_enums : bool, default True
+            为 True 时 enum 维保持全枚举；为 False 时在中心枚举下标邻域内缩小。
+
+        Returns
+        -------
+        list of tuple
+            长度为 count 的合法点列表。
+        """
+        assert center in self, f'ValueError, center {center} is not in space!'
+        if isinstance(radius, (list, tuple)):
+            assert len(radius) == self.dim, f'radius length {len(radius)} != dim {self.dim}'
+            dist_list = list(radius)
+        else:
+            dist_list = [radius] * self.dim
+
+        pars = []
+        for d, (coord, boe, s_type, dis) in enumerate(zip(center, self.boes, self.types, dist_list)):
+            if s_type == 'enum':
+                if ignore_enums:
+                    pars.append(boe)
+                else:
+                    enum_list = list(boe) if isinstance(boe, tuple) else boe
+                    pos = enum_list.index(coord)
+                    lo = max(0, int(pos - dis))
+                    hi = min(len(enum_list), int(pos + dis) + 1)
+                    pars.append(tuple(enum_list[lo:hi]))
+            elif s_type in ['int_array', 'float_array']:
+                coord_arr = np.asarray(coord)
+                space_lb, space_ub = boe[0], boe[1]
+                lb = max(space_lb, float(np.min(coord_arr) - dis))
+                ub = min(space_ub, float(np.max(coord_arr) + dis))
+                pars.append((lb, ub))
+            else:
+                space_lb, space_ub = boe[0], boe[1]
+                lb = max(space_lb, coord - dis)
+                ub = min(space_ub, coord + dis)
+                pars.append((lb, ub))
+
+        subspace = Space(*pars, par_types=self.types)
+        par_iter, total = subspace.extract(count, how='rand')
+        return list(par_iter)
 
 
 class ResultPool:
