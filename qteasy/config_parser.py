@@ -453,9 +453,22 @@ def parse_optimization_params_knn(config: dict) -> dict[str, Any]:
 
 
 def parse_optimization_params_pso(config: dict) -> dict[str, Any]:
-    """解析策略优化相关参数，优化算法为粒子群优化算法时使用:
+    """解析策略优化相关参数，优化算法为粒子群优化算法时使用。
+
+    沿用已有配置键 opti_population（或 opti_sample_count）、opti_max_rounds，
+    返回 population_size（粒子数 N）与 max_iterations（最大迭代次数）。
     """
-    raise NotImplementedError
+    pop = config.get('opti_population', config.get('opti_sample_count', 20))
+    population_size = int(pop) if isinstance(pop, (int, float)) else int(pop)
+    if population_size < 1:
+        population_size = 20
+    max_iterations = config.get('opti_max_rounds', 50)
+    if not isinstance(max_iterations, int) or max_iterations < 1:
+        max_iterations = 50
+    return {
+        'population_size': population_size,
+        'max_iterations': max_iterations,
+    }
 
 
 def parse_optimization_params_aco(config: dict) -> dict[str, Any]:
