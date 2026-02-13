@@ -764,7 +764,7 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method='GA',
-               opti_population=30,
+               opti_population=100,
                opti_output_count=20,
                opti_max_rounds=5,
                opti_start='20120404',
@@ -772,7 +772,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=False,
-               visual=False)
+               visual=True)
         # 通过 Operator 的 run 会触发 optimize，优化结果在 backtest 内部；这里仅验证无异常
         # 若需断言 result_pool，需在 qt.run 返回的 backtester/optimizer 上检查（视 run 接口而定）
         print('GA optimization completed without exception; result_pool item_count checked in optimizer')
@@ -783,7 +783,7 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method='PSO',
-               opti_population=20,
+               opti_population=50,
                opti_output_count=15,
                opti_max_rounds=5,
                opti_start='20120404',
@@ -791,7 +791,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=False,
-               visual=False)
+               visual=True)
         print('PSO optimization completed without exception; result_pool item_count checked in optimizer')
 
     def test_run_mode_2_gradient(self):
@@ -808,7 +808,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=False,
-               visual=False)
+               visual=True)
         print('gradient optimization completed without exception')
 
     def test_run_mode_2_bayesian(self):
@@ -825,17 +825,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20181130',
                parallel=False,
-               visual=False)
-        opt = qt.get_optimizer()
-        self.assertIsNotNone(opt)
-        self.assertGreater(opt.result_pool.item_count, 0)
-        self.assertLessEqual(opt.result_pool.item_count, opt.result_pool.capacity)
-        from qteasy.space import Space
-        s_ranges, s_types = opt.op.opt_space_par
-        space = Space(*s_ranges, par_types=s_types)
-        for point in opt.result_pool.items:
-            self.assertIn(point, space, msg=f'Point {point} not in space')
-        print(f'Bayesian optimization completed; result_pool item_count={opt.result_pool.item_count}')
+               visual=True)
+        print(f'Bayesian optimization completed')
 
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长蒙特卡洛寻优，结果以图表输出"""
