@@ -20,7 +20,7 @@ from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
 
 from qteasy.datatypes import (
-    DataType,
+    DataType, infer_data_types,
 )
 
 from qteasy.history import (
@@ -751,7 +751,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
 
     from .datatables import get_tables_by_name_or_usage
     from .data_channels import get_dependent_table
-    from .datatypes import get_tables_by_dtypes
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
@@ -772,13 +771,16 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
     table_list = get_tables_by_name_or_usage(
             tables=tables,
     )
-    # 根据数据类型查找相应的数据表名称
+    # 根据数据类型查找相应的数据表名称，并将这些数据表添加到下载清单中
     if dtypes or freqs or asset_types:
-        table_list.update(get_tables_by_dtypes(
-                dtypes=dtypes,
+        data_types = infer_data_types(
+                names=dtypes,
                 freqs=freqs,
                 asset_types=asset_types,
-        ))
+        )
+        for dtype in data_types:
+            table_list.update(dtype.data_table_names)
+
     # 下载部分数据表需要依赖其他表（通常是基础数据）的数据，这些依赖表的数据也需要下载，否则可能无法正确生成参数
     dependent_tables = set()
     if refill_dependent_tables:
