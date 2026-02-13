@@ -409,9 +409,21 @@ def parse_optimization_params_sa(config: dict) -> dict[str, Any]:
 
 
 def parse_optimization_params_ga(config: dict) -> dict[str, Any]:
-    """解析策略优化相关参数，优化算法为遗传算法时使用:
+    """解析策略优化相关参数，优化算法为遗传算法时使用。
+
+    沿用已有配置键 opti_population、opti_max_rounds，返回 population_size 与 max_generations。
     """
-    raise NotImplementedError
+    pop = config['opti_population']
+    population_size = int(pop) if isinstance(pop, (int, float)) else int(pop)
+    if population_size < 2:
+        population_size = 2
+    max_generations = config['opti_max_rounds']
+    if not isinstance(max_generations, int) or max_generations < 1:
+        max_generations = 5
+    return {
+        'population_size': population_size,
+        'max_generations': max_generations,
+    }
 
 
 def parse_optimization_params_knn(config: dict) -> dict[str, Any]:

@@ -9,6 +9,7 @@
 #  and parameter searching
 # ======================================
 
+import random
 import pandas as pd
 import numpy as np
 import time
@@ -885,7 +886,81 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        raise NotImplementedError
+        population_size = self.search_config['population_size']
+        max_generations = self.search_config['max_generations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+
+        # 常量：变异率、交叉时从父代取段的概率、选择比例
+        mutation_rate = 0.1
+        select_top_ratio = 0.5
+
+        par_iter, total = space.extract(population_size, how='rand')
+        pop = list(par_iter)
+        if len(pop) < 2:
+            # 空间过小无法交叉时仅评估并写入 result_pool
+            self._evaluate_parameters(
+                total=len(pop),
+                par_value_list=pop,
+                result_pool=self.result_pool,
+                parallel=parallel,
+            )
+            self.result_pool.cut(keep_largest=maximize_target)
+            return
+
+        sizes = space.vector_axis_sizes
+        dim = space.dim
+        offsets = [0]
+        for s in sizes:
+            offsets.append(offsets[-1] + s)
+
+        for gen in range(max_generations):
+            gen_pool = ResultPool(capacity=population_size)
+            self._evaluate_parameters(
+                total=len(pop),
+                par_value_list=pop,
+                result_pool=gen_pool,
+                parallel=parallel,
+                epoch_str=f'{gen + 1}/{max_generations}',
+                leave_progress_bar=False,
+            )
+            for item, perf in zip(gen_pool.items, gen_pool.perfs):
+                self.result_pool.push(item=item, perf=perf)
+            self.result_pool.cut(keep_largest=maximize_target)
+
+            # 选择：按 perf 排序取前 select_top_ratio 作为父代
+            idx_sorted = np.argsort(gen_pool.perfs)
+            if maximize_target:
+                idx_sorted = idx_sorted[::-1]
+            n_parents = max(2, int(len(pop) * select_top_ratio))
+            parent_indices = idx_sorted[:n_parents]
+            parents = [gen_pool.items[i] for i in parent_indices]
+
+            # 交叉与变异生成下一代
+            offspring = []
+            while len(offspring) < population_size:
+                a, b = random.choice(parents), random.choice(parents)
+                vec_a = space.point_to_vector(a)
+                vec_b = space.point_to_vector(b)
+                child_vec = np.empty_like(vec_a)
+                for d in range(dim):
+                    s, e = offsets[d], offsets[d + 1]
+                    if random.random() < 0.5:
+                        child_vec[s:e] = vec_a[s:e]
+                    else:
+                        child_vec[s:e] = vec_b[s:e]
+                child = space.vector_to_point(child_vec)
+                # 变异：每维以 mutation_rate 替换为该轴随机值
+                child_list = list(child)
+                for d in range(dim):
+                    if random.random() < mutation_rate:
+                        child_list[d] = list(space.axis[d].gen_values(1, 'rand'))[0]
+                child = tuple(child_list)
+                if child in space:
+                    offspring.append(child)
+            pop = offspring[:population_size]
+
+        self.result_pool.cut(keep_largest=maximize_target)
 
     def _search_gradient(self,
                          space: Space) -> None:
