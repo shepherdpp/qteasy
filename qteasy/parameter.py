@@ -772,4 +772,4 @@ class Parameter:
         """
         total = range(qty)
         bound = self._ubound - self._lbound
-        return [(np.random.random(size=self.shape) * bound - self._lbound).astype(dtype) for _ in total]
+        return [(self._lbound + np.random.random(size=self.shape) * bound).astype(dtype) for _ in total]
