@@ -2537,7 +2537,7 @@ def get_history_panel(
         freq=None,
         start=None,
         end=None,
-        rows=None,
+        rows=None,  # TODO: rows参数现在只能保证获取的数据行数小于等于rows，未来需要改进为严格等于rows
         drop_nan=True,
         resample_method='ffill',
         b_days_only=True,
@@ -2745,7 +2745,8 @@ def get_history_panel(
 def check_and_prepare_live_trade_data(op,
                                       trade_date: Union[str, pd.Timestamp],
                                       datasource: DataSource,
-                                      live_prices: pd.DataFrame = None) -> dict[str, pd.DataFrame]:
+                                      shares: Union[str, list[str]],
+                                      live_prices: Optional[pd.DataFrame] = None) -> dict[str, pd.DataFrame]:
     """ 在run_mode == 0的情况下准备相应的历史数据
 
     Parameters
@@ -2756,6 +2757,8 @@ def check_and_prepare_live_trade_data(op,
         交易日期
     datasource: DataSource
         用于下载数据的DataSource对象
+    shares: str or list of str
+        股票代码清单，逗号分隔字符串或字符串列表
     live_prices: pd.DataFrame, optional
         用于实盘交易的最新价格数据，如果不提供，则从datasource中下载获取
 
@@ -2767,7 +2770,13 @@ def check_and_prepare_live_trade_data(op,
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
 
-    raise NotImplementedError
+    return check_and_prepare_backtest_data(
+            op=op,
+            backtest_start=trade_date,
+            backtest_end=trade_date,
+            shares=shares,
+            datasource=datasource,
+    )
 
 
 def check_and_prepare_backtest_data(op,
