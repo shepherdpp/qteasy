@@ -967,18 +967,141 @@ class Optimizer:
         """ 最优参数搜索算法5：梯度下降法（多点同时梯度搜索）
 
         在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
-        最大步数为止。在参数空间中随机选择N个起点开始搜索，输出结果为最后一步的N个结果
+        最大步数为止。在参数空间中随机选择N个起点开始搜索，输出结果为最后一步的N个结果。
+
+        邻域通过 space.neighbors(point, axis_index, ...) 生成，支持 int/float/enum/int_array/float_array。
+        仅对 float 维做自适应步长（放大/缩小）；无改进时缩小步长，步长过小或连续无改进达阈值则终止该轨迹。
 
         Parameters
         ----------
-        space: qt.Space
-            参数空间对象
+        space: Space
+            参数空间
 
         Returns
         -------
-        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        None
         """
-        raise NotImplementedError
+        start_count = self.search_config.get('start_count', 10)
+        max_steps = self.search_config.get('max_steps', 20)
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+        dim = space.dim
+        types = space.types
+
+        # 每维步长（仅 float 维使用，其余为 None）
+        def _init_step_sizes():
+            step_sizes = []
+            for d in range(dim):
+                ax = space.axis[d]
+                if types[d] == 'float':
+                    sz = getattr(ax, 'size', None)
+                    step_sizes.append(max(1e-9, (sz * 0.1)) if sz is not None else 0.1)
+                else:
+                    step_sizes.append(None)
+            return step_sizes
+
+        # 生成 N 个起点
+        par_iter, total = space.extract(start_count, how='rand')
+        starts = list(par_iter)
+        if total == 0 or len(starts) == 0:
+            return
+
+        step_size_scale_up = 1.2
+        step_size_scale_down = 0.5
+        step_size_max_ratio = 0.5
+        step_size_min = 1e-9
+        no_improve_threshold = 3
+
+        tmp_pool = ResultPool(capacity=1000)
+
+        for start in starts:
+            x = start
+            step_sizes = _init_step_sizes()
+            no_improve_count = 0
+            current_perf = None
+
+            for _ in range(max_steps):
+                # 收集邻域候选：对每维调用 space.neighbors
+                candidates = []
+                for d in range(dim):
+                    step_arg = step_sizes[d] if step_sizes[d] is not None else None
+                    nb = space.neighbors(x, d, count=2, step=step_arg)
+                    for c in nb:
+                        if c in space:
+                            candidates.append(c)
+                # 当前点 + 所有候选，一起评估
+                to_eval = [x] + candidates
+                tmp_pool.clear()
+                self._evaluate_parameters(
+                    total=len(to_eval),
+                    par_value_list=to_eval,
+                    result_pool=tmp_pool,
+                    parallel=parallel,
+                    leave_progress_bar=False,
+                )
+                if not tmp_pool.items or len(tmp_pool.items) == 0:
+                    break
+                perfs = list(tmp_pool.perfs)
+                current_perf = perfs[0]
+                if len(perfs) == 1:
+                    no_improve_count += 1
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            step_sizes[d] = max(step_size_min, step_sizes[d] * step_size_scale_down)
+                    if no_improve_count >= no_improve_threshold:
+                        break
+                    continue
+
+                # 找最优候选（索引 0 为当前点，1 及以后为候选）
+                candidate_perfs = perfs[1:]
+                if maximize_target:
+                    best_cand_idx = int(np.argmax(candidate_perfs))
+                    best_cand_perf = candidate_perfs[best_cand_idx]
+                    improved = best_cand_perf > current_perf
+                else:
+                    best_cand_idx = int(np.argmin(candidate_perfs))
+                    best_cand_perf = candidate_perfs[best_cand_idx]
+                    improved = best_cand_perf < current_perf
+
+                if improved:
+                    x = candidates[best_cand_idx]
+                    current_perf = best_cand_perf
+                    no_improve_count = 0
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            ax = space.axis[d]
+                            sz = getattr(ax, 'size', None)
+                            cap = (sz * step_size_max_ratio) if sz is not None else step_sizes[d] * 2
+                            step_sizes[d] = min(step_sizes[d] * step_size_scale_up, cap)
+                else:
+                    no_improve_count += 1
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            step_sizes[d] = max(step_size_min, step_sizes[d] * step_size_scale_down)
+                    if no_improve_count >= no_improve_threshold:
+                        break
+                    all_too_small = all(
+                        s is None or s <= step_size_min for s in step_sizes
+                    )
+                    if all_too_small:
+                        break
+
+            # 轨迹终点 x 及其表现写入 result_pool（若未评估过则补评一次）
+            if current_perf is None:
+                tmp_pool.clear()
+                self._evaluate_parameters(
+                    total=1,
+                    par_value_list=[x],
+                    result_pool=tmp_pool,
+                    parallel=parallel,
+                    leave_progress_bar=False,
+                )
+                if tmp_pool.items:
+                    current_perf = tmp_pool.perfs[0]
+            if current_perf is not None:
+                self.result_pool.push(item=x, perf=current_perf)
+
+        self.result_pool.cut(keep_largest=maximize_target)
 
     def _search_pso(self,
                     space: Space) -> None:

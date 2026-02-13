@@ -369,6 +369,8 @@ def parse_all_optimization_params(config: dict) -> dict[str, Any]:
         opti_params.update(parse_optimization_params_sa(config))
     elif optimization_method == 'ga':
         opti_params.update(parse_optimization_params_ga(config))
+    elif optimization_method == 'gradient':
+        opti_params.update(parse_optimization_params_gradient(config))
     elif optimization_method == 'knn':
         opti_params.update(parse_optimization_params_knn(config))
     elif optimization_method == 'pso':
@@ -423,6 +425,24 @@ def parse_optimization_params_ga(config: dict) -> dict[str, Any]:
     return {
         'population_size': population_size,
         'max_generations': max_generations,
+    }
+
+
+def parse_optimization_params_gradient(config: dict) -> dict[str, Any]:
+    """解析策略优化相关参数，优化算法为梯度下降法时使用。
+
+    沿用已有配置键 opti_sample_count、opti_max_rounds，返回 start_count（起点数量 N）
+    与 max_steps（每条轨迹最大步数）。
+    """
+    start_count = config['opti_sample_count']
+    if not isinstance(start_count, int) or start_count < 1:
+        start_count = 10
+    max_steps = config['opti_max_rounds']
+    if not isinstance(max_steps, int) or max_steps < 1:
+        max_steps = 20
+    return {
+        'start_count': start_count,
+        'max_steps': max_steps,
     }
 
 
