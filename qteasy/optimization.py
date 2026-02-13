@@ -49,6 +49,72 @@ from qteasy.finance import (
     CashPlan,
 )
 
+
+def _gp_predict_rbf(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    length_scale: Optional[float] = None,
+    noise: float = 1e-5,
+) -> tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    """使用 RBF 核的高斯过程回归，对 X_test 预测均值和标准差（仅用 numpy）。
+
+    Parameters
+    ----------
+    X_train : np.ndarray
+        已评估点的编码矩阵，形状 (n, d)。
+    y_train : np.ndarray
+        已评估点的目标值，形状 (n,)。
+    X_test : np.ndarray
+        待预测点的编码矩阵，形状 (m, d)。
+    length_scale : float, optional
+        RBF 核长度尺度；None 时取训练点两两距离中位数的 0.5 倍。
+    noise : float
+        观测噪声方差，用于数值稳定。
+
+    Returns
+    -------
+    mu : np.ndarray or None
+        预测均值，形状 (m,)；拟合失败时返回 None。
+    sigma : np.ndarray or None
+        预测标准差，形状 (m,)；拟合失败时返回 None。
+    """
+    X_train = np.asarray(X_train, dtype=float)
+    y_train = np.asarray(y_train, dtype=float).ravel()
+    X_test = np.asarray(X_test, dtype=float)
+    n, d = X_train.shape
+    if n == 0 or y_train.size != n:
+        return None, None
+    if length_scale is None and n >= 2:
+        dists = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                dists.append(np.sqrt(np.sum((X_train[i] - X_train[j]) ** 2)))
+        length_scale = float(np.median(dists)) * 0.5 if dists else 1.0
+    if length_scale is None or length_scale <= 0:
+        length_scale = 1.0
+    ls = length_scale
+    # K = RBF(X_train, X_train) + noise * I
+    sqdist = np.sum(X_train ** 2, axis=1, keepdims=True) - 2 * (X_train @ X_train.T) + np.sum(X_train ** 2, axis=1)
+    sqdist = np.maximum(sqdist, 0.0)
+    K = np.exp(-0.5 * sqdist / (ls ** 2)) + noise * np.eye(n)
+    try:
+        L = np.linalg.cholesky(K)
+    except np.linalg.LinAlgError:
+        return None, None
+    alpha = np.linalg.solve(L.T, np.linalg.solve(L, y_train))
+    # k*: (m, n)
+    sqdist_star = np.sum(X_test ** 2, axis=1, keepdims=True) - 2 * (X_test @ X_train.T) + np.sum(X_train ** 2, axis=1)
+    sqdist_star = np.maximum(sqdist_star, 0.0)
+    k_star = np.exp(-0.5 * sqdist_star / (ls ** 2))
+    mu = k_star @ alpha
+    v = np.linalg.solve(L, k_star.T)
+    k_star_star = np.ones((X_test.shape[0],))
+    sigma_sq = np.maximum(k_star_star - np.sum(v ** 2, axis=0), 1e-12)
+    sigma = np.sqrt(sigma_sq)
+    return mu, sigma
+
+
 _shared_op: Optional[Operator] = None
 _shared_cash_investment_array: Optional[np.ndarray] = None
 _shared_cash_inflation_array: Optional[np.ndarray] = None
@@ -441,6 +507,8 @@ class Optimizer:
             self._search_pso(space=search_space)
         elif self.opti_method == 'gradient':
             self._search_gradient(space=search_space)
+        elif self.opti_method == 'bayesian':
+            self._search_bayesian(space=search_space)
         else:
             raise ValueError(f'Unsupported optimization method: {self.opti_method}')
         self.opti_time = time.time() - st
@@ -1232,6 +1300,8 @@ class Optimizer:
 
         贝叶斯优化是一种基于贝叶斯统计理论的全局优化方法，适用于高维、非凸、黑箱函数的优化问题。
         它通过构建目标函数的概率模型（通常是高斯过程）来指导参数搜索过程，从而在有限的评估次数内找到最优解。
+        流程：初始随机采样 -> 用 (X, y) 拟合 surrogate（RBF 核高斯过程）-> 迭代：在候选点上计算 UCB 采集函数，
+        选取采集值最大的点评估 -> 更新 (X, y) 与 result_pool，直至达到 max_iterations。
 
         Parameters
         ----------
@@ -1242,7 +1312,61 @@ class Optimizer:
         -------
         None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        raise NotImplementedError
+        init_sample_count = self.search_config['init_sample_count']
+        max_iterations = self.search_config['max_iterations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+        # 采集函数超参数（UCB 的 kappa）
+        kappa = 2.0
+        # 每轮采集时的候选点数量
+        candidate_count = 200
+
+        # ----- 1. 初始随机采样 -----
+        par_iter, total = space.extract(init_sample_count, how='rand')
+        par_list = list(par_iter)
+        if not par_list:
+            return
+        init_pool = ResultPool(capacity=len(par_list) + max_iterations)
+        self._evaluate_parameters(
+            total=len(par_list),
+            par_value_list=par_list,
+            result_pool=init_pool,
+            parallel=parallel,
+            epoch_str='init/1',
+            leave_progress_bar=False,
+        )
+        # 编码为 (X, y)；若为 minimize 则 y 取负，使 surrogate 端统一为“最大化”
+        X_list = [space.point_to_vector(p) for p in init_pool.items]
+        X = np.array(X_list)
+        y_raw = np.array(init_pool.perfs, dtype=float)
+        y = y_raw if maximize_target else -y_raw
+        for p, perf in zip(init_pool.items, init_pool.perfs):
+            self.result_pool.push(item=p, perf=perf)
+        self.result_pool.cut(keep_largest=maximize_target)
+
+        # ----- 2. 贝叶斯迭代 -----
+        for it in range(max_iterations - 1):
+            cand_iter, _ = space.extract(candidate_count, how='rand')
+            cand_points = list(cand_iter)
+            if not cand_points:
+                break
+            X_cand = np.array([space.point_to_vector(p) for p in cand_points])
+            mu, sigma = _gp_predict_rbf(X, y, X_cand, length_scale=None, noise=1e-5)
+            if mu is None:
+                next_point = cand_points[0]
+            else:
+                sigma = np.maximum(sigma, 1e-10)
+                ucb = mu + kappa * sigma
+                best_idx = int(np.argmax(ucb))
+                next_point = cand_points[best_idx]
+
+            # 评估建议点
+            perf = self._evaluate_parameter(next_point)
+            x_vec = space.point_to_vector(next_point)
+            X = np.vstack([X, x_vec.reshape(1, -1)])
+            y = np.append(y, perf if maximize_target else -perf)
+            self.result_pool.push(item=next_point, perf=perf)
+            self.result_pool.cut(keep_largest=maximize_target)
 
     def report_result(self, stage: str) -> str:
         """ 根据优化结果池生成优化结果报告字符串
