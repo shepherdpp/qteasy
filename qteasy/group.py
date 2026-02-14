@@ -13,7 +13,6 @@
 # together.
 # ======================================
 
-import numpy as np
 from typing import Iterable
 from qteasy.strategy import BaseStrategy
 
@@ -21,9 +20,6 @@ from qteasy.blender import (
     blender_parser,
     signal_blend,
     human_blender,
-)
-from qteasy.utilfuncs import (
-    TIME_FREQ_STRINGS,
 )
 
 
@@ -73,20 +69,42 @@ class Group:
     def member_strategies(self):
         return self.members
 
+    def _compute_default_blender_str(self) -> str:
+        """根据 signal_type 与当前 members 数量实时计算默认 blender 表达式。"""
+        n = len(self.members)
+        if n == 0:
+            return ''
+        if self._signal_type in ('ps', 'vs'):
+            return '+'.join(f's{i}' for i in range(n))
+        return '*'.join(f's{i}' for i in range(n))
+
     @property
     def blender_str(self):
+        if self._blender_str is None or self._blender_str == '':
+            return self._compute_default_blender_str()
         return self._blender_str
 
     @blender_str.setter
     def blender_str(self, value: str):
         if not isinstance(value, str):
             raise TypeError(f'blender_str should be a string, got {type(value)} instead')
+        if value:
+            try:
+                blender_parser(value)
+            except Exception as e:
+                raise ValueError(
+                    f'Invalid blender expression: "{value}" - {e}. '
+                    'Default blender will still be used.'
+                ) from e
         self._blender_str = value
         self._blender = blender_parser(value) if value else None
 
     @property
     def blender(self):
-        return self._blender
+        effective = self.blender_str
+        if effective:
+            return blender_parser(effective)
+        return None
 
     @property
     def human_blender(self):
@@ -177,8 +195,8 @@ class Group:
         self.members = []
 
     def blend(self, signals: Iterable):
-        """Set the blender for the group."""
-        return signal_blend(op_signals=signals, blender=self._blender)
+        """使用当前 blender 将同组策略信号混合为一组信号。"""
+        return signal_blend(op_signals=signals, blender=self.blender)
 
     def __repr__(self):
         return f"Group({self.name}, {self.signal_type}, {self.blender_str})"

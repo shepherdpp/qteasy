@@ -239,8 +239,9 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(self.gen_stg_d_close.run_freq, 'd')
         self.assertEqual(self.gen_stg_d_close.run_timing, 'close')
 
-        self.assertEqual(gp.blender_str, '')
-        self.assertEqual(gp.human_blender, '')
+        # 未设置 blender_str 时使用默认（PT 单策略为 s0）
+        self.assertEqual(gp.blender_str, 's0')
+        self.assertEqual(gp.human_blender, 'test_gen')
         gp.blender_str = 's0 + 3'
         self.assertEqual(gp.human_blender, 'test_gen + 3')
         self.assertEqual(gp.blender, ['+', '3', 's0'])
@@ -275,6 +276,9 @@ class TestGroup(unittest.TestCase):
         self.assertTrue(all(stg.run_freq == 'd' for stg in gp.members))
         self.assertTrue(all(stg.run_timing == 'close' for stg in gp.members))
 
+        # 未设置时默认 PT 为 s0*s1*s2
+        self.assertEqual(gp.blender_str, 's0*s1*s2')
+        self.assertIsNotNone(gp.blender)
         gp.blender_str = 's0 + s1 + s2'
         self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter + test_rule_iterator')
         self.assertEqual(gp.blender, ['+', 's2', '+', 's1', 's0'])
@@ -326,6 +330,58 @@ class TestGroup(unittest.TestCase):
         gp2.add_strategy(stg)
         self.assertEqual(stg.run_freq, 'h')
         self.assertEqual(stg.run_timing, 'open')
+
+    def test_default_blender_str_by_signal_type_and_members(self):
+        """未设置 blender_str 时，根据 signal_type 与 members 数量动态计算默认表达式。"""
+        # PT：s0*s1*...*sN
+        gp_pt = Group('g_pt', signal_type='pt', run_freq='d', run_timing='close')
+        self.assertEqual(gp_pt.blender_str, '')
+        gp_pt.add_strategy(self.gen_stg_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0')
+        gp_pt.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0*s1')
+        gp_pt.add_strategy(self.iterator_stg_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0*s1*s2')
+        print('PT default blender_str:', gp_pt.blender_str)
+
+        # PS/VS：s0+s1+...+sN
+        gp_ps = Group('g_ps', signal_type='ps', run_freq='d', run_timing='close')
+        gp_ps.add_strategy(self.gen_stg_d_close)
+        gp_ps.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp_ps.blender_str, 's0+s1')
+        gp_ps.add_strategy(self.iterator_stg_d_close)
+        self.assertEqual(gp_ps.blender_str, 's0+s1+s2')
+        print('PS default blender_str:', gp_ps.blender_str)
+
+        gp_vs = Group('g_vs', signal_type='vs', run_freq='d', run_timing='close')
+        gp_vs.add_strategy(self.gen_stg_d_close)
+        self.assertEqual(gp_vs.blender_str, 's0')
+        print('VS default blender_str:', gp_vs.blender_str)
+
+    def test_blender_str_setter_rejects_invalid_expression(self):
+        """setter 对非法表达式调用 blender_parser 校验，失败则报错、拒绝写入，并提示将仍使用默认。"""
+        gp = Group('g', run_freq='d', run_timing='close')
+        gp.add_strategy(self.gen_stg_d_close)
+        gp.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp.blender_str, 's0*s1')  # 当前默认
+
+        with self.assertRaises(ValueError) as ctx:
+            gp.blender_str = 'wrong blender'
+        self.assertIn('Invalid blender expression', str(ctx.exception))
+        self.assertIn('Default blender will still be used', str(ctx.exception))
+        # 拒绝写入：仍为默认
+        self.assertEqual(gp.blender_str, 's0*s1')
+
+        with self.assertRaises(ValueError):
+            gp.blender_str = 's0 + (unclosed'
+        self.assertEqual(gp.blender_str, 's0*s1')
+
+        # 合法表达式可写入
+        gp.blender_str = 's0 + s1'
+        self.assertEqual(gp.blender_str, 's0 + s1')
+        # 空串可写入，之后 getter 再返回默认
+        gp.blender_str = ''
+        self.assertEqual(gp.blender_str, 's0*s1')
 
 
 if __name__ == '__main__':
