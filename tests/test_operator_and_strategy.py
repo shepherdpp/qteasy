@@ -1737,9 +1737,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(group.run_timing, 'close')
         self.assertEqual(group.strategy_count, 3)
         self.assertEqual(group.members, [op['dma'], op['macd'], op['trix']])
-        self.assertEqual(group.blender_str, '')
-        self.assertEqual(group.human_blender, '')
-        self.assertEqual(group.blender, None)
+        # 未设置时使用默认 PT 表达式 s0*s1*s2
+        self.assertEqual(group.blender_str, 's0*s1*s2')
+        self.assertIsNotNone(group.blender)
+        self.assertEqual(group.human_blender, 'dma * macd * trix')
 
         op.groups['Group_1'].blender_str = 's0+s1+s2'
         self.assertEqual(group.blender_str, 's0+s1+s2')
@@ -1951,9 +1952,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
         self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_1'].blender_str, '')
-        self.assertEqual(op.groups['Group_1'].human_blender, '')
-        self.assertEqual(op.groups['Group_1'].blender, None)
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0*s1*s2*s3')
+        self.assertIsNotNone(op.groups['Group_1'].blender)
 
         # change run_freq and run_timing of some of the strategies, then groups will be changed
         op.set_parameter('dma', run_timing='open')
@@ -1972,21 +1972,18 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')
         self.assertEqual(op.groups['Group_1'].run_timing, 'close')
         self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_1'].blender_str, '')
-        self.assertEqual(op.groups['Group_1'].human_blender, '')
-        self.assertEqual(op.groups['Group_1'].blender, None)
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0*s1')
+        self.assertIsNotNone(op.groups['Group_1'].blender)
         self.assertEqual(op.groups['Group_2'].run_freq, 'd')
         self.assertEqual(op.groups['Group_2'].run_timing, 'open')
         self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_2'].blender_str, '')
-        self.assertEqual(op.groups['Group_2'].human_blender, '')
-        self.assertEqual(op.groups['Group_2'].blender, None)
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
+        self.assertIsNotNone(op.groups['Group_2'].blender)
         self.assertEqual(op.groups['Group_3'].run_freq, 'w')
         self.assertEqual(op.groups['Group_3'].run_timing, 'close')
         self.assertEqual(op.groups['Group_3'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_3'].blender_str, '')
-        self.assertEqual(op.groups['Group_3'].human_blender, '')
-        self.assertEqual(op.groups['Group_3'].blender, None)
+        self.assertEqual(op.groups['Group_3'].blender_str, 's0')
+        self.assertIsNotNone(op.groups['Group_3'].blender)
 
         # check all strategies are still in op.strategies
         self.assertEqual(op.strategy_count, 4)
@@ -2005,7 +2002,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_2'].run_timing, 'close')
         self.assertEqual(op.groups['Group_2'].run_freq, '1min')
         self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_2'].blender_str, '')
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
         # check that all strategies in group 2 has new run_timing and run_freq
         self.assertEqual(op['dma'].run_timing, 'close')
         self.assertEqual(op['dma'].run_freq, '1min')
@@ -2034,8 +2031,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.groups['Group_2'].run_freq, '1min')
         self.assertEqual(op.groups['Group_2'].run_timing, 'close')
         self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
-        self.assertEqual(op.groups['Group_2'].blender_str, '')
-        self.assertEqual(op.groups['Group_2'].human_blender, '')
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
+        self.assertEqual(op.groups['Group_2'].human_blender, 'dma')
         # check that group_3 no longer exists
         self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
         self.assertRaises(KeyError, op.get_group_by_id, 'Group_3')
@@ -4442,10 +4439,12 @@ class TestSetBlender(unittest.TestCase):
         # Group_2和Group_3的blender_str应为None或默认值
 
     def test_blender_empty_string(self):
-        """测试空字符串blender"""
+        """测试空字符串 blender：写入后 getter 返回默认表达式"""
         self.operator.add_strategy('dma')
         self.operator.set_blender('', 'Group_1')
-        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, '')
+        # 空串写入后，getter 按当前 members 返回默认（1 个策略为 s0）
+        self.assertEqual(self.operator.strategy_groups['Group_1'].strategy_count, 1)
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, 's0')
 
 
 class TestStrategyTracing(unittest.TestCase):
