@@ -223,7 +223,7 @@ class Parameter:
             return self._lbound <= item <= self._ubound and float(item).is_integer()
 
     def __eq__(self, other):
-        """判断两个参数对象是否相等
+        """判断两个参数对象是否相等（注意，不是比较两个参数的值，而只是比较两个参数对象本身）
         两个参数对象，只要它们的类型、范围、形状都相等，则认为它们是相等的
         两个相等的参数对象可以有不同的当前值和名称
         """
