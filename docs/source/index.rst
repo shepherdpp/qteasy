@@ -90,6 +90,15 @@
 
 
 .. toctree::
+   :caption:  qteasy 架构与设计
+   :numbered: 2
+   :maxdepth: 1
+   :glob:
+
+   design/*
+
+
+.. toctree::
    :caption:  ``qteasy`` 使用教程
    :numbered: 2
    :maxdepth: 1
