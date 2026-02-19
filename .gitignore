@@ -78,3 +78,5 @@ qteasy/qteasy_backup.cfg
 /.cursor
 /qteasy_usages
 /.vscode
+/scripts
+/qteasy_doc_ipynbs
