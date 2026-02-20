@@ -9,6 +9,7 @@
 # ======================================
 
 import numpy as np
+from typing import Optional
 from qteasy.parameter import Parameter
 from qteasy.datatypes import DataType, StgData
 # commonly used ta-lib funcs that have a None ta-lib version
@@ -178,13 +179,15 @@ def built_in_strategies(stg_id: str = None) -> list:
     return list(built_ins(stg_id).values())
 
 
-def built_in_doc(stg_id: str) -> str:
+def built_in_doc(stg_id: str, print_out:bool = False) -> Optional[str]:
     """ 获取内置策略的文档，stg_id必须正确给出且存在
 
     Parameters
     ----------
     stg_id: str
         策略ID
+    print_out: bool, optional
+        是否直接打印文档字符串，如果为False，则仅返回文档字符串
 
     Returns
     -------
@@ -194,7 +197,7 @@ def built_in_doc(stg_id: str) -> str:
     Examples
     --------
     >>> import qteasy as qt
-    >>> qt.built_in_doc('macd')
+    >>> qt.built_in_doc('macd', print_out=True)
     MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
     --------------------
     策略参数:
@@ -219,7 +222,11 @@ def built_in_doc(stg_id: str) -> str:
     stg = get_built_in_strategy(stg_id)
     doc_string = stg.__doc__
     doc_string = doc_string.replace('\n\n', '\n').replace('``', '')
-    return doc_string
+    if print_out:
+        print(doc_string)
+        return None
+    else:
+        return doc_string
 
 
 def get_built_in_strategy(stg_id: str) -> BaseStrategy:
@@ -254,7 +261,7 @@ def get_built_in_strategy(stg_id: str) -> BaseStrategy:
         return BUILT_IN_STRATEGIES[stg_id]()
 
     guess = _make_a_guess_by_id(stg_id)
-    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Did you mean: \'{guess}\'?')
+    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Maybe you mean: \'{guess}\'?')
     raise err
 
 
