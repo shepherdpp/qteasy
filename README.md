@@ -26,10 +26,12 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/shepherdpp?style=social)
 
 
-- [`qteasy`能做什么](#`qteasy`能做什么？)
+- [关于 qteasy](#关于qteasy)
+- [为什么用 qteasy？——量化人关心的几点](#为什么用-qteasy量化人关心的几点)
+- [qteasy 能做什么](#qteasy能做什么)
 - [安装](#安装)
-- [QTEASY文档](#文档)
-- [10分钟了解Qteasy的功能](#10分钟了解QTEASY的功能)
+- [文档](#文档)
+- [10分钟了解 qteasy 的功能](#10分钟了解-qteasy-的功能)
   - [初始配置——本地数据源](#配置本地数据源)
   - [下载股票价格并可视化](#下载金融历史数据)
   - [创建投资策略](#创建一个投资策略)
@@ -39,7 +41,7 @@
 
 > Note:
 > 
-> `qteays`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。
+> `qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。
 > 由于`qteasy`仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=)给我，也可以进入[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。也欢迎各位贡献代码！
 >
 > 我会尽快修复问题并回复大家的问题。
@@ -54,11 +56,24 @@
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
 
-1. **全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行
-2. **完全本地化** 所有的金融数据、策略运算和优化过程完全本地化，不依赖于任何云端服务
-3. **简单安全** 交易策略的定义方式直观、简单、逻辑清晰。数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题。
-4. **灵活高效** 独特的策略组和混合系统，复杂策略可以通过简单策略拼装而来，过程如同搭积木。
-5. **开箱即用** 内置超过70种策略，涵盖了常见的技术指标、均线、突破、反转等策略类型，满足不同交易风格的需求。
+1. **全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行，一站式完成
+2. **完全本地化** 数据、回测与实盘运行均在本地完成，不依赖云端服务，配置清晰、结果可复现
+3. **回测可信、实盘一致** 策略逻辑在回测与实盘中同一套运行，数据按「当时能看到的」历史严格注入，从机制上避免未来函数与数据泄露，减少「回测漂亮、实盘走样」的落差
+4. **灵活易用** 多策略可像搭积木一样组合并自定义信号合并方式；内置超过70种策略开箱即用，涵盖常见技术指标、均线、突破、反转等
+
+**设计理念**：qteasy 坚持本地化与可复现——你的数据在本地、策略逻辑统一用于回测与实盘、每个时点只用当时已可用的数据驱动决策，让回测结果更可信，从研究到实盘的过渡更顺畅。
+
+## 为什么用 qteasy？——量化人关心的几点
+
+- **回测结果可信，避免未来函数** 系统在回测时严格按「每个时点当时能看到的」历史数据驱动策略，策略无法触及未来数据，从机制上杜绝无意中的未来函数，回测结果更可信。
+- **回测与实盘同一套逻辑** 你写的策略逻辑既用于历史回测，也用于实盘或模拟盘，不换引擎、不换数据接口，减少「回测很好、实盘走样」的常见落差。
+- **多策略像搭积木，信号可配置合并** 可以把多个策略组合在一起，并选择如何把各策略的信号合并成最终交易信号（例如加权平均、取交集等），方便做多策略、多周期组合。
+- **参数更灵活，不同标的可用不同参数** 同一套策略可以为不同股票或标的设置不同参数（例如不同股票用不同均线周期），并支持多种优化算法在历史数据上搜索更稳健的参数组合。
+- **全流程本地、可复现** 数据获取与存储、回测、参数优化、实盘/模拟运行均在本地完成，配置清晰，便于复现结果和排查问题。
+
+### 2.0 版本亮点
+
+2.0 在保持上述特性的基础上，进一步带来：更灵活的策略参数设置；多策略可按不同运行频率与运行时机组合；策略可同时使用多种时间周期与数据窗口；更多优化算法与更丰富的评估指标；支持追踪策略内部行为，便于排查与调试。更多变更说明见 [2.0 迁移指南](https://qteasy.readthedocs.io/zh-cn/latest/) 及文档中的「架构与设计」章节。
 
 ## `qteasy`能做什么？
 
@@ -68,22 +83,25 @@
 - 方便地从多渠道获取大量金融历史数据，进行数据清洗后以统一格式进行本地存储
 - 通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂信息，也只需要一行代码即可获取
 - 基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化
+- 数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现
 
 ![png](docs/source/img/output_5_2.png)
 
-### **创建交易策略极其容易且安全**
+### **以简单、安全的方式创建交易策略**
 
-- 通过`BaseStrategy`类，交易策略定义方法直观、逻辑清晰：交易策略 == 数据+参数+逻辑
-- 内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而来，过程如同搭积木。
+- 通过`BaseStrategy`类，交易策略定义方法直观、逻辑清晰
+- 内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而来，过程如同搭积木
 - 交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性
+- 同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差
 
 ![png](docs/source/img/output_14_3.png)
 
 ### **交易策略的回测评价、优化和模拟自动化交易**
 
-- 通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行多维度全方位评价，生成交易报告和结果图标
+- 通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行多维度全方位评价，生成交易报告和结果图表
 - 提供多种优化算法，包括模拟退火、遗传算法、贝叶斯优化等在大参数空间中优化策略性能
 - 获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
+- 回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查
 - 未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易
 
 ![png](docs/source/examples/img/trader_app_1.png)  
@@ -124,7 +142,9 @@ $ pip install qteasy
     $ pip install ta-lib  # 手动安装ta-lib
     ```
 
-##  10分钟了解qteasy的功能
+## 10分钟了解 qteasy 的功能
+
+下面通过一个约 10 分钟的教程，快速体验从数据到回测、优化与实盘的完整流程。
 
 ### 导入`qteasy`
 基本的模块导入方法如下
@@ -138,45 +158,49 @@ qt.__version__
 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，如果本地没有历史数据，那么`qteasy`的许多功能就无法执行。
 
-`qteasy`默认通过`tushare`金融数据包来获取大量的金融数据，用户需要自行申请API Token，获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
+`qteasy`默认通过`tushare`金融数据包来获取金融数据，用户需要自行申请`API Token`，获取相应的权限和积分（详情参考：[Tushare 官网](https://tushare.pro/document/2)）
 
-因此，在使用`qteasy`之前需要对本地数据源和`tushare`进行必要的配置。在`QT_ROOT_PATH/qteasy/`路径下打开配置文件`qteasy.cfg`，可以看到下面内容：
+因此，在使用`qteasy`之前需要对`tushare`的`token`进行必要的配置。
+最简单的方式是使用`qt.start_up_settings()`和`qt.update_start_up_setting()`方法：
 
+```python
+qt.update_start_up_setting(
+        tushare_token='<你的tushare_token>',
+        local_data_source='db',  # 可选项：设置本地数据源类型，db表示使用MySQL数据库，默认使用csv文件
+        local_db_host = '<你的数据库主机名>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接地址，默认localhost
+        local_db_port = 3306,  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接端口，默认3306
+        local_db_user = '<user>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接用户名，默认root
+        local_db_password = '<password>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接密码，默认password
+)
+# 设置完成后，可以使用qt.start_up_settings()来查看当前的配置
+qt.start_up_settings()
 ```
-# qteasy configuration file
-# following configurations will be loaded when initialize qteasy
-
-# example:
-# local_data_source = database
-```
-#### 配置`tushare token`
-
-将你获得的tushare API token添加到配置文件中，如下所示：
-
-
-``` commandline
-tushare_token = <你的tushare API Token> 
-```
-#### 配置本地数据源 —— 用MySQL数据库作为本地数据源
-默认情况下`qteasy`使用存储在`data/`路径下的`.csv`文件作为数据源，不需要特殊设置。
-如果设置使用`mysql`数据库作为本地数据源，在配置文件中添加以下配置：
+这时可以看到当前的配置输出如下：
 
 ```text
-local_data_source = database  
-
-local_db_host = <host name>
-local_db_port = <port number>
-local_db_user = <user name>
-local_db_password = <password>
-local_db_name = <database name>
+Start up settings:
+--------------------
+tushare_token = <你的tushare token>
+...
 ```
+请检查打印出的配置文件内容是否正确，如果正确，就可以重新导入`qteasy`，并开始正常下载和使用金融数据了。
 
-关闭并保存好配置文件后，重新导入`qteasy`，就完成了数据源的配置，可以开始下载数据到本地了。
+> qteasy默认情况下将所有的金融数据以csv文件的形式保存在磁盘中，详情参见[qteasy文档数据管理](https://qteasy.readthedocs.io/zh-cn/latest/manage_data/1.%20overview.html)，如果你想把数据保存在`MySQL`数据库中，可以在配置文件中设置`local_data_source='db'`，并设置相应的数据库连接参数，如下所示：
+>
+>```python
+> qt.update_start_up_setting(
+>         local_data_source='db',  # 可选项：设置本地数据源类型，db表示使用MySQL数据库，默认使用csv文件
+>         local_db_host = '<你的数据库主机名>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接地址，默认localhost
+>         local_db_port = 3306,  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接端口，默认3306
+>         local_db_user = '<user>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接用户名，默认root
+>         local_db_password = '<password>',  # 可选项：如果使用MySQL数据库作为本地数据源，需要设置数据库的连接密码，默认password
+> )
+>```
 
 ### 下载金融历史数据 
 
 要下载金融价格数据，使用`qt.refill_data_source()`函数。下面的代码下载2021及2022两年内所有股票、所有指数的日K线数据，同时下载所有的股票和基金的基本信息数据。
-（根据网络速度，下载数据可能需要十分钟左右的时间，如果存储为csv文件，将占用大约200MB的磁盘空间）：
+（根据网络速度，下载数据可能需要几十秒到几分钟的时间，如果存储为`csv`文件，将占用大约200MB的磁盘空间）：
 
 ```python
 qt.refill_data_source(
@@ -300,14 +324,14 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 
 ```python
 op = qt.Operator(strategies='dma')
-op.info()
 ```
+
 现在可以看到`op`中有一个交易策略，ID是`dma`，我们在`Operator`层面设置或修改策略的参数
 时，都需要引用这个`ID`。
 
 `DMA`是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值`DMA`与其移动平均值`AMA`之间的交叉情况来确定多空或买卖点。：
 
-使用`qt.built_ins()`函数可以查看`DMA`策略的详细解，使用`qt.built_ins()`函数可以获取或者筛选需要的内置交易策略，例如：
+使用`qt.built_in_doc()`函数可以查看`DMA`策略的详细说明，使用`qt.built_ins()`函数可以获取或者筛选需要的内置交易策略，例如：
 ```python
 qt.built_in_doc('dma')
 ```
@@ -315,25 +339,22 @@ qt.built_in_doc('dma')
 
 ```
  DMA择时策略
-
-    策略参数：
+    策略参数:
         s, int, 短均线周期
         l, int, 长均线周期
         d, int, DMA周期
-    信号类型：
-        PS型：百分比买卖交易信号
-    信号规则：
-        在下面情况下产生买入信号：
+    信号类型:
+        PS型: 百分比买卖交易信号
+    信号规则:
+        在下面情况下产生买入信号:
         1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1
         2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0
         3， DMA与股价发生背离时的交叉信号，可信度较高
-
-    策略属性缺省值：
-    默认参数：(12, 26, 9)
-    数据类型：close 收盘价，单数据输入
-    采样频率：天
-    窗口长度：270
-    参数范围：[(10, 250), (10, 250), (8, 250)]
+    策略属性缺省值:
+        默认参数: (12, 26, 9)
+        数据类型: close 收盘价，单数据输入
+        窗口长度: 270
+        参数范围: [(10, 250), (10, 250), (8, 250)]
     策略不支持参考数据，不支持交易数据
 ```
 在默认情况下，策略有三个**可调参数**：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
@@ -345,7 +366,11 @@ qt.built_in_doc('dma')
 
 ### 回测、评价并优化交易策略的性能表现
 
-交易策略的表现与策略的参数息息相关，针对不同类型的股票，不同的交易风格、不同的交易周期，策略的参数可能需要不同的设置，`qteasy`提供了策略回测功能，并多种优化算法，帮助搜索最优的策略参数，提高策略表现。
+在`qteasy`中，交易策略中使用的任何变量都可以被定义为“可调参数”，例如dma策略中的短均线周期、长均线周期等等。
+
+这些参数的调节范围和参数类型都是人为规定的，交易策略的性能表现受可调参数的影响。
+
+因此，针对不同类型的股票，不同的交易风格、不同的交易周期，策略的参数可能需要被设为不同的值，同时，为了使策略性能最优化，我们也需要寻找最佳的参数组合。`qteasy`提供了策略回测功能，并多种优化算法，帮助搜索最优的策略参数，提高策略表现。
 
 #### 交易策略的回测
 
@@ -356,19 +381,18 @@ qt.built_in_doc('dma')
 
 ```python
 op = qt.Operator(strategies='dma')
-res = qt.run(
-        op=op,
-        mode=1,                         # 历史回测模式
-        asset_pool='000300.SH',         # 投资资产池，即允许投资的股票或指数，此处为沪深300指数
-        asset_type='IDX',               # 投资资产类型，IDX表示指数，E表示股票
-        invest_cash_amounts=[100000],   # 初始投资资金，此处为10万元
+qt.configure(
+        asset_pool='000300.SH',         # 投资资产池
+        asset_type='IDX',               # 投资资产类型
+        invest_cash_amounts=[100000],   # 投资资金
         invest_start='20220501',        # 投资回测开始日期
         invest_end='20221231',          # 投资回测结束日期
-        cost_rate_buy=0.0003,           # 买入费率，此处为0.03%
-        cost_rate_sell=0.0001,          # 卖出费率，此处为0.01%
+        cost_rate_buy=0.0003,           # 买入费率
+        cost_rate_sell=0.0001,          # 卖出费率
         visual=True,                    # 打印可视化回测图表
-        trade_log=True                  # 打印交易日志
+        trade_log=True,                 # 打印交易日志
 )
+res = qt.run(op, mode=1)  # 历史回测模式
 ```
 输出结果如下：
 ```
@@ -427,16 +451,17 @@ Max drawdown:                    11.92%
 import qteasy as qt
 
 op = qt.Operator(strategies='dma')
-op.set_parameter('dma', opt_tag=1)
-res = qt.run(op=op, 
-             mode=2,                    # 优化模式
+qt.configure(
              opti_start='20220501',     # 优化区间开始日期
              opti_end='20221231',       # 优化区间结束日期
              test_start='20220501',     # 测试区间开始日期
              test_end='20221231',       # 测试区间结束日期
              opti_sample_count=1000,    # 优化样本数量
              visual=True,               # 打印优化结果图表
-             parallel=False)            # 不使用并行计算
+             parallel=False             # 不使用并行计算
+)
+op.set_parameter('dma', opt_tag=1)
+res = qt.run(op, mode=2)  # 策略优化模式
 ```
 
 `qteasy`将在同一段历史数据（优化区间）上反复回测，找到结果最好的30组参数，并把这30组参数在另一段历史数据（测试区间）上进行独立测试，并显
@@ -470,18 +495,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 
 ```python
 op.set_parameter('dma', par_values=(143, 99, 32))
-res = op.run(
-        mode=1,                         # 历史回测模式
-        asset_pool='000300.SH',         # 投资资产池
-        asset_type='IDX',               # 投资资产类型
-        invest_cash_amounts=[100000],   # 投资资金
-        invest_start='20220501',        # 投资回测开始日期
-        invest_end='20221231',          # 投资回测结束日期
-        cost_rate_buy=0.0003,           # 买入费率
-        cost_rate_sell=0.0001,          # 卖出费率
-        visual=True,                    # 打印可视化回测图表
-        trade_log=True,                 # 打印交易日志
-)
+res = qt.run(op, mode=1)  # 历史回测模式
 ```
 结果如下：
 
@@ -501,8 +515,6 @@ res = op.run(
 alpha = qt.get_built_in_strategy('ndayrate')  # 创建一个N日股价涨幅交易策略
 
 # 设置策略的运行参数
-alpha.run_freq = 'd'  # 每日运行
-alpha.data_freq = 'd' # 策略使用日频数据
 alpha.window_length = 20  # 数据窗口长度
 alpha.sort_ascending = False  # 优先选择涨幅最大的股票
 alpha.condition = 'greater'  # 筛选出涨幅大于某一个值的股票
@@ -510,7 +522,7 @@ alpha.ubound = 0.005  # 筛选出涨幅大于0.5%的股票
 alpha.sel_count = 7  # 每次选出7支股票
 
 # 创建一个交易员对象，运行alpha策略
-op = qt.Operator(alpha, signal_type='PT', op_type='step')
+op = qt.Operator(alpha)
 
 # 设置策略运行参数
 # 交易股票池包括所有的银行股和家用电器股
@@ -522,10 +534,10 @@ qt.configure(
         trade_batch_size=100,  # 交易批量为100股的整数倍
         sell_batch_size=1,  # 卖出数量为1股的整数倍
         live_trade_account_id=None,  # 不指定实盘交易账户，给出账户名称并创建一个新的账户
-        live_trade_account_name='new_account'
+        live_trade_account_name='new_account',
         # 如果想要使用已有的账户，应该指定账户ID同时不给出account_name：
-        # live_trade_account_id=1
-        # live_trade_account_name=None
+        live_trade_account_id=1
+        live_trade_account_name=None
         live_trade_ui_type='tui',  # 使用TUI界面监控实盘交易，默认使用CLI界面
 )
 ```
