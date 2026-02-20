@@ -9,10 +9,10 @@
 # ======================================
 
 import numpy as np
-from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 from qteasy.parameter import Parameter
 from qteasy.datatypes import DataType, StgData
 # commonly used ta-lib funcs that have a None ta-lib version
+from qteasy.strategy import BaseStrategy, RuleIterator, FactorSorter, GeneralStg
 from qteasy.tafuncs import (
     sma,
     ema,
@@ -57,12 +57,12 @@ from qteasy.tafuncs import (
 
 
 # Built-in Rolling timing strategies:
-def built_in_list(stg_id=None) -> list:
+def built_in_list(stg_id: str = None) -> list:
     """  获取内置交易策略ID的列表,可以通过stg_id进行模糊匹配
 
     Parameters
     ----------
-    stg_id: str, optional
+    stg_id: str, Optional
         策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
         支持模糊匹配，例如'cross'可以匹配到'crossline'
 
@@ -89,7 +89,7 @@ def built_in_list(stg_id=None) -> list:
     return list(built_ins(stg_id).keys())
 
 
-def built_ins(stg_id=None) -> dict:
+def built_ins(stg_id: str = None) -> dict:
     """ 获取或筛选内置的交易策略,可以通过stg_id进行模糊匹配，返回的是策略的字典
 
     Parameters
@@ -139,12 +139,12 @@ def built_ins(stg_id=None) -> dict:
     return strategy_dict
 
 
-def built_in_strategies(stg_id=None) -> list:
+def built_in_strategies(stg_id: str = None) -> list:
     """  获取内置交易策略对象的列表,可以通过stg_id进行模糊匹配
 
     Parameters
     ----------
-    stg_id: str, optional
+    stg_id: str, Optional
         策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
         支持模糊匹配，例如'cross'可以匹配到'crossline'
 
@@ -178,7 +178,7 @@ def built_in_strategies(stg_id=None) -> list:
     return list(built_ins(stg_id).values())
 
 
-def built_in_doc(stg_id) -> str:
+def built_in_doc(stg_id: str) -> str:
     """ 获取内置策略的文档，stg_id必须正确给出且存在
 
     Parameters
@@ -223,7 +223,7 @@ def built_in_doc(stg_id) -> str:
     return doc_string
 
 
-def get_built_in_strategy(stg_id) -> BaseStrategy:
+def get_built_in_strategy(stg_id: str) -> BaseStrategy:
     """ 使用ID获取交易策略
 
     Parameters
