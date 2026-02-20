@@ -45,22 +45,17 @@ def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
-    定义一个交易策略，需要包含四大要素：
+    定义一个交易策略，需要包含三大要素：
 
-    1，交易策略的运行时机和运行频率，决定了策略在实盘运行时的运行时间点，交易员对象将在这些时间点调用策略
-        的realize()方法生成交易信号。
-        交易时机和运行频率由策略所属的 Group 管理，策略通过 Group 委托读取。
-        使用 op.add_strategy(stg, run_freq='d', run_timing='close') 添加策略时指定运行频率和时机。
-
-    2，策略的可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
+    1，策略的可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
         策略的可调参数通过Parameter对象来定义，每个Parameter对象包含参数的名称、类型、取值范围和默认值
         定义好Parameter对象后，可调参数可以通过策略对象的pars属性设置，而参数的值可以通过par_values参
         数在策略初始化后进行设置
 
-    3，生成交易信号所需的历史数据，历史数据通过指定数据类型名称、数据的频率和时间窗口长度来确定。
+    2，生成交易信号所需的历史数据，历史数据通过指定数据类型名称、数据的频率和时间窗口长度来确定。
         一个交易策略可以使用多种不同的历史数据类型，各种数据类型的频率和窗口长度可以不同
 
-    4，策略的运行逻辑，即如何根据历史数据生成交易信号，这个逻辑通过重写策略的realize()方法来实现
+    3，策略的运行逻辑，即如何根据历史数据生成交易信号，这个逻辑通过重写策略的realize()方法来实现
         在realize()方法中，可以使用get_pars()和get_data()方法来获取策略的参数和历史数据来计算交易信号
 
     如果要创建一个自定义交易策略对象，使用下面的方法：
@@ -71,17 +66,12 @@ class BaseStrategy:
             super().__init__(
                 name='<strategy name>',
                 description='<strategy description>',
-                stg_type='BASE',
                 pars=[<list of Parameter objects>],  # 定义策略的可调参数类型和取值范围
-                data_types=[<list of DataType objects>],  # 定义策略使用的数据类型，关于更多细节见qteasy文档
+                data_types=[<list of DataType / StgData objects>],  # 定义策略使用的数据类型，关于更多细节见qteasy文档
                 **kwargs,
             )
             if par_values:
                 self.update_par_values(par_values)
-            
-            # 注意：run_freq 和 run_timing 不再在策略构造函数中指定
-            # 它们由策略所属的 Group 管理，策略通过 Group 委托读取
-            # 使用 op.add_strategy(stg, run_freq='d', run_timing='close') 添加策略时指定
 
         def realize(self):
             '''实现策略的交易逻辑，生成交易信号'''
@@ -1351,7 +1341,7 @@ class RuleIterator(BaseStrategy):
 
         投资组合： [share1, share2, share3, share4]
                     |        |       |       |
-                 [ int1,    int2,   int3,   int4] -> np.array[ int1,    int2,   int3,   int4]
+                 [ int1,   int2,   int3,   int4 ] -> np.array[ int1,   int2,   int3,   int4]
 
     按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
     中，并产生交易信号了。

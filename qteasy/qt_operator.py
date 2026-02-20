@@ -479,7 +479,7 @@ class Operator:
 
         返回True，表明Operator的各项属性已经具备以下条件：
             1，Operator 已经有strategy
-            2，所有Strategy Group的 blender已经设置
+            2，所有Strategy Group 的 blender已经设置
             3，所有Strategy所需的历史数据类型都已经准备好（合法性检查以后再做）
             4，交易策略组运行时间表已经生成（合法性检查以后再做）
         只有满足以上条件，Operator对象才能开始生成交易信号
