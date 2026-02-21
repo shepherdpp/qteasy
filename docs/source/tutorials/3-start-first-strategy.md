@@ -37,15 +37,17 @@ $$当日涨幅 = \frac{Price_0}{Price_{20}} - 1$$
 
 交易员对象可以直接通过`qt.Operator()`来创建，创建时传递`strategies`参数即可在创建时同时创建交易策略：
 ```python
-import qteasy as qt
-op = qt.Operator(strategies = 'ndayrate', signal_type='pt')
+op = qt.Operator(strategies = 'ndayrate')
 ```
 通过上面的代码，我们已经在`qteasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。
 
 使用`qt.built_ins()`函数，可以查看内置策略的详细介绍：
 
+```python
+>>> qt.built_in_doc('ndayrate', print_out=True)
+```
+输出如下:
 ```text
-qt.built_ins('ndayrate')
 以股票过去N天的价格或数据指标的变动比例作为选股因子选股
     基础选股策略：根据股票以前n天的股价变动比例作为选股因子
 
@@ -86,34 +88,47 @@ qt.built_ins('ndayrate')
 
 至此，一个`Operator`对象和交易策略就已经创建好了。
 
-我们可以使用`Operator.info()`来查看交易员对象和交易策略的详细信息，同时，通过`Operator.strategies`属性可以访问其中的所有交易策略，通过它的`info()`方法也可以查看更详细的策略参数和信息
+我们可以使用`Operator.info()`来查看交易员对象和交易策略的详细信息，同时，通过`Operator.strategies`属性可以访问其中的所有交易策略。
 
 ```python
-op.info()
+>>> op.info()
+>>> stg = op.strategies[0]  # 获取op的第一个策略，下面的几种方法是等效的
+>>> # stg = op[0]
+>>> # stg = op['ndayrate']
+>>> # stg = op.get_strategy_by_id('ndayrate')
+```
+输出如下：
+```text
+==============================Operator Information==============================
+Name:        None
+Run Mode:    batch - All history operation signals are generated before back testing
+Groups:      1 Strategy(s) in 1 Group(s)
 
-stg = op.strategies[0]  # 获取op的第一个策略，下面的几种方法是等效的
-stg = op[0]
-stg = op['ndayrate']
-stg = op.get_strategies_by_id('ndayrate')
+------------------------------------Group_1-------------------------------------
+Signal Type: pt - Position Target, signal represents position holdings in percentage of total value
+Run Timing:  close @ d - days
+Strategies (1): ['ndayrate']
+Signal blenders: ndayrate
 
-stg.info()
-Strategy_ID             N-DAY RATE                                              
-================================================================================
-Strategy Parameter      (20,)                                                   
-Strategy_type           FactorSorter
-Strategy name           N-DAY RATE
-Description
-    Select stocks by its N day price change
-Strategy Properties     Values                                                  
+------------------------------Strategies in group-------------------------------
+stg_id          name                    parameters                              
 --------------------------------------------------------------------------------
-Param.count             1
-Param.types             ['int']                                                 
-Param.range             [(2, 150)]                                              
-Run parameters          d @ close                                               
-Data types              ['close']                                               
-Data parameters         150 d                                                   
+ndayrate        N-DAY RATE              (14,)                                   
+================================================================================
+```
+通过交易策略的`info()`方法也可以查看更详细的策略参数和信息:
 
-Max select count        100.0%
+```python
+>>> stg.info()
+```
+输出如下
+```text
+============================= Strategy: N-DAY RATE =============================
+Strategy FACTOR(N-DAY RATE)
+Parameters: ['n'] = (14,)                                           
+Date Types: close_ANY_d x 150                                       
+----------------------------- Selection Properties -----------------------------
+Max select count        50.0%
 Sort Ascending          False
 Weighting               even                                                    
 Filter Condition        any                                                     
@@ -125,12 +140,12 @@ Filter lbound           -inf
 接下来，我们还需要做一些最基本的设定，确保这个选股策略能按照我们的想法选股。`Operator`对象中的所有参数都可以通过`op.set_parameter()`方法来实现。
 
 ```python
-op.set_parameter(0,   
-                 sample_freq='d',  # 策略的选股周期为每日选股 
-                 sort_ascending=False,  # 设置选择涨幅最大的指数
-                 proportion_or_quantity=1,  # 设置每次选择一只指数后续持有
-                 pars=(20, ),  # 策略参数N=20，比较20日涨幅
-                 data_types='close')  # 使用收盘价计算涨幅
+>>> op.set_parameter(0,   # 指定需要设置参数的交易策略：即设置策略0的参数
+...                  sort_ascending=False,  # 设置选择涨幅最大的指数
+...                  max_sel_count=1,  # 设置选股数量，每次最多从投资池里选择一支股票
+...                  par_values=(20, ),  # 策略参数N=20，比较20日涨幅
+...                  data_types=[qt.StgData('close', freq='d', asset_type='ANY', use_latest_data_cycle=True, window_length=20)],  # 使用收盘价计算涨幅
+... )  
 ```
 在上面的代码段中，我们通过几个简单的参数设置选股策略的基本行为：
 
@@ -138,7 +153,7 @@ op.set_parameter(0,
 - `sort_ascending=False`：该策略的操作方式是将所有的N日涨幅排序后取前几位，因为需要取最大涨幅，因此需要降序排列，如果要取最小涨幅，则需要设置`sort_ascending=True`
 - `proportion_or_quantity=1`：选择的股票数量，因为从两个指数中固定二选一，因此设置此参数为1
 - `pars=(20, )`：策略参数N，设置为20表示根据20日涨幅选股
-- `data_types='close'`：默认值，计算收盘价的涨幅
+- `data_types=[qt.StgData(...)]`：此处为策略数据类型设置，告诉系统需要使用什么样的数据来计算选股因子，这里我们设置为收盘价，并且设置了窗口长度为20，表示在计算N日涨幅的时候，需要使用过去20天的收盘价数据来计算。
 
 ### 准备回测数据
 配置好选股策略以后，需要通过回测检验策略的表现，也就是调用沪深300和创业板两个指数的实际历史数据，进行模拟交易，看看模拟交易的结果是否能够跑赢大盘。在实际操作中，卖卖大盘指数不太容易，不过一般都可以很容易找到跟踪大盘指数的ETF基金来代替大盘，在这里为了简单起见，我们这里就直接投资于2011年1月1日一直到2020年12月31日之间的沪深300和创业板指数，假设交易费率为万分之一，双向收费，看看投资的结果如何。
@@ -151,15 +166,12 @@ op.set_parameter(0,
 使用下面的代码下载相应的历史数据：
 
 ```python
-qt.refill_data_source(tables='index_daily', symbols='399006, 000300', start_date='20100901', end_date='20201231')
-Filling data source file://csv@qt_root/data/ ...
-[########################################]7/7-100.0%  <index_basic:SSE-OTH>10365wrtn in ~1't
-[########################################]2/2-100.0%  <index_daily:000300.SH-399006.SZ>6925wrtn in ~2"
+>>> qt.refill_data_source(tables='index_daily', symbols='399006, 000300', start_date='20100901', end_date='20201231')
 ```
 确认数据是否下载成功：
 ```python
-qt.candle('000300.SH', start='20110101', end='20201231', asset_type='IDX', mav=[])
-qt.candle('399001.SZ', start='20110101', end='20201231', asset_type='IDX', mav=[])
+>>> qt.candle('000300.SH', start='20110101', end='20201231', asset_type='IDX', mav=[])
+>>> qt.candle('399001.SZ', start='20110101', end='20201231', asset_type='IDX', mav=[])
 ```
 ![在这里插入图片描述](img/tutorial02-01.png)
 
@@ -169,16 +181,17 @@ qt.candle('399001.SZ', start='20110101', end='20201231', asset_type='IDX', mav=[
 
 数据准备好之后，就可以开始配置回测参数并开始回测了。`qteasy`的策略回测完全是参数化的，在回测之前我们需要告诉系统所有的相关信息，例如投资的产品品种、投入资金的数量、回测开始日期和结束日期、回测过程的交易费用计算方法、交易批量等。我们可以通过`qt.configure()`对回测参数进行基本配置：
 ```python
-qt.configure(asset_pool=['000300.SH',
-                         '399006.SZ'],  # 投资指数包括沪深300和创业板指数
-             invest_cash_amounts=[100000],  # 投入金额为十万元
-             asset_type='IDX',  # 为简单起见，直接投资于指数
-             cost_rate_buy=0.0001,  # 买入资产时交易费用万分之一
-             cost_rate_sell=0.0001,  # 卖出资产时的交易费用为万分之一
-             invest_start='20110101',  # 模拟交易开始日期
-             invest_end='20201231',  # 模拟交易结束日期
-             trade_batch_size=0,  # 买入资产时最小交易批量
-             sell_batch_size=0)  # 卖出资产时最小交易批量
+>>> qt.configure(asset_pool=['000300.SH',
+...                          '399006.SZ'],  # 投资股票池里包括沪深300和创业板指数两个指数，分别代表大盘和小盘股
+...              invest_cash_amounts=[100000],  # 投入金额为十万元
+...              asset_type='IDX',  # 为简单起见，直接投资于指数
+...              cost_rate_buy=0.0001,  # 买入资产时交易费用万分之一
+...              cost_rate_sell=0.000,  # 卖出资产时的交易费用为万分之一
+...              invest_start='20110101',  # 模拟交易开始日期
+...              invest_end='20201231',  # 模拟交易结束日期
+...              trade_batch_size=0,  # 买入资产时最小交易批量
+...              sell_batch_size=0,  # 卖出资产时最小交易批量
+... )
 ```
 上面的配置含义如下
 - `asset_pool=['000300.SH', '399006.SZ']`：投资目标指数用列表形式给出，如果要投资其他的指数或ETF基金，直接传入证券代码即可，如果要从三个或更多的证券中选股，直接加入列表中即可
@@ -197,55 +210,52 @@ qt.configure(asset_pool=['000300.SH',
 
 `qteasy`的策略回测非常简单，设置好所有的配置后，即可以开始回测了，我们可以调用`qt.run()`开始回测，回测的同时，我们开启可视化图表输出，并且开启交易明细记录：
 ```python
-res = qt.run(op, visual=True, trade_log=True)  # 使用下面的方法效果是等同德
-res = op.run(visual=True, trade_log=True)  # visual 和 trade_log两个参数同样是qt的配置参数，下面的调用方法等效：
-qt.configure(visual=True,
-             trade_log=True)
-qt.run(op)  # or op.run()
+>>> res = qt.run(op, mode=1, visual=True, trade_log=True)  # 调用qteasy的run方法，启动回测交易
 ```
-等待片刻后，回测完成，`qteasy`会自动打印回测报告如下：
-```
-     ====================================
-     |                                  |
-     |       BACK TESTING RESULT        |
-     |                                  |
-     ====================================
+等待片刻后，回测完成，`qteasy`会自动打印回测报告
 
+输出如下：
+```text
+====================================
+|                                  |
+|         BACKTEST REPORT          |
+|                                  |
+====================================
 qteasy running mode: 1 - History back testing
-time consumption for operate signal creation: 142.4ms
-time consumption for operation back looping:  3s369.3ms
-
-investment starts on      2011-01-04 00:00:00
-ends on                   2020-12-31 00:00:00
-Total looped periods:     10.0 years.      - 一共模拟了十年的交易
-
+time consumption for operate signal creation: 79.4 ms
+time consumption for operation back testing:  4.7 ms
+investment starts on      2011-01-04 15:00:00
+ends on                   2020-12-30 15:00:00
+Total looped periods:     10.0 years.
 -------------operation summary:------------
-
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
           Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
-000300.SH    74       79    153   47.2%      0.0%     52.8%  
-399006.SZ    85      118    203   48.5%      0.0%     51.5%   
+000300.SH   427       87    514   46.3%      1.6%     52.2%  
+399006.SZ   356       83    439   46.5%      1.2%     52.3%  
 
-Total operation fee:     ¥    3,122.37    - 总交易费用
-total investment amount: ¥  100,000.00    - 初始投资金额十万元
-final value:              ¥  514,251.88   - 十年后投资总金额来到了五十一万
-Total return:                   414.25%   - 十年总收益率
-Avg Yearly return:               17.80%   - 年化收益率
-Skewness:                         -0.38
-Kurtosis:                          2.88
-Benchmark return:                63.38%   - 同期沪深300指数的总收益
-Benchmark Yearly return:          5.03%   - 沪深300的年化收益
+Total operation fee:      ¥    6,963.81
+total investment amount:  ¥  100,000.00
+final value:              ¥  468,589.47
+Total return:                   368.59% 
+Avg Yearly return:               16.71%
+Skewness:                         -0.39
+Kurtosis:                          3.18
+Benchmark return:                60.32% 
+Benchmark Yearly return:          4.84%
 
 ------strategy loop_results indicators------ 
-alpha:                            0.185
-Beta:                             0.691
-Sharp ratio:                      0.726
-Info ratio:                       0.049
-250 day volatility:               0.256
-Max drawdown:                    50.57% 
-    peak / valley:        2015-06-03 / 2016-06-13
-    recovered on:         2020-02-18
+alpha:                            0.192
+Beta:                             0.692
+Sharp ratio:                      0.766
+Info ratio:                       0.048
+250 day volatility:               0.257
+Max drawdown:                    47.91% 
+    peak / valley:        2015-06-03 / 2019-01-03
+    recovered on:         2020-02-24
 
-===========END OF REPORT=============
+
+==================END OF REPORT===================
 ```
 从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右，甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了17.8%，十年间总资产从十万元达到了五十多万元，翻了五倍多
 
@@ -296,14 +306,10 @@ Max drawdown:                    50.57%
 
 `qteasy`的内置选股策略提供了一个过滤条件`condition`属性，默认条件下`condition='any'`，代表没有过滤条件，现在我们需要把小于0的收益率过滤掉，因此可以设置`condition='greater'`同时设置过滤范围`ubound=0`即可：
 ```python
-op.set_parameter(0, 
-                 sample_freq='d',
-                 sort_ascending=False,
-                 proportion_or_quantity=1,
-                 pars=(20, ),
-                 data_types='close',
-                 condition='greater',  # 新增过滤条件：20日涨幅大于等于
-                 ubound=0)  # 过滤条件值：0
+>>> op.set_parameter(0, 
+...                  condition='greater',  # 新增过滤条件：20日涨幅大于等于
+...                  ubound=0.001,  # 过滤条件值：0
+...                  )  
 ```
 上面的设置跟前一节基本相同，增加了两个参数：
 
@@ -313,49 +319,49 @@ op.set_parameter(0,
 ### 改进后的结果
 同样按照前面的配置，直接执行`qt.run()`。这里直接放结果：
 ```python
-res=qt.run(op, visual=True, print_backtest_log=True)
+>>> res=qt.run(op, visual=True, print_backtest_log=True)
 ```
+输出如下：
 ```text
-     ====================================
-     |                                  |
-     |       BACK TESTING RESULT        |
-     |                                  |
-     ====================================
-
+====================================
+|                                  |
+|         BACKTEST REPORT          |
+|                                  |
+====================================
 qteasy running mode: 1 - History back testing
-time consumption for operate signal creation: 108.1ms
-time consumption for operation back looping:  914.3ms
-
-investment starts on      2011-01-04 00:00:00
-ends on                   2020-12-31 00:00:00
+time consumption for operate signal creation: 93.4 ms
+time consumption for operation back testing:  4.5 ms
+investment starts on      2011-01-04 15:00:00
+ends on                   2020-12-30 15:00:00
 Total looped periods:     10.0 years.
-
 -------------operation summary:------------
-
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
           Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
-000300.SH    82       85    167   24.4%      0.0%     75.6%  
-399006.SZ    90      104    194   41.2%      0.0%     58.8%   
+000300.SH   187       80    267   24.9%      0.6%     74.5%  
+399006.SZ   350       81    431   40.1%      0.5%     59.4%  
 
-Total operation fee:     ¥    5,535.42
+Total operation fee:     ¥    7,241.45
 total investment amount: ¥  100,000.00
-final value:              ¥1,006,560.22
-Total return:                   906.56% 
-Avg Yearly return:               25.98%
+final value:              ¥  742,879.17
+Total return:                   642.88% 
+Avg Yearly return:               22.22%
 Skewness:                         -0.23
-Kurtosis:                          4.79
-Benchmark return:                63.38% 
-Benchmark Yearly return:          5.03%
+Kurtosis:                          5.19
+Benchmark return:                60.32% 
+Benchmark Yearly return:          4.84%
 
 ------strategy loop_results indicators------ 
-alpha:                            0.285
-Beta:                             0.624
-Sharp ratio:                      1.029
-Info ratio:                       0.055
-250 day volatility:               0.208
-Max drawdown:                    20.26% 
-    peak / valley:        2015-06-03 / 2015-08-06
-    recovered on:         2015-10-20
-===========END OF REPORT=============
+alpha:                            0.274
+Beta:                             0.619
+Sharp ratio:                      1.004
+Info ratio:                       0.047
+250 day volatility:               0.209
+Max drawdown:                    23.80% 
+    peak / valley:        2018-01-24 / 2019-01-23
+    recovered on:         2019-03-06
+
+==================END OF REPORT===================
 ```
 可视化图表如下：
 ![在这里插入图片描述](img/tutorial02-10.png)

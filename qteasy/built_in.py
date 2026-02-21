@@ -3925,7 +3925,7 @@ class SelectingNDayRateChange(FactorSorter):
         n = self.get_pars('n')
         h = self.get_data('close_ANY_d')
         current_price = h[-1]
-        n_previous = h[-n - 1]
+        n_previous = h[- n]
         factors = (current_price - n_previous) / n_previous
 
         return factors
