@@ -36,12 +36,22 @@ $$当日涨幅 = \frac{Price_0}{Price_{20}} - 1$$
 根据上述的策略思路，我们很容易在`qteasy`中实现这样的轮动选股策略，因为`qteasy`中已经内置了近70个交易策略，所有的内置策略都有独特的名称，直接引用名称即可使用这些内置策略。`qteasy`中的所有交易策略都必须包含在一个名为`Operator`（交易员）的对象中，交易员对象实际是一个策略的容器，可以理解为一个交易员可以同时管理多个策略，并且同时运行这些策略来生成交易信号。
 
 交易员对象可以直接通过`qt.Operator()`来创建，创建时传递`strategies`参数即可在创建时同时创建交易策略：
+
+
+
 ```python
-op = qt.Operator(strategies = 'ndayrate')
+>>> import qteasy as qt
+>>> op = qt.Operator(
+...     strategies = 'ndayrate',  # 创建交易员对象时，同时创建一个交易策略“ndayrate”
+...     run_freq='d',   # 交易策略的运行频率为每天运行一次
+...     run_timing='close',  # 交易策略的运行时机为每天股票收盘时运行
+... )
 ```
 通过上面的代码，我们已经在`qteasy`中创建了一个选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。
 
 使用`qt.built_ins()`函数，可以查看内置策略的详细介绍：
+
+
 
 ```python
 >>> qt.built_in_doc('ndayrate', print_out=True)
@@ -53,36 +63,33 @@ op = qt.Operator(strategies = 'ndayrate')
 
     策略参数：
         n: int, 股票历史数据的选择期
-    信号类型：
-        PT型：百分比持仓比例信号
-    信号规则：
-        在每个选股周期使用以前n天的股价变动比例作为选股因子进行选股
-        通过以下策略属性控制选股方法：
-        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
-        *condition:         str ,   确定股票的筛选条件，默认值'any'
-                                    'any'        :默认值，选择所有可用股票
-                                    'greater'    :筛选出因子大于ubound的股票
-                                    'less'       :筛选出因子小于lbound的股票
-                                    'between'    :筛选出因子介于lbound与ubound之间的股票
-                                    'not_between':筛选出因子不在lbound与ubound之间的股票
-        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
-        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
-        *sort_ascending:    bool,   排序方法，默认值: False,
-                                    True: 优先选择因子最小的股票,
-                                    False, 优先选择因子最大的股票
-        *weighting:         str ,   确定如何分配选中股票的权重
-                                    默认值: 'even'
-                                    'even'       :所有被选中的股票都获得同样的权重
-                                    'linear'     :权重根据因子排序线性分配
-                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
-                                    'proportion' :权重与股票的因子分值成正比
-
-    策略属性缺省值：
-    默认参数：(14,)
-    数据类型：close 收盘价，单数据输入
-    采样频率：月
-    窗口长度：150
-    参数范围：[(2, 150)]
+    信号类型:
+        PT型: 百分比持仓比例信号
+    信号规则:
+        在每个选股周期使用过去N日内价格变动率作为选股因子进行选股
+        通过以下策略属性控制选股方法:
+        - max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值: 0.5，表示选中50%的股票
+        - condition:         str ,   确定股票的筛选条件，默认值any
+            - any        :默认值，选择所有可用股票
+            - greater    :筛选出因子大于ubound的股票
+            - less       :筛选出因子小于lbound的股票
+            - between    :筛选出因子介于lbound与ubound之间的股票
+            - not_between:筛选出因子不在lbound与ubound之间的股票
+        - lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        - ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        - sort_ascending:    bool,   排序方法，默认值: False,
+            - True: 优先选择因子最小的股票,
+            - False, 优先选择因子最大的股票
+        - weighting:         str ,   确定如何分配选中股票的权重，默认值: even
+            - even       :所有被选中的股票都获得同样的权重
+            - linear     :权重根据因子排序线性分配
+            - distance   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+            - proportion :权重与股票的因子分值成正比
+    策略属性缺省值:
+        默认参数: (14,)
+        数据类型: close 收盘价，单数据输入
+        窗口长度: 150
+        参数范围: [(2, 150)]
     策略不支持参考数据，不支持交易数据
 ```
 
@@ -234,8 +241,8 @@ Only non-empty shares are displayed, call
 000300.SH   427       87    514   46.3%      1.6%     52.2%  
 399006.SZ   356       83    439   46.5%      1.2%     52.3%  
 
-Total operation fee:      ¥    6,963.81
-total investment amount:  ¥  100,000.00
+Total operation fee:     ¥    6,963.81
+total investment amount: ¥  100,000.00
 final value:              ¥  468,589.47
 Total return:                   368.59% 
 Avg Yearly return:               16.71%
@@ -257,6 +264,8 @@ Max drawdown:                    47.91%
 
 ==================END OF REPORT===================
 ```
+![png](img/3-start-first-strategy_img01.png)
+
 从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右，甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了17.8%，十年间总资产从十万元达到了五十多万元，翻了五倍多
 
 
@@ -283,7 +292,7 @@ Max drawdown:                    47.91%
 因此，我们可以想办法改进一下这个策略，看看如何能够降低回撤，提升策略的性能。为此，我们需要仔细分析模拟交易回测过程中的每一笔交易，寻找降低回撤的办法。要查看回测交易的每一个细节，那就需要查看交易明细报告。
 
 ### 交易明细报告
-我们在回测的时候，设置了`print_backtest_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`qteasy/log`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开：
+我们在回测的时候，设置了`trade_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`QT_ROOT_PATH/tradelog`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开：
 ![两个交易明细报告](img/tutorial02-06.png)
 打开第一个文件可以看到交易日志，交易日志中记录了每一个交易日资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录：
 ![在这里插入图片描述](img/tutorial02-07.png)
@@ -306,7 +315,7 @@ Max drawdown:                    47.91%
 
 `qteasy`的内置选股策略提供了一个过滤条件`condition`属性，默认条件下`condition='any'`，代表没有过滤条件，现在我们需要把小于0的收益率过滤掉，因此可以设置`condition='greater'`同时设置过滤范围`ubound=0`即可：
 ```python
->>> op.set_parameter(0, 
+>>> op.set_parameter(0,
 ...                  condition='greater',  # 新增过滤条件：20日涨幅大于等于
 ...                  ubound=0.001,  # 过滤条件值：0
 ...                  )  
@@ -319,7 +328,7 @@ Max drawdown:                    47.91%
 ### 改进后的结果
 同样按照前面的配置，直接执行`qt.run()`。这里直接放结果：
 ```python
->>> res=qt.run(op, visual=True, print_backtest_log=True)
+>>> res=qt.run(op, visual=True, trade_log=True)
 ```
 输出如下：
 ```text
@@ -361,15 +370,18 @@ Max drawdown:                    23.80%
     peak / valley:        2018-01-24 / 2019-01-23
     recovered on:         2019-03-06
 
+
 ==================END OF REPORT===================
 ```
+
 可视化图表如下：
-![在这里插入图片描述](img/tutorial02-10.png)
+![png](img/3-start-first-strategy_img02.png)
+
 从资产收益率图上可以看到，原来一片绿色（全程持仓）变成了白绿相间（白色区间空仓持币），资产回撤情况得到了大幅度优化：从原来的50%回撤降低到了20%左右。而且总回报率也大大提升：
 
-- 资产总额从改进前的五十多万提高到一百万
-- 总收益率从400%提升到了900%
-- 年化收益率从17%提升到了26%
+- 资产总额从改进前的四十多万提高到七十多万
+- 总收益率从300%提升到了640%
+- 年化收益率从17%提升到了22%
 - 最大回撤从50%降低到了20%
 
 通过查看交易记录可知，的确策略在2015年6月底的股灾期间保持空仓，躲避了单边下跌的行情。
