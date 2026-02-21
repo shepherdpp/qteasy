@@ -2,82 +2,126 @@
 
 ## 安装与导入
 
-使用 pip 安装（要求 Python >= 3.6, <3.13）：
+使用 `pip` 安装（要求 `Python >= 3.6, <3.13`）：部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 [FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。
 
 ```bash
 pip install qteasy
 ```
-
-部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 [FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。
+启动后即可导入 `qteasy` 并查看版本号：
 
 ```python
-import qteasy as qt
-print(qt.__version__)
+>>> import qteasy as qt
+>>> print(qt.__version__)
 ```
 
+输出如下：
+
+```
+2.0.0
+```
 ---
 
 ## 一分钟跑通
 
-本节将带您完成：配置 tushare Token → 下载沪深 300 十年指数数据 → 查看数据与 K 线 → 使用内置 DMA 策略对 000300.SH 做择时回测，并得到一份可用的回测结果。
+本节将带您完成：配置 `tushare Token` → 下载沪深 300 十年指数数据 → 查看数据与 K 线 → 使用内置 DMA 策略对 000300.SH 做择时回测，并得到一份可用的回测结果。
 
 ### 1. 配置 tushare Token
 
-qteasy 默认使用本地 `data/` 目录存储数据。若要从网络下载数据，需要先配置 [tushare](https://tushare.pro/document/2) 的 API Token（请先在 tushare 官网注册并获取 Token）。
+`qteasy` 默认使用 `Tushare` 下载金融数据。若要下载数据，需要先在系统的启动配置文件中配置 `tushare` 的 API Token（请先在 [`tushare` 官网](https://tushare.pro)注册并获取 Token）。
 
-**方式一：配置文件**  
-在 qteasy 安装目录下的 `qteasy/qteasy.cfg` 中增加一行（可通过 `qt.view_config_files()` 查看配置文件路径）：
+有两种方式修改启动配置文件：
 
-```text
-tushare_token = 你的tushare_API_Token
-```
-
-**方式二：代码中配置**  
-在首次下载数据前执行一次：
+**方式一：在代码中设置启动配置**  
+在首次下载数据前执行`update_start_up_setting()`修改启动配置并自动将其保存到启动配置文件中：
 
 ```python
-import qteasy as qt
-qt.configure(tushare_token='你的tushare_API_Token')
+>>> qt.update_start_up_setting(tushare_token='你的tushare_API_Token')  # 启动配置将被保存到启动配置文件中
+>>> qt.start_up_settings()  # 查看启动配置文件的内容
+```
+
+输出如下：
+
+```
+Start up settings:
+--------------------
+tushare_token = <你的tushare_API_token>
+...
+```
+
+**方式二：直接修改启动配置文件**  
+启动配置文件 `qteasy.cfg` 保存在 qteasy 根目录下（可通过 `qt.QT_ROOT_PATH` 查看配置文件路径），使用任意文本编辑器打开该文件并在其中增加一行：
+
+```text
+tushare_token = 你的tushare_API_Token  # 直接打开文件并在其中新增配置，字符串配置不需要使用双引号
 ```
 
 ### 2. 下载 000300.SH 十年指数数据
 
-配置好 Token 后，下载沪深 300 指数（000300.SH）的日线数据。建议先下载交易日历与指数基础信息，再下载指数日线（约十年）：
+配置好 `tushare` Token 后，下载沪深 300 指数（000300.SH）的日线数据。建议先下载交易日历与指数基础信息，再下载指数日线（约十年）：
+
+使用`qteasy.refill_data_source()`函数，`qteasy`会自动从配置好的数据下载渠道下载数据，当数据量太大时，会自动分块下载数据、完成数据检查和清洗并存储到数据库中。
+
 
 ```python
-import qteasy as qt
-
-# 若未在 cfg 中配置 token，可在此设置
-# qt.configure(tushare_token='你的Token')
-
-# 下载交易日历与指数基础信息（首次使用建议执行）
-qt.refill_data_source(tables=['trade_calendar', 'index_basics'])
-
-# 下载 000300.SH 近十年日线数据
-qt.refill_data_source(
-    tables=['index_daily'],
-    start_date='20140101',
-    end_date='20241231',
-    symbols=['000300.SH'],
-)
+>>> # 下载交易日历与指数基础信息
+>>> qt.refill_data_source(tables=['trade_calendar', 'index_basics'])
+>>> # 下载 000300.SH 近十年日线数据
+>>> qt.refill_data_source(
+...     tables=['index_daily'],
+...     start_date='20140101',
+...     end_date='20241231',
+...     symbols=['000300.SH'],
+... )
 ```
+
+输出如下：
+
+```
+Filling data source file://csv@qt_root/data/ ...
+into 1 table(s) (parallely): {'trade_calendar'}
+<trade_calendar> 35000 wrn: 100%|████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
+Data refill completed! 35000 rows written into 1/1 table(s)!
+
+Filling data source file://csv@qt_root/data/ ...
+into 2 table(s) (parallely): {'index_daily', 'index_basic'}
+<index_daily> 152760 wrn: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:05<00:00,  2.51s/task]
+<index_basic> 1327 wrn: 100%|████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
+Data refill completed! 154087 rows written into 2/2 table(s)!
+```
+
 
 ### 3. 查看数据与 K 线图
 
 数据落地后，可用 `get_history_data` 取数、用 `candle` 画 K 线，确认数据与行情是否正常：
 
 ```python
-# 获取近一年日线（2.0 推荐使用 htype_names）
-hp = qt.get_history_data(
-    htype_names='open, high, low, close',
-    shares='000300.SH',
-    start='20230101',
-    end='20231231',
-)
-print(hp)  # 查看数据结构与范围
+>>> # 获取近一年日线
+>>> hp = qt.get_history_data(
+...     htypes='open, high, low, close',  # 设置需要获取的数据类型
+...     shares='000300.SH',  # 资产类型为沪深300指数
+...     start='20230101',  # 数据起始日期
+...     end='20231231',  # 数据结束日期
+... )
+>>> print(hp)  # 查看数据结构与范围
+>>> # 绘制 K 线（支持交互缩放与切换指标）
+>>> qt.candle('000300.SH', start='2023-06-01', end='2023-12-01', asset_type='IDX')
+```
 
-# 绘制 K 线（支持交互缩放与切换指标）
-qt.candle('000300.SH', start='2023-06-01', end='2023-12-01', asset_type='IDX')
+输出如下：
+
+```
+{'000300.SH':
+               open     high      low    close
+2023-01-03  3864.84  3893.99  3831.25  3887.90
+2023-01-04  3886.25  3905.90  3873.65  3892.95
+2023-01-05  3913.49  3974.88  3912.26  3968.58
+...             ...      ...      ...      ...
+2023-10-10  3696.25  3701.26  3655.59  3657.13
+2023-10-11  3674.75  3689.53  3658.35  3667.55
+2023-10-12  3697.93  3711.50  3682.84  3702.38
+
+[186 rows x 4 columns]
+}
 ```
 
 ![png](img/output_5_2.png)
@@ -87,104 +131,104 @@ qt.candle('000300.SH', start='2023-06-01', end='2023-12-01', asset_type='IDX')
 使用内置 **DMA** 均线择时策略，以 000300.SH 为交易标的，在已下载的十年数据上做回测。下面使用一组常用且表现较稳的参数（短均线 20、长均线 60、DMA 周期 10），直接得到回测结果与图表：
 
 ```python
-op = qt.Operator(strategies='dma')
-op.set_parameter('dma', pars=(20, 60, 10))  # 已验证的一组参数
-
-res = op.run(
-    mode=1,
-    asset_pool='000300.SH',
-    asset_type='IDX',
-    invest_cash_amounts=[100000],
-    invest_start='20150101',
-    invest_end='20241231',
-    cost_rate_buy=0.0003,
-    cost_rate_sell=0.0001,
-    visual=True,
-    trade_log=True,
-)
+>>> # 设置qteasy的运行配置参数
+>>> qt.configure(
+...     asset_pool='000300.SH',  # 交易资产池包括沪深300指数
+...     asset_type='IDX',  # 投资资产类型为IDX-指数
+...     invest_cash_amounts=[100000],  # 回测初始投资金额为十万元
+...     invest_start='20150101',  # 回测投资初始日期
+...     invest_end='20241231',  # 回测投资结束日期
+...     cost_rate_buy=0.0003,  # 交易费率：买入手续费万分之三
+...     cost_rate_sell=0.0001,  # 交易费率：卖出手续费万分之一
+...     visual=True,  # 是否输出回测结果可视化图表：是
+...     trade_log=True,  # 是否输出回测记录：是
+... )
+>>> op = qt.Operator(strategies='dma')  # 创建一个交易员对象，执行一个DMA交易策略
+>>> op.set_parameter('dma', par_values=(20, 60, 10))  # 设置交易策略的参数
+>>> res = qt.run(op, mode=1)  # 启动交易，运行模式为1（回测交易）
 ```
+输出如下：
 
-运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「qteasy 能做什么」中的参数优化与 [回测文档](references/3-back-test-strategy.md)。
+```
+====================================
+|                                  |
+|         BACKTEST REPORT          |
+|                                  |
+====================================
+qteasy running mode: 1 - History back testing
+time consumption for operate signal creation: 81.3 ms
+time consumption for operation back testing:  4.9 ms
+investment starts on      2015-01-05 15:00:00
+ends on                   2024-12-30 15:00:00
+Total looped periods:     10.0 years.
+-------------operation summary:------------
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
+          Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+000300.SH   340       41    381   44.7%     -0.0%     55.3%  
+
+Total operation fee:     ¥    3,261.19
+total investment amount: ¥  100,000.00
+final value:              ¥  115,601.73
+Total return:                    15.60% 
+Avg Yearly return:                1.46%
+Skewness:                         -1.16
+Kurtosis:                         16.95
+Benchmark return:                 1.67% 
+Benchmark Yearly return:          0.17%
+
+------strategy loop_results indicators------ 
+alpha:                            0.006
+Beta:                             0.975
+Sharp ratio:                      0.113
+Info ratio:                       0.001
+250 day volatility:               0.130
+Max drawdown:                    36.85% 
+    peak / valley:        2015-04-27 / 2018-11-27
+    recovered on:         Not recovered!
+
+
+==================END OF REPORT===================
+
+```
+![png](img/output_14_1.png)
+
+运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「`qteasy` 能做什么」中的参数优化与 [回测文档](references/3-back-test-strategy.md)。
 
 ---
 
-## qteasy 能做什么
+## `qteasy` 能做什么
 
-### 回测与评价
+### **获取并管理金融历史数据**: 
 
-所有交易策略由 `Operator`（交易员）管理。使用内置 DMA 均线择时策略，即可在历史数据上回测并得到收益曲线、最大回撤、夏普比等评价指标及图表。
+- 方便地从多渠道获取大量金融历史数据，进行数据清洗后以统一格式进行本地存储
+- 通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂信息，也只需要一行代码即可获取
+- 基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化
+- 数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现
 
-- 向量化回测，支持日/周/月及分钟级频率，运行高效。
-- 内置 70+ 策略，一行代码即可组合、回测；支持自定义策略与多策略混合（blender）。
-- 输出完整交易清单与多维度评价（收益、回撤、夏普、信息比等），并生成可视化图表。
+![png](img/output_5_2.png)
 
-内置策略说明见 [内置策略文档](references/4-build-in-strategy-blender.md)。
+### **以简单、安全的方式创建交易策略**
 
-```python
-op = qt.Operator(strategies='dma')
-op.info()
-
-res = op.run(
-    mode=1,
-    asset_pool='000300.SH',
-    asset_type='IDX',
-    invest_cash_amounts=[100000],
-    invest_start='20220501',
-    invest_end='20221231',
-    visual=True,
-    trade_log=True,
-)
-```
+- 通过`BaseStrategy`类，交易策略定义方法直观、逻辑清晰
+- 内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而来，过程如同搭积木
+- 交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性
+- 同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差
 
 ![png](img/output_14_3.png)
 
-### 参数优化
+### **交易策略的回测评价、优化和模拟自动化交易**
 
-设置策略的优化标记后，在 `mode=2` 下运行，qteasy 会在优化区间内搜索表现较好的参数，并在测试区间验证；优化结果可写回策略参数用于后续回测。
+- 通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行多维度全方位评价，生成交易报告和结果图表
+- 提供多种优化算法，包括模拟退火、遗传算法、贝叶斯优化等在大参数空间中优化策略性能
+- 获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息
+- 回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查
+- 未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易
 
-- 多种优化算法可选（网格、随机、遗传算法、贝叶斯等），适应不同参数规模与耗时。
-- 优化区间与测试区间分离，避免过拟合，结果更可依赖。
-- 一次运行得到多组候选参数及排名，便于比较与择优选入实盘。
+![png](examples/img/trader_app_1.png)  
+![png](examples/img/trader_app_2.png)  
+![png](examples/img/trader_app_light_theme.png) 
 
-详细参数与解读见 [策略优化](references/5-optimize-strategy.md)。
-
-```python
-op.set_parameter('dma', opt_tag=1)
-res = op.run(
-    mode=2,
-    opti_start='20220501',
-    opti_end='20221231',
-    test_start='20220501',
-    test_end='20221231',
-    opti_sample_count=1000,
-    visual=True,
-)
-```
-
-![png](img/output_24_1.png)
-
-### 实盘与监控界面
-
-qteasy 支持实盘或模拟运行：先配置交易标的与运行参数，再通过 `qt.run(op, ...)` 或命令行启动。使用账户 ID 可断点续跑。
-
-- 与交易所节奏一致：按交易日定时拉取行情、运行策略、模拟成交，支持 T+1 与费率设置。
-- 账户与交易记录持久化，断点续跑不丢状态；多账户可分别管理资金与持仓。
-- **TraderShell**：命令行界面，查看持仓、资金与交易日志，适合服务器与脚本化使用。
-- **TraderApp**：图形界面，实时查看交易日志、持仓与资金变化，操作更直观。
-
-详细配置与启动方式见 [模拟运行概览](references/1-simulation-overview.md)。
-
-![png](img/output_27_1.png)
-
-![png](examples/img/trader_app_light_theme.png)
-
-极简启动示例（需已配置资产池等）：
-
-```python
-qt.run(op, live_trade_account_name='new_account', live_trade_ui_type='tui')
-```
-
-或使用示例脚本：`python -m live_example --account 1 --ui tui`（参见 `examples/` 目录）。
 
 ---
 
