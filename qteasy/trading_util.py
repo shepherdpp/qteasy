@@ -17,11 +17,9 @@ import pandas as pd
 import numpy as np
 from typing import Union
 
-from akshare import news_report_time_baidu
 from numba import njit
 
 from qteasy.__init__ import logger_core as logger
-from qteasy.finance import get_cost_params
 from qteasy.qt_operator import Operator
 from qteasy.configure import QT_CONFIG
 from qteasy.utilfuncs import (

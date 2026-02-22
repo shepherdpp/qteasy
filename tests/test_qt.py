@@ -8,6 +8,7 @@
 #   Unittest for general functions of
 # qteasy.
 # ======================================
+import time
 import unittest
 import sys
 import pandas as pd
@@ -1265,11 +1266,6 @@ class TestQT(unittest.TestCase):
                 trade_log=True,
                 trace_log=True,
         )
-        # test with group merge type is None
-        qt.run(op=op, mode=1)
-
-        op.group_merge_type = 'AND'
-        qt.run(op=op, mode=1)
 
         # TODO: BUG: 这里需要解决trace产生的问题：
         #  首先是trace产生的记录在trade_log中没有与正确的时间对齐，详细说明如下：
@@ -1280,6 +1276,12 @@ class TestQT(unittest.TestCase):
         #     录应该出现在第10、20、30行，第三个策略的记录应该出现在第1、3、5、7行，
         #     然而，所有的记录都记录在了第1、2、3、4、5行，造成数据错位。
         #  这个问题应该修改
+
+        # test with group merge type is None
+        qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
+        op.group_merge_type = 'AND'
+        qt.run(op=op, mode=1)
 
         print(f'仿照qteasy tutorial中的案例，测试一个大小盘轮动策略，回测过程中记录trace值')
         op = qt.Operator(strategies=Sel_Tracing, run_freq='d', signal_type='PT')
@@ -1304,9 +1306,24 @@ class TestQT(unittest.TestCase):
                 cost_rate_sell=0.000,  # 卖出资产时的交易费用为万分之一
                 invest_start='20140101',  # 模拟交易开始日期
                 invest_end='20161231',  # 模拟交易结束日期
-                trade_batch_size=0.01,  # 买入资产时最小交易批量
-                sell_batch_size=0.01,  # 卖出资产时最小交易批量
+                trade_batch_size=0.0,  # 买入资产时最小交易批量
+                sell_batch_size=0.0,  # 卖出资产时最小交易批量
         )
+        # test with group merge type is None
+        qt.run(op=op, mode=1)
+
+        op.set_parameter(0,  # 指定需要设置参数的交易策略：即设置策略0的参数
+                         sort_ascending=False,  # 设置选择涨幅最大的指数
+                         max_sel_count=1,  # 设置选股数量，每次最多从投资池里选择一支股票
+                         par_values=(20,),  # 策略参数N=20，比较20日涨幅
+                         data_types=[
+                             qt.StgData('close', freq='d',
+                                        asset_type='ANY',
+                                        use_latest_data_cycle=True,
+                                        window_length=25)],  # 使用收盘价计算涨幅
+                         condition='greater',  # 设置条件为大于0，即只有当20日涨幅大于0时才会产生买入信号
+                         ubound=0,  # 设置条件的上界为0，即20日涨幅必须大于0才能产生买入信号
+                         )
         # test with group merge type is None
         qt.run(op=op, mode=1)
 
