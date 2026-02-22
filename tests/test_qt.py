@@ -160,23 +160,40 @@ class Cross_SMA_PS(qt.RuleIterator):
 
         self.trace('s_today', s_today)
         self.trace('f_today', f_today)
+        self.trace('s_last', s_last)
+        self.trace('f_last', f_last)
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_today * (1 + m)
         s_ma_l = s_today * (1 - m)
+        self.trace('s_ma_u', s_ma_u)
+        self.trace('s_ma_l', s_ma_l)
 
         # 根据观望模式在不同的点位产生交易信号
         if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
-            self.trace('signal', f'f_last:{f_last}, f_today:{f_today}, s_ma_u:{s_ma_u}, fast crossed upwards upper bound, signal is 1')
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, '
+                       f'fast crossed upwards upper bound, signal is 1')
             return 1.
         elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
-            self.trace('signal2', f'f_last:{f_last}, f_today:{f_today}, s_ma_u:{s_ma_u}, fast crossed downwards upper bound, signal is -1')
+            self.trace('signal2',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, '
+                       f'fast crossed downwards upper bound, signal is -1')
             return -1.
         elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_l:.3f}, '
+                       f'fast crossed downwards lower bound, signal is -1')
             return -1.
         elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_l:.3f}, '
+                       f'fast crossed upwards lower bound, signal is 1')
             return 1.
         else:  # 其余情况不产生任何信号
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, s_ma_l:{s_ma_l:.3f}, '
+                       f'no line crossing, nosignal generated')
             return 0.
 
 
@@ -231,6 +248,39 @@ class Cross_SMA_PT(qt.RuleIterator):
             return -1
         else:  # 其余情况不产生任何信号
             return 0
+
+
+class Sel_Tracing(qt.FactorSorter):
+    """ 以股票过去N天的价格或数据指标的变动比例作为选股因子选股，生成trace报告
+    """
+
+    def __init__(self, par_values=(14,), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(2, 150), par_type='int', name='n')
+                ],
+                name='N-DAY RATE',
+                description='Select stocks by its N day price change',
+                data_types=StgData('close', freq='d', asset_type='ANY', window_length=150),
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_previous = h[- n]
+        self.trace('cur_price_300', current_price[0])
+        self.trace('cur_price_SZ', current_price[1])
+        self.trace('n_prev_300', n_previous[0])
+        self.trace('n_prev_SZ', n_previous[1])
+        factors = (current_price - n_previous) / n_previous
+        self.trace('rate_300', factors[0])
+        self.trace('rate_SZ', factors[1])
+
+        return factors
 
 
 # Other high level test strategies
@@ -1025,13 +1075,18 @@ class TestQT(unittest.TestCase):
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                                 '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                                 '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
-                                                                '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                                '其他建材', '汽车服务', '火力发电', '医药商业',
+                                                                '汽车配件',
                                                                 '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
                                                                 '铜', '普钢', '航空', '特种钢',
-                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
-                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
-                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
-                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路',
+                                                                '超市连锁',
+                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械',
+                                                                '塑料',
+                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表',
+                                                                '服饰',
+                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰',
+                                                                '半导体',
                                                                 '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
                                                                 '陶瓷', '船舶'],
                                                       area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
@@ -1172,7 +1227,7 @@ class TestQT(unittest.TestCase):
         print('backtest in batch mode:')
         res_batch = qt.run(op=op_batch, mode=1)
         print('backtest in stepwise mode:')
-        res_stepwise = qt.run(op=op_stepwise,mode=1)
+        res_stepwise = qt.run(op=op_stepwise, mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
@@ -1199,7 +1254,7 @@ class TestQT(unittest.TestCase):
         qt.configure(
                 benchmark_asset='000300.SH',
                 benchmark_asset_type='IDX',
-                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_pool='601398.SH,600000.SH,000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
                 invest_start='20250301',
@@ -1214,6 +1269,45 @@ class TestQT(unittest.TestCase):
         qt.run(op=op, mode=1)
 
         op.group_merge_type = 'AND'
+        qt.run(op=op, mode=1)
+
+        # TODO: BUG: 这里需要解决trace产生的问题：
+        #  首先是trace产生的记录在trade_log中没有与正确的时间对齐，详细说明如下：
+        #   - Operator运行三个交易策略，分别在每日10:30，每日收盘时以及每周收盘
+        #     时运行，在生成的trade_log中，每一天都有两组交易记录，与上面的时间对
+        #     齐，本来三个交易策略的trace记录应该分别与10:30/15:00以及每周的时间
+        #     对齐，即第一个策略的记录应该出现在第2、4、6、8、10行，第二个策略的记
+        #     录应该出现在第10、20、30行，第三个策略的记录应该出现在第1、3、5、7行，
+        #     然而，所有的记录都记录在了第1、2、3、4、5行，造成数据错位。
+        #  这个问题应该修改
+
+        print(f'仿照qteasy tutorial中的案例，测试一个大小盘轮动策略，回测过程中记录trace值')
+        op = qt.Operator(strategies=Sel_Tracing, run_freq='d', signal_type='PT')
+        op.set_parameter(0,  # 指定需要设置参数的交易策略：即设置策略0的参数
+                         sort_ascending=False,  # 设置选择涨幅最大的指数
+                         max_sel_count=1,  # 设置选股数量，每次最多从投资池里选择一支股票
+                         par_values=(20,),  # 策略参数N=20，比较20日涨幅
+                         data_types=[
+                             qt.StgData('close', freq='d',
+                                        asset_type='ANY',
+                                        use_latest_data_cycle=True,
+                                        window_length=25)],  # 使用收盘价计算涨幅
+                         )
+        qt.configure(
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
+                asset_pool=['000300.SH',
+                            '399006.SZ'],  # 投资股票池里包括沪深300和创业板指数两个指数，分别代表大盘和小盘股
+                invest_cash_amounts=[100000],  # 投入金额为十万元
+                asset_type='IDX',  # 为简单起见，直接投资于指数
+                cost_rate_buy=0.0001,  # 买入资产时交易费用万分之一
+                cost_rate_sell=0.000,  # 卖出资产时的交易费用为万分之一
+                invest_start='20140101',  # 模拟交易开始日期
+                invest_end='20161231',  # 模拟交易结束日期
+                trade_batch_size=0.01,  # 买入资产时最小交易批量
+                sell_batch_size=0.01,  # 卖出资产时最小交易批量
+        )
+        # test with group merge type is None
         qt.run(op=op, mode=1)
 
     def test_sell_short(self):
@@ -1272,7 +1366,7 @@ class TestQT(unittest.TestCase):
                         run_freq='d',
                         run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
                         window_length=50,
-                        par_values=(20,),)
+                        par_values=(20,), )
 
         self.assertEqual(len(op.groups), 2)
         self.assertEqual(op.groups['Group_1'].run_freq, 'd')

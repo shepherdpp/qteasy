@@ -990,6 +990,9 @@ class BaseStrategy:
             需要追踪的变量或者需要记录的备注信息，可以是int/float/bool类型的数据，也可以是一条字符串备注信息
         """
 
+        # TODO: 需要考虑FactorSorter和GeneralStg两种情况下的trace问题：
+        #  因为在这两种情况下stg.realize中使用的变量都是nd_array向量，无法
+        #  记录，因此需要特殊处理
         if self._trace_enabled:
             if name is None:
                 err = RuntimeError(f'When trace variables, name must be given and can not be None!')
