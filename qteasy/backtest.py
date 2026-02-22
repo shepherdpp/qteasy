@@ -242,8 +242,7 @@ def calculate_trade_results(
         allow_sell_short: bool,
         moq_buy: float,
         moq_sell: float,
-) -> Union[tuple[ndarray, ndarray, ndarray, ndarray, ndarray],
-tuple[ndarray, ndarray, ndarray, ndarray, ndarray[Any, dtype[bool_]]]]:
+) -> tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
     """ 该函数用于批量计算股票交易结果，根据交易信号、价格和持仓情况，结合交易
     成本和仓位限制，计算出每只股票的买入卖出数量、现金变动及交易费用。支持多种
     交易信号类型（PT、PS、VS）和做空机制，并通过Numba加速计算。
@@ -486,6 +485,14 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
                               share_count: int) -> tuple[Any, np.ndarray]:
     """ 处理回测现金和股票交割队列，计算达到交割期的现金和股票，并更新可用现金和可用股票
 
+    此处需要非常注意区分：股现交割的时机是发生在交易完成前还是交易完成后，因为两种时机意味着
+     交割判断是不同的。如果交割发生在交易完成前，那么在“换日”判断基于上一次交易是否与本次交易日期一
+     致，如果不一致实际上处理的是前一日的交易结果，此时应该直接进行交割换日。
+     但是如果在交易后执行交割，则“换日”判断基于下一次交易是否与本次交易日期一致，将本次交易结果加入
+     交割队列后，当下一次交易换日时，才会进行交割换日。
+     上述两种交割处理不同，在目前的实现中，交割发生在交易完成后，因此“换日”判断基于下一次交易是否
+     与本次交易日期一致。应该按照交易后交割形式实现。
+
     Parameters
     ----------
     cash_delivery_queue: np.ndarray
@@ -519,25 +526,33 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
         达到交割期的股票数量
     """
 
-    # % 计算速度非常快，不需要区分is_new_day
-    cash_in_pos = day_num % (cash_delivery_period + 1)
-    stock_in_pos = day_num % (stock_delivery_period + 1)
-    cash_delivery_pos = (day_num + 1) % (cash_delivery_period + 1)
-    stock_delivery_pos = (day_num + 1) % (stock_delivery_period + 1)
-
-    if is_new_day or cash_delivery_period == 0:
-        cash_delivery_queue[cash_in_pos] = new_cash
-        cash_delivered = cash_delivery_queue[cash_delivery_pos]
+    if cash_delivery_period == 0:
+        cash_delivered = new_cash
     else:
+        # 计算交割队列的起始位置，将新增现金加入交割队列起始位置
+        cash_in_pos = day_num % cash_delivery_period
         cash_delivery_queue[cash_in_pos] += new_cash
-        cash_delivered = 0.0
+        if is_new_day:
+            # 如果下次交易是新的一天，查找现金交割位置执行交割，
+            cash_delivery_pos = (day_num + 1) % cash_delivery_period
+            cash_delivered = cash_delivery_queue[cash_delivery_pos]
+            cash_delivery_queue[cash_delivery_pos] = 0.0
+        else:
+            cash_delivered = 0.0
 
-    if is_new_day or stock_delivery_period == 0:
-        stock_delivery_queue[stock_in_pos, :] = new_stocks
-        stocks_delivered = stock_delivery_queue[stock_delivery_pos, :].copy()
+    if stock_delivery_period == 0:
+        stocks_delivered = new_stocks.copy()
     else:
+        # 计算交割队列起始位置，将新增股票加入交割队列起始位置
+        stock_in_pos = day_num % stock_delivery_period
         stock_delivery_queue[stock_in_pos, :] += new_stocks
-        stocks_delivered = np.zeros(shape=(share_count,), dtype='float')
+        if is_new_day:
+            # 如果下次交易是新的一天，查找股票交割位置执行交割，
+            stock_delivery_pos = (day_num + 1) % stock_delivery_period
+            stocks_delivered = stock_delivery_queue[stock_delivery_pos, :].copy()
+            stock_delivery_queue[stock_delivery_pos, :] = np.zeros(shape=(share_count,), dtype='float')
+        else:
+            stocks_delivered = np.zeros(shape=(share_count,), dtype='float')
 
     return cash_delivered, stocks_delivered
 
@@ -895,7 +910,7 @@ def generate_cash_invest_and_delivery_arrays(invest_cash_plan: CashPlan,
     cash_inflation_array = cash_inflation_array / np.roll(cash_inflation_array, 1)
     cash_inflation_array[0] = 1.0  # 第一天的通胀率设为1.0
 
-    day_changes = np.diff(day_diffs.values, prepend=-1)
+    day_changes = np.diff(day_diffs.values, append=day_diffs.values[-1] + 1)  # 计算相邻日期的差值，最后一个日期后面添加一个新日期以确保最后一天的变化被记录
     day_changes[day_changes.nonzero()] = 1  # 将非零差值设为1，表示天数变化
     return cash_investment_array, cash_inflation_array, day_changes
 
