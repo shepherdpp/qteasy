@@ -898,6 +898,55 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
     return None
 
 
+def transfer_data(source: DataSource,
+                  target: DataSource,
+                  tables=None,
+                  parallel=True,
+                  process_count=None,
+                  chunk_size=100,
+                  merge_type='update',
+                  log=False):
+    """ 将数据从一个数据源迁移到另一个数据源
+
+    Parameters
+    ----------
+    source: DataSource
+        数据迁移的来源数据源，必须是一个DataSource对象
+    target: DataSource
+        数据迁移的目标数据源，必须是一个DataSource对象
+    tables: str or list of str, default: None
+        需要迁移的数据表名称，如果为None，则迁移所有数据表
+    parallel: Bool, Default True
+        是否启用多线程迁移数据
+        - True:  启用多线程迁移数据
+        - False: 禁用多线程迁移数据
+    process_count: int
+        启用多线程迁移数据时，同时开启的线程数，默认值为设备的CPU核心数
+    chunk_size: int
+        保存数据到目标数据源时，为了减少文件/数据库读取次数，将迁移的数据累计一定数量后再批量保存到目标数据源，chunk_size即批量，默认值100
+    merge_type: str, Default 'update'
+        数据写入目标数据源时的合并方式，支持以下选项：
+        - 'update'  : 更新数据，如果数据已存在，则更新数据
+        - 'ignore'  : 忽略数据，如果数据已存在，则丢弃迁移的数据
+    log: Bool, Default False
+        是否记录数据迁移日志
+
+    Returns
+    -------
+    None
+    """
+    if not isinstance(source, DataSource):
+        raise TypeError(f'source should be a DataSource, got {type(source)} instead.')
+    if not isinstance(target, DataSource):
+        raise TypeError(f'target should be a DataSource, got {type(target)} instead.')
+
+    # TODO: implement this function,
+    #  当需要将大量数据从一个数据源迁移到另一个数据源时，这个函数将会非常有用。
+    #  这个函数需要具备迁移大量数据的能力，同时需要提供进度条、需要分段迁移
+
+    raise NotImplementedError
+
+
 def get_history_data(htypes=None,
                      *,
                      htype_names=None,
@@ -1418,7 +1467,7 @@ def live_trade_accounts() -> pd.DataFrame:
 
 
 # noinspection PyTypeChecker
-def run(op: Operator, **kwargs) -> Iterable:
+def run(op: Operator, **kwargs) -> Union[dict, list]:
     """ `qteasy`模块的主要入口函数
 
     接受`operator`交易员对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
