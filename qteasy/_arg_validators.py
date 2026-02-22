@@ -265,24 +265,24 @@ def _valid_qt_kwargs():
                           '该数值不能低于5秒'},
 
         'trade_batch_size':
-            {'Default':   0.0,
-             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
+            {'Default':   0.01,
+             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0.01,
              'level':     0,
-             'text':      '投资产品的最小申购批量大小，大于等于0的浮点数，例如：\n'
-                          '0. : 可以购买任意份额的投资产品，包括小数份额\n'
-                          '1. : 只能购买整数份额的投资产品\n'
-                          '100: 可以购买100的整数倍份额投资产品\n'
-                          'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
+             'text':      '投资产品的最小申购批量大小，大于等于0.01的浮点数，例如：\n'
+                          '0.1 : 可以购买低至0.1份的投资产品\n'
+                          '1.  : 只能购买整数份额的投资产品\n'
+                          '100 : 可以购买100的整数倍份额投资产品\n'
+                          'n   : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
 
         'sell_batch_size':
-            {'Default':   0.0,
-             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0,
+            {'Default':   0.01,
+             'Validator': lambda value: isinstance(value, (int, float)) and value >= 0.01,
              'level':     0,
-             'text':      '投资产品的最小卖出或赎回批量大小，大于等于0的浮点数，例如：\n'
-                          '0. : 可以购买任意份额的投资产品，包括小数份额\n'
-                          '1. : 只能购买整数份额的投资产品\n'
-                          '100: 可以购买100的整数倍份额投资产品\n'
-                          'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数\n'},
+             'text':      '投资产品的最小卖出或赎回批量大小，大于等于0.01的浮点数，例如：\n'
+                          '0.1 : 可以购买低至0.1份的投资产品\n'
+                          '1.  : 只能购买整数份额的投资产品\n'
+                          '100 : 可以购买100的整数倍份额投资产品\n'
+                          'n   : 可以购买的投资产品份额为n的整数倍，n不必为整数\n'},
 
         'cash_decimal_places':
             {'Default':   2,
