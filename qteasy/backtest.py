@@ -168,7 +168,11 @@ def backtest_step(
     if cash_inflation > 1.:
         own_cash *= cash_inflation
         available_cash *= cash_inflation
+        # DEBUG
+        # print(f'cash inflation applied: {cash_inflation:.4f}, new own_cash: {own_cash:.2f},
+        # new available_cash: {available_cash:.2f}')
 
+    # print(f'\ncalculating trade results for day {day_num}')
     # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
     cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
             signal_type=signal_type,
@@ -187,6 +191,13 @@ def backtest_step(
             moq_buy=moq_buy,
             moq_sell=moq_sell
     )
+    # DEBUG
+    # print(f'calculated trade results for day {day_num}, signal_type: {signal_type}, op_signal: {op_signal}\n'
+    #       f'own_cash: {own_cash:.5f}, own_amounts: {own_amounts.round(6)}, \n'
+    #       f'available_cash: {available_cash:.5f}, available_amounts: {available_amounts.round(6)}\n'
+    #       f'trade results - cash_gained: {cash_gained.sum():.5f}, cash_spent: {cash_spent.sum():.5f}, '
+    #       f'amount_purchased: {amount_purchased.sum():.5f}, amount_sold: {amount_sold.sum():.5f}, '
+    #       f'fees: {fees.sum():.5f}')
 
     # 3，处理现金变动和持仓变动的交割，输出交割数据
     new_cash = cash_gained.sum()
@@ -201,13 +212,30 @@ def backtest_step(
             stock_delivery_period=stock_delivery_period,
             share_count=share_count,
     )
+    # DEBUG
+    # print(f'\nprocessing delivery for day {day_num}, is_delivery_day: {is_delivery_day}\n'
+    #       f'cash delivery queue: {cash_delivery_queue.round(6)}, stock delivery queue: '
+    #       f'{stock_delivery_queue.round(6)}\n delivered_cash: {delivered_cash:.2f}, '
+    #       f'delivered_stocks: {delivered_stocks}')
 
     # 4, 更新持有现金和可用现金
     next_own_cash = own_cash + cash_gained.sum() + cash_spent.sum()
     next_available_cash = available_cash + delivered_cash + cash_spent.sum()
+    # DEBUG
+    # print(f'updating cash for day {day_num}, \n'
+    #       f'own_cash: {own_cash:.2f} + cash_gained: {cash_gained.sum():.2f} + cash_spent: '
+    #       f'{cash_spent.sum():.2f} = next_own_cash: {next_own_cash:.2f}\n'
+    #       f'available_cash: {available_cash:.2f} + delivered_cash: {delivered_cash:.2f} + cash_spent: '
+    #       f'{cash_spent.sum():.2f} = next_available_cash: {next_available_cash:.2f}')
     # 更新持有资产和可用资产
     next_own_amounts = own_amounts + amount_purchased + amount_sold
     next_available_amounts = available_amounts + delivered_stocks + amount_sold
+    # DEBUG
+    # print(f'updating amounts for day {day_num}, \n'
+    #       f'own_amounts: {own_amounts.round(6)} + amount_purchased: {amount_purchased} + amount_sold: '
+    #       f'{amount_sold} = next_own_amounts: {next_own_amounts.round(6)}\n'
+    #       f'available_amounts: {available_amounts.round(6)} + delivered_stocks: {delivered_stocks} + amount_sold: '
+    #       f'{amount_sold} = next_available_amounts: {next_available_amounts.round(6)}')
 
     # 5, 记录交易记录和交易费用
     current_trade_records = amount_purchased + amount_sold
@@ -225,7 +253,7 @@ def backtest_step(
     )
 
 
-@njit()
+@njit(cache=True, nogil=True)
 def calculate_trade_results(
         signal_type: Union[int, np.int32, np.int64, np.ndarray],
         own_cash: Union[float, np.float64, np.ndarray],
@@ -320,6 +348,9 @@ def calculate_trade_results(
                 pt_sell_threshold=pt_sell_threshold,
                 allow_sell_short=allow_sell_short
         )
+        # DEBUG
+        # print(f'parsed PT signals, trimmed_op_signal: {trimmed_op_signal.round(6)}, '
+        #       f'cash_to_spend: {cash_to_spend.round(6)}, amounts_to_sell: {amounts_to_sell.round(6)}')
 
     elif signal_type == 1:  # PS信号
         cash_to_spend, amounts_to_sell = parse_ps_signals(
@@ -396,9 +427,15 @@ def calculate_trade_results(
     if not allow_sell_short:
         # 忽略cash_to_spend中的空头买入部分（不允许卖空时无意义）
         cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
+        # DEBUG
+        # print(f'cash_to_spend adjusted, {cash_to_spend.round(6)} = np.where(cash_to_spend > 0.001,
+        # cash_to_spend, 0)\n')
         # 确保总现金买入金额不超过可用现金，如果超过则按比例调降
         if cash_to_spend.sum() > available_cash:
             cash_to_spend *= available_cash / cash_to_spend.sum()
+            # DEBUG
+            # print(f'cash_to_spend adjusted by available_cash, cash_to_spend: {cash_to_spend.round(6)}, *= '
+            #       f'available_cash: {available_cash:.2f} / cash_to_spend.sum(): {cash_to_spend.sum():.2f}\n')
 
     elif signal_type >= 1:
         # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit

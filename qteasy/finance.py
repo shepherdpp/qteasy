@@ -185,8 +185,12 @@ def get_selling_result(prices: np.ndarray,
      - cash_gained: ndarray     扣除手续费后获得的现金
      - fee: ndarray             扣除的手续费
     """
+    # 此处需要注意，如果a_to_sell是一个非常小的多头卖出的时候，会出现卖出金额小于手续费的情况
+    # 在这种情况下，应该将实际卖出数量置为0，因为此时卖出会导致亏损，且会导致其他不可预料的影响
+    # 例如，当可用现金为0的时候，卖出极小数量的股票反而导致手续费扣费导致现金变为负值
+
     if moq == 0:
-        a_sold = a_to_sell
+        a_sold = np.copy(a_to_sell)
     else:
         a_sold = np.trunc(a_to_sell / moq) * moq
     sold_values = a_sold * prices
@@ -194,6 +198,12 @@ def get_selling_result(prices: np.ndarray,
     rates = cost_params[1] - cost_params[4] * sold_values
     fees = np.where(sold_values, np.fmax(np.abs(sold_values * rates), cost_params[3]), 0)  # sell_min
     cash_gained = - (sold_values + fees)
+
+    # 多头卖出且所得现金小于0时（如小额卖出+最低手续费导致净收入为负），将该笔置为不成交
+    need_zero = (a_sold < 0) & (cash_gained < 0)
+    a_sold[need_zero] = 0
+    fees[need_zero] = 0
+    cash_gained[need_zero] = 0
 
     return a_sold, cash_gained, fees
 
