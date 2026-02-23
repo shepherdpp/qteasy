@@ -2009,14 +2009,14 @@ class Operator:
                         window_index=step_index,
                 )
 
-            # ---- end setting up data windows
-            signal_type = group.signal_type
-            signals = [stg.generate() for stg in group.members]
-
             # ---- take care of tracing if enabled
             if self._trace_enabled:
                 for stg in group.members:
-                    stg.next_trace_step()
+                    stg.update_trace_step(step=step_index)
+
+            # ---- end setting up data windows
+            signal_type = group.signal_type
+            signals = [stg.generate() for stg in group.members]
 
             if self.group_merge_type == 'None':
                 signal = group.blend(signals)

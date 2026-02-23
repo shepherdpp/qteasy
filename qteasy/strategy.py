@@ -216,10 +216,13 @@ class BaseStrategy:
         self._group_id = None  # deprecate: 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
         self._group = None   # 策略所在的策略组，使用self.assign_group()方法分配
         # 交易策略追踪相关参数 -- 用户可以在realize()方法中定义变量追踪，将变量值存储在_trace_data中
-        self._trace_enabled = False
-        self._trace_data = {}
-        self._trace_max_steps = 0
+        self._trace_enabled = False  # 设定是否启用追踪
+        self._trace_data = {}  # 一个dict，记录所有的追踪数据，用于创建追踪信息DataFrame，key为trace变量名，value为记录的变量值
+        self._trace_max_steps = 0  # 在一次运行中可能产生的最大运行次数，此数字与当次运行的run_schedule的行数相同
         self._trace_step = 0
+        # 每一次记录数据时的step_index，在运行多个策略组时，本策略不是所有时间点都运行的，因此
+        #  trace_step对应了该策略运行时间点在整个schedule中的位置，确保记录的变量值与正确的运
+        #  行时间点对齐
 
         # 策略的其他可设置参数
         self.debug = False  # 是否开启调试模式
@@ -974,10 +977,10 @@ class BaseStrategy:
         self._trace_max_steps = int(max_steps)
         self._trace_step = 0
 
-    def next_trace_step(self):
+    def update_trace_step(self, step: int):
         """ 前进到下一个追踪步骤"""
-        if self._trace_enabled:
-            self._trace_step += 1
+        if 0 <= step <= self._trace_max_steps:
+            self._trace_step = step
 
     def trace(self, name: str, var: Union[int, float, bool, str]) -> None:
         """ 在策略的realize()方法中调用此方法可以追踪策略中间变量的值，或者可以记录一条备注信息

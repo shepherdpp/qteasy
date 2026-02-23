@@ -1340,6 +1340,10 @@ class Backtester:
     def trace_result_df(self) -> Optional[DataFrame]:
         """ 根据回测结果生成交易过程记录，输出内容为DataFrame格式
 
+        当存在多策略组且运行时间不同（group_merge_type == 'None'）时，按策略组将各组的
+        trace 行对齐到 op_signal_index 中对应的 (time, group) 行，再按 op_signal_index
+        顺序合并，保证与 trade_log_df 的索引一致。
+
         Returns
         -------
         trade_trace: pd.DataFrame
