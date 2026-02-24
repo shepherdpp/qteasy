@@ -1103,8 +1103,8 @@ class TestTrader(unittest.TestCase):
         print(f'\ncurrent trade day? {ts.is_trade_day}, trader status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
-        print(f'trader status will be running or sleeping after running task "wakeup"')
-        if ts.is_market_open:
+        print(f'trader status will be running or sleeping after running task "wakeup", actually {ts.status}')
+        if ts.is_trade_day:
             self.assertEqual(ts.status, 'running')
         else:
             self.assertEqual(ts.status, 'sleeping')
@@ -1304,11 +1304,10 @@ class TestTrader(unittest.TestCase):
 
         ts.add_task('open_market')
         time.sleep(self.stoppage)
-        print(f'ran task open_market, current status: {ts.status}, broker status: {ts.broker.status}')
         print('added task open_market')
         print(f'trader status: {ts.status}')
         print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, prev_status)
+        self.assertEqual(ts.status, 'running')
         self.assertEqual(ts.broker.status, broker_prev_status)
 
         print(f'created daily schedule: \n{ts.task_daily_schedule}')

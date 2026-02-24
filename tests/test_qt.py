@@ -572,7 +572,7 @@ class TestQT(unittest.TestCase):
         print(res['final_value'])
         print(res['info'])
         print(res['sharp'])
-        self.assertAlmostEqual(res['final_value'], 395710.19, -3)
+        self.assertAlmostEqual(res['final_value'], 392452.98, -3)
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""

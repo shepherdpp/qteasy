@@ -859,6 +859,7 @@ class TraderShell(Cmd):
         """
 
         import rich
+        import math
 
         qty = args.amount
         symbol = args.symbol.upper()
@@ -878,9 +879,11 @@ class TraderShell(Cmd):
         else:
             moq = self.trader.get_config('sell_batch_size')['sell_batch_size']
 
-        if moq != 0 and qty % moq != 0:
-            rich.print(f'[bold red]Qty should be a multiple of the minimum order quantity ({moq})[/bold red]')
-            return False
+        if moq != 0:
+            quotient = qty / moq
+            if not np.isclose(quotient, round(quotient), atol=1e-9):
+                rich.print(f'[bold red]Trade qty({qty}) should be a multiple of the minimum order quantity ({moq})[/bold red]')
+                return False
 
         # check if symbol is legal
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like

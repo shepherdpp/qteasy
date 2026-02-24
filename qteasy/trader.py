@@ -647,7 +647,6 @@ class Trader(object):
         trader_config = self.config.copy()
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
-        import pdb; pdb.set_trace()
         _update_config_kwargs(trader_config, new_kwarg, raise_if_key_not_existed=True)
         # 现在将trader_config赋值给self.config，但是self.config是一个静态属性，因此需要
         # 从self.config中找到key对应的属性，并将value赋值给该属性
