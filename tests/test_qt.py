@@ -428,8 +428,8 @@ class TestQT(unittest.TestCase):
                      asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
-                     trade_batch_size=0.,
-                     sell_batch_size=0.,
+                     trade_batch_size=0.01,
+                     sell_batch_size=0.01,
                      parallel=True,
                      hist_dnld_retry_cnt=3,  # 减少数据下载重试次数，加快测试速度
                      hist_dnld_retry_wait=0.5,  # 减少数据下载重试等待时间，加快测试速度
@@ -1267,21 +1267,12 @@ class TestQT(unittest.TestCase):
                 trace_log=True,
         )
 
-        # TODO: BUG: 这里需要解决trace产生的问题：
-        #  首先是trace产生的记录在trade_log中没有与正确的时间对齐，详细说明如下：
-        #   - Operator运行三个交易策略，分别在每日10:30，每日收盘时以及每周收盘
-        #     时运行，在生成的trade_log中，每一天都有两组交易记录，与上面的时间对
-        #     齐，本来三个交易策略的trace记录应该分别与10:30/15:00以及每周的时间
-        #     对齐，即第一个策略的记录应该出现在第2、4、6、8、10行，第二个策略的记
-        #     录应该出现在第10、20、30行，第三个策略的记录应该出现在第1、3、5、7行，
-        #     然而，所有的记录都记录在了第1、2、3、4、5行，造成数据错位。
-        #  这个问题应该修改
-
         # test with group merge type is None
         qt.run(op=op, mode=1)
         time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
         op.group_merge_type = 'AND'
         qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
 
         print(f'仿照qteasy tutorial中的案例，测试一个大小盘轮动策略，回测过程中记录trace值')
         op = qt.Operator(strategies=Sel_Tracing, run_freq='d', signal_type='PT')
@@ -1306,11 +1297,12 @@ class TestQT(unittest.TestCase):
                 cost_rate_sell=0.000,  # 卖出资产时的交易费用为万分之一
                 invest_start='20140101',  # 模拟交易开始日期
                 invest_end='20161231',  # 模拟交易结束日期
-                trade_batch_size=0.0,  # 买入资产时最小交易批量
-                sell_batch_size=0.0,  # 卖出资产时最小交易批量
+                trade_batch_size=0.01,  # 买入资产时最小交易批量
+                sell_batch_size=0.01,  # 卖出资产时最小交易批量
         )
         # test with group merge type is None
         qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
 
         op.set_parameter(0,  # 指定需要设置参数的交易策略：即设置策略0的参数
                          sort_ascending=False,  # 设置选择涨幅最大的指数
@@ -1402,7 +1394,7 @@ class TestQT(unittest.TestCase):
                      invest_start='20110725',
                      invest_end='20220401',
                      trade_batch_size=1,
-                     sell_batch_size=0)
+                     sell_batch_size=0.01)
         stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
         qt.configure(asset_pool=stock_pool,
                      asset_type='E',
