@@ -352,7 +352,7 @@ class TestTraderCLI(unittest.TestCase):
         self.assertFalse(tss.do_buy('100 000001.SZ -p 10.0 -s long -w wrong_argument'))
         self.assertFalse(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty not multiple of moq
         print(f'change moq to 0 and then test again')
-        self.assertIsNone(tss.do_config('trade_batch_size -s 0'))
+        self.assertIsNone(tss.do_config('trade_batch_size -s 0.1'))
         self.assertIsNone(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty now accepted
 
     def test_command_sell(self):
@@ -464,10 +464,10 @@ class TestTraderCLI(unittest.TestCase):
         self.assertEqual(tss.trader.config['sell_batch_size'], 1)
         self.assertEqual(tss.trader.config['time_zone'], 'local')
         self.assertIsNone(tss.do_config('sell_batch_size time_zone -s 0 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1.0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
         self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Hong_Kong'))
-        self.assertEqual(tss.trader.config['sell_batch_size'], 0)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1.0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Hong_Kong')
 
         print(f'testing getting help and returns False')

@@ -647,6 +647,7 @@ class Trader(object):
         trader_config = self.config.copy()
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
+        import pdb; pdb.set_trace()
         _update_config_kwargs(trader_config, new_kwarg, raise_if_key_not_existed=True)
         # 现在将trader_config赋值给self.config，但是self.config是一个静态属性，因此需要
         # 从self.config中找到key对应的属性，并将value赋值给该属性
@@ -1499,8 +1500,6 @@ class Trader(object):
         break_point_file_name: str
             断点文件路径
         """
-        # TODO: 不用保存完整的config，只需要保存部分跟交易有关的信息即可
-        #  在启动交易时导入的断点会覆盖start_up_settings中的参数
         break_point_data = dict()
         break_point_data['operator'] = self.operator
         break_point_data['config'] = self.config
@@ -1523,7 +1522,10 @@ class Trader(object):
     def load_break_point(self) -> dict:
         """ 从断点文件中读取信息并载入相关属性
 
-        :return:
+        Returns
+        -------
+        break_point_data: dict
+            从断点文件中读取的断点参数
         """
         from .utilfuncs import read_binary_file
 
@@ -1544,6 +1546,18 @@ class Trader(object):
             return {}
 
         return break_point_data
+
+    def clear_break_point(self) -> None:
+        """ 如果断点文件存在，删除该断点文件
+
+        Returns
+        -------
+        None
+        """
+        break_point_file_name = break_point_file_path_name(self.account_id, self.datasource)
+        if os.path.exists(break_point_file_name):
+            os.remove(break_point_file_name)
+        return None
 
     def submit_trade_order(self, symbol: str, position: str, direction: str,
                            order_type: str, qty: int, price: float) -> dict:

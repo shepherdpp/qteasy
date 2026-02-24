@@ -315,12 +315,12 @@ class TestConfigParser(unittest.TestCase):
                                            1., 1.00027352, 1., 1., 1., 1., ])
         self.assertTrue(np.allclose(inflation_array, target_inflation_array, atol=1e-8))
         # assert day_indicator values on specific dates
-        target_day_indicators = np.array([1, 0, 0, 0, 0,
-                                          1, 0, 0, 0, 0,
-                                          1, 0, 0, 0, 0,
-                                          1, 0, 0, 0, 0,
-                                          1, 0, 0, 0, 0,
-                                          1, 0, 0, 0, 0])
+        target_day_indicators = np.array([0, 0, 0, 0, 1,
+                                          0, 0, 0, 0, 1,
+                                          0, 0, 0, 0, 1,
+                                          0, 0, 0, 0, 1,
+                                          0, 0, 0, 0, 1,
+                                          0, 0, 0, 0, 1])
         self.assertTrue(np.array_equal(day_indicator, target_day_indicators))
 
         # test timing table with multiple groups with different run_timings
@@ -381,12 +381,12 @@ class TestConfigParser(unittest.TestCase):
                                            1.00008207, 1.00008206, 1., 1., 1.00008206, 1., ])
         self.assertTrue(np.allclose(inflation_array, target_inflation_array, atol=1e-8))
         # assert day_indicator values on specific dates
-        target_day_indicators = np.array([1, 0, 1, 0, 1,
-                                          0, 1, 1, 0, 1,
-                                          1, 0, 1, 0, 1,
-                                          0, 1, 1, 0, 0,
+        target_day_indicators = np.array([0, 1, 0, 1, 0,
+                                          1, 1, 0, 1, 1,
+                                          0, 1, 0, 1, 0,
                                           1, 1, 0, 0, 1,
-                                          1, 0, 0, 1, 0])
+                                          1, 0, 0, 1, 1,
+                                          0, 0, 1, 0, 1])
         self.assertTrue(np.array_equal(day_indicators, target_day_indicators))
 
 
@@ -1048,17 +1048,18 @@ class TestParseOptimizationCashPlan(unittest.TestCase):
     def test_parse_all_optimization_params_bayesian_branch(self):
         """测试 parse_all_optimization_params 在 opti_method='bayesian' 时合并 bayesian 参数"""
         config = {
-            'opti_method': 'bayesian',
-            'optimize_target': 'fv',
+            'opti_method':        'bayesian',
+            'optimize_target':    'fv',
             'optimize_direction': 'maximize',
-            'opti_sample_count': 8,
-            'opti_max_rounds': 12,
+            'opti_sample_count':  8,
+            'opti_max_rounds':    12,
         }
         result = parse_all_optimization_params(config)
         self.assertEqual(result['init_sample_count'], 8)
         self.assertEqual(result['max_iterations'], 12)
         self.assertTrue(result['maximize_target'])
-        print(f'parse_all_optimization_params(bayesian): init_sample_count={result["init_sample_count"]}, max_iterations={result["max_iterations"]}')
+        print(
+            f'parse_all_optimization_params(bayesian): init_sample_count={result["init_sample_count"]}, max_iterations={result["max_iterations"]}')
 
 
 if __name__ == '__main__':

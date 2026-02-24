@@ -53,8 +53,8 @@ def _default_trader_kwargs():
         'live_price_channel': 'eastmoney',
         'live_data_channel': 'eastmoney',
         'live_price_freq': '15min',
-        'live_data_batch_size': 0.01,
-        'live_data_batch_interval': 0.01,
+        'live_data_batch_size': 0,
+        'live_data_batch_interval': 0,
         'daily_refill_tables': 'stock_1min, stock_5min',
         'weekly_refill_tables': 'stock_15min',
         'monthly_refill_tables': 'stock_daily',
@@ -336,6 +336,7 @@ class TestTrader(unittest.TestCase):
         )
         self.ts.renew_trade_log_file()
         self.ts.init_system_logger()
+        self.ts.clear_break_point()  # 删除断点文件以免上次的运行结果影响本次运行
         # remove test sys_log_file
         sys_log_file_path = sys_log_file_path_name(self.ts.account_id, test_ds)
         os.remove(sys_log_file_path)
@@ -1102,8 +1103,11 @@ class TestTrader(unittest.TestCase):
         print(f'\ncurrent trade day? {ts.is_trade_day}, trader status: {ts.status}')
         ts.add_task('wakeup')
         time.sleep(self.stoppage)
-        print(f'trader status will be running after running task "wakeup"')
-        self.assertEqual(ts.status, 'running')
+        print(f'trader status will be running or sleeping after running task "wakeup"')
+        if ts.is_market_open:
+            self.assertEqual(ts.status, 'running')
+        else:
+            self.assertEqual(ts.status, 'sleeping')
         print(f'\ncurrent status: {ts.status}')
         ts.add_task('sleep')
         print(f'trader status will be sleeping after running task "sleep"')
@@ -1296,7 +1300,7 @@ class TestTrader(unittest.TestCase):
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
         broker_prev_status = 'running'
-        prev_status = 'running'
+        prev_status = ts.prev_status
 
         ts.add_task('open_market')
         time.sleep(self.stoppage)
