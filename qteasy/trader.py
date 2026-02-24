@@ -199,8 +199,8 @@ class Trader(object):
                  pt_buy_threshold: float = 0.,
                  pt_sell_threshold: float = 0.,
                  allow_sell_short: bool = False,
-                 trade_batch_size: int = 0.,
-                 sell_batch_size: int = 0.,
+                 trade_batch_size: int = 0.01,
+                 sell_batch_size: int = 0.01,
                  long_position_limit: float = 1.0,
                  short_position_limit: float = -1.0,
                  stock_delivery_period: int = 1,
@@ -1972,9 +1972,6 @@ class Trader(object):
             提交的交易订单数量
         """
 
-        # DEBUG
-        # print(f'Running _run_strategy with step_index: {step_index}')
-
         self.send_message(f'running task run strategy: {step_index}', debug=True)
         operator = self._operator
 
@@ -1983,10 +1980,6 @@ class Trader(object):
         available_amounts = self.account_positions['available_qty'].values
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
-        # config = self._config
-        # DEBUG
-        # print(f'shares: {shares}, \nown_amounts: {own_amounts}, \navailable_amounts: {available_amounts}, '
-        #       f'\nown_cash: {own_cash}, \navailable_cash: {available_cash}')
 
         today = self.get_current_tz_datetime().strftime('%Y-%m-%d')
 
@@ -1995,8 +1988,6 @@ class Trader(object):
         group_timing = operator.group_timing_table.iloc[step_index].values
         group_count = len(operator.groups)
         groups_to_run = [operator.groups_by_index[i] for i in range(group_count) if group_timing[i]]
-        # DEBUG
-        # print(f'group_timing: {group_timing}, \ngroups_to_run: {groups_to_run}')
 
         for group in groups_to_run:
             for strategy in group.members:
@@ -2024,8 +2015,7 @@ class Trader(object):
                 shares=self.asset_pool,
                 live_prices=self.live_price,
         )
-        # DEBUG
-        # print(f'got data_packages: \n{data_packages}')
+
         self.send_message(f'read real time data and set operator data allocation', debug=True)
         operator.prepare_data_buffer(
                 start_date=self.get_current_tz_datetime(),
@@ -2033,8 +2023,6 @@ class Trader(object):
                 data_package=data_packages,
         )
         operator.create_data_windows()
-        # DEBUG
-        # print(f'prepared data buffer and created data windows for operator, now preparing current prices...')
 
         # 如果策略需要用到交易过程数据，则准备交易过程数据
         if self.operator.check_dynamic_data():
@@ -2046,14 +2034,9 @@ class Trader(object):
         # 更新最新实时价格，self.live_price的格式为index为symbols，列为['price']
         self._update_live_price()
         current_prices = self.live_price['price'].values
-        # DEBUG
-        # print(f'current_prices: {current_prices}')
 
         for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
             self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
-            # DEBUG
-            # print(f'got signal from operator.run_strategy: signal_type: {signal_type}, '
-            #       f'step_index: {step_index}, op_signal: {op_signal}')
 
             # 解析交易信号
             symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
@@ -2075,9 +2058,7 @@ class Trader(object):
                     short_position_limit=self.short_position_limit,
             )
             names = get_symbol_names(self._datasource, symbols)
-            # DEBUG
-            # print(f'parsed trade signals: \nsymbols: {symbols}, \npositions: {positions}, \ndirections: {directions}, '
-            #       f'\nquantities: {quantities}, \nquoted_prices: {quoted_prices}, \nremarks: {remarks}')
+
             self.send_message(f'generated trade signals:\n'
                               f'symbols: {symbols}\n'
                               f'positions: {positions}\n'

@@ -3600,12 +3600,12 @@ class TestOperatorAndStrategy(unittest.TestCase):
               f'  op_run_time: {backtested.op_run_time:.6f}\n'
               f'  backtest_time: {backtested.backtest_run_time:.6f}\n'
               f'results:\n'
-              f'  own cashes: \n{backtested.own_cashes}\n'
-              f'  available cashes: \n{backtested.available_cashes}\n'
-              f'  own amounts: \n{backtested.own_amounts_array}\n'
-              f'  available amounts: \n{backtested.available_amounts_array}\n'
-              f'  trade records:\n{backtested.trade_records_array}\n'
-              f'  trade costs:\n{backtested.trade_cost_array}\n')
+              f'  own cashes: \n{backtested.own_cashes.round(2)}\n'
+              f'  available cashes: \n{backtested.available_cashes.round(2)}\n'
+              f'  own amounts: \n{backtested.own_amounts_array.round(2)}\n'
+              f'  available amounts: \n{backtested.available_amounts_array.round(2)}\n'
+              f'  trade records:\n{backtested.trade_records_array.round(2)}\n'
+              f'  trade costs:\n{backtested.trade_cost_array.round(2)}\n')
 
         target_own_cashes = np.array(
                 [1.00000000e+06, 2.36033600e+02, 2.36033600e+02, 5.26179434e+05,

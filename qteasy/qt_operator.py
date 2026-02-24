@@ -140,6 +140,7 @@ class Operator:
 
         """
 
+        self._trace_signal_index = 0
         self.debug = False  # debug模式下，Operator对象自动被认为是ready的
         self.name = name
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
