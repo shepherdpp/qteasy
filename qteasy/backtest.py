@@ -1348,17 +1348,16 @@ class Backtester:
         trade_trace: pd.DataFrame
             交易模拟过程数据
         """
-        if self.enable_tracing:
-            trace_dfs = []
-            for group in self.op.groups.values():
-                for strategy in group.members:
-                    trace_dfs.append(strategy.get_trace_data())
-
-            trade_trace = pd.concat(trace_dfs, axis=1)
-            trade_trace.index = self.op.op_signal_index
-
-            self.trace_df = trade_trace
-
+        if not self.enable_tracing:
+            return self.trace_df
+        op_signal_index = self.op.op_signal_index
+        trace_dfs = [s.get_trace_data() for s in self.op.strategies]
+        if not trace_dfs:
+            self.trace_df = pd.DataFrame(index=op_signal_index)
+            return self.trace_df
+        trade_trace = pd.concat(trace_dfs, axis=1)
+        trade_trace.index = op_signal_index
+        self.trace_df = trade_trace
         return self.trace_df
 
     def evaluate_result(self, indicators: str) -> dict:

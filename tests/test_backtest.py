@@ -4618,6 +4618,41 @@ class TestBacktester(unittest.TestCase):
         self.assertFalse(summary_rows.empty)
         self.assertEqual(len(summary_rows), 5)
 
+    def test_trace_result_df_index_alignment_with_trade_log(self):
+        """
+        测试 enable_tracing 且多策略组、不同运行时间（group_merge_type == 'None'）时，
+        trace_result_df 的索引与 op_signal_index 一致，并与 trade_log 的 summary 行对齐。
+
+        对齐由 Operator 在写入 trace 时使用全局 signal 行号（_trace_signal_index）保证；
+        trace_result_df() 仅按策略 concat 后设置 index，本用例验证结果索引与行数正确。
+        """
+        self.backtester_no_merge.enable_tracing = True
+        trade_log_df = self.backtester_no_merge.generate_trade_logs()
+        op_signal_index = self.backtester_no_merge.op.op_signal_index
+        trace_df = self.backtester_no_merge.trace_result_df()
+
+        print(f'op_signal_index:\n{op_signal_index}\n'
+              f'trace_result_df index:\n{trace_df.index}\n'
+              f'trace_result_df shape: {trace_df.shape}')
+
+        self.assertIsNotNone(trace_df)
+        self.assertTrue(
+                trace_df.index.equals(op_signal_index),
+                msg='trace_result_df.index should equal op_signal_index',
+        )
+        self.assertEqual(
+                len(trace_df),
+                len(op_signal_index),
+                msg='trace_result_df row count should equal len(op_signal_index)',
+        )
+        summary_level = trade_log_df.index.get_level_values(2)
+        summary_rows = trade_log_df.loc[summary_level == '7, summary']
+        self.assertEqual(
+                len(summary_rows),
+                len(op_signal_index),
+                msg='Trade log summary row count should match op_signal_index',
+        )
+
     def test_generate_trade_summary(self):
         """
         测试generate_trade_summary方法
