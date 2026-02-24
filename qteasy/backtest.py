@@ -172,7 +172,9 @@ def backtest_step(
         # print(f'cash inflation applied: {cash_inflation:.4f}, new own_cash: {own_cash:.2f},
         # new available_cash: {available_cash:.2f}')
 
-    # print(f'\ncalculating trade results for day {day_num}')
+    # print(f'\ncalculating trade results for day {day_num}, signal_type: {signal_type}, op_signal: {op_signal}')
+    # if day_num == 1781:
+    #     import pdb; pdb.set_trace()
     # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
     cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
             signal_type=signal_type,
@@ -192,7 +194,7 @@ def backtest_step(
             moq_sell=moq_sell
     )
     # DEBUG
-    # print(f'calculated trade results for day {day_num}, signal_type: {signal_type}, op_signal: {op_signal}\n'
+    # print(f'calculated trade results'
     #       f'own_cash: {own_cash:.5f}, own_amounts: {own_amounts.round(6)}, \n'
     #       f'available_cash: {available_cash:.5f}, available_amounts: {available_amounts.round(6)}\n'
     #       f'trade results - cash_gained: {cash_gained.sum():.5f}, cash_spent: {cash_spent.sum():.5f}, '
@@ -219,8 +221,8 @@ def backtest_step(
     #       f'delivered_stocks: {delivered_stocks}')
 
     # 4, 更新持有现金和可用现金
-    next_own_cash = own_cash + cash_gained.sum() + cash_spent.sum()
-    next_available_cash = available_cash + delivered_cash + cash_spent.sum()
+    next_own_cash = np.round(own_cash + cash_gained.sum() + cash_spent.sum(), 3)
+    next_available_cash = np.round(available_cash + delivered_cash + cash_spent.sum(), 3)
     # DEBUG
     # print(f'updating cash for day {day_num}, \n'
     #       f'own_cash: {own_cash:.2f} + cash_gained: {cash_gained.sum():.2f} + cash_spent: '
@@ -228,8 +230,8 @@ def backtest_step(
     #       f'available_cash: {available_cash:.2f} + delivered_cash: {delivered_cash:.2f} + cash_spent: '
     #       f'{cash_spent.sum():.2f} = next_available_cash: {next_available_cash:.2f}')
     # 更新持有资产和可用资产
-    next_own_amounts = own_amounts + amount_purchased + amount_sold
-    next_available_amounts = available_amounts + delivered_stocks + amount_sold
+    next_own_amounts = np.round(own_amounts + amount_purchased + amount_sold, 3)
+    next_available_amounts = np.round(available_amounts + delivered_stocks + amount_sold, 3)
     # DEBUG
     # print(f'updating amounts for day {day_num}, \n'
     #       f'own_amounts: {own_amounts.round(6)} + amount_purchased: {amount_purchased} + amount_sold: '
@@ -361,7 +363,7 @@ def calculate_trade_results(
                 allow_sell_short=allow_sell_short
         )
         # 如果是全零信号，则直接返回空结果
-        if np.all(cash_to_spend == 0) and np.all(amounts_to_sell == 0):
+        if np.allclose(cash_to_spend, 0.) and np.allclose(amounts_to_sell, 0.):
             return (empty_array,
                     empty_array,
                     empty_array,
@@ -377,7 +379,7 @@ def calculate_trade_results(
                 cost_params=cost_params,
         )
         # 如果是全零信号，则直接返回空结果
-        if np.all(cash_to_spend == 0) and np.all(amounts_to_sell == 0):
+        if np.allclose(cash_to_spend, 0.) and np.allclose(amounts_to_sell, 0.):
             return (empty_array,
                     empty_array,
                     empty_array,
@@ -416,7 +418,7 @@ def calculate_trade_results(
             cost_params=cost_params,
     )
 
-    if np.all(np.abs(cash_to_spend) < 0.001):
+    if np.allclose(cash_to_spend, 0.0, atol=0.001):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         return cash_gained, empty_array, empty_array, amount_sold, fee_selling
 
@@ -473,6 +475,9 @@ def calculate_trade_results(
             moq=moq_buy,
             cost_params=cost_params,
     )
+    # DEBUG
+    # print(f'calculated purchase result: amount_purchased: {amount_purchased.round(2)}'
+    #       f'cash_spent: {cash_spent}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
