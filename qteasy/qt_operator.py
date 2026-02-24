@@ -1700,10 +1700,11 @@ class Operator:
         None
         """
         self._trace_enabled = True
-        trace_steps = self.get_signal_count()
+        self._trace_signal_index = 0
+        max_trace_steps = self.get_signal_count()
 
         for stg in self.strategies:
-            stg.enable_tracing(max_steps=trace_steps)
+            stg.enable_tracing(max_steps=max_trace_steps)
 
     def disable_tracing(self):
         """ 禁用Operator对象中所有strategy的跟踪功能
@@ -1990,6 +1991,14 @@ class Operator:
         """
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
+        # 每次进入时按 step_index 设置起始全局 signal 行号，支持“只跑部分 step”的调用
+        if self._trace_enabled:
+            if self.group_merge_type == 'None':
+                self._trace_signal_index = int(
+                        self.group_timing_table.iloc[:step_index].values.sum()
+                )
+            else:
+                self._trace_signal_index = step_index
         # print(f'taking step index: {step_index} from group_timing_table with shape {self.group_timing_table.shape}')
         group_timing = self.group_timing_table.iloc[step_index].values
         group_count = len(self.groups)
@@ -2009,10 +2018,10 @@ class Operator:
                         window_index=step_index,
                 )
 
-            # ---- take care of tracing if enabled
+            # ---- take care of tracing if enabled（使用全局 signal 行号，与 op_signal_index 一致）
             if self._trace_enabled:
                 for stg in group.members:
-                    stg.update_trace_step(step=step_index)
+                    stg.update_trace_step(step=self._trace_signal_index)
 
             # ---- end setting up data windows
             signal_type = group.signal_type
@@ -2021,6 +2030,7 @@ class Operator:
             if self.group_merge_type == 'None':
                 signal = group.blend(signals)
                 yield signal_type, step_index, signal
+                self._trace_signal_index += 1
             elif self.group_merge_type == 'Or':
                 signal += group.blend(signals)
             elif self.group_merge_type == 'And':
@@ -2030,6 +2040,7 @@ class Operator:
 
         if self.group_merge_type != 'None':
             yield signal_type, step_index, signal
+            self._trace_signal_index += 1
 
     def run_strategies(self, steps: Iterable) -> Iterable:
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
