@@ -530,7 +530,7 @@ def _valid_qt_kwargs():
 
         'cost_rate_buy':
             {'Default':   0.0003,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (float, int))
                                         and 0 <= value < 1,
              'level':     1,
              'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算\n'
@@ -538,7 +538,7 @@ def _valid_qt_kwargs():
 
         'cost_rate_sell':
             {'Default':   0.0001,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (float, int))
                                         and 0 <= value < 1,
              'level':     1,
              'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算\n'
@@ -546,7 +546,7 @@ def _valid_qt_kwargs():
 
         'cost_min_buy':
             {'Default':   5.0,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (float, int))
                                         and value >= 0,
              'level':     2,
              'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额\n'
@@ -554,14 +554,14 @@ def _valid_qt_kwargs():
 
         'cost_min_sell':
             {'Default':   5.0,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (float, int))
                                         and value >= 0,
              'level':     2,
              'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额，取值范围为[0, inf)'},
 
         'cost_slippage':
             {'Default':   0.0,
-             'Validator': lambda value: isinstance(value, float)
+             'Validator': lambda value: isinstance(value, (float, int))
                                         and 0 <= value < 1,
              'level':     2,
              'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本，取值范围为[0, 1)'},

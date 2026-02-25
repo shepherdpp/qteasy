@@ -97,7 +97,7 @@ Data refill completed! 154087 rows written into 2/2 table(s)!
 ```python
 >>> # 获取近一年日线
 >>> hp = qt.get_history_data(
-...     htypes='open, high, low, close',  # 设置需要获取的数据类型
+...     htypes='open, high, low, close',  # 需要获取的数据类型分别为开盘价、最高价、最低价、收盘价
 ...     shares='000300.SH',  # 资产类型为沪深300指数
 ...     start='20230101',  # 数据起始日期
 ...     end='20231231',  # 数据结束日期
