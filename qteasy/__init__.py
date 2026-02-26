@@ -176,13 +176,68 @@ else:
 # 设置qteasy运行过程中忽略某些numpy计算错误报警
 np.seterr(divide='ignore', invalid='ignore')
 
-# 设置qteasy回测交易报告以及错误报告的存储路径
-QT_SYS_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'])  # 系统日志存储路径
-QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])  # 交易记录存储路径，包括回测和实盘交易
 
-# 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
-os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
-os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
+def _validate_path_string(path_setting: str, config_key: str) -> None:
+    """ 校验路径配置字符串中是否包含非法字符，若存在则抛出 ValueError。
+
+    通用规则：禁止 ASCII 控制字符（0x00-0x1F、0x7F）。
+    Windows 下额外禁止 <>"|?*，且仅允许在第二位出现冒号（如 C:）。
+    """
+    if not isinstance(path_setting, str):
+        raise ValueError(
+            f'Path configuration "{config_key}" must be a string, got {type(path_setting).__name__}.'
+        )
+    for c in path_setting:
+        if ord(c) < 32 or ord(c) == 127:
+            raise ValueError(
+                f'Invalid control character in configuration "{config_key}": '
+                'path must not contain control characters.'
+            )
+    if os.name == 'nt':
+        forbidden = set('<>"|?*')
+        for i, c in enumerate(path_setting):
+            if c in forbidden:
+                raise ValueError(
+                    f'Invalid character in configuration "{config_key}": "{c}" is not allowed in path.'
+                )
+            if c == ':':
+                if not (i == 1 and len(path_setting) >= 2 and path_setting[0].isalpha()):
+                    raise ValueError(
+                        f'Invalid character in configuration "{config_key}": '
+                        '":" only allowed as drive letter (e.g. C:).'
+                    )
+
+
+def _resolve_path(root: str, path_setting: str, config_key: str = 'path') -> str:
+    """ 根据配置项解析为绝对路径：支持相对路径、绝对路径与 ~ 家目录路径。
+
+    先做非法字符校验，再 expanduser，若为绝对路径则直接 normpath，否则相对 root 拼接。
+    """
+    _validate_path_string(path_setting, config_key)
+    expanded = os.path.expanduser(path_setting)
+    if os.path.isabs(expanded):
+        return os.path.normpath(expanded)
+    return os.path.normpath(os.path.join(root, expanded))
+
+
+def _refresh_log_paths() -> None:
+    """ 根据当前 QT_CONFIG 中的 sys_log_file_path、trade_log_file_path 刷新日志路径并创建目录。
+
+    仅对上述两个配置项生效，不修改 local_data_file_path 或 QT_DATA_SOURCE。
+    """
+    global QT_SYS_LOG_PATH, QT_TRADE_LOG_PATH
+    QT_SYS_LOG_PATH = _resolve_path(
+        QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'], 'sys_log_file_path'
+    )
+    QT_TRADE_LOG_PATH = _resolve_path(
+        QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'], 'trade_log_file_path'
+    )
+    os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
+    os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
+
+
+# 设置qteasy回测交易报告以及错误报告的存储路径（支持热修改，见 configure 挂钩）
+_refresh_log_paths()
 # 设置loggings，创建logger
 debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
