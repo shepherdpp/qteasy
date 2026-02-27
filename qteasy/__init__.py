@@ -251,7 +251,10 @@ error_handler.setFormatter(formatter)
 logger_core = logging.getLogger('core')
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
-logger_core.setLevel(logging.INFO)
+# 根据 QT_CONFIG['log_level'] 设置日志等级，默认 INFO
+_log_level_name = str(QT_CONFIG.get('log_level', 'INFO')).upper()
+_log_level_value = getattr(logging, _log_level_name, logging.INFO)
+logger_core.setLevel(_log_level_value)
 logger_core.propagate = False
 
 logger_core.info('qteasy loaded!')

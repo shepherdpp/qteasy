@@ -57,7 +57,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(QT_CONFIG.mode, 1)
         self.assertEqual(QT_CONFIG.cash_delivery_period, 0)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
-        self.assertEqual(QT_CONFIG.invest_start, '20170605')
+        # 日期类参数默认已改为 None，由 config_parser 在运行时推导
+        self.assertIsNone(QT_CONFIG.invest_start)
         self.assertEqual(QT_CONFIG.cost_rate_buy, 0.0003)
         self.assertEqual(QT_CONFIG.benchmark_asset, '000300.SH')
 
@@ -82,7 +83,8 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(Exception, qt.configure, mode=5)
         self.assertRaises(Exception, qt.configure, cash_delivery_period='abc')
         self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
-        self.assertRaises(Exception, qt.configure, invest_start=None)
+        # invest_start=None 为合法默认值，不再断言为异常；改为断言非法日期字符串
+        self.assertRaises(Exception, qt.configure, invest_start='invalid_date')
         self.assertRaises(Exception, qt.configure, benchmark_asset=15)
         # parameters that do not exist
         self.assertRaises(Exception, qt.configure, wrong_parameter=3)

@@ -70,7 +70,7 @@ stg_list = qt.built_ins('dma')
 | `ssma`      | `SCRSSMA` | 单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例                                                                                                                |
 | `sdema`     | `SCRSDEMA` | 单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例                                                                                                          |
 | `sema`      | `SCRSEMA` | 单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例                                                                                                               |
- | ...         | ...     | 完整的内置策略清单请见[参考文档](../references/4-build-in-strategy-blender.md)                                                                                                                                              |
+| ...         | ...     | 完整的内置策略清单请见[参考文档](../references/4-build-in-strategy-blender.md)                                                                                                                                              |
 
 
 如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的`doc-string`：

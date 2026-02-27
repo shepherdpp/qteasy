@@ -312,6 +312,12 @@ def _valid_qt_kwargs():
              'level':     1,
              'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
 
+        'max_worker_count':
+            {'Default':   None,
+             'Validator': lambda value: (isinstance(value, int) and value >= 1) or value is None,
+             'level':     2,
+             'text':      '并行计算时允许使用的最大工作进程/线程数量。如果为None，则由系统自动根据CPU核心数决定。'},
+
         'hist_dnld_parallel':
             {'Default':   16,
              'Validator': lambda value: isinstance(value, int) and value >= 0,
@@ -358,20 +364,29 @@ def _valid_qt_kwargs():
                           '例如，设置hist_dnld_backoff = 2时，每次重试失败\n'
                           '后延迟时间会变为前一次的2倍，取值范围为[1.0, 3.0]'},
 
+        'log_level':
+            {'Default':   'INFO',
+             'Validator': lambda value: isinstance(value, str)
+                                        and value.upper() in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+             'level':     1,
+             'text':      'qteasy 核心日志等级，全局控制日志输出详细程度，可选：DEBUG/INFO/WARNING/ERROR/CRITICAL'},
+
         'auto_dnld_hist_tables':
             {'Default':   [],
              'Validator': lambda value: isinstance(value, list) and all(isinstance(item, str) for item in value),
              'level':     4,
              'text':      '在实盘运行时自动下载的历史数据表名列表，例如：\n'
                           '["stock_daily", "index_weekly", "stock_monthly"]\n'
-                          '如果列表为空，则不自动下载任何历史数据'},
+                          '如果列表为空，则不自动下载任何历史数据',
+             'planned':   True},
 
         'gpu':
             {'Default':   False,
              'Validator': lambda value: isinstance(value, bool),
              'level':     4,
              'text':      '如果True，策略参数寻优时使用GPU加速计算\n'
-                          '<本功能目前尚未实现! NotImplemented>'},
+                          '<本功能目前尚未实现! NotImplemented>',
+             'planned':   True},
 
         'local_data_source':
             {'Default':   'file',
@@ -476,26 +491,28 @@ def _valid_qt_kwargs():
                           '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
         'benchmark_asset_type':  # TODO: Deprecate: 如果已经指定了benchmark_asset的qt_code，那么其asset_type已经隐含确定，应该不需要再指定该参数
-            {'Default':   'IDX',
-             'Validator': lambda value: _validate_asset_type(value),
-             'level':     1,
-             'text':      '基准收益的资产类型，取值范围如下：\n'
-                          'IDX  : 指数\n'
-                          'E    : 股票\n'
-                          'FT   : 期货\n'
-                          'FD   : 基金'},
+            {'Default':    'IDX',
+             'Validator':  lambda value: _validate_asset_type(value),
+             'level':      1,
+             'text':       '基准收益的资产类型，取值范围如下：\n'
+                           'IDX  : 指数\n'
+                           'E    : 股票\n'
+                           'FT   : 期货\n'
+                           'FD   : 基金',
+             'deprecated': True},
 
         'benchmark_dtype':  # TODO: Deprecate: benchmark_asset的价格类型应该根据Operator的运行时间表，自动从数据源中获取，而不需要用户指定
-            {'Default':   'close',
-             'Validator': lambda value: value.lower() in ['open',
-                                                          'high',
-                                                          'low',
-                                                          'close',
-                                                          'vol',
-                                                          'unit_nav',
-                                                          'accum_nav'],
-             'level':     1,
-             'text':      '作为基准收益的资产的价格类型。'},
+            {'Default':    'close',
+             'Validator':  lambda value: value.lower() in ['open',
+                                                           'high',
+                                                           'low',
+                                                           'close',
+                                                           'vol',
+                                                           'unit_nav',
+                                                           'accum_nav'],
+             'level':      1,
+             'text':       '作为基准收益的资产的价格类型。',
+             'deprecated': True},
 
         'report':
             {'Default':   True,
@@ -567,20 +584,20 @@ def _valid_qt_kwargs():
              'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本，取值范围为[0, 1)'},
 
         'invest_start':
-            {'Default':   '20170605',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '回测模式下的回测开始日期\n'
-                          '格式为"YYYYMMDD"'},
+             'text':      '回测模式下的回测开始日期。如果为None，将在运行时根据invest_end或当前日期自动推导。\n'
+                          '显式设置时格式为\"YYYYMMDD\"'},
 
         'invest_end':
-            {'Default':   '20210201',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '回测模式下的回测结束日期\n'
-                          '格式为"YYYYMMDD"'},
+             'text':      '回测模式下的回测结束日期。如果为None，将在运行时根据当前日期自动推导。\n'
+                          '显式设置时格式为\"YYYYMMDD\"'},
 
         'invest_cash_amounts':
             {'Default':   [100000.0],
@@ -649,15 +666,16 @@ def _valid_qt_kwargs():
                           '- forward/f/accu - 对于股票，使用前复权价格回测，对于基金，使用复权净值回测'},
 
         'maximize_cash_usage':  # deprecated
-            {'Default':   True,
-             'Validator': lambda value: isinstance(value, bool),
-             'level':     4,
-             'text':      '回测交易时是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即\n'
-                          '用于同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。\n'
-                          '- True -  默认值，首先处理同一批次交易中的卖出信号，并在可能时将获得的现金\n'
-                          '          立即用于本次买入\n'
-                          '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
-                          '          次交易委托同时提交时，这是正常情况'},
+            {'Default':    True,
+             'Validator':  lambda value: isinstance(value, bool),
+             'level':      4,
+             'text':       '回测交易时是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即\n'
+                           '用于同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。\n'
+                           '- True -  默认值，首先处理同一批次交易中的卖出信号，并在可能时将获得的现金\n'
+                           '          立即用于本次买入\n'
+                           '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
+                           '          次交易委托同时提交时，这是正常情况',
+             'deprecated': True},
 
         'PT_buy_threshold':
             {'Default':   0.,
@@ -754,18 +772,20 @@ def _valid_qt_kwargs():
                           '一个偏移量运行，避免无法交易。取值范围为[0, 5]'},
 
         'opti_start':
-            {'Default':   '20160405',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '优化模式下的策略优化区间开始日期，输入为"YYYYMMDD"或其他类似日期格式的字符串'},
+             'text':      '优化模式下的策略优化区间开始日期。如果为None，将在运行时根据opti_end自动推导为其前一年。\n'
+                          '显式设置时输入为\"YYYYMMDD\"或其他类似日期格式的字符串'},
 
         'opti_end':
-            {'Default':   '20191231',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '优化模式下的策略优化区间结束日期，输入为"YYYYMMDD"或其他类似日期格式的字符串'},
+             'text':      '优化模式下的策略优化区间结束日期。如果为None，将在运行时根据当前日期自动推导。\n'
+                          '显式设置时输入为\"YYYYMMDD\"或其他类似日期格式的字符串'},
 
         'opti_cash_amounts':
             {'Default':   [100000.0],
@@ -793,20 +813,20 @@ def _valid_qt_kwargs():
                           '["20100104", "20100202", "20100304"]'},
 
         'test_start':
-            {'Default':   '20200106',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '优化模式下的策略测试区间开始日期'
-                          '格式为"YYYYMMDD"，字符串类型输入'},
+             'text':      '优化模式下的策略测试区间开始日期。如果为None，将在运行时根据test_end自动推导为其前六个月。\n'
+                          '显式设置时格式为\"YYYYMMDD\"，字符串类型输入'},
 
         'test_end':
-            {'Default':   '20210201',
+            {'Default':   None,
              'Validator': lambda value: isinstance(value, str)
-                                        and _is_datelike(value),
+                                        and _is_datelike(value) if value is not None else True,
              'level':     0,
-             'text':      '优化模式下的策略测试区间结束日期\n'
-                          '格式为"YYYYMMDD"，字符串类型输入'},
+             'text':      '优化模式下的策略测试区间结束日期。如果为None，将在运行时根据当前日期自动推导。\n'
+                          '显式设置时格式为\"YYYYMMDD\"，字符串类型输入'},
 
         'test_cash_amounts':
             {'Default':   [100000.0],
@@ -992,8 +1012,7 @@ def _validate_vkwargs_dict(vkwargs):
     -------
     """
     for key, value in vkwargs.items():
-        if len(value) != 4:
-            raise ValueError(f'Items != 2 in valid config_key table, for config_key {key}')
+        # 仅要求必要字段存在，其它元数据字段（如 deprecated / planned）为可选
         if 'Default' not in value:
             raise ValueError(f'Missing "Default" value for config_key {key}')
         if 'Validator' not in value:
@@ -1065,6 +1084,11 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False, width=80):
                 cur_value = str(kwargs[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
+                # 在描述中附加 deprecated / planned 信息，便于用户识别参数状态
+                if vkwargs[key].get('deprecated', False):
+                    description = '[DEPRECATED] ' + description
+                elif vkwargs[key].get('planned', False):
+                    description = '[PLANNED] ' + description
             else:
                 continue
 
@@ -1259,6 +1283,14 @@ def _validate_key_and_value(key, value, raise_key_error=False, raise_value_error
         raise KeyError(err_msg)
     if key not in vkwargs:
         return True
+
+    # 如果参数已经标记为 deprecated，则在每次验证时给出 FutureWarning
+    if vkwargs[key].get('deprecated', False):
+        warnings.warn(
+                f'Config key "{key}" is deprecated and will be removed in a future version of qteasy.',
+                FutureWarning,
+                stacklevel=3,
+        )
 
     try:
         valid = vkwargs[key]['Validator'](value)

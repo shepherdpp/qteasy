@@ -27,6 +27,9 @@ from qteasy.config_parser import (
     parse_optimization_params_pso,
     parse_optimization_params_bayesian,
     parse_all_optimization_params,
+    build_backtest_config_view,
+    build_optimize_config_view,
+    build_live_trade_config_view,
 )
 from qteasy.backtest import generate_cash_invest_and_delivery_arrays
 
@@ -1003,6 +1006,80 @@ class TestParseOptimizationCashPlan(unittest.TestCase):
         # 验证总金额
         self.assertAlmostEqual(sum(result[0].amounts), 100000, places=2)
         self.assertAlmostEqual(sum(result[1].amounts), 100000, places=2)
+
+
+class TestConfigViews(unittest.TestCase):
+
+    def test_backtest_config_view_basic(self):
+        """测试 BacktestConfigView 构建与字段映射"""
+        config = {
+            'invest_start':        '20200101',
+            'invest_end':          '20200131',
+            'invest_cash_dates':   None,
+            'invest_cash_amounts': [100000.0],
+            'riskfree_ir':         0.03,
+            'asset_pool':          '000300.SH',
+            'asset_type':          'IDX',
+            'backtest_price_adj':  'none',
+        }
+        view = build_backtest_config_view(config)
+        self.assertEqual(view.start, '2020-01-01')
+        self.assertEqual(view.end, '2020-01-31')
+        self.assertIsInstance(view.cash_plan, CashPlan)
+        self.assertEqual(view.asset_pool, '000300.SH')
+        self.assertEqual(view.asset_type, 'IDX')
+        self.assertEqual(view.backtest_price_adj, 'none')
+
+    def test_optimize_config_view_basic(self):
+        """测试 OptimizeConfigView 构建与字段映射"""
+        config = {
+            'opti_start':        '2023-06-01',
+            'opti_end':          '2023-09-01',
+            'test_start':        '2023-09-02',
+            'test_end':          '2023-12-01',
+            'opti_cash_dates':   None,
+            'opti_cash_amounts': [100000],
+            'test_cash_dates':   None,
+            'test_cash_amounts': [100000],
+            'riskfree_ir':       0.03,
+            'asset_pool':        '000300.SH',
+            'asset_type':        'IDX',
+            'benchmark_asset':   '000300.SH',
+        }
+        view = build_optimize_config_view(config)
+        self.assertEqual(view.opt_start, '2023-06-01')
+        self.assertEqual(view.opt_end, '2023-09-01')
+        self.assertEqual(view.val_start, '2023-09-02')
+        self.assertEqual(view.val_end, '2023-12-01')
+        self.assertIsInstance(view.opt_cash_plan, CashPlan)
+        self.assertIsInstance(view.val_cash_plan, CashPlan)
+        self.assertEqual(view.asset_pool, '000300.SH')
+        self.assertEqual(view.asset_type, 'IDX')
+        self.assertEqual(view.benchmark_asset, '000300.SH')
+
+    def test_live_trade_config_view_basic(self):
+        """测试 LiveTradeConfigView 构建与字段映射"""
+        config = {
+            'mode':                           0,
+            'asset_pool':                     '000300.SH',
+            'asset_type':                     'E',
+            'time_zone':                      'Asia/Shanghai',
+            'live_price_acquire_channel':     'eastmoney',
+            'live_price_acquire_freq':        '15MIN',
+            'live_trade_data_refill_channel': 'eastmoney',
+            'live_trade_daily_refill_tables': 'stock_daily',
+            'live_trade_weekly_refill_tables': '',
+            'live_trade_monthly_refill_tables': '',
+        }
+        view = build_live_trade_config_view(config)
+        self.assertEqual(view.mode, 0)
+        self.assertEqual(view.asset_pool, '000300.SH')
+        self.assertEqual(view.asset_type, 'E')
+        self.assertEqual(view.time_zone, 'Asia/Shanghai')
+        self.assertEqual(view.live_price_channel, 'eastmoney')
+        self.assertEqual(view.live_price_freq, '15MIN')
+        self.assertEqual(view.data_refill_channel, 'eastmoney')
+        self.assertEqual(view.daily_refill_tables, 'stock_daily')
 
     def test_parse_optimization_params_pso(self):
         """测试 parse_optimization_params_pso：返回 population_size、max_iterations"""

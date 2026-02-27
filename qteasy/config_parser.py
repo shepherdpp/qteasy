@@ -13,7 +13,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import Any, Union
+from typing import Any, Union, NamedTuple
 from warnings import warn
 
 from qteasy import QT_DATA_SOURCE
@@ -21,6 +21,62 @@ from qteasy.configure import ConfigDict
 from qteasy.utilfuncs import next_market_trade_day, regulate_date_format, str_to_list
 from qteasy.finance import CashPlan
 from qteasy.history import get_history_data_packages, get_history_panel
+
+
+class BacktestConfigView(NamedTuple):
+    """ 回测相关配置视图，集中展示回测所需的关键参数 """
+
+    start: str
+    end: str
+    cash_plan: CashPlan
+    asset_pool: Any
+    asset_type: str
+    backtest_price_adj: str
+
+
+class OptimizeConfigView(NamedTuple):
+    """ 策略优化相关配置视图 """
+
+    opt_start: str
+    opt_end: str
+    val_start: str
+    val_end: str
+    opt_cash_plan: CashPlan
+    val_cash_plan: CashPlan
+    asset_pool: Any
+    asset_type: str
+    benchmark_asset: str
+
+
+class LiveTradeConfigView(NamedTuple):
+    """ 实盘交易相关配置视图 """
+
+    mode: Any
+    asset_pool: Any
+    asset_type: str
+    time_zone: str
+    live_price_channel: str
+    live_price_freq: str
+    data_refill_channel: str
+    daily_refill_tables: str
+    weekly_refill_tables: str
+    monthly_refill_tables: str
+
+
+def build_live_trade_config_view(config: Union[dict, ConfigDict]) -> LiveTradeConfigView:
+    """ 根据当前配置构建实盘交易配置视图对象。"""
+    return LiveTradeConfigView(
+            mode=config.get('mode'),
+            asset_pool=config.get('asset_pool'),
+            asset_type=config.get('asset_type'),
+            time_zone=config.get('time_zone', 'local'),
+            live_price_channel=config.get('live_price_acquire_channel'),
+            live_price_freq=config.get('live_price_acquire_freq'),
+            data_refill_channel=config.get('live_trade_data_refill_channel'),
+            daily_refill_tables=config.get('live_trade_daily_refill_tables', ''),
+            weekly_refill_tables=config.get('live_trade_weekly_refill_tables', ''),
+            monthly_refill_tables=config.get('live_trade_monthly_refill_tables', ''),
+    )
 
 
 def parse_optimization_start_end_dates(config) -> tuple[str, str, str, str]:
@@ -156,6 +212,30 @@ def parse_backtest_cash_plan(config: Union[dict, ConfigDict]) -> CashPlan:
         return invest_cash_plan
 
 
+def build_backtest_config_view(config: Union[dict, ConfigDict]) -> BacktestConfigView:
+    """ 根据当前配置构建回测配置视图对象。
+
+    该视图集中包含：
+    - 回测起止日期（经过解析后的有效日期）；
+    - 现金投入计划（CashPlan 对象）；
+    - 资产池与资产类型；
+    - 复权方式设置。
+    """
+    invest_start, invest_end = parse_backtest_start_end_dates(config=config)
+    cash_plan = parse_backtest_cash_plan(config=config)
+    asset_pool = config.get('asset_pool')
+    asset_type = config.get('asset_type')
+    backtest_price_adj = config.get('backtest_price_adj', 'none')
+    return BacktestConfigView(
+            start=invest_start,
+            end=invest_end,
+            cash_plan=cash_plan,
+            asset_pool=asset_pool,
+            asset_type=asset_type,
+            backtest_price_adj=backtest_price_adj,
+    )
+
+
 def parse_trade_cost_params(config) -> dict:
     """解析交易成本相关的配置参数:
         buy_rate: float, 交易成本：固定买入费率
@@ -189,6 +269,26 @@ def parse_trade_cost_params(config) -> dict:
         raise ValueError('cost_slippage should be a float number between 0 and 1')
 
     return cost_params
+
+
+def build_optimize_config_view(config: Union[dict, ConfigDict]) -> OptimizeConfigView:
+    """ 根据当前配置构建策略优化配置视图对象。"""
+    opt_start, opt_end, val_start, val_end = parse_optimization_start_end_dates(config=config)
+    opt_cash_plan, val_cash_plan = parse_optimization_cash_plan(config=config)
+    asset_pool = config.get('asset_pool')
+    asset_type = config.get('asset_type')
+    benchmark_asset = config.get('benchmark_asset')
+    return OptimizeConfigView(
+            opt_start=opt_start,
+            opt_end=opt_end,
+            val_start=val_start,
+            val_end=val_end,
+            opt_cash_plan=opt_cash_plan,
+            val_cash_plan=val_cash_plan,
+            asset_pool=asset_pool,
+            asset_type=asset_type,
+            benchmark_asset=benchmark_asset,
+    )
 
 
 def parse_signal_parsing_params(config) -> dict:
