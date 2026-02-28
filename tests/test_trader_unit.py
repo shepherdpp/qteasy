@@ -18,88 +18,21 @@ from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker
 
 
-# --------------- 测试用 DataSource：独立目录，测试后清理 ---------------
+# --------------- 测试用 DataSource：从公共夹具导入（data_test_trader，legacy=False） ---------------
 
-def _get_trader_test_data_dir():
-    """Trader 单元/集成测试专用数据目录，不使用默认 QT_DATA_SOURCE。"""
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_test_trader')
-
-
-def _default_trader_kwargs():
-    """Trader 测试用默认 kwargs。"""
-    return {
-        'market_open_time_am': '09:30:00',
-        'market_close_time_pm': '15:30:00',
-        'market_open_time_pm': '13:00:00',
-        'market_close_time_am': '11:30:00',
-        'exchange': 'SSE',
-        'cash_delivery_period': 0,
-        'stock_delivery_period': 0,
-        'asset_pool': '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-        'asset_type': 'E',
-        'pt_buy_threshold': 0.05,
-        'pt_sell_threshold': 0.05,
-        'allow_sell_short': False,
-        'live_price_channel': 'eastmoney',
-        'live_data_channel': 'eastmoney',
-        'live_price_freq': '15min',
-        'live_data_batch_size': 0,
-        'live_data_batch_interval': 0,
-        'daily_refill_tables': 'stock_1min, stock_5min',
-        'weekly_refill_tables': 'stock_15min',
-        'monthly_refill_tables': 'stock_daily',
-    }
-
-
-def _create_operator():
-    """测试用最小 Operator。"""
-    op = Operator(strategies=['macd', 'dma'])
-    op.set_parameter(stg_id='dma', window_length=10, run_freq='h')
-    op.set_parameter(stg_id='macd', window_length=10, run_freq='30min')
-    return op
-
-
-def _clear_tables(datasource):
-    """清理测试相关表（含日志/断点相关文件由调用方按需删除）。"""
-    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders',
-                  'sys_op_trade_results', 'stock_daily']:
-        if datasource.table_data_exists(table):
-            datasource.drop_table_data(table)
-
-
-def _create_test_datasource():
-    """创建专用测试 DataSource，不使用默认 QT_DATA_SOURCE。"""
-    data_dir = _get_trader_test_data_dir()
-    os.makedirs(data_dir, exist_ok=True)
-    return DataSource('file', file_type='csv', file_loc=data_dir, allow_drop_table=True)
-
-
-def create_trader_with_account(account_id=1, with_positions=True, debug=False):
-    """
-    创建带账户（及可选持仓）的 Trader，使用测试 DataSource。
-    返回 (trader, datasource)。调用方需在测试结束后调用 _clear_tables(datasource)。
-    """
-    test_ds = _create_test_datasource()
-    _clear_tables(test_ds)
-    new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
-    if with_positions:
-        for sym in ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']:
-            get_or_create_position(account_id=account_id, symbol=sym, position_type='long', data_source=test_ds)
-        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
-        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
-    operator = _create_operator()
-    broker = SimulatorBroker()
-    trader = Trader(
-        account_id=account_id,
-        operator=operator,
-        broker=broker,
-        datasource=test_ds,
-        debug=debug,
-        **_default_trader_kwargs(),
-    )
-    return trader, test_ds
+from tests.trader_test_helpers import (
+    get_trader_test_data_dir,
+    default_trader_kwargs,
+    create_operator,
+    clear_tables,
+    create_test_datasource,
+    create_trader_with_account,
+)
+# 别名，便于本文件内 tearDown 等继续使用 _clear_tables / _create_operator 等命名
+_clear_tables = clear_tables
+_create_operator = create_operator
+_default_trader_kwargs = default_trader_kwargs
+_create_test_datasource = create_test_datasource
 
 
 # --------------- 初始化与参数验证 ---------------

@@ -49,6 +49,7 @@ UNKNOWN.egg-info/
 dist/
 qteasy.egg-info/
 data_test/
+tests/data_test_trader_legacy/
 /question.py
 *.xlsx
 *.numbers

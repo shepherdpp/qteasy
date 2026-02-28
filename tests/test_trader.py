@@ -12,6 +12,7 @@ import unittest
 import time
 import os
 import csv
+from unittest.mock import patch
 
 from queue import Queue
 from threading import Thread
@@ -28,177 +29,23 @@ from qteasy.trader import Trader
 from qteasy.broker import SimulatorBroker, Broker
 
 
-# --------------- Fixture helpers (plan section 2) ---------------
+# --------------- Fixture helpers：从公共模块导入，本文件使用 legacy=True ---------------
 
-def _get_data_test_dir():
-    """Return path to data_test directory (works when run from project root or tests/)."""
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'qteasy', 'data_test')
-
-
-def _default_trader_kwargs():
-    """Default kwargs for Trader used across tests."""
-    return {
-        'market_open_time_am': '09:30:00',
-        'market_close_time_pm': '15:30:00',
-        'market_open_time_pm': '13:00:00',
-        'market_close_time_am': '11:30:00',
-        'exchange': 'SSE',
-        'cash_delivery_period': 0,
-        'stock_delivery_period': 0,
-        'asset_pool': '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
-        'asset_type': 'E',
-        'pt_buy_threshold': 0.05,
-        'pt_sell_threshold': 0.05,
-        'allow_sell_short': False,
-        'live_price_channel': 'eastmoney',
-        'live_data_channel': 'eastmoney',
-        'live_price_freq': '15min',
-        'live_data_batch_size': 0,
-        'live_data_batch_interval': 0,
-        'daily_refill_tables': 'stock_1min, stock_5min',
-        'weekly_refill_tables': 'stock_15min',
-        'monthly_refill_tables': 'stock_daily',
-    }
-
-
-def _create_operator():
-    """Create a minimal Operator for tests."""
-    operator = Operator(strategies=['macd', 'dma'])
-    operator.set_parameter(stg_id='dma', window_length=10, run_freq='h')
-    operator.set_parameter(stg_id='macd', window_length=10, run_freq='30min')
-    return operator
-
-
-def _clear_tables(datasource):
-    """Clear test-related tables in datasource."""
-    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders',
-                  'sys_op_trade_results', 'stock_daily']:
-        if datasource.table_data_exists(table):
-            datasource.drop_table_data(table)
-
-
-def _write_minimal_stock_daily(datasource, symbols=None, start_date='2023-02-01', end_date='2023-05-10'):
-    """Write minimal daily bars for run_strategy tests. Covers symbols and date range with >= 30 rows per symbol.
-    Uses bars schema: ts_code, trade_date, open, high, low, close, pre_close, change, pct_chg, vol, amount.
-    """
-    if symbols is None:
-        symbols = ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ']
-    dates = pd.bdate_range(start=start_date, end=end_date)
-    rows = []
-    for ts_code in symbols:
-        for i, d in enumerate(dates):
-            price = 10.0 + (i % 100) * 0.1
-            rows.append({
-                'ts_code': ts_code,
-                'trade_date': d.strftime('%Y-%m-%d'),
-                'open': price,
-                'high': price + 0.5,
-                'low': price - 0.5,
-                'close': price + 0.1,
-                'pre_close': price - 0.1,
-                'change': 0.1,
-                'pct_chg': 1.0,
-                'vol': 1000000.0,
-                'amount': 10000000.0,
-            })
-    df = pd.DataFrame(rows)
-    datasource.write_table_data(df, 'stock_daily')
-
-
-def create_trader_with_account(account_id=1, with_positions=True, debug=False):
-    """
-    Create a minimal runnable Trader with an account and optional positions.
-    Tables are cleared and recreated. Returns (trader, datasource).
-    """
-    data_test_dir = _get_data_test_dir()
-    test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir, allow_drop_table=True)
-    _clear_tables(test_ds)
-    new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
-    if with_positions:
-        for sym in ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']:
-            get_or_create_position(account_id=account_id, symbol=sym, position_type='long', data_source=test_ds)
-        update_position(position_id=1, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=2, data_source=test_ds, qty_change=200, available_qty_change=200)
-        update_position(position_id=3, data_source=test_ds, qty_change=300, available_qty_change=300)
-        update_position(position_id=4, data_source=test_ds, qty_change=200, available_qty_change=100)
-    operator = _create_operator()
-    broker = SimulatorBroker()
-    trader = Trader(
-        account_id=account_id,
-        operator=operator,
-        broker=broker,
-        datasource=test_ds,
-        debug=debug,
-        **_default_trader_kwargs(),
-    )
-    return trader, test_ds
-
-
-def create_trader_with_orders_and_results(account_id=1, debug=False, stoppage=0.5):
-    """
-    Create a Trader with account, positions, submitted orders and trade results (full fixture).
-    Returns (trader, datasource). Caller may use trader.init_trade_log_file(), init_system_logger() as needed.
-    """
-    trader, test_ds = create_trader_with_account(account_id=account_id, with_positions=True, debug=debug)
-    trader.renew_trade_log_file()
-    trader.init_system_logger()
-    parsed_signals_batch = (
-        ['000001.SZ', '000002.SZ', '000004.SZ', '000006.SZ', '000007.SZ'],
-        ['long', 'long', 'long', 'long', 'long'],
-        ['buy', 'sell', 'sell', 'buy', 'buy'],
-        [100, 100, 300, 400, 500],
-        [60.0, 70.0, 80.0, 90.0, 100.0],
-    )
-    order_ids = save_parsed_trade_orders(
-        account_id=account_id,
-        symbols=parsed_signals_batch[0],
-        positions=parsed_signals_batch[1],
-        directions=parsed_signals_batch[2],
-        quantities=parsed_signals_batch[3],
-        prices=parsed_signals_batch[4],
-        data_source=test_ds,
-    )
-    for oid in order_ids:
-        submit_order(oid, test_ds)
-    time.sleep(stoppage)
-    parsed_signals_batch2 = (
-        ['000001.SZ', '000004.SZ', '000005.SZ', '000007.SZ'],
-        ['long', 'long', 'long', 'long'],
-        ['sell', 'buy', 'buy', 'sell'],
-        [200, 200, 100, 300],
-        [70.0, 30.0, 56.0, 79.0],
-    )
-    order_ids2 = save_parsed_trade_orders(
-        account_id=account_id,
-        symbols=parsed_signals_batch2[0],
-        positions=parsed_signals_batch2[1],
-        directions=parsed_signals_batch2[2],
-        quantities=parsed_signals_batch2[3],
-        prices=parsed_signals_batch2[4],
-        data_source=test_ds,
-    )
-    for oid in order_ids2:
-        submit_order(order_id=oid, data_source=test_ds)
-    time.sleep(stoppage)
-    delivery_config = {'cash_delivery_period': 0, 'stock_delivery_period': 0}
-    for i, raw in enumerate([
-        {'order_id': 1, 'filled_qty': 100, 'price': 60.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
-        {'order_id': 2, 'filled_qty': 100, 'price': 70.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
-        {'order_id': 3, 'filled_qty': 200, 'price': 80.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
-        {'order_id': 4, 'filled_qty': 400, 'price': 89.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
-        {'order_id': 5, 'filled_qty': 500, 'price': 100.5, 'transaction_fee': 5.0, 'canceled_qty': 0.0},
-    ], 1):
-        full = process_trade_result(raw_trade_result=raw, data_source=test_ds)
-        trader.log_trade_result(full)
-        dr = deliver_trade_result(result_id=full['result_id'], account_id=account_id, data_source=test_ds)
-        trader.log_qty_delivery(dr)
-        trader.log_cash_delivery(dr)
-        time.sleep(stoppage)
-    cancel_order(8, test_ds, delivery_config)
-    process_account_delivery(account_id=account_id, data_source=test_ds)
-    trader.init_trade_log_file()
-    trader.init_system_logger()
-    return trader, test_ds
+from tests.trader_test_helpers import (
+    get_trader_test_data_dir,
+    default_trader_kwargs,
+    create_operator,
+    clear_tables,
+    write_minimal_stock_daily,
+    create_trader_with_account,
+    create_trader_with_orders_and_results,
+)
+# 本文件使用 data_test_trader_legacy，调用处显式传 legacy=True
+_get_trader_legacy_test_data_dir = lambda: get_trader_test_data_dir(legacy=True)
+_clear_tables = clear_tables
+_create_operator = create_operator
+_default_trader_kwargs = default_trader_kwargs
+_write_minimal_stock_daily = write_minimal_stock_daily
 
 
 class TestTrader(unittest.TestCase):
@@ -241,9 +88,9 @@ class TestTrader(unittest.TestCase):
             'monthly_refill_tables':            'stock_daily',
 
         }
-        # 创建测试数据源
-        data_test_dir = '../qteasy/data_test/'
-        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
+        # 使用专用测试数据源（data_test_trader_legacy），测试结束后在 tearDown 中清理
+        data_test_dir = _get_trader_legacy_test_data_dir()
+        os.makedirs(data_test_dir, exist_ok=True)
         test_ds = DataSource(
                 'file',
                 file_type='csv',
@@ -483,6 +330,12 @@ class TestTrader(unittest.TestCase):
         )
         self.ts.init_trade_log_file()
         self.ts.init_system_logger()
+
+    def tearDown(self):
+        """测试结束后清理测试数据，不污染默认数据源。"""
+        ts = getattr(self, 'ts', None)
+        if ts is not None:
+            _clear_tables(ts.datasource)
 
     def test_system_logging(self):
         """ test all functions related to system logging
@@ -1083,95 +936,85 @@ class TestTrader(unittest.TestCase):
     
         该测试验证Trader在不同状态之间的转换，包括running、sleeping、paused和stopped状态。
         同时测试了直接调用内部方法对状态的影响。
-        
-        Args:
-            self: 测试类实例，包含ts属性(Trader实例)和stoppage属性(睡眠时间)
-            
-        Returns:
-            None: 该测试方法无返回值，通过断言验证Trader状态转换的正确性
+        使用 mock 固定当前时间为 2023-05-10 08:00，避免因真实交易时段导致断言不稳定。
         """
-        ts = self.ts
-        self.assertIsInstance(ts, Trader)
-        Thread(target=ts.run, daemon=True).start()
-        time.sleep(self.stoppage)
-        print(f'started trader, current status: {ts.status}')
-        if self.ts.is_market_open:
-            self.assertEqual(ts.status, 'running')
-        else:
+        with patch('qteasy.trader.get_current_timezone_datetime', return_value=pd.Timestamp('2023-05-10 08:00:00')):
+            ts = self.ts
+            self.assertIsInstance(ts, Trader)
+            Thread(target=ts.run, daemon=True).start()
+            time.sleep(self.stoppage)
+            print(f'started trader, current status: {ts.status}')
             self.assertEqual(ts.status, 'sleeping')
 
-        print(f'\ncurrent trade day? {ts.is_trade_day}, trader status: {ts.status}')
-        ts.add_task('wakeup')
-        time.sleep(self.stoppage)
-        print(f'trader status will be running or sleeping after running task "wakeup", actually {ts.status}')
-        if ts.is_trade_day:
+            print(f'\ncurrent trade day? {ts.is_trade_day}, trader status: {ts.status}')
+            ts.add_task('wakeup')
+            time.sleep(self.stoppage)
+            print(f'trader status will be running or sleeping after running task "wakeup", actually {ts.status}')
             self.assertEqual(ts.status, 'running')
-        else:
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('sleep')
+            print(f'trader status will be sleeping after running task "sleep"')
+            time.sleep(self.stoppage)
             self.assertEqual(ts.status, 'sleeping')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('sleep')
-        print(f'trader status will be sleeping after running task "sleep"')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'sleeping')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('pause')
-        print(f'trader status will be paused after running task "pause"')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'paused')
-        ts.add_task('wakeup')  # should be ignored
-        print(f'trader status will still be paused after running task "wakeup" in paused status')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'paused')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('resume')  # resume to previous status: sleeping
-        print(f'trader status will be sleeping after running task "resume"')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'sleeping')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('wakeup')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'running')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('pause')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'paused')
-        ts.add_task('sleep')  # should be ignored
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'paused')
-        ts.add_task('resume')  # resume to previous status: running
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'running')
-        print(f'\ncurrent status: {ts.status}')
-        ts.add_task('stop')
-        time.sleep(self.stoppage)
-        self.assertEqual(ts.status, 'stopped')
-        print(f'\ncurrent status: {ts.status}')
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('pause')
+            print(f'trader status will be paused after running task "pause"')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'paused')
+            ts.add_task('wakeup')  # should be ignored
+            print(f'trader status will still be paused after running task "wakeup" in paused status')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'paused')
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('resume')  # resume to previous status: sleeping
+            print(f'trader status will be sleeping after running task "resume"')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'sleeping')
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('wakeup')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'running')
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('pause')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'paused')
+            ts.add_task('sleep')  # should be ignored
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'paused')
+            ts.add_task('resume')  # resume to previous status: running
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'running')
+            print(f'\ncurrent status: {ts.status}')
+            ts.add_task('stop')
+            time.sleep(self.stoppage)
+            self.assertEqual(ts.status, 'stopped')
+            print(f'\ncurrent status: {ts.status}')
 
-        # 测试直接调用内部方法对状态的影响
-        print(f'test function _run_task, as running tasks off-line')
-        self.assertEqual(ts.status, 'stopped')
-        ts._run_task('start')
-        self.assertEqual(ts.status, 'sleeping')
-        ts._run_task('stop')
-        self.assertEqual(ts.status, 'stopped')
-        ts._run_task('start')
-        self.assertEqual(ts.status, 'sleeping')
-        ts._run_task('wakeup')
-        self.assertEqual(ts.status, 'running')
-        ts._run_task('sleep')
-        self.assertEqual(ts.status, 'sleeping')
-        ts._run_task('wakeup')
-        self.assertEqual(ts.status, 'running')
-        ts._run_task('pause')
-        self.assertEqual(ts.status, 'paused')
-        ts._run_task('resume')
-        self.assertEqual(ts.status, 'running')
-        ts._run_task('sleep')
-        self.assertEqual(ts.status, 'sleeping')
-        ts._run_task('pause')
-        self.assertEqual(ts.status, 'paused')
-        ts._run_task('resume')
-        self.assertEqual(ts.status, 'sleeping')
+            # 测试直接调用内部方法对状态的影响
+            print(f'test function _run_task, as running tasks off-line')
+            self.assertEqual(ts.status, 'stopped')
+            ts._run_task('start')
+            self.assertEqual(ts.status, 'sleeping')
+            ts._run_task('stop')
+            self.assertEqual(ts.status, 'stopped')
+            ts._run_task('start')
+            self.assertEqual(ts.status, 'sleeping')
+            ts._run_task('wakeup')
+            self.assertEqual(ts.status, 'running')
+            ts._run_task('sleep')
+            self.assertEqual(ts.status, 'sleeping')
+            ts._run_task('wakeup')
+            self.assertEqual(ts.status, 'running')
+            ts._run_task('pause')
+            self.assertEqual(ts.status, 'paused')
+            ts._run_task('resume')
+            self.assertEqual(ts.status, 'running')
+            ts._run_task('sleep')
+            self.assertEqual(ts.status, 'sleeping')
+            ts._run_task('pause')
+            self.assertEqual(ts.status, 'paused')
+            ts._run_task('resume')
+            self.assertEqual(ts.status, 'sleeping')
 
     def test_trader_properties_methods(self):
         """Test function _run_task"""
@@ -1263,112 +1106,112 @@ class TestTrader(unittest.TestCase):
         ts.info()
 
     def test_trader_run(self):
-        """Test full-fledged run with all tasks manually added"""
+        """Test full-fledged run with all tasks manually added.
+        Uses mock time 2023-05-10 08:00 so status is deterministic (sleeping until open_market).
+        Mock 打在实例的 get_current_tz_datetime 上，保证 daemon 线程内 self.get_current_tz_datetime() 也返回固定时间。
+        """
         ts = self.ts
-        ts.debug = True  # 这样就可以直接模拟交易日了
-        ts.force_current_date = pd.to_datetime('2023-05-10').date()  # 强制设置日期为一个交易日
-        self.assertTrue(ts.is_trade_day)
-        Thread(target=ts.run, daemon=True).start()  # start the trader
-        time.sleep(self.stoppage)
-        print(f'started trader, current status: {ts.status}, broker status: {ts.broker.status}')
+        ts.debug = True
+        fixed_ts = pd.Timestamp('2023-05-10 08:00:00')
+        with patch.object(ts, 'get_current_tz_datetime', return_value=fixed_ts):
+            self.assertTrue(ts.is_trade_day)
+            Thread(target=ts.run, daemon=True).start()  # start the trader
+            time.sleep(self.stoppage)
+            print(f'started trader, current status: {ts.status}, broker status: {ts.broker.status}')
 
-        # 依次执行start, pre_open, open_market, run_stg - macd, run_stg - dma, close_market, post_close, stop
-        ts.add_task('start')
-        time.sleep(self.stoppage)
-        print(f'ran task start, current status: {ts.status}, broker status: {ts.broker.status}')
-        print('added task start')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        # 新的trader创建后，如果当前是交易时段，status为running，否则为sleeping，因此这里的status可能是running或者sleeping，需要根据market_open判断
-        if ts.is_market_open:
-            self.assertEqual(ts.status, 'running')
-            self.assertEqual(ts.broker.status, 'running')
-        else:
+            # 依次执行start, pre_open, open_market, run_stg - macd, run_stg - dma, close_market, post_close, stop
+            ts.add_task('start')
+            time.sleep(self.stoppage)
+            print(f'ran task start, current status: {ts.status}, broker status: {ts.broker.status}')
+            print('added task start')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
 
-        ts.add_task('pre_open')
-        time.sleep(self.stoppage)
-        print(f'ran task pre_open, current status: {ts.status}, broker status: {ts.broker.status}')
-        print('added task pre_open')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        if ts.is_market_open:
-            self.assertEqual(ts.status, 'running')
-            self.assertEqual(ts.broker.status, 'running')
-        else:
+            ts.add_task('pre_open')
+            time.sleep(self.stoppage)
+            print(f'ran task pre_open, current status: {ts.status}, broker status: {ts.broker.status}')
+            print('added task pre_open')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
-        broker_prev_status = 'running'
-        prev_status = ts.prev_status
+            broker_prev_status = 'running'
+            prev_status = ts.prev_status
 
-        ts.add_task('open_market')
-        time.sleep(self.stoppage)
-        print('added task open_market')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, broker_prev_status)
+            ts.add_task('open_market')
+            # pre_open 会执行数据源分析与填充，耗时较长；需轮询等待 open_market 被 daemon 线程执行
+            max_wait = 90
+            for _ in range(max_wait * 10):
+                time.sleep(0.1)
+                if ts.status == 'running':
+                    break
+            print('added task open_market')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'running', 'open_market should set status to running (pre_open may take long)')
+            self.assertEqual(ts.broker.status, broker_prev_status)
 
-        print(f'created daily schedule: \n{ts.task_daily_schedule}')
+            print(f'created daily schedule: \n{ts.task_daily_schedule}')
 
-        ts.add_task('run_strategy', 0)
-        time.sleep(self.stoppage)
-        print(f'ran task run_strategy, current status: {ts.status}, broker status: {ts.broker.status}')
-        print('added task run_strategy - macd')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
-        ts.add_task('run_strategy', 1)
-        time.sleep(self.stoppage)
-        print('added task run_strategy - dma')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
-        ts.add_task('sleep')
-        time.sleep(self.stoppage)
-        print('added task sleep')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'paused')
-        ts.add_task('wakeup')
-        time.sleep(self.stoppage)
-        print('added task wakeup')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
-        ts.add_task('run_strategy', 2)
-        time.sleep(self.stoppage)
-        print('added task run_strategy - macd, dma')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'running')
-        self.assertEqual(ts.broker.status, 'running')
-        ts.add_task('close_market')
-        time.sleep(self.stoppage)
-        print('added task close_market')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'paused')
-        ts.add_task('post_close')
-        time.sleep(self.stoppage)
-        print('added task post_close')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'sleeping')
-        self.assertEqual(ts.broker.status, 'paused')
-        ts.add_task('stop')
-        time.sleep(self.stoppage)
-        print('added task stop')
-        print(f'trader status: {ts.status}')
-        print(f'broker status: {ts.broker.status}')
-        self.assertEqual(ts.status, 'stopped')
-        self.assertEqual(ts.broker.status, 'stopped')
+            ts.add_task('run_strategy', 0)
+            time.sleep(self.stoppage)
+            print(f'ran task run_strategy, current status: {ts.status}, broker status: {ts.broker.status}')
+            print('added task run_strategy - macd')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+            ts.add_task('run_strategy', 1)
+            time.sleep(self.stoppage)
+            print('added task run_strategy - dma')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+            ts.add_task('sleep')
+            time.sleep(self.stoppage)
+            print('added task sleep')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'paused')
+            ts.add_task('wakeup')
+            time.sleep(self.stoppage)
+            print('added task wakeup')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+            ts.add_task('run_strategy', 2)
+            time.sleep(self.stoppage)
+            print('added task run_strategy - macd, dma')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'running')
+            self.assertEqual(ts.broker.status, 'running')
+            ts.add_task('close_market')
+            time.sleep(self.stoppage)
+            print('added task close_market')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'paused')
+            ts.add_task('post_close')
+            time.sleep(self.stoppage)
+            print('added task post_close')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'sleeping')
+            self.assertEqual(ts.broker.status, 'paused')
+            ts.add_task('stop')
+            time.sleep(self.stoppage)
+            print('added task stop')
+            print(f'trader status: {ts.status}')
+            print(f'broker status: {ts.broker.status}')
+            self.assertEqual(ts.status, 'stopped')
+            self.assertEqual(ts.broker.status, 'stopped')
 
     def test_get_update_live_prices(self):
         """ test update live prices"""
@@ -1464,13 +1307,18 @@ class TestTrader(unittest.TestCase):
             self.assertEqual(ts.status, 'sleeping')
             self.assertEqual(ts.broker.status, 'init')
         self.assertEqual(ts.is_trade_day, False)
-        self.assertEqual(ts.task_daily_schedule, [])
+        # 非交易日无交易任务；若配置了 monthly_refill_tables 且当日为 1 号会加入 refill，仅断言无交易任务
+        non_refill = [t for t in ts.task_daily_schedule if t[1] != 'refill']
+        self.assertEqual(non_refill, [], 'non-trade day should have no trading tasks in schedule')
+        # 清空日程，否则下一段交易日 _initialize_schedule 会因「日程非空」直接 return 而不生成完整 agenda
+        ts.task_daily_schedule = []
 
         # generate task agenda in a trade day and complete agenda will be generated depending on generate time
         sim_date = dt.date(2023, 5, 10)  # a trade day
         ts.force_current_date = sim_date
         sim_time = dt.time(7, 0, 0)  # before morning market open
         self.assertEqual(ts.is_trade_day, True)
+        ts.task_daily_schedule = []  # 确保为空，否则 _initialize_schedule 会直接 return 不重新生成
         ts._initialize_schedule(sim_time)  # should generate complete agenda
         print('\n========generated task agenda before morning market open========\n')
         for task in ts.task_daily_schedule:
@@ -1519,9 +1367,13 @@ class TestTrader(unittest.TestCase):
             ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)),
         ]
         self.assertEqual(ts.task_daily_schedule[:35], target_agenda[:35])
+        self.assertIn(('16:00:00', 'refill', ('stock_1min, stock_5min', 1)), ts.task_daily_schedule)
         last_task = ts.task_daily_schedule[-1]
         print(last_task)
-        self.assertEqual(last_task, ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)))
+        # 每月 1 号会多一条 monthly refill，故最后一项可能是 daily 或 monthly refill
+        self.assertEqual(last_task[0], '16:00:00')
+        self.assertEqual(last_task[1], 'refill')
+        self.assertIn(last_task[2], [('stock_1min, stock_5min', 1), ('stock_daily', 31)])
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_schedule = []
@@ -1560,7 +1412,10 @@ class TestTrader(unittest.TestCase):
             ('15:45:00', 'post_close'),
             ('16:00:00', 'refill', ('stock_1min, stock_5min', 1))
         ]
-        self.assertEqual(ts.task_daily_schedule, target_agenda)
+        self.assertEqual(ts.task_daily_schedule[:len(target_agenda)], target_agenda)
+        # 每月 1 号会多一条 monthly refill，允许末尾多这一项
+        if len(ts.task_daily_schedule) > len(target_agenda):
+            self.assertEqual(ts.task_daily_schedule[-1], ('16:00:00', 'refill', ('stock_daily', 31)))
         ts.task_queue.empty()  # clear task queue
 
         # third, create simulated task agenda and execute tasks from the agenda at sim times
@@ -1657,12 +1512,18 @@ class TestTraderInit(unittest.TestCase):
     """Tests for Trader __init__: valid construction and invalid parameter types."""
 
     def setUp(self):
-        self.data_test_dir = _get_data_test_dir()
+        self.data_test_dir = _get_trader_legacy_test_data_dir()
+        os.makedirs(self.data_test_dir, exist_ok=True)
         self.test_ds = DataSource('file', file_type='csv', file_loc=self.data_test_dir, allow_drop_table=True)
         _clear_tables(self.test_ds)
         new_account(user_name='init_test_user', cash_amount=50000, data_source=self.test_ds)
         self.operator = _create_operator()
         self.broker = SimulatorBroker()
+
+    def tearDown(self):
+        """测试结束后清理测试数据。"""
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_init_valid_with_positional_and_kwargs(self):
         """Valid construction with required args and default kwargs."""
@@ -1767,7 +1628,11 @@ class TestTraderProperties(unittest.TestCase):
     config, file flags, is_trade_day, etc."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=False)
+        self.trader, self.test_ds = create_trader_with_account(debug=False, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_status_initial_is_stopped(self):
         self.assertEqual(self.trader.status, 'stopped')
@@ -1880,8 +1745,12 @@ class TestTraderTaskState(unittest.TestCase):
     """Tests for add_task, _run_task, _add_task_from_schedule, _initialize_schedule, get_schedule_string."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.trader, self.test_ds = create_trader_with_account(debug=True, legacy=True)
         self.stoppage = 0.5
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_add_task_non_str_raises_type_error(self):
         with self.assertRaises(TypeError) as ctx:
@@ -1939,8 +1808,12 @@ class TestTraderTaskState(unittest.TestCase):
         self.assertIn('>', s_rich, 'rich_form=True must produce ">" from "]"')
 
     def test_initialize_schedule_non_trade_day_empty_schedule(self):
+        """非交易日且无 refill 配置时，日程应为空；若保留默认 monthly_refill 则 1 号会有 refill 任务。"""
         self.trader.debug = True
         self.trader.force_current_date = pd.to_datetime('2023-01-01').date()
+        self.trader.monthly_refill_tables = ''
+        self.trader.weekly_refill_tables = ''
+        self.trader.daily_refill_tables = ''
         self.trader._initialize_schedule(pd.Timestamp('2023-01-01 08:00:00').time())
         self.assertEqual(self.trader.task_daily_schedule, [])
 
@@ -1970,8 +1843,12 @@ class TestTraderTasksIndividual(unittest.TestCase):
     """Per-task tests: each of the 14 tasks invoked via _run_task and expected state/side effects."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.trader, self.test_ds = create_trader_with_account(debug=True, legacy=True)
         self.stoppage = 0.5
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_task_start(self):
         self.assertEqual(self.trader.status, 'stopped')
@@ -2064,7 +1941,7 @@ class TestTraderTasksIndividual(unittest.TestCase):
         self.assertGreaterEqual(n, 0)
 
     def test_task_process_result_valid_result(self):
-        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=True, stoppage=0.2)
+        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=True, stoppage=0.2, legacy=True)
         raw = {'order_id': 1, 'filled_qty': 50, 'price': 61.0, 'transaction_fee': 2.5, 'canceled_qty': 0.0}
         self.trader._run_task('start')
         self.trader._run_task('process_result', raw)
@@ -2100,8 +1977,12 @@ class TestTraderTaskWhitelist(unittest.TestCase):
     """TASK_WHITELIST: in each status, non-whitelisted tasks are ignored when run from main loop."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=True)
+        self.trader, self.test_ds = create_trader_with_account(debug=True, legacy=True)
         self.stoppage = 0.8
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_stopped_only_start_executes(self):
         """run() 入口会先执行 _run_task('start')，故主循环处理队列时已为 sleeping。
@@ -2146,7 +2027,11 @@ class TestTraderAccountOrders(unittest.TestCase):
     """history_orders, trade_results, submit_trade_order, manual_change_cash/position."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=False, stoppage=0.2)
+        self.trader, self.test_ds = create_trader_with_orders_and_results(account_id=1, debug=False, stoppage=0.2, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_history_orders_without_results_columns(self):
         ho = self.trader.history_orders(with_trade_results=False)
@@ -2190,7 +2075,11 @@ class TestTraderLoggingAndBreakpoint(unittest.TestCase):
     read_trade_log, save/load_break_point."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=False)
+        self.trader, self.test_ds = create_trader_with_account(debug=False, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_read_sys_log_file_missing_returns_empty_list(self):
         path = sys_log_file_path_name(self.trader.account_id, self.trader.datasource)
@@ -2236,7 +2125,11 @@ class TestTraderInfoAndMessages(unittest.TestCase):
     """info(), send_message, add_message_prefix, get_config, update_config, get_current_tz_datetime."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=False)
+        self.trader, self.test_ds = create_trader_with_account(debug=False, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_info_returns_dict(self):
         d = self.trader.info()
@@ -2336,7 +2229,11 @@ class TestTraderBoundaries(unittest.TestCase):
     """Boundary and edge cases: empty account, cost_params None, read_sys_log row_count edge, etc."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(account_id=1, with_positions=False, debug=False)
+        self.trader, self.test_ds = create_trader_with_account(account_id=1, with_positions=False, debug=False, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_account_positions_empty_positions_still_dataframe(self):
         pos = self.trader.account_positions
@@ -2371,7 +2268,11 @@ class TestTraderAssetPoolDetail(unittest.TestCase):
     """asset_pool_detail(): empty stock_basic vs with data."""
 
     def setUp(self):
-        self.trader, self.test_ds = create_trader_with_account(debug=False)
+        self.trader, self.test_ds = create_trader_with_account(debug=False, legacy=True)
+
+    def tearDown(self):
+        if getattr(self, 'test_ds', None) is not None:
+            _clear_tables(self.test_ds)
 
     def test_asset_pool_detail_returns_dataframe(self):
         detail = self.trader.asset_pool_detail()
