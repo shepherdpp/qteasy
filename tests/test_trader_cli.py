@@ -6,8 +6,10 @@
 # Created:  2024-03-04
 # Desc:
 #   Unittest for trader CLI.
+#   使用专用测试 DataSource（非 QT_DATA_SOURCE），测试结束后清理测试数据。
 # ======================================
 
+import os
 import unittest
 import time
 import pandas as pd
@@ -19,6 +21,18 @@ from qteasy.trading_util import process_account_delivery, process_trade_result, 
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account
 from qteasy.broker import SimulatorBroker
+
+
+def _get_cli_test_data_dir():
+    """CLI 测试专用数据目录，不使用默认 QT_DATA_SOURCE。"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_test_trader_cli')
+
+
+def _clear_cli_test_tables(datasource):
+    """清理 CLI 测试用到的表数据，测试完成后调用。"""
+    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+        if datasource.table_data_exists(table):
+            datasource.drop_table_data(table)
 
 
 class TestTraderCLI(unittest.TestCase):
@@ -62,9 +76,9 @@ class TestTraderCLI(unittest.TestCase):
             'pt_sell_threshold':     0.05,
             'allow_sell_short':      False,
         }
-        # 创建测试数据源
-        data_test_dir = '../qteasy/data_test/'
-        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
+        # 使用专用测试数据源（非 QT_DATA_SOURCE），测试完成后清理
+        data_test_dir = _get_cli_test_data_dir()
+        os.makedirs(data_test_dir, exist_ok=True)
         test_ds = DataSource(
                 'file',
                 file_type='csv',
@@ -134,6 +148,11 @@ class TestTraderCLI(unittest.TestCase):
         self.ts.renew_trade_log_file()
 
         self.tss = TraderShell(self.ts)
+
+    def tearDown(self):
+        """测试结束后清理测试数据，不污染默认数据源。"""
+        if getattr(self, 'ts', None) is not None:
+            _clear_cli_test_tables(self.ts.datasource)
 
     def test_properties(self):
 

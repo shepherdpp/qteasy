@@ -5,15 +5,30 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-04-09
 # Desc:
-#   Unittest for the Trader TUI
+#   Unittest for the Trader TUI.
+#   使用专用测试 DataSource（非 QT_DATA_SOURCE），测试结束后清理测试数据。
 # ======================================
 
+import os
 import unittest
 
 import qteasy.trader
 from qteasy import Operator, DataSource
 from qteasy.trader_tui import TraderApp
 from qteasy.broker import SimulatorBroker
+from qteasy.trade_recording import new_account
+
+
+def _get_tui_test_data_dir():
+    """TUI 测试专用数据目录，不使用默认 QT_DATA_SOURCE。"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_test_trader_tui')
+
+
+def _clear_tui_test_tables(datasource):
+    """清理 TUI 测试用到的表数据，测试完成后调用。"""
+    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+        if datasource.table_data_exists(table):
+            datasource.drop_table_data(table)
 
 
 class TestTraderTUI(unittest.TestCase):
@@ -21,20 +36,17 @@ class TestTraderTUI(unittest.TestCase):
     def setUp(self) -> None:
         """Set up test fixtures, if any."""
         print('Setting up test Trader...')
+        data_test_dir = _get_tui_test_data_dir()
+        os.makedirs(data_test_dir, exist_ok=True)
+        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir, allow_drop_table=True)
+        _clear_tui_test_tables(test_ds)
+        new_account(user_name='test_user1', cash_amount=100000, data_source=test_ds)
+
         operator = Operator(strategies=['macd', 'dma'], op_type='step')
-        operator.set_parameter(
-                stg_id='dma',
-                window_length=20,
-                run_freq='H'
-        )
-        operator.set_parameter(
-                stg_id='macd',
-                window_length=30,
-                run_freq='30min',
-        )
+        operator.set_parameter(stg_id='dma', window_length=20, run_freq='H')
+        operator.set_parameter(stg_id='macd', window_length=30, run_freq='30min')
         broker = SimulatorBroker()
         config = {
-            # 'mode':                  0,
             'time_zone':             'local',
             'market_open_time_am':   '09:30:00',
             'market_close_time_pm':  '15:30:00',
@@ -48,14 +60,7 @@ class TestTraderTUI(unittest.TestCase):
             'pt_buy_threshold':      0.05,
             'pt_sell_threshold':     0.05,
             'allow_sell_short':      False,
-            # 'invest_start':          '2018-01-01',
-            # 'opti_start':            '2018-01-01',
         }
-        # 创建测试数据源
-        data_test_dir = '../qteasy/data_test/'
-        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
-        test_ds = DataSource('file', file_type='csv', file_loc=data_test_dir)
-
         self.trader = qteasy.trader.Trader(
                 account_id=1,
                 operator=operator,
@@ -64,16 +69,38 @@ class TestTraderTUI(unittest.TestCase):
                 **config,
         )
 
+    def tearDown(self) -> None:
+        """测试结束后清理测试数据。"""
+        if getattr(self, 'trader', None) is not None:
+            _clear_tui_test_tables(self.trader.datasource)
+
+    def test_app_initialization_binds_trader(self):
+        """TraderApp 初始化后正确绑定 Trader。"""
+        app = TraderApp(trader=self.trader)
+        self.assertIs(app.trader, self.trader)
+        self.assertIsInstance(app.dark, bool)
+        print('test_app_initialization_binds_trader: ok')
+
     def test_action_toggle_dark(self):
-        ''' test action_toggle_dark '''
+        """action_toggle_dark 切换 dark 状态。"""
         trader = self.trader
         app = TraderApp(trader=trader)
+        initial = app.dark
         app.action_toggle_dark()
-        self.assertEqual(app.dark, False)
+        self.assertEqual(app.dark, not initial)
         app.action_toggle_dark()
-        self.assertEqual(app.dark, True)
+        self.assertEqual(app.dark, initial)
+        print('test_action_toggle_dark: ok')
+
+    def test_action_toggle_dark_twice_back_to_original(self):
+        """连续两次 toggle_dark 后恢复初始状态。"""
+        app = TraderApp(trader=self.trader)
+        original = app.dark
+        app.action_toggle_dark()
+        app.action_toggle_dark()
+        self.assertEqual(app.dark, original, msg='two toggles should restore original')
+        print('test_action_toggle_dark_twice_back_to_original: ok')
 
 
 if __name__ == '__main__':
-    # unittest.main()
-    pass
+    unittest.main()
