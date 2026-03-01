@@ -120,7 +120,7 @@ $ pip install qteasy
 
 
 ### python 版本
-- *`python` version >= 3.6, < 3.13* 
+- *`python` version >= 3.9, < 3.13* 
 
 ### 安装可选依赖包
 

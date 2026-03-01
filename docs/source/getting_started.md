@@ -2,7 +2,7 @@
 
 ## 安装与导入
 
-使用 `pip` 安装（要求 `Python >= 3.6, <3.13`）：部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 [FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。
+使用 `pip` 安装（要求 `Python >= 3.9, <3.13`）：部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 [FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。
 
 ```bash
 pip install qteasy
