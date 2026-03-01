@@ -18,10 +18,10 @@ import numpy as np
 
 from qteasy.database import DataSource
 
-from qteasy.trading_util import _parse_pt_signals, _parse_ps_signals, _parse_vs_signals, _signal_to_order_elements
+from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
-from qteasy.trading_util import calculate_cost_change
+from qteasy.trading_util import calculate_cost_change, trade_time_index
 
 from qteasy.trade_recording import new_account, get_account, update_account, update_account_balance
 from qteasy.trade_recording import update_position, get_account_positions, get_or_create_position
@@ -1599,27 +1599,31 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
     def test_create_daily_task_agenda(self):
         """ test function create_daily_task_schedule """
-        # test create daily task agenda with only one strategy, run_freq='d', run_timing='close'
+
+        # test create daily task agenda with only one strategy, run_freq='d', only one group
+        print(f'\ntest create daily task agenda with only one strategy, run_freq="d", run_timing="close"\n')
         op = qt.Operator(strategies='macd')
         stg = op.strategies[0]
-        self.assertEqual(stg.strategy_run_freq, 'd')
-        self.assertEqual(stg.strategy_run_timing, 'close')
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           '15min',
-            'live_trade_daily_refill_tables':    'stock_1min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            # 'live_price_frequency':              'h',
+            'live_price_frequency':              '15min',
+            'daily_refill_tables':               'stock_1min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        agenda = create_daily_task_schedule(op, **config)
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 26)
+        self.assertIn(len(agenda), [26, 27])  # 不同的日期，可能有一个或两个refill事件
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
         self.assertEqual(agenda[2], ('09:45:05', 'acquire_live_price'))
@@ -1629,95 +1633,108 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(agenda[11], ('12:55:00', 'open_market'))
         self.assertEqual(agenda[12], ('13:15:05', 'acquire_live_price'))
         self.assertEqual(agenda[19], ('15:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[21], ('15:29:00', 'run_strategy', 0))
         self.assertEqual(agenda[22], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[23], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[24], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[25], ('16:00:00', 'refill', ('stock_1min', 1)))
 
-        # test create daily task agenda with only one strategy, run_freq='h', run_timing='open'
-        op = qt.Operator(strategies='macd')
-        stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
-        stg.strategy_run_timing = 'open'
+        # test create daily task agenda with only one strategy, run_freq='H', run_timing='open'
+        print(f'\ntest create daily task agenda with only one strategy, run_freq="H", run_timing="open"\n')
+        op = qt.Operator(strategies='macd', run_freq='h', run_timing='open')
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           '15min',
-            'live_trade_daily_refill_tables':    'stock_1min, stock_5min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            'live_price_frequency':              '15min',
+            'daily_refill_tables':               'stock_1min, stock_5min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        agenda = create_daily_task_schedule(op, **config)
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 31)
+        self.assertIn(len(agenda), [31, 32])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd']))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
+        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', 0))  # 本应该在9:30运行，但是按照规则开盘时推迟一分钟
         self.assertEqual(agenda[3], ('09:45:05', 'acquire_live_price'))
-        self.assertEqual(agenda[6], ('10:30:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[11], ('11:30:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[6], ('10:30:00', 'run_strategy', 1))
+        self.assertEqual(agenda[11], ('11:30:00', 'run_strategy', 2))
         self.assertEqual(agenda[13], ('11:35:00', 'close_market'))
         self.assertEqual(agenda[14], ('12:55:00', 'open_market'))
-        self.assertEqual(agenda[15], ('13:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[19], ('14:00:00', 'run_strategy', ['macd']))
-        self.assertEqual(agenda[24], ('15:00:00', 'run_strategy', ['macd']))
+        self.assertEqual(agenda[15], ('13:00:00', 'run_strategy', 3))
+        self.assertEqual(agenda[19], ('14:00:00', 'run_strategy', 4))
+        self.assertEqual(agenda[24], ('15:00:00', 'run_strategy', 5))
         self.assertEqual(agenda[27], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[28], ('15:30:05', 'acquire_live_price'))
         self.assertEqual(agenda[29], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[30], ('16:00:00', 'refill', ('stock_1min, stock_5min', 1)))
 
-        # test create daily task agenda with multiple strategies, run_freq='h'/'30min'/'d', run_timing='//10:30'
-        op = qt.Operator(strategies=['macd', 'rsi', 'dma'])
-        stg = op.strategies[0]
-        stg.strategy_run_freq = 'h'
-        stg.strategy_run_timing = 'open'
-        stg = op.strategies[1]
-        stg.strategy_run_freq = '30min'
-        stg.strategy_run_timing = 'open'
-        stg = op.strategies[2]
-        stg.strategy_run_freq = 'd'
-        stg.strategy_run_timing = '10:30'
+        # test create daily task agenda with multiple strategy groups, run_freq='h'/'30min'/'d', run_timing='//10:30'
+        op = qt.Operator()  # strategies=['macd', 'rsi', 'dma']
+        op.add_strategy('macd', run_timing='open', run_freq='h')
+        op.add_strategy('rsi', run_timing='open', run_freq='30min')
+        op.add_strategy('dma', run_timing='10:30', run_freq='d')
+        print(f'\ntest create daily task agenda with multiple strategy groups, '
+              f'run_freq="h"/"30min"/"d", run_timing="//10:30"\n')
+
         config = {
             'market_open_time_am':               '09:30:00',
             'market_close_time_pm':              '15:30:00',
             'market_open_time_pm':               '13:00:00',
             'market_close_time_am':              '11:30:00',
-            'exchange':                          'SSE',
-            'strategy_open_close_timing_offset': 1,
-            'live_price_acquire_freq':           '60min',
-            'live_trade_daily_refill_tables':    'stock_1min',
-            'live_trade_weekly_refill_tables':   'stock_15min',
-            'live_trade_monthly_refill_tables':  'stock_daily',
+            'exchange_market':                   'SSE',
+            'open_close_timing_offset':          1,
+            'live_price_frequency':              '60min',
+            'daily_refill_tables':               'stock_1min',
+            'weekly_refill_tables':              'stock_15min',
+            'monthly_refill_tables':             'stock_daily',
         }
-        agenda = create_daily_task_schedule(op, config)
-        print([f'{i}: {item}' for i, item in enumerate(agenda)])
+        agenda = create_daily_task_schedule(op, **config)
+        for i, item in enumerate(agenda):
+            print(f'{i}: {item}')
         self.assertIsInstance(agenda, list)
-        self.assertEqual(len(agenda), 22)
+        strategy_lists = op.group_timing_table.copy()
+        strategy_lists.loc[strategy_lists['Group_1'] == 1, 'Group_1'] = 'macd'
+        strategy_lists.loc[strategy_lists['Group_2'] == 1, 'Group_2'] = 'rsi'
+        strategy_lists.loc[strategy_lists['Group_3'] == 1, 'Group_3'] = 'dma'
+
+        self.assertIn(len(agenda), [22, 23])
         self.assertEqual(agenda[0], ('09:15:00', 'pre_open'))
         self.assertEqual(agenda[1], ('09:30:00', 'open_market'))
-        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[2], ('09:31:00', 'run_strategy', 0))
+        self.assertEqual(strategy_lists.iloc[0].to_list(), ['macd', 'rsi', 0])
+        self.assertEqual(agenda[3], ('10:00:00', 'run_strategy', 1))
+        self.assertEqual(strategy_lists.iloc[1].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[4], ('10:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[5], ('10:30:00', 'run_strategy', ['macd', 'rsi', 'dma']))
-        self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[5], ('10:30:00', 'run_strategy', 2))
+        self.assertEqual(strategy_lists.iloc[2].to_list(), ['macd', 'rsi', 'dma'])
+        self.assertEqual(agenda[6], ('11:00:00', 'run_strategy', 3))
+        self.assertEqual(strategy_lists.iloc[3].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[7], ('11:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[8], ('11:30:00', 'run_strategy', 4))
+        self.assertEqual(strategy_lists.iloc[4].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[9], ('11:35:00', 'close_market'))
         self.assertEqual(agenda[10], ('12:55:00', 'open_market'))
-        self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', ['macd', 'rsi']))
-        self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[11], ('13:00:00', 'run_strategy', 5))
+        self.assertEqual(strategy_lists.iloc[5].to_list(), ['macd', 'rsi', 0])
+        self.assertEqual(agenda[12], ('13:30:00', 'run_strategy', 6))
+        self.assertEqual(strategy_lists.iloc[6].to_list(), [0, 'rsi', 0])
+        self.assertEqual(agenda[13], ('14:00:00', 'run_strategy', 7))
+        self.assertEqual(strategy_lists.iloc[7].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[14], ('14:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[15], ('14:30:00', 'run_strategy', ['rsi']))
-        self.assertEqual(agenda[16], ('15:00:00', 'run_strategy', ['macd', 'rsi']))
+        self.assertEqual(agenda[15], ('14:30:00', 'run_strategy', 8))
+        self.assertEqual(strategy_lists.iloc[8].to_list(), [0, 'rsi', 0])
+        self.assertEqual(agenda[16], ('15:00:00', 'run_strategy', 9))
+        self.assertEqual(strategy_lists.iloc[9].to_list(), ['macd', 'rsi', 0])
         self.assertEqual(agenda[17], ('15:00:05', 'acquire_live_price'))
-        self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', ['rsi']))
+        self.assertEqual(agenda[18], ('15:29:00', 'run_strategy', 10))
+        self.assertEqual(strategy_lists.iloc[10].to_list(), [0, 'rsi', 0])
         self.assertEqual(agenda[19], ('15:30:00', 'close_market'))
         self.assertEqual(agenda[20], ('15:45:00', 'post_close'))
         self.assertEqual(agenda[21], ('16:00:00', 'refill', ('stock_1min', 1)))
@@ -1831,7 +1848,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 1, trade signal: \n'
               f'{read_trade_order_detail(1, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 1, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1886,7 +1903,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 2, trade signal: \n'
               f'{read_trade_order_detail(2, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 2, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -1947,7 +1964,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 3, trade signal: \n'
               f'{read_trade_order_detail(3, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 3, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2008,7 +2025,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 4, trade signal: \n'
               f'{read_trade_order_detail(4, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 4, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2094,7 +2111,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 7, trade signal: \n'
               f'{read_trade_order_detail(7, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 7, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2156,7 +2173,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'\n------------START PROCESS TRADE RESULT-----------------\n'
               f'before processing trade result 9, trade signal: \n'
               f'{read_trade_order_detail(9, data_source=self.test_ds)}\n')
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2214,7 +2231,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'transaction_fee': 23.9,
             'canceled_qty':    0.0,
         }
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         process_trade_result(raw_trade_result, data_source=self.test_ds)
         print(f'after processing trade result 9, position data of account_id == 1: \n'
               f'{get_account_positions(1, data_source=self.test_ds)}\n'
@@ -2250,7 +2267,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(trade_result['delivery_status'], 'ND')
 
         # process trade result delivery for the last order
-        process_account_delivery(account_id=1, data_source=self.test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
         # check available qty availability
         symbols, own_qty, available_qty, costs = get_account_position_availabilities(
                 1,
@@ -2307,11 +2324,35 @@ class TestTradingUtilFuncs(unittest.TestCase):
         available_amounts = np.array([500., 500., 1000.])
         available_cash = 100000.0
         test_config = {
-            'PT_buy_threshold':  0.0,
-            'PT_sell_threshold': 0.0,
-            'allow_sell_short':  True,
-            'trade_batch_size':  100.,
-            'sell_batch_size':   1.,
+            'PT_buy_threshold':     0.0,
+            'PT_sell_threshold':    0.0,
+            'allow_sell_short':     True,
+            'trade_batch_size':     100.,
+            'sell_batch_size':      1.,
+            'long_position_limit':  1.0,
+            'short_position_limit': -1.0,
+            'cost_rate_buy':        0.0,
+            'cost_rate_sell':       0.0,
+            'cost_min_buy':         0.0,
+            'cost_min_sell':        0.0,
+            'cost_slippage':        0.0,
+        }
+        cost_params = np.array([
+            test_config['cost_rate_buy'],
+            test_config['cost_rate_sell'],
+            test_config['cost_min_buy'],
+            test_config['cost_min_sell'],
+            test_config['cost_slippage'],
+        ])
+        parse_trade_signal_kwargs = {
+            'cost_params': cost_params,
+            'pt_buy_threshold': test_config['PT_buy_threshold'],
+            'pt_sell_threshold': test_config['PT_sell_threshold'],
+            'allow_sell_short': test_config['allow_sell_short'],
+            'trade_batch_size': test_config['trade_batch_size'],
+            'sell_batch_size': test_config['sell_batch_size'],
+            'long_position_limit': test_config['long_position_limit'],
+            'short_position_limit': test_config['short_position_limit'],
         }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
@@ -2324,7 +2365,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2341,7 +2382,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2360,7 +2401,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2377,7 +2418,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2396,7 +2437,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2413,7 +2454,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
@@ -2423,11 +2464,35 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # test allow_sell_short = False
         test_config = {
-            'PT_buy_threshold':  0.1,
-            'PT_sell_threshold': -0.1,
-            'allow_sell_short':  False,
-            'trade_batch_size':  0.,
-            'sell_batch_size':   0.,
+            'PT_buy_threshold':     0.1,
+            'PT_sell_threshold':    -0.1,
+            'allow_sell_short':     False,
+            'trade_batch_size':     0.,
+            'sell_batch_size':      0.,
+            'long_position_limit':  1.0,
+            'short_position_limit': -1.0,
+            'cost_rate_buy':        0.000,
+            'cost_rate_sell':       0.000,
+            'cost_min_buy':         0.0,
+            'cost_min_sell':        0.0,
+            'cost_slippage':        0.0,
+        }
+        cost_params = np.array([
+            test_config['cost_rate_buy'],
+            test_config['cost_rate_sell'],
+            test_config['cost_min_buy'],
+            test_config['cost_min_sell'],
+            test_config['cost_slippage'],
+        ])
+        parse_trade_signal_kwargs = {
+            'cost_params': cost_params,
+            'pt_buy_threshold': test_config['PT_buy_threshold'],
+            'pt_sell_threshold': test_config['PT_sell_threshold'],
+            'allow_sell_short': test_config['allow_sell_short'],
+            'trade_batch_size': test_config['trade_batch_size'],
+            'sell_batch_size': test_config['sell_batch_size'],
+            'long_position_limit': test_config['long_position_limit'],
+            'short_position_limit': test_config['short_position_limit'],
         }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
@@ -2440,7 +2505,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2458,7 +2523,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {ps_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2476,7 +2541,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 own_cash=own_cash,
                 available_amounts=available_amounts,
                 available_cash=available_cash,
-                config=test_config,
+                **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal} not allow short: \n{parsed_signal_elements}')
         self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
@@ -2741,6 +2806,195 @@ class TestTradingUtilFuncs(unittest.TestCase):
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""
         # test parsing pt buy long signal with only one symbol
+        # test parsing pt signals with pt_buy_threshold = 0. and pt_sell_threshold = 0.
+
+        pt_buy_threshold = 0.
+        pt_sell_threshold = 0.
+        prices = np.array([10.])
+
+        # test parsing pt signals with holdings = 0 and cash = 10000 in 3 cases
+        own_amounts = np.array([0.0])
+        own_cash = 10000.0
+
+        signals = np.array([0])  # case 1: no action
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])  # case 2: buy long
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])  # case 3: sell long
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing pt signals with holdings = 500 and cash = 5000 in 5 cases
+        own_amounts = np.array([500.0])
+        own_cash = 5000.0
+
+        signals = np.array([0])  # case 1: sell long
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-500.0])
+
+        signals = np.array([0.5])  # case 2: buy long
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([1.0])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-1000.0])
+
+        signals = np.array([1.5])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing pt signals with holdings = -500 and cash = 15000 in 5 cases
+        own_amounts = np.array([-500.0])
+        own_cash = 15000.0
+
+        signals = np.array([0])  # case 1
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [500.0])
+
+        signals = np.array([0.5])  # case 2
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [1000.0])
+
+        signals = np.array([-1.0])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-1.5])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                allow_sell_short=True,
+        )
+        self.assertEqual(cash_to_spend, [-10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing pt sell long signal in other traditional cases
+
         signals = np.array([1])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
@@ -2748,7 +3002,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2768,7 +3022,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2788,7 +3042,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2808,7 +3062,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.5
         pt_sell_threshold = 0.5
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2829,7 +3083,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         pt_buy_threshold = 0.1
         pt_sell_threshold = 0.1
 
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2842,14 +3096,205 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 155.0])
 
     def test_parse_ps_signals(self):
-        """ test _parse_ps_signals function """
-        # test parsing ps buy long signal with only one symbol
+        """ test parse_ps_signals function """
+        # test parsing ps signals with only one symbol
+        prices = np.array([10.])
+
+        # test parsing ps signals with holdings = 0 and cash = 10000 in 3 cases
+        own_amounts = np.array([0.0])
+        own_cash = 10000.0
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=False
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing ps signals with holdings = 500 and cash = 5000 in 6 cases
+        own_amounts = np.array([500.0])
+        own_cash = 5000.0
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([1.0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-250.0])
+
+        signals = np.array([-1.0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-500.0])
+
+        signals = np.array([-1.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-750.0])
+
+        # test parsing ps signals with holdings = -500 and cash = 15000 in 6 cases
+        own_amounts = np.array([-500.0])
+        own_cash = 15000.0
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [250.0])
+
+        signals = np.array([1.0])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [500.0])
+
+        signals = np.array([1.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [750.0])
+
+        signals = np.array([-0.5])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-1.])
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=True
+        )
+        self.assertEqual(cash_to_spend, [-10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing ps signals in other traditional cases
         signals = np.array([1])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2865,7 +3310,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2881,7 +3326,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0])
         own_cash = 5000.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2897,7 +3342,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([-500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2914,7 +3359,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         own_amounts = np.array([0.0, 0.0, 500.0, 150.0, 0.0, -500.0])
         own_cash = 0.0
 
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
@@ -2925,18 +3370,200 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
     def test_parse_vs_signals(self):
-        """ test _parse_vs_signals function """
-        # test parsing vs buy long signal with only one symbol
+        """ test parse_vs_signals function """
+        # test parsing vs signals with only one symbol
+        prices = np.array([10.])
+
+        # test parsing vs signals with holdings = 0 in 4 cases
+        own_amounts = np.array([0.0])
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing vs signals with holdings = 500 in 5 cases
+        own_amounts = np.array([500.0])
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-500.0])
+
+        signals = np.array([1000])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-1000])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [-1000.0])
+
+        # test parsing vs signals with holdings = -500 in 5 cases
+        own_amounts = np.array([-500.0])
+
+        signals = np.array([0])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [500.0])
+
+        signals = np.array([-500])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([1000])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [0.0])
+        self.assertEqual(amounts_to_sell, [1000.0])
+
+        signals = np.array([-1000])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-10000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        # test parsing vs signals in other traditional cases
         signals = np.array([500])
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=False
+                allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
@@ -2945,12 +3572,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=False
+                allow_sell_short=False,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [-500.0])
 
@@ -2959,28 +3588,123 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10.])
         own_amounts = np.array([0.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [-5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
-        # test parsing vs sell short signal with only one symbol
         signals = np.array([500])
         prices = np.array([10.])
         own_amounts = np.array([-500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(cash_to_spend, [0.0])
         self.assertEqual(amounts_to_sell, [500.0])
+
+        # test parsing vs signals with different cost params
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 5.0, 8.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5005.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 5.0, 8.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.001, 0.003, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5005.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.001, 0.003, 0.0, 0.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([500])
+        prices = np.array([10.])
+        own_amounts = np.array([200.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.001, 0.003, 8.0, 20.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [5008.0])
+        self.assertEqual(amounts_to_sell, [0.0])
+
+        signals = np.array([-500])
+        prices = np.array([10.])
+        own_amounts = np.array([-500.0])
+
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=True,
+                cost_params=np.array([0.001, 0.003, 8.0, 20.0, 0.0]),
+        )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
+        self.assertEqual(cash_to_spend, [-5000.0])
+        self.assertEqual(amounts_to_sell, [0.0])
 
         # test parsing vs multi-type signal with multiple symbols
 
@@ -2988,12 +3712,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
         prices = np.array([10., 10., 10., 10., 10., 10.])
         own_amounts = np.array([0.0, 0.0, 500.0, -250.0, 0.0, -500.0])
 
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
                 signals=signals,
                 prices=prices,
                 own_amounts=own_amounts,
-                allow_sell_short=True
+                allow_sell_short=True,
+                cost_params=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
         )
+        print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
@@ -3207,6 +3933,434 @@ class TestTradingUtilFuncs(unittest.TestCase):
         )
         self.assertAlmostEqual(cost_change, -10.)
         self.assertAlmostEqual(new_cost, -0.)
+
+    def test_trade_time_index(self):
+        """ 测试函数是否能正确生成交易时段的indexer"""
+        print('create datetime index with freq "D" and keep non-trading days')
+        indexer = trade_time_index('20200101', '20200105', freq='d', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200101'),
+                                         pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103'),
+                                         pd.to_datetime('20200104'),
+                                         pd.to_datetime('20200105')])
+
+        print('create datetime index with freq "D" without non-trading days')
+        indexer = trade_time_index('20200101', '20200105', freq='d')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 2)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103')])
+
+        print('create datetime index with freq "30min" with default trade time with non_trading days')
+        indexer = trade_time_index('20200101', '20200103', freq='30min', trade_days_only=False)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 18)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00', '2020-01-02 09:30:00',
+                                              '2020-01-02 10:00:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:00:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 14:30:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "30min" with default trade time without non_trading days')
+        indexer = trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "30min" with default trade time without non_trading days')
+        indexer = trade_time_index('20200101', '20200103', freq='30min', trade_days_only=True, include_start_am=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 8)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 10:00:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:00:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 14:30:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print(f'测试带时间偏移的交易时间索引')
+        indexer = trade_time_index(start='20200101', end='20200107', freq='d', time_offset='15:00',
+                                   trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 3)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 15:00:00',
+                                              '2020-01-03 15:00:00',
+                                              '2020-01-06 15:00:00'])))
+
+        print(f'测试带时间偏移的交易时间索引且freq为小时，此时会忽略time_offset')
+        indexer = trade_time_index(start='20200101', end='20200103', freq='h', time_offset='15:00',
+                                   trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 15:00:00'])))
+
+        print('create datetime index with freq "h" with default trade time without non_trading days')
+        indexer = trade_time_index('20200101', '20200103', freq='h', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "h" with start and end with time')
+        indexer = trade_time_index('2020-01-01 09:00:00', '2020-01-03 14:59:59',
+                                   freq='h', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 14)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:30:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 14:00:00',
+                                              '2020-01-01 15:00:00', '2020-01-02 09:30:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 15:00:00',
+                                              '2020-01-03 09:30:00', '2020-01-03 10:30:00',
+                                              '2020-01-03 11:30:00', '2020-01-03 14:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "h" not including start am')
+        indexer = trade_time_index('20200101', '20200103', freq='h',
+                                   include_start_am=False,
+                                   trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 10:30:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "h" not including start am with start_pm == 13:15:00')
+        indexer = trade_time_index('20200101', '20200103', freq='h',
+                                   include_start_am=False,
+                                   include_start_pm=True,
+                                   trade_days_only=True,
+                                   start_pm='13:15:00')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 10:30:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:15:00', '2020-01-02 14:15:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "30min" not including start am with different start_am and start_pm')
+        indexer = trade_time_index('20200101', '20200103', freq='30min',
+                                   include_start_am=False,
+                                   include_start_pm=True,
+                                   trade_days_only=True,
+                                   start_am='07:30:00',
+                                   start_pm='13:30:00')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 12)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 08:00:00', '2020-01-02 08:30:00',
+                                              '2020-01-02 09:00:00', '2020-01-02 09:30:00',
+                                              '2020-01-02 10:00:00', '2020-01-02 10:30:00',
+                                              '2020-01-02 11:00:00', '2020-01-02 11:30:00',
+                                              '2020-01-02 13:30:00', '2020-01-02 14:00:00',
+                                              '2020-01-02 14:30:00', '2020-01-02 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "w" and check if all dates are Sundays (default)')
+        indexer = trade_time_index('20200101', '20200201', freq='W', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-05', '2020-01-12',
+                                              '2020-01-19', '2020-01-26'])))
+        self.assertTrue(
+                all(day.day_name() == 'Sunday' for day in indexer)
+        )
+
+        print('create datetime index with freq "w" and check if all dates are Sundays (default)')
+        indexer = trade_time_index('20200101', '20200201', freq='W', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-03', '2020-01-10',
+                                              '2020-01-17', '2020-01-23'])))
+        self.assertTrue(
+                all(day.day_name() != 'Sunday' for day in indexer)
+        )
+        self.assertTrue(
+                all(day.day_name() != 'Saturday' for day in indexer)
+        )
+
+        print('create datetime index with freq "w-Fri" and check if all dates are Fridays')
+        indexer = trade_time_index('20200101', '20200201', freq='W-Fri', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertTrue(
+                all(day.day_name() == 'Friday' for day in indexer)
+        )
+
+        print('test datetime index with freq like "M" representing end of each Month - with non-trade days')
+        indexer = trade_time_index('20200501', '20201001', freq='M', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-05-31', '2020-06-30',
+                                              '2020-07-31', '2020-08-31',
+                                              '2020-09-30', ])
+                              )
+                         )
+
+        print('test datetime index with freq like "M" representing end of each Month - with only trade days')
+        indexer = trade_time_index('20200501', '20201001', freq='M', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-05-29', '2020-06-30',
+                                              '2020-07-31', '2020-08-31',
+                                              '2020-09-30', ])
+                              )
+                         )
+
+        print('test datetime index with freq like "MS" representing end of each Month - with non-trade days')
+        indexer = trade_time_index('20200501', '20201001', freq='MS', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 6)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-05-01', '2020-06-01',
+                                              '2020-07-01', '2020-08-01',
+                                              '2020-09-01', '2020-10-01'])
+                              )
+                         )
+
+        print('test datetime index with freq like "MS" representing end of each Month - not including end')
+        indexer = trade_time_index('20200501', '20201001', freq='MS', trade_days_only=False,
+                                   include_start=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-06-01',
+                                              '2020-07-01', '2020-08-01',
+                                              '2020-09-01', '2020-10-01'])
+                              )
+                         )
+
+        print('test datetime index with freq like "MS" representing end of each Month - not including start')
+        indexer = trade_time_index('20200501', '20201001', freq='MS', trade_days_only=False,
+                                   include_end=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-05-01', '2020-06-01',
+                                              '2020-07-01', '2020-08-01',
+                                              '2020-09-01'])
+                              )
+                         )
+
+        print('test datetime index with freq like "MS" representing end of each Month - with only trade days')
+        indexer = trade_time_index('20200501', '20201001', freq='MS', trade_days_only=True)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-05-06', '2020-06-01',
+                                              '2020-07-01', '2020-08-03',
+                                              '2020-09-01', ])
+                              )
+                         )
+
+        print('test datetime index with freq like "MS-5" representing 5th of day of each Month - Not Implemented')
+        indexer = trade_time_index('20200101', '20200601', freq='MS-5', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-05', '2020-02-05', '2020-03-05',
+                                              '2020-04-05', '2020-05-05'])
+                              )
+                         )
+
+        print('test datetime index with freq like "ME-3" representing 1st last day of each Month - Not Implemented')
+        indexer = trade_time_index('20200101', '20200601', freq='ME-3', trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-29', '2020-02-27', '2020-03-29',
+                                              '2020-04-28', '2020-05-29'])
+                              )
+                         )
+
+        print('使用freq=QS测试datetime_index，且设置trade_days_only为False/True')
+        indexer = trade_time_index('20200101', '20201231', freq='QS', trade_days_only=False)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01', '2020-04-01',
+                                              '2020-07-01', '2020-10-01'])
+                              )
+                         )
+
+        print('使用freq=QS测试datetime_index，且设置trade_days_only为True')
+        indexer = trade_time_index('20200101', '20201231', freq='QS', trade_days_only=True)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02', '2020-04-01',
+                                              '2020-07-01', '2020-10-09'])
+                              )
+                         )
+
+        print('使用freq=QE-Nov测试datetime_index，且设置trade_days_only为False')
+        indexer = trade_time_index('20200101', '20201231', freq='QE-NOV', trade_days_only=False)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-02-29', '2020-05-31',
+                                              '2020-08-31', '2020-11-30'])
+                              )
+                         )
+
+        print('使用freq=QE-Nov-5测试datetime_index，且设置trade_days_only为True')
+        indexer = trade_time_index('20200101', '20201231', freq='QE-NOV-5', trade_days_only=True)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-02-25', '2020-05-27',
+                                              '2020-08-27', '2020-11-26'])
+                              )
+                         )
+
+        print('使用freq=QS-Nov测试datetime_index，且设置trade_days_only为True')
+        indexer = trade_time_index('20200101', '20201231', freq='QS-NOV-5', trade_days_only=False)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-02-05', '2020-05-05',
+                                              '2020-08-05', '2020-11-05'])
+                              )
+                         )
+
+        print('使用freq=QS-Nov-5测试datetime_index，且设置trade_days_only为True')
+        indexer = trade_time_index('20200101', '20201231', freq='QS-NOV-5', trade_days_only=True)
+        print(f'the output is \n{indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-02-05', '2020-05-06',
+                                              '2020-08-05', '2020-11-05'])
+                              )
+                         )
+
+        print('create datetime index with start/end/periods')
+        print('when freq can be inferred')
+        indexer = trade_time_index(start='20200102', end='20200103', periods=49)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-02 09:30:00', '2020-01-02 10:00:00',
+                                              '2020-01-02 10:30:00', '2020-01-02 11:00:00',
+                                              '2020-01-02 11:30:00', '2020-01-02 13:30:00',
+                                              '2020-01-02 14:00:00', '2020-01-02 14:30:00',
+                                              '2020-01-02 15:00:00'])
+                              )
+                         )
+        print('when freq can NOT be inferred')
+        indexer = trade_time_index(start='20200101', end='20200102', periods=50, trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 8)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:48:22.040816326',
+                                              '2020-01-01 10:17:45.306122448',
+                                              '2020-01-01 10:47:08.571428571',
+                                              '2020-01-01 11:16:31.836734693',
+                                              '2020-01-01 13:13:28.163265306',
+                                              '2020-01-01 13:42:51.428571428',
+                                              '2020-01-01 14:12:14.693877551',
+                                              '2020-01-01 14:41:37.959183673'])
+                              )
+                         )
+
+        print('create datetime index with start/periods/freq')
+        indexer = trade_time_index(start='20200101', freq='30min', periods=49, trade_days_only=False)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('test false input')
+        self.assertRaises(ValueError, trade_time_index, start='20200101')  # only one of start/end/freq/periods
+        self.assertRaises(ValueError, trade_time_index, end='2020010101')  # only one of start/end/freq/periods
+        self.assertRaises(ValueError, trade_time_index, freq='d')  # only one of start/end/freq/periods
+        self.assertRaises(ValueError, trade_time_index, periods=15)  # only one of start/end/freq/periods
+        self.assertRaises(ValueError, trade_time_index, start='20200101', freq='d')  # two of start/end/freq/periods
+        self.assertRaises(ValueError, trade_time_index, freq='d', end='20200103')  # two of start/end/freq/periods
+
+        self.assertRaises(ValueError, trade_time_index, start='20200105', end='20200101', freq='d')  # start after end
+        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101',
+                          freq='d')  # wrong date format
+        self.assertRaises(ValueError, trade_time_index, start='2020010505', end='20200101',
+                          freq='not a freq')  # wrong freq
+        self.assertRaises(TypeError, trade_time_index, start='2020010505', end='20200101',
+                          periods='wrong')  # wrong periods
+        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='d',
+                          time_offset='wrong_offset')  # wrong timeoffset
+        self.assertRaises(ValueError, trade_time_index, start='20200101', end='20200105', freq='h',
+                          start_am='wrong_time')  # wrong time
+
+        self.assertRaises(RuntimeError, trade_time_index, start='20200101', end='20200105', freq='d',
+                          market='WRONG_MKT')  # wrong periods
 
 
 if __name__ == '__main__':

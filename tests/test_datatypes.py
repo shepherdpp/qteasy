@@ -12,19 +12,20 @@
 import unittest
 
 import pandas as pd
+from tqdm import tqdm
 
 from qteasy.database import DataSource
 from qteasy.utilfuncs import (
-    progress_bar,
     str_to_list,
     list_to_str_format,
 )
 
 from qteasy.datatypes import (
     DataType,
+    _parse_acquisition_parameters,
     get_history_data_from_source,
     get_reference_data_from_source,
-    get_tables_by_dtypes, infer_data_types,
+    infer_data_types,
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
@@ -1261,7 +1262,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('libor_usd|3m', 'd', 'None'),
     ('libor_usd|6m', 'd', 'None'),
     ('libor_usd|12m', 'd', 'None'),
-    # ('libor_eur|on', 'd', 'None'),
+    # ('libor_eur|on', 'd', 'None'),  # EUR and GBP libor rates are not published
     # ('libor_eur|1w', 'd', 'None'),
     # ('libor_eur|1m', 'd', 'None'),
     # ('libor_eur|2m', 'd', 'None'),
@@ -1462,15 +1463,43 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     'close',
     'close|b',
     'high|f',
-    ('low|forward', None, 'E'),
+    ('low|f', None, 'E'),
     ('open', 'w', None),
     ('pe', 'd', 'IDX'),
     ('pe', 'd', 'E'),
     ('pe', None, 'E'),
+    ('close|b', 'd', None),
     ('ths_category', 'None', 'E'),
     ('weight_rule', 'None', 'IDX'),
     ('is_trade_day|SSE', 'd', 'None'),
     ('high-000300.SH', '5min', 'IDX'),
+]
+
+ALL_TYPES_TO_TEST_WITH_MULTI_ASSET_TYPES = [
+    ('close', 'd', 'E, IDX'),
+    ('close', 'd', 'IDX, FD'),
+    ('close', 'd', 'FD, E'),
+    ('close', 'd', 'E, FD, IDX'),
+    ('close', '5min', 'E, FT, FD'),
+    ('close', 'd', 'ANY'),
+]
+
+EXPECTED_MULTI_ASSET_TYPE_STRING_RESULTS = [
+    'E,IDX',
+    'FD,IDX',
+    'E,FD',  # alphabetical order
+    'E,FD,IDX',
+    'E,FD,FT',  # alphabetical order
+    'ANY',  # ANY resolves to all available types
+]
+
+EXPECTED_MULTI_ASSET_TYPES = [
+    ['E', 'IDX'],
+    ['FD', 'IDX'],
+    ['E', 'FD'],
+    ['E', 'FD', 'IDX'],
+    ['E', 'FD', 'FT'],
+    ['E', 'FD', 'FT', 'IDX', 'OPT'],  # ANY resolves to all available types
 ]
 
 
@@ -1510,13 +1539,11 @@ class TestDataTypes(unittest.TestCase):
             print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
                   f'name:     {dtype.name}\n'
                   f'freq:     {dtype.freq}\n'
-                  # f'all freqs: {dtype.available_freqs}\n'
+                  f'all freqs: {dtype.available_freqs}\n'
                   f'asset_type: {dtype.asset_type}\n'
-                  # f'all a_types: {dtype.available_asset_types}\n'
+                  f'all a_types: {dtype.available_asset_types}\n'
                   f'unsymbolizer: {dtype.unsymbolizer}\n'
-                  f'desc:     {dtype.description}\n'
-                  f'acq_type: {dtype.acquisition_type}\n'
-                  f'kwargs:   {dtype.kwargs}\n')
+                  f'desc:     {dtype.description}\n')
             self.assertIsInstance(dtype, DataType)
             self.assertEqual(dtype.name, name)
             if freq is not None:
@@ -1528,13 +1555,130 @@ class TestDataTypes(unittest.TestCase):
         d1 = DataType(name='close|b')
         d2 = DataType(name='close|f')
 
+        acquisition_type, kwargs = _parse_acquisition_parameters(
+                search_name=d1._search_name,
+                name_par=d1._name_pars,
+                freq=d1.freq,
+                asset_type=d1.asset_type,
+                built_in_tables=True,
+        )
+
         print(f'dtype 1: {d1}, and dtype 2: {d2}')
         self.assertEqual(d1.name, 'close|b')
-        self.assertEqual(d2.name, 'close|f')
-        d1_adj = d1.kwargs.get('adj_type')
-        d2_adj = d2.kwargs.get('adj_type')
+        d1_adj = kwargs.get('adj_type')
         self.assertEqual(d1_adj, 'b')
+
+        acquisition_type, kwargs = _parse_acquisition_parameters(
+                search_name=d2._search_name,
+                name_par=d2._name_pars,
+                freq=d2.freq,
+                asset_type=d2.asset_type,
+                built_in_tables=True,
+        )
+
+        self.assertEqual(d2.name, 'close|f')
+        d2_adj = kwargs.get('adj_type')
         self.assertEqual(d2_adj, 'f')
+
+        # TODO: test create datatypes like 'ANY' or 'E,IDX'
+        #  this must be realized in the DataType class because
+        #  we must allow users to define their strategies that
+        #  can work with multiple types of assets.
+
+        for k, a_type_str, a_types in zip(ALL_TYPES_TO_TEST_WITH_MULTI_ASSET_TYPES,
+                                          EXPECTED_MULTI_ASSET_TYPE_STRING_RESULTS,
+                                          EXPECTED_MULTI_ASSET_TYPES):
+            if isinstance(k, tuple):
+                name, freq, asset_type = k
+            else:
+                name = k
+                freq = None
+                asset_type = None
+
+            dtype = DataType(
+                    name=name,
+                    freq=freq,
+                    asset_type=asset_type,
+            )
+
+            print(f'got input: {name}, {freq}, {asset_type}, created dtype: {dtype}:\n'
+                  f'name:     {dtype.name}\n'
+                  f'freq:     {dtype.freq}\n'
+                  f'all freqs: {dtype.available_freqs}\n'
+                  f'asset_type: {dtype.asset_type}\n'
+                  f'all a_types: {dtype.available_asset_types}\n'
+                  f'unsymbolizer: {dtype.unsymbolizer}\n'
+                  f'desc:     {dtype.description}\n')
+            self.assertIsInstance(dtype, DataType)
+            self.assertEqual(dtype.name, name)
+            if freq is not None:
+                self.assertEqual(dtype.freq, freq)
+            if asset_type is not None:
+                self.assertEqual(dtype.asset_type, a_type_str)
+                self.assertEqual(dtype.asset_type_str, a_type_str)
+                self.assertEqual(dtype.asset_types, a_types)
+
+    def test_trade_op_types(self):
+        """ test special trade_op_types"""
+        d1 = DataType('op_trade_volumes')
+        print(f'created data type: {d1}')
+        self.assertEqual(d1.name, 'op_trade_volumes')
+        self.assertEqual(d1.asset_type_str, '')
+        self.assertEqual(d1.asset_types, '')
+        self.assertEqual(d1.freq, '')
+        self.assertEqual(d1.unsymbolizer, None)
+        self.assertEqual(d1.dtype_id, 'op_trade_volumes')
+        self.assertEqual(d1.unsymbolizer, None)
+
+        d2 = DataType('op_trade_prices')
+        print(f'created data type: {d2}')
+        self.assertEqual(d2.name, 'op_trade_prices')
+        self.assertEqual(d2.asset_type_str, '')
+        self.assertEqual(d2.asset_types, '')
+        self.assertEqual(d2.freq, '')
+        self.assertEqual(d2.unsymbolizer, None)
+        self.assertEqual(d2.dtype_id, 'op_trade_prices')
+        self.assertEqual(d2.unsymbolizer, None)
+
+        d3 = DataType('op_holding_positions')
+        print(f'created data type: {d3}')
+        self.assertEqual(d3.name, 'op_holding_positions')
+        self.assertEqual(d3.asset_type_str, '')
+        self.assertEqual(d3.asset_types, '')
+        self.assertEqual(d3.freq, '')
+        self.assertEqual(d3.unsymbolizer, None)
+        self.assertEqual(d3.dtype_id, 'op_holding_positions')
+        self.assertEqual(d3.unsymbolizer, None)
+
+        d4 = DataType('op_settled_positions')
+        print(f'created data type: {d4}')
+        self.assertEqual(d4.name, 'op_settled_positions')
+        self.assertEqual(d4.asset_type_str, '')
+        self.assertEqual(d4.asset_types, '')
+        self.assertEqual(d4.freq, '')
+        self.assertEqual(d4.unsymbolizer, None)
+        self.assertEqual(d4.dtype_id, 'op_settled_positions')
+        self.assertEqual(d4.unsymbolizer, None)
+
+        d5 = DataType('op_holding_positions')
+        print(f'created data type: {d5}')
+        self.assertEqual(d5.name, 'op_holding_positions')
+        self.assertEqual(d5.asset_type_str, '')
+        self.assertEqual(d5.asset_types, '')
+        self.assertEqual(d5.freq, '')
+        self.assertEqual(d5.unsymbolizer, None)
+        self.assertEqual(d5.dtype_id, 'op_holding_positions')
+        self.assertEqual(d5.unsymbolizer, None)
+
+        d6 = DataType('op_settled_positions')
+        print(f'created data type: {d6}')
+        self.assertEqual(d6.name, 'op_settled_positions')
+        self.assertEqual(d6.asset_type_str, '')
+        self.assertEqual(d6.asset_types, '')
+        self.assertEqual(d6.freq, '')
+        self.assertEqual(d6.unsymbolizer, None)
+        self.assertEqual(d6.dtype_id, 'op_settled_positions')
+        self.assertEqual(d6.unsymbolizer, None)
 
     def test_all_types_with_full_id(self):
         ds = self.ds
@@ -1545,220 +1689,230 @@ class TestDataTypes(unittest.TestCase):
         empty_type_descs = []
         empty_type_acq_types = []
         all_tables = ds.all_data_tables
-        for k in ALL_TYPES_TO_TEST_WITH_FULL_ID:
-            self.assertIsInstance(k, tuple)
 
-            # create a new instance of the data type
-            name, freq, asset_type = k
+        with tqdm(total=total) as pbar:
+            for k in ALL_TYPES_TO_TEST_WITH_FULL_ID:
+                self.assertIsInstance(k, tuple)
 
-            dtype = DataType(
-                    name=name,
-                    freq=freq,
-                    asset_type=asset_type,
-            )
-            self.assertIsInstance(dtype, DataType)
-            self.assertEqual(dtype.name, name)
-            self.assertEqual(dtype.freq, freq)
-            self.assertEqual(dtype.asset_type, asset_type)
+                # create a new instance of the data type
+                name, freq, asset_type = k
 
-            acq_type = dtype.acquisition_type
-            desc = dtype.description
+                dtype = DataType(
+                        name=name,
+                        freq=freq,
+                        asset_type=asset_type,
+                )
+                self.assertIsInstance(dtype, DataType)
+                self.assertEqual(dtype.name, name)
+                self.assertEqual(dtype.freq, freq)
+                self.assertEqual(dtype.asset_type, asset_type)
 
-            table_name = dtype.kwargs['table_name']
+                acq_type, kwargs = _parse_acquisition_parameters(
+                        search_name=dtype._search_name,
+                        name_par=dtype._name_pars,
+                        freq=dtype.freq,
+                        asset_type=dtype.asset_type,
+                        built_in_tables=True,
 
-            shares = None
-            starts = '2019-09-01'
-            ends = '2020-09-12'
+                )
+                desc = dtype.description
 
-            type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition', 'category']
-            type_with_events = ['event_status', 'event_signal', 'event_multi_stat', 'selected_events']
-            if (acq_type in type_with_shares) and (asset_type == 'E'):
-                shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
-                if table_name == 'index_weight':
-                    starts = '2018-09-01'
-                    ends = '2020-12-31'
-                if table_name in ['money_flow', 'stock_limit', ]:
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
-                shares = ['000300.SH', '000001.SH']
-                if table_name == 'sw_industry_basic':
-                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
-                if table_name == 'ths_index_basic':
-                    shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
-                if table_name == 'ths_index_daily':
-                    shares = ['700001.TI', '700002.TI', '700003.TI', '700004.TI', '700005.TI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'ci_index_daily':
-                    shares = ['CI005001.CI', 'CI005005.CI', 'CI005010.CI', 'CI005014.CI', 'CI005015.CI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'sw_index_daily':
-                    shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-                if table_name == 'global_index_daily':
-                    shares = ['AS51', 'CKLSE', 'CSX5P', 'DJI', 'HKAH']
-                    starts = '2024-04-01'
-                    ends = '2024-05-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'FD'):
-                shares = ['515630.SH']
-            elif (acq_type in type_with_shares) and (asset_type == 'FT'):
-                shares = ['AG.SHF', 'A.DCE', 'CU.SHF', 'C.DCE']
-                if table_name in ['future_weekly', 'future_monthly']:
-                    starts = '2024-12-01'
-                    ends = '2025-02-01'
-            elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
-                shares = ['10000001.SH', '10001909.SH', '10001910.SH', '10001911.SH', '10007976.SH']
-            elif (acq_type in type_with_events) and (asset_type == 'E'):
-                shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '600009.SH']
-                starts = '2018-01-01'
-                ends = '2020-05-01'
-                # for special tables:
-                if table_name == 'stock_suspend':
-                    starts = '2020-03-10'
-                    ends = '2020-03-13'
-                elif table_name in ['top_list', 'hs_top10_stock', 'top_inst']:
+                table_name = kwargs['table_name']
+
+                shares = None
+                starts = '2019-09-01'
+                ends = '2020-09-12'
+
+                type_with_shares = ['direct', 'basics', 'adjustment', 'operation', 'composition', 'category']
+                type_with_events = ['event_status', 'event_signal', 'event_multi_stat', 'selected_events']
+                if (acq_type in type_with_shares) and (asset_type == 'E'):
                     shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
-                    starts = '2024-01-01'
-                    ends = '2024-05-01'
-                elif table_name in ['dividend']:
-                    shares = ['000001.SZ', '000007.SZ', '000003.SZ', '000017.SZ', '000009.SZ']
+                    if table_name == 'index_weight':
+                        starts = '2018-09-01'
+                        ends = '2020-12-31'
+                    if table_name in ['money_flow', 'stock_limit', ]:
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'IDX'):
+                    shares = ['000300.SH', '000001.SH']
+                    if table_name == 'sw_industry_basic':
+                        shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                    if table_name == 'ths_index_basic':
+                        shares = ['885566.TI', '885760.TI', '885599.TI', '885841.TI', '885883.TI']
+                    if table_name == 'ths_index_daily':
+                        shares = ['700001.TI', '700002.TI', '700003.TI', '700004.TI', '700005.TI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'ci_index_daily':
+                        shares = ['CI005001.CI', 'CI005005.CI', 'CI005010.CI', 'CI005014.CI', 'CI005015.CI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'sw_index_daily':
+                        shares = ['801140.SI', '801710.SI', '801230.SI', '801770.SI', '801880.SI']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                    if table_name == 'global_index_daily':
+                        shares = ['AS51', 'CKLSE', 'CSX5P', 'DJI', 'HKAH']
+                        starts = '2024-04-01'
+                        ends = '2024-05-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'FD'):
+                    shares = ['515630.SH']
+                elif (acq_type in type_with_shares) and (asset_type == 'FT'):
+                    shares = ['AG.SHF', 'A.DCE', 'CU.SHF', 'C.DCE']
+                    if table_name in ['future_weekly', 'future_monthly']:
+                        starts = '2024-12-01'
+                        ends = '2025-02-01'
+                elif (acq_type in type_with_shares) and (asset_type == 'OPT'):
+                    shares = ['10000001.SH', '10001909.SH', '10001910.SH', '10001911.SH', '10007976.SH']
+                elif (acq_type in type_with_events) and (asset_type == 'E'):
+                    shares = ['000007.SZ', '000017.SZ', '000003.SZ', '600019.SH', '600009.SH']
                     starts = '2018-01-01'
-                    ends = '2025-01-01'
-            elif (acq_type in type_with_events) and (asset_type == 'FD'):
-                shares = ['000152.OF', '960032.OF']
-                starts = '2018-01-01'
-                ends = '2020-05-01'
+                    ends = '2020-05-01'
+                    # for special tables:
+                    if table_name == 'stock_suspend':
+                        starts = '2020-03-10'
+                        ends = '2020-03-13'
+                    elif table_name in ['top_list', 'hs_top10_stock', 'top_inst']:
+                        shares = ['000651.SZ', '000001.SZ', '002936.SZ', '603810.SH']
+                        starts = '2024-01-01'
+                        ends = '2024-05-01'
+                    elif table_name in ['dividend']:
+                        shares = ['000001.SZ', '000007.SZ', '000003.SZ', '000017.SZ', '000009.SZ']
+                        starts = '2018-01-01'
+                        ends = '2025-01-01'
+                elif (acq_type in type_with_events) and (asset_type == 'FD'):
+                    shares = ['000152.OF', '960032.OF']
+                    starts = '2018-01-01'
+                    ends = '2020-05-01'
 
-            if (asset_type in 'E') and (freq[-3:] == 'min'):
-                starts = '2022-04-01'
-                ends = '2022-04-15'
-            elif (asset_type == 'FT') and (freq[-3:] == 'min'):
-                starts = '2023-08-25'
-                ends = '2023-08-27'
-            elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
-                starts = '2024-09-27'
-                ends = '2024-09-28'
-            elif (asset_type == 'FD') and (freq == 'h'):
-                starts = '2021-09-20'
-                ends = '2021-09-30'
-            elif freq[-3:] == 'min':
-                starts = '2022-04-01'
-                ends = '2022-04-15'
+                if (asset_type in 'E') and (freq[-3:] == 'min'):
+                    starts = '2022-04-01'
+                    ends = '2022-04-15'
+                elif (asset_type == 'FT') and (freq[-3:] == 'min'):
+                    starts = '2023-08-25'
+                    ends = '2023-08-27'
+                elif (asset_type == 'OPT') and (freq[-3:] == 'min'):
+                    starts = '2024-09-27'
+                    ends = '2024-09-28'
+                elif (asset_type == 'FD') and (freq == 'h'):
+                    starts = '2021-09-20'
+                    ends = '2021-09-30'
+                elif freq[-3:] == 'min':
+                    starts = '2022-04-01'
+                    ends = '2022-04-15'
 
-            if table_name in ['hk_top10_stock']:
-                shares = ['00700.HK', '00857.HK', '00939.HK', '00941.HK', '01810.HK']
-                starts = '2024-04-02'
-                ends = '2024-04-05'
+                if table_name in ['hk_top10_stock']:
+                    shares = ['00700.HK', '00857.HK', '00939.HK', '00941.HK', '01810.HK']
+                    starts = '2024-04-02'
+                    ends = '2024-04-05'
 
-            if table_name in ['hs_money_flow', 'hibor', 'shibor', 'libor']:
-                starts = '2024-04-01'
-                ends = '2024-04-15'
-            if table_name in ['hibor', 'libor']:
-                starts = '2020-04-01'
-                ends = '2020-06-15'
-            if table_name in ['gz_index']:
-                starts = '2015-01-01'
-                ends = '2015-02-20'
-            if table_name in ['cn_gdp', 'cn_cpi', 'cn_ppi', 'cn_sf', 'cn_money', 'cn_pmi']:
-                starts = '2024-01-01'
-                ends = '2024-12-31'
+                if table_name in ['hs_money_flow', 'hibor', 'shibor', 'libor']:
+                    starts = '2024-04-01'
+                    ends = '2024-04-15'
+                if table_name in ['hibor', 'libor']:
+                    starts = '2020-04-01'
+                    ends = '2020-06-15'
+                if table_name in ['gz_index']:
+                    starts = '2015-01-01'
+                    ends = '2015-02-20'
+                if table_name in ['cn_gdp', 'cn_cpi', 'cn_ppi', 'cn_sf', 'cn_money', 'cn_pmi']:
+                    starts = '2024-01-01'
+                    ends = '2024-12-31'
 
-            if table_name in ['block_trade']:
-                shares = ['000603.SZ', '000723.SZ', '000783.SZ', '000796.SZ', '000895.SZ', '002203.SZ']
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name in ['block_trade']:
+                    shares = ['000603.SZ', '000723.SZ', '000783.SZ', '000796.SZ', '000895.SZ', '002203.SZ']
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'stock_holder_trade':
-                shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ',]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'stock_holder_trade':
+                    shares = ['002243.SZ', '300328.SZ', '300504.SZ', '300710.SZ', '300832.SZ', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'margin_detail':
-                shares = ['300978.SZ', '300979.SZ', '300980.SZ', '300981.SZ', '300982.SZ', '300983.SZ', ]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'margin_detail':
+                    shares = ['300978.SZ', '300979.SZ', '300980.SZ', '300981.SZ', '300982.SZ', '300983.SZ', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            if table_name == 'stock_suspend':
-                shares = ['000005.SZ', '000599.SZ', '002490.SZ', '600375.SH', '872931.BJ', '600165.SH', ]
-                starts = '2024-04-01'
-                ends = '2024-05-01'
+                if table_name == 'stock_suspend':
+                    shares = ['000005.SZ', '000599.SZ', '002490.SZ', '600375.SH', '872931.BJ', '600165.SH', ]
+                    starts = '2024-04-01'
+                    ends = '2024-05-01'
 
-            # print(f'testing dtype {dtype} with parameters: \n'
-            #       f'shares: {shares}\n'
-            #       f'starts/ends: {starts}/{ends}\n')
+                # print(f'testing dtype {dtype} with parameters: \n'
+                #       f'shares: {shares}\n'
+                #       f'starts/ends: {starts}/{ends}\n')
 
-            if shares is not None:
-                shares = list_to_str_format(shares)
-            if table_name in ['cn_money']:
-                # import pdb; pdb.set_trace()
-                pass
-            data = dtype.get_data_from_source(
-                    ds,
-                    symbols=shares,
-                    starts=starts,
-                    ends=ends,
-            )
+                if shares is not None:
+                    shares = list_to_str_format(shares)
+                if table_name in ['cn_money']:
+                    pass
+                data = dtype.get_data_from_source(
+                        ds,
+                        symbols=shares,
+                        starts=starts,
+                        ends=ends,
+                )
 
-            acquired += 1
-            progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=120)
+                acquired += 1
+                pbar.set_description(f'{dtype} - {dtype.description}')
+                pbar.update()
+                # progress_bar(acquired, total, comments=f'{dtype} - {dtype.description}', column_width=120)
 
-            try:
-                all_tables.remove(table_name)
-            except ValueError:
-                pass
+                try:
+                    all_tables.remove(table_name)
+                except ValueError:
+                    pass
 
-            if data.empty:
-                if freq in ['h', '30min', '15min', '5min', '1min',]:
+                if data.empty:
+                    if freq in ['h', '30min', '15min', '5min', '1min', ]:
+                        continue
+                    empty_count += 1
+                    empty_types.append(k)
+                    empty_type_descs.append(desc)
+                    empty_type_acq_types.append(acq_type)
+                    print(f'\nempty data for {dtype} - {dtype.description}')
                     continue
-                empty_count += 1
-                empty_types.append(k)
-                empty_type_descs.append(desc)
-                empty_type_acq_types.append(acq_type)
-                print(f'\nempty data for {dtype} - {dtype.description}')
-                continue
 
-            print(f'\ngot data for {dtype}: \n{data}')
+                print(f'\ngot data for {dtype}: \n{data}')
 
-            # checking the datatypes and start / end dates of the data
-            if acq_type in ['basics', 'category']:
-                # index are shares
-                self.assertIsInstance(data, pd.Series)
-                self.assertTrue(data.index.dtype == 'object')
-                self.assertTrue(all(share in shares for share in data.index))
-            elif (acq_type in ['reference']) or (dtype.unsymbolizer is not None):
-                self.assertIsInstance(data, pd.Series)
-                self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                starts = pd.to_datetime(starts)
-                ends = pd.to_datetime(ends)
-                self.assertTrue(all(date >= starts for date in data.index))
-                self.assertTrue(all(date <= ends for date in data.index))
-            elif (acq_type in type_with_shares) and (dtype.unsymbolizer is None):
-                self.assertIsInstance(data, pd.DataFrame)
-                if not data.empty:
-                    try:
-                        self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                        self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                        self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
-                    except AssertionError:
-                        # import pdb;
-                        # pdb.set_trace()
-                        pass
-            elif acq_type in type_with_events:
-                self.assertIsInstance(data, pd.DataFrame)
-                if not data.empty:
-                    try:
-                        self.assertEqual(data.index.dtype, 'datetime64[ns]')
-                        self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
-                        self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
-                    except AssertionError:
-                        # import pdb
-                        # pdb.set_trace()
-                        pass
-            else:
-                self.assertIsInstance(data, pd.Series)
+                # checking the datatypes and start / end dates of the data
+                if acq_type in ['basics', 'category']:
+                    # index are shares
+                    self.assertIsInstance(data, pd.Series)
+                    self.assertTrue(data.index.dtype == 'object')
+                    self.assertTrue(all(share in shares for share in data.index))
+                elif (acq_type in ['reference']) or (dtype.unsymbolizer is not None):
+                    self.assertIsInstance(data, pd.Series)
+                    self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                    starts = pd.to_datetime(starts)
+                    ends = pd.to_datetime(ends)
+                    self.assertTrue(all(date >= starts for date in data.index))
+                    self.assertTrue(all(date <= ends for date in data.index))
+                elif (acq_type in type_with_shares) and (dtype.unsymbolizer is None):
+                    self.assertIsInstance(data, pd.DataFrame)
+                    if not data.empty:
+                        try:
+                            self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                            self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                            self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                        except AssertionError:
+                            # import pdb;
+                            # pdb.set_trace()
+                            pass
+                elif acq_type in type_with_events:
+                    self.assertIsInstance(data, pd.DataFrame)
+                    if not data.empty:
+                        try:
+                            self.assertEqual(data.index.dtype, 'datetime64[ns]')
+                            self.assertGreaterEqual(data.index[0].date(), pd.Timestamp(starts).date())
+                            self.assertLessEqual(data.index[-1].date(), pd.Timestamp(ends).date())
+                        except AssertionError:
+                            # import pdb
+                            # pdb.set_trace()
+                            pass
+                else:
+                    self.assertIsInstance(data, pd.Series)
 
         print(f'\n{empty_count} out of {total} empty data types (except those in min freq data tables):')
         emptys = pd.DataFrame({
@@ -1773,36 +1927,58 @@ class TestDataTypes(unittest.TestCase):
         for table in all_tables:
             print(ds.get_table_info(table))
 
-    def test_get_tables_by_dtypes(self):
-        """ test module function get_tables_by_dtypes()"""
-        tables = get_tables_by_dtypes(
-                dtypes=['close', 'high', 'low'],
-                freqs=['d', 'w', 'm'],
-                asset_types=['E', 'IDX'],
-        )
-        print(f'\n{len(tables)} tables are covered by the data types:')
-        print(tables)
-        self.assertEqual(len(tables), 6)
-        self.assertEqual(
-                tables,
-                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily'}
-        )
+    def test_get_data_from_source(self):
+        """ test the basic data acquiring function dtype.get_data_from_source() """
+        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
+        htype_names = 'pe,close|b,open,close'
+        htype_names = str_to_list(htype_names)
+        asset_type = ['E', 'IDX', 'FD']
+        freq = 'd'
+        htypes = []
+        # 逐个生成htype并添加到htypes清单中
+        for at in asset_type:
+            for htype_name in htype_names:
+                try:
+                    htype = DataType(name=htype_name, freq=freq, asset_type=at)
+                    htypes.append(htype)
+                except:
+                    print(f'  - failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    continue
+        shares = list_to_str_format(shares)
+        print(f'getting data for htypes: \n{[at.__str__() for at in htypes]}')
 
-        tables = get_tables_by_dtypes(
-                dtypes=['close', 'high', 'low'],
-                freqs=None,
-                asset_types=['E', 'IDX'],
-        )
+        for htype in htypes:
+            print(f'getting data for dtype: {htype}')
+            df = htype.get_data_from_source(
+                    self.ds,
+                    symbols=shares,
+                    starts='20210101',
+                    ends='20210301',
+            )
+            print(f'got data:\n{df}')
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertFalse(df.empty)
 
-        print(f'\n{len(tables)} tables are covered by the data types:')
-        print(tables)
-        self.assertEqual(len(tables), 16)
-        self.assertEqual(
-                tables,
-                {'stock_daily', 'index_monthly', 'stock_weekly', 'stock_monthly', 'index_weekly', 'index_daily',
-                 'stock_1min', 'index_1min', 'stock_hourly', 'stock_5min', 'stock_15min', 'stock_30min',
-                 'index_hourly', 'index_5min', 'index_15min', 'index_30min', 'index_1min'}
-        )
+        # 生成multi_asset_type_htypes：
+        multi_asset_type_htypes = [
+            DataType(name='pe', freq='d', asset_type='E, IDX'),
+            DataType(name='close|b', freq='d', asset_type='E, FD'),
+            DataType(name='close', freq='h', asset_type='E, FD, IDX'),
+            DataType(name='open', freq='h', asset_type='E, IDX'),
+        ]
+        print(f'getting data for multi-asset_type htypes: \n{[at.__str__() for at in multi_asset_type_htypes]}')
+
+        for htype in multi_asset_type_htypes:
+            print(f'getting data for dtype: {htype}')
+            df = htype.get_data_from_source(
+                    self.ds,
+                    symbols=shares,
+                    starts='20210101',
+                    ends='20210301',
+            )
+            print(f'got data:\n{df}')
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertFalse(df.empty)
 
     def test_get_history_data(self):
         """ test getting arr, from real database """
@@ -1810,6 +1986,7 @@ class TestDataTypes(unittest.TestCase):
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htype_names = 'pe,close|b,open,swing,strength'
         htype_names = str_to_list(htype_names)
+        htype_ids = ['pe', 'close|b', 'open', 'swing', 'strength']
         start = '20210101'
         end = '20210301'
         asset_type = ['E', 'IDX', 'FD']
@@ -1822,11 +1999,11 @@ class TestDataTypes(unittest.TestCase):
                     htype = DataType(name=htype_name, freq=freq, asset_type=at)
                     htypes.append(htype)
                 except:
-                    print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
+                    print(f'  - failed to create htype with parameters: {htype_name}, {freq}, {at}')
                     continue
         shares = list_to_str_format(shares)
         print(f'getting data without combination for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_ids = [htype.id for htype in htypes]
+        htype_dtype_ids = [htype.dtype_id for htype in htypes]
 
         dfs = get_history_data_from_source(
                 self.ds,
@@ -1837,7 +2014,8 @@ class TestDataTypes(unittest.TestCase):
                 freq=freq,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_ids)
+        self.assertEqual(len(dfs), len(htypes))
+        self.assertEqual(list(dfs.keys()), htype_dtype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
@@ -1852,10 +2030,10 @@ class TestDataTypes(unittest.TestCase):
                 start=start,
                 end=end,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
@@ -1866,7 +2044,7 @@ class TestDataTypes(unittest.TestCase):
         start = '20230901'
         end = '20230910'
         freq = 'h'
-        htype_names = ['pe', 'close', 'open', 'swing', 'strength']
+        htype_ids = ['pe', 'close', 'open', 'swing', 'strength']
         # 逐个生成htype并添加到htypes清单中
         h_types = [DataType(name='pe', freq='d', asset_type='E'),
                    DataType(name='close', freq='h', asset_type='E'),
@@ -1888,16 +2066,16 @@ class TestDataTypes(unittest.TestCase):
                 start=start,
                 end=end,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
 
         print(f'got history panel:\n{dfs}')
 
         print(f'getting data with only row_count parameter without starts or ends')
-        htype_ids = [htype.id for htype in h_types]
+        htype_ids = ['pe', 'close', 'open', 'swing', 'strength']
 
         dfs = get_history_data_from_source(
                 self.ds,
@@ -1906,14 +2084,31 @@ class TestDataTypes(unittest.TestCase):
                 start='20210203',
                 row_count=20,
                 freq=freq,
-                combine_htype_names=True,
+                combine_asset_types=True,
         )
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), htype_names)
+        self.assertEqual(list(dfs.keys()), htype_ids)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel: \n{dfs}')
         for df in dfs:
             self.assertLessEqual(len(df), 20)
+
+        print(f'Getting data with multi-asset_type datatypes with multiple shares')
+        multi_data_types = [DataType(name='pe', freq='d', asset_type='E, IDX'),
+                            DataType(name='close', freq='h', asset_type='E, FD, IDX'),
+                            DataType(name='open', freq='h', asset_type='ANY'),
+                            ]
+
+        dfs = get_history_data_from_source(
+                self.ds,
+                qt_codes=shares,
+                htypes=multi_data_types,
+                start=start,
+                end=end,
+                freq=freq,
+                combine_asset_types=True,
+        )
+        print(f'got history panel:\n{dfs}')
 
     def test_get_reference_data(self):
         """ test function get_reference_data()"""
@@ -1933,7 +2128,7 @@ class TestDataTypes(unittest.TestCase):
                 print(f'failed to create htype with parameters: {htype_name}, {freq}')
                 continue
         print(f'getting simple reference data for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_names = [htype.name for htype in htypes]
+        htype_names = [htype.dtype_id for htype in htypes]
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -1966,7 +2161,10 @@ class TestDataTypes(unittest.TestCase):
                     print(f'failed to create htype with parameters: {htype_name}, {freq}, {at}')
                     continue
         print(f'getting reference data with unsymbolizer for htypes: \n{[at.__str__() for at in htypes]}')
-        htype_names = ['shibor|on', 'wz_cm', 'close|b-000651.SZ', 'close-000300.SH']
+        htype_names = ['shibor|on_None_d',
+                       'wz_cm_None_d',
+                       'close|b-000651.SZ_E_d',
+                       'close-000300.SH_IDX_d']
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -1975,6 +2173,7 @@ class TestDataTypes(unittest.TestCase):
                 end=end,
                 freq=freq,
         )
+        print(f'got reference data: \n{ser}')
         self.assertIsInstance(ser, dict)
         self.assertEqual(list(ser.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.Series) for item in ser.values()))
@@ -1993,7 +2192,10 @@ class TestDataTypes(unittest.TestCase):
                    DataType(name='close-000300.SH', freq='5min', asset_type='IDX'),
                    ]
         print(f'getting re-freq reference data for htypes: \n{[at.__str__() for at in h_types]}')
-        htype_names = ['shibor|on', 'wz_cm', 'close|b-000651.SZ', 'close-000300.SH']
+        htype_names = ['shibor|on_None_d',
+                       'wz_cm_None_d',
+                       'close|b-000651.SZ_E_5min',
+                       'close-000300.SH_IDX_5min']
 
         ser = get_reference_data_from_source(
                 self.ds,
@@ -2009,12 +2211,12 @@ class TestDataTypes(unittest.TestCase):
         print(f'got history panel:\n{ser}')
 
         print(f'{"=" * 80}\ngetting data with only row_count parameter without starts and ends')
-        htype_names = [htype.name for htype in h_types]
+        htype_names = [htype.dtype_id for htype in h_types]
 
         dfs = get_reference_data_from_source(
                 self.ds,
                 htypes=h_types,
-                end=end,
+                end='20230620',
                 row_count=20,
                 freq=freq,
         )
@@ -2022,7 +2224,7 @@ class TestDataTypes(unittest.TestCase):
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htype_names)
         self.assertTrue(all(isinstance(item, pd.Series) for item in dfs.values() if not item.empty))
-        for df in dfs:
+        for df in dfs.values():
             self.assertLessEqual(len(df), 20)
 
     def test_infer_data_types(self):
@@ -2071,7 +2273,8 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 
         # test infer data types with missing freq but force match freq
-        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types, force_match_freq=True)
+        data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types,
+                                      allow_ignore_freq=True)
         print(f'Inferred data types with missing freqs and force match freq: \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='E'),
@@ -2086,7 +2289,7 @@ class TestDataTypes(unittest.TestCase):
 
         # test infer data types with missing asset_type but forced match asset type
         data_types = infer_data_types(names=names, freqs=freqs, asset_types=missing_asset_types,
-                                      force_match_asset_type=True)
+                                      allow_ignore_asset_type=True)
         print(f'Inferred data types with missing asset types and forced match asset type: \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='IDX'),
@@ -2100,7 +2303,7 @@ class TestDataTypes(unittest.TestCase):
         # teset infer data types with adj parameter
         data_types = infer_data_types(names=names, freqs=missing_freqs, asset_types=assert_types,
                                       adj='back',
-                                      force_match_freq=True)
+                                      allow_ignore_freq=True)
         print(f'Inferred data types with adj = "b": \n{data_types}')
         expected_data_types = [
             DataType(name='pe', freq='d', asset_type='E'),
@@ -2149,8 +2352,8 @@ class TestDataTypes(unittest.TestCase):
         freqs = ['h', 'd', 'm']
         asset_types = ['E', 'IDX', 'FD']
         data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types,
-                                      force_match_freq=True,
-                                      force_match_asset_type=True)
+                                      allow_ignore_freq=True,
+                                      allow_ignore_asset_type=True)
         print(f'Inferred data types with multiple duplicated cases with forced freq and asset_type: \n{data_types}')
         expected_data_types = [
             DataType(name='close', freq='h', asset_type='E'),
@@ -2177,7 +2380,42 @@ class TestDataTypes(unittest.TestCase):
             DataType(name='is_trade_day|SSE', freq='d', asset_type='None'),
             DataType(name='name', freq='None', asset_type='FT')
         ]
+        expected_dtype_ids = [dt.dtype_id for dt in expected_data_types]
+        expected_dtype_ids.sort()
+        dtype_ids = [dt.dtype_id for dt in data_types]
+        dtype_ids.sort()
+        for edi, di in zip(expected_dtype_ids, dtype_ids):
+            print(f'expected: {edi}, got: {di}')
+        # import pdb;
+        # pdb.set_trace()
         self.assertEqual(len(data_types), 23)
+        self.assertTrue(all(dt in expected_data_types for dt in data_types))
+        self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+        # test infer data types with allow_ignore_adj = True
+        names = ['close', 'close|b', 'close|f']
+        freqs = ['d', 'h']
+        asset_types = ['E', 'IDX', 'FD']
+        data_types = infer_data_types(names=names, freqs=freqs, asset_types=asset_types,
+                                      allow_ignore_adj=True)
+        print(f'Inferred data types with allow_ignore_adj = True: \n{data_types}')
+        expected_data_types = [
+            DataType(name='close', freq='d', asset_type='E'),
+            DataType(name='close', freq='d', asset_type='IDX'),
+            DataType(name='close', freq='d', asset_type='FD'),
+            DataType(name='close', freq='h', asset_type='E'),
+            DataType(name='close', freq='h', asset_type='IDX'),
+            DataType(name='close', freq='h', asset_type='FD'),
+            DataType(name='close|b', freq='d', asset_type='E'),
+            DataType(name='close|b', freq='d', asset_type='FD'),
+            DataType(name='close|b', freq='h', asset_type='E'),
+            DataType(name='close|b', freq='h', asset_type='FD'),
+            DataType(name='close|f', freq='d', asset_type='E'),
+            DataType(name='close|f', freq='d', asset_type='FD'),
+            DataType(name='close|f', freq='h', asset_type='E'),
+            DataType(name='close|f', freq='h', asset_type='FD'),
+        ]
+        self.assertEqual(len(data_types), 14)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
 

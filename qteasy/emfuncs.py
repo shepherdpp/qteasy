@@ -243,8 +243,8 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
         ('klt', f'{klt}'),
         ('fqt', f'{fqt}'),
     )
-    base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
     # base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
+    base_url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
     url = base_url + '?' + urlencode(params)
     try:
         json_response = requests.get(
@@ -252,6 +252,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
     except:
         return pd.DataFrame()
     data = json_response['data']
+
     if data is None:
         return pd.DataFrame()
     klines = data['klines']
@@ -274,7 +275,7 @@ def _get_k_history(code: str, beg: str = '16000101', end: str = '20500101',
 def _get_rt_quote(code: str) -> pd.DataFrame:
     """ codes from tushare, get real time quote data from eastmoney"""
 
-    url = "https://push2.eastmoney.com/api/qt/stock/get"
+    base_url = "https://push2.eastmoney.com/api/qt/stock/get"
     symbol = _gen_eastmoney_code(code)
     # print(symbol)
     params = {
@@ -287,6 +288,7 @@ def _get_rt_quote(code: str) -> pd.DataFrame:
         "wbp2u":  "|0|0|0|web",
         "_":      str(int(time.time() * 1000))
     }
+    url = base_url + '?' + urlencode(params)
 
     # print(params["secid"])
     response = requests.get(url, headers=dc_cookies, cookies=dc_headers, params=params)

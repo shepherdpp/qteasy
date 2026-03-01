@@ -195,11 +195,11 @@ msgstr ""
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:57
 msgid ""
-"**策略需要的数据** ——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.strategy_data_types` 等属性完全自由定义，并指定数据类型、频率以及窗口长"
+"**策略需要的数据** ——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.data_types` 等属性完全自由定义，并指定数据类型、频率以及窗口长"
 "度"
 msgstr ""
 "**Strategy_data_needed** - die von der Strategie benötigten Daten; z.B. benötigen Sie tägliche K-Linien-Daten für die letzten 10 Tage oder Kurs-Gewinn-Verhältnisse für das letzte Jahr? In `qteasy` kann die von "
-"der Strategie benötigte Datenmenge völlig frei mit Eigenschaften wie `Strategy.strategy_data_types` definiert werden, die den Datentyp, die Häufigkeit und die Länge des Fensters angeben"
+"der Strategie benötigte Datenmenge völlig frei mit Eigenschaften wie `Strategy.data_types` definiert werden, die den Datentyp, die Häufigkeit und die Länge des Fensters angeben"
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:58
 msgid "**策略的逻辑** ——通过重写`Strategy.realize()`方法，用户可以自由定义如何使用输入数据，产生交易决策。"
@@ -479,10 +479,10 @@ msgstr ""
 "abrufen wollen, schneiden wir sie einfach direkt aus `ndarray` aus."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:194
-msgid "前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.pars`即可获取。"
+msgid "前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.par_values`即可获取。"
 msgstr ""
 "Wie bereits erwähnt, ist der einstellbare Parameter dieser Strategie die Periode der Mittelwertberechnung. Um die Periode mit Hilfe des einstellbaren Parameters zu berechnen, müssen wir die Werte des "
-"einstellbaren Parameters erhalten, die in der pars-Eigenschaft der Strategie gespeichert sind und über `self.pars` abgerufen werden können."
+"einstellbaren Parameters erhalten, die in der par_values-Eigenschaft der Strategie gespeichert sind und über `self.par_values` abgerufen werden können."
 
 #: ../../source/tutorials/5-first-self-defined-strategy.md:204
 msgid "到这里，实现策略逻辑所需要的元素都备齐了，接下来我们可以开始实现策略逻辑。"

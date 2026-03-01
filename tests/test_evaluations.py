@@ -13,9 +13,18 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from qteasy.evaluate import eval_alpha, eval_benchmark, eval_beta, eval_fv
-from qteasy.evaluate import eval_info_ratio, eval_max_drawdown, eval_sharp
-from qteasy.evaluate import eval_volatility
+from qteasy.finance import CashPlan
+from qteasy.evaluate import (
+    eval_alpha,
+    eval_benchmark,
+    eval_beta,
+    eval_fv,
+    eval_info_ratio,
+    eval_max_drawdown,
+    eval_sharp,
+    eval_volatility,
+    evaluate,
+)
 
 
 class TestEvaluations(unittest.TestCase):
@@ -378,12 +387,12 @@ class TestEvaluations(unittest.TestCase):
     # noinspection PyTypeChecker
     def test_info_ratio(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference['value']), 0.075553316)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data3, reference['value']), 0.018949457)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data4, reference['value']), 0.056328143)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data5, reference['value']), -0.004270068)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data6, reference['value']), 0.009198027)
+        self.assertAlmostEqual(eval_info_ratio(self.test_data7, reference['value']), -0.000890283)
 
     def test_volatility(self):
         self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
@@ -628,12 +637,12 @@ class TestEvaluations(unittest.TestCase):
 
     def test_beta(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
-        self.assertAlmostEqual(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
-        self.assertAlmostEqual(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
-        self.assertAlmostEqual(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
-        self.assertAlmostEqual(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
-        self.assertAlmostEqual(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
+        self.assertAlmostEqual(eval_beta(self.test_data2, reference['value']), -0.017148939)
+        self.assertAlmostEqual(eval_beta(self.test_data3, reference['value']), -0.042204233)
+        self.assertAlmostEqual(eval_beta(self.test_data4, reference['value']), -0.15652986)
+        self.assertAlmostEqual(eval_beta(self.test_data5, reference['value']), -0.049195532)
+        self.assertAlmostEqual(eval_beta(self.test_data6, reference['value']), -0.026995082)
+        self.assertAlmostEqual(eval_beta(self.test_data7, reference['value']), -0.01147809)
 
         self.assertRaises(Exception, eval_beta, [1, 2, 3], reference, 'value')
         self.assertRaises(Exception, eval_beta, self.test_data3, [1, 2, 3], 'value')
@@ -740,7 +749,7 @@ class TestEvaluations(unittest.TestCase):
                                   -0.1155195, -0.11569505, -0.10513348, -0.09611072, -0.10719791,
                                   -0.10843965, -0.11025856, -0.10247839, -0.10554044, -0.10927647,
                                   -0.10645088, -0.09982498, -0.10542734, -0.09631372, -0.08229695])
-        test_beta_mean = eval_beta(self.long_data, self.long_bench, 'value')
+        test_beta_mean = eval_beta(self.long_data, self.long_bench['value'])
         test_beta_roll = self.long_data['beta'].values
         expected = float(np.nanmean(expected_beta))
         self.assertAlmostEqual(test_beta_mean, expected)
@@ -748,12 +757,12 @@ class TestEvaluations(unittest.TestCase):
 
     def test_alpha(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
-        self.assertAlmostEqual(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
-        self.assertAlmostEqual(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
-        self.assertAlmostEqual(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
-        self.assertAlmostEqual(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
-        self.assertAlmostEqual(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
+        self.assertAlmostEqual(eval_alpha(self.test_data2, 5, reference['value'],  0.5), 11.63072977)
+        self.assertAlmostEqual(eval_alpha(self.test_data3, 5, reference['value'],  0.5), 1.886590071)
+        self.assertAlmostEqual(eval_alpha(self.test_data4, 5, reference['value'],  0.5), 6.827021872)
+        self.assertAlmostEqual(eval_alpha(self.test_data5, 5, reference['value'],  0.92), -1.192265168)
+        self.assertAlmostEqual(eval_alpha(self.test_data6, 5, reference['value'],  0.92), -1.437142359)
+        self.assertAlmostEqual(eval_alpha(self.test_data7, 5, reference['value'],  0.92), -1.781311545)
 
         # 测试长数据的alpha计算
         expected_alpha = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -856,7 +865,7 @@ class TestEvaluations(unittest.TestCase):
                                    0.56645031, 0.62766439, 0.71829315, 0.69481356, 0.59550329,
                                    0.58133754, 0.59014148, 0.58026655, 0.61719273, 0.67373203,
                                    0.75573056, 0.89501633, 0.8347253, 0.87964685, 0.89015835])
-        test_alpha_mean = eval_alpha(self.long_data, 100, self.long_bench, 'value')
+        test_alpha_mean = eval_alpha(self.long_data, 100, self.long_bench['value'])
         test_alpha_roll = self.long_data['alpha'].values
         expected = float(np.nanmean(expected_alpha))
         self.assertAlmostEqual(test_alpha_mean, expected)
@@ -869,29 +878,238 @@ class TestEvaluations(unittest.TestCase):
 
     def test_benchmark(self):
         reference = self.test_data1
-        tr, yr = eval_benchmark(self.test_data2, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data2, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
-        tr, yr = eval_benchmark(self.test_data3, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data3, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
-        tr, yr = eval_benchmark(self.test_data4, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data4, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
-        tr, yr = eval_benchmark(self.test_data5, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data5, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
-        tr, yr = eval_benchmark(self.test_data6, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data6, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
-        tr, yr = eval_benchmark(self.test_data7, reference, 'value')
+        tr, yr = eval_benchmark(self.test_data7, reference['value'])
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
 
-    def test_evaluate(self):
-        """ 测试回测结果评价函数"""
-        # TODO: implement this test
-        pass
+
+class TestEvaluate(unittest.TestCase):
+
+    def setUp(self):
+        """测试前准备"""
+        # 创建示例回测结果数据
+        dates = pd.date_range('2023-01-01', '2023-01-10', freq='D')
+        self.looped_values = pd.DataFrame({
+            '000001': [100, 105, 110, 108, 112, 115, 118, 120, 122, 125],
+            '000002': [50, 52, 48, 51, 53, 55, 54, 56, 58, 60],
+            'cash':   [10000, 10000, 9500, 9500, 9000, 9000, 8500, 8500, 8000, 8000],
+            'fee':    [10, 10, 20, 20, 15, 15, 10, 10, 5, 5],
+            'value':  [20000, 21000, 20500, 21000, 22000, 23000, 23500, 24000, 24500, 25000]
+        }, index=dates)
+
+        # 创建基准数据
+        self.hist_benchmark = pd.Series(
+                [1000, 1020, 1040, 1030, 1050, 1070, 1090, 1100, 1120, 1140],
+                index=dates,
+                name='benchmark'
+        )
+
+        # 创建现金计划数据
+        self.cash_plan = CashPlan(
+                dates=['2023-01-01', '2023-01-05'],
+                amounts=[10000, 5000],
+                interest_rate=0.02,
+        )
+
+    def test_evaluate_with_all_indicators(self):
+        """测试所有指标"""
+        full_indicators = 'r,m,v,b,beta,alpha, sharp, info, calmar'
+        result = evaluate(
+                looped_values=self.looped_values,
+                hist_benchmark=self.hist_benchmark,
+                cash_plan=self.cash_plan,
+                indicators=full_indicators,
+        )
+        print(f'All Indicators Result: \n{result}')
+
+        # 验证返回结果类型
+        self.assertIsInstance(result, dict)
+
+        # 验证所有指标都存在
+        expected_keys = ['final_value', 'backtest_start', 'backtest_end', 'complete_values', 'days',
+                         'months', 'years', 'oper_count', 'total_invest', 'total_fee', 'rtn', 'annual_rtn',
+                         'skew', 'kurtosis', 'return_df', 'mdd', 'peak_date', 'valley_date', 'recover_date',
+                         'worst_drawdowns', 'volatility', 'benchmark_rtn', 'benchmark_a_rtn', 'beta', 'alpha',
+                         'sharp','info', 'calmar']
+        for key in expected_keys:
+            self.assertIn(key, result)
+        # 验证complete_values中包含相应的数据列
+        expected_columns = ['000001', '000002', 'cash', 'fee', 'value', 'invest', 'underwater',
+                            'volatility', 'beta', 'alpha', 'sharp', 'calmar']
+        for col in expected_columns:
+            self.assertIn(col, result['complete_values'].columns)
+
+        # 验证指标值正确
+        self.assertEqual(result['final_value'], 25000)
+        self.assertEqual(result['backtest_start'], pd.Timestamp('2023-01-01'))
+        self.assertEqual(result['backtest_end'], pd.Timestamp('2023-01-10'))
+        self.assertEqual(result['days'], 9)
+        self.assertEqual(result['months'], 0)
+        self.assertAlmostEqual(result['years'], 0.02465753424657534)
+        self.assertIsInstance(result['oper_count'], pd.DataFrame)
+        self.assertEqual(result['total_invest'], 15000)
+        self.assertEqual(result['total_fee'], 120)
+        self.assertAlmostEqual(result['rtn'], 0.66666666666667)
+        self.assertAlmostEqual(result['annual_rtn'], 993571875.2514205)
+        self.assertEqual(result['skew'], -1.2171458258254086)
+        self.assertEqual(result['kurtosis'], 2.5128906158494253)
+        self.assertIsInstance(result['return_df'], pd.DataFrame)
+        self.assertAlmostEqual(result['mdd'], 0.023809523809523808)
+        self.assertEqual(result['peak_date'], pd.Timestamp('2023-01-02'))
+        self.assertEqual(result['valley_date'], pd.Timestamp('2023-01-03'))
+        self.assertEqual(result['recover_date'], pd.Timestamp('2023-01-04'))
+        self.assertIsInstance(result['worst_drawdowns'], pd.DataFrame)
+        self.assertAlmostEqual(result['volatility'], 0.34858831128855094)
+        self.assertAlmostEqual(result['benchmark_rtn'], 0.14)
+        self.assertAlmostEqual(result['benchmark_a_rtn'], 202.14580559247182)
+        self.assertAlmostEqual(result['beta'], 0.020487222249774256)
+        self.assertAlmostEqual(result['alpha'], 993571871.1065862)
+        self.assertAlmostEqual(result['sharp'], 17.850405436804643)
+        self.assertAlmostEqual(result['info'], 0.47016119817088853)
+        self.assertAlmostEqual(result['calmar'], 10.5)
+        pd.testing.assert_frame_equal(result['complete_values'], self.looped_values)
+
+    def test_evaluate_with_multiple_indicators(self):
+        """测试多个指标组合"""
+        indicators = 'benchmark, sharp, info, alpha'
+        result = evaluate(
+                looped_values=self.looped_values,
+                hist_benchmark=self.hist_benchmark,
+                cash_plan=self.cash_plan,
+                indicators=indicators
+        )
+        print(f'Multiple Indicators Result: \n{result}')
+
+        # 验证返回结果类型
+        self.assertIsInstance(result, dict)
+
+        # 验证所有指标都存在
+        expected_keys = ['final_value', 'backtest_start', 'backtest_end', 'complete_values', 'days',
+                         'months', 'years', 'oper_count', 'total_invest', 'total_fee',
+                         'benchmark_rtn', 'benchmark_a_rtn', 'alpha', 'sharp','info']
+        for key in expected_keys:
+            self.assertIn(key, result)
+        # 验证complete_values中包含相应的数据列
+        expected_columns = ['000001', '000002', 'cash', 'fee', 'value', 'alpha', 'sharp']
+        for col in expected_columns:
+            self.assertIn(col, result['complete_values'].columns)
+
+        # 验证指标值正确
+        self.assertEqual(result['final_value'], 25000)
+        self.assertEqual(result['backtest_start'], pd.Timestamp('2023-01-01'))
+        self.assertEqual(result['backtest_end'], pd.Timestamp('2023-01-10'))
+        self.assertEqual(result['days'], 9)
+        self.assertEqual(result['months'], 0)
+        self.assertAlmostEqual(result['years'], 0.02465753424657534)
+        self.assertIsInstance(result['oper_count'], pd.DataFrame)
+        self.assertEqual(result['total_invest'], 15000)
+        self.assertEqual(result['total_fee'], 120)
+        self.assertAlmostEqual(result['benchmark_rtn'], 0.14)
+        self.assertAlmostEqual(result['benchmark_a_rtn'], 202.14580559247182)
+        self.assertAlmostEqual(result['alpha'], 993571871.1065862)
+        self.assertAlmostEqual(result['info'], 0.47016119817088853)
+
+    def test_evaluate_with_empty_indicators(self):
+        """测试空指标字符串，只输出基本信息"""
+        result = evaluate(
+                looped_values=self.looped_values,
+                hist_benchmark=self.hist_benchmark,
+                cash_plan=self.cash_plan,
+                indicators=''
+        )
+        print(f'Empty Indicators Result: \n{result}')
+
+        # 验证返回包含基础信息的字典
+        self.assertIsInstance(result, dict)
+
+        # 验证所有指标都存在
+        expected_keys = ['final_value', 'backtest_start', 'backtest_end', 'complete_values', 'days',
+                         'months', 'years', 'oper_count', 'total_invest', 'total_fee']
+        for key in expected_keys:
+            self.assertIn(key, result)
+
+        # 验证complete_values中包含相应的数据列
+        expected_columns = ['000001', '000002', 'cash', 'fee', 'value']
+        for col in expected_columns:
+            self.assertIn(col, result['complete_values'].columns)
+
+        # 验证指标值正确
+        self.assertEqual(result['final_value'], 25000)
+        self.assertEqual(result['backtest_start'], pd.Timestamp('2023-01-01'))
+        self.assertEqual(result['backtest_end'], pd.Timestamp('2023-01-10'))
+        self.assertEqual(result['days'], 9)
+        self.assertEqual(result['months'], 0)
+        self.assertAlmostEqual(result['years'], 0.02465753424657534)
+        self.assertIsInstance(result['oper_count'], pd.DataFrame)
+        self.assertEqual(result['total_invest'], 15000)
+        self.assertEqual(result['total_fee'], 120)
+
+    def test_evaluate_with_invalid_indicator(self):
+        """测试无效指标，输出默认结果"""
+        result = evaluate(
+                looped_values=self.looped_values,
+                hist_benchmark=self.hist_benchmark,
+                cash_plan=self.cash_plan,
+                indicators='invalid_indicator'
+        )
+        print(f'Invalid Indicator Result: \n{result}')
+
+        # 验证返回包含基础信息的字典
+        self.assertIsInstance(result, dict)
+
+        # 验证所有指标都存在
+        expected_keys = ['final_value', 'backtest_start', 'backtest_end', 'complete_values', 'days',
+                         'months', 'years', 'oper_count', 'total_invest', 'total_fee']
+        for key in expected_keys:
+            self.assertIn(key, result)
+
+        # 验证complete_values中包含相应的数据列
+        expected_columns = ['000001', '000002', 'cash', 'fee', 'value']
+        for col in expected_columns:
+            self.assertIn(col, result['complete_values'].columns)
+
+        # 验证指标值正确
+        self.assertEqual(result['final_value'], 25000)
+        self.assertEqual(result['backtest_start'], pd.Timestamp('2023-01-01'))
+        self.assertEqual(result['backtest_end'], pd.Timestamp('2023-01-10'))
+        self.assertEqual(result['days'], 9)
+        self.assertEqual(result['months'], 0)
+        self.assertAlmostEqual(result['years'], 0.02465753424657534)
+        self.assertIsInstance(result['oper_count'], pd.DataFrame)
+        self.assertEqual(result['total_invest'], 15000)
+        self.assertEqual(result['total_fee'], 120)
+
+    def test_evaluate_with_mixed_valid_invalid_indicators(self):
+        """测试混合有效和无效指标"""
+        result = evaluate(
+                looped_values=self.looped_values,
+                hist_benchmark=self.hist_benchmark,
+                cash_plan=self.cash_plan,
+                indicators='final_value,invalid_indicator,loop_dates'
+        )
+        print(f'Mixed Indicators Result: \n{result}')
+
+        # 验证只返回有效指标
+        self.assertIsInstance(result, dict)
+        self.assertIn('final_value', result)
+        self.assertIn('backtest_start', result)
+        self.assertIn('backtest_end', result)
+        self.assertEqual(result['final_value'], 25000)
 
 
 if __name__ == '__main__':

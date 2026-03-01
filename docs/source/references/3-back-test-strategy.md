@@ -374,7 +374,7 @@ stg = op[stg_idx]
 
 ### 设置策略参数或Operator参数
 
-### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, strategy_run_freq=None, window_length=None, data_types=None, strategy_run_timing=None, **kwargs)`
+### `op.set_parameter(stg_id, pars=None, opt_tag=None, par_range=None, par_types=None, data_freq=None, run_freq=None, window_length=None, data_types=None, strategy_run_timing=None, **kwargs)`
 指定一个交易策略的ID，设置这个交易策略的策略参数或其他属性
 
 ### `op.set_blender(price_type=None, blender=None)` 
@@ -454,8 +454,7 @@ qteasy提供了丰富的环境参数以控制回测的具体过程
 ```python
 qt.configure(
     mode=1,  # 设置运行模式为：1-回测模式
-    benchmark_asset = '000300.SH',  # 设置交易评价基准
-    benchmark_asset_type = 'IDX',  # 设置交易评价基准的资产类型
+    benchmark_asset = '000300.SH',  # 设置交易评价基准（类型由系统根据代码自动推断）
     asset_pool = '000300.SH',  # 设置交易资产组合
     asset_type = 'IDX',  # 交易资产组合的资产类型
     trade_batch_size = 0,  # 设置允许最小交易批量

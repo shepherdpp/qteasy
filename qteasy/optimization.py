@@ -9,20 +9,25 @@
 #  and parameter searching
 # ======================================
 
+import random
 import pandas as pd
 import numpy as np
 import time
-import math
+import logging
+from typing import Union, Optional, Generator
+from tqdm import tqdm
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from qteasy.qt_operator import Operator
-from qteasy._arg_validators import ConfigDict
+from qteasy.qt_operator import (
+    Operator,
+    SIGNAL_TYPE_ID,
+)
 
 from qteasy.backtest import (
-    apply_loop,
-    process_loop_results,
-    _get_complete_hist,
+    Backtester,
+    generate_cash_invest_and_delivery_arrays,
+    backtest_flash_steps,
 )
 
 from qteasy.history import (
@@ -32,384 +37,89 @@ from qteasy.history import (
 
 from qteasy.utilfuncs import (
     sec_to_duration,
-    progress_bar,
-    next_market_trade_day,
+    str_to_list,
 )
 
 from qteasy.space import (
     Space,
     ResultPool,
 )
+
 from qteasy.finance import (
     CashPlan,
-    set_cost,
-
-)
-from qteasy.evaluate import (
-    evaluate,
-    performance_statistics,
 )
 
 
-def _evaluate_all_parameters(par_generator,
-                             total,
-                             op: Operator,
-                             trade_price_list: HistoryPanel,
-                             benchmark_history_data,
-                             benchmark_history_data_type,
-                             config,
-                             stage='optimize') -> ResultPool:
-    """ 接受一个策略参数生成器对象，批量生成策略参数，反复调用_evaluate_one_parameter()函数，使用所有生成的策略参数
-        生成历史区间上的交易策略和回测结果，将得到的回测结果全部放入一个结果池对象，并根据策略筛选方法筛选出符合要求的回测
-        结果，并返回筛选后的结果。
-
-        根据config中的配置参数，这里可以选择进行并行计算以充分利用多核处理器的全部算力以缩短运行时间。
+def _gp_predict_rbf(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    length_scale: Optional[float] = None,
+    noise: float = 1e-5,
+) -> tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    """使用 RBF 核的高斯过程回归，对 X_test 预测均值和标准差（仅用 numpy）。
 
     Parameters
     ----------
-    par_generator: Iterables
-        一个迭代器对象，生成所有需要迭代测试的策略参数
-    op: Operator
-        一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
-    trade_price_list: pd.DataFrame
-        用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
-        （假设交易价格为收盘价）
-    benchmark_history_data: pd.DataFrame
-        用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
-        产的价格，例如沪深300指数的价格。
-    benchmark_history_data_type: str
-        用于回测结果评价的参考历史数据种类，通常为收盘价close
-    config: Config
-        参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
-        1, config.opti_output_count:
-            优化结果数量
-        2, config.parallel:
-            并行计算选项，True时进行多进程并行计算，False时进行单进程计算
-    stage: str
-        该参数直接传递至_evaluate_one_parameter()函数中，其含义和作用参见其docstring
+    X_train : np.ndarray
+        已评估点的编码矩阵，形状 (n, d)。
+    y_train : np.ndarray
+        已评估点的目标值，形状 (n,)。
+    X_test : np.ndarray
+        待预测点的编码矩阵，形状 (m, d)。
+    length_scale : float, optional
+        RBF 核长度尺度；None 时取训练点两两距离中位数的 0.5 倍。
+    noise : float
+        观测噪声方差，用于数值稳定。
 
     Returns
     -------
-        pool，一个Pool对象，包含经过筛选后的所有策略参数以及它们的性能表现
-
+    mu : np.ndarray or None
+        预测均值，形状 (m,)；拟合失败时返回 None。
+    sigma : np.ndarray or None
+        预测标准差，形状 (m,)；拟合失败时返回 None。
     """
-    pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
-    i = 0
-    best_so_far = 0
-    opti_target = config.optimize_target
-
-    # 启用多进程计算方式利用所有的CPU核心计算
-    if config.parallel:
-        # 启用并行计算
-        with ProcessPoolExecutor() as proc_pool:
-            futures = {proc_pool.submit(_evaluate_one_parameter,
-                                        par,
-                                        op,
-                                        trade_price_list,
-                                        benchmark_history_data,
-                                        benchmark_history_data_type,
-                                        config,
-                                        stage): par for par in
-                       par_generator}
-        for f in as_completed(futures):
-            eval_dict = f.result()
-            target_value = eval_dict[opti_target]
-            pool.push(item=futures[f], perf=target_value, extra=eval_dict)
-            i += 1
-            if target_value > best_so_far:
-                best_so_far = target_value
-            if i % 10 == 0:
-                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
-    # 禁用多进程计算方式，使用单进程计算
-    else:
-        for par in par_generator:
-            perf = _evaluate_one_parameter(par=par,
-                                           op=op,
-                                           trade_price_list=trade_price_list,
-                                           benchmark_history_data=benchmark_history_data,
-                                           benchmark_history_data_type=benchmark_history_data_type,
-                                           config=config,
-                                           stage=stage)
-            target_value = perf[opti_target]
-            pool.push(item=par, perf=target_value, extra=perf)
-            i += 1
-            if target_value > best_so_far:
-                best_so_far = target_value
-            if i % 10 == 0:
-                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
-    # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
-    progress_bar(i, i)
-
-    return pool
+    X_train = np.asarray(X_train, dtype=float)
+    y_train = np.asarray(y_train, dtype=float).ravel()
+    X_test = np.asarray(X_test, dtype=float)
+    n, d = X_train.shape
+    if n == 0 or y_train.size != n:
+        return None, None
+    if length_scale is None and n >= 2:
+        dists = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                dists.append(np.sqrt(np.sum((X_train[i] - X_train[j]) ** 2)))
+        length_scale = float(np.median(dists)) * 0.5 if dists else 1.0
+    if length_scale is None or length_scale <= 0:
+        length_scale = 1.0
+    ls = length_scale
+    # K = RBF(X_train, X_train) + noise * I
+    sqdist = np.sum(X_train ** 2, axis=1, keepdims=True) - 2 * (X_train @ X_train.T) + np.sum(X_train ** 2, axis=1)
+    sqdist = np.maximum(sqdist, 0.0)
+    K = np.exp(-0.5 * sqdist / (ls ** 2)) + noise * np.eye(n)
+    try:
+        L = np.linalg.cholesky(K)
+    except np.linalg.LinAlgError:
+        return None, None
+    alpha = np.linalg.solve(L.T, np.linalg.solve(L, y_train))
+    # k*: (m, n)
+    sqdist_star = np.sum(X_test ** 2, axis=1, keepdims=True) - 2 * (X_test @ X_train.T) + np.sum(X_train ** 2, axis=1)
+    sqdist_star = np.maximum(sqdist_star, 0.0)
+    k_star = np.exp(-0.5 * sqdist_star / (ls ** 2))
+    mu = k_star @ alpha
+    v = np.linalg.solve(L, k_star.T)
+    k_star_star = np.ones((X_test.shape[0],))
+    sigma_sq = np.maximum(k_star_star - np.sum(v ** 2, axis=0), 1e-12)
+    sigma = np.sqrt(sigma_sq)
+    return mu, sigma
 
 
-def _evaluate_one_parameter(par,
-                            op: Operator,
-                            trade_price_list: HistoryPanel,
-                            benchmark_history_data,
-                            benchmark_history_data_type,
-                            config,
-                            stage='optimize') -> dict:
-    """ 基于op中的交易策略，在给定策略参数par的条件下，计算交易策略在一段历史数据上的交易信号，并对交易信号的交易
-        结果进行回测，对回测结果数据进行评价，并给出评价结果。
-
-    本函数是一个方便的包裹函数，包裹了交易信号生成、交易信号回测以及回测结果评价结果的打包过程，同时，根据QT基
-    本配置的不同，可以在交易信号回测的过程中进行多重回测，即将一段历史区间分成几个子区间，在每一个子区间上分别
-    回测后返回多次回测的综合结果。
-
-    Parameters
-    ----------
-    par: tuple, list, dict
-        输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
-        略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
-        docstring
-    op: qt.Operator
-        一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
-    trade_price_list: HistoryPanel
-        用于模拟交易回测的历史价格，历史区间覆盖整个模拟交易期间，包含回测所需要的价格信息，可以为收盘价
-        和/或其他回测所需要的历史价格
-    benchmark_history_data: pd.DataFrame
-        用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
-        产的价格，例如沪深300指数的价格。
-    benchmark_history_data_type: str
-        用于回测结果评价的参考历史数据种类，通常为收盘价close，但也可以是其他价格，例如开盘价open
-    config: Config
-        参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
-        1, config.opti_type/test_type:
-            优化或测试模式，决定如何利用回测区间
-            single:     在整个回测区间上进行一次回测
-            multiple:   将回测区间分割为多个子区间并分别回测
-            montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
-        2, config.optimize_target/test_indicators:
-            优化目标函数（优化模式下）或评价指标（测试模式下）
-            在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
-            在测试模式下，对策略的回测结果进行多重评价并输出评价结果
-        3, config.opti_cash_amounts/test_cash_amounts:
-            优化/测试投资金额
-            在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
-        4, config.opti_sub_periods/test_sub_periods:
-            优化/测试区间数量
-            在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
-            每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
-            确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
-        5, config.opti_sub_prd_length/test_sub_prd_length:
-            优化/测试子区间长度
-            该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
-            例如，0.5代表每个子区间的长度是整个区间的一半
-    stage: str, optional, Default: 'optimize'
-        运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
-        1, 'loop':      运行模式为回测模式，在这种模式下：
-                        使用投资区间回测投资计划
-                        使用config.trade_log来确定是否打印回测结果
-        2, 'optimize':  运行模式为优化模式，在这种模式下：
-                        使用优化区间回测投资计划
-                        回测区间利用方式使用opti_type的设置值
-                        回测区间分段数量和间隔使用opti_sub_periods
-        3, 'test-o':    运行模式为测试模式-opti区间，以便在opti区间上进行一次与test区间完全相同的测试以比较结果
-                        使用优化区间回测投资计划
-                        回测区间利用方式使用test_type的设置值
-                        回测区间分段数量和间隔使用test_sub_periods
-        4, 'test-t':    运行模式为测试模式-test区间
-                        使用测试区间回测投资计划
-                        回测区间利用方式使用test_type的设置值
-                        回测区间分段数量和间隔使用test_sub_periods
-    Returns
-    -------
-    dict:
-    一个dict对象，存储该策略在使用par作为参数时的性能表现评分以及一些其他运行信息，允许对性能
-    表现进行多重指标评价，dict的指标类型为dict的键，评价结果为结果分值，dict不能为空，至少包含以下值：
-        'complete_value': 完整的回测结果清单，无结果时为None
-        'op_run_time':    交易清单生成耗时
-        'loop_run_time':  回测耗时
-        'final_value':    回测结果终值（默认评价指标）
-    除了上述必须存在的项目以外，返回的res_dict还可以包含任意evaluation模块可以输出的评价值，例如：
-        {'final_value': 34567,
-         'sharp':       0.123}
-    如果当前的策略不能生成有效的交易操作清单时，直接返回默认结果，其终值为负无穷大：
-        {'complete_values':  None,
-         'op_run_time':     0.0354675,
-         'loop_run_time':   None,
-         'final_value':     np.NINF}
-
-    """
-
-    res_dict = {'par':             None,
-                'complete_values': None,
-                'op_run_time':     0,
-                'loop_run_time':   0,
-                'final_value':     None}
-
-    assert stage in ['loop', 'optimize', 'test-o', 'test-t']
-    if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
-        op.set_opt_par(par)
-        res_dict['par'] = par
-    # 生成交易清单并进行模拟交易生成交易记录
-    st = time.time()
-    op_list = None
-    if op.op_type == 'batch':
-        op_list = op.create_signal()
-    et = time.time()
-    op_run_time = et - st
-    res_dict['op_run_time'] = op_run_time
-    riskfree_ir = config.riskfree_ir
-    log_backtest = False
-    period_length = 0
-    period_count = 0
-    trade_dates = np.array(trade_price_list.hdates)
-    if op.op_type == 'batch' and op_list is None:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
-        res_dict['final_value'] = np.NINF
-        res_dict['complete_values'] = pd.DataFrame()
-        return res_dict
-    # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数及回测参数
-    if stage == 'loop':
-        invest_cash_amounts = config.invest_cash_amounts
-        invest_cash_dates = pd.to_datetime(config.invest_start) if \
-            config.invest_cash_dates is None \
-            else pd.to_datetime(config.invest_cash_dates)
-        period_util_type = 'single'
-        indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
-        log_backtest = config.trade_log  # 回测参数trade_log只有在回测模式下才有用
-    elif stage == 'optimize':
-        invest_cash_amounts = config.opti_cash_amounts[0]
-        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
-        invest_cash_dates = pd.to_datetime(config.opti_start) if \
-            config.opti_cash_dates is None \
-            else pd.to_datetime(config.opti_cash_dates)
-        period_util_type = config.opti_type
-        period_count = config.opti_sub_periods
-        period_length = config.opti_sub_prd_length
-        indicators = config.optimize_target
-    elif stage == 'test-o':  # 在优化过程中，在优化区间上测试参数的性能
-        invest_cash_amounts = config.test_cash_amounts[0]
-        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
-        invest_cash_dates = pd.to_datetime(config.opti_start) if \
-            config.opti_cash_dates is None \
-            else pd.to_datetime(config.opti_cash_dates)
-        period_util_type = config.test_type
-        period_count = config.test_sub_periods
-        period_length = config.test_sub_prd_length
-        indicators = config.test_indicators
-    else:  # stage == 'test-t':  # 在优化结束后，在测试区间上测试找到的最优参数的性能
-        invest_cash_amounts = config.test_cash_amounts[0]
-        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
-        invest_cash_dates = pd.to_datetime(config.test_start) if \
-            config.test_cash_dates is None \
-            else pd.to_datetime(config.test_cash_dates)
-        period_util_type = config.test_type
-        period_count = config.test_sub_periods
-        period_length = config.test_sub_prd_length
-        indicators = config.test_indicators
-    # create list of start and end dates
-    # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
-    # used as the investment date for each sub-periods
-    invest_cash_dates = next_market_trade_day(invest_cash_dates)
-    start_dates = []
-    end_dates = []
-    if period_util_type == 'single' or period_util_type == 'montecarlo':
-        start_dates.append(trade_dates[np.searchsorted(trade_dates, invest_cash_dates)])
-        end_dates.append(trade_dates[-1])
-    elif period_util_type == 'multiple':
-        # 多重测试模式，将一个完整的历史区间切割成多个区间，多次测试
-        first_history_date = invest_cash_dates
-        last_history_date = trade_dates[-1]
-        history_range = last_history_date - first_history_date
-        sub_hist_range = history_range * period_length
-        sub_hist_interval = (1 - period_length) * history_range / period_count
-        for i in range(period_count):
-            # 计算每个测试区间的起止点，抖动起止点日期，确保起止点在交易日期列表中
-            start_date = first_history_date + i * sub_hist_interval
-            start_date = trade_dates[np.searchsorted(trade_dates, start_date)]
-            start_dates.append(start_date)
-            end_date = start_date + sub_hist_range
-            end_date = trade_dates[np.searchsorted(trade_dates, end_date)]
-            end_dates.append(end_date)
-    else:
-        raise KeyError(f'Invalid optimization type: {config.opti_type}')
-    # loop over all pairs of start and end dates, get the results separately and output average
-    perf_list = []
-    price_priority_list = op.get_bt_price_type_id_in_priority(priority=config.price_priority_OHLC)
-    trade_cost = set_cost(
-            buy_fix=config.cost_fixed_buy,
-            sell_fix=config.cost_fixed_sell,
-            buy_rate=config.cost_rate_buy,
-            sell_rate=config.cost_rate_sell,
-            buy_min=config.cost_min_buy,
-            sell_min=config.cost_min_sell,
-            slipage=config.cost_slippage
-    )
-    st = time.time()
-    complete_values = None
-    for start, end in zip(start_dates, end_dates):
-        start_idx = op.get_hdate_idx(start)
-        end_idx = op.get_hdate_idx(end)
-        trade_price_list_seg = trade_price_list.segment(start, end)
-        if stage != 'loop':
-            invest_cash_dates = trade_price_list_seg.hdates[0]
-        cash_plan = CashPlan(
-                invest_cash_dates.strftime('%Y%m%d'),
-                invest_cash_amounts,
-                riskfree_ir
-        )
-        # TODO: 将op_list_bt_indices的计算放到这一层函数中，以便下面几个函数可以共享
-        loop_results, op_log_matrix, op_summary_matrix, op_list_bt_indices = apply_loop(
-                operator=op,
-                trade_price_list=trade_price_list_seg,
-                start_idx=start_idx,
-                end_idx=end_idx,
-                cash_plan=cash_plan,
-                cost_rate=trade_cost,
-                moq_buy=config.trade_batch_size,
-                moq_sell=config.sell_batch_size,
-                inflation_rate=config.riskfree_ir,
-                pt_signal_timing=config.PT_signal_timing,
-                pt_buy_threshold=config.PT_buy_threshold,
-                pt_sell_threshold=config.PT_sell_threshold,
-                cash_delivery_period=config.cash_delivery_period,
-                stock_delivery_period=config.stock_delivery_period,
-                allow_sell_short=config.allow_sell_short,
-                long_pos_limit=config.long_position_limit,
-                short_pos_limit=config.short_position_limit,
-                max_cash_usage=config.maximize_cash_usage,
-                trade_log=log_backtest,
-                price_priority_list=price_priority_list
-        )
-        looped_val = process_loop_results(
-                operator=op,
-                loop_results=loop_results,
-                op_log_matrix=op_log_matrix,
-                op_summary_matrix=op_summary_matrix,
-                op_list_bt_indices=op_list_bt_indices,
-                trade_log=log_backtest,
-                bt_price_priority_ohlc='OHLC'
-        )
-        # TODO: 将_get_complete_hist() 与 process_loop_results()合并
-        complete_values = _get_complete_hist(
-                looped_value=looped_val,
-                h_list=trade_price_list,
-                benchmark_list=benchmark_history_data,
-                with_price=False
-        )
-        perf = evaluate(
-                looped_values=complete_values,
-                hist_benchmark=benchmark_history_data,
-                benchmark_data=benchmark_history_data_type,
-                cash_plan=cash_plan,
-                indicators=indicators
-        )
-        perf_list.append(perf)
-    perf = performance_statistics(perf_list)
-    et = time.time()
-    loop_run_time = et - st
-    res_dict.update(perf)
-    res_dict['loop_run_time'] = loop_run_time
-    import os
-    from qteasy import QT_TRADE_LOG_PATH
-    log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, 'trade_log.csv')
-    res_dict['trade_log'] = pd.read_csv(log_file_path_name) if log_backtest else None
-    log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, 'trade_records.csv')
-    res_dict['trade_record'] = pd.read_csv(log_file_path_name) if log_backtest else None
-    res_dict['complete_history'] = complete_values
-    return res_dict
+_shared_op: Optional[Operator] = None
+_shared_cash_investment_array: Optional[np.ndarray] = None
+_shared_cash_inflation_array: Optional[np.ndarray] = None
+_shared_delivery_day_indicators: Optional[np.ndarray] = None
+_shared_trade_price_data: Optional[np.ndarray] = None
 
 
 # TODO: 这个函数有潜在大量运行的可能，需要使用Numba加速
@@ -468,312 +178,1242 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     return mock_data
 
 
-def _search_grid(hist, benchmark, benchmark_type, op, config):
-    """ 最优参数搜索算法1: 网格搜索法
+def _initialize_worker(op,
+                       cash_investment_array,
+                       cash_inflation_array,
+                       delivery_day_indicators,
+                       trade_price_data,
+                       ) -> None:
+    """ Initialize shared memory for parallel workers"""
+    global _shared_op, _shared_cash_inflation_array, _shared_cash_investment_array, \
+        _shared_delivery_day_indicators, _shared_trade_price_data
 
-    在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
-    根据该点的参数生成操作信号、回测后寻找表现最佳的一组或多组参数
-    与该算法相关的设置选项有：
-    grid_size:  网格大小，float/int/list/tuple 当参数为数字时，生成空间所有方向
-                上都均匀分布的网格；当参数为list或tuple时，可以在空间的不同方向
-                上生成不同间隔大小的网格。list或tuple的维度须与空间的维度一致
+    _shared_op = op
+    _shared_cash_investment_array = cash_investment_array
+    _shared_cash_inflation_array = cash_inflation_array
+    _shared_delivery_day_indicators = delivery_day_indicators
+    _shared_trade_price_data = trade_price_data
+
+
+def _flash_evaluate_parameter(
+        share_count,
+        cost_params,
+        signal_parsing_params,
+        trading_moq_params,
+        trading_delivery_params,
+        par_values: tuple,
+) -> float:
+    """ 本质上实现了与_evaluate_parameter相同的功能，但不使用Backtester对象进行回测，
+    而是直接调用Operator的信号生成，同时调用backtest.backtest_batch_steps()函数进行回测。
+    以降低多进程计算时Backtester对象传输的开销。
 
     Parameters
     ----------
-    hist: HistoryPanel
-        历史数据，优化器的整个优化过程在历史数据上完成
-    op: qt.Operator
-        交易信号生成器对象
-    config: qt.Config
-        用于存储优化参数配置变量
+    par_values: tuple
+        策略参数值元组，元组中的每一个值对应策略空间中的一个参数
 
     Returns
     -------
-    tuple: (pool.items, pool.perfs)
-        pool.items 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
+    result: float
+    策略参数对应的回测结果评分
     """
-    s_range, s_type = op.opt_space_par
-    space = Space(s_range, s_type)  # 生成参数空间
+    global _shared_op, _shared_cash_inflation_array, _shared_cash_investment_array, \
+        _shared_delivery_day_indicators, _shared_trade_price_data
 
-    # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
-    par_generator, total = space.extract(config.opti_grid_size)
-    history_list = hist.fillna(0)
-    st = time.time()
-    pool = _evaluate_all_parameters(par_generator=par_generator,
-                                    total=total,
-                                    op=op,
-                                    trade_price_list=history_list,
-                                    benchmark_history_data=benchmark,
-                                    benchmark_history_data_type=benchmark_type,
-                                    config=config,
-                                    stage='optimize')
-    pool.cut(config.maximize_target)
-    et = time.time()
-    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
-    return pool.items, pool.perfs
+    _shared_op.set_opt_par_values(par_values=par_values)
+    # 1，调用operator.run()生成完整的交易信号清单，并计算保存运行时间
+    signal_length = _shared_op.get_signal_count()
+    stypes = np.zeros(signal_length, dtype=int)
+    s_indices = np.zeros(signal_length, dtype=int)
+    signals = np.zeros((signal_length, share_count), dtype=float)
+    signal_index = 0
+
+    for stype, s_index, signal in _shared_op.run_strategies(steps=range(len(_shared_op.group_timing_table))):
+        stypes[signal_index] = SIGNAL_TYPE_ID[stype]
+        s_indices[signal_index] = s_index
+        signals[signal_index, :] = signal
+        signal_index += 1
+
+    # 3，调用backtest_batch_steps()进行回测，填充回测结果清单
+    closing_cash, closing_amounts = backtest_flash_steps(
+            signal_types=stypes,
+            op_signals=signals,
+            cash_investment_array=_shared_cash_investment_array,
+            cash_inflation_array=_shared_cash_inflation_array,
+            delivery_day_indicators=_shared_delivery_day_indicators,
+            trade_prices=_shared_trade_price_data,
+            cost_params=cost_params,
+            **signal_parsing_params,
+            **trading_moq_params,
+            **trading_delivery_params,
+    )
+
+    # DEBUG
+    # print(f'evaluating parameter in op {id(op)} with trade_price_data: {id(trade_price_data)}')
+
+    opti_target = 'fv'
+    if opti_target == 'fv':
+        result = (_shared_trade_price_data[-1] * closing_amounts).sum() + closing_cash
+    elif opti_target == 'vol':
+        raise NotImplementedError('Volatility calculation without Backtester is not implemented yet')
+    elif opti_target == 'mdd':
+        raise NotImplementedError('Max Drawdown calculation without Backtester is not implemented yet')
+    else:
+        raise ValueError(f'Unsupported optimization target: {opti_target}')
+
+    return result
 
 
-def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
-    """ 最优参数搜索算法2: 蒙特卡洛法
+class Optimizer:
+    """ 最优参数搜索器对象
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+
+    def __init__(self,
+                 *,
+                 op: Operator,
+                 method: str,
+                 shares: list[str],
+                 benchmark: pd.DataFrame,
+                 pool_size: int,
+                 opti_target: str,
+                 opti_direction: str,
+                 parallel: bool,
+                 opti_start_date: str,
+                 opti_end_date: str,
+                 test_start_date: str,
+                 test_end_date: str,
+                 opti_cash_plan: CashPlan,
+                 test_cash_plan: CashPlan,
+                 cost_params: np.ndarray,  # 交易成本参数
+                 signal_parsing_params: dict,  # 交易信号解析参数
+                 trading_moq_params: dict,  # 交易最小单位参数
+                 trading_delivery_params: dict,  # 交易交割参数
+                 search_config: dict,
+                 logger: Optional[logging.Logger] = None,
+                 evaluate_indicators: str = 'r,m,v,b',
+                 test_plot_type: str = 'histo'):
+        """初始化Optimizer对象，设置基本参数
+
+        Parameters
+        ----------
+        op: Operator
+            交易操作对象，包含交易信号生成和交易执行的逻辑
+        method: str
+            优化方法名称，目前支持的优化方法包括：
+                'grid'：网格搜索法
+                'montecarlo'：蒙特卡洛法
+                'incremental'：增量递进搜索法
+                'ga'：遗传算法
+                'gradient'：梯度下降法
+                'pso'：粒子群优化算法
+                'aco'：蚁群优化算法
+        shares: list[str]
+            交易标的列表，包含所有交易标的的代码
+        benchmark: str
+            交易业绩评价基准数据类型，一个股票代码或基金代码
+        pool_size: int
+            优化结果池的大小，表示在优化过程中保存的最佳参数组合数量
+        opti_target: str
+            优化目标名称，用于指定优化过程中需要最大化或最小化的性能指标
+        opti_direction: str
+            优化方向，取值为 'maximize' 或 'minimize'，表示优化目标是最大化还是最小化
+        opti_start_date: str
+            优化区间开始日期，格式为 'YYYY-MM-DD' 或 'YYYYMMDD'
+        opti_end_date: str
+            优化区间结束日期，格式为 'YYYY-MM-DD' 或 'YYYYMMDD'
+        test_start_date: str
+            测试区间开始日期，格式为 'YYYY-MM-DD' 或 'YYYYMMDD'
+        test_end_date: str
+            测试区间结束日期，格式为 'YYYY-MM-DD' 或 'YYYYMMDD'
+        opti_cash_plan: CashPlan,
+            现金投资计划
+        test_cash_plan: CashPlan,
+            现金投资计划
+        cost_params: np.ndarray
+            交易成本参数，包括买入费率、卖出费率、最低买入费用、最低卖出费用、交易滑点
+            buy_rate: float, 交易成本：固定买入费率
+            sell_rate: float, 交易成本：固定卖出费率
+            buy_min: float, 交易成本：最低买入费用
+            sell_min: float, 交易成本：最低卖出费用
+            slippage: float, 交易成本：滑点
+        signal_parsing_params: dict
+            交易信号解析参数字典，包含解析交易信号所需的所有参数，通常是parse_signal_parsing_params()函数的输出
+        trading_moq_params: dict
+            交易最小单位参数字典，包含交易最小单位相关的所有参数，通常是parse_trading_moq_params()函数的输出
+        trading_delivery_params: dict
+            交易交割参数字典，包含交易交割相关的所有参数，通常是parse_trading_delivery_params()函数的输出
+        logger: Optional[logging.Logger]
+            可选的日志记录器对象，用于记录回测过程中的日志信息
+        evaluate_indicators: Optional[str], default 'r,m,v,b'
+            优化结果评价指标清单
+        test_plot_type: Optional[str], default 'histo'
+            优化结果图表显示类型
+            """
+
+        # 参数基础校验
+        assert isinstance(op, Operator), "op must be an instance of Operator"
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
+        assert isinstance(shares, list) and all(isinstance(s, str) for s in shares), "shares must be a list of strings"
+        if not isinstance(method, str):
+            raise ValueError("method must be a string")
+        if method not in self.AVAILABLE_OPTIMIZERS:
+            raise ValueError(
+                    f"method {method} is not supported. Available methods are: {list(self.AVAILABLE_OPTIMIZERS.keys())}")
+        if not isinstance(pool_size, int) or pool_size <= 0:
+            raise ValueError("pool_size must be a positive integer")
+        if opti_direction not in ['maximize', 'minimize']:
+            raise ValueError("opti_direction must be either 'maximize' or 'minimize'")
+        if opti_target not in ['fv', 'vol', 'mdd']:
+            raise ValueError("opti_target must be a valid performance metric: 'fv', 'vol', or 'mdd'")
+
+        # 1，所有基本属性
+        self.opti_method = method
+        # self.opti_func = self.AVAILABLE_OPTIMIZERS[method]
+
+        self.op = op
+        self.op_signals: Optional[np.ndarray] = None  # 回测生成的交易信号表格，实际上在op内也可以存储
+        self.shares = shares
+        self.share_count = len(shares)
+        self.benchmark = benchmark
+        self.opti_method = method.lower()
+        self.opti_target = opti_target
+        self.opti_direction = opti_direction
+
+        self.opti_start = opti_start_date
+        self.opti_end = opti_end_date
+        self.test_start = test_start_date
+        self.test_end = test_end_date
+
+        self.opti_cash_plan = opti_cash_plan
+        self.test_cash_plan = test_cash_plan
+
+        self.cost_params = cost_params
+        self.signal_parsing_params = signal_parsing_params
+        self.trading_moq_params = trading_moq_params
+        self.trading_delivery_params = trading_delivery_params
+
+        self.logger = logger
+
+        # 2，回测器属性以及用于回测器的中间参数
+        self.cash_investment_array = None  # 现金投入数组
+        self.cash_inflation_array = None  # 现金通胀数组
+        self.delivery_day_indicators = None  # 交割日指标数组
+        self.trade_price_data: Optional[np.ndarray] = None  # 回测使用的价格数据数组
+        self.running_backtester: Optional[Backtester] = None  # 优化区间或验证区间回测器对象
+
+        # 优化配置属性
+        self.search_config = search_config
+        self.evaluate_indicators = evaluate_indicators
+        self.test_plot_type = test_plot_type
+
+        # 用于存储优化结果参数的属性
+        self.result_pool = ResultPool(capacity=pool_size)
+        self.result_pool_size = pool_size  # 优化结果池的大小
+        self.validated_pool = ResultPool(capacity=pool_size)
+        self.parallel = parallel  # 是否启用多进程计算方式
+        self.current_parameters = None  # 当前优化参数
+        self.best_parameters = None  # 最佳优化参数
+        self.best_performance = None  # 最佳性能评分
+        self.opti_time = 0.0  # 优化时间记录
+        self.eval_time = 0.0  # 优化结果评价时间记录
+        self.test_time = 0.0  # 测试时间记录
+
+    def generate_running_backtester(self,
+                                    stage: str,
+                                    benchmark_data: pd.DataFrame,
+                                    trade_price_data: np.ndarray) -> None:
+        """ 根据指定的阶段生成对应的Backtester回测器对象
+
+        Parameters
+        ----------
+        stage: str
+            回测阶段，取值为 'optimization' 或 'validation'，分别表示优化区间回测器和验证区间回测器
+        benchmark_data: pd.DataFrame
+            交易业绩评价基准数据，一组与输出信号等时段的价格变动表或收益率变动表
+        trade_price_data: np.ndarray
+            交易价格数据数组，用于回测的价格数据
+
+        Returns
+        -------
+        None，生成的Backtester对象会被存储在self.running_backtester属性中
+        """
+        if stage == 'optimization':
+            cash_plan = self.opti_cash_plan
+        elif stage == 'validation':
+            cash_plan = self.test_cash_plan
+        else:
+            raise ValueError(f'Unsupported stage: {stage}')
+
+        # 现金投入和交割数据表
+        (self.cash_investment_array,
+         self.cash_inflation_array,
+         self.delivery_day_indicators) = generate_cash_invest_and_delivery_arrays(
+                invest_cash_plan=cash_plan,
+                group_merge_type=self.op.group_merge_type,
+                timing_table=self.op.group_timing_table,
+        )
+
+        self.running_backtester = Backtester(
+                op=self.op,
+                shares=self.shares,
+                cash_plan=cash_plan,
+                cash_investment_array=self.cash_investment_array,
+                cash_inflation_array=self.cash_inflation_array,
+                delivery_day_indicators=self.delivery_day_indicators,
+                cost_params=self.cost_params,
+                signal_parsing_params=self.signal_parsing_params,
+                trading_moq_params=self.trading_moq_params,
+                trading_delivery_params=self.trading_delivery_params,
+                trade_price_data=trade_price_data,
+                benchmark_data=benchmark_data,
+                logger=self.logger,
+        )
+
+    def optimize(self,
+                 benchmark_data: pd.DataFrame,
+                 trade_price_data: np.ndarray) -> 'Optimizer':
+
+        self.op.set_shares(self.shares)
+        self.op.is_ready(raise_error=True)
+        # 创建一个Backtester对象用于优化区间的回测
+        self.trade_price_data = trade_price_data
+        self.generate_running_backtester(
+                stage='optimization',
+                benchmark_data=benchmark_data,
+                trade_price_data=trade_price_data,
+        )
+        self.result_pool.clear()
+
+        s_ranges, s_types = self.op.opt_space_par
+        search_space = Space(*s_ranges,
+                             par_types=s_types)  # 生成参数空间
+        st = time.time()
+        if self.opti_method == 'grid':
+            self._search_grid(space=search_space)
+        elif self.opti_method == 'montecarlo':
+            self._search_montecarlo(space=search_space)
+        elif self.opti_method == 'sa':
+            self._search_sa(space=search_space)
+        elif self.opti_method == 'ga':
+            self._search_ga(space=search_space)
+        elif self.opti_method == 'pso':
+            self._search_pso(space=search_space)
+        elif self.opti_method == 'gradient':
+            self._search_gradient(space=search_space)
+        elif self.opti_method == 'bayesian':
+            self._search_bayesian(space=search_space)
+        else:
+            raise ValueError(f'Unsupported optimization method: {self.opti_method}')
+        self.opti_time = time.time() - st
+        # deep evaluate all selected parameters on test set
+        par_value_list = self.result_pool.items
+        total = self.result_pool_size
+        self.result_pool.clear()
+
+        st = time.time()
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=par_value_list,
+                result_pool=self.result_pool,
+                parallel=self.parallel,
+                deep_eval=True,
+        )
+        self.eval_time = time.time() - st
+
+        return self
+
+    def validate(self,
+                 benchmark_data: pd.DataFrame,
+                 trade_price_data: np.ndarray) -> 'Optimizer':
+
+        self.op.set_shares(self.shares)
+        self.op.is_ready(raise_error=True)
+        # 创建一个Backtester对象用于验证区间的回测
+        self.trade_price_data = trade_price_data
+        self.generate_running_backtester(
+                stage='validation',
+                benchmark_data=benchmark_data,
+                trade_price_data=trade_price_data,
+        )
+        self.validated_pool.clear()
+
+        optimized_par_list = self.result_pool.items.copy()
+        total = self.result_pool_size
+
+        st = time.time()
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=optimized_par_list,
+                result_pool=self.validated_pool,
+                parallel=self.parallel,
+                deep_eval=True,
+        )
+        self.test_time = time.time() - st
+
+        return self
+
+    def _evaluate_parameter(self, par_values: tuple) -> float:
+        """ 使用一组策略参数进行回测，并返回回测结果的简易评价结果即一个数字评分
+
+        Parameters
+        ----------
+        par_values: tuple
+            策略参数值元组，元组中的每一个值对应策略空间中的一个参数
+
+        Returns
+        -------
+        result: float
+        策略参数对应的回测结果评分
+        """
+        self.op.set_opt_par_values(par_values=par_values)
+        # 在优化区间进行回测
+        self.running_backtester.run()
+        # DEBUG
+        # print(f'evaluating parameter in {id(self)} with backtester: {id(self.running_backtester)}')
+        if self.opti_target == 'fv':
+            result = self.running_backtester.trade_result_final_value()
+        elif self.opti_target == 'vol':
+            result = self.running_backtester.trade_result_volatility()
+        elif self.opti_target == 'mdd':
+            result = self.running_backtester.trade_result_max_drawdown()
+        else:
+            raise ValueError(f'Unsupported optimization target: {self.opti_target}')
+
+        return result
+
+    def _deep_evaluate_parameter(self, par_values: tuple) -> tuple[float, dict]:
+        """ 使用一组策略参数进行回测，并返回回测结果的数字评价结果及评价指标字典
+
+        Parameters
+        ----------
+        par_values: tuple
+            策略参数值元组，元组中的每一个值对应策略空间中的一个参数
+
+        Returns
+        -------
+        """
+        perf = self._evaluate_parameter(par_values)
+        metrics = self.running_backtester.evaluate_result(indicators=self.evaluate_indicators)
+
+        # 特殊处理回测评价结果，使其符合优化结果表的生成需要
+        metrics_to_pop = ['peak_date', 'valley_date', 'recover_date',
+                          'worst_drawdowns', 'return_df', 'skew', 'kurtosis']
+        for metric in metrics_to_pop:
+            if metric in metrics.keys():
+                metrics.pop(metric)
+
+        if 'oper_count' in metrics.keys():
+            oper_count = metrics.pop('oper_count')
+            metrics['sell_count'] = oper_count.sell.sum()
+            metrics['buy_count'] = oper_count.buy.sum()
+        else:
+            metrics['sell_count'] = 0
+            metrics['buy_count'] = 0
+
+        metrics['par'] = par_values
+
+        return perf, metrics.copy()
+
+    def _evaluate_parameters(self,
+                             total: int,
+                             par_value_list: Union[list, tuple, Generator],
+                             result_pool: ResultPool,
+                             parallel: bool,
+                             epoch_str: str = '1/1',
+                             deep_eval: bool = False,
+                             leave_progress_bar: bool = True) -> None:
+        """ 循环批量运行self._evaluate_parameter函数，生成结果后存入参数result_pool中
+
+        Parameters
+        ----------
+        total: int
+            参数组合总数量，用于进度条显示
+        par_value_list: list/tuple/Generator
+            策略参数值列表或生成器，列表或生成器中的每一个元素都是一组策略参数值元组
+        result_pool: ResultPool
+            结果池对象，用于存储所有参数组合及其对应的评价结果
+        parallel: bool
+            是否启用多进程计算方式，如果是True，则启用多进程计算方式利用所有的CPU核心计算，
+            否则使用单进程计算
+        epoch_str: optional str
+            用于显示当前优化轮次的标识字符串，默认值为空字符串
+        deep_eval: optional bool
+            是否深入评价每一组参数的回测结果，如果是True，则返回评价指标字典，默认值为False
+        leave_progress_bar: optional bool, default True
+            是否在完成后保留进度条显示，默认值为True，对于多轮优化过程需要设置为False以减少屏幕输出
+
+        Returns
+        -------
+            pool，一个Pool对象，包含经过筛选后的所有策略参数以及它们的性能表现
+
+        """
+
+        # DEBUG
+        # import tracemalloc
+        # tracemalloc.start()
+
+        # 启用多进程计算方式利用所有的CPU核心计算
+        if parallel:
+            # 启用并行计算
+            self._evaluate_parameters_parallel(
+                    total=total,
+                    par_value_list=par_value_list,
+                    result_pool=result_pool,
+                    epoch_str=epoch_str,
+                    deep_eval=deep_eval,
+                    leave_progress_bar=leave_progress_bar,
+            )
+        # 禁用多进程计算方式，使用单进程计算
+        else:
+            self._evaluate_parameters_sequential(
+                    total=total,
+                    par_value_list=par_value_list,
+                    result_pool=result_pool,
+                    epoch_str=epoch_str,
+                    deep_eval=deep_eval,
+                    leave_progress_bar=leave_progress_bar,
+            )
+
+        # DEBUG
+        # current, peak = tracemalloc.get_traced_memory()
+        # print(f"Current memory usage {current / 1e6}MB; Peak: {peak / 1e6}MB")
+        # tracemalloc.stop()
+
+    def _evaluate_parameters_parallel(self,
+                                      total: int,
+                                      par_value_list: Union[list, tuple, Generator],
+                                      result_pool: ResultPool,
+                                      epoch_str: str,
+                                      deep_eval: bool,
+                                      leave_progress_bar: bool) -> None:
+        """ 并行循环批量运行evaluate_parameters()并将结果存入result_pool
+        """
+        i = 0
+        best_so_far = 0
+        # TODO: 在parallel的情况下，不管是使用flash_evaluate函数还是使用Backtester，在实际执行过程中都会
+        #  出现overhead开销过大的问题，影响整体计算效率，同时导致pbar无法显示（提交完成后，计算早就全部完成了
+        #  ），试过使用函数代替Backtester或减少内存消耗量，但是无济于事，最终结果都一样。最后一个办法是使用
+        #  SharedMemory来实现函数调用，需要探索
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        pbar_position = 1 if not leave_progress_bar else 0
+
+        # 启用并行计算
+        with ProcessPoolExecutor() as proc_pool:
+            futures = {proc_pool.submit(eval_func, par): par for par in
+                       par_value_list}
+
+        with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
+
+            for f in as_completed(futures):
+                target_value = f.result()
+                if deep_eval:
+                    perf, metrics = target_value
+                else:
+                    perf, metrics = target_value, None
+
+                result_pool.push(item=futures[f], perf=perf, extra=metrics)
+                i += 1
+                if perf > best_so_far:
+                    best_so_far = perf
+                pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
+                pbar.update()
+
+    def _evaluate_parameters_sequential(self,
+                                        total: int,
+                                        par_value_list: Union[list, tuple, Generator],
+                                        result_pool: ResultPool,
+                                        epoch_str: str,
+                                        deep_eval: bool,
+                                        leave_progress_bar: bool) -> None:
+        """ 顺序循环运行evaluate_parameters()方法，并将结果存入result_pool
+        """
+        i = 0
+        best_so_far = 0
+
+        eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
+        pbar_position = 1 if not leave_progress_bar else 0
+
+        with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
+
+            for par in par_value_list:
+                self.running_backtester.clear_backtest_buffers()
+                target_value = eval_func(par)
+                if deep_eval:
+                    perf, metrics = self._deep_evaluate_parameter(par)
+                else:
+                    perf, metrics = target_value, None
+                result_pool.push(item=par, perf=perf, extra=metrics)
+                i += 1
+                if perf > best_so_far:
+                    best_so_far = perf
+                pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
+                pbar.update(1)
+
+    def _search_grid(self,
+                     space: Space) -> None:
+        """ 最优参数搜索算法1: 网格搜索法
+
+        在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
+        根据该点的参数生成操作信号、回测后寻找表现最佳的一组或多组参数
+        与该算法相关的设置选项有：
+        grid_size:  网格大小，float/int/list/tuple 当参数为数字时，生成空间所有方向
+                    上都均匀分布的网格；当参数为list或tuple时，可以在空间的不同方向
+                    上生成不同间隔大小的网格。list或tuple的维度须与空间的维度一致
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+
+        # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
+        par_generator, total = space.extract(self.search_config['sample_count'])
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=par_generator,
+                result_pool=self.result_pool,
+                parallel=self.parallel
+        )
+
+        self.result_pool.cut(keep_largest=self.search_config['maximize_target'])
+
+    def _search_montecarlo(self,
+                           space: Space) -> None:
+        """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
         与该算法相关的设置选项有：
             sample_size:采样点数量，int 由于采样点的分布是随机的，因此采样点越多，越有可能
                         接近全局最优值
 
-    Parameters
-    ----------
-    hist: HistoryPanel
-        历史数据，优化器的整个优化过程在历史数据上完成
-    benchmark:
-        基准数据，用于计算基准收益率
-    benchmark_type:
-        基准数据类型，用于计算基准收益率
-    op: qt.Operator
-        交易信号生成器对象
-    config: qt.Config
-        用于存储交易相关参数的配置变量
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
 
-    Returns
-    -------
-    tuple: (pool.items, pool.perfs)
-        pool.items 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
-    """
-    # s_range, s_type = a_to_sell.opt_space_par
-    space = Space(*op.opt_space_par)  # 生成参数空间
-    # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
-    par_generator, total = space.extract(config.opti_sample_count, how='rand')
-    history_list = hist.fillna(0)
-    st = time.time()
-    pool = _evaluate_all_parameters(par_generator=par_generator,
-                                    total=total,
-                                    op=op,
-                                    trade_price_list=history_list,
-                                    benchmark_history_data=benchmark,
-                                    benchmark_history_data_type=benchmark_type,
-                                    config=config,
-                                    stage='optimize')
-    pool.cut(config.maximize_target)
-    et = time.time()
-    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st, short_form=True)}')
-    return pool.items, pool.perfs
-
-
-def _search_incremental(hist, benchmark, benchmark_type, op, config):
-    """ 最优参数搜索算法3: 增量递进搜索法
-
-    TODO: 当numpy版本高于1.21时，这个算法在parallel==True时会有极大的效率损失，应优化
-
-    该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
-    而且每一轮搜索都（大概率）更接近全局最优解。
-    该算法的第一轮搜索就是标准的蒙特卡洛算法，在整个参数空间中随机取出一定数量的参数组合，使用这
-    些参数分别进行信号回测。第一轮搜索结束后，在第一轮的全部结果中择优选出一定比例的最佳参数，以
-    这些最佳参数为中心点，构建一批子空间，这些子空间的总体积比起最初的参数空间小的多，但是大概率
-    容纳了最初参数空间的全局最优解。
-    接着，程序继续在新生成的子空间中取出同样多的参数组合，并同样选出最佳参数组合，以新的最优解为
-    中心创建下一轮的参数空间，其总体积再次缩小。
-    如上所诉反复运行程序，每一轮需要搜索的子空间的体积越来越小，找到全局最优的概率也越来越大，直到
-    参数空间的体积小于一个固定值，或者循环的次数超过最大次数，循环停止，输出当前轮的最佳参数组合。
-
-    与该算法相关的设置选项有：
-        r_sample_size:      采样点数量，int 每一轮搜索中采样点的数量
-        reduce_ratio:       择优比例，float, 大于零小于1的浮点数，次轮搜索参数空间大小与本轮
-                            空间大小的比例，同时也是参数组的择优比例，例如0。2代表每次搜索的
-                            参数中最佳的20%会被用于创建下一轮的子空间邻域，同时下一轮的子空间
-                            体积为本轮空间体积的20%
-        max_rounds:         最大轮数，int，循环次数达到该值时结束循环
-        min_volume:         最小体积，float，当参数空间的体积（Volume）小于该值时停止循环
-
-    Parameters
-    ----------
-    hist: HistoryPanel
-        历史数据，优化器的整个优化过程在历史数据上完成
-    op: qt.Operator
-        交易信号生成器对象
-    config: qt.Config
-        用于存储交易相关参数的配置变量
-
-    Returns
-    -------
-    tuple，包含两个变量
-        pool.items 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
-    """
-    sample_count = config.opti_r_sample_count
-    min_volume = config.opti_min_volume
-    max_rounds = config.opti_max_rounds
-    reduce_ratio = config.opti_reduce_ratio
-    parallel = config.parallel
-    s_range, s_type = op.opt_space_par
-    spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
-    base_space = Space(s_range, s_type)
-    base_volume = base_space.volume
-    base_dimension = base_space.dim
-    # 每一轮参数寻优后需要保留的参数组的数量
-    reduced_sample_count = int(sample_count * reduce_ratio)
-    pool = ResultPool(reduced_sample_count)  # 用于存储中间结果或最终结果的参数池对象
-
-    spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
-    space_count_in_round = 1  # 本轮运行子空间的数量
-    current_round = 1  # 当前运行轮次
-    current_volume = base_space.volume  # 当前运行轮次子空间的总体积
-    history_list = hist.fillna(0)  # 准备历史数据
-    """
-    估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
-    因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数
-    由于轮数的多少取决于两个变量，一个是最大轮次数，另一个是下一轮产生的子空间总和体积是否
-    小于最小体积阈值，因此，推算过程如下：
-    设初始空间体积为Vi，最小空间体积为Vmin，每一轮的缩小率为rr，最大计算轮数为Rmax
-    且第k轮的空间体积为Vk，则有：
-                          Vk = Vi * rr ** k
-          停止条件1：      Vk = Vi * rr ** k < Vmin
-          停止条件2:      k >= Rmax
-       根据停止条件1：    rr ** k < Vmin / Vi
-                       k > log(Vmin / Vi) / log(rr)
-           因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
-    """
-    round_count = min(max_rounds, (math.log(min_volume / base_volume) / math.log(reduce_ratio)))
-    total_calc_rounds = int(round_count * sample_count)
-    i = 0
-    st = time.time()
-    # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
-    while current_volume >= min_volume and current_round < max_rounds:
-        # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
-        par_list = list()
-        round_total = 0
-        for space in spaces:
-            # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
-            par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')
-            par_list.extend(par_generator)
-            round_total += total
-
-        pool = pool + _evaluate_all_parameters(par_generator=par_list,
-                                               total=round_total,
-                                               op=op,
-                                               trade_price_list=history_list,
-                                               benchmark_history_data=benchmark,
-                                               benchmark_history_data_type=benchmark_type,
-                                               config=config,
-                                               stage='optimize')
-        # 本轮所有结果都进入结果池，根据择优方向选择最优结果保留，剪除其余结果
-        pool.cut(config.maximize_target)
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        为了生成新的子空间，计算下一轮子空间的半径大小
-        为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
-        的缩小比例。这个比例与空间的维数和子空间的数量有关
-        例如：
-        若 reduce_ratio(rr)=0.5，设初始空间体积为Vi,边长为Si，第k轮空间体积为Vk，子空间数量为m，
-              每个子空间的体积为V，Size为S，空间的维数为d,则有：
-              Si ** d * (rr ** k) = Vi * (rr ** k) = Vk =  V * m = S ** d * m
-              于是：
-              S ** d * m = Si ** d * (rr ** k)
-              (S/Si) ** d = (rr ** k) / m
-              S/Si = ((rr ** k) / m) ** (1/d)
-        根据上述结果，第k轮的子空间直径S可以由原始空间的半径Si得到：
-              S = Si * ((rr ** k) / m) ** (1/d)
-              distance = S / 2
+
+        # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
+        par_generator, total = space.extract(self.search_config['sample_count'], how='rand')
+        self._evaluate_parameters(
+                total=total,
+                par_value_list=par_generator,
+                result_pool=self.result_pool,
+                parallel=self.parallel
+        )
+        self.result_pool.cut(self.search_config['maximize_target'])
+
+    def _search_sa(self,
+                   space: Space) -> None:
+        """ 最优参数搜索算法3: 模拟退火优化
+
+        该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
+        而且每一轮搜索都（大概率）更接近全局最优解。
+        该算法的第一轮搜索就是标准的蒙特卡洛算法，在整个参数空间中随机取出一定数量的参数组合，使用这
+        些参数分别进行信号回测。第一轮搜索结束后，在第一轮的全部结果中择优选出一定比例的最佳参数，以
+        这些最佳参数为中心点，构建一批子空间，这些子空间的总体积比起最初的参数空间小的多，但是大概率
+        容纳了最初参数空间的全局最优解。
+        接着，程序继续在新生成的子空间中取出同样多的参数组合，并同样选出最佳参数组合，以新的最优解为
+        中心创建下一轮的参数空间，其总体积再次缩小。
+        如上所诉反复运行程序，每一轮需要搜索的子空间的体积越来越小，找到全局最优的概率也越来越大，直到
+        参数空间的体积小于一个固定值，或者循环的次数超过最大次数，循环停止，输出当前轮的最佳参数组合。
+
+        与该算法相关的设置选项有：
+            r_sample_size:      采样点数量，int 每一轮搜索中采样点的数量
+            reduce_ratio:       择优比例，float, 大于零小于1的浮点数，次轮搜索参数空间大小与本轮
+                                空间大小的比例，同时也是参数组的择优比例，例如0。2代表每次搜索的
+                                参数中最佳的20%会被用于创建下一轮的子空间邻域，同时下一轮的子空间
+                                体积为本轮空间体积的20%
+            max_rounds:         最大轮数，int，循环次数达到该值时结束循环
+            min_volume:         最小体积，float，当参数空间的体积（Volume）小于该值时停止循环
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
         """
-        size_reduce_ratio = ((reduce_ratio ** current_round) / reduced_sample_count) ** (1 / base_dimension)
-        reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
-        # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-        current_volume = 0
-        spaces = []
-        for point in pool.items:
-            subspace = base_space.from_point(point=point, distance=reduced_size)
-            spaces.append(subspace)
-            current_volume += subspace.volume
-        current_round += 1
-        space_count_in_round = len(spaces)
-        progress_bar(i, total_calc_rounds, comments=f'start next round with {space_count_in_round} spaces')
-    et = time.time()
-    print(f'\nOptimization completed, total time consumption: {sec_to_duration(et - st)}')
-    return pool.items, pool.perfs
+        sample_count = self.search_config['opti_r_sample_count']
+        min_volume = self.search_config['opti_min_volume']
+        max_rounds = self.search_config['opti_max_rounds']
+        reduce_ratio = self.search_config['opti_reduce_ratio']
+        parallel = self.parallel
+
+        spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
+        base_space = space
+        base_dimension = base_space.dim
+        # 每一轮参数寻优后需要保留的参数组的数量
+        self.result_pool.capacity = sample_count  # 临时修改参数池的大小为reduced_sample_count
+
+        spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
+        space_count_in_round = 1  # 本轮运行子空间的数量
+        current_round = 0  # 当前运行轮次
+        current_volume = base_space.volume  # 当前运行轮次子空间的总体积
+        """
+        估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
+        因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数
+        由于轮数的多少取决于两个变量，一个是最大轮次数，另一个是下一轮产生的子空间总和体积是否
+        小于最小体积阈值，因此，推算过程如下：
+        设初始空间体积为Vi，最小空间体积为Vmin，每一轮的缩小率为rr，最大计算轮数为Rmax
+        且第k轮的空间体积为Vk，则有：
+                              Vk = Vi * rr ** k
+              停止条件1：      Vk = Vi * rr ** k < Vmin
+              停止条件2:      k >= Rmax
+           根据停止条件1：    rr ** k < Vmin / Vi
+                           k > log(Vmin / Vi) / log(rr)
+               因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
+        """
+
+        # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
+        while current_volume >= min_volume and current_round < max_rounds:
+            # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
+            par_list = list()
+            round_total = 0
+            for space in spaces:
+                # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
+                # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
+                par_generator, total = space.extract(sample_count // space_count_in_round, how='rand')
+                par_list.extend(par_generator)
+                round_total += total
+
+            self._evaluate_parameters(
+                    total=round_total,
+                    par_value_list=par_list,
+                    result_pool=self.result_pool,
+                    parallel=parallel,
+                    epoch_str=f'{current_round + 1}/{max_rounds}',
+            )
+            self.result_pool.cut(self.search_config['maximize_target'])
+            """
+            为了生成新的子空间，计算下一轮子空间的半径大小
+            为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
+            的缩小比例。这个比例与空间的维数和子空间的数量有关
+            例如：
+            若 reduce_ratio(rr)=0.5，设初始空间体积为Vi,边长为Si，第k轮空间体积为Vk，子空间数量为m，
+                  每个子空间的体积为V，Size为S，空间的维数为d,则有：
+                  Si ** d * (rr ** k) = Vi * (rr ** k) = Vk =  V * m = S ** d * m
+                  于是：
+                  S ** d * m = Si ** d * (rr ** k)
+                  (S/Si) ** d = (rr ** k) / m
+                  S/Si = ((rr ** k) / m) ** (1/d)
+            根据上述结果，第k轮的子空间直径S可以由原始空间的半径Si得到：
+                  S = Si * ((rr ** k) / m) ** (1/d)
+                  distance = S / 2
+            """
+            size_reduce_ratio = ((reduce_ratio ** current_round) / sample_count) ** (1 / base_dimension)
+            reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
+            # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
+            current_volume = 0
+            spaces.clear()
+            for point in self.result_pool.items:
+                subspace = base_space.from_point(point=point, distance=reduced_size)
+                spaces.append(subspace)
+                current_volume += subspace.volume
+            current_round += 1
+            space_count_in_round = len(spaces)
+
+        self.result_pool.capacity = self.result_pool_size
+        self.result_pool.cut(self.search_config['maximize_target'])
+
+    def _search_ga(self,
+                   space: Space) -> None:
+        """ 最优参数搜索算法4: 遗传算法
+        遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
+
+        遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
+        “种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
+        的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
+        越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
+        让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
+        同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
+        一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        population_size = self.search_config['population_size']
+        max_generations = self.search_config['max_generations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+
+        # 常量：变异率、交叉时从父代取段的概率、选择比例
+        mutation_rate = 0.1
+        select_top_ratio = 0.5
+
+        par_iter, total = space.extract(population_size, how='rand')
+        pop = list(par_iter)
+        if len(pop) < 2:
+            # 空间过小无法交叉时仅评估并写入 result_pool
+            self._evaluate_parameters(
+                total=len(pop),
+                par_value_list=pop,
+                result_pool=self.result_pool,
+                parallel=parallel,
+            )
+            self.result_pool.cut(keep_largest=maximize_target)
+            return
+
+        sizes = space.vector_axis_sizes
+        dim = space.dim
+        offsets = [0]
+        for s in sizes:
+            offsets.append(offsets[-1] + s)
+
+        for gen in range(max_generations):
+            gen_pool = ResultPool(capacity=population_size)
+            self._evaluate_parameters(
+                total=len(pop),
+                par_value_list=pop,
+                result_pool=gen_pool,
+                parallel=parallel,
+                epoch_str=f'{gen + 1}/{max_generations}',
+                leave_progress_bar=False,
+            )
+            for item, perf in zip(gen_pool.items, gen_pool.perfs):
+                self.result_pool.push(item=item, perf=perf)
+            self.result_pool.cut(keep_largest=maximize_target)
+
+            # 选择：按 perf 排序取前 select_top_ratio 作为父代
+            idx_sorted = np.argsort(gen_pool.perfs)
+            if maximize_target:
+                idx_sorted = idx_sorted[::-1]
+            n_parents = max(2, int(len(pop) * select_top_ratio))
+            parent_indices = idx_sorted[:n_parents]
+            parents = [gen_pool.items[i] for i in parent_indices]
+
+            # 交叉与变异生成下一代
+            offspring = []
+            while len(offspring) < population_size:
+                a, b = random.choice(parents), random.choice(parents)
+                vec_a = space.point_to_vector(a)
+                vec_b = space.point_to_vector(b)
+                child_vec = np.empty_like(vec_a)
+                for d in range(dim):
+                    s, e = offsets[d], offsets[d + 1]
+                    if random.random() < 0.5:
+                        child_vec[s:e] = vec_a[s:e]
+                    else:
+                        child_vec[s:e] = vec_b[s:e]
+                child = space.vector_to_point(child_vec)
+                # 变异：每维以 mutation_rate 替换为该轴随机值
+                child_list = list(child)
+                for d in range(dim):
+                    if random.random() < mutation_rate:
+                        child_list[d] = list(space.axis[d].gen_values(1, 'rand'))[0]
+                child = tuple(child_list)
+                if child in space:
+                    offspring.append(child)
+            pop = offspring[:population_size]
+
+        self.result_pool.cut(keep_largest=maximize_target)
+
+    def _search_gradient(self,
+                         space: Space) -> None:
+        """ 最优参数搜索算法5：梯度下降法（多点同时梯度搜索）
+
+        在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
+        最大步数为止。在参数空间中随机选择N个起点开始搜索，输出结果为最后一步的N个结果。
+
+        邻域通过 space.neighbors(point, axis_index, ...) 生成，支持 int/float/enum/int_array/float_array。
+        仅对 float 维做自适应步长（放大/缩小）；无改进时缩小步长，步长过小或连续无改进达阈值则终止该轨迹。
+
+        Parameters
+        ----------
+        space: Space
+            参数空间
+
+        Returns
+        -------
+        None
+        """
+        start_count = self.search_config.get('start_count', 10)
+        max_steps = self.search_config.get('max_steps', 20)
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+        dim = space.dim
+        types = space.types
+
+        # 每维步长（仅 float 维使用，其余为 None）
+        def _init_step_sizes():
+            step_sizes = []
+            for d in range(dim):
+                ax = space.axis[d]
+                if types[d] == 'float':
+                    sz = getattr(ax, 'size', None)
+                    step_sizes.append(max(1e-9, (sz * 0.1)) if sz is not None else 0.1)
+                else:
+                    step_sizes.append(None)
+            return step_sizes
+
+        # 生成 N 个起点
+        par_iter, total = space.extract(start_count, how='rand')
+        starts = list(par_iter)
+        if total == 0 or len(starts) == 0:
+            return
+
+        step_size_scale_up = 1.2
+        step_size_scale_down = 0.5
+        step_size_max_ratio = 0.5
+        step_size_min = 1e-9
+        no_improve_threshold = 3
+
+        tmp_pool = ResultPool(capacity=1000)
+
+        for start in starts:
+            x = start
+            step_sizes = _init_step_sizes()
+            no_improve_count = 0
+            current_perf = None
+
+            for _ in range(max_steps):
+                # 收集邻域候选：对每维调用 space.neighbors
+                candidates = []
+                for d in range(dim):
+                    step_arg = step_sizes[d] if step_sizes[d] is not None else None
+                    nb = space.neighbors(x, d, count=2, step=step_arg)
+                    for c in nb:
+                        if c in space:
+                            candidates.append(c)
+                # 当前点 + 所有候选，一起评估
+                to_eval = [x] + candidates
+                tmp_pool.clear()
+                self._evaluate_parameters(
+                    total=len(to_eval),
+                    par_value_list=to_eval,
+                    result_pool=tmp_pool,
+                    parallel=parallel,
+                    leave_progress_bar=False,
+                )
+                if not tmp_pool.items or len(tmp_pool.items) == 0:
+                    break
+                perfs = list(tmp_pool.perfs)
+                current_perf = perfs[0]
+                if len(perfs) == 1:
+                    no_improve_count += 1
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            step_sizes[d] = max(step_size_min, step_sizes[d] * step_size_scale_down)
+                    if no_improve_count >= no_improve_threshold:
+                        break
+                    continue
+
+                # 找最优候选（索引 0 为当前点，1 及以后为候选）
+                candidate_perfs = perfs[1:]
+                if maximize_target:
+                    best_cand_idx = int(np.argmax(candidate_perfs))
+                    best_cand_perf = candidate_perfs[best_cand_idx]
+                    improved = best_cand_perf > current_perf
+                else:
+                    best_cand_idx = int(np.argmin(candidate_perfs))
+                    best_cand_perf = candidate_perfs[best_cand_idx]
+                    improved = best_cand_perf < current_perf
+
+                if improved:
+                    x = candidates[best_cand_idx]
+                    current_perf = best_cand_perf
+                    no_improve_count = 0
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            ax = space.axis[d]
+                            sz = getattr(ax, 'size', None)
+                            cap = (sz * step_size_max_ratio) if sz is not None else step_sizes[d] * 2
+                            step_sizes[d] = min(step_sizes[d] * step_size_scale_up, cap)
+                else:
+                    no_improve_count += 1
+                    for d in range(dim):
+                        if step_sizes[d] is not None:
+                            step_sizes[d] = max(step_size_min, step_sizes[d] * step_size_scale_down)
+                    if no_improve_count >= no_improve_threshold:
+                        break
+                    all_too_small = all(
+                        s is None or s <= step_size_min for s in step_sizes
+                    )
+                    if all_too_small:
+                        break
+
+            # 轨迹终点 x 及其表现写入 result_pool（若未评估过则补评一次）
+            if current_perf is None:
+                tmp_pool.clear()
+                self._evaluate_parameters(
+                    total=1,
+                    par_value_list=[x],
+                    result_pool=tmp_pool,
+                    parallel=parallel,
+                    leave_progress_bar=False,
+                )
+                if tmp_pool.items:
+                    current_perf = tmp_pool.perfs[0]
+            if current_perf is not None:
+                self.result_pool.push(item=x, perf=current_perf)
+
+        self.result_pool.cut(keep_largest=maximize_target)
+
+    def _search_pso(self,
+                    space: Space) -> None:
+        """ 最优参数搜索算法6: Particle Swarm Optimization 粒子群优化算法
+
+        在参数空间中随机选择N个起点作为粒子群的初始位置，每个粒子根据自身的历史最优位置和全局的历史最优位置
+        来调整自己的速度和位置，逐步向最优解靠近。经过多次迭代后，粒子群会收敛到全局最优解或近似最优解。
+
+        数值表示使用 space.point_to_vector / space.vector_to_point，在编码向量空间内做速度与位置更新，
+        再映射回合法参数点。惯性权重 w=0.7，个体系数 c1=1.5，社会系数 c2=1.5。
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        population_size = self.search_config['population_size']
+        max_iterations = self.search_config['max_iterations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+
+        # PSO 超参数（常量，暂不从 config 暴露）
+        w = 0.7
+        c1 = 1.5
+        c2 = 1.5
+
+        par_iter, total = space.extract(population_size, how='rand')
+        positions = list(par_iter)
+        if not positions:
+            return
+
+        # 编码向量长度与各轴跨度（用于速度初始化）
+        vec_len = space.point_to_vector(positions[0]).size
+        sizes = space.vector_axis_sizes
+        dim = space.dim
+        offsets = [0]
+        for s in sizes:
+            offsets.append(offsets[-1] + s)
+        span_per_elem = np.zeros(vec_len)
+        for d in range(dim):
+            ax = space.axis[d]
+            boe = space.boes[d]
+            s, e = offsets[d], offsets[d + 1]
+            if ax.par_type in ['int', 'float']:
+                span = float(ax.ubound - ax.lbound) or 1.0
+                span_per_elem[s:e] = span
+            elif ax.par_type == 'enum':
+                enum_list = list(boe) if isinstance(boe, tuple) else boe
+                span = float(max(1, len(enum_list) - 1))
+                span_per_elem[s:e] = span
+            else:
+                span = float(ax.ubound - ax.lbound) or 1.0
+                span_per_elem[s:e] = span
+
+        # 初始化速度：小范围随机，与各维跨度成比例
+        velocities = [
+            np.random.uniform(-0.1 * span_per_elem, 0.1 * span_per_elem)
+            for _ in range(len(positions))
+        ]
+
+        # 评估初始位置，初始化 pbest 与 gbest
+        pbest_points = list(positions)
+        pbest_perfs = [None] * len(positions)
+        tmp_pool = ResultPool(capacity=len(positions))
+        self._evaluate_parameters(
+            total=len(positions),
+            par_value_list=positions,
+            result_pool=tmp_pool,
+            parallel=parallel,
+            epoch_str='1/1',
+            leave_progress_bar=False,
+        )
+        for i, (point, perf) in enumerate(zip(tmp_pool.items, tmp_pool.perfs)):
+            pbest_perfs[i] = perf
+        if maximize_target:
+            gbest_idx = max(range(len(pbest_perfs)), key=lambda j: pbest_perfs[j] if pbest_perfs[j] is not None else float('-inf'))
+        else:
+            gbest_idx = min(range(len(pbest_perfs)), key=lambda j: pbest_perfs[j] if pbest_perfs[j] is not None else float('inf'))
+        gbest_point = pbest_points[gbest_idx]
+        gbest_perf = pbest_perfs[gbest_idx]
+
+        for iteration in range(max_iterations - 1):
+            gbest_vec = space.point_to_vector(gbest_point)
+            for i in range(len(positions)):
+                x_vec = space.point_to_vector(positions[i])
+                pbest_vec = space.point_to_vector(pbest_points[i])
+                r1, r2 = np.random.random(), np.random.random()
+                v = velocities[i]
+                v = w * v + c1 * r1 * (pbest_vec - x_vec) + c2 * r2 * (gbest_vec - x_vec)
+                velocities[i] = v
+                x_new_vec = x_vec + v
+                new_point = space.vector_to_point(x_new_vec)
+                positions[i] = new_point
+
+            tmp_pool = ResultPool(capacity=len(positions))
+            self._evaluate_parameters(
+                total=len(positions),
+                par_value_list=positions,
+                result_pool=tmp_pool,
+                parallel=parallel,
+                epoch_str=f'{iteration + 2}/{max_iterations}',
+                leave_progress_bar=False,
+            )
+            for i, (point, perf) in enumerate(zip(tmp_pool.items, tmp_pool.perfs)):
+                if perf is None:
+                    continue
+                better = (perf > pbest_perfs[i]) if maximize_target else (perf < pbest_perfs[i])
+                if pbest_perfs[i] is None or better:
+                    pbest_perfs[i] = perf
+                    pbest_points[i] = point
+                gbest_better = (perf > gbest_perf) if maximize_target else (perf < gbest_perf)
+                if gbest_perf is None or gbest_better:
+                    gbest_perf = perf
+                    gbest_point = point
+
+        for point, perf in zip(pbest_points, pbest_perfs):
+            if perf is not None:
+                self.result_pool.push(item=point, perf=perf)
+        self.result_pool.cut(keep_largest=maximize_target)
+
+    def _search_bayesian(self,
+                         space: Space) -> None:
+        """ 最优参数搜索算法6: 贝叶斯优化算法
+
+        贝叶斯优化是一种基于贝叶斯统计理论的全局优化方法，适用于高维、非凸、黑箱函数的优化问题。
+        它通过构建目标函数的概率模型（通常是高斯过程）来指导参数搜索过程，从而在有限的评估次数内找到最优解。
+        流程：初始随机采样 -> 用 (X, y) 拟合 surrogate（RBF 核高斯过程）-> 迭代：在候选点上计算 UCB 采集函数，
+        选取采集值最大的点评估 -> 更新 (X, y) 与 result_pool，直至达到 max_iterations。
+
+        Parameters
+        ----------
+        space: qt.Space
+            参数空间对象
+
+        Returns
+        -------
+        None，搜索的结果最佳值会被保存在self.result_pool属性中
+        """
+        init_sample_count = self.search_config['init_sample_count']
+        max_iterations = self.search_config['max_iterations']
+        maximize_target = self.search_config['maximize_target']
+        parallel = self.parallel
+        # 采集函数超参数（UCB 的 kappa）
+        kappa = 2.0
+        # 每轮采集时的候选点数量
+        candidate_count = 200
+
+        # ----- 1. 初始随机采样 -----
+        par_iter, total = space.extract(init_sample_count, how='rand')
+        par_list = list(par_iter)
+        if not par_list:
+            return
+        init_pool = ResultPool(capacity=len(par_list) + max_iterations)
+        self._evaluate_parameters(
+            total=len(par_list),
+            par_value_list=par_list,
+            result_pool=init_pool,
+            parallel=parallel,
+            epoch_str='init/1',
+            leave_progress_bar=False,
+        )
+        # 编码为 (X, y)；若为 minimize 则 y 取负，使 surrogate 端统一为“最大化”
+        X_list = [space.point_to_vector(p) for p in init_pool.items]
+        X = np.array(X_list)
+        y_raw = np.array(init_pool.perfs, dtype=float)
+        y = y_raw if maximize_target else -y_raw
+        for p, perf in zip(init_pool.items, init_pool.perfs):
+            self.result_pool.push(item=p, perf=perf)
+        self.result_pool.cut(keep_largest=maximize_target)
+
+        # ----- 2. 贝叶斯迭代 -----
+        for it in range(max_iterations - 1):
+            cand_iter, _ = space.extract(candidate_count, how='rand')
+            cand_points = list(cand_iter)
+            if not cand_points:
+                break
+            X_cand = np.array([space.point_to_vector(p) for p in cand_points])
+            mu, sigma = _gp_predict_rbf(X, y, X_cand, length_scale=None, noise=1e-5)
+            if mu is None:
+                next_point = cand_points[0]
+            else:
+                sigma = np.maximum(sigma, 1e-10)
+                ucb = mu + kappa * sigma
+                best_idx = int(np.argmax(ucb))
+                next_point = cand_points[best_idx]
+
+            # 评估建议点
+            perf = self._evaluate_parameter(next_point)
+            x_vec = space.point_to_vector(next_point)
+            X = np.vstack([X, x_vec.reshape(1, -1)])
+            y = np.append(y, perf if maximize_target else -perf)
+            self.result_pool.push(item=next_point, perf=perf)
+            self.result_pool.cut(keep_largest=maximize_target)
+
+    def report_result(self, stage: str) -> str:
+        """ 根据优化结果池生成优化结果报告字符串
+
+        Parameters
+        ----------
+        stage: str
+            报告阶段，取值为 'optimization' 或 'validation'，分别表示优化区间报告和验证区间报告
+
+        Returns
+        -------
+        report_string: str
+            优化结果报告字符串
+        """
+        from qteasy.visual import opti_result_str
+        result = self.result_pool.extra if stage == 'optimization' else self.validated_pool.extra
+        report_string = opti_result_str(
+                result=result,
+                name='Validation report' if stage == 'validation' else 'Optimization report',
+                benchmark=self.benchmark,
+                opti_time=self.opti_time,
+                eval_time=self.eval_time,
+        )
+
+        return report_string
+
+    def plot_result(self) -> None:
+        """ 根据优化结果池生成优化结果图表
 
 
-def _search_ga(hist, benchmark, benchmark_type, op, config):
-    """ 最优参数搜索算法4: 遗传算法
-    遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
+        """
+        from qteasy.visual import _plot_test_result
+        _plot_test_result(
+                plot_type=self.test_plot_type,
+                opti_eval_res=self.result_pool.extra,
+                test_eval_res=self.validated_pool.extra,
+                opti_duration=self.opti_time,
+                eval_duration=self.eval_time,
+                test_duration=self.test_time,
+        )
 
-    遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
-    “种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
-    的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
-    越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
-    让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
-    同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
-    一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
-
-    Parameters
-    ----------
-    hist: HistoryPanel
-        历史数据，优化器的整个优化过程在历史数据上完成
-    benchmark:
-
-    benchmark_type:
-
-    op: object，
-        交易信号生成器对象
-    config: ConfigDict
-
-    Returns
-    -------
-    tuple，包含两个变量
-        pool.items 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
-
-    """
-    raise NotImplementedError
-
-
-def _search_gradient(hist, benchmark, benchmark_type, op, config):
-    """ 最优参数搜索算法5：梯度下降法
-    在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
-    最大步数为止，输出结果为最后N步的结果
-
-    Parameters
-    ----------
-    hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    benchmark:
-    benchmark_type:
-    op: object，交易信号生成器对象
-    config: object, 用于存储交易相关参数配置对象
-
-    Returns
-    -------
-    """
-    raise NotImplementedError
-
-
-def _search_pso(hist, benchmark, benchmark_type, op, config):
-    """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
-
-    Parameters
-    ----------
-    hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    benchmark:
-    benchmark_type:
-    op: object，交易信号生成器对象
-    config: object, 用于存储交易相关参数配置对象
-
-    Returns
-    -------
-    """
-    raise NotImplementedError
-
-
-def _search_aco(hist, benchmark, benchmark_type, op, config):
-    """ Ant Colony Optimization 蚁群优化算法，
-
-    Parameters
-    ----------
-    hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    benchmark:
-    benchmark_type:
-    op，object，交易信号生成器对象
-    config: object, 用于存储交易相关参数配置对象
-
-    Returns
-    -------
-    """
-    raise NotImplementedError
+    AVAILABLE_OPTIMIZERS = {
+        'grid':        _search_grid,
+        'montecarlo':  _search_montecarlo,
+        'SA':          _search_sa,
+        'GA':          _search_ga,
+        'gradient':    _search_gradient,
+        'PSO':         _search_pso,
+        'bayesian':    _search_bayesian,
+    }

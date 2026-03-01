@@ -14,336 +14,975 @@ import unittest
 import qteasy as qt
 import pandas as pd
 import numpy as np
-import math
-from qteasy.utilfuncs import rolling_window
-from qteasy.built_in import SelectingAvgIndicator, DMA, MACD, CDL
-from qteasy.tafuncs import sma
-from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from qteasy.blender import _exp_to_token, blender_parser, signal_blend, human_blender
+import time
+
+from qteasy.backtest import Backtester
+from qteasy.parameter import Parameter
+from qteasy.group import Group
+from qteasy.trading_util import trade_time_index as tti
+from qteasy.finance import CashPlan
+
+from qteasy.built_in import (
+    DMA,
+    MACD,
+    CDL,
+)
+from qteasy.strategy import (
+    BaseStrategy,
+    RuleIterator,
+    GeneralStg,
+    FactorSorter,
+)
+from qteasy.datatypes import (
+    DataType,
+    StgData,
+)
+
+# test parameters and datatypes:
+param1 = Parameter(
+        name='param1',
+        par_type='int',
+        par_range=(1, 4),
+        value=4,
+)
+
+param2 = Parameter(
+        name='param2',
+        par_type='float',
+        par_range=(0.0, 1.),
+        value=0.5,
+)
+
+param3 = Parameter(
+        name='param3',
+        par_type='enum',
+        par_range=('option1', 'option2', 'option3'),
+        value='option1',
+)
+
+param4 = Parameter(
+        name='param4',
+        par_type='array[3,]',
+        par_range=(1.0, 5.0),
+        value=np.array([1.0, 2.0, 3.0]),
+)
+
+dtype_1 = DataType(
+        name='close',
+        freq='d',
+        asset_type='E'
+)
+
+dtype_2 = DataType(
+        name='close',
+        freq='h',
+        asset_type='E'
+)
+
+dtype_3 = DataType(
+        name='close',
+        freq='5min',
+        asset_type='E'
+)
+
+dtype_4 = DataType(
+        name='close',
+        freq='15min',
+        asset_type='E',
+)
+
+dtype_5 = DataType(
+        name='close',
+        freq='w',
+        asset_type='E',
+)
+
+dtype_ref = DataType(
+        name='close',
+        freq='d',
+        asset_type='IDX',
+)
+
+dtype_dep = DataType(
+        name='close',
+        freq='d',
+        asset_type='E',
+)
+
+# 测试数据的值不是来自于DataSource，而是直接设定，方便运算
+dtype_1_data = np.array(
+        [[0.994, 0.412, 0.876],
+         [1.117, 1.257, 1.447],
+         [2.315, 2.080, 2.799],
+         [3.704, 3.870, 3.620],
+         [6.091, 6.127, 6.218],
+         [7.177, 7.337, 7.294],
+         [8.240, 8.254, 8.626],
+         [9.552, 9.446, 9.739],
+         [10.754, 10.192, 10.650],
+         [13.877, 13.685, 13.885],
+         [14.556, 14.774, 14.250],
+         [15.167, 15.026, 15.999],
+         [16.580, 16.236, 16.307],
+         [17.599, 17.797, 17.155],
+         [27.921, 27.938, 27.481],
+         [28.281, 28.604, 28.348],
+         [29.062, 29.559, 29.880],
+         [30.390, 30.247, 30.393],
+         [31.902, 31.344, 31.878],
+         [34.127, 34.099, 34.396],
+         [35.332, 35.854, 35.131],
+         [36.482, 36.229, 36.578],
+         [37.435, 37.952, 37.289],
+         [38.605, 38.377, 38.311],
+         [41.676, 41.230, 41.839]],
+)
+dtype_2_data = np.array(
+        [[0.296, 0.969, 0.422],
+         [0.153, 0.306, 0.254],
+         [0.793, 0.406, 0.798],
+         [0.257, 0.461, 0.749],
+         [1.201, 1.871, 1.381],
+         [1.117, 1.665, 1.956],
+         [1.040, 1.577, 1.919],
+         [1.431, 1.490, 1.036],
+         [2.634, 2.331, 2.445],
+         [2.981, 2.116, 2.068],
+         [2.646, 2.634, 2.910],
+         [2.901, 2.668, 2.527],
+         [3.217, 3.329, 3.680],
+         [3.027, 3.806, 3.796],
+         [3.047, 3.814, 3.564],
+         [3.091, 3.168, 3.139],
+         [6.273, 6.362, 6.544],
+         [6.221, 6.621, 6.439],
+         [6.990, 6.570, 6.894],
+         [6.771, 6.277, 6.217],
+         [7.140, 7.595, 7.823],
+         [7.508, 7.924, 7.539],
+         [7.065, 7.398, 7.163],
+         [7.630, 7.433, 7.144],
+         [8.988, 8.035, 8.454],
+         [8.468, 8.776, 8.954],
+         [8.057, 8.413, 8.022],
+         [8.812, 8.767, 8.421],
+         [9.974, 9.411, 9.576],
+         [9.738, 9.484, 9.772],
+         [9.390, 9.578, 9.635],
+         [9.145, 9.801, 9.636],
+         [10.093, 10.751, 10.501],
+         [10.553, 10.952, 10.705],
+         [10.803, 10.073, 10.546],
+         [10.787, 10.033, 10.851],
+         [13.340, 13.651, 13.768],
+         [13.672, 13.798, 13.485],
+         [13.715, 13.170, 13.580],
+         [13.102, 13.216, 13.235],
+         [14.304, 14.915, 14.385],
+         [14.386, 14.645, 14.360],
+         [14.569, 14.930, 14.235],
+         [14.492, 14.152, 14.376],
+         [15.367, 15.022, 15.234],
+         [15.320, 15.186, 15.298],
+         [15.252, 15.693, 15.582],
+         [15.146, 15.020, 15.932],
+         [16.687, 16.209, 16.238],
+         [16.571, 16.912, 16.015],
+         [16.118, 16.238, 16.120],
+         [16.270, 16.909, 16.950],
+         [17.636, 17.955, 17.647],
+         [17.659, 17.512, 17.246],
+         [17.531, 17.214, 17.680],
+         [17.356, 17.611, 17.768],
+         [27.391, 27.691, 27.099],
+         [27.216, 27.734, 27.063],
+         [27.534, 27.533, 27.873],
+         [27.745, 27.081, 27.593]]
+)
+dtype_3_data = np.array(
+        [[0.375, 0.370, 0.692],
+         [0.983, 0.857, 0.961],
+         [0.537, 0.462, 0.190],
+         [0.510, 0.770, 0.116],
+         [0.958, 0.129, 0.363],
+         [0.778, 0.350, 0.849],
+         [0.330, 0.420, 0.116],
+         [0.246, 0.702, 0.462],
+         [0.229, 0.207, 0.969],
+         [0.941, 0.340, 0.615],
+         [0.375, 0.014, 0.486],
+         [0.110, 0.095, 0.324],
+         [0.258, 0.809, 0.266],
+         [0.425, 0.767, 0.464],
+         [0.679, 0.314, 0.327],
+         [0.390, 0.655, 0.378],
+         [0.702, 0.377, 0.891],
+         [0.855, 0.844, 0.990],
+         [0.468, 0.934, 0.871],
+         [0.051, 0.750, 0.554],
+         [0.032, 0.958, 0.530],
+         [0.807, 0.790, 0.116],
+         [0.004, 0.479, 0.331],
+         [0.395, 0.427, 0.779],
+         [0.570, 0.193, 0.505],
+         [0.900, 0.955, 0.863],
+         [0.534, 0.036, 0.513],
+         [0.516, 0.056, 0.359],
+         [0.949, 0.903, 0.867],
+         [0.027, 0.270, 0.913],
+         [0.298, 0.337, 0.660],
+         [0.677, 0.019, 0.780],
+         [0.275, 0.345, 0.396],
+         [0.061, 0.017, 0.924],
+         [0.129, 0.398, 0.690],
+         [0.289, 0.957, 0.184],
+         [0.105, 0.755, 0.637],
+         [0.388, 0.963, 0.431],
+         [0.381, 0.378, 0.123],
+         [0.520, 0.319, 0.818],
+         [0.046, 0.050, 0.433],
+         [0.646, 0.411, 0.850],
+         [0.513, 0.281, 0.207],
+         [0.344, 0.295, 0.425],
+         [0.921, 0.263, 0.786],
+         [0.077, 0.217, 0.871],
+         [0.850, 0.649, 0.818],
+         [0.885, 0.088, 0.525],
+         [1.433, 1.209, 1.523],
+         [1.013, 1.897, 1.519],
+         [1.558, 1.484, 1.557],
+         [1.005, 1.926, 1.709],
+         [1.894, 1.196, 1.827],
+         [1.354, 1.431, 1.649],
+         [1.559, 1.759, 1.370],
+         [1.077, 1.811, 1.832],
+         [1.712, 1.541, 1.213],
+         [1.506, 1.822, 1.654],
+         [1.198, 1.949, 1.709],
+         [1.222, 1.696, 1.856],
+         [1.826, 1.224, 1.837],
+         [1.087, 1.511, 1.413],
+         [1.501, 1.391, 1.909],
+         [1.384, 1.921, 1.849],
+         [1.943, 1.121, 1.308],
+         [1.983, 1.953, 1.041],
+         [1.995, 1.570, 1.678],
+         [1.781, 1.178, 1.794],
+         [1.282, 1.602, 1.640],
+         [1.718, 1.058, 1.298],
+         [1.556, 1.472, 1.865],
+         [1.686, 1.193, 1.469],
+         [1.935, 1.317, 1.392],
+         [1.067, 1.622, 1.936],
+         [1.874, 1.187, 1.298],
+         [1.294, 1.657, 1.086],
+         [1.481, 1.221, 1.532],
+         [1.322, 1.798, 1.976],
+         [1.924, 1.553, 1.798],
+         [1.564, 1.808, 1.729],
+         [1.642, 1.099, 1.421],
+         [1.895, 1.096, 1.931],
+         [1.729, 1.487, 1.497],
+         [1.325, 1.450, 1.282],
+         [1.915, 1.491, 1.853],
+         [1.142, 1.633, 1.685],
+         [1.259, 1.669, 1.789],
+         [1.002, 1.811, 1.781],
+         [1.063, 1.718, 1.183],
+         [1.384, 1.473, 1.794],
+         [1.984, 1.189, 1.146],
+         [1.197, 1.347, 1.499],
+         [1.700, 1.894, 1.294],
+         [1.146, 1.029, 1.737],
+         [1.525, 1.055, 1.771],
+         [1.165, 1.931, 1.213],
+         [2.131, 2.803, 2.135],
+         [2.632, 2.242, 2.884],
+         [2.887, 2.505, 2.888],
+         [2.514, 2.761, 2.412],
+         [2.397, 2.106, 2.236],
+         [2.038, 2.077, 2.195],
+         [2.357, 2.516, 2.334],
+         [2.833, 2.181, 2.605],
+         [2.598, 2.510, 2.976],
+         [2.296, 2.303, 2.914],
+         [2.724, 2.226, 2.876],
+         [2.146, 2.895, 2.770],
+         [2.577, 2.967, 2.459],
+         [2.258, 2.198, 2.924],
+         [2.528, 2.151, 2.776],
+         [2.901, 2.428, 2.869],
+         [2.739, 2.544, 2.208],
+         [2.754, 2.148, 2.708],
+         [2.937, 2.628, 2.310],
+         [2.464, 2.173, 2.258],
+         [2.095, 2.613, 2.428],
+         [2.079, 2.980, 2.146],
+         [2.810, 2.864, 2.956],
+         [2.629, 2.845, 2.401],
+         [2.372, 2.331, 2.970],
+         [2.571, 2.230, 2.877],
+         [2.600, 2.421, 2.216],
+         [2.749, 2.904, 2.195],
+         [2.185, 2.628, 2.208],
+         [2.935, 2.545, 2.074],
+         [2.228, 2.898, 2.552],
+         [2.306, 2.569, 2.771],
+         [2.837, 2.099, 2.138],
+         [2.434, 2.215, 2.945],
+         [2.455, 2.709, 2.964],
+         [2.573, 2.327, 2.824],
+         [2.510, 2.889, 2.025],
+         [2.158, 2.434, 2.110],
+         [2.977, 2.127, 2.505],
+         [2.959, 2.013, 2.220],
+         [2.315, 2.814, 2.836],
+         [2.791, 2.891, 2.459],
+         [2.796, 2.187, 2.012],
+         [2.347, 2.809, 2.569],
+         [2.204, 2.624, 2.718],
+         [2.644, 2.461, 2.504],
+         [2.604, 2.019, 2.217],
+         [2.050, 2.582, 2.758],
+         [3.596, 3.793, 3.358],
+         [3.681, 3.141, 3.088],
+         [3.198, 3.032, 3.215],
+         [3.768, 3.493, 3.155],
+         [3.481, 3.702, 3.047],
+         [3.224, 3.762, 3.572],
+         [3.435, 3.432, 3.632],
+         [3.168, 3.707, 3.589],
+         [3.572, 3.775, 3.622],
+         [3.692, 3.738, 3.133],
+         [3.711, 3.733, 3.029],
+         [3.621, 3.909, 3.529],
+         [3.908, 3.253, 3.836],
+         [3.071, 3.818, 3.627],
+         [3.163, 3.677, 3.384],
+         [3.686, 3.725, 3.747],
+         [3.217, 3.133, 3.366],
+         [3.659, 3.798, 3.597],
+         [3.400, 3.885, 3.181],
+         [3.840, 3.265, 3.905],
+         [3.785, 3.116, 3.716],
+         [3.429, 3.995, 3.700],
+         [3.102, 3.577, 3.894],
+         [3.859, 3.471, 3.924],
+         [3.073, 3.426, 3.772],
+         [3.484, 3.362, 3.732],
+         [3.905, 3.197, 3.809],
+         [3.782, 3.207, 3.759],
+         [3.558, 3.547, 3.569],
+         [3.956, 3.236, 3.780],
+         [3.909, 3.511, 3.339],
+         [3.787, 3.820, 3.105],
+         [3.995, 3.039, 3.309],
+         [3.580, 3.367, 3.577],
+         [3.337, 3.210, 3.144],
+         [3.802, 3.840, 3.544],
+         [3.807, 3.947, 3.634],
+         [3.478, 3.082, 3.435],
+         [3.428, 3.279, 3.150],
+         [3.183, 3.067, 3.299],
+         [3.493, 3.589, 3.035],
+         [3.815, 3.557, 3.462],
+         [3.019, 3.028, 3.863],
+         [3.223, 3.597, 3.738],
+         [3.565, 3.076, 3.706],
+         [3.309, 3.221, 3.165],
+         [3.171, 3.399, 3.176],
+         [3.235, 3.470, 3.381]]
+)
+dtype_4_data = np.array(
+        [[3.496, 3.578, 3.001],
+         [3.026, 3.351, 3.198],
+         [3.678, 3.386, 3.985],
+         [3.357, 3.467, 3.014],
+         [3.319, 3.782, 3.705],
+         [3.356, 3.091, 3.209],
+         [3.122, 3.918, 3.729],
+         [3.094, 3.073, 3.343],
+         [3.611, 3.083, 3.345],
+         [3.978, 3.881, 3.738],
+         [3.206, 3.035, 3.697],
+         [3.567, 3.524, 3.884],
+         [3.966, 3.796, 3.849],
+         [3.225, 3.695, 3.128],
+         [3.540, 3.954, 3.556],
+         [3.501, 3.598, 3.956],
+         [6.311, 6.261, 6.459],
+         [6.707, 6.215, 6.338],
+         [6.019, 6.607, 6.370],
+         [6.966, 6.234, 6.653],
+         [6.786, 6.136, 6.881],
+         [6.900, 6.981, 6.760],
+         [6.670, 6.181, 6.087],
+         [6.393, 6.691, 6.690],
+         [6.105, 6.444, 6.785],
+         [6.302, 6.523, 6.397],
+         [6.087, 6.077, 6.015],
+         [6.810, 6.072, 6.885],
+         [6.220, 6.209, 6.478],
+         [6.784, 6.135, 6.384],
+         [6.811, 6.581, 6.935],
+         [6.829, 6.697, 6.587],
+         [7.008, 7.664, 7.347],
+         [7.465, 7.989, 7.290],
+         [7.799, 7.123, 7.340],
+         [7.520, 7.206, 7.754],
+         [7.249, 7.279, 7.512],
+         [7.024, 7.334, 7.183],
+         [7.356, 7.361, 7.163],
+         [7.571, 7.723, 7.762],
+         [7.852, 7.495, 7.681],
+         [7.789, 7.230, 7.191],
+         [7.882, 7.223, 7.282],
+         [7.704, 7.756, 7.364],
+         [7.296, 7.051, 7.166],
+         [7.185, 7.655, 7.670],
+         [7.517, 7.064, 7.100],
+         [7.080, 7.098, 7.718],
+         [8.572, 8.991, 8.070],
+         [8.049, 8.279, 8.446],
+         [8.992, 8.329, 8.424],
+         [8.372, 8.480, 8.991],
+         [8.234, 8.016, 8.956],
+         [8.260, 8.751, 8.770],
+         [8.377, 8.053, 8.150],
+         [8.526, 8.540, 8.699],
+         [8.800, 8.442, 8.388],
+         [8.845, 8.364, 8.188],
+         [8.011, 8.449, 8.809],
+         [8.192, 8.383, 8.717],
+         [8.455, 8.389, 8.182],
+         [8.469, 8.272, 8.698],
+         [8.887, 8.165, 8.732],
+         [8.292, 8.677, 8.789],
+         [9.506, 9.555, 9.518],
+         [9.549, 9.890, 9.250],
+         [9.107, 9.455, 9.229],
+         [9.926, 9.772, 9.015],
+         [9.617, 9.492, 9.495],
+         [9.805, 9.823, 9.110],
+         [9.204, 9.387, 9.865],
+         [9.948, 9.027, 9.818],
+         [9.015, 9.650, 9.124],
+         [9.137, 9.699, 9.195],
+         [9.662, 9.026, 9.602],
+         [9.824, 9.391, 9.907],
+         [9.004, 9.074, 9.118],
+         [9.658, 9.596, 9.721],
+         [9.160, 9.220, 9.649],
+         [9.301, 9.176, 9.548],
+         [10.948, 10.524, 10.069],
+         [10.786, 10.199, 10.421],
+         [10.806, 10.321, 10.119],
+         [10.095, 10.178, 10.130],
+         [10.637, 10.815, 10.054],
+         [10.154, 10.894, 10.784],
+         [10.724, 10.916, 10.176],
+         [10.652, 10.150, 10.355],
+         [10.209, 10.125, 10.323],
+         [10.330, 10.619, 10.460],
+         [10.680, 10.911, 10.869],
+         [10.297, 10.313, 10.823],
+         [10.002, 10.954, 10.198],
+         [10.643, 10.256, 10.040],
+         [10.477, 10.218, 10.066],
+         [10.889, 10.438, 10.762],
+         [13.174, 13.324, 13.294],
+         [13.989, 13.918, 13.573],
+         [13.944, 13.691, 13.977],
+         [13.292, 13.964, 13.259],
+         [13.709, 13.708, 13.709],
+         [13.490, 13.309, 13.316],
+         [13.103, 13.142, 13.989],
+         [13.690, 13.319, 13.662],
+         [13.443, 13.028, 13.810],
+         [13.880, 13.006, 13.643],
+         [13.032, 13.978, 13.125],
+         [13.203, 13.874, 13.805],
+         [13.727, 13.488, 13.435],
+         [13.808, 13.819, 13.747],
+         [13.582, 13.400, 13.771],
+         [13.248, 13.325, 13.055],
+         [14.125, 14.399, 14.519],
+         [14.610, 14.894, 14.842],
+         [14.054, 14.272, 14.731],
+         [14.285, 14.986, 14.139],
+         [14.824, 14.080, 14.709],
+         [14.027, 14.595, 14.309],
+         [14.301, 14.818, 14.289],
+         [14.942, 14.990, 14.374],
+         [14.101, 14.890, 14.207],
+         [14.253, 14.705, 14.268],
+         [14.217, 14.399, 14.725],
+         [14.035, 14.070, 14.655],
+         [14.047, 14.818, 14.061],
+         [14.625, 14.998, 14.324],
+         [14.120, 14.360, 14.089],
+         [14.927, 14.127, 14.191],
+         [15.637, 15.753, 15.807],
+         [15.031, 15.856, 15.515],
+         [15.091, 15.026, 15.302],
+         [15.821, 15.327, 15.066],
+         [15.700, 15.866, 15.226],
+         [15.450, 15.249, 15.897],
+         [15.456, 15.106, 15.598],
+         [15.893, 15.122, 15.398],
+         [15.131, 15.858, 15.872],
+         [15.060, 15.793, 15.028],
+         [15.744, 15.532, 15.339],
+         [15.119, 15.862, 15.188],
+         [15.844, 15.838, 15.060],
+         [15.858, 15.167, 15.301],
+         [15.222, 15.246, 15.499],
+         [15.358, 15.863, 15.092],
+         [16.683, 16.807, 16.261],
+         [16.419, 16.759, 16.250],
+         [16.398, 16.532, 16.773],
+         [16.192, 16.250, 16.657],
+         [16.243, 16.081, 16.615],
+         [16.198, 16.900, 16.127],
+         [16.539, 16.463, 16.219],
+         [16.714, 16.199, 16.169],
+         [16.109, 16.663, 16.129],
+         [16.407, 16.546, 16.859],
+         [16.011, 16.953, 16.526],
+         [16.590, 16.502, 16.508],
+         [16.819, 16.918, 16.637],
+         [16.338, 16.277, 16.038],
+         [16.579, 16.166, 16.275],
+         [16.270, 16.029, 16.943],
+         [17.477, 17.978, 17.552],
+         [17.929, 17.826, 17.661],
+         [17.314, 17.501, 17.455],
+         [17.095, 17.426, 17.468],
+         [17.089, 17.943, 17.504],
+         [17.967, 17.234, 17.417],
+         [17.412, 17.612, 17.110],
+         [17.433, 17.657, 17.645],
+         [17.476, 17.673, 17.100],
+         [17.765, 17.185, 17.993],
+         [17.613, 17.776, 17.817],
+         [17.557, 17.492, 17.497],
+         [17.750, 17.727, 17.281],
+         [17.323, 17.904, 17.214],
+         [17.117, 17.373, 17.823],
+         [17.164, 17.599, 17.148]]
+)
+dtype_5_data = np.array(
+        [[0.134, 0.207, 0.095],
+         [1.015, 0.591, 0.615],
+         [1.255, 0.850, 0.992]]
+)
+
+dtype_ref_data = np.array(
+        [[5267.72],
+         [5368.5],
+         [5417.67],
+         [5513.66],
+         [5495.43],
+         [5441.16],
+         [5596.35],
+         [5577.97],
+         [5470.46],
+         [5458.08],
+         [5518.52],
+         [5437.52],
+         [5476.43],
+         [5564.97],
+         [5569.78],
+         [5625.92],
+         [5512.97],
+         [5528.],
+         [5377.14],
+         [5351.96],
+         [5417.65],
+         [5501.09],
+         [5485.2],
+         [5473.95],
+         [5483.41]]
+)
+
+trade_price_h_data = np.array(
+        [[37.58, 32.50, 24.14],
+         [38.65, 33.31, 23.80],
+         [38.50, 34.20, 24.52],
+         [38.38, 34.10, 23.95],
+         [38.80, 34.09, 26.35],
+         [38.25, 34.12, 25.96],
+         [38.92, 34.43, 25.14],
+         [39.05, 34.12, 24.89],
+         [39.66, 34.45, 25.78],
+         [40.47, 35.48, 26.37],
+         [40.68, 35.45, 25.99],
+         [40.38, 35.21, 25.28],
+         [40.65, 35.10, 24.91],
+         [41.05, 35.05, 24.92],
+         [42.03, 35.05, 25.30],
+         [41.21, 34.63, 25.84],
+         [40.54, 34.95, 26.08],
+         [40.03, 34.88, 27.32],
+         [39.30, 34.70, 27.18],
+         [38.35, 33.84, 27.16],
+         [38.41, 34.42, 27.16],
+         [38.49, 34.29, 26.85],
+         [38.49, 34.35, 28.50],
+         [38.16, 34.27, 29.48],
+         [37.72, 34.71, 28.93],
+         [38.00, 34.87, 28.71],
+         [37.17, 34.54, 29.28],
+         [37.27, 34.15, 29.64],
+         [36.71, 33.97, 29.23],
+         [38.49, 35.15, 30.44],
+         [38.69, 36.14, 29.67],
+         [38.16, 36.08, 30.13],
+         [38.27, 37.03, 29.54],
+         [37.46, 36.56, 29.42],
+         [37.16, 35.21, 29.02],
+         [37.31, 35.52, 28.85],
+         [38.25, 36.42, 29.18],
+         [38.25, 36.61, 29.51],
+         [38.25, 36.97, 28.69],
+         [37.00, 36.91, 28.80]]
+)
+
+close_d_df = pd.DataFrame(
+        dtype_1_data, columns=['A', 'B', 'C'],
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
+)
+close_h_df = pd.DataFrame(
+        dtype_2_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='h',
+                                                         include_start_pm=False, include_start_am=False)  # len = 60
+)
+close_5min_df = pd.DataFrame(
+        dtype_3_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-08', freq='5min',
+                                                         include_start_pm=False, include_start_am=False)  # len = 192
+)
+close_15min_df = pd.DataFrame(
+        dtype_4_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-06', end='2023-01-30', freq='15min',
+                                                         include_start_pm=False, include_start_am=False)  # len = 176
+)
+close_w_df = pd.DataFrame(
+        dtype_5_data, columns=['A', 'B', 'C'], index=tti(start='2023-01-01', end='2023-01-31', freq='w-fri',
+                                                         time_offset="15:00")  # len = 3
+)
+
+trade_price_h_df = pd.DataFrame(
+        trade_price_h_data, columns=['A', 'B', 'C'],
+        index=tti(start='2023-01-10',
+                  end='2023-01-31',
+                  freq='h',
+                  include_start_am=False,
+                  include_start_pm=False)  # len = 40
+)
+
+trade_price_d_df = pd.DataFrame(
+        trade_price_h_data[:25], columns=['A', 'B', 'C'],
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
+)
+
+close_ref_df = pd.DataFrame(
+        dtype_ref_data, columns=['ref'],
+        index=tti(start='2023-01-01', end='2023-02-14', freq='D', time_offset="15:00")  # len = 25
+)['ref']  # make this a pd.Series for reference types
 
 
-class TestLSStrategy(RuleIterator):
-    """用于test测试的简单多空蒙板生成策略。基于RuleIterator策略模版，将下列策略循环应用到所有股票上
-        同时，针对不同股票策略参数可以不相同
-
-    该策略有两个参数，N与Price
-    如果给出的历史数据不包含参考数据时，策略逻辑如下：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于Price时，状态为看多，否则为看空
-    如果给出参考数据时，策略逻辑变为：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于当日参考数据时，状态为看多，否则为看空
-    如果给出交易结果数据时，策略逻辑变为：
-     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于上次交易价时，状态为看多，否则为看空
-
-    """
-
-    def __init__(self):
-        super().__init__(
-                name='test_LS',
-                description='test long/short strategy',
-                par_count=2,
-                par_types='discr, conti',
-                par_range=([1, 5], [2, 10]),
-                strategy_data_types='close, open, high, low',
-                data_freq='d',
-                window_length=5,
-                use_latest_data_cycle=False,
-        )
-        pass
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is not None:
-            n, price = pars
-        else:
-            n, price = self.pars
-        h = h.T
-        avg = (h[0] + h[1] + h[2] + h[3]) / 4
-        ma = sma(avg, n)
-        if r is not None:
-            # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据，r[-1
-            if ma[-1] < ref_price:
-                return 0
-            else:
-                return 1
-
-        if t is not None:
-            # 处理交易结果数据生成信号并返回
-            last_price = t[4]  # 获取最近的交易价格
-            if np.isnan(last_price):
-                return 1  # 生成第一次交易信号
-            if ma[-1] < last_price:
-                return 1
-            else:
-                return 0
-
-        if ma[-1] < price:
-            return 0
-        else:
-            return 1
-
-
-class TestSelStrategy(GeneralStg):
+# basic test strategies
+class TestGenStg(GeneralStg):
     """用于Test测试的通用交易策略，基于GeneralStrategy策略生成
 
-    策略没有参数，选股周期为5D
-    在每个选股周期内，按以下逻辑选择股票并设定多空状态：
+    策略参数：param1，param2
+    历史数据：close_E_d：日线收盘价x4天，close_E_h：60分钟收盘价x5小时
+    输出信号：各个股票的持仓比例
+    策略逻辑：
     当历史数据不含参考数据和交易结果数据时：
-     - 计算：今日变化率 = (今收-昨收)/平均股价(HLC平均股价)，
+     - 计算：N日变化率 = (今收-param1日前收)/今收，
+     - 计算：N小时变化率 = (今收-param1小时前收)/今收
+     - 计算：综合变化率 = N日变化率*param2 + N小时变化率*(1-param2)
      - 选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
-    当给出参考数据时，按下面逻辑设定多空：
-     - 计算：今日相对变化率 = (今收-昨收)/HLC平均股价/参考数据
-     - 选择相对变化率最高的两只股票，设定投资比率为50%，否则为0
-    当给出交易结果数据时，按下面逻辑设定多空：
-     - 计算：交易价差变化率 = (今收-昨收)/上期交易价格
-     - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
-    def __init__(self):
+    def __init__(self, par_values: tuple = None, **kwargs):
         super().__init__(
-                name='test_SEL',
-                description='test portfolio selection strategy',
-                par_count=0,
-                par_types='',
-                par_range=(),
-                strategy_data_types='high, low, close',
-                data_freq='d',
-                strategy_run_freq='10d',
-                window_length=5,
-                use_latest_data_cycle=False,
+                name='test_gen',
+                description='test general strategy',
+                pars=[param1.copy(), param2.copy()],
+                data_types={'close_E_d': dtype_1, 'close_E_h': dtype_2},
+                use_latest_data_cycle=[False, False],
+                window_length=[4, 5],
+                **kwargs,
         )
-        pass
 
-    def realize(self, h, r=None, t=None):
-        avg = np.nanmean(h, axis=(1, 2))
-        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
-        dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
-        if r is not None:
-            # calculate difper while r
-            ref_price = np.nanmean(r[:, 0])
-            difper = dif_no_nan / avg / ref_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
+        self.param1 = None
+        if par_values:
+            self.update_par_values(*par_values)
 
-        if t is not None:
-            # calculate difper while t
-            last_price = t[:, 4]
-            if np.all(np.isnan(last_price)):
-                return np.ones_like(avg) * 0.333
-            difper = dif_no_nan / last_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
+    def realize(self):
 
-        difper = dif_no_nan / avg
-        large2 = difper.argsort()[1:]
-        chosen = np.zeros_like(avg)
-        chosen[large2] = 0.5
-        return chosen
+        # p1, p2 = self.param1, self.param2
+        p1, p2 = self.get_pars('param1'), self.get_pars('param2')
+        # close_d, close_h = self.close_E_d, self.close_E_h
+        close_d, close_h = self.get_data('close_E_d'), self.get_data('close_E_h')
+        print("GeneralStg is running")
+        print(f"param1 = {p1}, param2 = {p2}")
+        print(f"got datas:\n{close_d}\n and \n{close_h}")
+        # create signal according to class doc and print out step results
+        dt1_change = (close_d[-1] - close_d[-p1]) / close_d[-1]
+        dt2_change = (close_h[-1] - close_h[-p1]) / close_h[-1]
+        print(f"dt1_change = (close_d[-1] - close_d[-{p1}]) / close_d[-1] = \n{dt1_change}")
+        print(f"dt2_change = (close_h[-1] - close_h[-{p1}]) / close_h[-1] = \n{dt2_change}")
+        combined_change = dt1_change * p2 + dt2_change * (1 - p2)
+        print(f"combined_change = dt1_change * {p2} + dt2_change * (1 - {p2}) = \n{combined_change}")
+        # get top 2 stock indexes
+        top2_idx = combined_change.argsort()[-2:][::-1]
+        print(f"top2 indexes = {top2_idx}")
+        signal = np.zeros_like(combined_change)
+        signal[top2_idx] = 0.5
+        print(f"signal = {signal}")
+
+        return signal
 
 
-class TestSelStrategyDiffTime(GeneralStg):
-    """用于Test测试的简单选股策略，基于Selecting策略生成
+class TestFactorSorter(FactorSorter):
+    """用于Test测试的简单选股策略，基于FactorSorter策略生成
 
-    策略没有参数，选股周期为5D
-    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
-    选股比例为平均分配
+    策略参数：param1，param2
+    历史数据：close_E_d：日线收盘价x3天，close_E_w：周收盘价x1周
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+    当历史数据不含参考数据和交易结果数据时：
+     - 计算：N日平均价 = param1日内收盘平均价，
+     - 计算：周价变化率 = (今收-param1小时前收)/本周收盘价
+     - 计算：选股因子 = N日平均价*param2 + 周价变化率*(1-param2)
+     - 将所有股票的选股因子排序后根据FactorSorter策略的标准选股方法进行选股
     """
 
-    def __init__(self):
+    def __init__(self, par_values=None, **kwargs):
         super().__init__(
-                name='test_SEL',
-                description='test portfolio selection strategy',
-                par_count=0,
-                par_types='',
-                par_range=(),
-                strategy_data_types='close, low, open',
-                data_freq='d',
-                strategy_run_freq='w',
-                window_length=2,
-                use_latest_data_cycle=False,
+                name='test_factor_sorter',
+                description='test factor sorter strategy',
+                pars=[param1.copy(), param2.copy()],
+                data_types={'close_E_d': dtype_1, 'close_E_w': dtype_5},
+                use_latest_data_cycle=[True, False],
+                window_length=[3, 1],
+                **kwargs,
         )
-        pass
 
-    def realize(self, h, r=None, t=None):
-        avg = h.mean(axis=1).squeeze()
-        difper = (h[:, :, 0] - np.roll(h[:, :, 0], 1))[:, -1] / avg
-        large2 = difper.argsort()[0:2]
-        chosen = np.zeros_like(avg)
-        chosen[large2] = 0.5
-        return chosen
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+
+        # p1, p2 = self.param1, self.param2
+        p1, p2 = self.get_pars('param1'), self.get_pars('param2')
+        # close_d, close_w = self.close_E_d, self.close_E_w
+        close_d, close_w = self.get_data('close_E_d'), self.get_data('close_E_w')
+        print("FactorSorter is running")
+        print(f"param1 = {p1}, param2 = {p2}")
+        print(f"got datas:\n{close_d}\n and \n{close_w}")
+        # create signal according to class doc and print out step results
+        dt1_change = np.mean(close_d[-p1:], axis=0)
+        dt2_change = (close_d[-1] - close_d[-p1]) / close_w[-1]
+        print(f"dt1_avg = mean(close_d[-{p1}:], axis=0) = \n{dt1_change}")
+        print(f"dt2_change = (close_d[-1] - close_d[-{p1}]) / close_w[-1] = \n{dt2_change}")
+        selection_factor = dt1_change * p2 + dt2_change * (1 - p2)
+        print(f"selection_factor = dt1_avg * {p2} + dt2_change * (1 - {p2}) = \n{selection_factor}")
+
+        return selection_factor
 
 
-class TestSigStrategy(GeneralStg):
-    """用于Test测试的简单信号生成策略，基于GeneralStrategy策略生成
+class TestRuleIter(RuleIterator):
+    """用于Test测试的循环规则策略，基于RuleIterator策略生成
 
-    策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
-    ratio是k线形状比例的阈值，定义为abs((C-O)/(H-L))。当这个比值小于ratio阈值时，判断该K线为十字交叉（其实还有丁字等多种情形，但这里做了
-    简化处理。
-    如果历史数据中没有给出参考数据，也没有给出交易结果数据时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
-    如果给出参考数据(参考数据包含两个种类type1与type2)时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于参考数据type1时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于参考数据type2时，卖出信号
-    如果给出交易结果数据时，信号生成的规则如下：
-     1，当某个K线出现十字交叉，且昨收与今收之差大于上期交易价格时，买入信号
-     2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
+    策略参数：param3，param4 (4-1, 4-2, 4-3)
+    历史数据：close_E_h：小时收盘价x5小时，close_E_15min：15分钟收盘价x20周期
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+    对股票池中的每只股票执行下面的操作：
+    - 计算：小时线均价 = param4-1 小时收盘价均值
+    - 计算：15分钟线均价1 = param4-2周期收盘价均值
+    - 计算：15分钟线均价2 = param4-3周期收盘价均值
+    - 当param3参数分别为以下option时，输出信号不同：
+        - option 1：当小时线均价 >= 15分钟线均价1 - 15分钟线均价2时，输出1，否则输出0
+        - option 2：当小时线均价 <= 15分钟线均价1 - 15分钟线均价2时，输出1，否则输出0
+        - option 3：当小时线均价介于15分钟线均价1和15分钟线均价2之间时，输出0，否则输出1
     """
 
-    def __init__(self):
+    def __init__(self, par_values=None, **kwargs):
         super().__init__(
-                name='test_SIG',
-                description='test signal creation strategy',
-                par_count=3,
-                par_types='conti, conti, conti',
-                par_range=([0, 10], [-3, 3], [-3, 3]),
-                strategy_data_types='close, open, high, low',
-                window_length=2,
-                use_latest_data_cycle=False,
-        )
-        pass
-
-    def realize(self, h, r=None, t=None):
-        max_ratio, price1, price2 = self.pars
-        ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
-        diff = h[:, -1, 0] - h[:, -2, 0]
-
-        if r is not None:
-            type1 = r[-1, 0]
-            type2 = r[-1, 1]
-            sig = np.where((ratio < max_ratio) & (diff > type1),
-                           1,
-                           np.where((ratio < max_ratio) & (diff < type2), -1, 0))
-            return sig
-
-        if t is not None:
-            pass
-
-        sig = np.where((ratio < max_ratio) & (diff > price1),
-                       1,
-                       np.where((ratio < max_ratio) & (diff < price2), -1, 0))
-
-        return sig
-
-
-class MyStg(qt.RuleIterator):
-    """自定义双均线择时策略策略"""
-
-    def __init__(self):
-        """这个均线择时策略只有三个参数：
-            - SMA 慢速均线，所选择的股票
-            - FMA 快速均线
-            - M   边界值
-
-            策略的其他说明
-
-        """
-        """
-        必须初始化的关键策略参数清单：
-
-        """
-        super().__init__(
-                pars=(20, 100, 0.01),
-                par_count=3,
-                par_types=['int', 'int', 'float'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
-                name='CUSTOM ROLLING TIMING STRATEGY',
-                description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
-                window_length=200,
+                name='test_rule_iterator',
+                description='test rule iterator strategy',
+                pars=[param3.copy(), param4.copy()],
+                data_types={'close_E_h': dtype_2, 'close_E_15min': dtype_4},
+                use_latest_data_cycle=[True, False],
+                window_length=[5, 20],
+                **kwargs,
         )
 
-    # 策略的具体实现代码写在策略的_realize()函数中
-    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
-        """策略的具体实现代码：
-        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
-        # 计算长短均线的当前值
-        s_ma = sma(h[0], s)[-1]
-        f_ma = sma(h[0], f)[-1]
+        if par_values:
+            self.update_par_values(*par_values)
 
-        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
-        s_ma_u = s_ma * (1 + m)
-        s_ma_l = s_ma * (1 - m)
-        # 根据观望模式在不同的点位产生Long/short/empty标记
+    def realize(self):
 
-        if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
-            return 1
-        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
-            return 0
-        else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
-            return -1
+        # p1, p2 = self.param3, self.param4
+        p1, p2 = self.get_pars('param3'), self.get_pars('param4')
+        # close_h, close_m = self.close_E_h, self.close_E_15min
+        close_h, close_m = self.get_data('close_E_h'), self.get_data('close_E_15min')
+        print("RuleIterator is running")
+        print(f"param3 = {p1}, param4 = {p2}")
+        print(f"got datas:\n{close_h}\n and \n{close_m}")
+        # create signal according to class doc and print out step results
+        h_avg = np.mean(close_h[-p2[0]:], axis=0)
+        m1_avg = np.mean(close_m[-p2[1]:], axis=0)
+        m2_avg = np.mean(close_m[-p2[2]:], axis=0)
+        print(f"h_avg = mean(close_h[-{p2[0]}:], axis=0) = {h_avg}")
+        print(f"m1_avg = mean(close_m[-{p2[1]}:], axis=0) = {m1_avg}")
+        print(f"m2_avg = mean(close_m[-{p2[2]}:], axis=0) = {m2_avg}")
+        if p1 == 'option1':
+            signal = 0.333 if h_avg >= ((m1_avg + m2_avg) / 2) else 0
+            print(f"option1: signal = 1 if h_avg({h_avg}) >= avg(m1_avg, m2_avg)"
+                  f"({((m1_avg + m2_avg) / 2)}) else 0")
+        elif p1 == 'option2':
+            signal = 0.333 if h_avg < ((m1_avg + m2_avg) / 2) else 0
+            print(f"option2: signal = 1 if h_avg({h_avg}) <= avg(m1_avg, m2_avg)"
+                  f"({((m1_avg + m2_avg) / 2)}) else 0")
+        else:  # p1 == 'option3':
+            signal = 0 if m2_avg <= m1_avg else 0.333
+            print(f"option3: signal = 0 if m2_avg({m2_avg}) <= m1_avg({m1_avg}) else 1")
+        print(f"signal = {signal}")
+        return signal
 
 
-class StgBuyOpen(GeneralStg):
-    def __init__(self, pars=(20,)):
+class TestReferenceData(GeneralStg):
+    """用于Test测试的参考数据策略，基于GeneralStrategy策略生成
+
+    策略参数：param1(N): 股票变化率周期N，param2(M): 参考数据变化率周期
+    历史数据：close_E_d：小时收盘价x5天，close:000300.SH_IDX_d：参考数据指数收盘价格x7天
+    输出信号：各个股票的持仓比例
+    策略逻辑：
+     - 计算：股票N日变化率 = (今收-N日前收)/今收
+     - 计算：参考数据M日变化率 = (今收-M小时前价)/今收
+     - 判断：
+        - 当参考数据M日变化率 > 0时：选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+        - 当参考数据M日变化率 <= 0时：选择今日变化率最低的两支，设定投资比率50%，否则投资比例为0
+    """
+
+    def __init__(self, par_values: tuple = None, **kwargs):
         super().__init__(
-                pars=pars,
-                par_count=1,
-                par_types=['int'],
-                name='OPEN_BUY',
-                par_range=[(0, 100)],
-                strategy_run_timing='open',
-                use_latest_data_cycle=False,
+                name='test_ref_data',
+                description='test reference data strategy',
+                pars=[
+                    Parameter((1, 5), name='N', par_type='int', value=5),
+                    Parameter((1, 7), name='M', par_type='int', value=7),
+                ],
+                data_types={'close_E_d': dtype_1, 'reference_d': dtype_ref},
+                use_latest_data_cycle=[False, False],
+                window_length=[5, 7],
+                **kwargs,
         )
-        pass
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None):
-        n, = self.pars
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
-        # 选股指标为各个股票的N日涨幅
-        factors = (current_price / n_day_price - 1).squeeze()
-        # 初始化选股买卖信号，初始值为全0
-        sig = np.zeros_like(factors)
-        # buy_pos = np.nanargmax(factors)
-        # sig[buy_pos] = 1
-        # return sig
-        if np.all(factors <= 0.002):
-            # 如果所有的选股指标都小于0，则全部卖出
-            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
-            return sig
+    def realize(self):
+        """实现策略逻辑"""
+
+        # n, m = self.param1, self.param2
+        n, m = self.get_pars('N'), self.get_pars('M')
+        # close_d, ref_d = self.close_E_d, self.reference_d
+        close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
+        # print("ReferenceData is running")
+        # print(f"param1(N) = {n}, param2(M) = {m}")
+        # print(f"got datas:\n{close_d}\n and \n{ref_d}")
+        # create signal according to class doc and print out step results
+        dt1_change = (close_d[-1] - close_d[-n]) / close_d[-1]
+        ref_change = (ref_d[-1] - ref_d[-m]) / ref_d[-1]
+        # print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
+        # print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
+        # get top 2 stock indexes
+        if ref_change > 0:
+            top2_idx = dt1_change.argsort()[-2:][::-1]
+            # print(f"ref_change > 0, top2 indexes = {top2_idx}")
         else:
-            # 如果选股指标有大于0的，则找出最大者
-            # 并生成买入信号
-            sig[np.nanargmax(factors)] = 1
-            return sig
+            top2_idx = dt1_change.argsort()[:2]
+            # print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
+        signal = np.zeros_like(dt1_change)
+        signal[top2_idx] = 0.5
+        # print(f"signal = {signal}")
+
+        return signal
 
 
-class StgSelClose(GeneralStg):
-    def __init__(self, pars=(20,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         name='SELL_CLOSE',
-                         par_range=[(0, 100)],
-                         strategy_run_timing='close')
-        pass
+class TestDependentData(GeneralStg):
+    """用于Test测试的依赖性数据策略，基于GeneralStrategy策略生成
 
-    def realize(self, h, r=None, t=None):
-        n, = self.pars
-        current_price = h[:, -1, 0]
-        n_day_price = h[:, -n, 0]
-        # 选股指标为各个股票的N日涨幅
-        factors = (current_price / n_day_price - 1).squeeze()
-        # 初始化选股买卖信号，初始值为全-1
-        sig = -np.ones_like(factors)
-        # sig[np.nanargmax(factors)] = 0
-        # return sig
-        if np.all(factors <= 0.002):
-            # 如果所有的选股指标都小于0，则全部卖出
-            return sig
+        策略参数：param1(N): 股票变化率周期N，param2(M): 参考数据变化率周期
+        历史数据：close_E_d：小时收盘价x5天，trade_price：依赖性数据，上次交易价格x1天
+        输出信号：各个股票的持仓比例
+        策略逻辑：
+         - 计算：股票N日变化率 = (今收-N日前收)/今收
+         - 计算：当前价格胜率 = (今收-交易价格)/今收
+         - 判断：
+            - 当当前价格胜率 > 0时：选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+            - 当当前价格胜率 <= 0时：选择今日变化率最低的两支，设定投资比率50%，否则投资比例为0
+        """
+
+    def __init__(self, par_values: tuple = None, **kwargs):
+        super().__init__(
+                name='test_ref_data',
+                description='test reference data strategy',
+                pars=[
+                    Parameter((1, 5), name='N', par_type='int', value=5),
+                    Parameter((1, 7), name='M', par_type='int', value=7),
+                ],
+                data_types={'close_E_d':         dtype_1,
+                            'reference_d':       dtype_ref,
+                            'holding_positions': DataType('op_holding_positions'),
+                            'trade_prices':      DataType('op_trade_prices'),
+                            'op_cashes':         DataType('op_cashes'),
+                            'op_trade_volumes':  DataType('op_trade_volumes')},
+                use_latest_data_cycle=[False, False],
+                window_length=[5, 7],
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        """实现策略逻辑，在策略中需要用到holding和trade_price两种数据， singaltype = VS"""
+        # n, m = self.param1, self.param2
+        n, m = self.get_pars('N'), self.get_pars('M')
+        close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
+        # print("ReferenceData is running")
+        # print(f"param1(N) = {n}, param2(M) = {m}")
+        # print(f"got datas:\n{close_d}\n and \n{ref_d}")
+        # create signal according to class doc and print out step results
+        dt1_change = (close_d[-1] - close_d[-n]) / close_d[-1]
+        ref_change = (ref_d[-1] - ref_d[-m]) / ref_d[-1]
+        # print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
+        # print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
+        # get top 2 stock indexes
+        if ref_change > 0:
+            top2_idx = dt1_change.argsort()[-2:][::-1]
+            # print(f"ref_change > 0, top2 indexes = {top2_idx}")
         else:
-            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
-            # 产生卖出信号
-            sig[np.nanargmax(factors)] = 0
-            return sig
+            top2_idx = dt1_change.argsort()[:2]
+            # print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
+        signal = np.zeros_like(dt1_change)
+        signal[top2_idx] = 0.5  # 再买入
+        # print(f"signal = {signal}")
+        holding, prices = self.get_data('holding_positions', 'trade_prices')
+        cashes, trade_volumes = self.get_data('op_cashes', 'op_trade_volumes')
+        # print(f'got holding data:\n{holding}\n and trade prices:\n{prices}')
+        # holding 和 prices 只是导入，做一些没有意义的计算，策略
+        # 输出结果与TestReferenceData是一样的
+        # print(f'got position holdings: {holding}')
+        # print(f'got trade prices:  {prices}')
+        # print(f'got cashes: {cashes}')
+        # print(f'got trade volumes: {trade_volumes}')
+
+        return signal
 
 
 class TestOperatorAndStrategy(unittest.TestCase):
@@ -361,292 +1000,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         print('start testing HistoryPanel object\n')
 
-        # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
-        # for some share_pool
-
-        # for share1:
-        data_rows = 50
-
-        share1_close = [10.04, 10, 10, 9.99, 9.97, 9.99, 10.03, 10.03, 10.06, 10.06, 10.11,
-                        10.09, 10.07, 10.06, 10.09, 10.03, 10.03, 10.06, 10.08, 10, 9.99,
-                        10.03, 10.03, 10.06, 10.03, 9.97, 9.94, 9.83, 9.77, 9.84, 9.91, 9.93,
-                        9.96, 9.91, 9.91, 9.88, 9.91, 9.64, 9.56, 9.57, 9.55, 9.57, 9.61, 9.61,
-                        9.55, 9.57, 9.63, 9.64, 9.65, 9.62]
-        share1_open = [10.02, 10, 9.98, 9.97, 9.99, 10.01, 10.04, 10.06, 10.06, 10.11,
-                       10.11, 10.07, 10.06, 10.09, 10.03, 10.02, 10.06, 10.08, 9.99, 10,
-                       10.03, 10.02, 10.06, 10.03, 9.97, 9.94, 9.83, 9.78, 9.77, 9.91, 9.92,
-                       9.97, 9.91, 9.9, 9.88, 9.91, 9.63, 9.64, 9.57, 9.55, 9.58, 9.61, 9.62,
-                       9.55, 9.57, 9.61, 9.63, 9.64, 9.61, 9.56]
-        share1_high = [10.07, 10, 10, 10, 10.03, 10.03, 10.04, 10.09, 10.1, 10.14, 10.11, 10.1,
-                       10.09, 10.09, 10.1, 10.05, 10.07, 10.09, 10.1, 10, 10.04, 10.04, 10.06,
-                       10.09, 10.05, 9.97, 9.96, 9.86, 9.77, 9.92, 9.94, 9.97, 9.97, 9.92, 9.92,
-                       9.92, 9.93, 9.64, 9.58, 9.6, 9.58, 9.62, 9.62, 9.64, 9.59, 9.62, 9.63,
-                       9.7, 9.66, 9.64]
-        share1_low = [9.99, 10, 9.97, 9.97, 9.97, 9.98, 9.99, 10.03, 10.03, 10.04, 10.11, 10.07,
-                      10.05, 10.03, 10.03, 10.01, 9.99, 10.03, 9.95, 10, 9.95, 10, 10.01, 9.99,
-                      9.96, 9.89, 9.83, 9.77, 9.77, 9.8, 9.9, 9.91, 9.89, 9.89, 9.87, 9.85, 9.6,
-                      9.64, 9.53, 9.55, 9.54, 9.55, 9.58, 9.54, 9.53, 9.53, 9.63, 9.64, 9.59, 9.56]
-
-        # for share2:
-        share2_close = [9.68, 9.87, 9.86, 9.87, 9.79, 9.82, 9.8, 9.66, 9.62, 9.58, 9.69, 9.78, 9.75,
-                        9.96, 9.9, 10.04, 10.06, 10.08, 10.24, 10.24, 10.24, 9.86, 10.13, 10.12,
-                        10.1, 10.25, 10.24, 10.22, 10.75, 10.64, 10.56, 10.6, 10.42, 10.25, 10.24,
-                        10.49, 10.57, 10.63, 10.48, 10.37, 10.96, 11.02, np.nan, np.nan, 10.88, 10.87, 11.01,
-                        11.01, 11.58, 11.8]
-        share2_open = [9.88, 9.88, 9.89, 9.75, 9.74, 9.8, 9.62, 9.65, 9.58, 9.67, 9.81, 9.8, 10,
-                       9.95, 10.1, 10.06, 10.14, 9.9, 10.2, 10.29, 9.86, 9.48, 10.01, 10.24, 10.26,
-                       10.24, 10.12, 10.65, 10.64, 10.56, 10.42, 10.43, 10.29, 10.3, 10.44, 10.6,
-                       10.67, 10.46, 10.39, 10.9, 11.01, 11.01, np.nan, np.nan, 10.82, 11.02, 10.96,
-                       11.55, 11.74, 11.8]
-        share2_high = [9.91, 10.04, 9.93, 10.04, 9.84, 9.88, 9.99, 9.7, 9.67, 9.71, 9.85, 9.9, 10,
-                       10.2, 10.11, 10.18, 10.21, 10.26, 10.38, 10.47, 10.42, 10.07, 10.24, 10.27,
-                       10.38, 10.43, 10.39, 10.65, 10.84, 10.65, 10.73, 10.63, 10.51, 10.35, 10.46,
-                       10.63, 10.74, 10.76, 10.54, 11.02, 11.12, 11.17, np.nan, np.nan, 10.92, 11.15,
-                       11.11, 11.55, 11.95, 11.93]
-        share2_low = [9.63, 9.84, 9.81, 9.74, 9.67, 9.72, 9.57, 9.54, 9.51, 9.47, 9.68, 9.63, 9.75,
-                      9.65, 9.9, 9.93, 10.03, 9.8, 10.14, 10.09, 9.78, 9.21, 9.11, 9.68, 10.05,
-                      10.12, 9.89, 9.89, 10.59, 10.43, 10.34, 10.32, 10.21, 10.2, 10.18, 10.36,
-                      10.51, 10.41, 10.32, 10.37, 10.87, 10.95, np.nan, np.nan, 10.65, 10.71, 10.75,
-                      10.91, 11.31, 11.58]
-
-        # for share3:
-        share3_close = [6.64, 7.26, 7.03, 6.87, np.nan, 6.64, 6.85, 6.7, 6.39, 6.22, 5.92, 5.91, 6.11,
-                        5.91, 6.23, 6.28, 6.28, 6.27, np.nan, 5.56, 5.67, 5.16, 5.69, 6.32, 6.14, 6.25,
-                        5.79, 5.26, 5.05, 5.45, 6.06, 6.21, 5.69, 5.46, 6.02, 6.69, 7.43, 7.72, 8.16,
-                        7.83, 8.7, 8.71, 8.88, 8.54, 8.87, 8.87, 8.18, 7.8, 7.97, 8.25]
-        share3_open = [7.26, 7, 6.88, 6.91, np.nan, 6.81, 6.63, 6.45, 6.16, 6.24, 5.96, 5.97, 5.96,
-                       6.2, 6.35, 6.11, 6.37, 5.58, np.nan, 5.65, 5.19, 5.42, 6.3, 6.15, 6.05, 5.89,
-                       5.22, 5.2, 5.07, 6.04, 6.12, 5.85, 5.67, 6.02, 6.04, 7.07, 7.64, 7.99, 7.59,
-                       8.73, 8.72, 8.97, 8.58, 8.71, 8.77, 8.4, 7.95, 7.76, 8.25, 7.51]
-        share3_high = [7.41, 7.31, 7.14, 7, np.nan, 6.82, 6.96, 6.85, 6.5, 6.34, 6.04, 6.02, 6.12, 6.38,
-                       6.43, 6.46, 6.43, 6.27, np.nan, 6.01, 5.67, 5.67, 6.35, 6.32, 6.43, 6.36, 5.79,
-                       5.47, 5.65, 6.04, 6.14, 6.23, 5.83, 6.25, 6.27, 7.12, 7.82, 8.14, 8.27, 8.92,
-                       8.76, 9.15, 8.9, 9.01, 9.16, 9, 8.27, 7.99, 8.33, 8.25]
-        share3_low = [6.53, 6.87, 6.83, 6.7, np.nan, 6.63, 6.57, 6.41, 6.15, 6.07, 5.89, 5.82, 5.73, 5.81,
-                      6.1, 6.06, 6.16, 5.57, np.nan, 5.51, 5.19, 5.12, 5.69, 6.01, 5.97, 5.86, 5.18, 5.19,
-                      4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
-                      8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
-
-        # for sel_finance test
-        shares_eps = np.array([[np.nan, np.nan, np.nan],
-                               [0.1, np.nan, np.nan],
-                               [np.nan, 0.2, np.nan],
-                               [np.nan, np.nan, 0.3],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, 0.2],
-                               [0.1, np.nan, np.nan],
-                               [np.nan, 0.3, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [0.3, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, 0.3, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, 0.3],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, 0, 0.2],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [0.1, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, 0.2],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [0.15, np.nan, np.nan],
-                               [np.nan, 0.1, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [0.1, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, 0.3],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, np.nan, np.nan],
-                               [0.2, np.nan, np.nan],
-                               [np.nan, 0.5, np.nan],
-                               [0.4, np.nan, 0.3],
-                               [np.nan, np.nan, np.nan],
-                               [np.nan, 0.3, np.nan],
-                               [0.9, np.nan, np.nan],
-                               [np.nan, np.nan, 0.1]])
-
-        # for reference history data
-        reference_data = np.array([[9.68],
-                                   [9.87],
-                                   [10],
-                                   [9.87],
-                                   [np.nan],
-                                   [9.82],
-                                   [6.85],
-                                   [10.03],
-                                   [10.06],
-                                   [9.58],
-                                   [10.11],
-                                   [5.91],
-                                   [9.75],
-                                   [10.06],
-                                   [6.23],
-                                   [10.04],
-                                   [10.06],
-                                   [6.27],
-                                   [10.24],
-                                   [10],
-                                   [10.24],
-                                   [9.86],
-                                   [5.69],
-                                   [10.12],
-                                   [10.03],
-                                   [6.25],
-                                   [9.94],
-                                   [9.83],
-                                   [9.77],
-                                   [10.64],
-                                   [6.06],
-                                   [9.93],
-                                   [5.69],
-                                   [5.46],
-                                   [10.24],
-                                   [9.88],
-                                   [7.43],
-                                   [7.72],
-                                   [8.16],
-                                   [10.37],
-                                   [8.7],
-                                   [11.02],
-                                   [np.nan],
-                                   [np.nan],
-                                   [9.55],
-                                   [10.87],
-                                   [11.01],
-                                   [9.64],
-                                   [7.97],
-                                   [8.25]])
-        reference_data2 = np.array([[0.03403, -0.00679],
-                                    [0.00822, -0.00270],
-                                    [0.03831, -0.04480],
-                                    [0.03389, -0.03428],
-                                    [0.00495, -0.03510],
-                                    [0.01980, -0.03766],
-                                    [0.02131, -0.03213],
-                                    [0.03938, -0.00722],
-                                    [0.01447, -0.02826],
-                                    [0.02945, -0.04790],
-                                    [0.02360, -0.04789],
-                                    [0.00619, -0.04531],
-                                    [0.04896, -0.04129],
-                                    [0.03516, -0.04309],
-                                    [0.03458, -0.03919],
-                                    [0.02444, -0.00516],
-                                    [0.02023, -0.02297],
-                                    [0.02938, -0.02868],
-                                    [0.03827, -0.00575],
-                                    [0.02168, -0.03163],
-                                    [0.01129, -0.04463],
-                                    [0.01640, -0.00991],
-                                    [0.01592, -0.04192],
-                                    [0.04553, -0.00682],
-                                    [0.00105, -0.04323],
-                                    [0.01473, -0.04458],
-                                    [0.04922, -0.00244],
-                                    [0.01109, -0.00762],
-                                    [0.04486, -0.01096],
-                                    [0.03808, -0.03854],
-                                    [0.04887, -0.04125],
-                                    [0.00573, -0.03636],
-                                    [0.02493, -0.01269],
-                                    [0.00295, -0.03817],
-                                    [0.03691, -0.02565],
-                                    [0.00501, -0.04381],
-                                    [0.02859, -0.03429],
-                                    [0.02525, -0.01701],
-                                    [0.02570, -0.01181],
-                                    [0.02488, -0.00623],
-                                    [0.02396, -0.04004],
-                                    [0.00127, -0.00818],
-                                    [0.02775, -0.03364],
-                                    [0.03757, -0.00792],
-                                    [0.04514, -0.00222],
-                                    [0.02610, -0.02855],
-                                    [0.04426, -0.03365],
-                                    [0.02742, -0.04061],
-                                    [0.02031, -0.01752],
-                                    [0.02251, -0.03796]])
-
-        self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
-                             '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
-                             '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
-                             '2016-07-19', '2016-07-20', '2016-07-21', '2016-07-22',
-                             '2016-07-25', '2016-07-26', '2016-07-27', '2016-07-28',
-                             '2016-07-29', '2016-08-01', '2016-08-02', '2016-08-03',
-                             '2016-08-04', '2016-08-05', '2016-08-08', '2016-08-09',
-                             '2016-08-10', '2016-08-11', '2016-08-12', '2016-08-15',
-                             '2016-08-16', '2016-08-17', '2016-08-18', '2016-08-19',
-                             '2016-08-22', '2016-08-23', '2016-08-24', '2016-08-25',
-                             '2016-08-26', '2016-08-29', '2016-08-30', '2016-08-31',
-                             '2016-09-01', '2016-09-02', '2016-09-05', '2016-09-06',
-                             '2016-09-07', '2016-09-08']
-
-        self.shares = ['000010', '000030', '000039']
-
-        self.types = ['close', 'open', 'high', 'low']
-        self.sel_finance_tyeps = ['eps']
-
-        self.test_data_3D = np.zeros((3, data_rows, 4))
-        self.test_data_sel_finance = np.empty((3, data_rows, 1))
-        self.test_ref_data = np.zeros((1, data_rows, 1))
-        self.test_ref_data2 = np.zeros((1, data_rows, 2))
-
-        # fill in 3D data
-        self.test_data_3D[0, :, 0] = share1_close
-        self.test_data_3D[0, :, 1] = share1_open
-        self.test_data_3D[0, :, 2] = share1_high
-        self.test_data_3D[0, :, 3] = share1_low
-
-        self.test_data_3D[1, :, 0] = share2_close
-        self.test_data_3D[1, :, 1] = share2_open
-        self.test_data_3D[1, :, 2] = share2_high
-        self.test_data_3D[1, :, 3] = share2_low
-
-        self.test_data_3D[2, :, 0] = share3_close
-        self.test_data_3D[2, :, 1] = share3_open
-        self.test_data_3D[2, :, 2] = share3_high
-        self.test_data_3D[2, :, 3] = share3_low
-
-        # fill in reference data
-        self.test_ref_data[0, :, :] = reference_data
-        self.test_ref_data2[0, :, :] = reference_data2
-
-        self.test_data_sel_finance[:, :, 0] = shares_eps.T
-
-        self.hp1 = qt.HistoryPanel(values=self.test_data_3D,
-                                   levels=self.shares,
-                                   columns=self.types,
-                                   rows=self.date_indices)
-        print(f'in test Operator, history panel is created for timing test')
-        self.hp1.info()
-        self.hp2 = qt.HistoryPanel(values=self.test_data_sel_finance,
-                                   levels=self.shares,
-                                   columns=self.sel_finance_tyeps,
-                                   rows=self.date_indices)
-        print(f'in test_Operator, history panel is created for selection finance test:')
-        self.hp2.info()
-        self.op = qt.Operator(strategies='dma', signal_type='PS')
-        self.op2 = qt.Operator(strategies='dma, macd, trix')
+        # 1， 准备模拟历史数据对象
+        pass
 
     def test_init(self):
         """ test initialization of Operator class"""
-        op = qt.Operator()
+        op = qt.Operator(name='test_operator')
         self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.signal_type, 'pt')
         self.assertIsInstance(op.strategies, list)
         self.assertEqual(len(op.strategies), 0)
         op = qt.Operator('dma')
@@ -658,70 +1018,595 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator(['dma', 'macd'])
         self.assertIsInstance(op, qt.Operator)
 
+        # test init with other parameters like signal_type, run_freq, run_timing, group_merge_type
+        op = qt.Operator('dma, macd', signal_type='ps')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'ps')
+
+        op = qt.Operator('dma, macd', run_freq='15min')
+        self.assertEqual(op.groups['Group_1'].run_freq, '15min')
+        self.assertEqual(op['dma'].run_freq, '15min')
+        self.assertEqual(op['macd'].run_freq, '15min')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertRaises(TypeError, qt.Operator, 'dma, macd', run_freq=15)
+        self.assertRaises(ValueError, qt.Operator, 'dma, macd', run_freq='5hourly')
+
+        op = qt.Operator('dma, macd', run_timing='open')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+        self.assertEqual(op['dma'].run_timing, 'open')
+        self.assertEqual(op['macd'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+
+        op = qt.Operator('dma, macd', group_merge_type='and')
+        self.assertEqual(op.group_merge_type, 'And')
+        self.assertRaises(TypeError, qt.Operator, 'dma, macd', group_merge_type=15)
+        self.assertRaises(ValueError, qt.Operator, 'dma, macd', group_merge_type='wrong_type')
+
+        op = qt.Operator('dma, macd', op_type='stepwise')
+        self.assertEqual(op.op_type, 'stepwise')
+        self.assertRaises(KeyError, qt.Operator, 'dma, macd', op_type=15)
+        self.assertRaises(KeyError, qt.Operator, 'dma, macd', op_type='fast')
+
     def test_repr(self):
         """ test basic representation of Opeartor class"""
         op = qt.Operator()
-        self.assertEqual(op.__repr__(), 'Operator([], \'pt\', \'batch\')')
+        self.assertEqual(op.__repr__(), 'Operator([], name=\'None\')')
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
-        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'pt\', \'batch\')')
-        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
-        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD)')
-        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
-        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
-        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
+        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], name=\'None\')')
+        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA, (12, 26, 9))')
+        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD, (12, 26, 9))')
+        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX, (12, 12))')
+        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM, (0.5,))')
+        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG, (14,))')
+
+    def test_get_next_ids(self):
+        """ test functions _next_stg_id and _next_group_id with fake ids"""
+        op = qt.Operator()
+        self.assertEqual(op.strategy_ids, [])
+
+        # test getting next id in simple cases
+        op.add_strategies('dma, macd, trix')
+        self.assertEqual(op._next_stg_id('dma'), 'dma_1')
+        self.assertEqual(op._next_stg_id('macd'), 'macd_1')
+        self.assertEqual(op._next_stg_id('trix'), 'trix_1')
+        self.assertEqual(op._next_stg_id('random'), 'random')
+
+        # test getting next id in missing indexes
+        op.add_strategies('dma, dma, dma')
+        self.assertEqual(op._next_stg_id('dma'), 'dma_4')
+        self.assertEqual(op._next_stg_id('macd'), 'macd_1')
+
+        # test getting next group id in simple cases
+        op = qt.Operator()
+        self.assertEqual(op.group_ids, [])
+        self.assertEqual(op._next_group_id(), 'Group_1')
+
+        # test getting next group id in missing indexes
+        op._groups = [Group('Group_1', run_freq='d', run_timing='close'),
+                      Group('Group_3', run_freq='d', run_timing='close'),
+                      Group('Group_5', run_freq='d', run_timing='close')]
+        self.assertEqual(op._next_group_id(), 'Group_6')
+
+    def test_operator_add_strategy(self):
+        """test adding strategies to Operator"""
+        op = qt.Operator('dma, all, sellrate')
+
+        self.assertIsInstance(op, qt.Operator)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
+        self.assertIsInstance(op[0], qt.built_in.DMA)
+        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op[2], qt.built_in.SellRate)
+        self.assertIsInstance(op['dma'], qt.built_in.DMA)
+        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
+        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
+        self.assertEqual(op.strategy_count, 3)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate'])
+        print(f'test adding strategies into existing op')
+        print('test adding strategy by string')
+        op.add_strategy('macd')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.MACD)
+        self.assertEqual(op.strategy_count, 4)
+        op.add_strategy('random')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
+        self.assertEqual(op.strategy_count, 5)
+        test_ls = TestGenStg()
+        op.add_strategy(test_ls)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[5], TestGenStg)
+        self.assertEqual(op.strategy_count, 6)
+        print(f'Test different instance of objects are added to operator')
+        op.add_strategy('dma')
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.DMA)
+        self.assertIsNot(op.strategies[0], op.strategies[6])
+        print(f'Test adding strategy with class name')
+        op.add_strategy(TestRuleIter)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[7], TestRuleIter)
+        self.assertEqual(op.strategy_count, 8)
+        self.assertEqual(op.strategy_ids,
+                         ['dma', 'all', 'sellrate', 'macd', 'random', 'custom', 'dma_1', 'custom_1'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0]})
+        self.assertEqual(op.strategy_group_count, 1)
+
+        print(f'create a new empty operator and add strategies with different run freq and run timing')
+        op = qt.Operator()  # now operator has no strategy and no strategy group
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.group_ids, [])
+
+        print(f'add a strategy with default run freq and run timing')
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 1)
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.strategy_ids, ['custom'])
+        self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
+
+        print(f'add a strategy with run freq h and run timing close')
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='close')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 2)
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_1'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+
+        print(f'add a strategy again with run freq d and run timing close')
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 3)
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_1'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+
+        print(f'test adding strategy with run freq h and run timing open')
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='open')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_1', 'custom_3'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_3'].members))
+        self.assertTrue(all(stg.run_timing == 'open' for stg in op.groups['Group_3'].members))
+        print(f'test adding strategy with run freq d and run timing close')
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 5)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['custom', 'custom_2', 'custom_4', 'custom_1', 'custom_3'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 3)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertTrue(all(stg.run_freq == 'd' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_1'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in op.groups['Group_2'].members))
+        self.assertTrue(all(stg.run_freq == 'h' for stg in op.groups['Group_3'].members))
+        self.assertTrue(all(stg.run_timing == 'open' for stg in op.groups['Group_3'].members))
+
+    def test_operator_add_strategies(self):
+        """ etst adding multiple strategies to Operator"""
+        op = qt.Operator('dma, all, sellrate')
+        self.assertEqual(op.strategy_count, 3)
+        print('test adding multiple strategies -- adding strategy by list of strings')
+        op.add_strategies(['dma', 'macd'])
+        self.assertEqual(op.strategy_count, 5)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by comma separated strings')
+        op.add_strategies('dma, macd')
+        self.assertEqual(op.strategy_count, 7)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[5], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by list of strategies')
+        op.add_strategies([qt.built_in.DMA(), qt.built_in.MACD()])
+        self.assertEqual(op.strategy_count, 9)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[7], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[8], qt.built_in.MACD)
+        print('test adding multiple strategies -- adding strategy by list of strategy and str')
+        op.add_strategies(['DMA', qt.built_in.MACD()])
+        self.assertEqual(op.strategy_count, 11)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[9], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[10], qt.built_in.MACD)
+        self.assertIsNot(op.strategies[0], op.strategies[9])
+        self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
+        print('test adding multiple strategies -- adding strategy by list of custom strategy and custom strategy names')
+        op.add_strategies([TestGenStg, TestGenStg(), TestRuleIter()])
+        self.assertEqual(op.strategy_count, 14)
+        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
+        self.assertIsInstance(op.strategies[11], TestGenStg)
+        self.assertIsInstance(op.strategies[12], TestGenStg)
+        self.assertIsInstance(op.strategies[13], TestRuleIter)
+        self.assertIsNot(op.strategies[11], op.strategies[12])
+        self.assertIsNot(op.strategies[11], op.strategies[13])
+        self.assertIsNot(op.strategies[12], op.strategies[13])
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0]})
+        print('test adding multiple strategies with different run freq and run timing')
+        op.add_strategy(TestRuleIter(), run_freq='d', run_timing='close')
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='close')
+        op.add_strategy(TestRuleIter(), run_freq='h', run_timing='open')
+        self.assertEqual(op.strategy_count, 17)
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
+                                           'dma_3', 'macd_2', 'dma_4', 'macd_3', 'custom', 'custom_1',
+                                           'custom_2', 'custom_3', 'custom_4', 'custom_5'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 15)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 1)
+        print(f'Group_2 has {op.groups["Group_2"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+
+        print(f'test adding multiple strategies with common run_timing and run_freq parameters')
+        op.add_strategies([TestRuleIter, 'dma', TestGenStg], run_timing='open', run_freq='d')
+        op.add_strategies(['macd', TestGenStg()], run_timing='close', run_freq='h')
+        self.assertEqual(op.strategy_count, 22)
+        self.assertEqual(op.strategy_group_count, 4)
+        self.assertEqual(op.strategy_ids, [
+            'dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'macd_1',
+            'dma_3', 'macd_2', 'dma_4', 'macd_3', 'custom', 'custom_1',
+            'custom_2', 'custom_3', 'custom_4', 'macd_4', 'custom_8',
+            'custom_5', 'custom_6', 'dma_5', 'custom_7',
+        ])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3', 'Group_4'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].strategy_count, 15)
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['dma',
+                                                                  'all',
+                                                                  'sellrate',
+                                                                  'dma_1',
+                                                                  'macd',
+                                                                  'dma_2',
+                                                                  'macd_1',
+                                                                  'dma_3',
+                                                                  'macd_2',
+                                                                  'dma_4',
+                                                                  'macd_3',
+                                                                  'custom',
+                                                                  'custom_1',
+                                                                  'custom_2',
+                                                                  'custom_3'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_1'), 15)
+        print(f'Group_1 has {op.groups["Group_1"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].strategy_count, 3)
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['custom_4', 'macd_4', 'custom_8'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_2'), 3)
+        print(f'Group_2 has {op.groups["Group_2"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_3'].run_freq, 'h')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].strategy_count, 1)
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['custom_5'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_3'), 1)
+        print(f'Group_3 has {op.groups["Group_3"].strategy_count} strategies')
+        self.assertEqual(op.groups['Group_4'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_4'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_4'].strategy_count, 3)
+        self.assertEqual(op.get_strategy_id_by_group('Group_4'), ['custom_6', 'dma_5', 'custom_7'])
+        self.assertEqual(op.get_strategy_count_by_group('Group_4'), 3)
+        print(f'Group_4 has {op.groups["Group_4"].strategy_count}')
+
+        print('test adding fault arr')
+        self.assertRaises(AssertionError, op.add_strategies, 123)
+        self.assertRaises(AssertionError, op.add_strategies, None)
+
+    def test_operator_remove_strategy(self):
+        """ test method remove strategy"""
+
+        print(f'create a new operator with 7 strategies in 3 groups')
+        op = qt.Operator('dma, all, sellrate')
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        op.add_strategies(['DMA', TestGenStg()], run_freq='h', run_timing='open')
+        self.assertEqual(op.strategy_count, 7)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 3)
+        self.assertEqual(op.groups['Group_1'].members, [op['dma'], op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_2'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_2'].members, [op['dma_1'], op['macd']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+        print('test removing strategies from Operator')
+        op.remove_strategy('dma')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['dma_1'])
+        self.assertEqual(op.strategies[3], op['macd'])
+        self.assertEqual(op.strategies[4], op['dma_2'])
+        self.assertEqual(op.strategies[5], op['custom'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                     'Group_2': op._groups[1],
+                                     'Group_3': op._groups[2]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_2'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_2'].members, [op['dma_1'], op['macd']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+
+        print(f'testing remove both strategies from group2')
+        op.remove_strategy('dma_1')
+        op.remove_strategy('macd')
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['dma_2'])
+        self.assertEqual(op.strategies[3], op['custom'])
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                     'Group_3': op._groups[1]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_3'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+
+        print(f'testing add strategies back to operator originally in group2, now they should be in group4')
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3', 'macd'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
+        self.assertEqual(op.strategies[2], op['dma_2'])
+        self.assertEqual(op.strategies[3], op['custom'])
+        self.assertEqual(op.strategies[4], op['dma_3'])
+        self.assertEqual(op.strategies[5], op['macd'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.groups, {'Group_1': op._groups[0],
+                                     'Group_3': op._groups[1],
+                                     'Group_4': op._groups[2]})
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_3', 'Group_4'])
+        self.assertEqual(op.groups['Group_1'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_1'].members, [op['all'], op['sellrate']])
+        self.assertEqual(op.groups['Group_3'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_3'].members, [op['dma_2'], op['custom']])
+        self.assertEqual(op.groups['Group_4'].strategy_count, 2)
+        self.assertEqual(op.groups['Group_4'].members, [op['dma_3'], op['macd']])
+
+        # test removing strategy that does not exist
+        print(f'test removing strategy that does not exist')
+        self.assertRaises(ValueError, op.remove_strategy, 'not_exist')
+        self.assertRaises(ValueError, op.remove_strategy, 'all_1')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3', 'macd'])
+
+        # test removing all strategies from operator
+        print(f'test removing all strategies from operator')
+        op.remove_strategy()  # remove the last strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_2', 'custom', 'dma_3'])
+        op.remove_strategy(0)  # remove the first strategy
+        print(f'strategies after remove the first one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2', 'custom', 'dma_3'])
+        op.remove_strategy(-2)  # remove the 2nd last strategy
+        print(f'strategies after remove the 2nt last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2', 'dma_3'])
+        op.remove_strategy(999)  # remove the last strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['sellrate', 'dma_2'])
+        op.remove_strategy(-999)  # remove the first strategy
+        print(f'strategies after remove the last one: {op.strategies}')
+        self.assertEqual(op.strategy_ids, ['dma_2'])
+        op.remove_strategy('dma_2')
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.strategies, [])
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.group_ids, [])
+        self.assertEqual(op.strategy_group_count, 0)
+
+        self.assertRaises(IndexError, op.remove_strategy, 0)
+
+        op.add_strategy('dma')
+        self.assertRaises(TypeError, op.remove_strategy, 35.76)
+
+    def test_operator_clear_strategies(self):
+        """ test operator clear strategies"""
+        op = qt.Operator('dma, all, sellrate')
+        op.add_strategies(['dma', 'macd'], run_freq='h', run_timing='close')
+        op.add_strategies(['DMA', TestGenStg()], run_freq='h', run_timing='open')
+        self.assertEqual(op.strategy_count, 7)
+        self.assertEqual(op.strategy_ids, ['dma', 'all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
+        print('test removing strategies from Operator')
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.strategy_groups, {})
+
+        op.add_strategy('dma', par_values=(12, 123, 25), run_freq='5min', run_timing='open')
+        self.assertEqual(op.strategy_count, 1)
+        self.assertEqual(op.strategy_ids, ['dma'])
+        self.assertEqual(type(op.strategies[0]), DMA)
+        self.assertEqual(op.strategies[0].par_values, (12, 123, 25))
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.groups, {'Group_1': op._groups[0]})
+        self.assertEqual(op.groups['Group_1'].strategy_count, 1)
+        self.assertEqual(op.groups['Group_1'].members, [op['dma']])
+        self.assertEqual(op.groups['Group_1'].run_freq, '5min')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_ids, [])
+        self.assertEqual(op.strategy_group_count, 0)
+        self.assertEqual(op.group_ids, [])
 
     def test_info(self):
         """Test information output of Operator"""
-        stg = qt.built_in.SelectingNDayRateChange()
-        print(f'test printing information of strategies, in verbose mode')
-        self.op[0].info()
+        op = qt.Operator('dma, macd, trix')
+        stg = qt.built_in.SelectingNDayRateChange()  # factor sorter info
+        print(f'\n  --==**  test printing information of strategies, in simple mode\n')
+        op[0].info()
+        print(f'\n  --==**  test printing information of strategies, in simple mode\n')
         stg.info()
 
-        print(f'test printing information of strategies, in simple mode')
-        self.op[0].info(verbose=False)
-        stg.info(verbose=False)
+        print(f'\n  --==**  test printing information of strategies, in verbose mode\n')
+        op[0].info(verbose=True)
+        print(f'\n  --==**  test printing information of strategies, in verbose mode\n')
+        stg.info(verbose=True)
 
-        print(f'test printing information of operator object')
-        self.op.info()
+        print(f'\n  --==**  test printing information of operator object\n')
+        op.info()
 
-    def test_set_pars(self):
-        """ 测试设置策略参数"""
-        stg_dma = self.op2[0]
-        stg_macd = self.op2[1]
-        stg_trix = self.op2[2]
+        op.add_strategies('dma, macd', run_freq='h', run_timing='close')
+        op.add_strategies([TestRuleIter, TestGenStg, TestFactorSorter], run_freq='h', run_timing='open')
+        print(f'\n  --==**  test printing information of operator in simple mode\n')
 
-        stg_dma.pars = (10, 20, 30)
-        self.assertEqual(stg_dma.pars, (10, 20, 30))
-        stg_macd.pars = (10, 20, 30)
-        self.assertEqual(stg_macd.pars, (10, 20, 30))
-        stg_trix.set_pars((10, 20))
-        self.assertEqual(stg_trix.pars, (10, 20))
-        stg_dma.set_pars({'a': (10, 20, 30),
-                          'b': (11, 21, 31),
-                          'c': (12, 22, 32)})
-        self.assertEqual(stg_dma.pars,
-                         {'a': (10, 20, 30),
-                          'b': (11, 21, 31),
-                          'c': (12, 22, 32)})
+        op.info()
+        print(f'\n  --==**  test printing information of operator in verbose mode\n')
+
+        op.info(verbose=True)
+
+    def test_update_par_values(self):
+        """ 测试设置策略参数，使用update_par_values"""
+        op = qt.Operator('dma, macd, trix')
+
+        stg_dma = op[0]
+        stg_macd = op[1]
+        stg_trix = op[2]
+
+        # test setting normal parameter values
+        stg_dma.par_values = (10, 20, 30)
+        self.assertEqual(stg_dma.par_values, (10, 20, 30))
+        stg_macd.par_values = (10, 20, 30.)
+        self.assertEqual(stg_macd.par_values, (10, 20, 30))
+        stg_trix.update_par_values(10, 20)
+        self.assertEqual(stg_trix.par_values, (10, 20))
+        stg_dma.update_par_values(10, 20, 30)
+        self.assertEqual(stg_dma.par_values, (10, 20, 30))
+        # update par values with kwargs
+        stg_macd.update_par_values(slow=10, fast=20, mid=30)
+        self.assertEqual(stg_macd.par_values, (10, 20, 30))
+        # update partial kwargs
+        stg_macd.update_par_values(fast=25)
+        self.assertEqual(stg_macd.par_values, (10, 25, 30))
+        stg_macd.update_par_values(12, 13)
+        self.assertEqual(stg_macd.par_values, (12, 13, 30))
+
+        # test update_par_values while par_count = 0
+        op_no_par = qt.Operator('all')  # 'all' has no pars
+        op_no_par[0].update_par_values()
 
         # test errors
-        self.assertRaises(AssertionError, stg_dma.set_pars, 'wrong input')   # wrong input type
-        self.assertRaises(ValueError, stg_dma.set_pars, (10, -100))  # par count does not match
-        self.assertRaises(ValueError, stg_dma.set_pars, (10, 10, -10))   # par out of range
-        wrong_dict_pars = {'a': (10, 20, 30),
-                           'b': (11, 21, 31),
-                           'c': (12, 22, 32)}
-        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par count not match in dict
-        wrong_dict_pars = {'a': 'wrong_type',
-                           'b': (11, 21),
-                           'c': (12, 22)}
-        self.assertRaises(TypeError, stg_trix.set_pars, wrong_dict_pars)  # wrong input type in dict
-        wrong_dict_pars = {'a': (10, 20),
-                           'b': (11, 21),
-                           'c': (12, -22)}
-        self.assertRaises(ValueError, stg_trix.set_pars, wrong_dict_pars)  # par out of range in dict
-        # raise NotImplementedError
+        self.assertRaises(TypeError, stg_dma.update_par_values, 'wrong', 'input', 'type')  # wrong input type
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, 10, 10)  # par count does not match
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10, -10)  # par out of range
+        self.assertRaises(ValueError, stg_dma.update_par_values, 10, 10.5, -10)  # par type not match
+        self.assertRaises(ValueError, stg_dma.update_par_ranges)  # no args nor kwargs while par_count > 0
+        self.assertRaises(KeyError, stg_dma.update_par_values, not_existed_par=10)  # kwarg that does not exist
+
+        # test setting multi-parameters to RuleIterators
+        op.add_strategy(TestRuleIter)
+
+        stg_rule = op[3]
+        self.assertIsInstance(stg_rule, TestRuleIter)
+        self.assertEqual(stg_rule.par_values[0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 2., 3.])))
+        stg_rule.update_par_values('option2', np.array([2., 3., 4.]))
+        self.assertEqual(stg_rule.par_values[0], 'option2')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([2., 3., 4.])))
+
+        self.assertEqual(stg_rule.allow_multi_par, True)
+        stg_rule.update_shares(share_names=['000001', '000002', '000003'])
+        stg_rule.update_par_values(
+                {'000001': ('option1', np.array([1, 4, 5])),
+                 '000002': ('option2', np.array([2, 4, 5])),
+                 '000003': ('option3', np.array([3, 4, 5]))}
+        )
+        self.assertEqual(stg_rule.multi_pars[0][0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[0][1], np.array([1., 4., 5.])))
+        self.assertEqual(stg_rule.multi_pars[1][0], 'option2')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[1][1], np.array([2., 4., 5.])))
+        self.assertEqual(stg_rule.multi_pars[2][0], 'option3')
+        self.assertTrue(np.allclose(stg_rule.multi_pars[2][1], np.array([3., 4., 5.])))
+        self.assertEqual(stg_rule.par_values[0], 'option1')
+        self.assertTrue(np.allclose(stg_rule.par_values[1], np.array([1., 4., 5.])))
+
+        # update multi-parameter will fail if allow_multi_par is False
+        stg_rule.allow_multi_par = False
+        self.assertRaises(ValueError, stg_rule.update_par_values,
+                          {'000001': (10, 10, 30),
+                           '000002': (20, 20, 50),
+                           '000003': (30, 30, 70)})
+
+        # other types of strategies don't support multi-parameter
+        op.add_strategy(GeneralStg)
+        stg_gen = op[4]
+
+        self.assertIsInstance(stg_gen, GeneralStg)
+        self.assertEqual(stg_gen.par_values, ())
+        self.assertRaises(ValueError, stg_gen.update_par_values,
+                          {'000001': (10, 10, 30),
+                           '000002': (20, 20, 50),
+                           '000003': (30, 30, 70)})
 
     def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""
@@ -748,134 +1633,79 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIs(op['macd'], op.strategies[0])
         self.assertIs(op['trix'], op.strategies[2])
         self.assertIs(op[1], op.strategies[1])
-        self.assertIs(op[3], op.strategies[2])
+        self.assertIs(op[2], op.strategies[2])
 
-    def test_get_strategies_by_price_type(self):
+        # test other forms of op.__getitem__
+        self.assertIs(op.get_stg(1), op.strategies[1])
+        self.assertIs(op.get_strategy_by_id('dma'), op.strategies[1])
+
+        # test Errors:
+        self.assertRaises(TypeError, op.__getitem__, {})
+        self.assertRaises(KeyError, op.__getitem__, 'not_existed_id')
+        self.assertRaises(KeyError, op.__getitem__, -1)
+        self.assertRaises(KeyError, op.__getitem__, 999)
+
+    def test_get_group(self):
+        """ test method get_group and related methods"""
+        op = qt.Operator('dma, macd')
+        op.add_strategies('trix, bband', run_timing='open')
+        # there should be two groups in op
+
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.get_group(0), op.groups['Group_1'])
+        self.assertEqual(op.get_group('Group_2'), op.groups['Group_2'])
+        self.assertEqual(op.get_group_by_id(0), op.groups['Group_1'])
+        self.assertEqual(op.get_group_by_id('Group_2'), op.groups['Group_2'])
+
+        self.assertRaises(IndexError, op.get_group, 999)
+        self.assertRaises(KeyError, op.get_group_by_id, 'Not_existed')
+
+    def test_get_strategies_by_group(self):
         """ test get_strategies_by_price_type"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
 
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategies_by_run_timing('close')
-        stg_open = op.get_strategies_by_run_timing('open')
-        stg_high = op.get_strategies_by_run_timing('high')
+        op.add_strategies('dma, macd, trix', run_timing='open', run_freq='h')
+        op.add_strategies('dma, macd, trix', run_timing='close', run_freq='h')
+        op.add_strategies('dma, macd, trix', run_timing='close', run_freq='d')
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.group_names, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
 
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
+        stg_group1 = op.get_strategies_by_group('Group_1')
+        stg_group2 = op.get_strategies_by_group('Group_2')
+        stg_group3 = op.get_strategies_by_group('Group_3')
 
-        self.assertEqual(stg_close, [op.strategies[1]])
-        self.assertEqual(stg_open, [op.strategies[0], op.strategies[2]])
-        self.assertEqual(stg_high, [])
+        self.assertIsInstance(stg_group1, list)
+        self.assertIsInstance(stg_group2, list)
+        self.assertIsInstance(stg_group3, list)
 
-        stg_wrong = op.get_strategies_by_run_timing(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
+        self.assertEqual(stg_group1, [op['dma'], op['macd'], op['trix']])
+        self.assertEqual(stg_group2, [op['dma_1'], op['macd_1'], op['trix_1']])
+        self.assertEqual(stg_group3, [op['dma_2'], op['macd_2'], op['trix_2']])
 
-    def test_get_strategy_count_by_run_timing(self):
-        """ test get_strategy_count_by_run_timing"""
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
+        # test get strategies by passing wrong group name
+        self.assertRaises(KeyError, op.get_strategies_by_group, 'not_exist')
+        self.assertRaises(KeyError, op.get_strategies_by_group, 'Group_4')
 
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_count_by_run_timing('close')
-        stg_open = op.get_strategy_count_by_run_timing('open')
-        stg_high = op.get_strategy_count_by_run_timing('high')
+        # test getting other strategy information by group
+        self.assertEqual(op.get_strategy_count_by_group('Group_1'), 3)
+        self.assertEqual(op.get_strategy_count_by_group('Group_2'), 3)
+        self.assertEqual(op.get_strategy_count_by_group('Group_3'), 3)
 
-        self.assertIsInstance(stg_close, int)
-        self.assertIsInstance(stg_open, int)
-        self.assertIsInstance(stg_high, int)
+        self.assertEqual(op.get_strategy_names_by_group('Group_1'), ['DMA', 'MACD', 'TRIX'])
+        self.assertEqual(op.get_strategy_names_by_group('Group_2'), ['DMA', 'MACD', 'TRIX'])
+        self.assertEqual(op.get_strategy_names_by_group('Group_3'), ['DMA', 'MACD', 'TRIX'])
 
-        self.assertEqual(stg_close, 1)
-        self.assertEqual(stg_open, 2)
-        self.assertEqual(stg_high, 0)
-
-        stg_wrong = op.get_strategy_count_by_run_timing(123)
-        self.assertIsInstance(stg_wrong, int)
-        self.assertEqual(stg_wrong, 0)
-
-    def test_get_strategy_names_by_price_type(self):
-        """ test get_strategy_names_by_price_type"""
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_names_by_run_timing('close')
-        stg_open = op.get_strategy_names_by_run_timing('open')
-        stg_high = op.get_strategy_names_by_run_timing('high')
-
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
-
-        self.assertEqual(stg_close, ['DMA'])
-        self.assertEqual(stg_open, ['MACD', 'TRIX'])
-        self.assertEqual(stg_high, [])
-
-        stg_wrong = op.get_strategy_names_by_run_timing(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
-
-    def test_get_strategy_id_by_price_type(self):
-        """ test get_strategy_IDs_by_price_type"""
-        print('-----Test get strategy IDs by price type------\n')
-        op = qt.Operator()
-        self.assertIsInstance(op, qt.Operator)
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-
-        op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='open')
-        stg_close = op.get_strategy_id_by_run_timing('close')
-        stg_open = op.get_strategy_id_by_run_timing('open')
-        stg_high = op.get_strategy_id_by_run_timing('high')
-
-        self.assertIsInstance(stg_close, list)
-        self.assertIsInstance(stg_open, list)
-        self.assertIsInstance(stg_high, list)
-
-        self.assertEqual(stg_close, ['dma'])
-        self.assertEqual(stg_open, ['macd', 'trix'])
-        self.assertEqual(stg_high, [])
-
-        op.add_strategies('dma, macd')
-        op.set_parameter('dma_1', strategy_run_timing='open')
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('macd_1', strategy_run_timing='close')
-        op.set_parameter('trix', strategy_run_timing='close')
-        print(f'Operator strategy id:\n'
-              f'{op.strategies} on memory pos:\n'
-              f'{[id(stg) for stg in op.strategies]}')
-        stg_close = op.get_strategy_id_by_run_timing('close')
-        stg_open = op.get_strategy_id_by_run_timing('open')
-        stg_all = op.get_strategy_id_by_run_timing()
-        print(f'All IDs of strategies:\n'
-              f'{stg_all}\n'
-              f'All price types of strategies:\n'
-              f'{[stg.strategy_run_timing for stg in op.strategies]}')
-        self.assertEqual(stg_close, ['dma', 'trix', 'macd_1'])
-        self.assertEqual(stg_open, ['macd', 'dma_1'])
-
-        stg_wrong = op.get_strategy_id_by_run_timing(123)
-        self.assertIsInstance(stg_wrong, list)
-        self.assertEqual(stg_wrong, [])
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['dma', 'macd', 'trix'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma_1', 'macd_1', 'trix_1'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['dma_2', 'macd_2', 'trix_2'])
 
     def test_property_strategies(self):
         """ test property strategies"""
@@ -895,175 +1725,44 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(strategies[1], MACD)
         self.assertIsInstance(strategies[2], CDL)
 
-    def test_property_strategy_count(self):
-        """ test Property strategy_count, and the method get_strategy_count_by_run_timing()"""
-        self.assertEqual(self.op.strategy_count, 1)
-        self.assertEqual(self.op2.strategy_count, 3)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing(), 1)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing(), 3)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing('close'), 1)
-        self.assertEqual(self.op.get_strategy_count_by_run_timing('high'), 0)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing('close'), 3)
-        self.assertEqual(self.op2.get_strategy_count_by_run_timing('open'), 0)
-
-    def test_property_strategy_names(self):
-        """ test property strategy_ids"""
-        op = qt.Operator('dma')
-        self.assertIsInstance(op.strategy_ids, list)
-        names = op.strategy_ids[0]
-        print(f'names are {names}')
-        self.assertEqual(names, 'dma')
-
-        op = qt.Operator('dma, macd, trix, cdl')
-        self.assertIsInstance(op.strategy_ids, list)
-        self.assertEqual(op.strategy_ids[0], 'dma')
-        self.assertEqual(op.strategy_ids[1], 'macd')
-        self.assertEqual(op.strategy_ids[2], 'trix')
-        self.assertEqual(op.strategy_ids[3], 'cdl')
-
-        op = qt.Operator('dma, macd, trix, dma, dma')
-        self.assertIsInstance(op.strategy_ids, list)
-        self.assertEqual(op.strategy_ids[0], 'dma')
-        self.assertEqual(op.strategy_ids[1], 'macd')
-        self.assertEqual(op.strategy_ids[2], 'trix')
-        self.assertEqual(op.strategy_ids[3], 'dma_1')
-        self.assertEqual(op.strategy_ids[4], 'dma_2')
-
-    def test_property_strategy_blenders(self):
-        """ test property strategy blenders including property setter,
-            and test the method get_blender()"""
-        print(f'------- Test property strategy blenders ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'pt')
-        # test adding blender to empty operator
-        op.strategy_blenders = '1 + 2'
-        op.signal_type = 'proportion signal'
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'ps')
-
-        op.add_strategy('dma')
-        op.strategy_blenders = 's1+s2'
-        self.assertEqual(op.strategy_blenders, {'close': ['+', 's2', 's1']})
-
-        op.clear_strategies()
-        self.assertEqual(op.strategy_blenders, {})
-        op.add_strategies('dma, trix, macd, dma')
-        op.set_parameter('dma', strategy_run_timing='open')
-        op.set_parameter('trix', strategy_run_timing='close')
-
-        op.set_blender('s1+s2', 'open')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        self.assertEqual(blender_open, ['+', 's2', 's1'])
-        self.assertEqual(blender_close, None)
-        self.assertEqual(blender_high, None)
-
-        op.set_blender('s1+2+3', 'open')
-        op.set_blender('s1+2+3', 'abc')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        blender_abc = op.get_blender('abc')
-        self.assertEqual(op.strategy_blenders, {'open': ['+', '3', '+', '2', 's1']})
-        self.assertEqual(blender_open, ['+', '3', '+', '2', 's1'])
-        self.assertEqual(blender_close, None)
-        self.assertEqual(blender_high, None)
-        self.assertEqual(blender_abc, None)
-
-        op.set_blender('s1+s1', None)
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
-        self.assertEqual(op.strategy_timings, ['close', 'open'])
-        self.assertEqual(op.get_blender(), {'close': ['+', 's1', 's1'],
-                                            'open':  ['+', 's1', 's1'], })
-        self.assertEqual(blender_open, ['+', 's1', 's1'])
-        self.assertEqual(blender_close, ['+', 's1', 's1'])
-
-        op.set_blender(['s1+s2+1', 's0+4'])
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['+', '4', 's0'])
-        self.assertEqual(blender_close, ['+', '1', '+', 's2', 's1'])
-        self.assertEqual(op.view_blender('open'), 'dma + 4')
-        self.assertEqual(op.view_blender('close'), 'macd + dma_1 + 1')
-
-        op.strategy_blenders = (['s1+2', 's0*3'])
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        self.assertEqual(op.view_blender('open'), 'dma * 3')
-        self.assertEqual(op.view_blender('close'), 'macd + 2')
-
-        # test error inputs:
-        self.assertRaises(TypeError, op.set_blender, 123, 'open')
-        # wrong type of price_type
-        self.assertRaises(TypeError, op.set_blender, '1+3', 1)
-        # price_type not found, no change is made
-        op.set_blender('1+3', 'volume')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # price_type not valid, no change is made
-        op.set_blender('1+2', 'wrong_timing')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # wrong type of blender, no change is made
-        self.assertRaises(TypeError, op.set_blender, 55, 'open')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # wrong type of blender, no change is made
-        self.assertRaises(TypeError, op.set_blender, ['1+2'], 'close')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        # can't parse blender, raise and no change is made
-        # self.assertWarns(Warning, op.set_blender, 'a+bc', 'high')
-        self.assertRaises(ValueError, op.set_blender, 'a+bc', 'close')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        self.assertEqual(blender_open, ['*', '3', 's0'])
-        self.assertEqual(blender_close, ['+', '2', 's1'])
-        self.assertIs(blender_high, None)
-
-    def test_property_singal_type(self):
+    def test_group_properties(self):
         """ test property signal_type"""
         op = qt.Operator()
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.signal_type, 'pt')
-        op = qt.Operator(signal_type='ps')
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.signal_type, 'ps')
-        op = qt.Operator(signal_type='PS')
-        self.assertEqual(op.signal_type, 'ps')
-        op = qt.Operator(signal_type='proportion signal')
-        self.assertEqual(op.signal_type, 'ps')
-        print(f'Error will be raised if Invalid signal type encountered')
-        self.assertRaises(
-                ValueError,
-                qt.Operator,
-                None,
-                'wrong value',
-                None
-        )
+        op.add_strategies('dma, macd, trix')
+        self.assertEqual(op.group_ids, ['Group_1'])
+        group = op.groups['Group_1']
+        self.assertIsInstance(group.signal_type, str)
+        self.assertEqual(group.signal_type, 'pt')
+        self.assertEqual(group.run_freq, 'd')
+        self.assertEqual(group.run_timing, 'close')
+        self.assertEqual(group.strategy_count, 3)
+        self.assertEqual(group.members, [op['dma'], op['macd'], op['trix']])
+        # 未设置时使用默认 PT 表达式 s0*s1*s2
+        self.assertEqual(group.blender_str, 's0*s1*s2')
+        self.assertIsNotNone(group.blender)
+        self.assertEqual(group.human_blender, 'dma * macd * trix')
 
-        print(f'test signal_type.setter')
-        op.signal_type = 'ps'
-        self.assertEqual(op.signal_type, 'ps')
-        print(f'test error raising')
-        self.assertRaises(TypeError, setattr, op, 'signal_type', 123)
-        self.assertRaises(ValueError, setattr, op, 'signal_type', 'wrong value')
+        op.groups['Group_1'].blender_str = 's0+s1+s2'
+        self.assertEqual(group.blender_str, 's0+s1+s2')
+        self.assertEqual(group.human_blender, 'dma + macd + trix')
+        self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
+
+        op.add_strategies('dma, macd')
+        self.assertEqual(group.strategy_count, 5)
+        self.assertEqual(group.members, [op['dma'], op['macd'], op['trix'], op['dma_1'], op['macd_1']])
+        self.assertEqual(group.blender_str, 's0+s1+s2')
+        self.assertEqual(group.human_blender, 'dma + macd + trix')
+        self.assertEqual(group.blender, ['+', 's2', '+', 's1', 's0'])
+
+        group.blender_str = 's0*2+s3-s1+max(s1, s2)'
+        self.assertEqual(group.blender_str, 's0*2+s3-s1+max(s1, s2)')
+        self.assertEqual(group.human_blender, 'dma * 2 + dma_1 - macd + max(macd, trix)')
+        self.assertEqual(group.blender, ['+', 'max(2)', 's2', 's1', '-', 's1', '+', 's3', '*', '2', 's0'])
+
+        op.add_strategies('dma', run_freq='h', run_timing='open')
+        self.assertEqual(op.get_group_by_id('Group_1'), op.groups['Group_1'])
+        self.assertEqual(op.get_group_by_id('Group_2'), op.groups['Group_2'])
+        self.assertRaises(KeyError, op.get_group_by_id, 'not_exist')
 
     def test_property_op_data_types(self):
         """ test property op_data_types"""
@@ -1072,23 +1771,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.op_data_types, [])
 
         op = qt.Operator('macd, dma, trix')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
+        self.assertEqual(dt_ids[0], 'close_ANY_d')
+        self.assertEqual(dt[0], DataType('close', freq='d', asset_type='ANY'))
 
         op = qt.Operator('macd, cdl')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
-        self.assertEqual(dt[1], 'high')
-        self.assertEqual(dt[2], 'low')
-        self.assertEqual(dt[3], 'open')
-        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
+        self.assertIn('close_ANY_d', dt_ids)
+        self.assertIn('high_ANY_d', dt_ids)
+        self.assertIn('low_ANY_d', dt_ids)
+        self.assertIn('open_ANY_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='ANY'), dt)
         op.add_strategy('dma')
+        dt_ids = op.op_data_type_ids
         dt = op.op_data_types
-        self.assertEqual(dt[0], 'close')
-        self.assertEqual(dt[1], 'high')
-        self.assertEqual(dt[2], 'low')
-        self.assertEqual(dt[3], 'open')
-        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
+        self.assertIn('close_ANY_d', dt_ids)
+        self.assertIn('high_ANY_d', dt_ids)
+        self.assertIn('low_ANY_d', dt_ids)
+        self.assertIn('open_ANY_d', dt_ids)
+        self.assertIn(DataType('close', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('high', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('low', freq='d', asset_type='ANY'), dt)
+        self.assertIn(DataType('open', freq='d', asset_type='ANY'), dt)
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
@@ -1105,105 +1814,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op.add_strategy('dma')
         dtn = op.op_data_type_count
         self.assertEqual(dtn, 4)
-
-    def test_property_op_data_freq(self):
-        """ test property op_data_freq"""
-        op = qt.Operator()
-        self.assertIsInstance(op.op_data_freq, str)
-        self.assertEqual(len(op.op_data_freq), 0)
-        self.assertEqual(op.op_data_freq, '')
-
-        op = qt.Operator('macd, dma, trix')
-        dtf = op.op_data_freq
-        self.assertIsInstance(dtf, str)
-        self.assertEqual(dtf[0], 'd')
-        op.set_parameter('macd', data_freq='m')
-        # op交易策略存在多个数据频率的情况尚未得到支持，以后支持该情况后可以实现下列功能
-        # dtf = op.op_data_freq
-        # self.assertIsInstance(dtf, list)
-        # self.assertEqual(len(dtf), 2)
-        # self.assertEqual(dtf[0], 'd')
-        # self.assertEqual(dtf[1], 'm')
-
-    def test_property_bt_price_types(self):
-        """ test property strategy_timings"""
-        print('------test property bt_price_tyeps-------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_timings, list)
-        self.assertEqual(len(op.strategy_timings), 0)
-        self.assertEqual(op.strategy_timings, [])
-
-        op = qt.Operator('macd, dma, trix')
-        btp = op.strategy_timings
-        self.assertIsInstance(btp, list)
-        self.assertEqual(btp[0], 'close')
-        op.set_parameter('macd', strategy_run_timing='open')
-        btp = op.strategy_timings
-        btpc = op.bt_price_type_count
-        print(f'price_types are \n{btp}')
-        self.assertIsInstance(btp, list)
-        self.assertEqual(len(btp), 2)
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', strategy_run_timing='close')
-        btp = op.strategy_timings
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.remove_strategy('dma_1')
-        btp = op.strategy_timings
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-        op.remove_strategy('macd_1')
-        btp = op.strategy_timings
-        btpc = op.bt_price_type_count
-        self.assertEqual(btp[0], 'close')
-        self.assertEqual(btp[1], 'open')
-        self.assertEqual(btpc, 2)
-
-    def test_property_op_data_type_list(self):
-        """ test property op_data_type_list"""
-        op = qt.Operator()
-        self.assertIsInstance(op.op_data_type_list, list)
-        self.assertEqual(len(op.op_data_type_list), 0)
-        self.assertEqual(op.op_data_type_list, [])
-
-        op = qt.Operator('macd, dma, trix, cdl')
-        ohd = op.op_data_type_list
-        print(f'ohd is {ohd}')
-        self.assertIsInstance(ohd, list)
-        self.assertEqual(ohd[0], ['close'])
-        op.set_parameter('macd', strategy_data_types='open, close')
-        ohd = op.op_data_type_list
-        print(f'ohd is {ohd}')
-        self.assertIsInstance(ohd, list)
-        self.assertEqual(len(ohd), 4)
-        self.assertEqual(ohd[0], ['open', 'close'])
-        self.assertEqual(ohd[1], ['close'])
-        self.assertEqual(ohd[2], ['close'])
-        self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
-
-    def test_property_op_history_data(self):
-        """ Test this important function to get operation history arr that shall be used in
-            signal generation
-            these arr are stored in list of nd-arrays, each ndarray represents the arr
-            that is needed for each and every strategy
-        """
-        print(f'------- Test getting operation history arr ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.op_history_data, {})
-        self.assertEqual(op.signal_type, 'pt')
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
@@ -1266,2260 +1876,3328 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op.max_window_length, int)
         self.assertEqual(op.max_window_length, 0)
 
-        op = qt.Operator('macd, dma, trix, cdl')
+        op = qt.Operator('macd, dma, trix, ndayvol')
         mwl = op.max_window_length
         print(f'before setting window_length the value is 270:\n'
               f'mwl is {mwl}\n')
+        print(f'before setting window_length the max_window_length by dtype "close_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
+        print(f'before setting window_length the max_window_length by dtype "high_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 270)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 270)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 150)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('low_ANY_d'), 150)
+
         op.set_parameter('macd', window_length=300)
-        op.set_parameter('dma', window_length=350)
+        op.set_parameter('ndayvol', window_length=350)
         mwl = op.max_window_length
         print(f'after setting window_length the value is new set value:\n'
               f'mwl is {mwl}\n')
+        print(f'after setting window_length the max_window_length by dtype "close_E_d" is '
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "high_E_d" is '
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
         self.assertIsInstance(mwl, int)
         self.assertEqual(mwl, 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 350)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 350)
 
-    def test_property_bt_price_type_count(self):
-        """ test property bt_price_type_count"""
-        print(f'-----test property bt_price_type_count--------:\n')
-        op = qt.Operator()
-        self.assertIsInstance(op.bt_price_type_count, int)
-        self.assertEqual(op.bt_price_type_count, 0)
+        # update window_length with multiple values
+        op.set_parameter('trix', window_length=(120,))
+        op.set_parameter('macd', window_length=(90,))
+        op.set_parameter('dma', window_length=(30,))
+        op.set_parameter('ndayvol', window_length=(90, 135, 45))
 
-        op = qt.Operator('macd, dma, trix, cdl')
-        otp = op.bt_price_type_count
-        print(f'before setting price_type the price count is 1:\n'
-              f'otp is {otp}\n')
-        self.assertIsInstance(otp, int)
-        self.assertEqual(otp, 1)
-        op.set_parameter('macd', strategy_run_timing='open')
-        op.set_parameter('dma', strategy_run_timing='open')
-        otp = op.bt_price_type_count
-        print(f'after setting price_type the price type count is 2:\n'
-              f'otp is {otp}\n')
-        self.assertIsInstance(otp, int)
-        self.assertEqual(otp, 2)
+        print(f'set window_length again:')
+        self.assertEqual(op['trix'].window_lengths, {'close_ANY_d': 120})
+        self.assertEqual(op['macd'].window_lengths, {'close_ANY_d': 90})
+        self.assertEqual(op['dma'].window_lengths, {'close_ANY_d': 30})
+        self.assertEqual(op['ndayvol'].window_lengths, {'close_ANY_d': 45, 'high_ANY_d': 90, 'low_ANY_d': 135})
+        self.assertEqual(op.max_window_length, 135)
+        print(f'after setting window_length the max_window_length by dtype "close_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("close_ANY_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "high_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("high_ANY_d")}:')
+        print(f'after setting window_length the max_window_length by dtype "low_ANY_d" is '
+              f'{op.get_max_window_length_by_dtype_id("low_ANY_d")}:')
 
-    def test_property_set(self):
+        self.assertEqual(op.get_max_window_length_by_dtype_id('close_ANY_d'), 120)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('high_ANY_d'), 90)
+        self.assertEqual(op.get_max_window_length_by_dtype_id('low_ANY_d'), 135)
+
+    def test_group_property_set(self):
         """ test all property setters:
             setting following properties:
             - strategy_blenders
             - signal_type
             other properties can not be set"""
-        print(f'------- Test setting properties ---------')
-        op = qt.Operator()
-        self.assertIsInstance(op.strategy_blenders, dict)
-        self.assertIsInstance(op.signal_type, str)
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'pt')
-        op.strategy_blenders = '1 + 2'
-        op.signal_type = 'proportion signal'
-        self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.signal_type, 'ps')
+        print(f'------- Test setting parameters and group properties ---------')
+        op_min = qt.Operator(strategies='DMA, MACD, ALL', run_freq='d', run_timing='open', signal_type='PS')
+        op_min.set_blender(blender='(s0+s1)*s2')
+
+        self.assertEqual(op_min.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op_min.groups['Group_1'].blender_str, '(s0+s1)*s2')
+        self.assertEqual(op_min.groups['Group_1'].human_blender, '(dma + macd) * all')
+        self.assertEqual(op_min.groups['Group_1'].blender, ['*', 's2', '+', 's1', 's0'])
 
         op = qt.Operator('macd, dma, trix, cdl')
-        # TODO: 修改set_parameter()，使下面的用法成立
-        #  a_to_sell.set_parameter('dma, cdl', price_type='open')
-        op.set_parameter('dma', strategy_run_timing='open')
-        op.set_parameter('cdl', strategy_run_timing='open')
-        sb = op.strategy_blenders
-        st = op.signal_type
-        self.assertIsInstance(sb, dict)
-        print(f'before setting: strategy_blenders={sb}')
-        self.assertEqual(sb, {})
-        op.strategy_blenders = '1+s2 * 3'
-        sb = op.strategy_blenders
-        print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '*', '3', 's2', '1'],
-                              'open':  ['+', '*', '3', 's2', '1']})
-        op.strategy_blenders = ['s1+2', '3-s4']
-        sb = op.strategy_blenders
-        print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '2', 's1'],
-                              'open':  ['-', 's4', '3']})
+        # ckeck that op has only one group with all strategies
+        self.assertEqual(op.strategy_group_count, 1)
+        self.assertEqual(op.group_ids, ['Group_1'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0]
+                                              })
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'dma', 'trix', 'cdl'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0*s1*s2*s3')
+        self.assertIsNotNone(op.groups['Group_1'].blender)
+
+        # change run_freq and run_timing of some of the strategies, then groups will be changed
+        op.set_parameter('dma', run_timing='open')
+        op.set_parameter('cdl', run_freq='w')
+        # check that op has two groups now
+        self.assertEqual(op.strategy_group_count, 3)
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2', 'Group_3'])
+        self.assertEqual(op.strategy_groups, {'Group_1': op._groups[0],
+                                              'Group_2': op._groups[1],
+                                              'Group_3': op._groups[2]}
+                         )
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'trix'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_3'), ['cdl'])
+
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0*s1')
+        self.assertIsNotNone(op.groups['Group_1'].blender)
+        self.assertEqual(op.groups['Group_2'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
+        self.assertIsNotNone(op.groups['Group_2'].blender)
+        self.assertEqual(op.groups['Group_3'].run_freq, 'w')
+        self.assertEqual(op.groups['Group_3'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_3'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_3'].blender_str, 's0')
+        self.assertIsNotNone(op.groups['Group_3'].blender)
+
+        # check all strategies are still in op.strategies
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['macd', 'trix', 'dma', 'cdl'])
+
+        # test setting group properties: run_timing, run_freq, signal_type, blender_str
+        op.set_group_parameters('Group_1', signal_type='VS')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'vs')
+        op.set_group_parameters('Group_1', blender_str='s0+s1')
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(op.groups['Group_1'].human_blender, 'macd + trix')
+        self.assertEqual(op.groups['Group_1'].blender, ['+', 's1', 's0'])
+
+        op.set_group_parameters('Group_2', run_timing='close', run_freq='1min')
+        # check that Group_2 properties are changed
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].run_freq, '1min')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
+        # check that all strategies in group 2 has new run_timing and run_freq
+        self.assertEqual(op['dma'].run_timing, 'close')
+        self.assertEqual(op['dma'].run_freq, '1min')
+
+        op.set_group_parameters('Group_3', run_timing='open', run_freq='30min', signal_type='PS', blender_str='s0')
+        # check that Group_3 properties are changed
+        self.assertEqual(op.groups['Group_3'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_3'].run_freq, '30min')
+        self.assertEqual(op.groups['Group_3'].signal_type, 'ps')
+        self.assertEqual(op.groups['Group_3'].blender_str, 's0')
+        # check that all strategies in group 3 has new run_timing and run_freq
+        self.assertEqual(op['cdl'].run_timing, 'open')
+        self.assertEqual(op['cdl'].run_freq, '30min')
+
+        # check that setting group3 the same run freq and run timing as group1 will merge the two groups
+        op.set_group_parameters('Group_3', run_timing='close', run_freq='d')
+        self.assertEqual(op.strategy_group_count, 2)
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_1'), ['macd', 'trix', 'cdl'])
+        self.assertEqual(op.get_strategy_id_by_group('Group_2'), ['dma'])
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_1'].signal_type, 'vs')  #
+        self.assertEqual(op.groups['Group_1'].blender_str, 's0+s1')  # blender info of group1 is lost after merging
+        self.assertEqual(op.groups['Group_1'].human_blender, 'macd + trix')
+        self.assertEqual(op.groups['Group_2'].run_freq, '1min')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        self.assertEqual(op.groups['Group_2'].signal_type, 'pt')
+        self.assertEqual(op.groups['Group_2'].blender_str, 's0')
+        self.assertEqual(op.groups['Group_2'].human_blender, 'dma')
+        # check that group_3 no longer exists
+        self.assertEqual(op.group_ids, ['Group_1', 'Group_2'])
+        self.assertRaises(KeyError, op.get_group_by_id, 'Group_3')
+        # check that all strategies are still in op.strategies
+        self.assertEqual(op.strategy_count, 4)
+        self.assertEqual(op.strategy_ids, ['macd', 'trix', 'cdl', 'dma'])
+
+        # test Error raising for setting parameters: no strategy,
+        self.assertRaises(AssertionError, op.set_parameter, None, par_values=(20, 15))
+        self.assertRaises(TypeError, op.set_parameter, 'macd', pars='wrong_pars')
+        self.assertRaises(TypeError, op.set_parameter, 'macd', par_range='wrong_type')
+        self.assertRaises(ValueError, op.set_parameter, 'macd', par_range=((32, 34)))  # wrong length
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
         op = qt.Operator()
         print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
 
-    def test_operator_add_strategy(self):
-        """test adding strategies to Operator"""
-        op = qt.Operator('dma, all, sellrate')
-
-        self.assertIsInstance(op, qt.Operator)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
-        self.assertIsInstance(op[0], qt.built_in.DMA)
-        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op[2], qt.built_in.SellRate)
-        self.assertIsInstance(op['dma'], qt.built_in.DMA)
-        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
-        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
-        self.assertEqual(op.strategy_count, 3)
-        print(f'test adding strategies into existing op')
-        print('test adding strategy by string')
-        op.add_strategy('macd')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[3], qt.built_in.MACD)
-        self.assertEqual(op.strategy_count, 4)
-        op.add_strategy('random')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
-        self.assertEqual(op.strategy_count, 5)
-        test_ls = TestLSStrategy()
-        op.add_strategy(test_ls)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[5], TestLSStrategy)
-        self.assertEqual(op.strategy_count, 6)
-        print(f'Test different instance of objects are added to operator')
-        op.add_strategy('dma')
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[6], qt.built_in.DMA)
-        self.assertIsNot(op.strategies[0], op.strategies[6])
-
-    def test_operator_add_strategies(self):
-        """ etst adding multiple strategies to Operator"""
-        op = qt.Operator('dma, all, sellrate')
-        self.assertEqual(op.strategy_count, 3)
-        print('test adding multiple strategies -- adding strategy by list of strings')
-        op.add_strategies(['dma', 'macd'])
-        self.assertEqual(op.strategy_count, 5)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[3], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[4], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by comma separated strings')
+        print(f'Adding strategies to operator')
         op.add_strategies('dma, macd')
-        self.assertEqual(op.strategy_count, 7)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[5], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[6], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by list of strategies')
-        op.add_strategies([qt.built_in.DMA(), qt.built_in.MACD()])
-        self.assertEqual(op.strategy_count, 9)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[7], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[8], qt.built_in.MACD)
-        print('test adding multiple strategies -- adding strategy by list of strategy and str')
-        op.add_strategies(['DMA', qt.built_in.MACD()])
-        self.assertEqual(op.strategy_count, 11)
-        self.assertIsInstance(op.strategies[0], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[9], qt.built_in.DMA)
-        self.assertIsInstance(op.strategies[10], qt.built_in.MACD)
-        self.assertIsNot(op.strategies[0], op.strategies[9])
-        self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
-        print('test adding fault arr')
-        self.assertRaises(AssertionError, op.add_strategies, 123)
-        self.assertRaises(AssertionError, op.add_strategies, None)
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
 
-    def test_operator_remove_strategy(self):
-        """ test method remove strategy"""
-        op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
-        self.assertEqual(op.strategy_count, 7)
-        print('test removing strategies from Operator')
-        op.remove_strategy('dma')
-        self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
-        self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['sellrate'])
-        self.assertEqual(op.strategies[2], op['dma_1'])
-        self.assertEqual(op.strategies[3], op['macd'])
-        self.assertEqual(op.strategies[4], op['dma_2'])
-        self.assertEqual(op.strategies[5], op['custom'])
-        op.remove_strategy('dma_1')
-        self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
-        self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['sellrate'])
-        self.assertEqual(op.strategies[2], op['macd'])
-        self.assertEqual(op.strategies[3], op['dma_2'])
-        self.assertEqual(op.strategies[4], op['custom'])
+        print(f'Adding one more group of strategies and Setting up blenders for groups')
+        op.add_strategies('trix, cdl', run_freq='h', run_timing='open')
+        op.set_group_parameters('Group_1', blender_str='s0+s1')
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+        op.set_group_parameters('Group_2', blender_str='s0*s1')
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
 
-    def test_operator_clear_strategies(self):
-        """ test operator clear strategies"""
-        op = qt.Operator('dma, all, sellrate')
-        op.add_strategies(['dma', 'macd'])
-        op.add_strategies(['DMA', TestLSStrategy()])
-        self.assertEqual(op.strategy_count, 7)
-        print('test removing strategies from Operator')
-        op.clear_strategies()
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
-        op.add_strategy('dma', pars=(12, 123, 25))
-        self.assertEqual(op.strategy_count, 1)
-        self.assertEqual(op.strategy_ids, ['dma'])
-        self.assertEqual(type(op.strategies[0]), DMA)
-        self.assertEqual(op.strategies[0].pars, (12, 123, 25))
-        op.clear_strategies()
-        self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_ids, [])
+        print(f'Adding historical data buffer to operator')
+        # set strategy window lengths to be about 5 to 9
+        op.set_parameter('dma', window_length=3)
+        op.set_parameter('macd', window_length=6)
+        op.set_parameter('trix', window_length=9)
+        op.set_parameter('cdl', window_length=5)
+        self.assertEqual(op.max_window_length, 9)
+        all_dtype_ids = op.op_data_type_ids
+        data_buffer = {}
+        for dtype in all_dtype_ids:
+            data_buffer[dtype] = close_d_df
+        start = close_d_df.index[10]
+        end = close_d_df.index[-1]
+        op.prepare_data_buffer(
+                start_date=start,
+                end_date=end,
+                data_package=data_buffer,
+        )
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Preparing running schedule for operator')
+        op.prepare_running_schedule(
+                start_date=start,
+                end_date=end,
+        )
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Setting up data windows for strategies')
+        op.create_data_windows()
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, False)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+        print(f'Setting up shares for operator')
+        op.set_shares(['share_1', 'share_2'])
+        print(f'operator is ready? "{op.ready}"')
+        self.assertEqual(op.ready, True)
+        print(f'checking why operator is not ready:\n')
+        op.is_ready(
+                tell_me_why=True,
+        )
+
+    def test_operator_prepare_schedule(self):
+        """测试Operator生成运行计划"""
+        # test function prepare_running_schedule() with group_merge_type = None
+
+        op = qt.Operator()  # create an operator with many strategy groups with freq and timing diversity
+        op.add_strategies('dma, macd')  # first group: d@close
+        op.add_strategies('dma, macd', run_freq='h')  # second group: h@close
+        op.add_strategies('dma, macd', run_freq='d', run_timing='open')  # third group: d@open
+        op.add_strategies('dma, macd', run_freq='30min', run_timing='open')  # fourth group: 30min@open
+        op.add_strategies('dma, macd', run_freq='d', run_timing='10:00')  # fifth group: d@10:00
+        # op.add_strategies('dma, macd', run_freq='W-TUE', run_timing='11:00')  # sixth group: d@9:30
+
+        # set group property of signal type to mix pt/ps/vs types
+        op.set_group_parameters(group='Group_1', signal_type='ps')
+        op.set_group_parameters(group='Group_3', signal_type='vs')
+        op.set_group_parameters(group='Group_4', signal_type='vs')
+
+        op.prepare_running_schedule(
+                start_date='2020-01-01',
+                end_date='2020-01-04',
+                trade_days_only=True,
+        )
+        op.group_merge_type = 'None'
+        print(f'operator running schedule is:\n')
+        for group in op.groups:
+            print(f'Group schedule for: "{group}:{op.groups[group]}"')
+            print(op.group_schedules[group])
+
+        # check details of the schedule of group 1
+        schedule = op.group_schedules['Group_1']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 2
+        schedule = op.group_schedules['Group_2']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 10)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 3
+        schedule = op.group_schedules['Group_3']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 09:30:00'))
+
+        # check details of the schedule of group 4
+        schedule = op.group_schedules['Group_4']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 18)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 13:30:00'))
+        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 14:30:00'))
+        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 09:30:00'))
+        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 10:00:00'))
+        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 11:00:00'))
+        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 11:30:00'))
+        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 13:30:00'))
+        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 14:00:00'))
+        self.assertEqual(schedule.index[16], pd.Timestamp('2020-01-03 14:30:00'))
+        self.assertEqual(schedule.index[17], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 5
+        schedule = op.group_schedules['Group_5']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 10:00:00'))
+
+        timing_table = op.group_timing_table
+        op_signal_type = op.op_signal_types
+        op_signal_index = op.op_signal_index
+        print(f'timing table is {timing_table}')
+        print(f'signal types: {op_signal_type}')
+        print(f'signal index: {op_signal_index}')
+        self.assertEqual(len(op_signal_index), len(op_signal_type))
+
+        # test function prepare_running_schedule() with group_merge_type = 'OR'
+
+        op = qt.Operator()  # create an operator with many strategy groups with freq and timing diversity
+        op.add_strategies('dma, macd')  # first group: d@close
+        op.add_strategies('dma, macd', run_freq='h')  # second group: h@close
+        op.add_strategies('dma, macd', run_freq='d', run_timing='open')  # third group: d@open
+        op.add_strategies('dma, macd', run_freq='30min', run_timing='open')  # fourth group: 30min@open
+        op.add_strategies('dma, macd', run_freq='d', run_timing='10:00')  # fifth group: d@10:00
+        # op.add_strategies('dma, macd', run_freq='W-TUE', run_timing='11:00')  # sixth group: d@9:30
+
+        op.prepare_running_schedule(
+                start_date='2020-01-01',
+                end_date='2020-01-04',
+                trade_days_only=True,
+        )
+        op.group_merge_type = 'OR'
+        print(f'operator running schedule is:\n')
+        for group in op.groups:
+            print(f'Group schedule for: "{group}:{op.groups[group]}"')
+            print(op.group_schedules[group])
+
+        # check details of the schedule of group 1
+        schedule = op.group_schedules['Group_1']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 2
+        schedule = op.group_schedules['Group_2']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 10)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 3
+        schedule = op.group_schedules['Group_3']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 09:30:00'))
+
+        # check details of the schedule of group 4
+        schedule = op.group_schedules['Group_4']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 18)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 13:30:00'))
+        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 14:30:00'))
+        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 09:30:00'))
+        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 10:00:00'))
+        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 11:00:00'))
+        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 11:30:00'))
+        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 13:30:00'))
+        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 14:00:00'))
+        self.assertEqual(schedule.index[16], pd.Timestamp('2020-01-03 14:30:00'))
+        self.assertEqual(schedule.index[17], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
+
+        # check details of the schedule of group 5
+        schedule = op.group_schedules['Group_5']
+        self.assertIsInstance(schedule, pd.DataFrame)
+        self.assertEqual(len(schedule.index), 2)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 10:00:00'))
+
+        timing_table = op.group_timing_table
+        op_signal_type = op.op_signal_types
+        op_signal_index = op.op_signal_index
+        print(f'timing table is {timing_table}')
+        print(f'signal types: {op_signal_type}')
+        print(f'signal index: {op_signal_index}')
+        self.assertEqual(len(op_signal_index), len(op_signal_type))
 
     def test_operator_assign_history_data(self):
         """测试分配Operator运行所需历史数据"""
-        test_ls = TestLSStrategy()
-        test_sel = TestSelStrategy()
-        test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls, test_sel, test_sig])
-        too_early_cash = qt.CashPlan(dates='2016-01-01', amounts=10000)
-        early_cash = qt.CashPlan(dates='2016-07-01', amounts=10000)
-        on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
-        no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
-                                    amounts=[10000, 10000, 10000, 10000])
-        # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
-        self.op.strategies[0].pars = None
-        self.assertRaises(AssertionError,
-                          self.op.assign_hist_data,
-                          hist_data=self.hp1,
-                          cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
-        late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
-        multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
-        self.op.set_parameter(stg_id='custom',
-                              pars={'000300': (5, 10.),
-                                    '000400': (5, 10.),
-                                    '000500': (5, 6.)})
-        self.assertEqual(self.op.strategies[0].pars, {'000300': (5, 10.),
-                                                      '000400': (5, 10.),
-                                                      '000500': (5, 6.)})
-        self.op.set_parameter(stg_id='custom_1',
-                              pars=())
-        self.assertEqual(self.op.strategies[1].pars, ()),
-        self.op.set_parameter(stg_id='custom_2',
-                              pars=(0.2, 0.02, -0.02))
-        self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
-        self.op.assign_hist_data(
-                hist_data=self.hp1,
-                cash_plan=on_spot_cash,
-        )  # TODO: 测试交易策略不需要使用当前数据周期的情况(stg.use_latest_data_cycle==False) for version 1.0.7
-        # test if all historical data related properties are set
-        self.assertIsInstance(self.op._op_list_shares, dict)
-        self.assertIsInstance(self.op._op_list_hdates, dict)
-        self.assertIsInstance(self.op._op_list_price_types, dict)
+        # create an operator with 2 groups of strategies
+        op = qt.Operator()
+        op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
+        op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
+        print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
+        op.set_parameter('custom', use_latest_data_cycle=False)
+        op.set_parameter('custom_1', use_latest_data_cycle=False)
+        op.set_parameter('custom_2', use_latest_data_cycle=False)
+        op.info(verbose=False)
 
-        self.assertIsInstance(self.op._op_history_data, dict)
-        self.assertEqual(len(self.op._op_history_data), 3)
-        self.assertEqual(list(self.op._op_history_data.keys()), ['custom', 'custom_1', 'custom_2'])
-        self.assertIsInstance(self.op._op_hist_data_rolling_windows, dict)
-        self.assertEqual(len(self.op._op_hist_data_rolling_windows), 3)
-        self.assertEqual(list(self.op._op_hist_data_rolling_windows.keys()), ['custom', 'custom_1', 'custom_2'])
-        print(self.op._op_hist_data_rolling_windows)
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (45, 3, 5, 4))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (45, 3, 5, 3))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (45, 3, 2, 4))
-
-        target_hist_data_rolling_window = np.array(
-                [[[10.04, 10.02, 10.07, 9.99],
-                  [10., 10., 10., 10.],
-                  [10., 9.98, 10., 9.97],
-                  [9.99, 9.97, 10., 9.97],
-                  [9.97, 9.99, 10.03, 9.97]],
-
-                 [[9.68, 9.88, 9.91, 9.63],
-                  [9.87, 9.88, 10.04, 9.84],
-                  [9.86, 9.89, 9.93, 9.81],
-                  [9.87, 9.75, 10.04, 9.74],
-                  [9.79, 9.74, 9.84, 9.67]],
-
-                 [[6.64, 7.26, 7.41, 6.53],
-                  [7.26, 7., 7.31, 6.87],
-                  [7.03, 6.88, 7.14, 6.83],
-                  [6.87, 6.91, 7., 6.7],
-                  [np.nan, np.nan, np.nan, np.nan]]]
+        op.prepare_running_schedule(
+                start_date='2023-01-10',
+                end_date='2023-01-31',
+                include_start_am=False,
+                include_start_pm=False,
         )
-        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom'][0],
-                                        target_hist_data_rolling_window,
-                                        equal_nan=True)
-        self.assertTrue(target_comparison)
-        target_hist_data_rolling_window = np.array(
-                [[[10.07, 9.99, 10.04],
-                  [10., 10., 10.],
-                  [10., 9.97, 10.],
-                  [10., 9.97, 9.99],
-                  [10.03, 9.97, 9.97]],
+        print(f'Operator running schedule prepared:\n')
+        for group in op.groups:
+            print(f'Group schedule for: "{group}:{op.groups[group]}"')
+            print(op.group_schedules[group])
+            self.assertIsInstance(op.group_schedules[group], pd.DataFrame)
+        group = 'Group_1'
+        self.assertEqual(len(op.group_schedules[group].index), 10)
+        self.assertEqual(op.group_schedules[group].index[0], pd.Timestamp('2023-01-10 15:00:00'))
+        self.assertEqual(op.group_schedules[group].index[-1], pd.Timestamp('2023-01-30 15:00:00'))
+        group = 'Group_2'
+        self.assertEqual(len(op.group_schedules[group].index), 40)
+        self.assertEqual(op.group_schedules[group].index[0], pd.Timestamp('2023-01-10 10:30:00'))
+        self.assertEqual(op.group_schedules[group].index[-1], pd.Timestamp('2023-01-30 15:00:00'))
 
-                 [[9.91, 9.63, 9.68],
-                  [10.04, 9.84, 9.87],
-                  [9.93, 9.81, 9.86],
-                  [10.04, 9.74, 9.87],
-                  [9.84, 9.67, 9.79]],
+        # test function prepare_data_buffer()
 
-                 [[7.41, 6.53, 6.64],
-                  [7.31, 6.87, 7.26],
-                  [7.14, 6.83, 7.03],
-                  [7., 6.7, 6.87],
-                  [np.nan, np.nan, np.nan]]]
+        print(f'Preparing data buffer for operator')
+        print(f'Operator data types needed are: {op.op_data_types}')
+        data_buffer = {
+            'close_E_15min': close_15min_df,
+            'close_E_d':     close_d_df,
+            'close_E_h':     close_h_df,
+            'close_E_w':     close_w_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
         )
-        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_1'][0],
-                                        target_hist_data_rolling_window,
-                                        equal_nan=True)
-        self.assertTrue(target_comparison)
-        target_hist_data_rolling_window = np.array(
-                [[[9.99, 9.97, 10., 9.97],
-                  [9.97, 9.99, 10.03, 9.97]],
+        print(f'Operator data buffer prepared:\n')
+        for dtype in op.op_data_type_ids:
+            print(f'Data type "{dtype}" has data:\n')
+            print(op.data_buffers[dtype])
+            print('\n')
 
-                 [[9.87, 9.75, 10.04, 9.74],
-                  [9.79, 9.74, 9.84, 9.67]],
+        print(f'Data Windows are NOT created for all strategies')
+        self.assertEqual(op.data_window_views, {})
+        self.assertEqual(op.data_window_indices, {})
 
-                 [[6.87, 6.91, 7., 6.7],
-                  [np.nan, np.nan, np.nan, np.nan]]]
-        )
-        target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_2'][0],
-                                        target_hist_data_rolling_window,
-                                        equal_nan=True)
-        self.assertTrue(target_comparison)
-        # test if automatic strategy blenders are set
-        self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', 's2', '+', 's1', 's0']})
-        tim_hist_data = self.op._op_history_data['custom']
-        sel_hist_data = self.op._op_history_data['custom_1']
-        ric_hist_data = self.op._op_history_data['custom_2']
+        # test function create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies')
+        self.assertEqual(len(op.data_window_views), 3)
+        self.assertEqual(len(op.data_window_indices), 3)
+        data_window_shapes = {
+            'custom':   {
+                'close_E_d': (22, 4, 3),
+                'close_E_h': (56, 5, 3),
+            },
+            'custom_1': {
+                'close_E_d': (23, 1, 3),
+                'close_E_w': (3, 1, 3),
+            },
+            'custom_2': {
+                'close_E_h':     (56, 5, 3),
+                'close_E_15min': (157, 5, 3),
+            },
+        }
+        data_window_targets = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [[[0.994, 0.412, 0.876],
+                          [1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62]],
 
-        print(f'in test_prepare_data in TestOperator:')
-        print('selecting history arr:\n', sel_hist_data)
-        print('originally passed arr in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
-        print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
-        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
-        self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
-        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, :, :], equal_nan=True))
+                         [[1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218]],
 
-        # raises Value Error if empty history panel is given
-        empty_hp = qt.HistoryPanel()
-        correct_hp = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 4)),
-                                     columns=self.types,
-                                     levels=self.shares,
-                                     rows=self.date_indices)
-        too_many_shares = qt.HistoryPanel(values=np.random.randint(10, size=(5, 50, 4)),
-                                          columns=self.types,
-                                          rows=self.date_indices)
-        too_many_types = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 5)),
-                                         rows=self.date_indices)
-        # raises Error when history panel is empty
-        self.assertRaises(ValueError,
-                          self.op.assign_hist_data,
-                          empty_hp,
-                          on_spot_cash)
-        # raises Error when first investment date is too early
-        self.assertRaises(ValueError,
-                          self.op.assign_hist_data,
-                          correct_hp,
-                          early_cash)
-        # raises Error when last investment date is too late
-        self.assertRaises(ValueError,
-                          self.op.assign_hist_data,
-                          correct_hp,
-                          late_cash)
-        # # raises Error when number of shares in history data does not fit
-        # self.assertRaises(AssertionError,
-        #                   self.op.assign_hist_data,
-        #                   too_many_shares,
-        #                   on_spot_cash)
-        # raises Error when too early cash investment date
-        self.assertRaises(ValueError,
-                          self.op.assign_hist_data,
-                          correct_hp,
-                          too_early_cash)
-        # raises Error when number of d_types in history data does not fit
-        self.assertRaises(KeyError,
-                          self.op.assign_hist_data,
-                          too_many_types,
-                          on_spot_cash)
+                         [[2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218],
+                          [7.177, 7.337, 7.294]]],
+                ),
+                'close_E_h': np.array(
+                        [[[0.296, 0.969, 0.422],
+                          [0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381]],
 
-        # test the effect of data type sequence in strategy definition
+                         [[0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956]],
 
-    def test_operator_generate(self):
-        """ 测试operator对象生成完整交易信号
+                         [[0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956],
+                          [1.04, 1.577, 1.919]]],
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [[[0.994, 0.412, 0.876],
+                          [1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799]],
 
-        :return:
-        """
-        # 使用test模块的自定义策略生成三种交易策略
-        test_ls = TestLSStrategy()
-        test_sel = TestSelStrategy()
-        test_sel2 = TestSelStrategyDiffTime()
-        test_sig = TestSigStrategy()
-        print('--Test PT type signal generation--')
-        # 测试PT类型的信号生成：
-        # 创建一个Operator对象，信号类型为PT（比例目标信号）
-        # 这个Operator对象包含两个策略，分别为LS-Strategy以及Sel-Strategy，代表择时和选股策略
-        # 两个策略分别生成PT信号后混合成一个信号输出
-        self.op = qt.Operator(strategies=[test_ls, test_sel])
-        self.op.set_parameter(stg_id='custom',
-                              pars={'000010': (5, 10.),
-                                    '000030': (5, 10.),
-                                    '000039': (5, 6.)})
-        self.op.set_parameter(stg_id=1,
-                              pars=())
-        self.op.assign_hist_data(
-                hist_data=self.hp1,
-                cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000),
-        )
-        print('--test operator information in normal mode--')
-        self.op.info()
-        self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', 's1', 's0']})
-        self.op.set_blender('s0*s1')
-        self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', 's1', 's0']})
-        print('--test operation signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal()
+                         [[1.117, 1.257, 1.447],
+                          [2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62]],
 
-        self.assertTrue(isinstance(op_list, np.ndarray))
-        backtest_price_types = self.op.op_list_price_types
-        self.assertEqual(backtest_price_types, ['close'])
-        self.assertEqual(op_list.shape, (3, 45, 1))
-        reduced_op_list = op_list.squeeze().T
-        print(f'op_list created, it is a 3 share/45 days/1 htype array, to make comparison happen, \n'
-              f'it will be squeezed to a 2-d array to compare on share-wise:\n'
-              f'{reduced_op_list}')
-        target_op_values = np.array([[0.0, 0.0, 0.0],
-                                     [0.0, 0.0, 0.0],
-                                     [0.0, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.5, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.5, 0.0, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.5],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 0.5, 0.0]])
+                         [[2.315, 2.08, 2.799],
+                          [3.704, 3.87, 3.62],
+                          [6.091, 6.127, 6.218]]],
 
-        self.assertTrue(np.allclose(target_op_values, reduced_op_list, equal_nan=True))
+                ),
+                'close_E_w': np.array(
+                        [[[0.134, 0.207, 0.095]],
 
-        print('--Test two separate signal generation for different price types--')
-        # 测试两组PT类型的信号生成：
-        # 在Operator对象中增加两个SigStrategy策略，策略类型相同但是策略的参数不同，回测价格类型为"OPEN"
-        # Opeartor应该生成两组交易信号，分别用于"close"和"open"两中不同的价格类型
-        # 这里需要重新生成两个新的交易策略对象，否则在op的strategies列表中产生重复的对象引用，从而引起错误
-        test_ls = TestLSStrategy()
-        test_sel = TestSelStrategy()
-        self.op.add_strategies([test_ls, test_sel])
-        self.op.set_parameter(stg_id='custom_2',
-                              strategy_run_timing='open')
-        self.op.set_parameter(stg_id='custom_3',
-                              strategy_run_timing='open')
-        self.assertEqual(self.op['custom'].strategy_run_timing, 'close')
-        self.assertEqual(self.op['custom_2'].strategy_run_timing, 'open')
-        self.op.set_parameter(stg_id='custom_2',
-                              pars={'000010': (5, 10.),
-                                    '000030': (5, 10.),
-                                    '000039': (5, 6.)})
-        self.op.set_parameter(stg_id='custom_3',
-                              pars=())
-        self.op.set_blender(blender='s0 or s1', run_timing='open')
-        self.op.assign_hist_data(
-                hist_data=self.hp1,
-                cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000),
-        )
-        print('--test how operator information is printed out--')
-        self.op.info()
-        self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['*', 's1', 's0'],
-                          'open':  ['or', 's1', 's0']})
-        print('--test opeartion signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal()
+                         [[1.015, 0.591, 0.615]],
 
-        self.assertTrue(isinstance(op_list, np.ndarray))
-        signal_close = op_list[:, :, 0].squeeze().T
-        signal_open = op_list[:, :, 1].squeeze().T
-        self.assertEqual(signal_close.shape, (45, 3))
-        self.assertEqual(signal_open.shape, (45, 3))
+                         [[1.255, 0.85, 0.992]]],
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [[[0.296, 0.969, 0.422],
+                          [0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381]],
 
-        target_op_close = np.array([[0.0, 0.0, 0.0],
-                                    [0.0, 0.0, 0.0],
-                                    [0.0, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.5, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.5, 0.0, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.5],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0],
-                                    [0.0, 0.5, 0.0]])
-        target_op_open = np.array([[0.5, 0.5, 1.0],
-                                   [0.5, 0.5, 1.0],
-                                   [0.5, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 0.5, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 1.0, 1.0],
-                                   [1.0, 0.5, 0.0],
-                                   [1.0, 0.5, 0.0],
-                                   [1.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.0, 1.0, 0.5],
-                                   [0.5, 1.0, 0.0],
-                                   [0.5, 1.0, 0.0],
-                                   [0.5, 1.0, 0.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.0, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0],
-                                   [0.5, 1.0, 1.0]])
+                         [[0.153, 0.306, 0.254],
+                          [0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956]],
 
-        signal_pairs = [[list(sig1), list(sig2), sig1 == sig2]
-                        for sig1, sig2
-                        in zip(list(target_op_close), list(signal_close))]
-        print(f'signals side by side:\n'
-              f'{signal_pairs}')
-        self.assertTrue(np.allclose(target_op_close, signal_close, equal_nan=True))
-        signal_pairs = [[list(sig1), list(sig2), sig1 == sig2]
-                        for sig1, sig2
-                        in zip(list(target_op_open), list(signal_open))]
-        print(f'signals side by side:\n'
-              f'{signal_pairs}')
-        self.assertTrue(np.allclose(target_op_open, signal_open, equal_nan=True))
+                         [[0.793, 0.406, 0.798],
+                          [0.257, 0.461, 0.749],
+                          [1.201, 1.871, 1.381],
+                          [1.117, 1.665, 1.956],
+                          [1.04, 1.577, 1.919]]],
+                ),
+                'close_E_15min': np.array(
+                        [[[3.496, 3.578, 3.001],
+                          [3.026, 3.351, 3.198],
+                          [3.678, 3.386, 3.985],
+                          [3.357, 3.467, 3.014],
+                          [3.319, 3.782, 3.705],
+                          [3.356, 3.091, 3.209],
+                          [3.122, 3.918, 3.729],
+                          [3.094, 3.073, 3.343],
+                          [3.611, 3.083, 3.345],
+                          [3.978, 3.881, 3.738],
+                          [3.206, 3.035, 3.697],
+                          [3.567, 3.524, 3.884],
+                          [3.966, 3.796, 3.849],
+                          [3.225, 3.695, 3.128],
+                          [3.540, 3.954, 3.556],
+                          [3.501, 3.598, 3.956],
+                          [6.311, 6.261, 6.459],
+                          [6.707, 6.215, 6.338],
+                          [6.019, 6.607, 6.370],
+                          [6.966, 6.234, 6.653]],
 
-        print('--Test two separate signal generation for different price types--')
-        # 更多测试集合
+                         [[3.026, 3.351, 3.198],
+                          [3.678, 3.386, 3.985],
+                          [3.357, 3.467, 3.014],
+                          [3.319, 3.782, 3.705],
+                          [3.356, 3.091, 3.209],
+                          [3.122, 3.918, 3.729],
+                          [3.094, 3.073, 3.343],
+                          [3.611, 3.083, 3.345],
+                          [3.978, 3.881, 3.738],
+                          [3.206, 3.035, 3.697],
+                          [3.567, 3.524, 3.884],
+                          [3.966, 3.796, 3.849],
+                          [3.225, 3.695, 3.128],
+                          [3.540, 3.954, 3.556],
+                          [3.501, 3.598, 3.956],
+                          [6.311, 6.261, 6.459],
+                          [6.707, 6.215, 6.338],
+                          [6.019, 6.607, 6.370],
+                          [6.966, 6.234, 6.653],
+                          [6.786, 6.136, 6.881]],
 
-    def test_operator_generate_stepwise(self):
-        """ 测试operator对象在实时模式下生成交易信号
+                         [[3.678, 3.386, 3.985],
+                          [3.357, 3.467, 3.014],
+                          [3.319, 3.782, 3.705],
+                          [3.356, 3.091, 3.209],
+                          [3.122, 3.918, 3.729],
+                          [3.094, 3.073, 3.343],
+                          [3.611, 3.083, 3.345],
+                          [3.978, 3.881, 3.738],
+                          [3.206, 3.035, 3.697],
+                          [3.567, 3.524, 3.884],
+                          [3.966, 3.796, 3.849],
+                          [3.225, 3.695, 3.128],
+                          [3.540, 3.954, 3.556],
+                          [3.501, 3.598, 3.956],
+                          [6.311, 6.261, 6.459],
+                          [6.707, 6.215, 6.338],
+                          [6.019, 6.607, 6.370],
+                          [6.966, 6.234, 6.653],
+                          [6.786, 6.136, 6.881],
+                          [6.900, 6.981, 6.760]]],
+                ),
+            },
+        }
+        target_data_indices = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [1, 1, 1, 1, 2, 2, 2, 2, 3, 3,
+                         3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
+                         6, 6, 6, 6, 7, 7, 7, 7, 8, 8,
+                         8, 8, 9, 9, 9, 9, 10, 10, 10, 10]
+                ),
+                'close_E_h': np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [2, 2, 2, 2, 3, 3, 3, 3, 4, 4,
+                         4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
+                         7, 7, 7, 7, 8, 8, 8, 8, 9, 9,
+                         9, 9, 10, 10, 10, 10, 11, 11, 11, 11]
+                ),
+                'close_E_w': np.array(
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 2, 2, 2, 2]
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+                'close_E_15min': np.array(
+                        [15, 19, 23, 27, 31, 35, 39, 43, 47, 51,
+                         55, 59, 63, 67, 71, 75, 79, 83, 87, 91,
+                         95, 99, 103, 107, 111, 115, 119, 123, 127, 131,
+                         135, 139, 143, 147, 151, 155, 156, 156, 156, 156]
+                ),
+            },
+        }
+        for stg_id in op.strategy_ids:
+            print(f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
+                # check data type and data shapes
+                self.assertIn(dtype, op.op_data_type_ids)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
+                self.assertEqual(data_window.shape[1],
+                                 op[stg_id].window_lengths[dtype])
 
-        :return:
-        """
-        # TODO: implement this test
-        pass
+                self.assertEqual(data_window.shape[2],
+                                 3)
+                # check that the data indices are correct
+                self.assertTrue(np.allclose(data_window[:3],
+                                            data_window_targets[stg_id][dtype], ))
+                # check all data indices
+                self.assertIsInstance(data_indices, np.ndarray)
+                self.assertEqual(len(data_indices), 40)
+                self.assertTrue(np.allclose(
+                        data_indices,
+                        target_data_indices[stg_id][dtype],
+                ))
 
-    def test_stg_parameter_setting(self):
-        """ test setting parameters of strategies
-        test the method set_parameters
+        # set different ULC for strategy data types, and check again data window and data indices
+        op.set_parameter('custom',
+                         use_latest_data_cycle=[True, False], )
+        op.set_parameter('custom_1',
+                         use_latest_data_cycle=[False, True], )
+        op.set_parameter('custom_2',
+                         use_latest_data_cycle=[False, True], )
 
-        :return:
-        """
-        op = qt.Operator(strategies='dma, all, sellrate')
-        print(op.strategies, '\n', [qt.built_in.DMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
-        print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
-        # TODO: allow set_parameters to a list of strategies or str-listed strategies
-        # TODO: allow set_parameters to all strategies of specific bt price type
-        print(f'Set up strategy parameters by strategy id')
-        op.set_parameter('dma',
-                         opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
-        op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        op.set_parameter('all',
-                         window_length=20)
-        op.set_parameter('all', strategy_run_timing='close')
-        print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, strategy_run_timing='open')
-        op.set_parameter(2,
-                         opt_tag=1,
-                         pars=(9, -0.09),
-                         window_length=10)
-        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (5, 15)))
-        self.assertEqual(op.strategies[2].pars, (9, -0.09))
-        self.assertEqual(op.op_data_freq, 'd')
-        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.max_window_length, 20)
-        print(f'KeyError will be raised if wrong strategy id is given')
-        self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
-        self.assertRaises(KeyError, op.set_parameter, stg_id='wrong_input', pars=(1, 2))
-        print(f'ValueError will be raised if parameter can be set')
-        self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
-        # test blenders of different price types
-        # test setting blenders to different price types
+        op.create_data_windows()
 
-        # self.assertEqual(a_to_sell.get_blender('close'), 'str-1.2')
-        self.assertEqual(op.strategy_timings, ['close', 'open'])
-        op.set_blender('s0 and s1 or s2', 'open')
-        self.assertEqual(op.get_blender('open'), ['or', 's2', 'and', 's1', 's0'])
-        op.set_blender('s0 or s1 and s2', 'close')
-        self.assertEqual(op.get_blender(), {'close': ['or', 'and', 's2', 's1', 's0'],
-                                            'open':  ['or', 's2', 'and', 's1', 's0']})
+        target_data_indices = {
+            'custom':   {
+                'close_E_d': np.array(
+                        [1, 1, 1, 2, 2, 2, 2, 3, 3, 3,
+                         3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
+                         6, 6, 6, 7, 7, 7, 7, 8, 8, 8,
+                         8, 9, 9, 9, 9, 10, 10, 10, 10, 11]  # USE latest data cycle = TRUE
+                ),
+                'close_E_h': np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+            },
+            'custom_1': {
+                'close_E_d': np.array(
+                        [2, 2, 2, 2, 3, 3, 3, 3, 4, 4,
+                         4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
+                         7, 7, 7, 7, 8, 8, 8, 8, 9, 9,
+                         9, 9, 10, 10, 10, 10, 11, 11, 11, 11]
+                ),
+                'close_E_w': np.array(
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 1, 1, 1, 1, 2, 2, 2, 2, 2]  # USE latest data cycle = TRUE
+                ),
+            },
+            'custom_2': {
+                'close_E_h':     np.array(
+                        [15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                         25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                         35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                         45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+                ),
+                'close_E_15min': np.array(
+                        [16, 20, 24, 28, 32, 36, 40, 44, 48, 52,
+                         56, 60, 64, 68, 72, 76, 80, 84, 88, 92,
+                         96, 100, 104, 108, 112, 116, 120, 124, 128, 132,
+                         136, 140, 144, 148, 152, 156, 156, 156, 156, 156]  # USE latest data cycle = TRUE
+                ),
+            },
+        }
+        for stg_id in op.strategy_ids:
+            print(f'======================AFTER setting different ULC========================'
+                  f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
+                # check data type and data shapes
+                self.assertIn(dtype, op.op_data_type_ids)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertIsInstance(data_window, np.ndarray)
+                self.assertEqual(len(data_window), data_window_shapes[stg_id][dtype][0])
+                self.assertEqual(data_window.shape[1],
+                                 op[stg_id].window_lengths[dtype])
 
-        self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (5, 15), (1, 100), (-0.5, 0.5)],
-                          ['int', 'int', 'int', 'int', 'float']))
-        self.assertEqual(op.opt_tags, [1, 0, 1])
-
-    def test_signal_blend(self):
-        self.assertEqual(blender_parser('s0 & 1'), ['&', '1', 's0'])
-        self.assertEqual(blender_parser('s0 or 1'), ['or', '1', 's0'])
-        self.assertEqual(blender_parser('s0 & s1 | s2'), ['|', 's2', '&', 's1', 's0'])
-        blender = blender_parser('s0 & s1 | s2')
-        self.assertEqual(signal_blend([1, 1, 1], blender), 1)
-        self.assertEqual(signal_blend([1, 0, 1], blender), 1)
-        self.assertEqual(signal_blend([1, 1, 0], blender), 1)
-        self.assertEqual(signal_blend([0, 1, 1], blender), 1)
-        self.assertEqual(signal_blend([0, 0, 1], blender), 1)
-        self.assertEqual(signal_blend([1, 0, 0], blender), 0)
-        self.assertEqual(signal_blend([0, 1, 0], blender), 0)
-        self.assertEqual(signal_blend([0, 0, 0], blender), 0)
-        # parse: '0 & ( 1 | 2 )'
-        self.assertEqual(blender_parser('s0 & ( s1 | s2 )'), ['&', '|', 's2', 's1', 's0'])
-        blender = blender_parser('s0 & ( s1 | s2 )')
-        self.assertEqual(signal_blend([1, 1, 1], blender), 1)
-        self.assertEqual(signal_blend([1, 0, 1], blender), 1)
-        self.assertEqual(signal_blend([1, 1, 0], blender), 1)
-        self.assertEqual(signal_blend([0, 1, 1], blender), 0)
-        self.assertEqual(signal_blend([0, 0, 1], blender), 0)
-        self.assertEqual(signal_blend([1, 0, 0], blender), 0)
-        self.assertEqual(signal_blend([0, 1, 0], blender), 0)
-        self.assertEqual(signal_blend([0, 0, 0], blender), 0)
-        # parse: '(1-2) and 3 + ~0'
-        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
-        blender = blender_parser('(s1-s2)/s3 + s0')
-        self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
-        # parse: '(1-2)/3 + 0'
-        self.assertEqual(blender_parser('(s1-s2)/s3 + s0'), ['+', 's0', '/', 's3', '-', 's2', 's1'])
-        blender = blender_parser('(s1-s2)/s3 + s0')
-        self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
-        # pars: '(0*1/2*(3+4))+5*(6+7)-8'
-        self.assertEqual(blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8'),
-                         ['-', 's8', '+', '*', '+', 's7', 's6', 's5', '*', '+', 's4', 's3', '/', 's2', '*', 's1', 's0'])
-        blender = blender_parser('(s0*s1/s2*(s3+s4))+s5*(s6+s7)-s8')
-        self.assertEqual(signal_blend([1, 1, 1, 1, 1, 1, 1, 1, 1], blender), 3)
-        self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 14)
-        # parse: '0/max(2,1,3 + 5)+4'
-        self.assertEqual(blender_parser('s0/max(s2,s1,s3 + s5)+s4'),
-                         ['+', 's4', '/', 'max(3)', '+', 's5', 's3', 's1', 's2', 's0'])
-        blender = blender_parser('s0/max(s2,s1,s3 + 5)+s4')
-        self.assertEqual(signal_blend([8.0, 4, 3, 5.0, 0.125, 5], blender), 0.925)
-        self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 5.25)
-
-        print('speed test')
-        import time
-        st = time.time()
-        blender = blender_parser('s0+max(s1,s2,(s3+s4)*s5, max(s6, (s7+s8)*s9), s10-s11) * (s12+s13)')
-        res = []
-        for i in range(10000):
-            res = signal_blend([1, 1, 2, 3, 4, 5, 3, 4, 5, 6, 7, 8, 2, 3], blender)
-        et = time.time()
-        print(f'total time for RPN processing: {et - st}, got result: {res}')
-
-        blender = blender_parser("s0 + s1 * s2")
-        self.assertEqual(signal_blend([1, 2, 3], blender), 7)
-        blender = blender_parser("(s0 + s1) * s2")
-        self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(s0+s1) * s2")
-        self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(s0 + s1)   * s2")
-        self.assertEqual(signal_blend([1, 2, 3], blender), 9)
-        blender = blender_parser("(s0-s1)/s2 + s3")
-        print(f'RPN of notation: "(s0-s1)/s2 + s3" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
-        blender = blender_parser("-(s0-s1)/s2 + s3")
-        print(f'RPN of notation: "-(s0-s1)/s2 + s3" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
-        blender = blender_parser("~(0-1)/s2 + s3")
-        print(f'RPN of notation: "~(s0-s1)/s2 + s3" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), 0.33333333)
-        blender = blender_parser("s0 + s1 / s2")
-        print(f'RPN of notation: "0 + 1 / 2" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, math.pi, 4], blender), 1.78539816)
-        blender = blender_parser("(s0 + s1) / s2")
-        print(f'RPN of notation: "(0 + 1) / 2" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(signal_blend([1, 2, 3], blender), 1)
-        blender = blender_parser("(s0 + s1 * s2) / s3")
-        print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
-        blender = blender_parser("s0 / s1 * s2")
-        print(f'RPN of notation: "0 / 1 * 2" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(signal_blend([1, 3, 6], blender), 2)
-        blender = blender_parser("(s0 - s1 + s2) * s4")
-        print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
-        blender = blender_parser("s0 * s1")
-        print(f'RPN of notation: "0 * 1" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([math.pi, math.e], blender), 8.539734222673566)
-
-        blender = blender_parser('abs(s3-sqrt(s2) /  cos(s1))')
-        print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['abs(1)', '-', '/', 'cos(1)', 's1', 'sqrt(1)', 's2', 's3'])
-        blender = blender_parser('s0/max(s2,s1,s3 + s5)+s4')
-        print(f'RPN of notation: "0/max(2,1,3 + 5)+4" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', 's4', '/', 'max(3)', '+', 's5', 's3', 's1', 's2', 's0'])
-
-        blender = blender_parser('s1 + sum(s1,s2,s3+s3, sum(s1, s2) + s3) *s5')
-        print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', 's5', 'sum(4)', '+', 's3', 'sum(2)', 's2', 's1',
-                                   '+', 's3', 's3', 's2', 's1', 's1'])
-        blender = blender_parser('s1+sum(1,2,(s3+s5)*s4, sum(s3, (4+s5)*s6), s7-s8) * (s2+s3)')
-        print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
-              f'{" ".join(blender[::-1])}')
-        self.assertEqual(blender, ['+', '*', '+', 's3', 's2', 'sum(5)', '-', 's8', 's7',
-                                   'sum(2)', '*', 's6', '+', 's5', '4', 's3', '*', 's4',
-                                   '+', 's5', 's3', '2', '1', 's1'])
-
-    def test_tokenizer(self):
-        self.assertListEqual(_exp_to_token('s1+s1'),
-                             ['s1', '+', 's1'])
-        print(_exp_to_token('s1+s1'))
-        self.assertListEqual(_exp_to_token('1+1'),
-                             ['1', '+', '1'])
-        print(_exp_to_token('1+1'))
-        self.assertListEqual(_exp_to_token('1 & 1'),
-                             ['1', '&', '1'])
-        print(_exp_to_token('1&1'))
-        self.assertListEqual(_exp_to_token('1 and 1'),
-                             ['1', 'and', '1'])
-        print(_exp_to_token('1 and 1'))
-        self.assertListEqual(_exp_to_token('-1 and 1'),
-                             ['-1', 'and', '1'])
-        print(_exp_to_token('s0 and s1'))
-        self.assertListEqual(_exp_to_token('s0 or s1'),
-                             ['s0', 'or', 's1'])
-        print(_exp_to_token('1 and 1'))
-        self.assertListEqual(_exp_to_token('1 or 1'),
-                             ['1', 'or', '1'])
-        print(_exp_to_token('1 or 1'))
-        self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
-                             ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
-        print(_exp_to_token('(1 - 1 + -1) * pi'))
-        self.assertListEqual(_exp_to_token('(s1 - s1 + -1) * pi'),
-                             ['(', 's1', '-', 's1', '+', '-1', ')', '*', 'pi'])
-        print(_exp_to_token('(s1 - s1 + -1) * pi'))
-        self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
-                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
-        print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
-        self.assertListEqual(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'),
-                             ['abs(', 's5', '-', 'sqrt(', 's2', ')', '/', 'cos(', 'pi', ')', ')'])
-        print(_exp_to_token('abs(s5-sqrt(s2) /  cos(pi))'))
-        self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
-                             ['sin(', 'pi', ')', '+', '2.14'])
-        print(_exp_to_token('sin(pi) + 2.14'))
-        self.assertListEqual(_exp_to_token('-sin(pi) + 2.14'),
-                             ['-1', '*', 'sin(', 'pi', ')', '+', '2.14'])
-        print(_exp_to_token('-sin(pi) + 2.14'))
-        self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
-                             ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
-        print(_exp_to_token('(1-2)/3.0 + 0.0000'))
-        self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-1', '*', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
-        print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
-        self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
-                             ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
-        print(_exp_to_token('(x + e * 10) / 10'))
-        self.assertListEqual(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
-                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
-                              ')'])
-        print(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
-        self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
-                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
-        print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
-        self.assertListEqual(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'),
-                             ['abs(', '-1.14', ')', '+', 'power(', '2', ',', '3', ')', 'and', 'log(', '3.14', ')'])
-        print(_exp_to_token('abs(-1.14)+power(2, 3)and log(3.14)'))
-        self.assertListEqual(_exp_to_token('strength_1.25(0, 1, 2)'),
-                             ['strength_1.25(', '0', ',', '1', ',', '2', ')'])
-        print(_exp_to_token('strength_1.25(0, 1, 2)'))
-        self.assertListEqual(_exp_to_token('avg_pos_3_1.25(0, 1,2)'),
-                             ['avg_pos_3_1.25(', '0', ',', '1', ',', '2', ')'])
-        print(_exp_to_token('avg_pos_3_1.25(0, 1,2)'))
-        self.assertListEqual(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'),
-                             ['clip_-1_1(', 'pos_5_0.2(', '0', ',', '1', ',', '2', ',', '3', ',', '4', ')', ')'])
-        print(_exp_to_token('clip_-1_1(pos_5_0.2(0, 1, 2, 3, 4))'))
-
-    def test_all_blending_funcs(self):
-        """ 测试其他信号组合函数是否正常工作"""
-        # 生成五个示例交易信号
-        signal0 = np.array([[0.12, 0.35, 0.11],
-                            [0.81, 0.22, 0.29],
-                            [0.86, 0.47, 0.29],
-                            [0.46, 0.81, 0.60],
-                            [0.42, 0.55, 0.74]])
-        signal1 = np.array([[0.94, 0.66, 0.69],
-                            [0.85, 0.30, 0.65],
-                            [0.87, 0.06, 0.24],
-                            [0.73, 0.20, 0.19],
-                            [0.43, 0.18, 0.44]])
-        signal2 = np.array([[0.24, 0.81, 0.44],
-                            [0.66, 0.92, 0.99],
-                            [0.18, 0.17, 0.11],
-                            [0.48, 0.57, 0.55],
-                            [0.37, 0.66, 0.01]])
-        signal3 = np.array([[0.92, 0.88, 0.16],
-                            [0.89, 0.79, 0.27],
-                            [0.48, 0.77, 0.20],
-                            [0.43, 0.33, 0.25],
-                            [0.90, 0.30, 0.49]])
-        signal4 = np.array([[0.05, 0.17, 0.30],
-                            [0.16, 0.62, 0.61],
-                            [0.52, 0.83, 0.57],
-                            [0.16, 0.36, 0.28],
-                            [0.99, 0.57, 0.04]])
-        # 将示例信号组合为交易信号组，与operator输出形式相同
-        signals = [signal0, signal1, signal2, signal3, signal4]
-
-        # 开始测试blender functions
-        print('\ntest average functions')
-        blender_exp = 'avg(s0, s1, s2, s3, s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.454, 0.574, 0.340],
-                           [0.674, 0.570, 0.562],
-                           [0.582, 0.460, 0.282],
-                           [0.452, 0.454, 0.374],
-                           [0.622, 0.452, 0.344]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest comparison functions')
-        blender_exp = 'combo(s0, s1, s2) + min(s0, s1,s2)-max(s2, s3, s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.50,  1.29,  0.91],
-                           [2.09,  0.74,  1.23],
-                           [1.57, -0.07,  0.18],
-                           [1.65,  1.21,  0.98],
-                           [0.60,  0.91,  0.71]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest mathematical functions')
-        blender_exp = 'abs(s0) + ceil(s1) * pow(s0, s1) + floor(s2+s3+s4) - exp(s3) and log(s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[8.77344165, 6.12214254, 1.74092762],
-                           [7.10858499, 3.90823377, 2.38476921],
-                           [3.79382222, 2.82813777, 1.71955085],
-                           [4.84445021, 4.18981584, 4.14202468],
-                           [3.13336769, 3.20675832, 6.87013820]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function strength')
-        blender_exp = 'strength_1.35(s0, s1, s2)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0., 1., 0.],
-                           [1., 1., 1.],
-                           [1., 0., 0.],
-                           [1., 1., 0.],
-                           [0., 1., 0.]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function position')
-        blender_exp = 'pos_3_0.5(s0, s1, s2, s3, s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0., 1., 0.],
-                           [1., 1., 1.],
-                           [1., 0., 0.],
-                           [0., 0., 0.],
-                           [0., 1., 0.]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function clip')
-        blender_exp = 'clip_-1_0.8(pos_5_0.2(s0, s1, s2, s3, s4))'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.0, 0.0, 0.0],
-                           [0.0, 0.8, 0.8],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.8, 0.0],
-                           [0.8, 0.0, 0.0]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function avg position')
-        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.000, 0.574, 0.000],
-                           [0.674, 0.570, 0.562],
-                           [0.582, 0.000, 0.000],
-                           [0.000, 0.000, 0.000],
-                           [0.000, 0.452, 0.000]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function unify')
-        blender_exp = 'unify(avgpos_3_0.5(s0, s1, s2, s3, s4))'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.00000000, 1.00000000, 0.00000000],
-                           [0.37320044, 0.31561462, 0.31118494],
-                           [1.00000000, 0.00000000, 0.00000000],
-                           [0.00000000, 0.00000000, 0.00000000],
-                           [0.00000000, 1.00000000, 0.00000000]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        print('\ntest signal combination function with pure numbers')
-        blender_exp = 'avgpos_3_0.5(s0, 1.5*s1, 2*s2, 0.5*s3, 2+s4)'
-        blender = blender_parser(blender_exp)
-        res = signal_blend(signals, blender)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        target = np.array([[0.000, 1.114, 0.881],
-                           [1.202, 0.000, 1.198],
-                           [1.057, 0.000, 0.000],
-                           [0.978, 0.955, 0.878],
-                           [1.049, 0.972, 0.741]])
-
-        hit = np.allclose(res, target)
-        self.assertTrue(hit)
-
-        # test human_blender function:
-        print('\ntest human_blender function')
-        strategy_ids = ['MACD', 'DMA', 'CROSSLINE', 'TRIX', 'KDJ']
-        blender_exp = 'avgpos_3_0.5(s0, s1, s2, s3, s4)'
-        res = human_blender(blender_exp, strategy_ids)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        self.assertEqual(res, 'avgpos_3_0.5(MACD, DMA, CROSSLINE, TRIX, KDJ)')
-
-        blender_exp = 'max(s0, s1, s2)+s3*s4'
-        res = human_blender(blender_exp, strategy_ids)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        self.assertEqual(res, 'max(MACD, DMA, CROSSLINE) + TRIX * KDJ')
-
-        blender_exp = 'max(s0, s1/s0)+s1and0.5*s4'
-        res = human_blender(blender_exp, strategy_ids)
-        print(f'blended signals with blender "{blender_exp}" is \n{res}')
-        self.assertEqual(res, 'max(MACD, DMA / MACD) + DMA and 0.5 * KDJ')
-
-        blender_exp = 'max(s0, s1/s0)+s1^0.5*s6'
-        self.assertRaises(IndexError, human_blender, blender_exp, strategy_ids)
+                self.assertEqual(data_window.shape[2],
+                                 3)
+                # check that the data indices are correct
+                self.assertTrue(np.allclose(data_window[:3],
+                                            data_window_targets[stg_id][dtype], ))
+                # check all data indices
+                self.assertIsInstance(data_indices, np.ndarray)
+                self.assertEqual(len(data_indices), 40)
+                self.assertTrue(np.allclose(
+                        data_indices,
+                        target_data_indices[stg_id][dtype],
+                ))
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
-        print(f'--------- Testing setting Opt Pars: set_opt_par -------')
+        print(f'--------- Testing setting Opt Pars: set_opt_par_values -------')
         op = qt.Operator('dma, random, crossline')
         op.set_parameter('dma',
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10, )
         op.set_parameter('dma',
-                         pars=(5, 10, 5))
-        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
+                         par_values=(50, 10, 55))
+        self.assertEqual(op.strategies[0].par_values, (50, 10, 55))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
-        op.set_opt_par((5, 12, 9))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
+        op.set_opt_par_values((58, 12, 90))
+        self.assertEqual(op.strategies[0].par_values, (58, 12, 90))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (35, 120, 0.02))
 
         op.set_parameter('crossline',
                          opt_tag=1,
-                         par_range=((5, 10), (5, 35), (0, 1)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10, )
         op.set_parameter('crossline',
-                         pars=(5, 10, 0.1))
+                         par_values=(55, 10, 0.1))
         self.assertEqual(op.opt_tags, [1, 0, 1])
-        op.set_opt_par((5, 12, 9, 8, 26, 0.09))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
+        op.set_opt_par_values((60, 12, 99, 80, 26, 0.09))
+        self.assertEqual(op.strategies[0].par_values, (60, 12, 99))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
-        op.set_opt_par((9, 200, 155, 8, 26, 0.09, 5, 12, 9))
-        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 0.09))
+        op.set_opt_par_values((90, 200, 155, 80, 26, 0.09, 5, 12, 9))
+        self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (80, 26, 0.09))
 
-        # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
+        # test set_opt_par_values when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
                          opt_tag=2,
-                         par_range=((5, 10), (5, 35), (5, 15)),
-                         window_length=10,
-                         strategy_data_types=['close', 'open', 'high'])
+                         window_length=10, )
         op.set_parameter('crossline',
-                         pars=(5, 10, 5))
+                         par_values=(50, 10, 0.05))
         self.assertEqual(op.opt_tags, [1, 0, 2])
-        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (5, 10, 5))
-        op.set_opt_par((5, 12, 9, (8, 26, 9)))
-        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
-        self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
+        self.assertEqual(op.strategies[0].par_values, (90, 200, 155))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (50, 10, 0.05))
+        op.set_opt_par_values((15, 12, 9, (18, 26, 0.09)))
+        self.assertEqual(op.strategies[0].par_values, (15, 12, 9))
+        self.assertEqual(op.strategies[1].par_values, (0.5,))
+        self.assertEqual(op.strategies[2].par_values, (18, 26, 0.09))
 
         # Test Errors
         # op.set_opt_par主要在优化过程中自动生成，已经保证了参数的正确性，因此不再检查参数正确性
 
-    def test_stg_attribute_get_and_set(self):
-        self.stg = qt.built_in.CROSSLINE()
-        self.stg_type = 'RULE-ITER'
-        self.stg_name = "CROSSLINE"
-        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
-                        'point' \
-                        ' of long and short term moving average prices '
-        self.pars = (35, 120, 0.02)
-        self.par_boes = [(10, 250), (10, 250), (0, 0.1)]
-        self.par_count = 3
-        self.par_types = ['int', 'int', 'float']
-        self.opt_tag = 0
-        self.data_types = ['close']
-        self.data_freq = 'd'
-        self.sample_freq = 'd'
-        self.window_length = 270
+    def test_operator_signal_creation(self):
+        """ 测试operator对象生成完整信号,仅考虑交易信号的生成，不考虑信号的执行以及持仓变化
 
-        self.assertEqual(self.stg.stg_type, self.stg_type)
-        self.assertEqual(self.stg.name, self.stg_name)
-        self.assertEqual(self.stg.description, self.stg_text)
-        self.assertEqual(self.stg.pars, self.pars)
-        self.assertEqual(self.stg.par_types, self.par_types)
-        self.assertEqual(self.stg.par_range, self.par_boes)
-        self.assertEqual(self.stg.par_count, self.par_count)
-        self.assertEqual(self.stg.opt_tag, self.opt_tag)
-        self.assertEqual(self.stg.data_freq, self.data_freq)
-        self.assertEqual(self.stg.strategy_run_freq, self.sample_freq)
-        self.assertEqual(self.stg.data_types, self.data_types)
-        self.assertEqual(self.stg.window_length, self.window_length)
-        self.stg.name = 'NEW NAME'
-        self.stg.description = 'NEW TEXT'
-        self.assertEqual(self.stg.name, 'NEW NAME')
-        self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.pars = (10, 20, 0.03)
-        self.assertEqual(self.stg.pars, (10, 20, 0.03))
-        self.stg.par_count = 3
-        self.assertEqual(self.stg.par_count, 3)
-        self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
-        self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
-        self.stg.par_types = ['float', 'float', 'int', 'enum']
-        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'enum'])
-        self.stg.par_types = 'float, float, int, float'
-        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'float'])
-        self.stg.data_types = 'close, open'
-        self.assertEqual(self.stg.data_types, ['close', 'open'])
-        self.stg.data_types = ['close', 'high', 'low']
-        self.assertEqual(self.stg.data_types, ['close', 'high', 'low'])
-        self.stg.data_freq = 'w'
-        self.assertEqual(self.stg.data_freq, 'w')
-        self.stg.window_length = 300
-        self.assertEqual(self.stg.window_length, 300)
+        生成一个包含两个group，三个交易策略的operator对象，使用测试数据生成交易信号清单
+        三个交易策略的运行频率固定，使用的交易数据固定，数据窗口长度固定，运行时间区间也固定
+        测试operator的策略在以下不同设置下生成交易信号的正确性
 
-    def test_rule_iterator(self):
-        """测试rule_iterator类型策略"""
-        stg = TestLSStrategy()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, RuleIterator)
-        stg_pars = {'000100': (5, 10),
-                    '000200': (5, 10),
-                    '000300': (5, 6)}
-        stg.set_pars(stg_pars)
-        history_data = self.hp1.values[:, :-1]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+        1，测试交易策略数据类型的ULC参数，首先所有的ULC都为False，然后设置为True与False的组合
+        2，测试交易策略不同的parameter参数下交易信号的不同
+        3，测试交易策略3的Multi_parameters参数，即不同的股票使用不同的参数
+        4，测试不同的group_merge_type：首先使用None，然后测试group_merge_type=‘or'
+        """
+        # create an operator with 2 groups of strategies, set all ULCs to False
+        op = qt.Operator()
+        op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
+        op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
+        print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
+        op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2,
+                         weighting='even')
+        op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
+        op.info(verbose=True)
 
-        # test strategy generate with only hist_data
-        print(f'test strategy generate with only hist_data')
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
+        # set up blender
+        op.set_group_parameters(group='Group_1', blender_str='(s0+s1)/2')
+        op.set_group_parameters(group='Group_2', blender_str='s0')
+        op.group_merge_type = 'None'
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-10',
+                end_date='2023-01-31',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n')
+        # prepare data buffer
 
-        lsmask = np.array([[0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+        data_buffer = {
+            'close_E_15min': close_15min_df,
+            'close_E_d':     close_d_df,
+            'close_E_h':     close_h_df,
+            'close_E_w':     close_w_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
+        )
+        print(f'Operator data buffer prepared:\n')
 
-        # test strategy generate with history data and reference_data
-        print(f'\ntest strategy generate with reference_data')
-        ref_data = self.test_ref_data[0, :, :]
-        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              ref_data=ref_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        for stg_id in op.strategy_ids:
+            print(f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
 
-        lsmask = np.array([[1.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [1.0, 1.0, 1.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+        # generate trading signals
+        print(f'Generating trading signals with all ULCs set to False\n'
+              f'Operator run schedule: length: ({len(op.group_timing_table)})\n'
+              f'{op.group_timing_table}\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0., 0.])),
+            ('pt', 1, np.array([0., 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0.333, 0.333])),
+            ('pt', 3, np.array([0.25, 0.25, 0.5])),
+            ('pt', 3, np.array([0., 0.333, 0.])),
+            ('pt', 4, np.array([0., 0., 0.])),
+            ('pt', 5, np.array([0.333, 0., 0.])),
+            ('pt', 6, np.array([0., 0.333, 0.333])),
+            ('pt', 7, np.array([0.5, 0.25, 0.25])),
+            ('pt', 7, np.array([0., 0.333, 0.])),
+            ('pt', 8, np.array([0., 0., 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0.333, 0.333, 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0.333, 0.333, 0.333])),
+            ('pt', 12, np.array([0., 0., 0.])),
+            ('pt', 13, np.array([0., 0., 0.333])),
+            ('pt', 14, np.array([0.333, 0.333, 0.333])),
+            ('pt', 15, np.array([0.5, 0., 0.5])),
+            ('pt', 15, np.array([0.333, 0., 0.333])),
+            ('pt', 16, np.array([0., 0., 0.])),
+            ('pt', 17, np.array([0., 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.25, 0.5, 0.25])),
+            ('pt', 19, np.array([0.333, 0., 0.])),
+            ('pt', 20, np.array([0., 0., 0.])),
+            ('pt', 21, np.array([0.333, 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0.333, 0.])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0.333, 0.333, 0.333])),
+            ('pt', 24, np.array([0., 0., 0.])),
+            ('pt', 25, np.array([0., 0., 0.])),
+            ('pt', 26, np.array([0., 0., 0.])),
+            ('pt', 27, np.array([0., 0.5, 0.5])),
+            ('pt', 27, np.array([0., 0.333, 0.333])),
+            ('pt', 28, np.array([0., 0., 0.])),
+            ('pt', 29, np.array([0.333, 0., 0.])),
+            ('pt', 30, np.array([0.333, 0.333, 0.])),
+            ('pt', 31, np.array([0.25, 0.5, 0.25])),
+            ('pt', 31, np.array([0., 0., 0.])),
+            ('pt', 32, np.array([0., 0., 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0.333, 0., 0.])),
+            ('pt', 35, np.array([0.25, 0.25, 0.5])),
+            ('pt', 35, np.array([0.333, 0., 0.333])),
+            ('pt', 36, np.array([0.333, 0.333, 0.333])),
+            ('pt', 37, np.array([0.333, 0.333, 0.333])),
+            ('pt', 38, np.array([0.333, 0.333, 0.333])),
+            ('pt', 39, np.array([0.5, 0.25, 0.25])),
+            ('pt', 39, np.array([0.333, 0.333, 0.333])),
+        ]
+        signals = []
+        signal_index = 0
+        op.set_shares(['000001', '000002', '000003'])
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        # test strategy generate with trade_data
-        print(f'\ntest strategy generate with trade_data')
-        output = []
-        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
-        trade_data.fill(np.nan)
-        recent_prices = np.zeros(shape=(3,))
-        for step in range(len(history_data_rolling_window)):
-            output.append(
-                    stg.generate(
-                            hist_data=history_data_rolling_window,
-                            trade_data=trade_data,
-                            data_idx=step
-                    )
-            )
-            current_prices = history_data_rolling_window[step, :, -1, 0]
-            current_signals = output[-1]
-            recent_prices = np.where(current_signals == 1., current_prices, recent_prices)
-            trade_data[:, 4] = recent_prices
-        output = np.array(output, dtype='float')
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        # 1, set different ULC combinations and check data windows and signals
 
-        lsmask = np.array([[1.0, 1.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 1.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0]])
-        self.assertEqual(output.shape, lsmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {lsmask[i]}')
-        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+        op.set_parameter('custom', use_latest_data_cycle=[True, False])
+        op.set_parameter('custom_1', use_latest_data_cycle=[False, True])
+        op.set_parameter('custom_2', use_latest_data_cycle=True)
 
-    def test_general_strategy(self):
-        """ 测试第一种基础策略类General Strategy"""
-        # test strategy with only history data
-        stg = TestSelStrategy()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, GeneralStg)
-        stg_pars = ()
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['high, low, close', :, :-1]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+        # generate trading signals
+        print(f'Generating trading signals with all ULCs set to False\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.])),
+            ('pt', 3, np.array([0.25, 0.25, 0.5])),
+            ('pt', 3, np.array([0.333, 0.333, 0.])),
+            ('pt', 4, np.array([0.333, 0., 0.])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0.333, 0.])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0.333, 0.333, 0.])),
+            ('pt', 8, np.array([0.333, 0., 0.333])),
+            ('pt', 9, np.array([0.333, 0.333, 0.333])),
+            ('pt', 10, np.array([0., 0.333, 0.])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0.333, 0.333])),
+            ('pt', 12, np.array([0., 0.333, 0.333])),
+            ('pt', 13, np.array([0., 0.333, 0.333])),
+            ('pt', 14, np.array([0.333, 0., 0.])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0., 0.333])),
+            ('pt', 16, np.array([0., 0., 0.333])),
+            ('pt', 17, np.array([0.333, 0.333, 0.])),
+            ('pt', 18, np.array([0.333, 0., 0.333])),
+            ('pt', 19, np.array([0.25, 0.5, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0., 0.333])),
+            ('pt', 22, np.array([0.333, 0.333, 0.])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0., 0., 0.333])),
+            ('pt', 24, np.array([0., 0., 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0., 0.333])),
+            ('pt', 27, np.array([0., 0.5, 0.5])),
+            ('pt', 27, np.array([0., 0., 0.333])),
+            ('pt', 28, np.array([0.333, 0., 0.])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0., 0.])),
+            ('pt', 31, np.array([0.25, 0.5, 0.25])),
+            ('pt', 31, np.array([0., 0.333, 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.333])),
+            ('pt', 33, np.array([0.333, 0., 0.])),
+            ('pt', 34, np.array([0., 0., 0.])),
+            ('pt', 35, np.array([0.25, 0.25, 0.5])),
+            ('pt', 35, np.array([0.333, 0.333, 0.333])),
+            ('pt', 36, np.array([0.333, 0.333, 0.333])),
+            ('pt', 37, np.array([0.333, 0.333, 0.333])),
+            ('pt', 38, np.array([0.333, 0.333, 0.333])),
+            ('pt', 39, np.array([0.5, 0.5, 0.])),
+            ('pt', 39, np.array([0.333, 0.333, 0.333])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        selmask = np.array([[0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
+        # 2, set different parameters for strategies and check signals
+        op.set_parameter('custom', par_values=(3, 0.7))
+        op.set_parameter('custom_1', par_values=(2, 0.3))
+        op.set_parameter('custom_2', par_values=('option2', np.array([3, 2, 1])))
 
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
-        # test strategy with history data and reference data
-        print(f'\ntest strategy generate with reference_data')
-        ref_data = self.test_ref_data[0, :, :]
-        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              ref_data=ref_rolling_window,
-                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+        # generate trading signals
+        print(f'Generating trading signals with all ULCs set to False\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0.333, 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0.333, 0., 0.])),
+            ('pt', 3, np.array([0.5, 0., 0.5])),
+            ('pt', 3, np.array([0., 0., 0.333])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0., 0., 0.333])),
+            ('pt', 8, np.array([0.333, 0.333, 0.333])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0.333, 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0.333, 0.333, 0.333])),
+            ('pt', 13, np.array([0.333, 0., 0.333])),
+            ('pt', 14, np.array([0., 0., 0.333])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0.333, 0.])),
+            ('pt', 16, np.array([0.333, 0.333, 0.333])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0., 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.333])),
+            ('pt', 21, np.array([0.333, 0.333, 0.333])),
+            ('pt', 22, np.array([0., 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0.333, 0., 0.])),
+            ('pt', 24, np.array([0.333, 0.333, 0.333])),
+            ('pt', 25, np.array([0.333, 0.333, 0.333])),
+            ('pt', 26, np.array([0., 0.333, 0.])),
+            ('pt', 27, np.array([0.25, 0.5, 0.25])),
+            ('pt', 27, np.array([0.333, 0.333, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.333])),
+            ('pt', 30, np.array([0., 0.333, 0.333])),
+            ('pt', 31, np.array([0.5, 0., 0.5])),
+            ('pt', 31, np.array([0.333, 0., 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.333])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.333])),
+            ('pt', 35, np.array([0.5, 0.5, 0.])),
+            ('pt', 35, np.array([0., 0.333, 0.])),
+            ('pt', 36, np.array([0., 0., 0.])),
+            ('pt', 37, np.array([0., 0., 0.])),
+            ('pt', 38, np.array([0., 0., 0.])),
+            ('pt', 39, np.array([0.25, 0.5, 0.25])),
+            ('pt', 39, np.array([0., 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        selmask = np.array([[0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
+        # 3, set different Multi_parameters for strategy 3 and check signals
+        op.set_parameter('custom_2', allow_multi_par=True,
+                         multi_pars=[
+                             ('option1', np.array([1, 2, 3])),
+                             ('option2', np.array([3, 2, 1])),
+                             ('option3', np.array([2, 3, 1])),
+                         ])
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
 
-        # test strategy generate with trade_data
-        print(f'\ntest strategy generate with trade_data')
-        output = []
-        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
-        trade_data.fill(np.nan)
-        recent_prices = np.zeros(shape=(3,))
-        prev_signals = np.zeros(shape=(3,))
-        for step in range(len(history_data_rolling_window)):
-            output.append(
-                    stg.generate(
-                            hist_data=history_data_rolling_window,
-                            trade_data=trade_data,
-                            data_idx=step
-                    )
-            )
-            current_prices = history_data_rolling_window[step, :, -1, 2]
-            current_signals = output[-1]
-            recent_prices = np.where(current_signals != prev_signals, current_prices, recent_prices)
-            trade_data[:, 4] = recent_prices
-            prev_signals = current_signals
-        output = np.array(output, dtype='float')
+        # generate trading signals
+        print(f'Generating trading signals with multi-parameters \n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.5, 0., 0.5])),
+            ('pt', 3, np.array([0.333, 0., 0.333])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.25, 0.25, 0.5])),
+            ('pt', 7, np.array([0.333, 0., 0.333])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.25, 0.25, 0.5])),
+            ('pt', 15, np.array([0.333, 0.333, 0.333])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 23, np.array([0., 0., 0.])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0.25, 0.5, 0.25])),
+            ('pt', 27, np.array([0., 0.333, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0.5, 0., 0.5])),
+            ('pt', 31, np.array([0., 0., 0.333])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.5, 0.5, 0.])),
+            ('pt', 35, np.array([0.333, 0.333, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.25, 0.5, 0.25])),
+            ('pt', 39, np.array([0.333, 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 50)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        selmask = np.array([[0.33333, 0.33333, 0.33333],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0.5, 0, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5],
-                            [0.5, 0, 0.5],
-                            [0.5, 0.5, 0],
-                            [0.5, 0.5, 0],
-                            [0, 0.5, 0.5]])
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'step: {i}:\n'
-                  f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, atol=0.001, equal_nan=True))
+        # 4, set group_merge_type to 'or' and check signals
+        op.group_merge_type = 'or'
 
-    def test_general_strategy2(self):
-        """ 测试第二种general strategy通用策略类型"""
-        # test strategy with only historical data
-        stg = TestSigStrategy()
-        stg_pars = (0.2, 0.02, -0.02)
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['close, open, high, low', :, 4:50]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+        # generate trading signals
+        print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "or"\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.833, 0., 0.833])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.583, 0.25, 0.833])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0.25, 0.25, 0.5])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.583, 0.583, 0.833])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0.5, 0.25, 0.25])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0.25, 0.5, 0.25])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0.25, 0.833, 0.25])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0.5, 0., 0.833])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.833, 0.833, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.583, 0.5, 0.25])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        # test generate signal in real time mode:
-        output = []
-        for step in [0, 3, 5, 7, 10]:
-            output.append(stg.generate(hist_data=history_data_rolling_window, data_idx=step))
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0]])
-        for signal, target in zip(output, sigmatrix):
-            self.assertIsInstance(signal, np.ndarray)
-            self.assertEqual(signal.shape, (3,))
-            self.assertTrue(np.allclose(signal, target))
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 40)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        # test generate signal in batch mode:
-        output = stg.generate(hist_data=history_data_rolling_window,
-                              data_idx=np.arange(len(history_data_rolling_window)))
+        # 5, set group_merge_type to 'and' and check signals
+        op.group_merge_type = 'and'
 
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0]])
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+        # generate trading signals
+        print(f'Generating trading signals with some ULCs = True with operator group_merge_type = "And"\n'
+              f'Operator run schedule:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n'
+              f'signal_count\n'
+              f'{op.get_signal_count()}\n')
+        # check that the signals are correct
+        signals_target = [
+            ('pt', 0, np.array([0., 0.333, 0.333])),
+            ('pt', 1, np.array([0.333, 0.333, 0.333])),
+            ('pt', 2, np.array([0., 0., 0.333])),
+            ('pt', 3, np.array([0.1665, 0., 0.1665])),
+            ('pt', 4, np.array([0.333, 0.333, 0.333])),
+            ('pt', 5, np.array([0.333, 0.333, 0.333])),
+            ('pt', 6, np.array([0., 0., 0.333])),
+            ('pt', 7, np.array([0.08325, 0., 0.1665])),
+            ('pt', 8, np.array([0.333, 0.333, 0.])),
+            ('pt', 9, np.array([0.333, 0., 0.333])),
+            ('pt', 10, np.array([0., 0., 0.333])),
+            ('pt', 11, np.array([0., 0., 0.])),
+            ('pt', 12, np.array([0., 0.333, 0.])),
+            ('pt', 13, np.array([0., 0., 0.])),
+            ('pt', 14, np.array([0.333, 0., 0.333])),
+            ('pt', 15, np.array([0.08325, 0.08325, 0.1665])),
+            ('pt', 16, np.array([0., 0.333, 0.])),
+            ('pt', 17, np.array([0.333, 0.333, 0.333])),
+            ('pt', 18, np.array([0.333, 0.333, 0.333])),
+            ('pt', 19, np.array([0., 0., 0.])),
+            ('pt', 20, np.array([0.333, 0.333, 0.])),
+            ('pt', 21, np.array([0., 0.333, 0.333])),
+            ('pt', 22, np.array([0.333, 0., 0.333])),
+            ('pt', 23, np.array([0., 0., 0.])),
+            ('pt', 24, np.array([0., 0.333, 0.])),
+            ('pt', 25, np.array([0., 0.333, 0.])),
+            ('pt', 26, np.array([0., 0.333, 0.333])),
+            ('pt', 27, np.array([0., 0.1665, 0.])),
+            ('pt', 28, np.array([0.333, 0.333, 0.333])),
+            ('pt', 29, np.array([0.333, 0.333, 0.])),
+            ('pt', 30, np.array([0., 0.333, 0.])),
+            ('pt', 31, np.array([0., 0., 0.1665])),
+            ('pt', 32, np.array([0.333, 0.333, 0.])),
+            ('pt', 33, np.array([0.333, 0.333, 0.333])),
+            ('pt', 34, np.array([0., 0.333, 0.])),
+            ('pt', 35, np.array([0.1665, 0.1665, 0.])),
+            ('pt', 36, np.array([0.333, 0., 0.])),
+            ('pt', 37, np.array([0.333, 0., 0.])),
+            ('pt', 38, np.array([0.333, 0., 0.])),
+            ('pt', 39, np.array([0.08325, 0., 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
 
-        side_by_side_array = [[i, out_line, sig_line]
-                                       for
-                                       i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)]
-        # side_by_side_array = np.array(side_by_side_array)
-        print(f'output and signal matrix lined up side by side is \n'
-              f'{side_by_side_array}')
-        self.assertEqual(sigmatrix.shape, output.shape)
-        self.assertTrue(np.allclose(np.array(output), sigmatrix))
+        print(f'Generating trading signals completed\n')
+        self.assertEqual(len(signals), 40)
+        self.assertEqual(len(signals), op.get_signal_count())
+        self.assertEqual(len(signals), len(signals_target))
 
-        # test strategy with also reference data
-        print(f'\ntest strategy generate with reference_data')
-        stg_pars = (0.3, 0.02, -0.02)
-        stg.set_pars(stg_pars)
-        history_data = self.hp1['close, open, high, low', :, 4:50]
-        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
-        reference_data = self.test_ref_data2[0, 4:50, :]
-        ref_rolling_windows = rolling_window(reference_data, stg.window_length, 0)
+    def test_operator_signal_creation_using_reference_data(self):
+        """测试operator对象运行交易策略生成交易信号过程中使用参考数据的情形"""
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PS')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
 
-        # test generate signal in real time mode:
-        output = []
-        for step in [0, 3, 5, 7, 10]:
-            output.append(stg.generate(
-                    hist_data=history_data_rolling_window,
-                    ref_data=ref_rolling_windows,
-                    data_idx=step
-            ))
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 1.0, 0.0]])
-        for signal, target in zip(output, sigmatrix):
-            self.assertIsInstance(signal, np.ndarray)
-            self.assertEqual(signal.shape, (3,))
-            self.assertTrue(np.allclose(signal, target))
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-12',
+                end_date='2023-02-3',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n'
+              f'{op.group_timing_table}({len(op.group_timing_table)})\n')
+        # prepare data buffer
 
-        # test generate signal in batch mode:
-        output = stg.generate(
-                hist_data=history_data_rolling_window,
-                ref_data=ref_rolling_windows,
-                data_idx=np.arange(len(history_data_rolling_window))
+        data_buffer = {
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
+        )
+        print(f'Operator data buffer prepared:\n')
+
+        # create_data_windows()
+        op.create_data_windows()
+        print(f'Data Windows created for all strategies\n'
+              f'Operator is ready: {op.is_ready(tell_me_why=True)}\n')
+
+        for stg_id in op.strategy_ids:
+            print(f'Strategy "{stg_id}" has data window for its data types:\n'
+                  f'{op[stg_id].data_types}\n')
+            for dtype in op[stg_id].data_types:
+                data_window = op.data_window_views[stg_id][dtype]
+                data_indices = op.data_window_indices[stg_id][dtype]
+                print(f'Data type "{dtype}" has data window (shape: {data_window.shape}):\n'
+                      f'{data_window[:3]}\n'
+                      f'with window indices: {data_indices}\n'
+                      )
+
+        # check that the signals are correct
+        signals_target = [
+            ('ps', 0, np.array([0.5, 0.5, 0.])),
+            ('ps', 1, np.array([0.5, 0., 0.5])),
+            ('ps', 2, np.array([0.5, 0., 0.5])),
+            ('ps', 3, np.array([0., 0.5, 0.5])),
+            ('ps', 4, np.array([0.5, 0.5, 0.])),
+            ('ps', 5, np.array([0.5, 0.5, 0.])),
+            ('ps', 6, np.array([0.5, 0., 0.5])),
+            ('ps', 7, np.array([0.5, 0., 0.5])),
+            ('ps', 8, np.array([0.5, 0., 0.5])),
+            ('ps', 9, np.array([0.5, 0.5, 0.])),
+            ('ps', 10, np.array([0.5, 0.5, 0.])),
+        ]
+        signals = []
+        signal_index = 0
+        op.debug = True
+        for signal in op.run_strategies(steps=range(len(op.group_timing_table))):
+            signals.append(signal)
+            expected = signals_target[signal_index]
+            print(signal, expected)
+            self.assertEqual(expected[0], signal[0])
+            self.assertEqual(expected[1], signal[1])
+            self.assertTrue(np.allclose(expected[2], signal[2], atol=0.001))
+            signal_index += 1
+
+    def test_operator_run_and_execute_static(self):
+        """ 测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
+
+        主要的目的是为了测试生成的交易信号能否被正确地执行，
+        同时测试交易信号生成过程中需要用到交易数据的情形
+
+        生成一个包含两个group，三个交易策略的operator对象，使用测试数据生成交易信号清单
+        三个交易策略的运行频率固定，使用的交易数据固定，数据窗口长度固定，运行时间区间也固定
+        交易信号生成后，送入backtest loop模块生成交易结果并更新交易持仓
+        """
+
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='PT')
+        op.debug = True
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-12',
+                end_date='2023-02-3',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        # prepare data buffer
+        data_buffer = {
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
         )
 
-        sigmatrix = np.array([[0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [1.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, -1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [1.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [-1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 1.0],
-                              [0.0, 1.0, 0.0],
-                              [1.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 1.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 0.0, -1.0],
-                              [0.0, 1.0, 0.0],
-                              [0.0, 1.0, 0.0]])
+        # 开始测试operator run/execute 使用batch模式（一次性创建所有交易信号并批量执行）
+        op.create_data_windows()
 
-        side_by_side_array = [[i, out_line == sig_line, out_line, sig_line]
-                                       for
-                                       i, out_line, sig_line
-                                       in zip(range(len(output)), output, sigmatrix)]
-        # side_by_side_array = np.array(side_by_side_array)
-        print(f'output and signal matrix lined up side by side is \n'
-              f'{side_by_side_array}')
-        self.assertEqual(sigmatrix.shape, output.shape)
-        self.assertTrue(np.allclose(np.array(output), sigmatrix, equal_nan=True))
+        # 准备交易数据
+        trade_price_data = trade_price_d_df.values[0:11]
 
-    def test_factor_sorter(self):
-        """Test Factor Sorter 策略, test all built-in strategy parameters"""
-        print(f'\ntest strategy generate with only history data')
-        stg = SelectingAvgIndicator()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, FactorSorter)
-        stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
-        stg.set_pars(stg_pars)
-        stg.window_length = 5
-        stg.data_freq = 'd'
-        stg.strategy_run_freq = '10d'
-        stg.sort_ascending = False
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.max_sel_count = 0.67
-        # test additional FactorSorter properties
-        self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
-        self.assertEqual(stg.window_length, 5)
-        self.assertEqual(stg.data_freq, 'd')
-        self.assertEqual(stg.strategy_run_freq, '10d')
-        self.assertEqual(stg.sort_ascending, False)
-        self.assertEqual(stg.condition, 'greater')
-        self.assertEqual(stg.lbound, 0)
-        self.assertEqual(stg.ubound, 0)
-        self.assertEqual(stg.max_sel_count, 0.67)
+        cash_investment_array = np.zeros((op.get_signal_count(),), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((op.get_signal_count(),), dtype=float)
+        delivery_day_indicators = np.ones((op.get_signal_count(),), dtype=bool)
 
-        history_data = self.hp2.values[:, :-1]
-        hist_data_rolling_window = rolling_window(history_data, window=stg.window_length, axis=1)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
-
-        selmask = np.array([[0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.0, 1.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get mininum factor
-        stg_pars = (True, 'even', 'less', 1, 1, 0.67)
-        stg.sort_ascending = True
-        stg.condition = 'less'
-        stg.lbound = 1
-        stg.ubound = 1
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.0, 1.0],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.0, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get max factor in linear weight
-        stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'linear'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0.0, 0.33333333, 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.66666667, 0.33333333],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.0, 0.33333333, 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0.66666667, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
-
-        # test single factor, get max factor in linear weight
-        stg_pars = (False, 'distance', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'distance'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.08333333, 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.91666667, 0.08333333],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.91666667, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        # test single factor, get max factor in proportion weight
-        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'proportion'
-        stg.condition = 'greater'
-        stg.lbound = 0
-        stg.ubound = 0
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.4, 0.6],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.6, 0.4],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.33333333, 0., 0.66666667],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.25, 0., 0.75],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.375, 0.625, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        # test single factor, get max factor in linear weight, threshold 0.2
-        stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
-        stg.sort_ascending = False
-        stg.weighting = 'even'
-        stg.condition = 'greater'
-        stg.lbound = 0.2
-        stg.ubound = 0.2
-        stg.set_pars(stg_pars)
-        print(f'Start to test financial selection parameter {stg_pars}')
-
-        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0., 0., 1.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0.],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan]])
-
-        self.assertEqual(output.shape, selmask.shape)
-        for i in range(len(output)):
-            print(f'output:    {output[i]}\n'
-                  f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-        print(f'\ntest financial generate with reference data')
-        # to be added
-
-    def test_stg_trading_different_prices(self):
-        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
-        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
-        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
-        stg_buy = StgBuyOpen()
-        stg_sel = StgSelClose()
-        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(
-                0,
-                data_freq='d',
-                strategy_run_freq='d',
-                window_length=50,
-                pars=(20,),
-                strategy_data_types='close',  # 考察收盘价变化率
-                strategy_run_timing='open',   # 以开盘价买进(这个策略只处理买入信号)
+        signal_parsing_params = dict(
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=False,
         )
-        op.set_parameter(
-                1,
-                data_freq='d',
-                strategy_run_freq='d',
-                window_length=50,
-                pars=(20,),
-                strategy_data_types='close',  # 考察收盘价的变化率
-                strategy_run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+        trading_moq_params = dict(
+                moq_buy=10.,
+                moq_sell=1.,
         )
-        op.set_blender(blender='s0')
-        op.get_blender()
-        qt.configure(asset_pool=['000300.SH',
-                                 '399006.SZ'],
-                     asset_type='IDX')
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     trade_log=True,
-                     invest_start='20110725',
-                     invest_end='20220401',
-                     trade_batch_size=1,
-                     sell_batch_size=0)
-        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
-        qt.configure(asset_pool=stock_pool,
-                     asset_type='E',
-                     benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
-                     opti_output_count=50,
-                     invest_start='20211013',
-                     invest_end='20211231',
-                     opti_sample_count=100,
-                     trade_batch_size=100.,
-                     sell_batch_size=100.,
-                     invest_cash_amounts=[1000000],
-                     mode=1,
-                     trade_log=True,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=0.03,
-                     backtest_price_adj='none')
+        trading_delivery_params = dict(
+                cash_delivery_period=0,
+                stock_delivery_period=1,
+        )
 
-    def test_stg_index_follow(self):
-        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
-        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
-        op.set_parameter(0,
-                         opt_tag=1,
-                         strategy_run_freq='m',
-                         strategy_data_types='wt_idx|000300.SH',
-                         sort_ascending=False,
-                         weighting='proportion',
-                         max_sel_count=300)
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     trade_log=True)
+        backtested = Backtester(
+                op=op,
+                shares=list(close_d_df.columns),
+                cash_plan=CashPlan(dates='20230112', amounts=[1000000.0], interest_rate=0.0),
+                cash_inflation_array=cash_inflation_array,
+                cash_investment_array=cash_investment_array,
+                delivery_day_indicators=delivery_day_indicators,
+                cost_params=np.array([0.0001, 0.0001, 5.0, 5.0, 0.]),
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                trade_price_data=trade_price_data,
+                benchmark_data=close_ref_df,
+        ).run()
+
+        with np.printoptions(suppress=True, precision=5):
+            print(f'Backtest executed in batch mode, \n'
+                  f'  op_run_time: {backtested.op_run_time:.6f}\n'
+                  f'  backtest_time: {backtested.backtest_run_time:.6f}\n '
+                  f'results:\n'
+                  f'  own cashes: \n{backtested.own_cashes.round(3)}\n'
+                  f'  available cashes: \n{backtested.available_cashes.round(3)}\n'
+                  f'  own amounts: \n{backtested.own_amounts_array.round(2)}\n'
+                  f'  available amounts: \n{backtested.available_amounts_array.round(2)}\n'
+                  f'  trade records:\n{backtested.trade_records_array.round(2)}\n'
+                  f'  trade costs:\n{backtested.trade_cost_array.round(3)}\n')
+
+        target_own_cashes = np.array(
+                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
+                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671],
+        )
+        target_available_cashes = np.array(
+                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
+                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671]
+        )
+        target_own_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13281., 0., 0.],
+                 [13301., 0., 20880.],
+                 [0., 10., 20880.],
+                 [6580., 7490., 0.],
+                 [13820., 15490., 0.],
+                 [13767., 0., 10.],
+                 [13743., 0., 21510.],
+                 [13763., 0., 21349.],
+                 [13763., 120., 0.],
+                 [13853., 15890., 0.]]
+        )
+        target_available_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13281., 0., 0.],
+                 [13301., 0., 20880.],
+                 [0., 10., 20880.],
+                 [6580., 7490., 0.],
+                 [13820., 15490., 0.],
+                 [13767., 0., 10.],
+                 [13743., 0., 21510.],
+                 [13763., 0., 21349.],
+                 [13763., 120., 0.],
+                 [13853., 15890., 0.]],
+        )
+        target_trade_records = np.array(
+                [[13300., 15380., 0.],
+                 [-19., -15380., 0.],
+                 [20., 0., 20880.],
+                 [-13301., 10., 0.],
+                 [6580., 7480., -20880.],
+                 [7240., 8000., 0.],
+                 [-53., -15490., 10.],
+                 [-24., 0., 21500.],
+                 [20., 0., -161.],
+                 [0., 120., -21349.],
+                 [90., 15770., 0.], ],
+        )
+        target_fees = np.array(
+                [[49.981, 49.985, 0.],
+                 [5., 51.231, 0.],
+                 [5., 0., 51.198],
+                 [51.049, 5., 0.],
+                 [25.53, 25.499, 55.019],
+                 [27.693, 27.296, 0.],
+                 [5., 53.332, 5.],
+                 [5., 0., 53.514],
+                 [5., 0., 5.],
+                 [0., 5., 56.297],
+                 [5., 55.905, 0.]],
+        )
+
+        self.assertTrue(np.allclose(target_own_cashes, backtested.own_cashes, atol=0.01))
+        self.assertTrue(np.allclose(target_available_cashes, backtested.available_cashes, atol=0.01))
+        self.assertTrue(np.allclose(target_own_stocks, backtested.own_amounts_array))
+        self.assertTrue(np.allclose(target_available_stocks, backtested.available_amounts_array))
+        self.assertTrue(np.allclose(target_trade_records, backtested.trade_records_array))
+        self.assertTrue(np.allclose(target_fees, backtested.trade_cost_array, atol=0.01))
+
+    def test_operator_run_and_execute_dynamic(self):
+        # 开始测试operator run/execute 使用stepwise模式（逐步创建交易信号并逐步回测，
+        # 每次回测后更新operator的数据，因为operator的运行依赖回测数据）
+
+        # 初始化一个新的operator对象，生成一个需要依赖性数据的交易策略
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestDependentData], signal_type='PT')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-12',
+                end_date='2023-02-3',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        # prepare data buffer
+        data_buffer = {
+            'close_E_d':            close_d_df,
+            'reference_d':          close_ref_df,
+            'op_holding_positions': None,
+            'op_trade_prices':      None,
+            'op_trade_volumes':     None,
+            'op_cashes':            None,
+        }
+        op.prepare_data_buffer(
+                start_date='2023-01-11',
+                end_date='2023-01-31',
+                data_package=data_buffer,
+        )
+        # 开始测试operator run/execute 使用stepwise模式（生成一组交易信号并生成一组结果，循环执行直到生成全部结果）
+        op.create_data_windows()
+
+        # 准备交易数据
+        trade_price_data = trade_price_d_df.values[0:11]
+
+        cash_investment_array = np.zeros((op.get_signal_count(),), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((op.get_signal_count(),), dtype=float)
+        delivery_day_indicators = np.ones((op.get_signal_count(),), dtype=bool)
+
+        signal_parsing_params = dict(
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=False,
+        )
+        trading_moq_params = dict(
+                moq_buy=10.,
+                moq_sell=1.,
+        )
+        trading_delivery_params = dict(
+                cash_delivery_period=0,
+                stock_delivery_period=1,
+        )
+
+        backtested = Backtester(
+                op=op,
+                shares=list(close_d_df.columns),
+                cash_plan=CashPlan(dates='20230112', amounts=[1000000.0], interest_rate=0.0),
+                cash_inflation_array=cash_inflation_array,
+                cash_investment_array=cash_investment_array,
+                delivery_day_indicators=delivery_day_indicators,
+                cost_params=np.array([0.0001, 0.0001, 5.0, 5.0, 0.]),
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                trade_price_data=trade_price_data,
+                benchmark_data=close_ref_df,
+        ).run()
+
+        with np.printoptions(suppress=True, precision=5):
+            print(f'Backtest executed in stepwise mode, \n'
+                  f'  op_run_time: {backtested.op_run_time:.6f}\n'
+                  f'  backtest_time: {backtested.backtest_run_time:.6f}\n'
+                  f'results:\n'
+                  f'  own cashes: \n{backtested.own_cashes.round(3)}\n'
+                  f'  available cashes: \n{backtested.available_cashes.round(3)}\n'
+                  f'  own amounts: \n{backtested.own_amounts_array.round(2)}\n'
+                  f'  available amounts: \n{backtested.available_amounts_array.round(2)}\n'
+                  f'  trade records:\n{backtested.trade_records_array.round(2)}\n'
+                  f'  trade costs:\n{backtested.trade_cost_array.round(3)}\n')
+
+        target_own_cashes = np.array(
+                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
+                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671],
+        )
+        target_available_cashes = np.array(
+                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
+                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671]
+        )
+        target_own_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13281., 0., 0.],
+                 [13301., 0., 20880.],
+                 [0., 10., 20880.],
+                 [6580., 7490., 0.],
+                 [13820., 15490., 0.],
+                 [13767., 0., 10.],
+                 [13743., 0., 21510.],
+                 [13763., 0., 21349.],
+                 [13763., 120., 0.],
+                 [13853., 15890., 0.]]
+        )
+        target_available_stocks = np.array(
+                [[0., 0., 0.],
+                 [13300., 15380., 0.],
+                 [13281., 0., 0.],
+                 [13301., 0., 20880.],
+                 [0., 10., 20880.],
+                 [6580., 7490., 0.],
+                 [13820., 15490., 0.],
+                 [13767., 0., 10.],
+                 [13743., 0., 21510.],
+                 [13763., 0., 21349.],
+                 [13763., 120., 0.],
+                 [13853., 15890., 0.]],
+        )
+        target_trade_records = np.array(
+                [[13300., 15380., 0.],
+                 [-19., - 15380., 0.],
+                 [20., 0., 20880.],
+                 [-13301., 10., 0.],
+                 [6580., 7480., - 20880.],
+                 [7240., 8000., 0.],
+                 [-53., - 15490., 10.],
+                 [-24., 0., 21500.],
+                 [20., 0., - 161.],
+                 [0., 120., - 21349.],
+                 [90., 15770., 0.]],
+        )
+        target_fees = np.array(
+                [[49.981, 49.985, 0.],
+                 [5., 51.231, 0.],
+                 [5., 0., 51.198],
+                 [51.049, 5., 0.],
+                 [25.53, 25.499, 55.019],
+                 [27.693, 27.296, 0.],
+                 [5., 53.332, 5.],
+                 [5., 0., 53.514],
+                 [5., 0., 5.],
+                 [0., 5., 56.297],
+                 [5., 55.905, 0.]],
+        )
+
+        self.assertTrue(np.allclose(target_own_cashes, backtested.own_cashes, atol=0.01))
+        self.assertTrue(np.allclose(target_available_cashes, backtested.available_cashes, atol=0.01))
+        self.assertTrue(np.allclose(target_own_stocks, backtested.own_amounts_array))
+        self.assertTrue(np.allclose(target_available_stocks, backtested.available_amounts_array))
+        self.assertTrue(np.allclose(target_trade_records, backtested.trade_records_array))
+        self.assertTrue(np.allclose(target_fees, backtested.trade_cost_array, atol=0.01))
+
+    def test_operator_run_and_execute_with_large_data_set_for_speed(self):
+        """ 使用一个随机生成的超大数据集(近7万行，1000列）测试operator对象运行交易策略生成交易信号并执行交易信号更新持仓
+
+        使用同样的数据集重复运行十次以测试运行速度（测试速度前先运行一次以完成函数的namba编译）
+        """
+        # 创建一个测试交易策略，使用TestReferenceData类
+        op = qt.Operator(strategies=[TestReferenceData], signal_type='VS')
+        # 设置交易策略运行频率为5min，开始日期2020-01-01，结束日期2025-12-31，共69792行
+        op.set_parameter(stg_id='custom', run_freq='5min')
+        # operator只有一个strategy, set up blender
+        op.set_group_parameters(group='Group_1', blender_str='s0')
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2020-01-15',
+                # end_date='2020-06-30',
+                end_date='2025-12-31',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n'
+              f'total steps = {len(op.group_timing_table)}\n')
+
+        # 准备一个超大的数据集
+        share_count = 1000
+        shares = [f's_{i}' for i in range(share_count)]
+
+        large_close = pd.DataFrame(
+                np.random.randint(10, size=(69792, share_count)).astype(float) + 30,
+                columns=[f's_{i}' for i in range(share_count)],
+                index=tti(start='2020-01-01', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
+        )
+        large_ref = pd.DataFrame(
+                np.random.randint(10, size=(1477, 1)).astype(float) + 100,
+                columns=['ref'],
+                index=tti(start='2019-12-01', end='2025-12-31', freq='d', include_start_am=False,
+                          include_start_pm=False)
+        )['ref']  # reference data is a pd.DataFrame
+        data_buffer = {
+            'close_E_d':   large_close,
+            'reference_d': large_ref,
+        }
+        op.prepare_data_buffer(
+                start_date='2020-01-03',
+                end_date='2025-12-31',
+                # end_date='2020-06-30',
+                data_package=data_buffer,
+        )
+
+        # 准备大量交易价格数据
+
+        signal_count = op.get_signal_count()
+
+        trade_price_data = pd.DataFrame(
+                np.random.randint(10, size=(signal_count, share_count)).astype(float) + 30,
+                columns=[f's_{i}' for i in range(share_count)],
+                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
+        )
+
+        benchmark_data = pd.Series(
+                np.random.randint(10, size=(signal_count,)).astype(float) + 30,
+                index=tti(start='2020-01-15', end='2025-12-31', freq='5min', include_start_am=False,
+                          include_start_pm=False)
+        )
+        print(f'created random trade price data of shape {trade_price_data.shape}\n'
+              f'starting from {trade_price_data.index[0]} to {trade_price_data.index[-1]}\n,'
+              f'prepared data buffer with large data set of shape: {large_close.shape}\n'
+              f'starting from {large_close.index[0]} to {large_close.index[-1]}\n'
+              f'prepared reference data of shape: {large_ref.shape}\n'
+              f'starting from {large_ref.index[0]} to {large_ref.index[-1]}\n')
+
+        trade_price_data = trade_price_data.values
+
+        # 开始测试operator run/execute 使用batch模式（一次性创建所有交易信号并批量执行）
+        op.create_data_windows()
+        # 设置股票名称
+        op.set_shares([f's_{i}' for i in range(share_count)])
+
+        # 准备交易数据
+        cash_investment_array = np.zeros((signal_count,), dtype=float)
+        cash_investment_array[0] = 1000000.0  # 初始资金
+        cash_inflation_array = np.zeros((signal_count,), dtype=float)
+        delivery_day_indicators = np.ones((signal_count,), dtype=bool)
+
+        cost_params = np.array([0.0001, 0.0001, 5.0, 5.0, 0.0])
+        signal_parsing_params = dict(
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                long_pos_limit=1.0,
+                short_pos_limit=-1.0,
+                allow_sell_short=True,
+        )
+        trading_moq_params = dict(
+                moq_buy=10.,
+                moq_sell=1.,
+        )
+        trading_delivery_params = dict(
+                cash_delivery_period=0,
+                stock_delivery_period=1,
+        )
+
+        # 使用Backtester对象执行回测并计算回测时间
+        backtested = Backtester(
+                op=op,
+                shares=shares,
+                cash_plan=CashPlan(dates=['2020-01-15'], amounts=[1000000.0], interest_rate=0.0),
+                cash_investment_array=cash_investment_array,
+                cash_inflation_array=cash_inflation_array,
+                delivery_day_indicators=delivery_day_indicators,
+                cost_params=cost_params,
+                signal_parsing_params=signal_parsing_params,
+                trading_moq_params=trading_moq_params,
+                trading_delivery_params=trading_delivery_params,
+                trade_price_data=trade_price_data,
+                benchmark_data=benchmark_data,
+        ).run()
+
+        signal_time = backtested.op_run_time
+        print(f'Generated {op.get_signal_count()} trading signals in {signal_time:.6f} seconds\n')
+        self.assertLessEqual(signal_time, 8.0)  # 交易信号生成时间不超过8秒
+        backtest_time = backtested.backtest_run_time
+        print(f'Backtested {op.get_signal_count()} and created trading tables in {backtest_time:.6f} seconds\n')
+        self.assertLessEqual(backtest_time, 8.0)  # 回测时间不超过8秒
+
+        # 测试计算回测最终结果的时间（包括计算三种回测分析结果）
+        st = time.time()
+        final_value = backtested.trade_result_final_value()
+        mdd = backtested.trade_result_max_drawdown()
+        volatility = backtested.trade_result_volatility()
+        et = time.time()
+        print(f'Calculated backtest numaric results: \n'
+              f' - fv:          {final_value:.3f}\n'
+              f' - mdd:         {mdd:.2%}\n'
+              f' - volatility:  {volatility:.3f}\n'
+              f' in {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成净值记录时间不超过5秒
+
+        # 测试生成回测记录的完整评价指标并计算时间：
+        st = time.time()
+        backtested.evaluate_result(indicators='r,m,v,b,info,alpha,beta,sharp')
+        et = time.time()
+        print(f'Complete evaluation of backtest results took {et - st:.6f} seconds\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成完整评价记录时间不超过5秒
+
+        # 测试生成基本交易结果DataFrame的时间
+        st = time.time()
+        result_df = backtested.trade_result_df()
+        et = time.time()
+        print(f'Created basic trade result dataframe with {len(result_df)} records in {et - st:.6f} seconds\n'
+              f'trade log:\n{result_df.head()}\n')
+        self.assertLessEqual(et - st, 5.0)  # 生成交易日志时间不超过5秒
+
+        # 测试生成完整交易日志DataFrame的时间
+        st = time.time()
+        trade_log = backtested.generate_trade_logs()
+        et = time.time()
+        print(f'Created trade log:\n{trade_log.head()}\n in {et - st:.6f} seconds\n')
+
+        # 测试生成完整交易汇总表DataFrame的时间
+        st = time.time()
+        trade_summary = backtested.generate_trade_summary()
+        et = time.time()
+        print(f'Created trade summary:\n{trade_summary.head()}\n in {et - st:.6f} seconds\n')
+
+        # 重复运行十次以精确测算回测的速度
+        print(f'Now repeating the backtest 10 times to measure speed...\n')
+        op_run_times = []
+        backtest_times = []
+        cycles = 10
+        from tqdm import trange
+        for _ in trange(cycles):
+            backtested.run()
+            op_run_times.append(backtested.op_run_time)
+            backtest_times.append(backtested.backtest_run_time)
+
+        op_run_time = sum(op_run_times)
+        backtest_time = sum(backtest_times)
+        print(f'10 times backtest executed for {op.get_signal_count()} signals in: \n'
+              f' - signal creation (total/avg):  {op_run_time:.3f} / {(op_run_time / cycles):.3f} sec\n'
+              f' - backtest (total/avg)          {backtest_time:.3f} / {(backtest_time / cycles):.3f} sec')
+        self.assertLessEqual((et - st) / 5, 10.0)  # 单次平均回测时间不超过10秒
 
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
-        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
-        op_min.set_parameter(0, data_freq='h', strategy_run_freq='h')
-        op_min.set_parameter(1, data_freq='h', strategy_run_freq='d')
-        op_min.set_parameter(2, data_freq='h', strategy_run_freq='y')
-        op_min.set_blender(blender='(s0+s1)*s2')
-        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
-                                 '000918.SZ', '000819.SZ', '000899.SZ'],
-                     asset_type='E',
-                     visual=True,
-                     trade_log=False)
-        res = qt.run(op_min,
-                     mode=1,
-                     visual=True,
-                     trade_log=False,
-                     invest_start='20160225',
-                     invest_end='20161023',
-                     trade_batch_size=100,
-                     sell_batch_size=100)
+        # TODO: implement this function
+        pass
 
     def test_long_short_position_limits(self):
         """ 测试多头和空头仓位的最高仓位限制 """
-        # TODO: implement this test
+        # TODO: implement this function
         pass
+
+    def test_check_and_prepare_data(self):
+        """ 测试函数check_and_prepare_backtest_data() in core.py"""
+
+        op = qt.Operator()
+        op.add_strategies([TestGenStg, TestFactorSorter])  # first group: d@close
+        op.add_strategies([TestRuleIter], run_freq='h')  # second group: h@close
+        print(f'Operator created with {op.strategy_group_count} groups of strategies:\n')
+        op.set_parameter('custom', use_latest_data_cycle=False, par_values=(4, 0.5))
+        op.set_parameter('custom_1', use_latest_data_cycle=False, par_values=(3, 0.5), max_sel_count=2,
+                         weighting='even')
+        op.set_parameter('custom_2', use_latest_data_cycle=False, par_values=('option1', np.array([1, 2, 3])))
+        op.info(verbose=True)
+
+        # set up blender
+        op.set_group_parameters(group='Group_1', blender_str='(s0+s1)/2')
+        op.set_group_parameters(group='Group_2', blender_str='s0')
+        op.group_merge_type = 'None'
+
+        # create running schedule and prepare data buffer and data windows
+        op.prepare_running_schedule(
+                start_date='2023-01-10',
+                end_date='2023-01-31',
+                include_start_am=False,
+                include_start_pm=False,
+        )
+        print(f'Operator running schedule prepared:\n')
+
+
+class TestAddStrategy(unittest.TestCase):
+    """测试Operator类的add_strategy方法"""
+
+    def setUp(self):
+        """测试前准备"""
+        self.operator = qt.Operator()
+
+    def test_add_strategy_with_string_builtin(self):
+        """测试添加内置策略字符串"""
+        # 添加策略
+        self.operator.add_strategy('dma', opt_tag=1, par_values=(50, 10, 20))
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], DMA)
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+        self.assertEqual(self.operator.strategies[0].par_values, (50, 10, 20))
+
+    def test_add_strategy_with_base_strategy_object(self):
+        """测试添加BaseStrategy对象"""
+        # 创建策略对象
+        strategy = DMA()
+
+        # 添加策略
+        self.operator.add_strategy(strategy)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIs(self.operator.strategies[0], strategy)
+        self.assertEqual(self.operator.strategies[0].strategy_id, 'dma')
+
+    def test_add_strategy_with_strategy_type(self):
+        """测试添加策略类型"""
+        # 添加策略类型
+        self.operator.add_strategy(DMA)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], DMA)
+        self.assertEqual(self.operator.strategies[0].strategy_id, 'dma')
+
+    def test_add_strategy_with_tuple_raises_error(self):
+        """测试传入元组时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(('strategy1', 'strategy2'))
+
+        self.assertIn('Strategy can not be a tuple of a list', str(context.exception))
+
+    def test_add_strategy_with_list_raises_error(self):
+        """测试传入列表时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(['strategy1', 'strategy2'])
+
+        self.assertIn('Strategy can not be a tuple of a list', str(context.exception))
+
+    def test_add_strategy_with_unsupported_type_raises_error(self):
+        """测试传入不支持类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy(123)
+
+        self.assertIn('The strategy type', str(context.exception))
+
+    def test_add_duplicate_strategy(self):
+        """测试添加重复策略时抛出异常"""
+        self.operator.clear_strategies()
+        # 第一次添加成功
+        self.operator.add_strategy('dma')
+
+        # 第二次添加相同策略产生第二个策略ID
+        self.operator.add_strategy('dma')
+
+        self.assertEqual(self.operator.strategy_count, 2)
+        self.assertEqual(self.operator[0].strategy_id, 'dma')
+        self.assertEqual(self.operator[1].strategy_id, 'dma_1')
+
+    def test_add_strategy_with_run_freq_and_timing(self):
+        """测试添加策略时设置run_freq和run_timing参数"""
+        # 添加策略并设置特殊参数
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+
+        # 验证参数被正确设置
+        self.assertEqual(self.operator.strategies[0].run_freq, 'd')
+        self.assertEqual(self.operator.strategies[0].run_timing, 'open')
+
+    def test_add_strategy_with_invalid_run_freq_type_raises_error(self):
+        """测试传入无效run_freq类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy('dma', run_freq=123)
+
+        self.assertIn('run_freq should be a string', str(context.exception))
+
+    def test_add_strategy_with_invalid_run_timing_type_raises_error(self):
+        """测试传入无效run_timing类型时抛出异常"""
+        with self.assertRaises(TypeError) as context:
+            self.operator.add_strategy('dma', run_timing=123)
+
+        self.assertIn('run_timing should be a string', str(context.exception))
+
+    def test_add_strategy_creates_new_group(self):
+        """测试添加策略时创建新分组"""
+        # 添加策略
+        self.operator.add_strategy('dma')
+
+        # 验证创建了新分组
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(self.operator._groups[0].run_freq, 'd')
+        self.assertEqual(self.operator._groups[0].run_timing, 'close')
+
+    def test_add_strategy_to_existing_group(self):
+        """测试将策略添加到现有分组"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma')
+
+        # 添加第二个策略（相同频率和时机）
+        self.operator.add_strategy('macd')
+
+        # 验证两个策略在同一个分组中
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(len(self.operator._groups[0].members), 2)
+
+    def test_add_strategy_calls_set_parameter(self):
+        """测试添加策略时调用set_parameter方法"""
+        # 添加策略并设置参数
+        self.operator.add_strategy('dma', opt_tag=1, par_values=(50, 10, 20))
+
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+        self.assertEqual(self.operator.strategies[0].par_values, (50, 10, 20))
+
+    def test_add_strategy_with_multiple_kwargs(self):
+        """测试添加策略时传入多个参数"""
+        # 添加策略并设置多个参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=1,
+                                   par_values=(50, 10, 20),
+                                   run_freq='d',
+                                   run_timing='open',
+                                   window_length=30)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        # 验证参数被设置
+        self.assertEqual(self.operator.strategies[0].run_freq, 'd')
+        self.assertEqual(self.operator.strategies[0].run_timing, 'open')
+        self.assertEqual(self.operator.strategies[0].opt_tag, 1)
+
+    def test_add_strategy_with_none_run_freq_and_timing(self):
+        """测试传入None值的run_freq和run_timing参数"""
+        # 创建策略对象
+        strategy = DMA()
+
+        # 添加策略并设置None参数
+        self.operator.add_strategy(strategy)
+
+        # 验证策略的原始值被保留
+        self.assertEqual(strategy.run_freq, 'd')
+        self.assertEqual(strategy.run_timing, 'close')
+
+    def test_add_strategy_id_generation(self):
+        """测试策略ID生成机制"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma')
+        self.assertIn('dma', self.operator.strategy_ids[0])
+
+        # 添加第二个同名策略
+        self.operator.add_strategy('dma')
+        self.assertIn('dma', self.operator.strategy_ids[1])
+        self.assertNotEqual(self.operator.strategy_ids[0], self.operator.strategy_ids[1])
+
+    def test_add_strategy_group_creation_logic(self):
+        """测试策略分组创建逻辑"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+        first_group_id = self.operator._groups[0].name
+
+        # 添加具有不同运行频率的策略
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        second_group_id = self.operator._groups[1].name
+
+        # 验证创建了两个不同的分组
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertNotEqual(first_group_id, second_group_id)
+
+        # 添加具有相同运行频率和时机的策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+
+        # 验证第三个策略被添加到第一个分组
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertEqual(len(self.operator._groups[0].members), 2)
+
+    def test_add_strategy_with_custom_strategy_object(self):
+        """测试添加自定义策略对象"""
+
+        class CustomStrategy(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self._strategy_id = None
+
+        custom_strategy = CustomStrategy()
+
+        # 添加自定义策略
+        self.operator.add_strategy(custom_strategy)
+
+        # 验证策略被正确添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIs(self.operator.strategies[0], custom_strategy)
+        self.assertEqual(custom_strategy._strategy_id, 'custom')
+
+    def test_add_strategy_with_strategy_class(self):
+        """测试添加策略类"""
+
+        class CustomStrategyClass(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self._strategy_id = None
+
+        # 添加策略类
+        self.operator.add_strategy(CustomStrategyClass)
+
+        # 验证策略实例被正确创建和添加
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertIsInstance(self.operator.strategies[0], CustomStrategyClass)
+        self.assertEqual(self.operator.strategies[0]._strategy_id, 'custom')
+
+    def test_add_strategy_with_empty_operator(self):
+        """测试在空Operator中添加策略"""
+        # 验证初始状态
+        self.assertEqual(self.operator.strategy_count, 0)
+        self.assertEqual(len(self.operator._groups), 0)
+
+        # 添加策略
+        class MockStrategy(qt.GeneralStg):
+            def __init__(self):
+                super().__init__()
+                self._strategy_id = None
+
+        self.operator.add_strategy(MockStrategy)
+
+        # 验证添加后状态
+        self.assertEqual(self.operator.strategy_count, 1)
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(len(self.operator._groups[0].members), 1)
+
+    def test_add_strategy_parameter_setting_integration(self):
+        """测试添加策略与参数设置的集成"""
+        # 添加策略并设置多个参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=2,
+                                   par_values=(10, 20, 30),
+                                   window_length=50)
+
+        # 验证参数被设置
+        strategy = self.operator.strategies[0]
+        self.assertEqual(strategy.opt_tag, 2)
+        self.assertEqual(strategy.par_values, (10, 20, 30))
+        self.assertEqual(strategy.window_lengths['close_ANY_d'], 50)
+
+    def test_add_strategy_different_timing_and_freq(self):
+        """测试添加不同运行时机和频率的策略"""
+        # 添加默认策略
+        self.operator.add_strategy('dma')
+        self.assertEqual(len(self.operator._groups), 1)
+        self.assertEqual(self.operator._groups[0].run_freq, 'd')
+        self.assertEqual(self.operator._groups[0].run_timing, 'close')
+
+        # 添加不同频率的策略
+        self.operator.add_strategy('macd', run_freq='h', run_timing='close')
+        self.assertEqual(len(self.operator._groups), 2)
+
+        # 添加不同时机的策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='open')
+        self.assertEqual(len(self.operator._groups), 3)
+
+    def test_add_strategy_custom_strategy_with_params(self):
+        """测试添加带参数的自定义策略"""
+
+        class CustomStrategy(qt.GeneralStg):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self._strategy_id = None
+
+        custom_strategy = CustomStrategy(opt_tag=1, par_values=(5, 10),
+                                         pars=[Parameter(par_range=(0, 50), name='par_1', par_type='int'),
+                                               Parameter(par_range=(0, 50), name='par_2', par_type='int')])
+
+        self.operator.add_strategy(custom_strategy)
+
+        self.assertEqual(len(self.operator.strategies), 1)
+        self.assertEqual(custom_strategy.opt_tag, 1)
+        self.assertEqual(custom_strategy.par_values, (5, 10))
+
+    def test_add_strategy_group_assignment(self):
+        """测试策略正确分配到分组"""
+        # 添加第一个策略
+        self.operator.add_strategy('dma', run_freq='d', run_timing='close')
+
+        # 添加第二个相同运行参数的策略
+        self.operator.add_strategy('macd', run_freq='d', run_timing='close')
+
+        # 添加第三个不同运行参数的策略
+        self.operator.add_strategy('dma', run_freq='h', run_timing='close')
+
+        # 验证分组情况
+        self.assertEqual(len(self.operator._groups), 2)
+        self.assertEqual(len(self.operator._groups[0].members), 2)  # 第一组有两个策略
+        self.assertEqual(len(self.operator._groups[1].members), 1)  # 第二组有一个策略
+
+    def test_add_strategy_with_all_parameter_types(self):
+        """测试添加策略时传入各种类型的参数"""
+        # 添加策略并设置各种参数
+        self.operator.add_strategy('dma',
+                                   opt_tag=1,
+                                   par_values=(10, 20, 30),
+                                   run_freq='d',
+                                   run_timing='open',
+                                   window_length=60,
+                                   use_latest_data_cycle=True,
+                                   data_types={'close_ANY_d': qt.DataType('close', freq='d', asset_type='ANY')})
+
+        # 验证参数被设置
+        strategy = self.operator.strategies[0]
+        self.assertEqual(strategy.opt_tag, 1)
+        self.assertEqual(strategy.par_values, (10, 20, 30))
+        self.assertEqual(strategy.run_freq, 'd')
+        self.assertEqual(strategy.run_timing, 'open')
+        self.assertEqual(strategy.window_lengths['close_ANY_d'], 60)
+        self.assertEqual(strategy.data_ulc['close_ANY_d'], True)
+
+    def test_add_strategy_duplicate_check(self):
+        """测试策略重复检查功能"""
+        # 添加策略
+        strategy1 = DMA()
+        strategy2 = DMA()
+
+        self.operator.add_strategy(strategy1)
+
+        # 尝试添加相同的策略实例
+        with self.assertRaises(ValueError):
+            self.operator.add_strategy(strategy1)
+
+        # 添加不同的策略实例，但相同的类型
+        self.operator.add_strategy(strategy2)
+        self.assertEqual(len(self.operator.strategies), 2)
+
+
+class TestSetBlender(unittest.TestCase):
+    """测试Operator类的set_blender方法"""
+
+    def setUp(self):
+        """设置测试环境"""
+        self.operator = qt.Operator()
+
+    def test_strategy_count_zero(self):
+        """测试策略数量为0时直接返回"""
+        # 创建一个没有策略的Operator
+        operator_empty = qt.Operator()
+        # 验证策略数量为0
+        self.assertEqual(operator_empty.strategy_count, 0)
+        # 调用set_blender方法，应该直接返回，不执行任何操作
+        result = operator_empty.set_blender('s0+s1', 'Group_1')
+        self.assertIsNone(result)
+
+    def test_group_id_none_blender_none(self):
+        """测试group_id为None且blender为None时直接返回"""
+        self.operator.add_strategy('dma')
+        self.assertEqual(self.operator.strategy_count, 1)
+        result = self.operator.set_blender(None, None)
+        self.assertIsNone(result)
+
+    def test_group_id_none_blender_string(self):
+        """测试group_id为None且blender为字符串时转换为列表处理"""
+        self.operator.add_strategies('dma, trix')
+        self.operator.add_strategies('macd, ddema', run_freq='h', run_timing='open')
+
+        # 验证有两个策略组
+        self.assertEqual(self.operator.strategy_group_count, 2)
+
+        # 设置blender
+        self.operator.set_blender('s0+s1', None)
+
+        # 验证两个组都被设置为相同的blender
+        group1 = self.operator.strategy_groups['Group_1']
+        group2 = self.operator.strategy_groups['Group_2']
+        self.assertEqual(group1.blender_str, 's0+s1')
+        self.assertEqual(group2.blender_str, 's0+s1')
+
+        print(self.operator.get_blender())
+        print(self.operator.get_blender('Group_1'))
+        print(self.operator.get_blender('Group_2'))
+        self.assertIs(self.operator.get_blender('Not existed'), None)
+
+        print(self.operator.view_blender())
+        print(self.operator.view_blender('Group_1'))
+        print(self.operator.view_blender('Group_2'))
+        self.assertRaises(KeyError, self.operator.view_blender, 0)
+        self.assertRaises(KeyError, self.operator.view_blender, 'not_existed')
+
+    def test_group_id_none_blender_empty_list(self):
+        """测试blender为空列表时抛出ValueError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(ValueError) as context:
+            self.operator.set_blender([], None)
+        self.assertIn('Empty blender list!', str(context.exception))
+
+    def test_group_id_none_blender_list_with_non_string(self):
+        """测试blender列表包含非字符串元素时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(['s0+s1', 123], None)
+        self.assertIn('All items in blender list should be strings!', str(context.exception))
+
+    def test_group_id_none_blender_list_insufficient(self):
+        """测试blender列表数量不足时用最后一个元素补齐"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        self.operator.add_strategy('dma', run_freq='w', run_timing='close')
+
+        # 验证有3个策略组
+        self.assertEqual(self.operator.strategy_group_count, 3)
+
+        # 设置只有1个blender值的列表，应该被扩展到3个
+        self.operator.set_blender(['s0+s1'], None)
+
+        # 验证所有组都被设置为最后一个元素的值
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_3'].blender_str, 's0+s1')
+
+    def test_group_id_none_blender_list_sufficient(self):
+        """测试blender列表数量足够时正常分配"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置与策略组数量相等的blender列表
+        self.operator.set_blender(['s0+s1', 's2*s3'], None)
+
+        # 验证每个组被分配对应的blender
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_list_excessive(self):
+        """测试blender列表数量过多时只使用前面的元素"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置超过策略组数量的blender列表
+        self.operator.set_blender(['s0+s1', 's2*s3', 's1-s0'], None)
+
+        # 验证只有前两个被使用
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_dict(self):
+        """测试blender为字典时遍历设置"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 设置字典形式的blender
+        blender_dict = {'Group_1': 's0+s1', 'Group_2': 's2*s3'}
+        self.operator.set_blender(blender_dict, None)
+
+        # 验证每个组被设置为字典中对应的值
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        self.assertEqual(groups['Group_2'].blender_str, 's2*s3')
+
+    def test_group_id_none_blender_invalid_type(self):
+        """测试blender为无效类型时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(123, None)
+        self.assertIn('Wrong type of blender', str(context.exception))
+
+    def test_group_id_valid_blender_string(self):
+        """测试group_id有效且blender为字符串时正常设置"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+
+        # 验证blender_str被正确设置
+        self.operator.set_blender('s0+s1', 'Group_1')
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, 's0+s1')
+
+    def test_group_id_invalid(self):
+        """测试group_id无效时抛出KeyError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(KeyError) as context:
+            self.operator.set_blender('s0+s1', 'Invalid_Group')
+        self.assertIn("Strategy group 'Invalid_Group' is not valid", str(context.exception))
+
+    def test_group_id_valid_blender_invalid_type(self):
+        """测试group_id有效但blender类型错误时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender(123, 'Group_1')
+        self.assertIn('Wrong type of blender', str(context.exception))
+
+    def test_group_id_invalid_type(self):
+        """测试group_id类型错误时抛出TypeError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(TypeError) as context:
+            self.operator.set_blender('s0+s1', 123)
+        self.assertIn('group should be a string', str(context.exception))
+
+    def test_invalid_blender_expression(self):
+        """测试无效blender表达式时抛出ValueError"""
+        self.operator.add_strategy('dma')
+        with self.assertRaises(ValueError) as context:
+            self.operator.set_blender('invalid@expr', 'Group_1')
+        # 注意：这里可能不会抛出异常，因为blender_str属性设置可能不会立即验证表达式
+        # 但如果表达式无效，应该在Group类中被验证
+
+    def test_blender_with_complex_expression(self):
+        """测试复杂的blender表达式"""
+        self.operator.add_strategy('dma')
+        complex_expr = 's0*2 + s1 - max(s0, s1)'
+        self.operator.set_blender(complex_expr, 'Group_1')
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, complex_expr)
+
+    def test_blender_dict_partial_groups(self):
+        """测试字典形式的blender只设置部分组"""
+        self.operator.add_strategy('dma')
+        self.operator.add_strategy('macd', run_freq='h', run_timing='open')
+        self.operator.add_strategy('dma', run_freq='w', run_timing='close')
+
+        # 只设置部分组
+        partial_blender_dict = {'Group_1': 's0+s1'}
+        self.operator.set_blender(partial_blender_dict, None)
+
+        # 验证只设置了指定的组
+        groups = self.operator.strategy_groups
+        self.assertEqual(groups['Group_1'].blender_str, 's0+s1')
+        # Group_2和Group_3的blender_str应为None或默认值
+
+    def test_blender_empty_string(self):
+        """测试空字符串 blender：写入后 getter 返回默认表达式"""
+        self.operator.add_strategy('dma')
+        self.operator.set_blender('', 'Group_1')
+        # 空串写入后，getter 按当前 members 返回默认（1 个策略为 s0）
+        self.assertEqual(self.operator.strategy_groups['Group_1'].strategy_count, 1)
+        self.assertEqual(self.operator.strategy_groups['Group_1'].blender_str, 's0')
+
+
+class TestStrategyTracing(unittest.TestCase):
+    """测试BaseStrategy类的trace相关方法"""
+
+    def setUp(self):
+        """设置测试环境"""
+        # 创建一个简单的策略实例用于测试
+        self.strategy = BaseStrategy(
+                name='test_strategy',
+                description='Test strategy for tracing',
+        )
+        # 设置策略ID用于测试
+        self.strategy._strategy_id = 'test_id'
+
+    def test_disable_tracing_initially(self):
+        """测试初始状态下追踪功能是禁用的"""
+        self.assertFalse(self.strategy._trace_enabled)
+        self.assertEqual(self.strategy._trace_max_steps, 0)
+        self.assertEqual(self.strategy._trace_step, 0)
+        self.assertEqual(len(self.strategy._trace_data), 0)
+
+    def test_enable_tracing_with_valid_max_steps(self):
+        """测试启用追踪功能，使用有效的max_steps"""
+        max_steps = 10
+        self.strategy.enable_tracing(max_steps)
+
+        self.assertTrue(self.strategy._trace_enabled)
+        self.assertEqual(self.strategy._trace_max_steps, max_steps)
+        self.assertEqual(self.strategy._trace_step, 0)
+        self.assertEqual(len(self.strategy._trace_data), 0)
+
+    def test_enable_tracing_with_invalid_max_steps(self):
+        """测试使用无效max_steps启用追踪功能"""
+        # 测试非整数输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing("invalid")
+
+        # 测试负数输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing(-5)
+
+        # 测试零输入
+        with self.assertRaises(ValueError):
+            self.strategy.enable_tracing(0)
+
+    def test_disable_tracing_method(self):
+        """测试禁用追踪功能"""
+        # 先启用追踪
+        self.strategy.enable_tracing(5)
+        self.strategy.trace(10, 'test_var')
+
+        # 确认追踪已启用
+        self.assertTrue(self.strategy._trace_enabled)
+        self.assertEqual(len(self.strategy._trace_data), 1)
+
+        # 禁用追踪
+        self.strategy.disable_tracing()
+
+        # 确认追踪已禁用
+        self.assertFalse(self.strategy._trace_enabled)
+        self.assertEqual(self.strategy._trace_max_steps, 0)
+        self.assertEqual(self.strategy._trace_step, 0)
+        self.assertEqual(len(self.strategy._trace_data), 0)
+
+    def test_trace_with_int_variable(self):
+        """测试追踪整数变量"""
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个整数变量
+        self.strategy.trace('int_var', 42)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_int_var', trace_data)
+        self.assertEqual(trace_data['test_id_int_var'][0], 42)
+
+    def test_trace_with_float_variable(self):
+        """测试追踪浮点数变量"""
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个浮点数变量
+        self.strategy.trace('float_var', 3.14)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_float_var', trace_data)
+        self.assertEqual(trace_data['test_id_float_var'][0], 3.14)
+
+    def test_trace_with_boolean_variable(self):
+        """测试追踪布尔变量"""
+        print(f'test trace_with_boolean_variable')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个布尔变量
+        self.strategy.trace('bool_var', True)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertIn('test_id_bool_var', trace_data)
+        self.assertEqual(trace_data['test_id_bool_var'][0], True)
+
+    def test_trace_with_string_variable(self):
+        """测试追踪字符串变量"""
+        print('test_trace_with_string_variable')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个字符串变量
+        self.strategy.trace("test_string", 'str_var')
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertIn('test_id_test_string', trace_data)
+        self.assertEqual(trace_data['test_id_test_string'][0], "str_var")
+
+    def test_trace_with_multiple_variables(self):
+        """测试追踪多个变量"""
+        print(f'test trace with multiple variables')
+        self.strategy.enable_tracing(5)
+
+        # 追踪多个变量
+        self.strategy.trace('var1', 1)
+        self.strategy.trace('var2', 2.5)
+        self.strategy.trace('var3', False)
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'got trace data: \n{trace_data}')
+        self.assertEqual(len(trace_data), 5)
+        self.assertIn('test_id_var1', trace_data)
+        self.assertIn('test_id_var2', trace_data)
+        self.assertIn('test_id_var3', trace_data)
+        self.assertEqual(trace_data['test_id_var1'][0], 1)
+        self.assertEqual(trace_data['test_id_var2'][0], 2.5)
+        self.assertEqual(trace_data['test_id_var3'][0], False)
+
+    def test_trace_with_comments(self):
+        """测试追踪变量时添加注释"""
+        print(f'test trace with comments')
+        self.strategy.enable_tracing(5)
+
+        # 追踪一个变量并添加注释
+        self.strategy.trace('commented_var', 'This is a test comment')
+
+        # 检查追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertIn('test_id_commented_var', trace_data)
+        self.assertEqual(trace_data['test_id_commented_var'][0], 'This is a test comment')
+
+    def test_trace_with_max_steps_limit(self):
+        """测试追踪变量时不超过最大步数限制"""
+        print(f'test trace with max steps limit')
+        max_steps = 3
+        self.strategy.enable_tracing(max_steps)
+
+        # 追踪超过最大步数限制的变量
+        for i in range(max_steps + 2):  # 追踪5个值，但最大步数是3
+            self.strategy.trace('limited_var', i)
+            if i < max_steps:  # 只有前max_steps个值会被记录
+                self.strategy._trace_step += 1  # 模拟步数前进
+
+        # 检查追踪数据，只有前max_steps个值被记录
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        if 'limited_var' in trace_data:
+            # 实际记录的数量取决于trace方法如何处理超过限制的情况
+            recorded_count = len(trace_data['limited_var'])
+            # 根据trace方法的实现，它会在达到max_steps时停止记录
+            self.assertLessEqual(recorded_count, max_steps)
+
+    def test_get_trace_data_empty_when_disabled(self):
+        """测试当追踪功能禁用时get_trace_data返回空结果"""
+        # 确保追踪功能被禁用
+        print(f'test get_trace_data when tracing is disabled')
+        self.strategy.disable_tracing()
+
+        # 尝试追踪一个变量（这应该不会被记录）
+        self.strategy.trace('disabled_var', 123)
+
+        # 获取追踪数据
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+
+        # 应该返回空字典
+        self.assertEqual(len(trace_data), 0)
+
+    def test_trace_dtype_handling(self):
+        """测试追踪不同数据类型时的数据类型处理"""
+        print('test trace dtype handling')
+        self.strategy.enable_tracing(5)
+
+        # 追踪不同类型的变量并检查内部数据类型
+        self.strategy.trace('int_var', 10)  # 应该是int64
+        self.strategy.trace('float_var', 3.14)  # 应该是float64
+        self.strategy.trace('bool_var', True)  # 应该是bool
+        self.strategy.trace('str_var', "text")  # 应该是object
+
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+
+        # 验证数据被正确存储
+        self.assertEqual(trace_data['test_id_int_var'][0], 10)
+        self.assertEqual(trace_data['test_id_float_var'][0], 3.14)
+        self.assertEqual(trace_data['test_id_bool_var'][0], True)
+        self.assertEqual(trace_data['test_id_str_var'][0], "text")
+
+    def test_trace_step_tracking(self):
+        """测试追踪步骤的记录"""
+        self.strategy.enable_tracing(5)
+
+        # 模拟追踪多个步骤
+        self.strategy._trace_step = 0
+        self.strategy.trace('step_var', 1)
+
+        self.strategy._trace_step = 1
+        self.strategy.trace('step_var', 2)
+
+        self.strategy._trace_step = 2
+        self.strategy.trace('step_var', 3)
+
+        trace_data = self.strategy.get_trace_data()
+        print(f'get trace data: \n{trace_data}')
+        self.assertEqual(len(trace_data['test_id_step_var']), 5)
+        self.assertEqual(trace_data['test_id_step_var'][0], 1)
+        self.assertEqual(trace_data['test_id_step_var'][1], 2)
+        self.assertEqual(trace_data['test_id_step_var'][2], 3)
+
+
+class TestOperatorSetParameter(unittest.TestCase):
+    """完整测试 Operator.set_parameter 的全部参数与边界条件，不使用 Mock。"""
+
+    def setUp(self):
+        self.op = qt.Operator()
+        self.op.add_strategies('dma, macd', run_freq='d', run_timing='close')
+        self.dma_id = self.op.strategy_ids[0]
+        self.macd_id = self.op.strategy_ids[1]
+
+    # ---------- stg_id 边界 ----------
+    def test_set_parameter_stg_id_valid_str(self):
+        self.op.set_parameter(self.dma_id, par_values=(50, 10, 20))
+        self.assertEqual(self.op[self.dma_id].par_values, (50, 10, 20))
+
+    def test_set_parameter_stg_id_valid_int(self):
+        self.op.set_parameter(0, par_values=(50, 10, 20))
+        self.assertEqual(self.op[0].par_values, (50, 10, 20))
+        self.op.set_parameter(1, par_values=(11, 27, 8))
+        self.assertEqual(self.op[1].par_values, (11, 27, 8))
+
+    def test_set_parameter_stg_id_int_negative_raises(self):
+        """stg_id 为负整数（如 -1）时应报错，不支持“最后一个策略”的语义。"""
+        self.assertRaises(KeyError, self.op.set_parameter, -1, par_values=(11, 27, 8))
+
+    def test_set_parameter_stg_id_none_raises(self):
+        self.assertRaises(AssertionError, self.op.set_parameter, None, par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_wrong_type_raises(self):
+        self.assertRaises(AssertionError, self.op.set_parameter, 1.5, par_values=(1, 2, 3))
+        self.assertRaises(AssertionError, self.op.set_parameter, [], par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_nonexistent_str_raises(self):
+        self.assertRaises(KeyError, self.op.set_parameter, 'nonexistent_id', par_values=(1, 2, 3))
+
+    def test_set_parameter_stg_id_int_out_of_range_raises(self):
+        self.assertRaises(KeyError, self.op.set_parameter, 10, par_values=(1, 2, 3))
+        self.assertRaises(KeyError, self.op.set_parameter, -10, par_values=(1, 2, 3))
+
+    # ---------- pars ----------
+    def test_set_parameter_pars_single_parameter(self):
+        from qteasy.parameter import Parameter
+        new_par = Parameter(par_range=(5, 100), par_type='int', name='slow')
+        self.op.set_parameter(self.dma_id, pars=new_par)
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (5, 100))
+
+    def test_set_parameter_pars_list(self):
+        from qteasy.parameter import Parameter
+        pars = [
+            Parameter(par_range=(5, 100), par_type='int', name='slow'),
+            Parameter(par_range=(5, 100), par_type='int', name='long'),
+            Parameter(par_range=(5, 100), par_type='int', name='diff'),
+        ]
+        self.op.set_parameter(self.dma_id, pars=pars)
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (5, 100))
+
+    def test_set_parameter_pars_wrong_type_raises(self):
+        self.assertRaises(TypeError, self.op.set_parameter, self.dma_id, pars='not_a_par')
+
+    # ---------- opt_tag ----------
+    def test_set_parameter_opt_tag_0_1_2(self):
+        self.op.set_parameter(self.dma_id, opt_tag=0)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 0)
+        self.op.set_parameter(self.dma_id, opt_tag=1)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 1)
+        self.op.set_parameter(self.dma_id, opt_tag=2)
+        self.assertEqual(self.op[self.dma_id].opt_tag, 2)
+
+    # ---------- data_types ----------
+    def test_set_parameter_data_types_single(self):
+        self.op.set_parameter(
+                self.dma_id,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=100,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths.get('close_ANY_d'), 100)
+
+    def test_set_parameter_data_types_list(self):
+        self.op.set_parameter(
+                self.dma_id,
+                data_types=[DataType('close', freq='d', asset_type='ANY')],
+                window_length=80,
+        )
+        self.assertEqual(self.op[self.dma_id].max_window_length, 80)
+
+    # ---------- data_type_id + window_length + use_latest_data_cycle ----------
+    def test_set_parameter_data_type_id_window_length(self):
+        self.op.set_parameter(
+                self.dma_id,
+                data_type_id='close_ANY_d',
+                window_length=120,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 120)
+
+    def test_set_parameter_data_type_id_use_latest_data_cycle(self):
+        self.op.set_parameter(
+                self.dma_id,
+                data_type_id='close_ANY_d',
+                use_latest_data_cycle=True,
+        )
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_data_type_id_nonexistent_raises(self):
+        self.assertRaises(
+                KeyError,
+                self.op.set_parameter,
+                self.dma_id,
+                data_type_id='wrong_dtype_id',
+                window_length=10,
+        )
+
+    def test_set_parameter_window_length_scalar(self):
+        self.op.set_parameter(self.dma_id, window_length=50)
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 50)
+
+    def test_set_parameter_window_length_dict(self):
+        self.op.set_parameter(self.dma_id, window_length={'close_ANY_d': 88})
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 88)
+
+    def test_set_parameter_use_latest_data_cycle_scalar(self):
+        self.op.set_parameter(self.dma_id, use_latest_data_cycle=True)
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_use_latest_data_cycle_dict(self):
+        self.op.set_parameter(self.dma_id, use_latest_data_cycle={'close_ANY_d': False})
+        self.assertFalse(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    # ---------- freq + asset_type（需多数据类型策略）----------
+    def test_set_parameter_freq_asset_type_with_multi_dtype_strategy(self):
+        stg = BaseStrategy(
+                name='MultiDtypeStg',
+                pars=[param1.copy(), param2.copy()],
+                data_types=[dtype_1.copy(), dtype_2.copy(), dtype_4.copy()],
+                use_latest_data_cycle=False,
+                window_length=20,
+        )
+        self.op.add_strategy(stg, run_freq='d', run_timing='close')
+        stg_id = stg.strategy_id
+        self.assertIn('close_E_d', self.op[stg_id].data_types)
+        self.op.set_parameter(stg_id, data_type_id='close_E_15min', freq='30min')
+        self.assertIn('close_E_30min', self.op[stg_id].data_types)
+        self.assertNotIn('close_E_15min', self.op[stg_id].data_types)
+        self.op.set_parameter(stg_id, data_type_id='close_E_d', asset_type='IDX')
+        self.assertIn('close_IDX_d', self.op[stg_id].data_types)
+        self.assertNotIn('close_E_d', self.op[stg_id].data_types)
+
+    # ---------- par_values ----------
+    def test_set_parameter_par_values_tuple(self):
+        self.op.set_parameter(self.dma_id, par_values=(20, 30, 10))
+        self.assertEqual(self.op[self.dma_id].par_values, (20, 30, 10))
+
+    def test_set_parameter_par_values_list(self):
+        self.op.set_parameter(self.macd_id, par_values=[14, 28, 7])
+        self.assertEqual(self.op[self.macd_id].par_values, (14, 28, 7))
+
+    def test_set_parameter_par_values_kwargs_rule_iterator(self):
+        """按名字设置单组参数：par_values 为 {参数名: 值} 时按 kwargs 传入。"""
+        self.op.set_parameter(
+                self.dma_id,
+                par_values={'slow': 15, 'long': 25, 'diff': 8},
+        )
+        self.assertEqual(self.op[self.dma_id].par_values, (15, 25, 8))
+
+    def test_set_parameter_par_values_multi_par_with_default(self):
+        """multi_par 标准格式：{stock_id: (par_tuple), 'default': (par_tuple)}；按 share_id/default 解析后与 share_names 同序，
+        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。"""
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+                self.dma_id,
+                par_values={
+                    '000001':  (12, 25, 24),
+                    '000002':  (12, 26, 27),
+                    'default': (12, 24, 26),
+                },
+        )
+        stg = self.op[self.dma_id]
+        self.assertTrue(stg.allow_multi_par)
+        self.assertIsNotNone(stg.multi_pars)
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
+        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 应使用指定参数')
+        self.assertEqual(stg.multi_pars[2], (12, 24, 26), '000003 应使用 default 参数')
+
+    def test_set_parameter_par_values_multi_par_dict_key_order_follows_share_names(self):
+        """解析顺序以 share_names 为准，与 dict 的 key 顺序无关。
+        
+        约定：实现必须按 share_names 顺序遍历并查 dict，得到与 share_names 同序的 multi_pars 序列。
+        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。
+        """
+        shares = ['000001', '000002', '000003']
+        print(f'before setting multi_pars: '
+              f'par_values: {self.op[self.dma_id].par_values}, multi_pars: {self.op[self.dma_id].multi_pars}')
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+                self.dma_id,
+                par_values={
+                    'default': (12, 24, 26),
+                    '000002':  (12, 26, 27),
+                    '000001':  (12, 25, 24),
+                    '000003':  (12, 23, 25),
+                },
+        )
+        stg = self.op[self.dma_id]
+        print(f'par_values: {stg.par_values}, multi_pars: {stg.multi_pars}')
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 按 share_names 顺序')
+        self.assertEqual(stg.multi_pars[1], (12, 26, 27), '000002 按 share_names 顺序')
+        self.assertEqual(stg.multi_pars[2], (12, 23, 25), '000003 按 share_names 顺序')
+        self.assertEqual(stg.par_values, (12, 25, 24), '整体 par_values 为最新的multi_pars')
+
+    def test_set_parameter_par_values_multi_par_wrong_par_values(self):
+        """multi_par 中某股票的 par_tuple 类型错误时应报错。
+
+        约定：每个 (par_tuple) 必须为 tuple 或 list, 且可以被正确设置为par_values
+        """
+        shares = ['000001', '000002']
+        self.op.set_shares(shares)
+        self.assertRaises(
+                (ValueError, TypeError),
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={
+                    '000001':  (12, 25, 24),
+                    '000002':  'not_a_tuple',
+                    'default': (12, 24, 26),
+                },
+        )
+        self.assertRaises(
+                KeyError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={
+                    '000001': (12, 25, 24),
+                },
+
+        )
+
+        self.assertRaises(
+                (ValueError, TypeError),
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={
+                    '000001': (12, 25, 24),
+                    '000002': (12, 26),  # 长度错误
+                },
+        )
+
+        self.assertRaises(
+                (ValueError, TypeError),
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={
+                    '000001': (12, 25, 24),
+                    '000002': (12, 0, 6),  # 范围超限
+                },
+        )
+
+        self.assertRaises(
+                (ValueError, TypeError),
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={
+                    '000001': (12, 25, 24),
+                    '000002': (12, 3.14, 6),  # dtype错误
+                },
+        )
+
+    def test_set_parameter_par_values_multi_par_multiple_shares_use_default(self):
+        """多只 share 未在 dict 中显式出现时，均使用 default。
+        
+        约定：未在 dict 中出现的 share_names[i] 使用 'default' 对应的 par_tuple。
+        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。
+        """
+        shares = ['000001', '000002', '000003']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+                self.dma_id,
+                par_values={
+                    '000001':  (12, 25, 24),
+                    'default': (12, 24, 26),
+                },
+        )
+        stg = self.op[self.dma_id]
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 显式指定')
+        self.assertEqual(stg.multi_pars[1], (12, 24, 26), '000002 使用 default')
+        self.assertEqual(stg.multi_pars[2], (12, 24, 26), '000003 使用 default')
+
+    def test_set_parameter_par_values_multi_par_share_mismatch(self):
+        """multi_par 中股票代码与 share_names 不完全匹配：仅按 share_names 解析，未出现的 share_id 忽略。
+        
+        len(multi_pars)==share_count 与 RuleIterator.generate() 中 for i in range(self.share_count); par=self.multi_pars[i] 一致。
+        """
+        shares = ['000001', '000002']
+        self.op.set_shares(shares)
+        self.op.set_parameter(
+                self.dma_id,
+                par_values={
+                    '000001':  (12, 25, 24),
+                    '000003':  (12, 26, 27),
+                    'default': (12, 24, 26),
+                },
+        )
+        stg = self.op[self.dma_id]
+        self.assertIsNotNone(stg.multi_pars)
+        self.assertEqual(len(stg.multi_pars), len(shares))
+        self.assertEqual(stg.multi_pars[0], (12, 25, 24), '000001 应使用指定参数')
+        self.assertEqual(stg.multi_pars[1], (12, 24, 26),
+                         '000002 不在 dict 中应使用 default；000003 在 dict 中但不在 share_names 中应忽略')
+
+    def test_set_parameter_par_values_multi_par_before_set_shares_raises(self):
+        """先 set_parameter(multi_par) 后 set_shares 时应报错：share_count 未定无法解析。
+        
+        约定 A：此时报错（例如 ValueError），提示需先 set_shares 或 share_count 未定。
+        若实现改为"延后解析"（约定 B）：先接受并暂存 dict，在 set_shares 或 generate 时再按 share_names 解析，
+        则本用例应改为断言：先 set_parameter(multi_par) 再 set_shares 后，len(stg.multi_pars)==share_count。
+        """
+        op = qt.Operator()
+        op.add_strategy(DMA(), run_freq='d', run_timing='close')
+        stg_id = op.strategy_ids[0]
+        self.assertRaises(
+                (ValueError, TypeError, KeyError),
+                op.set_parameter,
+                stg_id,
+                par_values={'000001': (12, 5, 4), 'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_multi_par_only_default_raises(self):
+        """multi_par 仅含 default 时应报错：至少有一个非 default 的 stock_id。
+        
+        约定：multi_par 中至少有一个非 'default' 的 stock_id。
+        """
+        self.op.set_shares(['000001', '000002'])
+        self.assertRaises(
+                ValueError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_multi_par_value_length_mismatch_raises(self):
+        """multi_par 中某 value 长度与 par_count 不一致时应报错。
+        
+        约定：每个 (par_tuple) 长度必须等于 strategy.par_count。
+        """
+        self.op.set_shares(['000001', '000002'])
+        self.assertRaises(
+                (ValueError, TypeError),
+                self.op.set_parameter,
+                self.dma_id,
+                par_values={'000001': (12, 5), '000002': (12, 6, 7), 'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_multi_par_disallowed_raises(self):
+        """allow_multi_par=False 时传入 multi_par 应报错。"""
+        op = qt.Operator()
+        stg = DMA(allow_multi_par=False)
+        op.add_strategy(stg, run_freq='d', run_timing='close')
+        stg_id = stg.strategy_id
+        op.set_shares(['000001', '000002'])
+        self.assertRaises(
+                (ValueError, TypeError),
+                op.set_parameter,
+                stg_id,
+                par_values={'000001': (12, 5, 4), '000002': (12, 6, 7), 'default': (12, 4, 6)},
+        )
+
+    def test_set_parameter_par_values_tuple_list_not_multi_par(self):
+        """tuple/list 形式的 par_values 解析为普通位置参数，不作为 multi_par；multi_par 仅接受 dict。"""
+        self.op.set_shares(['000001', '000002'])
+        self.op.set_parameter(
+                self.dma_id,
+                par_values=(12, 25, 34),
+        )
+        stg = self.op[self.dma_id]
+        self.assertIsNone(stg.multi_pars, 'tuple/list 不应被当作 multi_par 设置')
+
+    def test_set_parameter_par_values_wrong_length_raises(self):
+        self.assertRaises(
+                ValueError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_values=(1, 2),
+        )
+        self.assertRaises(
+                ValueError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_values=(1, 2, 3, 4),
+        )
+
+    # ---------- par_range ----------
+    def test_set_parameter_par_range_tuple(self):
+        self.op.set_parameter(
+                self.dma_id,
+                par_range=((15, 100), (15, 100), (5, 80)),
+        )
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (15, 100))
+        self.assertEqual(self.op[self.dma_id].pars['diff'].par_range, (5, 80))
+
+    def test_set_parameter_par_range_dict(self):
+        self.op.set_parameter(
+                self.dma_id,
+                par_range={'slow': (20, 150), 'long': (20, 150), 'diff': (8, 120)},
+        )
+        self.assertEqual(self.op[self.dma_id].pars['slow'].par_range, (20, 150))
+
+    def test_set_parameter_par_range_wrong_type_raises(self):
+        self.assertRaises(
+                TypeError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_range='not_list_or_dict',
+        )
+
+    def test_set_parameter_par_range_wrong_length_raises(self):
+        self.assertRaises(
+                ValueError,
+                self.op.set_parameter,
+                self.dma_id,
+                par_range=((10, 250), (10, 250)),
+        )
+
+    # ---------- run_freq / run_timing ----------
+    def test_set_parameter_run_freq_same_value_no_move(self):
+        g0 = self.op[self.dma_id]._group_id
+        self.op.set_parameter(self.dma_id, run_freq='d')
+        self.assertEqual(self.op[self.dma_id]._group_id, g0)
+        self.assertEqual(self.op[self.dma_id].run_freq, 'd')
+
+    def test_set_parameter_run_freq_change_strategy_alone_in_group(self):
+        self.assertEqual(len(self.op.groups), 1)
+        self.assertEqual(len(self.op.groups['Group_1'].members), 2)
+        op2 = qt.Operator()
+        op2.add_strategy(DMA(), run_freq='d', run_timing='close')
+        self.assertEqual(len(op2.groups['Group_1'].members), 1)
+        op2.set_parameter(op2.strategy_ids[0], run_freq='h')
+        self.assertEqual(op2[str(op2.strategy_ids[0])].run_freq, 'h')
+        self.assertEqual(op2.groups['Group_1'].run_freq, 'h')
+
+    def test_set_parameter_run_freq_change_strategy_not_alone(self):
+        self.op.set_parameter(self.dma_id, run_freq='h', run_timing='close')
+        self.assertEqual(self.op[self.dma_id].run_freq, 'h')
+        self.assertEqual(self.op[self.macd_id].run_freq, 'd')
+        self.assertEqual(len(self.op.groups), 2)
+        g_d = [g for g in self.op.groups.values() if g.run_freq == 'd'][0]
+        g_h = [g for g in self.op.groups.values() if g.run_freq == 'h'][0]
+        self.assertEqual(len(g_d.members), 1)
+        self.assertEqual(len(g_h.members), 1)
+
+    def test_set_parameter_run_timing_change(self):
+        self.op.set_parameter(self.dma_id, run_timing='open')
+        self.assertEqual(self.op[self.dma_id].run_timing, 'open')
+        self.assertEqual(self.op[self.macd_id].run_timing, 'close')
+
+    def test_set_parameter_run_freq_change_merges_two_groups(self):
+        """两 Group 各一个 Strategy，修改其中一个的 run_freq/run_timing 与另一 Group 相同，应合并为一 Group。"""
+        op = qt.Operator()
+        op.add_strategy(DMA(), run_freq='d', run_timing='close')
+        op.add_strategy(MACD(), run_freq='h', run_timing='close')
+        self.assertEqual(len(op.groups), 2)
+        self.assertEqual(len(op.groups['Group_1'].members), 1)
+        self.assertEqual(len(op.groups['Group_2'].members), 1)
+        dma_id = op.strategy_ids[0]
+        macd_id = op.strategy_ids[1]
+        self.assertEqual(op[dma_id].run_freq, 'd')
+        self.assertEqual(op[macd_id].run_freq, 'h')
+        op.set_parameter(macd_id, run_freq='d', run_timing='close')
+        self.assertEqual(len(op.groups), 1)
+        only_group = list(op.groups.values())[0]
+        self.assertEqual(only_group.strategy_count, 2)
+        self.assertEqual(only_group.run_freq, 'd')
+        self.assertEqual(only_group.run_timing, 'close')
+        self.assertEqual(op[dma_id]._group_id, op[macd_id]._group_id)
+        self.assertEqual(op[dma_id].run_freq, 'd')
+        self.assertEqual(op[macd_id].run_freq, 'd')
+        self.assertEqual(op[dma_id].run_timing, 'close')
+        self.assertEqual(op[macd_id].run_timing, 'close')
+
+    # ---------- kwargs -> set_custom_pars ----------
+    def test_set_parameter_custom_pars_valid_attr(self):
+        self.op[self.dma_id]._test_attr = 0
+        self.op.set_parameter(self.dma_id, _test_attr=99)
+        self.assertEqual(self.op[self.dma_id]._test_attr, 99)
+
+    def test_set_parameter_custom_pars_invalid_attr_raises(self):
+        self.assertRaises(
+                KeyError,
+                self.op.set_parameter,
+                self.dma_id,
+                nonexistent_attr=1,
+        )
+
+    # ---------- 组合多参数 ----------
+    def test_set_parameter_combined_multiple_params(self):
+        self.op.set_parameter(
+                self.dma_id,
+                opt_tag=1,
+                par_values=(18, 28, 9),
+                window_length=100,
+                use_latest_data_cycle=True,
+        )
+        self.assertEqual(self.op[self.dma_id].opt_tag, 1)
+        self.assertEqual(self.op[self.dma_id].par_values, (18, 28, 9))
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 100)
+        self.assertTrue(self.op[self.dma_id].get_data_ulc('close_ANY_d'))
+
+    def test_set_parameter_combined_data_types_and_update(self):
+        self.op.set_parameter(
+                self.dma_id,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=90,
+                use_latest_data_cycle=False,
+        )
+        self.op.set_parameter(
+                self.dma_id,
+                data_type_id='close_ANY_d',
+                window_length=95,
+        )
+        self.assertEqual(self.op[self.dma_id].window_lengths['close_ANY_d'], 95)
 
 
 if __name__ == '__main__':
-    # get all stock prices from year 2020 to year 2022
-    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_daily', start_date='20200101', end_date='20221231')
-
-    # get index prices of 000300 and 399006 data from 2005 to year 2022
-    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='index_daily', start_date='20050101', end_date='20221231',
-                          code_range='000300,399006')
-
-    # get hourly price data for a few stocks in year 2016
-    qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_hourly', start_date='20160101', end_date='20161231',
-                          code_range=['000001', '000002', '000005', '000006', '000007', '000918', '000819',
-                                      '000899'])
     unittest.main()

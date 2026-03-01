@@ -22,6 +22,7 @@ import time
 import numpy as np
 import pandas as pd
 
+from typing import Optional
 from cmd import Cmd
 from threading import Timer
 from rich.text import Text
@@ -136,16 +137,12 @@ def pack_status_info(trader_info, width=80):
     sell_fix = trader_info["sell_fix"]
     buy_rate = trader_info["buy_rate"]
     sell_rate = trader_info["sell_rate"]
-    buy_min = trader_info["buy_min"]
-    sell_min = trader_info["sell_min"]
 
     if (buy_fix > 0) or (sell_fix > 0):
         trader_info += f'{"Trade cost - fixed (B/S)":<{semi_width - 20}}' \
                        f'¥ {buy_fix:.3f} / ¥ {sell_fix:.3f}\n'
     if (buy_rate > 0) or (sell_rate > 0):
         trader_info += f'{"Trade cost - rate (B/S)":<{semi_width - 20}}{buy_rate:.3%} / {sell_rate:.3%}\n'
-    if (buy_min > 0) or (sell_min > 0):
-        trader_info += f'{"Trade cost - minimum (B/S)":<{semi_width - 20}}¥ {buy_min:.3f} / ¥ {sell_min:.3f}\n'
     info_str += f'{"Market time (open/close)":<{semi_width - 20}}' \
                    f'{trader_info["market_open_am"]} / ' \
                    f'{trader_info["market_close_pm"]}\n'
@@ -370,7 +367,7 @@ class TraderShell(Cmd):
         'strategies': dict(prog='', description='Show or change strategy parameters',
                            usage='strategies [STRATEGY [STRATEGY ...]] [-h] [--detail] '
                                  '[--set-par [SET_VAL [SET_VAL ...]]] [--blender BLENDER] '
-                                 '[--timing TIMING]'),
+                                 '[--group GROUP]'),
         'schedule':   dict(prog='', description='Show trade agenda',
                            usage='schedule [-h]'),
         'refill':     dict(prog='', description='Refill data to datasource',
@@ -433,7 +430,7 @@ class TraderShell(Cmd):
                        ('--detail', '-d'),
                        ('--set-par', '--set', '-s'),
                        ('--blender', '-b'),
-                       ('--timing', '-t')],
+                       ('--group', '-g')],
         'schedule':   [],
         'refill':     [('tables',),
                        ('--coverage', '-c'),
@@ -587,7 +584,7 @@ class TraderShell(Cmd):
                         'help':    'set blender for strategies'},
                        {'action':  'store',
                         'default': '',
-                        'help':    'The strategy run timing of the strategies whose blender is set'}],
+                        'help':    'The strategy group whose blender is set'}],
         'schedule':   [],
         'refill':     [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '+',  # nargs='+' will require at least one argument
@@ -685,7 +682,7 @@ class TraderShell(Cmd):
     def filter_order_details(self,
                              order_details: pd.DataFrame,
                              *,
-                             symbols: [str] = None,
+                             symbols: list[str] = None,
                              status: str = None,
                              order_time: str = None,
                              order_type: str = None,
@@ -817,7 +814,7 @@ class TraderShell(Cmd):
                     raise RuntimeError(f'Error: failed to add argument {arg} to parser for command {command}\n'
                                        f'pars: {arg_property}')
 
-    def parse_args(self, command, args=None) -> argparse.Namespace or None:
+    def parse_args(self, command, args=None) -> Optional[argparse.Namespace]:
         """ 解析命令行参数
 
         Parameters
@@ -862,6 +859,7 @@ class TraderShell(Cmd):
         """
 
         import rich
+        import math
 
         qty = args.amount
         symbol = args.symbol.upper()
@@ -881,9 +879,11 @@ class TraderShell(Cmd):
         else:
             moq = self.trader.get_config('sell_batch_size')['sell_batch_size']
 
-        if moq != 0 and qty % moq != 0:
-            rich.print(f'[bold red]Qty should be a multiple of the minimum order quantity ({moq})[/bold red]')
-            return False
+        if moq != 0:
+            quotient = qty / moq
+            if not np.isclose(quotient, round(quotient), atol=1e-9):
+                rich.print(f'[bold red]Trade qty({qty}) should be a multiple of the minimum order quantity ({moq})[/bold red]')
+                return False
 
         # check if symbol is legal
         from qteasy.utilfuncs import is_complete_cn_stock_symbol_like
@@ -1642,9 +1642,10 @@ class TraderShell(Cmd):
                 try:
                     self.trader.update_config(key, value)
                     rich.print(f'[bold green]configure key "{key}" has been changed to "{value}".[bold green]')
-                except:
-                    rich.print(f'[bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
+                except Exception as e:
+                    rich.print(f'{e}, [bold red]configure key "{key}" can not be changed to "{value}".[/bold red]')
                     continue
+        return None
 
     def do_history(self, arg):
         """usage: history [SYMBOL] [-h]
@@ -2032,7 +2033,7 @@ class TraderShell(Cmd):
         strategies = [stg for stg_list in args.strategy for stg in stg_list] if args.strategy else []
         detail = args.detail
         set_val = [tuple(val_list) for val_list in args.set_val] if args.set_val else []
-        timing = args.timing
+        group = args.group
         blender = args.blender
 
         if not strategies and not blender:
@@ -2055,7 +2056,7 @@ class TraderShell(Cmd):
             return
 
         elif strategies and set_val:
-            # set the parameters of each strategy
+            # update parameter values of each strategy
 
             # count of strategies should match that of set_val
             if len(strategies) != len(set_val):
@@ -2066,7 +2067,8 @@ class TraderShell(Cmd):
                 try:
                     # correct par type before setting
                     op = self.trader.operator
-                    op.set_parameter(stg_id=stg, pars=val)
+                    val = tuple(int(v) for v in val)
+                    op.set_parameter(stg_id=stg, par_values=val)
                     print(f'Parameter {val} has been set to strategy {stg}.')
                 except Exception as e:
                     print(f'Can not set {val} to {stg}, Error: {e}')
@@ -2075,12 +2077,12 @@ class TraderShell(Cmd):
                         traceback.print_exc()
                     return False
 
-        elif timing and blender:
+        elif group and blender:
             try:
-                self.trader.operator.set_blender(blender=blender, run_timing=timing)
-                print(f'Blender {blender} has been set to run timing {timing}')
+                self.trader.operator.set_blender(blender=blender, group_id=group)
+                print(f'Blender {blender} has been set to run timing {group}')
             except Exception as e:
-                print(f'Can not set {blender} to {timing}, Error: {e}')
+                print(f'Can not set {blender} to {group}, Error: {e}')
                 if self.trader.debug:
                     import traceback
                     traceback.print_exc()
@@ -2156,7 +2158,7 @@ class TraderShell(Cmd):
 
         # make tables back to comma-separated string
         tables = list_to_str_format(tables)
-        self.trader.run_task('refill', tables, coverage, channel)
+        self.trader._run_task('refill', tables, coverage, channel)
         return False
 
     def do_run(self, arg):
@@ -2220,7 +2222,7 @@ class TraderShell(Cmd):
             self.trader.broker.status = 'running'
 
             try:
-                self.trader.run_task('run_strategy', *strategies, run_in_main_thread=True)
+                self.trader._run_task('run_strategy', *strategies, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running strategy: {e}')
@@ -2235,7 +2237,7 @@ class TraderShell(Cmd):
                 return False
             try:
                 task_args = tuple(task_args)
-                self.trader.run_task(task, *task_args, run_in_main_thread=True)
+                self.trader._run_task(task, *task_args, run_in_main_thread=True)
             except Exception as e:
                 import traceback
                 print(f'Error in running task: {e}')

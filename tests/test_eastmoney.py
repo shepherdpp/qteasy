@@ -41,7 +41,7 @@ class TestEastmoney(unittest.TestCase):
 
         self.assertIsInstance(res, pd.DataFrame)
         if is_market_trade_day(end):
-            self.assertFalse(res.empty)
+            self.assertFalse(res.empty, f'empty data downloaded for {code} on {end}, which is a trade day!')
         else:
             self.assertTrue(res.empty)
         code = '000651'
@@ -72,7 +72,7 @@ class TestEastmoney(unittest.TestCase):
         self.assertIsInstance(res, pd.DataFrame)
         from qteasy.utilfuncs import is_market_trade_day
         if is_market_trade_day(date):
-            self.assertFalse(res.empty)
+            self.assertFalse(res.empty, f'empty data downloaded for {code} on {date}, which is a trade day!')
             self.assertEqual(len(res), 2)
             self.assertEqual(res.columns.to_list(),
                              ['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
@@ -149,6 +149,10 @@ class TestEastmoney(unittest.TestCase):
         res = real_time_quote(qt_code=code)
         print(res)
         self.assertIsInstance(res, pd.DataFrame)
+        if is_market_trade_day((pd.to_datetime('today')).strftime('%Y%m%d')):
+            self.assertFalse(res.empty, f'empty data downloaded for {code}, which is a trade day!')
+        else:
+            self.assertTrue(res.empty)
 
 
 if __name__ == '__main__':

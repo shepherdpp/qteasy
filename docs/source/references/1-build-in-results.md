@@ -73,7 +73,6 @@ qt.configuration(up_to=5, default=True)
     invest_cash_amounts:  [100000.0]     <[100000.0]>
     invest_cash_dates:    None           <None>
     allow_sell_short:     False          <False>
-    maximize_cash_usage:  False          <False>
     PT_buy_threshold:     0.03           <0.03>
     PT_sell_threshold:    0.03           <0.03>
     price_priority_OHLC:  OHLC           <OHLC>

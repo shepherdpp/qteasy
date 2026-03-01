@@ -49,6 +49,7 @@ UNKNOWN.egg-info/
 dist/
 qteasy.egg-info/
 data_test/
+tests/data_test_trader_legacy/
 /question.py
 *.xlsx
 *.numbers
@@ -62,7 +63,6 @@ qteasy/__pycache__/*
 *.nbc
 /qteasy/__pycache__
 qteasy/__pycache__/backtest._loop_step-23.py37m.1.nbc
-/qteasy/__pycache__
 docs/source/img/logo-horizontal-full.png
 docs/source/img/logo-horizontal-light.png
 docs/source/img/logo-icon.png
@@ -78,3 +78,7 @@ qteasy/qteasy_backup.cfg
 /.cursor
 /qteasy_usages
 /.vscode
+/scripts
+/qteasy_doc_ipynbs
+*.json
+docs/source/README.md

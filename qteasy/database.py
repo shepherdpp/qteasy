@@ -10,10 +10,13 @@
 # ======================================
 
 import os
-from os import path
 import pandas as pd
 import numpy as np
 import warnings
+
+from tqdm import tqdm
+from os import path
+from typing import Union
 
 from functools import lru_cache
 
@@ -336,13 +339,16 @@ class DataSource:
         all_info = []
         print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
         total_table_count = len(all_table_names)
-        from .utilfuncs import progress_bar
+
         completed_reading_count = 0
-        for table_name in all_table_names:
-            progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
+
+        for table_name in tqdm(all_table_names,
+                               desc='Analyzing tables',
+                               total=total_table_count):
             all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True).values())
             completed_reading_count += 1
-        progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing completed!')
+
+        print(f'Analyzing completed!')
         all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size', 'records',
                                                    'pk1', 'records1', 'min1', 'max1',
                                                    'pk2', 'records2', 'min2', 'max2'])
@@ -1238,7 +1244,7 @@ class DataSource:
         )
 
     def read_table_data(self, table, *,
-                        shares: str = None,
+                        shares: Union[str, list] = None,
                         start: str = None,
                         end: str = None,
                         primary_key_in_index: bool = True,
@@ -1251,7 +1257,7 @@ class DataSource:
         ----------
         table: str
             数据表名称
-        shares: str
+        shares: str or list of str,
             ts_code筛选条件，逗号分隔字符串，为空时给出所有记录
         start: str，
             YYYYMMDD格式日期，为空时不筛选

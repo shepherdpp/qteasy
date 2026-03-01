@@ -23,6 +23,7 @@ from argparse import Namespace
 from qteasy.trade_recording import delete_account
 from qteasy.qt_operator import Operator
 from qteasy.visual import candle
+from qteasy.parameter import Parameter
 
 from qteasy.core import (
     run,
@@ -36,7 +37,6 @@ from qteasy.core import (
     get_history_data,
     filter_stock_codes,
     filter_stocks,
-    reconnect_ds,
     get_table_info,
     get_table_overview,
     live_trade_accounts,
@@ -100,6 +100,7 @@ from qteasy.database import (
 from qteasy.datatypes import (
     find_history_data,
     DataType,
+    StgData,
 )
 
 from qteasy._arg_validators import (
@@ -109,15 +110,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '1.4.11'
+__version__ = '2.0.0'
 version_info = Namespace(
-        major=1,
-        minor=4,
-        patch=11,
-        short=(1, 4),
-        full=(1, 4, 11),
-        string='1.4.11',
-        tuple=('1', '4', '11'),
+        major=2,
+        minor=0,
+        patch=0,
+        short=(2, 0),
+        full=(2, 0, 0),
+        string='2.0.0',
+        tuple=('2', '0', '0'),
         releaselevel='beta',
 )
 
@@ -175,13 +176,68 @@ else:
 # 设置qteasy运行过程中忽略某些numpy计算错误报警
 np.seterr(divide='ignore', invalid='ignore')
 
-# 设置qteasy回测交易报告以及错误报告的存储路径
-QT_SYS_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'])  # 系统日志存储路径
-QT_TRADE_LOG_PATH = os.path.join(QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'])  # 交易记录存储路径，包括回测和实盘交易
 
-# 设置系统日志以及交易日志的存储路径，如果路径不存在，则新建一个文件夹
-os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
-os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
+def _validate_path_string(path_setting: str, config_key: str) -> None:
+    """ 校验路径配置字符串中是否包含非法字符，若存在则抛出 ValueError。
+
+    通用规则：禁止 ASCII 控制字符（0x00-0x1F、0x7F）。
+    Windows 下额外禁止 <>"|?*，且仅允许在第二位出现冒号（如 C:）。
+    """
+    if not isinstance(path_setting, str):
+        raise ValueError(
+            f'Path configuration "{config_key}" must be a string, got {type(path_setting).__name__}.'
+        )
+    for c in path_setting:
+        if ord(c) < 32 or ord(c) == 127:
+            raise ValueError(
+                f'Invalid control character in configuration "{config_key}": '
+                'path must not contain control characters.'
+            )
+    if os.name == 'nt':
+        forbidden = set('<>"|?*')
+        for i, c in enumerate(path_setting):
+            if c in forbidden:
+                raise ValueError(
+                    f'Invalid character in configuration "{config_key}": "{c}" is not allowed in path.'
+                )
+            if c == ':':
+                if not (i == 1 and len(path_setting) >= 2 and path_setting[0].isalpha()):
+                    raise ValueError(
+                        f'Invalid character in configuration "{config_key}": '
+                        '":" only allowed as drive letter (e.g. C:).'
+                    )
+
+
+def _resolve_path(root: str, path_setting: str, config_key: str = 'path') -> str:
+    """ 根据配置项解析为绝对路径：支持相对路径、绝对路径与 ~ 家目录路径。
+
+    先做非法字符校验，再 expanduser，若为绝对路径则直接 normpath，否则相对 root 拼接。
+    """
+    _validate_path_string(path_setting, config_key)
+    expanded = os.path.expanduser(path_setting)
+    if os.path.isabs(expanded):
+        return os.path.normpath(expanded)
+    return os.path.normpath(os.path.join(root, expanded))
+
+
+def _refresh_log_paths() -> None:
+    """ 根据当前 QT_CONFIG 中的 sys_log_file_path、trade_log_file_path 刷新日志路径并创建目录。
+
+    仅对上述两个配置项生效，不修改 local_data_file_path 或 QT_DATA_SOURCE。
+    """
+    global QT_SYS_LOG_PATH, QT_TRADE_LOG_PATH
+    QT_SYS_LOG_PATH = _resolve_path(
+        QT_ROOT_PATH, QT_CONFIG['sys_log_file_path'], 'sys_log_file_path'
+    )
+    QT_TRADE_LOG_PATH = _resolve_path(
+        QT_ROOT_PATH, QT_CONFIG['trade_log_file_path'], 'trade_log_file_path'
+    )
+    os.makedirs(QT_SYS_LOG_PATH, exist_ok=True)
+    os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
+
+
+# 设置qteasy回测交易报告以及错误报告的存储路径（支持热修改，见 configure 挂钩）
+_refresh_log_paths()
 # 设置loggings，创建logger
 debug_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(QT_SYS_LOG_PATH, 'qteasy.log'),
                                                           backupCount=3, when='midnight')
@@ -195,7 +251,10 @@ error_handler.setFormatter(formatter)
 logger_core = logging.getLogger('core')
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
-logger_core.setLevel(logging.INFO)
+# 根据 QT_CONFIG['log_level'] 设置日志等级，默认 INFO
+_log_level_name = str(QT_CONFIG.get('log_level', 'INFO')).upper()
+_log_level_value = getattr(logging, _log_level_name, logging.INFO)
+logger_core.setLevel(_log_level_value)
 logger_core.propagate = False
 
 logger_core.info('qteasy loaded!')
@@ -205,17 +264,29 @@ py_version = sys.version_info
 py_ver_major = py_version.major
 py_ver_minor = py_version.minor
 
+# qteasy的全局常量
+# 运行模式常量
+LIVE_TRADE_MODE = 0
+LIVE_MODE = 0
+BACKTEST_MODE = 1
+OPTIMIZE_MODE = 2
+OPTI_MODE = 2
+OPTIMIZATION_MODE = 2
+PREDICT_MODE = 3
+PREDICTION_MODE = 3
+
 __all__ = [
     'run', 'set_config', 'get_configurations', 'get_config', 'view_config_files',
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
-    'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config',
-    'reconnect_ds', 'get_table_info', 'get_table_overview', 'get_start_up_settings',
+    'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config', 'Parameter',
+    'get_table_info', 'get_table_overview', 'get_start_up_settings', 'find_history_data', 'DataType', 'StgData',
     'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
     'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',
     'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG', 'utilfuncs', 'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts', 'delete_account',
+    'logger_core', 'live_trade_accounts', 'delete_account', 'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
+    'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
 ]

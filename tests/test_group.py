@@ -1,0 +1,388 @@
+# coding=utf-8
+# ======================================
+# File:     test_group.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2025-08-11
+# Desc:
+#   Unittest for all strategy group
+# properties and methods.
+# ======================================
+
+import unittest
+
+import numpy as np
+
+from qteasy.group import Group
+from qteasy.parameter import Parameter
+from qteasy.datatypes import DataType
+from qteasy.strategy import RuleIterator, GeneralStg, FactorSorter
+
+
+class TestGroup(unittest.TestCase):
+
+    def setUp(self):
+        class GenStg(GeneralStg):
+            """第一个测试交易策略类，继承自GeneralStg
+
+            包含两个可调参数: `param1` 和 `param2`，用于测试参数传递和使用。
+            使用三种不同的数据类型: 'price@5minx30', 'volume@hx10', 'indicator@dx5'，用于测试数据类型的处理。
+            """
+            param1 = Parameter(
+                name='param1',
+                par_type='int',
+                par_range=(1, 100),
+                value=50,
+            )
+            param2 = Parameter(
+                name='param2',
+                par_type='int',
+                par_range=(2, 50),
+                value=25,
+            )
+            dtype_1 = DataType(
+                name='close',
+                freq='d',
+                asset_type='E',
+            )
+            dtype_3 = DataType(
+                name='close',
+                freq='5min',
+                asset_type='E',
+            )
+
+            def __init__(self, par_values: tuple = None):
+                super().__init__(
+                        name='test_gen',
+                        description='test general strategy',
+                        pars=[self.param1, self.param2],
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
+                )
+
+                if par_values:
+                    self.update_par_values(*par_values)
+
+            def realize(self):
+
+                print("GeneralStg realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                avg = dt1_avg * self.param1 + dt2_avg * self.param2
+                print(f'avg = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+                signal = np.zeros_like(avg)
+                signal[np.argmax(avg)] = 1
+                print(f'got signal: \n{signal}')
+
+                return signal
+
+        class FactorSorterStg(FactorSorter):
+
+            param1 = Parameter(
+                name='param1',
+                par_type='int',
+                par_range=(1, 100),
+                value=50,
+            )
+            param2 = Parameter(
+                name='param2',
+                par_type='int',
+                par_range=(2, 50),
+                value=25,
+            )
+            dtype_1 = DataType(
+                name='close',
+                freq='d',
+                asset_type='E',
+            )
+            dtype_3 = DataType(
+                name='close',
+                freq='5min',
+                asset_type='E',
+            )
+
+            def __init__(self, par_values=None, **kwargs):
+                super().__init__(
+                        name='test_factor_sorter',
+                        description='test factor sorter strategy',
+                        pars=[self.param1, self.param2],
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
+                        **kwargs,
+                )
+
+                if par_values:
+                    self.update_par_values(*par_values)
+
+            def realize(self):
+                print("FactorSorter realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                avg = dt1_avg * self.param1 + dt2_avg * self.param2
+                print(f'signal sorter = avg1 * {self.param1} + avg2 * {self.param2} = \n{avg}')
+
+                return avg
+
+        class RuleIteratorStg(RuleIterator):
+
+            param1 = Parameter(
+                name='param1',
+                par_type='int',
+                par_range=(1, 100),
+                value=50,
+            )
+            param2 = Parameter(
+                name='param2',
+                par_type='int',
+                par_range=(2, 50),
+                value=25,
+            )
+            dtype_1 = DataType(
+                name='close',
+                freq='d',
+                asset_type='E',
+            )
+            dtype_3 = DataType(
+                name='close',
+                freq='5min',
+                asset_type='E',
+            )
+
+            def __init__(self, par_values=None):
+                super().__init__(
+                        name='test_rule_iterator',
+                        description='test rule iterator strategy',
+                        pars=[self.param1, self.param2],
+                        data_types={'close_E_d': self.dtype_1, 'close_E_5min': self.dtype_3},
+                        use_latest_data_cycle=[True, False],
+                        window_length=[7, 9],
+                )
+
+                if par_values:
+                    self.update_par_values(*par_values)
+
+            def realize(self):
+                print("RuleIterator realized")
+                print(f"got datas:\n{self.close_E_d}\n and \n{self.close_E_5min}")
+                dt1_avg = np.mean(self.close_E_d, axis=0)
+                dt2_avg = np.mean(self.close_E_5min, axis=0)
+                print(f"average 1: \n{dt1_avg}, \naverage 2: \n{dt2_avg}")
+                criteria = dt1_avg * self.param1 >= dt2_avg * self.param2
+                print(f'criteria = avg1 * {self.param1} >= avg2 * {self.param2} = {criteria}')
+                if criteria:
+                    return 1
+                else:
+                    return 0
+
+        # 实例化测试策略类
+        self.gen_stg_d_close = GenStg()
+        self.gen_stg_h_close = GenStg(par_values=(50, 20))
+        self.gen_stg_h_open = GenStg(par_values=(50, 15))
+
+        self.factor_sorter_d_close = FactorSorterStg(par_values=(10, 14))
+        self.factor_sorter_h_close = FactorSorterStg(par_values=(10, 15))
+        self.factor_sorter_h_open = FactorSorterStg()
+
+        self.iterator_stg_d_close = RuleIteratorStg()
+        self.iterator_stg_h_close = RuleIteratorStg()
+        self.iterator_stg_d_930 = RuleIteratorStg()
+
+    def test_creation(self):
+        """Group 必须在创建时就有合法的 run_freq / run_timing。"""
+        # 正常创建：必须传 run_freq / run_timing
+        gp = Group('new_group', signal_type='PS', blender='', run_freq='d', run_timing='close')
+
+        self.assertIsInstance(gp, Group)
+        self.assertEqual(gp.name, 'new_group')
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
+        self.assertEqual(gp.signal_type, 'ps')
+
+        # test creating groups with different parameters
+        gp = Group(name='name', blender='s1 + s2', run_freq='d', run_timing='close')
+        self.assertEqual(gp.signal_type, 'pt')
+        self.assertEqual(gp.members, [])
+
+        # test creating groups with wrong parameters
+        self.assertRaises(TypeError, Group, 35)  # wrong type
+        self.assertRaises(ValueError, Group, 'name', signal_type='wrong_type')
+        self.assertRaises(TypeError, Group, 'name', signal_type=24)
+        self.assertRaises(ValueError, Group, 'name', blender='wrong blender')
+
+        # 不允许缺失或为 None 的 run_freq / run_timing
+        self.assertRaises((TypeError, ValueError), Group, run_freq=None, run_timing=None)
+        self.assertRaises((TypeError, ValueError), Group, 'name', run_freq=None, run_timing='close')
+        self.assertRaises((TypeError, ValueError), Group, 'name', run_freq='d', run_timing=None)
+
+    def test_add_strategy(self):
+        """Group 的 run_freq/run_timing 由构造确定，Strategy 只通过 Group 委托读取。"""
+        gp = Group('new_group', run_freq='d', run_timing='close')
+
+        self.assertEqual(gp.name, 'new_group')
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
+        self.assertEqual(gp.blender, None)
+        self.assertEqual(gp.human_blender, '')
+
+        gp.add_strategy(self.gen_stg_d_close)
+
+        # Group 的 freq/timing 不因添加策略而改变
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
+        # Strategy 的 run_freq/run_timing 从 Group 委托读取
+        self.assertEqual(self.gen_stg_d_close.run_freq, 'd')
+        self.assertEqual(self.gen_stg_d_close.run_timing, 'close')
+
+        # 未设置 blender_str 时使用默认（PT 单策略为 s0）
+        self.assertEqual(gp.blender_str, 's0')
+        self.assertEqual(gp.human_blender, 'test_gen')
+        gp.blender_str = 's0 + 3'
+        self.assertEqual(gp.human_blender, 'test_gen + 3')
+        self.assertEqual(gp.blender, ['+', '3', 's0'])
+
+        gp.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(self.factor_sorter_d_close.run_freq, 'd')
+        self.assertEqual(self.factor_sorter_d_close.run_timing, 'close')
+
+        gp.blender_str = 's0 + s1'
+        self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter')
+        self.assertEqual(gp.blender, ['+', 's1', 's0'])
+
+        gp.add_strategy(self.factor_sorter_h_open)
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
+
+    def test_blender(self):
+        """Group 的 run_freq/run_timing 完全由 Group 提供，成员策略通过委托获得。"""
+        gp = Group('new_group', run_freq='d', run_timing='close')
+
+        self.assertEqual(gp.name, 'new_group')
+        self.assertEqual(gp.run_freq, 'd')
+        self.assertEqual(gp.run_timing, 'close')
+        self.assertEqual(gp.blender, None)
+        self.assertEqual(gp.human_blender, '')
+
+        gp.add_strategy(self.gen_stg_d_close)
+        gp.add_strategy(self.factor_sorter_d_close)
+        gp.add_strategy(self.iterator_stg_d_close)
+
+        # 所有成员策略的 freq/timing 都应从 group 委托读取
+        self.assertTrue(all(stg.run_freq == 'd' for stg in gp.members))
+        self.assertTrue(all(stg.run_timing == 'close' for stg in gp.members))
+
+        # 未设置时默认 PT 为 s0*s1*s2
+        self.assertEqual(gp.blender_str, 's0*s1*s2')
+        self.assertIsNotNone(gp.blender)
+        gp.blender_str = 's0 + s1 + s2'
+        self.assertEqual(gp.human_blender, 'test_gen + test_factor_sorter + test_rule_iterator')
+        self.assertEqual(gp.blender, ['+', 's2', '+', 's1', 's0'])
+
+        signals = [
+            np.array([0.7,0.5,0.3]),
+            np.array([0.8,0.8,0.8]),
+            np.array([0.5,0.6,0.7]),
+        ]
+
+        blended_signal = gp.blend(signals)
+        print(blended_signal)
+        self.assertIsInstance(blended_signal, np.ndarray)
+        self.assertEqual(blended_signal.shape, (3,))
+        self.assertTrue(np.allclose(blended_signal, np.array([2., 1.9, 1.8])))
+
+        test_blender_strings = [
+            's0 + s1 + s2 + s0',
+            's0 * 2 + s1 * 3 - s2',
+            'max(s0, s1) + s2',
+            'max(s0, s1, s2)',
+            'min(s0, s1) + s2',
+            'min(s0, s1, s2)',
+            'sum(s0, s1, s2)',
+            'avg(s0, s1, s2)',
+            'pos_2_0.5(s0, s1, s2)',
+            'avgpos_2_0.5(s0, s1, s2)',
+            'power(s0, s1) + s2',
+            'unify(s0) + uni(s1) + unify(s2)'
+        ]
+
+        for blender_str in test_blender_strings:
+            gp.blender_str = blender_str
+            print(f'Testing blender: {gp.human_blender}, \nblender: {gp.blender}\nresult\n{gp.blend(signals)}')
+            self.assertIsInstance(gp.blender, list)
+            self.assertTrue(all(isinstance(item, str) for item in gp.blender))
+
+    def test_strategy_run_freq_timing_changes_with_group(self):
+        """同一策略在不同 Group 间移动时，其 run_freq/run_timing 应随 Group 改变。"""
+        gp1 = Group('g1', run_freq='d', run_timing='close')
+        gp2 = Group('g2', run_freq='h', run_timing='open')
+        stg = self.gen_stg_d_close
+
+        gp1.add_strategy(stg)
+        self.assertEqual(stg.run_freq, 'd')
+        self.assertEqual(stg.run_timing, 'close')
+
+        gp1.remove_strategy(stg)
+        gp2.add_strategy(stg)
+        self.assertEqual(stg.run_freq, 'h')
+        self.assertEqual(stg.run_timing, 'open')
+
+    def test_default_blender_str_by_signal_type_and_members(self):
+        """未设置 blender_str 时，根据 signal_type 与 members 数量动态计算默认表达式。"""
+        # PT：s0*s1*...*sN
+        gp_pt = Group('g_pt', signal_type='pt', run_freq='d', run_timing='close')
+        self.assertEqual(gp_pt.blender_str, '')
+        gp_pt.add_strategy(self.gen_stg_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0')
+        gp_pt.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0*s1')
+        gp_pt.add_strategy(self.iterator_stg_d_close)
+        self.assertEqual(gp_pt.blender_str, 's0*s1*s2')
+        print('PT default blender_str:', gp_pt.blender_str)
+
+        # PS/VS：s0+s1+...+sN
+        gp_ps = Group('g_ps', signal_type='ps', run_freq='d', run_timing='close')
+        gp_ps.add_strategy(self.gen_stg_d_close)
+        gp_ps.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp_ps.blender_str, 's0+s1')
+        gp_ps.add_strategy(self.iterator_stg_d_close)
+        self.assertEqual(gp_ps.blender_str, 's0+s1+s2')
+        print('PS default blender_str:', gp_ps.blender_str)
+
+        gp_vs = Group('g_vs', signal_type='vs', run_freq='d', run_timing='close')
+        gp_vs.add_strategy(self.gen_stg_d_close)
+        self.assertEqual(gp_vs.blender_str, 's0')
+        print('VS default blender_str:', gp_vs.blender_str)
+
+    def test_blender_str_setter_rejects_invalid_expression(self):
+        """setter 对非法表达式调用 blender_parser 校验，失败则报错、拒绝写入，并提示将仍使用默认。"""
+        gp = Group('g', run_freq='d', run_timing='close')
+        gp.add_strategy(self.gen_stg_d_close)
+        gp.add_strategy(self.factor_sorter_d_close)
+        self.assertEqual(gp.blender_str, 's0*s1')  # 当前默认
+
+        with self.assertRaises(ValueError) as ctx:
+            gp.blender_str = 'wrong blender'
+        self.assertIn('Invalid blender expression', str(ctx.exception))
+        self.assertIn('Default blender will still be used', str(ctx.exception))
+        # 拒绝写入：仍为默认
+        self.assertEqual(gp.blender_str, 's0*s1')
+
+        with self.assertRaises(ValueError):
+            gp.blender_str = 's0 + (unclosed'
+        self.assertEqual(gp.blender_str, 's0*s1')
+
+        # 合法表达式可写入
+        gp.blender_str = 's0 + s1'
+        self.assertEqual(gp.blender_str, 's0 + s1')
+        # 空串可写入，之后 getter 再返回默认
+        gp.blender_str = ''
+        self.assertEqual(gp.blender_str, 's0*s1')
+
+
+if __name__ == '__main__':
+    unittest.main()

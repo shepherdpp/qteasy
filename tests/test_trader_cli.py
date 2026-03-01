@@ -1,14 +1,15 @@
 # coding=utf-8
 # ======================================
-# File:     test_trader_shell.py
+# File:     test_trader_cli.py
 # Author:   Jackie PENG
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2024-03-04
 # Desc:
-#   Unittest for trader shell properties
-# and commands.
+#   Unittest for trader CLI.
+#   使用专用测试 DataSource（非 QT_DATA_SOURCE），测试结束后清理测试数据。
 # ======================================
 
+import os
 import unittest
 import time
 import pandas as pd
@@ -22,7 +23,19 @@ from qteasy.trade_recording import get_or_create_position, get_position_by_id, g
 from qteasy.broker import SimulatorBroker
 
 
-class TestTraderShell(unittest.TestCase):
+def _get_cli_test_data_dir():
+    """CLI 测试专用数据目录，不使用默认 QT_DATA_SOURCE。"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_test_trader_cli')
+
+
+def _clear_cli_test_tables(datasource):
+    """清理 CLI 测试用到的表数据，测试完成后调用。"""
+    for table in ['sys_op_live_accounts', 'sys_op_positions', 'sys_op_trade_orders', 'sys_op_trade_results']:
+        if datasource.table_data_exists(table):
+            datasource.drop_table_data(table)
+
+
+class TestTraderCLI(unittest.TestCase):
 
     def setUp(self):
 
@@ -46,9 +59,26 @@ class TestTraderShell(unittest.TestCase):
             'invest_start':          '2018-01-01',
             'opti_start':            '2018-01-01',
         }
-        # 创建测试数据源
-        data_test_dir = '../qteasy/data_test/'
-        # 创建一个专用的测试数据源，以免与已有的文件混淆，不需要测试所有的数据源，因为相关测试在test_datasource中已经完成
+        trader_kwargs = {
+            'time_zone':             'local',
+            'market_open_time_am':   '09:30:00',
+            'market_close_time_pm':  '15:30:00',
+            'market_open_time_pm':   '13:00:00',
+            'market_close_time_am':  '11:30:00',
+            'exchange':              'SSE',
+            'cash_delivery_period':  0,
+            'stock_delivery_period': 0,
+            'asset_pool':            '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ, 000006.SZ, 000007.SZ',
+            'asset_type':            'E',
+            'trade_batch_size':      100,
+            'sell_batch_size':       100,
+            'pt_buy_threshold':      0.05,
+            'pt_sell_threshold':     0.05,
+            'allow_sell_short':      False,
+        }
+        # 使用专用测试数据源（非 QT_DATA_SOURCE），测试完成后清理
+        data_test_dir = _get_cli_test_data_dir()
+        os.makedirs(data_test_dir, exist_ok=True)
         test_ds = DataSource(
                 'file',
                 file_type='csv',
@@ -110,13 +140,19 @@ class TestTraderShell(unittest.TestCase):
                 account_id=1,
                 operator=operator,
                 broker=broker,
-                config=config,
                 datasource=test_ds,
-                debug=False,)
+                debug=False,
+                **trader_kwargs,
+        )
         self.ts.debug = True
         self.ts.renew_trade_log_file()
 
         self.tss = TraderShell(self.ts)
+
+    def tearDown(self):
+        """测试结束后清理测试数据，不污染默认数据源。"""
+        if getattr(self, 'ts', None) is not None:
+            _clear_cli_test_tables(self.ts.datasource)
 
     def test_properties(self):
 
@@ -335,7 +371,7 @@ class TestTraderShell(unittest.TestCase):
         self.assertFalse(tss.do_buy('100 000001.SZ -p 10.0 -s long -w wrong_argument'))
         self.assertFalse(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty not multiple of moq
         print(f'change moq to 0 and then test again')
-        self.assertIsNone(tss.do_config('trade_batch_size -s 0'))
+        self.assertIsNone(tss.do_config('trade_batch_size -s 0.1'))
         self.assertIsNone(tss.do_buy('11.2 000001.SZ -p 10.0 -s long'))  # qty now accepted
 
     def test_command_sell(self):
@@ -442,15 +478,16 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_config('user_defined_key'))
         self.assertIsNone(tss.do_config('user_defined_key -d'))
         print(f'testing running with values to set to config key')
-        self.assertEqual(tss.trader.config['mode'], 0)
-        self.assertIsNone(tss.do_config('mode -s 1'))
-        self.assertEqual(tss.trader.config['mode'], 1)
+        self.assertEqual(tss.trader.config['sell_batch_size'], 100)
+        self.assertIsNone(tss.do_config('sell_batch_size -s 1'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1)
         self.assertEqual(tss.trader.config['time_zone'], 'local')
-        self.assertIsNone(tss.do_config('mode time_zone -s 0 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s 0 Asia/Shanghai'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1.0)
         self.assertEqual(tss.trader.config['time_zone'], 'Asia/Shanghai')
-        self.assertIsNone(tss.do_config('mode time_zone -s 35 Asia/Shanghai'))
-        self.assertEqual(tss.trader.config['mode'], 0)
+        self.assertIsNone(tss.do_config('sell_batch_size time_zone -s -5 Asia/Hong_Kong'))
+        self.assertEqual(tss.trader.config['sell_batch_size'], 1.0)
+        self.assertEqual(tss.trader.config['time_zone'], 'Asia/Hong_Kong')
 
         print(f'testing getting help and returns False')
         self.assertFalse(tss.do_config('-h'))
@@ -526,7 +563,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        2,
@@ -536,7 +573,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -546,7 +583,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        4,
@@ -556,7 +593,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        5,
@@ -566,7 +603,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        3,
@@ -576,7 +613,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        6,
@@ -586,7 +623,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        7,
@@ -596,7 +633,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         time.sleep(self.stoppage)
         raw_trade_result = {
             'order_id':        9,
@@ -606,10 +643,10 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result=raw_trade_result, data_source=test_ds)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
         # order 8 is canceled
         time.sleep(self.stoppage)
-        process_account_delivery(account_id=1, data_source=test_ds, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=test_ds, **delivery_config)
 
         print('testing history command that runs normally and returns None')
         self.assertIsNone(tss.do_history(''))
@@ -665,7 +702,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 2 is filled
         raw_trade_result = {
@@ -676,7 +713,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 3 is partially-filled
         raw_trade_result = {
@@ -687,7 +724,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 4 is partially-filled
         raw_trade_result = {
@@ -698,7 +735,7 @@ class TestTraderShell(unittest.TestCase):
             'canceled_qty':    0.0,
         }
         process_trade_result(raw_trade_result, tss.trader.datasource)
-        process_account_delivery(account_id=1, data_source=tss.trader.datasource, config=delivery_config)
+        process_account_delivery(account_id=1, data_source=tss.trader.datasource, **delivery_config)
         time.sleep(self.stoppage)
         # order 5 is canceled
         raw_trade_result = {
@@ -925,18 +962,18 @@ class TestTraderShell(unittest.TestCase):
         self.assertIsNone(tss.do_strategies('macd dma -d'))
 
         print('\ntesting setting pars to one and two strategies')
-        self.assertEqual(tss.trader.operator['macd'].pars, (12, 26, 9))
+        self.assertEqual(tss.trader.operator['macd'].par_values, (12, 26, 9))
         self.assertIsNone(tss.do_strategies('macd -s 35 25 55'))
-        self.assertEqual(tss.trader.operator['macd'].pars, (35, 25, 55))
-        self.assertEqual(tss.trader.operator['dma'].pars, (12, 26, 9))
+        self.assertEqual(tss.trader.operator['macd'].par_values, (35, 25, 55))
+        self.assertEqual(tss.trader.operator['dma'].par_values, (12, 26, 9))
         self.assertIsNone(tss.do_strategies('dma -s 35 25 55'))
-        self.assertEqual(tss.trader.operator['dma'].pars, (35, 25, 55))
+        self.assertEqual(tss.trader.operator['dma'].par_values, (35, 25, 55))
         self.assertIsNone(tss.do_strategies('dma macd -s 40 41 42 -s 43 44 45'))
-        self.assertEqual(tss.trader.operator['dma'].pars, (40, 41, 42))
-        self.assertEqual(tss.trader.operator['macd'].pars, (43, 44, 45))
+        self.assertEqual(tss.trader.operator['dma'].par_values, (40, 41, 42))
+        self.assertEqual(tss.trader.operator['macd'].par_values, (43, 44, 45))
 
         print('\ntesting setting blender to timing')
-        self.assertIsNone(tss.do_strategies('-b s0*s1 -t close'))
+        self.assertIsNone(tss.do_strategies('-b s0*s1 -g Group_1'))
 
         print(f'\ntesting getting help and returns False')
         self.assertFalse(tss.do_strategies('-h'))
@@ -948,9 +985,9 @@ class TestTraderShell(unittest.TestCase):
         self.assertFalse(tss.do_strategies('dma -s 1 2 3'))  # out of range pars
         self.assertFalse(tss.do_strategies('dma -s 44 44 44 44'))  # too many pars
         self.assertFalse(tss.do_strategies('dma macd -s 44 44 44'))  # value not match strategy
-        self.assertFalse(tss.do_strategies('-d blender -s 44 44 44'))  # blender without timing
-        self.assertFalse(tss.do_strategies('-d blender -t wrong_timing'))
-        self.assertFalse(tss.do_strategies('-d wrong_blender -t wrong_timing'))
+        self.assertFalse(tss.do_strategies('-d blender -s 44 44 44'))  # blender without group
+        self.assertFalse(tss.do_strategies('-d blender -g wrong_group'))
+        self.assertFalse(tss.do_strategies('-d wrong_blender -g wrong_group'))
 
     def test_command_schedule(self):
         """ test schedule command"""

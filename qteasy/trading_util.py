@@ -12,13 +12,22 @@
 # ======================================
 
 import os
+
 import pandas as pd
 import numpy as np
+from typing import Union
+
+from numba import njit
 
 from qteasy.__init__ import logger_core as logger
 from qteasy.qt_operator import Operator
 from qteasy.configure import QT_CONFIG
-from qteasy.utilfuncs import get_current_timezone_datetime, str_to_list
+from qteasy.utilfuncs import (
+    get_current_timezone_datetime,
+    regulate_date_format, str_to_list,
+    nearest_market_trade_day,
+    next_market_trade_day,
+)
 
 from qteasy.trade_recording import (
     read_trade_order,
@@ -42,7 +51,19 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-def create_daily_task_schedule(operator, config=None, is_trade_day=True):
+def create_daily_task_schedule(operator,
+                               is_trade_day: bool = True,
+                               exchange_market: str = 'SSE',
+                               market_open_time_am: str = '09:30:00',
+                               market_close_time_am: str = '11:30:00',
+                               market_open_time_pm: str = '13:00:00',
+                               market_close_time_pm: str = '15:00:00',
+                               open_close_timing_offset: int = 0,
+                               daily_refill_tables: str = '',
+                               weekly_refill_tables: str = '',
+                               monthly_refill_tables: str = '',
+                               live_price_frequency: str = '1min',
+                               ) -> list[tuple]:
     """ 根据operator对象中的交易策略以及环境变量生成每日任务日程
 
     每日任务日程包括含 sleep / wake_up / run_stg 等所有有效任务类型的任务列表，
@@ -52,10 +73,28 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     ----------
     operator: Operator
         交易策略的Operator对象
-    config: dict, optional
-        qteasy的配置环境变量, 如果为None, 则使用qteasy.QT_CONFIG
     is_trade_day: bool, optional
         是否是交易日, 默认为True
+    exchange_market: str, optional, default 'SSE'
+        交易市场, 默认为'SSE'
+    market_open_time_am: str, optional, default '09:30:00'
+        交易市场上午开盘时间, 格式为'HH:MM:SS'
+    market_close_time_am: str, optional, default '11:30:00'
+        交易市场上午收盘时间, 格式为'HH:MM:SS'
+    market_open_time_pm: str, optional, default '13:00:00'
+        交易市场下午开盘时间, 格式为'HH:MM:SS'
+    market_close_time_pm: str, optional, default '15:00:00'
+        交易市场下午收盘时间, 格式为'HH:MM:SS'
+    open_close_timing_offset: int, optional, default 0
+        交易市场开收盘时间偏移量, 单位为分钟, 默认为0
+    daily_refill_tables: str, optional, default ''
+        每日补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
+    weekly_refill_tables: str, optional, default ''
+        每周补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
+    monthly_refill_tables: str, optional, default ''
+        每月补充DataSource数据库的任务列表, 格式为'table1,table2,table3'
+    live_price_frequency: str, optional, default '1min'
+        实时价格获取频率, 格式为pandas的时间频率字符串, 如'1min', '5min', '15min'等
 
     Returns
     -------
@@ -65,19 +104,11 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     # 检查输入数据的类型是否正确
     if not isinstance(operator, Operator):
         raise TypeError(f'operator must be an Operator object, got {type(operator)} instead.')
-    if not isinstance(config, dict):
-        raise TypeError(f'config must be a dict object, got {type(config)} instead.')
 
     task_agenda = []
 
     today = get_current_timezone_datetime().date()
-
-    market_open_time_am = config['market_open_time_am']
-    market_close_time_am = config['market_close_time_am']
-    market_open_time_pm = config['market_open_time_pm']
-    market_close_time_pm = config['market_close_time_pm']
-    # exchange_market = config['exchange']
-    exchange_market = 'SSE'
+    tomorrow = today + pd.Timedelta(days=1)
 
     # 调整任务时间，开盘任务在开盘时执行，收盘任务在收盘时执行，sleep和wakeup任务在开盘前后5分钟执行
     # TODO: 开收盘任务执行提前期或sleep/wakeup任务执行延后期，应该是可配置的
@@ -102,14 +133,6 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
                      pd.Timedelta(minutes=data_source_delay)).strftime('%H:%M:%S')
 
     if is_trade_day:
-        # 添加交易市场开市和收市任务，早晚收盘和午间休市时时产生open_market/close_market任务
-        task_agenda.append((market_open_time, 'open_market'))
-        task_agenda.append((pre_open_time, 'pre_open'))
-        task_agenda.append((sleep_time_am, 'close_market'))
-        task_agenda.append((wakeup_time_pm, 'open_market'))
-        task_agenda.append((market_close_time, 'close_market'))
-        task_agenda.append((post_close_time, 'post_close'))
-
         # 根据config中的live_price_acquire参数，生成获取实时价格的任务
         # 数据获取频率是分钟级别的，根据交易市场的开市时间和收市时间，生成获取实时价格的任务时间
         from qteasy.utilfuncs import next_market_trade_day
@@ -118,10 +141,10 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
             the_next_day = (a_trade_day + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
         else:
             raise ValueError(f'no next trade day of today({today})')
-        run_time_index = _trade_time_index(
+        price_filling_time_index = trade_time_index(
                 start=a_trade_day,
                 end=the_next_day,
-                freq=config['live_price_acquire_freq'],
+                freq=live_price_frequency,
                 start_am=market_open_time_am,
                 end_am=market_close_time_am,
                 include_start_am=False,
@@ -135,76 +158,63 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
         #  数据库数据的写入实际上是在strategy_run()任务中进行的，同时trader会自动定期隐式执行
         #  update_live_price()任务，因此这里的update_live_price()任务可以不添加？
         # 将实时价格的更新时间添加到任务日程，生成价格更新日程，因为价格更新的任务优先级更低，因此每个任务都推迟5秒执行
-        for t in run_time_index:
+        for t in price_filling_time_index:
             t = (pd.to_datetime(t) + pd.Timedelta(seconds=5)).strftime('%H:%M:%S')
             task_agenda.append((t, 'acquire_live_price'))
 
-        # 从Operator对象中读取交易策略，分析策略的strategy_run_timing和strategy_run_freq参数，生成任务日程
-        for stg_id, stg in operator.get_strategy_id_pairs():
-            timing = stg.strategy_run_timing
-            freq = stg.strategy_run_freq
-            if freq.lower() in ['1min', '5min', '15min', '30min', 'h']:
-                # 如果策略的运行频率是分钟级别的，则根据交易市场的开市时间和收市时间，生成每日任务日程
-                run_time_index = _trade_time_index(
-                        start=a_trade_day,
-                        end=the_next_day,
-                        freq=freq,
-                        start_am=market_open_time_am,
-                        end_am=market_close_time_am,
-                        include_start_am=True,
-                        include_end_am=True,
-                        start_pm=market_open_time_pm,
-                        end_pm=market_close_time_pm,
-                        include_start_pm=True,
-                        include_end_pm=True,
-                ).strftime('%H:%M:%S').tolist()
-            else:
-                if timing == 'open':
-                    # 'open'表示开盘时运行策略即在开盘时运行
-                    stg_run_time = (pd.to_datetime(market_open_time_am))
-                elif timing == 'close':
-                    # 'close' 表示收盘时运行策略即在收盘时运行
-                    stg_run_time = (pd.to_datetime(market_close_time_pm))
-                else:
-                    # 其他情况，直接使用timing参数, 除非timing参数不是时间字符串，或者timing参数不在交易市场的开市时间内
-                    try:
-                        stg_run_time = pd.to_datetime(timing)
-                    except ValueError:
-                        raise ValueError(f'Invalid strategy_run_timing: {timing}')
-                run_time_index = [stg_run_time.strftime('%H:%M:%S')]
+        # 从Operator对象中直接读取运行时间表
+        operator.prepare_running_schedule(
+                start_date=today,
+                end_date=tomorrow,
+                trade_days_only=False,
+                start_am=market_open_time_am,
+                end_am=market_close_time_am,
+                include_start_am=True,
+                include_end_am=True,
+                start_pm=market_open_time_pm,
+                end_pm=market_close_time_pm,
+                include_start_pm=True,
+                include_end_pm=True,
+        )
+        stg_run_time_index = operator.group_timing_table.index.strftime('%H:%M:%S').tolist()
 
-            # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
-            strategy_open_close_timing_offset = config['strategy_open_close_timing_offset']
-            for idx in range(len(run_time_index)):
-                stg_run_time = pd.to_datetime(run_time_index[idx])
-                market_open_time = pd.to_datetime(market_open_time_am)
-                market_close_time = pd.to_datetime(market_close_time_pm)
-                if stg_run_time <= market_open_time:
-                    # timing 在交易市场的开盘时间或以前，此时调整timing为开盘后1分钟
-                    stg_run_time = market_open_time + pd.Timedelta(minutes=strategy_open_close_timing_offset)
-                    run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+        # 将策略的运行时间添加到任务日程，生成任务日程
+        for signal_index, t in enumerate(stg_run_time_index):
+            task_agenda.append((t, 'run_strategy', signal_index))
+
+        # 整理所有的timing，如果timing 在交易市场的开盘前或收盘后，此时调整timing为开盘后/收盘前1分钟
+        open_close_timing_offset = int(open_close_timing_offset)
+        if open_close_timing_offset > 0:
+            offset_task_agenda = []
+
+            market_open_dt = pd.to_datetime(market_open_time)
+            market_close_dt = pd.to_datetime(market_close_time)
+
+            for task in task_agenda:
+                task_time = pd.to_datetime(task[0])
+                task_type = task[1]
+                if task_type not in ['run_strategy']:
+                    offset_task_agenda.append(task)
                     continue
-                if stg_run_time >= market_close_time:
-                    # timing 在交易市场的收盘时间或以后，此时调整timing为收盘前1分钟
-                    stg_run_time = market_close_time - pd.Timedelta(minutes=strategy_open_close_timing_offset)
-                    run_time_index[idx] = stg_run_time.strftime('%H:%M:%S')
+                if task_time <= market_open_dt:
+                    task_time = task_time + pd.Timedelta(minutes=open_close_timing_offset)
+                elif task_time >= market_close_dt:
+                    task_time = task_time - pd.Timedelta(minutes=open_close_timing_offset)
+                # 更新任务时间
+                task = (task_time.strftime('%H:%M:%S'),) + task[1:]
+                offset_task_agenda.append(task)
 
-            # 将策略的运行时间添加到任务日程，生成任务日程
-            for t in run_time_index:
-                if any(item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')):
-                    # 如果同时发生的'run_stg'任务已经存在，则修改该任务，将stg_id添加到列表中
-                    task_to_update = [item for item in task_agenda if (item[0] == t) and (item[1] == 'run_strategy')]
-                    task_idx_to_update = task_agenda.index(task_to_update[0])
-                    task_agenda[task_idx_to_update][2].append(stg_id)
-                else:
-                    # 否则，则直接添加任务
-                    task_agenda.append((t, 'run_strategy', [stg_id]))
+            task_agenda = offset_task_agenda
 
-    # 添加补充DataSource数据库的任务（根据config中的live_trade_daily/weekly/monthly_refill_tables参数）
-    daily_refill_tables = config['live_trade_daily_refill_tables']
-    weekly_refill_tables = config['live_trade_weekly_refill_tables']
-    monthly_refill_tables = config['live_trade_monthly_refill_tables']
+        # 添加交易市场开市和收市任务，早晚收盘和午间休市时时产生open_market/close_market任务
+        task_agenda.append((market_open_time, 'open_market'))
+        task_agenda.append((pre_open_time, 'pre_open'))
+        task_agenda.append((sleep_time_am, 'close_market'))
+        task_agenda.append((wakeup_time_pm, 'open_market'))
+        task_agenda.append((market_close_time, 'close_market'))
+        task_agenda.append((post_close_time, 'post_close'))
 
+    # 添加补充DataSource数据库的任务（根据daily_refill_tables/weekly_refill_tables/monthly_refill_tables参数）
     if daily_refill_tables and is_trade_day:  # 每个交易日运行
         task_agenda.append((data_source_refilling_time, 'refill', (daily_refill_tables, 1)))
 
@@ -214,13 +224,18 @@ def create_daily_task_schedule(operator, config=None, is_trade_day=True):
     if today.day == 1 and monthly_refill_tables:  # 每月1号运行
         task_agenda.append((data_source_refilling_time, 'refill', (monthly_refill_tables, 31)))
 
-    # 对任务日程进行排序 （其实排序并不一定需要）
-    task_agenda.sort(key=lambda x: x[0])
+    # 对任务日程进行排序
+    try:
+        task_agenda.sort(key=lambda x: x[0])
+    except:
+        import pdb
+        pdb.set_trace()
 
     return task_agenda
 
 
 # Utility functions for live trade
+# @njit()
 def parse_trade_signal(signals,
                        signal_type,
                        shares,
@@ -229,7 +244,15 @@ def parse_trade_signal(signals,
                        own_cash,
                        available_amounts=None,
                        available_cash=None,
-                       config=None):
+                       cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
+                       pt_buy_threshold: float = 0.0,
+                       pt_sell_threshold: float = 0.0,
+                       allow_sell_short: bool = False,
+                       trade_batch_size: int = 0,
+                       sell_batch_size: int = 0,
+                       long_position_limit: float = 1.0,
+                       short_position_limit: float = -1.0,
+                       ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易订单元素，包括
     资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
@@ -251,8 +274,27 @@ def parse_trade_signal(signals,
         股票可用持仓数量, 与shares对应, 顺序一致, 无持仓的股票数量为0, 负数表示空头持仓
     available_cash: float
         账户可用资金总额
-    config: dict
-        交易信号的配置
+    cost_params: np.ndarray, default=get_cost_params()
+        交易成本参数, 一个长度为5的数组，包含以下内容：
+        [0] - buy_rate: float, 交易成本：固定买入费率
+        [1] - sell_rate: float, 交易成本：固定卖出费率
+        [2] - buy_min: float, 交易成本：最低买入费用
+        [3] - sell_min: float, 交易成本：最低卖出费用
+        [4] - slippage: float, 交易成本：滑点
+    pt_buy_threshold: float, default=0.0
+        PT买入阈值
+    pt_sell_threshold: float, default=0.0
+        PT卖出阈值
+    allow_sell_short: bool, default=False
+        是否允许卖空
+    trade_batch_size: int, default=0
+        买入交易批量大小
+    sell_batch_size: int, default=0
+        卖出交易批量大小
+    long_position_limit: float, default=1.0
+        多头持仓限制
+    short_position_limit: float, default=-1.0
+        空头持仓限制
 
     Returns
     -------
@@ -264,7 +306,6 @@ def parse_trade_signal(signals,
         quoted_prices: list of float, 交易信号对应的交易价格
     """
 
-    # TODO: 还需要考虑交易批量的限制，如只能买卖整数股或整百股等
     # 处理optional参数:
     # 如果没有提供可用资金和持仓数量，使用当前的资金和持仓数量
     if available_amounts is None:
@@ -272,47 +313,42 @@ def parse_trade_signal(signals,
     if available_cash is None:
         available_cash = own_cash
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
-    if config is None:
-        from qteasy import QT_CONFIG
-        config = {
-            'PT_buy_threshold': QT_CONFIG['PT_buy_threshold'],
-            'PT_sell_threshold': QT_CONFIG['PT_sell_threshold'],
-            'allow_sell_short': QT_CONFIG['allow_sell_short'],
-            'cash_decimal_places': QT_CONFIG['cash_decimal_places'],
-            'amount_decimal_places': QT_CONFIG['amount_decimal_places'],
-            'trade_batch_size': QT_CONFIG['trade_batch_size'],
-            'sell_batch_size': QT_CONFIG['sell_batch_size']
-        }
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
-        cash_to_spend, amounts_to_sell = _parse_pt_signals(
-            signals=signals,
+        trimmed_signals = trim_pt_type_signals(
+            op_signals=signals,
+            long_pos_limit=long_position_limit,
+            short_pos_limit=short_position_limit,
+        )
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+            signals=trimmed_signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
-            pt_buy_threshold=config['PT_buy_threshold'],
-            pt_sell_threshold=config['PT_sell_threshold'],
-            allow_sell_short=config['allow_sell_short']
+            pt_buy_threshold=pt_buy_threshold,
+            pt_sell_threshold=pt_sell_threshold,
+            allow_sell_short=allow_sell_short,
         )
     # 解析PT交易信号：
     # 读取当前的所有持仓，与signal比较，根据差值确定计划买进和卖出的数量
     # 解析PS/VS交易信号
     # 直接根据交易信号确定计划买进和卖出的数量
     elif signal_type.lower() == 'ps':
-        cash_to_spend, amounts_to_sell = _parse_ps_signals(
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
             own_cash=own_cash,
-            allow_sell_short=config['allow_sell_short']
+            allow_sell_short=allow_sell_short
         )
     elif signal_type.lower() == 'vs':
-        cash_to_spend, amounts_to_sell = _parse_vs_signals(
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
             signals=signals,
             prices=prices,
             own_amounts=own_amounts,
-            allow_sell_short=config['allow_sell_short']
+            allow_sell_short=allow_sell_short,
+            cost_params=cost_params,
         )
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
@@ -331,35 +367,60 @@ def parse_trade_signal(signals,
         prices=prices,
         available_cash=available_cash,
         available_amounts=available_amounts,
-        moq_buy=config['trade_batch_size'],
-        moq_sell=config['sell_batch_size'],
-        allow_sell_short=config['allow_sell_short'],
+        moq_buy=trade_batch_size,
+        moq_sell=sell_batch_size,
+        allow_sell_short=allow_sell_short,
     )
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
 
-# TODO: 将parse_pt/ps/vs_signals函数作为通用函数，在core.py的loopstep中直接引用这三个函数的返回值
-#  从而消除重复的代码
-# TODO: 考虑修改多空买卖信号的表示方式：当前的表示方式为：
-#  1. 多头买入信号：正数cash_to_spend
-#  2. 空头买入信号：负数cash_to_spend
-#  3. 多头卖出信号：负数amounts_to_sell，负数表示空头，与直觉相反
-#  4. 空头卖出信号：正数amounts_to_sell，正数表示多头，与直觉相反
-#  但是这种表示方式不够直观
-#  可以考虑将多头买入信号和空头卖出信号的表示方式统一为：
-#  1. 多头买入信号：正数cash_to_spend
-#  2. 空头买入信号：负数cash_to_spend
-#  3. 多头卖出信号：正数amounts_to_sell
-#  4. 空头卖出信号：负数amounts_to_sell
-#  上述表示方法用cash表示买入，amounts表示卖出，且正数表示多头，负数表示空头，与直觉相符
-#  但是这样需要修改core.py中的代码，需要修改backtest的部分代码，需要详细测试
-def _parse_pt_signals(signals,
-                      prices,
-                      own_amounts,
-                      own_cash,
-                      pt_buy_threshold,
-                      pt_sell_threshold,
-                      allow_sell_short):
+@njit(cache=True)
+def trim_pt_type_signals(op_signals: np.ndarray,
+                         long_pos_limit: float,
+                         short_pos_limit: float) -> np.ndarray:
+    """ 修剪PT类型的交易信号，使得交易信号不超过多头和空头的持仓限制
+
+    Parameters
+    ----------
+    op_signals: np.ndarray
+        交易信号
+    long_pos_limit: float
+        多头持仓限制
+    short_pos_limit: float
+        空头持仓限制
+
+    Returns
+    -------
+    trimmed_op_signals: np.ndarray
+        返回修改后的signals数组
+    """
+    # 分别计算多头和空头信号的总和
+    long_signals = np.where(op_signals > 0, op_signals, 0.)
+    short_signals = np.where(op_signals < 0, op_signals, 0.)
+
+    long_sum = np.sum(long_signals)
+    short_sum = np.sum(short_signals)
+
+    # 如果多头信号总和超过多头持仓限制，则按比例缩减多头信号
+    if long_sum > long_pos_limit:
+        long_signals = long_signals * long_pos_limit / long_sum
+    # 如果空头信号总和小于空头持仓限制，则按比例缩减空头信号
+    if short_sum < short_pos_limit:
+        short_signals = short_signals * short_pos_limit / short_sum
+
+    trimmed_op_signals = long_signals + short_signals
+
+    return trimmed_op_signals
+
+
+@njit(cache=True)
+def parse_pt_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     own_cash: Union[float, np.float64, np.int64, np.ndarray],
+                     pt_buy_threshold: float,
+                     pt_sell_threshold: float,
+                     allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PT类型的交易信号
 
     Parameters
@@ -370,7 +431,7 @@ def _parse_pt_signals(signals,
         各个资产的价格
     own_amounts: np.ndarray
         各个资产的持仓数量
-    own_cash: float
+    own_cash: float, np.float64
         账户的现金
     pt_buy_threshold: float
         PT买入的阈值
@@ -382,8 +443,8 @@ def _parse_pt_signals(signals,
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-        cash_to_spend: np.ndarray, 买入资产的现金
-        amounts_to_sell: np.ndarray, 卖出资产的数量
+        cash_to_spend: np.ndarray, 买入资产的现金金额，正数表示买入多头，负数表示买入空头
+        amounts_to_sell: np.ndarray, 卖出资产的数量，正数表示卖出空头，负数表示卖出多头
     """
 
     # 计算当前总资产
@@ -395,11 +456,11 @@ def _parse_pt_signals(signals,
     previous_pos = own_amounts * prices / total_value
     position_diff = signals - previous_pos
     # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-    # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
+    # 当持有份额大于零且交易信号为负时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
     amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
                                position_diff / previous_pos * own_amounts,
                                0.)
-    # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
+    # 当持有份额不小于0且交易信号为正时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
     cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
                              position_diff * total_value,
                              0.)
@@ -418,7 +479,12 @@ def _parse_pt_signals(signals,
     return cash_to_spend, amounts_to_sell
 
 
-def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
+@njit(cache=True)
+def parse_ps_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     own_cash: Union[float, np.float64, np.ndarray],
+                     allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
     """ 解析PS类型的交易信号
 
     Parameters
@@ -437,17 +503,17 @@ def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-        cash_to_spend: np.ndarray, 买入资产的现金
-        amounts_to_sell: np.ndarray, 卖出资产的数量
+        cash_to_spend: np.ndarray, 买入资产的现金金额，正数表示买入多头，负数表示买入空头
+        amounts_to_sell: np.ndarray, 卖出资产的数量，正数表示卖出空头，负数表示卖出多头
     """
 
     # 计算当前总资产
     total_value = np.sum(prices * own_amounts) + own_cash
 
     # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
-    # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
+    # 当持有份额大于零时，平多仓：卖出数量 = 交易信号 * 持仓份额，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals * own_amounts, 0.)
-    # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
+    # 当持有份额不小于0时，开多仓：买入金额 = 交易信号 * 当前总资产，此时不能持有空头头寸
     cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * total_value, 0.)
 
     # 当允许买空卖空时，允许开启空头头寸：
@@ -461,7 +527,12 @@ def _parse_ps_signals(signals, prices, own_amounts, own_cash, allow_sell_short):
     return cash_to_spend, amounts_to_sell
 
 
-def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
+@njit(cache=True)
+def parse_vs_signals(signals: np.ndarray,
+                     prices: np.ndarray,
+                     own_amounts: np.ndarray,
+                     allow_sell_short: bool,
+                     cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号
 
     Parameters
@@ -474,20 +545,28 @@ def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
         当前持有的资产的数量
     allow_sell_short: bool
         是否允许卖空
+    cost_params: np.ndarray
+        VS信号类型直接给出交易数量，为了确保计算出的消耗现金数据准确，必须考虑交易成本
+        交易成本参数, 一个长度为7的数组，包含以下内容：
+        [0] - buy_rate: float, 交易成本：固定买入费率
+        [1] - sell_rate: float, 交易成本：固定卖出费率
+        [2] - buy_min: float, 交易成本：最低买入费用
+        [3] - sell_min: float, 交易成本：最低卖出费用
+        [4] - slippage: float, 交易成本：滑点
 
     Returns
     -------
     tuple: (cash_to_spend, amounts_to_sell)
-    - symbols: list of str, 产生交易信号的资产代码
-    - positions: list of str, 产生交易信号的各各资产的头寸类型('long', 'short')
-    - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
-    - quantities: list of float, 所有交易信号的交易数量
+        cash_to_spend: np.ndarray, 买入资产的现金
+        amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
+    buy_rate, sell_rate, buy_min, sell_min, slippage = cost_params
+
     # 计算各个资产的计划买入金额和计划卖出数量
-    # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
+    # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals, 0.)
-    # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
+    # 当持有份额不小于0且信号为正时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
     cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
 
     # 当允许买空卖空时，允许开启空头头寸：
@@ -496,6 +575,13 @@ def _parse_vs_signals(signals, prices, own_amounts, allow_sell_short):
         cash_to_spend += np.where((signals < 0) & (own_amounts <= 0), signals * prices, 0.)
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
+
+    # 计算交易成本对买入金额的影响，只有多头买入才需要考虑交易成本，因为空头买入的成本会从在收入的现金中扣除
+    cash_to_spend += np.where(
+        cash_to_spend > 0,
+        np.fmax(buy_min, cash_to_spend * buy_rate),
+        0.
+    )
 
     return cash_to_spend, amounts_to_sell
 
@@ -810,7 +896,10 @@ def cancel_order(order_id, data_source=None, config=None) -> int:
     return order_id
 
 
-def process_account_delivery(account_id, data_source=None, config=None) -> list:
+def process_account_delivery(account_id,
+                             data_source=None,
+                             stock_delivery_period=0,
+                             cash_delivery_period=0) -> list:
     """ 处理account_id账户中所有持仓和现金的交割
 
     从交易历史中读取尚未交割的现金和持仓，根据config中的设置值 'cash_delivery_period' 和
@@ -823,7 +912,10 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
         账户的id
     data_source: str, optional
         数据源的名称, 默认为None, 表示使用默认的数据源
-    config: dict, optional
+    stock_delivery_period: int, default 0
+        股票交割周期，单位为天
+    cash_delivery_period: int, default 0
+        现金交割周期，单位为天
 
 
     Returns
@@ -834,13 +926,6 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
 
     if not isinstance(account_id, (int, np.int64)):
         raise TypeError('account_id must be an int')
-    if config is None:
-        config = {
-            'cash_delivery_period': 0,
-            'stock_delivery_period': 0,
-        }
-    if not isinstance(config, dict):
-        raise TypeError('config must be a dict')
 
     delivery_result = []
 
@@ -858,8 +943,8 @@ def process_account_delivery(account_id, data_source=None, config=None) -> list:
                 result_id=int(result_id),
                 account_id=account_id,
                 result=result.to_dict(),
-                stock_delivery_period=config['stock_delivery_period'],
-                cash_delivery_period=config['cash_delivery_period'],
+                stock_delivery_period=stock_delivery_period,
+                cash_delivery_period=cash_delivery_period,
                 data_source=data_source,
         )
         delivery_result.append(res)
@@ -1380,24 +1465,25 @@ def get_last_trade_result_summary(account_id, shares=None, data_source=None):
     return shares, amounts_changed, trade_prices
 
 
-def _trade_time_index(start=None,
-                      end=None,
-                      periods=None,
-                      freq=None,
-                      trade_days_only=True,
-                      market='SSE',
-                      include_start=True,
-                      include_end=True,
-                      start_am='9:30:00',
-                      end_am='11:30:00',
-                      include_start_am=True,
-                      include_end_am=True,
-                      start_pm='13:00:00',
-                      end_pm='15:00:00',
-                      include_start_pm=False,
-                      include_end_pm=True):
+def trade_time_index(start=None,
+                     end=None,
+                     periods=None,
+                     freq=None,
+                     trade_days_only=True,
+                     time_offset=None,
+                     market='SSE',
+                     include_start=True,
+                     include_end=True,
+                     start_am='9:30:00',
+                     end_am='11:30:00',
+                     include_start_am=True,
+                     include_end_am=True,
+                     start_pm='13:00:00',
+                     end_pm='15:00:00',
+                     include_start_pm=False,
+                     include_end_pm=True):
     """ 通过start/end/periods/freq生成一个符合交易时间段的datetime series，这个序列中的
-    每一个时间都在交易时段内，排除所有的交易日
+    每一个时间都在交易时段内，排除所有的非交易日以及非交易时间的序列
 
     Parameters
     ----------
@@ -1407,10 +1493,12 @@ def _trade_time_index(start=None,
         日期时间序列的终止日期/时间
     periods: int
         日期时间序列的分段数量
-    freq: str, {'min', 'h', 'd', 'M'}
-        日期时间序列的频率
+    freq: str, {'min', 'h', 'D', 'W', 'M', 'Q', 'Y'}
+        日期时间序列的频率，支持特殊频率如W-FRI, MS(月初), ME(月末), QE-5(季度末倒数第五天)等
     trade_days_only: bool, Default True
-        是否剔除所有非交易日，默认True，如果为False，则保留所有的非交易日
+        是否仅返回交易日，如果频率高于日频，则偏移到最近的交易日
+    time_offset: str, Default None
+        时间偏移量，代表时间的字符串，"00:00"到"23:59"之间，当freq低于等于一天('d', 'w', ...)时有效
     market: str, {'SSE', 'SZSE', 'SHFE', ...}, Default 'SSE'
         交易市场类型，不同的交易市场交易日定义可能不同, 默认上交所，trade_days_only为False时无效
     include_start: bool, Default True
@@ -1441,10 +1529,10 @@ def _trade_time_index(start=None,
     Examples
     --------
     # target time index not in trading day
-    >>> _trade_time_index(start='2021-01-01', end='2021-01-02', freq='h')
+    >>> trade_time_index(start='2021-01-01', end='2021-01-02', freq='h')
     DatetimeIndex([], dtype='datetime64[ns]', freq=None)
     # target time index is in trading day
-    >>> _trade_time_index(start='2021-02-01', end='2021-02-02', freq='h')
+    >>> trade_time_index(start='2021-02-01', end='2021-02-02', freq='h')
     DatetimeIndex(['2020-02-01 09:30:00', '2020-02-01 10:30:00',
                    '2020-02-01 11:30:00', '2020-02-01 13:00:00',
                    '2020-02-01 14:00:00', '2020-02-01 15:00:00',
@@ -1453,45 +1541,64 @@ def _trade_time_index(start=None,
                    '2020-02-02 14:00:00', '2020-02-02 15:00:00'],
                     dtype='datetime64[ns]', freq=None)
     """
+
+    day_delta = None
+    low_frequency = False
+
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
-        freq = str(freq).lower()
-    # 检查时间序列区间的开闭状况
-    closed = 'both'
-    if include_start:
-        closed = 'left'
-    if include_end:
-        closed = 'right'
-    if include_start and include_end:
-        closed = 'both'
+        freq = str(freq)
 
-    '''
-    here temp code for parsing version of pandas
-    - if version is less than 1.4.0, use closed parameter
-    - if version is greater than 1.4.0, use inclusive parameter
-    '''
-    if pd.__version__ < '1.4.0':
-        # noinspection PyTypeChecker
-        closed = None if closed == 'both' else closed
-        time_index = pd.date_range(
-                start=start,
-                end=end,
-                periods=periods,
-                freq=freq,
-                closed=closed,  # closed parameter is deprecated since version 1.4.0
-        )
-    else:
-        # noinspection PyTypeChecker
-        time_index = pd.date_range(
-                start=start,
-                end=end,
-                periods=periods,
-                freq=freq,
-                inclusive=closed,  # inclusive is added inplace of closed since 1.4.0
-        )
+        # 判断freq是大于日频还是小于日频
+        if freq[0] in 'wWMQY':
+            low_frequency = True
 
-    if trade_days_only:
-        # 剔除time_index中的non-trade day
+        # 解析M/Q/Y-num类型的偏移数据，调整低频数据的日期偏移值
+        if ('-' in freq) and (freq[0] in 'MQY'):
+            try:
+                # ME-5或M-5表示从月底向前偏移5天即月底前五天，MS-3表示从月初向后偏移3天即月初第三天
+                day_offset = int(freq.split('-')[-1]) - 1
+                day_offset_direction = 1 if freq[1] == 'S' else -1
+                freq = '-'.join(freq.split('-')[:-1])
+                if 0 < day_offset < 27:
+                    day_delta = day_offset_direction * pd.Timedelta(day_offset, 'd')
+            except:
+                # 这种情况通常由Y-JAN / Q-NOV等freq引起的，此时不需要调整
+                pass
+
+        # 如果需要偏移日期，起止日期也需要同样偏移
+        if day_delta is not None:
+            if start is not None:
+                start = regulate_date_format(pd.to_datetime(start) - day_delta)
+            if end is not None:
+                end = regulate_date_format(pd.to_datetime(end) - day_delta)
+
+    # 获取基准区间，基准区间包括开始和结束日期
+    time_index = pd.date_range(
+            start=start,
+            end=end,
+            periods=periods,
+            freq=freq,
+    )
+    if len(time_index) == 0:
+        err = ValueError('No time index can be extracted with given start/end/freq/periods parameters, '
+                         'please check your input')
+        raise err
+
+    # 处理日期偏移
+    if day_delta is not None:
+        time_index += day_delta
+
+    if trade_days_only and low_frequency:
+        # 因为数据频率小于日频，因此不能直接剔除非交易日，而应该将其偏移到最近的交易日，偏移的规则为
+        # - 如果基准日期是在周/月/季/年初，则偏移到下一个交易日
+        # - 如果基准日期是在周/月/季/年末，则偏移到前一个交易日
+        if (len(freq) > 1) and (freq[1] == 'S'):
+            time_index = pd.DatetimeIndex(map(next_market_trade_day, time_index))
+        else:
+            time_index = pd.DatetimeIndex(map(nearest_market_trade_day, time_index))
+    elif trade_days_only:
+        # 当时间频率高于或等于日频时，剔除time_index中的非交易日
         from qteasy import QT_TRADE_CALENDAR as calendar
         calendar = calendar.is_open.unstack(level='exchange')
         try:
@@ -1508,31 +1615,33 @@ def _trade_time_index(start=None,
         trade_cal = trade_cal.ffill()
         time_index = trade_cal.loc[trade_cal == 1].index
 
-    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
+    # 判断time_index的freq，确定频率低于等于1天(d/w/m)还是高于1天(h/min)
     if time_index.freqstr is not None:
-        freq_str = time_index.freqstr.lower().split('-')[0]
+        freq_str = time_index.freqstr.split('-')[0]
     else:
         freq_str = time_index.inferred_freq
-        if freq_str is not None:
-            freq_str = freq_str.lower()
-        else:
+        if isinstance(freq_str, str):
+            freq_str = freq_str
+        elif len(time_index) >= 2:
             time_delta = time_index[1] - time_index[0]
             if time_delta < pd.Timedelta(1, 'd'):
                 freq_str = 'h'
             else:
                 freq_str = 'd'
+        else:  # len(time_index) == 1
+            freq_str = 'd'
     ''' freq_str有以下几种不同的情况：
-        min:        T
+        min:        T/min
         hour:       H
         day:        D
-        week:       W-SUN/...
-        month:      M
-        quarter:    Q-DEC/...
-        year:       A-DEC/...
-        由于周、季、年三种情况存在复合字符串，因此需要split
+        week:       W/W-SUN/...
+        month:      MS/ME/M-1/...
+        quarter:    QS/QE/QE-DEC/...
+        year:       YS/YE-DEC/...
+        由于周、月、季、年三种情况存在复合字符串，因此需要split
     '''
-
-    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:] in ['min']):
+    # 当freq小于一天时，需要按交易时段去掉不在交易时段以内的时间点
+    if (freq_str[-1:].lower() in ['t', 'h']) or (freq_str[-3:].lower() in ['min']):
         # 在这里还有一处细节需要处理：当freq=‘h'的时候，生成的时间是整点如：
         # 09:00:00 / 10:00:00 / 11:00:00
         # 然而，如果start_am或者start_pm不是整点而是半点时，如start_am=09:30:00，
@@ -1566,9 +1675,34 @@ def _trade_time_index(start=None,
                 time_index_am[idx_am],
                 time_index_pm[idx_pm],
         )
-        return pd.to_datetime(time_index_am_pm)
-    else:
-        return time_index
+        time_index = pd.to_datetime(time_index_am_pm)
+
+    else:  # 当freq大于等于一天时，需查看是否需要对时间进行偏移
+        if time_offset is not None:
+            from qteasy.utilfuncs import time_string_to_hour_float
+            try:
+                offset_hour = time_string_to_hour_float(time_offset)
+                offset = pd.Timedelta(hours=offset_hour)
+            except Exception as e:
+                raise ValueError(f'Invalid time_offset {time_offset}, should be format like "HH:MM", {e}')
+            time_index = time_index + offset
+
+    # 最后的处理1：检查是否出现不在用户指定start/end时间段内的时间点，剔除超过范围的时间点
+    if end is not None:
+        if include_end:
+            time_index = time_index[np.where(time_index <= pd.to_datetime(end))]
+        else:
+            time_index = time_index[np.where(time_index < pd.to_datetime(end))]
+    if start is not None:
+        if include_start:
+            time_index = time_index[np.where(time_index >= pd.to_datetime(start))]
+        else:
+            time_index = time_index[np.where(time_index > pd.to_datetime(start))]
+
+    # 最后的处理2：检查index中是否存在重复的时间点，如果存在，则剔除重复的时间点
+    time_index = pd.DatetimeIndex(sorted(set(time_index)))
+
+    return time_index
 
 
 def get_symbol_names(datasource, symbols, asset_types: list = None, refresh: bool = False):

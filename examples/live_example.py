@@ -26,20 +26,14 @@ if __name__ == '__main__':
     # 内置交易策略，使用macd执行交易
     alpha = qt.get_built_in_strategy('macd')
 
-    alpha.strategy_run_freq = '10min'  # 每10分钟运行
-    alpha.data_freq = '10min'  # 10min数据
-    alpha.window_length = 100  # 数据窗口长度
-
     beta = qt.get_built_in_strategy('dma')
 
-    beta.strategy_run_freq = '30min'  # 每30分钟运行
-    beta.data_freq = '30min'  # 30min数据
-    beta.window_length = 100  # 数据窗口长度
+    op = Operator(signal_type='PT', op_type='step')
+    op.add_strategy(alpha, run_freq='10min', freq='5min', window_length=50)  # 每10分钟运行
+    op.add_strategy(beta, run_freq='30min', freq='30min', window_length=50)  # 每30分钟运行
 
-    op = Operator(strategies=[alpha, beta], signal_type='PT', op_type='step')
-
-    op.set_parameter('alpha', (32, 16, 9))
-    op.set_parameter('beta', (10, 50, 10))
+    op.set_parameter('alpha', par_values=(32, 16, 9))
+    op.set_parameter('beta', par_values=(10, 50, 10))
 
     asset_pool = ['000651.SZ', '688609.SH', '000550.SZ', '301215.SZ', '002676.SZ', '603726.SH']
 
@@ -55,8 +49,6 @@ if __name__ == '__main__':
             asset_type='E',
             asset_pool=asset_pool,
             benchmark_asset='000001.SH',
-            benchmark_asset_type='IDX',
-            benchmark_dtype='close',
             trade_batch_size=100,
             sell_batch_size=100,
             live_trade_account_id=args.account,
@@ -67,4 +59,4 @@ if __name__ == '__main__':
             live_trade_broker_params=None,
     )
 
-    op.run()
+    qt.run(op)

@@ -14,7 +14,9 @@
 import numpy as np
 import pandas as pd
 import time
+import logging
 
+from typing import Generator, Union, Any
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -348,13 +350,13 @@ def fetch_batched_table_data(
         *,
         table: str,
         channel: str,
-        arg_list: any,
+        arg_list: Any,
         parallel: bool = True,
         process_count: int = None,
-        logger: any = None,
+        logger: logging.Logger = None,
         download_batch_size: int = 0,
         download_batch_interval: int = 0.,
-) -> pd.DataFrame:
+) -> Generator[dict[str, Any], Any, None]:
     """ 一个Generator，顺序循环批量获取同一张数据表的数据，支持并行下载并逐个返回数据
 
     Parameters
@@ -400,7 +402,8 @@ def fetch_batched_table_data(
             df = fetch_table_data(table, **kwargs)
             if (download_batch_interval != 0) and (completed % download_batch_size == 0):
                 time.sleep(download_batch_interval)
-            # logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
+            if logger is not None:
+                logger.info(f'[{table}:{kwargs}] {len(df)} rows downloaded')
             yield {'kwargs': kwargs, 'data': df}
 
     else:  # parallel
@@ -424,6 +427,8 @@ def fetch_batched_table_data(
                 for f in as_completed(futures):
                     kwargs = futures[f]
                     completed += 1
+                    if logger is not None:
+                        logger.info(f'[{table}:{kwargs}] {len(f.result())} rows downloaded')
                     yield {'kwargs': kwargs, 'data': f.result()}
 
                 if download_batch_interval != 0:
@@ -433,13 +438,13 @@ def fetch_batched_table_data(
 def fetch_real_time_klines(
         *,
         channel: str,
-        qt_codes: str or [str],
+        qt_codes: Union[str, list[str]],
         freq: str = 'd',
         parallel: bool = True,
         time_zone: str = 'local',
         verbose: bool = True,
         matured_kline_only: bool = False,
-        logger: any = None,
+        logger: Any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
     获取的数据仅包括当天的数据，如果当天不是交易日，返回空数据框。
@@ -1220,13 +1225,13 @@ TUSHARE_API_MAP = {
         ['new_share', 'none', 'none', 'none', '', 'Y', '200'],
 
     'money_flow':
-        ['moneyflow', 'trade_date', 'trade_date', '20100101', '', '', ''],
+        ['moneyflow', 'trade_date', 'trade_date', '20000101', '', '', ''],
 
-    'stock_limit':
-        ['stk_limit', 'trade_date', 'trade_date', '20100101', '', '', ''],
+    'stock_limit':  # start date verified
+        ['stk_limit', 'trade_date', 'trade_date', '20070101', '', '', ''],
 
     'stock_suspend':
-        ['suspend_d', 'trade_date', 'trade_date', '20100101', '', '', ''],
+        ['suspend_d', 'trade_date', 'trade_date', '20000101', '', '', ''],
 
     'hs_money_flow':
         ['moneyflow_hsgt', 'trade_date', 'trade_date', '20100101', '', '', ''],
@@ -1310,16 +1315,16 @@ TUSHARE_API_MAP = {
         ['index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
 
     'ths_index_daily':
-        ['ths_daily', 'trade_date', 'trade_date', '20100101', '', '', ''],
+        ['ths_daily', 'trade_date', 'trade_date', '20070801', '', '', ''],
 
     'ths_index_weight':
         ['ths_member', 'ts_code', 'table_index', 'ths_index_basic', '', '', ''],
 
     'ci_index_daily':
-        ['ci_daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+        ['ci_daily', 'trade_date', 'trade_date', '20100101', '', '', ''],
 
     'sw_index_daily':
-        ['sw_daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
+        ['sw_daily', 'trade_date', 'trade_date', '20000101', '', '', ''],
 
     'global_index_daily':
         ['index_global', 'trade_date', 'trade_date', '19901211', '', '', ''],

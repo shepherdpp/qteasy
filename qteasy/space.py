@@ -10,25 +10,25 @@
 # ======================================
 
 import numpy as np
-import itertools
-import warnings
+
+from typing import Union, Iterable, Optional
+from itertools import islice, product, zip_longest
 
 from qteasy.utilfuncs import (
-    str_to_list,
     input_to_list,
 )
+from qteasy.parameter import Parameter
 
 
 class Space:
-    """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中
+    """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中。当Axis对象等同于交易策略的Parameter
+    参数的时候，Space对象就可以表示为一个交易策略的参数空间。优化器可以从参数空间中提取出一系列的参数点。
 
-    参数空间类用于生成并管理一个参数空间，从参数空间中根据一定的要求提取出一系列的参数点并组装成迭代器供优化器调用
-    参数空间包含一个或多个轴，每个轴代表参数空间的一个维度，从每个轴上取出一个数值作为参数空间中某个点的坐标，而这个坐标
-    就代表空间中的一个参数组合
-    参数空间支持三种不同的轴，整数轴、浮点轴，这两种都是数值型的轴，还有另一种枚举轴，包含不同对象的枚举，同样可以作为参数
-    空间的一个维度独立存在，与数值轴的操作方式相同
-    数值轴的定义方式为上下界定义，枚举轴的定义方式为枚举定义，数值轴的取值范围为上下界之间的合法数值，而枚举轴的取值为枚举
-    列表中的值
+    参数空间对象支持不同类型的参数轴，可以是整数轴、浮点轴、枚举轴以及数组轴。
+    参数空间对象提供了一系列的方法用于从空间中提取参数点、以及判断某个参数点是否在空间中等基本操作，除此以外，还提供了
+    高级操作例如计算两个点之间的距离、根据速度向量从某个点出发生成一个子空间、或者生成一个点的邻域空间或子空间等操作。
+
+    上面这些操作将被用于策略的优化过程，例如遗传算法、粒子群算法等优化算法中。
 
     Properties
     ----------
@@ -47,7 +47,7 @@ class Space:
 
     Methods
     -------
-    extract(interval_or_qty, how='interval'):
+    extract(qty, how='interval'):
         从参数空间中提取参数点，返回一个参数点的迭代器
 
     Examples
@@ -57,7 +57,7 @@ class Space:
     >>> space.dim
     3
     >>> space.axis
-    [<Int Axis: (1, 5)>, <Float Axis: (3.0, 10.0)>, <Enum Axis: (5, 6, 7, 8, 9)>]
+    [<Int Parameter: (1, 5)>, <Float Parameter: (3.0, 10.0)>, <Enum Parameter: (5, 6, 7, 8, 9)>]
     >>> space.size
     100
     >>> space.volume
@@ -88,47 +88,67 @@ class Space:
      (1, 7.595081100116288, 8)]
     """
 
-    def __init__(self, pars, par_types: [list, str] = None):
+    def __init__(self,
+                 *par_ranges: Union[Iterable, Parameter, list[Parameter]],
+                 par_types: Union[list[str], str] = None
+                 ):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         Parameters
         ----------
-        pars: int、float或list,
-            需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照types中的类型字符串创建不
-            同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
-            pars为float，自动生成上下界为(0, items)的浮点型数值轴，
-            pars为int，自动生成上下界为(0, items)的整形数值轴
-            pars为list，根据list的元素种类和数量生成不同类型轴：
-                list元素只有两个且元素类型为int或float：生成上下界为(items[0], items[1])的浮点型数值
-                轴或整形数值轴
-                list元素不是两个，或list元素类型不是int或float：生成枚举轴，轴的元素包含par中的元素
+        *par_ranges: tuple, list of tuple, Parameter, list of Parameter
+            参数空间中包括的参数，可以输入参数对象，参数对象的列表或者参数的范围列表
+            参数范围的列表和参数对象不能混合输入。
+            如果输入参数对象，则生成一个包含这些参数对象的参数空间，此时不需要输入par_types参数
+            如果输入参数范围列表，则根据par_types参数生成不同类型的参数对象，如果不输入par_types参数，
+            则根据参数范围自动判断参数类型
         par_types: list of str or str, optional
             生成的空间每个轴的类型，如果不给出types，会根据输入的pars自动判断，如果给出types，会根据types中
             的类型字符串创建不同的轴，types中的类型字符串分别如下：
             'int'/'discr':      生成整数型轴
             'float'/'conti':    生成浮点数值轴
             'enum':             生成枚举轴
+            ‘array’:            生成数组轴，数组轴的元素为一个数组
 
         Returns
         -------
-        None
+        Space object
 
         Examples
         --------
-        >>> space = Space([(1, 5), (3., 10.), (5, 6, 7, 8, 9)])
+        # 直接输入Parameter对象
+        >>> par1 = Parameter((1, 5), 'int')
+        >>> par2 = Parameter((3., 10.), 'float')
+        >>> par3 = Parameter((5, 6, 7, 8, 9), 'enum')
+        >>> space = Space(par1, par2, par3)
         <(1, 5),(3.0, 10.0),(5,...,9)>
-        >>> space = Space([(1, 5), (3., 10.), (5, 6, 7, 8, 9)], ['float', 'int', 'int'])
+        # 输入Parameter对象列表
+        >>> space = Space((1, 5), (3., 10.), (5, 6, 7, 8, 9))
+        <(1, 5),(3.0, 10.0),(5,...,9)>
+        # 输入参数范围列表，并指定每个参数的类型
+        >>> space = Space((1, 5), (3., 10.), (5, 6, 7, 8, 9), par_types=['float', 'int', 'int'])
         <(1.0, 5.0),(3, 10),(5, 6)>
         """
         self._axis = []
-        assert pars is not None, f'InputError, pars should be a list or tuple of items, got {pars}'
+        # 处理输入，如果pars参数为Parameter对象，则直接使用
+        if any(isinstance(par, Parameter) for par in par_ranges):
+            if not all(isinstance(par, Parameter) for par in par_ranges):
+                raise TypeError('All elements in pars should be Parameter objects if pars contains Parameter objects')
+            self._axis = list(par_ranges)
+            return
+
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
-        pars = list(pars)
-        par_dim = len(pars)
+        par_ranges = list(par_ranges)
+        par_dim = len(par_ranges)
         if par_types is None:
             par_types = []
-        elif isinstance(par_types, str):
-            par_types = str_to_list(par_types, ',')
+        if isinstance(par_types, str):
+            par_types = [par_types]
+        if not isinstance(par_types, list):
+            raise TypeError(f'par_types should be a list of strings, got {type(par_types)} instead')
+        if not all(isinstance(pt, (str, type(None))) for pt in par_types):
+            raise TypeError('All elements in par_types should be strings or None')
+
         par_types = input_to_list(par_types, par_dim, None)
         # 预处理par_types
         for i in range(len(par_types)):
@@ -141,9 +161,10 @@ class Space:
             elif par_types[i].lower() in ['enum', 'enumerate']:
                 par_types[i] = 'enum'
             else:
-                raise KeyError(f'Invalid parameter type: {par_types[i]}')
+                continue
+                # raise KeyError(f'Invalid parameter type: {par_types[i]}')
         # 逐一生成Axis对象并放入axes列表中
-        self._axis = [Axis(par, par_type) for par, par_type in zip(pars, par_types)]
+        self._axis = [Parameter(par, par_type=par_type) for par, par_type in zip(par_ranges, par_types)]
 
     @property
     def dim(self):  # 空间的维度
@@ -165,7 +186,7 @@ class Space:
     def types(self):
         """List of types of axis of the space"""
         if self.dim > 0:
-            types = [ax.axis_type for ax in self.axis]
+            types = [ax.par_type for ax in self.axis]
             return types
         else:
             return None
@@ -174,7 +195,7 @@ class Space:
     def boes(self):
         """List of bounds of axis of the space"""
         if self.dim > 0:
-            boes = [ax.axis_boe for ax in self.axis]
+            boes = [ax.par_range for ax in self.axis]
             return boes
         else:
             return None
@@ -225,13 +246,13 @@ class Space:
         else:
             print('Space is empty!')
 
-    def extract(self, interval_or_qty: int = 1, how: str = 'interval'):
+    def extract(self, quantities: Union[int, list[int]] = 1, how: str = 'interval'):
         """从空间中提取出一系列的点，并且把所有的点以迭代器对象的形式返回供迭代
 
         Parameters
         ----------
-        interval_or_qty: int
-            从空间中每个轴上需要提取数据的步长或坐标数量
+        quantities: int or list of int, default 1
+            从空间中每个轴上需要提取数据的点的数量
         how: str, default 'interval', {'interval', 'intv', 'step', 'rand', 'random'}
             合法参数：
             interval/intv/step,以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
@@ -245,18 +266,18 @@ class Space:
 
         Examples
         --------
-        >>> space = Space([(1, 10), (3, 10), (5, 6, 7, 8, 9)])
+        >>> space = Space((1, 10), (3, 10), (5, 6, 7, 8, 9))
         >>> space
         <(1, 10),(3, 10),(5,...,9)>
-        >>> list(space.extract(4, how='interval')[0])
+        >>> list(space.extract([2, 2, 2], how='interval')[0])
         [(1, 3.0, 5),
          (1, 3.0, 9),
-         (1, 7.0, 5),
-         (1, 7.0, 9),
-         (5, 3.0, 5),
-         (5, 3.0, 9),
-         (5, 7.0, 5),
-         (5, 7.0, 9)]
+         (1, 10.0, 5),
+         (1, 10.0, 9),
+         (10, 3.0, 5),
+         (10, 3.0, 9),
+         (10, 10.0, 5),
+         (10, 10.0, 9)]
         >>> list(space.extract(8, how='rand')[0])
         [(1, 7.928856883024961, 9),
          (3, 9.764777688087385, 8),
@@ -267,23 +288,35 @@ class Space:
          (1, 3.3702544943635155, 7),
          (1, 7.595081100116288, 8)]
         """
-        interval_or_qty_list = input_to_list(pars=interval_or_qty,
+        interval_or_qty_list = input_to_list(pars=quantities,
                                              dim=self.dim,
                                              padder=[1])
-        axis_ranges = [ax.extract(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
+        if how in ['interval', 'intv', 'step']:
+            # interval模式下，根据需要提取的点总数计算每一个轴的步长，为了确保总数正确，采用开方的方式计算每个轴的点数
+            interval_or_qty_list = [int(np.ceil(intv ** (1 / self.dim))) for intv in interval_or_qty_list]
+
+        axis_ranges = [ax.gen_values(qty, how) for ax, qty in zip(self.axis, interval_or_qty_list)]
         total = np.array(list(map(len, axis_ranges))).prod()
+
         if self.types == ['enum'] and isinstance(self.boes[0], tuple):
             # in this case, space is an enum of tuple parameters, no formation of tuple is needed
             return axis_ranges[0], len(axis_ranges[0])
         if how in ['interval', 'intv', 'step']:
-            return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
+            # 当how为interval时，由于每个axis都需要生成点，总的点数可能大于quantities，此时需要用islice切片
+            # 同时为了尽量均匀切片，切片的step为total//quantities
+            if total <= quantities:
+                return product(*axis_ranges), total
+            else:
+                slice_step = total // quantities
+                slice_ubound = slice_step * quantities
+                return islice(product(*axis_ranges), 0, slice_ubound, slice_step), quantities  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how in ['rand', 'random']:
-            return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
+            return zip_longest(*axis_ranges), quantities  # 使用迭代器工具将所有点组合打包为点集
         else:
             raise KeyError(f'Invalid extraction method: {how}\n'
                            f'Valid methods are: "interval" or "rand"')
 
-    def __contains__(self, item: [list, tuple, object]):
+    def __contains__(self, item: Union[list, tuple, object]):
         """ 判断item是否在Space对象中, 返回True如果item在Space中，否则返回False
 
         Parameters
@@ -297,28 +330,34 @@ class Space:
 
         Examples
         --------
-        >>> s = Space(['x', 'y'], ['int', 'float'])
-        >>> ('x', 'int') in s
+        >>> s = Space(('x', 'y'), (0, 10), par_types=['enum','int'])
+        <('x', 'y'),(0, 10)>
+        >>> ('x', 6) in s
         True
+        >>> ('z', 6) in s
+        False
+        >>> ('x', 15) in s
+        False
 
         """
         assert isinstance(item, (list, tuple, Space)), \
             f'TypeError, the item must be a point (tuple or list of coordinates) or a subspace, got {type(item)}'
-        if isinstance(item, (tuple, list)):  # if item is a point
+        if isinstance(item, (tuple, list)):  # if item is a point, all parameter should be in its range
             if len(item) != self.dim:
                 return False
-            for coordinate, boe, s_type in zip(item, self.boes, self.types):
-                if s_type == 'enum':
-                    if coordinate not in boe:
-                        return False
-                else:
-                    if not boe[0] <= coordinate <= boe[1]:
-                        return False
+            return all(cordi in ax for cordi, ax in zip(item, self.axis))
         else:  # if item is a space, check if all boes are within self boes
-            if item.dim != self.dim:
+            if item.dim != self.dim:  # different dimensions
                 return False
             if any(item_type != self_type for item_type, self_type in zip (item.types, self.types)):
+                # different par types
                 return False
+            if any(item_type in ['float_array', 'int_array'] for item_type in item.types):
+                # check array shapes
+                item_array_axis = [item for item, t in zip(item.axis, item.types) if t in ['float_array', 'int_array']]
+                self_array_axis = [item for item, t in zip(self.axis, self.types) if t in ['float_array', 'int_array']]
+                if any(it.shape != st.shape for it, st in zip(item_array_axis, self_array_axis)):
+                    return False
             for it_boe, s_boe, s_type in zip(item.boes, self.boes, self.types):
                 if s_type == 'enum':  # in case of enum, check if all items are in self boe
                     if any(it not in s_it for it, s_it in zip(it_boe, s_boe)):
@@ -328,7 +367,7 @@ class Space:
                         return False
         return True
 
-    def from_point(self, point, distance: [int, float, list], ignore_enums=True):
+    def from_point(self, point, distance: Union[int, float, list, tuple], ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
 
         Parameters
@@ -347,9 +386,9 @@ class Space:
         Examples
         --------
         >>> p = (1, 2, 3)
-        >>> s = Space([(0, 5), (1, 3), (1, 5)])
+        >>> s = Space([(0, 9), (0, 9), (0, 9)])
         >>> s.from_point(p, 1)
-        <(0, 5),(1, 3),(1, 5)>
+        <(0, 2),(1, 4),(2, 5)>
 
         """
         assert point in self, f'ValueError, point {point} is not in space!'
@@ -377,349 +416,271 @@ class Space:
                     lbound = max((enum_pos - dis), 0)
                     ubound = min((enum_pos + dis), len(boe))
                     pars.append(boe[lbound:ubound])
-        return Space(pars, self.types)
+        return Space(*pars, par_types=self.types)
 
+    def _vector_axis_sizes(self) -> list:
+        """返回编码向量中每一轴占用的元素个数，用于 point_to_vector / vector_to_point。
 
-class Axis:
-    """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度
-
-    Axis对象包含Space对象的一个维度，与Space对象相似，Axis对象也有三种类型：
-    1，discr (int) Axis，离散型数轴，包含一系列连续的整数，由这些整数值的上下界来定义。例如Axis([0, 10])代表一个Axis，这个Axis上的
-        取值范围为0～10，包括0与10
-    2，conti (float) Axis，连续数轴对象，包含从下界到上界之间的所有浮点数，同样使用上下界定义，如Axis([0., 2.0])
-    3，enum Axis，枚举值数轴，取值范围为一系列任意类型对象，这些对象需要在创建Axis的时候就定义好。
-        例如：Axis(['a', 1, 'abc', (1, 2, 3)])就是一个枚举轴，它的取值可以是以下列表中的任意一个
-                        ['a', 1, 'abc', (1, 2, 3)]
-    Axis对象最重要的方法是extract()方法，代表从数轴的所有可能值中取出一部分并返回给Space对象生成迭代器。
-    对于Axis对象来说，有两种基本的extract()方法：
-    1，interval方法：间隔取值方法，即按照一定的间隔从数轴中取出一定数量的值。这种方法的参数主要是step_size，对于conti类型的数轴
-        step_size可以为一个浮点数，对于其他类型的数轴，step_size只能为整数。取值的举例如下：
-        a: 从一个conti数值轴中，以step_size=0.5取值：
-            Axis([0, 3]).extract(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
-        b: 从一个discr数值轴中，以step_size=2取值:
-            Axis([1, 5]).extract(step_size-2) -> [1, 3, 5]
-        c: 从一个enum轴中，以step_size=2取值:
-            Axis([1, 2, 3, 'a', 'b', 'c', (1, 2)]).extract(step_size=2) -> [1, 3, 'b', (1, 2)]
-    2，random方法: 从数轴的所有可选值中随机选出指定数量的值返回到Space对象，对于任何类型的Axis，其取值方法都是类似的，指定的取值数量
-    必须是整数：举例如下：
-        a: 从一个enum轴中随机取出四个值：
-            Axis(['a', 'b', 'c']).extract(count=4) -> ['b', 'a', 'c', 'a']
-
-    Properties
-    ----------
-    count: int
-        输出数轴中元素的个数，若数轴为连续型，输出为inf
-    size: int
-        数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界
-    axis_type: str
-        该数轴的类型，可选值为'conti', 'discr', 'enum'
-
-    Methods
-    -------
-    extract(method, **kwargs)
-        从数轴上取出一定数量的值，返回一个Generator对象，该Generator对象可以用于生成Space对象的迭代器
-    """
-    CONTI = 10
-    DISCR = 20
-    ENUM = 30
-    AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
-
-    def __init__(self, bounds_or_enum, typ=None):
-        """ 初始化数轴对象
-
-        Parameters
-        ----------
-        bounds_or_enum: list or tuple
-            数轴的上下界或枚举值，当数轴类型为conti或discr时，bounds_or_enum为一个长度为2的列表或元组，分别代表数轴的上下界；
-            当数轴类型为enum时，bounds_or_enum为一个列表或元组，其中的元素为该数轴上所有可用的值
-        typ: str, {'conti', 'float', 'discr', 'int', 'enum'}, optional
-            数轴的类型，当typ为空时，根据bounds_or_enum的类型自动判断数轴类型
-
-        Raises
-        ------
-        ValueError
-            当输入的数轴类型不在可选值中时，抛出ValueError异常
-
+        Returns
+        -------
+        list of int
+            标量轴（int/float/enum）为 1，数组轴为 np.prod(axis.shape)。
         """
-        import numbers
-        self._axis_type = None  # 数轴类型
-        self._lbound = None  # 离散型或连续型数轴下界
-        self._ubound = None  # 离散型或连续型数轴上界
-        self._enum_val = None  # 当数轴类型为“枚举”型时，储存改数轴上所有可用值
-        # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
-        boe = list(bounds_or_enum)
-        length = len(boe)  # 列表元素个数
-        if typ is None:
-            # 当typ为空时，需要根据输入数据的类型猜测typ
-            if length <= 2:
-                # list长度小于等于2，根据数据类型取上下界:
-                #    1， 当任意一个元素不是数字时，类型为枚举，否则->2
-                #    2， 当任意一个元素是浮点型时，类型为连续型，否则->
-                #    3， 所有元素都是整形，类型为离散型
-                if any(not isinstance(item, numbers.Number) for item in boe):
-                    typ = 'enum'
-                elif any(isinstance(item, float) for item in boe):
-                    typ = 'float'
-                else:  # 输入数据类型不是数字时，处理为枚举类型
-                    typ = 'int'
-            else:  # list长度为其余值时，全部处理为enum数据
-                typ = 'enum'
-        elif typ != 'enum' and typ != 'int' and typ != 'float':
-            typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
-        # 开始根据typ的值生成具体的Axis
-        if typ == 'enum':  # 创建一个枚举数轴
-            self._new_enumerate_axis(boe)
-        elif typ == 'int':  # 创建一个离散型数轴
-            if length == 1:
-                self._new_discrete_axis(0, boe[0])
+        sizes = []
+        for ax in self.axis:
+            if ax.par_type in ['int', 'float', 'enum']:
+                sizes.append(1)
+            elif ax.par_type in ['int_array', 'float_array']:
+                sizes.append(int(np.prod(ax.shape)))
             else:
-                self._new_discrete_axis(boe[0], boe[1])
-        else:  # 创建一个连续型数轴
-            if length == 1:
-                self._new_continuous_axis(0, boe[0])
-            else:
-                self._new_continuous_axis(boe[0], boe[1])
-
-    def __repr__(self):
-        """输出数轴的字符串表示"""
-        if self.axis_type == 'enum':
-            return 'Enum Axis({})'.format(self.axis_boe)
-        elif self.axis_type == 'float':
-            return 'Float Axis({}, {})'.format(self._lbound, self._ubound)
-        else:
-            return 'Int Axis({}, {})'.format(self._lbound, self._ubound)
+                sizes.append(1)
+        return sizes
 
     @property
-    def count(self):
-        """输出数轴中元素的个数，若数轴为连续型，输出为inf"""
-        self_type = self._axis_type
-        if self_type == 'float':
-            return np.inf
-        elif self_type == 'int':
-            return self._ubound - self._lbound + 1
-        else:
-            return len(self._enum_val)
+    def vector_axis_sizes(self) -> list:
+        """编码向量中每一轴占用的元素个数（只读），供优化算法做按段交叉等操作。"""
+        return self._vector_axis_sizes()
 
-    @property
-    def size(self):
-        """输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界"""
-        if self.axis_type == 'float':
-            return self._ubound - self._lbound
-        else:
-            return self.count
+    def point_to_vector(self, point: Union[tuple, list]) -> np.ndarray:
+        """将参数空间中的点编码为定长数值向量，供 GA/PSO/gradient/bayesian 等算法复用。
 
-    @property
-    def axis_type(self):
-        """返回数轴的类型"""
-        return self._axis_type
-
-    @property
-    def axis_boe(self):
-        """返回数轴的上下界或枚举"""
-        if self._axis_type == 'enum':
-            return tuple(self._enum_val)
-        else:
-            return self._lbound, self._ubound
-
-    def extract(self, interval_or_qty=1, how='interval'):
-        """从数轴中抽取数据，并返回一个iterator迭代器对象
+        编码规则：int/float 维各 1 个元素；enum 维为枚举下标（0 到 len-1）；
+        int_array/float_array 维按 C 顺序展平为一段标量。
 
         Parameters
         ----------
-        interval_or_qty: int
-            需要从数轴中抽取的数据总数或抽取间隔，当how=='interval'时，代表抽取间隔，否则代表总数
-        how: str, {'interval', 'int', 'rand', 'random'}, Default 'interval'
-            抽取方法，
-            'interval'/'int': 从数轴中抽取interval_or_qty个数据，每两个数据之间的间隔固定
-            'rand'/'random': 从数轴中抽取interval_or_qty个数据，每两个数据之间的间隔随机
+        point : tuple or list
+            空间内的合法点，满足 point in space。
 
         Returns
         -------
-        iterator: 一个迭代器对象，包含所有抽取的数值
+        np.ndarray
+            一维浮点数组，长度等于各轴编码长度之和。
         """
-        if not isinstance(how, str):
-            raise TypeError(f'extract method \'how\' should be a string in {self.AVAILABLE_EXTRACT_METHODS}')
-        if how.lower() in ['interval', 'int']:
-            if self.axis_type == 'enum':
-                return self._extract_enum_interval(interval_or_qty)
+        assert point in self, f'ValueError, point {point} is not in space!'
+        sizes = self._vector_axis_sizes()
+        parts = []
+        for d, (coord, ax, sz) in enumerate(zip(point, self.axis, sizes)):
+            t = ax.par_type
+            if t == 'int':
+                parts.append(np.array([float(coord)], dtype=float))
+            elif t == 'float':
+                parts.append(np.array([float(coord)], dtype=float))
+            elif t == 'enum':
+                boe = self.boes[d]
+                idx = list(boe).index(coord) if isinstance(boe, tuple) else boe.index(coord)
+                parts.append(np.array([float(idx)], dtype=float))
+            elif t in ['int_array', 'float_array']:
+                arr = np.asarray(coord, dtype=float).ravel(order='C')
+                parts.append(arr)
             else:
-                return self._extract_bounding_interval(interval_or_qty)
-        if how.lower() in ['rand', 'random']:
-            if self.axis_type == 'enum':
-                return self._extract_enum_random(interval_or_qty)
+                parts.append(np.array([float(coord)], dtype=float))
+        return np.concatenate(parts).astype(float)
+
+    def vector_to_point(self, vec: Union[np.ndarray, list]) -> tuple:
+        """将数值向量解码为参数空间内的合法点。
+
+        解码时对 float 维 clip、int 维 round 后 clip、enum 维下标 clip 后取枚举值、
+        int_array/float_array 维 reshape 并逐元素 clip（int_array 取整）。
+
+        Parameters
+        ----------
+        vec : np.ndarray or list
+            与 point_to_vector 输出同长的数值向量。
+
+        Returns
+        -------
+        tuple
+            合法参数点，满足 point in space。
+        """
+        vec = np.asarray(vec, dtype=float).ravel()
+        sizes = self._vector_axis_sizes()
+        assert vec.size == sum(sizes), (
+            f'Vector length {vec.size} does not match space encoding size {sum(sizes)}'
+        )
+        out = []
+        offset = 0
+        for d, (ax, sz) in enumerate(zip(self.axis, sizes)):
+            t = ax.par_type
+            seg = vec[offset:offset + sz]
+            offset += sz
+            lb, ub = ax.lbound, ax.ubound
+            if t == 'int':
+                val = int(np.clip(np.round(seg[0]), lb, ub))
+                out.append(val)
+            elif t == 'float':
+                val = float(np.clip(seg[0], lb, ub))
+                out.append(val)
+            elif t == 'enum':
+                boe = self.boes[d]
+                enum_list = list(boe) if isinstance(boe, tuple) else boe
+                idx = int(np.clip(np.round(seg[0]), 0, len(enum_list) - 1))
+                out.append(enum_list[idx])
+            elif t == 'int_array':
+                a = np.clip(seg, lb, ub).astype(int)
+                out.append(a.reshape(ax.shape))
+            elif t == 'float_array':
+                a = np.clip(seg, lb, ub).astype(float)
+                out.append(a.reshape(ax.shape))
             else:
-                return self._extract_bounding_random(interval_or_qty)
-        raise KeyError(f'extract method {how} is not valid, make sure method is one of '
-                       f'{self.AVAILABLE_EXTRACT_METHODS}')
+                out.append(float(np.clip(seg[0], lb, ub)))
+        return tuple(out)
 
-    def _set_bounds(self, lbound, ubound):
-        """设置数轴的上下界, 只适用于离散型或连续型数轴
+    def neighbors(self,
+                  point: Union[tuple, list],
+                  axis_index: int,
+                  count: Optional[int] = None,
+                  step: Optional[Union[float, int]] = None) -> list:
+        """生成仅在第 axis_index 维上与 point 不同的邻域候选点列表，供梯度搜索与贝叶斯候选使用。
 
-        Parameters
-        ----------
-        lbound: int or float
-            数轴下界
-        ubound: int or float
-            数轴上界
-
-        Returns
-        -------
-        None
-        """
-        self._lbound = lbound
-        self._ubound = ubound
-        self.__enum = None
-
-    def _set_enum_val(self, enum):
-        """设置数轴的枚举值，适用于枚举型数轴
-
-        此处需要区分tuple_enum类型和普通enum类型的数轴，tuple_enum类型的数轴需要保留tuple类型，
-        因此不能使用np.array转换类型。普通enum类型可以使用np.array转换类型。转换类型的原因是为了便于使用np的random直接读出多个值，
-        而对于tuple_enum类型来说，使用np.array会强制将tuple类型转换为array，会在后续操作中导致问题。
+        对 float 维：当前值 ± step（或默认步长），clip 到边界；
+        对 int 维：当前值 ±1（或 ±step 若给出）；
+        对 enum 维：除当前值外的若干枚举值（随机或全部）；
+        对 int_array/float_array 维：逐元素 ±step 或整轴随机重采样若干次。
 
         Parameters
         ----------
-        enum: 数轴枚举值
+        point : tuple or list
+            空间内的点。
+        axis_index : int
+            要扰动的轴索引。
+        count : int, optional
+            对 enum/array 维生成的候选个数；对 int/float 若不指定则生成 ±step 两个候选。
+        step : float or int, optional
+            对 int/float/array 的扰动步长；不指定时 float 用轴 size 的 10%，int 用 1。
 
         Returns
         -------
-        None
+        list of tuple
+            仅第 axis_index 维与 point 不同的合法点列表（不含 point 自身）。
         """
-        self._lbound = None
-        self._ubound = None
-        self._enum_val = enum
+        assert point in self, f'ValueError, point {point} is not in space!'
+        assert 0 <= axis_index < self.dim, f'axis_index {axis_index} out of range [0, {self.dim})'
+        ax = self.axis[axis_index]
+        t = ax.par_type
+        coord = point[axis_index]
+        boe = self.boes[axis_index]
+        lb, ub = (boe[0], boe[1]) if t != 'enum' else (None, None)
+        candidates = []
 
-    def _new_discrete_axis(self, lbound, ubound):
-        """ 创建一个新的离散型数轴
+        if t == 'float':
+            step_val = step if step is not None else max(1e-9, (ub - lb) * 0.1)
+            for delta in (step_val, -step_val):
+                v = np.clip(float(coord) + delta, lb, ub)
+                if v != coord:
+                    new_point = list(point)
+                    new_point[axis_index] = v
+                    candidates.append(tuple(new_point))
+        elif t == 'int':
+            step_val = int(step) if step is not None else 1
+            for delta in (step_val, -step_val):
+                v = int(np.clip(int(coord) + delta, lb, ub))
+                if v != coord:
+                    new_point = list(point)
+                    new_point[axis_index] = v
+                    candidates.append(tuple(new_point))
+        elif t == 'enum':
+            enum_list = list(boe) if isinstance(boe, tuple) else boe
+            others = [x for x in enum_list if x != coord]
+            k = count if count is not None else min(2, len(others))
+            if k <= 0 or not others:
+                return []
+            indices = np.random.choice(len(others), size=min(k, len(others)), replace=False)
+            for i in indices:
+                new_point = list(point)
+                new_point[axis_index] = others[i]
+                candidates.append(tuple(new_point))
+        elif t in ['int_array', 'float_array']:
+            arr = np.asarray(coord)
+            k = count if count is not None else 2
+            gen = list(ax.gen_values(k + 1, 'rand'))  # 多取一个避免全与 coord 相同
+            for g in gen:
+                new_arr = np.asarray(g)
+                if not np.array_equal(new_arr, arr):
+                    new_point = list(point)
+                    new_point[axis_index] = new_arr
+                    cand = tuple(new_point)
+                    if cand in self and any(np.array_equal(cand, c) for c in candidates):
+                        candidates.append(cand)
+                    if len(candidates) >= k:
+                        break
+        else:
+            return []
+
+        return [c for c in candidates if tuple(c) in self]
+
+    def sample_subspace(self,
+                        center: Union[tuple, list],
+                        radius: Union[int, float, list, tuple],
+                        count: int,
+                        ignore_enums: bool = True) -> list:
+        """在以 center 为中心、半径为 radius 的子空间内随机采样 count 个点。
+
+        封装“邻域子空间 + 随机采样”：对 int/float 维使用 center±radius 裁剪到原边界；
+        对 enum 维若 ignore_enums 为 True 则保留全枚举，否则在中心下标邻域内；
+        对 array 维使用标量半径：子空间为每元素在 [min(center)-r, max(center)+r] 内裁剪到轴边界。
 
         Parameters
         ----------
-        lbound: int or float
-            数轴下界
-        ubound: int or float
-            数轴上界
+        center : tuple or list
+            中心点，必须在空间内。
+        radius : int, float, or list/tuple of length dim
+            每维的半径（标量或按维）。
+        count : int
+            采样点数量。
+        ignore_enums : bool, default True
+            为 True 时 enum 维保持全枚举；为 False 时在中心枚举下标邻域内缩小。
 
         Returns
         -------
-        None
+        list of tuple
+            长度为 count 的合法点列表。
         """
-        self._axis_type = 'int'
-        self._set_bounds(int(lbound), int(ubound))
+        assert center in self, f'ValueError, center {center} is not in space!'
+        if isinstance(radius, (list, tuple)):
+            assert len(radius) == self.dim, f'radius length {len(radius)} != dim {self.dim}'
+            dist_list = list(radius)
+        else:
+            dist_list = [radius] * self.dim
 
-    def _new_continuous_axis(self, lbound, ubound):
-        """ 创建一个新的连续型数轴
+        pars = []
+        for d, (coord, boe, s_type, dis) in enumerate(zip(center, self.boes, self.types, dist_list)):
+            if s_type == 'enum':
+                if ignore_enums:
+                    pars.append(boe)
+                else:
+                    enum_list = list(boe) if isinstance(boe, tuple) else boe
+                    pos = enum_list.index(coord)
+                    lo = max(0, int(pos - dis))
+                    hi = min(len(enum_list), int(pos + dis) + 1)
+                    pars.append(tuple(enum_list[lo:hi]))
+            elif s_type in ['int_array', 'float_array']:
+                coord_arr = np.asarray(coord)
+                space_lb, space_ub = boe[0], boe[1]
+                lb = max(space_lb, float(np.min(coord_arr) - dis))
+                ub = min(space_ub, float(np.max(coord_arr) + dis))
+                pars.append((lb, ub))
+            else:
+                space_lb, space_ub = boe[0], boe[1]
+                lb = max(space_lb, coord - dis)
+                ub = min(space_ub, coord + dis)
+                pars.append((lb, ub))
 
-        Parameters
-        ----------
-        lbound: int or float
-            数轴下界
-        ubound: int or float
-            数轴上界
-
-        Returns
-        -------
-        None
-        """
-        self._axis_type = 'float'
-        self._set_bounds(float(lbound), float(ubound))
-
-    def _new_enumerate_axis(self, enum):
-        """ 创建一个新的枚举型数轴
-
-        Parameters
-        ----------
-        enum: 数轴枚举值
-
-        Returns
-        -------
-        None
-        """
-        self._axis_type = 'enum'
-        self._set_enum_val(enum)
-
-    def _extract_bounding_interval(self, interval: [int, float]):
-        """ 按照间隔方式从离散或连续型数轴中提取值
-
-        Parameters
-        ----------
-        interval: int or float
-            提取间隔
-
-        Returns
-        -------
-        np.array 从数轴中提取出的值对象
-        """
-        if self._axis_type == 'float':
-            return np.arange(self._lbound, self._ubound, interval)
-        if self._axis_type == 'int':
-            if not float(interval).is_integer():
-                raise ValueError(f'interval should be an integer, got {interval} instead!')
-            if not float(self._lbound).is_integer():
-                raise ValueError(f'l-bound of discrete axis should be an integer, got {self._lbound} instead')
-            return np.arange(self._lbound, self._ubound + 1, interval)
-
-    def _extract_bounding_random(self, qty: int):
-        """ 按照随机方式从离散或连续型数轴中提取值
-
-        Parameters
-        ----------
-        qty: int
-            提取的数据总量
-
-        Returns
-        -------
-        np.array 从数轴中提取出的值对象
-        """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
-        if self._axis_type == 'int':
-            return np.random.randint(self._lbound, self._ubound + 1, size=qty)
-        if self._axis_type == 'float':
-            return np.random.uniform(self._lbound, self._ubound, qty)
-
-    def _extract_enum_interval(self, interval):
-        """ 按照间隔方式从枚举型数轴中提取值
-
-        Parameters
-        ----------
-        interval: int or float
-            提取间隔
-
-        Returns
-        -------
-        list 从数轴中提取出的值对象
-        """
-        if not float(interval).is_integer():
-            raise ValueError(f'interval should be an integer, got {interval} instead!')
-        selected = np.arange(0, self.count, interval)
-        return [self._enum_val[i] for i in selected]
-
-    def _extract_enum_random(self, qty: int):
-        """ 按照随机方式从枚举型数轴中提取值
-
-        Parameters
-        ----------
-        qty: int
-            提取的数据总量
-
-        Returns
-        -------
-        list 从数轴中提取出的值对象
-        """
-        if not float(qty).is_integer():
-            raise ValueError(f'interval should be an integer, got {qty} instead!')
-        selected = np.random.choice(self.count, size=qty)
-        return [self._enum_val[i] for i in selected]
+        # 数组轴需要带 shape 的类型串（如 float_array[2,2]），否则 Parameter 会得到 par_shape=None
+        par_types_with_shape = []
+        for ax in self.axis:
+            if ax.par_type in ['int_array', 'float_array'] and getattr(ax, 'shape', None):
+                par_types_with_shape.append(f'{ax.par_type}[{",".join(map(str, ax.shape))}]')
+            else:
+                par_types_with_shape.append(ax.par_type)
+        subspace = Space(*pars, par_types=par_types_with_shape)
+        par_iter, total = subspace.extract(count, how='rand')
+        return list(par_iter)
 
 
 class ResultPool:
-    """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
-
-    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序
-    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序
-    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序
-    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右, 即使在结果池很小，总数据量很大的情况下，
-    循环排序的速度也慢于单次排序修剪
+    """结果池类，用于保存一组元素以及这组元素的评价分数和额外信息。同时提供多种方法对结果池内的元素进行处理
+    包括根据评价分数对结果进行排序、裁剪、筛选等等操作。
 
     Properties
     ----------
@@ -757,26 +718,32 @@ class ResultPool:
         capacity: int
             池中最多可以放入的结果数量
         """
-        self.__capacity = capacity  # 池中最多可以放入的结果数量
+        self.__capacity = 0  # 池中最多可以放入的结果数量
         self.__pool = []  # 用于存放被结果所评价的元素，如参数等
         self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
         self.__extra = []  # 用于存放额外的信息，与每个元素一一相关，在裁剪时会跟随元素被裁剪掉
 
+        self._set_capacity(capacity)
+
     @property
     def items(self):
-        return self.__pool  # 只读属性，所有池中参数
+        return self.__pool.copy()  # 只读属性，所有池中参数
 
     @property
     def perfs(self):
-        return self.__perfs  # 只读属性，所有池中参数的评价分
+        return self.__perfs.copy()  # 只读属性，所有池中参数的评价分
 
     @property
     def extra(self):
-        return self.__extra  # 只读属性，所有池中参数的额外信息
+        return self.__extra.copy()  # 只读属性，所有池中参数的额外信息
 
     @property
     def capacity(self):
         return self.__capacity
+
+    @capacity.setter
+    def capacity(self, value):
+        self._set_capacity(value)
 
     @property
     def item_count(self):
@@ -786,6 +753,12 @@ class ResultPool:
     def is_empty(self):
         return len(self.items) == 0
 
+    def _set_capacity(self, value):
+        """ 检查输入数据的合法性，设置结果池的容量"""
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError(f'Capacity should be a positive integer, got {value} instead')
+        self.__capacity = value
+
     def clear(self):
         """ 清空整个结果池
 
@@ -793,25 +766,44 @@ class ResultPool:
         """
         self.__pool = []
         self.__perfs = []
+        self.__extra = []
 
-    def in_pool(self, item, perf, extra=None):
-        """将新的结果压入池中  # deprecated
-
-        Parameters
-        ----------
-        item: object
-            需要放入结果池的参数对象
-        perf: float
-            放入结果池的参数评价分数
-        extra: object， optional
-            需要放入结果池的参数对象的额外信息
+    def get_item_perfs(self, items: Iterable):
+        """获取结果池中元素及其对应评价分的字典表示
 
         Returns
         -------
-        None
+        dict
+            结果池中元素及其对应评价分的字典表示
         """
-        warnings.warn(f'in_pool() is deprecated, use push() instead', DeprecationWarning)
-        self.push(item, perf, extra)
+        raise NotImplementedError
+
+    def get_item_extra(self, items: Iterable):
+        """获取结果池中元素及其对应额外信息的字典表示
+
+        Returns
+        -------
+        dict
+            结果池中元素及其对应额外信息的字典表示
+        """
+        raise NotImplementedError
+
+    def show_items(self, with_extra=False):
+        """以表格的形式显示结果池中的所有元素"""
+        print(f'Result Pool (capacity: {self.capacity}, current size: {self.item_count}):')
+        # 打印表头
+        header = f'{"Index":<10}{"Item":<35}{"Perf":<20}'
+        if with_extra:
+            header += f'{"Extra":<30}'
+        print(header)
+        print('-' * 95)
+        # 打印每一行
+        if with_extra:
+            for i, (item, perf, extra) in enumerate(zip(self.__pool, self.__perfs, self.__extra)):
+                print(f'{i:<10}{str(item):<35}{perf:<20.3f}{str(extra):<30}')
+        else:
+            for i, (item, perf) in enumerate(zip(self.__pool, self.__perfs)):
+                print(f'{i:<10}{str(item):<35}{perf:<20.3f}')
 
     def push(self, item, perf, extra=None):
         """将新的结果压入池中
@@ -829,6 +821,9 @@ class ResultPool:
         -------
         None
         """
+        # perf必须是数值类型
+        if not isinstance(perf, (int, float)):
+            raise TypeError(f'Performance score must be a number, got {type(perf)} instead')
         self.__pool.append(item)  # 新元素入池
         self.__perfs.append(perf)  # 新元素评价分记录
         self.__extra.append(extra)

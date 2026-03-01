@@ -10,6 +10,7 @@
 
 import numpy as np
 import pandas as pd
+from typing import Union
 
 from qteasy.space import ResultPool
 from qteasy.finance import CashPlan
@@ -19,6 +20,11 @@ from qteasy.utilfuncs import (
     pandas_freq_alias_version_conversion,
 )
 
+
+# TODO: 改进evaluate.py，所有的评价函数都基于np.array计算，而不是pd.DataFrame，
+#  - 所有的评价函数都直接返回相关的计算结果，而不是修改传入数据框架。
+#  - 所有的函数都使用numba加速
+#  - 评价结果为一个对象，包含各种评价结果，可以输出各种评价结果的DataFrame
 
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame
 def performance_statistics(performances: list, stats='mean'):
@@ -81,14 +87,8 @@ def performance_statistics(performances: list, stats='mean'):
 
     res = dict()
 
-    # try:
-    #     res['par'] = performances[0]['par']
-    # except:
-    #     print(f'\nERROR RAISED! \n'
-    #           f'in performance statistics: performances[0]:\n{performances[0]}')
-    res['loop_start'] = performances[0]['loop_start']
-    res['loop_end'] = performances[-1]['loop_end']
-    # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
+    res['backtest_start'] = performances[0]['backtest_start']
+    res['backtest_end'] = performances[-1]['backtest_end']
     res['complete_values'] = performances[0]['complete_values']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
@@ -108,8 +108,8 @@ def performance_statistics(performances: list, stats='mean'):
                                                                         'peak_date',
                                                                         'valley_date',
                                                                         'recover_date',
-                                                                        'loop_start',
-                                                                        'loop_end',
+                                                                        'backtest_start',
+                                                                        'backtest_end',
                                                                         'complete_values',
                                                                         'worst_drawdowns',
                                                                         'return_df']]
@@ -132,79 +132,118 @@ def performance_statistics(performances: list, stats='mean'):
 
 
 def evaluate(looped_values: pd.DataFrame,
-             hist_benchmark: pd.DataFrame,
-             benchmark_data: str,
+             hist_benchmark: Union[pd.DataFrame, pd.Series],
              cash_plan,
-             indicators: str = 'final_value') -> dict:
+             indicators: str = None) -> dict:
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
-        返回一个dict，包含所有需要的indicators
+    返回一个dict，包含所有需要的指标。输出的指标种类通过indicators参数确定，详见输出说明。
 
-    这里生成的indicators包含：
-    - final_value:        回测区间最后一天的总资产金额
-    - loop_start:        回测区间起始日
-    - loop_end:          回测区间终止日
-    - complete_values:   完整的回测历史价格记录
-                         此DF包含的数据如下：
-                         - stocks;
-                         - operation fee;
-                         - own cash;
-                         - total value;
-                         - indicators like rolling sharp/rolling alpha/rolling beta/rolling volatility
-    - days:              回测历史周期总天数
-    - months:            回测历史周期总月数
-    - years:             回测历史周期年份数
-    - oper_count         操作数量
-    - total_invest       总投入资金数量
-    - total_fee          总交易费用
-    - rtn:               回测的总回报率
-    - annual_rtn:        回测的年均回报率
-    - mdd:               最大回撤（从前期最高点开始计算最大跌幅）
-    - peak_date:         最大回撤峰值日期（前期高点日期）
-    - valley_date:       最大回撤谷值日期（最大跌幅日期）
-    - volatility:        回测区间波动率（最后一日波动率）
-    - ref_rtn:           benchmark参照指标的回报率
-    - ref_annual_rtn:    benchmark参照指标的年均回报率
-    - beta:              回测区间的beta值
-    - sharp:             回测区间的夏普率
-    - alpha:             回测区间的阿尔法值
-    - info:              回测区间的信息比率
-    - worst_drawdowns    一个DataFrame，五次最大的回撤记录
-    TODO: 增加Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
+    TODO: 增加Omega Ratio、Stability、Tail Ratio、Daily value at risk
 
     Parameters
     ----------
     looped_values: pd.DataFrame:
         回测区间的历史价格记录
-    hist_benchmark: pd.DataFrame,
+    hist_benchmark: pd.DataFrame, pd.Series,
         参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
-    benchmark_data: str,
-        参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
     cash_plan: CashPlan,
         投资计划
-    indicators: str, Default: 'final_value'
-        评价指标，逗号分隔的多个评价指标
+    indicators: str, Optional
+        评价指标，逗号分隔的多个评价指标，包含下列选项:
+        'r'/'rtn'/'return'/'total_return'                   : 总收益率和年化收益率指标
+        'm'/'mdd'/'max_drawdown'                            : 最大回撤指标
+        'v'/'volatility'                                    : 波动率指标
+        'b'/'benchmark_rtn'/'benchmark'/'benchmark_a_rtn'   : 基准收益率指标
+        'beta'                                              : 贝塔系数指标
+        'sharp'                                             : 夏普率指标
+        'alpha'                                             : 阿尔法系数指标
+        'info'                                              : 信息比率指标
+        'calmar'                                            : Calmar比率指标
 
     Returns
     -------
     performance_dict: dict: 一个字典，每个指标的各种值
+
+    如果不给出任何indicator指标，基本评价指标包括:
+    - final_value:       回测区间最后一天的总资产金额
+    - backtest_start:    回测区间起始日
+    - backtest_end:      回测区间终止日
+    - complete_values:   一个DataFrame，完整的回测历史价格记录,包含的数据如下：
+                            - stocks: 各个股票的持仓数量
+                            - cash: 持有现金数量
+                            - fee: 当期交易总费用
+                            - value; 当期持有现金和资产总价值
+                            - other indicators: 根据需要计算的其他评价指标历史变化值
+    - days:              回测历史周期总天数
+    - months:            回测历史周期总月数
+    - years:             回测历史周期年份数
+    - oper_count         一个DataFrame，记录交易过程操作信息，包括每支股票在回测区间内的下列信息:
+                            - buy: 总买入次数
+                            - sell: 总卖出次数
+                            - total: 总买卖次数
+                            - long: 多头持仓天数占比
+                            - short: 空头持仓天数占比
+                            - empty: 无持仓天数占比
+    - total_invest       总投入资金数量
+    - total_fee          总交易费用
+
+    当输入的indicator参数包含'r', 'rtn', 'return', 'total_return'时，计算下面的指标：
+    - 修改complete_values，增加一列 'invest'，记录每交易周期的新增资金投入
+    - rtn:               回测的总回报率
+    - annual_rtn:        回测的年均回报率
+    - skew:              回测收益率的偏度
+    - kurtosis:          回测收益率的峰度
+    - return_df:         一个DataFrame，包含回测区间内整个投资组合的年度、月度收益率： TODO: 考虑改成动态周期
+                            - ['Jan' ~ 'Dec']:     当年每月的月度收益率
+                            - y-cum:               当年累计年度收益率
+
+    当输入的indicator参数包含'm', 'mdd', 'max_drawdown' 时，计算下面指标:
+    - 修改complete_values，增加一列 'underwater'，记录每个回测期间的回测幅度
+    - mdd:               最大回撤（从前期最高点开始计算最大跌幅）
+    - peak_date:         最大回撤峰值日期（前期高点日期）
+    - valley_date:       最大回撤谷值日期（最大跌幅日期）
+    - recover_date:      最大回撤恢复日期（回撤结束日期）
+    - worst_drawdowns    一个DataFrame，记录回测区间内五次最大的回撤记录，包含：
+                            - peak_date:     回撤峰值日期
+                            - valley_date:   回撤谷值日期
+                            - recover_date:  回撤恢复日期
+                            - drawdown:      回撤幅度
+
+    当输入的indicator参数包含'v', 'volatility' 时，计算下面波动率指标:
+    - 修改complete_values，增加一列 'volatility'，记录250日滚动波动率
+    - volatility:        回测区间波动率（最后一日波动率）
+
+    当输入的indicator参数包含'b', 'benchmark_rtn', 'benchmark', 'benchmark_a_rtn' 时，计算基准收益率指标:
+    - benchmark_rtn:     基准指标的总回报率
+    - benchmark_a_rtn:   基准指标的年化回报率
+
+    当输入的indicator参数包含'beta', 'sharp', 'alpha', 'info', 'calmar' 中的任一个时，计算相应的指标:
+    - beta:              回测区间的beta值，并添加250日滚动beta到complete_values中
+    - sharp:             回测区间的夏普率，并添加夏普率到complete_values中
+    - alpha:             回测区间的阿尔法值，并添加阿尔法值到complete_values中
+    - info:              回测区间的信息比率
+    - calmar:            回测区间的Calmar比率，并添加Calmar比率到complete_values中
     """
     # validate input
-
-    if not isinstance(hist_benchmark, pd.DataFrame):
-        raise TypeError(f'reference value should be pandas DataFrame, got {type(hist_benchmark)} instead!')
+    # if isinstance(hist_benchmark, pd.DataFrame):
+    #     hist_benchmark = hist_benchmark[hist_benchmark.columns[0]]
+    # if not isinstance(hist_benchmark, pd.Series):
+    #     raise TypeError(f'benchmark value should be pandas Series, got {type(hist_benchmark)} instead!')
     if not isinstance(looped_values, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_values)} instead')
-    if benchmark_data not in hist_benchmark.columns:
-        raise KeyError(f'reference data type \'{benchmark_data}\' can not be found in reference data')
     if not isinstance(cash_plan, CashPlan):
         raise TypeError(f'Cash plan is not valid, got {type(cash_plan)} instead')
 
-    indicator_list = str_to_list(indicators)
+    if indicators:
+        indicator_list = str_to_list(indicators)
+    else:
+        indicator_list = []
+
     performance_dict = dict()
-    # 评价回测结果——计算回测终值，这是默认输出结果
+    # 默认评价回测结果——计算回测终值和交易基本信息，这些是默认输出结果
     performance_dict['final_value'] = eval_fv(looped_val=looped_values)
-    performance_dict['loop_start'] = looped_values.index[0]
-    performance_dict['loop_end'] = looped_values.index[-1]
+    performance_dict['backtest_start'] = looped_values.index[0]
+    performance_dict['backtest_end'] = looped_values.index[-1]
     performance_dict['complete_values'] = looped_values
     days, months, years, oper_count, total_invest, total_fee = eval_operation(looped_value=looped_values,
                                                                               cash_plan=cash_plan)
@@ -215,7 +254,7 @@ def evaluate(looped_values: pd.DataFrame,
     performance_dict['total_invest'] = total_invest
     performance_dict['total_fee'] = total_fee
     # 评价回测结果——计算总投资收益率
-    if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
+    if any(indicator in indicator_list for indicator in ['r', 'return', 'rtn', 'total_return']):
         rtn, annual_rtn, skewness, kurtosis, rtn_df = eval_return(looped_values, cash_plan)
         performance_dict['rtn'] = rtn
         performance_dict['annual_rtn'] = annual_rtn
@@ -223,7 +262,7 @@ def evaluate(looped_values: pd.DataFrame,
         performance_dict['kurtosis'] = kurtosis
         performance_dict['return_df'] = rtn_df
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-    if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
+    if any(indicator in indicator_list for indicator in ['m', 'mdd', 'max_drawdown']):
         mdd, peak_date, valley_date, recover_date, drawdown_list = eval_max_drawdown(looped_values)
         performance_dict['mdd'] = mdd
         performance_dict['peak_date'] = peak_date
@@ -231,32 +270,33 @@ def evaluate(looped_values: pd.DataFrame,
         performance_dict['recover_date'] = recover_date
         performance_dict['worst_drawdowns'] = drawdown_list
     # 评价回测结果——计算投资期间的波动率系数
-    if any(indicator in indicator_list for indicator in ['volatility', 'v']):
+    if any(indicator in indicator_list for indicator in ['v', 'volatility']):
         performance_dict['volatility'] = eval_volatility(looped_values)
-    # 评价回测结果——计算参考数据收益率以及平均年化收益率
-    if any(indicator in indicator_list for indicator in ['ref', 'ref_rtn', 'reference', 'ref_annual_rtn']):
-        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_benchmark, benchmark_data)
-        performance_dict['ref_rtn'] = ref_rtn
-        performance_dict['ref_annual_rtn'] = ref_annual_rtn
+    # 评价回测结果——计算基准数据收益率以及平均年化收益率
+    if any(indicator in indicator_list for indicator in ['b', 'benchmark_rtn', 'benchmark', 'benchmark_a_rtn']):
+        benchmark_rtn, benchmark_a_rtn = eval_benchmark(looped_values, hist_benchmark)
+        performance_dict['benchmark_rtn'] = benchmark_rtn
+        performance_dict['benchmark_a_rtn'] = benchmark_a_rtn
     # 评价回测结果——计算投资期间的beta贝塔系数
     if 'beta' in indicator_list:
-        performance_dict['beta'] = eval_beta(looped_values, hist_benchmark, benchmark_data)
+        performance_dict['beta'] = eval_beta(looped_values, hist_benchmark)
     # 评价回测结果——计算投资期间的夏普率
     if 'sharp' in indicator_list:
         interest_rate = cash_plan.ir
         performance_dict['sharp'] = eval_sharp(looped_values, interest_rate)
     # 评价回测结果——计算投资期间的alpha阿尔法系数
     if 'alpha' in indicator_list:
-        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark, benchmark_data)
+        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark)
     # 评价回测结果——计算投资回报的信息比率
     if 'info' in indicator_list:
-        performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark, benchmark_data)
+        performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark)
+    # 评价回测结果——计算投资回报的Calmar比率
     if 'calmar' in indicator_list:
-        performance_dict['info'] = eval_calmar(looped_values)
-    if bool(performance_dict):
-        return performance_dict
+        performance_dict['calmar'] = eval_calmar(looped_values)
     else:
-        return performance_dict
+        pass
+
+    return performance_dict
 
 
 def _get_yearly_span(value_df: pd.DataFrame) -> float:
@@ -287,14 +327,13 @@ def _get_yearly_span(value_df: pd.DataFrame) -> float:
     return total_year
 
 
-def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
+def eval_benchmark(looped_values, hist_benchmark):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
     Parameters
     ----------
     looped_values: pd.DataFrame
-    hist_benchmark: pd.DataFrame
-    benchmark_data: str
+    hist_benchmark: pd.Series
 
     Returns
     -------
@@ -302,15 +341,16 @@ def eval_benchmark(looped_values, hist_benchmark, benchmark_data):
     """
     total_year = _get_yearly_span(looped_values)
     try:
-        rtn_data = hist_benchmark[benchmark_data]
+        rtn_data = hist_benchmark
         rtn = (rtn_data[looped_values.index[-1]] / rtn_data[looped_values.index[0]])
+        looped_values['benchmark'] = rtn_data.loc[looped_values.index]
         return rtn - 1, rtn ** (1 / total_year) - 1.
     except Exception:
         pass
         return 0., 0.
 
 
-def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.0035):
+def eval_alpha(looped_value, total_invest, benchmark_value, risk_free_ror: float = 0.0035):
     """ 回测结果评价函数：alpha系数
     阿尔法系数(α)是基金的超额收益和按照β系数计算的期望收益之间的差额。 其计算方法如下：超额收益是基金的实际收益减去无
     风险投资收益(例如1年期银行定期存款收益)；期望收益是贝塔系数β和市场超额收益的乘积，反映基金由于市场整体变动而获得的收益；
@@ -326,10 +366,8 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         回测结果
     total_invest: float
         总投资金额
-    reference_value: pd.DataFrame
+    benchmark_value: pd.Series
         参考标准
-    reference_data: str
-        参考标准数据名称
 
     Returns
     -------
@@ -338,19 +376,19 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     loop_len = len(looped_value)
     # 计算alpha的过程需要用到beta，如果beta不存在则需要先计算beta
     if 'beta' not in looped_value.columns:
-        b = eval_beta(looped_value, reference_value, reference_data)
+        b = eval_beta(looped_value, benchmark_value)
     if loop_len <= 250:
         # 计算年化收益，如果回测期间小于一年，直接计算平均年收益率
         total_year = _get_yearly_span(looped_value)
         final_value = eval_fv(looped_value)
         strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-        reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
-        b = eval_beta(looped_value, reference_value, reference_data)
-        alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+        benchmark_return, benchmark_yearly_return = eval_benchmark(looped_value, benchmark_value)
+        b = eval_beta(looped_value, benchmark_value)
+        alpha = (strategy_return - risk_free_ror) - b * (benchmark_yearly_return - risk_free_ror)
         # 当回测期间小于1年时，填充空白alpha值
         looped_value['alpha'] = np.nan
         # looped_value['alpha'].iloc[-1] = alpha  # Chained assignment is not allowed soon
-        looped_value.at[looped_value.index[-1], 'alpha'] = alpha # use .at to avoid chained assignment
+        looped_value.at[looped_value.index[-1], 'alpha'] = alpha  # use .at to avoid chained assignment
         # following usage also works
         # looped_value.loc[looped_value.index[-1], 'alpha'] = alpha
         # or
@@ -358,14 +396,14 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     else:  # loop_len > 250
         # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
-        bench = reference_value[reference_data]
+        bench = benchmark_value
         bench_ret = (bench / bench.shift(250)) - 1
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
         alpha = looped_value['alpha'].mean()
     return alpha
 
 
-def eval_beta(looped_value, reference_value, reference_data):
+def eval_beta(looped_value, benchmark_value: pd.Series):
     """ 贝塔系数。考察投资组合与基准投资组合之间的相关性，它度量了投资组合相对于基准组合的风险大小或波动大小。
     贝塔系数越大，表示该投资组合相对于基准组合波动越大（通常使用市场平均水平作为基准）：
      - 当贝塔系数为1时，表示投资组合的波动等于市场平均水平
@@ -379,10 +417,8 @@ def eval_beta(looped_value, reference_value, reference_data):
     ----------
     looped_value:pd.DataFrame,
         回测结果，需要计算Beta的股票价格或投资收益历史价格
-    reference_value: pd.DataFrame,
+    benchmark_value: pd.Series,
         参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
-    reference_data: str:
-        参考结果的数据类型，如close, open, low 等
 
     Returns
     -------
@@ -392,17 +428,16 @@ def eval_beta(looped_value, reference_value, reference_data):
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = reference_value[reference_data]
-    ref_ret = (ref / ref.shift(1)) - 1
+    ref_ret = benchmark_value.pct_change()
     if len(looped_value) > 250:
         ret_dev = looped_value['pct_change'].rolling(250).var()
-        looped_value['beta'] = looped_value['pct_change'].rolling(250).cov(ref_ret) / ret_dev
+        ret_cov = looped_value['pct_change'].rolling(250).cov(ref_ret)
+        looped_value['beta'] = ret_cov / ret_dev
         return looped_value['beta'].mean()
     else:
         ret_dev = looped_value['pct_change'].var()
         beta = looped_value['pct_change'].cov(ref_ret) / ret_dev
         looped_value['beta'] = np.nan
-        # looped_value['beta'].iloc[-1] = beta  # Chained assignment is not allowed soon
         looped_value.at[looped_value.index[-1], 'beta'] = beta  # use .at to avoid chained assignment
         return beta
 
@@ -469,21 +504,23 @@ def eval_volatility(looped_value, logarithm: bool = True):
         return volatility
 
 
-def eval_info_ratio(looped_value, reference_value, reference_data):
+def eval_info_ratio(looped_value, benchmark_value):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
-        information ratio = (portfolio return - reference return) / tracking error
+        information ratio = (portfolio return - benchmark return) / tracking error
 
     Parameters
     ----------
     looped_value: pd.DataFrame,
         回测结果，需要计算info_ratio的股票价格或投资收益历史价格
+    benchmark_value: pd.Series,
+        基准结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
 
     Returns
     -------
     info_ratio: float
     """
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = reference_value[reference_data]
+    ref = benchmark_value
     ref_ret = (ref / ref.shift(1)) - 1
     track_error = (ref_ret - ret).std(
             ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
@@ -510,10 +547,9 @@ def eval_calmar(looped_value):
         looped_value['calmar'] = ret / drawdown.rolling(250).max()
         return looped_value['calmar'].mean()
     else:  # len(looped_value <= 250
-        ret = value[-1] / value[0] - 1
+        ret = value.iloc[-1] / value.iloc[0] - 1
         calmar = ret / drawdown.max()
         looped_value['calmar'] = np.nan
-        # looped_value['calmar'].iloc[-1] = calmar  # Chained assignment is not allowed soon
         looped_value.at[looped_value.index[-1], 'calmar'] = calmar  # use .at to avoid chained assignment
         return calmar
 
@@ -627,10 +663,12 @@ def eval_return(looped_val, cash_plan):
     kurtosis: float，应用该评价方法对回测模拟结果的评价分数
     looped_val: pd.DataFrame，回测器生成输出的交易模拟记录
     """
+
     if looped_val.empty:
         return -np.inf, -np.inf, np.nan, np.nan, pd.DataFrame()
     invest_plan = cash_plan.plan
-    looped_val['invest'] = invest_plan.amount
+    looped_val['invest'] = 0
+    looped_val.iloc[np.searchsorted(looped_val.index, invest_plan.index), looped_val.columns.get_loc('invest')] = invest_plan.amount.values
     looped_val = looped_val.fillna(0)
     looped_val['invest'] = looped_val.invest.cumsum()
     looped_val['rtn'] = looped_val.value / looped_val['invest'] - 1
@@ -721,14 +759,14 @@ def eval_operation(looped_value, cash_plan):
     total_months = int(np.round(total_days / 30))
     # 使用looped_values统计交易过程中的多空持仓时间比例
     holding_stocks = looped_value.copy()
-    holding_stocks.drop(columns=['cash', 'fee', 'value', 'reference'], inplace=True)
+    holding_stocks.drop(columns=['cash', 'fee', 'value'], inplace=True)
     # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
     holding_movements = holding_stocks - holding_stocks.shift(1)
-    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign（）以便后续方便加总统计数量
-    holding_long = np.where(holding_stocks>0, np.sign(holding_stocks), 0)
-    holding_short = np.where(holding_stocks<0, np.sign(holding_stocks), 0)
-    holding_inc = np.where(holding_movements>0, np.sign(holding_movements), 0)
-    holding_dec = np.where(holding_movements<0, np.sign(holding_movements), 0)
+    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign()以便后续方便加总统计数量
+    holding_long = np.where(holding_stocks > 0, np.sign(holding_stocks), 0)
+    holding_short = np.where(holding_stocks < 0, np.sign(holding_stocks), 0)
+    holding_inc = np.where(holding_movements > 0, np.sign(holding_movements), 0)
+    holding_dec = np.where(holding_movements < 0, np.sign(holding_movements), 0)
     # 统计数量
     sell_counts = -holding_dec.sum(axis=0)
     buy_counts = holding_inc.sum(axis=0)
@@ -741,6 +779,7 @@ def eval_operation(looped_value, cash_plan):
     op_counts['long'] = long_percent
     op_counts['short'] = short_percent
     op_counts['empty'] = 1 - op_counts.long - op_counts.short
+
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
     # 返回所有输出变量

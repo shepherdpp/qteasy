@@ -16,7 +16,8 @@ import time
 import warnings
 import numpy as np
 import pandas as pd
-import types
+
+from typing import Union
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -24,12 +25,17 @@ from functools import wraps, lru_cache
 TIME_FREQ_LEVELS = {
     'Y':     10,
     'YE':    10,
+    'YS':    10,
     'Q':     20,
     'QE':    20,
+    'QS':    20,
     'M':     30,
     'ME':    30,
+    'MS':    30,
     'W':     40,
+    'w':     40,
     'D':     50,
+    'd':     50,
     'H':     60,
     'h':     60,
     '30MIN': 70,
@@ -47,28 +53,7 @@ TIME_FREQ_LEVELS = {
 }  # TODO: 最好是将所有的frequency封装为一个类，确保字符串大小写正确，且引入复合频率的比较和处理
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']  # TODO: add 'HK', 'US' to available_asset_types
-PROGRESS_BAR = {0:  '----------------------------------------', 1:  '#---------------------------------------',
-                2:  '##--------------------------------------', 3:  '###-------------------------------------',
-                4:  '####------------------------------------', 5:  '#####-----------------------------------',
-                6:  '######----------------------------------', 7:  '#######---------------------------------',
-                8:  '########--------------------------------', 9:  '#########-------------------------------',
-                10: '##########------------------------------', 11: '###########-----------------------------',
-                12: '############----------------------------', 13: '#############---------------------------',
-                14: '##############--------------------------', 15: '###############-------------------------',
-                16: '################------------------------', 17: '#################-----------------------',
-                18: '##################----------------------', 19: '###################---------------------',
-                20: '####################--------------------', 21: '#####################-------------------',
-                22: '######################------------------', 23: '#######################-----------------',
-                24: '########################----------------', 25: '#########################---------------',
-                26: '##########################--------------', 27: '###########################-------------',
-                28: '############################------------', 29: '#############################-----------',
-                30: '##############################----------', 31: '###############################---------',
-                32: '################################--------', 33: '#################################-------',
-                34: '##################################------', 35: '###################################-----',
-                36: '####################################----', 37: '#####################################---',
-                38: '######################################--', 39: '#######################################-',
-                40: '########################################'
-                }
+
 NUMBER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
 INTEGER_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)$')
 FLOAT_IDENTIFIER = re.compile(r'^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)$')
@@ -79,7 +64,7 @@ TS_CODE_IDENTIFIER_CN_STOCK = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ)$')
 TS_CODE_IDENTIFIER_CN_INDEX = re.compile(r'^[0-9]{6}(\.SH|\.SZ)$')
 TS_CODE_IDENTIFIER_CN_FUND = re.compile(r'^[0-9]{6}(\.OF)$')
 TS_CODE_IDENTIFIER_ALL = re.compile(r'^[0-9]{6}(\.SZ|\.SH|\.BJ|\.OF)$')
-ALL_COST_PARAMETERS = ['buy_fix', 'sell_fix', 'buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slipage']
+ALL_COST_PARAMETERS = ['buy_rate', 'sell_rate', 'buy_min', 'sell_min', 'slippage']
 
 AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                           'proportion signal': 'ps',
@@ -246,7 +231,7 @@ def parse_freq_string(freq, std_freq_only=False):
     return qty, main_freq, sub_freq
 
 
-def get_main_freq_level(freq) -> int or None:
+def get_main_freq_level(freq) -> Union[int, None]:
     """ 确定并返回freqency的级别
 
     Parameters
@@ -342,44 +327,6 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
         return f_retry  # true decorator
 
     return deco_retry
-
-
-def mask_to_signal(lst):
-    """将持仓蒙板转化为交易信号.
-
-    转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
-    则产生相应的补仓买入信号；如果持仓比率降低，则产生相应的卖出信号将仓位降低到目标水平。
-    生成的信号范围在(-1, 1)之间，负数代表卖出，正数代表买入，且具体的买卖信号signal意义如下：
-    signal > 0时，表示用总资产的 signal * 100% 买入该资产， 如0.35表示用当期总资产的35%买入该投资产品，如果
-        现金总额不足，则按比例调降买入比率，直到用尽现金。
-    signal < 0时，表示卖出本期持有的该资产的 signal * 100% 份额，如-0.75表示当期应卖出持有该资产的75%份额。
-    signal = 0时，表示不进行任何操作
-
-    Parameters
-    ----------
-    lst: ndarray
-        持仓蒙板
-
-    Returns
-    -------
-    op，ndarray，交易信号矩阵
-    """
-    np.seterr(divide='ignore', invalid='ignore')
-    if lst.ndim == 2:  # 如果输入信号是2D的，则逐行操作（axis=0）
-        # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
-        # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%
-        op = (lst - np.roll(lst, shift=1, axis=0))
-        # 差额小于0者需要计算差额与上期持仓数之比，作为卖出信号的强度，如上期为0.7，本期为0.35，差额为-0.35，则卖出信号强度
-        # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
-        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=0)), op)
-        # 补齐因为计算差额导致的第一行数据为NaN值的问题
-        # print(f'creating operation signals, first signal is {lst[0]}')
-        op[0] = lst[0]
-    else:  # 如果输入信号是3D的，同样逐行操作，但Axis和2D情形不同(axis=1)
-        op = (lst - np.roll(lst, shift=1, axis=1))
-        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=1)), op)
-        op[:, 0, :] = lst[:, 0, :]
-    return op.clip(-1, 1)
 
 
 def unify(arr):
@@ -516,7 +463,7 @@ def sec_to_duration(t: float, estimation: bool = False, short_form: bool = False
         return time_str
 
 
-def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
+def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
     """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
 
     1，当输入item为slice时，直接返回slice
@@ -578,7 +525,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         return None
 
 
-def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dict:
+def labels_to_dict(input_labels: Union[list, str], target_list: Union[list, range]) -> dict:
     """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
@@ -680,15 +627,15 @@ def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=N
     return res
 
 
-def input_to_list(pars, dim, padder=None):
+def input_to_list(pars, dim=None, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     Parameters
     ----------
-    pars: str or int or list of int or list of str
+    pars: obj or list of obj or list of obj
         需要转化为list对象的输出对象
     dim: int
-        需要生成的目标list的元素数量
+        需要生成的目标list的元素数量，如果给出None，则不补足
     padder: Any
         当元素数量不足的时候用来补充的元素
 
@@ -707,18 +654,19 @@ def input_to_list(pars, dim, padder=None):
     >>> input_to_list('a', 3)
     ['a', 'a', 'a']
     """
-    if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
+    if not isinstance(pars, (list, tuple, dict)):  # 处理非iterable类型的输入
         pars = [pars] * dim
     else:
         pars = list(pars)  # 正常处理，输入转化为列表类型
     par_dim = len(pars)
     # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
-    if par_dim < dim:
+    if (dim is not None) and (par_dim < dim):
         pars.extend([padder] * (dim - par_dim))
     return pars
 
 
-def regulate_date_format(date_str: [str, object]) -> str:
+def regulate_date_format(date_str: Union[str, object],
+                         force_format: str = None) -> str:
     """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
         将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
 
@@ -726,6 +674,9 @@ def regulate_date_format(date_str: [str, object]) -> str:
     ----------
     date_str: str, date time like
         时间日期字符串
+    force_format: str, optional
+        强制使用某种格式输出，默认None, 可选'date': '%Y-%m-%d' 或 'datetime': '%Y-%m-%d %H:%M:%S'
+        或者其他给出的合法的strftime格式字符串
 
     Returns
     -------
@@ -746,14 +697,23 @@ def regulate_date_format(date_str: [str, object]) -> str:
     except Exception as e:
         raise ValueError(f'{e}: {date_str} is not a valid date-time')
     from datetime import time
-    if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
-        str_format = '%Y-%m-%d'
+    if force_format is None:
+        if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
+            str_format = '%Y-%m-%d'
+        else:
+            str_format = '%Y-%m-%d %H:%M:%S'
     else:
-        str_format = '%Y-%m-%d %H:%M:%S'
+        if force_format == 'date':
+            str_format = '%Y-%m-%d'
+        elif force_format == 'datetime':
+            str_format = '%Y-%m-%d %H:%M:%S'
+        else:
+            str_format = force_format
+
     return date_time.strftime(str_format)
 
 
-def list_to_str_format(str_list: [list, str]) -> str:
+def list_to_str_format(str_list: Union[list[str], str]) -> str:
     """ 将list型的str数据转变为逗号分隔的str类型，
 
     Parameters
@@ -777,46 +737,7 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, *, comments: str = '', column_width: int = -1, cut_off_pos: float = 0.8):
-    """根据输入的数字生成进度条字符串并刷新
-
-    Parameters
-    ----------
-    prog: int
-        当前进度，用整数表示
-    total: int
-        总体进度，默认为100
-    comments: str, optional
-        需要显示在进度条中的文字信息
-    column_width: int, optional, default: -1
-        进度条的宽度，如果为-1则自动获取终端的宽度, 默认为-1
-        如果为0，则宽度不限制，输入其他整数则限制进度条的宽度
-    cut_off_pos: float, optional, default: 0.8
-        进度条的截断位置，当进度条长度超过column_width时，进度条将被从cut_off_pos位置截断，只显示前后部分
-    """
-    if column_width == -1:
-        column_width, _ = shutil.get_terminal_size()
-    if column_width < 20:
-        column_width = 20
-
-    if cut_off_pos > 1:
-        cut_off_pos = 1
-
-    if total <= 0:
-        return
-
-    if prog > total:
-        prog = total
-
-    progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
-    if column_width > 0:
-        progress_str = adjust_string_length(progress_str, column_width, cut_off=cut_off_pos)
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
-
-
-def get_current_timezone_datetime(time_zone='local'):
+def get_current_timezone_datetime(time_zone: str = 'local') -> pd.Timestamp:
     """ 获取指定时区的当前时间，同时确保返回的时间是tz_naive的
 
     如果time_zone为'local', 获取当前时区的当前时间。
@@ -1214,7 +1135,7 @@ def weekday_name(weekday: int):
     return weekday_names[weekday]
 
 
-def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
+def date_to_quarter_format(date: Union[str, pd.Timestamp]) -> str:
     """ convert a Timestamp or date like to quarter format like 2020Q3"""
     try:
         date = pd.to_datetime(date).floor(freq='d')
@@ -1224,7 +1145,7 @@ def date_to_quarter_format(date: [str, pd.Timestamp]) -> str:
     return f'{date.year}Q{date.quarter}'
 
 
-def date_to_month_format(date: [str, pd.Timestamp]) -> str:
+def date_to_month_format(date: Union[str, pd.Timestamp]) -> str:
     """ convert a Timestamp or date like to month format like 202012"""
     try:
         date = pd.to_datetime(date).floor(freq='d')
@@ -1279,7 +1200,7 @@ def list_truncate(lst: list, trunc_size: int, as_list: bool = False):
         return (lst[i:i + trunc_size] for i in range(0, len(lst), trunc_size))
 
 
-def is_number_like(key: [str, int, float]) -> bool:
+def is_number_like(key: Union[str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的数字
 
     Parameters
@@ -1300,7 +1221,7 @@ def is_number_like(key: [str, int, float]) -> bool:
     return False
 
 
-def is_integer_like(key: [str, int]) -> bool:
+def is_integer_like(key: Union[str, int]) -> bool:
     """ 判断一个字符串是否是一个合法的整数
 
     Parameters
@@ -1320,7 +1241,7 @@ def is_integer_like(key: [str, int]) -> bool:
     return False
 
 
-def is_float_like(key: [str, int, float]) -> bool:
+def is_float_like(key: Union[str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的浮点数
 
     Parameters
@@ -1939,7 +1860,66 @@ def rolling_window(arr, window, axis=0):
                       writeable=False)
 
 
-def reindent(s, num_spaces=4):
+class SlideView:
+    def __init__(self, array: np.ndarray):
+        """
+        创建一个滑动视图，使得 slide[i] 返回 array[:i] 的视图
+
+        参数:
+            array: 输入的numpy数组
+        """
+        self.array = np.asarray(array)
+
+    def __getitem__(self, index):
+        """
+        实现索引访问，返回 array[:index] 的视图
+        """
+        if index < 0:
+            # 如果索引小于0，则从末位开始计数
+            return self.array[0:index]
+        else:
+            return self.array[:index + 1]
+
+    def __len__(self):
+        """
+        返回视图的长度，等于原数组长度+1（因为包括了从0到整个数组的所有切片）
+        """
+        return len(self.array) + 1
+
+
+class FunctionTimer:
+    def __init__(self):
+        self.timers = {}
+
+    def start_timer(self, func_name):
+        """开始计时"""
+        if func_name not in self.timers:
+            self.timers[func_name] = 0
+        return time.perf_counter()
+
+    def end_timer(self, func_name, start_time):
+        """结束计时并累加"""
+        elapsed = time.perf_counter() - start_time
+        self.timers[func_name] += elapsed
+
+    def time_function(self, func_name, func, *args, **kwargs):
+        """包装函数调用进行计时"""
+        start = self.start_timer(func_name)
+        result = func(*args, **kwargs)
+        self.end_timer(func_name, start)
+        return result
+
+    def get_stats(self):
+        """获取计时统计"""
+        return self.timers.copy()
+
+    def print_stats(self):
+        """打印计时统计"""
+        for func_name, total_time in self.timers.items():
+            print(f"{func_name} 总耗时: {total_time:.4f} 秒")
+
+
+def reindent(s, num_spaces: int = 4) -> str:
     """ 给定一个（通常多行）的string，在每一行前面添加空格形成缩进效果
 
     Parameters
@@ -1969,37 +1949,6 @@ def reindent(s, num_spaces=4):
     s = [(num_spaces * ' ') + line.lstrip() for line in s]
     s = '\n'.join(s)
     return s
-
-
-def truncate_string(s, n, padder='.') -> str:  # to be deprecated
-    """ to be deprecated, 调整字符串为指定长度，为了保证兼容性，暂时保留此函数
-    以后使用adjust_string_length代替
-
-    Parameters
-    ----------
-    s: str
-        字符串
-    n: int
-        需要保留的长度
-    padder: str, Default: '...'
-        填充在截短的字符串后用于表示省略号的字符，默认为'.'
-
-    Returns
-    -------
-    str
-
-    Examples
-    --------
-    >>> truncate_string('hello world', 5)
-    'he...'
-    >>> truncate_string('hello world', 5, padder='*')
-    'he***'
-    >>> truncate_string('hello world', 3)
-    'h..'
-    """
-    warnings.warn('truncate_string will be deprecated, use adjust_string_length instead',
-                  DeprecationWarning, stacklevel=2)
-    return adjust_string_length(s, n, filler=padder)
 
 
 def adjust_string_length(s, n, *,
@@ -2359,3 +2308,25 @@ def read_binary_file(*, file_path: str, file_name: str, mode: str = 'rb'):
         saved_data = pickle.load(f)
 
     return saved_data
+
+
+def time_string_to_hour_float(time_string):
+    """
+    Converts a time string (e.g., "HH:MM") to a float representing hours.
+
+    Parameters
+    ----------
+    time_string (str):
+        The time string in "HH:MM" format.
+
+    Returns
+    -------
+        float: The time represented as a float (e.g., 15.5 for "15:30").
+    """
+
+    hours_str, minutes_str = time_string.split(':')
+    hours = int(hours_str)
+    minutes = int(minutes_str)
+
+    total_hours = hours + (minutes / 60.0)
+    return total_hours

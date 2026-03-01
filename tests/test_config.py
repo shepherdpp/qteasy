@@ -55,16 +55,15 @@ class TestConfig(unittest.TestCase):
         # test legal parameter configurations in QT_CONFIG
         qt.reset_config()
         self.assertEqual(QT_CONFIG.mode, 1)
-        self.assertEqual(QT_CONFIG.opti_type, 'single')
         self.assertEqual(QT_CONFIG.cash_delivery_period, 0)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
-        self.assertEqual(QT_CONFIG.invest_start, '20160405')
+        # 日期类参数默认已改为 None，由 config_parser 在运行时推导
+        self.assertIsNone(QT_CONFIG.invest_start)
         self.assertEqual(QT_CONFIG.cost_rate_buy, 0.0003)
         self.assertEqual(QT_CONFIG.benchmark_asset, '000300.SH')
 
         qt.configure(
                 mode=2,
-                opti_type='multiple',
                 cash_delivery_period=1,
                 backtest_price_adj='b',
                 invest_start='20191010',
@@ -72,7 +71,6 @@ class TestConfig(unittest.TestCase):
                 benchmark_asset='000001.SH'
         )
         self.assertEqual(QT_CONFIG.mode, 2)
-        self.assertEqual(QT_CONFIG.opti_type, 'multiple')
         self.assertEqual(QT_CONFIG.cash_delivery_period, 1)
         self.assertEqual(QT_CONFIG.backtest_price_adj, 'b')
         self.assertEqual(QT_CONFIG.invest_start, '20191010')
@@ -83,10 +81,10 @@ class TestConfig(unittest.TestCase):
         # test illegal parameter configurations
         # illegal values
         self.assertRaises(Exception, qt.configure, mode=5)
-        self.assertRaises(Exception, qt.configure, opti_type='mul')
         self.assertRaises(Exception, qt.configure, cash_delivery_period='abc')
         self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
-        self.assertRaises(Exception, qt.configure, invest_start=None)
+        # invest_start=None 为合法默认值，不再断言为异常；改为断言非法日期字符串
+        self.assertRaises(Exception, qt.configure, invest_start='invalid_date')
         self.assertRaises(Exception, qt.configure, benchmark_asset=15)
         # parameters that do not exist
         self.assertRaises(Exception, qt.configure, wrong_parameter=3)
@@ -99,6 +97,21 @@ class TestConfig(unittest.TestCase):
         )
         self.assertEqual(QT_CONFIG.self_defined_par1, 2)
         self.assertEqual(QT_CONFIG.self_defined_par2, 'user_defined_value')
+
+        # 已删除的配置键（2.0 中移除）不可再通过 only_built_in_keys=True 设置
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, maximize_cash_usage=True)
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, benchmark_asset_type='IDX')
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, benchmark_dtype='close')
+
+    def test_removed_config_keys_not_in_default(self):
+        """重置配置后，已删除的配置键不应出现在 QT_CONFIG 中"""
+        qt.reset_config()
+        self.assertIsNone(getattr(QT_CONFIG, 'maximize_cash_usage', None))
+        self.assertIsNone(getattr(QT_CONFIG, 'benchmark_asset_type', None))
+        self.assertIsNone(getattr(QT_CONFIG, 'benchmark_dtype', None))
 
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())

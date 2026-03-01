@@ -81,6 +81,15 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs) -> No
                                                           _valid_qt_kwargs().values())}
         _update_config_kwargs(set_cfg, default_kwargs, raise_if_key_not_existed=True)
 
+    # 热更新：当修改的是全局 QT_CONFIG 时，刷新日志路径（sys_log_file_path / trade_log_file_path）
+    if config is None:
+        try:
+            import qteasy as qt
+            if hasattr(qt, '_refresh_log_paths'):
+                qt._refresh_log_paths()
+        except Exception:
+            pass
+
 
 def set_config(config=None, reset=False, only_built_in_keys=True, **kwargs) -> None:
     """ 配置qteasy的运行参数QT_CONFIG，等同于configure()

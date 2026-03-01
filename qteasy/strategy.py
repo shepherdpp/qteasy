@@ -12,130 +12,159 @@
 import numpy as np
 import pandas as pd
 from abc import abstractmethod, ABCMeta
+from typing import Union, List, Tuple, Dict, Any, Callable, Literal, Iterable
 import warnings
 
 from qteasy.utilfuncs import (
     TIME_FREQ_STRINGS,
-    str_to_list,
+    input_to_list, str_to_list,
 )
+from qteasy.datatypes import (
+    DataType,
+    StgData,
+)
+
+from qteasy.parameter import Parameter
+
+
+def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
+    """检查字典的键和值的类型"""
+    assert isinstance(pars, dict), f'parameter "{par_name}" is invalid, please check your input'
+    assert all(isinstance(dtype, value_type) for dtype in pars.values()), \
+        f'parameter "{par_name}" should be a dict of {value_type} objects, got {pars} instead'
+    assert all(isinstance(dtype.__getattribute__(key_type), str) for dtype in pars.values()), \
+        f'parameter "{par_name}" should be a dict of {value_type} objects with {key_type} as key, ' \
+        f'got {pars} instead'
+    assert all(key == dtype.__getattribute__(key_type) for key, dtype in pars.items()), \
+        f'parameter "{par_name}" should be a dict of {value_type} objects with {key_type} as key, ' \
+        f'got {pars} instead'
+
+    return True
 
 
 class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
+    定义一个交易策略，需要包含三大要素：
+
+    1，策略的可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
+        策略的可调参数通过Parameter对象来定义，每个Parameter对象包含参数的名称、类型、取值范围和默认值
+        定义好Parameter对象后，可调参数可以通过策略对象的pars属性设置，而参数的值可以通过par_values参
+        数在策略初始化后进行设置
+
+    2，生成交易信号所需的历史数据，历史数据通过指定数据类型名称、数据的频率和时间窗口长度来确定。
+        一个交易策略可以使用多种不同的历史数据类型，各种数据类型的频率和窗口长度可以不同
+
+    3，策略的运行逻辑，即如何根据历史数据生成交易信号，这个逻辑通过重写策略的realize()方法来实现
+        在realize()方法中，可以使用get_pars()和get_data()方法来获取策略的参数和历史数据来计算交易信号
+
+    如果要创建一个自定义交易策略对象，使用下面的方法：
+    ```python
+    class MyStrategy(BaseStrategy):
+
+        def __init__(self, par_values=(<parameter values>), **kwargs):
+            super().__init__(
+                name='<strategy name>',
+                description='<strategy description>',
+                pars=[<list of Parameter objects>],  # 定义策略的可调参数类型和取值范围
+                data_types=[<list of DataType / StgData objects>],  # 定义策略使用的数据类型，关于更多细节见qteasy文档
+                **kwargs,
+            )
+            if par_values:
+                self.update_par_values(par_values)
+
+        def realize(self):
+            '''实现策略的交易逻辑，生成交易信号'''
+            # 获取策略参数
+            param1, param2 = self.get_pars('param1', 'param2')
+            # 获取历史数据
+            price_data = self.get_data('price')
+            # 计算交易信号
+            signals = ...  # 根据参数和数据计算交易信号
+            return signals
+
+    需要注意，交易策略的输出交易信号并不是真正的交易指令，而是一个实数类型的交易信号，在后续的交易执行环节中，
+    这个信号将被解析为具体的交易指令。交易信号的类型由交易员对象的signal_type属性决定，交易信号的类型有三种，
+    分别是：
+
+        - 'VS'：数量买卖信号，最简单直接的信号类型。这个实数代表的是买入或卖出相应数量的股票：
+            例如10表示买入10股股票，-5表示卖出5股股票
+        - 'PT'：仓位比例信号，这个实数代表的是目标持仓比例，通过买入或卖出股票使当前持仓比例达到目标持仓比例，
+            例如0.5表示持有50%的多头仓位，如果目前持有20%的多头，则需要买入30%的股票，
+            如果目前持有70%的多头，则需要卖出20%的股票
+        - 'PS'：比例买卖信号，这个实数代表的是买入或卖出相应比例的股票：
+            例如0.5表示使用当前总投资额的50%买入股票，如果当前总投资额为10000元，则买入5000元的股票
+
+    不同交易信号在三种信号类型下的含义示例见下表：
+
+            signal\type |         PT           |            PS           |       VS
+            ------------------------------------------------------------------------------------
+                1.5     | 持有多头仓位比例150%*   |  买入总投资额150%的股票    | 多头买入1.5股或1.5份
+                0.5     |   持有多头仓位比例50%   |  买入总投资额50%的股票     | 多头买入0.5股或0.5份
+                0.0     |    调整持仓比例至0      |     不进行任何操作        |     不进行任何操作
+               -0.5     |  持有空头仓位比例至50%   |     卖出当前持仓的50%     | 卖出当前持仓0.5股或0.5份
+               -1.5     | 持有空头仓位比例至150%*  | 卖出当前全部持仓并持50%空仓 | 卖出1.5股或1.5份或空头买入
+
     Properties
     ----------
-    pars: any
-        策略可调参数，可以是任意类型。策略的优化过程，就是寻找策略可调参数的最优组合的过程。
-    opt_tag: int {0, 1}
-        策略的优化标签，0表示不参与优化，1表示参与优化
-    par_count: int
-        策略可调参数的个数
-    par_types: [list, str]
-        策略可调参数的类型，可以是一个列表，也可以是一个字符串，如果是字符串，则表示所有参数的类型都相同
-    par_range: [list, tuple]
-        策略可调参数的取值范围，可以是一个列表，也可以是一个元组，如果是列表，则表示所有参数的取值范围都相同
-    stg_type: str
-        策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
     name: str
-        策略名称，用户自定义，用于区分不同的策略
+        策略名称，用户自定义，用于区分不同的策略一个
     description: str
         策略描述，用户自定义，用于描述策略的基本原理
-    data_freq: str
-        策略所使用的数据的频率，可以是以下几种类型：
-        'd'：日线数据
-        'w'：周线数据
-        'm'：月线数据
-    sample_freq: str
-        策略的采样频率，可以是以下几种类型：
-        'd'：日线数据
-        'w'：周线数据
-        'm'：月线数据
-    window_length: int
-        策略所使用的数据的长度，即策略所使用的数据的长度，例如策略所使用的均线的长度
-    data_types: [str, list]
-        策略所使用的数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
-    reference_data_types: [str, list]
-        策略所使用的参考数据的类型，可以是一个字符串，也可以是一个列表，如果是字符串，则表示所有数据的类型都相同
-    bt_price_type: str
-        策略回测时的价格类型，可以是以下几种类型：
-        'open'：开盘价
-        'high'：最高价
-        'low'：最低价
-        'close'：收盘价
+    strategy_id: str
+        策略的唯一ID，在策略运行时由系统分配
+    group_id: str
+        策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略，该ID由系统分配
+    par_values: tuple
+        策略参数，元组，每个策略都包含若干个可调参数，这些参数可以在策略运行前进行调整，影响策略的性能表现
+    signal_type: str
+        策略生成的交易信号类型，不同的信号类型将被解析为不同的交易指令
+        - 'pt'表示仓位比例，
+        - 'ps'表示买卖信号，
+        - 'vs'表示持仓变化量
 
     Methods
     -------
-    generate(data: np.ndarray, pars: any = None)
-        生成策略信号，该方法是策略的核心方法，所有的策略都必须实现该方法
+    get_pars(*par_names)
+        获取策略参数的值，可以获取多个参数
+    get_data(*data_type_ids)
+        获取历史数据，可以获取多个数据类型的数据
+    realize()
+        生成策略信号，抽象方法，在几种不同的子类中实现
 
     """
-    __mataclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     AVAILABLE_STG_RUN_TIMING = ['open', 'close', 'unit_nav', 'accum_nav']
 
     def __init__(
             self,
-            pars: any = None,
+            *,
+            name: str = '',
+            description: str = '',
+            stg_type: str = 'BASE',
+            pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
+            data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
+            use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
+            window_length: Union[int, List[int], Dict[str, int]] = 270,
             opt_tag: int = 0,
-            stg_type: str = 'strategy type',
-            name: str = 'strategy name',
-            description: str = 'intro text of strategy',
-            par_count: int = None,
-            par_types: [[str], str] = None,
-            par_range: [list, tuple] = None,
-            strategy_run_freq: str = 'd',
-            sample_freq: str = None,  # to be deprecated
-            strategy_run_timing: str = 'close',
-            bt_price_type: str = None,  # to be deprecated
-            strategy_data_types: [str, [str]] = 'close',
-            data_types: [str, [str]] = None,  # to be deprecated
-            use_latest_data_cycle: bool = True,
-            reference_data_types: [str, [str]] = '',
-            data_freq: str = 'd',
-            window_length: int = 270,
+            par_values: Union[Tuple[Any], List[Any]] = None,
     ):
         """ 初始化策略
 
         Parameters
         ----------
-        pars: any
-            策略参数，可以是任意类型，但是需要根据具体的策略类来确定具体的参数类型
-        opt_tag: int {0, 1}
-            策略的优化标签，0表示不参与优化，1表示参与优化
-        stg_type: str
-            策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
         name: str
             策略名称，用户自定义策略的名称，用于区分不同的策略
         description: str
             策略描述，用户自定义策略的描述，用于区分不同的策略
-        par_count: int
-            策略可调参数的个数
-        par_types: list of str, {'int', 'float', 'enum'}
-            策略可调参数的类型，每个参数的类型可以是int, float或enum
-        par_range: list or tuple
-            策略可调参数的取值范围，每个参数的取值范围可以是一个tuple，也可以是一个list
-        strategy_run_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-            TODO: 如果运行频率低于日频，可以通过'w-Fri'等方式指定哪一天运行
-        sample_freq: str, deprecated
-            策略的运行频率，可以是分钟、日频、周频、月频、季频或年频，分别表示每分钟运行一次、每日运行一次等等
-        strategy_run_timing: datetime-like or str
-            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
-            例如'09:30:00'表示每天的09:30:00运行策略，可以设定为'open'或'close'，表示每天开盘或收盘运行策略
-            如果运行频率高于天频，则这个参数无效，策略运行时间为交易日正常交易时段中频次分割点。
-            例如，如果运行频率为'h', 假设股市9：30开市，15：30收市
-            则策略运行时间为
-            ['09:30:00', '10:30:00',
-             '11:30:00', '13:00:00',
-             '14:00:00', '15:00:00',]
-        bt_price_type: str, deprecated
-            策略运行的时间点，策略运行频率低于天时，这个参数是一个时间，表示策略每日的运行时间
-        strategy_data_types: str or list of str
-            策略使用的数据类型，例如close, open, high, low等
-        data_types: str or list of str, deprecated
-            策略使用的数据类型，例如close, open, high, low等
-        use_latest_data_cycle: bool, default True
+        stg_type: str
+            策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
+        pars: Parameter, list of Parameter, dict {str: Parameter}, default None
+            策略可调参数，Parameter对象，确定策略的可调参数，参数类型以及取值范围
+        data_types: DataType, list of DataTypes, dict{str: DataType}
+            策略使用的数据类型，每个数据类型一个类型名
+        use_latest_data_cycle: bool, list of bool, dict{str: bool}, default True
             是否使用最新的数据周期生成交易信号，默认True
             如果为True: 默认值
                 在实盘运行时，会尝试下载当前周期的最新数据，或尝试使用最近的实时数据估算当前周期的数据，此时应该注意避免出现未来函数，
@@ -145,177 +174,60 @@ class BaseStrategy:
             如果为False：
                 在回测或实盘运行时都仅使用当前已经获得的上一周期的已知数据生成交易信号，在运行频率较低时，可能会导致
                     交易信号的滞后，但是可以避免未来函数的出现。
-        reference_data_types: str or list of str
-            策略使用的参考数据类型，例如close, open, high, low等
-        data_freq: str {'d', 'w', 'm', 'q', 'y'}
-            策略使用的数据频率，可以是日频、周频、月频、季频或年频
-        window_length: int
+        window_length: int, list of int, dict{str: int}, default 30
             策略使用的数据窗口长度，即策略使用的历史数据的长度
+        opt_tag: int {0, 1}
+            策略的优化标签，0表示不参与优化，1表示参与优化
 
         Returns
         -------
         None
         """
-        # 关于已经废弃的参数，给出警告信息，并赋值给新的参数
-        if sample_freq is not None:
-            warnings.warn('sample_freq is deprecated, use strategy_run_freq instead')
-            strategy_run_freq = sample_freq
-        if bt_price_type is not None:
-            warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
-            strategy_run_timing = bt_price_type
-        if data_types is not None:
-            warnings.warn('data_types is deprecated, use strategy_data_types instead')
-            strategy_data_types = data_types
 
         # 检查策略参数是否合法：
-        # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
         logger_core.info(f'initializing new Strategy: type: {stg_type}, name: {name}, text: {description}')
-        implied_par_count = None
-        implied_par_types = None
-        implied_par_range = None
-        if pars is None:
-            pass
-        # 如果给出了pars且为tuple时，推测 par_count, par_types, par_range 三个参数的值
-        elif isinstance(pars, (tuple, list)):
-            implied_par_count = len(pars)
-            implied_par_types = []
-            implied_par_range = []
-            for item in pars:
-                if isinstance(item, int):
-                    implied_par_types.append('int')
-                    implied_par_range.append((item, item + 1))
-                elif isinstance(item, float):
-                    implied_par_types.append('float')
-                    implied_par_range.append((item - 1, item + 1))
-                elif isinstance(item, str):
-                    implied_par_types.append('enum')
-                    implied_par_range.append(tuple([item]))
-                else:
-                    raise TypeError(f'Invalid parameter item type: ({type(item)}), parameter can only contain'
-                                    f'integers, floats or strings')
-        # 如果给出了pars且为dict时，仅检查是否dict中的所有值都是tuple
-        elif isinstance(pars, dict):
-            if not all(isinstance(item, tuple) for item in pars.values()):
-                raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encountered')
 
-        else:
-            raise TypeError(f'Invalid parameter type. pars should be a tuple, '
-                            f'a list or a dict, got {type(pars)} instead.')
-
-        # 如果给出了par_count/par_types/par_range等三个参数，则检查其合法性，如果合法，替换
-        # 推测参数（若存在），如果不合法，使用推测参数（若存在）并给出警告，如果推测参数不存在，
-        # 则报错，并给出有价值的指导意见
-        if par_count is None:
-            par_count = implied_par_count
-        else:
-            # TODO: 按照当前的代码，par_count一但设置后就无法修改，这点是否合理？
-            if not isinstance(par_count, int):
-                raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
-            if par_count < 0:
-                raise ValueError(f'Invalid parameter count ({par_count}), it should not be less than 0')
-            if implied_par_count is not None:
-                if par_count != implied_par_count:
-                    logger_core.warning(f'Invalid parameter count ({par_count}), given parameter implies '
-                                        f'({implied_par_count})'
-                                        f'par_count adjusted, you should '
-                                        f'probably pass "par_count = {implied_par_count}"')
-                    par_count = implied_par_count
-
-        if par_types is None:
-            par_types = implied_par_types
-        else:
-            if not isinstance(par_types, (str, list)):
-                raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
-                                f'got {type(par_types)} instead')
-            if isinstance(par_types, str):
-                par_types = str_to_list(par_types)
-            for item in par_types:
-                if not isinstance(item, str):
-                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
-                if not item.lower() in ['int', 'float', 'conti', 'discr', 'enum', 'list']:
-                    raise KeyError(f'Invalid type ({item}), should be one of "int, float, conti, discr, enum, list"')
-            if len(par_types) < par_count:
-                logger_core.warning(f'Not enough parameter types({len(par_types)}) to assign'
-                                    f' to all ({par_count}) parameters')
-            elif len(par_types) > par_count:
-                logger_core.info(f'Got more parameter types({len(par_types)}) than count of parameters({par_count})')
-                par_types = par_types[0:par_count]
-
-        if par_range is None:
-            par_range = implied_par_range
-        else:
-            if not isinstance(par_range, (tuple, list)):
-                raise TypeError(f'parameter range (par_range) should be a tuple or a list, '
-                                f'got {type(par_range)} instead')
-            for item in par_range:
-                if not isinstance(item, (tuple, list)):
-                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
-            if len(par_range) < par_count:
-                logger_core.warning(f'Not enough parameter ranges({len(par_range)}) to assign'
-                                    f' to all ({par_count}) parameters')
-            elif len(par_range) > par_count:
-                logger_core.info(f'Got more parameter types({len(par_range)}) than count of parameters({par_count})')
-                par_range = par_range[0:par_count]
+        self._stg_name = str(name)
+        self._stg_description = str(description)
 
         self._pars = None
+        self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
         self._opt_tag = None
         self.set_opt_tag(opt_tag)  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
-        self._stg_name = name  # 策略的名称
-        self._stg_text = description  # 策略的描述文字
-        self._par_count = par_count  # 策略参数的元素个数
-        self._par_types = par_types  # 策略参数的类型，可选类型'int/float/discr/conti/enum/list'
-        self._par_bounds_or_enums = par_range
-        self.set_pars(pars)  # 设置策略参数，使用set_pars()函数同时检查参数的合法性
-        logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={par_count},'
-                         f' par_types={par_types}, par_range={par_range}')
+        if par_values:
+            self.update_par_values(*par_values)
 
-        # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
-        assert data_freq is not None
-        assert strategy_run_freq is not None
-        assert window_length is not None
-        assert strategy_data_types is not None
-        assert strategy_run_timing is not None
-        assert reference_data_types is not None
-        assert use_latest_data_cycle is not None
-        self._data_freq = None
-        self._strategy_run_freq = None
-        self._window_length = None
+        logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={self.par_count},'
+                         f' par_types={self.par_types}, par_range={self.par_range}')
+
         self._data_types = None
-        self._strategy_run_timing = None
-        self._reference_data_types = None
-        self._use_latest_data_cycle = None
-        self.set_hist_pars(data_freq=data_freq,
-                           strategy_run_freq=strategy_run_freq,
-                           window_length=window_length,
-                           strategy_data_types=strategy_data_types,
-                           strategy_run_timing=strategy_run_timing,
-                           reference_data_types=reference_data_types,
-                           use_latest_data_cycle=use_latest_data_cycle)
-        logger_core.info(
-            f'Strategy creation. with other parameters: data_freq={data_freq}, strategy_run_freq={strategy_run_freq},'
-            f' window_length={window_length}, strategy_run_timing={strategy_run_timing}, '
-            f'reference_data_types={reference_data_types}')
+        self._data_ids = None  # 一个list，保存所有数据类型的data_id
+        self._data_ULC = None  # 一个dict，保存每个data的最新周期使用标志
+        self._data_WL = None  # 一个dict，保存每个data的窗口长度
+        self.set_data_types(data_types, use_latest_data_cycle, window_length)
+        logger_core.info(f'Strategy data types set:\n'
+                         f'data_types={self.data_types}, data_ids={self._data_ids}, ')
 
-    @property
-    def stg_type(self):
-        """策略类型，表明策略的基类，即：
-            - GeneralStg: GENERAL
-            - FactorSorter: FACTOR
-            - RuleIterator: RULE-ITER
-        """
-        return self._stg_type
+        # 以下是策略运行时产生的动态参数
+        self._share_names = None
+        self._strategy_id = None  # 策略的唯一ID，在策略运行时由系统分配
+        self._group_id = None  # deprecate: 策略所在的策略组ID，策略组是一个策略的集合，策略组可以包含多个策略
+        self._group = None   # 策略所在的策略组，使用self.assign_group()方法分配
+        # 交易策略追踪相关参数 -- 用户可以在realize()方法中定义变量追踪，将变量值存储在_trace_data中
+        self._trace_enabled = False  # 设定是否启用追踪
+        self._trace_data = {}  # 一个dict，记录所有的追踪数据，用于创建追踪信息DataFrame，key为trace变量名，value为记录的变量值
+        self._trace_max_steps = 0  # 在一次运行中可能产生的最大运行次数，此数字与当次运行的run_schedule的行数相同
+        self._trace_step = 0
+        # 每一次记录数据时的step_index，在运行多个策略组时，本策略不是所有时间点都运行的，因此
+        #  trace_step对应了该策略运行时间点在整个schedule中的位置，确保记录的变量值与正确的运
+        #  行时间点对齐
 
-    @property
-    def pars(self):
-        """策略参数，是一个列表，列表中的每个元素都是一个参数值"""
-        return self._pars
-
-    @pars.setter
-    def pars(self, new_pars: (tuple, dict)):
-        """设置策略参数，参数的合法性检查在这里进行"""
-        self.set_pars(new_pars)
+        # 策略的其他可设置参数
+        self.debug = False  # 是否开启调试模式
+        self.trace_mode = False  # 是否开启追踪模式
+        self.logger = None  # 策略的日志记录器
 
     @property
     def name(self):
@@ -327,66 +239,84 @@ class BaseStrategy:
         self._stg_name = name
 
     @property
+    def strategy_id(self):
+        return self._strategy_id
+
+    @property
+    def group(self):
+        return self._group
+
+    @property
+    def group_id(self):
+        """策略所属策略组的ID，策略加入Operator后由系统分配"""
+        return self.group.name if self._group is not None else None
+
+    @property
     def description(self):
         """策略说明文本，对策略的实现方法和功能进行简要介绍"""
-        return self._stg_text
+        return self._stg_description
 
     @description.setter
     def description(self, description: str):
-        if not isinstance(description, str):
-            raise TypeError(f'description should be a string, got {type(description)} instead.')
-        self._stg_text = description
+        self._stg_description = str(description)
+
+    @property
+    def stg_type(self):
+        """策略类型，表明策略的基类，即：
+            - GeneralStg: GENERAL
+            - FactorSorter: FACTOR
+            - RuleIterator: RULE-ITER
+        """
+        return self._stg_type
+
+    @property
+    def has_pars(self) -> bool:
+        """返回True如果策略有可调参数，否则返回False"""
+        return self.pars != {}
+
+    @property
+    def pars(self):
+        """策略参数，是一个列表，列表中的每个元素都是一个参数值"""
+        return self._pars
+
+    @pars.setter
+    def pars(self, new_pars):
+        """设置策略参数，参数的合法性检查在这里进行"""
+        self.set_pars(new_pars)
 
     @property
     def par_count(self):
         """策略的参数数量"""
-        return self._par_count
+        return len(self.par_values)
 
-    @par_count.setter
-    def par_count(self, par_count: int):
-        if not isinstance(par_count, int):
-            raise TypeError(f'par count should be an integer, got {type(par_count)} instead.')
-        self._par_count = par_count
+    @property
+    def par_values(self) -> tuple:
+        """策略参数，元组
+        Return
+        -------
+        tuple: 策略参数的值，元组中的每个元素都是一个参数值，如果没有设置参数，则返回None
+        """
+        return tuple(par.value for par in self._pars.values()) if self._pars is not None else None
+
+    @par_values.setter
+    def par_values(self, pars: tuple):
+        """设置策略参数，参数的合法性检查在这里进行"""
+        self.update_par_values(*pars)
+
+    @property
+    def par_names(self):
+        """策略的参数名称列表"""
+        return [par.name for par in self.pars.values()] if self.par_values is not None else []
 
     @property
     def par_types(self):
-        """策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum'"""
-        return self._par_types
-
-    @par_types.setter
-    def par_types(self, par_types: [list, str]):
-        """ 设置par_types属性
-
-        输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
-        'conti, conti' 代表 ['conti', 'conti']
-
-        Parameters
-        ----------
-        par_types: [list, str]
-            策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum',
-            或者也可以为'int', 'float'分别表示离散型和连续型
-
-        Returns
-        -------
-        None
-        """
-        if par_types is None:
-            # 当没有给出策略参数类型时，参数类型为空列表
-            self._par_types = []
-        else:
-            if isinstance(par_types, str):
-                par_types = str_to_list(par_types, ',')
-            assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
-            self._par_types = par_types
+        """策略的参数类型，由策略参数类的par_type属性给出"""
+        return {name: par.par_type for name, par in self.pars.items()}
 
     @property
     def par_range(self):
         """策略的参数取值范围，用来定义参数空间用于参数优化"""
-        return self._par_bounds_or_enums
-
-    @par_range.setter
-    def par_range(self, boes: list):
-        self.set_par_range(par_range=boes)
+        return {name: par.par_range for name, par in self.pars.items()}
 
     @property
     def opt_tag(self):
@@ -398,57 +328,30 @@ class BaseStrategy:
         self.set_opt_tag(opt_tag=opt_tag)
 
     @property
-    def pars(self):
-        """策略参数，元组
-        :return:
-        """
-        return self._pars
-
-    @pars.setter
-    def pars(self, pars: tuple):
-        self.set_pars(pars)
-
-    @property
-    def has_pars(self):
-        return self.pars is not None
+    def run_freq(self):
+        """策略生成的采样频率，从所属Group读取。策略需先加入Operator才能访问此属性"""
+        if self._group is None:
+            raise AttributeError(
+                "Strategy must be added to an Operator (and thus a Group) before run_freq can be accessed. "
+                "Use op.add_strategy(stg, run_freq='d', run_timing='close') to add strategy to operator."
+            )
+        return self._group.run_freq
 
     @property
-    def data_freq(self):
-        """策略依赖的历史数据频率"""
-        return self._data_freq
-
-    @data_freq.setter
-    def data_freq(self, data_freq):
-        self.set_hist_pars(data_freq=data_freq)
-
-    @property
-    def sample_freq(self):  # to be deprecated
-        """策略生成的采样频率"""
-        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
-        return self._strategy_run_freq
-
-    @sample_freq.setter
-    def sample_freq(self, sample_freq):  # to be deprecated
-        warnings.warn('sample_freq is deprecated, use strategy_run_freq instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_freq=sample_freq)
+    def run_timing(self):
+        """策略的运行时机，从所属Group读取。策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型。
+        策略需先加入Operator才能访问此属性"""
+        if self._group is None:
+            raise AttributeError(
+                "Strategy must be added to an Operator (and thus a Group) before run_timing can be accessed. "
+                "Use op.add_strategy(stg, run_freq='d', run_timing='close') to add strategy to operator."
+            )
+        return self._group.run_timing
 
     @property
-    def strategy_run_freq(self):
-        """策略生成的采样频率"""
-        return self._strategy_run_freq
-
-    @strategy_run_freq.setter
-    def strategy_run_freq(self, sample_freq):
-        self.set_hist_pars(strategy_run_freq=sample_freq)
-
-    @property
-    def window_length(self):
-        """策略依赖的历史数据窗口长度"""
-        return self._window_length
-
-    @window_length.setter
-    def window_length(self, window_length):
-        self.set_hist_pars(window_length=window_length)
+    def data_type_count(self):
+        """策略依赖的历史数据类型的数量"""
+        return len(self.data_types)
 
     @property
     def data_types(self):
@@ -456,151 +359,126 @@ class BaseStrategy:
         return self._data_types
 
     @data_types.setter
-    def data_types(self, data_types):
-        warnings.warn('data_types is deprecated, use history_data_types instead', DeprecationWarning)
-        self.set_hist_pars(strategy_data_types=data_types)
+    def data_types(self, data_types: Union[DataType, List[DataType], Dict[str, DataType]]):
+        """设置策略依赖的历史数据类型"""
+        if isinstance(data_types, StgData):
+            use_latest_data_cycle = data_types.use_latest_data_cycle
+            window_length = data_types.window_length
+        else:
+            use_latest_data_cycle = False
+            window_length = 30
+
+        self.set_data_types(
+                data_types,
+                use_latest_data_cycle=use_latest_data_cycle,
+                window_length=window_length,
+        )
 
     @property
-    def strategy_data_types(self):
-        """data_types的别名"""
-        return self._data_types
-
-    @strategy_data_types.setter
-    def strategy_data_types(self, data_types):
-        self.set_hist_pars(strategy_data_types=data_types)
+    def data_type_ids(self):
+        """策略依赖的历史数据类型的ID"""
+        return self._data_ids
 
     @property
-    def history_data_types(self):
-        """data_types的别名"""
-        return self._data_types
-
-    @history_data_types.setter
-    def history_data_types(self, data_types):
-        self.set_hist_pars(strategy_data_types=data_types)
+    def data_ids(self):
+        """策略依赖的历史数据类型的名称"""
+        return self._data_ids
 
     @property
-    def strategy_run_timing(self):
-        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        return self._strategy_run_timing
-
-    @strategy_run_timing.setter
-    def strategy_run_timing(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        self.set_hist_pars(strategy_run_timing=price_type)
+    def data_names(self):
+        """策略依赖的历史数据类型的名称"""
+        return {dtype_id: dtype.name for dtype_id, dtype in self._data_types.items()}
 
     @property
-    def strategy_timing(self):
-        """ 策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        return self._strategy_run_timing
-
-    @strategy_timing.setter
-    def strategy_timing(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        self.set_hist_pars(strategy_run_timing=price_type)
+    def data_freqs(self):
+        """策略依赖的历史数据类型的频率"""
+        return {dtype_id: dtype.freq for dtype_id, dtype in self._data_types.items()}
 
     @property
-    def bt_price_type(self):  # to be deprecated
-        """策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
-        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        return self._strategy_run_timing
-
-    @bt_price_type.setter
-    def bt_price_type(self, price_type):  # to be deprecated
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_timing=price_type)
+    def data_ulc(self):
+        """策略依赖的历史数据类型的最新周期使用标志"""
+        return self._data_ULC
 
     @property
-    def bt_price_types(self):
-        """ 策略的运行时机，strategy_run_timing的旧名, to be deprecated"""
-        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        return self._strategy_run_timing
-
-    @bt_price_types.setter
-    def bt_price_types(self, price_type):
-        """ 设置策略的运行时机，策略运行时机决定了live运行时策略的运行时间，以及回测时策略的价格类型"""
-        warnings.warn('bt_price_types is deprecated, use strategy_run_timing instead', DeprecationWarning)
-        self.set_hist_pars(strategy_run_timing=price_type)
+    def data_window_lengths(self):
+        """策略依赖的历史数据类型的窗口长度"""
+        return self._data_WL
 
     @property
-    def ref_types(self):
-        """ 返回策略的参考数据类型，如果不需要参考数据，返回空列表
-
-        :return:
-        """
-        return self._reference_data_types
-
-    @ref_types.setter
-    def ref_types(self, ref_types):
-        """ 设置策略的参考数据类型"""
-        self.set_hist_pars(reference_data_types=ref_types)
+    def window_lengths(self):
+        """策略依赖的历史数据类型的窗口长度"""
+        return self._data_WL
 
     @property
-    def reference_data_types(self):
-        """ ref_types的别名
-
-        Returns
-        -------
-        list: 策略的参考数据类型，如果不需要参考数据，返回空列表
-        """
-        return self._reference_data_types
-
-    @reference_data_types.setter
-    def reference_data_types(self, ref_types):
-        """ 设置策略的参考数据类型"""
-        self.set_hist_pars(reference_data_types=ref_types)
+    def max_window_length(self):
+        """ 策略所有历史数据种类中，最大的窗口长度"""
+        return max(self._data_WL.values()) if self._data_WL else 0
 
     @property
-    def use_latest_data_cycle(self):
-        """ 是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
-        return self._use_latest_data_cycle
+    def share_count(self):
+        """运行时参数，策略运行时的股票数量，只有运行后才能确定"""
+        if self._share_names is None:
+            return 0
+        return len(self._share_names)
 
-    @use_latest_data_cycle.setter
-    def use_latest_data_cycle(self, use_latest_data_cycle):
-        """ 设置是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号"""
-        self.set_hist_pars(use_latest_data_cycle=use_latest_data_cycle)
+    @property
+    def share_names(self):
+        """运行时参数，策略运行时的股票名称列表，只有运行后才能确定"""
+        if self._share_names is None:
+            warnings.warn('share_names is not set, please initialize the strategy first')
+            return []
+        return self._share_names
+
+    def get_use_latest_data_cycle(self, data_type: str = None) -> bool:
+        """ 根据dtype_id获取历史数据的最新周期使用参数"""
+        return self._data_ULC[data_type]
+
+    def get_data_ulc(self, data_type: str = None) -> bool:
+        """ 根据dtype_id获取历史数据的最新周期使用参数"""
+        return self._data_ULC[data_type]
+
+    def get_window_length(self, data_type: str = None) -> int:
+        """根据dtype_id获取历史数据窗口长度"""
+        return self._data_WL[data_type]
+
+    def get_data_name(self, data_type: str = None) -> str:
+        """ 根据dtype_id获取数据类型的名称"""
+        return self.data_names[data_type]
 
     def __str__(self):
-        """打印所有相关信息和主要属性"""
-        str1 = f'{type(self)}'
-        str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
-        str3 = f'\nInformation of the strategy: {self.name}, {self.description}'
-        str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_range}'
-        if self._pars is not None:
-            str5 = f'\nParameter: {self._pars}\n'
-        else:
-            str5 = f'\nNo Parameter!\n'
-        return ''.join([str1, str2, str3, str4, str5])
+        """返回交易策略的主要信息"""
+        return f'Strategy {self.stg_type}({self.name})'
 
     def __repr__(self):
-        """ 打印对象的代表信息，strategy对象的代表信息即它的名字，其他的属性都是可变的，唯独name是唯一不变的strategy的id
-        因此打印的格式为"Timing(macd)"或类似式样
+        """ 打印对象的代表信息
 
         Returns
         -------
         str
         """
-        str1 = f'{self._stg_type}('
-        str2 = f'{self.name})'
-        return ''.join([str1, str2])
+        return f'{self._stg_type}({self.name}, {self.par_values})'
 
-    def info(self, verbose: bool = True, stg_id: str = None) -> None:
+    def info(self, verbose: bool = False, status: bool = False, stg_id: str = None, extra_info:str = None) -> None:
         """打印所有相关信息和主要属性
 
         Parameters
         ----------
-        verbose: bool, default True
+        verbose: bool, default False
             是否打印更多的信息
+        status: bool, default False
+            是否打印策略的运行状态
         stg_id: str, default None
             策略的ID，如果为None，则打印策略的名称，否则打印策略的ID
+        extra_info: str, default None
+            额外的信息，可以是任何字符串，会被打印在策略主信息之后，参数和数据之前
 
         Returns
         -------
         None
         """
-        from .utilfuncs import adjust_string_length
         from rich import print as rprint
         from shutil import get_terminal_size
+        from .utilfuncs import adjust_string_length
 
         if stg_id is None:
             stg_id = self.name
@@ -608,147 +486,458 @@ class BaseStrategy:
         info_width = int(term_width * 0.75) if term_width > 120 else term_width
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
-        stg_type = self.__class__.__bases__[0].__name__
-        rprint(f'\n{"Strategy_ID":<{key_width}}{adjust_string_length(str(stg_id), value_width)}')
-        rprint('=' * info_width)
-        if self._pars is not None:
-            rprint(f'{"Strategy Parameter":<{key_width}}{adjust_string_length(str(self._pars), value_width)}')
-        else:
-            rprint('Strategy Parameter: No Parameter!')
-        rprint(f'{"Strategy_type":<{key_width}}{stg_type}\n'
-               f'{"Strategy name":<{key_width}}{self.name}\n'
-               f'Description\n    {self.description}')
-        # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
+        stg_title = f' Strategy: {stg_id} '
+        rprint(f'{stg_title:=^{info_width}}')
         if verbose:
-            run_type_str = self.strategy_run_freq + ' @ ' + self.strategy_run_timing
-            data_type_str = str(self.window_length) + ' ' + self.data_freq
-            rprint(
-                    f'\n'
-                    f'{"Strategy Properties":<{key_width}}{"Values":{value_width}}\n'
-                    f'{"-" * info_width}\n'
-                    f'{"Param.count":<{key_width}}{self.par_count}\n'
-                    f'{"Param.types":<{key_width}}{adjust_string_length(str(self.par_types), value_width)}\n'
-                    f'{"Param.range":<{key_width}}{adjust_string_length(str(self.par_range), value_width)}\n'
-                    f'{"Run parameters":<{key_width}}{adjust_string_length(run_type_str, value_width)}\n'
-                    f'{"Data types":<{key_width}}{adjust_string_length(str(self.history_data_types), value_width)}\n'
-                    f'{"Data parameters":<{key_width}}{adjust_string_length(data_type_str, value_width)}'
-            )
-        print()
+            rprint(f'{self.__str__()}: {self.description}')
+        else:
+            rprint(self.__str__())
 
-    def set_pars(self, pars: (tuple, dict)) -> int:
-        """设置策略参数，在设置之前对参数的个数进行检查
+        if verbose:
+            # 打印额外信息
+            if extra_info:
+                rprint(extra_info)
+
+            # 打印所有策略可调参数相关信息
+            par_name_width = int(info_width * .1)
+            par_type_width = int(info_width * .2)
+            par_range_width = int(info_width * .2)
+            par_value_width = int(info_width * .5)
+            rprint(f'{" Parameters ":-^{info_width}}\n'
+                   f'{"name":<{par_name_width}}'
+                   f'{"type":<{par_type_width}}'
+                   f'{"range":<{par_range_width}}'
+                   f'{"value":<{par_value_width}}')
+            for par_name, par in self.pars.items():
+                rprint(
+                        f'{adjust_string_length(par_name, par_name_width) :<{par_name_width}}'
+                        f'{adjust_string_length(par.par_type, par_type_width) :<{par_type_width}}'
+                        f'{adjust_string_length(str(par.par_range), par_range_width) :^{par_range_width}}'
+                        f'{adjust_string_length(str(par.value), par_value_width) :^{par_value_width}}'
+                )
+
+            # 打印所有策略数据类型相关信息
+            dtype_id_width = int(info_width * .2)
+            window_width = int(info_width * .1)
+            ulc_width = int(info_width * .2)
+            description_width = int(info_width * .5)
+            rprint(f'{" Data Types ":-^{info_width}}\n'
+                   f'{"id":<{dtype_id_width}}'
+                   f'{"window":<{window_width}}'
+                   f'{"use latest":<{ulc_width}}'
+                   f'{"description":<{description_width}}')
+            for dtype_id, dtype in self.data_types.items():
+                rprint(
+                        f'{adjust_string_length(dtype_id, dtype_id_width) :<{dtype_id_width}}'
+                        f'{adjust_string_length(str(self.get_window_length(dtype_id)), window_width) :<{window_width}}'
+                        f'{adjust_string_length(str(self.get_data_ulc(dtype_id)), ulc_width) :^{ulc_width}}'
+                        f'{adjust_string_length(str(dtype.description), description_width, hans_aware=True) :^{description_width}}'
+                )
+        else:
+            par_info = f'{self.par_names} = {self.par_values}'
+            dtype_info = ', '.join([f'{dtype} x {window}' for dtype, window in self.window_lengths.items()])
+            rprint(f'Parameters: {par_info:<{value_width}}')
+            rprint(f'Date Types: {dtype_info:<{value_width}}')
+            # 打印额外信息
+            if extra_info:
+                rprint(extra_info)
+
+    def set_pars(self, pars: Union[Parameter, List[Parameter], Dict[str, Parameter]]) -> bool:
+        """ 设置交易策略的可调参数，不设定参数的值，设置成功返回True，否则返回False或Raise
 
         Parameters
         ----------
-        pars: tuple or dict of tuples
-            需要设置的参数
+        pars: Parameter, list of Parameters, tuple of Parameters, dict{str: Parameter}
+            需要设置的参数字典，key为参数名、value为参数
+
+        Returns
+        -------
+        True: 当参数设置成功时
+        """
+
+        if pars is None:
+            pars = {}
+        # 如果给出了pars且为tuple时，pars必须是Parameter对象，
+        elif isinstance(pars, Parameter):
+            pars = {pars.name: pars}
+        elif isinstance(pars, (list, tuple)):
+            if not all(isinstance(par, Parameter) for par in pars):
+                raise TypeError(f'pars should be a list of Parameter objects, got {type(pars)} instead')
+            pars = {par.name: par for par in pars}
+        elif isinstance(pars, dict):
+            # 确保每一个par.name与key一致
+            for key, par in pars.items():
+                if not isinstance(par, Parameter):
+                    raise TypeError(f'pars should be a dict of Parameter objects, got {type(pars)} instead')
+                if key != par.name:
+                    par.name = key
+        else:
+            raise TypeError(f'pars should be a list or a dict of Parameter Objects! got {type(pars)} instead')
+
+        if not _dict_par_format_is_valid('pars', pars, Parameter, 'name'):
+            raise ValueError(f'pars is invalid! ({pars})')
+
+        self._pars = {name: par for name, par in pars.items()}
+
+        for name, par in pars.items():
+            par.name = name
+            self.__setattr__(name, par.value)
+
+        return True
+
+    def get_pars(self, *par_names):
+        """get the value of parameter by its name or id, alias as operator.par_name
+        multiple parameters can be got at one time"""
+        return self._get_pars_or_data(*par_names)
+
+    def _get_pars_or_data(self, *names: str):
+        """get the value of parameter or data by its name or id, alias as operator.par_name or operator.dtype_id
+        multiple parameters or data can be got at one time"""
+        undefined_names = [name for name in names if name not in self.par_names and name not in self.data_type_ids]
+        if undefined_names:
+            raise KeyError(f'names {undefined_names} not defined in strategy {self}')
+        if len(names) > 1:
+            return tuple(self.__getattribute__(name) for name in names)
+        else:
+            return self.__getattribute__(names[0])
+
+    def set_data_types(self,
+                       data_types: Union[DataType, List[DataType], Dict[str, DataType]],
+                       use_latest_data_cycle,
+                       window_length) -> None:
+        """ 设置策略参数
+
+        Parameters
+        ----------
+        data_types: DataType，list of DataType, dict {str: DataType}
+            需要设置的参数字典，key为参数名、value为参数
+        use_latest_data_cycle: bool, list of bool, dict {str: bool}
+            是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号
+        window_length: int, list of int, dict {str: int}
+            策略使用的数据窗口长度，即策略使用的历史数据的长度
 
         Returns
         -------
         int: 1: 设置成功，0: 设置失败
         """
-        assert isinstance(pars, (tuple, dict)) or pars is None, \
-            f'parameter should be either a tuple or a dict, got {type(pars)} instead'
-        if pars is None:
-            self._pars = pars
-            return 1
-        if isinstance(pars, dict):
-            return self.set_dict_pars(pars)
-
-        # try correct par types
-        pars = self.correct_pars_type(pars)
-        # now pars should be tuples
-        if self.check_pars(pars):
-            self._pars = pars
-            return 1
+        if data_types is None:
+            data_types = {}
+        elif isinstance(data_types, DataType):
+            data_types = {data_types.dtype_id: data_types}
+        elif isinstance(data_types, (list, tuple)):
+            data_types = {dtype.dtype_id: dtype for dtype in data_types}
+        elif isinstance(data_types, dict):
+            # set up dtype_id for each DataType object
+            for key, dtype in data_types.items():
+                if not isinstance(dtype, DataType):
+                    raise TypeError(f'pars should be a dict of DataType objects, got {type(data_types)} instead')
+                if key != dtype.dtype_id:
+                    dtype._dtype_id = key
         else:
-            return 0
+            raise TypeError(f'pars is invalid! ({data_types})')
 
-    def check_pars(self, pars: tuple) -> bool:
-        """检查pars(一个tuple)是否符合strategy的参数设置"""
-        for par, par_type, par_range in zip(pars, self._par_types, self.par_range):
-            if not isinstance(pars, tuple):
-                raise TypeError(f'Invalid parameter type, expect tuple, got {type(pars)}.')
-            if len(pars) != self.par_count:
-                # 如果参数的个数不对，那么抛出异常
-                raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
-                                 f' got {len(pars)} ({pars}).')
-            if par_type in ['int', 'discr']:
-                # 如果par_type是int或者discr，那么par应该是一个整数
-                if not isinstance(par, int):
-                    raise Exception(f'Invalid parameter, it should be an integer, got {type(par)}')
+        if not _dict_par_format_is_valid('data_types', data_types, DataType, 'dtype_id'):
+            raise ValueError(f'pars is invalid! ({data_types})')
 
-            if par_type in ['float', 'conti']:
-                # 如果par_type是float或者conti，那么par应该是一个浮点数/整数
-                if not isinstance(par, (int, float)):
-                    raise Exception(f'Invalid parameter, it should be a float or an integer, got {type(par)}')
+        self._data_types = data_types
+        self._data_ids = [dtype_name for dtype_name in data_types]
+        self._data_types = data_types
 
-            if par_type in ['enum']:
-                # 如果par_type是enum，那么par应该是par_range中的一个元素
-                if par not in par_range:
-                    raise ValueError(f'Invalid parameter, {par} should be one of items in ({par_range})')
-            else:
-                l_bound, u_bound = par_range
-                # 如果par_type是int或者float，那么par应该在par_range定义的范围内
-                if (par < l_bound) or (par > u_bound):
-                    raise ValueError(f'Invalid parameter! {par} is out of range: ({l_bound} - {u_bound})')
-        return True
+        # 设置ULC
+        if isinstance(use_latest_data_cycle, bool):
+            self._data_ULC = {d_name: use_latest_data_cycle for d_name in self.data_types}
+        elif isinstance(use_latest_data_cycle, (list, tuple)):
+            ULCs = input_to_list(use_latest_data_cycle, len(self.data_types), False)
+            self._data_ULC = {self._data_ids[i]: ULCs[i] for i in range(len(ULCs))}
+        elif isinstance(use_latest_data_cycle, dict):
+            self._data_ULC = {d_name: False for d_name in self._data_ids}
+            self._data_ULC.update(use_latest_data_cycle)
+        elif use_latest_data_cycle is None:
+            self._data_ULC = {d_name: False for d_name in self._data_ids}
+        else:
+            raise TypeError(f'parameter "use_latest_data_cycles" is invalid ({use_latest_data_cycle}), '
+                            f'please check your input')
 
-    def correct_pars_type(self, pars: tuple) -> tuple:
-        """ 将可能为字符串格式的pars根据type调整为正确的格式
+        # 如果DataType中给出了ULC，则更新相应的ULC值
+        for dtype_id, dtype in data_types.items():
+            if not isinstance(dtype, StgData):
+                continue
+            if dtype.use_latest_data_cycle is not None:
+                if not isinstance(dtype.use_latest_data_cycle, bool):
+                    raise TypeError(f'use_latest_data_cycle should be a boolean, '
+                                    f'got {dtype.use_latest_data_cycle} instead')
+                self._data_ULC[dtype_id] = dtype.use_latest_data_cycle
+
+        # 设置window lengths
+        if isinstance(window_length, (int, float)):
+            if window_length <= 0:
+                raise ValueError(f'window_length should be a positive integer, got {window_length} instead')
+            window_length = int(window_length)
+            self._data_WL = {d_name: window_length for d_name in self.data_types}
+        elif isinstance(window_length, (list, tuple)):
+            WLs = input_to_list(window_length, len(self.data_types), 20)
+            self._data_WL = {self._data_ids[i]: WLs[i] for i in range(len(WLs))}
+        elif isinstance(window_length, dict):
+            self._data_WL = {d_name: 20 for d_name in self._data_ids}
+            self._data_WL.update(window_length)
+        elif window_length is None:
+            self._data_WL = {d_name: 20 for d_name in self._data_ids}
+        else:
+            raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
+
+        # 如果DataType中给出了window_length，则更新相应的window_length值
+        for dtype_id, dtype in data_types.items():
+            if not isinstance(dtype, StgData):
+                continue
+            if dtype.window_length is not None:
+                if not isinstance(dtype.window_length, int) or dtype.window_length <= 0:
+                    raise ValueError(f'window_length should be a positive integer, got '
+                                     f'{dtype.window_length}({type(dtype.window_length)}) instead')
+                self._data_WL[dtype_id] = dtype.window_length
+
+        for dtype_id in data_types:
+            self.__setattr__(dtype_id, None)
+
+    def get_data(self, *dtype_id):
+        """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
+        return self._get_pars_or_data(*dtype_id)
+
+    def update_shares(self,
+                      share_count: int = None,
+                      share_names: Union[str, list[str]] = None):
+        """ 更新策略的股票名称列表，或者仅给出share_count并自动生成虚拟股票名称列表
+        如果给出了share_names，则忽略share_count，生成股票列表
+        如果没有给出share_names，则必须给出share_count，并生成虚拟名称列表
 
         Parameters
         ----------
-        pars: tuple
-            策略参数
+        share_count: int, optional
+            股票数量
+        share_names: list of str, optional
+            股票名称列表，如果没有提供，则使用默认的股票名称列表
 
         Returns
         -------
-        pars: tuple
-            pars in corrected type
+        None
         """
+        if share_names is not None:
+            if isinstance(share_names, str):
+                share_names = str_to_list(share_names)
+            if not isinstance(share_names, (str, list)):
+                raise TypeError(f'share_names should be a string or list of str, got{type(share_names)}')
+            self._share_names = share_names
+        else:
+            if share_count is None:
+                raise ValueError('Either share_names or share_count should be given')
+            if not isinstance(share_count, int):
+                raise TypeError(f'share count should be a integer, got {type(share_count)} instead')
+            if share_count <= 0:
+                raise ValueError(f'share count should be given and be larger than 0, got {share_count}')
+            self._share_names = [f'Share_{i+1}' for i in range(share_count)]
 
-        if len(pars) != self._par_count:
-            raise ValueError(f'Invalid strategy parameter, expect {self.par_count} parameters,'
-                             f' got {len(pars)} ({pars}).')
-        # corrected_pars = [None] * self._par_count
-        corrected_pars = [None for _ in range(self._par_count)]
-        try:
-            for i in range(self._par_count):
-                par = pars[i]
-                p_type = self.par_types[i]
-                if p_type in ['int', 'descr']:
-                    corrected_pars[i] = int(par)
-                elif p_type in ['float', 'conti']:
-                    corrected_pars[i] = float(par)
+    def update_data_types(self,
+                          dtype_id=None,
+                          *,
+                          use_latest_data_cycle: Union[bool, tuple[bool], list[bool], dict[str, bool]] = None,
+                          window_length: Union[int, tuple[int], list[int], dict[str, int]] = None,
+                          freq: Union[str, tuple[str], list[str], dict[str, str]] = None,
+                          asset_type: Union[str, tuple[str], list[str], dict[str, str]] = None) -> None:
+        """ 更新交易策略的数据参数，可以更新单个数据类型的参数，也可以更新多个数据类型的参数
+        如果给出dtype_id，则更新单个参数，否则更新所有参数。
+        支持更新 window_length、use_latest_data_cycle、freq、asset_type；
+        修改 freq 或 asset_type 会替换为新的 DataType 实例（因 dtype_id 由 name/freq/asset_type 派生）。
+        """
+        # 1) 先更新 window_length 和 use_latest_data_cycle（在当前 dtype_id 上）
+        if dtype_id is not None:
+            if dtype_id not in self.data_types:
+                raise KeyError(f'data type {dtype_id} is not defined in the strategy')
+            if use_latest_data_cycle is not None:
+                assert isinstance(use_latest_data_cycle, bool), \
+                    f'use_latest_data_cycle should be a boolean, got {type(use_latest_data_cycle)} instead'
+                self._data_ULC[dtype_id] = use_latest_data_cycle
+            if window_length is not None:
+                assert isinstance(window_length, int) and window_length > 0, \
+                    f'window_length should be a positive integer, got {window_length} instead'
+                self._data_WL[dtype_id] = window_length
+        else:  # 如果没有给出dtype_id，则更新所有参数或按照dict更新参数
+            if use_latest_data_cycle is not None:
+                if isinstance(use_latest_data_cycle, bool):
+                    self._data_ULC = {d_name: use_latest_data_cycle for d_name in self.data_types}
+                elif isinstance(use_latest_data_cycle, (list, tuple)):
+                    if len(use_latest_data_cycle) != len(self.data_types):
+                        raise ValueError(f'Length of use_latest_data_cycle should be {len(self.data_types)}, '
+                                         f'got {len(use_latest_data_cycle)} instead')
+                    ULCs = input_to_list(use_latest_data_cycle, len(self.data_types), False)
+                    self._data_ULC = {self._data_ids[i]: ULCs[i] for i in range(len(ULCs))}
+                elif isinstance(use_latest_data_cycle, dict):
+                    assert all(isinstance(v, bool) for v in use_latest_data_cycle.values()), \
+                        f'All use_latest_data_cycle should be boolean, got {use_latest_data_cycle} instead'
+                    self._data_ULC.update(use_latest_data_cycle)
                 else:
-                    corrected_pars[i] = par
+                    raise TypeError(f'Only one "use_latest_data_cycles" should be given when dtype_id is None, ')
+            if window_length is not None:
+                if isinstance(window_length, (int, float)):
+                    if window_length <= 0:
+                        raise ValueError(f'window_length should be a positive integer, got {window_length} instead')
+                    window_length = int(window_length)
+                    self._data_WL = {d_name: window_length for d_name in self.data_types}
+                elif isinstance(window_length, (list, tuple)):
+                    if len(window_length) != len(self.data_types):
+                        raise ValueError(f'Length of window_length should be {len(self.data_types)}, '
+                                         f'got {len(window_length)} instead')
+                    WLs = input_to_list(window_length, len(self.data_types), 20)
+                    self._data_WL = {self._data_ids[i]: WLs[i] for i in range(len(WLs))}
+                elif isinstance(window_length, dict):
+                    assert all(isinstance(v, int) for v in window_length.values()), \
+                        f'All window lengths should be positive integers, got {window_length} instead'
+                    self._data_WL.update(window_length)
+                else:
+                    raise TypeError(f'parameter "window_length" is invalid ({window_length}), please check your input')
 
-            return tuple(corrected_pars)
+        # 2) 再处理 freq / asset_type：用新 DataType 替换旧项，保持 _data_ids 顺序
+        if freq is None and asset_type is None:
+            return
 
-        except Exception as e:
-            raise RuntimeError({e})
+        def _resolve_freq_asset(did: str):
+            dt = self._data_types[did]
+            new_f = freq
+            new_a = asset_type
+            if dtype_id is not None:
+                # 单条更新：freq/asset_type 为标量 str
+                if did != dtype_id:
+                    return None, None
+                if freq is not None:
+                    assert isinstance(freq, str), f'freq should be str when dtype_id is given, got {type(freq)}'
+                    new_f = freq
+                else:
+                    new_f = dt.freq
+                if asset_type is not None:
+                    assert isinstance(asset_type, str), f'asset_type should be str when dtype_id is given, got {type(asset_type)}'
+                    new_a = asset_type
+                else:
+                    new_a = dt.asset_type
+            else:
+                # 批量：freq/asset_type 可为标量、list、dict
+                if freq is not None:
+                    if isinstance(freq, str):
+                        new_f = freq
+                    elif isinstance(freq, (list, tuple)):
+                        idx = self._data_ids.index(did)
+                        new_f = freq[idx] if idx < len(freq) else dt.freq
+                    elif isinstance(freq, dict):
+                        new_f = freq.get(did, dt.freq)
+                    else:
+                        raise TypeError(f'freq should be str, list, tuple or dict, got {type(freq)}')
+                else:
+                    new_f = dt.freq
+                if asset_type is not None:
+                    if isinstance(asset_type, str):
+                        new_a = asset_type
+                    elif isinstance(asset_type, (list, tuple)):
+                        idx = self._data_ids.index(did)
+                        new_a = asset_type[idx] if idx < len(asset_type) else dt.asset_type
+                    elif isinstance(asset_type, dict):
+                        new_a = asset_type.get(did, dt.asset_type)
+                    else:
+                        raise TypeError(f'asset_type should be str, list, tuple or dict, got {type(asset_type)}')
+                else:
+                    new_a = dt.asset_type
+            return new_f, new_a
 
-    def set_dict_pars(self, pars: dict) -> int:
-        """ 当策略参数是一个dict的时候，这个dict的key是股票代码，values是每个股票代码的不同策略参数，每个策略参数都应该符合
-            检查dict的合法性，并设置参数
+        replacements = []  # (old_id, new_dtype, new_id)
+        for did in list(self._data_ids):
+            new_f, new_a = _resolve_freq_asset(did)
+            if new_f is None:
+                continue
+            dt = self._data_types[did]
+            if (new_f, new_a) == (dt.freq, dt.asset_type):
+                continue
+            try:
+                new_dtype = DataType(dt.name, freq=new_f, asset_type=new_a)
+            except Exception as e:
+                raise ValueError(f'Failed to create DataType({dt.name!r}, freq={new_f!r}, asset_type={new_a!r}): {e}')
+            new_id = new_dtype.dtype_id
+            replacements.append((did, new_dtype, new_id))
+
+        for old_id, new_dtype, new_id in replacements:
+            ulc_val = self._data_ULC[old_id]
+            wl_val = self._data_WL[old_id]
+            del self._data_types[old_id]
+            del self._data_ULC[old_id]
+            del self._data_WL[old_id]
+            if new_id not in self._data_types:
+                self._data_types[new_id] = new_dtype
+                self._data_ULC[new_id] = ulc_val
+                self._data_WL[new_id] = wl_val
+                self._data_ids = [new_id if x == old_id else x for x in self._data_ids]
+                self.__setattr__(new_id, None)
+            else:
+                # new_id 已存在：仅从列表中移除 old_id，并更新已有条目的 ULC/WL
+                self._data_ids = [x for x in self._data_ids if x != old_id]
+                self._data_ULC[new_id] = ulc_val
+                self._data_WL[new_id] = wl_val
+
+    def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
+        """ 快速更新策略的参数值
+
+        Parameters
+        ----------
+        par_values: tuple, optional
+            策略参数的值，元组中的每个元素是按顺序排列的所有参数值，如果
+            没有设置参数，则必须传入kwargs参数
+        kwargs: dict
+            以字典形式传入具体需要更新的参数值，键为参数名，值为参数值
+
+        Returns
+        -------
+        None
         """
+        # allow updating partial parameter values, thus length check is not needed
+        if par_values != ():
+            if len(par_values) > self.par_count:
+                raise ValueError(f'Number of par_values should not exceed {self.par_count}, '
+                                 f'got {len(par_values)} instead')
+            for par_name, par_value in zip(self.par_names, par_values):
+                self._pars[par_name].value = par_value
+                self.__setattr__(par_name, par_value)
+        elif self.par_count == 0:
+            pass
+        else:  # 如果没有传入par_values，则必须传入kwargs参数
+            if not kwargs:
+                raise ValueError('par_values is None, please provide par_values or kwargs to update parameters')
+            for par_name, par_value in kwargs.items():
+                if par_name not in self.par_names:
+                    raise KeyError(f'parameter {par_name} is not defined in the strategy')
+                self._pars[par_name].value = par_value
+                self.__setattr__(par_name, par_value)
 
-        if not isinstance(pars, dict):
-            raise TypeError(f'Invalid parameter, expect a dict, got {type(pars)}')
-        if len(pars) == 0:
-            return self.set_pars(None)
-        for key in pars.keys():
-            if not isinstance(key, str):
-                raise TypeError(f'Invalid parameter, all keys of dict type parameter should be a stock code,'
-                                f' got a {type(key)}')
-        if all(self.check_pars(par) for par in pars.values()):
-            self._pars = pars
-            return 1
+    def update_par_ranges(self, *par_ranges: Any, **kwargs) -> None:
+        """ 快速更新策略的参数取值范围
 
-    def update_pars(self, pars: (tuple, dict)) -> None:
-        """ 极简方式更新策略的参数，默认参数格式正确，不检查参数的合规性"""
-        self._pars = pars
+        Parameters
+        ----------
+        par_ranges: tuple of dict, optional
+            策略参数的取值范围，元组中的每个元素是按顺序排列的所有参数取值范围的字典，
+            如果没有设置参数，则必须传入kwargs参数
+
+        Returns
+        -------
+        None
+        """
+        # allow updating partial parameter ranges, thus length check is not needed
+        if par_ranges != ():
+            if len(par_ranges) > self.par_count:
+                raise ValueError(f'Number of par_ranges should not exceed {self.par_count}, '
+                                 f'got {len(par_ranges)} instead')
+            for par_name, par_range in zip(self.par_names, par_ranges):
+                self._pars[par_name].update_par_range(new_range=par_range)
+        else:  # 如果没有传入par_ranges，则必须传入kwargs参数
+            if not kwargs:
+                raise ValueError('par_ranges is None, please provide par_ranges or kwargs to update parameter ranges')
+            for par_name, par_range in kwargs.items():
+                if par_name not in self.par_names:
+                    raise KeyError(f'parameter {par_name} is not defined in the strategy')
+                self._pars[par_name].update_par_range(new_range=par_range)
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型"""
@@ -757,98 +946,11 @@ class BaseStrategy:
         self._opt_tag = opt_tag
         return opt_tag
 
-    def set_par_range(self, par_range):
-        """ 设置策略参数的取值范围"""
-        if par_range is None:
-            self._par_bounds_or_enums = []
-        else:
-            self._par_bounds_or_enums = par_range
-        return par_range
-
-    def set_hist_pars(self,
-                      data_freq: str = None,
-                      strategy_run_freq: str = None,
-                      window_length: int = None,
-                      strategy_data_types: str = None,
-                      strategy_run_timing: str = None,
-                      reference_data_types: str = None,
-                      use_latest_data_cycle: bool = None) -> None:
-        """ 设置策略的历史数据回测相关属性
-
-        Parameters
-        ----------
-        data_freq: str
-            数据频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        strategy_run_freq: str
-            策略运行频率，可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
-        window_length: int
-            回测时需要用到的历史数据窗口的长度
-        strategy_data_types: str
-            需要用到的历史数据类型
-        strategy_run_timing: str
-            需要用到的历史数据回测价格类型
-        reference_data_types: str
-            策略运行参考数据类型
-        use_latest_data_cycle: bool
-            是否使用最近的一个完整的数据周期
-
-        Returns
-        -------
-        None
-        """
-        if data_freq is not None:
-            assert isinstance(data_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
-            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
-                                                           f'string'
-            self._data_freq = data_freq
-        if strategy_run_freq is not None:
-            assert isinstance(strategy_run_freq, str), \
-                f'TypeError, sample frequency should be a string, got {type(strategy_run_freq)} instead'
-            import re
-            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', strategy_run_freq.lower()):
-                raise ValueError(f"{strategy_run_freq} is not a valid frequency string,"
-                                 f"sample freq can only be like '10d' or '2w'")
-            self._strategy_run_freq = strategy_run_freq
-        if window_length is not None:
-            assert isinstance(window_length, int), \
-                f'TypeError, window length should an integer, got {type(window_length)} instead'
-            assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
-            self._window_length = window_length
-        if strategy_data_types is not None:
-            if isinstance(strategy_data_types, str):
-                strategy_data_types = str_to_list(strategy_data_types, ',')
-            assert isinstance(strategy_data_types, list), \
-                f'TypeError, data type should be a list, got {type(strategy_data_types)} instead'
-            self._data_types = strategy_data_types
-        if strategy_run_timing is not None:
-            assert isinstance(strategy_run_timing,
-                              str), f'Wrong input type, price_type should be a string, got {type(strategy_run_timing)}'
-            try:
-                pd.to_datetime(strategy_run_timing)
-            except Exception as e:
-                if strategy_run_timing not in self.AVAILABLE_STG_RUN_TIMING:
-                    # TODO: add deprecation warning: 以前定义的bt_price_type的部分允许值已经不再适用，需要更新
-                    raise ValueError(f'Invalid price type, should be one of {self.AVAILABLE_STG_RUN_TIMING}, '
-                                     f'got {strategy_run_timing} instead')
-
-            self._strategy_run_timing = strategy_run_timing
-        if reference_data_types is not None:
-            if isinstance(reference_data_types, str):
-                reference_data_types = str_to_list(reference_data_types, ',')
-            assert isinstance(reference_data_types, list), \
-                f'TypeError, reference data types should be a list, got {type(reference_data_types)} instead'
-            self._reference_data_types = reference_data_types
-
-        if use_latest_data_cycle is not None:
-            assert isinstance(use_latest_data_cycle, bool), \
-                f'TypeError, use_latest_data_cycle should be a bool, got {type(use_latest_data_cycle)} instead'
-            # warn the user if use_latest_data_cycle is set to True for future functions
-            if use_latest_data_cycle:
-                if self.strategy_run_timing != 'close':
-                    warnings.warn(f'Be cautious of future function! Data required for strategy might '
-                                  f'not be available at {self.strategy_run_timing}!', UserWarning)
-            self._use_latest_data_cycle = use_latest_data_cycle
+    def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+        """ 将策略的历史数据更新为window_index指定的历史数据"""
+        for dtype_name in self.data_types:
+            data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
+            setattr(self, dtype_name, data_window)
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -856,290 +958,105 @@ class BaseStrategy:
             if k in self.__dict__:
                 setattr(self, k, v)
             else:
-                # deprecated key processing warning
-                if k == 'sample_freq':
-                    warnings.warn('sample_freq is deprecated, use strategy_fun_freq instead')
-                    self.set_hist_pars(strategy_run_freq=v)
-                    continue
-                if k == 'bt_price_type':
-                    warnings.warn('bt_price_type is deprecated, use strategy_run_timing instead')
-                    self.set_hist_pars(strategy_run_timing=v)
-                    continue
-                if k == 'bt_data_type':
-                    warnings.warn('bt_data_type is deprecated, use strategy_data_types instead')
-                    self.set_hist_pars(strategy_run_timing=v)
-                    continue
-                if k == 'data_types':
-                    warnings.warn('data_types is deprecated, use strategy_data_types instead')
-                    self.set_hist_pars(strategy_data_types=v)
-                    continue
-                if k == 'bt_run_freq':
-                    warnings.warn('bt_run_freq is deprecated, use strategy_run_freq instead')
-                    self.set_hist_pars(strategy_run_freq=v)
-                    continue
-                if k == 'proportion_or_quantity':
-                    warnings.warn('proportion_or_quantity is deprecated, use max_sel_count instead')
-                    self.set_custom_pars(max_sel_count=v)
-                    continue
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
-    def generate(self,
-                 hist_data: np.ndarray,
-                 ref_data: np.ndarray = None,
-                 trade_data: np.ndarray = None,  # deprecated since v1.1
-                 data_idx=None):
+    def disable_tracing(self):
+        """ 禁用最交易策略追踪功能"""
+        self._trace_enabled = False
+        self._trace_data = {}
+        self._trace_max_steps = 0
+        self._trace_step = 0
+
+    def enable_tracing(self, max_steps: int):
+        """ 启用最交易策略追踪功能"""
+        if not isinstance(max_steps, (int, np.integer, float, np.floating)) or (max_steps <= 0):
+            raise ValueError(f'max_steps should be a positive integer, got {max_steps}({type(max_steps)}) instead')
+
+        self._trace_enabled = True
+        self._trace_data = {}
+        self._trace_max_steps = int(max_steps)
+        self._trace_step = 0
+
+    def update_trace_step(self, step: int):
+        """ 前进到下一个追踪步骤"""
+        if 0 <= step <= self._trace_max_steps:
+            self._trace_step = step
+
+    def trace(self, name: str, var: Union[int, float, bool, str]) -> None:
+        """ 在策略的realize()方法中调用此方法可以追踪策略中间变量的值，或者可以记录一条备注信息
+
+        Parameters
+        ----------
+        name: str
+            追踪记录的名称，用于区分不同的追踪变量
+        var: any
+            需要追踪的变量或者需要记录的备注信息，可以是int/float/bool类型的数据，也可以是一条字符串备注信息
+        """
+
+        # TODO: 需要考虑FactorSorter和GeneralStg两种情况下的trace问题：
+        #  因为在这两种情况下stg.realize中使用的变量都是nd_array向量，无法
+        #  记录，因此需要特殊处理
+        if self._trace_enabled:
+            if name is None:
+                err = RuntimeError(f'When trace variables, name must be given and can not be None!')
+                raise err
+            if name not in self._trace_data:
+                # 根据变量类型选择最优数据类型
+                if isinstance(var, (int, np.integer)):
+                    dtype = np.int64
+                elif isinstance(var, (float, np.floating)):
+                    dtype = np.float64
+                elif isinstance(var, (bool, np.bool_)):
+                    dtype = np.bool_
+                elif isinstance(var, (str, np.str_)):
+                    dtype = object
+                else:
+                    err = TypeError(f'When trace variables, only int, float, bool, str types are supported, '
+                                    f'got {type(var)} instead!')
+                    raise err
+
+                # 预分配数组
+                self._trace_data[name] = {
+                    'values': np.empty(self._trace_max_steps, dtype=dtype),
+                }
+
+            trace_info = self._trace_data[name]
+            idx = self._trace_step
+
+            if idx < self._trace_max_steps:
+                trace_info['values'][idx] = var
+
+    def get_trace_data(self):
+        """获取实际追踪数据的DataFrame形式"""
+        result = pd.DataFrame(index=range(self._trace_max_steps))
+        for name, data in self._trace_data.items():
+            col_name = self.strategy_id + '_' + name
+            result[col_name] = data['values']
+        return result
+
+    @abstractmethod
+    def generate(self):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
 
         Parameters
         ----------
-        hist_data: np.ndarray
-            策略运行所需的历史数据，包括价格数据、指标数据等
-        ref_data: np.ndarray
-            策略运行所需的参考数据，包括价格数据、指标数据等
-        trade_data: np.ndarray  # deprecated since v1.1
-            策略运行所需的交易数据，包括价格数据、指标数据等  # TODO (v1.1 Deprecate, v1.2 删除)
-        data_idx: int or np.ndarray
-            策略运行所需的历史数据的索引，用于在历史数据中定位当前运行的数据
 
         Returns
         -------
         stg_signal: np.ndarray
             策略运行的输出，包括交易信号、交易指令等
         """
-
-        # TODO: for v1.1规划更新
-        #  改变trade_data的定义。删除trade_data，允许用户在hist_data和ref_data
-        #  中定义持仓量、成交量、成交价等数据，这些数据类型通过特殊的数据类型关键字指定，因此客户在策略定
-        #  义时可以通过data_type来灵活地指定所需的数据，不需要专门的trade_data数据类型了。
-        #  同时，这样做还有一个好处，可以定义更多更广泛的数据类型，例如交易日日期、星期几、月份、交易时间
-        #  等等数据，所有与股票无关的数据都可以定义为reference_data，与股票相关的数据可以定义为
-        #  history_data。这样可以大大增加策略的灵活性。
-        #  同时为未来允许用户自定义数据类型做好准备。
-
-        # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
-        # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
-        if data_idx is None:
-            # 为了实现stepwise模式运行op，且与qt的realtime模式配合实现实盘运行，是否可以考虑
-            #  当data_idx为None时输出None？这样在op运行时可以使用data_idx的值控制是否运行策略？
-            # data_idx = -1
-            return None
-
-        if isinstance(data_idx, (int, np.int64)):
-            # 如果data_idx为整数时，生成单组信号stg_signal
-            idx = data_idx
-            h_seg = hist_data[idx]
-            if ref_data is None:
-                ref_seg = None
-            else:
-                ref_seg = ref_data[idx]
-            return self.generate_one(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
-        elif isinstance(data_idx, np.ndarray):  # 如果data_idx为一组整数时，生成完整信号清单 signal_list
-            # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
-            signal_count, share_count, date_count, htype_count = hist_data.shape
-            sig_list = np.full(shape=(signal_count, share_count), fill_value=np.nan, order='C')
-            # 遍历data_idx中的序号，生成N组交易信号，将这些信号填充到清单中对应的位置上
-            all_none_list = [None] * signal_count
-            hist_data_list = hist_data[data_idx]
-            if ref_data is None:
-                ref_data_list = all_none_list
-            else:
-                ref_data_list = ref_data[data_idx]
-            if trade_data is None:
-                # warnings.warn('trade_data is deprecated, use hist_data and ref_data instead', DeprecationWarning)
-                trade_data_list = all_none_list
-            else:
-                trade_data_list = [trade_data] * signal_count
-            # 使用map完成快速遍历填充
-            signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
-            # 将生成的交易信号填充到清单中对应的位置(data_idx)上
-            sig_list[data_idx] = np.array(signals)
-            # 将所有分段组合成完整的ndarray
-            return sig_list
-        else:  # for any other unexpected type of input
-            raise TypeError(f'invalid type of data_idx: ({type(data_idx)})')
-
-    @abstractmethod
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
-        """ 抽象方法，在各个Strategy类中实现具体操作
-
-        Parameters
-        ----------
-        h_seg: np.ndarray
-            策略运行所需的历史数片段，包括价格数据、指标数据等
-        ref_seg: np.ndarray
-            策略运行所需的参考数片段，包括价格数据、指标数据等
-        trade_data: np.ndarray  depreciated since v1.1
-            策略运行所需的交易数据片段，包括价格数据、指标数据等
-
-        Returns
-        -------
-        stg_signal: np.ndarray
-        """
         pass
 
 
 class GeneralStg(BaseStrategy):
-    """ 通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。
+    """ 通用交易策略类，用户需要完整定义策略的所有交易逻辑，并在realize()方法中定义策略
+    的信号输出。
 
-        策略的实现
-        要创建一个通用交易策略，需要创建一个GeneralStg策略类，并重写realize()方法，在其中定义交易信号
-        的生成规则，并在策略属性中定义相关的数据类型和策略的运行参数。这样就可以将策略用于实盘或回测了。
+    realize()方法的输出：
+    realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
 
-        推荐使用下面的方法创建策略类：
-
-            Class ExampleStrategy(GeneralStg):
-
-                def realize(self, h, r=None, t=None, pars=None):
-
-                    # 在这里编写信号生成逻辑
-                    ...
-                    result = ...
-                    # result代表策略的输出
-
-                    return result
-
-        用下面的方法创建一个策略对象：
-
-            example_strategy = ExampleStrategy(pars=<example pars>,
-                                               name='example',
-                                               description='example strategy',
-                                               strategy_data_types='close'
-                                               ...
-                                               )
-            在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-        GeneralStg通用策略的参数如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
-
-            pars: tuple,            策略参数
-            opt_tag: int,           优化标记，策略是否参与参数优化
-            name: str,              策略名称
-            description: str,       策略简介
-            par_count: int,         策略参数个数
-            par_types: tuple/list,  策略参数类型
-            par_range:              策略参数取值范围
-            data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
-            strategy_run_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
-            window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            strategy_data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-            strategy_run_timing:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-            reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等。
-
-        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-        realize()的定义：
-
-            def realize(self,
-                        h: np.ndarray,
-                        r: np.ndarray,
-                        t: np.ndarray):
-
-        realize()中获取策略参数：
-
-                par_1, par_2, ..., par_n = self.pars
-
-        realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-
-            - h(history): 历史数据片段，shape为(M, N, L)，即：
-
-                - M层：   股票类型
-
-                - N行：   交易日期/时间轴
-
-                - L列：   历史数据类型轴
-
-                在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
-                例如：设定：
-                        - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                        - data_freq = 'd'
-                        - window_length = 100
-                        - strategy_data_types = "open, high, low, close, pe"
-
-                    以下例子都基于前面给出的参数设定
-                    例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                        close_last_day = h_seg[:, -1, 3]
-                        close_10_day = h_seg[:, -10, 3]
-                        rate_10 = (close_last_day / close_10_day) - 1
-
-                    例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                        max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
-                        close_last_day = h_seg[:, -1, 3]
-                        penetrate = close_last_day > max_10_day
-
-                    例3, 获取股票最近10日市盈率的平均值
-                        pe_10_days = h_seg[:, -10:-1, 4]
-                        avg_pe = pe_10_days.mean(axis=1)
-
-                    例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                        close_10_days = h_seg[:, -10:-1, 3]
-                        close_50_days = h_seg[:, -50:-1, 3]
-                        ma_10 = close_10_days.mean(axis=1)
-                        ma_50 = close_10_days.mean(axis=1)
-
-            - r(reference):参考历史数据，默认为None，shape为(N, L)
-                与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-                宏观经济数据等，
-
-                - N行, 交易日期/时间轴
-
-                - L列，参考数据类型轴
-
-                以下是获取参考数据的几个例子：
-                    设定：
-                        - reference_data_types = "000300.SH.close, 000001.SH.close"
-
-                    例1: 获取最近一天的沪深300收盘价：
-                        close_300 = r[-1, 0]
-                    例2: 获取五天前的上证指数收盘价:
-                        close_SH = r[-5, 1]
-
-            - t(trade):交易历史数据，默认为None，shape为(N, 5)
-                最近几次交易的结果数据，2D数据。包含N行5列数据
-                如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-                数据的结构如下
-
-                - N行， 股票/证券类型轴
-                    每一列代表一只个股或证券
-
-                - 5列,  交易数据类型轴
-                    - 0, own_amounts:              当前持有每种股票的份额
-                    - 1, available_amounts:        当前可用的每种股票的份额
-                    - 2, current_prices:           当前的股票价格
-                    - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                    - 4, recent_trade_prices:      最近一次成交价格
-
-                示例：以下是在策略中获取交易数据的几个例子：
-
-                    例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                        volume = t[:, 3]
-                        trade_prices = t[:, 4]
-                        或者:
-                        t = t.T
-                        volume = t[3]
-                        trade_prices = t[4]
-                    例2: 获取当前持有股票数量:
-                        own_amounts = t[:, 0]
-                        或者:
-                        t = t.T
-                        own_amounts = t[0]
-
-
-        realize()方法的输出：
-        realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
-        ndarray中每个元素代表相应股票的操作信号。在不同的信号类型时，交易信号的含义不同：
-
-             signal type   |         PT           |            PS           |       VS
-            ------------------------------------------------------------------------------------
-                sig > 1    |         N/A          |           N/A           | Buy in sig shares
-             1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
-                sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
-             0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
-               sig < -1    |         N/A          |           N/A           |  Sell sig shares
-
-        按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
-        中，并产生交易信号了。
-
-        关于GeneralStg类的更详细说明，请参见qteasy的文档。
+    关于GeneralStg类的更详细说明，请参见qteasy的文档。
     """
     __metaclass__ = ABCMeta
 
@@ -1153,16 +1070,13 @@ class GeneralStg(BaseStrategy):
                          description=description,
                          **kwargs)
 
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
+    def generate(self):
         """ 通用交易策略的所有策略代码全部都在realize中实现
         """
-        return self.realize(h=h_seg, r=ref_seg, t=trade_data)
+        return self.realize()
 
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None):
+    def realize(self):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
             交易信号的格式必须为1D 的numpy数组，数据类型为float
@@ -1183,46 +1097,8 @@ class FactorSorter(BaseStrategy):
     策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
     因子的筛选排序取舍逻辑了。
 
-    推荐使用下面的方法创建策略类：
+    这六个选股参数如下：
 
-        Class ExampleStrategy(FactorSorter):
-
-            def realize(self, h, r=None, t=None, pars=None):
-
-                # 在这里编写信号生成逻辑
-                ...
-                factor = ...
-                # factor代表策略输出的选股因子，用于进一步选股
-
-                return factor
-
-    用下面的方法创建一个策略对象：
-
-        example_strategy = ExampleStrategy(pars=<example pars>,
-                                           name='example',
-                                           description='example strategy',
-                                           strategy_data_types='close'
-                                           ...
-                                           )
-        在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-    与通用策略类不同，FactorSorter策略需要几个特殊属性用于确定选股行为（以下*者）
-    策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
-
-        pars:               tuple,  策略参数
-        opt_tag:            int,    优化标记，策略是否参与参数优化
-        name:               str,    策略名称
-        description:        str,    策略简介
-        par_count:          int,    策略参数个数
-        par_types:          tuple,  策略参数类型
-        par_range:          tuple,  策略参数取值范围
-        data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
-        strategy_run_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
-        window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-        strategy_data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-        strategy_run_timing:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-        reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等。
         *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
         *condition:         str ,   确定股票的筛选条件，默认值'any'
                                     'any'        :默认值，选择所有可用股票
@@ -1240,112 +1116,6 @@ class FactorSorter(BaseStrategy):
                                     'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
                                     'proportion' :权重与股票的因子分值成正比
 
-    - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-    realize()的定义：
-
-        def realize(self,
-                    h: np.ndarray,
-                    r: np.ndarray = None,
-                    t: np.ndarray = None,
-                    pars: tuple = None
-                    ):
-
-    realize()中获取策略参数：
-
-            par_1, par_2, ..., par_n = self.pars
-
-    或者：
-            if pars is not None:
-                par_1, par_2, ..., par_n = pars
-            else:
-                par_1, par_2, ..., par_n = self.pars
-
-    realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-
-        - h(history): 历史数据片段，shape为(M, N, L)，即：
-
-            - M层：   M种股票的数据
-
-            - N行：   历史数据时间跨度
-
-            - L列：   L种历史数据类型
-
-            在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
-            例如：设定：
-                    - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                    - data_freq = 'd'
-                    - window_length = 100
-                    - strategy_data_types = "open, high, low, close, pe"
-
-                以下例子都基于前面给出的参数设定
-                例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
-                    close_last_day = h[:, -1, 3]
-                    close_10_day = h[:, -10, 3]
-                    rate_10 = (close_last_day / close_10_day) - 1
-
-                例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                    max_10_day = h[:, -10:-1, 1].max(axis=1)
-                    close_last_day = h[:, -1, 3]
-                    penetrate = close_last_day > max_10_day
-
-                例3, 获取股票最近10日市盈率的平均值
-                    pe_10_days = h[:, -10:-1, 4]
-                    avg_pe = pe_10_days.mean(axis=1)
-
-                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                    close_10_days = h[:, -10:-1, 3]
-                    close_50_days = h[:, -50:-1, 3]
-                    ma_10 = close_10_days.mean(axis=1)
-                    ma_50 = close_10_days.mean(axis=1)
-
-        - r(reference):参考历史数据，默认为None，shape为(N, L)
-            与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-            宏观经济数据等，
-
-            - N行, 交易日期/时间轴
-
-            - L列，参考数据类型轴
-
-            以下是获取参考数据的几个例子：
-                设定：
-                    - reference_data_types = "close-000300.SH, close-000001.SH"
-
-                例1: 获取最近一天的沪深300收盘价：
-                    close_300 = r[-1, 0]
-                例2: 获取五天前的上证指数收盘价:
-                    close_SH = r[-5, 1]
-
-        - t(trade):交易历史数据，默认为None，shape为(N, 5)
-            最近几次交易的结果数据，2D数据。包含N行5列数据
-            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-            数据的结构如下
-
-            - N行， 股票/证券类型轴
-                每一列代表一只个股或证券
-
-            - 5列,  交易数据类型轴
-                - 0, own_amounts:              当前持有每种股票的份额
-                - 1, available_amounts:        当前可用的每种股票的份额
-                - 2, current_prices:           当前的交易价格
-                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                - 4, recent_trade_prices:      最近一次成交价格
-
-            示例：以下是在策略中获取交易数据的几个例子：
-
-                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                    volume = t[:, 3]
-                    trade_prices = t[:, 4]
-                    或者:
-                    t = t.T
-                    volume = t[3]
-                    trade_prices = t[4]
-                例2: 获取当前持有股票数量:
-                    own_amounts = t[:, 0]
-                    或者:
-                    t = t.T
-                    own_amounts = t[0]
-
     realize()方法的输出：
     FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
     自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。
@@ -1362,15 +1132,6 @@ class FactorSorter(BaseStrategy):
         时，上述因子的选股结果为:
                 np.array[0.0, 0.0, 0.5, 0.5]
 
-    在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:
-
-         signal type   |         PT prefered type     |
-        -----------------------------------------------
-            sig > 1    |              N/A             |
-         1 >= sig > 0  |      Buy to sig position     |
-            sig = 0    |      Sell to hold 0 share    |
-         0 > sig >= -1 |             N/A              |
-           sig < -1    |             N/A              |
     关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
@@ -1398,7 +1159,7 @@ class FactorSorter(BaseStrategy):
         self.sort_ascending = sort_ascending
         self.weighting = weighting
 
-    def info(self, verbose: bool = True, stg_id=None):
+    def info(self, verbose: bool = False, stg_id=None, **kwargs):
         """ display more FactorSorter-specific properties
 
         Parameters
@@ -1407,9 +1168,10 @@ class FactorSorter(BaseStrategy):
             if True, display more properties
         stg_id: str
             strategy id, if None, use self.name
+        **kwargs:
+            other parameters
         """
         from .utilfuncs import adjust_string_length
-        from rich import print as rprint
         from shutil import get_terminal_size
 
         term_width = get_terminal_size().columns
@@ -1417,18 +1179,20 @@ class FactorSorter(BaseStrategy):
         key_width = max(24, int(info_width * 0.3))
         value_width = max(7, info_width - key_width)
 
-        super().info(verbose=verbose, stg_id=stg_id)
+        extra_info = f'{" Selection Properties ":-^{info_width}}\n'
         if self.max_sel_count > 1:
-            rprint(f'{"Max select count":<{key_width}}{int(self.max_sel_count)}')
+            extra_info += f'{"Max select count":<{key_width}}{int(self.max_sel_count)}\n'
         else:
-            rprint(f'{"Max select count":<{key_width}}{self.max_sel_count:.1%}')
-        rprint(f'{"Sort Ascending":<{key_width}}{self.sort_ascending}\n'
-               f'{"Weighting":<{key_width}}{adjust_string_length(self.weighting, value_width)}\n'
-               f'{"Filter Condition":<{key_width}}{adjust_string_length(self.condition, value_width)}\n'
-               f'{"Filter ubound":<{key_width}}{self.ubound}\n'
-               f'{"Filter lbound":<{key_width}}{self.lbound}')
+            extra_info += f'{"Max select count":<{key_width}}{self.max_sel_count:.1%}\n'
+        extra_info += f'{"Sort Ascending":<{key_width}}{self.sort_ascending}\n' \
+               f'{"Weighting":<{key_width}}{adjust_string_length(self.weighting, value_width)}\n' \
+               f'{"Filter Condition":<{key_width}}{adjust_string_length(self.condition, value_width)}\n' \
+               f'{"Filter ubound":<{key_width}}{self.ubound}\n' \
+               f'{"Filter lbound":<{key_width}}{self.lbound}'
 
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
+        super().info(verbose=verbose, stg_id=stg_id, extra_info=extra_info)
+
+    def generate(self):
         """处理从_realize()方法传递过来的选股因子
 
         选出符合condition的因子，并将这些因子排序，根据次序确定所有因子相应股票的选股权重
@@ -1436,12 +1200,6 @@ class FactorSorter(BaseStrategy):
 
         Parameters
         ----------
-        h_seg: np.ndarray
-            一个三维数组，shape为(M, N, L)，代表M个股票在N个交易时间内的L种历史数据
-        ref_seg: np.ndarray
-            一个二维数组，shape为(N, L)，代表N个交易时间内的L种参考数据
-        trade_data: np.ndarray
-            一个二维数组，shape为(N,5)，代表N交易时间内的五种交易相关数据
 
         Returns
         -------
@@ -1455,7 +1213,10 @@ class FactorSorter(BaseStrategy):
         sort_ascending = self.sort_ascending  # True: 选择最小的，Fals: 选择最大的
         weighting = self.weighting
 
-        share_count = h_seg.shape[0]
+        # 获取realize()方法计算得到的选股因子
+        factors = self.realize()
+
+        share_count = factors.shape[0]
         if pct < 1:
             # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
             pct = int(share_count * pct)
@@ -1463,16 +1224,11 @@ class FactorSorter(BaseStrategy):
             pct = int(pct)
         if pct < 1:
             pct = 1
-        # 历史数据片段必须是ndarray对象，否则无法进行
-        assert isinstance(h_seg, np.ndarray), \
-            f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
 
-        factors = self.realize(h=h_seg, r=ref_seg, t=trade_data)
         # factors必须是一维向量，如果因子是二维向量，允许shape为(N, 1)型，此时将其转换为一维向量，否则报错
         if factors.ndim == 2:
             factors = factors.flatten()
-        # if len(factors) != share_count:
-        #     raise ValueError(f'invalid length of factors, expect {share_count}, got {len(factors)} instead')
+
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1482,9 +1238,9 @@ class FactorSorter(BaseStrategy):
         elif condition == 'less':
             factors[np.where(factors > lbound)] = np.nan
         elif condition == 'between':
-            factors[np.where((factors < lbound) & (factors > ubound))] = np.nan
+            factors[np.where((factors < lbound) | (factors > ubound))] = np.nan
         elif condition == 'not_between':
-            factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
+            factors[np.where((factors > lbound) & (factors < ubound))] = np.nan
         else:
             raise ValueError(f'invalid selection condition \'{condition}\''
                              f'should be one of ["any", "greater", "less", "between", "not_between"]')
@@ -1559,169 +1315,30 @@ class FactorSorter(BaseStrategy):
         return chosen
 
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None):
-        """ h, r, 和 t 都是用于生成交易信号的窗口数据，根据这一段窗口数据
-            生成一条交易信号
-        """
+    def realize(self):
+        """ realize strategy here"""
         pass
 
 
 class RuleIterator(BaseStrategy):
     """ 规则迭代策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时迭代应用到所有的股票上。
 
+    RuleIterator策略类的特殊功能是可以对同一套交易规则，将不同的参数应用到投资组合中的不同股票上。
+    例如，用户可以设计一个均线交叉策略，并将其应用到投资组合中的所有股票上，同时可以为每只股票
+    设定不同的均线周期参数。
+
+    例如，用户可以为投资组合中的股票分别设定不同的均线参数：
+        stock1: short_window=5, long_window=20
+        stock2: short_window=10, long_window=50
+        stock3: short_window=20, long_window=100
+        stock4: short_window=30, long_window=200
+
+    这样，用户只需要编写一套均线交叉的交易规则，就可以将其应用到投资组合中的所有股票上，同时
+    还可以为每只股票设定不同的均线参数。这种特殊的交易策略，需要用到RuleIterator类的
+    multi_pars属性。
+
     这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则，
     策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。
-
-    Properties
-    ----------
-    pars:               tuple,
-        策略参数
-    opt_tag:            int,
-        优化标记，策略是否参与参数优化
-    name:               str,
-        策略名称
-    description:        str,
-        策略简介
-    par_count:          int,
-        策略参数个数
-    par_types:          tuple,
-        策略参数类型
-    par_range:          tuple,
-        策略参数取值范围
-    data_freq:          str:
-        数据频率，用于生成策略输出所需的历史数据的频率
-    strategy_run_freq:
-        策略运行采样频率，即相邻两次策略生成的间隔频率。
-    window_length:
-        历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-    strategy_data_types:
-        静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
-    strategy_run_timing:
-        策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
-    reference_data_types:
-        参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有
-        的股票的信号生成，如指数、宏观经济数据等。
-
-    Examples
-    --------
-        Class ExampleStrategy(RuleIterator):
-
-            def realize(self, h, r=None, t=None, pars=None):
-
-                # 在这里编写信号生成逻辑
-                ...
-                result = ...
-                # result代表策略的输出
-
-                return result
-
-    用下面的方法创建一个策略对象：
-
-        example_strategy = ExampleStrategy(pars=<example pars>,
-                                           name='example',
-                                           description='example strategy',
-                                           strategy_data_types='close'
-                                           ...
-                                           )
-        在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
-
-    - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
-
-    realize()的定义：
-
-        def realize(self,
-                    h: np.ndarray,
-                    r: np.ndarray = None,
-                    t: np.ndarray = None,
-                    pars: tuple = None
-                    ):
-
-    realize()中获取策略参数：
-
-            par_1, par_2, ..., par_n = self.pars
-
-    realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
-        :input:
-        h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，
-            h 的shape为(N, L)，含义如下：
-
-            - N行：交易时间轴
-            - L列： 历史数据类型轴
-
-            示例：
-                以下例子都基于前面给出的参数设定
-                例1，计算最近的收盘价相对于10天前的涨跌幅：
-                    close_last_day = h_seg[-1, 3]
-                    close_10_day = h_seg[-10, 3]
-                    rate_10 = (close_last_day / close_10_day) - 1
-
-                例2, 判断股票最近的收盘价是否大于10日内的最高价：
-                    max_10_day = h_seg[-10:-1, 1].max(axis=1)
-                    close_last_day = h_seg[-1, 3]
-                    penetrate = close_last_day > max_10_day
-
-                例3, 获取股票最近10日市盈率的平均值
-                    pe_10_days = h_seg[-10:-1, 4]
-                    avg_pe = pe_10_days.mean(axis=1)
-
-                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
-                    close_10_days = h_seg[-10:-1, 3]
-                    close_50_days = h_seg[-50:-1, 3]
-                    ma_10 = close_10_days.mean(axis=1)
-                    ma_50 = close_10_days.mean(axis=1)
-
-        - r(reference):参考历史数据，默认为None，shape为(N, L)
-            与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
-            宏观经济数据等，
-
-            - N行, 交易日期/时间轴
-
-            - L列，参考数据类型轴
-
-            以下是获取参考数据的几个例子：
-                设定：
-                    - reference_data_types = "000300.SH.close, 000001.SH.close"
-
-                例1: 获取最近一天的沪深300收盘价：
-                    close_300 = r[-1, 0]
-                例2: 获取五天前的上证指数收盘价:
-                    close_SH = r[-5, 1]
-
-        - t(trade):交易历史数据，默认为None，shape为(N, 5)
-            最近几次交易的结果数据，2D数据。包含N行5列数据
-            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
-            数据的结构如下
-
-            - N行， 股票/证券类型轴
-                每一列代表一只个股或证券
-
-            - 5列,  交易数据类型轴
-                - 0, own_amounts:              当前持有每种股票的份额
-                - 1, available_amounts:        当前可用的每种股票的份额
-                - 2, current_prices:           当前的交易价格
-                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
-                - 4, recent_trade_prices:      最近一次成交价格
-
-            示例：以下是在策略中获取交易数据的几个例子：
-
-                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
-                    volume = t[:, 3]
-                    trade_prices = t[:, 4]
-                    或者:
-                    t = t.T
-                    volume = t[3]
-                    trade_prices = t[4]
-                例2: 获取当前持有股票数量:
-                    own_amounts = t[:, 0]
-                    或者:
-                    t = t.T
-                    own_amounts = t[0]
-
-        :output
-        signals: 一个代表交易信号的数字，dtype为float
 
     realize()方法的输出：
     realize()方法的输出就是交易信号，该交易信号是一个数字，策略会将其推广到整个投资组合：
@@ -1730,17 +1347,7 @@ class RuleIterator(BaseStrategy):
 
         投资组合： [share1, share2, share3, share4]
                     |        |       |       |
-                 [ int1,    int2,   int3,   int4] -> np.array[ int1,    int2,   int3,   int4]
-
-    在不同的信号类型下，信号的含义不同。
-
-         signal type   |         PT           |            PS           |       VS
-        ------------------------------------------------------------------------------------
-            sig > 1    |         N/A          |           N/A           | Buy in sig shares
-         1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
-            sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
-         0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
-           sig < -1    |         N/A          |           N/A           |  Sell sig shares
+                 [ int1,   int2,   int3,   int4 ] -> np.array[ int1,   int2,   int3,   int4]
 
     按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
     中，并产生交易信号了。
@@ -1749,30 +1356,177 @@ class RuleIterator(BaseStrategy):
     RuleIterator 策略类继承了交易策略基类
 
     """
-    __mataclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     def __init__(self,
                  name: str = 'Rule-Iterator',
                  description: str = 'description of rule iterator strategy',
+                 allow_multi_par: bool = True,
                  **kwargs):
         super().__init__(name=name,
                          description=description,
                          stg_type='RULE-ITER',
                          **kwargs)
+        self._data_windows = {}
+        self.allow_multi_par = allow_multi_par  # 设置为True，表示策略可以对不同的股票使用不同的参数
+        self.multi_pars = None
 
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
+    def info(self, verbose: bool = False, stg_id=None, **kwargs):
+        """ display more FactorSorter-specific properties
+
+        Parameters
+        ----------
+        verbose: bool
+            if True, display more properties
+        stg_id: str
+            strategy id, if None, use self.name
+        **kwargs:
+            other parameters
+        """
+        from shutil import get_terminal_size
+
+        term_width = get_terminal_size().columns
+        info_width = int(term_width * 0.75) if term_width > 120 else term_width
+        key_width = max(24, int(info_width * 0.3))
+
+        extra_info = f'{" Iteration Properties ":-^{info_width}}\n'
+        extra_info += f'{"Allow multi pars":<{key_width}}{self.allow_multi_par}'
+
+        if self.allow_multi_par:
+            if not self.multi_pars:
+                extra_info += f'\n{"Multi-parameter not set":<{info_width}}'
+            elif verbose:  # print out complete multi_pars
+                multi_par_str = '\n'.join([f'{str(k)}: {str(v)}' for k, v in self.multi_pars.items()])
+                extra_info += f'\n{"Multi-parameter":<{info_width}}\n{multi_par_str}'
+            else:  # print out brief multi_pars info
+                extra_info += f'\n{"Multi-parameter (pass verbose=True to view all multi pars)":<{info_width}}\n' \
+                              f'{self.multi_pars[self.multi_pars.values[0]]}\n...'
+
+        super().info(verbose=verbose, stg_id=stg_id, extra_info=extra_info)
+
+    def update_par_values(self, *par_values: Any, **kwargs: Any) -> None:
+        """ 快速更新策略的参数值，如果参数是一个multi_par，将其写入multi_par，
+        并将其第一组参数值写入par_values
+
+        Parameters
+        ----------
+        par_values: tuple, optional
+            策略参数的值，元组中的每个元素是按顺序排列的所有参数值，如果
+            没有设置参数，则必须传入kwargs参数
+        kwargs: dict
+            以字典形式传入具体需要更新的参数值，键为参数名，值为参数值
+
+        Returns
+        -------
+        None
+        """
+        if not par_values:
+            super().update_par_values(**kwargs)
+            return
+
+        # 只有当第一个参数是 dict 时，才可能是 multi_par
+        # tuple/list 形式的 par_values 不应被当作 multi_par
+        if isinstance(par_values[0], dict):
+            # par values中有multi_par，更新multi_par
+            par_values_dict = par_values[0]
+            self._update_multi_pars(par_values_dict)
+            # 将第一个参数值写入par_values
+            par_values = self.multi_pars[0]
+            super().update_par_values(*par_values)
+        else:
+            # par_values是一个tuple或list，直接更新参数值
+            # 确保 multi_pars 不会被设置（tuple/list 形式不应设置 multi_pars）
+            # 注意：这里不修改 multi_pars，保持其原有值（通常为 None）
+            super().update_par_values(*par_values)
+
+    def _update_multi_pars(self, multi_pars):
+        """ 设置多参数的函数，允许用户为每只股票设置不同的参数
+
+        Parameters
+        ----------
+        multi_pars: dict {str: tuple, list, ndarray}
+            策略参数字典，key为股票代码或'default'，value为参数的值元组
+
+        Returns
+        -------
+        None
+        """
+        if not self.allow_multi_par:
+            # 如果不允许多参数，则直接返回一个空元组
+            self.multi_pars = None
+            raise ValueError('multi_pars is not allowed, you need to set allow_multi_par to True first')
+
+        # multi_par 仅接受 dict 形式
+        if not isinstance(multi_pars, dict):
+            raise TypeError(f'multi_pars should be a dict, not {type(multi_pars)}')
+
+        # 检查 share_count：如果为 0，说明还未 set_shares，应报错
+        if self.share_count == 0:
+            raise ValueError(
+                '无法设置 multi_par：share_count 为 0，请先调用 set_shares() 设置股票列表'
+            )
+
+        # 获取 default 值和策略默认参数
+        default_value = multi_pars.get('default', None)
+
+        # 按 share_names 顺序解析，而非按 dict 的 key 顺序
+        result = []
+        for share_name in self.share_names:
+            if share_name in multi_pars:
+                # 如果 dict 中存在该 share_id，使用对应值
+                par_tuple = multi_pars[share_name]
+            elif default_value is not None:
+                # 如果不存在但存在 'default'，使用 default 值
+                par_tuple = default_value
+            else:
+                # 如果都不存在，使用策略默认 par_values
+                raise KeyError(f'par_value of {share_name} is not provided in multi_pars and default '
+                               f'value is not given, please provide par_value for {share_name} or '
+                               f'set a default value like "default": (par1, par2, ...) in multi_pars')
+
+            # 确保 par_tuple 是 tuple 或 list
+            if not isinstance(par_tuple, (tuple, list)):
+                raise TypeError(
+                    f'par values must be tuple or list，got {type(par_tuple)} for share {share_name}'
+                )
+
+            # 转换为 tuple
+            par_tuple = tuple(par_tuple)
+
+            # 校验参数元组长度必须等于 par_count
+            if len(par_tuple) != self.par_count:
+                raise ValueError(
+                    f'par values count should be equal to par_count ({self.par_count})，'
+                    f'got {len(par_tuple)} for share {share_name}'
+                )
+
+            # Make sure that par_tuple is valid by setting the first par_tuple to the strategy parameters
+            self.update_par_values(*par_tuple)
+
+            result.append(par_tuple)
+
+        # 校验解析后的 multi_pars 长度必须等于 share_count
+        if len(result) != self.share_count:
+            raise ValueError(
+                f'length of multi_pars must equal to share_count ({self.share_count})，'
+                f'got {len(result)}'
+            )
+
+        self.multi_pars = tuple(result)
+
+    def update_running_data_window(self, data_windows:dict, window_indices:dict, window_index:int):
+        """ 将策略的历史数据更新为window_index指定的历史数据，对Rule_iterator来说数据不能直接保存到"""
+        for dtype_name in self.data_types:
+            data_window = data_windows[dtype_name][window_indices[dtype_name][window_index]]
+            self._data_windows[dtype_name] = data_window
+
+    def generate(self):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
             对于滚动展开后的矩阵，使用map函数循环调用generate_one函数生成整个历史区间的
             循环回测结果（结果为1维向量， 长度为hist_length - _window_length + 1）
 
         Parameters
         ----------
-        h_seg: np.ndarray
-            历史数据片段, 二维数组，shape为(N, L)，其中N为历史数据长度，L为历史数据类型轴
-        ref_seg: np.ndarray
-            参考数据片段, 二维数组，shape为(N, L)，其中N为历史数据长度，L为参考数据类型轴
-        trade_data: np.ndarray
-            交易数据片段, 二维数组，shape为(N, 5)，其中N为历史数据长度，5为交易数据类型轴
 
         Returns
         -------
@@ -1780,51 +1534,21 @@ class RuleIterator(BaseStrategy):
             一维向量。根据策略，在历史上产生的仓位信号或交易信号，具体信号的含义取决于策略类型
         """
         # 生成iterators, 将参数送入realize_no_nan中逐个迭代后返回结果
-        share_count, window_length, hdata_count = h_seg.shape
-        ref_seg_iter = (ref_seg for i in range(share_count))
-        if trade_data is None:
-            trade_data_iter = (None for i in range(share_count))
-        else:
-            trade_data_iter = trade_data
-        pars = self.pars
-        if isinstance(pars, dict):
-            pars_iter = pars.values()
-        else:
-            pars_iter = (pars for i in range(share_count))
-        signal = np.array(list(map(self.realize_no_nan,
-                                   pars_iter,
-                                   h_seg,
-                                   ref_seg_iter,
-                                   trade_data_iter)))
+        signal = np.empty(self.share_count, dtype=float)
+
+        for i in range(self.share_count):
+            if self.allow_multi_par and self.multi_pars:
+                # 如果允许多参数，则为每个股票使用不同的参数
+                par = self.multi_pars[i]
+                self.update_par_values(*par)
+            # 更新股票使用的数据
+            for dtype_name in self.data_types:
+                setattr(self, dtype_name, self._data_windows[dtype_name][:, i])
+            signal[i] = self.realize()
 
         return signal
 
-    def realize_no_nan(self,
-                       params,
-                       h_seg,
-                       ref_seg,
-                       trade_data):
-        """ 生成没有nan的数据，传递到realize中并获取结果返回
-        """
-        # 仅针对非nan值计算，忽略股票停牌时期
-        hist_nonan = h_seg[~np.isnan(h_seg[:, 0])]
-        if ref_seg is None:
-            ref_nonan = None
-        else:
-            ref_nonan = ref_seg[~np.isnan(ref_seg[:, 0])]
-
-        return self.realize(h=hist_nonan,
-                            r=ref_nonan,
-                            t=trade_data,
-                            pars=params)
-
     @abstractmethod
-    def realize(self,
-                h,
-                r=None,
-                t=None,
-                pars=None):
-        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
-            生成一个股票的独立交易信号，同样的规则会被复制到其他股票
-        """
+    def realize(self):
+        """ realize strategy here"""
         pass

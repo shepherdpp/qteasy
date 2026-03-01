@@ -23,12 +23,9 @@ if __name__ == '__main__':
     parser = get_qt_argparser()
     args = parser.parse_args()
 
-    # 内置交易策略，使用macd执行交易
+    # 内置交易策略，使用ndaychg执行交易
     alpha = qt.get_built_in_strategy('ndaychg')  # 一个基于N日涨跌幅的策略，用于多市场轮动策略
-
-    alpha.strategy_run_freq = 'd'  # 每天运行
-    alpha.data_freq = 'd'  # 日频数据
-    alpha.window_length = 25  # 数据窗口长度为25天
+    alpha.update_data_types('close_ANY_d', window_length=25)  # 数据窗口长度为25天
 
     # 定义选股参数
     alpha.sort_ascending = False  # 优先选择涨幅最大的股票
@@ -37,8 +34,8 @@ if __name__ == '__main__':
     alpha.max_sel_count = 2  # 每次最多选出2支股票
     alpha.weighting = 'even'  # 选出的股票等权重买入且权重平均分配
 
-    op = Operator(strategies=[alpha], signal_type='PT', op_type='step')
-    op.set_parameter('custom', pars=(20, ))  # 以20日张跌幅为选股因子
+    op = Operator(strategies=[alpha], signal_type='PT', op_type='step', run_freq='d')
+    op.set_parameter('custom', par_values=(20, ))  # 以20日涨跌幅为选股因子
 
     asset_pool = [  # 4个ETF之间轮，最多同时选中两个
         '515630.SH',  # 保险证券ETF
@@ -69,4 +66,4 @@ if __name__ == '__main__':
             live_trade_broker_params=None,
     )
 
-    op.run()
+    qt.run(op)

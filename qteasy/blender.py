@@ -825,7 +825,7 @@ def _exp_to_token(string):
             cur_token_type = token_types['comma']
         else:
             # 某种没有预料到的字符出现在表达式中：
-            raise TypeError(f'character in expression "{ch}" is not valid!')
+            raise ValueError(f'character in expression "{ch}" is not valid!')
 
         # 四种常规情况下判断当前token已经完整，将该token压入tokens栈，完成一个token的识别：
         # 1，当前字符被判定为新的token类型;
@@ -918,8 +918,8 @@ def human_blender(blender_str: str, strategy_ids: list) -> str:
             try:
                 strategy_id = strategy_ids[int(token[1:])]
             except IndexError:
-                raise IndexError(f'index {token[1:]} out of range, while there are only '
-                                 f'{len(strategy_ids)} strategies in the list')
+                raise IndexError(f'Invalid blender string "{blender_str}": the index "s{token[1:]}" is out of range, '
+                                 f'while there are only {len(strategy_ids)} strategies in the list')
             human_tokens.append(str(strategy_id))
         elif token in ['+', '-', '*', '/', '^', '&', '|', 'and', 'or', 'not', '~']:
             human_tokens.append(f' {token} ')

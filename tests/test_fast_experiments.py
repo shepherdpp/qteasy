@@ -10,10 +10,13 @@
 # ======================================
 import unittest
 
+from numba.core.utils import benchmark
+
 import qteasy as qt
 import numpy as np
 
-from qteasy import QT_CONFIG
+from qteasy.parameter import Parameter
+from qteasy.datatypes import StgData
 
 
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
@@ -29,40 +32,45 @@ def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target
 
 class MultiFactors(qt.FactorSorter):
 
-    def __init__(self, pars: tuple = (0.5, 0.3, 0.7)):
+    def __init__(self, par_values: tuple = (0.5, 0.3, 0.7)):
         super().__init__(
-                pars=pars,
-                par_count=3,
-                par_types=['float', 'float', 'float'],  # 参数1:大小市值分类界限，参数2:小/中bp分界线，参数3，中/大bp分界线
-                par_range=[(0.01, 0.99), (0.01, 0.49), (0.50, 0.99)],
+                pars=[Parameter((0.01, 0.99), name='size_gate_percentile', par_type='float'),
+                      Parameter((0.01, 0.49), name='bp_small_percentile', par_type='float'),
+                      Parameter((0.50, 0.99), name='bp_large_percentile', par_type='float')],
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='m',  # 每月执行一次选股（每周或每天都可以）
-                strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
-                data_freq='d',  # 数据频率（包括股票数据和参考数据）
+                data_types=[StgData('pb', freq='d', asset_type='E'),
+                            StgData('total_mv', freq='d', asset_type='E'),
+                            StgData('close', freq='d', asset_type='E'),
+                            StgData('close-000300.SH', freq='d', asset_type='IDX')],  # 参考数据
                 window_length=20,
                 use_latest_data_cycle=True,
-                reference_data_types='close-000300.SH',  # 选股需要用到市场收益率，作为参考数据传入
                 max_sel_count=10,  # 最多选出10支股票
                 sort_ascending=True,  # 选择因子最小的股票
                 condition='less',  # 仅选择因子小于某个值的股票
                 lbound=0,  # 仅选择因子小于0的股票
                 ubound=0,  # 仅选择因子小于0的股票
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
 
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.pars
+        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate_percentile',
+                                                                                       'bp_small_percentile',
+                                                                                       'bp_large_percentile')
+        pb_data, mv_data, close_data = self.get_data('pb_E_d', 'total_mv_E_d', 'close_E_d')  # 获取策略数据
+
         # 读取投资组合的数据PB和total_MV的最新值
-        pb = h[:, -1, 0]  # 当前所有股票的PB值
-        mv = h[:, -1, 1]  # 当前所有股票的市值
-        pre_close = h[:, -2, 2]  # 当前所有股票的前收盘价
-        close = h[:, -1, 2]  # 当前所有股票的最新收盘价
+        pb = pb_data[-1]  # 当前所有股票的PB值
+        mv = mv_data[-1]  # 当前所有股票的市值
+        pre_close = close_data[-2]  # 当前所有股票的前收盘价
+        close = close_data[-1]  # 当前所有股票的最新收盘价
 
         # 读取参考数据(r)
-        market_pre_close = r[-2, 0]  # HS300的昨收价
-        market_close = r[-1, 0]  # HS300的收盘价
+        r = self.get_data('close-000300.SH_IDX_d')  # 获取参考数据
+        market_pre_close = r[-2]  # HS300的昨收价
+        market_close = r[-1]  # HS300的收盘价
 
         # 计算账面市值比，为pb的倒数
         bp = pb ** -1
@@ -120,43 +128,46 @@ class MultiFactors(qt.FactorSorter):
 
 class IndexEnhancement(qt.GeneralStg):
 
-    def __init__(self, pars: tuple = (0.35, 0.8, 5)):
+    def __init__(self, par_values: tuple = (0.35, 0.8, 5)):
         super().__init__(
-                pars=pars,
-                par_count=2,
-                par_types=['float', 'float', 'int'],  # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
-                par_range=[(0.01, 0.99), (0.51, 0.99), (2, 20)],
+                # 参数1:沪深300指数权重阈值，低于它的股票不被选中，参数2: 初始权重，参数3: 连续涨跌天数，作为强弱势判断阈值
+                pars=[Parameter((0.01, 0.99), name='weight_threshold', par_type='float'),
+                      Parameter((0.51, 0.99), name='initial_weight', par_type='float'),
+                      Parameter((2, 20), name='price_days', par_type='int')],
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='d',  # 每天执行一次选股
-                strategy_data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
-                data_freq='d',  # 数据频率（包括股票数据和参考数据）
-                window_length=20,
+                # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
+                data_types=[StgData('wt_idx|000300.SH', freq='d', asset_type='ANY', window_length=1),
+                            StgData('close', freq='d', asset_type='ANY', window_length=20, )],
                 use_latest_data_cycle=True,
-                reference_data_types='',  # 不需要使用参考数据
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        weight_threshold, init_weight, price_days = self.pars
+    def realize(self):
+        weight_threshold, init_weight, price_days = self.get_pars('weight_threshold', 'initial_weight', 'price_days')
+        index_weight, prices = self.get_data('wt_idx|000300.SH_ANY_d', 'close_ANY_d')
         # 读取投资组合的权重wt和最近price_days天的收盘价
-        wt = h[:, -1, 0]  # 当前所有股票的权重值
-        pre_close = h[:, -price_days - 1:-1, 1]
-        close = h[:, -price_days:, 1]  # 当前所有股票的最新连续收盘价
+        wt = index_weight[-1]  # 当前所有股票的权重值
+        pre_close = prices[-price_days - 1:-1]
+        close = prices[-price_days:]  # 当前所有股票的最新连续收盘价
         # 计算连续price_days天的收益
         stock_returns = pre_close - close  # 连续p天的收益
 
         # 设置初始选股权重为0.8
         weights = init_weight * np.ones_like(wt)
 
+        # 剔除所有没有权重（NaN）的股票
+        weights[np.where(np.isnan(wt))] = 0
+
         # 剔除掉权重小于weight_threshold的股票
         weights[wt < weight_threshold] = 0
 
         # 找出强势股，将其权重设为1, 找出弱势股，将其权重设置为 init_weight - (1 - init_weight)
-        up_trends = np.all(stock_returns > 0, axis=1)
+        up_trends = np.all(stock_returns > 0, axis=0)
         weights[up_trends] = 1.0
         down_trend_weight = init_weight - (1 - init_weight)
-        down_trends = np.all(stock_returns < 0, axis=1)
+        down_trends = np.all(stock_returns < 0, axis=0)
         weights[down_trends] = down_trend_weight
 
         # 实际选股权重为weights * HS300权重
@@ -168,36 +179,40 @@ class IndexEnhancement(qt.GeneralStg):
 
 class GridTrading(qt.GeneralStg):
 
-    def __init__(self, pars: tuple = (2.0, 3.0, 0.3, 0.5, 300)):
+    def __init__(self, par_values: tuple = (2.0, 3.0, 0.3, 0.5, 300)):
         super().__init__(
-                pars=pars,
-                par_count=5,
-                par_types=['float', 'float', 'float', 'float', 'int'],
                 # 仓位配置的阈值：参数1:低仓位阈值，参数2: 高仓位阈值，参数3：低仓位比例，参数4:高仓位比例，参数5:计算天数
-                par_range=[(0.5, 3.0), (2.0, 10.), (0.01, 0.5), (0.5, 0.99), (10, 300)],
+                pars=[Parameter((0.5, 3.0), name='low_threshold', par_type='float'),
+                      Parameter((2.0, 10.0), name='high_threshold', par_type='float'),
+                      Parameter((0.01, 0.5), name='low_position', par_type='float'),
+                      Parameter((0.5, 0.99), name='high_position', par_type='float'),
+                      Parameter((10, 300), name='days', par_type='int')],
                 name='GridTrading',
                 description='根据过去300份钟的股价均值和标准差，改变投资金额的仓位',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='1min',  # 每份钟执行一次调整
-                strategy_data_types='close',  # 使用份钟收盘价调整
-                data_freq='1min',  # 数据频率（包括股票数据和参考数据）
+                data_types=[StgData('close', freq='1min', asset_type='ANY')],  # 使用分钟收盘价调整
                 window_length=300,
                 use_latest_data_cycle=False,  # 高频数据不需要使用当前数据区间
-                reference_data_types='',  # 不需要使用参考数据
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略输出PT信号，即仓位目标信号"""
 
-        low_threshold, high_threshold, low_pos, hi_pos, days = self.pars
+        low_threshold, high_threshold, low_pos, hi_pos, days = self.get_pars('low_threshold',
+                                                                             'high_threshold',
+                                                                             'low_position',
+                                                                             'high_position',
+                                                                             'days')
+        h = self.get_data('close_ANY_1min')
 
         # 读取最近N天的收盘价
-        close = h[:, - days:, 0]  # 最新连续收盘价
-        current_close = h[:, -1, 0]  # 当天的收盘价
+        close = h[- days:]  # 最新连续收盘价
+        current_close = h[-1]  # 当天的收盘价
 
         # 计算N天的平均价和标准差，并计算仓位阈值
-        close_mean = np.nanmean(close, axis=1)
-        close_std = np.nanstd(close, axis=1)
+        close_mean = np.nanmean(close)
+        close_std = np.nanstd(close)
         hi_positive = close_mean + high_threshold * close_std
         low_positive = close_mean + low_threshold * close_std
         low_negative = close_mean - low_threshold * close_std
@@ -206,9 +221,9 @@ class GridTrading(qt.GeneralStg):
         # 根据当前的实际价格确定目标仓位，并将目标仓位作为信号输出
         pos = np.zeros_like(close_mean)
         pos = np.where(current_close > hi_positive, hi_pos, pos)
-        pos = np.where(hi_positive >= current_close > low_positive, low_pos, pos)
-        pos = np.where(low_positive >= current_close > low_negative, 0, pos)
-        pos = np.where(low_negative >= current_close > hi_negative, - low_pos, pos)
+        pos = np.where((hi_positive >= current_close > low_positive), low_pos, pos)
+        pos = np.where((low_positive >= current_close > low_negative), 0, pos)
+        pos = np.where((low_negative >= current_close > hi_negative), - low_pos, pos)
         pos = np.where(current_close >= hi_negative, - hi_pos, pos)
 
         return pos
@@ -235,19 +250,23 @@ class FastExperiments(unittest.TestCase):
         print(len(shares), shares[:10])
 
         alpha = MultiFactors()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha,
+                         signal_type='PT',
+                         run_timing='close',  # 在周期结束（收盘）时运行
+                         run_freq='M',  # 每月执一次选股（每周或每天都可以）
+                         )
 
-        op.op_type = 'stepwise'
-        op.set_blender("0.8*s0", 'close')
-        # op.run(mode=1,
-        #        invest_start='20210101',
-        #        invest_end='20220501',
-        #        asset_type='E',
-        #        invest_cash_amounts=[1000000],
-        #        asset_pool=shares,
-        #        trade_batch_size=100,
-        #        sell_batch_size=1,
-        #        trade_log=True)
+        op.set_blender("0.8*s0", 'Group_1')
+        qt.run(op=op,
+               mode=1,
+               invest_start='20210101',
+               invest_end='20220501',
+               asset_type='E',
+               invest_cash_amounts=[1000000],
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=True)
         self.assertTrue(True)
 
     def test_index_enhancement(self):
@@ -258,19 +277,24 @@ class FastExperiments(unittest.TestCase):
         print(len(shares), shares[:10])
 
         alpha = IndexEnhancement()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha,
+                         signal_type='PT',
+                         run_timing='close',  # 在周期结束（收盘）时运行
+                         run_freq='d',  # 每天执行一次选股
+                         )
 
         op.op_type = 'stepwise'
-        op.set_blender("0.8*s0", 'close')
-        # op.run(mode=1,
-        #        invest_start='20210101',
-        #        invest_end='20220501',
-        #        asset_type='E',
-        #        invest_cash_amounts=[1000000],
-        #        asset_pool=shares,
-        #        trade_batch_size=100,
-        #        sell_batch_size=1,
-        #        trade_log=True)
+        op.set_blender("0.8*s0", 'Group_1')
+        qt.run(op=op,
+               mode=1,
+               invest_start='20210101',
+               invest_end='20220501',
+               asset_type='E',
+               invest_cash_amounts=[1000000],
+               asset_pool=shares,
+               trade_batch_size=100,
+               sell_batch_size=1,
+               trade_log=True)
         self.assertTrue(True)
 
     def test_grid_trading(self):
@@ -278,28 +302,28 @@ class FastExperiments(unittest.TestCase):
         self.assertEqual(1, 1)
 
         alpha = GridTrading()
-        op = qt.Operator(alpha, signal_type='PT')
+        op = qt.Operator(alpha, signal_type='PT', run_timing='close', run_freq='1min')
 
-        op.op_type = 'batch'
-        op.set_blender("1.0*s0", 'close')
-        # op.run(
-        #         mode=1,
-        #         invest_start='20220401',
-        #         invest_end='20220731',
-        #         invest_cash_amounts=[1000000],
-        #         asset_type='IDX',
-        #         asset_pool=['000300.SH'],
-        #         trade_batch_size=0,
-        #         sell_batch_size=0,
-        #         trade_log=True,
-        #         allow_sell_short=True,
-        # )
+        op.set_blender("1.0*s0", 'Group_1')
+        qt.run(
+                op=op,
+                mode=1,
+                invest_start='20220401',
+                invest_end='20220731',
+                invest_cash_amounts=[1000000],
+                asset_type='IDX',
+                asset_pool=['000300.SH'],
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                trade_log=True,
+                allow_sell_short=True,
+        )
         self.assertTrue(True)
 
     def test_get_history_data(self):
         """
         """
-        # extract normal data
+        # gen_value normal data
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',
@@ -308,7 +332,7 @@ class FastExperiments(unittest.TestCase):
                                    adj='n',
                                    asset_type='E')
         print(f'not adjusted data: \n{data}')
-        # extract back adjusted price for one asset
+        # gen_value back adjusted price for one asset
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',
@@ -317,7 +341,7 @@ class FastExperiments(unittest.TestCase):
                                    adj='b',
                                    asset_type='E')
         print(f'adjusted data: \n{data}')
-        # extract back adjusted prices for both assets mixed
+        # gen_value back adjusted prices for both assets mixed
         data = qt.get_history_data(htypes='open, high, low, close',
                                    start='20211230',
                                    end='20220110',

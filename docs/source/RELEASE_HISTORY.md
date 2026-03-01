@@ -1,5 +1,23 @@
 # RELEASE HISTORY
 
+## 2.0.0 (2026-02-27)
+- Major update: qteasy 2.0 will be released with significant changes in the architecture and APIs, aiming to provide a more powerful and flexible framework for quantitative trading. Users are advised to check the migration guide in the documentation to smoothly upgrade to 2.0.
+- Key changes in 2.0 include:
+  - Major improvements in `Operator` / `Strategy` class:
+    - Introduced `Parameter` class to represent strategy parameters, and `Operator` can now specify the parameters it needs with Parameter instances, and users can set the parameters with more flexible ways, including setting parameters with different values for different symbols.
+    - Introduced `Group` class to represent strategy groups, and `Operator` now groups strategies into different groups, and each group can have its own running frequency and running timing and blender, thus strategies can be run with more flexible and powerful ways.
+    - An improved operator running schedule is introduced in 2.0, now all strategies are running at a more granular level allowing more flexible running timing and more accurate backtesting results, and the running schedule is determined per strategy group, allowing different groups of strategies to be run with different frequencies and timings.
+    - Improved how strategies utilizes historical data, now strategies are able to utilize data with different frequencies and window lengths in the same run, and the data are extracted and allocated to strategies in a more efficient way.
+    - Improved efficiency of strategy backtesting and optimization, now the backtesting and optimization process is more efficient with better utilization of system resources, and the performance is improved significantly especially when running with multiprocessing.
+    - Introduced Tracing mode in `Operator` to allow users to trace backtest results of each strategy group in more detail by defining tracing points in strategy realization, tracing results will be saved in trade logs.
+    - Simplified definition of strategy realization, now users can acquire historical data and parameters with simpler APIs with user-defined names in more intuitive ways.
+    - Introduced more strategy optimization algorithms, and users can set up different optimization algorithms for different strategy groups, and the optimization process is more efficient and more powerful with better utilization of system resources.
+    - Improved backtest / optimization result evaluation processes with more comprehensive evaluation metrics and more intuitive result presentation.
+  - `DataType` class now supports asset type "ANY" to represent any type of asset, and strategy can specify the asset type of its target symbols with "ANY" to be compatible with all types of assets.
+  - Introduced `StgData` class in strategy definition as syntax suger for users to specify window length and other related properties of Data used in strategy
+  - **Removed configuration keys**: `maximize_cash_usage`, `benchmark_asset_type`, `benchmark_dtype`. Logic is now inferred from execution flow and `benchmark_asset`. See [qteasy_2_migration_guide](qteasy_2_migration_guide.md) for migration.
+  - Other bug fixes and improvements
+
 ## 1.4.11 (2026-02-14)
 - Added FutureWarning for APIs that will be removed or changed in qteasy 2.0. Users are advised to migrate to the recommended alternatives so as to upgrade smoothly to 2.0.
 - Affected APIs:

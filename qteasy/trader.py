@@ -19,39 +19,30 @@ import time
 import numpy as np
 import pandas as pd
 
+from typing import Union, Optional, Any
 from queue import Queue
+
 from rich.text import Text
 
-from .__init__ import __version__ as qteasy_version
-from .configure import ConfigDict, QT_CONFIG
 from .database import DataSource
-from .datatypes import get_tables_by_dtypes
+from .history import check_and_prepare_live_trade_data
 from .qt_operator import Operator
 from .broker import Broker
 from .data_channels import fetch_real_time_klines
-from .core import (
-    check_and_prepare_live_trade_data,
-    get_history_data,
-    refill_data_source,
-)
 
 from .trade_recording import (
     get_account,
-    get_account_position_availabilities,
     get_account_position_details,
     get_account_cash_availabilities,
     query_trade_orders,
     record_trade_order,
     get_or_create_position,
-    new_account,
-    update_position,
 )
 
 from .trading_util import (
     cancel_order,
     create_daily_task_schedule,
     get_position_by_id,
-    get_last_trade_result_summary,
     get_symbol_names,
     process_account_delivery,
     parse_trade_signal,
@@ -72,7 +63,6 @@ from .utilfuncs import (
     get_current_timezone_datetime,
 )
 
-
 UNIT_TO_TABLE = {
     'h':     'stock_hourly',
     '30min': 'stock_30min',
@@ -81,6 +71,41 @@ UNIT_TO_TABLE = {
     '1min':  'stock_1min',
     'min':   'stock_1min',
 }
+
+
+def run_sync_task(task_func, *args) -> None:
+    """ 以同步方式执行任务
+
+    Parameters
+    ----------
+    task_func: func
+        任务名称
+    *args: tuple
+        任务参数
+    """
+
+    if args:
+        task_func(*args)
+    else:
+        task_func()
+
+
+def run_async_task(task_func, *args) -> None:
+    """ 以异步方式执行任务
+
+    Parameters
+    ----------
+    task_func: func
+        任务名称
+    *args: tuple
+        任务参数
+    """
+    from threading import Thread
+    if args:
+        t = Thread(target=task_func, args=args, daemon=True)
+    else:
+        t = Thread(target=task_func, daemon=True)
+    t.start()
 
 
 class Trader(object):
@@ -121,7 +146,7 @@ class Trader(object):
         交易系统的main loop
     add_task(task) -> None
         添加任务到任务队列
-    run_task(task) -> None
+    _run_task(task) -> None
         执行任务
     """
 
@@ -149,7 +174,42 @@ class Trader(object):
         'available_cash',  # 20, 变动后的可用现金
     ]
 
-    def __init__(self, account_id, operator, broker, config, datasource, debug=False):
+    def __init__(self,
+                 operator: Operator,
+                 account_id: int,
+                 broker: Broker,
+                 datasource: DataSource,
+                 asset_pool: Union[str, list],
+                 asset_type: str = 'E',
+                 time_zone: str = 'local',
+                 exchange: str = 'SSE',
+                 market_open_time_am: str = '09:30:00',
+                 market_close_time_am: str = '11:30:00',
+                 market_open_time_pm: str = '13:00:00',
+                 market_close_time_pm: str = '15:00:00',
+                 live_price_channel: str = 'tushare',
+                 live_price_freq: str = '1min',
+                 live_data_batch_size: int = 0,
+                 live_data_batch_interval: int = 0,
+                 live_data_channel: str = 'tushare',
+                 watched_price_refresh_interval: int = 5,
+                 benchmark_asset: str = '000300.SH',
+                 live_sys_logger: logging.Logger = None,
+                 cost_params: np.ndarray = None,
+                 pt_buy_threshold: float = 0.,
+                 pt_sell_threshold: float = 0.,
+                 allow_sell_short: bool = False,
+                 trade_batch_size: int = 0.01,
+                 sell_batch_size: int = 0.01,
+                 long_position_limit: float = 1.0,
+                 short_position_limit: float = -1.0,
+                 stock_delivery_period: int = 1,
+                 cash_delivery_period: int = 0,
+                 open_close_timing_offset: int = 1,
+                 daily_refill_tables: str = '',
+                 weekly_refill_tables: str = '',
+                 monthly_refill_tables: str = '',
+                 debug=False):
         """ 初始化Trader
 
         Parameters
@@ -160,8 +220,6 @@ class Trader(object):
             交易员对象，包含所有的交易策略，管理交易策略，控制策略的运行方式和合并方式
         broker: Broker
             交易所对象，接受交易订单并返回交易结果
-        config: dict
-            交易系统的配置信息
         datasource: DataSource
             数据源对象，从数据源获取数据
         debug: bool, default False
@@ -170,13 +228,11 @@ class Trader(object):
         err = None
         if not isinstance(account_id, int):
             err = TypeError(f'account_id must be int, got {type(account_id)} instead')
-        if not isinstance(operator, Operator):
+        elif not isinstance(operator, Operator):
             err = TypeError(f'operator must be Operator, got {type(operator)} instead')
-        if not isinstance(broker, Broker):
+        elif not isinstance(broker, Broker):
             err = TypeError(f'broker must be Broker, got {type(broker)} instead')
-        if not isinstance(config, dict):
-            err = TypeError(f'config must be dict, got {type(config)} instead')
-        if not isinstance(datasource, DataSource):
+        elif not isinstance(datasource, DataSource):
             err = TypeError(f'datasource must be DataSource, got {type(datasource)} instead')
 
         if err:
@@ -185,12 +241,11 @@ class Trader(object):
         self.account_id = account_id
         self._broker = broker
         self._operator = operator
-        self._config = ConfigDict()
-        self._config.update(QT_CONFIG.copy())
-        self._config.update(config)
+
+        self.debug = debug
+        self.force_current_date = None  # 用于测试，强制当前日期
+
         self._datasource = datasource
-        asset_pool = self._config['asset_pool']
-        asset_type = self._config['asset_type']
         if isinstance(asset_pool, str):
             asset_pool = str_to_list(asset_pool)
         self._asset_pool = asset_pool
@@ -200,32 +255,58 @@ class Trader(object):
         self.message_queue = Queue()
 
         self.task_daily_schedule = []
-        self.time_zone = config['time_zone']
+        self.time_zone = time_zone
         self.init_datetime = self.get_current_tz_datetime().strftime("%Y-%m-%d %H:%M:%S")
 
-        self.next_task = ''
-        self.count_down_to_next_task = 0
-
-        self.is_trade_day = False
         self.is_market_open = False
         self._status = 'stopped'
         self._prev_status = None
 
-        self.live_price_channel = self._config['live_price_acquire_channel']
-        self.live_price_freq = self._config['live_price_acquire_freq']
+        # ---------------- trade market related -----------------
+        self.exchange = exchange
+        self.cost_params = cost_params
+        self.pt_buy_threshold = pt_buy_threshold
+        self.pt_sell_threshold = pt_sell_threshold
+        self.allow_sell_short = allow_sell_short
+        self.trade_batch_size = trade_batch_size
+        self.sell_batch_size = sell_batch_size
+        self.long_position_limit = long_position_limit
+        self.short_position_limit = short_position_limit
+        self.stock_delivery_period = stock_delivery_period
+        self.cash_delivery_period = cash_delivery_period
+
+        self.market_open_time_am = market_open_time_am
+        self.market_close_time_am = market_close_time_am
+        self.market_open_time_pm = market_open_time_pm
+        self.market_close_time_pm = market_close_time_pm
+
+        self.open_close_timing_offset = open_close_timing_offset
+        self.daily_refill_tables = daily_refill_tables
+        self.weekly_refill_tables = weekly_refill_tables
+        self.monthly_refill_tables = monthly_refill_tables
+
+        # ---------------- live price related -----------------
         self.live_price = None  # 用于存储本交易日最新的实时价格，用于跟踪最新价格、计算市值盈亏等
-        self.watched_price_refresh_interval = self._config['live_price_acquire_freq']
+        self.live_price_channel = live_price_channel
+        self.live_price_freq = live_price_freq
+        self.live_data_batch_size = live_data_batch_size
+        self.live_data_batch_interval = live_data_batch_interval
+        self.live_data_channel = live_data_channel
+        self.watched_price_refresh_interval = watched_price_refresh_interval
         self.watched_prices = None  # 用于存储被监视的股票的最新价格，用于监视价格变动
-        benchmark_list = self._config['benchmark_asset']
-        if isinstance(benchmark_list, str):
-            benchmark_list = str_to_list(benchmark_list)
+        if isinstance(benchmark_asset, str):
+            benchmark_list = str_to_list(benchmark_asset)
+        elif isinstance(benchmark_asset, list):
+            benchmark_list = benchmark_asset[:]
+        else:
+            err = TypeError(f'benchmark_asset must be str or list, got {type(benchmark_asset)} instead')
+            raise err
+        self.benchmark = benchmark_asset
         self.watch_list = benchmark_list + self._asset_pool
 
-        self.live_sys_logger = None
+        self.live_sys_logger = live_sys_logger
 
         self.account = get_account(self.account_id, data_source=self._datasource)
-
-        self.debug = debug
 
     # ================== properties ==================
     @property
@@ -243,6 +324,51 @@ class Trader(object):
     @property
     def prev_status(self) -> str:
         return self._prev_status
+
+    def _get_next_scheduled_task_and_countdown(self, current_time=None):
+        """ 计算 task_daily_schedule 中下一个未到点任务及距其的秒数，供 next_task、count_down_to_next_task 使用。
+
+        Parameters
+        ----------
+        current_time : datetime.time, optional
+            当前时间；为 None 时使用 get_current_tz_datetime().time()。便于单测传入固定时间。
+
+        Returns
+        -------
+        tuple
+            (next_task, count_down_seconds)
+            - next_task: 下一个满足 task_time > current_time 且距离最近的任务元组 (time_str, task_name, *opt)，无则 None
+            - count_down_seconds: 到该任务时间的秒数；无下一个任务时为到当日 23:59:59 的秒数（至少为 1）
+        """
+        import datetime as dt
+        if current_time is None:
+            current_time = self.get_current_tz_datetime().time()
+        convenience_date = dt.datetime(2000, 1, 1)
+        current_datetime = dt.datetime.combine(convenience_date, current_time)
+        end_of_the_day = dt.datetime.combine(convenience_date, dt.time(23, 59, 59))
+        count_down = (end_of_the_day - current_datetime).total_seconds()
+        if count_down <= 0:
+            count_down = 1
+        next_task = None
+        for task in self.task_daily_schedule:
+            task_time = pd.to_datetime(task[0], utc=True).time()
+            if task_time > current_time:
+                task_datetime = dt.datetime.combine(convenience_date, task_time)
+                sec = (task_datetime - current_datetime).total_seconds()
+                if sec < count_down:
+                    count_down = sec
+                    next_task = task
+        return (next_task, count_down)
+
+    @property
+    def next_task(self):
+        """ 下一个计划执行的任务：task_daily_schedule 中第一个 task_time > 当前时间的任务元组，无则 None。"""
+        return self._get_next_scheduled_task_and_countdown(None)[0]
+
+    @property
+    def count_down_to_next_task(self):
+        """ 到下一个计划任务的倒计时秒数；无下一任务时为到当日 23:59:59 的秒数（至少 1）。"""
+        return self._get_next_scheduled_task_and_countdown(None)[1]
 
     @property
     def operator(self) -> Operator:
@@ -322,11 +448,12 @@ class Trader(object):
             start_date = (today - pd.Timedelta(days=7)).strftime('%Y%m%d')
             end_date = today.strftime('%Y%m%d')
             try:
+                from qteasy.core import get_history_data
                 current_prices = get_history_data(
                         shares=positions.index.tolist(),
                         htypes='close',
                         asset_type='E',
-                        freq=self.operator.op_data_freq,
+                        freq='d',
                         start=start_date,
                         end=end_date,
                 )['close'].iloc[-1]
@@ -334,7 +461,9 @@ class Trader(object):
                 self.send_message(f'Error in getting current prices: {e}', debug=True)
                 current_prices = pd.Series(index=positions.index, data=np.nan)
         else:
-            current_prices = self.live_price['close'].reindex(index=positions.index).astype('float')
+            # 在交易日，使用self.live_price中保存的最新实时价格
+            # self.live_price的格式为：index为symbols，列为['price']
+            current_prices = self.live_price['price'].reindex(index=positions.index).astype('float')
 
         positions['name'] = positions['name'].fillna('')
         positions['current_price'] = current_prices
@@ -350,7 +479,85 @@ class Trader(object):
 
     @property
     def config(self) -> dict:
-        return self._config
+        """ create trader related config properties, not the complete
+        QT_CONFIG to prevent from changing qt config in trader"""
+        trader_config = {
+            'time_zone':                            self.time_zone,
+            'live_price_acquire_channel':           self.live_price_channel,
+            'live_price_acquire_freq':              self.live_price_freq,
+            'market_open_time_am':                  self.market_open_time_am,
+            'market_close_time_am':                 self.market_close_time_am,
+            'market_open_time_pm':                  self.market_open_time_pm,
+            'market_close_time_pm':                 self.market_close_time_pm,
+            'benchmark_asset':                      self.benchmark,
+            'trade_batch_size':                     self.trade_batch_size,
+            'sell_batch_size':                      self.sell_batch_size,
+            'cash_delivery_period':                 self.cash_delivery_period,
+            'stock_delivery_period':                self.stock_delivery_period,
+            'allow_sell_short':                     self.allow_sell_short,
+            'long_position_limit':                  self.long_position_limit,
+            'short_position_limit':                 self.short_position_limit,
+            'strategy_open_close_timing_offset':    self.open_close_timing_offset,
+            'live_trade_daily_refill_tables':       self.daily_refill_tables,
+            'live_trade_weekly_refill_tables':      self.weekly_refill_tables,
+            'live_trade_monthly_refill_tables':     self.monthly_refill_tables,
+            'live_trade_data_refill_batch_size':    self.live_data_batch_size,
+            'live_trade_data_refill_batch_interval':self.live_data_batch_interval,
+            'live_trade_data_refill_channel':       self.live_data_channel,
+            'watched_price_refresh_interval':       self.watched_price_refresh_interval,
+            'cost_rate_buy':                        self.cost_params[0] if self.cost_params is not None else 0.,
+            'cost_rate_sell':                       self.cost_params[1] if self.cost_params is not None else 0.,
+            'cost_min_buy':                         self.cost_params[2] if self.cost_params is not None else 0.,
+            'cost_min_sell':                        self.cost_params[3] if self.cost_params is not None else 0.,
+            'cost_slippage':                        self.cost_params[4] if self.cost_params is not None else 0.,
+            'PT_buy_threshold':                     self.pt_buy_threshold,
+            'PT_sell_threshold':                    self.pt_sell_threshold,
+        }
+        return trader_config
+
+    def _update_config(self, key, value) -> None:
+        """ 更新交易系统的配置信息
+
+        该方法根据给定的配置项名称，将值直接写入 Trader 的对应属性中。
+        假定 key 和 value 均已完成参数校验。
+        """
+        # 成本相关参数单独处理：映射到 self.cost_params 的对应位置
+        cost_param_index_map = {
+            'cost_rate_buy': 0,
+            'cost_rate_sell': 1,
+            'cost_min_buy': 2,
+            'cost_min_sell': 3,
+            'cost_slippage': 4,
+        }
+        if key in cost_param_index_map:
+            idx = cost_param_index_map[key]
+            # 如果尚未初始化成本参数，先创建一个包含 5 个元素的数组
+            if self.cost_params is None:
+                self.cost_params = np.array([0., 0., 0., 0., 0.], dtype=float)
+            else:
+                # 复制一份，避免在原数组上原地修改带来潜在副作用
+                self.cost_params = np.array(self.cost_params, dtype=float)
+            self.cost_params[idx] = value
+            return
+
+        # 其他配置项直接映射到 Trader 的实例属性
+        config_key_to_attr = {
+            'live_price_acquire_channel':            'live_price_channel',
+            'live_price_acquire_freq':               'live_price_freq',
+            'benchmark_asset':                       'benchmark',
+            'strategy_open_close_timing_offset':     'open_close_timing_offset',
+            'live_trade_daily_refill_tables':        'daily_refill_tables',
+            'live_trade_weekly_refill_tables':       'weekly_refill_tables',
+            'live_trade_monthly_refill_tables':      'monthly_refill_tables',
+            'live_trade_data_refill_batch_size':     'live_data_batch_size',
+            'live_trade_data_refill_batch_interval': 'live_data_batch_interval',
+            'live_trade_data_refill_channel':        'live_data_channel',
+            'PT_buy_threshold':                      'pt_buy_threshold',
+            'PT_sell_threshold':                     'pt_sell_threshold',
+        }
+        attr_name = config_key_to_attr.get(key, key)
+        if hasattr(self, attr_name):
+            setattr(self, attr_name, value)
 
     @property
     def trade_log_file_is_valid(self) -> bool:
@@ -386,9 +593,38 @@ class Trader(object):
         """ 返回交易设置文件是否存在 """
         return os.path.exists(break_point_file_path_name(self.account_id, self.datasource))
 
+    @property
+    def is_trade_day(self, current_date=None) -> bool:
+        """ 检查当前日期是否是交易日
+
+        Parameters
+        ----------
+        current_date: datetime.date, optional
+            当前日期，默认为None，即当前日期为今天，指定日期用于测试
+
+        Returns
+        -------
+        None
+        """
+
+        from qteasy.utilfuncs import is_market_trade_day
+        if current_date is None:
+            current_date = self.get_current_tz_datetime().date()  # 产生本地时间
+
+        if self.debug:
+            if self.force_current_date is not None:
+                current_date = pd.to_datetime(self.force_current_date).date()
+            return is_market_trade_day(current_date, self.exchange)
+
+        return is_market_trade_day(current_date, self.exchange)
+
     # ================== methods ==================
     def get_current_tz_datetime(self) -> pd.Timestamp:
-        """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间"""
+        """ 根据当前时区获取当前时间，如果指定时区等于当前时区，将当前时区设置为local，返回当前时间
+        如果设置了force_current_date, 则返回force_current_date对应的datetime，主要用于测试
+        """
+        if self.force_current_date is not None:
+            return pd.to_datetime(self.force_current_date)
 
         tz_time = get_current_timezone_datetime(self.time_zone)
         # if tz_time is very close to local time, then set time_zone to local and return local time
@@ -400,18 +636,23 @@ class Trader(object):
     def get_config(self, key=None) -> dict:
         """ 返回交易系统的配置信息 如果给出了key，返回一个仅包含key:value的dict，否则返回完整的config字典"""
         if key is not None:
-            return {key: self._config.get(key)}
+            return {key: self.config.get(key)}
         else:
-            return self._config
+            return self.config
 
-    def update_config(self, key=None, value=None) -> dict:
+    def update_config(self, key=None, value=None) -> Optional[dict]:
         """ 更新交易系统的配置信息 """
-        if key not in self._config:
+        if key not in self.config:
             return None
+        trader_config = self.config.copy()
         from qteasy._arg_validators import _update_config_kwargs
         new_kwarg = {key: value}
-        _update_config_kwargs(self._config, new_kwarg, raise_if_key_not_existed=True)
-        return self._config[key]
+        _update_config_kwargs(trader_config, new_kwarg, raise_if_key_not_existed=True)
+        # 现在将trader_config赋值给self.config，但是self.config是一个静态属性，因此需要
+        # 从self.config中找到key对应的属性，并将value赋值给该属性
+        for k, v in trader_config.items():
+            self._update_config(k, v)
+        return self.config[key]
 
     def get_schedule_string(self, rich_form=True) -> str:
         """ 返回当前的任务日程，以DataFrame.to_string()的形式返回
@@ -455,7 +696,7 @@ class Trader(object):
         3，如果当前是交易日，检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
         """
 
-        self.run_task('start')
+        self._run_task('start')
 
         market_open_day_loop_interval = 0.05
         market_close_day_loop_interval = 1
@@ -487,14 +728,15 @@ class Trader(object):
                         args = None
                     self.send_message(f'task queue is not empty, taking next task from queue: {task_name}', debug=True)
                     if task_name not in white_listed_tasks:
-                        self.send_message(f'task: {task} cannot be executed in current status: {self.status}', debug=True)
+                        self.send_message(f'task: {task} cannot be executed in current status: {self.status}',
+                                          debug=True)
                         self.task_queue.task_done()
                         continue
                     try:
                         if args:
-                            self.run_task(task_name, *args)
+                            self._run_task(task_name, *args)
                         else:
-                            self.run_task(task_name)
+                            self._run_task(task_name)
                     # error handling: (TODO: if there's connection problem, reconnect or hold the trader?)
                     except RuntimeError as e:
                         import traceback
@@ -515,17 +757,19 @@ class Trader(object):
                 # 如果日期变化，检查是否是交易日，如果是交易日，更新日程
                 # TODO: move these operations to a task "change_date"
                 if current_date != pre_date:
-                    self._check_trade_day()
                     self._initialize_schedule(current_time)
 
                 # 检查broker的result_queue中是否有交易结果，如果有，则添加"process_result"任务到task_queue中
+                # TODO: 不要在trader中操作broker的所有Queue，而应该调用broker的API来获取交易结果
                 if not self.broker.result_queue.empty():
                     result = self.broker.result_queue.get()
                     if self.broker.debug:
                         self.send_message(f'got new result from broker for order {result["order_id"]}, '
                                           f'adding process_result task to queue')
                     self.add_task('process_result', result)
+                    self.broker.result_queue.task_done()
                 # 检查broker的message_queue中是否有消息，如果有，则处理消息，通常情况将消息添加到消息队列中
+                # TODO: 不要在trader中操作broker的message Queue，应该调用broker的API来获取消息
                 if not self.broker.broker_messages.empty():
                     message = self.broker.broker_messages.get()
                     self.send_message(message)
@@ -538,7 +782,7 @@ class Trader(object):
                                   f'{"=" * 20}\n')
         except KeyboardInterrupt:
             self.send_message('KeyboardInterrupt, stopping trader...')
-            self.run_task('stop')
+            self._run_task('stop')
         except Exception as e:
             self.send_message(f'error occurred when running trader, error: {e}')
             import traceback
@@ -588,6 +832,7 @@ class Trader(object):
         trader_info_dict = {}
 
         if system:
+            from qteasy import __version__ as qteasy_version
             # System Info
             trader_info_dict['python'] = sys.version
             trader_info_dict['qteasy'] = qteasy_version
@@ -618,14 +863,12 @@ class Trader(object):
             trader_info_dict['Live price update freq'] = \
                 self.get_config("live_price_acquire_freq")["live_price_acquire_freq"]
             trader_info_dict['Strategy'] = self.operator.strategies
-            trader_info_dict['Strategy run frequency'] = self.operator.op_data_freq
+            trader_info_dict['Run frequency'] = [gp.run_freq for gp in self.operator.groups.values()]
             trader_info_dict['trade batch size'] = self.get_config("trade_batch_size")["trade_batch_size"]
             trader_info_dict['sell batch size'] = self.get_config("sell_batch_size")["sell_batch_size"]
             trader_info_dict['cash delivery period'] = self.get_config("cash_delivery_period")["cash_delivery_period"]
             trader_info_dict['stock delivery period'] = \
                 self.get_config("stock_delivery_period")["stock_delivery_period"]
-            trader_info_dict['buy_fix'] = float(self.get_config('cost_fixed_buy')['cost_fixed_buy'])
-            trader_info_dict['sell_fix'] = float(self.get_config('cost_fixed_sell')['cost_fixed_sell'])
             trader_info_dict['buy_rate'] = float(self.get_config('cost_rate_buy')['cost_rate_buy'])
             trader_info_dict['sell_rate'] = float(self.get_config('cost_rate_sell')['cost_rate_sell'])
             trader_info_dict['buy_min'] = float(self.get_config('cost_min_buy')['cost_min_buy'])
@@ -742,41 +985,26 @@ class Trader(object):
 
         return message
 
-    def add_task(self, task, kwargs=None) -> None:
+    def add_task(self, task, *args) -> None:
         """ 添加任务到任务队列
 
         Parameters
         ----------
         task: str
             任务名称
-        kwargs: dict
+        args: Any
             任务参数
         """
         if not isinstance(task, str):
             err = TypeError('task should be a str')
             raise err
-        if kwargs and (not isinstance(kwargs, dict)):
-            err = TypeError('kwargs should be a dict')
-            raise err
 
-        if kwargs:
-            task = (task, (kwargs, ))
+        if args:
+            task = (task, args)
         self.send_message(f'adding task: {task}', debug=True)
         self._add_task_to_queue(task)
 
-    def add_async_task(self, task, kwargs=None) -> None:
-        """ 添加异步任务到任务队列，异步任务将以异步形式在主线程以外的子线程执行
-
-        Parameters
-        ----------
-        task: str
-            任务名称
-        **kwargs: dict
-            任务参数
-        """
-        raise NotImplementedError
-
-    def history_orders(self, with_trade_results=True):
+    def history_orders(self, with_trade_results=True) -> pd.DataFrame:
         """ 账户的历史订单详细信息
 
         Parameters
@@ -1029,10 +1257,10 @@ class Trader(object):
                 **position_data
         )
         position_change_detail = {
-            'pos_id': position_id,
-            'qty_change': quantity,
+            'pos_id':               position_id,
+            'qty_change':           quantity,
             'available_qty_change': quantity,
-            'cost_change': cost_change,
+            'cost_change':          cost_change,
         }
         # 在trade_log中记录持仓变动
         self.log_manual_qty_change(position_change_detail)
@@ -1066,7 +1294,31 @@ class Trader(object):
 
         return self.watched_prices
 
-# ============= functions related to trade config and logging ====================
+    def refresh_datasource_price_data(self, unit: str) -> None:
+        """ 从data_channel中下载最新的价格数据，并更新到数据源中，确保实盘运行前交易策略可以获取到最新的数据"""
+        table_to_update = UNIT_TO_TABLE[unit.lower()]
+        # 这里不能将不完整的实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
+        real_time_data = fetch_real_time_klines(
+                freq=unit.lower(),
+                channel=self.live_price_channel,
+                qt_codes=self.asset_pool,
+                verbose=False,
+                matured_kline_only=True,  # 这里确保只获取成熟的K线数据
+        )
+        # 将real_time_data写入DataSource
+        self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
+                                  f'{real_time_data.to_string()}\n'
+                                  f'writing data to datasource: {self.datasource}...', debug=True)
+
+        rows_written = self._datasource.update_table_data(
+                table=table_to_update,
+                df=real_time_data,
+                merge_type='update',
+        )
+        self.send_message(message=f'{rows_written} rows real-time price data written to'
+                                  f'data source: {self.datasource}', debug=True)
+
+    # ============= functions related to trade config and logging ====================
 
     def new_sys_logger(self) -> logging.Logger:
         """ 返回一个系统logger
@@ -1247,8 +1499,6 @@ class Trader(object):
         break_point_file_name: str
             断点文件路径
         """
-        # TODO: 不用保存完整的config，只需要保存部分跟交易有关的信息即可
-        #  在启动交易时导入的断点会覆盖start_up_settings中的参数
         break_point_data = dict()
         break_point_data['operator'] = self.operator
         break_point_data['config'] = self.config
@@ -1271,7 +1521,10 @@ class Trader(object):
     def load_break_point(self) -> dict:
         """ 从断点文件中读取信息并载入相关属性
 
-        :return:
+        Returns
+        -------
+        break_point_data: dict
+            从断点文件中读取的断点参数
         """
         from .utilfuncs import read_binary_file
 
@@ -1292,6 +1545,18 @@ class Trader(object):
             return {}
 
         return break_point_data
+
+    def clear_break_point(self) -> None:
+        """ 如果断点文件存在，删除该断点文件
+
+        Returns
+        -------
+        None
+        """
+        break_point_file_name = break_point_file_path_name(self.account_id, self.datasource)
+        if os.path.exists(break_point_file_name):
+            os.remove(break_point_file_name)
+        return None
 
     def submit_trade_order(self, symbol: str, position: str, direction: str,
                            order_type: str, qty: int, price: float) -> dict:
@@ -1643,14 +1908,10 @@ class Trader(object):
                 self._operator = operator
                 self.send_message('Loaded operator from break point!')
 
-            # broker = break_point.get('broker', None)
-            # if broker:
-            #     self._broker = broker
-            #     self.send_message('Loaded broker from break point!')
-
             config = break_point.get('config', None)
-            if config:
-                self._config.update(config)
+            if config and isinstance(config, dict):
+                for key, value in config.items():
+                    self.update_config(key=key, value=value)
                 self.send_message('Loaded configurations from break point!')
         else:
             self.send_message('No break point found, will using default configurations...')
@@ -1658,7 +1919,6 @@ class Trader(object):
         # 初始化trader的状态，初始化任务计划
         self.status = 'sleeping'
         self.send_message('Checking trade day and initializing schedule...')
-        self._check_trade_day()
         self._initialize_schedule()
 
         # 启动broker
@@ -1682,11 +1942,13 @@ class Trader(object):
         msg = Text('Putting Trader to sleep', style='bold red')
         self.send_message(message=msg)
         self.status = 'sleeping'
+        # TODO: 不应该在trader中操作broker的状态
         self.broker.status = 'paused'
 
     def _wakeup(self) -> None:
         """ 唤醒交易系统 """
         self.status = 'running'
+        # TODO: 不应该在trader中操作broker的状态
         self.broker.status = 'running'
         msg = Text('Trader is awake, broker is running', style='bold red')
         self.send_message(message=msg)
@@ -1703,7 +1965,7 @@ class Trader(object):
         msg = Text(f'Trader is resumed to previous status({self.status})', style='bold red')
         self.send_message(message=msg)
 
-    def _run_strategy(self, *strategy_ids) -> int:
+    def _run_strategy(self, step_index) -> int:
         """ 运行交易策略
 
         1，读取实时数据，设置operator的数据分配
@@ -1714,8 +1976,8 @@ class Trader(object):
 
         Parameters
         ----------
-        strategy_ids: list of str
-            交易策略ID列表
+        step_index: int
+            当前运行的任务步骤索引，对应于self.task_daily_schedule中的索引
 
         Returns
         -------
@@ -1723,166 +1985,138 @@ class Trader(object):
             提交的交易订单数量
         """
 
-        self.send_message(f'running task run strategy: {strategy_ids}', debug=True)
+        self.send_message(f'running task run strategy: {step_index}', debug=True)
         operator = self._operator
-        signal_type = operator.signal_type
+
         shares = self.asset_pool
-        own_amounts = self.account_positions['qty']
-        available_amounts = self.account_positions['available_qty']
+        own_amounts = self.account_positions['qty'].values
+        available_amounts = self.account_positions['available_qty'].values
         own_cash = self.account_cash[0]
         available_cash = self.account_cash[1]
-        config = self._config
-        # window_length = self._operator.max_window_length
-        #
-        # # 下载最小所需实时历史数据
-        # data_end_time = self.get_current_tz_datetime()  # 产生本地时间
-        max_strategy_freq = 'T'
-        for strategy_id in strategy_ids:
-            strategy = operator[strategy_id]
-            freq = strategy.strategy_run_freq.upper()
-            if TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_strategy_freq]:
-                max_strategy_freq = freq
-        # 解析strategy_run的运行频率，根据频率确定是否下载实时数据
+
+        today = self.get_current_tz_datetime().strftime('%Y-%m-%d')
+
+        # 下载最小所需实时历史数据
+        max_run_freq = 'T'
+        group_timing = operator.group_timing_table.iloc[step_index].values
+        group_count = len(operator.groups)
+        groups_to_run = [operator.groups_by_index[i] for i in range(group_count) if group_timing[i]]
+
+        for group in groups_to_run:
+            for strategy in group.members:
+                freq = strategy.run_freq.upper()
+                if freq in TIME_FREQ_LEVELS and TIME_FREQ_LEVELS[freq] < TIME_FREQ_LEVELS[max_run_freq]:
+                    max_run_freq = freq
+        # 解析strategy_run的运行频率，根据频率确定是否更新数据源中的数据
         self.send_message(f'getting live price data for strategy run...', debug=True)
         # # 将类似于'2H'或'15min'的时间频率转化为两个变量：duration和unit (duration=2, unit='H')/ (duration=15, unit='min')
-        duration, unit, _ = parse_freq_string(max_strategy_freq, std_freq_only=False)
+        duration, unit, _ = parse_freq_string(max_run_freq, std_freq_only=False)
         if (unit.lower() in ['min', '5min', '15min', '30min', 'h']) and self.is_trade_day:
             # 如果strategy_run的运行频率为分钟或小时，则调用fetch_realtime_price_data方法获取分钟级别的实时价格
-            # TODO: 实时价格不应该使用fetch_realtime_price_data方法，而应该使用fetch_realtime_quote方法
-            table_to_update = UNIT_TO_TABLE[unit.lower()]
-            # 这里不能将实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
-            real_time_data = fetch_real_time_klines(
-                    freq=unit.lower(),
-                    channel=self.live_price_channel,
-                    qt_codes=self.asset_pool,
-                    verbose=False,
-                    matured_kline_only=True,  # 这里确保只获取成熟的K线数据
-            )
-            # 将real_time_data写入DataSource
-            self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
-                                      f'{real_time_data.to_string()}\n'
-                                      f'writing data to datasource: {self.datasource}...', debug=True)
-
-            rows_written = self._datasource.update_table_data(
-                    table=table_to_update,
-                    df=real_time_data,
-                    merge_type='update',
-            )
-            self.send_message(message=f'{rows_written} rows real-time price data written to'
-                                      f'data source: {self.datasource}', debug=True)
-
+            self.refresh_datasource_price_data(unit=unit)
+        # TODO: 由于此时下载的是完整的K线数据，对应着DataType的ULC属性为False的情形，如果ULC为True，则需要继续下载不完整的K线
         # 如果strategy_run的运行频率大于等于D，则不下载实时数据，使用datasource中的历史数据
         else:
             pass
-        # 读取最新数据,设置operator的数据分配,创建trade_data
-        self.send_message(f'preparing trade data...', debug=True)
-        hist_op, hist_ref = check_and_prepare_live_trade_data(
-                operator=operator,
-                config=config,
+
+        # 从dataSource中读取最新数据,组装成data_package
+        self.send_message(f'preparing data package...', debug=True)
+        data_packages = check_and_prepare_live_trade_data(
+                op=operator,
+                trade_date=today,
                 datasource=self._datasource,
+                shares=self.asset_pool,
                 live_prices=self.live_price,
         )
+
         self.send_message(f'read real time data and set operator data allocation', debug=True)
-        operator.assign_hist_data(
-                hist_data=hist_op,
-                reference_data=hist_ref,
-                live_mode=True,
-                live_running_stgs=list(strategy_ids)
+        operator.prepare_data_buffer(
+                start_date=self.get_current_tz_datetime(),
+                end_date=self.get_current_tz_datetime(),
+                data_package=data_packages,
         )
+        operator.create_data_windows()
 
-        # 生成N行5列的交易相关数据，包括当前持仓、可用持仓、当前价格、最近成交量、最近成交价格
-        trade_data = np.zeros(shape=(len(shares), 5))
-        position_availabilities = get_account_position_availabilities(
-                account_id=self.account_id,
-                shares=shares,
-                data_source=self._datasource,
-        )
-        # 当前价格是hist_op的最后一行, 如果需要用latest_data_cycle，最新的实时数据已经包含在hist_op中了
-        timing_type = operator[strategy_ids[0]].strategy_timing
-        current_prices = hist_op[timing_type, :, -1].squeeze()
-        if current_prices.ndim == 0:
-            current_prices = np.array([current_prices])
-        last_trade_result_summary = get_last_trade_result_summary(
-                account_id=self.account_id,
-                shares=shares,
-                data_source=self._datasource,
-        )
-        self.send_message(f'Generating trade data from position availabilities...', debug=True)
-        trade_data[:, 0] = position_availabilities[1]
-        trade_data[:, 1] = position_availabilities[2]
-        trade_data[:, 2] = current_prices
-        trade_data[:, 3] = last_trade_result_summary[1]
-        trade_data[:, 4] = last_trade_result_summary[2]
+        # 如果策略需要用到交易过程数据，则准备交易过程数据
+        if self.operator.check_dynamic_data():
+            # TODO: implement this function
+            raise NotImplementedError
 
-        if operator.op_type == 'batch':
-            raise KeyError(f'Operator can not work in live mode when its operation type is "batch", set '
-                           f'"Operator.op_type = "step"')
-        else:
-            op_signal = operator.create_signal(
-                    trade_data=trade_data,
-                    sample_idx=0,
-                    price_type_idx=0
-            )  # 生成交易清单
-        self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
-
-        # 解析交易信号
-        symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
-                signals=op_signal,
-                signal_type=signal_type,
-                shares=shares,
-                prices=current_prices,
-                own_amounts=own_amounts,
-                own_cash=own_cash,
-                available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
-                available_cash=available_cash,
-                config=config
-        )
-        names = get_symbol_names(self._datasource, symbols)
+        # 开始运行交易策略，逐个生成交易信号
         submitted_qty = 0
-        self.send_message(f'generated trade signals:\n'
-                          f'symbols: {symbols}\n'
-                          f'positions: {positions}\n'
-                          f'directions: {directions}\n'
-                          f'quantities: {quantities}\n'
-                          f'current_prices: {quoted_prices}\n',
-                          debug=True)
-        for sym, name, pos, d, qty, price, remark in zip(
-                symbols,
-                names,
-                positions,
-                directions,
-                quantities,
-                quoted_prices,
-                remarks,
-        ):
-            if remark:
-                self.send_message(remark)
-            if qty <= 0.001:
-                continue
+        # 更新最新实时价格，self.live_price的格式为index为symbols，列为['price']
+        self._update_live_price()
+        current_prices = self.live_price['price'].values
 
-            trade_order = self.submit_trade_order(
-                    symbol=sym,
-                    position=pos,
-                    direction=d,
-                    order_type='market',
-                    qty=qty,
-                    price=price,
+        for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
+            self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
+
+            # 解析交易信号
+            symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
+                    signals=op_signal,
+                    signal_type=signal_type,
+                    shares=shares,
+                    prices=current_prices,
+                    own_amounts=own_amounts,
+                    own_cash=own_cash,
+                    available_amounts=available_amounts,  # 这里给出了available_amounts和available_cash，就不会产生超额交易订单
+                    available_cash=available_cash,
+                    cost_params=self.cost_params,
+                    pt_buy_threshold=self.pt_buy_threshold,
+                    pt_sell_threshold=self.pt_sell_threshold,
+                    allow_sell_short=self.allow_sell_short,
+                    trade_batch_size=self.trade_batch_size,
+                    sell_batch_size=self.sell_batch_size,
+                    long_position_limit=self.long_position_limit,
+                    short_position_limit=self.short_position_limit,
             )
+            names = get_symbol_names(self._datasource, symbols)
 
-            if trade_order:
-                order_id = trade_order['order_id']
-                self._broker.order_queue.put(trade_order)
-                # format the message depending on buy/sell orders
-                msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
-                if d == 'buy':  # red for buy
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
-                else:  # green for sell
-                    msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
-                # 记录已提交的交易数量
-                self.send_message(msg)
-                submitted_qty += 1
+            self.send_message(f'generated trade signals:\n'
+                              f'symbols: {symbols}\n'
+                              f'positions: {positions}\n'
+                              f'directions: {directions}\n'
+                              f'quantities: {quantities}\n'
+                              f'current_prices: {quoted_prices}\n',
+                              debug=True)
+            for sym, name, pos, d, qty, price, remark in zip(
+                    symbols,
+                    names,
+                    positions,
+                    directions,
+                    quantities,
+                    quoted_prices,
+                    remarks,
+            ):
+                if remark:
+                    self.send_message(remark)
+                if qty <= 0.001:
+                    continue
 
-        self.send_message(f'<RAN STRATEGY {tuple(strategy_ids)}>: {submitted_qty} orders submitted in total.')
+                trade_order = self.submit_trade_order(
+                        symbol=sym,
+                        position=pos,
+                        direction=d,
+                        order_type='market',
+                        qty=qty,
+                        price=price,
+                )
+
+                if trade_order:
+                    order_id = trade_order['order_id']
+                    self._broker.order_queue.put(trade_order)
+                    # format the message depending on buy/sell orders
+                    msg = Text(f'<NEW ORDER {order_id}>: <{name} - {sym}> ', style='bold')
+                    if d == 'buy':  # red for buy
+                        msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold red')
+                    else:  # green for sell
+                        msg.append(f'{d}-{pos} {qty} shares @ {price}', style='bold green')
+                    # 记录已提交的交易数量
+                    self.send_message(msg)
+                    submitted_qty += 1
+
+            self.send_message(f'<RAN STRATEGY {groups_to_run}>: {submitted_qty} orders submitted in total.')
+
         return submitted_qty
 
     def _process_result(self, result) -> None:
@@ -1924,8 +2158,8 @@ class Trader(object):
         deliver_result = deliver_trade_result(
                 result_id=result_id,
                 account_id=self.account_id,
-                stock_delivery_period=self._config['stock_delivery_period'],
-                cash_delivery_period=self._config['cash_delivery_period'],
+                stock_delivery_period=self.stock_delivery_period,
+                cash_delivery_period=self.cash_delivery_period,
                 data_source=self._datasource,
         )
 
@@ -1946,7 +2180,6 @@ class Trader(object):
 
         self.send_message(f'Checking Trader and Broker connections...')
         datasource = self._datasource
-        config = self._config
         operator = self._operator
 
         self.send_message(f'Reconnecting to datasource...')
@@ -1963,7 +2196,6 @@ class Trader(object):
         refill_missing_datasource_data(
                 operator=operator,
                 trader=self,
-                config=config,
                 datasource=datasource,
         )
 
@@ -1972,7 +2204,8 @@ class Trader(object):
         delivery_results = process_account_delivery(
                 account_id=self.account_id,
                 data_source=self._datasource,
-                config=self._config,
+                stock_delivery_period=self.stock_delivery_period,
+                cash_delivery_period=self.cash_delivery_period,
         )
 
         # 生成交割结果信息推送到信息队列
@@ -1981,6 +2214,8 @@ class Trader(object):
                 continue
             self.log_cash_delivery(res)
             self.log_qty_delivery(res)
+
+        self._status = 'sleeping'
 
         # 获取当日实时价格
         self._update_live_price()
@@ -2004,6 +2239,7 @@ class Trader(object):
         #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
         #   result_queue中的结果全部处理完毕，或者超过一定时间
         if not order_queue.empty():
+            # TODO: 不应该在trader中操作broker的order_queue，应该通过broker的API获取order的信息
             self.send_message('unprocessed orders found, these orders will be canceled')
             while not order_queue.empty():
                 order = order_queue.get()
@@ -2049,16 +2285,16 @@ class Trader(object):
             cancel_order(order_id=order_id, data_source=self._datasource)
             self.send_message(f'Canceled unfilled order: {order_id}')
 
-    def _change_date(self) -> None:
-        """ 改变日期，在日期改变（午夜）前执行的操作，包括：
-
-        - 处理前一日交易的交割
-        - 处理前一日获取的实时数据、并准备下一日的实时数据
-        - 检查下一日是否是交易日，并更新相关的运行参数
-        - 重新生成agenda
-        - 生成消息发送到消息队列
-        """
-        raise NotImplementedError
+    # def _change_date(self) -> None:
+    #     """ 改变日期，在日期改变（午夜）前执行的操作，包括：
+    #
+    #     - 处理前一日交易的交割
+    #     - 处理前一日获取的实时数据、并准备下一日的实时数据
+    #     - 检查下一日是否是交易日，并更新相关的运行参数
+    #     - 重新生成agenda
+    #     - 生成消息发送到消息队列
+    #     """
+    #     raise NotImplementedError
 
     def _market_open(self) -> None:
         """ 开市时操作：
@@ -2068,7 +2304,7 @@ class Trader(object):
         """
         self.send_message('running task: market open', debug=True)
         self.is_market_open = True
-        self.run_task('wakeup')
+        self._run_task('wakeup')
         self.send_message('market is open, trader is running, broker is running')
 
     def _market_close(self) -> None:
@@ -2079,7 +2315,7 @@ class Trader(object):
         """
         self.send_message('running task: market close', debug=True)
         self.is_market_open = False
-        self.run_task('sleep')
+        self._run_task('sleep')
         self.send_message('market is closed, trader is slept, broker is paused')
 
     def _refill(self, tables: str, duration: int = 1, channel=None) -> None:
@@ -2110,12 +2346,14 @@ class Trader(object):
         end_date = self.get_current_tz_datetime().date()
         start_date = end_date - pd.Timedelta(days=duration)
         if channel is None:
-            channel = self.config['live_trade_data_refill_channel']
+            channel = self.live_data_channel
         else:
             channel = channel
 
-        refill_data_batch_size = self.config['live_trade_data_refill_batch_size']
-        refill_data_batch_interval = self.config['live_trade_data_refill_batch_interval']
+        refill_data_batch_size = self.live_data_batch_size
+        refill_data_batch_interval = self.live_data_batch_interval
+
+        from qteasy.core import refill_data_source
 
         refill_data_source(
                 tables=tables,
@@ -2131,8 +2369,8 @@ class Trader(object):
         )
 
     # ================ task operations =================
-    def run_task(self, task, *args, run_in_main_thread=False) -> None:
-        """ 运行任务
+    def _run_task(self, task, *args: Any, run_in_main_thread=False) -> None:
+        """ 运行任务，这个API不应该开放给用户使用，而是应该在trader的主循环中被调用
 
         Parameters
         ----------
@@ -2153,7 +2391,7 @@ class Trader(object):
             'run_strategy':       self._run_strategy,
             'process_result':     self._process_result,
             'acquire_live_price': self._update_live_price,
-            'change_date':        self._change_date,
+            # 'change_date':        self._change_date,
             'start':              self._start,
             'stop':               self._stop,
             'sleep':              self._sleep,
@@ -2175,104 +2413,15 @@ class Trader(object):
 
         task_func = available_tasks[task]
 
-        new_thread_tasks = ['acquire_live_price', 'run_strategy']  # ‘proces_result’ was in the list before
-        # TODO: 观察改进效果
-        #  这里将'process_result'任务从new_thread_tasks中移除，因为process_result任务不能在单独的线程
-        #  中运行，因为如果同时有多个交易结果需要处理，可能会导致多个数据被同时写入数据库，引起数据冲突导致
-        #  数据结果不一致。这种不一致现在在一个订单分批同时成交时观察到了：当一个500股的买入订单分两批成交，
-        #  第一批300股，第二批200股时，实际记录到数据库中的交易结果只有第二次成交记录，第一次成交记录丢失。
-        #  从而引起数据混乱。现在修改后待观察是否还会出现这种情况。
-        if (not run_in_main_thread) and (task in new_thread_tasks):
-            from threading import Thread
-            if args:
-                t = Thread(target=task_func, args=args, daemon=True)
-            else:
-                t = Thread(target=task_func, daemon=True)
-            self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
-            t.start()
+        async_tasks = ['acquire_live_price', 'run_strategy']
+        if (not run_in_main_thread) and (task in async_tasks):
+            self.send_message(f'will run async task: {task} with args: {args}', debug=True)
+            run_async_task(task_func, *args)
         else:
-            self.send_message(f'running task: {task} with args: {args}', debug=True)
-            if args:
-                task_func(*args)
-            else:
-                task_func()
-
-    def run_async_task(self, task, *args) -> None:
-        """ 以异步方式执行任务
-
-        Parameters
-        ----------
-        task: str
-            任务名称
-        *args: tuple
-            任务参数
-        """
-
-        available_tasks = {
-            'pre_open':           self._pre_open,
-            'open_market':        self._market_open,
-            'close_market':       self._market_close,
-            'post_close':         self._post_close,
-            'run_strategy':       self._run_strategy,
-            'process_result':     self._process_result,
-            'acquire_live_price': self._update_live_price,
-            'change_date':        self._change_date,
-            'start':              self._start,
-            'stop':               self._stop,
-            'sleep':              self._sleep,
-            'wakeup':             self._wakeup,
-            'pause':              self._pause,
-            'resume':             self._resume,
-            'refill':             self._refill,
-        }
-
-        if task is None:
-            return
-        if not isinstance(task, str):
-            err = ValueError(f'task must be a string, got {type(task)} instead.')
-            raise err
-
-        if task not in available_tasks.keys():
-            err = ValueError(f'Invalid task name: {task}')
-            raise err
-
-        task_func = available_tasks[task]
-
-        async_tasks = ['acquire_live_price', 'run_strategy', 'process_result']
-
-        if task not in async_tasks:
-            err = ValueError(f'Invalid task name: {task}, only the following tasks can be run asynchronously: '
-                             f'{async_tasks}')
-            raise err
-
-        from threading import Thread
-        if args:
-            t = Thread(target=task_func, args=args, daemon=True)
-        else:
-            t = Thread(target=task_func, daemon=True)
-        self.send_message(f'will run task: {task} with args: {args} in a new Thread {t.name}', debug=True)
-        t.start()
+            self.send_message(f'running sync task: {task} with args: {args}', debug=True)
+            run_sync_task(task_func, *args)
 
     # =============== internal methods =================
-
-    def _check_trade_day(self, current_date=None) -> None:
-        """ 检查当前日期是否是交易日
-
-        Parameters
-        ----------
-        current_date: datetime.date, optional
-            当前日期，默认为None，即当前日期为今天，指定日期用于测试
-
-        Returns
-        -------
-        None
-        """
-        if current_date is None:
-            current_date = self.get_current_tz_datetime().date()  # 产生本地时间
-        from qteasy.utilfuncs import is_market_trade_day
-        # exchange = self._config['exchange']  # TODO: should we add exchange to config?
-        exchange = 'SSE'
-        self.is_trade_day = is_market_trade_day(current_date, exchange)
 
     def _add_task_to_queue(self, task) -> None:
         """ 添加任务到任务队列
@@ -2296,44 +2445,26 @@ class Trader(object):
         """
         if current_time is None:
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
-        task_added = False  # 是否添加了任务
-        next_task = 'None'
-        import datetime as dt
-        convenience_date = dt.datetime(2000, 1, 1)
-        current_datetime = dt.datetime.combine(convenience_date, current_time)
-        end_of_the_day = dt.datetime.combine(convenience_date, dt.time(23, 59, 59))
-        count_down_to_next_task = (end_of_the_day - current_datetime).total_seconds()  # 到下一个最近任务的倒计时，单位为秒
-        if count_down_to_next_task <= 0:
-            count_down_to_next_task = 1
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
-        for idx, task in enumerate(self.task_daily_schedule):
-            task_time = pd.to_datetime(task[0], utc=True).time()
+        # 从后向前遍历，避免 pop(idx) 后后续索引错位导致漏处理
+        for idx in range(len(self.task_daily_schedule) - 1, -1, -1):
+            task_tuple = self.task_daily_schedule[idx]
+            task_time = pd.to_datetime(task_tuple[0], utc=True).time()
             # 当task_time小于等于current_time时，添加task，同时删除该task
             if task_time <= current_time:
-                task_tuple = self.task_daily_schedule.pop(idx)
+                self.task_daily_schedule.pop(idx)
                 self.send_message(f'adding task: {task_tuple} from agenda', debug=True)
                 if len(task_tuple) == 3:
                     task = task_tuple[1:3]
                 elif len(task_tuple) == 2:
-                    task = task[1]
+                    task = task_tuple[1]
                 else:
                     err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                     raise err
 
                 self.send_message(f'current time {current_time} >= task time {task_time}, '
-                                      f'adding task: {task} from agenda', debug=True)
+                                  f'adding task: {task} from agenda', debug=True)
                 self._add_task_to_queue(task)
-                task_added = True
-            # 计算count_down_to_next_task秒数
-            else:
-                task_datetime = dt.datetime.combine(convenience_date, task_time)
-                count_down_sec = (task_datetime - current_datetime).total_seconds()
-                if count_down_sec < count_down_to_next_task:
-                    count_down_to_next_task = count_down_sec
-                    next_task = task
-        if not task_added:
-            self.next_task = next_task
-            self.count_down_to_next_task = count_down_to_next_task
 
     def _initialize_schedule(self, current_time=None) -> None:
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：
@@ -2352,28 +2483,31 @@ class Trader(object):
             # current_time = pd.to_datetime('now', utc=True).tz_convert(TIME_ZONE).time()  # 产生UTC时间
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         self.send_message('initializing agenda...', debug=True)
-        # 如果不是交易日，直接返回
-        # TODO: 不判断交易日，将交易日判断放到create_daily_task_schedule中进行
-        # if not self.is_trade_day:
-        #     self.send_message('not a trade day, no need to initialize agenda', debug=True)
-        #     return
+
         if self.task_daily_schedule:
             # 如果任务日程非空列表，直接返回
             self.send_message('task agenda is not empty, no need to initialize agenda', debug=True)
             return
-
         self.task_daily_schedule = create_daily_task_schedule(
                 operator=self.operator,
-                config=self._config,
                 is_trade_day=self.is_trade_day,
+                market_open_time_am=self.market_open_time_am,
+                market_close_time_am=self.market_close_time_am,
+                market_open_time_pm=self.market_open_time_pm,
+                market_close_time_pm=self.market_close_time_pm,
+                live_price_frequency=self.live_price_freq,
+                open_close_timing_offset=self.open_close_timing_offset,
+                daily_refill_tables=self.daily_refill_tables,
+                weekly_refill_tables=self.weekly_refill_tables,
+                monthly_refill_tables=self.monthly_refill_tables,
         )
         self.send_message(f'created complete daily schedule (to be further adjusted): {self.task_daily_schedule}',
                           debug=True)
         # 根据当前时间删除过期的任务
-        moa = pd.to_datetime(self._config['market_open_time_am']).time()
-        mca = pd.to_datetime(self._config['market_close_time_am']).time()
-        moc = pd.to_datetime(self._config['market_open_time_pm']).time()
-        mcc = pd.to_datetime(self._config['market_close_time_pm']).time()
+        moa = pd.to_datetime(self.market_open_time_am).time()
+        mca = pd.to_datetime(self.market_close_time_am).time()
+        moc = pd.to_datetime(self.market_open_time_pm).time()
+        mcc = pd.to_datetime(self.market_close_time_pm).time()
         if current_time < moa:
             # before market morning open, keep all tasks
             self.send_message('before market morning open, keeping all tasks', debug=True)
@@ -2404,7 +2538,7 @@ class Trader(object):
                                                      'open_market',
                                                      'close_market'])]
         elif mcc < current_time:
-            # after market close, remove all task before current time except pre_open and post_close
+            # after market close, remove all tasks before current time except pre_open and post_close
             self.send_message('market closed, removing all tasks before current time except '
                               'pre_open and post_close',
                               debug=True)
@@ -2414,7 +2548,7 @@ class Trader(object):
             self.task_daily_schedule = [task for task in self.task_daily_schedule if
                                         (pd.to_datetime(task[0]).time() >= current_time) or
                                         (task[1] in ['pre_open',
-                                                     'post_close',])]
+                                                     'post_close', ])]
         else:
             err = ValueError(f'Invalid current time: {current_time}')
             raise err
@@ -2424,21 +2558,60 @@ class Trader(object):
     def _update_live_price(self) -> None:
         """获取实时数据，并将实时数据更新到self.live_price中
 
-        注：此函数并不将读取的数据写入datasource，且可能出现Timeout或运行失败"""
+        生成的live_price数据格式如下：
+        live_price = pd.DataFrame(
+            index=symbols,
+            data={'price': prices},
+        )
+        其中symbols是资产池中的资产代码，与self.asset_pool中的代码一致，prices是对应的实时价格数据
+        """
         self.send_message(f'Acquiring live price data', debug=True)
         real_time_data = fetch_real_time_klines(
                 qt_codes=self.asset_pool,
                 channel=self.live_price_channel,
-                freq=self.operator.op_data_freq,
+                freq='1MIN',
                 verbose=False,
         )
         if real_time_data.empty:
             # empty data downloaded
             self.send_message(f'Something went wrong, failed to download live price data.', debug=True)
+
+            # 如果下载失败且当前不存在有效实时价格，则为资产池创建占位价格数据
+            if not isinstance(self.live_price, pd.DataFrame) or self.live_price.empty:
+                if isinstance(self.asset_pool, str):
+                    from .utilfuncs import str_to_list as _qt_str_to_list
+                    symbols = _qt_str_to_list(self.asset_pool)
+                else:
+                    symbols = list(self.asset_pool)
+                fallback_df = pd.DataFrame(
+                        index=symbols,
+                        data={'price': np.nan},
+                )
+                self.live_price = fallback_df
+
             return
-        real_time_data.set_index('ts_code', inplace=True)
-        # 将real_time_data 赋值给self.live_price
-        self.live_price = real_time_data
+
+        # 从实时K线数据中提取每个标的的最新价格，生成符合docstring描述格式的DataFrame：
+        # live_price = pd.DataFrame(index=symbols, data={'price': prices})
+        # 其中prices使用实时K线中的收盘价close列
+        try:
+            price_series = real_time_data.set_index('ts_code')['close'].astype(float)
+        except KeyError:
+            # 如果没有close列，退而求其次使用最后一列作为价格，避免因外部接口变化导致崩溃
+            temp = real_time_data.set_index('ts_code')
+            price_series = temp.iloc[:, -1].astype(float)
+
+        if isinstance(self.asset_pool, str):
+            from .utilfuncs import str_to_list as _qt_str_to_list
+            symbols = _qt_str_to_list(self.asset_pool)
+        else:
+            symbols = list(self.asset_pool)
+
+        live_price_df = pd.DataFrame(
+                index=symbols,
+                data={'price': price_series.reindex(symbols)},
+        )
+        self.live_price = live_price_df
         self.send_message(f'acquired live price data, live prices updated!', debug=True)
         return
 
@@ -2453,142 +2626,9 @@ class Trader(object):
     }
 
 
-def start_trader_ui(
-        operator: Operator,
-        account_id: int = None,
-        user_name: str = None,
-        init_cash: float = None,
-        init_holdings: dict = None,
-        datasource: DataSource = None,
-        config: dict = None,
-        debug: bool = False,
-) -> None:
-    """ 启动交易。根据配置信息生成Trader对象，并启动TraderShell
-
-    Parameters
-    ----------
-    operator: Operator
-        交易员 object
-    account_id: int, optional
-        交易账户ID, 如果ID小于0或者未给出，则需要新建一个账户
-    user_name: str, optional
-        交易账户用户名，如果未给出账户ID或为空，则需要新建一个账户，此时必须给出用户名
-    init_cash: float, optional
-        初始资金，只有创建新账户时有效
-    init_holdings: dict of {str: int}, optional
-        初始持仓股票代码和数量的字典{'symbol': amount}，只有创建新账户时有效
-    datasource: DataSource, optional
-        数据源 object
-    config: dict, optional, default None
-        配置信息字典
-    debug: bool, optional, default False
-        是否进入debug模式
-
-    Returns
-    -------
-    None
-    """
-    if not isinstance(operator, Operator):
-        err = ValueError(f'operator must be an Operator object, got {type(operator)} instead.')
-        raise err
-    # if account_id is None then create a new account
-    if (account_id is None) or (account_id < 0):
-        if (user_name is None) or (user_name == ''):
-            err = ValueError(f'Account_id is not given, Choose a valid account or create a new one:\n'
-                             f'- to view all existing accounts, call: \'qt.live_trade_accounts()\'\n'
-                             f'- to choose an existed account, set: \'live_trade_account_id=<ID>\'\n'
-                             f'- to create a new account, set: \'live_trade_account_name="your_account_name"\'')
-            raise err
-        account_id = new_account(
-                user_name=user_name,
-                cash_amount=init_cash,
-                data_source=datasource,
-        )
-    try:
-        _ = get_account(account_id, data_source=datasource)
-    except Exception as e:
-        err = ValueError(f'{e}\nFailed to use account({account_id}), Choose a valid account or create a new one:\n'
-                         f'- to choose an account, set: live_trade_account_id=<ID>\n'
-                         f'- to create a new account, set: live_trade_account_name="your_account_name"')
-        raise err
-
-    # now we know that account_id is valid
-
-    # if init_holdings is not None then add holdings to account
-    if init_holdings is not None:
-        if not isinstance(init_holdings, dict):
-            err = ValueError(f'init_holdings must be a dict, got {type(init_holdings)} instead.')
-            raise err
-        for symbol, amount in init_holdings.items():
-            pos_id = get_or_create_position(
-                    account_id=account_id,
-                    symbol=symbol,
-                    position_type='long' if amount > 0 else 'short',
-                    data_source=datasource,
-            )
-            update_position(
-                    position_id=pos_id,
-                    data_source=datasource,
-                    **{
-                        'qty_change':           abs(amount),
-                        'available_qty_change': abs(amount),
-                    }
-            )
-
-    # if account is ready then create trader and broker
-    broker_type = config['live_trade_broker_type']
-    broker_params = config['live_trade_broker_params']
-    if (broker_type == 'simulator') and (broker_params is None):
-        broker_params = {
-            "fee_rate_buy":    config['cost_rate_buy'],
-            "fee_rate_sell":   config['cost_rate_sell'],
-            "fee_min_buy":     config['cost_min_buy'],
-            "fee_min_sell":    config['cost_min_sell'],
-            "fee_fix_buy":     config['cost_fixed_buy'],
-            "fee_fix_sell":    config['cost_fixed_sell'],
-            "slipage":         config['cost_slippage'],
-            "moq_buy":         config['trade_batch_size'],
-            "moq_sell":        config['sell_batch_size'],
-            "delay":           1.0,
-            "price_deviation": 0.001,
-            # TODO: the probabilities should be a parameter passed in
-            "probabilities":   (0.5, 0.45, 0.05),  # originally: (0.9, 0.08, 0.02)
-        }
-
-    from qteasy.broker import get_broker
-    broker = get_broker(broker_type, broker_params)
-
-    trader = Trader(
-            account_id=account_id,
-            operator=operator,
-            broker=broker,
-            config=config,
-            datasource=datasource,
-            debug=debug,
-    )
-    trader.register_broker(debug=trader.debug)
-
-    # find out datasource availabilities, refill data source if table data not available
-    refill_missing_datasource_data(
-            operator=operator,
-            trader=trader,
-            config=config,
-            datasource=datasource,
-    )
-
-    ui_type = config['live_trade_ui_type']
-    if ui_type.lower() == 'cli':
-        from .trader_cli import TraderShell
-        TraderShell(trader).run()
-    elif ui_type.lower() == 'tui':
-        from .trader_tui import TraderApp
-        TraderApp(trader).run()
-    else:
-        err= TypeError(f'Invalid ui type: ({ui_type})! use "cli" or "tui" instead.')
-        raise err
-
-
-def refill_missing_datasource_data(operator, trader, config, datasource) -> None:
+def refill_missing_datasource_data(operator,
+                                   trader,
+                                   datasource) -> None:
     """ 针对日频或以上的数据，检查数据源中的数据可用性，下载缺失的数据到数据源
 
     在trader运行过程中，为了避免数据缺失，检查当前Datasource中的数据是否已经填充到最新日期，
@@ -2600,8 +2640,6 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
         Operator交易员对象
     trader: Trader
         Trader交易对象
-    config: qt.Config
-        Config配置对象
     datasource: qt.Datasource
         Datasource数据源对象
 
@@ -2613,15 +2651,10 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
     # find out datasource availabilities, refill data source if table data not available
     op_data_types = operator.op_data_types
     op_data_freq = operator.op_data_freq
-    asset_types = config['asset_type']
-    if isinstance(asset_types, str):
-        asset_types = str_to_list(asset_types)
-    related_tables = get_tables_by_dtypes(
-            dtypes=op_data_types,
-            freqs=[op_data_freq],
-            asset_types=asset_types,
-    )
-    related_tables = [table for table in related_tables]
+    related_tables = []
+    for dtype in op_data_types:
+        related_tables.extend(dtype.data_table_names)
+
     if len(related_tables) == 0:
         related_tables = ['stock_daily']
     elif len(related_tables) >= 1:
@@ -2632,32 +2665,27 @@ def refill_missing_datasource_data(operator, trader, config, datasource) -> None
         last_available_date = pd.to_datetime(last_available_date)
     except:
         last_available_date = trader.get_current_tz_datetime() - pd.Timedelta(value=100, unit='d')
+
     from qteasy.utilfuncs import prev_market_trade_day
     today = trader.get_current_tz_datetime().strftime('%Y%m%d')
     last_trade_day = prev_market_trade_day(today) - pd.Timedelta(value=1, unit='d')
     if last_available_date < last_trade_day:
         # no need to refill if data is already filled up til yesterday
 
-        if isinstance(config['asset_pool'], str):
-            symbol_list = str_to_list(config['asset_pool'])
-        else:
-            symbol_list = config['asset_pool'].copy()  # to prevent from changing the config
+        symbol_list = trader.asset_pool.copy()  # to prevent from changing the config
 
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
-        asset_types = config['asset_type']
-        if asset_types != 'IDX':
+        asset_types = trader.asset_type
+        if 'IDX' not in asset_types:
             # add index to make sure indices are downloaded
             asset_types += ', IDX'
         start_date = last_available_date
         end_date = trader.get_current_tz_datetime()
-
+        from qteasy.core import refill_data_source
         refill_data_source(
                 data_source=datasource,
                 channel='tushare',
                 tables=related_tables,
-                dtypes=op_data_types,
-                freqs=op_data_freq,
-                asset_types=asset_types,
                 start_date=start_date.strftime('%Y%m%d'),
                 end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
                 symbols=symbol_list,

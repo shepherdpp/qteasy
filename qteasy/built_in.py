@@ -9,8 +9,11 @@
 # ======================================
 
 import numpy as np
-from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
+from typing import Optional
+from qteasy.parameter import Parameter
+from qteasy.datatypes import DataType, StgData
 # commonly used ta-lib funcs that have a None ta-lib version
+from qteasy.strategy import BaseStrategy, RuleIterator, FactorSorter, GeneralStg
 from qteasy.tafuncs import (
     sma,
     ema,
@@ -55,12 +58,12 @@ from qteasy.tafuncs import (
 
 
 # Built-in Rolling timing strategies:
-def built_in_list(stg_id=None) -> list:
+def built_in_list(stg_id: str = None) -> list:
     """  获取内置交易策略ID的列表,可以通过stg_id进行模糊匹配
 
     Parameters
     ----------
-    stg_id: str, optional
+    stg_id: str, Optional
         策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
         支持模糊匹配，例如'cross'可以匹配到'crossline'
 
@@ -87,7 +90,7 @@ def built_in_list(stg_id=None) -> list:
     return list(built_ins(stg_id).keys())
 
 
-def built_ins(stg_id=None) -> dict:
+def built_ins(stg_id: str = None) -> dict:
     """ 获取或筛选内置的交易策略,可以通过stg_id进行模糊匹配，返回的是策略的字典
 
     Parameters
@@ -137,12 +140,12 @@ def built_ins(stg_id=None) -> dict:
     return strategy_dict
 
 
-def built_in_strategies(stg_id=None) -> list:
+def built_in_strategies(stg_id: str = None) -> list:
     """  获取内置交易策略对象的列表,可以通过stg_id进行模糊匹配
 
     Parameters
     ----------
-    stg_id: str, optional
+    stg_id: str, Optional
         策略ID或者ID的片段，用于筛选需要的策略, 如果stg_id为None，则返回所有内置策略的字典
         支持模糊匹配，例如'cross'可以匹配到'crossline'
 
@@ -176,13 +179,15 @@ def built_in_strategies(stg_id=None) -> list:
     return list(built_ins(stg_id).values())
 
 
-def built_in_doc(stg_id) -> str:
+def built_in_doc(stg_id: str, print_out:bool = False) -> Optional[str]:
     """ 获取内置策略的文档，stg_id必须正确给出且存在
 
     Parameters
     ----------
     stg_id: str
         策略ID
+    print_out: bool, optional
+        是否直接打印文档字符串，如果为False，则仅返回文档字符串
 
     Returns
     -------
@@ -192,7 +197,7 @@ def built_in_doc(stg_id) -> str:
     Examples
     --------
     >>> import qteasy as qt
-    >>> qt.built_in_doc('macd')
+    >>> qt.built_in_doc('macd', print_out=True)
     MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
     --------------------
     策略参数:
@@ -208,7 +213,6 @@ def built_in_doc(stg_id) -> str:
     策略属性缺省值:
     默认参数: (12, 26, 9)
     数据类型: close 收盘价，单数据输入
-    采样频率: 天
     窗口长度: 270
     参数范围: [(10, 250), (10, 250), (5, 250)]
     策略不支持参考数据，不支持交易数据
@@ -218,10 +222,14 @@ def built_in_doc(stg_id) -> str:
     stg = get_built_in_strategy(stg_id)
     doc_string = stg.__doc__
     doc_string = doc_string.replace('\n\n', '\n').replace('``', '')
-    return doc_string
+    if print_out:
+        print(doc_string)
+        return None
+    else:
+        return doc_string
 
 
-def get_built_in_strategy(stg_id) -> BaseStrategy:
+def get_built_in_strategy(stg_id: str) -> BaseStrategy:
     """ 使用ID获取交易策略
 
     Parameters
@@ -253,7 +261,7 @@ def get_built_in_strategy(stg_id) -> BaseStrategy:
         return BUILT_IN_STRATEGIES[stg_id]()
 
     guess = _make_a_guess_by_id(stg_id)
-    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Did you mean: \'{guess}\'?')
+    err = ValueError(f'No built-in strategy found for \'{stg_id}\', Maybe you mean: \'{guess}\'?')
     raise err
 
 
@@ -297,32 +305,33 @@ class CROSSLINE(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 120, 0.02)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: ``D``, 天\n
         窗口长度: ``270``\n
         参数范围: ``[(10, 250), (10, 250), (0, 1)]``
     策略不支持参考数据，不支持交易数据
 
     """
 
-    def __init__(self, pars: tuple = (35, 120, 0.02)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'float'],
-                         par_range=[(10, 250), (10, 250), (0, 0.1)],
-                         name='CROSSLINE',
-                         description='Moving average crossline strategy, determine long/short position according '
-                                     'to the cross point of long and short term moving average prices ',
-                         strategy_data_types='close')
+    def __init__(self, par_values: tuple = (35, 120, 0.02)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((10, 250), name='l', par_type='int'),
+                    Parameter((0, 0.1), name='m', par_type='float'),
+                ],
+                name='CROSSLINE',
+                description='Moving average crossline strategy, determine long/short position according '
+                            'to the cross point of long and short term moving average prices ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, m = self.pars
-        else:
-            s, l, m = pars
+    def realize(self):
+        s, l, m = self.get_pars('s', 'l', 'm')
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        h = self.get_data('close_ANY_d')
         # 计算长短均线之间的距离
-        diff = (sma(h[0], l) - sma(h[0], s))[-1]
+        diff = (sma(h, l) - sma(h, s))[-1]
         m = m * l
         if diff < -m:
             return 1
@@ -341,30 +350,33 @@ class CDL(RuleIterator):
         PS型: 百分比交易信号\n
         VS型: 交易数量信号
     信号规则:
-        搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算\n
-        等效cdldoji匹配数量，以匹配数量为交易信号。
+        搜索历史数据窗口内出现的cdl doji模式（匹配度0～100之间），加总后/100，计算\n
+        等效cdl doji匹配数量，以匹配数量为交易信号。
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``open, high, low, close`` 开盘，最高，最低，收盘价\n
-        采样频率: ``D``, 天\n
         窗口长度: ``100``\n
         参数范围: ``None``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=None,
-                         par_range=None,
-                         name='CDL INDICATOR',
-                         description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
-                         window_length=200,
-                         strategy_data_types='open,high,low,close')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='CDL INDICATOR',
+                description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('open', freq='d', asset_type='ANY'),
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY')
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        h = h.T
-        cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
+    def realize(self):
+        o, h, l, c = self.get_data('open_ANY_d', 'high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        cat = (cdldoji(o, h, l, c).cumsum() // 100)
 
         return float(cat[-1])
 
@@ -387,35 +399,37 @@ class SoftBBand(RuleIterator):
     策略属性缺省值:
         默认参数: ``(20, 2, 2, 0)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100), (0.5, 5), (0.5, 5), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 2, 2, 0)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'float', 'float', 'int'],
-                         par_range=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
-                         name='Soft Bolinger Band',
-                         description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
-                         window_length=200,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 2, 2, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), name='p', par_type='int'),
+                    Parameter((0.5, 5), name='u', par_type='float'),
+                    Parameter((0.5, 5), name='d', par_type='float'),
+                    Parameter((0, 8), name='m', par_type='int'),
+                ],
+                name='Soft Bolinger Band',
+                description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
+                window_length=200,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, u, d, m = self.pars
-        else:
-            p, u, d, m = pars
-        h = h.T
-        hi, mid, low = bbands(h[0], p, u, d, m)
+    def realize(self):
+        p, u, d, m = self.get_pars('p', 'u', 'd', 'm')
+        h = self.get_data('close_ANY_d')
+        hi, mid, low = bbands(h, p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
         # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的33.3%
-        if h[0][-1] < low[-1]:
+        if h[-1] < low[-1]:
             sig = -0.333
-        elif h[0][-1] > hi[-1]:
+        elif h[-1] > hi[-1]:
             sig = 0.1
         else:
             sig = 0
@@ -440,32 +454,31 @@ class BBand(RuleIterator):
     策略属性缺省值:
         默认参数: ``(20, 2, 2)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 100), (0.5, 5), (0.5, 5)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 2, 2)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'float', 'float'],
-                         par_range=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         name='BBand',
-                         description='BBand strategy, determine long/short position according to Bollinger bands',
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=270,
-                         strategy_data_types=['close'])
+    def __init__(self, par_values=(20, 2, 2)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), name='span', par_type='int'),
+                    Parameter((0.5, 2.5), name='upper', par_type='float'),
+                    Parameter((0.5, 2.5), name='lower', par_type='float'),
+                ],
+                name='BBand',
+                description='BBand strategy, determine long/short position according to Bollinger bands',
+                window_length=270,
+                data_types=[DataType('close', freq='d', asset_type='ANY')],  # single data input
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            span, upper, lower = self.pars
-        else:
-            span, upper, lower = pars
+    def realize(self):
+        span, upper, lower = self.get_pars('span', 'upper', 'lower')
+
         # 计算指数的指数移动平均价格
-        h = h.T
-        price = h[0]
+        price = self.get_data('close_ANY_d')
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断:
         # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
@@ -500,28 +513,27 @@ class SCRSSMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - SMA',
-                         description='Single moving average strategy that uses simple moving average as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - SMA',
+                description='Single moving average strategy that uses simple moving average as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.pars
-        else:
-            rng, = pars
-        h = h.T
-        diff = (sma(h[0], rng) - h[0])[-1]
+    def realize(self):
+        rng = self.get_pars('rng')
+        h = self.get_data('close_ANY_d')
+        diff = (sma(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -542,28 +554,25 @@ class SCRSDEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - DEMA',
-                         description='Single moving average strategy that uses DEMA as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=Parameter((3, 250), name='rng', par_type='int'),
+                name='SINGLE CROSSLINE - DEMA',
+                description='Single moving average strategy that uses DEMA as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.pars
-        else:
-            rng, = pars
-        h = h.T
-        diff = (dema(h[0], rng) - h[0])[-1]
+    def realize(self):
+        rng = self.get_pars('rng')
+        h = self.get_data('close_ANY_d')
+        diff = (dema(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -584,28 +593,27 @@ class SCRSEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - EMA',
-                         description='Single moving average strategy that uses EMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - EMA',
+                description='Single moving average strategy that uses EMA as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.pars
-        else:
-            rng, = pars
-        h = h.T
-        diff = (ema(h[0], rng) - h[0])[-1]
+    def realize(self):
+        rng = self.get_pars('rng')
+        h = self.get_data('close_ANY_d')
+        diff = (ema(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -626,29 +634,29 @@ class SCRSHT(RuleIterator):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
+    def __init__(self, par_values=()):
         try:  # if ta-lib is installed
             from .tafuncs import ht
-        except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
-            err = NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
+        except Exception:  # if ta-lib is not installed, warn user to install ta-lib
+            err = ModuleNotFoundError('This strategy requires ta-lib, please install ta-lib first')
             raise err
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='SINGLE CROSSLINE - HT',
-                         description='Single moving average strategy that uses HT line as the trade line',
-                         strategy_data_types='close')
+        super().__init__(
+                pars=[],
+                name='SINGLE CROSSLINE - HT',
+                description='Single moving average strategy that uses HT line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        h = h.T
-        diff = (ht(h[0]) - h[0])[-1]
+    def realize(self):
+        h = self.get_data('close_ANY_d')
+        diff = (ht(h) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -669,29 +677,28 @@ class SCRSKAMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 250)],
-                         name='SINGLE CROSSLINE - KAMA',
-                         description='Single moving average strategy that uses KAMA line as the '
-                                  'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='rng', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - KAMA',
+                description='Single moving average strategy that uses KAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            rng, = self.pars
-        else:
-            rng, = pars
-        h = h.T
-        diff = (kama(h[0], rng) - h[0])[-1]
+    def realize(self):
+        rng = self.get_pars('rng')
+        h = self.get_data('close_ANY_d')
+        diff = (kama(h, rng) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -713,29 +720,29 @@ class SCRSMAMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(0.5, 0.05)``\n``
         数据类型: ``close`` 收盘价，单数据输入\n``
-        采样频率: 天\n``
         窗口长度: ``270``\n``
         参数范围: ``[(0.01, 0.99), (0.01, 0.99)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.5, 0.05)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99)],
-                         name='SINGLE CROSSLINE - MAMA',
-                         description='Single moving average strategy that uses MAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(0.5, 0.05)):
+        super().__init__(
+                pars=[
+                    Parameter((0.01, 0.99), name='f', par_type='float'),
+                    Parameter((0.01, 0.99), name='s', par_type='float'),
+                ],
+                name='SINGLE CROSSLINE - MAMA',
+                description='Single moving average strategy that uses MAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s = self.pars
-        else:
-            f, s = pars
-        h = h.T
-        diff = (mama(h[0], f, s)[0] - h[0])[-1]
+    def realize(self):
+        f, s = self.get_pars('f', 's')
+        h = self.get_data('close_ANY_d')
+        diff = (mama(h, f, s)[0] - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -757,28 +764,28 @@ class SCRST3(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 0.5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20), (0, 1)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 0.5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(2, 20), (0, 1)],
-                         name='SINGLE CROSSLINE - T3',
-                         description='Single moving average strategy that uses T3 line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 0.5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='p', par_type='int'),
+                    Parameter((0, 1), name='v', par_type='float'),
+                ],
+                name='SINGLE CROSSLINE - T3',
+                description='Single moving average strategy that uses T3 line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, v = self.pars
-        else:
-            p, v = pars
-        h = h.T
-        diff = (t3(h[0], p, v) - h[0])[-1]
+    def realize(self):
+        p, v = self.get_pars('p', 'v')
+        h = self.get_data('close_ANY_d')
+        diff = (t3(h, p, v) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -799,29 +806,28 @@ class SCRSTEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(6,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(6,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 20)],
-                         name='SINGLE CROSSLINE - TEMA',
-                         description='Single moving average strategy that uses TEMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(6,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - TEMA',
+                description='Single moving average strategy that uses TEMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        diff = (tema(h[0], p) - h[0])[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        h = self.get_data('close_ANY_d')
+        diff = (tema(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -842,29 +848,28 @@ class SCRSTRIMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
-                         name='SINGLE CROSSLINE - TRIMA',
-                         description='Single moving average strategy that uses TRIMA line as the '
-                                     'trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - TRIMA',
+                description='Single moving average strategy that uses TRIMA line as the '
+                            'trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        diff = (trima(h[0], p) - h[0])[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        h = self.get_data('close_ANY_d')
+        diff = (trima(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -885,29 +890,28 @@ class SCRSWMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
-                         name='SINGLE CROSSLINE - WMA',
-                         description='Single moving average strategy that uses MAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='p', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - WMA',
+                description='Single moving average strategy that uses MAMA line as the '
+                            'trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        diff = (wma(h[0], p) - h[0])[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        h = self.get_data('close_ANY_d')
+        diff = (wma(h, p) - h)[-1]
         if diff < 0:
             return 1
         else:
@@ -938,28 +942,28 @@ class DCRSSMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='SINGLE CROSSLINE - SMA',
-                         description='Double moving average strategy that uses simple moving average as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='SINGLE CROSSLINE - SMA',
+                description='Double moving average strategy that uses simple moving average as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.pars
-        else:
-            l, s = pars
-        h = h.T
-        diff = (sma(h[0], l) - sma(h[0], s))[-1]
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_ANY_d')
+        diff = (sma(h, l) - sma(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -982,28 +986,28 @@ class DCRSDEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - DEMA',
-                         description='Double moving average strategy that uses DEMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - DEMA',
+                description='Double moving average strategy that uses DEMA as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.pars
-        else:
-            l, s = pars
-        h = h.T
-        diff = (dema(h[0], l) - dema(h[0], s))[-1]
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_ANY_d')
+        diff = (dema(h, l) - dema(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1026,28 +1030,28 @@ class DCRSEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - EMA',
-                         description='Double moving average strategy that uses EMA as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - EMA',
+                description='Double moving average strategy that uses EMA as the trade line',
+                data_types=[DataType('close', freq='d', asset_type='ANY')],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.pars
-        else:
-            l, s = pars
-        h = h.T
-        diff = (ema(h[0], l) - ema(h[0], s))[-1]
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_ANY_d')
+        diff = (ema(h, l) - ema(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1070,28 +1074,28 @@ class DCRSKAMA(RuleIterator):
     策略属性缺省值:
     默认参数: ``(125, 25)``\n
     数据类型: ``close`` 收盘价，单数据输入\n
-    采样频率: 天\n
     窗口长度: ``270``\n
     参数范围: ``[(3, 250), (3, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (3, 250)],
-                         name='DOUBLE CROSSLINE - KAMA',
-                         description='Double moving average strategy that uses KAMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='l', par_type='int'),
+                    Parameter((3, 250), name='s', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - KAMA',
+                description='Double moving average strategy that uses KAMA line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            l, s = self.pars
-        else:
-            l, s = pars
-        h = h.T
-        diff = (kama(h[0], l) - kama(h[0], s))[-1]
+    def realize(self):
+        l, s = self.get_pars('l', 's')
+        h = self.get_data('close_ANY_d')
+        diff = (kama(h, l) - kama(h, s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1116,28 +1120,30 @@ class DCRSMAMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(0.15, 0.05, 0.55, 0.25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['float', 'float', 'float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
-                         name='DOUBLE CROSSLINE - MAMA',
-                         description='Double moving average strategy that uses MAMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(0.15, 0.05, 0.55, 0.25)):
+        super().__init__(
+                pars=[
+                    Parameter((0.01, 0.99), name='lf', par_type='float'),
+                    Parameter((0.01, 0.99), name='ls', par_type='float'),
+                    Parameter((0.01, 0.99), name='sf', par_type='float'),
+                    Parameter((0.01, 0.99), name='ss', par_type='float'),
+                ],
+                name='DOUBLE CROSSLINE - MAMA',
+                description='Double moving average strategy that uses MAMA line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lf, ls, sf, ss = self.pars
-        else:
-            lf, ls, sf, ss = pars
-        h = h.T
-        diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
+    def realize(self):
+        lf, ls, sf, ss = self.get_pars('lf', 'ls', 'sf', 'ss')
+        h = self.get_data('close_ANY_d')
+        diff = (mama(h, lf, ls)[0] - mama(h, sf, ss)[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -1162,28 +1168,30 @@ class DCRST3(RuleIterator):
     策略属性缺省值:
         默认参数: ``(20, 0.5, 5, 0.5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20), (0, 1), (2, 20), (0, 1)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(20, 0.5, 5, 0.5)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'float', 'int', 'float'],
-                         par_range=[(2, 20), (0, 1), (2, 20), (0, 1)],
-                         name='DOUBLE CROSSLINE - T3',
-                         description='Double moving average strategy that uses T3 line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(20, 0.5, 5, 0.5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='lp', par_type='int'),
+                    Parameter((0, 1), name='lv', par_type='float'),
+                    Parameter((2, 20), name='sp', par_type='int'),
+                    Parameter((0, 1), name='sv', par_type='float'),
+                ],
+                name='DOUBLE CROSSLINE - T3',
+                description='Double moving average strategy that uses T3 line as the trade line',
+                data_types=[DataType('close', freq='d', asset_type='ANY')],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, lv, sp, sv = self.pars
-        else:
-            lp, lv, sp, sv = pars
-        h = h.T
-        diff = (t3(h[0], lp, lv) - t3(h[0], sp, sv))[-1]
+    def realize(self):
+        lp, lv, sp, sv = self.get_pars('lp', 'lv', 'sp', 'sv')
+        h = self.get_data('close_ANY_d')
+        diff = (t3(h, lp, lv) - t3(h, sp, sv))[-1]
         if diff < 0:
             return 1
         else:
@@ -1206,28 +1214,28 @@ class DCRSTEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(11, 6)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(11, 6)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 20), (2, 20)],
-                         name='DOUBLE CROSSLINE - TEMA',
-                         description='Double moving average strategy that uses TEMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(11, 6)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='lp', par_type='int'),
+                    Parameter((2, 20), name='sp', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - TEMA',
+                description='Double moving average strategy that uses TEMA line as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, sp = self.pars
-        else:
-            lp, sp = pars
-        h = h.T
-        diff = (tema(h[0], lp) - tema(h[0], sp))[-1]
+    def realize(self):
+        lp, sp = self.get_pars('lp', 'sp')
+        h = self.get_data('close_ANY_d')
+        diff = (tema(h, lp) - tema(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1250,28 +1258,28 @@ class DCRSTRIMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200), (3, 200)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 200), (3, 200)],
-                         name='DOUBLE CROSSLINE - TRIMA',
-                         description='Double moving average strategy that uses TRIMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='lp', par_type='int'),
+                    Parameter((3, 200), name='sp', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - TRIMA',
+                description='Double moving average strategy that uses TRIMA line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, sp = self.pars
-        else:
-            lp, sp = pars
-        h = h.T
-        diff = (trima(h[0], lp) - trima(h[0], sp))[-1]
+    def realize(self):
+        lp, sp = self.get_pars('lp', 'sp')
+        h = self.get_data('close_ANY_d')
+        diff = (trima(h, lp) - trima(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1294,28 +1302,28 @@ class DCRSWMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 25)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200), (3, 200)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 25)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 200), (3, 200)],
-                         name='DOUBLE CROSSLINE - WMA',
-                         description='Double moving average strategy that uses WMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 25)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='lp', par_type='int'),
+                    Parameter((3, 200), name='sp', par_type='int'),
+                ],
+                name='DOUBLE CROSSLINE - WMA',
+                description='Double moving average strategy that uses WMA line as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lp, sp = self.pars
-        else:
-            lp, sp = pars
-        h = h.T
-        diff = (wma(h[0], lp) - wma(h[0], sp))[-1]
+    def realize(self):
+        lp, sp = self.get_pars('lp', 'sp')
+        h = self.get_data('close_ANY_d')
+        diff = (wma(h, lp) - wma(h, sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -1347,28 +1355,28 @@ class SLPSMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (2, 20)],
-                         name='SLOPE - SMA',
-                         description='Smoothed Curve Slope strategy that uses simple moving average as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(35, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - SMA',
+                description='Smoothed Curve Slope strategy that uses simple moving average as the trade line',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = sma(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = sma(h, f)
         # TODO 取N个最近的curve点进行线性回归
         slope = curve[-1] - curve[-n]
         if slope > 0:
@@ -1396,28 +1404,28 @@ class SLPDEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (2, 20)],
-                         name='SLOPE - DEMA',
-                         description='Smoothed Curve Slope Strategy that uses DEMA as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(35, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - DEMA',
+                description='Smoothed Curve Slope Strategy that uses DEMA as the trade line ',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = dema(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = dema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1444,28 +1452,29 @@ class SLPEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (2, 20)],
-                         name='SLOPE - EMA',
-                         description='Smoothed Curve Slope Strategy that uses EMA as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(35, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - EMA',
+                description='Smoothed Curve Slope Strategy that uses EMA as the trade line ',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = ema(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = ema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1491,33 +1500,33 @@ class SLPHT(RuleIterator):
     策略属性缺省值:
         默认参数: ``(5,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(5, )):
+    def __init__(self, par_values=(5,)):
         try:  # if ta-lib is installed
             from .tafuncs import ht
         except Exception as e:  # if ta-lib is not installed, warn user to install ta-lib
             raise NotImplementedError('This strategy requires ta-lib, please install ta-lib first')
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 20)],
-                         name='SLOPE - HT',
-                         description='Smoothed Curve Slope Strategy that uses HT line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - HT',
+                description='Smoothed Curve Slope Strategy that uses HT line as the '
+                            'trade line ',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        h = h.T
-        curve = ht(h[0])
+    def realize(self):
+        n = self.get_pars('N')
+        h = self.get_data('close_ANY_d').T
+        curve = ht(h)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1544,29 +1553,30 @@ class SLPKAMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 250), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 250), (2, 20)],
-                         name='SLOPE - KAMA',
-                         description='Smoothed Curve Slope Strategy that uses KAMA line as the '
-                                     'trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(35, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 250), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - KAMA',
+                description='Smoothed Curve Slope Strategy that uses KAMA line as the '
+                            'trade line ',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = kama(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = kama(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1594,28 +1604,30 @@ class SLPMAMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(0.5, 0.05, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(0.01, 0.99), (0.01, 0.99), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.5, 0.05, 5)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['float', 'float', 'int'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99), (2, 20)],
-                         name='SLOPE - MAMA',
-                         description='Smoothed Curve Slope Strategy that uses MAMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(0.5, 0.05, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((0.01, 0.99), name='f', par_type='float'),
+                    Parameter((0.01, 0.99), name='s', par_type='float'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - MAMA',
+                description='Smoothed Curve Slope Strategy that uses MAMA line as the trade line ',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s, n = self.pars
-        else:
-            f, s, n = pars
-        h = h.T
-        curve = mama(h[0], f, s)[0]
+    def realize(self):
+        f, s, n = self.get_pars('f', 's', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = mama(h, f, s)[0]
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1643,28 +1655,30 @@ class SLPT3(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 0.25, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20), (0, 1), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 0.25, 5)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'float', 'int'],
-                         par_range=[(2, 20), (0, 1), (2, 20)],
-                         name='SLOPE - T3',
-                         description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 0.25, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='p', par_type='int'),
+                    Parameter((0, 1), name='v', par_type='float'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - T3',
+                description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, v, n = self.pars
-        else:
-            p, v, n = pars
-        h = h.T
-        curve = t3(h[0], p, v)
+    def realize(self):
+        p, v, n = self.get_pars('p', 'v', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = t3(h, p, v)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1691,28 +1705,29 @@ class SLPTEMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(6, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 20), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(6, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 20), (2, 20)],
-                         name='SLOPE - TEMA',
-                         description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(6, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 20), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - TEMA',
+                description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = ema(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = ema(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1739,28 +1754,29 @@ class SLPTRIMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(35, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 200), (2, 20)],
-                         name='SLOPE - TRIMA',
-                         description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(35, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - TRIMA',
+                description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = trima(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = trima(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1787,28 +1803,29 @@ class SLPWMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(125, 5)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(3, 200), (2, 20)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125, 5)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(3, 200), (2, 20)],
-                         name='SLOPE - WMA',
-                         description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(125, 5)):
+        super().__init__(
+                pars=[
+                    Parameter((3, 200), name='f', par_type='int'),
+                    Parameter((2, 20), name='N', par_type='int'),
+                ],
+                name='SLOPE - WMA',
+                description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, n = self.pars
-        else:
-            f, n = pars
-        h = h.T
-        curve = wma(h[0], f)
+    def realize(self):
+        f, n = self.get_pars('f', 'N')
+        h = self.get_data('close_ANY_d')
+        curve = wma(h, f)
         slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
@@ -1836,29 +1853,32 @@ class SAREXT(RuleIterator):
     策略属性缺省值:
         默认参数: ``(0, 3)``\n
         数据类型: ``high``, ``low``最高价和最低价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``
         参数范围: ``[(-100, 100), (0, 5)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0, 3)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(-100, 100), (0, 5)],
-                         name='Parabolic SAREXT',
-                         description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
-                         window_length=200,
-                         strategy_data_types='high, low')
+    def __init__(self, par_values=(0, 3)):
+        super().__init__(
+                pars=[
+                    Parameter((-100, 100), par_type='int', name='a'),
+                    Parameter((0, 5), par_type='float', name='m')
+                ],
+                name='Parabolic SAREXT',
+                description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY')
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            a, m = self.pars
-        else:
-            a, m = pars
-        h = h.T
-        sar = sarext(h[0], h[1], a, m)[-1]
+    def realize(self):
+        a, m = self.get_pars('a', 'm')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        sar = sarext(high, low, a, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
         # 当指标小于0时，输出空头
@@ -1887,32 +1907,34 @@ class MACD(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 26, 9)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(10, 250), (10, 250), (5, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars: tuple = (12, 26, 9)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (5, 250)],
-                         name='MACD',
-                         description='MACD strategy, determine long/short position according to differences of '
-                                     'exponential weighted moving average prices',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 26, 9)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), par_type='int', name='slow'),
+                    Parameter((10, 250), par_type='int', name='fast'),
+                    Parameter((5, 250), par_type='int', name='mid')
+                ],
+                name='MACD',
+                description='MACD strategy, determine long/short position according to differences of '
+                            'exponential weighted moving average prices',
+                window_length=270,
+                data_types=DataType('close', freq='d', asset_type='ANY')
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, m = self.pars
-        else:
-            s, l, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+    def realize(self):
+        s, l, m = self.get_pars('slow', 'fast', 'mid')
+
+        h = self.get_data('close_ANY_d')
 
         # 计算指数的指数移动平均价格
-        diff = ema(h[0], s) - ema(h[0], l)
+        diff = ema(h, s) - ema(h, l)
         dea = ema(diff, m)
         _macd = 2 * (diff - dea)
         cat = 1 if _macd[-1] > 0 else 0
@@ -1934,33 +1956,33 @@ class TRIX(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 12)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 50), (3, 150)]``
     策略不支持参考数据，不支持交易数据
 
     """
 
-    def __init__(self, pars=(12, 12)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 50), (3, 150)],
-                         name='TRIX',
-                         description='TRIX strategy, determine long/short position according to triple exponential '
-                                     'weighted moving average prices',
-                         data_freq='d',
-                         strategy_run_freq='d',
-                         window_length=270,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 12), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter((2, 50), par_type='int', name='s'),
+                    Parameter((3, 150), par_type='int', name='m')
+                ],
+                name='TRIX',
+                description='TRIX strategy, determine long/short position according to triple exponential '
+                            'weighted moving average prices',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=220,
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, m = self.pars
-        else:
-            s, m = pars
-        h = h.T
-        trx = trix(h[0], s) * 100
+    def realize(self):
+        s, m = self.get_pars('s', 'm')
+        h = self.get_data('close_ANY_d')
+
+        trx = trix(h, s) * 100
         matrix = sma(trx, m)
         if trx[-1] > matrix[-1]:
             return 1
@@ -1984,29 +2006,32 @@ class ADX(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(2, 35)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 35)],
-                         name='ADX',
-                         description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
-                         window_length=200,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 35), par_type='int', name='p')
+                ],
+                name='ADX',
+                description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = adx(h[0], h[1], h[2], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = adx(high, low, close, p)[-1]
         # TODO 策略:
         #  指标比较复杂，需要深入研究一下
         #  指标大于25时属于强趋势。。。未完待续
@@ -2037,29 +2062,30 @@ class APO(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 26, 0)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(10, 100), (10, 100), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 26, 0)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 100), (10, 100), (0, 8)],
-                         name='APO',
-                         description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
-                         window_length=200,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 26, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((10, 100), par_type='int', name='f'),
+                    Parameter((10, 100), par_type='int', name='s'),
+                    Parameter((0, 8), par_type='int', name='m'),
+                ],
+                name='APO',
+                description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
+                window_length=200,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s, m = self.pars
-        else:
-            f, s, m = pars
-        h = h.T
-        res = apo(h[0], f, s, m)[-1]
+    def realize(self):
+        f, s, m = self.get_pars('f', 's', 'm')
+        h = self.get_data('close_ANY_d')
+        res = apo(h, f, s, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
         # 当指标小于0时，输出空头
@@ -2090,29 +2116,31 @@ class AROON(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low`` 最高价，最低价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='AROON',
-                         description='Aroon, determine buy/sell signals according to AROON Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p')
+                ],
+                name='AROON',
+                description='Aroon, determine buy/sell signals according to AROON Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        ups, dns = aroon(h[0], h[1], p)
+    def realize(self):
+        p = self.get_pars('p')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        ups, dns = aroon(high, low, p)
 
         if ups[-1] > dns[-1]:
             cat = 0.5
@@ -2145,29 +2173,31 @@ class AROONOSC(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low`` 最高价，最低价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='AROON Oscillator',
-                         description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p')
+                ],
+                name='AROON Oscillator',
+                description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = aroonosc(h[0], h[1], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        res = aroonosc(high, low, p)[-1]
 
         if res > 0:
             cat = 0.5
@@ -2200,29 +2230,32 @@ class CCI(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='CCI',
-                         description='CCI, determine long/short positions according to CC Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p')
+                ],
+                name='CCI',
+                description='CCI, determine long/short positions according to CC Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = cci(h[0], h[1], h[2], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = cci(high, low, close, p)[-1]
 
         if res > 0:
             cat = 0.5
@@ -2255,29 +2288,28 @@ class CMO(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='CMO',
-                         description='CMO, determine long/short positions according to CMO Indicators',
-                         window_length=200,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p')
+                ],
+                name='CMO',
+                description='CMO, determine long/short positions according to CMO Indicators',
+                window_length=200,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = cmo(h[0], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        h = self.get_data('close_ANY_d')
+        res = cmo(h, p)[-1]
 
         if 50 > res > 0:
             cat = 0.5
@@ -2312,29 +2344,33 @@ class MACDEXT(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 0, 26, 0, 9, 0)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 0, 26, 0, 9, 0)):
-        super().__init__(pars=pars,
-                         par_count=6,
-                         par_types=['int', 'int', 'int', 'int', 'int', 'int'],
-                         par_range=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
-                         name='MACD Extension',
-                         description='MACD Extension, determine long/short position according to extended MACD',
-                         window_length=200,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 0, 26, 0, 9, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 35), par_type='int', name='fp'),
+                    Parameter((0, 8), par_type='int', name='ft'),
+                    Parameter((2, 35), par_type='int', name='sp'),
+                    Parameter((0, 8), par_type='int', name='st'),
+                    Parameter((2, 35), par_type='int', name='p'),
+                    Parameter((0, 8), par_type='int', name='t'),
+                ],
+                name='MACD Extension',
+                description='MACD Extension, determine long/short position according to extended MACD',
+                window_length=200,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            fp, ft, sp, st, p, t = self.pars
-        else:
-            fp, ft, sp, st, p, t = pars
-        h = h.T
-        m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)
+    def realize(self):
+        fp, ft, sp, st, p, t = self.get_pars('fp', 'ft', 'sp', 'st', 'p', 't')
+        h = self.get_data('close_ANY_d')
+        m, sig, hist = macdext(h, fp, ft, sp, st, p, t)
         if m[-1] > 0:
             cat = 1
         else:
@@ -2357,29 +2393,33 @@ class MFI(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低，收盘，交易量，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(2, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='MFI',
-                         description='MFI, determine buy/sell signals according to MFI Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low, close, volume')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p')
+                ],
+                name='MFI',
+                description='MFI, determine buy/sell signals according to MFI Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = mfi(h[0], h[1], h[2], h[3], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        high, low, close, volume = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        res = mfi(high, low, close, volume, p)[-1]
 
         if res < 20:
             sig = 0.1
@@ -2406,30 +2446,34 @@ class DI(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14, 14)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低，收盘，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(1, 100), (1, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14, 14)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(1, 100), (1, 100)],
-                         name='DI',
-                         description='DI, determine long/short positions according to +/- DI Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(14, 14)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), par_type='int', name='n'),
+                    Parameter((1, 100), par_type='int', name='p')
+                ],
+                name='DI',
+                description='DI, determine long/short positions according to +/- DI Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, p, = self.pars
-        else:
-            n, p, = pars
-        h = h.T
-        ndi = minus_di(h[0], h[1], h[2], n)[-1]
-        pdi = plus_di(h[0], h[1], h[2], p)[-1]
+    def realize(self):
+        n, p, = self.get_pars('n', 'p')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        ndi = minus_di(high, low, close, n)[-1]
+        pdi = plus_di(high, low, close, p)[-1]
 
         if pdi > ndi:
             cat = 1
@@ -2458,30 +2502,33 @@ class DM(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14, 14)``\n
         数据类型: ``high``, ``low`` 最高价，最低，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``200``\n
         参数范围: ``[(1, 100), (1, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14, 14)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(1, 100), (1, 100)],
-                         name='DM',
-                         description='DM, determine long/short positions according to +/- DM Indicators',
-                         window_length=200,
-                         strategy_data_types='high, low')
+    def __init__(self, par_values=(14, 14)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), par_type='int', name='n'),
+                    Parameter((1, 100), par_type='int', name='p')
+                ],
+                name='DM',
+                description='DM, determine long/short positions according to +/- DM Indicators',
+                window_length=200,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, p, = self.pars
-        else:
-            n, p, = pars
-        h = h.T
-        ndm = minus_dm(h[0], h[1], n)[-1]
-        pdm = plus_dm(h[0], h[1], p)[-1]
+    def realize(self):
+        n, p, = self.get_pars('n', 'p')
+        high, low = self.get_data('high_ANY_d', 'low_ANY_d')
+        ndm = minus_dm(high, low, n)[-1]
+        pdm = plus_dm(high, low, p)[-1]
 
         if pdm > ndm:
             cat = 1
@@ -2508,29 +2555,28 @@ class MOM(RuleIterator):
     策略属性缺省值:``
         默认参数: ``(14, )``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(1, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(1, 100)],
-                         name='MOM',
-                         description='MOM, determine long/short positions according to MOM Indicators',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), par_type='int', name='p')
+                ],
+                name='MOM',
+                description='MOM, determine long/short positions according to MOM Indicators',
+                window_length=100,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, = self.pars
-        else:
-            p, = pars
-        h = h.T
-        res = mom(h[0], p)[-1]
+    def realize(self):
+        p = self.get_pars('p')
+        h = self.get_data('close_ANY_d')
+        res = mom(h, p)[-1]
 
         if res > 0:
             cat = 1
@@ -2560,29 +2606,30 @@ class PPO(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 26, 0)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (20, 200), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 26, 0)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (20, 200), (0, 8)],
-                         name='PPO',
-                         description='PPO, determine long/short positions according to PPO Indicators',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 26, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='fp'),
+                    Parameter((20, 200), par_type='int', name='sp'),
+                    Parameter((0, 8), par_type='int', name='m'),
+                ],
+                name='PPO',
+                description='PPO, determine long/short positions according to PPO Indicators',
+                window_length=100,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            fp, sp, m = self.pars
-        else:
-            fp, sp, m = pars
-        h = h.T
-        res = ppo(h[0], fp, sp, m)[-1]
+    def realize(self):
+        fp, sp, m = self.get_pars('fp', 'sp', 'm')
+        h = self.get_data('close_ANY_d')
+        res = ppo(h, fp, sp, m)[-1]
 
         if res > 0:
             cat = 1
@@ -2612,29 +2659,30 @@ class RSI(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 70, 30)````\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (50, 100), (0, 50)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 70, 30)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (50, 100), (0, 50)],
-                         name='RSI',
-                         description='RSI, determine long/short positions according to RSI Indicators',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 70, 30)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p'),
+                    Parameter((50, 100), par_type='int', name='ulim'),
+                    Parameter((0, 50), par_type='int', name='llim'),
+                ],
+                name='RSI',
+                description='RSI, determine long/short positions according to RSI Indicators',
+                window_length=100,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, ulim, llim = self.pars
-        else:
-            p, ulim, llim = pars
-        h = h.T
-        res = rsi(h[0], p)[-1]
+    def realize(self):
+        p, ulim, llim = self.get_pars('p', 'ulim', 'llim')
+        h = self.get_data('close_ANY_d')
+        res = rsi(h, p)[-1]
 
         if res > ulim:
             cat = 1
@@ -2665,29 +2713,36 @@ class STOCH(RuleIterator):
     策略属性缺省值:
         默认参数: ``(5, 3, 0, 3, 0)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(5, 3, 0, 3, 0)):
-        super().__init__(pars=pars,
-                         par_count=5,
-                         par_types=['int', 'int', 'int', 'int', 'int'],
-                         par_range=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
-                         name='Stochastic',
-                         description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
-                         window_length=100,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(5, 3, 0, 3, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='fk'),
+                    Parameter((2, 100), par_type='int', name='sk'),
+                    Parameter((0, 8), par_type='int', name='skm'),
+                    Parameter((2, 100), par_type='int', name='sd'),
+                    Parameter((0, 8), par_type='int', name='sdm'),
+                ],
+                name='Stochastic',
+                description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            fk, sk, skm, sd, sdm = self.pars
-        else:
-            fk, sk, skm, sd, sdm = pars
-        h = h.T
-        k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
+    def realize(self):
+        fk, sk, skm, sd, sdm = self.get_pars('fk', 'sk', 'skm', 'sd', 'sdm')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        k, d = stoch(high, low, close, fk, sk, skm, sd, sdm)
 
         if k[-1] > 80:
             sig = -0.3
@@ -2716,29 +2771,34 @@ class STOCHF(RuleIterator):
     策略属性缺省值:
         默认参数: ``(5, 3, 0)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (2, 100), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(5, 3, 0)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (2, 100), (0, 8)],
-                         name='Fast Stochastic',
-                         description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
-                         window_length=100,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(5, 3, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='fk'),
+                    Parameter((2, 100), par_type='int', name='fd'),
+                    Parameter((0, 8), par_type='int', name='fdm'),
+                ],
+                name='Fast Stochastic',
+                description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            fk, fd, fdm = self.pars
-        else:
-            fk, fd, fdm = pars
-        h = h.T
-        k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
+    def realize(self):
+        fk, fd, fdm = self.get_pars('fk', 'fd', 'fdm')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        k, d = stochf(high, low, close, fk, fd, fdm)
 
         if k[-1] > 80:
             sig = -0.3
@@ -2768,29 +2828,31 @@ class STOCHRSI(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14, 5, 3, 0)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (2, 100), (2, 100), (0, 8)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14, 5, 3, 0)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'int', 'int', 'int'],
-                         par_range=[(2, 100), (2, 100), (2, 100), (0, 8)],
-                         name='Stochastic RSI',
-                         description='Stochastic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14, 5, 3, 0)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p'),
+                    Parameter((2, 100), par_type='int', name='fk'),
+                    Parameter((2, 100), par_type='int', name='fd'),
+                    Parameter((0, 8), par_type='int', name='fdm'),
+                ],
+                name='Stochastic RSI',
+                description='Stochastic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
+                window_length=100,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, fk, fd, fdm = self.pars
-        else:
-            p, fk, fd, fdm = pars
-        h = h.T
-        k, d = stochrsi(h[0], p, fk, fd, fdm)
+    def realize(self):
+        p, fk, fd, fdm = self.get_pars('p', 'fk', 'fd', 'fdm')
+        h = self.get_data('close_ANY_d')
+        k, d = stochrsi(h, p, fk, fd, fdm)
 
         if k[-1] > 0.8:
             sig = -0.3
@@ -2820,29 +2882,36 @@ class ULTOSC(RuleIterator):
     策略属性缺省值:
         默认参数: ``(7, 14, 28, 70, 30)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(1, 100), (1, 100), (1, 100), (70, 99), (1, 30)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(7, 14, 28, 70, 30)):
-        super().__init__(pars=pars,
-                         par_count=5,
-                         par_types=['int', 'int', 'int', 'int', 'int'],
-                         par_range=[(1, 100), (1, 100), (1, 100), (70, 99), (1, 30)],
-                         name='Ultimate Oscillator',
-                         description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
-                         window_length=100,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(7, 14, 28, 70, 30)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), par_type='int', name='p1'),
+                    Parameter((1, 100), par_type='int', name='p2'),
+                    Parameter((1, 100), par_type='int', name='p3'),
+                    Parameter((70, 99), par_type='int', name='u'),
+                    Parameter((1, 30), par_type='int', name='l'),
+                ],
+                name='Ultimate Oscillator',
+                description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p1, p2, p3, u, l = self.pars
-        else:
-            p1, p2, p3, u, l = pars
-        h = h.T
-        res = ultosc(h[0], h[1], h[2], p1, p2, p3)[-1]
+    def realize(self):
+        p1, p2, p3, u, l = self.get_pars('p1', 'p2', 'p3', 'u', 'l')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = ultosc(high, low, close, p1, p2, p3)[-1]
 
         if res > u:
             sig = -0.3
@@ -2870,29 +2939,34 @@ class WILLR(RuleIterator):
     策略属性缺省值:
         默认参数: ``(14, 80, 20)``\n
         数据类型: ``high``, ``low``, ``close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100), (70, 99), (1, 30)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14, 80, 20)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (70, 99), (1, 30)],
-                         name='Williams\' R',
-                         description='Williams R, determine buy/sell signals according to Williams R',
-                         window_length=100,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(14, 80, 20)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), par_type='int', name='p'),
+                    Parameter((70, 99), par_type='int', name='u'),
+                    Parameter((1, 30), par_type='int', name='l'),
+                ],
+                name='Williams\' R',
+                description='Williams R, determine buy/sell signals according to Williams R',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, u, l = self.pars
-        else:
-            p, u, l = pars
-        h = h.T
-        res = willr(h[0], h[1], h[2], p)[-1]
+    def realize(self):
+        p, u, l = self.get_pars('p', 'u', 'l')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
+        res = willr(high, low, close, p)[-1]
         if res > -l:
             sig = -0.3
         elif res < -u:
@@ -2923,25 +2997,28 @@ class AD(RuleIterator):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='AD',
-                         description='Accumulation Distribution Line Strategy',
-                         window_length=100,
-                         strategy_data_types='high, low, close, volume')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='AD',
+                description='Accumulation Distribution Line Strategy',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        h = h.T
-        ad_val = ad(h[0], h[1], h[2], h[3])
+    def realize(self):
+        high, low, close, vol = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        ad_val = ad(high, low, close, vol)
         ad_last, ad_latest = ad_val[-2], ad_val[-1]
         if ad_last > ad_latest:
             sig = -0.3
@@ -2970,29 +3047,34 @@ class ADOSC(RuleIterator):
     策略属性缺省值:
         默认参数: ``(3, 10)``\n
         数据类型: ``high``, ``low``, ``close``, ``volume`` 最高价，最低价，收盘价, 成交量，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 10), (10, 99)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(3, 10)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 10), (10, 99)],
-                         name='A/D Oscillator',
-                         description='Accumulation Distribution Line Oscillator',
-                         window_length=100,
-                         strategy_data_types='high, low, close, volume')
+    def __init__(self, par_values=(3, 10)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 10), par_type='int', name='f'),
+                    Parameter((10, 99), par_type='int', name='s')
+                ],
+                name='A/D Oscillator',
+                description='Accumulation Distribution Line Oscillator',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s = self.pars
-        else:
-            f, s = pars
-        h = h.T
-        res = adosc(h[0], h[1], h[2], h[3], f, s)[-1]
+    def realize(self):
+        f, s = self.get_pars('f', 's')
+        high, low, close, vol = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d', 'volume_ANY_d')
+        res = adosc(high, low, close, vol, f, s)[-1]
         if res > 0:
             sig = -0.3
         elif res < 0:
@@ -3022,26 +3104,30 @@ class OBV(RuleIterator):
     策略属性缺省值:
         默认参数: ``(15, )``\n
         数据类型: ``close``, ``volume`` 收盘价, 成交量，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(5, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(15, )):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(5, 100)],
-                         name='OBV',
-                         description='On-Balance Volume Strategy',
-                         window_length=100,
-                         strategy_data_types='close, volume')
+    def __init__(self, par_values=(15,)):
+        super().__init__(
+                pars=[
+                    Parameter((5, 100), par_type='int', name='n')
+                ],
+                name='OBV',
+                description='On-Balance Volume Strategy',
+                window_length=100,
+                data_types=[
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        n, = self.pars
-        h = h.T
-        close, volume = h[0], h[1]
+    def realize(self):
+        n = self.get_pars('n')
+        close, volume = self.get_data('close_ANY_d', 'volume_ANY_d')
         obv_ma = sma(obv(close, volume), n)
         close_ma = sma(close, n)
         obv_trend_up = obv_ma[-1] <= obv_ma[-2]
@@ -3083,26 +3169,31 @@ class ATR(RuleIterator):
     策略属性缺省值:
         默认参数: ``(15, )``\n
         数据类型: ``high``, ``low``, ``close``, 最高价，最低价，收盘价，多数据输入\n
-        采样频率: 天\n
         窗口长度: ``100``\n
         参数范围: ``[(5, 100)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(15, )):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[],
-                         name='ATR',
-                         description='Average True Range Strategy',
-                         window_length=100,
-                         strategy_data_types='high, low, close')
+    def __init__(self, par_values=(15,)):
+        super().__init__(
+                pars=[
+                    Parameter((5, 100), par_type='int', name='n')
+                ],
+                name='ATR',
+                description='Average True Range Strategy',
+                window_length=100,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        n, = self.pars
-        h = h.T
-        high, low, close = h[0], h[1], h[2]
+    def realize(self):
+        n, = self.get_pars('n')
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
         atr_value = atr(high, low, close, n)
         close_ma = sma(close, n)
         atr_trend_up = atr_value[-1] <= atr_value[-2]
@@ -3122,17 +3213,19 @@ class NATR(RuleIterator):
     """ Not Implemented Yet
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='OBV',
-                         description='On-Balance Volume Strategy',
-                         window_length=100,
-                         strategy_data_types='close, volume')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='OBV',
+                description='On-Balance Volume Strategy',
+                window_length=100,
+                data_types=[
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         raise NotImplementedError
 
 
@@ -3140,17 +3233,19 @@ class TRANGE(RuleIterator):
     """ Not Implemented Yet
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_range=[],
-                         name='OBV',
-                         description='On-Balance Volume Strategy',
-                         window_length=100,
-                         strategy_data_types='close, volume')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='OBV',
+                description='On-Balance Volume Strategy',
+                window_length=100,
+                data_types=[
+                    DataType('close', freq='d', asset_type='ANY'),
+                    DataType('volume', freq='d', asset_type='ANY'),
+                ],
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         raise NotImplementedError
 
 
@@ -3171,18 +3266,18 @@ class SignalNone(RuleIterator):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='NONE',
-                         description='Do not take any risk control activity')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='NONE',
+                description='Do not take any risk control activity')
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         return 0.
 
 
@@ -3203,7 +3298,6 @@ class SellRate(RuleIterator):
     策略属性缺省值:
         默认参数: ``(20, 0.1)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(1, 100), (-0.5, 0.5)]``
     策略不支持参考数据，不支持交易数据
@@ -3212,21 +3306,25 @@ class SellRate(RuleIterator):
 
     # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
 
-    def __init__(self, pars=(20, 0.1)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(1, 100), (-0.5, 0.5)],
-                         window_length=100,
-                         name='SELLRATE',
-                         description='Generate selling signal when N-day change rate is over a certain value')
+    def __init__(self, par_values=(20, 0.1)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), name='day', par_type='int'),
+                    Parameter((-0.5, 0.5), name='change', par_type='float')
+                ],
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=100,
+                name='SELLRATE',
+                description='Generate selling signal when N-day change rate is over a certain value',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            day, change = self.pars
-        else:
-            day, change = pars
-        h = h
+    def realize(self):
+
+        day, change = self.get_pars('day', 'change')
+        h = self.get_data('close_ANY_d')
+
         diff = h[-1] - h[-day]
         if (change >= 0) and (diff > change):
             return -1
@@ -3252,7 +3350,6 @@ class BuyRate(RuleIterator):
     策略属性缺省值:
         默认参数: ``(20, 0.1)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(1, 100), (-0.5, 0.5)]``
     策略不支持参考数据，不支持交易数据
@@ -3261,21 +3358,23 @@ class BuyRate(RuleIterator):
 
     # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
 
-    def __init__(self, pars=(20, 0.1)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(1, 100), (-0.5, 0.5)],
-                         window_length=100,
-                         name='BUYRATE',
-                         description='Generate buying signal when N-day change rate is over a certain value')
+    def __init__(self, par_values=(20, 0.1)):
+        super().__init__(
+                pars=[
+                    Parameter((1, 100), name='day', par_type='int'),
+                    Parameter((-0.5, 0.5), name='change', par_type='float')
+                ],
+                window_length=100,
+                name='BUYRATE',
+                description='Generate buying signal when N-day change rate is over a certain value',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            day, change = self.pars
-        else:
-            day, change = pars
-        h = h
+    def realize(self):
+        day, change = self.get_pars('day', 'change')
+        h = self.get_data('close_ANY_d')
         diff = h[-1] - h[-day]
         if (change >= 0) and (diff > change):
             return 1
@@ -3296,21 +3395,21 @@ class TimingLong(GeneralStg):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
 
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='Long',
-                         description='Simple Timing strategy, return constant long position on the whole history')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='Long',
+                description='Simple Timing strategy, return constant long position on the whole history')
 
-    def realize(self, h, r=None, t=None, pars=None):
-        sc, wl, htp = h.shape
-        return np.ones(shape=(sc, ))
+    def realize(self):
+        sc = self.share_count
+        return np.ones(shape=(sc,))
 
 
 class TimingShort(GeneralStg):
@@ -3325,21 +3424,21 @@ class TimingShort(GeneralStg):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='Short',
-                         description='Simple Timing strategy, return constant Short (minus) position on '
-                                     'the whole history')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='Short',
+                description='Simple Timing strategy, return constant Short (minus) position on '
+                            'the whole history')
 
-    def realize(self, h, r=None, t=None, pars=None):
-        sc, wl, htp = h.shape
-        return -np.ones(shape=(sc, ))
+    def realize(self):
+        sc = self.share_count
+        return -np.ones(shape=(sc,))
 
 
 class TimingZero(GeneralStg):
@@ -3354,20 +3453,20 @@ class TimingZero(GeneralStg):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='Zero',
-                         description='Simple Timing strategy, return constant Zero position ratio on the whole history')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='Zero',
+                description='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
-    def realize(self, h, r=None, t=None, pars=None):
-        sc, wl, htp = h.shape
-        return np.zeros(shape=(sc, ))
+    def realize(self):
+        sc = self.share_count
+        return np.zeros(shape=(sc,))
 
 
 class DMA(RuleIterator):
@@ -3387,30 +3486,34 @@ class DMA(RuleIterator):
     策略属性缺省值:
         默认参数: ``(12, 26, 9)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[(10, 250), (10, 250), (8, 250)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 26, 9)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (5, 250)],
-                         name='DMA',
-                         description='Quick DMA strategy, determine long/short position according to differences of '
-                                     'moving average prices with simple timing strategy',
-                         strategy_data_types='close')
+    def __init__(self, par_values=(12, 26, 9), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(10, 250), par_type='int', name='slow'),
+                    Parameter(par_range=(10, 250), par_type='int', name='long'),
+                    Parameter(par_range=(5, 250), par_type='int', name='diff')
+                ],
+                name='DMA',
+                window_length=270,
+                description='Quick DMA strategy, determine long/short position according to differences of '
+                            'moving average prices with simple timing strategy',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                **kwargs,
+        )
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, d = self.pars
-        else:
-            s, l, d = pars
+        if par_values:
+            self.update_par_values(*par_values)
 
-        h = h.T
-        dma = sma(h[0], s) - sma(h[0], l)
+    def realize(self):
+        s, l, d = self.get_pars('slow', 'long', 'diff')
+
+        h = self.get_data('close_ANY_d')
+        dma = sma(h, s) - sma(h, l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
 
@@ -3432,20 +3535,20 @@ class SelectingAll(GeneralStg):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='SIMPLE ',
-                         description='GeneralStg all share and distribute weights evenly')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='SIMPLE',
+                description='GeneralStg all share and distribute weights evenly')
 
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         # 所有股票全部被选中，投资比例平均分配
-        share_count = h.shape[0]
+        share_count = self.share_count
         return np.ones(shape=(share_count,)) / share_count
 
 
@@ -3461,19 +3564,19 @@ class SelectingNone(GeneralStg):
     策略属性缺省值:
         默认参数: ``()``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
         窗口长度: ``270``\n
         参数范围: ``[]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         name='NONE ',
-                         description='None of the shares will be selected')
+    def __init__(self):
+        super().__init__(
+                pars=[],
+                name='NONE ',
+                description='None of the shares will be selected')
 
-    def realize(self, h, r=None, t=None, pars=None):
-        share_count = h.shape[0]
+    def realize(self):
+        share_count = self.share_count
         return [0.] * share_count
 
 
@@ -3491,26 +3594,28 @@ class SelectingRandom(GeneralStg):
     策略属性缺省值:
         默认参数: ``(0.5, )``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 天\n
-        窗口长度: ``270``\n
+        窗口长度: ``100``\n
         参数范围: ``[(0, np.inf)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(0.5,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['float'],
-                         par_range=[(0, np.inf)],
-                         name='RANDOM',
-                         description='GeneralStg share Randomly and distribute weights evenly')
+    def __init__(self, par_values=(0.5,)):
+        super().__init__(
+                pars=[
+                    Parameter((0, np.inf), name='pct', par_type='float')
+                ],
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=100,
+                name='RANDOM',
+                description='GeneralStg share Randomly and distribute weights evenly',
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            pct, = self.pars
-        else:
-            pct, = pars
-        share_count = h.shape[0]
+    def realize(self):
+        pct = self.get_pars('pct')
+
+        share_count = self.share_count
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
             chosen = np.random.choice([1, 0], size=share_count, p=[pct, 1 - pct])
@@ -3552,7 +3657,6 @@ class SelectingAvgIndicator(FactorSorter):
     策略属性缺省值:
         默认参数: ``(True, 'even', 'greater', 0, 0, 0.25)``\n
         数据类型: ``eps`` 每股收益，单数据输入\n
-        采样频率: ``Y``, 年\n
         窗口长度: ``270``\n
         参数范围: ``[(True, False)``,\n
         ``('even', 'linear', 'proportion')``,\n
@@ -3564,27 +3668,32 @@ class SelectingAvgIndicator(FactorSorter):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(True, 'even', 'greater', 0, 0, 0.25)):
-        super().__init__(pars=pars,
-                         par_count=6,
-                         par_types=['enum', 'enum', 'enum', 'float', 'float', 'float'],
-                         par_range=[(True, False),
-                                    ('even', 'linear', 'distance', 'proportion'),
-                                    ('any', 'greater', 'less', 'between', 'not_between'),
-                                    (-np.inf, np.inf),
-                                    (-np.inf, np.inf),
-                                    (0, np.inf)],
-                         name='FINANCE',
-                         description='GeneralStg share_pool according to financial indicator PE',
-                         data_freq='d',
-                         strategy_run_freq='y',
-                         window_length=90,
-                         strategy_data_types='pe')
+    def __init__(self, par_values=(True, 'even', 'greater', 0, 0, 0.25)):
+        super().__init__(
+                pars=[
+                    Parameter((True, False), name='sort_ascending', par_type='enum'),
+                    Parameter(('even', 'linear', 'distance', 'proportion'), name='weighting', par_type='enum'),
+                    Parameter(('any', 'greater', 'less', 'between', 'not_between'), name='condition',
+                              par_type='enum'),
+                    Parameter((-np.inf, np.inf), name='lbound', par_type='float'),
+                    Parameter((-np.inf, np.inf), name='ubound', par_type='float'),
+                    Parameter((0, np.inf), name='max_sel_count', par_type='float')
+                ],
+                name='FINANCE',
+                description='GeneralStg share_pool according to financial indicator PE',
+                window_length=90,
+                data_types=DataType('pe', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is not None:
-            self.sort_ascending, self.weighting, self.condition, self.lbound, self.ubound, self.max_sel_count = pars
-        factors = np.nanmean(h, axis=1)
+    def realize(self):
+        # TODO: 这里需要另一种获取数据的方式，也许通过数据的index来获取
+        #  例如self.get_data_by_index(0)来获取第一个数据类型的数据
+        #  因为数据的ID是可以由用户改变的
+        dtype_id = self.data_type_ids
+        h = self.get_data(dtype_id[0])
+        factors = np.nanmean(h, axis=0)
 
         return factors
 
@@ -3619,31 +3728,28 @@ class SelectingNDayLast(FactorSorter):
     策略属性缺省值:
         默认参数: ``(2,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 月\n
         窗口长度: ``100``\n
         参数范围: ``[(2, 100)]``\n
     策略不支持参考数据，不支持交易数据
 
     """
 
-    def __init__(self, pars=(2,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
-                         name='N-DAY LAST',
-                         description='Select stocks according their previous prices',
-                         data_freq='d',
-                         strategy_run_freq='m',
-                         window_length=100,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(2,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 100), name='n', par_type='int')
+                ],
+                name='N-DAY LAST',
+                description='Select stocks according their previous prices',
+                window_length=100,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        factors = h[:, -n-1, 0]
+    def realize(self):
+        n = self.get_pars('n')
+        factors = self.get_data('close_ANY_d')[-n - 1]
 
         return factors
 
@@ -3679,30 +3785,28 @@ class SelectingNDayAvg(FactorSorter):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: 月\n
         窗口长度: ``150``\n
         参数范围: ``[(2, 150)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY AVG',
-                         description='Select stocks by its N day average open price',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 150), name='n', par_type='int')
+                ],
+                name='N-DAY AVG',
+                description='Select stocks by its N day average open price',
+                window_length=150,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        n_average = h[:, -n-1:, 0].mean(axis=1)
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        n_average = h[-n - 1:-1].mean(axis=0)
         factors = n_average
 
         return factors
@@ -3739,32 +3843,30 @@ class SelectingNDayChange(FactorSorter):
     策略属性缺省值:
         默认参数: (14,)\n
         数据类型: close 收盘价，单数据输入\n
-        采样频率: 月\n
         窗口长度: 150\n
         参数范围: [(2, 150)]
     策略不支持参考数据，不支持交易数据
 
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY CHANGE',
-                         description='Select stocks by its N day price change',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[
+                    Parameter((2, 150), name='n', par_type='int')
+                ],
+                name='N-DAY CHANGE',
+                description='Select stocks by its N day price change',
+                window_length=150,
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        current_price = h[:, -1, 0]
-        n_previous = h[:, -n-1, 0]
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_previous = h[-n - 1]
         factors = current_price - n_previous
 
         return factors
@@ -3801,31 +3903,29 @@ class SelectingNDayRateChange(FactorSorter):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``close`` 收盘价，单数据输入\n
-        采样频率: ``M``, 月\n
         窗口长度: ``150``\n
         参数范围: ``[(2, 150)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY RATE',
-                         description='Select stocks by its N day price change',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='close')
+    def __init__(self, par_values=(14,), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(2, 150), par_type='int', name='n')
+                ],
+                name='N-DAY RATE',
+                description='Select stocks by its N day price change',
+                data_types=StgData('close', freq='d', asset_type='ANY', window_length=150),
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        current_price = h[:, -1, 0]
-        n_previous = h[:, -n-1, 0]
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_previous = h[- n - 1]
         factors = (current_price - n_previous) / n_previous
 
         return factors
@@ -3861,113 +3961,110 @@ class SelectingNDayVolatility(FactorSorter):
     策略属性缺省值:
         默认参数: ``(14,)``\n
         数据类型: ``high,low,close`` 最高价，最低价，收盘价，多数据输入\n
-        采样频率: ``M``, 月\n
         窗口长度: ``150``\n
         参数范围: ``[(2, 150)]``
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 150)],
-                         name='N-DAY VOL',
-                         description='Select stocks by its N day price change',
-                         data_freq='d',
-                         strategy_run_freq='M',
-                         window_length=150,
-                         strategy_data_types='high,low,close')
+    def __init__(self, par_values=(14,)):
+        super().__init__(
+                pars=[Parameter((2, 150), name='n', par_type='int')],
+                name='N-DAY VOL',
+                description='Select stocks by its N day price change',
+                window_length=150,
+                data_types=[
+                    DataType('high', freq='d', asset_type='ANY'),
+                    DataType('low', freq='d', asset_type='ANY'),
+                    DataType('close', freq='d', asset_type='ANY'),
+                ],
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            n, = self.pars
-        else:
-            n, = pars
-        high = h[:, :, 0]
-        low = h[:, :, 1]
-        close = h[:, :, 2]
+    def realize(self):
+        n = self.get_pars('n')
+
+        high, low, close = self.get_data('high_ANY_d', 'low_ANY_d', 'close_ANY_d')
 
         # 计算ATR波动率, 因为输入数据包含多个股票的数据，因此需要分别计算每个股票的ATR，然后将结果合并，最后取最后一列（最后一天的ATR）
-        factors = np.array(list(map(atr, high, low, close, [n]*len(high))))[:, -1]
+        factors = np.array(list(map(atr, high, low, close, [n] * len(high))))[-1]
 
         return factors
 
 
-BUILT_IN_STRATEGIES = {'crossline':         CROSSLINE,
-                       'macd':              MACD,
-                       'dma':               DMA,
-                       'trix':              TRIX,
-                       'cdl':               CDL,
-                       'bband':             BBand,
-                       's-bband':           SoftBBand,
-                       'sarext':            SAREXT,
-                       'ssma':              SCRSSMA,
-                       'sdema':             SCRSDEMA,
-                       'sema':              SCRSEMA,
-                       'sht':               SCRSHT,
-                       'skama':             SCRSKAMA,
-                       'smama':             SCRSMAMA,
-                       'st3':               SCRST3,
-                       'stema':             SCRSTEMA,
-                       'strima':            SCRSTRIMA,
-                       'swma':              SCRSWMA,
-                       'dsma':              DCRSSMA,
-                       'ddema':             DCRSDEMA,
-                       'dema':              DCRSEMA,
-                       'dkama':             DCRSKAMA,
-                       'dmama':             DCRSMAMA,
-                       'dt3':               DCRST3,
-                       'dtema':             DCRSTEMA,
-                       'dtrima':            DCRSTRIMA,
-                       'dwma':              DCRSWMA,
-                       'slsma':             SLPSMA,
-                       'sldema':            SLPDEMA,
-                       'slema':             SLPEMA,
-                       'slht':              SLPHT,
-                       'slkama':            SLPKAMA,
-                       'slmama':            SLPMAMA,
-                       'slt3':              SLPT3,
-                       'sltema':            SLPTEMA,
-                       'sltrima':           SLPTRIMA,
-                       'slwma':             SLPWMA,
-                       'adx':               ADX,
-                       'apo':               APO,
-                       'aroon':             AROON,
-                       'aroonosc':          AROONOSC,
-                       'cci':               CCI,
-                       'cmo':               CMO,
-                       'macdext':           MACDEXT,
-                       'mfi':               MFI,
-                       'di':                DI,
-                       'dm':                DM,
-                       'mom':               MOM,
-                       'ppo':               PPO,
-                       'rsi':               RSI,
-                       'stoch':             STOCH,
-                       'stochf':            STOCHF,
-                       'stochrsi':          STOCHRSI,
-                       'ultosc':            ULTOSC,
-                       'willr':             WILLR,
-                       'ad':                AD,
-                       'adosc':             ADOSC,
-                       'obv':               OBV,
-                       'signal_none':       SignalNone,
-                       'sellrate':          SellRate,
-                       'buyrate':           BuyRate,
-                       'long':              TimingLong,
-                       'short':             TimingShort,
-                       'zero':              TimingZero,
-                       'all':               SelectingAll,
-                       'select_none':       SelectingNone,
-                       'random':            SelectingRandom,
-                       'finance':           SelectingAvgIndicator,
-                       'ndaylast':          SelectingNDayLast,
-                       'ndayavg':           SelectingNDayAvg,
-                       'ndayrate':          SelectingNDayRateChange,
-                       'ndaychg':           SelectingNDayChange,
-                       'ndayvol':           SelectingNDayVolatility
+BUILT_IN_STRATEGIES = {'crossline':   CROSSLINE,
+                       'macd':        MACD,
+                       'dma':         DMA,
+                       'trix':        TRIX,
+                       'cdl':         CDL,
+                       'bband':       BBand,
+                       's-bband':     SoftBBand,
+                       'sarext':      SAREXT,
+                       'ssma':        SCRSSMA,
+                       'sdema':       SCRSDEMA,
+                       'sema':        SCRSEMA,
+                       'sht':         SCRSHT,
+                       'skama':       SCRSKAMA,
+                       'smama':       SCRSMAMA,
+                       'st3':         SCRST3,
+                       'stema':       SCRSTEMA,
+                       'strima':      SCRSTRIMA,
+                       'swma':        SCRSWMA,
+                       'dsma':        DCRSSMA,
+                       'ddema':       DCRSDEMA,
+                       'dema':        DCRSEMA,
+                       'dkama':       DCRSKAMA,
+                       'dmama':       DCRSMAMA,
+                       'dt3':         DCRST3,
+                       'dtema':       DCRSTEMA,
+                       'dtrima':      DCRSTRIMA,
+                       'dwma':        DCRSWMA,
+                       'slsma':       SLPSMA,
+                       'sldema':      SLPDEMA,
+                       'slema':       SLPEMA,
+                       'slht':        SLPHT,
+                       'slkama':      SLPKAMA,
+                       'slmama':      SLPMAMA,
+                       'slt3':        SLPT3,
+                       'sltema':      SLPTEMA,
+                       'sltrima':     SLPTRIMA,
+                       'slwma':       SLPWMA,
+                       'adx':         ADX,
+                       'apo':         APO,
+                       'aroon':       AROON,
+                       'aroonosc':    AROONOSC,
+                       'cci':         CCI,
+                       'cmo':         CMO,
+                       'macdext':     MACDEXT,
+                       'mfi':         MFI,
+                       'di':          DI,
+                       'dm':          DM,
+                       'mom':         MOM,
+                       'ppo':         PPO,
+                       'rsi':         RSI,
+                       'stoch':       STOCH,
+                       'stochf':      STOCHF,
+                       'stochrsi':    STOCHRSI,
+                       'ultosc':      ULTOSC,
+                       'willr':       WILLR,
+                       'ad':          AD,
+                       'adosc':       ADOSC,
+                       'obv':         OBV,
+                       'signal_none': SignalNone,
+                       'sellrate':    SellRate,
+                       'buyrate':     BuyRate,
+                       'long':        TimingLong,
+                       'short':       TimingShort,
+                       'zero':        TimingZero,
+                       'all':         SelectingAll,
+                       'select_none': SelectingNone,
+                       'random':      SelectingRandom,
+                       'finance':     SelectingAvgIndicator,
+                       'ndaylast':    SelectingNDayLast,
+                       'ndayavg':     SelectingNDayAvg,
+                       'ndayrate':    SelectingNDayRateChange,
+                       'ndaychg':     SelectingNDayChange,
+                       'ndayvol':     SelectingNDayVolatility
                        }
-
 
 available_built_in_strategies = BUILT_IN_STRATEGIES.values()

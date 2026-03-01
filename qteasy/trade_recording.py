@@ -13,6 +13,7 @@
 import os
 import pandas as pd
 import numpy as np
+from typing import Union
 
 from qteasy.database import DataSource
 
@@ -21,8 +22,6 @@ from qteasy.database import DataSource
 TIMEZONE = 'Asia/Shanghai'
 
 
-# TODO: 创建一个模块级变量，用于存储交易信号的数据源，所有的交易信号都从这个数据源中读取
-#  避免交易信号从不同的数据源中获取，导致交易信号的不一致性 ?? 这是不是最好的做法？？
 # 9 foundational functions for account and position management
 def new_account(*, user_name, cash_amount, data_source=None, **account_data) -> int:
     """ 创建一个新的账户
@@ -597,8 +596,11 @@ def get_account_positions(account_id, data_source=None):
             'sys_op_positions',
             **{'account_id': account_id},
     )
+    _empty_canonical = pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
     if positions is None:
-        return pd.DataFrame(columns=['account_id', 'symbol', 'position', 'qty', 'available_qty'])
+        return _empty_canonical
+    if positions.empty or not positions.columns.tolist() or 'symbol' not in positions.columns:
+        return _empty_canonical
 
     return positions
 
@@ -1064,7 +1066,13 @@ def read_trade_order_detail(order_id, data_source=None) -> dict:
     return trade_order_detail
 
 
-def save_parsed_trade_orders(account_id, symbols, positions, directions, quantities, prices, data_source=None):
+def save_parsed_trade_orders(account_id: int,
+                             symbols: list[str],
+                             positions: list[str],
+                             directions: list[str],
+                             quantities: list[Union[float, int]],
+                             prices: list[Union[float, int]],
+                             data_source: DataSource) -> list[int]:
     """ 根据parse_trade_signal的结果，将交易订单要素组装成完整的交易订单dict，并将交易信号保存到数据库
 
     Parameters

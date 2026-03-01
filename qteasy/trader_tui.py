@@ -575,8 +575,8 @@ class TraderApp(App):
 
             next_task = self.trader.next_task
             count_down = sec_to_duration(self.trader.count_down_to_next_task, estimation=True)
-
-            system_log.border_title = f"System Log - Next Task: {next_task} in {count_down}"
+            next_task_string = next_task[1] if next_task else 'None'
+            system_log.border_title = f"System Log - Next Task: {next_task_string} in {count_down}"
             display.border_title = f"{self.status}: {current_time}"
 
             # check the message queue of the trader
@@ -871,12 +871,12 @@ class TraderApp(App):
         tree.root.expand()
 
         # add first level nodes per timing
-        for timing in op.strategy_timings:
+        for timing in op.strategy_groups:
             timing_node = tree.root.add(f"Timing: {timing}", expand=True)
-            for strategy in op.get_strategies_by_run_timing(timing):
+            for strategy in op.get_strategies_by_group(timing):
                 strategy_node = timing_node.add(f"Strategy: {strategy.name}", expand=True)
-                strategy_node.add_leaf(f"Run freq: {strategy.strategy_run_freq}")
-                strategy_node.add_leaf(f"Parameters: {strategy.pars}")
+                strategy_node.add_leaf(f"Run freq: {strategy.run_freq}")
+                strategy_node.add_leaf(f"Parameters: {strategy.par_values}")
                 strategy_node.add_leaf(f"Par Types: {strategy.par_types}")
                 strategy_node.add_leaf(f"Data Types: {strategy.data_types}")
 
@@ -931,7 +931,7 @@ class TraderApp(App):
         """Actions to perform before exiting the app.
         """
         # stop the trader, broker and the trader event loop
-        self.trader.run_task('stop')
+        self.trader._run_task('stop')
         time.sleep(0.1)
 
         self.status = 'stopped'

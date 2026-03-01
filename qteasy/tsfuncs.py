@@ -884,7 +884,6 @@ def realtime_min(ts_code, freq):
 
     pro = ts.pro_api()
     res = pro.rt_min(ts_code=ts_code, freq=freq)
-    # import pdb; pdb.set_trace()
     res.index = pd.to_datetime(res['trade_time'])
     res = res.reindex(columns=['symbol', 'name', 'pre_close', 'open', 'close', 'high', 'low', 'vol', 'amount'])
 
@@ -2343,7 +2342,7 @@ def top_inst(trade_date: str = None,
     res = pro.top_inst(trade_date=trade_date,
                        ts_code=ts_code)
     logger_core.info(
-            f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
+        f'Downloaded {len(res)} rows from tushare: top_inst with ts_code={ts_code}, trade_date={trade_date}')
     return res
 
 

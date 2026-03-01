@@ -18,8 +18,9 @@
 import qteasy as qt
 import numpy as np
 
+
 class IndexEnhancement(qt.GeneralStg):
-    
+
     def __init__(self, pars: tuple = (0.35, 0.8, 5)):
         super().__init__(
                 pars=pars,
@@ -29,17 +30,16 @@ class IndexEnhancement(qt.GeneralStg):
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
                 strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                strategy_run_freq='d',  # 每天执行一次选股
+                run_freq='d',  # 每天执行一次选股
                 strategy_data_types='wt-000300.SH, close',  # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
                 data_freq='d',  # 数据频率（包括股票数据和参考数据）
                 window_length=20,
                 use_latest_data_cycle=True,
                 reference_data_types='',  # 不需要使用参考数据
         )
-    
-    def realize(self, h, r=None, t=None, pars=None):
 
-        weight_threshold, init_weight, price_days = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        weight_threshold, init_weight, price_days = self.par_values
         # 读取投资组合的权重wt和最近price_days天的收盘价
         wt = h[:, -1, 0]  # 当前所有股票的权重值
         pre_close = h[:, -price_days - 1:-1, 1]
@@ -47,20 +47,20 @@ class IndexEnhancement(qt.GeneralStg):
 
         # 计算连续price_days天的收益
         stock_returns = pre_close - close  # 连续p天的收益
-        
+
         # 设置初始选股权重为0.8
         weights = init_weight * np.ones_like(wt)
-        
+
         # 剔除掉权重小于weight_threshold的股票
         weights[wt < weight_threshold] = 0
-        
+
         # 找出强势股，将其权重设为1, 找出弱势股，将其权重设置为 init_weight - (1 - init_weight)
         up_trends = np.all(stock_returns > 0, axis=1)
         weights[up_trends] = 1.0
         down_trend_weight = init_weight - (1 - init_weight)
         down_trends = np.all(stock_returns < 0, axis=1)
         weights[down_trends] = down_trend_weight
-        
+
         # 实际选股权重为weights * HS300权重
         weights *= wt
 

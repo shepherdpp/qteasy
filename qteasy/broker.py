@@ -25,7 +25,7 @@ CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
 AMOUNT_DECIMAL_PLACES = QT_CONFIG['amount_decimal_places']
 
 
-def _verify_trade_result(trade_result, order_qty):
+def _verify_trade_result(trade_result, order_qty) -> bool:
     """ 检查result，确认是否符合基本要求:
     包括trade_result各个组份的类型是否正确、数据是否超过范围
 
@@ -38,6 +38,10 @@ def _verify_trade_result(trade_result, order_qty):
         fee: float
     order_qty: float
         订单的报价数量
+
+    Returns
+    -------
+    bool: 当result符合基本要求的时候，返回True
     """
     result_type, qty, filled_price, fee = trade_result
 
@@ -96,7 +100,7 @@ class Broker(object):
     """
     __metaclass__ = ABCMeta
 
-    # TODO: for v1.1:
+    # TODO: for v2.0:
     #  重构Broker类，使Broker基类提供通用的接口，如log_in, log_out, run, transaction等
     #  并将具体的交易所实现放在子类中，如SimulatorBroker, SimpleBroker等
     #  重构后的Broker类应该是一个抽象类，不能直接实例化，只能通过子类实例化
@@ -152,13 +156,6 @@ class Broker(object):
         # override this function if necessary
         self.is_registered = True
         self.debug = debug
-
-    def log_out_broker(self):
-        """ Broker对象在关闭前的处理过程。
-        Override这个函数，以添加更多处理
-        """
-        # override this function if necessary
-        pass
 
     def run(self):
         """ Broker的主循环，从order_queue中获取交易订单并处理，获得交易结果并放入result_queue中
@@ -363,7 +360,6 @@ class Broker(object):
         # 全部订单处理完毕或发生错误后结束
         return
 
-
     @abstractmethod
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
         """ 交易所处理交易订单并获取交易结果, 抽象方法，需要由用户在子类中实现
@@ -425,6 +421,38 @@ class Broker(object):
         ('failed', 0, 0, 0)
         """
         pass
+
+    # --------- New APIs defined for new base broker class
+    def log_in_broker(self):
+        """登录"""
+        raise NotImplementedError
+
+    def log_out_broker(self):
+        """ Broker对象在关闭前的处理过程。
+        Override这个函数，以添加更多处理
+        """
+        # override this function if necessary
+        pass
+
+    def get_positions(self):
+        """ get positions from the broker"""
+        raise NotImplementedError
+
+    def get_orders(self):
+        """get ids of the orders submitted"""
+        raise NotImplementedError
+
+    def get_results(self, order_id):
+        """ get the order execution result with order id"""
+        raise NotImplementedError
+
+    def submit_order(self):
+        """交易挂单"""
+        raise NotImplementedError
+
+    def withdraw_order(self):
+        """交易撤单"""
+        raise NotImplementedError
 
 
 class SimpleBroker(Broker):
@@ -517,7 +545,7 @@ class SimulatorBroker(Broker):
                  fee_min_sell=0.0,
                  fee_fix_buy=0.0,
                  fee_fix_sell=0.0,
-                 slipage=0.0,
+                 slippage=0.0,
                  moq_buy=0.0,
                  moq_sell=0.0,
                  delay=1.0,
@@ -540,8 +568,8 @@ class SimulatorBroker(Broker):
             买入操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
         fee_fix_sell: float, default 0.0
             卖出操作的固定交易费用，如果不为0，则忽略交易费率和最低费用
-        slipage: float, default 0.0
-            交易滑点, 当交易数量很大时，交易费用会被放大 slipage * (qty / 100) ** 2 倍
+        slippage: float, default 0.0
+            交易滑点, 当交易数量很大时，交易费用会被放大 slippage * (qty / 100) ** 2 倍
         moq_buy: float, default 0.0
             买入操作最小数量
         moq_sell: float, default 0.0
@@ -564,7 +592,7 @@ class SimulatorBroker(Broker):
         self.fee_min_sell = fee_min_sell
         self.fee_fix_buy = fee_fix_buy
         self.fee_fix_sell = fee_fix_sell
-        self.slipage = slipage
+        self.slippage = slippage
         self.moq_buy = moq_buy
         self.moq_sell = moq_sell
         self.delay = delay
@@ -672,8 +700,8 @@ class SimulatorBroker(Broker):
                 else:
                     raise RuntimeError(f'invalid direction: {direction}')
                 # 模拟交易滑点, 交易数量越大，对交易费用产生的影响越大
-                if self.slipage > 0:
-                    transaction_fee *= (1 + self.slipage * (qty / 100) ** 2)
+                if self.slippage > 0:
+                    transaction_fee *= (1 + self.slippage * (qty / 100) ** 2)
 
             # 成交类型为取消，成交数量为0，成交价格为0，交易费用为0
             elif result_type in ['canceled']:  # result_type == 'canceled'

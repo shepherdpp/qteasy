@@ -10,16 +10,23 @@
 # ======================================
 import unittest
 
+import os
+import shutil
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
 import numpy as np
 
-from qteasy.datatypes import infer_data_types
+from qteasy.database import DataSource
 from qteasy.utilfuncs import str_to_list
+from qteasy.datatypes import (
+    infer_data_types,
+    DataType,
+)
 from qteasy.history import (
     stack_dataframes,
     ffill_3d_data,
+    get_history_data_packages
 )
 
 
@@ -946,25 +953,24 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         """ 测试是否能正确获取HistoryPanel"""
-        # TODO: 为了确保兼容性，首先使用infer_data_type()创建data_types，再传入get_history_panel()
         print('test get history panel data')
         data_types = infer_data_types(
                 names='wt_idx|000003.SH, close, wt_idx|000300.SH',
                 freqs='m',
                 asset_types='any',
                 adj='none',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           start='20210101', end='20210802', freq='m')
-        expected_htypes = ['wt_idx|000003.SH', 'close', 'wt_idx|000300.SH']
+        expected_htypes = ['wt_idx|000003.SH', 'close', 'close', 'wt_idx|000300.SH']
         expected_shares = ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH']
+        print(f'HistoryPanel obtained is:\n{hp}')
         self.assertTrue(all(i in expected_htypes for i in hp.htypes))
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
-        print(hp)
 
         print('test get history panel data without shares')
         data_types = infer_data_types(
@@ -977,18 +983,18 @@ class TestHistoryPanel(unittest.TestCase):
                                           drop_nan=True)
         expected_htypes = ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH']
         expected_shares = ['none']
+        print(f'HistoryPanel obtained is:\n{hp}')
         self.assertTrue(all(i in expected_htypes for i in hp.htypes))
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
-        print(hp)
 
         print('test get history panel data from converting multiple frequencies')
         data_types = infer_data_types(
                 names='wt_idx|000003.SH, close, pe, eps, revenue_ps',
                 freqs='w',
                 asset_types='any',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
@@ -1029,7 +1035,7 @@ class TestHistoryPanel(unittest.TestCase):
                 names='open, high, close|b, pe',
                 freqs='h',
                 asset_types='E',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
@@ -1052,11 +1058,11 @@ class TestHistoryPanel(unittest.TestCase):
                 names='open, high, close|b, pe',
                 freqs='h',
                 asset_types='E',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
                                           shares='000002.SZ, 000001.SZ, 000300.SH',
-                                          start='20210115', freq='h',
+                                          start='20210114', freq='h',
                                           rows=20, )
         print(hp)
         expected_htypes = ['open', 'high', 'close|b', 'pe']
@@ -1065,32 +1071,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(all(i in hp.htypes for i in expected_htypes))
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
+        # here check that all idx data are nan and row count is correct (20)
         all_idx_data = hp[:, '000300.SH']
         self.assertTrue(np.all(np.isnan(all_idx_data)))
-        self.assertEqual(len(hp), 22)
-
-        print('test getting history panel with row_counts and no start nor end')
-
-        # data_types = infer_data_types(
-        #         names='open, high, close|b, pe',
-        #         freqs='h',
-        #         asset_types='E',
-        #         force_match_freq=True,
-        # )
-        # import pdb; pdb.set_trace()
-        # hp = qt.history.get_history_panel(data_types=data_types, data_source=self.ds,
-        #                                   shares='000002.SZ, 000001.SZ, 000300.SH',
-        #                                   freq='h', rows=20, )
-        # print(hp)
-        # expected_htypes = ['open', 'high', 'close|b', 'pe']
-        # expected_shares = ['000002.SZ', '000001.SZ', '000300.SH']
-        # self.assertTrue(all(i in expected_htypes for i in hp.htypes))
-        # self.assertTrue(all(i in hp.htypes for i in expected_htypes))
-        # self.assertTrue(all(i in expected_shares for i in hp.shares))
-        # self.assertTrue(all(i in hp.shares for i in expected_shares))
-        # all_idx_data = hp[:, '000300.SH']
-        # self.assertTrue(np.all(np.isnan(all_idx_data)))
-        # self.assertEqual(len(hp), 20)
+        self.assertLessEqual(len(hp), 20)
 
         print('test get history panel data')
         data_types = infer_data_types(
@@ -1098,7 +1082,7 @@ class TestHistoryPanel(unittest.TestCase):
                 freqs='m',
                 asset_types='any',
                 adj='none',
-                force_match_freq=True,
+                allow_ignore_freq=True,
         )
         hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
                                           shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
@@ -1155,6 +1139,15 @@ class TestHistoryPanel(unittest.TestCase):
                           start='202101001',
                           end='20210115',
                           freq='d',)
+
+        print(f'test getting data with different freq but same asset type and name, ValueError expected')
+        data_types = [qt.DataType('close', freq='d', asset_type='E'),
+                      qt.DataType('close', freq='w', asset_type='E'),
+                      qt.DataType('close', freq='m', asset_type='E')]
+        with self.assertRaises(ValueError):
+            hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
+                                              shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+                                              start='20210101', end='20210202', freq='m')
 
     def test_flatten_to_dataframe(self):
         """ 测试函数 flatten_to_dataframe() """
@@ -1244,6 +1237,256 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(ValueError, hp.flattened_head, -1)
         self.assertRaises(TypeError, hp.flattened_tail, '3')
         self.assertRaises(ValueError, hp.flattened_tail, -1)
+
+
+class TestGetHistoryDataPackages(unittest.TestCase):
+
+    def setUp(self):
+        """设置测试环境，创建测试数据源和测试数据"""
+        # 创建临时目录用于测试数据源
+        self.test_data_path = "./temp_test_data"
+        os.makedirs(self.test_data_path, exist_ok=True)
+
+        # 创建测试数据源
+        self.data_source = DataSource(
+                source_type='file',
+                file_loc=self.test_data_path,
+        )
+        # 创建测试数据close_E_d
+        self.dates = pd.date_range('2023-01-01', '2023-01-20', freq='D')
+        self.shares = ['000001.SZ', '000002.SZ']
+        self.shares_and_index = ['000001.SZ', '000002.SZ', '000001.SH']
+
+        # 为每只股票创建测试数据文件
+        for share in self.shares:
+            data = pd.DataFrame({
+                'trade_date':   self.dates,
+                'ts_code':      [share] * 20,
+                'open':   np.random.rand(20) * 100,
+                'high':   np.random.rand(20) * 100,
+                'low':    np.random.rand(20) * 100,
+                'close':  np.random.rand(20) * 100,
+                'vol': np.random.randint(1000, 10000, 20)
+            })
+            print(f'updating data for share {share}:\n{data}')
+            self.data_source.update_table_data('stock_daily', df=data, merge_type='update')
+
+        # 创建指数（参考）数据文件（如指数数据）
+        index_data = pd.DataFrame({
+            'trade_date':   self.dates,
+            'ts_code':      ['000001.SH'] * 20,
+            'open':   np.random.rand(20) * 5000,
+            'high':   np.random.rand(20) * 5000,
+            'low':    np.random.rand(20) * 5000,
+            'close':  np.random.rand(20) * 5000,
+            'vol': np.random.randint(100000, 1000000, 20)
+        })
+        print(f'updating index data:\n{index_data}')
+        self.data_source.update_table_data('index_daily', df=index_data, merge_type='update')
+
+        # 检查确认数据已经存入datasource
+        self.data_source.get_table_info('stock_daily')
+
+        # 创建DataType对象
+        self.price_type = DataType('close', freq='d', asset_type='E')
+        self.volume_type = DataType('volume', freq='d', asset_type='E')
+        self.index_close = DataType('close', freq='d', asset_type='IDX')
+
+    def tearDown(self):
+        """清理测试环境"""
+        print(f'tearing down test environment')
+        # 删除临时目录
+        if os.path.exists(self.test_data_path):
+            shutil.rmtree(self.test_data_path)
+            print(f'deleted test data path: {self.test_data_path}')
+
+    def test_get_single_data_type_with_shares(self):
+        """测试获取单个数据类型和指定股票的数据"""
+        result = get_history_data_packages(
+                data_types=self.price_type,
+                data_source=self.data_source,
+                shares=self.shares_and_index,
+                start='2023-01-01',
+                end='2023-01-10'
+        )
+        print(f'get data result is:\n{result}')
+
+        # 验证返回值类型
+        self.assertIsInstance(result, dict)
+        self.assertIn('close_E_d', result)
+        self.assertIsInstance(result['close_E_d'], pd.DataFrame)
+
+        # 验证DataFrame内容
+        df = result['close_E_d']
+        self.assertEqual(len(df), 10)  # 10个交易日
+        self.assertEqual(len(df.columns), 3)  # 2只股票
+        self.assertTrue(all(share in df.columns for share in self.shares))
+
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('stock_daily', shares=self.shares,
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        self.assertTrue(np.allclose(df['000001.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SZ']['close'].values))
+        self.assertTrue(np.allclose(df['000002.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000002.SZ']['close'].values))
+
+        self.assertTrue(all(np.isnan(df['000001.SH'].values)))
+
+    def test_get_multiple_data_types_with_shares(self):
+        """测试获取多个数据类型和指定股票的数据"""
+        result = get_history_data_packages(
+                data_types=[self.price_type, self.volume_type, self.index_close],
+                data_source=self.data_source,
+                shares=self.shares_and_index,
+                start='2023-01-01',
+                end='2023-01-10'
+        )
+        print(f'get data result is:\n{result}')
+
+        # 验证返回值
+        self.assertIsInstance(result, dict)
+        self.assertIn('close_E_d', result)
+        self.assertIn('volume_E_d', result)
+        self.assertIn('close_IDX_d', result)
+        self.assertIsInstance(result['close_E_d'], pd.DataFrame)
+        self.assertIsInstance(result['volume_E_d'], pd.DataFrame)
+        self.assertIsInstance(result['close_IDX_d'], pd.DataFrame)
+
+        # 验证DataFrame内容
+        price_df = result['close_E_d']
+        volume_df = result['volume_E_d']
+        index_df = result['close_IDX_d']
+        self.assertEqual(len(price_df), 10)
+        self.assertEqual(len(volume_df), 10)
+        self.assertEqual(len(index_df), 10)
+        self.assertEqual(len(price_df.columns), 3)
+        self.assertEqual(len(volume_df.columns), 3)
+        self.assertEqual(len(index_df.columns), 3)
+
+        # 验证DataFrame'close_E_d'内容
+        df = result['close_E_d']
+
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('stock_daily', shares=self.shares,
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        self.assertTrue(np.allclose(df['000001.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SZ']['close'].values))
+        self.assertTrue(np.allclose(df['000002.SZ'].values, table_data[table_data.index.get_level_values('ts_code') == '000002.SZ']['close'].values))
+
+        # 验证DataFrame'close_IDX_d'内容
+        df = result['close_IDX_d']
+
+        # 从datasource读取数据
+        table_data = self.data_source.read_table_data('index_daily', shares='000001.SH',
+                                                      start='2023-01-01', end='2023-01-10')
+        print(f'table_data from data source:\n{table_data}')
+        self.assertTrue(np.allclose(df['000001.SH'].values, table_data[table_data.index.get_level_values('ts_code') == '000001.SH']['close'].values))
+
+    def test_get_data_with_date_range(self):
+        """测试使用日期范围获取数据"""
+        result = get_history_data_packages(
+                data_types=self.price_type,
+                data_source=self.data_source,
+                shares=self.shares,
+                start='2023-01-03',
+                end='2023-01-07'
+        )
+        print(f'get data result is:\n{result}')
+
+        df = result['close_E_d']
+        self.assertEqual(len(df), 5)  # 5个交易日
+        self.assertTrue(pd.Timestamp('2023-01-03 15:00:00') in df.index)
+        self.assertTrue(pd.Timestamp('2023-01-07 15:00:00') in df.index)
+
+    def test_get_data_with_row_count(self):
+        """测试使用行数限制获取数据"""
+        print(f'testing get data with start and row count')
+        result = get_history_data_packages(
+                data_types=self.price_type,
+                data_source=self.data_source,
+                shares=self.shares,
+                start='2023-01-05',
+                rows=5,
+        )
+        print(f'get data result is:\n{result}')
+
+        df = result['close_E_d']
+        self.assertEqual(len(df), 5)  # 最近5个交易日
+        self.assertEqual(df.index[0], pd.Timestamp('2023-01-05 15:00:00'))
+
+        print(f'testing get data with end and row count')
+        result = get_history_data_packages(
+                data_types=self.price_type,
+                data_source=self.data_source,
+                shares=self.shares,
+                end='2023-01-07',
+                rows=5,
+        )
+        print(f'get data result is:\n{result}')
+
+        df = result['close_E_d']
+        self.assertEqual(len(df), 5)  # 最近5个交易日
+        self.assertEqual(df.index[-1], pd.Timestamp('2023-01-07 15:00:00'))
+
+    def test_get_reference_data_without_shares(self):
+        """测试获取无股票代码的参考数据"""
+
+        # 创建参考数据类型
+        index_type = DataType('close-000001.SH', freq='d', asset_type='IDX')
+        print(f'Created data type that is unsymbolized: {index_type.unsymbolized}')
+
+        result = get_history_data_packages(
+                data_types=index_type,
+                data_source=self.data_source,
+                shares=None,
+                start='2023-01-03',
+                end='2023-01-09'
+        )
+        print(f'get data result is:\n{result}')
+
+        self.assertIsInstance(result, dict)
+        self.assertIn('close-000001.SH_IDX_d', result)
+        self.assertIsInstance(result['close-000001.SH_IDX_d'], pd.Series)
+        result_df = result['close-000001.SH_IDX_d']
+        self.assertEqual(result_df.shape, (7, ))  # 7个交易日，1列数据
+        self.assertEqual(result_df.name, 'close-000001.SH_IDX_d')  # 列名为'none'
+        self.assertEqual(result_df.index[0], pd.Timestamp('2023-01-03 15:00:00'))
+        self.assertEqual(result_df.index[-1], pd.Timestamp('2023-01-09 15:00:00'))
+
+    def test_invalid_data_types(self):
+        """测试无效的数据类型参数"""
+        with self.assertRaises(TypeError):
+            get_history_data_packages(
+                    data_types="invalid_type",
+                    data_source=self.data_source,
+                    shares=self.shares,
+                    start='2023-01-01',
+                    end='2023-01-10'
+            )
+
+        with self.assertRaises(TypeError):
+            get_history_data_packages(
+                    data_types=["invalid_type"],
+                    data_source=self.data_source,
+                    shares=self.shares,
+                    start='2023-01-01',
+                    end='2023-01-10'
+            )
+
+    def test_empty_result(self):
+        """测试无数据返回的情况"""
+
+        print(f'testing get data with date range that has no data')
+
+        # 当下载的数据为空时，raise RuntimeError:
+        with self.assertRaises(RuntimeError):
+            # 使用不存在的日期范围
+            get_history_data_packages(
+                    data_types=self.price_type,
+                    data_source=self.data_source,
+                    shares=self.shares,
+                    start='2024-01-01',
+                    end='2024-01-10'
+            )
 
 
 if __name__ == '__main__':

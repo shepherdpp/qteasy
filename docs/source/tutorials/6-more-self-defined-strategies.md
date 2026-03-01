@@ -201,7 +201,7 @@ alpha = AlphaFac(pars=(),
                  name='AlphaSel',
                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
                  data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                 strategy_run_freq='m',
+                 run_freq='m',
                  data_freq='d',
                  window_length=100,
                  max_sel_count=30,  # 设置选股数量，最多选出30个股票
@@ -357,7 +357,7 @@ alpha = AlphaPT(pars=(),
                  name='AlphaSel',
                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
                  data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
-                 strategy_run_freq='m',
+                 run_freq='m',
                  data_freq='d',
                  window_length=100)
 op = qt.Operator(alpha, signal_type='PT')
@@ -368,7 +368,6 @@ res = op.run(mode=1,
              PT_sell_threshold=0.00,
              trade_batch_size=100,
              sell_batch_size=1,
-             maximize_cash_usage=True,
              trade_log=True
             )
 ```

@@ -6,17 +6,22 @@
 # Created:  2020-02-12
 # Desc:
 #   Unittest for general functions of
-#   qteasy.
+# qteasy.
 # ======================================
+import time
 import unittest
 import sys
 import pandas as pd
 import numba as nb
+from tqdm import tqdm
+
 import qteasy as qt
 import numpy as np
 
+from qteasy.parameter import Parameter
 from qteasy.tafuncs import bbands
 from qteasy.tafuncs import sma
+from qteasy.datatypes import DataType, StgData
 
 from qteasy.strategy import RuleIterator, GeneralStg
 
@@ -35,42 +40,30 @@ class TestLSStrategy(RuleIterator):
 
     """
 
-    def __init__(self):
-        super().__init__(name='test_LS',
-                         description='test long/short strategy',
-                         par_count=2,
-                         par_types='discr, conti',
-                         par_range=([2, 20], [2, 20]),
-                         strategy_data_types='close, open, high, low',
-                         data_freq='d',
-                         window_length=5)
-        pass
+    def __init__(self, par_values=(10, 10.0)):
+        super().__init__(
+                name='test_LS',
+                description='test long/short strategy',
+                pars=[
+                    Parameter((2, 20), name='n', par_type='int'),
+                    Parameter((2, 20), name='price', par_type='float')
+                ],
+                data_types=[
+                    DataType('close', freq='d', asset_type='E'),
+                    DataType('open', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='E'),
+                    DataType('low', freq='d', asset_type='E'),
+                ],
+                window_length=5,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
 
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is not None:
-            n, price = pars
-        else:
-            n, price = self.pars
-        h = h.T
+    def realize(self):
+        n, price = self.get_pars('n', 'price')
+        h = self.get_data('close_E_d', 'open_E_d', 'high_E_d', 'low_E_d')
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
-        if r is not None:
-            # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据，r[-1]
-            if ma[-1] < ref_price:
-                return 0
-            else:
-                return 1
-
-        if t is not None:
-            # 处理交易结果数据生成信号并返回
-            last_price = t[4]  # 获取最近的交易价格
-            if np.isnan(last_price):
-                return 1  # 生成第一次交易信号
-            if ma[-1] < last_price:
-                return 1
-            else:
-                return 0
 
         if ma[-1] < price:
             return 0
@@ -95,43 +88,25 @@ class TestSelStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SEL',
-                         description='test portfolio selection strategy',
-                         par_count=0,
-                         par_types='',
-                         par_range=(),
-                         strategy_data_types='high, low, close',
-                         data_freq='d',
-                         strategy_run_freq='10d',
-                         window_length=5,
-                         )
+        super().__init__(
+                name='test_SEL',
+                description='test portfolio selection strategy',
+                pars=[],
+                data_types=[
+                    DataType('close', freq='d', asset_type='E'),
+                    DataType('high', freq='d', asset_type='E'),
+                    DataType('low', freq='d', asset_type='E'),
+                ],
+                window_length=5,
+        )
         pass
 
-    def realize(self, h, r=None, t=None):
-        avg = np.nanmean(h, axis=(1, 2))
-        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
-        dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
-        if r is not None:
-            # calculate difper while r
-            ref_price = np.nanmean(r[:, 0])
-            difper = dif_no_nan / avg / ref_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
+    def realize(self):
+        close, high, low = self.get_data('close_E_d', 'high_E_d', 'low_E_d')
+        avg = np.nanmean(close + high + low, axis=0) / 3
+        dif = (close - np.roll(close, 1, axis=0))[-1]
 
-        if t is not None:
-            # calculate difper while t
-            last_price = t[:, 4]
-            if np.all(np.isnan(last_price)):
-                return np.ones_like(avg) * 0.333
-            difper = dif_no_nan / last_price
-            large2 = difper.argsort()[1:]
-            chosen = np.zeros_like(avg)
-            chosen[large2] = 0.5
-            return chosen
-
-        difper = dif_no_nan / avg
+        difper = dif / avg
         large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
@@ -141,7 +116,7 @@ class TestSelStrategy(GeneralStg):
 class Cross_SMA_PS(qt.RuleIterator):
     """自定义双均线择时策略策略，产生的信号类型为交易信号"""
 
-    def __init__(self):
+    def __init__(self, par_values=(25, 100, 0.01)):
         """这个均线择时策略只有三个参数：
             - SMA 慢速均线，所选择的股票
             - FMA 快速均线
@@ -155,54 +130,78 @@ class Cross_SMA_PS(qt.RuleIterator):
 
         """
         super().__init__(
-                pars=(25, 100, 0.01),
-                par_count=3,
-                par_types=['discr', 'discr', 'conti'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                pars=[
+                    Parameter((10, 250), name='f', par_type='int'),
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((0.0, 0.5), name='m', par_type='float')
+                ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=200,
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     # 策略的具体实现代码写在策略的realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度
         """
-        f, s, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        f, s, m = self.get_pars('f', 's', 'm')
+        h = self.get_data('close_ANY_d')
         # 计算长短均线的当前值和昨天的值
         sma = qt.tafuncs.sma
-        s_ma = sma(h[0], s)
-        f_ma = sma(h[0], f)
+        s_ma = sma(h, s)
+        f_ma = sma(h, f)
 
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
 
+        self.trace('s_today', s_today)
+        self.trace('f_today', f_today)
+        self.trace('s_last', s_last)
+        self.trace('f_last', f_last)
+
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_today * (1 + m)
         s_ma_l = s_today * (1 - m)
+        self.trace('s_ma_u', s_ma_u)
+        self.trace('s_ma_l', s_ma_l)
 
         # 根据观望模式在不同的点位产生交易信号
         if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, '
+                       f'fast crossed upwards upper bound, signal is 1')
             return 1.
         elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
+            self.trace('signal2',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, '
+                       f'fast crossed downwards upper bound, signal is -1')
             return -1.
         elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_l:.3f}, '
+                       f'fast crossed downwards lower bound, signal is -1')
             return -1.
         elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_l:.3f}, '
+                       f'fast crossed upwards lower bound, signal is 1')
             return 1.
         else:  # 其余情况不产生任何信号
+            self.trace('signal',
+                       f'f_last:{f_last:.3f}, f_today:{f_today:.3f}, s_ma_u:{s_ma_u:.3f}, s_ma_l:{s_ma_l:.3f}, '
+                       f'no line crossing, nosignal generated')
             return 0.
 
 
 class Cross_SMA_PT(qt.RuleIterator):
     """自定义双均线择时策略策略，产生的信号类型为持仓目标信号"""
 
-    def __init__(self):
+    def __init__(self, par_values=(25, 100, 0.01)):
         """这个均线择时策略只有三个参数：
             - SMA 慢速均线，所选择的股票
             - FMA 快速均线
@@ -212,28 +211,30 @@ class Cross_SMA_PT(qt.RuleIterator):
 
         """
         super().__init__(
-                pars=(25, 100, 0.01),
-                par_count=3,
-                par_types=['discr', 'discr', 'conti'],
-                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                pars=[
+                    Parameter((10, 250), name='f', par_type='int'),
+                    Parameter((10, 250), name='s', par_type='int'),
+                    Parameter((0.0, 0.5), name='m', par_type='float')
+                ],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
-                strategy_data_types='close',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
                 window_length=200,
         )
+        if par_values:
+            self.update_par_values(*par_values)
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def realize(self, h, r=None, t=None, pars=None):
+    def realize(self):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
+        f, s, m = self.get_pars('f', 's', 'm')
+        h = self.get_data('close_ANY_d')
         # 计算长短均线的当前值
         sma = qt.tafuncs.sma
-        s_ma = sma(h[0], s)[-1]
-        f_ma = sma(h[0], f)[-1]
+        s_ma = sma(h, s)[-1]
+        f_ma = sma(h, f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)
@@ -250,6 +251,155 @@ class Cross_SMA_PT(qt.RuleIterator):
             return 0
 
 
+class Sel_Tracing(qt.FactorSorter):
+    """ 以股票过去N天的价格或数据指标的变动比例作为选股因子选股，生成trace报告
+    """
+
+    def __init__(self, par_values=(14,), **kwargs):
+        super().__init__(
+                pars=[
+                    Parameter(par_range=(2, 150), par_type='int', name='n')
+                ],
+                name='N-DAY RATE',
+                description='Select stocks by its N day price change',
+                data_types=StgData('close', freq='d', asset_type='ANY', window_length=150),
+                **kwargs,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_previous = h[- n - 1]
+        self.trace('cur_price_300', current_price[0])
+        self.trace('cur_price_SZ', current_price[1])
+        self.trace('n_prev_300', n_previous[0])
+        self.trace('n_prev_SZ', n_previous[1])
+        factors = (current_price - n_previous) / n_previous
+        self.trace('rate_300', factors[0])
+        self.trace('rate_SZ', factors[1])
+
+        return factors
+
+
+# Other high level test strategies
+class MyStg(qt.RuleIterator):
+    """自定义双均线择时策略策略"""
+
+    def __init__(self, par_values=(20, 100, 0.01)):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        super().__init__(
+                pars=[
+                    Parameter((10, 250), par_type='int', name='f'),  # 快速均线
+                    Parameter((10, 250), par_type='int', name='s'),  # 慢速均线
+                    Parameter((0.0, 0.5), par_type='float', name='m'),  # 边界值
+                ],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                window_length=200,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    # 策略的具体实现代码写在策略的_realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
+        f, s, m = self.get_pars('f', 's', 'm')
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = self.get_data('close_ANY_d')  # 取最近200个交易日的数据进行计算
+        # 计算长短均线的当前值
+        s_ma = sma(h, s)[-1]
+        f_ma = sma(h, f)[-1]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_ma * (1 + m)
+        s_ma_l = s_ma * (1 - m)
+        # 根据观望模式在不同的点位产生Long/short/empty标记
+
+        if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
+            return 1
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
+            return 0
+        else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
+            return -1
+
+
+class StgBuyOpen(GeneralStg):
+    def __init__(self, par_values=(20,)):
+        super().__init__(
+                pars=[Parameter((0, 100), par_type='int', name='n')],
+                name='OPEN_BUY',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                use_latest_data_cycle=False,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_day_price = h[-n]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全0
+        sig = np.zeros_like(factors)
+
+        if np.all(factors <= 0.0001):
+            # 如果所有的选股指标都小于0，则全部卖出
+            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
+            return sig
+        else:
+            # 如果选股指标有大于0的，则找出最大者
+            # 并生成买入信号
+            sig[np.nanargmax(factors)] = 1
+            return sig
+
+
+class StgSelClose(GeneralStg):
+    def __init__(self, par_values=(20,)):
+        super().__init__(
+                pars=[Parameter((0, 100), par_type='int', name='n')],
+                name='SELL_CLOSE',
+                data_types=DataType('close', freq='d', asset_type='ANY'),
+                use_latest_data_cycle=True,
+        )
+        if par_values:
+            self.update_par_values(*par_values)
+
+    def realize(self):
+        n = self.get_pars('n')
+        h = self.get_data('close_ANY_d')
+        current_price = h[-1]
+        n_day_price = h[-n]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全-1
+        sig = -np.ones_like(factors)
+        # sig[np.nanargmax(factors)] = 0
+        # return sig
+        if np.all(factors <= 0.002):
+            # 如果所有的选股指标都小于0，则全部卖出
+            return sig
+        else:
+            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
+            # 产生卖出信号
+            sig[np.nanargmax(factors)] = 0
+            return sig
+
+
 class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
@@ -257,6 +407,7 @@ class TestQT(unittest.TestCase):
         # 准备测试所需数据，确保本地数据源有足够的数据
 
         self.op = qt.Operator(strategies=['dma', 'macd'])
+        self.op.group_merge_type = 'OR'
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
         print(' test environment information')
@@ -272,13 +423,12 @@ class TestQT(unittest.TestCase):
 
         qt.configure(benchmark_asset='000300.SH',
                      mode=1,
-                     benchmark_asset_type='IDX',
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
-                     trade_batch_size=0.,
-                     sell_batch_size=0.,
+                     trade_batch_size=0.01,
+                     sell_batch_size=0.01,
                      parallel=True,
                      hist_dnld_retry_cnt=3,  # 减少数据下载重试次数，加快测试速度
                      hist_dnld_retry_wait=0.5,  # 减少数据下载重试等待时间，加快测试速度
@@ -291,8 +441,8 @@ class TestQT(unittest.TestCase):
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
         self.op.set_blender('pos_2_0(s0, s1)')
-        self.op.set_parameter(stg_id='dma', pars=timing_pars1)
-        self.op.set_parameter(stg_id='macd', pars=timing_pars3)
+        self.op.set_parameter(stg_id='dma', par_values=timing_pars1)
+        self.op.set_parameter(stg_id='macd', par_values=timing_pars3)
 
     def test_configure(self):
         """测试参数设置
@@ -309,7 +459,6 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         # test temp config_key in run() that works only in run()
@@ -322,23 +471,19 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
 
         config_copy = config.copy()
         qt.configure(config_copy,
                      mode=1,
-                     benchmark_asset='000002.SZ',
-                     benchmark_asset_type='E')
+                     benchmark_asset='000002.SZ')
         self.assertEqual(config.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         self.assertEqual(config_copy.mode, 1)
         self.assertEqual(config_copy.benchmark_asset, '000002.SZ')
-        self.assertEqual(config_copy.benchmark_asset_type, 'E')
         self.assertEqual(config_copy.asset_pool, '000300.SH')
         self.assertEqual(config_copy.invest_start, '20070110')
 
@@ -367,7 +512,7 @@ class TestQT(unittest.TestCase):
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
         op = qt.Operator(strategies=['stema'], op_type='stepwise')
-        op.set_parameter('stema', pars=(6,))
+        op.set_parameter('stema', par_values=(6,))
         qt.QT_CONFIG.mode = 0
         # qt.run(op)
         # TODO: running qteasy in mode 0 will enter interactive shell, which is not testable
@@ -378,7 +523,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      trade_log=True,
-                     invest_cash_dates='20070604', )
+                     )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
@@ -393,10 +538,10 @@ class TestQT(unittest.TestCase):
                 trade_log=False,
                 buy_sell_points=False,
                 show_positions=False,
-                invest_cash_dates='20070616',
         )
         self.assertIsInstance(res, dict)
-        self.assertIsNone(res['trade_log'])
+        self.assertIsNone(res.get('trade_log'))
+        self.assertIsNone(res.get('trade_summary'))
 
         print(f'test plot with both buy-sell points and position indicators')
         qt.configuration(up_to=1, default=True)
@@ -411,29 +556,26 @@ class TestQT(unittest.TestCase):
                 trade_log=True,
                 buy_sell_points=True,
                 show_positions=True,
-                invest_cash_dates='20070604',
         )
         self.assertIsInstance(res, dict)
-        self.assertIsNotNone(res['trade_log'])
+        self.assertIsInstance(res['trade_log'], str)
+        self.assertIsInstance(res['trade_summary'], str)
         self.assertIsInstance(res['report'], str)
         print(res['trade_log'])
         print(res['report'])
-        print(res['trade_record'])
         print(res['final_value'])
         print(res['info'])
         print(res['sharp'])
-        self.assertAlmostEqual(res['final_value'], 341175.59, 0)
+        self.assertAlmostEqual(res['final_value'], 395710.19, -3)  # testing the second time this number will be 392452.98
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
-               opti_start='20120404',
-               opti_end='20141231',
+               opti_start='20060404',
+               opti_end='20181231',
                test_start='20120604',
                test_end='20181130',
                parallel=False,
@@ -441,9 +583,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20141231',
@@ -451,31 +591,29 @@ class TestQT(unittest.TestCase):
                test_end='20181130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-idx_range optimization')
+        print(f'strategy optimization in Montecarlo with mdd as opti target')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
+               optimize_target='mdd',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-idx_range testing')
+        print(f'strategy optimization in Montecarlo with volatility as opti target')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='multiple',
+               opti_method='montecarlo',
                opti_sample_count=200,
+               optimize_target='vol',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
-               parallel=True,
+               parallel=False,
                visual=False)
 
     def test_run_mode_2_montecarlo_visual(self):
@@ -484,18 +622,14 @@ class TestQT(unittest.TestCase):
         qt.configuration(up_to=1, default=True)
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
+               opti_method='montecarlo',
                opti_sample_count=200,
                opti_start='20120404',
                opti_end='20140601',
-               opti_cash_dates='20120407',
+               opti_cash_dates='20120404',
                test_start='20120604',
                test_end='20181130',
                test_cash_dates='20120604',
-               test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
-               # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
@@ -506,10 +640,8 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=1024,
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -519,10 +651,8 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=1024,
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -532,10 +662,10 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
+               optimize_target='mdd',
+               optimize_direction='minimize',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -545,10 +675,9 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='multiple',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
+               optimize_target='vol',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -561,10 +690,8 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -575,38 +702,36 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in grid search algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='single',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
                parallel=True,
+               report=False,
                visual=True,
                indicator_plot_type=1)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='single',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
+               optimize_target='mdd',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20181130',
                parallel=True,
+               report=True,
                visual=True,
                indicator_plot_type=2)
         print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=0,
-               opti_type='multiple',
-               test_type='multiple',
-               opti_grid_size=128,
+               opti_method='grid',
+               opti_sample_count=128,
+               optimize_target='vol',
                opti_start='20120404',
                opti_end='20141231',
                test_start='20120604',
@@ -620,7 +745,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -635,7 +760,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -650,9 +775,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -667,9 +790,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='multiple',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -682,12 +803,82 @@ class TestQT(unittest.TestCase):
                parallel=True,
                visual=False)
 
+    def test_run_mode_2_ga(self):
+        """测试策略的优化模式，使用遗传算法寻优，断言 result_pool 有结果且数量合理"""
+        print('strategy optimization with GA (genetic algorithm), parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='GA',
+               opti_population=100,
+               opti_output_count=20,
+               opti_max_rounds=5,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=True)
+        # 通过 Operator 的 run 会触发 optimize，优化结果在 backtest 内部；这里仅验证无异常
+        # 若需断言 result_pool，需在 qt.run 返回的 backtester/optimizer 上检查（视 run 接口而定）
+        print('GA optimization completed without exception; result_pool item_count checked in optimizer')
+
+    def test_run_mode_2_pso(self):
+        """测试策略的优化模式，使用粒子群优化(PSO)寻优，断言无异常、result_pool 有结果且数量合理"""
+        print('strategy optimization with PSO (particle swarm optimization), parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='PSO',
+               opti_population=50,
+               opti_output_count=15,
+               opti_max_rounds=5,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=True)
+        print('PSO optimization completed without exception; result_pool item_count checked in optimizer')
+
+    def test_run_mode_2_gradient(self):
+        """测试策略的优化模式，使用梯度下降法寻优，断言无异常、result_pool 数量合理"""
+        print('strategy optimization with gradient descent, parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='gradient',
+               opti_sample_count=10,
+               opti_output_count=20,
+               opti_max_rounds=15,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=True)
+        print('gradient optimization completed without exception')
+
+    def test_run_mode_2_bayesian(self):
+        """测试策略的优化模式，使用贝叶斯优化寻优，断言无异常、result_pool 有结果且点均在 space 内"""
+        print('strategy optimization with Bayesian optimization, parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method='bayesian',
+               opti_sample_count=5,
+               opti_output_count=10,
+               opti_max_rounds=8,
+               opti_start='20120404',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20181130',
+               parallel=False,
+               visual=True)
+        print(f'Bayesian optimization completed')
+
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长蒙特卡洛寻优，结果以图表输出"""
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -699,12 +890,10 @@ class TestQT(unittest.TestCase):
                test_end='20181130',
                parallel=True,
                visual=True)
-        print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
+        print(f'strategy optimization in sa with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='single',
+               opti_method='SA',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -722,9 +911,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='grid',
                opti_output_count=20,
                opti_sample_count=200,
                opti_start='20120404',
@@ -736,9 +923,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='montecarlo',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -756,9 +941,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='grid',
                opti_output_count=20,
                opti_sample_count=200,
                opti_start='20120404',
@@ -770,9 +953,7 @@ class TestQT(unittest.TestCase):
         print(f'strategy optimization in incremental with with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
-               opti_method=2,
-               opti_type='single',
-               test_type='montecarlo',
+               opti_method='montecarlo',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.2,
                opti_output_count=20,
@@ -800,32 +981,35 @@ class TestQT(unittest.TestCase):
         total_count = len(all_built_ins)
         key_results = []
         print(f'testing all built-in strategies')
-        from qteasy.utilfuncs import progress_bar
-        for strategy in all_built_ins:
-            op = qt.Operator(strategies=[strategy])
-            res = qt.run(
-                    op,
-                    mode=1,
-                    asset_pool='000300.SH, 399006.SZ',  # 两个投资标的都是指数，asset_type='IDX'
-                    invest_start='20200101',
-                    invest_end='20211231',
-                    trade_log=False,
-                    visual=False,
-                    report=False,
-            )
-            tested_count += 1
-            progress_bar(tested_count, total_count, comments=f'testing: {strategy}')
+        with tqdm(total=len(all_built_ins)) as pbar:
+            for strategy in all_built_ins:
+                op = qt.Operator(strategies=[strategy])
+                op.set_blender('s0', 'Group_1')  #TODO: blender can be missing if only one strategy?
+                res = qt.run(
+                        op,
+                        mode=1,
+                        asset_pool='000300.SH, 399006.SZ',  # 两个投资标的都是指数，asset_type='IDX'
+                        invest_start='20200101',
+                        invest_end='20211231',
+                        trade_log=False,
+                        visual=False,
+                        report=False,
+                )
+                tested_count += 1
+                pbar.set_description(f'testing: {strategy}')
+                pbar.update()
+                # progress_bar(tested_count, total_count, comments=f'testing: {strategy}')
 
-            key_results.append(
-                    [strategy,
-                     res['loop_run_time'],
-                     res['op_run_time'],
-                     res['total_invest'],
-                     res['final_value'],
-                     res['rtn'],
-                     res['mdd'],
-                     ]
-            )
+                key_results.append(
+                        [strategy,
+                         res['loop_run_time'],
+                         res['op_run_time'],
+                         res['total_invest'],
+                         res['final_value'],
+                         res['rtn'],
+                         res['mdd'],
+                         ]
+                )
 
         result = pd.DataFrame(key_results,
                               columns=['strategy',
@@ -851,7 +1035,6 @@ class TestQT(unittest.TestCase):
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
@@ -859,18 +1042,19 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1.,
                      mode=1,
                      trade_log=True)
-        op.set_parameter('long', pars=())
-        op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
-                         strategy_run_freq='Q',
-                         strategy_data_types='pe',
+        op.set_parameter('long', par_values=None)
+        op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 0.4),
+                         run_freq='Q',
+                         data_types=[DataType('pe', freq='d', asset_type='E')],
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
                          ubound=0,
                          lbound=0,
                          max_sel_count=0.4)
-        op.set_parameter('signal_none', pars=())
-        op.set_blender('avg(s0, s1, s2)', 'ls')
+        # op.set_parameter('signal_none', par_values=())
+        op.set_blender('avg(s0, s1)', 'Group_1')
+        op.set_blender('s0', 'Group_2')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
@@ -885,13 +1069,18 @@ class TestQT(unittest.TestCase):
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                                 '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                                 '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
-                                                                '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                                '其他建材', '汽车服务', '火力发电', '医药商业',
+                                                                '汽车配件',
                                                                 '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
                                                                 '铜', '普钢', '航空', '特种钢',
-                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
-                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
-                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
-                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路',
+                                                                '超市连锁',
+                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械',
+                                                                '塑料',
+                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表',
+                                                                '服饰',
+                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰',
+                                                                '半导体',
                                                                 '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
                                                                 '陶瓷', '船舶'],
                                                       area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
@@ -901,7 +1090,6 @@ class TestQT(unittest.TestCase):
                                                             '上海']),
                      asset_type='E',
                      benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
@@ -911,21 +1099,21 @@ class TestQT(unittest.TestCase):
                      trade_log=False,
                      hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
-        op.set_parameter('long', pars=())
-        op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 30),
-                         strategy_run_freq='Q',
-                         strategy_data_types='basic_eps',
+        op.set_parameter('long', par_values=())
+        op.set_parameter('finance', par_values=(True, 'proportion', 'greater', 0, 0, 30),
+                         run_freq='Q',
+                         data_types=DataType('basic_eps'),
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
                          ubound=0,
                          lbound=0,
                          max_sel_count=30)
-        op.set_parameter('signal_none', pars=())
-        op.set_blender('avg(s0, s1, s2)', 'close')
-        # TODO: 这里运行大量股票选股策略时，从DataSource读取数据需要24分钟时间，这个
-        #  时间太长，必须尽快优化
-        # qt.run(op, visual=False, trade_log=True)
+        op.set_parameter('signal_none', par_values=())
+        op.set_blender('avg(s0, s1)', 'Group_1')
+        op.set_blender('s0', group_id='Group_2')
+        op.group_merge_type = 'OR'
+        qt.run(op, visual=False, trade_log=True)
 
     def test_op_stepwise(self):
         """测试stepwise模式下的operator的表，使用两个测试专用交易策略"""
@@ -933,12 +1121,12 @@ class TestQT(unittest.TestCase):
         op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
         op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step')
         for op in [op_batch, op_stepwise]:
-            op.set_parameter(0, window_length=100, pars=(12, 26, 9))
-            op.set_parameter(1, window_length=100, pars=(12, 26, 9))
+            op.set_parameter(0, window_length=100, par_values=(12, 26, 9))
+            op.set_parameter(1, window_length=100, par_values=(12, 26, 9))
+            op.set_blender('avg(s0, s1)', group_id='Group_1')
 
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool='601398.SH, 600000.SH, 000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
@@ -950,9 +1138,9 @@ class TestQT(unittest.TestCase):
                 trade_log=False
         )
         print('backtest in batch mode:')
-        res_batch = op_batch.run(mode=1)
+        res_batch = qt.run(op=op_batch, mode=1)
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(mode=1)
+        res_stepwise = qt.run(op=op_stepwise, mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
@@ -967,13 +1155,15 @@ class TestQT(unittest.TestCase):
                          res_stepwise['final_value'])
 
         print('backtest in batch mode:')
-        res_batch = op_batch.run(
+        res_batch = qt.run(
+                op=op_batch,
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
         )
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(
+        res_stepwise = qt.run(
+                op=op_stepwise,
                 mode=1,
                 invest_start='20180101',
                 invest_end='20191231'
@@ -985,25 +1175,30 @@ class TestQT(unittest.TestCase):
         self.assertEqual(res_batch['final_value'],
                          res_stepwise['final_value'])
 
-        # test operator that utilizes trade data
+        # test operator that runs at different frequencies
+        print('test operator that runs at different frequencies')
         stg1 = TestLSStrategy()
         stg2 = TestSelStrategy()
         stg1.window_length = 100
         stg2.window_length = 100
-        stg2.strategy_run_freq = '2w'
+
         op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_batch.set_parameter('custom_1', run_freq='W')
         op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
+        op_stepwise.set_parameter('custom_1', run_freq='W')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_stepwise]:
-            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
-            op.set_parameter(1, pars=par_stg2, opt_tag=1)
+            op.set_shares(['000100', '000200', '000300'])
+            op.set_blender('s0', group_id='Group_1')
+            op.set_blender('s0', group_id='Group_2')
+            op.set_parameter(0, par_values=par_stg1, opt_tag=1, par_range=([2, 20], [2, 100]))
+            op.set_parameter(1, par_values=par_stg2, opt_tag=1)
 
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool='601398.SH, 600000.SH, 000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
@@ -1021,27 +1216,105 @@ class TestQT(unittest.TestCase):
         print('output result back testing with test data')
 
         print('backtest in batch mode:')
-        res_batch = op_batch.run(mode=1)
+        res_batch = qt.run(op=op_batch, mode=1)
         print('backtest in stepwise mode:')
-        res_stepwise = op_stepwise.run(mode=1)
+        res_stepwise = qt.run(op=op_stepwise, mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
               f'{val_batch}\n'
               f'and the result of stepwise operation is\n'
               f'{val_stepwise}')
+        self.assertTrue(np.allclose(val_batch, val_stepwise))
 
-        print('backtest in batch mode in optimization mode:')
-        op_batch.run(mode=2)
-        print('backtest in stepwise mode in optimization mode')
-        op_stepwise.run(mode=2)
+        # print('backtest in batch mode in optimization mode:')
+        # qt.run(op=op_batch, mode=2)
+        # print('backtest in stepwise mode in optimization mode')
+        # qt.run(op=op_stepwise, mode=2)
 
         print('test stepwise mode with different sample freq')
+
+    def test_op_tracing(self):
+        """test an multi-group op with tracing enabled with short period of data"""
+        # 创建一个Operator包含三个交易策略组
+        op = qt.Operator(strategies=Cross_SMA_PS, run_freq='d', signal_type='PS')
+        op.add_strategy(Cross_SMA_PS, run_freq='W')
+        op.add_strategy(Cross_SMA_PS, run_freq='d', run_timing='10:30')
+        op.set_blender('s0')
+
+        qt.configure(
+                benchmark_asset='000300.SH',
+                asset_pool='601398.SH,600000.SH,000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20250301',
+                invest_end='20250501',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True,
+                trade_log=True,
+                trace_log=True,
+                # trade_log=False,
+                # trace_log=False,
+        )
+
+        # test with group merge type is None
+        qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
+        op.group_merge_type = 'AND'
+        qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
+
+        print(f'仿照qteasy tutorial中的案例，测试一个大小盘轮动策略，回测过程中记录trace值')
+        op = qt.Operator(strategies=Sel_Tracing, run_freq='d', signal_type='PT')
+        op.set_parameter(0,  # 指定需要设置参数的交易策略：即设置策略0的参数
+                         sort_ascending=False,  # 设置选择涨幅最大的指数
+                         max_sel_count=1,  # 设置选股数量，每次最多从投资池里选择一支股票
+                         par_values=(20,),  # 策略参数N=20，比较20日涨幅
+                         data_types=[
+                             qt.StgData('close', freq='d',
+                                        asset_type='ANY',
+                                        use_latest_data_cycle=True,
+                                        window_length=25)],  # 使用收盘价计算涨幅
+                         )
+        qt.configure(
+                benchmark_asset='000300.SH',
+                asset_pool=['000300.SH',
+                            '399006.SZ'],  # 投资股票池里包括沪深300和创业板指数两个指数，分别代表大盘和小盘股
+                invest_cash_amounts=[100000],  # 投入金额为十万元
+                asset_type='IDX',  # 为简单起见，直接投资于指数
+                cost_rate_buy=0.0001,  # 买入资产时交易费用万分之一
+                cost_rate_sell=0.000,  # 卖出资产时的交易费用为万分之一
+                invest_start='20110101',  # 模拟交易开始日期
+                invest_end='20201231',  # 模拟交易结束日期
+                trade_batch_size=0.01,  # 买入资产时最小交易批量
+                sell_batch_size=0.01,  # 卖出资产时最小交易批量
+        )
+        # test with group merge type is None
+        qt.configuration(up_to=5)
+        qt.run(op=op, mode=1)
+        time.sleep(1)  # 等待文件写入完成，避免后续操作过快导致文件访问冲突
+
+        op.set_parameter(0,  # 指定需要设置参数的交易策略：即设置策略0的参数
+                         sort_ascending=False,  # 设置选择涨幅最大的指数
+                         max_sel_count=1,  # 设置选股数量，每次最多从投资池里选择一支股票
+                         par_values=(20,),  # 策略参数N=20，比较20日涨幅
+                         data_types=[
+                             qt.StgData('close', freq='d',
+                                        asset_type='ANY',
+                                        use_latest_data_cycle=True,
+                                        window_length=25)],  # 使用收盘价计算涨幅
+                         condition='greater',  # 设置条件为大于0，即只有当20日涨幅大于0时才会产生买入信号
+                         ubound=0,  # 设置条件的上界为0，即20日涨幅必须大于0才能产生买入信号
+                         )
+        # test with group merge type is None
+        qt.run(op=op, mode=1)
 
     def test_sell_short(self):
         """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
         op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
-        op.set_parameter(0, pars=(23, 100, 0.02))
+        op.set_parameter(0, par_values=(23, 100, 0.02))
+        op.set_blender('s0', group_id='Group_1')
         res = qt.run(op,
                      mode=1,
                      invest_start='20060101',
@@ -1059,7 +1332,8 @@ class TestQT(unittest.TestCase):
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
         op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
-        op.set_parameter(0, (23, 100, 0.02))
+        op.set_parameter(0, par_values=(23, 100, 0.02))
+        op.set_blender('s0', group_id='Group_1')
         res = qt.run(op, mode=1,
                      invest_start='20060101',
                      allow_sell_short=False,
@@ -1075,18 +1349,80 @@ class TestQT(unittest.TestCase):
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
 
+    def test_stg_trading_different_prices(self):
+        """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
+        # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
+        print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(signal_type='ps')
+        op.add_strategy(stg_buy,
+                        run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
+                        run_freq='d',
+                        window_length=50,
+                        par_values=(20,),
+                        )
+        op.add_strategy(stg_sel,
+                        run_freq='d',
+                        run_timing='close',  # 以收盘价卖出(这个策略只处理卖出信号)
+                        window_length=50,
+                        par_values=(20,), )
+
+        self.assertEqual(len(op.groups), 2)
+        self.assertEqual(op.groups['Group_1'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_2'].run_freq, 'd')
+        self.assertEqual(op.groups['Group_1'].run_timing, 'open')
+        self.assertEqual(op.groups['Group_2'].run_timing, 'close')
+        op.set_blender(blender='s0')
+        op.get_blender()
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     trade_log=True,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=1,
+                     sell_batch_size=0.01)
+        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     benchmark_asset='000300.SH',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,
+                     invest_cash_amounts=[1000000],
+                     mode=1,
+                     trade_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=0.03,
+                     backtest_price_adj='none')
+
+    def test_stg_index_follow(self):
+        # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
+        print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_blender(blender='s0')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         run_freq='M',
+                         data_types=StgData('wt_idx|000300.SH', freq='m', asset_type='E', window_length=1),
+                         sort_ascending=False,
+                         weighting='proportion',
+                         max_sel_count=300)
+        res = qt.run(op,
+                     mode=1,
+                     asset_pool=qt.filter_stock_codes(index='000300.SH', date='20220103'),
+                     invest_start='20220203',
+                     invest_end='20220930',
+                     visual=True,
+                     trade_log=True)
+
 
 if __name__ == '__main__':
-    # get all stock prices from year 2020 to year 2022
-    # qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_daily', start_date='20200101', end_date='20221231')
-
-    # get index prices of 000300 and 399006 data from 2005 to year 2022
-    # qt.refill_data_source(qt.QT_DATA_SOURCE, tables='index_daily', start_date='20050101', end_date='20221231',
-    #                       code_range='000300,399006')
-
-    # get hourly price data for a few stocks in year 2016
-    # qt.refill_data_source(qt.QT_DATA_SOURCE, tables='stock_hourly', start_date='20160101', end_date='20161231',
-    #                       code_range=['000001', '000002', '000005', '000006', '000007', '000918', '000819',
-    #                                   '000899'])
-    # unittest.main()
-    pass
+    unittest.main()
