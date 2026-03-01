@@ -51,22 +51,42 @@
 
 ## 使用 `qteasy` 的 `Strategy` 策略类
 
-`qteasy`的交易策略就是基于上面的概念定义的。qteasy提供了策略基类Strategy，定义交易策略时只需要继承Strategy类，并在初始化时定义下面三个方面的内容：
+`qteasy`的交易策略就是基于上面的概念定义的。`qteasy`定义的策略类，就是数据和交易逻辑的载体。用户通过继承`Strategy`类，定义自己的策略类，在这个类中定义策略需要的数据以及策略的实现逻辑，就可以创建一个自定义交易策略了。
 
-- **策略的运行时机** —— 策略何时运行，以什么频率运行，例如，每分钟运行一次，每天运行一次，是开盘时运行，还是收盘时运行？在`qteasy`中，策略的运行时机是以策略的属性`Strategy.strategy_run_timing`来定义
-- **策略需要的数据** ——策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？在`qteasy`中，策略所需的数据量可以以`Strategy.strategy_data_types` 等属性完全自由定义，并指定数据类型、频率以及窗口长度
-- **策略的逻辑** ——通过重写`Strategy.realize()`方法，用户可以自由定义如何使用输入数据，产生交易决策。
+因此，在`qteasy`的设计中，一个交易策略包括下面四个核心要素：
+
+### 策略以及策略组的运行时机
+
+- **策略的运行时机** —— 策略何时运行，以什么频率运行，这个要素是由策略组确定的。在将一个策略添加到`Operator`中的时候，可以指定参数`run_freq` `run_timing`,这两个参数共同决定了策略的运行时机
+
+### 策略的可调参数和历史数据
+
+`qteasy`中的交易策略还有一个特别的设计：可调参数。可调参数是指在策略运行过程中会被不断调整的参数，例如均线周期、选股排名的股票数量等等，这些参数直接影响了策略的表现，因此我们希望能够调整这些参数来找到最优的参数组合，从而使得策略表现最佳。`qteasy`提供了一个非常方便的接口来定义可调参数，用户可以在策略属性中定义任意数量的可调参数，并且为每个可调参数指定名称、取值范围、数据类型等等，这些定义好的可调参数会被自动传入策略实现函数中，用户可以直接使用这些参数来实现交易逻辑。
+
+- **策略的可调参数** —— 策略中需要调整的参数，例如均线周期、选股排名的股票数量等等，这些参数直接影响了策略的表现，因此我们希望能够调整这些参数来找到最优的参数组合，从而使得策略表现最佳。`qteasy`提供了一个非常方便的接口`Parameters`来定义可调参数，用户可以在策略属性中定义任意数量的可调参数，并且为每个可调参数指定名称、取值范围、数据类型等等，这些定义好的可调参数会被自动传入策略实现函数中，用户可以直接使用这些参数来实现交易逻辑。
+
+### 策略需要的数据以及运行逻辑
+
+- **策略需要的数据** —— 策略需要的数据输入；例如，需要过去10天的日K线数据，还是过去一年的市盈率？策略所需的数据量可以由`Strategy.data_types` 属性完全自由定义，用户可以使用`qt.StgData()`对象定义任意类型的数据输入，数据的频率、数据的窗口长度都可以由策略属性完全自由定义，`qteasy`会根据这些定义自动打包数据送入策略的实现函数中
+- **策略的运行逻辑** —— 策略的实现逻辑通过重写`Strategy.realize()`方法，用户可以自由定义如何使用输入数据，产生交易信号。
+
+### 策略的输出信号
+
+`qteasy`允许用户定义不同类型的交易信号：`PT` `PS` `VS`等等，用户可以根据自己的需要选择不同类型的交易信号来实现不同类型的交易策略。关于交易信号的含义，简述如下，要查看不同类型的交易信号的详细介绍，参见[交易信号](../manage_strategies/3.%20trade%20signals.md)。
+  - **PT型信号** —— 代表仓位的百分比，输出为一个0到1之间的数值，保持持有多少比例的仓位，例如输出0.5代表持有50%的仓位，输出0代表不持有，输出1代表全仓持有；
+  - **PS型信号** —— 代表交易百分比，输出为一个-1到1之间的数值，代表买入/卖出多少比例的仓位，例如输出0.5代表买入50%的仓位，输出-0.5代表卖出50%的仓位，输出0代表不操作；
+  - **VS型信号** —— 代表交易的数量，输出的数字代表需要买入/卖出的股票数量，例如500表示买入500股，-300表示卖出300股
 
 除了上面跟策略有关的信息以外，其余所有的工作`qteasy`都已经做好了，所有的交易数据都会根据策略属性被自动打包成一个`ndarray`数组，可以很方便地提取并使用；同一个交易策略，在实盘运行时会自动抽取交易数据，根据定义好的策略生成交易信号，在回测时也会自动提取历史数据，自动生成历史数据切片，不会形成未来函数。同时，所有交易数据都会
 
 因此，在`qteasy`中的策略自定义非常简单：
 
-- **`__init__()`** 在此方法中定义策略的运行参数，包括运行的频率、视窗长度、使用的数据类型、可调参数数量类型等
-- **`realize()`** 在此方法中定义策略的运行逻辑：提取自动生成的交易数据，根据数据生成交易信号
+- **`__init__()`** 在此方法中定义策略的所有参数，包括策略的名称、描述、以及最重要的可调参数、数据类型等等，这些参数会被`qteasy`自动识别，在策略运行可以直接使用
+- **`realize()`** 在此方法中定义策略的运行逻辑：提取历史数据，根据数据生成交易信号
 
 ![在这里插入图片描述](../img/Strategy_Class_Illustration.png)
 
-除了上面所说的策略属性以外，自定义策略同样拥有与内置交易策略相同的基本属性，例如可调参数数量、类型等等，因为它们与内置交易策略相同，在这里就不赘述了。
+除了上面所说的策略属性以外，自定义策略同样拥有与内置交易策略相同的基本属性，例如可调参数等等，因为它们与内置交易策略相同，在这里就不赘述了。
 ## 三种不同的自定义策略基类
 
 `qteasy`提供了三种不同的策略类，便于用户针对不同的情况创建自定义策略。
@@ -78,6 +98,7 @@
 三种交易策略基类的属性、方法都完全相同，区别仅在于`realize()`方法的定义。
 
 下面，我们通过几个循序渐进的例子来了解如何创建自定义策略。
+
 ## 定义一个双均线择时交易策略
 
 我们的第一个例子是最简单的双均线择时交易策略，这是一个最经典的择时交易策略。
@@ -102,6 +123,7 @@
 有了上面的准备，那我们来看看策略代码如何定义。一个最基本的策略代码，第一步就是继承策略基类（这里是`RuleIterator`），创建一个自定义类：
 ```python
 from qteasy import RuleIterator
+from qteasy import Parameter, StgData
 
 class Cross_SMA(RuleIterator):
 
@@ -111,7 +133,7 @@ class Cross_SMA(RuleIterator):
         )
 
     # 策略的具体实现代码写在策略的realize()函数中
-    def realize(self, h, **kwargs):
+    def realize(self):
         """策略的具体实现代码：
         """
         pass
@@ -131,49 +153,27 @@ class Cross_SMA(RuleIterator):
 
 在这里，我们将快慢均线的周期定义为可调参数，在策略属性中进行以下定义
 
-```python
-    def __init__(self):
-        super().__init__(
-            name='CROSSLINE',  # 策略的名称
-            description='快慢双均线择时策略',  # 策略的描述
-            pars=(30, 60),  # 策略默认参数是快均线周期30， 慢均线周期60
-            par_count=2,  # 策略只有长短周期两个参数
-            par_types=['int', 'int'],  # 策略两个参数的数据类型均为整型变量
-            par_range=[(10, 100), (10, 200)],  # 两个策略参数的取值范围
-        )
-```
-### 定义策略运行时机
+策略的可调参数使用Parameter对象定义，利用这个对象我们可以为每个可调参数指定名称、取值范围、数据类型等等，这些定义好的可调参数会被自动传入策略实现函数中，用户可以直接使用这些参数来实现交易逻辑。
 
-接下来，我们开始定义策略的运行时机。运行时机由两个属性定义：
-策略的运行时机可以定义为`‘close’`（收盘时）或者`‘open’`（开盘时）。这里的开盘与收盘并不仅仅指每个交易日的开盘与收盘，而是指广义的区间结束和开始，如果策略被定义为每分钟运行一次，那么`close`指的是在这个每分钟时间区间的结束时运行策略，也就是每分钟的最后一秒运行策略。因此，`timing`和`freq`两个属性共同定义了策略的运行时机。
-
-如下面的属性定义了策略在每个交易日收盘时运行（实盘运行时策略会在收盘前一分钟运行以避免收盘后无法提交交易委托）
 ```python
-    def __init__(self):
-        super().__init__(
-            ...  # 其他属性略
-            strategy_run_timing = 'close'
-            run_freq = 'd'
-        )
+pars=[Parameter((10, 100), data_type='int', name='fast', value=30),
+      Parameter((10, 100), data_type='int', name='slow', value=60)],  # 策略默认参数是快均线周期30， 慢均线周期60
 ```
 
 ### 定义策略需要的数据
-策略需要的数据由三个属性确定，分别定义数据类型（ID），数据频率以及采样窗口长度。
+策略需要的数据`StgData`对象确定，`qteasy`中的每个数据类型对象都可以根据一个唯一ID，数据频率以及资产类型确定。同时还可以指定数据窗口的长度。
+
+
 
 定义好策略数据后，`qteasy`会自动将窗口内的数据打包送入策略`realize()`函数，如果在回测的过程中，所有历史数据会根据同样的规则分别打包成一系列的数据窗口，因此，不管是回测还是实盘运行，`realize()`函数接受到的历史数据格式完全相同，处理方式也完全相同，确保实盘和回测运行的一致性，也避免了回测中可能出现的未来函数：
 
 ![在这里插入图片描述](img/Data_window_explained.png)
 
-数据类型的定义如下，我们需要过去201天的每日收盘价，之所以需要201天的收盘价，是因为我们定义了可调参数的最大范围为200，为了计算周期为200的移动均线，需要201天的收盘价
+`StgData`数据类型的定义如下，我们需要过去201天的每日收盘价，之所以需要201天的收盘价，是因为我们定义了可调参数的最大范围为200，为了计算周期为200的移动均线，需要201天的收盘价
 ```python
-    def __init__(self):
-        super().__init__(
-            ...  # 其他属性略
-            strategy_data_types='close',  # 策略基于收盘价计算均线，因此数据类型为'close'
-            data_freq = 'd',  # 历史数据的频率为日
-            window_length=201,  # 历史数据窗口长度为201，每一次交易信号都是由它之前前201天的历史数据决定的
-        )
+data_types=[StgType('close', asset_type='ANY', freq='d', window_length=201)]  # 策略基于收盘价计算均线，因此数据类型为'close'，历史数据的频率为日，历史数据窗口长度为201，每一次交易信号都是由它之前前201天的历史数据决定的
 ```
+根据上面定义的数据类型，qteasy给该策略分配一个唯一的ID：`close_ANY_d`，使用这个ID就可以在策略实现函数中提取历史数据了，后面我们会介绍如何提取历史数据。
 
 至此，自定义交易策略的所有重要属性就全部定义好了。接下来我们来定义策略的实现。
 
@@ -186,103 +186,101 @@ class Cross_SMA(RuleIterator):
 - 编写逻辑，产生输出
 
 #### 获取历史数据和可调参数值：
-`realize()`方法的输入参数是一个标准定义，前面已经提到过了，所有需要的数据都会自动打包传入，这些数据就是参数`h`。`h`代表`“history data”`
 
-`h`的形态是一个`Numpy` `ndarray`，在`RuleIterator`策略中，它是一个二维数组，有N行、M列，其中每一列包含一种历史数据，每一行包含一个周期的数据。
-在这个例子中，由于我们定义的数据类型为过去201天的收盘价，只有一种数据类型，因此h有201行，1列，每一行是一天的收盘价，数据是升序排列的，因此第一行为最早的数据，最后一行为最近的数据。我们要获取历史数据，直接从`ndarray`中切片即可。
+前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值以及具体的历史数据。
 
-前面已经提过，这个策略的可调参数就是均线的计算周期，因此，为了使用可调参数计算周期，我们需要取得可调参数的值，这些值保存在策略的pars属性中，通过`self.pars`即可获取。
+在realize()方法中获取可调参数和历史数据非常简单，分别使用`self.get_data()`和`self.get_pars()`即可获取。两个方法都可以一次获取多个数据或参数，获取的数据会被解包到一个`tuple`中，用户可以直接使用。
 
 ```python
-    def realize(self, h, **kwargs):
+def realize(self):
     """策略的具体实现代码
     """
-    close = h[:, 0]  # 通过切片获取最近201天的收盘价
-    f, s = self.par_values  # 读取快均线（f）和慢均线（s）的计算周期
+    close = self.get_data('close_ANY_d')  # 通过数据ID获取数据：最近201天的收盘价
+    f, s = self.get_pars('fast', 'slow')  # 读取快均线（fast）和慢均线（slow）的计算周期
 ```
 
 到这里，实现策略逻辑所需要的元素都备齐了，接下来我们可以开始实现策略逻辑。
 
-我们需要首先计算两组移动平均价，如果用户安装了`ta-lib`库，那么可以直接调用`ta-lib`的`SMA`函数计算移动平均价，如果没有安装，现在也没有太大关系，因为`qteasy`为用户提供了免`ta-lib`版本的`SMA`函数，（并不是所有的技术指标都有免`ta-lib`版本，详情参见参考文档）可以直接引用计算。
+我们需要首先计算两组移动平均价，如果用户安装了`ta-lib`库，那么可以直接调用`ta-lib`的`SMA`函数计算移动平均价，如果没有安装，现在也没有太大关系，因为`qteasy`为用户提供了免`ta-lib`版本的`SMA`函数，（并不是所有的技术指标都有免`ta-lib`版本，详情参见[参考文档](../api/api_reference.rst)）可以直接引用计算。
 
 ```python
-    def realize(self, h, **kwargs):
-        """策略的具体实现代码
-        """
-        ...
-        from qteasy.tafuncs import sma
-        # 使用qt.sma计算简单移动平均价
-        s_ma = sma(close, s)
-        f_ma = sma(close, f)
-		# 为了考察两条均线的交叉, 计算两根均线昨日和今日的值，以便判断
-        s_today, s_last = s_ma[-1], s_ma[-2]
-        f_today, f_last = f_ma[-1], f_ma[-2]
+def realize(self, h, **kwargs):
+    """策略的具体实现代码
+    """
+    ...
+    from qteasy.tafuncs import sma
+    # 使用qt.sma计算简单移动平均价
+    s_ma = sma(close, s)
+    f_ma = sma(close, f)
+    # 为了考察两条均线的交叉, 计算两根均线昨日和今日的值，以便判断
+    s_today, s_last = s_ma[-1], s_ma[-2]
+    f_today, f_last = f_ma[-1], f_ma[-2]
 ```
 计算出移动均线后，我们可以直接在`realize`方法中定义策略的输出，也就是交易决策。
 
 对于`RuleIterator`类策略，不管我们的策略同时作用于多少支股票，我们都只需要定义一套规则即可，是为“规则迭代”，因此，我们只需要输出一个数字，代表交易决策即可。这个数字会被`qteasy`自动转化为不同的交易委托单。转化的规则由`Operator`对象的工作模式确定，关于这一点在前面的教程中已经介绍过了，这里不再赘述。
 
-总之，如果我们计划让`Operator`工作在`“PS”`模式下，那么只需要在应当买入的当天，产生交易信号“1”，在应当卖出的当天，产生交易信号“-1”即可，如果不希望交易，则输出“0”：
+在本例子中，我们计划让交易策略输出的信号代表将多大比例的总资产投入到投资产品中，那么只需要在应当买入的当天，产生交易信号“1”，在应当卖出的当天，产生交易信号“-1”即可，如果不希望交易，则输出“0”：
 
 ```python
-    def realize(self, h, **kwargs):
-        """策略的具体实现代码
-        """
-        ...
-        if (f_last < s_last) and (f_today > s_today):  
-            return 1
-        # 当快均线自上而下穿过上边界，发出全部卖出信号
-        elif (f_last > s_last) and (f_today < s_today):  
-            return -1
-        else:  # 其余情况不产生任何信号
-            return 0
+def realize(self, h, **kwargs):
+    """策略的具体实现代码
+    """
+    ...
+    if (f_last < s_last) and (f_today > s_today):  
+        # 当快均线自下而上穿过上边界（即昨日快均线低于慢均线，而今天高于于慢均线），发出全仓买入信号
+        return 1
+    elif (f_last > s_last) and (f_today < s_today): 
+        # 当快均线自上而下穿过上边界（即昨日快均线高于慢均线，而今天低于于慢均线），发出全部卖出信号
+        return -1
+    else:  # 其余情况不产生任何信号
+        return 0
 ```
 
 至此，这个交易策略就定义完成了！`qteasy`会完成所有背后的复杂工作，用户仅需要集中精力解决策略的数据和逻辑定义即可。完整代码如下（为节约篇幅，删除了所有注释）：
 
 ```python
-from qteasy import RuleIterator
+from qteasy import RuleIterator, Parameter, StgData
+from qteasy.tafuncs import sma
 # 创建双均线交易策略类
-class Cross_SMA(RuleIterator):
+class Cross_SMA_PS(RuleIterator):
     def __init__(self):
         super().__init__(
             name='CROSSLINE',  # 策略的名称
             description='快慢双均线择时策略',  # 策略的描述
-            pars=(30, 60),  # 策略默认参数是快均线周期30， 慢均线周期60
-            par_count=2,  # 策略只有长短周期两个参数
-            par_types=['int', 'int'],  # 策略两个参数的数据类型均为整型变量
-            par_range=[(10, 100), (10, 200)],  # 两个策略参数的取值范围
-            strategy_run_timing = 'close'
-            run_freq = 'd'
-            strategy_data_types='close',  # 策略基于收盘价计算均线，因此数据类型为'close'
-            data_freq = 'd',  # 历史数据的频率为日
-            window_length=201,  # 历史数据窗口长度为201，每一次交易信号都是由它之前前201天的历史数据决定的
+            pars=[Parameter((10, 100), par_type='int', name='fast', value=30),
+                  Parameter((10, 100), par_type='int', name='slow', value=60)],
+            data_types=[StgData('close', freq='d', asset_type='ANY', window_length=201)],
         )
 
-    def realize(self, h, **kwargs):
-        from qteasy.tafuncs import sma
-        f, s= pars
-        close = h[:, 0]
+    def realize(self):
         
+        close = self.get_data('close_ANY_d')  # 通过数据ID获取数据：最近201天的收盘价
+        f, s = self.get_pars('fast', 'slow')  # 读取快均线（fast）和慢均线（slow）的计算周期
+        
+        # 使用qt.sma计算简单移动平均价
         s_ma = sma(close, s)
         f_ma = sma(close, f)
-        
+        # 为了考察两条均线的交叉, 计算两根均线昨日和今日的值，以便判断
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
         
         if (f_last < s_last) and (f_today > s_today):  
-            return 1  # 全仓买入信号
-        elif (f_last > s_last) and (f_today < s_today):  
-            return -1  # 全仓卖出信号
+            # 当快均线自下而上穿过上边界（即昨日快均线低于慢均线，而今天高于于慢均线），发出全仓买入信号
+            return 1
+        elif (f_last > s_last) and (f_today < s_today): 
+            # 当快均线自上而下穿过上边界（即昨日快均线高于慢均线，而今天低于于慢均线），发出全部卖出信号
+            return -1
         else:  # 其余情况不产生任何信号
             return 0
-
 ```
 
 接下来，我们就可以像使用任何内置交易策略一样使用这个自定义策略了。
 
+我们需要创建一个新的`Operator`对象，并在创建对象的时候，将刚才创建的`Cross_SMA`策略加入到`Operator`中，同时指定这个策略的信号类型为`PS`型信号，这是告诉`Operator`使用`PS`规则来解析交易策略生成的信号：
+
 ```python
-op = qt.Operator(strategy=[Cross_SMA()], signal_type='PS'))
+op = qt.Operator(strategies=[Cross_SMA_PS()], signal_type='PS')
 ```
 
 让我们看看这个策略的回测结果。
@@ -295,7 +293,7 @@ op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
 
 # 设置op的策略参数
 op.set_parameter(0, 
-                 pars= (20, 60)  # 设置快慢均线周期分别为20天、60天
+                 par_values= (20, 60)  # 设置快慢均线周期分别为20天、60天
                 )
 
 # 设置基本回测参数，开始运行模拟交易回测
@@ -303,18 +301,19 @@ res = qt.run(op,
              mode=1,  # 运行模式为回测模式
              asset_pool='000300.SH',  # 投资标的为000300.SH即沪深300指数
              invest_start='20110101',  # 回测开始日期
+             invest_end='20191231', # 回测结束日期
              visual=True  # 生成交易回测结果分析图
             )
 ```
 回测的结果如下：
 
-![在这里插入图片描述](../examples/img/output_3_2.png)
+![在这里插入图片描述](../tutorials/img/output_18_1.png)
 
 下面，我们可以尝试一下修改策略的可调参数，再重新跑一遍回测，回测区间与前一次相同：
 
 ```python
 op.set_parameter(0, 
-                 pars= (25, 166)  # 设置快慢均线周期分别为25天、166天
+                 par_values= (25, 166)  # 设置快慢均线周期分别为25天、166天
                 )
 
 # 设置基本回测参数，开始运行模拟交易回测，回测参数完全一样
@@ -327,9 +326,50 @@ res = qt.run(op,
 ```
 可以看到，改变参数后，策略的回测结果大为改观：要了解如何进行策略参数优化，请参考本教程的后续章节
 
-![在这里插入图片描述](../examples/img/output_5_1.png)
+```text
+====================================
+|                                  |
+|         BACKTEST REPORT          |
+|                                  |
+====================================
+qteasy running mode: 1 - History back testing
+time consumption for operate signal creation: 111.0 ms
+time consumption for operation back testing:  2.1 ms
+investment starts on      2011-01-04 15:00:00
+ends on                   2019-12-30 15:00:00
+Total looped periods:     9.0 years.
+-------------operation summary:------------
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
+          Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+000300.SH    6        7      13   46.8%     -0.0%     53.2%  
 
-至此，我们已经实现了一个简单的自定义择时交易策略，那么另外两种策略类如何实现呢？下面我们再用两个例子来说明。
+Total operation fee:     ¥      283.00
+total investment amount: ¥  100,000.00
+final value:              ¥  180,675.40
+Total return:                    80.68% 
+Avg Yearly return:                6.80%
+Skewness:                         -1.01
+Kurtosis:                         17.32
+Benchmark return:                27.96% 
+Benchmark Yearly return:          2.78%
+
+------strategy loop_results indicators------ 
+alpha:                           -1.011
+Beta:                            -4.128
+Sharp ratio:                      0.368
+Info ratio:                       0.009
+250 day volatility:               0.134
+Max drawdown:                    31.58% 
+    peak / valley:        2015-06-08 / 2015-07-08
+    recovered on:         2018-01-22
+
+==================END OF REPORT===================
+```
+
+![在这里插入图片描述](../tutorials/img/output_20_1.png)
+
+至此，我们已经实现了一个简单的自定义择时交易策略，那么另外两种策略类如何实现呢？我们在下一章节中再用更多的例子来说明。
 
 ## 本节回顾
 
