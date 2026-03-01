@@ -1411,7 +1411,7 @@ class TestQT(unittest.TestCase):
         op.set_parameter(0,
                          opt_tag=1,
                          run_freq='M',
-                         data_types=StgData('wt_idx|000300.SH', freq='d', asset_type='E', window_length=1),
+                         data_types=StgData('wt_idx|000300.SH', freq='m', asset_type='E', window_length=1),
                          sort_ascending=False,
                          weighting='proportion',
                          max_sel_count=300)

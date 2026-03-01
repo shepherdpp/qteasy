@@ -1447,7 +1447,7 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'stock_basic', 'column': 'delist_date'}],
     ('is_hs', 'None', 'E'):                           ['股票基本信息 - 是否沪深港通标的', 'basics',
                                                        {'table_name': 'stock_basic', 'column': 'is_hs'}],
-    ('wt_idx|%', 'd', 'E'):                           ['股票在指数中所占权重 - %', 'composition',
+    ('wt_idx|%', 'm', 'E'):                           ['股票在指数中所占权重 - %', 'composition',
                                                        {'table_name':  'index_weight', 'column': 'weight',
                                                         'comp_column': 'index_code', 'index': '%'}],
     # 按照'ths_category',一个股票可能会同时被分到多个类别中，这样导致无法选择出唯一的分类，临时解决措施是使用类似event_multi_stat
