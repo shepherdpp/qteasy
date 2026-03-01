@@ -423,7 +423,6 @@ class TestQT(unittest.TestCase):
 
         qt.configure(benchmark_asset='000300.SH',
                      mode=1,
-                     benchmark_asset_type='IDX',
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      opti_output_count=50,
@@ -460,7 +459,6 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         # test temp config_key in run() that works only in run()
@@ -473,23 +471,19 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
 
         config_copy = config.copy()
         qt.configure(config_copy,
                      mode=1,
-                     benchmark_asset='000002.SZ',
-                     benchmark_asset_type='E')
+                     benchmark_asset='000002.SZ')
         self.assertEqual(config.mode, 2)
         self.assertEqual(config.benchmark_asset, '000300.SH')
-        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         self.assertEqual(config_copy.mode, 1)
         self.assertEqual(config_copy.benchmark_asset, '000002.SZ')
-        self.assertEqual(config_copy.benchmark_asset_type, 'E')
         self.assertEqual(config_copy.asset_pool, '000300.SH')
         self.assertEqual(config_copy.invest_start, '20070110')
 
@@ -1041,7 +1035,6 @@ class TestQT(unittest.TestCase):
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
@@ -1097,7 +1090,6 @@ class TestQT(unittest.TestCase):
                                                             '上海']),
                      asset_type='E',
                      benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
@@ -1135,7 +1127,6 @@ class TestQT(unittest.TestCase):
 
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool='601398.SH, 600000.SH, 000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
@@ -1208,7 +1199,6 @@ class TestQT(unittest.TestCase):
 
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool='601398.SH, 600000.SH, 000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
@@ -1254,7 +1244,6 @@ class TestQT(unittest.TestCase):
 
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool='601398.SH,600000.SH,000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
@@ -1290,7 +1279,6 @@ class TestQT(unittest.TestCase):
                          )
         qt.configure(
                 benchmark_asset='000300.SH',
-                benchmark_asset_type='IDX',
                 asset_pool=['000300.SH',
                             '399006.SZ'],  # 投资股票池里包括沪深300和创业板指数两个指数，分别代表大盘和小盘股
                 invest_cash_amounts=[100000],  # 投入金额为十万元
@@ -1402,7 +1390,6 @@ class TestQT(unittest.TestCase):
         qt.configure(asset_pool=stock_pool,
                      asset_type='E',
                      benchmark_asset='000300.SH',
-                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20211013',
                      invest_end='20211231',

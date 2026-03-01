@@ -490,30 +490,6 @@ def _valid_qt_kwargs():
                           '绝对值以外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                           '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'benchmark_asset_type':  # TODO: Deprecate: 如果已经指定了benchmark_asset的qt_code，那么其asset_type已经隐含确定，应该不需要再指定该参数
-            {'Default':    'IDX',
-             'Validator':  lambda value: _validate_asset_type(value),
-             'level':      1,
-             'text':       '基准收益的资产类型，取值范围如下：\n'
-                           'IDX  : 指数\n'
-                           'E    : 股票\n'
-                           'FT   : 期货\n'
-                           'FD   : 基金',
-             'deprecated': True},
-
-        'benchmark_dtype':  # TODO: Deprecate: benchmark_asset的价格类型应该根据Operator的运行时间表，自动从数据源中获取，而不需要用户指定
-            {'Default':    'close',
-             'Validator':  lambda value: value.lower() in ['open',
-                                                           'high',
-                                                           'low',
-                                                           'close',
-                                                           'vol',
-                                                           'unit_nav',
-                                                           'accum_nav'],
-             'level':      1,
-             'text':       '作为基准收益的资产的价格类型。',
-             'deprecated': True},
-
         'report':
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
@@ -664,18 +640,6 @@ def _valid_qt_kwargs():
                           '                 长期回测不考虑除权派息将会导致回测结果与实际相差巨大；\n'
                           '- back/b/adj     - 对于股票，使用后复权价格回测，对于基金，使用复权净值回测；\n'
                           '- forward/f/accu - 对于股票，使用前复权价格回测，对于基金，使用复权净值回测'},
-
-        'maximize_cash_usage':  # deprecated
-            {'Default':    True,
-             'Validator':  lambda value: isinstance(value, bool),
-             'level':      4,
-             'text':       '回测交易时是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即\n'
-                           '用于同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。\n'
-                           '- True -  默认值，首先处理同一批次交易中的卖出信号，并在可能时将获得的现金\n'
-                           '          立即用于本次买入\n'
-                           '- False - 同批次买入和卖出信号同时处理，不立即使用卖出资产的现金将同一批\n'
-                           '          次交易委托同时提交时，这是正常情况',
-             'deprecated': True},
 
         'PT_buy_threshold':
             {'Default':   0.,

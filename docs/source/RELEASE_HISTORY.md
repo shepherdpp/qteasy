@@ -15,6 +15,7 @@
     - Improved backtest / optimization result evaluation processes with more comprehensive evaluation metrics and more intuitive result presentation.
   - `DataType` class now supports asset type "ANY" to represent any type of asset, and strategy can specify the asset type of its target symbols with "ANY" to be compatible with all types of assets.
   - Introduced `StgData` class in strategy definition as syntax suger for users to specify window length and other related properties of Data used in strategy
+  - **Removed configuration keys**: `maximize_cash_usage`, `benchmark_asset_type`, `benchmark_dtype`. Logic is now inferred from execution flow and `benchmark_asset`. See [qteasy_2_migration_guide](qteasy_2_migration_guide.md) for migration.
   - Other bug fixes and improvements
 
 ## 1.4.11 (2026-02-14)

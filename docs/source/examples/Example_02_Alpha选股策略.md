@@ -236,7 +236,6 @@ Max drawdown:                    19.42%
 >>>              PT_sell_threshold=0.00,
 >>>              trade_batch_size=100,
 >>>              sell_batch_size=1,
->>>              maximize_cash_usage=True,
 >>>              trade_log=True
 >>>             )
 ```

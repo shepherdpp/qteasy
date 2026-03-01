@@ -62,8 +62,6 @@ if __name__ == '__main__':
             asset_type='E',
             asset_pool=asset_pool,
             benchmark_asset='000300.SH',
-            benchmark_asset_type='IDX',
-            benchmark_dtype='close',
             trade_batch_size=100,
             sell_batch_size=1,
             live_trade_account_id=args.account,

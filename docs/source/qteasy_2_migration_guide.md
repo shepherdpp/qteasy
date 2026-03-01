@@ -14,6 +14,34 @@
 - 引入了更多的交易策略优化算法，使得用户可以针对不同的交易策略参数空间选择更适合的优化算法，同时提高了策略优化对系统资源的利用率，提高了优化速度。
 - 改进了交易策略回测 / 优化结果的评价分析流程，引入了更多的评价指标，提高了评价结果的直观性。
 
+## 已移除或变更的配置参数 / Removed or changed configuration parameters
+
+以下配置键在 2.0 中已从内置配置中移除。若在 2.0 中仍通过 `qt.configure(..., only_built_in_keys=True)` 传入下列任一键，将触发 `KeyError`。
+
+### 删除的配置键
+
+| 配置键 | 说明与替代方式 |
+|--------|----------------|
+| **maximize_cash_usage** | 已移除。回测时是否最大化利用同一批次交易获得的现金，已内聚到交易执行流程，不再通过配置暴露。无替代键，删除该键即可。 |
+| **benchmark_asset_type** | 已移除。基准资产类型现由 `benchmark_asset` 的代码与数据源自动推断。仅需设置 `benchmark_asset`。 |
+| **benchmark_dtype** | 已移除。基准价格类型由运行时间表与数据源自动推断。仅需设置 `benchmark_asset`。 |
+
+### 变更的配置键
+
+本次仅做删除，无重命名或合并类变更。
+
+### 升级操作建议
+
+1. 在 `qteasy.cfg` 或自有配置中搜索并删除上述三个键。
+2. 在代码中删除对 `qt.configure(..., maximize_cash_usage=...)`、`benchmark_asset_type`、`benchmark_dtype` 的传入。
+3. 确认回测/优化仅依赖 `benchmark_asset` 即可得到正确基准。
+
+### 破坏性变更提示
+
+在 2.0 中，若仍通过 `qt.configure(..., only_built_in_keys=True)` 传入上述任一已删除键，将触发 `KeyError`。使用 `only_built_in_keys=False` 时，这些键可被写入配置对象但不会参与任何运行逻辑。
+
+---
+
 ## Migration Steps / 版本迁移步骤
 
 ### 针对自定义交易策略

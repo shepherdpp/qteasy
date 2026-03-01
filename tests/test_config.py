@@ -98,6 +98,21 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(QT_CONFIG.self_defined_par1, 2)
         self.assertEqual(QT_CONFIG.self_defined_par2, 'user_defined_value')
 
+        # 已删除的配置键（2.0 中移除）不可再通过 only_built_in_keys=True 设置
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, maximize_cash_usage=True)
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, benchmark_asset_type='IDX')
+        with self.assertRaises(KeyError):
+            qt.configure(only_built_in_keys=True, benchmark_dtype='close')
+
+    def test_removed_config_keys_not_in_default(self):
+        """重置配置后，已删除的配置键不应出现在 QT_CONFIG 中"""
+        qt.reset_config()
+        self.assertIsNone(getattr(QT_CONFIG, 'maximize_cash_usage', None))
+        self.assertIsNone(getattr(QT_CONFIG, 'benchmark_asset_type', None))
+        self.assertIsNone(getattr(QT_CONFIG, 'benchmark_dtype', None))
+
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
 
