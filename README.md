@@ -1,4 +1,4 @@
-![png](docs/source/img/qteasy_logo_horizontal.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/qteasy_logo_horizontal.png)
 
 # `qteasy` -- 一个本地化、灵活易用的高效量化投资工具包
 
@@ -85,7 +85,7 @@
 - 基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化
 - 数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现
 
-![png](docs/source/img/output_5_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
 
 ### **以简单、安全的方式创建交易策略**
 
@@ -94,7 +94,7 @@
 - 交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性
 - 同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差
 
-![png](docs/source/img/output_14_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
 
 ### **交易策略的回测评价、优化和模拟自动化交易**
 
@@ -104,9 +104,9 @@
 - 回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查
 - 未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易
 
-![png](docs/source/examples/img/trader_app_1.png)  
-![png](docs/source/examples/img/trader_app_2.png)  
-![png](docs/source/examples/img/trader_app_light_theme.png) 
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_1.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png)  
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png) 
 
 ## 安装
 
@@ -250,7 +250,7 @@ qt.get_history_data(htypes='open, high, low, close',
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
 ```
 
-![png](docs/source/img/output_5_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
     
 `qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
 `qt.candle()`支持功能如下：
@@ -275,15 +275,15 @@ qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
-![png](docs/source/img/output_3_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_1.png)
 
-![png](docs/source/img/output_7_2.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_7_2.png)
 
-![png](docs/source/img/output_8_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_8_3.png)
 
-![png](docs/source/img/output_3_4.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_4.png)
 
-![png](docs/source/img/output_3_5.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_5.png)
     
 
 生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持
@@ -299,14 +299,14 @@ qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 - 在K线图上双击鼠标，可以切换不同的均线类型
 - 在K线图的指标区域双击，可以切换不同的指标类型：MACD，RSI，DEMA
 
-![gif](docs/source/img/output_dyna_plot.gif)
+![gif](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_dyna_plot.gif)
 
 关于`DataSource`对象的更多详细介绍，请参见[qteasy文档](https://qteasy.readthedocs.io/zh-cn/latest/api/data_source.html)
 
 
 ###  创建一个投资策略并启动实盘自动化运行（模拟）
 
-![png](docs/source/examples/img/trader_app_2.png) 
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_2.png) 
 
 `qteasy`中的所有交易策略都是由`qteast.Operator`（交易员）对象来实现回测和运行的，`Operator`对象是一个策略容器，一个交易员可以同时
 管理多个不同的交易策略。
@@ -375,7 +375,7 @@ qt.built_in_doc('dma')
 #### 交易策略的回测
 
 `qteasy`可以使用历史数据回测策略表现并输出图表如下：
-![png](docs/source/img/output_14_3.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_14_3.png)
 
 使用默认参数回测刚才建立的DMA策略在历史数据上的表现，可以使用`qt.run()`。
 
@@ -439,7 +439,7 @@ Max drawdown:                    11.92%
 
 ===========END OF REPORT=============
 ```
-![png](docs/source/img/output_21_1.png)
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_21_1.png)
 
 #### 交易策略的参数调优
 
@@ -490,7 +490,7 @@ qteasy running mode: 2 - Strategy Parameter Optimization
 ===========END OF REPORT=============
 ```
 
-![png](docs/source/img/output_24_1.png)   
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_24_1.png)   
 将优化后的参数应用到策略中，并再次回测，可以看到结果明显提升：
 
 ```python
@@ -499,7 +499,7 @@ res = qt.run(op, mode=1)  # 历史回测模式
 ```
 结果如下：
 
-![png](docs/source/img/output_26_1.png)   
+![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_26_1.png)   
 
 
 关于策略优化结果的更多解读、以及更多优化参数的介绍，请参见详细文档
@@ -561,10 +561,10 @@ qt.run(op, mode=0)  # 交易模式为实盘运行
    
    在命令行界面中，启动后默认显示的是交易策略的dashboard(状态页)，在该屏幕上会滚动显示交易策略运行日志，打印产生的交易信号、交易结果、当前最新股票价格等信息。
    
-   ![png](docs/source/img/output_27_1.png)  
+   ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_1.png)  
    在策略运行过程中，用户可以通过键入"Ctrl+C"进入主菜单，按1键进入交互模式，这时用户可以通过键盘输入命令来查看持仓、查看账户资金变化、查看交易日志等信息，也可以通过命令来控制交易策略的运行，例如暂停、继续、终止交易策略的运行。
 
-   ![png](docs/source/img/output_27_3.png) 
+   ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_27_3.png) 
 
 
    
@@ -583,7 +583,7 @@ qt.run(op, mode=0)  # 交易模式为实盘运行
 
    在TUI图形界面中，用户的Terminal会被划分为多个区域，显示策略运行过程中的所有关键信息，例如在顶部显示当前资产总额、浮动盈亏，在画面中部以图表显示当前持仓、交易订单历史记录、实时股票价格、以及策略运行参数等信息，在画面底部显示交易日志。
 
-   ![png](docs/source/examples/img/trader_app_light_theme.png)
+   ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/examples/img/trader_app_light_theme.png)
 
 
    用户可以在TUI界面中以快捷键或者鼠标按钮点击的方式与qteasy的自动化交易程序互动，目前支持的功能较少，包括：
