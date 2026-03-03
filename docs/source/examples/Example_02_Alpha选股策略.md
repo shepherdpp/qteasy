@@ -7,21 +7,11 @@
 回测时间为:2016-04-05 到 2021-02-01
 
 
+首先导入`qteasy`模块
 ```python
->>> import os
->>> import sys
->>> sys.path.insert(0, os.path.abspath('../'))
->>> # 导入qteasy模块
 >>> import qteasy as qt
->>> print(f'qteasy version: {qt.__version__}, datasource: {qt.QT_DATA_SOURCE}')
 ```
 
-输出如下：
-
-```
-
-qteasy version: 2.0.0, datasource: mysql://localhost@3306/ts_db
-```
 在选股之前，需要检查需要的历史数据
 
 EV/EBITDA数据并不直接存在于qteasy定义的数据类型中，需要通过几个数据组合计算出来
