@@ -998,6 +998,7 @@ class Backtester:
                  trading_delivery_params: dict,  # 交易交割参数
                  trade_price_data: np.ndarray,  # 交易价格数据
                  benchmark_data: Optional[Union[pd.DataFrame, pd.Series]] = None,
+                 evaluate_price_data: Optional[pd.DataFrame] = None,
                  enable_tracing: bool = False,
                  logger: Optional[logging.Logger] = None):
         """ 初始化Backtester对象，设置operator对象和回测参数，初始化回测结果存储表格
@@ -1011,7 +1012,9 @@ class Backtester:
         cash_plan: CashPlan,
             现金投资计划
         benchmark_data: pd.DataFrame or pd.Series
-            用于评价回测结果的业绩基准数据
+            用于评价回测结果的业绩基准价格，频率为日频，每日收盘价，其索引为回测开始日到结束日的所有交易日日期，列名为benchmark
+        evaluate_price_data: pd.DataFrame, optional
+            用于评价回测结果的日频收盘价数据，索引为交易日15:00:00，列为资产代码
         cash_investment_array: np.ndarray
             现金投资数组，记录每一个交易信号日的现金投资金额
         cash_inflation_array: np.ndarray
@@ -1109,7 +1112,6 @@ class Backtester:
         self.trade_price_array = np.zeros(shape_signals, dtype=float)  # 记录每次交易的成交价格，未成交为0，dynamic数据类型的operator需要用到
 
         # 4, 回测交易最终结果：评价指标、交易日志和交易汇总记录
-        # self.backtest_final_value: float = 0.0  # fv 在evaluate中可以直接计算，但是为了节省时间，这个值可以计算出来并缓存
         self.backtest_result: dict = {}
         self.trade_log_df: Optional[pd.DataFrame] = None
         self.summary_df: Optional[pd.DataFrame] = None
@@ -1118,6 +1120,7 @@ class Backtester:
         # 5, 其他相关属性（需要增加数据匹配性校验）
         self.cash_plan = cash_plan
         self.benchmark_data = benchmark_data
+        self.evaluate_price_data = evaluate_price_data
         self.enable_tracing = enable_tracing
 
         if logger is not None:
@@ -1215,6 +1218,8 @@ class Backtester:
         """处理operator的交易信号包含动态数据类型(依赖交易结果的数据类型)的情况:
 
         根据输入参数逐步调用operator.run()生成交易信号清单，然后调用backtest_batch_steps()进行回测"""
+
+        # TODO: 实现交易过程动态数据的获取
 
         # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
         signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
@@ -1330,15 +1335,44 @@ class Backtester:
         value_history: pd.DataFrame
             交易模拟结果数据
         """
-        value_history = pd.DataFrame(self.own_amounts_array[1:],
-                                     index=self.op.op_signal_index.get_level_values(0),
-                                     columns=self.shares)
-        # 填充标量计算结果
-        value_history['cash'] = self.own_cashes[1:]
-        value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
-        value_history['fee'] = self.trade_cost_array.sum(axis=1)
+        if self.evaluate_price_data is None:
+            value_history = pd.DataFrame(self.own_amounts_array[1:],
+                                         index=self.op.op_signal_index.get_level_values(0),
+                                         columns=self.shares)
+            value_history['cash'] = self.own_cashes[1:]
+            value_history['value'] = (self.trade_price_data * self.own_amounts_array[1:]).sum(axis=1) + self.own_cashes[1:]
+            value_history['fee'] = self.trade_cost_array.sum(axis=1)
+            value_history = value_history.groupby(value_history.index).last()
+            return value_history
 
-        value_history = value_history.groupby(value_history.index).last()
+        daily_index = self.evaluate_price_data.index
+        step_times = pd.to_datetime(self.op.op_signal_index.get_level_values(0))
+
+        step_times_values = step_times.to_numpy()
+        daily_values_ts = daily_index.to_numpy()
+        # 对于第一个交易信号之前的日期，使用初始持仓（索引0）；
+        # 对于两个交易信号之间的日期，使用最近一次交易后的持仓；
+        # 对于最后一个交易信号之后的日期，使用最后一次交易后的持仓。
+        pos_idx = np.searchsorted(step_times_values, daily_values_ts, side='right')
+        pos_idx = np.clip(pos_idx, 0, self.own_amounts_array.shape[0] - 1)
+
+        daily_positions = self.own_amounts_array[pos_idx, :]
+        daily_cash = self.own_cashes[pos_idx]
+
+        step_dates = step_times.normalize()
+        step_fee = self.trade_cost_array.sum(axis=1)
+        fee_by_date = pd.Series(step_fee, index=step_dates).groupby(level=0).sum()
+        daily_fee = fee_by_date.reindex(daily_index).fillna(0.0)
+
+        # 使用评价用日频收盘价构造日频价格序列
+        daily_prices = self.evaluate_price_data.reindex(daily_index).reindex(columns=self.shares)
+        price_array = np.nan_to_num(daily_prices.values, nan=0.0)
+        daily_values = (price_array * daily_positions).sum(axis=1) + daily_cash
+        # import pdb; pdb.set_trace()
+        value_history = pd.DataFrame(daily_positions, index=daily_index, columns=self.shares)
+        value_history['cash'] = daily_cash
+        value_history['value'] = daily_values
+        value_history['fee'] = daily_fee.values
 
         return value_history
 

@@ -947,8 +947,8 @@ def transfer_data(source: DataSource,
     raise NotImplementedError
 
 
-def get_history_data(htypes=None,
-                     *,
+def get_history_data(*,
+                     htypes=None,
                      htype_names=None,
                      data_types=None,
                      data_source=None,
@@ -1227,6 +1227,8 @@ def get_history_data(htypes=None,
     # 检查数据合法性：
     if shares is None:
         shares = ''
+    if htypes is None:
+        htypes = ''
 
     if not isinstance(shares, (str, list)):
         raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')

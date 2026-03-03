@@ -428,7 +428,7 @@ def eval_beta(looped_value, benchmark_value: pd.Series):
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref_ret = benchmark_value.pct_change()
+    ref_ret = benchmark_value.pct_change(fill_method=None)
     if len(looped_value) > 250:
         ret_dev = looped_value['pct_change'].rolling(250).var()
         ret_cov = looped_value['pct_change'].rolling(250).cov(ref_ret)

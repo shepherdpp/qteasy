@@ -126,6 +126,9 @@ version_info = Namespace(
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
 QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
 
+QT_SYS_LOG_PATH = ''
+QT_TRADE_LOG_PATH = ''
+
 # 准备从本地配置文件中读取预先存储的qteasy配置
 _qt_local_configs = {}
 

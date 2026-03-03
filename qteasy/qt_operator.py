@@ -2319,6 +2319,17 @@ class Operator:
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=start_date,
+                backtest_end=end_date,
+        )
+
+        from qteasy.history import check_and_prepare_evaluate_price_data
+        evaluate_price_data = check_and_prepare_evaluate_price_data(
+                op=self,
+                shares=config['asset_pool'],
+                datasource=datasource,
+                backtest_start=start_date,
+                backtest_end=end_date,
         )
 
         self.prepare_data_buffer(
@@ -2335,6 +2346,7 @@ class Operator:
                 shares=config['asset_pool'],
                 cash_plan=cash_plan,
                 benchmark_data=hist_benchmark,
+                evaluate_price_data=evaluate_price_data,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
                 delivery_day_indicators=delivery_day_indicators,

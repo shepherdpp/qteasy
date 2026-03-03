@@ -1349,6 +1349,59 @@ class TestQT(unittest.TestCase):
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
 
+    def test_all_run_freqs_and_timings(self):
+        """ 使用最基本的内置交易策略DMA测试单个交易策略在不同的运行频率和运行时点回测是否能生成
+        正确频率的complete_value DataFrame
+        设置visual和trade_log都为False，只检查回测结果的complete_values的index是否为交易日15:00
+        的日频时间序列，且不检查数值正确性（数值正确性在其他测试中已经覆盖）
+        """
+        freq_timings_to_test = [('ME', 'close'),
+                                ('MS', '10:30'),
+                                ('d', 'close'),
+                                ('d', '11:00'),
+                                ('h', 'close'),
+                                ('5min', 'close')]
+        illegal_freq_timings = [('ME', '8:30'),
+                                ('MQ', 'wrong_time')]
+
+        invest_start = '20250301'
+        invest_end = '20251231'
+        invest_start_ts = pd.to_datetime(invest_start)
+        invest_end_ts = pd.to_datetime(invest_end)
+
+        for freq, timing in freq_timings_to_test:
+            print(f'testing strategy running at frequency and timing: {freq}, {timing}')
+            op = qt.Operator('dma', run_freq=freq, run_timing=timing)
+            res = qt.run(op=op,
+                         mode=1,
+                         asset_type='E',
+                         asset_pool=['000651.SZ', '000001.SZ'],
+                         invest_start=invest_start,
+                         invest_end=invest_end,
+                         trade_batch_size=100,
+                         sell_batch_size=1,
+                         report=False,
+                         visual=False,
+                         trade_log=True,
+                         )
+            time.sleep(2)
+            print(f'complete_values head for frequency and timing {freq}, {timing}:')
+            print(f'final value is {res["final_value"]}')
+            print(f'complete values are \n'
+                  f'{res["complete_values"][["000651.SZ", "000001.SZ", "cash", "fee", "value"]].head(60).to_string()}')
+            print(f'keys of the complete values: \n{res["complete_values"].keys()}')
+            cv = res['complete_values']
+            self.assertIsInstance(cv, pd.DataFrame)
+            self.assertGreater(len(cv.index), 0)
+            # index 必须覆盖从invest_start到invest_end期间的交易日，时间为15:00:00
+            self.assertGreaterEqual(cv.index[0], invest_start_ts)
+            self.assertLessEqual(cv.index[-1], invest_end_ts + pd.Timedelta(days=1))
+            times = cv.index.time
+            self.assertTrue(all(t.hour == 15 and t.minute == 0 and t.second == 0 for t in times))
+            # 价值列不允许为NaN
+            self.assertFalse(cv['value'].isna().any())
+
+
     def test_stg_trading_different_prices(self):
         """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
         # 测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出
