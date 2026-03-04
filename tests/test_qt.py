@@ -1365,12 +1365,12 @@ class TestQT(unittest.TestCase):
         以上均以 Backtester 内部数组为金标准，确保从数组到 complete_values 的映射逻辑无损。
         """
         freq_timings_to_test = [
-            # ('ME', 'close'),
+            ('ME', 'close'),
             ('MS', '10:30'),
-            # ('d', 'close'),
-            # ('d', '11:00'),
-            # ('h', 'close'),
-            # ('5min', 'close'),
+            ('d', 'close'),
+            ('d', '11:00'),
+            ('h', 'close'),
+            ('5min', 'close'),
         ]
         illegal_freq_timings = [('ME', '8:30'),
                                 ('MQ', 'wrong_time')]
@@ -1441,14 +1441,14 @@ class TestQT(unittest.TestCase):
 
             expected_positions = np.vstack(expected_positions)
             expected_cashes = np.asarray(expected_cashes)
-            print(f'expected_positions head for frequency and timing {freq}, {timing}:\n{expected_positions}\n')
-            print(f'expected_cashes head for frequency and timing {freq}, {timing}:\n{expected_cashes}\n')
+            # print(f'expected_positions head for frequency and timing {freq}, {timing}:\n{expected_positions}\n')
+            # print(f'expected_cashes head for frequency and timing {freq}, {timing}:\n{expected_cashes}\n')
 
             # 2.2 使用评价价格 evaluate_price_data 计算每日总资产（value），以金标准持仓 / 现金为基础
             daily_prices = backtested.evaluate_price_data.reindex(daily_index).reindex(columns=backtested.shares)
             price_array = np.nan_to_num(daily_prices.values, nan=0.0)
             expected_values = (price_array * expected_positions).sum(axis=1) + expected_cashes
-            print(f'expected_values are: {expected_values}\n')
+            # print(f'expected_values are: {expected_values}\n')
 
             # 2.3 将成交费用按交易日聚合，映射到每日 fee
             step_dates = step_times.normalize()

@@ -985,6 +985,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         index_daily_df_000300['ts_code'] = '000300.SH'
 
         # 添加000300.SH的分钟K线数据到index_1min表中，供指数参考数据使用
+        index_hourly_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        index_hourly_df_000300['ts_code'] = '000300.SH'
+
+        # 添加000300.SH的分钟K线数据到index_1min表中，供指数参考数据使用
         index_min_df_000300 = pd.DataFrame(
                 np.random.randint(2000, 4000, size=(len(min_index), 6)),
                 columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
@@ -1011,6 +1019,9 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.datasource.update_table_data('index_daily',
                                           df=index_daily_df_000300.reset_index().rename(
                                                   columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_hourly',
+                                          df=index_hourly_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_time'}))
         self.datasource.update_table_data('index_1min',
                                           df=index_min_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
         self.datasource.update_table_data('fund_nav',
@@ -1088,7 +1099,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_list_with_complex_operator(self):
         """测试用例：正常输入参数，shares为列表，复杂operator"""
@@ -1120,7 +1131,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_list_with_monthly_operator(self):
         """测试用例：正常输入参数，月度运行operator，测试各种share组合"""
@@ -1243,7 +1254,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1274,7 +1285,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1305,7 +1316,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1336,7 +1347,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_open_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1367,7 +1378,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1398,7 +1409,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator_forward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1429,7 +1440,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator_backward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1460,7 +1471,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_with_problematic_parameters(self):
         """测试有问题的输入参数"""
