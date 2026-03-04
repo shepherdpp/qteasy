@@ -1505,6 +1505,7 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
         daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
         hourly_index = tti(start='20200101', end='20201231', freq='h')
+        self.evaluate_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True, time_offset='15:00')
 
         # 生成000001的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
@@ -1625,7 +1626,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.daily_operator,
                 benchmark_symbol=self.benchmark_stock,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231'
         )
         print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
 
@@ -1642,10 +1645,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_stock].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        print(f'operator timing table index:\n{self.daily_operator.group_timing_table.index}')
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
         print(f'benchmark data index:\n{result.index}')
-        self.assertTrue(result.index.equals(self.daily_operator.group_timing_table.index))
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_stock(self):
         """测试用例：正常输入参数，返回DataFrame"""
@@ -1653,7 +1656,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_stock,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231'
         )
         print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
 
@@ -1670,8 +1675,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_stock].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
+        print(f'benchmark data index:\n{result.index}')
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_index(self):
         """测试用例：空的benchmark代码"""
@@ -1679,7 +1686,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_index,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for index {self.benchmark_index}:\n{result}')
 
@@ -1696,8 +1705,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_index].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
+        print(f'benchmark data index:\n{result.index}')
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_fund(self):
         """测试日期范围处理"""
@@ -1705,7 +1716,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_fund_in,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for fund in {self.benchmark_fund_in}:\n{result}')
 
@@ -1722,8 +1735,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_fund_in].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(self.evaluate_index)
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_fund_out(self):
         """测试返回数据的结构是否正确"""
@@ -1731,7 +1745,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_fund_out,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for fund in {self.benchmark_fund_out}:\n{result}')
 
@@ -1748,8 +1764,8 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_fund_out].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_nonexistent_benchmark(self):
         """测试用例：不存在的benchmark代码"""
@@ -1758,7 +1774,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.operator,
                     benchmark_symbol='NONEXIST',
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
     def test_missing_data_in_source(self):
@@ -1769,7 +1787,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.wrong_operator,
                     benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
         # 超出范围的operater运行计划
@@ -1782,12 +1802,16 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.operator,
                     benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
             check_and_prepare_benchmark_data(
                     op=self.wrong_operator,
                     benchmark_symbol='000001.SZ',
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
 

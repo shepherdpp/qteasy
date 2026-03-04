@@ -2491,6 +2491,8 @@ class Operator:
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=opti_start,
+                backtest_end=opti_end,
         )
 
         print(f'Starting optimization...')
@@ -2535,6 +2537,8 @@ class Operator:
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=test_start,
+                backtest_end=test_end,
         )
         print(f'Starting validation on test data...')
         optimizer.validate(

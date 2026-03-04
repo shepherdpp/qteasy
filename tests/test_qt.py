@@ -1380,8 +1380,8 @@ class TestQT(unittest.TestCase):
                          invest_end=invest_end,
                          trade_batch_size=100,
                          sell_batch_size=1,
-                         report=False,
-                         visual=False,
+                         report=True,
+                         visual=True,
                          trade_log=True,
                          )
             time.sleep(2)
@@ -1400,7 +1400,6 @@ class TestQT(unittest.TestCase):
             self.assertTrue(all(t.hour == 15 and t.minute == 0 and t.second == 0 for t in times))
             # 价值列不允许为NaN
             self.assertFalse(cv['value'].isna().any())
-
 
     def test_stg_trading_different_prices(self):
         """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""

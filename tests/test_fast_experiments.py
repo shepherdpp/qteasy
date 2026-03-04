@@ -137,7 +137,7 @@ class IndexEnhancement(qt.GeneralStg):
                 name='IndexEnhancement',
                 description='跟踪HS300指数选股，并根据连续上涨/下跌趋势判断强弱势以增强权重',
                 # 利用HS300权重设定选股权重, 根据收盘价判断强弱势
-                data_types=[StgData('wt_idx|000300.SH', freq='d', asset_type='ANY', window_length=1),
+                data_types=[StgData('wt_idx|000300.SH', freq='m', asset_type='ANY', window_length=1),
                             StgData('close', freq='d', asset_type='ANY', window_length=20, )],
                 use_latest_data_cycle=True,
         )
@@ -146,7 +146,7 @@ class IndexEnhancement(qt.GeneralStg):
 
     def realize(self):
         weight_threshold, init_weight, price_days = self.get_pars('weight_threshold', 'initial_weight', 'price_days')
-        index_weight, prices = self.get_data('wt_idx|000300.SH_ANY_d', 'close_ANY_d')
+        index_weight, prices = self.get_data('wt_idx|000300.SH_ANY_m', 'close_ANY_d')
         # 读取投资组合的权重wt和最近price_days天的收盘价
         wt = index_weight[-1]  # 当前所有股票的权重值
         pre_close = prices[-price_days - 1:-1]
