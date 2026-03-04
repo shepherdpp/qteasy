@@ -191,7 +191,8 @@ def backtest_step(
             short_pos_limit=short_pos_limit,
             allow_sell_short=allow_sell_short,
             moq_buy=moq_buy,
-            moq_sell=moq_sell
+            moq_sell=moq_sell,
+            cash_delivery_period=cash_delivery_period,
     )
     # DEBUG
     # print(f'calculated trade results'
@@ -272,6 +273,7 @@ def calculate_trade_results(
         allow_sell_short: bool,
         moq_buy: float,
         moq_sell: float,
+        cash_delivery_period: int,
 ) -> tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
     """ 该函数用于批量计算股票交易结果，根据交易信号、价格和持仓情况，结合交易
     成本和仓位限制，计算出每只股票的买入卖出数量、现金变动及交易费用。支持多种
@@ -424,17 +426,23 @@ def calculate_trade_results(
 
     # 5，根据可用现金数量或多空持仓限额调整买入计划
 
-    # 如果不允许卖空交易，则根据可用现金调整买入计划，确保买入总金额不超过可用现金
-    # 此时自动保证交易后的持仓比例在0～1之间
+    # 如果不允许卖空交易，则根据可用现金调整买入计划，确保买入总金额不超过可用现金。
+    # 此时自动保证交易后的持仓比例在0～1之间。
     if not allow_sell_short:
+        # 对于 PT 信号，在现金交割周期为 0 时，可以在同一回测步中复用本期卖出获得的现金，
+        # 从而更好地贴合“目标仓位一次性调仓”的语义；对于 PS / VS 信号，始终仅使用期初可用现金。
+        if signal_type == 0 and cash_delivery_period == 0:
+            effective_available_cash = available_cash + cash_gained.sum()
+        else:
+            effective_available_cash = available_cash
         # 忽略cash_to_spend中的空头买入部分（不允许卖空时无意义）
         cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
         # DEBUG
         # print(f'cash_to_spend adjusted, {cash_to_spend.round(6)} = np.where(cash_to_spend > 0.001,
         # cash_to_spend, 0)\n')
-        # 确保总现金买入金额不超过可用现金，如果超过则按比例调降
-        if cash_to_spend.sum() > available_cash:
-            cash_to_spend *= available_cash / cash_to_spend.sum()
+        # 确保总现金买入金额不超过有效可用现金，如果超过则按比例调降
+        if cash_to_spend.sum() > effective_available_cash:
+            cash_to_spend *= effective_available_cash / cash_to_spend.sum()
             # DEBUG
             # print(f'cash_to_spend adjusted by available_cash, cash_to_spend: {cash_to_spend.round(6)}, *= '
             #       f'available_cash: {available_cash:.2f} / cash_to_spend.sum(): {cash_to_spend.sum():.2f}\n')

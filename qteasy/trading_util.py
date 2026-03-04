@@ -421,7 +421,7 @@ def parse_pt_signals(signals: np.ndarray,
                      pt_buy_threshold: float,
                      pt_sell_threshold: float,
                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析PT类型的交易信号
+    """ 解析PT类型的交易信号，生成“理论目标调仓计划”
 
     Parameters
     ----------
@@ -485,7 +485,7 @@ def parse_ps_signals(signals: np.ndarray,
                      own_amounts: np.ndarray,
                      own_cash: Union[float, np.float64, np.ndarray],
                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析PS类型的交易信号
+    """ 解析PS类型的交易信号，将信号解释为基于当前总资产和持仓比例的订单规模
 
     Parameters
     ----------
@@ -533,7 +533,7 @@ def parse_vs_signals(signals: np.ndarray,
                      own_amounts: np.ndarray,
                      allow_sell_short: bool,
                      cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析VS类型的交易信号
+    """ 解析VS类型的交易信号，将信号解释为绝对金额/数量级订单
 
     Parameters
     ----------

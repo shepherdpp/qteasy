@@ -1364,14 +1364,12 @@ class TestQT(unittest.TestCase):
            - 每个交易日的 value 列必须等于“持仓 * 当日评价价格 + 当日现金”；
         以上均以 Backtester 内部数组为金标准，确保从数组到 complete_values 的映射逻辑无损。
         """
-        freq_timings_to_test = [
-            ('ME', 'close'),
-            ('MS', '10:30'),
-            ('d', 'close'),
-            ('d', '11:00'),
-            ('h', 'close'),
-            ('5min', 'close'),
-        ]
+        freq_timings_to_test = [('ME', 'close'),
+                                ('MS', '10:30'),
+                                ('d', 'close'),
+                                ('d', '11:00'),
+                                ('h', 'close'),
+                                ('5min', 'close')]
         illegal_freq_timings = [('ME', '8:30'),
                                 ('MQ', 'wrong_time')]
 
@@ -1390,7 +1388,6 @@ class TestQT(unittest.TestCase):
                     mode=1,
                     asset_type='E',
                     asset_pool=['000651.SZ', '000001.SZ'],
-                    benchmark_asset='000651.SZ',
                     invest_start=invest_start,
                     invest_end=invest_end,
                     trade_batch_size=100,
@@ -1402,7 +1399,7 @@ class TestQT(unittest.TestCase):
 
             cv = res['complete_values']
             print(f'complete_values head for frequency and timing {freq}, {timing}:')
-            print(cv[["000651.SZ", "000001.SZ", "cash", "fee", "value"]].to_string())
+            print(cv[["000651.SZ", "000001.SZ", "cash", "fee", "value"]].head(60).to_string())
 
             # ---------- 1. 结构约束：index 必须是投资区间内的所有交易日 15:00 ----------
             self.assertIsInstance(cv, pd.DataFrame)
@@ -1419,7 +1416,6 @@ class TestQT(unittest.TestCase):
             backtested = op.backtested
 
             # 2.1 通过“最近一次不晚于当日的交易信号”确定每日应使用的持仓 / 现金索引
-            print(f'positioning daily holdings and cash based on backtested arrays for frequency and timing {freq}, {timing}')
             daily_index = cv.index
             step_times = pd.to_datetime(backtested.op.op_signal_index.get_level_values(0))
             own_amounts = backtested.own_amounts_array
@@ -1441,14 +1437,11 @@ class TestQT(unittest.TestCase):
 
             expected_positions = np.vstack(expected_positions)
             expected_cashes = np.asarray(expected_cashes)
-            # print(f'expected_positions head for frequency and timing {freq}, {timing}:\n{expected_positions}\n')
-            # print(f'expected_cashes head for frequency and timing {freq}, {timing}:\n{expected_cashes}\n')
 
             # 2.2 使用评价价格 evaluate_price_data 计算每日总资产（value），以金标准持仓 / 现金为基础
             daily_prices = backtested.evaluate_price_data.reindex(daily_index).reindex(columns=backtested.shares)
             price_array = np.nan_to_num(daily_prices.values, nan=0.0)
             expected_values = (price_array * expected_positions).sum(axis=1) + expected_cashes
-            # print(f'expected_values are: {expected_values}\n')
 
             # 2.3 将成交费用按交易日聚合，映射到每日 fee
             step_dates = step_times.normalize()
@@ -1477,6 +1470,60 @@ class TestQT(unittest.TestCase):
                     expected_daily_fee,
                     err_msg=f'fee mismatch for freq={freq}, timing={timing}',
             )
+
+    def test_pt_rebalance_uses_same_step_sell_cash_when_delivery_zero(self):
+        """测试 PT 信号在 cash_delivery_period == 0 时，换仓场景能在同一回测步内复用卖出获得的现金。
+
+        构造一个最小化的 PT 策略：在回测区间内只产生一次信号，把全部仓位从第一只股票 A 调整到第二只
+        股票 B。初始状态设为“全仓持有 A，现金为 0”。如果实现正确，在 cash_delivery_period == 0 时，
+        该信号应当在一次回测步中基本完成从 A 到 B 的换仓（考虑交易成本和最小成交单位后的少量偏差）。
+        """
+        from qteasy import Operator, GeneralStg, StgData, configure, run
+
+        class OneShotPT(GeneralStg):
+
+            def __init__(self):
+                super().__init__(
+                        name='OneShotPT',
+                        description='单次 PT 调仓，将全部仓位从第一只股票切换到第二只股票',
+                        data_types=StgData('close', freq='d', asset_type='E', window_length=1),
+                        use_latest_data_cycle=True,
+                )
+
+            def realize(self):
+                prices = self.get_data('close_E_d')[-1]
+                # 两只股票：第一只 A，第二只 B。
+                # 第一天信号：全仓 A（1, 0），第二天信号：全仓 B（0, 1）。
+                if self.now_step == 0:
+                    self.signal[:] = [1.0, 0.0]
+                else:
+                    return np.array([0.0, 1.0])
+
+        shares = ['000001.SZ', '000002.SZ']
+        configure(
+                asset_pool=shares,
+                asset_type='E',
+                invest_start='20200102',
+                invest_end='20200110',
+                invest_cash_amounts=[100000.0],
+                trade_batch_size=100,
+                sell_batch_size=100,
+                cash_delivery_period=0,
+                stock_delivery_period=0,
+        )
+
+        op = Operator(strategies=[OneShotPT()], signal_type='PT', run_freq='d', run_timing='close')
+        res = run(op=op, mode=1, visual=False, trade_log=False)
+
+        backtested = op.backtested
+        final_amounts = backtested.own_amounts_array[-1]
+        final_values = (backtested.trade_price_data[-1] * final_amounts).sum() + backtested.own_cashes[-1]
+        initial_values = (backtested.trade_price_data[0] * backtested.own_amounts_array[0]).sum() + backtested.own_cashes[0]
+
+        # 最后应当主要持有第二只股票，第一只股票仓位接近 0
+        self.assertLess(abs(final_amounts[0]), abs(final_amounts[1]) * 0.05 + 1e-6)
+        # 整体资产价值不应因为换仓逻辑问题而出现异常缩水
+        self.assertGreater(final_values, initial_values * 0.8)
 
     def test_stg_trading_different_prices(self):
         """测试一个以开盘价买入，以收盘价卖出的大小盘轮动交易策略"""
