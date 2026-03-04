@@ -2330,6 +2330,7 @@ class Operator:
                 datasource=datasource,
                 backtest_start=start_date,
                 backtest_end=end_date,
+                backtest_price_adj=config['backtest_price_adj'],
         )
 
         self.prepare_data_buffer(

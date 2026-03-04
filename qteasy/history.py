@@ -2998,7 +2998,8 @@ def check_and_prepare_evaluate_price_data(op,
                                           shares: Union[str, list[str]],
                                           datasource: DataSource,
                                           backtest_start,
-                                          backtest_end) -> pd.DataFrame:
+                                          backtest_end,
+                                          backtest_price_adj: str) -> pd.DataFrame:
     """ 基于Operator对象已经生成的group_schedule，获取指定时间区间内的日频收盘价数据，用于回测结果评价。
 
     本函数通过operator信息获取用于回测结果评价的参考价格数据。与用于回测交易过程的trade_prices不同，
@@ -3017,6 +3018,8 @@ def check_and_prepare_evaluate_price_data(op,
         回测开始日期
     backtest_end:
         回测结束日期
+    backtest_price_adj: str
+        回测价格复权方式，必须与回测过程中使用的价格复权方式保持一致
 
     Returns
     -------
@@ -3037,11 +3040,13 @@ def check_and_prepare_evaluate_price_data(op,
                                    freq='d',
                                    time_offset='15:00')
 
+    # 根据回测配置中的backtest_price_adj确定评价用价格的复权方式，确保与回测价格保持一致
+    price_adj = str(backtest_price_adj).lower()
     data_types = infer_data_types(
             'close',
             freqs='d',
             asset_types='E, IDX, FD',
-            # adj='back',
+            adj=price_adj,
             allow_ignore_freq=True,
             allow_ignore_adj=True,
     )
