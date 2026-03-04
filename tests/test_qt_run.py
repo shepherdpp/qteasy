@@ -887,6 +887,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.op_complex.set_parameter(stg_id=0, run_freq='d', run_timing='close')
         self.op_complex.set_parameter(stg_id=1, run_freq='h', run_timing='close')
         self.op_simple = Operator(strategies=[self.daily_strategy], run_freq='d', run_timing='close')
+        self.op_monthly_10 = Operator(strategies=[self.daily_strategy], run_freq='MS', run_timing='10:30')
         self.op_open = Operator(strategies=[self.daily_open_stg, self.hourly_strategy])
         self.op_open.set_parameter(stg_id=0, run_freq='d', run_timing='open')
         self.op_open.set_parameter(stg_id=1, run_freq='h', run_timing='close')
@@ -907,7 +908,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
         daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
         hourly_index = tti(start='20200101', end='20201231', freq='h')
-        min_index = tti(start='20200501', end='20200731', freq='1min', trade_days_only=True)
+        min_index = tti(start='20200301', end='20201031', freq='1min', trade_days_only=True)
 
         # 生成000001以及000002的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
@@ -943,7 +944,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
                 index=min_index,
         )
         stock_min_df_000002['ts_code'] = '000002.SZ'
-        stock_min_df = pd.concat([stock_min_df_000001, stock_daily_df_000002])
+        stock_min_df = pd.concat([stock_min_df_000001, stock_min_df_000002])
 
         # 生成000001/000002的stock_hourly数据
         stock_hourly_df_000001 = pd.DataFrame(
@@ -1019,6 +1020,10 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.op_simple.prepare_running_schedule(
                 start_date='20200525',
                 end_date='20200610',
+        )
+        self.op_monthly_10.prepare_running_schedule(
+                start_date='20200301',
+                end_date='20201230',
         )
         self.op_complex.prepare_running_schedule(
                 start_date='20200610',
@@ -1116,6 +1121,38 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
             self.assertFalse(result[share].isnull().all())
+
+    def test_share_list_with_monthly_operator(self):
+        """测试用例：正常输入参数，月度运行operator，测试各种share组合"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_monthly_10,
+                shares=self.shares_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with simple operator and shares list:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_monthly_10.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.shares_list:
+            self.assertIn(share, result.columns)
+
+        # 检查数据全部是数值类型且不含NaN
+        for share in self.shares_list:
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().any())
 
     def test_single_share_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
