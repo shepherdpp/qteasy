@@ -2942,7 +2942,7 @@ def check_and_prepare_trade_prices(op,
                 data_types=data_types,
                 data_source=datasource,
                 shares=shares,
-                freq=freq,
+                freq=dtype_freq,
                 start=price_start,
                 end=price_end,
                 resample_method='ffill',
@@ -2966,7 +2966,7 @@ def check_and_prepare_trade_prices(op,
             raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
 
         # 调整日频及更低频率数据的时间点到对应的可用时间点上
-        if freq[0].lower() in ['d', 'w', 'm', 'q', 'y']:
+        if dtype_freq.lower() in ['d', 'w', 'm', 'q', 'y']:
             # 从schedules中获取对应的时间可用偏移量
             time_offset = sched[0] - pd.to_datetime(sched[0].date())
             trade_prices.index = trade_prices.index + pd.Timedelta(time_offset)
