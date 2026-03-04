@@ -318,7 +318,7 @@ class HistoryPanel():
             return list(self._columns.keys())
 
     @htypes.setter
-    def htypes(self, input_htypes: [str, list]):
+    def htypes(self, input_htypes: Union[str, list]):
         """修改HistoryPanel的历史数据类型"""
         if not self.is_empty:
             if isinstance(input_htypes, str):
@@ -811,7 +811,10 @@ class HistoryPanel():
         """
         return self.row_count
 
-    def re_label(self, shares: (str, list) = None, htypes: (str, list) = None, hdates: (str, list) = None) -> None:
+    def re_label(self,
+                 shares: Union[str, list] = None,
+                 htypes: Union[str, list] = None,
+                 hdates: Union[str, list] = None) -> None:
         """ 给HistoryPanel对象的层、行、列标签重新赋值
 
         Parameters
@@ -882,7 +885,7 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: [int, float]):
+    def fillna(self, with_val: Union[int, float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         Parameters
@@ -898,7 +901,7 @@ class HistoryPanel():
             self._values = fill_nan_data(self._values, with_val)
         return self
 
-    def fillinf(self, with_val: [int, float]):
+    def fillinf(self, with_val: Union[int, float]):
         """ 使用with_value来填充HistoryPanel中的所有inf值
 
         Parameters
@@ -1151,8 +1154,8 @@ class HistoryPanel():
         return self
 
     def slice_to_dataframe(self,
-                           htype: (str, int) = None,
-                           share: (str, int) = None,
+                           htype: Union[str, int] = None,
+                           share: Union[str, int] = None,
                            dropna: bool = False,
                            inf_as_na: bool = False) -> pd.DataFrame:
         """ 将HistoryPanel对象中的指定片段转化为DataFrame
@@ -2213,7 +2216,7 @@ def stack_dataframes(dfs: Union[list, dict],
                         columns=combined_htypes)
 
 
-def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+def from_df_dict(dfs: Union[list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
     """ 函数stack_dataframes()的别称，等同于函数stack_dataframes()"""
     return stack_dataframes(dfs=dfs,
                             dataframe_as=dataframe_as,
@@ -2589,9 +2592,9 @@ def get_history_panel(
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
         否则输出的历史数据频率与数据类型中规定的频率相同
-    start: str
+    start: str datetime like
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-    end: str
+    end: str datetime like
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
     rows: int
         获取的历史数据的行数，如果rows为None，则获取所有可用的历史数据
