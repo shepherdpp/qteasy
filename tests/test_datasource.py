@@ -1322,14 +1322,17 @@ class TestDataSource(unittest.TestCase):
         print('checks resample hourly data to 15 min')
         print(f'resampled data:\n{resampled.head(25)}')
         print(f'houly data:\n{hourly_data_tt.head(15)}')
-        sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
+        # 将每一天的15min频数据段映射回同一天的逐小时数据行：
+        # - 现在每个交易日有16个15min时间点（去掉09:30与13:00），对应7个逐小时数据点
+        # - sampled_rows 中的 (start, end) 为 [start, end) 形式的行区间
+        sampled_rows = [(0, 1), (1, 5), (5, 8), (None, None), (8, 11), (11, 15), (15, 16)]
         for day in range(9):
             for pos in range(len(sampled_rows)):
                 start = sampled_rows[pos][0]
                 end = sampled_rows[pos][1]
                 if start is None:
                     continue
-                for row in range(start + day * 17, end + day * 17):
+                for row in range(start + day * 16, end + day * 16):
                     res = hourly_data_tt.iloc[pos + day * 7].values
                     target = resampled.iloc[row].values
                     self.assertTrue(np.allclose(res, target))
@@ -1406,7 +1409,10 @@ class TestDataSource(unittest.TestCase):
         print(resampled)
         # TODO: last day data missing when resampling daily data to sub-daily data
         #   this is to be improved
-        sampled_rows = [(0, 9), (9, 18), (18, 27)]
+        # 由于 trade_time_index 默认不再包含 09:30，每个交易日的 30min 交易时间点为：
+        # 10:00 / 10:30 / 11:00 / 11:30 / 13:30 / 14:00 / 14:30 / 15:00 共 8 个
+        # 因此这里按 8 行/日划分 resampled 行号
+        sampled_rows = [(0, 8), (8, 16), (16, 24)]
         for pos in range(len(sampled_rows)):
             for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
                 res = daily_data.iloc[pos].values

@@ -421,7 +421,7 @@ def parse_pt_signals(signals: np.ndarray,
                      pt_buy_threshold: float,
                      pt_sell_threshold: float,
                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析PT类型的交易信号
+    """ 解析PT类型的交易信号，生成“理论目标调仓计划”
 
     Parameters
     ----------
@@ -485,7 +485,7 @@ def parse_ps_signals(signals: np.ndarray,
                      own_amounts: np.ndarray,
                      own_cash: Union[float, np.float64, np.ndarray],
                      allow_sell_short: bool) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析PS类型的交易信号
+    """ 解析PS类型的交易信号，将信号解释为基于当前总资产和持仓比例的订单规模
 
     Parameters
     ----------
@@ -533,7 +533,7 @@ def parse_vs_signals(signals: np.ndarray,
                      own_amounts: np.ndarray,
                      allow_sell_short: bool,
                      cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
-    """ 解析VS类型的交易信号
+    """ 解析VS类型的交易信号，将信号解释为绝对金额/数量级订单
 
     Parameters
     ----------
@@ -1476,7 +1476,7 @@ def trade_time_index(start=None,
                      include_end=True,
                      start_am='9:30:00',
                      end_am='11:30:00',
-                     include_start_am=True,
+                     include_start_am=False,
                      include_end_am=True,
                      start_pm='13:00:00',
                      end_pm='15:00:00',
@@ -1509,7 +1509,7 @@ def trade_time_index(start=None,
         早晨交易时段的开始时间
     end_am: datetime like str, Default '11:30:00'
         早晨交易时段的结束时间
-    include_start_am: bool, Default True
+    include_start_am: bool, Default False
         早晨交易时段是否包括开始时间
     include_end_am: bool, Default True
         早晨交易时段是否包括结束时间

@@ -274,7 +274,7 @@ class TestConfigParser(unittest.TestCase):
         target_day_indicators = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
         self.assertTrue(np.array_equal(day_indicators, target_day_indicators))
 
-        # test op_schedule with hourly frequency
+        # test op_schedule with hourly frequency (include_start_am=True to get 5 slots per day for expected arrays)
         config = {
             'invest_start':        '20200101',
             'invest_end':          '20200110',
@@ -286,6 +286,7 @@ class TestConfigParser(unittest.TestCase):
                 start='2020-01-01',
                 end='2020-01-10',
                 freq='h',
+                include_start_am=True,
         )
         timing_table = pd.DataFrame(
                 {'Group_1': [1.0] * len(op_schedule)},

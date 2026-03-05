@@ -154,24 +154,20 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
 
         print(f'timing_table.index: {timing_table.index}')
 
-        expected_index = pd.DatetimeIndex(['2023-03-01 09:30:00', '2023-03-01 10:30:00',
-                                           '2023-03-01 11:30:00', '2023-03-01 14:00:00',
-                                           '2023-03-01 15:00:00', '2023-03-02 09:30:00',
+        expected_index = pd.DatetimeIndex(['2023-03-01 10:30:00', '2023-03-01 11:30:00',
+                                           '2023-03-01 14:00:00', '2023-03-01 15:00:00',
                                            '2023-03-02 10:30:00', '2023-03-02 11:30:00',
                                            '2023-03-02 14:00:00', '2023-03-02 15:00:00',
-                                           '2023-03-03 09:30:00', '2023-03-03 10:30:00',
-                                           '2023-03-03 11:30:00', '2023-03-03 14:00:00',
-                                           '2023-03-03 15:00:00', '2023-03-06 09:30:00',
+                                           '2023-03-03 10:30:00', '2023-03-03 11:30:00',
+                                           '2023-03-03 14:00:00', '2023-03-03 15:00:00',
                                            '2023-03-06 10:30:00', '2023-03-06 11:30:00',
                                            '2023-03-06 14:00:00', '2023-03-06 15:00:00',
-                                           '2023-03-07 09:30:00', '2023-03-07 10:30:00',
-                                           '2023-03-07 11:30:00', '2023-03-07 14:00:00',
-                                           '2023-03-07 15:00:00', '2023-03-08 09:30:00',
+                                           '2023-03-07 10:30:00', '2023-03-07 11:30:00',
+                                           '2023-03-07 14:00:00', '2023-03-07 15:00:00',
                                            '2023-03-08 10:30:00', '2023-03-08 11:30:00',
                                            '2023-03-08 14:00:00', '2023-03-08 15:00:00',
-                                           '2023-03-09 09:30:00', '2023-03-09 10:30:00',
-                                           '2023-03-09 11:30:00', '2023-03-09 14:00:00',
-                                           '2023-03-09 15:00:00'])
+                                           '2023-03-09 10:30:00', '2023-03-09 11:30:00',
+                                           '2023-03-09 14:00:00', '2023-03-09 15:00:00'])
 
         # 检查生成的group_timing_table的index是否正确
         pd.testing.assert_index_equal(timing_table.index, expected_index)
@@ -253,35 +249,31 @@ class TestOperatorPrepareRunningSchedule(unittest.TestCase):
         print(f'timing_table.index: {timing_table.index}')
         print(f'timing_table.values: {timing_table.values}')
 
-        expected_index = pd.DatetimeIndex(['2023-03-01 09:30:00', '2023-03-01 10:30:00',
-                                           '2023-03-01 11:30:00', '2023-03-01 14:00:00',
-                                           '2023-03-01 15:00:00', '2023-03-02 09:30:00',
+        expected_index = pd.DatetimeIndex(['2023-03-01 10:30:00', '2023-03-01 11:30:00',
+                                           '2023-03-01 14:00:00', '2023-03-01 15:00:00',
                                            '2023-03-02 10:30:00', '2023-03-02 11:30:00',
                                            '2023-03-02 14:00:00', '2023-03-02 15:00:00',
-                                           '2023-03-03 09:30:00', '2023-03-03 10:30:00',
-                                           '2023-03-03 11:30:00', '2023-03-03 14:00:00',
-                                           '2023-03-03 15:00:00', '2023-03-06 09:30:00',
+                                           '2023-03-03 10:30:00', '2023-03-03 11:30:00',
+                                           '2023-03-03 14:00:00', '2023-03-03 15:00:00',
                                            '2023-03-06 10:30:00', '2023-03-06 11:30:00',
                                            '2023-03-06 14:00:00', '2023-03-06 15:00:00',
-                                           '2023-03-07 09:30:00', '2023-03-07 10:30:00',
-                                           '2023-03-07 11:30:00', '2023-03-07 14:00:00',
-                                           '2023-03-07 15:00:00', '2023-03-08 09:30:00',
+                                           '2023-03-07 10:30:00', '2023-03-07 11:30:00',
+                                           '2023-03-07 14:00:00', '2023-03-07 15:00:00',
                                            '2023-03-08 10:30:00', '2023-03-08 11:30:00',
                                            '2023-03-08 14:00:00', '2023-03-08 15:00:00',
-                                           '2023-03-09 09:30:00', '2023-03-09 10:30:00',
-                                           '2023-03-09 11:30:00', '2023-03-09 14:00:00',
-                                           '2023-03-09 15:00:00', '2023-03-10 09:30:00',
+                                           '2023-03-09 10:30:00', '2023-03-09 11:30:00',
+                                           '2023-03-09 14:00:00', '2023-03-09 15:00:00',
                                            '2023-03-10 10:30:00', '2023-03-10 11:30:00',
                                            '2023-03-10 14:00:00', '2023-03-10 15:00:00'])
 
-        expected_values = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 1],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
-                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0]])
+        expected_values = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 1],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0],
+                                    [0, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0]])
 
         # 检查生成的group_timing_table的index是否正确
         pd.testing.assert_index_equal(timing_table.index, expected_index)
@@ -887,6 +879,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.op_complex.set_parameter(stg_id=0, run_freq='d', run_timing='close')
         self.op_complex.set_parameter(stg_id=1, run_freq='h', run_timing='close')
         self.op_simple = Operator(strategies=[self.daily_strategy], run_freq='d', run_timing='close')
+        self.op_monthly_10 = Operator(strategies=[self.daily_strategy], run_freq='MS', run_timing='10:30')
         self.op_open = Operator(strategies=[self.daily_open_stg, self.hourly_strategy])
         self.op_open.set_parameter(stg_id=0, run_freq='d', run_timing='open')
         self.op_open.set_parameter(stg_id=1, run_freq='h', run_timing='close')
@@ -907,7 +900,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
         daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
         hourly_index = tti(start='20200101', end='20201231', freq='h')
-        min_index = tti(start='20200501', end='20200731', freq='1min', trade_days_only=True)
+        min_index = tti(start='20200301', end='20201031', freq='1min', trade_days_only=True)
 
         # 生成000001以及000002的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
@@ -943,7 +936,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
                 index=min_index,
         )
         stock_min_df_000002['ts_code'] = '000002.SZ'
-        stock_min_df = pd.concat([stock_min_df_000001, stock_daily_df_000002])
+        stock_min_df = pd.concat([stock_min_df_000001, stock_min_df_000002])
 
         # 生成000001/000002的stock_hourly数据
         stock_hourly_df_000001 = pd.DataFrame(
@@ -984,6 +977,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         index_daily_df_000300['ts_code'] = '000300.SH'
 
         # 添加000300.SH的分钟K线数据到index_1min表中，供指数参考数据使用
+        index_hourly_df_000300 = pd.DataFrame(
+                np.random.randint(2000, 4000, size=(len(hourly_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=hourly_index,
+        )
+        index_hourly_df_000300['ts_code'] = '000300.SH'
+
+        # 添加000300.SH的分钟K线数据到index_1min表中，供指数参考数据使用
         index_min_df_000300 = pd.DataFrame(
                 np.random.randint(2000, 4000, size=(len(min_index), 6)),
                 columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
@@ -1010,6 +1011,9 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.datasource.update_table_data('index_daily',
                                           df=index_daily_df_000300.reset_index().rename(
                                                   columns={'index': 'trade_date'}))
+        self.datasource.update_table_data('index_hourly',
+                                          df=index_hourly_df_000300.reset_index().rename(
+                                                  columns={'index': 'trade_time'}))
         self.datasource.update_table_data('index_1min',
                                           df=index_min_df_000300.reset_index().rename(columns={'index': 'trade_time'}))
         self.datasource.update_table_data('fund_nav',
@@ -1019,6 +1023,10 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         self.op_simple.prepare_running_schedule(
                 start_date='20200525',
                 end_date='20200610',
+        )
+        self.op_monthly_10.prepare_running_schedule(
+                start_date='20200301',
+                end_date='20201230',
         )
         self.op_complex.prepare_running_schedule(
                 start_date='20200610',
@@ -1083,7 +1091,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_list_with_complex_operator(self):
         """测试用例：正常输入参数，shares为列表，复杂operator"""
@@ -1115,7 +1123,39 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
+
+    def test_share_list_with_monthly_operator(self):
+        """测试用例：正常输入参数，月度运行operator，测试各种share组合"""
+        # 测试简单operator以及简单share_list的情形
+        result = check_and_prepare_trade_prices(
+                op=self.op_monthly_10,
+                shares=self.shares_list,
+                price_adj='none',
+                datasource=self.datasource
+        )
+        print(f'got trade prices with simple operator and shares list:\n{result}')
+
+        # 验证结果是DataFrame，且不为空
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+
+        # 检查索引类型正确，且索引与operator的group_timing_table的index一致
+        self.assertIsInstance(result.index, pd.DatetimeIndex)
+        timing_table_index = self.op_monthly_10.group_timing_table.index
+        print(f'expected timing table index:\n{timing_table_index}')
+        print(f'got trade prices index:\n{result.index}')
+        self.assertTrue(result.index.equals(timing_table_index))
+
+        # 检查列包含所有的shares
+        for share in self.shares_list:
+            self.assertIn(share, result.columns)
+
+        # 检查数据全部是数值类型且不含NaN
+        for share in self.shares_list:
+            self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
+                                                np.dtype('int64'), np.dtype('int32')])
+            self.assertFalse(result[share].isnull().any())
 
     def test_single_share_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1206,7 +1246,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1237,7 +1277,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1268,7 +1308,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1299,7 +1339,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_open_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1330,7 +1370,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1361,7 +1401,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator_forward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1392,7 +1432,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_share_index_fund_with_timing_operator_backward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1423,7 +1463,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
             # 检查数据全部是数值类型且不含NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().all())
+            self.assertFalse(result[share].isnull().any())
 
     def test_with_problematic_parameters(self):
         """测试有问题的输入参数"""
@@ -1505,6 +1545,7 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # - 场外基金日线净值：161039.OF，包括净值、累计净值和复权净值
         daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
         hourly_index = tti(start='20200101', end='20201231', freq='h')
+        self.evaluate_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True, time_offset='15:00')
 
         # 生成000001的stock_daily数据
         stock_daily_df_000001 = pd.DataFrame(
@@ -1625,7 +1666,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.daily_operator,
                 benchmark_symbol=self.benchmark_stock,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231'
         )
         print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
 
@@ -1642,10 +1685,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_stock].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        print(f'operator timing table index:\n{self.daily_operator.group_timing_table.index}')
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
         print(f'benchmark data index:\n{result.index}')
-        self.assertTrue(result.index.equals(self.daily_operator.group_timing_table.index))
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_stock(self):
         """测试用例：正常输入参数，返回DataFrame"""
@@ -1653,7 +1696,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_stock,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231'
         )
         print(f'got benchmark data for stock {self.benchmark_stock}:\n{result}')
 
@@ -1670,8 +1715,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_stock].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
+        print(f'benchmark data index:\n{result.index}')
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_index(self):
         """测试用例：空的benchmark代码"""
@@ -1679,7 +1726,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_index,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for index {self.benchmark_index}:\n{result}')
 
@@ -1696,8 +1745,10 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_index].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(f'evaluate price index:\n{self.evaluate_index}')
+        print(f'benchmark data index:\n{result.index}')
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_fund(self):
         """测试日期范围处理"""
@@ -1705,7 +1756,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_fund_in,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for fund in {self.benchmark_fund_in}:\n{result}')
 
@@ -1722,8 +1775,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_fund_in].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        print(self.evaluate_index)
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_benchmark_with_fund_out(self):
         """测试返回数据的结构是否正确"""
@@ -1731,7 +1785,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         result = check_and_prepare_benchmark_data(
                 op=self.operator,
                 benchmark_symbol=self.benchmark_fund_out,
-                datasource=self.datasource
+                datasource=self.datasource,
+                backtest_start='20200101',
+                backtest_end='20201231',
         )
         print(f'got benchmark data for fund in {self.benchmark_fund_out}:\n{result}')
 
@@ -1748,8 +1804,8 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
         # 检查数据中没有NaN值
         self.assertFalse(result[self.benchmark_fund_out].isnull().any())
 
-        # 检查index与operator的group_timing_table一致
-        self.assertTrue(result.index.equals(self.operator.group_timing_table.index))
+        # 检查index与evaluate_index一致，为20200101～20201231的日频时间点
+        self.assertTrue(result.index.equals(self.evaluate_index))
 
     def test_nonexistent_benchmark(self):
         """测试用例：不存在的benchmark代码"""
@@ -1758,7 +1814,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.operator,
                     benchmark_symbol='NONEXIST',
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
     def test_missing_data_in_source(self):
@@ -1769,7 +1827,9 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.wrong_operator,
                     benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
         # 超出范围的operater运行计划
@@ -1782,12 +1842,16 @@ class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
             check_and_prepare_benchmark_data(
                     op=self.operator,
                     benchmark_symbol='000999.SZ',  # 假设该代码在数据源中不存在
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
             check_and_prepare_benchmark_data(
                     op=self.wrong_operator,
                     benchmark_symbol='000001.SZ',
-                    datasource=self.datasource
+                    datasource=self.datasource,
+                    backtest_start='20200101',
+                    backtest_end='20201231',
             )
 
 

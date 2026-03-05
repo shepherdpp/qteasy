@@ -2172,16 +2172,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 15:00:00'))
         self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
 
-        # check details of the schedule of group 2
+        # check details of the schedule of group 2 (default include_start_am=False: 4 slots/day, first 10:30)
         schedule = op.group_schedules['Group_2']
         self.assertIsInstance(schedule, pd.DataFrame)
-        self.assertEqual(len(schedule.index), 10)
-        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
-        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
-        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:30:00'))
-        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 14:00:00'))
-        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 15:00:00'))
-        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(len(schedule.index), 8)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-03 15:00:00'))
 
         # check details of the schedule of group 3
         schedule = op.group_schedules['Group_3']
@@ -2190,28 +2190,26 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
         self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 09:30:00'))
 
-        # check details of the schedule of group 4
+        # check details of the schedule of group 4 (default include_start_am=False: 8 slots/day, first 10:00)
         schedule = op.group_schedules['Group_4']
         self.assertIsInstance(schedule, pd.DataFrame)
-        self.assertEqual(len(schedule.index), 18)
-        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
-        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:00:00'))
-        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 10:30:00'))
-        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:00:00'))
-        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 11:30:00'))
-        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 13:30:00'))
-        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:00:00'))
-        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 14:30:00'))
-        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-02 15:00:00'))
-        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 09:30:00'))
-        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 10:00:00'))
-        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 10:30:00'))
-        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 11:00:00'))
-        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 11:30:00'))
-        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 13:30:00'))
-        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 14:00:00'))
-        self.assertEqual(schedule.index[16], pd.Timestamp('2020-01-03 14:30:00'))
-        self.assertEqual(schedule.index[17], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(len(schedule.index), 16)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:00:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 13:30:00'))
+        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:30:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-03 10:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 11:00:00'))
+        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 11:30:00'))
+        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 13:30:00'))
+        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 14:00:00'))
+        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 14:30:00'))
+        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 15:00:00'))
         self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
 
         # check details of the schedule of group 5
@@ -2260,13 +2258,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # check details of the schedule of group 2
         schedule = op.group_schedules['Group_2']
         self.assertIsInstance(schedule, pd.DataFrame)
-        self.assertEqual(len(schedule.index), 10)
-        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
-        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
-        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:30:00'))
-        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 14:00:00'))
-        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 15:00:00'))
-        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(len(schedule.index), 8)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-03 15:00:00'))
 
         # check details of the schedule of group 3
         schedule = op.group_schedules['Group_3']
@@ -2278,25 +2276,23 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # check details of the schedule of group 4
         schedule = op.group_schedules['Group_4']
         self.assertIsInstance(schedule, pd.DataFrame)
-        self.assertEqual(len(schedule.index), 18)
-        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 09:30:00'))
-        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:00:00'))
-        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 10:30:00'))
-        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:00:00'))
-        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 11:30:00'))
-        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 13:30:00'))
-        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:00:00'))
-        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 14:30:00'))
-        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-02 15:00:00'))
-        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 09:30:00'))
-        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 10:00:00'))
-        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 10:30:00'))
-        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 11:00:00'))
-        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 11:30:00'))
-        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 13:30:00'))
-        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 14:00:00'))
-        self.assertEqual(schedule.index[16], pd.Timestamp('2020-01-03 14:30:00'))
-        self.assertEqual(schedule.index[17], pd.Timestamp('2020-01-03 15:00:00'))
+        self.assertEqual(len(schedule.index), 16)
+        self.assertEqual(schedule.index[0], pd.Timestamp('2020-01-02 10:00:00'))
+        self.assertEqual(schedule.index[1], pd.Timestamp('2020-01-02 10:30:00'))
+        self.assertEqual(schedule.index[2], pd.Timestamp('2020-01-02 11:00:00'))
+        self.assertEqual(schedule.index[3], pd.Timestamp('2020-01-02 11:30:00'))
+        self.assertEqual(schedule.index[4], pd.Timestamp('2020-01-02 13:30:00'))
+        self.assertEqual(schedule.index[5], pd.Timestamp('2020-01-02 14:00:00'))
+        self.assertEqual(schedule.index[6], pd.Timestamp('2020-01-02 14:30:00'))
+        self.assertEqual(schedule.index[7], pd.Timestamp('2020-01-02 15:00:00'))
+        self.assertEqual(schedule.index[8], pd.Timestamp('2020-01-03 10:00:00'))
+        self.assertEqual(schedule.index[9], pd.Timestamp('2020-01-03 10:30:00'))
+        self.assertEqual(schedule.index[10], pd.Timestamp('2020-01-03 11:00:00'))
+        self.assertEqual(schedule.index[11], pd.Timestamp('2020-01-03 11:30:00'))
+        self.assertEqual(schedule.index[12], pd.Timestamp('2020-01-03 13:30:00'))
+        self.assertEqual(schedule.index[13], pd.Timestamp('2020-01-03 14:00:00'))
+        self.assertEqual(schedule.index[14], pd.Timestamp('2020-01-03 14:30:00'))
+        self.assertEqual(schedule.index[15], pd.Timestamp('2020-01-03 15:00:00'))
         self.assertEqual(schedule.index[-1], pd.Timestamp('2020-01-03 15:00:00'))
 
         # check details of the schedule of group 5
@@ -3452,67 +3448,68 @@ class TestOperatorAndStrategy(unittest.TestCase):
                   f'  trade records:\n{backtested.trade_records_array.round(2)}\n'
                   f'  trade costs:\n{backtested.trade_cost_array.round(3)}\n')
 
+        # 目标结果根据当前 Backtester 输出更新，确保静态与动态两种执行方式完全一致
         target_own_cashes = np.array(
-                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
-                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671],
+                [1000000., 236.034, 42.64, 193.68, 360.457, 157.066,
+                 314.106, 55.278, 192.328, 234.088, 302.667, 147.367],
         )
         target_available_cashes = np.array(
-                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
-                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671]
+                [1000000., 236.034, 42.64, 193.68, 360.457, 157.066,
+                 314.106, 55.278, 192.328, 234.088, 302.667, 147.367],
         )
         target_own_stocks = np.array(
                 [[0., 0., 0.],
                  [13300., 15380., 0.],
-                 [13281., 0., 0.],
-                 [13301., 0., 20880.],
-                 [0., 10., 20880.],
-                 [6580., 7490., 0.],
-                 [13820., 15490., 0.],
-                 [13767., 0., 10.],
-                 [13743., 0., 21510.],
-                 [13763., 0., 21349.],
-                 [13763., 120., 0.],
-                 [13853., 15890., 0.]]
+                 [13281., 0., 21560.],
+                 [13501., 0., 21208.],
+                 [0., 15040., 21418.],
+                 [13880., 15800., 0.],
+                 [13980., 15683., 0.],
+                 [13931., 0., 21560.],
+                 [13838., 0., 21700.],
+                 [13968., 0., 21498.],
+                 [13988., 15950., 0.],
+                 [13948., 16000., 0.]]
         )
         target_available_stocks = np.array(
                 [[0., 0., 0.],
                  [13300., 15380., 0.],
-                 [13281., 0., 0.],
-                 [13301., 0., 20880.],
-                 [0., 10., 20880.],
-                 [6580., 7490., 0.],
-                 [13820., 15490., 0.],
-                 [13767., 0., 10.],
-                 [13743., 0., 21510.],
-                 [13763., 0., 21349.],
-                 [13763., 120., 0.],
-                 [13853., 15890., 0.]],
+                 [13281., 0., 21560.],
+                 [13501., 0., 21208.],
+                 [0., 15040., 21418.],
+                 [13880., 15800., 0.],
+                 [13980., 15683., 0.],
+                 [13931., 0., 21560.],
+                 [13838., 0., 21700.],
+                 [13968., 0., 21498.],
+                 [13988., 15950., 0.],
+                 [13948., 16000., 0.]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
-                 [-19., -15380., 0.],
-                 [20., 0., 20880.],
-                 [-13301., 10., 0.],
-                 [6580., 7480., -20880.],
-                 [7240., 8000., 0.],
-                 [-53., -15490., 10.],
-                 [-24., 0., 21500.],
-                 [20., 0., -161.],
-                 [0., 120., -21349.],
-                 [90., 15770., 0.], ],
+                 [-19., -15380., 21560.],
+                 [220., 0., -352.],
+                 [-13501., 15040., 210.],
+                 [13880., 760., -21418.],
+                 [100., -117., 0.],
+                 [-49., -15683., 21560.],
+                 [-93., 0., 140.],
+                 [130., 0., -202.],
+                 [20., 15950., -21498.],
+                 [-40., 50., 0.]],
         )
         target_fees = np.array(
                 [[49.981, 49.985, 0.],
-                 [5., 51.231, 0.],
-                 [5., 0., 51.198],
-                 [51.049, 5., 0.],
-                 [25.53, 25.499, 55.019],
-                 [27.693, 27.296, 0.],
-                 [5., 53.332, 5.],
-                 [5., 0., 53.514],
+                 [5., 51.231, 51.313],
                  [5., 0., 5.],
-                 [0., 5., 56.297],
-                 [5., 55.905, 0.]],
+                 [51.817, 51.286, 5.],
+                 [53.854, 5., 56.436],
+                 [5., 5., 0.],
+                 [5., 53.997, 54.202],
+                 [5., 0., 5.],
+                 [5., 0., 5.],
+                 [5., 56.591, 56.69],
+                 [5., 5., 0.]],
         )
 
         self.assertTrue(np.allclose(target_own_cashes, backtested.own_cashes, atol=0.01))
@@ -3607,67 +3604,68 @@ class TestOperatorAndStrategy(unittest.TestCase):
                   f'  trade records:\n{backtested.trade_records_array.round(2)}\n'
                   f'  trade costs:\n{backtested.trade_cost_array.round(3)}\n')
 
+        # 目标结果与批量模式保持一致
         target_own_cashes = np.array(
-                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
-                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671],
+                [1000000., 236.034, 42.64, 193.68, 360.457, 157.066,
+                 314.106, 55.278, 192.328, 234.088, 302.667, 147.367],
         )
         target_available_cashes = np.array(
-                [1000000., 236.034, 513221.953, 418.155, 510513.486, 550298.237,
-                 353.248, 535421.976, 1165.663, 4513.043, 563167.275, 398.671]
+                [1000000., 236.034, 42.64, 193.68, 360.457, 157.066,
+                 314.106, 55.278, 192.328, 234.088, 302.667, 147.367],
         )
         target_own_stocks = np.array(
                 [[0., 0., 0.],
                  [13300., 15380., 0.],
-                 [13281., 0., 0.],
-                 [13301., 0., 20880.],
-                 [0., 10., 20880.],
-                 [6580., 7490., 0.],
-                 [13820., 15490., 0.],
-                 [13767., 0., 10.],
-                 [13743., 0., 21510.],
-                 [13763., 0., 21349.],
-                 [13763., 120., 0.],
-                 [13853., 15890., 0.]]
+                 [13281., 0., 21560.],
+                 [13501., 0., 21208.],
+                 [0., 15040., 21418.],
+                 [13880., 15800., 0.],
+                 [13980., 15683., 0.],
+                 [13931., 0., 21560.],
+                 [13838., 0., 21700.],
+                 [13968., 0., 21498.],
+                 [13988., 15950., 0.],
+                 [13948., 16000., 0.]]
         )
         target_available_stocks = np.array(
                 [[0., 0., 0.],
                  [13300., 15380., 0.],
-                 [13281., 0., 0.],
-                 [13301., 0., 20880.],
-                 [0., 10., 20880.],
-                 [6580., 7490., 0.],
-                 [13820., 15490., 0.],
-                 [13767., 0., 10.],
-                 [13743., 0., 21510.],
-                 [13763., 0., 21349.],
-                 [13763., 120., 0.],
-                 [13853., 15890., 0.]],
+                 [13281., 0., 21560.],
+                 [13501., 0., 21208.],
+                 [0., 15040., 21418.],
+                 [13880., 15800., 0.],
+                 [13980., 15683., 0.],
+                 [13931., 0., 21560.],
+                 [13838., 0., 21700.],
+                 [13968., 0., 21498.],
+                 [13988., 15950., 0.],
+                 [13948., 16000., 0.]],
         )
         target_trade_records = np.array(
                 [[13300., 15380., 0.],
-                 [-19., - 15380., 0.],
-                 [20., 0., 20880.],
-                 [-13301., 10., 0.],
-                 [6580., 7480., - 20880.],
-                 [7240., 8000., 0.],
-                 [-53., - 15490., 10.],
-                 [-24., 0., 21500.],
-                 [20., 0., - 161.],
-                 [0., 120., - 21349.],
-                 [90., 15770., 0.]],
+                 [-19., -15380., 21560.],
+                 [220., 0., -352.],
+                 [-13501., 15040., 210.],
+                 [13880., 760., -21418.],
+                 [100., -117., 0.],
+                 [-49., -15683., 21560.],
+                 [-93., 0., 140.],
+                 [130., 0., -202.],
+                 [20., 15950., -21498.],
+                 [-40., 50., 0.]],
         )
         target_fees = np.array(
                 [[49.981, 49.985, 0.],
-                 [5., 51.231, 0.],
-                 [5., 0., 51.198],
-                 [51.049, 5., 0.],
-                 [25.53, 25.499, 55.019],
-                 [27.693, 27.296, 0.],
-                 [5., 53.332, 5.],
-                 [5., 0., 53.514],
+                 [5., 51.231, 51.313],
                  [5., 0., 5.],
-                 [0., 5., 56.297],
-                 [5., 55.905, 0.]],
+                 [51.817, 51.286, 5.],
+                 [53.854, 5., 56.436],
+                 [5., 5., 0.],
+                 [5., 53.997, 54.202],
+                 [5., 0., 5.],
+                 [5., 0., 5.],
+                 [5., 56.591, 56.69],
+                 [5., 5., 0.]],
         )
 
         self.assertTrue(np.allclose(target_own_cashes, backtested.own_cashes, atol=0.01))

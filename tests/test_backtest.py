@@ -2041,6 +2041,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
@@ -2302,6 +2303,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
@@ -2784,6 +2786,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
@@ -3246,6 +3249,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
@@ -3610,6 +3614,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10., 10., 10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 
@@ -3956,6 +3961,7 @@ class TestBacktest(unittest.TestCase):
                 moq_buy=0.,
                 moq_sell=0.,
                 prices=np.array([10.]),
+                cash_delivery_period=1,
         )
         print(f'fixed parameters for testing calculate_trade_results(): \n{fixed_kwargs_parameters}')
 

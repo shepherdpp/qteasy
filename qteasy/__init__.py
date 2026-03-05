@@ -110,21 +110,24 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 version_info = Namespace(
         major=2,
         minor=0,
-        patch=0,
+        patch=1,
         short=(2, 0),
-        full=(2, 0, 0),
-        string='2.0.0',
-        tuple=('2', '0', '0'),
+        full=(2, 0, 1),
+        string='2.0.1',
+        tuple=('2', '0', '1'),
         releaselevel='beta',
 )
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
 QT_ROOT_PATH = os.path.join(QT_ROOT_PATH, 'qteasy/')
+
+QT_SYS_LOG_PATH = ''
+QT_TRADE_LOG_PATH = ''
 
 # 准备从本地配置文件中读取预先存储的qteasy配置
 _qt_local_configs = {}

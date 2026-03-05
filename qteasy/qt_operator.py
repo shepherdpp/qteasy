@@ -2319,6 +2319,18 @@ class Operator:
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=start_date,
+                backtest_end=end_date,
+        )
+
+        from qteasy.history import check_and_prepare_evaluate_price_data
+        evaluate_price_data = check_and_prepare_evaluate_price_data(
+                op=self,
+                shares=config['asset_pool'],
+                datasource=datasource,
+                backtest_start=start_date,
+                backtest_end=end_date,
+                backtest_price_adj=config['backtest_price_adj'],
         )
 
         self.prepare_data_buffer(
@@ -2335,6 +2347,7 @@ class Operator:
                 shares=config['asset_pool'],
                 cash_plan=cash_plan,
                 benchmark_data=hist_benchmark,
+                evaluate_price_data=evaluate_price_data,
                 cash_investment_array=cash_investment_array,
                 cash_inflation_array=cash_inflation_array,
                 delivery_day_indicators=delivery_day_indicators,
@@ -2346,6 +2359,10 @@ class Operator:
                 enable_tracing=config['trace_log'],
                 logger=logger,
         ).run()
+
+        # 保存 Backtester 对象到 Operator，便于在测试或后续处理中直接访问回测“金标准”数组
+        # （own_amounts_array / own_cashes / trade_price_data / trade_cost_array 等）
+        self.backtested = backtested
 
         # 评价回测结果——根据交易结果生成交易结果的评价结果
         backtested.evaluate_result(
@@ -2458,30 +2475,32 @@ class Operator:
         )
 
         # debug
-        print(f'preparing data buffer...')
+        # print(f'preparing data buffer...')
         self.prepare_data_buffer(
                 start_date=opti_start,
                 end_date=opti_end,
                 data_package=opti_data_package,
         )
-        print(f'creating data windows...')
+        # print(f'creating data windows...')
         self.create_data_windows()
 
-        print(f'Preparing trade prices...')
+        # print(f'Preparing trade prices...')
         opti_trade_prices = check_and_prepare_trade_prices(
                 op=self,
                 shares=config['asset_pool'],
                 price_adj=config['backtest_price_adj'],
                 datasource=datasource,
         )
-        print(f'Preparing benchmark data')
+        # print(f'Preparing benchmark data')
         opti_benchmark = check_and_prepare_benchmark_data(
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=opti_start,
+                backtest_end=opti_end,
         )
 
-        print(f'Starting optimization...')
+        # print(f'Starting optimization...')
         optimizer.optimize(
                 benchmark_data=opti_benchmark,
                 trade_price_data=opti_trade_prices.values,
@@ -2523,6 +2542,8 @@ class Operator:
                 op=self,
                 benchmark_symbol=config['benchmark_asset'],
                 datasource=datasource,
+                backtest_start=test_start,
+                backtest_end=test_end,
         )
         print(f'Starting validation on test data...')
         optimizer.validate(
