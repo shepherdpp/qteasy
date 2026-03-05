@@ -51,6 +51,8 @@ class Group:
         self._blender = None
 
         self.members = []
+        # 运行时由 Operator 设置，用于在策略中访问 Operator 级别的运行状态（如 process data）
+        self._operator = None
         self._run_timing = run_timing
         self._run_freq = run_freq
 

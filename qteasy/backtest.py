@@ -1232,6 +1232,26 @@ class Backtester:
         # 1，读取初始持仓和现金数据，更新operator中的依赖性历史数据
         signals = np.zeros((self.op.get_signal_count(), self.share_count), dtype=float)
 
+        # 为 Operator 注入完整的交易过程数据源与时间索引，供策略通过 get_data('proc.xxx', ...) 访问。
+        # 注意：这里不改变原有 dynamic data buffer 机制，仅额外提供 process data 视图。
+        try:
+            self.op._process_time_index = self.op.op_signal_index.get_level_values(0).to_numpy()
+        except Exception:
+            self.op._process_time_index = None
+        if hasattr(self.op, "_process_data_sources"):
+            self.op._process_data_sources = {
+                "own_cashes": self.own_cashes,
+                "available_cashes": self.available_cashes,
+                "own_amounts": self.own_amounts_array,
+                "available_amounts": self.available_amounts_array,
+                "trade_records": self.trade_records_array,
+                "trade_costs": self.trade_cost_array,
+                # 使用实际成交价格作为交易价格过程数据
+                "trade_prices": self.trade_price_array,
+                # 使用交易模拟价格作为估值价格，用于 position_value / total_value 一类派生量
+                "price_data": self.trade_price_data,
+            }
+
         self.op.prepare_dynamic_data_buffer(
                 trade_records=self.trade_records_array,  # 成交量
                 trade_prices=self.trade_price_array,  # 成交价格

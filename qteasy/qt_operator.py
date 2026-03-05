@@ -140,7 +140,10 @@ class Operator:
 
         """
 
+        # 全局 signal 行号（与 op_signal_index 对齐），用于 tracing 与 process data 对齐
         self._trace_signal_index = 0
+        # 当前正在生成/处理的全局 signal 行号，用于 process data API
+        self._current_signal_index: int = 0
         self.debug = False  # debug模式下，Operator对象自动被认为是ready的
         self.name = name
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
@@ -192,6 +195,11 @@ class Operator:
         self.dynamic_data_buffers = {}  # Dict——Operator对象的动态历史数据缓存，缓存所有策略所需的动态历史数据
         self.data_window_views = {}  # Dict——Operator对象的历史数据滑窗视图，保存所有策略所需的历史数据滑窗
         self.data_window_indices = {}  # Dict——Operator对象的历史数据滑窗索引，保存所有策略所需的历史数据滑窗索引
+
+        # 回测 / 实盘运行过程中由 Backtester / Trader 注入的“交易过程数据”源与时间索引，
+        # 仅用于在策略中通过 get_data('proc.xxx', ...) 访问过程数据
+        self._process_data_sources: dict[str, Any] = {}
+        self._process_time_index = None
 
         # batch模式下生成的交易清单以及交易清单的相关信息
         self._op_signals = None  # 在batch模式下，Operator生成的交易信号清单
@@ -947,6 +955,8 @@ class Operator:
                               blender=None,
                               run_freq=run_freq,
                               run_timing=run_timing, )
+            # 让 Group 反向持有 Operator 引用，便于策略通过 group 访问 Operator
+            new_group._operator = self
             new_group.add_strategy(strategy)
             self._groups.append(new_group)
         else:  # add the strategy to an existing group
@@ -1478,6 +1488,7 @@ class Operator:
                                       blender=None,
                                       run_freq=new_run_freq,
                                       run_timing=new_run_timing, )
+                    new_group._operator = self
                     new_group.add_strategy(strategy)
                     strategy._group_id = group_id
                     self._groups.append(new_group)
@@ -1992,14 +2003,15 @@ class Operator:
         """
         if self.group_timing_table is None:
             raise ValueError("Group timing table is not set. Please set it before running steps.")
-        # 每次进入时按 step_index 设置起始全局 signal 行号，支持“只跑部分 step”的调用
+        # 计算当前步骤对应的“全局 signal 行号”起点（与 op_signal_index 对齐），
+        # 无论是否启用 tracing，process data 都依赖这一索引。
+        if self.group_merge_type == 'None':
+            base_signal_index = int(self.group_timing_table.iloc[:step_index].values.sum())
+        else:
+            base_signal_index = step_index
+        # 对 tracing 来说，保持原有语义：使用全局 signal 行号，与 op_signal_index 一致
         if self._trace_enabled:
-            if self.group_merge_type == 'None':
-                self._trace_signal_index = int(
-                        self.group_timing_table.iloc[:step_index].values.sum()
-                )
-            else:
-                self._trace_signal_index = step_index
+            self._trace_signal_index = base_signal_index
         # print(f'taking step index: {step_index} from group_timing_table with shape {self.group_timing_table.shape}')
         group_timing = self.group_timing_table.iloc[step_index].values
         group_count = len(self.groups)
@@ -2010,6 +2022,7 @@ class Operator:
         signal = 0 if self.group_merge_type == 'Or' else 1
         # DEBUG:
         # print(f'In current op run step, following groups are running: {groups}')
+        current_index = base_signal_index
         for group in groups:
             # ----set up data window for each strategy
             for strategy in group.members:
@@ -2026,12 +2039,16 @@ class Operator:
 
             # ---- end setting up data windows
             signal_type = group.signal_type
+            # 在生成信号前，更新当前全局 signal 行号，供 process data 访问使用
+            self._current_signal_index = current_index
             signals = [stg.generate() for stg in group.members]
 
             if self.group_merge_type == 'None':
                 signal = group.blend(signals)
                 yield signal_type, step_index, signal
-                self._trace_signal_index += 1
+                current_index += 1
+                if self._trace_enabled:
+                    self._trace_signal_index += 1
             elif self.group_merge_type == 'Or':
                 signal += group.blend(signals)
             elif self.group_merge_type == 'And':
@@ -2040,8 +2057,11 @@ class Operator:
                 raise ValueError(f'Invalid group merge type: {self.group_merge_type}')
 
         if self.group_merge_type != 'None':
+            # 对于 AND / OR 合并模式，同一时间步只产生一条合并后的信号
+            self._current_signal_index = current_index
             yield signal_type, step_index, signal
-            self._trace_signal_index += 1
+            if self._trace_enabled:
+                self._trace_signal_index += 1
 
     def run_strategies(self, steps: Iterable) -> Iterable:
         """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
