@@ -1,5 +1,14 @@
 # RELEASE HISTORY
 
+## 2.0.1 (2026-03-05)
+- Improved documentation and docstrings, adding more explanations about the overall design and architecture of qteasy.
+- Fixed the post-backtest performance evaluation so that all evaluation tables and plotted equity curves are consistently computed on daily frequency, independent of the strategy running frequency.
+- Removed configuration keys `price_priority_OHLC` and `price_priority_quote`, which are no longer meaningful under the new pricing architecture.
+- Fixed issues where trade prices could sometimes not be correctly fetched during backtests.
+- Fixed incorrect inclusion of market opening time in strategy running schedules for high-frequency backtests such as hourly and minute-level runs.
+- Unified the adjustment method for trading prices and evaluation prices so that both now use the same adjustment convention.
+- Refined the semantics and execution behavior of PT / PS / VS signals: for PT signals, the backtest matching engine now reuses cash obtained from same-step sells as much as possible to reach the target portfolio; for PS and VS signals, the engine keeps naive order semantics and drops orders that cannot be filled due to resource limits.
+
 ## 2.0.0 (2026-02-27)
 - Major update: qteasy 2.0 will be released with significant changes in the architecture and APIs, aiming to provide a more powerful and flexible framework for quantitative trading. Users are advised to check the migration guide in the documentation to smoothly upgrade to 2.0.
 - Key changes in 2.0 include:
