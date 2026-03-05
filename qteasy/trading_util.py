@@ -1509,7 +1509,7 @@ def trade_time_index(start=None,
         早晨交易时段的开始时间
     end_am: datetime like str, Default '11:30:00'
         早晨交易时段的结束时间
-    include_start_am: bool, Default True
+    include_start_am: bool, Default False
         早晨交易时段是否包括开始时间
     include_end_am: bool, Default True
         早晨交易时段是否包括结束时间
