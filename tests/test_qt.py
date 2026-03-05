@@ -1484,6 +1484,7 @@ class TestQT(unittest.TestCase):
 
             def __init__(self):
                 super().__init__(
+                        pars=[Parameter((0, 1), name='id', par_type='int', value=0)],
                         name='OneShotPT',
                         description='单次 PT 调仓，将全部仓位从第一只股票切换到第二只股票',
                         data_types=StgData('close', freq='d', asset_type='E', window_length=1),
@@ -1492,11 +1493,14 @@ class TestQT(unittest.TestCase):
 
             def realize(self):
                 prices = self.get_data('close_E_d')[-1]
+                id = self.get_pars('id')
                 # 两只股票：第一只 A，第二只 B。
                 # 第一天信号：全仓 A（1, 0），第二天信号：全仓 B（0, 1）。
-                if self.now_step == 0:
-                    self.signal[:] = [1.0, 0.0]
+                if id == 0:
+                    self.par_values = (1,)  # 更新参数 id，确保第二天发出不同的信号
+                    return np.array([1.0, 0.0])
                 else:
+                    self.par_values = (0,)  # 更新参数 id，确保第二天发出不同的信号
                     return np.array([0.0, 1.0])
 
         shares = ['000001.SZ', '000002.SZ']
