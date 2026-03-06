@@ -284,6 +284,127 @@ class TestProcessDataAPI(unittest.TestCase):
         self.assertIsInstance(res, dict)
 
 
+class NoLookAheadStg(GeneralStg):
+    """用于测试 proc.trade_records 在动态回测中不包含当前步尚未成交结果。"""
+
+    def __init__(self):
+        super().__init__(
+                name='NoLookAhead',
+                description='no look-ahead test strategy',
+                pars=[Parameter((0, 1), name='dummy', par_type='int', value=0)],
+                data_types=StgData('close', freq='d', asset_type='E', window_length=1),
+        )
+        # 记录每一步在 realize() 中看到的 trade_records 历史长度与 lag=0 的结果
+        self.hist_lengths: list[int] = []
+        self.last_records: list[np.ndarray] = []
+
+    def realize(self):
+        # 获取完整历史和最近一次 trade_records 视图
+        hist = self.get_data('proc.trade_records')
+        self.hist_lengths.append(0 if hist.size == 0 else hist.shape[0])
+        if hist.size == 0:
+            # 第一步没有历史成交记录
+            self.last_records.append(None)
+        else:
+            last = self.get_data('proc.trade_records', lag=0)
+            # last 形状通常为 (1, share_count)
+            self.last_records.append(last.copy())
+        # 输出零信号，避免对路径产生额外影响
+        return np.zeros(self.share_count, dtype=float)
+
+
+@unittest.skip("TODO: enable after dynamic proc.* injection is finalized for no-look-ahead verification")
+class TestNoLookAheadForProcessData(unittest.TestCase):
+    """D 组：验证 proc.trade_records 等过程数据不发生前视。"""
+
+    def test_proc_trade_records_no_look_ahead(self):
+        print('\n[TestNoLookAheadForProcessData] verifying proc.trade_records has no look-ahead')
+        shares = ['000001.SZ', '000002.SZ']
+        configure(
+                asset_pool=shares,
+                asset_type='E',
+                invest_start='20200102',
+                invest_end='20200110',
+                invest_cash_amounts=[100000.0],
+                trade_batch_size=100,
+                sell_batch_size=100,
+        )
+        op = Operator(strategies=[NoLookAheadStg()],
+                      signal_type='VS',  # 使用 VS 信号，策略返回 0，不改变路径
+                      run_freq='d',
+                      run_timing='close')
+        res = run(op=op, mode=1, visual=False, trade_log=False)
+        self.assertIsInstance(res, dict)
+        backtested = op.backtested
+        stg = op.strategies[0]
+
+        print('  recorded hist_lengths:', stg.hist_lengths)
+        print('  trade_records_array shape:', backtested.trade_records_array.shape)
+
+        # 对于第 k 步（k>=1），last_records[k] 应等于 trade_records_array[k-1]
+        for k, last in enumerate(stg.last_records):
+            if k == 0 or last is None:
+                continue
+            expected = backtested.trade_records_array[k - 1]
+            np.testing.assert_allclose(last.reshape(expected.shape),
+                                       expected,
+                                       err_msg=f'look-ahead detected at step {k}')
+
+
+class VolumeBasedDynamicStg(GeneralStg):
+    """E 组示例动态策略：基于最近成交量控制简单买入/持有逻辑（作为路径正确性测试样例）。"""
+
+    def __init__(self):
+        super().__init__(
+                name='VolumeBasedDynamic',
+                description='volume-based dynamic strategy using proc.trade_records',
+                pars=[Parameter((0, 10), name='threshold', par_type='int', value=1)],
+                data_types=StgData('close', freq='d', asset_type='E', window_length=1),
+        )
+
+    def realize(self):
+        """示意性逻辑：如果最近一次成交绝对量大于阈值，则本步信号为 0，否则买入 1 单位。"""
+        threshold = self.get_pars('threshold')
+        trades_hist = self.get_data('proc.trade_records')
+        if trades_hist.size == 0:
+            # 第一步：发出买入信号
+            return np.array([1.0] + [0.0] * (self.share_count - 1), dtype=float)
+        last_trades = self.get_data('proc.trade_records', lag=0)[0]
+        if np.abs(last_trades).sum() > threshold:
+            # 最近一笔成交较大，本步不再加仓
+            return np.zeros(self.share_count, dtype=float)
+        else:
+            return np.array([1.0] + [0.0] * (self.share_count - 1), dtype=float)
+
+
+@unittest.skip("TODO: design and validate explicit expected path for VolumeBasedDynamicStg")
+class TestDynamicStrategyWithProcessData(unittest.TestCase):
+    """E 组：使用 process data 的真实动态策略路径正确性测试（占位实现，待补充期望路径）。"""
+
+    def test_dynamic_strategy_with_process_data_correctness(self):
+        print('\n[TestDynamicStrategyWithProcessData] volume-based dynamic strategy correctness (placeholder)')
+        shares = ['000001.SZ', '000002.SZ']
+        configure(
+                asset_pool=shares,
+                asset_type='E',
+                invest_start='20200102',
+                invest_end='20200110',
+                invest_cash_amounts=[100000.0],
+                trade_batch_size=1,
+                sell_batch_size=1,
+        )
+        op = Operator(strategies=[VolumeBasedDynamicStg()],
+                      signal_type='VS',
+                      run_freq='d',
+                      run_timing='close')
+        res = run(op=op, mode=1, visual=False, trade_log=False)
+        self.assertIsInstance(res, dict)
+        backtested = op.backtested
+        print('  own_amounts_array:', backtested.own_amounts_array)
+        print('  own_cashes:', backtested.own_cashes)
+        # TODO: 在未来根据 VolumeBasedDynamicStg 的设计，补充显式的期望路径并使用 allclose 断言
+
+
 if __name__ == '__main__':
     unittest.main()
 
