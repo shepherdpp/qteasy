@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 2.1.0 (2026-03-05)
+## 2.1.0 (2026-03-06)
 - **Process data (proc.\*) API**: Strategies can access runtime state (cash, positions, trade records, etc.) via `get_data('proc.own_cash')`, `get_data('proc.trade_records', lag=0)` and other `proc.*` fields in `realize()` without declaring them in `data_types`. Process data is injected by Backtester (backtest) and Trader (live) and respects no-look-ahead: at step k the strategy sees only results from steps 0..k-1 for trade data.
 - **Dynamic backtest path selection**: If any strategy uses `proc.*` in its `realize()` source, backtest automatically uses the stepwise path (`_backtest_dynamic_operator`); otherwise the static path (batch signals + vectorized backtest) is used. Detection is via `_strategies_use_proc_data()` so no declaration is required.
 - **Live trading process data**: When `operator.check_dynamic_data()` is True, Trader injects current account/position and price views into the operator so that `get_data('proc.xxx')` works in live mode with the same API as in backtest.
