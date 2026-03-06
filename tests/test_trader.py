@@ -1287,6 +1287,8 @@ class TestTrader(unittest.TestCase):
         print(f'current ts status: {ts.status}')
 
         # generate task agenda in a non-trade day and empty list will be generated
+        # run() 启动时 _run_task('start') 已调用 _initialize_schedule() 用真实时间生成了日程，须先清空再测非交易日
+        ts.task_daily_schedule = []
         sim_date = dt.date(2023, 1, 1)  # a non-trade day
         ts.force_current_date = sim_date
         sim_time = dt.time(0, 0, 0)  # midnight
@@ -1370,10 +1372,10 @@ class TestTrader(unittest.TestCase):
         self.assertIn(('16:00:00', 'refill', ('stock_1min, stock_5min', 1)), ts.task_daily_schedule)
         last_task = ts.task_daily_schedule[-1]
         print(last_task)
-        # 每月 1 号会多一条 monthly refill，故最后一项可能是 daily 或 monthly refill
+        # 最后一项为 16:00 refill：daily(1)、weekly(7)、每月 1 号还有 monthly(31)，顺序不固定
         self.assertEqual(last_task[0], '16:00:00')
         self.assertEqual(last_task[1], 'refill')
-        self.assertIn(last_task[2], [('stock_1min, stock_5min', 1), ('stock_daily', 31)])
+        self.assertIn(last_task[2], [('stock_1min, stock_5min', 1), ('stock_15min', 7), ('stock_daily', 31)])
         # re_initialize_agenda at 10:35:27
         sim_time = dt.time(10, 35, 27)
         ts.task_daily_schedule = []
@@ -1413,9 +1415,12 @@ class TestTrader(unittest.TestCase):
             ('16:00:00', 'refill', ('stock_1min, stock_5min', 1))
         ]
         self.assertEqual(ts.task_daily_schedule[:len(target_agenda)], target_agenda)
-        # 每月 1 号会多一条 monthly refill，允许末尾多这一项
+        # 可能多出 daily/weekly/monthly refill，顺序不固定，末尾任一项均为合法
         if len(ts.task_daily_schedule) > len(target_agenda):
-            self.assertEqual(ts.task_daily_schedule[-1], ('16:00:00', 'refill', ('stock_daily', 31)))
+            last_extra = ts.task_daily_schedule[-1]
+            self.assertEqual(last_extra[0], '16:00:00')
+            self.assertEqual(last_extra[1], 'refill')
+            self.assertIn(last_extra[2], [('stock_1min, stock_5min', 1), ('stock_15min', 7), ('stock_daily', 31)])
         ts.task_queue.empty()  # clear task queue
 
         # third, create simulated task agenda and execute tasks from the agenda at sim times
@@ -1992,43 +1997,40 @@ class TestTraderTaskWhitelist(unittest.TestCase):
 
     def test_stopped_only_start_executes(self):
         """run() 入口会先执行 _run_task('start')，故主循环处理队列时已为 sleeping。
-        验证：sleeping 时非白名单任务（run_strategy）被忽略，白名单任务（wakeup）执行，stop 后回到 stopped。"""
-        self.assertEqual(self.trader.status, 'stopped')
-        Thread(target=self.trader.run, daemon=True).start()
-        time.sleep(self.stoppage)
-        if self.trader.is_market_open:
-            self.assertEqual(self.trader.status, 'running', 'run() runs start first so status becomes running')
-        else:
-            self.assertEqual(self.trader.status, 'sleeping', 'run() runs start first so status becomes sleeping')
-        self.trader.add_task('run_strategy', 0)
-        time.sleep(self.stoppage)
-        self.assertEqual(self.trader.status, 'sleeping', 'run_strategy not in sleeping whitelist, should be ignored')
-        self.trader.add_task('wakeup')
-        time.sleep(self.stoppage)
-        self.assertEqual(self.trader.status, 'running', 'wakeup is in sleeping whitelist')
-        self.trader.add_task('stop')
-        time.sleep(self.stoppage)
-        self.assertEqual(self.trader.status, 'stopped')
+        验证：sleeping 时非白名单任务（run_strategy）被忽略，白名单任务（wakeup）执行，stop 后回到 stopped。
+        使用 mock 固定时间为 2023-05-10 08:00，避免交易时段内 run() 执行 open_market 导致 status 变为 running。"""
+        with patch('qteasy.trader.get_current_timezone_datetime', return_value=pd.Timestamp('2023-05-10 08:00:00')):
+            self.assertEqual(self.trader.status, 'stopped')
+            Thread(target=self.trader.run, daemon=True).start()
+            time.sleep(self.stoppage)
+            self.assertEqual(self.trader.status, 'sleeping', 'run() runs start first so status is sleeping before 09:30')
+            self.trader.add_task('run_strategy', 0)
+            time.sleep(self.stoppage)
+            self.assertEqual(self.trader.status, 'sleeping', 'run_strategy not in sleeping whitelist, should be ignored')
+            self.trader.add_task('wakeup')
+            time.sleep(self.stoppage)
+            self.assertEqual(self.trader.status, 'running', 'wakeup is in sleeping whitelist')
+            self.trader.add_task('stop')
+            time.sleep(self.stoppage)
+            self.assertEqual(self.trader.status, 'stopped')
 
     def test_sleeping_wakeup_executes_refill_allowed(self):
-        self.trader._run_task('start')
-        if self.trader.is_market_open:
-            self.assertEqual(self.trader.status, 'running')
-        else:
+        """sleeping 下 run_strategy 被忽略、wakeup 执行。mock 时间为 08:00 避免交易时段内 status 已为 running。"""
+        with patch('qteasy.trader.get_current_timezone_datetime', return_value=pd.Timestamp('2023-05-10 08:00:00')):
+            self.trader._run_task('start')
             self.assertEqual(self.trader.status, 'sleeping')
-        self.trader.add_task('run_strategy', 0)
-        Thread(target=self.trader.run, daemon=True).start()
-        time.sleep(self.stoppage)
-        self.assertEqual(self.trader.status, 'sleeping')
-        self.trader.add_task('wakeup')
-        # 轮询等待，避免 pre_open/refill 等耗时导致调度延迟
-        for _ in range(50):
-            time.sleep(0.1)
-            if self.trader.status == 'running':
-                break
-        self.assertEqual(self.trader.status, 'running')
-        self.trader.add_task('stop')
-        time.sleep(self.stoppage)
+            self.trader.add_task('run_strategy', 0)
+            Thread(target=self.trader.run, daemon=True).start()
+            time.sleep(self.stoppage)
+            self.assertEqual(self.trader.status, 'sleeping')
+            self.trader.add_task('wakeup')
+            for _ in range(50):
+                time.sleep(0.1)
+                if self.trader.status == 'running':
+                    break
+            self.assertEqual(self.trader.status, 'running')
+            self.trader.add_task('stop')
+            time.sleep(self.stoppage)
 
 
 # --------------- Plan 3.3/3.4: Account/orders, logging, info, boundaries ---------------

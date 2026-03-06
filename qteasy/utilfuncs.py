@@ -2231,7 +2231,15 @@ def pandas_freq_alias_version_conversion(freq) -> str:
     """
     version = pd.__version__
     if version < '2.2':
-        return freq
+        freq_alias_map = {
+            'ME':   'M',
+            'QE':   'Q',
+            'YE':   'Y',
+            'h':    'H',
+            'min':  'MIN',
+        }
+        mapped_freq = freq_alias_map.get(freq, freq)
+        return mapped_freq
     # freq aliases like '5MIN' should also be converted to '5min'
     freq_alias_map = {
         'M':   'ME',

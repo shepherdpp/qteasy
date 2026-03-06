@@ -229,6 +229,38 @@ class GridTrading(qt.GeneralStg):
         return pos
 
 
+class AlphaPT(qt.GeneralStg):
+
+    def realize(self):
+        # 从历史数据编码中读取四种历史数据的最新数值
+        total_mv = self.get_data('total_mv_E_d')[-1]  # 总市值
+        total_liab = self.get_data('total_liab_E_q')[-1]  # 总负债
+        cash_equ = self.get_data('c_cash_equ_end_period_E_q')[-1]  # 现金及现金等价物总额
+        ebitda = self.get_data('ebitda_E_q')[-1]  # ebitda，息税折旧摊销前利润
+
+        # 选股因子为EV/EBIDTA，使用下面公式计算
+        factors = (total_mv + total_liab - cash_equ) / ebitda
+        # 处理交易信号，将所有小于0的因子变为NaN
+        factors = np.where(factors < 0, np.nan, factors)
+        # 选出数值最小的30个股票的序号
+        arg_partitioned = factors.argpartition(30)
+        selected = arg_partitioned[:30]  # 被选中的30个股票的序号，此时股票可能有NaN被选中的情况，需要去掉
+        not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+
+        # 如果选出的股票中有因子为NaN的，则剔除掉
+        selected = selected[~np.isnan(selected)]
+        sel_count = len(selected)
+
+        # 开始生成PT交易信号
+        signal = np.zeros_like(factors)
+        # 所有被选中的股票的持仓目标被设置为0.03，表示持有3.3%
+        signal[selected] = 1 / sel_count
+        # 其余未选中的所有股票持仓目标在PT信号模式下被设置为0，代表目标仓位为0
+        signal[not_selected] = 0
+
+        return signal
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -352,17 +384,38 @@ class FastExperiments(unittest.TestCase):
         print(f'adjusted data: \n{data}')
         self.assertTrue(True)
 
-    def test_fetch_and_save(self):
-        """ test fetch and save data"""
-        from qteasy.data_channels import fetch_real_time_klines
-        from qteasy.datatables import set_primary_key_frame, set_primary_key_index
-
-        data = fetch_real_time_klines(freq='15min', channel='eastmoney', qt_codes='000651.SZ')
-        print(data)
-        df = data.copy()
-        df = set_primary_key_frame(df, ['trade_time'], ['datetime'])
-        set_primary_key_index(df, ['trade_time'], ['datetime'])
-        self.test_ds.update_table_data('stock_5min', df=data, merge_type='update')
+    def test_fast_experiments(self):
+        """ test for strategy GridTrading"""
+        from qteasy import DataType
+        shares = ['000001.SZ', '000002.SZ', '000063.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ',
+                  '000333.SZ', '000338.SZ', '000413.SZ', '000415.SZ', '000423.SZ', '000425.SZ', '000538.SZ',
+                  '000568.SZ', '000596.SZ', '000625.SZ', '000627.SZ', '000629.SZ', '000630.SZ', '000651.SZ',
+                  '000656.SZ', '000661.SZ', '000671.SZ', '000703.SZ', '000709.SZ', '000723.SZ', '000725.SZ',
+                  '000728.SZ', '000768.SZ', '000776.SZ', '000783.SZ', '000786.SZ', '000858.SZ', '000876.SZ',
+                  '000895.SZ', '000898.SZ', '000938.SZ', '000961.SZ', '000963.SZ', '001979.SZ', '002001.SZ',
+                  '002007.SZ', '002008.SZ', '002010.SZ', '002024.SZ', '002027.SZ', '002032.SZ', '002044.SZ',
+                  '002050.SZ']
+        alpha = AlphaPT(pars=(),
+                        name='AlphaSel',
+                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+                        data_types=[DataType('total_mv', asset_type='E'),
+                                    DataType('total_liab'),
+                                    DataType('c_cash_equ_end_period'),
+                                    DataType('ebitda')],
+                        window_length=10)
+        op = qt.Operator(alpha, signal_type='PT', run_freq='M')
+        res = qt.run(op=op,
+                     mode=1,
+                     asset_type='E',
+                     asset_pool=shares,
+                     invest_start='20160101',
+                     invest_end='20220707',
+                     PT_buy_threshold=0.00,  # 如果设置PBT=0.00，PST=0.03，最终收益会达到30万元
+                     PT_sell_threshold=0.00,
+                     trade_batch_size=100,
+                     sell_batch_size=1,
+                     trade_log=True
+                     )
 
 
 if __name__ == '__main__':

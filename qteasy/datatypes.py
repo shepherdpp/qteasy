@@ -237,9 +237,6 @@ def _parse_name_and_params(name: str) -> tuple:
             the column name used to unsymbolize historical data (convert hist data to reference data
             by extracting one column from dataframe)
     """
-    if name in TRADE_OPERATION_DATA_TYPES:
-        return name, None, None
-
     if '-' in name:
         name, unsymbolizer = name.split('-')
     else:
@@ -270,9 +267,6 @@ def _parse_built_in_freqs_and_asset_types(name: str) -> tuple[list[str], list[st
         built_in_asset_types: list of str
             数据的资产类型
     """
-    if name in TRADE_OPERATION_DATA_TYPES:
-        return list(), list()
-
     data_map = _get_built_in_data_type_map()
 
     try:
@@ -306,9 +300,6 @@ def _parse_user_defined_freqs_and_asset_types(name: str) -> tuple[list[str], lis
         user_defined_asset_types: list of str
             数据的资产类型
     """
-    if name in TRADE_OPERATION_DATA_TYPES:
-        return list(), list()
-
     type_map = _get_user_data_type_map()
 
     if type_map.empty:
@@ -1013,67 +1004,58 @@ class DataType:
         built_in_freqs, built_in_asset_types = _parse_built_in_freqs_and_asset_types(search_name)
         user_defined_freqs, user_defined_asset_types = _parse_user_defined_freqs_and_asset_types(search_name)
 
-        if search_name in TRADE_OPERATION_DATA_TYPES:
-            # 解析交易数据类型
-            default_freq = ''
-            asset_types = ''
-            asset_type_str = ''
-            dtype_id = search_name
-            description = TRADE_OPERATION_DATA_TYPES[search_name]
+        # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
+        # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
+        if (freq is None) and len(built_in_freqs) > 0:
+            default_freq = built_in_freqs[0]
+        elif (freq is None) and len(user_defined_freqs) > 0:
+            default_freq = user_defined_freqs[0]
+        elif (freq in built_in_freqs) or (freq in user_defined_freqs):
+            default_freq = freq
         else:
+            raise ValueError(f'Can not match any frequency with data type name {search_name}'
+                             f' in either built in or user defined data type maps. Please check'
+                             f' your input.')
 
-            # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
-            # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
-            if (freq is None) and len(built_in_freqs) > 0:
-                default_freq = built_in_freqs[0]
-            elif (freq is None) and len(user_defined_freqs) > 0:
-                default_freq = user_defined_freqs[0]
-            elif (freq in built_in_freqs) or (freq in user_defined_freqs):
-                default_freq = freq
-            else:
-                raise ValueError(f'Can not match any frequency with data type name {search_name}'
-                                 f' in either built in or user defined data type maps. Please check'
-                                 f' your input.')
+        # asset_types 是一个sorted list，存储所有设定的default asset types
+        # 而asset_type_str 是一个字符串，存储用户输入的asset_type参数，用于生成dtype_id等属性
 
-            # asset_types 是一个sorted list，存储所有设定的default asset types
-            # 而asset_type_str 是一个字符串，存储用户输入的asset_type参数，用于生成dtype_id等属性
+        if asset_type is not None:
+            asset_types = str_to_list(asset_type)
+            asset_types = [at.strip() for at in asset_types]
+            asset_types.sort()
+        elif len(built_in_asset_types) > 0:
+            asset_types = built_in_asset_types[0:1]
+        elif len(user_defined_asset_types) > 0:
+            asset_types = user_defined_asset_types[0:1]
+        else:
+            raise ValueError(f'Can not match any asset type with data typa name {search_name}'
+                             f' in either built in or user defined data type maps. Please check'
+                             f' your input.')
 
-            if asset_type is not None:
-                asset_types = str_to_list(asset_type)
-                asset_types = [at.strip() for at in asset_types]
-                asset_types.sort()
-            elif len(built_in_asset_types) > 0:
-                asset_types = built_in_asset_types[0:1]
-            elif len(user_defined_asset_types) > 0:
-                asset_types = user_defined_asset_types[0:1]
-            else:
-                raise ValueError(f'Can not match any asset type with data typa name {search_name}'
-                                 f' in either built in or user defined data type maps. Please check'
-                                 f' your input.')
+        # 确认asset_types中的每一个asset_type是否合法
+        if 'ANY' in asset_types:
+            asset_types = built_in_asset_types + user_defined_asset_types
+            asset_types.sort()
+            asset_type_str = 'ANY'
+        elif all(at in built_in_asset_types + user_defined_asset_types for at in asset_types):
+            asset_types.sort()
+            asset_type_str = ','.join(asset_types)
+        else:
+            unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
 
-            # 确认asset_types中的每一个asset_type是否合法
-            if 'ANY' in asset_types:
-                asset_types = built_in_asset_types + user_defined_asset_types
-                asset_types.sort()
-                asset_type_str = 'ANY'
-            elif all(at in built_in_asset_types + user_defined_asset_types for at in asset_types):
-                asset_types.sort()
-                asset_type_str = ','.join(asset_types)
-            else:
-                unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
+            raise ValueError(f'Asset types {unmatched} not found in DATA_TYPE_MAP.'
+                             f' Please check your input.')
 
-                raise ValueError(f'Asset types {unmatched} not found in DATA_TYPE_MAP.'
-                                 f' Please check your input.')
-
-            # 已经确认了name，freq和asset_types的合法性，现在可以生成DataType实例
-            # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
-            description = _parse_dtype_description(
-                search_name=search_name,
-                name_par=name_pars,
-                freq=default_freq,
-                asset_types=asset_types,
-            )
-            dtype_id = f'{name}_{asset_type_str}_{default_freq}'
+        # 已经确认了name，freq和asset_types的合法性，现在可以生成DataType实例
+        # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
+        description = _parse_dtype_description(
+            search_name=search_name,
+            name_par=name_pars,
+            freq=default_freq,
+            asset_types=asset_types,
+        )
+        dtype_id = f'{name}_{asset_type_str}_{default_freq}'
 
         self._name = name
         self._search_name = search_name
@@ -4309,14 +4291,6 @@ DATA_TYPE_MAP = {
                                                        {'table_name': 'margin_detail', 'column': 'rzrqye'}]
 }
 USER_DATA_TYPE_MAP = {
-}
-TRADE_OPERATION_DATA_TYPES = {
-    'op_trade_volumes':     'Trade volume in previous strategy running cycles',
-    'op_trade_prices':      'Trade prices at which stocks are bought or sold',
-    'op_holding_positions': 'Security position holding history',
-    'op_settled_positions': 'Settled security positions history',
-    'op_cashes':            'Owned cashes history',
-    'op_settled_cashes':    'Settled cashes that can be used',
 }
 
 

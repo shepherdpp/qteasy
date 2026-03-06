@@ -936,12 +936,8 @@ class TestDependentData(GeneralStg):
                     Parameter((1, 5), name='N', par_type='int', value=5),
                     Parameter((1, 7), name='M', par_type='int', value=7),
                 ],
-                data_types={'close_E_d':         dtype_1,
-                            'reference_d':       dtype_ref,
-                            'holding_positions': DataType('op_holding_positions'),
-                            'trade_prices':      DataType('op_trade_prices'),
-                            'op_cashes':         DataType('op_cashes'),
-                            'op_trade_volumes':  DataType('op_trade_volumes')},
+                data_types={'close_E_d':   dtype_1,
+                            'reference_d': dtype_ref},
                 use_latest_data_cycle=[False, False],
                 window_length=[5, 7],
                 **kwargs,
@@ -950,38 +946,22 @@ class TestDependentData(GeneralStg):
             self.update_par_values(*par_values)
 
     def realize(self):
-        """实现策略逻辑，在策略中需要用到holding和trade_price两种数据， singaltype = VS"""
-        # n, m = self.param1, self.param2
+        """实现策略逻辑，使用 proc.* 获取过程数据（仅作引用，不参与信号计算），信号与 TestReferenceData 一致。"""
         n, m = self.get_pars('N'), self.get_pars('M')
         close_d, ref_d = self.get_data('close_E_d'), self.get_data('reference_d')
-        # print("ReferenceData is running")
-        # print(f"param1(N) = {n}, param2(M) = {m}")
-        # print(f"got datas:\n{close_d}\n and \n{ref_d}")
-        # create signal according to class doc and print out step results
         dt1_change = (close_d[-1] - close_d[-n]) / close_d[-1]
         ref_change = (ref_d[-1] - ref_d[-m]) / ref_d[-1]
-        # print(f"dt1_change = (close_d[-1] - close_d[-{n}]) / close_d[-1] = \n{dt1_change}")
-        # print(f"ref_change = (ref_d[-1] - ref_d[-{m}]) / ref_d[-1] = \n{ref_change}")
-        # get top 2 stock indexes
         if ref_change > 0:
             top2_idx = dt1_change.argsort()[-2:][::-1]
-            # print(f"ref_change > 0, top2 indexes = {top2_idx}")
         else:
             top2_idx = dt1_change.argsort()[:2]
-            # print(f"ref_change <= 0, bottom2 indexes = {top2_idx}")
         signal = np.zeros_like(dt1_change)
-        signal[top2_idx] = 0.5  # 再买入
-        # print(f"signal = {signal}")
-        holding, prices = self.get_data('holding_positions', 'trade_prices')
-        cashes, trade_volumes = self.get_data('op_cashes', 'op_trade_volumes')
-        # print(f'got holding data:\n{holding}\n and trade prices:\n{prices}')
-        # holding 和 prices 只是导入，做一些没有意义的计算，策略
-        # 输出结果与TestReferenceData是一样的
-        # print(f'got position holdings: {holding}')
-        # print(f'got trade prices:  {prices}')
-        # print(f'got cashes: {cashes}')
-        # print(f'got trade volumes: {trade_volumes}')
-
+        signal[top2_idx] = 0.5
+        # 过程数据仅作引用，不参与信号计算，保证与 TestReferenceData 输出一致
+        _ = self.get_data('proc.own_amounts')
+        _ = self.get_data('proc.trade_price')
+        _ = self.get_data('proc.own_cash')
+        _ = self.get_data('proc.trade_records')
         return signal
 
 
@@ -3536,14 +3516,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
                 include_start_am=False,
                 include_start_pm=False,
         )
-        # prepare data buffer
+        # prepare data buffer（过程数据由 Backtester 通过 _process_data_sources 注入，此处仅提供静态数据）
         data_buffer = {
-            'close_E_d':            close_d_df,
-            'reference_d':          close_ref_df,
-            'op_holding_positions': None,
-            'op_trade_prices':      None,
-            'op_trade_volumes':     None,
-            'op_cashes':            None,
+            'close_E_d':   close_d_df,
+            'reference_d': close_ref_df,
         }
         op.prepare_data_buffer(
                 start_date='2023-01-11',

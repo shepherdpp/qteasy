@@ -228,6 +228,8 @@ class BaseStrategy:
         self.debug = False  # 是否开启调试模式
         self.trace_mode = False  # 是否开启追踪模式
         self.logger = None  # 策略的日志记录器
+        # 运行时由 Operator 设置，用于在策略内部访问 Operator（例如 process data）
+        self._operator = None
 
     @property
     def name(self):
@@ -698,9 +700,197 @@ class BaseStrategy:
         for dtype_id in data_types:
             self.__setattr__(dtype_id, None)
 
-    def get_data(self, *dtype_id):
-        """通过dtype_id获取历史数据，可以获取多个数据类型的数据"""
-        return self._get_pars_or_data(*dtype_id)
+    def get_data(self,
+                 *dtype_id: str,
+                 lag: Union[int, str, None] = None,
+                 window: Union[str, None] = None):
+        """通过dtype_id获取历史数据或交易过程数据，可以获取多个数据类型的数据
+
+        对于普通历史数据（无 ``proc.`` 前缀）：
+            - 保持现有行为，仅支持按 dtype_id 批量获取数据，不支持 ``lag`` / ``window`` 参数；
+        对于交易过程数据（以 ``proc.`` 开头）：
+            - 支持 ``lag`` / ``window`` 两类定位参数，用于按运行步或时间窗口获取账户 / 持仓 / 成交历史。
+        """
+        if not dtype_id:
+            raise ValueError('at least one data type id must be provided')
+
+        names = list(dtype_id)
+        proc_names = [n for n in names if isinstance(n, str) and n.startswith('proc.')]
+        static_names = [n for n in names if n not in proc_names]
+
+        # 同时包含静态数据和过程数据时直接报错，提示用户拆分调用
+        if proc_names and static_names:
+            raise ValueError(
+                    'get_data() cannot mix static data and process data in one call. '
+                    'Please call get_data() separately for static sources and proc.* sources.'
+            )
+
+        # 仅静态数据：保持现有行为，不支持 lag/window
+        if static_names and not proc_names:
+            if lag is not None or window is not None:
+                raise ValueError('lag/window parameters are only supported for proc.* (process) data.')
+            return self._get_pars_or_data(*static_names)
+
+        # 仅过程数据：通过 proc.* 接口访问 Backtester / Trader 注入的交易过程数据。
+        # 根据约定，一次调用只允许访问一个 proc.* 字段，避免在返回结构和参数语义上引入歧义。
+        if not proc_names:
+            raise ValueError('no valid process data ids (proc.*) provided to get_data()')
+
+        if len(proc_names) != 1:
+            raise ValueError(
+                    'get_data() only supports one proc.* (process data) field per call. '
+                    'Please call get_data() separately for each proc.* source.'
+            )
+
+        if lag is not None and window is not None:
+            raise ValueError('lag and window cannot be used at the same time for proc.* data.')
+
+        return self._get_process_data_single(proc_names[0], lag=lag, window=window)
+
+    def _get_process_data_single(self,
+                                 name: str,
+                                 *,
+                                 lag: Union[int, str, None],
+                                 window: Union[str, None]) -> np.ndarray:
+        """内部工具：根据名称和定位参数获取单个 proc.* 过程数据字段"""
+        # 1，获取 Operator 与过程数据源
+        group = getattr(self, '_group', None)
+        op = getattr(group, '_operator', None) if group is not None else None
+        if op is None:
+            raise RuntimeError('Process data is only available when strategy is managed by an Operator.')
+
+        sources = getattr(op, '_process_data_sources', None)
+        if not sources:
+            raise RuntimeError('Process data sources are not initialized; proc.* data is not available.')
+
+        current_idx = getattr(op, '_current_signal_index', None)
+        if current_idx is None:
+            raise RuntimeError('Current signal index is not available for process data access.')
+
+        time_index = getattr(op, '_process_time_index', None)
+
+        # 2，构造“截至当前可见”的完整历史序列（不包含当前尚未成交的这一 signal 的结果）
+        def _slice_until_now(arr: np.ndarray, offset: int = 0) -> np.ndarray:
+            """根据当前全局 signal 行号裁剪数组，offset 用于处理 like own_cashes 这类多一行的情况。"""
+            # current_idx 表示“当前正在生成的 signal 行号”，已经完成的 signal 数量为 current_idx
+            if arr.ndim == 1:
+                stop = min(current_idx + offset, arr.shape[0])
+                return arr[:stop].copy()
+            stop = min(current_idx + offset, arr.shape[0])
+            return arr[:stop, :].copy()
+
+        base: np.ndarray
+        if name == 'proc.own_cash':
+            # own_cashes 形状为 (n_signals + 1,)，索引 0 为初始状态，索引 i 为第 i-1 条信号执行后的结果
+            base = _slice_until_now(sources['own_cashes'], offset=1)
+        elif name == 'proc.available_cash':
+            base = _slice_until_now(sources['available_cashes'], offset=1)
+        elif name == 'proc.own_amounts':
+            base = _slice_until_now(sources['own_amounts'], offset=1)
+        elif name == 'proc.available_amounts':
+            base = _slice_until_now(sources['available_amounts'], offset=1)
+        elif name == 'proc.trade_records':
+            base = _slice_until_now(sources['trade_records'], offset=0)
+        elif name == 'proc.trade_cost':
+            base = _slice_until_now(sources['trade_costs'], offset=0)
+        elif name == 'proc.trade_price':
+            base = _slice_until_now(sources['trade_prices'], offset=0)
+        elif name in ('proc.position_value', 'proc.total_value'):
+            # 使用 price_data 对持仓进行估值
+            own_amounts = _slice_until_now(sources['own_amounts'], offset=1)
+            cashes = _slice_until_now(sources['own_cashes'], offset=1)
+            price_data = sources.get('price_data', None)
+            if price_data is None:
+                raise RuntimeError('price_data is not available for computing position_value/total_value.')
+            # price_data 形状约为 (n_signals, share_count)，own_amounts 为 (<=n_signals, share_count)
+            steps = own_amounts.shape[0]
+            prices = price_data[:steps, :]
+            position_values = (prices * own_amounts).sum(axis=1)
+            if name == 'proc.position_value':
+                base = position_values
+            else:  # total_value = position_value + cash
+                base = position_values + cashes
+        else:
+            raise KeyError(f'Unknown process data field "{name}".')
+
+        # 3，根据 lag / window 进行二次裁剪
+        def _apply_int_lag(arr: np.ndarray, k: int) -> np.ndarray:
+            if k < 0:
+                raise ValueError('lag must be non-negative when using integer lag.')
+            if arr.ndim == 1:
+                if arr.size == 0:
+                    return arr
+                if k >= arr.size:
+                    # 超出历史长度时，返回最早一条
+                    return arr[0:1]
+                return arr[-(k + 1):-(k)] if k != 0 else arr[-1:]
+            # 2D：在时间轴上取对应一行
+            if arr.shape[0] == 0:
+                return arr
+            if k >= arr.shape[0]:
+                return arr[0:1, :]
+            idx = arr.shape[0] - k - 1
+            return arr[idx:idx + 1, :]
+
+        def _parse_time_delta(spec: str) -> np.timedelta64:
+            if not isinstance(spec, str) or len(spec) < 2:
+                raise ValueError(f'invalid time lag/window spec "{spec}", expected like "1d" or "8h".')
+            unit = spec[-1].lower()
+            try:
+                val = int(spec[:-1])
+            except Exception:
+                raise ValueError(f'invalid time lag/window spec "{spec}", expected like "1d" or "8h".')
+            if unit == 'd':
+                return np.timedelta64(val, 'D')
+            if unit == 'h':
+                return np.timedelta64(val, 'h')
+            raise ValueError(f'unsupported time unit in lag/window spec "{spec}", only "d"/"h" are supported.')
+
+        def _apply_time_lag(arr: np.ndarray, spec: str) -> np.ndarray:
+            if time_index is None:
+                raise RuntimeError('time index is not available for time-based lag/window on process data.')
+            if arr.shape[0] == 0:
+                return arr
+            delta = _parse_time_delta(spec)
+            # 对应 arr 的时间索引是 process_time_index 的前 arr.shape[0] 个元素
+            ts = np.asarray(time_index[:arr.shape[0]])
+            current_t = ts[-1]
+            cutoff = current_t - delta
+            mask = ts <= cutoff
+            if not mask.any():
+                # 如果没有足够长的历史，退化为返回第一条
+                return arr[0:1] if arr.ndim == 1 else arr[0:1, :]
+            idx = np.nonzero(mask)[0][-1]
+            return arr[idx:idx + 1] if arr.ndim == 1 else arr[idx:idx + 1, :]
+
+        def _apply_time_window(arr: np.ndarray, spec: str) -> np.ndarray:
+            if time_index is None:
+                raise RuntimeError('time index is not available for time-based lag/window on process data.')
+            if arr.shape[0] == 0:
+                return arr
+            delta = _parse_time_delta(spec)
+            ts = np.asarray(time_index[:arr.shape[0]])
+            current_t = ts[-1]
+            cutoff = current_t - delta
+            mask = ts > cutoff
+            if not mask.any():
+                # 没有任何点落在窗口内，返回空数组，保持形状兼容
+                if arr.ndim == 1:
+                    return arr[:0]
+                return arr[:0, :]
+            idx0 = np.nonzero(mask)[0][0]
+            return arr[idx0:]  # [idx0, ..., -1]
+
+        if lag is None and window is None:
+            return base
+        if isinstance(lag, int):
+            return _apply_int_lag(base, lag)
+        if isinstance(lag, str):
+            return _apply_time_lag(base, lag)
+        if isinstance(window, str):
+            return _apply_time_window(base, window)
+
+        raise ValueError('invalid lag/window specification for proc.* data.')
 
     def update_shares(self,
                       share_count: int = None,

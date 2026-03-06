@@ -2037,16 +2037,30 @@ class Trader(object):
         )
         operator.create_data_windows()
 
-        # 如果策略需要用到交易过程数据，则准备交易过程数据
+        # 更新最新实时价格（供解析信号与 process data 注入使用）
+        self._update_live_price()
+        current_prices = self.live_price['price'].values
+
+        # 如果策略需要用到交易过程数据，则向 Operator 注入当前账户/持仓视图，供 get_data('proc.xxx') 使用
         if self.operator.check_dynamic_data():
-            # TODO: implement this function
-            raise NotImplementedError
+            share_count = len(shares)
+            # 实盘单次运行仅一个“步”，策略访问的 current_idx 为 0
+            operator._process_time_index = np.array([
+                pd.Timestamp(self.get_current_tz_datetime()).asm8
+            ], dtype=np.datetime64)
+            operator._process_data_sources = {
+                'own_cashes': np.array([own_cash], dtype=float),
+                'available_cashes': np.array([available_cash], dtype=float),
+                'own_amounts': np.asarray(own_amounts, dtype=float).reshape(1, share_count),
+                'available_amounts': np.asarray(available_amounts, dtype=float).reshape(1, share_count),
+                'trade_records': np.zeros((0, share_count), dtype=float),
+                'trade_costs': np.zeros((0, share_count), dtype=float),
+                'trade_prices': np.zeros((0, share_count), dtype=float),
+                'price_data': np.asarray(current_prices, dtype=float).reshape(1, share_count),
+            }
 
         # 开始运行交易策略，逐个生成交易信号
         submitted_qty = 0
-        # 更新最新实时价格，self.live_price的格式为index为symbols，列为['price']
-        self._update_live_price()
-        current_prices = self.live_price['price'].values
 
         for signal_type, step_index, op_signal in operator.run_strategy(step_index=step_index):  # 生成交易清单
             self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
