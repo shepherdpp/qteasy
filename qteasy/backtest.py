@@ -1387,16 +1387,18 @@ class Backtester:
         daily_positions = self.own_amounts_array[pos_idx, :]
         daily_cash = self.own_cashes[pos_idx]
 
+        # 将每一步交易费用按“日期”聚合为“每日总费用”，再与日频索引按日期对齐
         step_dates = step_times.normalize()
         step_fee = self.trade_cost_array.sum(axis=1)
         fee_by_date = pd.Series(step_fee, index=step_dates).groupby(level=0).sum()
-        daily_fee = fee_by_date.reindex(daily_index).fillna(0.0)
+        daily_dates = daily_index.normalize()
+        daily_fee = fee_by_date.reindex(daily_dates).fillna(0.0)
 
         # 使用评价用日频收盘价构造日频价格序列
         daily_prices = self.evaluate_price_data.reindex(daily_index).reindex(columns=self.shares)
         price_array = np.nan_to_num(daily_prices.values, nan=0.0)
         daily_values = (price_array * daily_positions).sum(axis=1) + daily_cash
-        # import pdb; pdb.set_trace()
+
         value_history = pd.DataFrame(daily_positions, index=daily_index, columns=self.shares)
         value_history['cash'] = daily_cash
         value_history['value'] = daily_values
