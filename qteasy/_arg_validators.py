@@ -466,6 +466,12 @@ def _valid_qt_kwargs():
              'level':     4,
              'text':      '明细交易日志的存储路径'},
 
+        'trade_log_keep_days':
+            {'Default':   0,
+             'Validator': lambda value: isinstance(value, int) or value is None,
+             'level':     4,
+             'text':      'trade_log与trade_summary文件的保留天数，None或小于等于0表示不自动删除旧文件'},
+
         'trade_log':
             {'Default':   True,
              'Validator': lambda value: isinstance(value, bool),
