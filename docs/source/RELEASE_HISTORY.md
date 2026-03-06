@@ -1,5 +1,13 @@
 # RELEASE HISTORY
 
+## 2.1.0 (2026-03-05)
+- **Process data (proc.\*) API**: Strategies can access runtime state (cash, positions, trade records, etc.) via `get_data('proc.own_cash')`, `get_data('proc.trade_records', lag=0)` and other `proc.*` fields in `realize()` without declaring them in `data_types`. Process data is injected by Backtester (backtest) and Trader (live) and respects no-look-ahead: at step k the strategy sees only results from steps 0..k-1 for trade data.
+- **Dynamic backtest path selection**: If any strategy uses `proc.*` in its `realize()` source, backtest automatically uses the stepwise path (`_backtest_dynamic_operator`); otherwise the static path (batch signals + vectorized backtest) is used. Detection is via `_strategies_use_proc_data()` so no declaration is required.
+- **Live trading process data**: When `operator.check_dynamic_data()` is True, Trader injects current account/position and price views into the operator so that `get_data('proc.xxx')` works in live mode with the same API as in backtest.
+- **Removed legacy dynamic data types**: `TRADE_OPERATION_DATA_TYPES` and all `op_*` DataTypes (e.g. `op_cashes`, `op_trade_volumes`) have been removed from `qteasy.datatypes`. Creating `DataType('op_cashes')` etc. now raises `KeyError`. Process data must be accessed only via `get_data('proc.xxx')`. `Operator.prepare_dynamic_data_buffer` is now a no-op; `all_dynamic_dtypes` always returns an empty dict.
+- **Tests**: Added `tests/test_process_data_api.py` for process data API, branch selection, static/dynamic equivalence, no-look-ahead, and dynamic strategy correctness. `TestDependentData` in operator tests was refactored to use `proc.*` instead of old `op_*` types.
+- **Docs**: Design doc `docs/source/design/09-process-data-and-dynamic-backtest.md`; process data section in `03-data-in-strategies.md`; branch selection note in `06-backtest-live-optimization.md`.
+
 ## 2.0.1 (2026-03-05)
 - Improved documentation and docstrings, adding more explanations about the overall design and architecture of qteasy.
 - Fixed the post-backtest performance evaluation so that all evaluation tables and plotted equity curves are consistently computed on daily frequency, independent of the strategy running frequency.
