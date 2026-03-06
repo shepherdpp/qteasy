@@ -7,6 +7,7 @@
 - **Removed legacy dynamic data types**: `TRADE_OPERATION_DATA_TYPES` and all `op_*` DataTypes (e.g. `op_cashes`, `op_trade_volumes`) have been removed from `qteasy.datatypes`. Creating `DataType('op_cashes')` etc. now raises `KeyError`. Process data must be accessed only via `get_data('proc.xxx')`. `Operator.prepare_dynamic_data_buffer` is now a no-op; `all_dynamic_dtypes` always returns an empty dict.
 - **Tests**: Added `tests/test_process_data_api.py` for process data API, branch selection, static/dynamic equivalence, no-look-ahead, and dynamic strategy correctness. `TestDependentData` in operator tests was refactored to use `proc.*` instead of old `op_*` types.
 - **Docs**: Design doc `docs/source/design/09-process-data-and-dynamic-backtest.md`; process data section in `03-data-in-strategies.md`; branch selection note in `06-backtest-live-optimization.md`.
+- **Pandas frequency alias compatibility**: Fixed `pandas_freq_alias_version_conversion()` so that it normalizes both legacy (<2.2) and new (>=2.2) pandas frequency aliases (e.g. `M/ME`, `H/h`, `MIN/min`, `5MIN/5min`), avoiding mis-matched freq errors and warnings across different pandas versions.
 
 ## 2.0.1 (2026-03-05)
 - Improved documentation and docstrings, adding more explanations about the overall design and architecture of qteasy.

@@ -27,6 +27,7 @@ from qteasy.utilfuncs import (
     regulate_date_format, str_to_list,
     nearest_market_trade_day,
     next_market_trade_day,
+    pandas_freq_alias_version_conversion,
 )
 
 from qteasy.trade_recording import (
@@ -1573,6 +1574,7 @@ def trade_time_index(start=None,
             if end is not None:
                 end = regulate_date_format(pd.to_datetime(end) - day_delta)
 
+    freq = pandas_freq_alias_version_conversion(freq)
     # 获取基准区间，基准区间包括开始和结束日期
     time_index = pd.date_range(
             start=start,
