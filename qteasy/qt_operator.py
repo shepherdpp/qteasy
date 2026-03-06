@@ -20,7 +20,7 @@ import qteasy
 from qteasy.strategy import BaseStrategy, RuleIterator
 from qteasy.group import Group
 from qteasy.parameter import Parameter
-from qteasy.datatypes import DataType, TRADE_OPERATION_DATA_TYPES
+from qteasy.datatypes import DataType
 
 from qteasy.history import (
     check_and_prepare_trade_prices,
@@ -364,10 +364,12 @@ class Operator:
 
     @property
     def all_dynamic_dtypes(self):
-        """ 返回operator对象所有策略自对象的动态历史数据类型ID的集合"""
-        all_dynamic_dtype_ids = {d.dtype_id: d for d in self.all_strategy_data_types if
-                                 d.name in TRADE_OPERATION_DATA_TYPES}
-        return all_dynamic_dtype_ids
+        """ 返回 operator 内“旧式”动态数据类型集合；已废弃，始终返回空。
+
+        过程数据现统一通过 get_data('proc.xxx') 访问，不再通过 DataType 声明。
+        保留本属性仅为兼容调用方，返回空字典。
+        """
+        return {}
 
     @property
     def opt_space_par(self):
@@ -1596,17 +1598,26 @@ class Operator:
                 else:
                     raise ValueError(f'Invalid group parameter: {key}')
 
-    def check_dynamic_data(self):
-        """ 检查operator对象是否包含动态数据类型（即以来交易结果的历史数据）以生成交易信号
+    def _strategies_use_proc_data(self) -> bool:
+        """检测是否有任意策略在 realize() 中使用了 get_data('proc.xxx') 形式的 process data。"""
+        import inspect
+        for stg in self.strategies:
+            try:
+                src = inspect.getsource(stg.realize)
+                if "'proc." in src or '"proc.' in src:
+                    return True
+            except (TypeError, OSError):
+                continue
+        return False
 
-        Returns
-        -------
-        bool
-            如果operator对象包含动态数据类型，则返回True，否则返回False
+    def check_dynamic_data(self):
+        """ 检查operator对象是否包含动态数据类型（即依赖交易结果的历史数据）以生成交易信号。
+
+        若任意策略在 realize() 中使用了 get_data('proc.xxx')，则视为依赖动态过程数据，需走动态回测分支。
         """
         if self.op_type == 'stepwise':
             return True
-        return len(self.all_dynamic_dtypes) > 0
+        return self._strategies_use_proc_data()
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -1859,13 +1870,9 @@ class Operator:
             例如：{'price': price_df, 'volume': volume_df, ...}
             其中每个DataFrame的索引为时间戳，列为不同的标的代码
         """
-        # 清除原有的data_buffers
+        # 清除原有的 data_buffers
         self.data_buffers = {}
-        # 将data_package中的数据区分为data_package以及operation_data_packages
-        from qteasy.datatypes import TRADE_OPERATION_DATA_TYPES
-        dynamic_data_package = {k: data_package[k] for k in data_package if k in TRADE_OPERATION_DATA_TYPES}
-        data_package = {k: data_package[k] for k in data_package if k not in TRADE_OPERATION_DATA_TYPES}
-        # 针对所有data_type，检查数据包的key是否都是str且value都是DataFrame或
+        # 针对所有 data_type，检查数据包的 key 是否都是 str 且 value 都是 DataFrame 或
         for key, data in data_package.items():
             if not isinstance(key, str):
                 raise TypeError(f"Data package keys must be strings, got {type(key)} instead.")
@@ -1886,30 +1893,25 @@ class Operator:
             pass
 
         for data_type in self.all_strategy_data_types:
-            if (data_type.dtype_id not in data_package) and (data_type.name not in dynamic_data_package):
+            if data_type.dtype_id not in data_package:
                 raise ValueError(f"Data type '{data_type}' required by strategies is missing in data package.")
-            elif data_type.name in dynamic_data_package:
-                # 处理在operation_data_package中的数据类型（这部分数据需要在op.prepare_dynamic_data_buffer，因此全部为None）
-                self.dynamic_data_buffers[data_type.dtype_id] = None
-            else:
-                # 处理剩下的在data_package中的数据类型
-                dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
-                if len(data_package[data_type.dtype_id]) < dtype_max_window:
-                    msg = (f"Not enough data for data type '{data_type}' to create data windows. "
-                           f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
-                    raise ValueError(msg)
-                if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(
-                        start_date).date():
-                    # 确保数据有足够的前置量
-                    msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
-                           f"Data package starts on {data_package[data_type.dtype_id].index[0]}, "
-                           f"and start_date is {start_date}, \nbut the first available window starts on "
-                           f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]} (window length: "
-                           f"{dtype_max_window}). ")
-                    # to solve problem of insufficient data when freq = 'Q'
-                    raise ValueError(msg)
-                # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
-                self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
+            dtype_max_window = self.get_max_window_length_by_dtype_id(data_type.dtype_id)
+            if len(data_package[data_type.dtype_id]) < dtype_max_window:
+                msg = (f"Not enough data for data type '{data_type}' to create data windows. "
+                       f"Required: {dtype_max_window}, Available: {len(data_package[data_type.dtype_id])}")
+                raise ValueError(msg)
+            if data_package[data_type.dtype_id].index[dtype_max_window - 1].date() > pd.to_datetime(
+                    start_date).date():
+                # 确保数据有足够的前置量
+                msg = (f"Not enough data for data type '{data_type}' to create data windows. \n"
+                       f"Data package starts on {data_package[data_type.dtype_id].index[0]}, "
+                       f"and start_date is {start_date}, \nbut the first available window starts on "
+                       f" {data_package[data_type.dtype_id].index[dtype_max_window - 1]} (window length: "
+                       f"{dtype_max_window}). ")
+                # to solve problem of insufficient data when freq = 'Q'
+                raise ValueError(msg)
+            # 检查数据索引是否包含所需的时间范围且含有足够的前置数据
+            self.data_buffers[data_type.dtype_id] = data_package[data_type.dtype_id]
 
     def prepare_dynamic_data_buffer(self, *,
                                     trade_records: np.ndarray,
@@ -1918,31 +1920,9 @@ class Operator:
                                     available_cashes: np.ndarray,
                                     holding_positions: np.ndarray,
                                     available_positions: np.ndarray) -> None:
-        """ position holder for function prepare_dynamic_data_buffer"""
-        # 检查需要的数据类型并准备相应的数据缓冲区
-
-        if self.dynamic_data_buffers is None:
-            err = RuntimeError(f'There are no dynamic data types defined, please check your strategy data types!')
-            raise err
-        dtype_id_to_name = {d.dtype_id: d.name for d in self.all_dynamic_dtypes.values()}
-        name_to_data = {
-            'op_trade_volumes':       trade_records,
-            'op_trade_prices':        trade_prices,
-            'op_cashes':              own_cashes,
-            'op_available_cashes':    available_cashes,
-            'op_holding_positions':   holding_positions,
-            'op_available_positions': available_positions,
-        }
-
-        for group in self._groups:
-            for strategy in group.members:
-                for data_type in strategy.data_types:
-                    if data_type not in dtype_id_to_name:
-                        continue
-                    # data_type is a dynamic data type
-                    slider = SlideView(name_to_data[dtype_id_to_name[data_type]])
-                    self.data_window_views[strategy.strategy_id][data_type] = slider
-                    self.data_window_indices[strategy.strategy_id][data_type] = np.arange(len(slider))
+        """预留接口：过程数据已统一通过 proc.* 注入，本方法不再执行逻辑。"""
+        # 过程数据由 Backtester/Trader 通过 _process_data_sources 注入，策略通过 get_data('proc.xxx') 访问
+        pass
 
     def create_data_windows(self):
         """ Create data windows for each strategy and its data types.

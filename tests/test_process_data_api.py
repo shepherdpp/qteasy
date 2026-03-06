@@ -93,9 +93,9 @@ class TestDynamicDataTypeDetection(unittest.TestCase):
         # 纯静态策略不应被视为依赖动态过程数据
         self.assertFalse(op.check_dynamic_data())
 
-    @unittest.skip("TODO: enable after check_dynamic_data considers proc.* usage")
     def test_check_dynamic_data_proc_usage(self):
-        """占位测试：一旦 check_dynamic_data 支持基于 proc.* 使用情况的判定，应启用本测试。"""
+        """使用 proc.* 的策略应使 check_dynamic_data() 返回 True，从而走动态回测分支。"""
+        print('\n[TestDynamicDataTypeDetection] proc_usage: check_dynamic_data should be True')
         shares = ['000001.SZ', '000002.SZ']
         configure(
                 asset_pool=shares,
@@ -110,8 +110,10 @@ class TestDynamicDataTypeDetection(unittest.TestCase):
                       signal_type='PT',
                       run_freq='d',
                       run_timing='close')
+        self.assertTrue(op.check_dynamic_data(), 'Operator with proc.* usage should require dynamic backtest')
         run(op=op, mode=1, visual=False, trade_log=False)
-        self.assertTrue(op.check_dynamic_data())
+        self.assertIsNotNone(op.backtested)
+        print('  check_dynamic_data():', op.check_dynamic_data(), ', backtest completed.')
 
 
 class TestDynamicVsStaticBacktestEquivalence(unittest.TestCase):
@@ -313,7 +315,6 @@ class NoLookAheadStg(GeneralStg):
         return np.zeros(self.share_count, dtype=float)
 
 
-@unittest.skip("TODO: enable after dynamic proc.* injection is finalized for no-look-ahead verification")
 class TestNoLookAheadForProcessData(unittest.TestCase):
     """D 组：验证 proc.trade_records 等过程数据不发生前视。"""
 
@@ -377,12 +378,12 @@ class VolumeBasedDynamicStg(GeneralStg):
             return np.array([1.0] + [0.0] * (self.share_count - 1), dtype=float)
 
 
-@unittest.skip("TODO: design and validate explicit expected path for VolumeBasedDynamicStg")
 class TestDynamicStrategyWithProcessData(unittest.TestCase):
-    """E 组：使用 process data 的真实动态策略路径正确性测试（占位实现，待补充期望路径）。"""
+    """E 组：使用 process data 的真实动态策略路径正确性测试。"""
 
     def test_dynamic_strategy_with_process_data_correctness(self):
-        print('\n[TestDynamicStrategyWithProcessData] volume-based dynamic strategy correctness (placeholder)')
+        """VolumeBasedDynamicStg：第一步无历史则买 1 单位第一只股票，之后每步若上步成交绝对值和不大于阈值则继续买 1 单位。"""
+        print('\n[TestDynamicStrategyWithProcessData] volume-based dynamic strategy correctness')
         shares = ['000001.SZ', '000002.SZ']
         configure(
                 asset_pool=shares,
@@ -400,9 +401,16 @@ class TestDynamicStrategyWithProcessData(unittest.TestCase):
         res = run(op=op, mode=1, visual=False, trade_log=False)
         self.assertIsInstance(res, dict)
         backtested = op.backtested
-        print('  own_amounts_array:', backtested.own_amounts_array)
-        print('  own_cashes:', backtested.own_cashes)
-        # TODO: 在未来根据 VolumeBasedDynamicStg 的设计，补充显式的期望路径并使用 allclose 断言
+        n_steps = backtested.own_amounts_array.shape[0] - 1  # 步数
+        last_own = backtested.own_amounts_array[-1]
+        print('  n_steps:', n_steps, ', last own_amounts:', last_own)
+
+        # 策略逻辑：第一步无历史则买 1 单位第一只；之后若上步成交绝对值和不大于阈值(1)则继续买
+        self.assertGreaterEqual(n_steps, 1, 'dynamic backtest should have at least one step')
+        self.assertGreater(last_own[0], 0, 'first asset should have positive position (strategy buys at least once)')
+        self.assertEqual(last_own[1], 0, 'second asset should remain 0 (strategy only buys first)')
+        # 每步最多买 1 单位，最终持仓应在 1..n_steps 之间（具体取决于交割与阈值判断）
+        self.assertLessEqual(last_own[0], n_steps + 1, 'position should not exceed one buy per step')
 
 
 if __name__ == '__main__':

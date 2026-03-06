@@ -1618,67 +1618,15 @@ class TestDataTypes(unittest.TestCase):
                 self.assertEqual(dtype.asset_type_str, a_type_str)
                 self.assertEqual(dtype.asset_types, a_types)
 
-    def test_trade_op_types(self):
-        """ test special trade_op_types"""
-        d1 = DataType('op_trade_volumes')
-        print(f'created data type: {d1}')
-        self.assertEqual(d1.name, 'op_trade_volumes')
-        self.assertEqual(d1.asset_type_str, '')
-        self.assertEqual(d1.asset_types, '')
-        self.assertEqual(d1.freq, '')
-        self.assertEqual(d1.unsymbolizer, None)
-        self.assertEqual(d1.dtype_id, 'op_trade_volumes')
-        self.assertEqual(d1.unsymbolizer, None)
-
-        d2 = DataType('op_trade_prices')
-        print(f'created data type: {d2}')
-        self.assertEqual(d2.name, 'op_trade_prices')
-        self.assertEqual(d2.asset_type_str, '')
-        self.assertEqual(d2.asset_types, '')
-        self.assertEqual(d2.freq, '')
-        self.assertEqual(d2.unsymbolizer, None)
-        self.assertEqual(d2.dtype_id, 'op_trade_prices')
-        self.assertEqual(d2.unsymbolizer, None)
-
-        d3 = DataType('op_holding_positions')
-        print(f'created data type: {d3}')
-        self.assertEqual(d3.name, 'op_holding_positions')
-        self.assertEqual(d3.asset_type_str, '')
-        self.assertEqual(d3.asset_types, '')
-        self.assertEqual(d3.freq, '')
-        self.assertEqual(d3.unsymbolizer, None)
-        self.assertEqual(d3.dtype_id, 'op_holding_positions')
-        self.assertEqual(d3.unsymbolizer, None)
-
-        d4 = DataType('op_settled_positions')
-        print(f'created data type: {d4}')
-        self.assertEqual(d4.name, 'op_settled_positions')
-        self.assertEqual(d4.asset_type_str, '')
-        self.assertEqual(d4.asset_types, '')
-        self.assertEqual(d4.freq, '')
-        self.assertEqual(d4.unsymbolizer, None)
-        self.assertEqual(d4.dtype_id, 'op_settled_positions')
-        self.assertEqual(d4.unsymbolizer, None)
-
-        d5 = DataType('op_holding_positions')
-        print(f'created data type: {d5}')
-        self.assertEqual(d5.name, 'op_holding_positions')
-        self.assertEqual(d5.asset_type_str, '')
-        self.assertEqual(d5.asset_types, '')
-        self.assertEqual(d5.freq, '')
-        self.assertEqual(d5.unsymbolizer, None)
-        self.assertEqual(d5.dtype_id, 'op_holding_positions')
-        self.assertEqual(d5.unsymbolizer, None)
-
-        d6 = DataType('op_settled_positions')
-        print(f'created data type: {d6}')
-        self.assertEqual(d6.name, 'op_settled_positions')
-        self.assertEqual(d6.asset_type_str, '')
-        self.assertEqual(d6.asset_types, '')
-        self.assertEqual(d6.freq, '')
-        self.assertEqual(d6.unsymbolizer, None)
-        self.assertEqual(d6.dtype_id, 'op_settled_positions')
-        self.assertEqual(d6.unsymbolizer, None)
+    def test_trade_op_types_removed(self):
+        """旧式过程数据类型（op_*）已移除，创建此类 DataType 应抛出 KeyError。过程数据请使用 get_data('proc.xxx')。"""
+        print('\n[test_trade_op_types_removed] old op_* types must raise KeyError')
+        for name in ('op_trade_volumes', 'op_trade_prices', 'op_holding_positions', 'op_settled_positions',
+                     'op_cashes', 'op_settled_cashes'):
+            with self.subTest(name=name):
+                with self.assertRaises(KeyError):
+                    DataType(name)
+        print('  all op_* types correctly rejected')
 
     def test_all_types_with_full_id(self):
         ds = self.ds
