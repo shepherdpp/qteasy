@@ -521,8 +521,10 @@ class TestQT(unittest.TestCase):
         """测试策略的回测模式,结果打印但不可视化"""
         qt.configure(mode=1,
                      trade_batch_size=1,
+                     invest_start='20070604',
+                     invest_end='20190329',
                      visual=False,
-                     trade_log=True,
+                     trade_log=False,
                      )
         qt.run(self.op)
 
@@ -534,6 +536,8 @@ class TestQT(unittest.TestCase):
                 self.op,
                 mode=1,
                 trade_batch_size=1,
+                invest_start='20070604',
+                invest_end='20190329',
                 visual=True,
                 trade_log=False,
                 buy_sell_points=False,
@@ -551,6 +555,8 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=1,
                 invest_start='20070604',
                 invest_end='20190329',
+                cost_rate_buy=0.0001,
+                cost_rate_sell=0.,
                 invest_cash_amounts=[100_000],
                 visual=True,
                 trade_log=True,
@@ -562,11 +568,15 @@ class TestQT(unittest.TestCase):
         self.assertIsInstance(res['trade_summary'], str)
         self.assertIsInstance(res['report'], str)
         print(res['trade_log'])
-        print(res['report'])
         print(res['final_value'])
+        print(res['total_fee'])
         print(res['info'])
         print(res['sharp'])
-        self.assertAlmostEqual(res['final_value'], 395710.19, -3)  # testing the second time this number will be 392452.98
+        self.assertAlmostEqual(res['final_value'], 395710.19, 0)
+        self.assertAlmostEqual(res['total_fee'], 773.9, 0)
+        self.assertAlmostEqual(res['sharp'], 0.513, 3)
+        self.assertAlmostEqual(res['days'], 4315, 0)
+        self.assertAlmostEqual(res['rtn'], 2.957, 3)
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
@@ -1447,7 +1457,7 @@ class TestQT(unittest.TestCase):
             step_dates = step_times.normalize()
             step_fee = backtested.trade_cost_array.sum(axis=1)
             fee_by_date = pd.Series(step_fee, index=step_dates).groupby(level=0).sum()
-            expected_daily_fee = fee_by_date.reindex(daily_index).fillna(0.0).values
+            expected_daily_fee = fee_by_date.reindex(daily_index.normalize()).fillna(0.0).values
 
             # 2.4 强断言：complete_values 的各列必须与基于数组重算的结果完全一致
             np.testing.assert_allclose(
