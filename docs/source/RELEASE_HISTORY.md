@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.1.1 (2026-03-07)
+- Fixed backtest report "Total operation fee" always showing zero when daily evaluation uses `evaluate_price_data`. Fees were aggregated by date but then reindexed against the daily index that carries a time-of-day (e.g. 15:00), so the index mismatch produced all NaNs and the subsequent fillna(0) zeroed the fee column. Alignment is now done on normalized dates so that `backtest_result['total_fee']` matches the sum of per-trade fees in trade_log.
+- Added automatic rotation for trade_log and trade_summary files: old `trade_log_*.csv` and `trade_summary_*.csv` files are removed according to the configured retention period to avoid unbounded growth of the log directory, a new configure key `trade_log_keep_days` is now added to configure trade log rotation behavior.
+
 ## 2.1.0 (2026-03-06)
 - **Process data (proc.\*) API**: Strategies can access runtime state (cash, positions, trade records, etc.) via `get_data('proc.own_cash')`, `get_data('proc.trade_records', lag=0)` and other `proc.*` fields in `realize()` without declaring them in `data_types`. Process data is injected by Backtester (backtest) and Trader (live) and respects no-look-ahead: at step k the strategy sees only results from steps 0..k-1 for trade data.
 - **Dynamic backtest path selection**: If any strategy uses `proc.*` in its `realize()` source, backtest automatically uses the stepwise path (`_backtest_dynamic_operator`); otherwise the static path (batch signals + vectorized backtest) is used. Detection is via `_strategies_use_proc_data()` so no declaration is required.

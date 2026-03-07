@@ -13,12 +13,14 @@
 import os
 import sys
 import warnings
+import logging
+from datetime import datetime, timedelta
+from logging.handlers import TimedRotatingFileHandler
+from argparse import Namespace
+from typing import Optional
 
 import tushare as ts
 import numpy as np
-import logging
-from logging.handlers import TimedRotatingFileHandler
-from argparse import Namespace
 
 from qteasy.trade_recording import delete_account
 from qteasy.qt_operator import Operator
@@ -110,15 +112,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 version_info = Namespace(
         major=2,
         minor=1,
-        patch=0,
+        patch=1,
         short=(2, 1),
-        full=(2, 1, 0),
-        string='2.1.0',
-        tuple=('2', '1', '0'),
+        full=(2, 1, 1),
+        string='2.1.1',
+        tuple=('2', '1', '1'),
         releaselevel='beta',
 )
 
@@ -239,6 +241,108 @@ def _refresh_log_paths() -> None:
     os.makedirs(QT_TRADE_LOG_PATH, exist_ok=True)
 
 
+def _rotate_trade_logs(base_path: str, keep_days: int) -> list[str]:
+    """根据保留天数删除指定目录下的旧 trade_log / trade_summary 文件。
+
+    优先从文件名中解析创建时间，格式参考 qt_operator 中的生成逻辑：
+    trade_log_{operator_name}_%Y%m%d_%H%M%S.csv
+    trade_summary_{operator_name}_%Y%m%d_%H%M%S.csv
+    若解析失败，则退回使用文件修改时间近似作为创建时间。
+    """
+    from qteasy import QT_CONFIG  # 局部导入以避免循环引用
+
+    if keep_days is None or keep_days <= 0:
+        return []
+
+    if not os.path.isdir(base_path):
+        return []
+
+    threshold = datetime.now() - timedelta(days=keep_days)
+    removed_files: list[str] = []
+
+    for name in os.listdir(base_path):
+        full_path = os.path.join(base_path, name)
+        if not os.path.isfile(full_path):
+            continue
+        if not (name.startswith('trade_log_') or name.startswith('trade_summary_')):
+            continue
+        if not name.endswith('.csv'):
+            continue
+
+        created_time: Optional[datetime] = None
+
+        try:
+            # 解析文件名中的时间戳部分：{prefix}_{operator_name}_%Y%m%d_%H%M%S.csv
+            stem = name[:-4]  # 去除 .csv
+            parts = stem.split('_')
+            if len(parts) >= 3:
+                date_str, time_str = parts[-2], parts[-1]
+                created_time = datetime.strptime(f'{date_str}_{time_str}', '%Y%m%d_%H%M%S')
+        except Exception:
+            created_time = None
+
+        if created_time is None:
+            # 解析失败时退回到 mtime
+            try:
+                created_time = datetime.fromtimestamp(os.path.getmtime(full_path))
+            except Exception:
+                continue
+
+        if created_time < threshold:
+            try:
+                os.remove(full_path)
+                removed_files.append(full_path)
+            except Exception as e:
+                # 仅记录 warning，不中断程序
+                logging.getLogger('core').warning(
+                    'Failed to remove old trade log file "%s": %s', full_path, e
+                )
+
+    if removed_files:
+        logging.getLogger('core').info(
+            'Rotated trade logs: %d files removed, keep_days=%s',
+            len(removed_files),
+            keep_days,
+        )
+
+    return removed_files
+
+
+def _auto_rotate_trade_logs() -> None:
+    """在模块初始化阶段，根据配置自动对当前 trade_log 目录做一次轮换删除。"""
+    global QT_TRADE_LOG_PATH
+
+    keep_days = QT_CONFIG.get('trade_log_keep_days', 0)
+    if keep_days is None or (isinstance(keep_days, int) and keep_days <= 0):
+        return
+
+    _rotate_trade_logs(QT_TRADE_LOG_PATH, int(keep_days))
+
+
+def rotate_trade_logs(days: Optional[int] = None) -> None:
+    """手动触发 trade_log / trade_summary 轮换删除。
+
+    Parameters
+    ----------
+    days : int or None
+        若为 None，则使用全局配置 trade_log_keep_days；
+        若为正整数，则以该值作为本次删除的保留天数（不修改全局配置）。
+    """
+    global QT_TRADE_LOG_PATH
+
+    if days is None:
+        keep_days = QT_CONFIG.get('trade_log_keep_days', 0)
+    else:
+        if not isinstance(days, int):
+            raise ValueError(f'Parameter "days" must be an integer or None, got {type(days).__name__}.')
+        keep_days = days
+
+    if keep_days is None or (isinstance(keep_days, int) and keep_days <= 0):
+        return
+
+    _rotate_trade_logs(QT_TRADE_LOG_PATH, int(keep_days))
+
+
 # 设置qteasy回测交易报告以及错误报告的存储路径（支持热修改，见 configure 挂钩）
 _refresh_log_paths()
 # 设置loggings，创建logger
@@ -258,6 +362,9 @@ logger_core.addHandler(error_handler)
 _log_level_name = str(QT_CONFIG.get('log_level', 'INFO')).upper()
 _log_level_value = getattr(logging, _log_level_name, logging.INFO)
 logger_core.setLevel(_log_level_value)
+
+# 在 logger 初始化完成后，根据配置自动做一次 trade_log 轮换
+_auto_rotate_trade_logs()
 logger_core.propagate = False
 
 logger_core.info('qteasy loaded!')
