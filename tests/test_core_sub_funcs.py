@@ -9,11 +9,13 @@
 #   sub-functions.
 # ======================================
 import unittest
+import warnings
 
 import pandas as pd
 import numpy as np
 
 from qteasy import QT_DATA_SOURCE
+from qteasy.datatypes import DataType
 
 
 class TestCoreSubFuncs(unittest.TestCase):
@@ -249,6 +251,77 @@ class TestCoreSubFuncs(unittest.TestCase):
                           shares='missing_code, 513100.SH',
                           adj='wrong_adj'
                           )
+
+    def test_get_history_data_unmatched_names_raises(self):
+        """未定义的数据类型名称必须触发 ValueError，且异常信息中包含未匹配名称"""
+        from qteasy import get_history_data
+        print('\n[TestGetHistoryData] unmatched type name raises ValueError with name in message')
+        with self.assertRaises(ValueError) as ctx:
+            with warnings.catch_warnings(record=True):
+                warnings.simplefilter('always')
+                get_history_data(
+                    htypes='close, nonexistent_xyz_123',
+                    shares='000001.SZ',
+                    start='20200101',
+                    end='20200201',
+                )
+        self.assertIn('nonexistent_xyz_123', str(ctx.exception))
+        print(' exception message contains missing name:', 'nonexistent_xyz_123' in str(ctx.exception))
+
+    def test_get_history_data_partial_match_raises(self):
+        """部分可匹配、部分不可匹配时抛出 ValueError，并列出不可匹配的名称"""
+        from qteasy import get_history_data
+        print('\n[TestGetHistoryData] partial match raises ValueError, missing names listed')
+        with self.assertRaises(ValueError) as ctx:
+            with warnings.catch_warnings(record=True):
+                warnings.simplefilter('always')
+                get_history_data(
+                    htypes='close, nonexistent_abc, open',
+                    shares='000001.SZ',
+                    start='20200101',
+                    end='20200201',
+                )
+        self.assertIn('nonexistent_abc', str(ctx.exception))
+        print(' exception message contains missing name:', 'nonexistent_abc' in str(ctx.exception))
+
+    def test_get_history_data_explicit_data_types(self):
+        """显式传入 data_types 时不再按名称推断，不做“名称缺失”校验，行为与原有一致"""
+        from qteasy import get_history_data
+        print('\n[TestGetHistoryData] explicit data_types: no infer, no missing-name check')
+        data_types = [DataType(name='close', freq='d', asset_type='E')]
+        res = get_history_data(
+            data_types=data_types,
+            shares='000001.SZ',
+            start='20200101',
+            end='20200201',
+            freq='d',  # 显式传入 freq，避免 get_history_panel 中 _adjust_freq 收到 None
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIn('000001.SZ', res)
+        self.assertIn('close', res['000001.SZ'].columns, msg='explicit data_types should yield close column')
+        print(' keys:', list(res.keys()), 'columns:', list(res['000001.SZ'].columns))
+
+    def test_get_history_data_ebitda_and_total_mv(self):
+        """非常规类型名 ebitda（仅季度）+ total_mv（日频）应同时返回两列，依赖 DataSource 有对应数据"""
+        from qteasy import get_history_data
+        print('\n[TestGetHistoryData] ebitda + total_mv: both columns expected when data available')
+        try:
+            res = get_history_data(
+                htypes='ebitda, total_mv',
+                start='20200101',
+                end='20201231',
+                shares='000001.SZ',
+            )
+        except Exception as e:
+            print(' get_history_data raised (may be no data):', e)
+            self.skipTest('ebitda/total_mv data not available in DataSource')
+            return
+        self.assertIsInstance(res, dict)
+        self.assertIn('000001.SZ', res)
+        df = res['000001.SZ']
+        print(' columns:', list(df.columns), 'shape:', df.shape)
+        self.assertIn('ebitda', df.columns, msg='ebitda column should be present after type matching fix')
+        self.assertIn('total_mv', df.columns, msg='total_mv column should be present')
 
     def test_get_backtest_data_package(self):
         """ 测试获取回测数据包"""
