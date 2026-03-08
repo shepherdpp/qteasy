@@ -1145,7 +1145,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=1.,
                 sell_batch_size=1.,
                 parallel=True,
-                trade_log=False
+                trade_log=True,
         )
         print('backtest in batch mode:')
         res_batch = qt.run(op=op_batch, mode=1)
@@ -1221,7 +1221,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=100.,
                 sell_batch_size=100.,
                 parallel=True,
-                trade_log=False
+                trade_log=True,
         )
         print('output result back testing with test data')
 
@@ -1264,8 +1264,6 @@ class TestQT(unittest.TestCase):
                 parallel=True,
                 trade_log=True,
                 trace_log=True,
-                # trade_log=False,
-                # trace_log=False,
         )
 
         # test with group merge type is None

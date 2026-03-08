@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.1.3 (2026-03-08)
+- **Filenames**  
+  Internal filename generation has been updated so that all generated file names (e.g. trade logs, system logs, data exports) comply with Windows, Linux, and macOS requirements. You no longer need to worry about invalid characters or path issues when using qteasy on different operating systems.
+
 ## 2.1.2 (2026-03-07)
 - **Backtest trade prices**  
   Asset pool passed as a comma-separated string is now handled correctly; trade price columns are aligned to the full pool so backtests work with back-adjusted prices or missing data for some symbols.
