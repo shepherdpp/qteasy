@@ -9,6 +9,7 @@
 # ======================================
 
 
+import logging
 import os
 
 import numpy as np
@@ -2385,6 +2386,17 @@ class Operator:
 
             backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
             backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
+
+            value_curve_file_name = sanitize_filename(
+                f'value_curve_{self.name}_{backtest_datetime}.csv'
+            )
+            value_curve_file_path = os.path.join(QT_TRADE_LOG_PATH, value_curve_file_name)
+            saved_value_curve = backtested.save_complete_values(save_to_file_path=value_curve_file_path)
+            if saved_value_curve is not None:
+                qteasy_log = logger if logger is not None else logging.getLogger('qteasy')
+                qteasy_log.info(
+                    'value curve (complete_values) saved to %s', saved_value_curve
+                )
 
         if config['report']:
             # 格式化输出回测结果

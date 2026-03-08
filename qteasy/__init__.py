@@ -264,7 +264,7 @@ def _rotate_trade_logs(base_path: str, keep_days: int) -> list[str]:
         full_path = os.path.join(base_path, name)
         if not os.path.isfile(full_path):
             continue
-        if not (name.startswith('trade_log_') or name.startswith('trade_summary_')):
+        if not (name.startswith('trade_log_') or name.startswith('trade_summary_') or name.startswith('value_curve_')):
             continue
         if not name.endswith('.csv'):
             continue

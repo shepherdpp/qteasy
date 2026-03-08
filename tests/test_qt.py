@@ -24,6 +24,7 @@ from qteasy.tafuncs import sma
 from qteasy.datatypes import DataType, StgData
 
 from qteasy.strategy import RuleIterator, GeneralStg
+from qteasy.trading_util import trade_log_file_path_name
 
 
 class TestLSStrategy(RuleIterator):
@@ -1406,6 +1407,11 @@ class TestQT(unittest.TestCase):
             )
 
             cv = res['complete_values']
+            # 获取回测结果中的trade_log保存路径，并将cv保存成csv文件，该文件与trade_log的路径相同，文件名相似，文件名为trade_log文件名+“_cv.csv”
+            trade_log_path = res['trade_log']
+            cv_file_name = trade_log_path + '_cv.csv'
+            cv.to_csv(cv_file_name)
+            
             print(f'complete_values head for frequency and timing {freq}, {timing}:')
             print(cv[["000651.SZ", "000001.SZ", "cash", "fee", "value"]].head(60).to_string())
 
@@ -1478,6 +1484,21 @@ class TestQT(unittest.TestCase):
                     expected_daily_fee,
                     err_msg=f'fee mismatch for freq={freq}, timing={timing}',
             )
+
+            # 2.5 价格列 p-{code} 存在且与 evaluate_price_data 按日对齐，缺失处为 NaN
+            for share in backtested.shares:
+                pcol = 'p-' + share
+                self.assertIn(pcol, cv.columns, msg=f'missing price column {pcol} for freq={freq}, timing={timing}')
+                pd.testing.assert_series_equal(
+                    cv[pcol],
+                    daily_prices[share],
+                    check_names=False,
+                    check_exact=False,
+                )
+
+            # 2.6 trade_log=True 时应收录 complete_values_file（value_curve 保存路径）
+            self.assertIn('complete_values_file', res, msg='trade_log=True should set complete_values_file')
+            self.assertIsNotNone(res['complete_values_file'], msg='value curve path should be set')
 
     def test_pt_rebalance_uses_same_step_sell_cash_when_delivery_zero(self):
         """测试 PT 信号在 cash_delivery_period == 0 时，换仓场景能在同一回测步内复用卖出获得的现金。

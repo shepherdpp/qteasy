@@ -1400,6 +1400,9 @@ class Backtester:
         daily_values = (price_array * daily_positions).sum(axis=1) + daily_cash
 
         value_history = pd.DataFrame(daily_positions, index=daily_index, columns=self.shares)
+        # 每只股票的价格列 p-{代码} 紧接在对应持仓列之后，顺序与 self.shares 一致，缺失价格保留 NaN
+        for s in self.shares:
+            value_history['p-' + s] = daily_prices[s].values
         value_history['cash'] = daily_cash
         value_history['value'] = daily_values
         value_history['fee'] = daily_fee.values
@@ -1455,8 +1458,17 @@ class Backtester:
         return self.backtest_result
 
     # 生成回测结果的明细报告，包括纯文本形式的报告和图表形式的报告
-    def report_result(self) -> str:
+    def report_result(self,
+                      trade_log: str = None,
+                      trade_summary: str = None) -> str:
         """ 生成回测结果的明细报告，报告为纯文本格式，可以使用print命令打印
+
+        Parameters
+        ----------
+        trade_log: str, optional
+            交易日志文件的存储路径，默认值为None，如果给出该路径，则在报告中打印交易日志的存储路径
+        trade_summary: str, optional
+            交易汇总记录文件的存储路径，默认值为None，如果给出，则在报告中打印交易汇总记录的存储路径
 
         Returns
         -------
@@ -1687,3 +1699,31 @@ class Backtester:
         self.backtest_result['trade_summary'] = save_to_file_path  #
 
         return self.summary_df
+
+    def save_complete_values(self, save_to_file_path: Optional[str] = None) -> Optional[str]:
+        """ 将 complete_values 保存为 CSV 文件（当 trade_log=True 时由 qt_operator 调用）
+
+        Parameters
+        ----------
+        save_to_file_path: str, optional
+            保存路径，若为 None 则不写入
+
+        Returns
+        -------
+        str or None
+            成功时返回保存路径，否则返回 None
+        """
+        cv = self.backtest_result.get('complete_values')
+        if save_to_file_path is None or cv is None or (isinstance(cv, pd.DataFrame) and cv.empty):
+            if self.logger:
+                self.logger.debug(
+                    'save_complete_values skipped: path=%s, complete_values present=%s',
+                    save_to_file_path,
+                    cv is not None and (not isinstance(cv, pd.DataFrame) or not cv.empty),
+                )
+            return None
+        cv.to_csv(save_to_file_path, encoding='utf-8')
+        self.backtest_result['complete_values_file'] = save_to_file_path
+        if self.logger:
+            self.logger.info(f'complete values (value curve) saved to {save_to_file_path}')
+        return save_to_file_path
