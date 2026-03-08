@@ -406,7 +406,7 @@ class TestQT(unittest.TestCase):
     def setUp(self):
         # 准备测试所需数据，确保本地数据源有足够的数据
 
-        self.op = qt.Operator(strategies=['dma', 'macd'])
+        self.op = qt.Operator(strategies=['dma', 'macd'], name='Test Operator')
         self.op.group_merge_type = 'OR'
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
@@ -994,7 +994,7 @@ class TestQT(unittest.TestCase):
         with tqdm(total=len(all_built_ins)) as pbar:
             for strategy in all_built_ins:
                 op = qt.Operator(strategies=[strategy])
-                op.set_blender('s0', 'Group_1')  #TODO: blender can be missing if only one strategy?
+                op.set_blender('s0', 'Group_1')
                 res = qt.run(
                         op,
                         mode=1,
@@ -1036,7 +1036,7 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'], name='Test Multi-Share')
         all_shares = qt.filter_stocks(date='20070101')
         shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
@@ -1074,7 +1074,7 @@ class TestQT(unittest.TestCase):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
-        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'], name='Test Many Share')
         qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                                 '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
@@ -1106,7 +1106,7 @@ class TestQT(unittest.TestCase):
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     trade_log=False,
+                     trade_log=True,
                      hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', par_values=())
@@ -1123,13 +1123,13 @@ class TestQT(unittest.TestCase):
         op.set_blender('avg(s0, s1)', 'Group_1')
         op.set_blender('s0', group_id='Group_2')
         op.group_merge_type = 'OR'
-        qt.run(op, visual=False, trade_log=True)
+        qt.run(op, visual=True, trade_log=True)
 
     def test_op_stepwise(self):
         """测试stepwise模式下的operator的表，使用两个测试专用交易策略"""
         # confirm that operator running results are same in stepwise and batch type
-        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
-        op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step')
+        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch', name='Test Stepwise')
+        op_stepwise = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='step', name='Test Stepwise')
         for op in [op_batch, op_stepwise]:
             op.set_parameter(0, window_length=100, par_values=(12, 26, 9))
             op.set_parameter(1, window_length=100, par_values=(12, 26, 9))
@@ -1192,9 +1192,9 @@ class TestQT(unittest.TestCase):
         stg1.window_length = 100
         stg2.window_length = 100
 
-        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch', name='Test Batch')
         op_batch.set_parameter('custom_1', run_freq='W')
-        op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise')
+        op_stepwise = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='stepwise', name='Test Step')
         op_stepwise.set_parameter('custom_1', run_freq='W')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
@@ -1226,9 +1226,9 @@ class TestQT(unittest.TestCase):
         print('output result back testing with test data')
 
         print('backtest in batch mode:')
-        res_batch = qt.run(op=op_batch, mode=1)
+        res_batch = qt.run(op=op_batch, mode=1, visual=True, trade_log=True)
         print('backtest in stepwise mode:')
-        res_stepwise = qt.run(op=op_stepwise, mode=1)
+        res_stepwise = qt.run(op=op_stepwise, mode=1, visual=True, trade_log=True)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         print(f'the result of batched operation is\n'
@@ -1247,7 +1247,7 @@ class TestQT(unittest.TestCase):
     def test_op_tracing(self):
         """test an multi-group op with tracing enabled with short period of data"""
         # 创建一个Operator包含三个交易策略组
-        op = qt.Operator(strategies=Cross_SMA_PS, run_freq='d', signal_type='PS')
+        op = qt.Operator(strategies=Cross_SMA_PS, run_freq='d', signal_type='PS', name='Test Tracing')
         op.add_strategy(Cross_SMA_PS, run_freq='W')
         op.add_strategy(Cross_SMA_PS, run_freq='d', run_timing='10:30')
         op.set_blender('s0')
@@ -1392,7 +1392,7 @@ class TestQT(unittest.TestCase):
             print(f'testing strategy running at frequency and timing: {freq}, {timing}')
 
             # 直接使用 qt.run() 完成回测，并通过 op.backtested 访问 Backtester 金标准数组
-            op = qt.Operator('dma', run_freq=freq, run_timing=timing)
+            op = qt.Operator('dma', run_freq=freq, run_timing=timing, name=f'Test {freq} @ {timing}')
             res = qt.run(
                     op=op,
                     mode=1,
@@ -1545,7 +1545,7 @@ class TestQT(unittest.TestCase):
         print('\n测试大小盘轮动交易策略，比较两个指数的过去N日收盘价涨幅，选择较大的持有，以开盘价买入，以收盘价卖出')
         stg_buy = StgBuyOpen()
         stg_sel = StgSelClose()
-        op = qt.Operator(signal_type='ps')
+        op = qt.Operator(signal_type='ps', name='Open-Close Rotation')
         op.add_strategy(stg_buy,
                         run_timing='open',  # 以开盘价买进(这个策略只处理买入信号)
                         run_freq='d',
@@ -1596,7 +1596,7 @@ class TestQT(unittest.TestCase):
     def test_stg_index_follow(self):
         # 跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率
         print('\n跟踪沪深300指数的价格，买入沪深300指数成分股并持有，计算收益率')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op = qt.Operator(strategies=['finance'], signal_type='PS', name='Index Follow')
         op.set_blender(blender='s0')
         op.set_parameter(0,
                          opt_tag=1,

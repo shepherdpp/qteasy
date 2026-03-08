@@ -1385,7 +1385,7 @@ class DataType:
             err = TypeError(f'Only history data')
 
         if column_name not in acquired_data.columns:
-            err = KeyError(f'columu name {column_name} not in columns of acquired_data: \n{acquired_data.columns}')
+            err = KeyError(f'column ({column_name}) not in acquired_data: \n{acquired_data.columns}')
             raise err
         return acquired_data[column_name]
 

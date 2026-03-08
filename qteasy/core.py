@@ -1246,7 +1246,8 @@ def get_history_data(*,
         if not isinstance(data_types, list) or not all(isinstance(dt, DataType) for dt in data_types):
             raise TypeError("data_types must be a list of DataType instances")
     else:
-        if htypes is not None:
+        # 仅当用户显式传入了非空 htypes 时才用它覆盖 htype_names（htypes 为 None 时已在前面被置为 ''，故用 truthy 判断以保持与 htype_names 等效）
+        if htypes:
             warn("htypes parameter is deprecated, please use htype_names instead", DeprecationWarning)
             htype_names = htypes
 
@@ -1309,17 +1310,39 @@ def get_history_data(*,
         else:
             htype_names = htype_names
 
-        # create data_types out of htype_names, freq, asset_types:
-        # TODO: 使用成熟的infer_data_type函数替代下面的代码
-        from itertools import product
+        # 按名称逐个调用 infer_data_types，以便无效名称触发 KeyError 时仍能收集 missing_names 并统一报 ValueError
         data_types = []
-        freqs = [freq, 'None']
-        asset_type.extend(['None'])
-        for n, f, at in product(htype_names, freqs, asset_type):
+        missing_names = []
+        asset_types_arg = asset_type + ['None']
+        for n in htype_names:
             try:
-                data_types.append(DataType(name=n, freq=f, asset_type=at))
-            except:
-                continue
+                dts = infer_data_types(
+                    names=[n],
+                    freqs=[freq],
+                    asset_types=asset_types_arg,
+                    adj=None,  # 已在上面根据 adj 改写 htype_names，此处不再传入避免重复改写
+                    allow_ignore_freq=True,
+                    allow_ignore_asset_type=True,
+                )
+                if dts:
+                    data_types.extend(dts)
+                else:
+                    missing_names.append(n)
+            except (KeyError, ValueError):
+                missing_names.append(n)
+        # 按 dtype_id 去重
+        data_types = list({dt.dtype_id: dt for dt in data_types}.values())
+        if missing_names:
+            warn(
+                f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
+                f"Check spelling or define them in DATA_TYPE_MAP.",
+                UserWarning,
+                stacklevel=2,
+            )
+            raise ValueError(
+                f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
+                f"Please check spelling or add definitions via qt.define() / DATA_TYPE_MAP."
+            )
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE

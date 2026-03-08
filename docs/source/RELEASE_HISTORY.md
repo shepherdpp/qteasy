@@ -1,5 +1,15 @@
 # RELEASE HISTORY
 
+## 2.1.2 (2026-03-07)
+- **Backtest trade prices**  
+  Asset pool passed as a comma-separated string is now handled correctly; trade price columns are aligned to the full pool so backtests work with back-adjusted prices or missing data for some symbols.
+- **get_history_data**  
+  Invalid type names now raise a `ValueError` listing unmatched names (and suggest `qt.define()` / DATA_TYPE_MAP) instead of being silently skipped; deprecated `htypes` only overrides `htype_names` when given explicitly.
+- **Visualization chart titles**  
+  Backtest result charts now show a title with the Operator name and backtest date-time, so you can match charts to the corresponding trade_log and trade_summary files.
+- **Error messages**  
+  Fixed typo and clarified message when a requested column is missing in DataType ("columu" → "column").
+
 ## 2.1.1 (2026-03-07)
 - Fixed backtest report "Total operation fee" always showing zero when daily evaluation uses `evaluate_price_data`. Fees were aggregated by date but then reindexed against the daily index that carries a time-of-day (e.g. 15:00), so the index mismatch produced all NaNs and the subsequent fillna(0) zeroed the fee column. Alignment is now done on normalized dates so that `backtest_result['total_fee']` matches the sum of per-trade fees in trade_log.
 - Added automatic rotation for trade_log and trade_summary files: old `trade_log_*.csv` and `trade_summary_*.csv` files are removed according to the configured retention period to avoid unbounded growth of the log directory, a new configure key `trade_log_keep_days` is now added to configure trade log rotation behavior.

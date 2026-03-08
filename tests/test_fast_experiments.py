@@ -386,36 +386,34 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """ test for strategy GridTrading"""
-        from qteasy import DataType
-        shares = ['000001.SZ', '000002.SZ', '000063.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ',
-                  '000333.SZ', '000338.SZ', '000413.SZ', '000415.SZ', '000423.SZ', '000425.SZ', '000538.SZ',
-                  '000568.SZ', '000596.SZ', '000625.SZ', '000627.SZ', '000629.SZ', '000630.SZ', '000651.SZ',
-                  '000656.SZ', '000661.SZ', '000671.SZ', '000703.SZ', '000709.SZ', '000723.SZ', '000725.SZ',
-                  '000728.SZ', '000768.SZ', '000776.SZ', '000783.SZ', '000786.SZ', '000858.SZ', '000876.SZ',
-                  '000895.SZ', '000898.SZ', '000938.SZ', '000961.SZ', '000963.SZ', '001979.SZ', '002001.SZ',
-                  '002007.SZ', '002008.SZ', '002010.SZ', '002024.SZ', '002027.SZ', '002032.SZ', '002044.SZ',
-                  '002050.SZ']
-        alpha = AlphaPT(pars=(),
-                        name='AlphaSel',
-                        description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
-                        data_types=[DataType('total_mv', asset_type='E'),
-                                    DataType('total_liab'),
-                                    DataType('c_cash_equ_end_period'),
-                                    DataType('ebitda')],
-                        window_length=10)
-        op = qt.Operator(alpha, signal_type='PT', run_freq='M')
-        res = qt.run(op=op,
-                     mode=1,
-                     asset_type='E',
-                     asset_pool=shares,
-                     invest_start='20160101',
-                     invest_end='20220707',
-                     PT_buy_threshold=0.00,  # 如果设置PBT=0.00，PST=0.03，最终收益会达到30万元
-                     PT_sell_threshold=0.00,
-                     trade_batch_size=100,
-                     sell_batch_size=1,
-                     trade_log=True
+        shares = qt.filter_stock_codes(index='000300.SH', date='20190501')  # 选择股票池，包括2019年5月以来所有沪深300指数成分股
+        # 设置回测的运行参数
+        # shares = ['000001.SZ', '000002.SZ', '000063.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ',
+        #           '000333.SZ', '000338.SZ', '000413.SZ', '000415.SZ', '000423.SZ', '000425.SZ', '000538.SZ',
+        #           '000568.SZ', '000596.SZ', '000625.SZ', '000627.SZ', '000629.SZ', '000630.SZ', '000651.SZ',
+        #           '000656.SZ', '000661.SZ', '000671.SZ', '000703.SZ', '000709.SZ', '000723.SZ', '000725.SZ',
+        #           '000728.SZ', '000768.SZ', '000776.SZ', '000783.SZ', '000786.SZ', '000858.SZ', '000876.SZ',
+        #           '000895.SZ', '000898.SZ', '000938.SZ', '000961.SZ', '000963.SZ', '001979.SZ', '002001.SZ',
+        #           '002007.SZ', '002008.SZ', '002010.SZ', '002024.SZ', '002027.SZ', '002032.SZ', '002044.SZ',
+        #           '002050.SZ']
+        qt.configure(mode=1,  # mode=1表示回测模式
+                     invest_start='20160405',  # 回测开始日期
+                     invest_end='20210201',  # 回测结束日期
+                     asset_type='E',  # 投资品种为股票
+                     backtest_price_adj='b',
+                     asset_pool=shares,  # shares包含同期沪深300指数的成份股
+                     trade_batch_size=100,  # 买入批量为100股
+                     sell_batch_size=1,  # 卖出批量为整数股
+                     trade_log=True,  # 生成交易记录
                      )
+
+        # alpha = MultiFactors()  # 生成一个交易策略的实例，名为alpha
+        op = qt.Operator('dma', signal_type='PT',
+                         run_timing='close',  # 在周期结束（收盘）时运行
+                         run_freq='M',  # 每月执行一次选股（每周或每天都可以）
+                         )  # 生成交易员对象，操作alpha策略，交易信号的类型为‘PT'，意思是生成的信号代表持仓比例，例如1代表100%持有股票，0.35表示持有股票占资产的35%
+        # op.set_blender('1.0*s0')  # 交易策略混合方式，只有一个策略，不需要混合
+        qt.run(op=op)  # 开始运行
 
 
 if __name__ == '__main__':
