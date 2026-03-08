@@ -2256,6 +2256,77 @@ def pandas_freq_alias_version_conversion(freq) -> str:
     return mapped_freq
 
 
+def sanitize_filename(filename: str, max_length: int = 255) -> str:
+    """将文件名规范化为跨平台安全格式。
+
+    规范：仅保留字母、数字、下划线、连字符；空格替换为下划线；全小写；
+    不以点开头；连续多个下划线合并为一个，且主干首尾不留下划线；
+    过长则截断；扩展名单独校验并小写化。
+
+    Parameters
+    ----------
+    filename : str
+        待规范化的文件名（可含扩展名）。
+    max_length : int, optional
+        允许的最大长度（含扩展名），默认 255，适配常见文件系统。
+
+    Returns
+    -------
+    str
+        规范化后的文件名。
+
+    Examples
+    --------
+    >>> sanitize_filename('Trade Log_2024.csv')
+    'trade_log_2024.csv'
+    >>> sanitize_filename('  My File.Name  ')
+    'my_file.name'
+    """
+    if not filename or not isinstance(filename, str):
+        return 'unnamed'
+
+    s = filename.strip()
+    if not s:
+        return 'unnamed'
+
+    # 分离扩展名（仅最后一个点视为扩展名）
+    if '.' in s:
+        last_dot = s.rfind('.')
+        stem, ext = s[:last_dot], s[last_dot + 1:]
+    else:
+        stem, ext = s, ''
+
+    # 主干：空格 -> _，仅保留 a-z 0-9 _ -，并小写
+    stem = stem.replace(' ', '_').lower()
+    stem = re.sub(r'[^a-z0-9_-]', '', stem)
+    stem = stem.lstrip('.')  # 不以点开头
+    stem = re.sub(r'_+', '_', stem)  # 连续下划线合并为一个
+    stem = stem.strip('_')  # 去掉开头和结尾的下划线
+
+    # 扩展名：仅保留字母数字并小写
+    ext = re.sub(r'[^a-z0-9]', '', ext.lower()) if ext else ''
+
+    # 拼接
+    if ext:
+        full = (stem + '.' + ext) if stem else ('unnamed.' + ext)
+    else:
+        full = stem if stem else 'unnamed'
+
+    # 过长时截断主干部分
+    if len(full) > max_length:
+        if ext:
+            max_stem_len = max(1, max_length - 1 - len(ext))
+            stem = stem[:max_stem_len].rstrip('._-') or 'unnamed'
+            stem = re.sub(r'_+', '_', stem).strip('_') or 'unnamed'
+            full = stem + '.' + ext
+        else:
+            stem = (stem[:max_length] or '').rstrip('._-')
+            stem = re.sub(r'_+', '_', stem).strip('_') or 'unnamed'
+            full = stem
+
+    return full
+
+
 def write_binary_file(*, file_path: str, file_name: str, data, mode: str = 'wb'):
     """ 将二进制数据写入文件
 

@@ -33,6 +33,7 @@ from .utilfuncs import (
     human_units,
     date_to_month_format,
     date_to_quarter_format,
+    sanitize_filename,
 )
 
 from .datatables import (
@@ -377,15 +378,15 @@ class DataSource:
 
     # 文件操作层函数，只操作文件，不修改数据
     def _get_file_path_name(self, file_name):
-        """获取完整文件路径名"""
+        """获取完整文件路径名（文件名经跨平台安全规范化）。"""
         if self.source_type == 'db':
             err = RuntimeError('can not check file system while source type is "db"')
             raise err
         if not isinstance(file_name, str):
             err = TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
             raise err
-        file_name = file_name + '.' + self.file_type
-        file_path_name = path.join(self.file_path, file_name)
+        safe_filename = sanitize_filename(file_name + '.' + self.file_type)
+        file_path_name = path.join(self.file_path, safe_filename)
         return file_path_name
 
     def _file_exists(self, file_name):
@@ -637,7 +638,7 @@ class DataSource:
         """
         import os
         if self._file_exists(file_name):
-            file_path_name = os.path.join(self.file_path, file_name + '.' + self.file_type)
+            file_path_name = self._get_file_path_name(file_name)
             os.remove(file_path_name)
 
     def _get_file_size(self, file_name):
@@ -1427,8 +1428,8 @@ class DataSource:
             file_name = table
         if file_path is None:
             file_path = os.getcwd()
-        # 检查file_path_name是否存在，如果已经存在，则抛出异常
-        file_path_name = path.join(file_path, file_name)
+        # 检查file_path_name是否存在，如果已经存在，则抛出异常（文件名经跨平台安全规范化）
+        file_path_name = path.join(file_path, sanitize_filename(file_name))
         if os.path.exists(file_path_name):
             err = FileExistsError(f'File {file_path_name} already exists!')
             raise err

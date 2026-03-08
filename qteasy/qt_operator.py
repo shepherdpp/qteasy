@@ -34,6 +34,7 @@ from qteasy.utilfuncs import (
     str_to_list,
     rolling_window,
     SlideView,
+    sanitize_filename,
 )
 
 from qteasy.built_in import (
@@ -2368,14 +2369,18 @@ class Operator:
         backtested.evaluate_result(
                 indicators=config['test_indicators'],
         )
-        backtest_datetime = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+        backtest_datetime = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
 
         if config['trade_log']:
             from qteasy import QT_TRADE_LOG_PATH
-            trade_log_file_name = f'trade_log_{self.name}_{backtest_datetime}.csv'
+            trade_log_file_name = sanitize_filename(
+                f'trade_log_{self.name}_{backtest_datetime}.csv'
+            )
             trade_log_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
 
-            trade_summary_file_name = f'trade_summary_{self.name}_{backtest_datetime}.csv'
+            trade_summary_file_name = sanitize_filename(
+                f'trade_summary_{self.name}_{backtest_datetime}.csv'
+            )
             trade_summary_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_summary_file_name)
 
             backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
@@ -2387,8 +2392,8 @@ class Operator:
             print(report)
         if config['visual']:
             # 图表输出投资回报历史曲线
-            plot_title = f'{self.name} - Backtest Report: - {backtest_datetime}' if self.name else \
-                f'Backtest Report: - {backtest_datetime}'
+            plot_title = f'Backtest Report: {self.name} - {backtest_datetime}' if self.name else \
+                f'Backtest Report - {backtest_datetime}'
             backtested.plot_result(
                     plot_title=plot_title,
                     buy_sell_markers=config['buy_sell_points'],
