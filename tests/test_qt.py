@@ -1407,13 +1407,10 @@ class TestQT(unittest.TestCase):
             )
 
             cv = res['complete_values']
-            # 获取回测结果中的trade_log保存路径，并将cv保存成csv文件，该文件与trade_log的路径相同，文件名相似，文件名为trade_log文件名+“_cv.csv”
-            trade_log_path = res['trade_log']
-            cv_file_name = trade_log_path + '_cv.csv'
-            cv.to_csv(cv_file_name)
             
-            print(f'complete_values head for frequency and timing {freq}, {timing}:')
-            print(cv[["000651.SZ", "000001.SZ", "cash", "fee", "value"]].head(60).to_string())
+            print(f'complete_values head for frequency and timing {freq}, {timing}:\n'
+                  f'starting next test in 3 seconds...\n')
+            time.sleep(3)
 
             # ---------- 1. 结构约束：index 必须是投资区间内的所有交易日 15:00 ----------
             self.assertIsInstance(cv, pd.DataFrame)
