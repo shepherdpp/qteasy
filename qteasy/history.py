@@ -2889,6 +2889,8 @@ def check_and_prepare_trade_prices(op,
         raise TypeError(f'price_adj should be a string, got {type(price_adj)} instead')
     if price_adj.lower() not in ['none', 'n', 'back', 'b', 'forward', 'f', 'accu']:
         raise ValueError(f"invalid price_adj ({price_adj}), which should be anyone of ['none', 'back', 'forward']")
+    if isinstance(shares, str):
+        shares = str_to_list(shares, sep_char=',')
 
     all_run_freqs = [group.run_freq for group in op.groups.values()]
     all_run_timings = [group.run_timing for group in op.groups.values()]
@@ -2964,7 +2966,7 @@ def check_and_prepare_trade_prices(op,
                     trade_prices[dtype_name] = df.drop(columns=all_nan_cols)
             # 将trade_prices中剩下的DataFrame进行合并
             trade_prices = pd.concat(list(trade_prices.values()), axis=1)
-            trade_prices.reindex(columns=shares)
+            trade_prices = trade_prices.reindex(columns=shares)
         else:
             raise ValueError(f'Unexpected number of data types ({len(trade_prices)}) in trade prices!')
 
@@ -2993,6 +2995,8 @@ def check_and_prepare_trade_prices(op,
     # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
     combined_trade_prices.ffill(inplace=True)
+    # 强制列对齐到完整资产池，避免 backtest_price_adj 等导致列数不足
+    combined_trade_prices = combined_trade_prices.reindex(columns=shares)
 
     return combined_trade_prices
 
