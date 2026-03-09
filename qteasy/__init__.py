@@ -112,15 +112,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.1.2'
+__version__ = '2.1.3'
 version_info = Namespace(
         major=2,
         minor=1,
-        patch=2,
+        patch=3,
         short=(2, 1),
-        full=(2, 1, 2),
-        string='2.1.2',
-        tuple=('2', '1', '2'),
+        full=(2, 1, 3),
+        string='2.1.3',
+        tuple=('2', '1', '3'),
         releaselevel='beta',
 )
 
@@ -264,7 +264,7 @@ def _rotate_trade_logs(base_path: str, keep_days: int) -> list[str]:
         full_path = os.path.join(base_path, name)
         if not os.path.isfile(full_path):
             continue
-        if not (name.startswith('trade_log_') or name.startswith('trade_summary_')):
+        if not (name.startswith('trade_log_') or name.startswith('trade_summary_') or name.startswith('value_curve_')):
             continue
         if not name.endswith('.csv'):
             continue

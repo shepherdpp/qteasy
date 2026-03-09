@@ -22,6 +22,7 @@ from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_l
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 from qteasy.utilfuncs import reindent, adjust_string_length, is_float_like, is_integer_like
 from qteasy.utilfuncs import is_cn_stock_symbol_like, is_complete_cn_stock_symbol_like
+from qteasy.utilfuncs import sanitize_filename
 
 
 class RetryableError(Exception):
@@ -102,6 +103,28 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(str_to_list('abc'), ['abc'])
         self.assertEqual(str_to_list(''), [])
         self.assertRaises(AssertionError, str_to_list, 123)
+
+    def test_sanitize_filename(self):
+        """文件名规范化：仅保留字母数字下划线连字符、空格转下划线、小写、去首点、无连续/首尾下划线、截断过长。"""
+        print('\n[TestSanitizeFilename] 跨平台安全文件名规范化')
+        self.assertEqual(sanitize_filename('Trade Log_2024.csv'), 'trade_log_2024.csv')
+        self.assertEqual(sanitize_filename('  My File.Name  '), 'my_file.name')
+        self.assertEqual(sanitize_filename('trade_log_MyOp_20240308_123456.csv'), 'trade_log_myop_20240308_123456.csv')
+        self.assertEqual(sanitize_filename('live_log_1_User Name.log'), 'live_log_1_user_name.log')
+        # 连续下划线合并、去掉开头和结尾的下划线
+        self.assertEqual(sanitize_filename('file_name_with___under_score.csv'), 'file_name_with_under_score.csv')
+        self.assertEqual(sanitize_filename('__file_name_starts_with_underscore.file'), 'file_name_starts_with_underscore.file')
+        self.assertEqual(sanitize_filename('file_name_ends_with_underscore_.file'), 'file_name_ends_with_underscore.file')
+        self.assertEqual(sanitize_filename('.hidden'), 'unnamed.hidden')
+        self.assertEqual(sanitize_filename('UPPER.CSV'), 'upper.csv')
+        self.assertEqual(sanitize_filename('a/b\\c*d?.txt'), 'abcd.txt')
+        self.assertEqual(sanitize_filename(''), 'unnamed')
+        self.assertEqual(sanitize_filename('  \t  '), 'unnamed')
+        short = 'a' * 200 + '.csv'
+        out = sanitize_filename(short, max_length=255)
+        self.assertLessEqual(len(out), 255)
+        self.assertTrue(out.endswith('.csv'))
+        print('  sanitize_filename samples:', out[:50], '...', out[-10:])
 
     def test_list_or_slice(self):
         str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}

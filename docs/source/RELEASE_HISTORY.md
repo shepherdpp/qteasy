@@ -1,6 +1,14 @@
 # RELEASE HISTORY
 
-## 2.1.2 (2026-03-07)
+## 2.1.3 (2026-03-09)
+- **Filenames**  
+  Internal filename generation has been updated so that all generated file names (e.g. trade logs, system logs, data exports) comply with Windows, Linux, and macOS requirements. You no longer need to worry about invalid characters or path issues when using qteasy on different operating systems.
+- **value_curve file when trade_log=True**  
+  When `trade_log=True`, the full value curve is also saved as a CSV file (`value_curve_{name}_{datetime}.csv`) in the same directory as trade_log and trade_summary, and is rotated with them according to `trade_log_keep_days`, so you can keep or archive it with your other backtest logs.
+- **Backtest result and reports**  
+  Optimized backtest reports and added price information into backtest results in complete values, made backtest result analysis much easier.
+
+## 2.1.2 (2026-03-08)
 - **Backtest trade prices**  
   Asset pool passed as a comma-separated string is now handled correctly; trade price columns are aligned to the full pool so backtests work with back-adjusted prices or missing data for some symbols.
 - **get_history_data**  

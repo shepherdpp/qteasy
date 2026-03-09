@@ -172,7 +172,8 @@ def evaluate(looped_values: pd.DataFrame,
                             - stocks: 各个股票的持仓数量
                             - cash: 持有现金数量
                             - fee: 当期交易总费用
-                            - value; 当期持有现金和资产总价值
+                            - value: 当期持有现金和资产总价值
+                            - p-{股票代码}: 各标的的当日收盘价列（仅在有 evaluate_price_data 时存在），缺失价格为 NaN
                             - other indicators: 根据需要计算的其他评价指标历史变化值
     - days:              回测历史周期总天数
     - months:            回测历史周期总月数

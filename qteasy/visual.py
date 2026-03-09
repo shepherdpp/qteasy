@@ -1467,7 +1467,11 @@ def _plot_test_result(opti_eval_res: list,
     plt.show()
 
 
-def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=None) -> Optional[str]:
+def _loop_report_str(loop_results=None,
+                     trade_log: str = None,
+                     trade_summary: str = None,
+                     column_width: int = None,
+                     ) -> Optional[str]:
     """ 生成单次回测的结果格式化输出，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致，输出结果可以直接打印到控制台或者写入文件
 
@@ -1475,12 +1479,12 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
     ----------
     loop_results: dict
         回测结果
-    columns: list, optional, to be implemented
-        输出的列名
-    headers: list, optional, to be implemented
-        输出的表头
-    formatter: list, optional, to be implemented
-        输出的格式化函数
+    trade_log: str, optional
+        交易日志的存储路径，如果给出，则在报告中包含交易日志的存储路径
+    trade_summary: str, optional
+        交易总结的存储路径，如果给出，则在报告中包含交易总结的存储路径
+    column_width: int, optional, not implemented yet
+        交易总结表格的列宽，如果给出，则限定交易总结表格的列宽，确保表格在控制台输出时不会因为列宽过大而变形
 
     Returns
     -------
@@ -1551,6 +1555,17 @@ def _loop_report_str(loop_results=None, columns=None, headers=None, formatter=No
         report_string += f'\n    recovered on:         {loop_results["recover_date"].date()}\n'
     else:
         report_string += f'\n    recovered on:         Not recovered!\n'
+    # 从参数或 loop_results 取路径，便于 qt_operator 保存后报告中展示
+    path_trade_log = trade_log if trade_log is not None else loop_results.get('trade_log')
+    path_trade_summary = trade_summary if trade_summary is not None else loop_results.get('trade_summary')
+    if path_trade_log:
+        report_string += f'\ntrade log is stored in: {path_trade_log}\n'
+    if path_trade_summary:
+        report_string += f'trade summary is stored in: {path_trade_summary}\n'
+    path_value_curve = loop_results.get('complete_values_file')
+    if path_value_curve:
+        report_string += f'value curve (complete values) is stored in: {path_value_curve}\n'
+
     report_string += report_ending()
 
     return report_string

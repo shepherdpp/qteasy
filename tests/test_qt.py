@@ -24,6 +24,7 @@ from qteasy.tafuncs import sma
 from qteasy.datatypes import DataType, StgData
 
 from qteasy.strategy import RuleIterator, GeneralStg
+from qteasy.trading_util import trade_log_file_path_name
 
 
 class TestLSStrategy(RuleIterator):
@@ -1145,7 +1146,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=1.,
                 sell_batch_size=1.,
                 parallel=True,
-                trade_log=False
+                trade_log=True,
         )
         print('backtest in batch mode:')
         res_batch = qt.run(op=op_batch, mode=1)
@@ -1221,7 +1222,7 @@ class TestQT(unittest.TestCase):
                 trade_batch_size=100.,
                 sell_batch_size=100.,
                 parallel=True,
-                trade_log=False
+                trade_log=True,
         )
         print('output result back testing with test data')
 
@@ -1264,8 +1265,6 @@ class TestQT(unittest.TestCase):
                 parallel=True,
                 trade_log=True,
                 trace_log=True,
-                # trade_log=False,
-                # trace_log=False,
         )
 
         # test with group merge type is None
@@ -1408,8 +1407,10 @@ class TestQT(unittest.TestCase):
             )
 
             cv = res['complete_values']
-            print(f'complete_values head for frequency and timing {freq}, {timing}:')
-            print(cv[["000651.SZ", "000001.SZ", "cash", "fee", "value"]].head(60).to_string())
+            
+            print(f'complete_values head for frequency and timing {freq}, {timing}:\n'
+                  f'starting next test in 3 seconds...\n')
+            time.sleep(3)
 
             # ---------- 1. 结构约束：index 必须是投资区间内的所有交易日 15:00 ----------
             self.assertIsInstance(cv, pd.DataFrame)
@@ -1480,6 +1481,21 @@ class TestQT(unittest.TestCase):
                     expected_daily_fee,
                     err_msg=f'fee mismatch for freq={freq}, timing={timing}',
             )
+
+            # 2.5 价格列 p-{code} 存在且与 evaluate_price_data 按日对齐，缺失处为 NaN
+            for share in backtested.shares:
+                pcol = 'p-' + share
+                self.assertIn(pcol, cv.columns, msg=f'missing price column {pcol} for freq={freq}, timing={timing}')
+                pd.testing.assert_series_equal(
+                    cv[pcol],
+                    daily_prices[share],
+                    check_names=False,
+                    check_exact=False,
+                )
+
+            # 2.6 trade_log=True 时应收录 complete_values_file（value_curve 保存路径）
+            self.assertIn('complete_values_file', res, msg='trade_log=True should set complete_values_file')
+            self.assertIsNotNone(res['complete_values_file'], msg='value curve path should be set')
 
     def test_pt_rebalance_uses_same_step_sell_cash_when_delivery_zero(self):
         """测试 PT 信号在 cash_delivery_period == 0 时，换仓场景能在同一回测步内复用卖出获得的现金。

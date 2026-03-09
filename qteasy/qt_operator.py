@@ -9,6 +9,7 @@
 # ======================================
 
 
+import logging
 import os
 
 import numpy as np
@@ -34,6 +35,7 @@ from qteasy.utilfuncs import (
     str_to_list,
     rolling_window,
     SlideView,
+    sanitize_filename,
 )
 
 from qteasy.built_in import (
@@ -2368,18 +2370,33 @@ class Operator:
         backtested.evaluate_result(
                 indicators=config['test_indicators'],
         )
-        backtest_datetime = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+        backtest_datetime = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
 
         if config['trade_log']:
             from qteasy import QT_TRADE_LOG_PATH
-            trade_log_file_name = f'trade_log_{self.name}_{backtest_datetime}.csv'
+            trade_log_file_name = sanitize_filename(
+                f'trade_log_{self.name}_{backtest_datetime}.csv'
+            )
             trade_log_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
 
-            trade_summary_file_name = f'trade_summary_{self.name}_{backtest_datetime}.csv'
+            trade_summary_file_name = sanitize_filename(
+                f'trade_summary_{self.name}_{backtest_datetime}.csv'
+            )
             trade_summary_file_path = os.path.join(QT_TRADE_LOG_PATH, trade_summary_file_name)
 
             backtested.generate_trade_logs(save_to_file_path=trade_log_file_path)
             backtested.generate_trade_summary(save_to_file_path=trade_summary_file_path)
+
+            value_curve_file_name = sanitize_filename(
+                f'value_curve_{self.name}_{backtest_datetime}.csv'
+            )
+            value_curve_file_path = os.path.join(QT_TRADE_LOG_PATH, value_curve_file_name)
+            saved_value_curve = backtested.save_complete_values(save_to_file_path=value_curve_file_path)
+            if saved_value_curve is not None:
+                qteasy_log = logger if logger is not None else logging.getLogger('qteasy')
+                qteasy_log.info(
+                    'value curve (complete_values) saved to %s', saved_value_curve
+                )
 
         if config['report']:
             # 格式化输出回测结果
@@ -2387,8 +2404,8 @@ class Operator:
             print(report)
         if config['visual']:
             # 图表输出投资回报历史曲线
-            plot_title = f'{self.name} - Backtest Report: - {backtest_datetime}' if self.name else \
-                f'Backtest Report: - {backtest_datetime}'
+            plot_title = f'Backtest Report: {self.name} - {backtest_datetime}' if self.name else \
+                f'Backtest Report - {backtest_datetime}'
             backtested.plot_result(
                     plot_title=plot_title,
                     buy_sell_markers=config['buy_sell_points'],
