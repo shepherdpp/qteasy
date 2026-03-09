@@ -1159,7 +1159,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('top_list_reason', 'd', 'E'),
     ('total_mv', 'd', 'IDX'),
     ('float_mv', 'd', 'IDX'),
-    ('total_share     float', 'd', 'IDX'),
+    ('total_share', 'd', 'IDX'),
     ('float_share', 'd', 'IDX'),
     ('free_share', 'd', 'IDX'),
     ('turnover_rate', 'd', 'IDX'),
