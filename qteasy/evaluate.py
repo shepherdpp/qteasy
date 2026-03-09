@@ -761,6 +761,8 @@ def eval_operation(looped_value, cash_plan):
     # 使用looped_values统计交易过程中的多空持仓时间比例
     holding_stocks = looped_value.copy()
     holding_stocks.drop(columns=['cash', 'fee', 'value'], inplace=True)
+    price_columns = [col for col in holding_stocks.columns if col.startswith('p-')]
+    holding_stocks.drop(columns=price_columns, inplace=True)
     # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
     holding_movements = holding_stocks - holding_stocks.shift(1)
     # 分别标记多仓/空仓，买入/卖出的位置，全部取sign()以便后续方便加总统计数量
