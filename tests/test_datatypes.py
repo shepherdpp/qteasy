@@ -1627,12 +1627,12 @@ class TestDataTypes(unittest.TestCase):
                     self.assertEqual(dtype.asset_types, a_types)
 
     def test_trade_op_types_removed(self):
-        """旧式过程数据类型（op_*）已移除，创建此类 DataType 应抛出 KeyError。过程数据请使用 get_data('proc.xxx')。"""
+        """旧式过程数据类型（op_*）已移除，创建此类 DataType 应抛出 ValueError。过程数据请使用 get_data('proc.xxx')。"""
         print('\n[test_trade_op_types_removed] old op_* types must raise KeyError')
         for name in ('op_trade_volumes', 'op_trade_prices', 'op_holding_positions', 'op_settled_positions',
                      'op_cashes', 'op_settled_cashes'):
             with self.subTest(name=name):
-                with self.assertRaises(KeyError):
+                with self.assertRaises(ValueError):
                     DataType(name)
         print('  all op_* types correctly rejected')
 
