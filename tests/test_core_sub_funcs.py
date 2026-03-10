@@ -17,6 +17,7 @@ import warnings
 import pandas as pd
 import numpy as np
 
+import qteasy
 from qteasy import QT_DATA_SOURCE, get_history_data
 from qteasy.database import DataSource
 from qteasy.datatypes import DataType
@@ -696,6 +697,94 @@ class TestGetHistoryDataAPI(unittest.TestCase):
         self.assertIn('open', res)
         self.assertEqual(set(res['close'].columns), {'000001.SZ', '000002.SZ'})
         print(' keys are htype names, columns are shares')
+
+
+class TestGetHistoryDataRealData(unittest.TestCase):
+    """基于实际数据源测试 get_history_data，覆盖常用参数组合与边界情况。"""
+    def setUp(self):
+        self.datasource = qteasy.QT_DATA_SOURCE
+        self.shares = ['000001.SZ', '000300.SH', '000651.SZ']  # asset type include E and IDx
+
+    def test_get_history_data_realistic_cases(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_mv_m(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='m'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_mv_d(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_share_d(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_share',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d',
+                # asset_type='E',
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_share', data[share].columns)
+            self.assertTrue(data[share]['total_share'].notna().any())
+
+    def test_get_history_data_total_share_m(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_share',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='m',
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_share', data[share].columns)
+            self.assertTrue(data[share]['total_share'].notna().all())
 
 
 if __name__ == '__main__':

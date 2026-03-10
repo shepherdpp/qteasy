@@ -4467,15 +4467,19 @@ def get_history_data_from_source(
     qt_codes = str_to_list(qt_codes)
 
     for htyp, df in history_data_acquired.items():
-        # 如果df的columns含有重复的qt_code，说明读取的数据包含重复的freq，此时应报错
+        # 如果df的columns含有重复的qt_code，说明读取的数据包含多个来源（例如不同asset_type）
+        # 这里不再直接报错，而是对重复列按“逐行选取第一个非NaN值”的方式进行合并。
         if df.columns.duplicated().any():
-            duplicated_htypes = [htype.id for htype in htypes if htype.name == htyp]
-            duplicated_htypes = ', '.join([htype for htype in list(np.unique(duplicated_htypes))])
-            err = ValueError(f'Failed to create history panel with "combine_asset_types=True", '
-                             f'possible cause is that multiple freqs are given for same datatype: '
-                             f'[{duplicated_htypes}]\n'
-                             f'Please check your input datatypes.')
-            raise err
+            new_df = pd.DataFrame(index=df.index)
+            for col in df.columns.unique():
+                sub = df.loc[:, df.columns == col]
+                if sub.shape[1] == 1:
+                    new_df[col] = sub.iloc[:, 0]
+                else:
+                    # 从左到右按列回填，优先使用较早列中的非NaN值
+                    combined = sub.bfill(axis=1).iloc[:, 0]
+                    new_df[col] = combined
+            df = new_df
         df = df.reindex(columns=qt_codes)
         # 当row_count起作用的时候，需要分辨用户给出了start还是end，据此决定取head还是tail
         if row_count and (start is None):
