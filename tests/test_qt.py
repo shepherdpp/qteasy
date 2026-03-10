@@ -1169,15 +1169,31 @@ class TestQT(unittest.TestCase):
         res_batch = qt.run(
                 op=op_batch,
                 mode=1,
+                benchmark_asset='000300.SH',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
                 invest_start='20180101',
-                invest_end='20191231'
+                invest_end='20191231',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True,
+                trade_log=True,
         )
         print('backtest in stepwise mode:')
         res_stepwise = qt.run(
                 op=op_stepwise,
                 mode=1,
+                benchmark_asset='000300.SH',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
                 invest_start='20180101',
-                invest_end='20191231'
+                invest_end='20191231',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True,
+                trade_log=True,
         )
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_stepwise = res_stepwise["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
@@ -1226,6 +1242,8 @@ class TestQT(unittest.TestCase):
         )
         print('output result back testing with test data')
 
+        print(f'backtest configurations:\n------------------------------')
+        print(f'{qt.configuration(up_to=3)}')
         print('backtest in batch mode:')
         res_batch = qt.run(op=op_batch, mode=1, visual=True, trade_log=True)
         print('backtest in stepwise mode:')

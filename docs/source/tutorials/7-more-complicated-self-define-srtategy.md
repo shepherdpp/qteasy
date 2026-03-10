@@ -34,6 +34,7 @@ $ pip install qteasy -U
 同时，`qteasy`的回测框架也做了相当多的特殊设计，可以完全避免您无意中在交易策略中导入"未来函数"，确保您的交易策略在回测时完全基于过去的数据，同时也使用了很多预处理技术以及JIT技术对内核关键函数进行了编译，以实现不亚于C语言的运行速度。
 
 不过，为了实现理论上无限可能的交易策略，仅仅使用内置交易策略以及策略混合就不一定够用了，一些特定的交易策略，或者一些特别复杂的交易策略是无法通过内置策略混合而成的，这就需要我们使用`qteasy`提供的`Strategy`基类，基于一定的规则创建一个自定义交易策略了。
+
 ## 本节的目标
                         
 在本节中，我们将介绍`qteasy`的交易策略基类，通过一个具体的例子详细讲解如何基于这几个基类，创建一个只属于您自己的交易策略。为了说明
@@ -154,16 +155,6 @@ class MultiFactors(qt.FactorSorter):
 定义好上面的策略之后，就可以开始进行回测了，我们需要在`qteasy`中创建一个交易员对象，操作前面创建的策略：
 ```python
 shares = qt.filter_stock_codes(index='000300.SH', date='20190501')  # 选择股票池，包括2019年5月以来所有沪深300指数成分股
-# 设置回测的运行参数
-qt.configure(mode=1,  # mode=1表示回测模式
-             invest_start='20160405',  # 回测开始日期
-             invest_end='20210201',  # 回测结束日期
-             asset_type='E',  # 投资品种为股票
-             asset_pool=shares,  # shares包含同期沪深300指数的成份股
-             trade_batch_size=100,  # 买入批量为100股
-             sell_batch_size=1,  # 卖出批量为整数股
-             trade_log=True,  # 生成交易记录
-       )
        
 #  开始策略的回测
 
@@ -172,74 +163,83 @@ op = qt.Operator(alpha, signal_type='PT',
                  run_timing='close',  # 在周期结束（收盘）时运行
                  run_freq='M',  # 每月执行一次选股（每周或每天都可以）
                 )  # 生成交易员对象，操作alpha策略，交易信号的类型为‘PT'，意思是生成的信号代表持仓比例，例如1代表100%持有股票，0.35表示持有股票占资产的35%
-# op.set_blender('1.0*s0')  # 交易策略混合方式，只有一个策略，不需要混合
-qt.run(op=op)  # 开始运行
+# 设置回测参数，并开始回测
+qt.run(op=op,
+       mode=1,  # 回测模式
+       invest_start='20160405',  # 回测开始日期
+       invest_end='20210201',  # 回测结束日期
+       asset_type='E',  # 投资品种为股票
+       asset_pool=shares,  # shares包含同期沪深300指数的成份股
+       trade_batch_size=100,  # 买入批量为100股
+       sell_batch_size=1,  # 卖出批量为整数股
+       trade_log=True,  # 生成交易记录
+      )  # 开始运行
 ```
 运行结果如下：
 
 ```text
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 0.0 ms
-    time consumption for operation back looping:  8 sec 335.0 ms
-    
-    investment starts on      2016-04-05 00:00:00
-    ends on                   2021-02-01 00:00:00
-    Total looped periods:     4.8 years.
-    
-    -------------operation summary:------------
-    Only non-empty shares are displayed, call 
-    "loop_result["oper_count"]" for complete operation summary
-    
-              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
-    000063.SZ    2        2      4     3.4%      0.0%     96.6%  
-    000100.SZ    3        3      6     5.2%      0.0%     94.8%  
-    000157.SZ    1        1      2     1.8%      0.0%     98.2%  
-    000333.SZ    2        2      4     3.4%      0.0%     96.6%  
-    000338.SZ    1        1      2     1.7%      0.0%     98.3%  
-    000413.SZ    2        2      4     3.6%      0.0%     96.4%  
-    000596.SZ    1        1      2     1.8%      0.0%     98.2%  
-    000625.SZ    3        3      6     5.3%      0.0%     94.7%  
-    000629.SZ    1        1      2     1.7%      0.0%     98.3%  
-    000651.SZ    1        1      2     1.7%      0.0%     98.3%  
-    ...            ...     ...   ...      ...       ...       ...
-    688005.SH    1        2      3     3.3%      0.0%     96.7%  
-    000733.SZ    1        1      2     1.8%      0.0%     98.2%  
-    002180.SZ    1        1      2     1.7%      0.0%     98.3%  
-    600039.SH    1        1      2     1.7%      0.0%     98.3%  
-    600803.SH    1        1      2     1.7%      0.0%     98.3%  
-    601615.SH    1        1      2     1.8%      0.0%     98.2%  
-    000983.SZ    2        2      4     3.3%      0.0%     96.7%  
-    600732.SH    3        4      7     6.7%      0.0%     93.3%  
-    600754.SH    1        1      2     1.8%      0.0%     98.2%  
-    601699.SH    1        1      2     1.7%      0.0%     98.3%   
-    
-    Total operation fee:     ¥    7,063.30
-    total investment amount: ¥  100,000.00
-    final value:              ¥  584,928.02
-    Total return:                   484.93% 
-    Avg Yearly return:               44.15%
-    Skewness:                         -0.14
-    Kurtosis:                          2.77
-    Benchmark return:                65.96% 
-    Benchmark Yearly return:         11.06%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.428
-    Beta:                             0.371
-    Sharp ratio:                      1.376
-    Info ratio:                       0.076
-    250 day volatility:               0.287
-    Max drawdown:                    35.84% 
-        peak / valley:        2018-06-12 / 2019-01-02
-        recovered on:         2019-03-05
-    
-    ===========END OF REPORT=============
+====================================
+|                                  |
+|         BACKTEST REPORT          |
+|                                  |
+====================================
+qteasy running mode: 1 - History back testing
+time consumption for operate signal creation: 197.5 ms
+time consumption for operation back testing:  315.2 ms
+investment starts on      2016-04-05 15:00:00
+ends on                   2021-01-29 15:00:00
+Total looped periods:     4.8 years.
+-------------operation summary:------------
+Only non-empty shares are displayed, call 
+"loop_result["oper_count"]" for complete operation summary
+          Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+000413.SZ    3        3       6    5.4%     -0.0%     94.6%  
+000415.SZ    1        1       2    2.0%     -0.0%     98.0%  
+000625.SZ    1        1       2    2.0%     -0.0%     98.0%  
+000629.SZ    1        1       2    1.5%     -0.0%     98.5%  
+000656.SZ    1        1       2    1.8%     -0.0%     98.2%  
+000723.SZ    5        5      10    8.2%     -0.0%     91.8%  
+000725.SZ    1        1       2    1.9%     -0.0%     98.1%  
+000728.SZ    1        1       2    1.9%     -0.0%     98.1%  
+000783.SZ    1        1       2    1.8%     -0.0%     98.2%  
+000898.SZ    4        4       8    7.1%     -0.0%     92.9%  
+...            ...     ...   ...      ...       ...       ...
+001965.SZ    1        1       2    1.9%     -0.0%     98.1%  
+300418.SZ    2        2       4    3.8%     -0.0%     96.2%  
+300442.SZ    1        1       2    1.8%     -0.0%     98.2%  
+600026.SH    1        1       2    1.8%     -0.0%     98.2%  
+000975.SZ    1        1       2    1.8%     -0.0%     98.2%  
+300394.SZ    1        1       2    1.5%     -0.0%     98.5%  
+600160.SH    3        3       6    5.0%     -0.0%     95.0%  
+601127.SH    1        2       3    1.7%     -0.0%     98.3%  
+601058.SH    2        2       4    3.6%     -0.0%     96.4%  
+302132.SZ    1        1       2    2.0%     -0.0%     98.0%  
+
+Total operation fee:     ¥    3,227.95
+total investment amount: ¥  100,000.00
+final value:              ¥  153,592.75
+Total return:                    53.59% 
+Avg Yearly return:                9.31%
+Skewness:                          0.09
+Kurtosis:                          6.81
+Benchmark return:                63.94% 
+Benchmark Yearly return:         10.80%
+
+------strategy loop_results indicators------ 
+alpha:                            0.026
+Beta:                             0.702
+Sharp ratio:                      0.295
+Info ratio:                      -0.008
+250 day volatility:               0.161
+Max drawdown:                    30.41% 
+    peak / valley:        2016-11-22 / 2018-10-16
+    recovered on:         2019-03-07
+
+trade log is stored in: /Users/jackie/Projects/qteasy_logs/trade_log_none_20260309_152544.csv
+trade summary is stored in: /Users/jackie/Projects/qteasy_logs/trade_summary_none_20260309_152544.csv
+value curve (complete values) is stored in: /Users/jackie/Projects/qteasy_logs/value_curve_none_20260309_152544.csv
+
+==================END OF REPORT===================
 ```
     
 ![png](img/output_4_4.png)

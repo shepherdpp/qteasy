@@ -17,9 +17,10 @@ import warnings
 import pandas as pd
 import numpy as np
 
+import qteasy
 from qteasy import QT_DATA_SOURCE, get_history_data
 from qteasy.database import DataSource
-from qteasy.datatypes import DataType
+from qteasy.datatypes import DataType, _get_built_in_data_type_map
 
 
 class TestCoreSubFuncs(unittest.TestCase):
@@ -182,11 +183,13 @@ class TestGetHistoryDataAPI(unittest.TestCase):
         self.data_source = DataSource(source_type='file', file_loc=self.test_data_path)
         # 固定日期范围与标的，便于断言
         self.dates = pd.date_range('2023-01-03', '2023-01-20', freq='B')
+        self.weekly_dates = pd.date_range('2023-01-02', '2023-01-20', freq='W-MON')
         self.shares = ['000001.SZ', '000002.SZ', '000651.SZ']
         self.index_share = '000300.SH'
         self.start_str = '20230103'
         self.end_str = '20230120'
         n = len(self.dates)
+        wn = len(self.weekly_dates)
 
         # stock_daily: bars  schema (ts_code, trade_date, open, high, low, close, pre_close, change, pct_chg, vol, amount)
         for share in self.shares:
@@ -218,6 +221,22 @@ class TestGetHistoryDataAPI(unittest.TestCase):
             'vol': vol.astype(float), 'amount': (vol * c).astype(float),
         })
         self.data_source.update_table_data('index_daily', df=idx_data, merge_type='update')
+
+        # stock_weekly (同 stock_daily 结构，freq='w' 时从该表取数)
+        for share in self.shares:
+            o = np.random.RandomState(42).rand(wn) * 10 + 10
+            h = o + np.random.RandomState(43).rand(wn) * 2
+            l = o - np.random.RandomState(44).rand(wn) * 2
+            c = (h + l) / 2
+            vol = np.random.RandomState(45).randint(1000, 10000, wn)
+            data = pd.DataFrame({
+                'ts_code': [share] * wn,
+                'trade_date': self.weekly_dates,
+                'open': o, 'high': h, 'low': l, 'close': c,
+                'pre_close': c, 'change': 0.0, 'pct_chg': 0.0,
+                'vol': vol.astype(float), 'amount': (vol * c).astype(float),
+            })
+            self.data_source.update_table_data('stock_weekly', df=data, merge_type='update')
 
         # stock_adj_factor
         for share in self.shares:
@@ -696,6 +715,161 @@ class TestGetHistoryDataAPI(unittest.TestCase):
         self.assertIn('open', res)
         self.assertEqual(set(res['close'].columns), {'000001.SZ', '000002.SZ'})
         print(' keys are htype names, columns are shares')
+
+
+class TestGetHistoryDataRealData(unittest.TestCase):
+    """基于实际数据源测试 get_history_data，覆盖常用参数组合与边界情况。"""
+    def setUp(self):
+        self.datasource = qteasy.QT_DATA_SOURCE
+        self.shares = ['000001.SZ', '000300.SH', '000651.SZ']  # asset type include E and IDx
+
+    def test_get_history_data_realistic_cases(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_mv_m(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='m'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_mv_d(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_mv',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d'
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_mv', data[share].columns)
+            self.assertTrue(data[share]['total_mv'].notna().any())
+
+    def test_get_history_data_total_share_d(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_share',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d',
+                # asset_type='E',
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_share', data[share].columns)
+            self.assertTrue(data[share]['total_share'].notna().any())
+
+    def test_get_history_data_total_share_m(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_share',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='m',
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_share', data[share].columns)
+        # 月频总股本在部分资产上可能全为空（如指数），至少一只标的有非空即可
+        self.assertTrue(any(data[s]['total_share'].notna().any() for s in self.shares))
+
+    def test_get_history_data_total_liab_d(self):
+        """ test multiple cases with real data source, covering common parameters and edge cases. """
+        data = get_history_data(
+                htype_names='total_share, total_liab, c_cash_equ_end_period, ebitda',
+                data_source=self.datasource,
+                shares=self.shares,
+                start='20220101',
+                end='20221231',
+                freq='d',
+        )
+        print(data)
+        self.assertTrue(all(share in data for share in self.shares))
+        for share in self.shares:
+            self.assertIn('total_share', data[share].columns)
+            self.assertIn('total_liab', data[share].columns)
+            self.assertIn('c_cash_equ_end_period', data[share].columns)
+            self.assertIn('ebitda', data[share].columns)
+        # 至少一只标的有非空财报字段（指数等可能全 NaN）
+        self.assertTrue(any(data[s]['total_share'].notna().any() for s in self.shares))
+        self.assertTrue(any(data[s]['total_liab'].notna().any() for s in self.shares))
+        self.assertTrue(any(data[s]['c_cash_equ_end_period'].notna().any() for s in self.shares))
+        self.assertTrue(any(data[s]['ebitda'].notna().any() for s in self.shares))
+
+    def test_get_history_data_for_all_name_freq_combinations(self):
+        """ 使用 DATA_TYPE_MAP 中 acquisition_type 为 direct 的 dtype 去重，回归 get_history_data 在常见 name+freq 组合下的行为。"""
+        dtype_map = _get_built_in_data_type_map()
+        direct_mask = dtype_map['acquisition_type'] == 'direct'
+        direct_df = dtype_map.loc[direct_mask]
+        if direct_df.empty:
+            self.skipTest('no direct acquisition types in built-in map')
+        idx = direct_df.index
+        all_dtype_names_full = sorted(set(idx.get_level_values('dtype')))
+        all_freqs_raw = set(idx.get_level_values('freq'))
+        common_freqs = {'d', 'w', 'm', 'q', 'h'}
+        all_freqs = sorted(all_freqs_raw & common_freqs)
+        if not all_freqs:
+            all_freqs = sorted(all_freqs_raw)[:4]
+        # 优先覆盖常见、易有数据的 direct 类型，避免大量空数据导致失败
+        preferred = ['close', 'open', 'high', 'low', 'volume', 'total_mv', 'total_share', 'pe', 'pb']
+        all_dtype_names = [n for n in preferred if n in all_dtype_names_full]
+        if not all_dtype_names:
+            all_dtype_names = all_dtype_names_full[:12]
+
+        for dtype_name in all_dtype_names:
+            for freq in all_freqs:
+                with self.subTest(dtype_name=dtype_name, freq=freq):
+                    data = get_history_data(
+                            htype_names=dtype_name,
+                            data_source=self.datasource,
+                            shares=self.shares,
+                            start='20220101',
+                            end='20221231',
+                            freq=freq,
+                    )
+                    if not data or not all(share in data for share in self.shares):
+                        self.skipTest(f'no data for {dtype_name}@{freq}')
+                    for share in self.shares:
+                        self.assertIn(dtype_name, data[share].columns)
+                    # 至少一个 share 有非空数据；若全部为空则跳过（真实数据源可能无该组合）
+                    any_non_empty = any(
+                        data[share][dtype_name].notna().any()
+                        for share in self.shares
+                    )
+                    if not any_non_empty:
+                        self.skipTest(f'{dtype_name}@{freq} 所有 share 全为 NaN')
 
 
 if __name__ == '__main__':

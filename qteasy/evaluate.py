@@ -671,11 +671,17 @@ def eval_return(looped_val, cash_plan):
     looped_val['invest'] = 0
     looped_val.iloc[np.searchsorted(looped_val.index, invest_plan.index), looped_val.columns.get_loc('invest')] = invest_plan.amount.values
     looped_val = looped_val.fillna(0)
-    looped_val['invest'] = looped_val.invest.cumsum()
-    looped_val['rtn'] = looped_val.value / looped_val['invest'] - 1
+    invest_cumsum = looped_val['invest'].cumsum()
     ys = (looped_val.index - looped_val.index[0]).days / 365.
-    looped_val['annual_rtn'] = (looped_val.rtn + 1) ** (1 / ys) - 1
-    looped_val['pct_change'] = looped_val.value / looped_val.value.shift(1) - 1
+    rtn_series = looped_val['value'] / invest_cumsum - 1
+    annual_rtn_series = (rtn_series + 1) ** (1 / ys) - 1
+    pct_change_series = looped_val['value'] / looped_val['value'].shift(1) - 1
+    looped_val = looped_val.assign(
+        invest=invest_cumsum,
+        rtn=rtn_series,
+        annual_rtn=annual_rtn_series,
+        pct_change=pct_change_series,
+    )
     skewness = looped_val['pct_change'].skew()
     kurtosis = looped_val['pct_change'].kurtosis()
 
@@ -761,6 +767,8 @@ def eval_operation(looped_value, cash_plan):
     # 使用looped_values统计交易过程中的多空持仓时间比例
     holding_stocks = looped_value.copy()
     holding_stocks.drop(columns=['cash', 'fee', 'value'], inplace=True)
+    price_columns = [col for col in holding_stocks.columns if col.startswith('p-')]
+    holding_stocks.drop(columns=price_columns, inplace=True)
     # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
     holding_movements = holding_stocks - holding_stocks.shift(1)
     # 分别标记多仓/空仓，买入/卖出的位置，全部取sign()以便后续方便加总统计数量

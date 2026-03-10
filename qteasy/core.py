@@ -33,6 +33,8 @@ from qteasy.utilfuncs import (
     AVAILABLE_ASSET_TYPES,
     _partial_lev_ratio,
     TIME_FREQ_STRINGS,
+    TIME_FREQ_LEVELS,
+    parse_freq_string,
 )
 
 from qteasy._arg_validators import (
@@ -947,8 +949,8 @@ def transfer_data(source: DataSource,
     raise NotImplementedError
 
 
-def get_history_data(*,
-                     htypes=None,
+def get_history_data(htypes=None,
+                     *,
                      htype_names=None,
                      data_types=None,
                      data_source=None,
@@ -1284,6 +1286,8 @@ def get_history_data(*,
         if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
             err = KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
             raise err
+        # 显式 asset_type：用户未使用 any 关键字；否则视为“未显式指定”
+        explicit_asset_type = not any(item.upper() == 'ANY' for item in asset_type)
         if any(item.upper() == 'ANY' for item in asset_type):
             asset_type = AVAILABLE_ASSET_TYPES
         asset_type = [item.upper() for item in asset_type]
@@ -1310,39 +1314,145 @@ def get_history_data(*,
         else:
             htype_names = htype_names
 
-        # 按名称逐个调用 infer_data_types，以便无效名称触发 KeyError 时仍能收集 missing_names 并统一报 ValueError
-        data_types = []
-        missing_names = []
-        asset_types_arg = asset_type + ['None']
-        for n in htype_names:
-            try:
-                dts = infer_data_types(
-                    names=[n],
-                    freqs=[freq],
-                    asset_types=asset_types_arg,
-                    adj=None,  # 已在上面根据 adj 改写 htype_names，此处不再传入避免重复改写
-                    allow_ignore_freq=True,
-                    allow_ignore_asset_type=True,
-                )
+        # 按名称解析 DataType，对 infer_data_types 的结果做二次筛选，保证每个 name 只有一个原生 freq/asset_type
+        def _freq_level(freq_str: str) -> int:
+            """将频率字符串转换为主频率，并返回其 level，用于频率高低比较。"""
+            _, main_freq, _ = parse_freq_string(freq_str)
+            key = main_freq if main_freq is not None else freq_str.upper()
+            if key not in TIME_FREQ_LEVELS:
+                err = KeyError(f'invalid freq string {freq_str}')
+                raise err
+            return TIME_FREQ_LEVELS[key]
+
+        def _choose_best_freq(available_freqs, target_freq_str: str) -> str:
+            """在可用原生频率中，为 target_freq 选择一个“最合适”的原生 freq。"""
+            # 使用主频率进行比较
+            _, target_main, _ = parse_freq_string(target_freq_str)
+            if target_main is None:
+                target_main = target_freq_str.upper()
+            t_lvl = _freq_level(target_main)
+            # 将可用频率映射到主频率集合
+            norm_map = {}
+            for f in available_freqs:
+                _, main_f, _ = parse_freq_string(f)
+                key = main_f if main_f is not None else f.upper()
+                norm_map.setdefault(key, []).append(f)
+            norm_freqs = list(norm_map.keys())
+            if target_main in norm_freqs:
+                return norm_map[target_main][0]
+            higher = [nf for nf in norm_freqs if _freq_level(nf) < t_lvl]
+            if higher:
+                best_norm = max(higher, key=_freq_level)
+                return norm_map[best_norm][0]
+            lower = [nf for nf in norm_freqs if _freq_level(nf) > t_lvl]
+            if lower:
+                best_norm = min(lower, key=_freq_level)
+                return norm_map[best_norm][0]
+            # 理论上不会到达此处
+            return available_freqs[0]
+
+        def _collect_candidate_dtypes_from_names(names, target_freq_str: str, asset_types_arg: list[str]):
+            """阶段 1：从 DATA_TYPE_MAP 中收集每个 name 的原生 DataType 候选集合。"""
+            candidates = {n: [] for n in names}
+            # 第一轮：使用 target_freq 直接匹配
+            for n in names:
+                try:
+                    dts = infer_data_types(
+                        names=[n],
+                        freqs=[target_freq_str],
+                        asset_types=asset_types_arg,
+                        adj=None,
+                        allow_ignore_freq=False,
+                        allow_ignore_asset_type=False,
+                    )
+                except Exception:
+                    dts = []
                 if dts:
-                    data_types.extend(dts)
-                else:
-                    missing_names.append(n)
-            except (KeyError, ValueError):
-                missing_names.append(n)
-        # 按 dtype_id 去重
-        data_types = list({dt.dtype_id: dt for dt in data_types}.values())
-        if missing_names:
-            warn(
-                f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
-                f"Check spelling or define them in DATA_TYPE_MAP.",
-                UserWarning,
-                stacklevel=2,
-            )
-            raise ValueError(
-                f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
-                f"Please check spelling or add definitions via qt.define() / DATA_TYPE_MAP."
-            )
+                    candidates[n].extend(dts)
+            # 第二轮：对仍然没有候选的 name 使用更宽的频率集合重试，
+            # 这里使用小写形式的频率字符串，以便与 DATA_TYPE_MAP 中的原生 freq 定义（如 'q','m','d','h'）对齐
+            broad_freqs = [f.lower() for f in TIME_FREQ_LEVELS.keys()]
+            for n in names:
+                if candidates[n]:
+                    continue
+                try:
+                    dts = infer_data_types(
+                        names=[n],
+                        freqs=broad_freqs,
+                        asset_types=asset_types_arg,
+                        adj=None,
+                        allow_ignore_freq=False,
+                        allow_ignore_asset_type=False,
+                    )
+                except Exception:
+                    dts = []
+                if dts:
+                    candidates[n].extend(dts)
+            return candidates
+
+        def _select_effective_dtypes(candidates_raw: dict, target_freq_str: str,
+                                     asset_types_arg: list[str],
+                                     explicit_asset_type: bool) -> list[DataType]:
+            """阶段 2：对候选 DataType 做名称覆盖、频率唯一化与资产类型过滤。
+
+            当 explicit_asset_type 为 False 时，不在此处对 asset_type 做任何裁剪，
+            允许同一 name/freq 下存在多种资产类型的 DataType，一并交由 history 层处理。
+            """
+            missing_names = []
+            effective_dtypes: list[DataType] = []
+            # 名称逐一处理
+            for name, dts in candidates_raw.items():
+                if not dts:
+                    missing_names.append(name)
+                    continue
+                # 按 dtype_id 去重
+                dt_map = {}
+                for dt in dts:
+                    dt_map[dt.dtype_id] = dt
+                dts_unique = list(dt_map.values())
+                # 频率唯一化
+                available_freqs = list({dt.freq for dt in dts_unique})
+                try:
+                    chosen_freq = _choose_best_freq(available_freqs, target_freq_str)
+                except KeyError:
+                    missing_names.append(name)
+                    continue
+                freq_filtered = [dt for dt in dts_unique if dt.freq == chosen_freq]
+                if not freq_filtered:
+                    missing_names.append(name)
+                    continue
+                # 资产类型过滤：
+                # - 显式 asset_type 时按 asset_types_arg 过滤；
+                # - 未显式指定时不过滤，允许多种资产类型并存，由下游根据 shares/type 决定实际取数。
+                if explicit_asset_type:
+                    # 用户给出了明确资产类型限制，此时 asset_types_arg 就是期望资产类型集合
+                    filtered = [dt for dt in freq_filtered if dt.asset_type in asset_types_arg]
+                    if not filtered:
+                        missing_names.append(name)
+                        continue
+                    freq_filtered = filtered
+                # 经过频率与资产类型处理后，至少应保留一个 DataType
+                if not freq_filtered:
+                    missing_names.append(name)
+                    continue
+                effective_dtypes.extend(freq_filtered)
+            if missing_names:
+                warn(
+                    f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
+                    f"Check spelling or define them in DATA_TYPE_MAP.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                raise ValueError(
+                    f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
+                    f"Please check spelling or add definitions via qt.define() / DATA_TYPE_MAP."
+                )
+            return effective_dtypes
+
+        # 收集候选 DataType 并根据 freq / asset_type 规则筛选
+        asset_types_arg = asset_type
+        candidates_raw = _collect_candidate_dtypes_from_names(htype_names, freq, asset_types_arg)
+        data_types = _select_effective_dtypes(candidates_raw, freq, asset_types_arg, explicit_asset_type)
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE

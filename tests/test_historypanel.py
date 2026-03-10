@@ -1144,10 +1144,14 @@ class TestHistoryPanel(unittest.TestCase):
         data_types = [qt.DataType('close', freq='d', asset_type='E'),
                       qt.DataType('close', freq='w', asset_type='E'),
                       qt.DataType('close', freq='m', asset_type='E')]
-        with self.assertRaises(ValueError):
-            hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
-                                              shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                              start='20210101', end='20210202', freq='m')
+        # 这里原来的期望值是不允许相同name相同AT但不同freq的data type共存，因为这样会导致无法确定应该用哪个
+        # data type来获取数据，但是后来在升级到2.1.4版本时为了解决freq与AT冲突的问题，修改了不同地方的代码逻辑，
+        # 使得出现这种情况时仍然会强制汇总获取的不同数据到同一列，因此这里的期望值也修改为不报错，但是还需要进一步
+        # 观察这种修改是否会引入其他问题
+        # with self.assertRaises(ValueError):
+        #     hp = qt.history.get_history_panel(data_source=self.ds, data_types=data_types,
+        #                                       shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+        #                                       start='20210101', end='20210202', freq='m')
 
     def test_flatten_to_dataframe(self):
         """ 测试函数 flatten_to_dataframe() """
