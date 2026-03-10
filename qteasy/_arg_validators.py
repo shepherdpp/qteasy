@@ -665,28 +665,6 @@ def _valid_qt_kwargs():
                           '例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓>=35%时，才会产生\n'
                           '交易信号，即此时实际持仓与目标持仓之间的差值大于5%了。取值范围为[0, 1)'},
 
-        'price_priority_OHLC':  # deprecated
-            {'Default':   'OHLC',
-             'Validator': lambda value: isinstance(value, str)
-                                        and all(item.upper() in 'OHLCA'
-                                                for item in value)
-                                        and all(item.upper() in value
-                                                for item in 'OHLC'),
-             'level':     3,
-             'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
-                          '不同的价格信号的优先级。\n'
-                          '输入类型为字符串，O、H、L、C、A分别代表Open,High,Low,Close,Nav\n'},
-
-        'price_priority_quote':  # deprecated
-            {'Default':   'normal',
-             'Validator': lambda value: isinstance(value, str)
-                                        and (value in ['normal', 'reverse']),
-             'level':     3,
-             'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为实时报价时，回测程序处理\n'
-                          '不同的价格信号的优先级。取值范围如下：\n'
-                          '- "normal"：  优先处理更接近成交价的报价，如卖1/买1等\n'
-                          '- "reverse"： 优先处理更远离成交价的报价，如卖5/买5等'},
-
         'cash_delivery_period':
             {'Default':   0,
              'Validator': lambda value: isinstance(value, int)

@@ -51,7 +51,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `2.1.3`
+- Latest Version: `2.1.4`
 - License: BSD 3-Clause License
 
 `qteasy`是为量化交易人员开发的一套量化交易工具包，特点如下：
@@ -397,7 +397,7 @@ qt.configure(
         asset_type='IDX',               # 投资资产类型
         invest_cash_amounts=[100000],   # 投资资金
         invest_start='20220501',        # 投资回测开始日期
-        invest_end='20221231',          # 投资回测结束日期
+             invest_end='20221231',          # 投资回测结束日期
         cost_rate_buy=0.0003,           # 买入费率
         cost_rate_sell=0.0001,          # 卖出费率
         visual=True,                    # 打印可视化回测图表

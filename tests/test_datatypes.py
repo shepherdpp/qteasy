@@ -1159,7 +1159,7 @@ ALL_TYPES_TO_TEST_WITH_FULL_ID = [
     ('top_list_reason', 'd', 'E'),
     ('total_mv', 'd', 'IDX'),
     ('float_mv', 'd', 'IDX'),
-    ('total_share     float', 'd', 'IDX'),
+    ('total_share', 'd', 'IDX'),
     ('float_share', 'd', 'IDX'),
     ('free_share', 'd', 'IDX'),
     ('turnover_rate', 'd', 'IDX'),
@@ -1614,17 +1614,25 @@ class TestDataTypes(unittest.TestCase):
             if freq is not None:
                 self.assertEqual(dtype.freq, freq)
             if asset_type is not None:
-                self.assertEqual(dtype.asset_type, a_type_str)
-                self.assertEqual(dtype.asset_type_str, a_type_str)
-                self.assertEqual(dtype.asset_types, a_types)
+                # 新语义：部分参数时在 MAP 中取第一个匹配项，可能为单资产；多资产请求时仅断言结果属于请求集合
+                if 'ANY' in (asset_type or '').upper():
+                    self.assertEqual(dtype.asset_type_str, 'ANY')
+                    self.assertEqual(dtype.asset_types, a_types)
+                elif len(a_types) > 1:
+                    self.assertIn(dtype.asset_type, a_types, msg=f'first-match semantics: asset_type in {a_types}')
+                    self.assertEqual(dtype.freq, freq)
+                else:
+                    self.assertEqual(dtype.asset_type, a_type_str)
+                    self.assertEqual(dtype.asset_type_str, a_type_str)
+                    self.assertEqual(dtype.asset_types, a_types)
 
     def test_trade_op_types_removed(self):
-        """旧式过程数据类型（op_*）已移除，创建此类 DataType 应抛出 KeyError。过程数据请使用 get_data('proc.xxx')。"""
+        """旧式过程数据类型（op_*）已移除，创建此类 DataType 应抛出 ValueError。过程数据请使用 get_data('proc.xxx')。"""
         print('\n[test_trade_op_types_removed] old op_* types must raise KeyError')
         for name in ('op_trade_volumes', 'op_trade_prices', 'op_holding_positions', 'op_settled_positions',
                      'op_cashes', 'op_settled_cashes'):
             with self.subTest(name=name):
-                with self.assertRaises(KeyError):
+                with self.assertRaises(ValueError):
                     DataType(name)
         print('  all op_* types correctly rejected')
 
@@ -2366,6 +2374,56 @@ class TestDataTypes(unittest.TestCase):
         self.assertEqual(len(data_types), 14)
         self.assertTrue(all(dt in expected_data_types for dt in data_types))
         self.assertTrue(all(dt in data_types for dt in expected_data_types))
+
+
+class TestDataTypeInitPartialParams(unittest.TestCase):
+    """ 覆盖 DataType 四种构造语义：仅 name；name+freq；name+asset_type；name+freq+asset_type。"""
+
+    def test_name_only_returns_first_defined(self):
+        print('\n[TestDataTypeInitPartialParams] name only')
+        for name in ('close', 'total_share'):
+            with self.subTest(name=name):
+                dt = DataType(name)
+                self.assertIsInstance(dt, DataType)
+                self.assertEqual(dt.name, name)
+                self.assertIsNotNone(dt.freq)
+                self.assertIsNotNone(dt.asset_type)
+        print('  name-only OK')
+
+    def test_name_and_freq_returns_first_match(self):
+        print('\n[TestDataTypeInitPartialParams] name + freq')
+        dt = DataType('total_share', freq='d')
+        self.assertEqual(dt.name, 'total_share')
+        self.assertEqual(dt.freq, 'd')
+        dt2 = DataType('total_share', freq='q')
+        self.assertEqual(dt2.freq, 'q')
+        with self.assertRaises(ValueError):
+            DataType('total_share', freq='h')
+        print('  name+freq OK')
+
+    def test_name_and_asset_type_returns_first_match(self):
+        print('\n[TestDataTypeInitPartialParams] name + asset_type')
+        dt = DataType('total_share', asset_type='IDX')
+        self.assertEqual(dt.name, 'total_share')
+        self.assertEqual(dt.asset_type, 'IDX')
+        self.assertEqual(dt.freq, 'd')
+        dt2 = DataType('close', asset_type='E')
+        self.assertEqual(dt2.asset_type, 'E')
+        with self.assertRaises(ValueError):
+            DataType('total_share', asset_type='FT')
+        print('  name+asset_type OK')
+
+    def test_name_freq_asset_type_exact_match(self):
+        print('\n[TestDataTypeInitPartialParams] name + freq + asset_type')
+        dt = DataType('total_share', freq='d', asset_type='IDX')
+        self.assertEqual(dt.name, 'total_share')
+        self.assertEqual(dt.freq, 'd')
+        self.assertEqual(dt.asset_type, 'IDX')
+        dt2 = DataType('total_share', freq='d', asset_type='E')
+        self.assertEqual(dt2.asset_type, 'E')
+        with self.assertRaises(ValueError):
+            DataType('total_share', freq='q', asset_type='IDX')
+        print('  name+freq+asset_type OK')
 
 
 if __name__ == '__main__':

@@ -1399,10 +1399,10 @@ class Backtester:
         price_array = np.nan_to_num(daily_prices.values, nan=0.0)
         daily_values = (price_array * daily_positions).sum(axis=1) + daily_cash
 
-        value_history = pd.DataFrame(daily_positions, index=daily_index, columns=self.shares)
-        # 每只股票的价格列 p-{代码} 紧接在对应持仓列之后，顺序与 self.shares 一致，缺失价格保留 NaN
-        for s in self.shares:
-            value_history['p-' + s] = daily_prices[s].values
+        # 一次性拼接持仓列与价格列，避免逐列插入导致 DataFrame 碎片化
+        positions_df = pd.DataFrame(daily_positions, index=daily_index, columns=self.shares)
+        price_df = daily_prices.reindex(columns=self.shares).rename(columns=lambda c: 'p-' + c)
+        value_history = pd.concat([positions_df, price_df], axis=1)
         value_history['cash'] = daily_cash
         value_history['value'] = daily_values
         value_history['fee'] = daily_fee.values
