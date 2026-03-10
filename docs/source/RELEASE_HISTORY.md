@@ -1,5 +1,13 @@
 # RELEASE HISTORY
 
+## 2.1.4 (2026-03-10)
+- **Evaluation fixes**  
+  - `evaluate` now generates the `oper_count` DataFrame with only operation-count metrics instead of incorrectly including all price columns.
+  - Large backtests no longer trigger pandas `PerformanceWarning` in evaluation; the aggregation and concatenation logic has been refactored to be more efficient while keeping the same outputs.
+- **Data type definitions and get_history_data**  
+  - Fixed misdefined built-in data types such as `('total_share','d','IDX')` so that share-count and market-value fields line up correctly across stocks and indices.
+  - Improved the resolution logic in `DataType` / `infer_data_types` / `get_history_data` for `(dtype_name, freq, asset_type)` combinations: frequency matching now respects the `TIME_FREQ_LEVELS` hierarchy, and multiple definitions for the same logical name are merged safely instead of causing empty data or duplicate-column errors.
+
 ## 2.1.3 (2026-03-09)
 - **Filenames**  
   Internal filename generation has been updated so that all generated file names (e.g. trade logs, system logs, data exports) comply with Windows, Linux, and macOS requirements. You no longer need to worry about invalid characters or path issues when using qteasy on different operating systems.
