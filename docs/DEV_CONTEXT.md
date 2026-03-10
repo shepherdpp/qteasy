@@ -23,7 +23,7 @@
 ## get_history_data 类型解析与 freq/asset_type 选择（开发者摘要）
 
 - **职责分工**：
-  - `DataType`：描述数据在数据源中的原生形态（`name`, `freq`, `asset_type`, `table_name`, `column` 等），不等于用户希望看到的输出频率。
+  - `DataType`：描述数据在数据源中的原生形态（`name`, `freq`, `asset_type`, `table_name`, `column` 等），不等于用户希望看到的输出频率；支持仅 name、name+freq、name+asset_type、name+freq+asset_type 四种构造方式，部分参数时在 MAP 中取第一个匹配项。
   - `get_history_panel`：根据一组 `DataType` 从 `DataSource` 取原始数据，再按用户传入的 `freq` 调用 `_adjust_freq` 升/降频，对齐时间网格，并返回 `HistoryPanel` 或 dict。
   - `get_history_data`：面向用户的入口，负责把 `htype_names/htypes + freq + asset_type + shares` 推断为一组“原生 DataType 列表”，再交给 `get_history_panel`。
 
@@ -40,13 +40,13 @@
     - **频率唯一化**：使用 `TIME_FREQ_LEVELS`/`parse_freq_string` 为每个 `name` 选定一个“最合适”的原生 `freq`（完全一致 > 更高频中最近 > 更低频中最近），丢弃其它频率；
     - **资产类型过滤**：
       - 显式 `asset_type` 时严格过滤只保留匹配资产类型，否则视为未覆盖；
-      - `asset_type=None/'any'` 时，在当前不改 history 层的前提下采用保守优先级（`E > IDX > 其他`）为每个 `name` 选取一个 asset_type 版本，避免 `combine_asset_types=True` 下出现同一 `(name,freq)` 多 asset_type 冲突。
+      - `asset_type=None/'any'` 时保留该 name 下所有 asset_type 版本；`get_history_data_from_source` 对同名列合并（按列 bfill 取首非 NaN），避免 history 层报错。
 
 - **典型场景**：
   - `htype_names='total_mv', freq='m', shares=股票`：
     - 原生只存在 `total_mv_d_E/IDX`，阶段 2 会基于 `TIME_FREQ_LEVELS` 选 `d` 作为原生 `freq`，优先选择股票 `E` 版本，再由 `_adjust_freq` 把日频升采样到月频。
   - `htype_names='total_share', freq='d', shares=股票`：
-    - 原生存在 `total_share_d_E` 与 `total_share_d_IDX`，阶段 2 会在 asset_type='any' + 股票 shares 的语境下只保留 `total_share_d_E`，避免 history 层看到 E+IDX 两套定义。
+    - 原生存在 `total_share_d_E` 与 `total_share_d_IDX`，阶段 2 在 asset_type 未显式时保留两者，由 `get_history_data_from_source` 对同名列合并输出。
 
 开发时如需修改或扩展 DataType 解析逻辑，请同时更新：
 

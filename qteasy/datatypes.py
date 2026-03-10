@@ -314,6 +314,65 @@ def _parse_user_defined_freqs_and_asset_types(name: str) -> tuple[list[str], lis
             list(matched_types.index.get_level_values('asset_type').unique())
 
 
+def _resolve_dtype_key(search_name: str, freq: Optional[str] = None,
+                      asset_type: Optional[str] = None) -> tuple[str, list[str]]:
+    """ 根据部分参数在内置表与用户表中解析出唯一的 (search_name, freq, asset_type) 键。
+
+    约定：先遍历内置 DATA_TYPE_MAP 再 USER_DATA_TYPE_MAP；同一表内按键迭代顺序取第一个匹配项。
+    用于实现 DataType 四种构造语义：仅 name；name+freq；name+asset_type；name+freq+asset_type。
+
+    Parameters
+    ----------
+    search_name: str
+        数据类型名称（与 _parse_name_and_params 返回的 search_name 一致）
+    freq: str, optional
+        频率约束；None 表示不约束
+    asset_type: str, optional
+        资产类型约束，支持 'E'、'E,IDX' 等；None 表示不约束
+
+    Returns
+    -------
+    tuple
+        resolved_freq: str
+        resolved_asset_types: list[str]，单元素或与表项一致的多资产列表
+
+    Raises
+    ------
+    ValueError
+        找不到任何匹配项时
+    """
+    def iter_keys(data_map: dict):
+        """ 按插入顺序迭代 (name, f, at) 且 name == search_name 的键。"""
+        for (name, f, at) in data_map.keys():
+            if name != search_name:
+                continue
+            yield f, at
+
+    asset_types_set = None
+    if asset_type is not None:
+        asset_types_set = set(at.strip() for at in str_to_list(asset_type))
+
+    for data_map in (DATA_TYPE_MAP, USER_DATA_TYPE_MAP):
+        for f, at in iter_keys(data_map):
+            if freq is not None and f != freq:
+                continue
+            if asset_types_set is not None and at not in asset_types_set:
+                continue
+            return (f, [at])
+
+    if freq is not None and asset_type is not None:
+        msg = (f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP. '
+               f'No matching name+freq+asset_type.')
+    elif freq is not None:
+        msg = (f'No DataType with name "{search_name}" and freq "{freq}" found in DATA_TYPE_MAP.')
+    elif asset_type is not None:
+        msg = (f'No DataType with name "{search_name}" and asset_type "{asset_type}" found in DATA_TYPE_MAP.')
+    else:
+        msg = (f'DataType name "{search_name}" not found in DATA_TYPE_MAP. '
+               f'Check spelling or use define() to add it.')
+    raise ValueError(msg)
+
+
 def _parse_dtype_description(search_name: str, name_par: str, freq: str, asset_types: list[str])-> str:
     """ 根据正确的search_name， freq和asset_type查找数据类型的描述
 
@@ -333,13 +392,15 @@ def _parse_dtype_description(search_name: str, name_par: str, freq: str, asset_t
     description: str
         数据类型的描述
     """
-    data_map = DATA_TYPE_MAP
-
     all_descriptions = []
-    for asset_type in asset_types:
-        key = (search_name, freq, asset_type)
-        if key not in data_map:
-            raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+    for at in asset_types:
+        key = (search_name, freq, at)
+        if key in DATA_TYPE_MAP:
+            data_map = DATA_TYPE_MAP
+        elif key in USER_DATA_TYPE_MAP:
+            data_map = USER_DATA_TYPE_MAP
+        else:
+            raise ValueError(f'DataType {search_name}({at})@{freq} not found in DATA_TYPE_MAP.')
 
         description, _, _ = data_map[key]
 
@@ -379,14 +440,18 @@ def _parse_acquisition_parameters(search_name, name_par, freq, asset_type, built
         kwargs: dict
             获取数据的参数
     """
+    key = (search_name, freq, asset_type)
     if built_in_tables:
-        data_map = DATA_TYPE_MAP
+        if key in DATA_TYPE_MAP:
+            data_map = DATA_TYPE_MAP
+        elif key in USER_DATA_TYPE_MAP:
+            data_map = USER_DATA_TYPE_MAP
+        else:
+            raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
     else:
         data_map = USER_DATA_TYPE_MAP
-
-    key = (search_name, freq, asset_type)
-    if key not in data_map:
-        raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
+        if key not in data_map:
+            raise ValueError(f'DataType {search_name}({asset_type})@{freq} not found in DATA_TYPE_MAP.')
 
     _, acquisition_type, kwargs = data_map[key]
 
@@ -1000,55 +1065,48 @@ class DataType:
 
         search_name, name_pars, unsymbolizer = _parse_name_and_params(name)
 
-        # 根据用户输入的name查找所有匹配的频率和资产类型
-        built_in_freqs, built_in_asset_types = _parse_built_in_freqs_and_asset_types(search_name)
+        # 获取内置与用户表中该 name 的 freq/asset_type 列表，用于 _all_* 属性及 ANY 分支
+        try:
+            built_in_freqs, built_in_asset_types = _parse_built_in_freqs_and_asset_types(search_name)
+        except KeyError:
+            built_in_freqs, built_in_asset_types = [], []
         user_defined_freqs, user_defined_asset_types = _parse_user_defined_freqs_and_asset_types(search_name)
 
-        # 如果用户同时输入了freq和asset_type，确认用户输入是否在匹配的范围内
-        # 如果用户输入不在匹配范围内，抛出异常，如果在匹配范围内，使用用户输入作为default值
-        if (freq is None) and len(built_in_freqs) > 0:
-            default_freq = built_in_freqs[0]
-        elif (freq is None) and len(user_defined_freqs) > 0:
-            default_freq = user_defined_freqs[0]
-        elif (freq in built_in_freqs) or (freq in user_defined_freqs):
-            default_freq = freq
-        else:
-            raise ValueError(f'Can not match any frequency with data type name {search_name}'
-                             f' in either built in or user defined data type maps. Please check'
-                             f' your input.')
-
-        # asset_types 是一个sorted list，存储所有设定的default asset types
-        # 而asset_type_str 是一个字符串，存储用户输入的asset_type参数，用于生成dtype_id等属性
-
+        # 按四条语义解析出唯一的 (default_freq, asset_types)
+        user_asset_list = None
         if asset_type is not None:
-            asset_types = str_to_list(asset_type)
-            asset_types = [at.strip() for at in asset_types]
-            asset_types.sort()
-        elif len(built_in_asset_types) > 0:
-            asset_types = built_in_asset_types[0:1]
-        elif len(user_defined_asset_types) > 0:
-            asset_types = user_defined_asset_types[0:1]
-        else:
-            raise ValueError(f'Can not match any asset type with data typa name {search_name}'
-                             f' in either built in or user defined data type maps. Please check'
-                             f' your input.')
+            user_asset_list = [at.strip() for at in str_to_list(asset_type)]
+            user_asset_list.sort()
 
-        # 确认asset_types中的每一个asset_type是否合法
-        if 'ANY' in asset_types:
+        if user_asset_list and 'ANY' in user_asset_list:
+            # 用户传入 asset_type='ANY'：取第一个匹配键得到 default_freq，资产类型用全量
+            resolved_freq, _ = _resolve_dtype_key(search_name, freq, None)
+            default_freq = resolved_freq
             asset_types = built_in_asset_types + user_defined_asset_types
             asset_types.sort()
             asset_type_str = 'ANY'
-        elif all(at in built_in_asset_types + user_defined_asset_types for at in asset_types):
-            asset_types.sort()
+        elif freq is not None and asset_type is not None:
+            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, freq, asset_type)
+            default_freq = resolved_freq
+            asset_types = resolved_asset_types
+            asset_type_str = ','.join(asset_types)
+        elif freq is not None and asset_type is None:
+            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, freq, None)
+            default_freq = resolved_freq
+            asset_types = resolved_asset_types
+            asset_type_str = ','.join(asset_types)
+        elif freq is None and asset_type is not None:
+            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, asset_type)
+            default_freq = resolved_freq
+            asset_types = resolved_asset_types
             asset_type_str = ','.join(asset_types)
         else:
-            unmatched = [at for at in asset_types if at not in built_in_asset_types + user_defined_asset_types]
+            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, None)
+            default_freq = resolved_freq
+            asset_types = resolved_asset_types
+            asset_type_str = ','.join(asset_types)
 
-            raise ValueError(f'Asset types {unmatched} not found in DATA_TYPE_MAP.'
-                             f' Please check your input.')
-
-        # 已经确认了name，freq和asset_types的合法性，现在可以生成DataType实例
-        # 根据search_name，freq和asset_type查找description以及acquisition_type等信息
+        # 根据 search_name、freq、asset_type 查找 description
         description = _parse_dtype_description(
             search_name=search_name,
             name_par=name_pars,

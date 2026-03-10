@@ -1369,8 +1369,9 @@ def get_history_data(htypes=None,
                     dts = []
                 if dts:
                     candidates[n].extend(dts)
-            # 第二轮：对仍然没有候选的 name 使用更宽的频率集合重试
-            broad_freqs = list(TIME_FREQ_LEVELS.keys())
+            # 第二轮：对仍然没有候选的 name 使用更宽的频率集合重试，
+            # 这里使用小写形式的频率字符串，以便与 DATA_TYPE_MAP 中的原生 freq 定义（如 'q','m','d','h'）对齐
+            broad_freqs = [f.lower() for f in TIME_FREQ_LEVELS.keys()]
             for n in names:
                 if candidates[n]:
                     continue
