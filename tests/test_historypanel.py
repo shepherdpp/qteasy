@@ -24,6 +24,7 @@ from qteasy.datatypes import (
     DataType,
 )
 from qteasy.history import (
+    HistoryPanel,
     stack_dataframes,
     ffill_3d_data,
     get_history_data_packages
@@ -1491,6 +1492,43 @@ class TestGetHistoryDataPackages(unittest.TestCase):
                     start='2024-01-01',
                     end='2024-01-10'
             )
+
+
+class TestHistoryPanelToShareFrame(unittest.TestCase):
+    """ 测试 HistoryPanel.to_share_frame 语法糖行为。"""
+
+    def test_to_share_frame_basic(self):
+        """ 单股票全指标切片，index 为 hdates，columns 为全部 htypes。"""
+        print('\n[TestHistoryPanelToShareFrame] basic to_share_frame')
+        values = np.array(
+                [
+                    [[1.0, 2.0, 3.0],
+                     [4.0, 5.0, 6.0]],
+                    [[7.0, 8.0, 9.0],
+                     [10.0, 11.0, 12.0]],
+                ]
+        )
+        shares = ['000001.SZ', '000002.SZ']
+        hdates = ['2023-01-03', '2023-01-04']
+        htypes = ['open', 'high', 'low']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        df = hp.to_share_frame('000001.SZ')
+        print('  df shape:', df.shape, 'index:', df.index.tolist(), 'columns:', df.columns.tolist())
+        expected = hp.slice_to_dataframe(share='000001.SZ')
+        pd.testing.assert_frame_equal(df, expected)
+        self.assertEqual(list(df.index), list(hp.hdates))
+        self.assertEqual(list(df.columns), htypes)
+
+    def test_to_share_frame_invalid_share_raises(self):
+        """ 非法 share 时应抛出 KeyError。"""
+        print('\n[TestHistoryPanelToShareFrame] invalid share raises')
+        values = np.ones((1, 2, 2))
+        shares = ['000001.SZ']
+        hdates = ['2023-01-03', '2023-01-04']
+        htypes = ['open', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        with self.assertRaises(KeyError):
+            hp.to_share_frame('000002.SZ')
 
 
 if __name__ == '__main__':

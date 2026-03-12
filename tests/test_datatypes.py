@@ -26,6 +26,7 @@ from qteasy.datatypes import (
     get_history_data_from_source,
     get_reference_data_from_source,
     infer_data_types,
+    find_history_data,
 )
 
 ALL_TYPES_TO_TEST_WITH_FULL_ID = [
@@ -2424,6 +2425,98 @@ class TestDataTypeInitPartialParams(unittest.TestCase):
         with self.assertRaises(ValueError):
             DataType('total_share', freq='q', asset_type='IDX')
         print('  name+freq+asset_type OK')
+
+
+class TestFindHistoryDataAPI(unittest.TestCase):
+    """ 扩展版 find_history_data 的行为测试：兼容旧用法，新增 DataFrame 返回与过滤能力。"""
+
+    def test_find_history_data_basic_pattern_compat_list_return(self):
+        print('\n[TestFindHistoryDataAPI] basic list return for legacy patterns')
+        for pattern in ('pe', 'open', '市盈率'):
+            with self.subTest(pattern=pattern):
+                ids = find_history_data(pattern)
+                print(f'  pattern={pattern!r}, matched ids count: {len(ids)}')
+                self.assertIsInstance(ids, list)
+                if ids:
+                    self.assertIsInstance(ids[0], str)
+
+    def test_find_history_data_freq_and_asset_type_filter(self):
+        print('\n[TestFindHistoryDataAPI] freq/asset_type filters')
+        df = find_history_data('close', freq='d', asset_type='E', as_data_frame=True)
+        print(f'  filtered result shape: {df.shape}')
+        self.assertIsInstance(df, pd.DataFrame)
+        if not df.empty:
+            self.assertTrue(set(df['freq']) == {'d'})
+            self.assertTrue(set(df['asset_type']) == {'E'})
+
+    def test_find_history_data_multi_freq_and_asset_type_list(self):
+        print('\n[TestFindHistoryDataAPI] freq/asset_type as list or string equivalence')
+        df_list = find_history_data('close', freq=['d', 'q'], asset_type=['E', 'IDX'], as_data_frame=True)
+        df_str = find_history_data('close', freq='d,q', asset_type='E,IDX', as_data_frame=True)
+        print(f'  df_list shape: {df_list.shape}, df_str shape: {df_str.shape}')
+        self.assertIsInstance(df_list, pd.DataFrame)
+        self.assertIsInstance(df_str, pd.DataFrame)
+        self.assertTrue(set(df_list['freq']).issubset({'d', 'q'}))
+        self.assertTrue(set(df_list['asset_type']).issubset({'E', 'IDX'}))
+        # 两种输入形式筛选结果中的 data_id 集合应一致（顺序可以不同）
+        self.assertSetEqual(set(df_list.index), set(df_str.index))
+
+    def test_find_history_data_as_data_frame_default_columns(self):
+        print('\n[TestFindHistoryDataAPI] DataFrame return and default columns')
+        base_ids = find_history_data('pe', freq='d', asset_type='E')
+        df = find_history_data('pe', freq='d', asset_type='E', as_data_frame=True)
+        print(f'  base_ids count: {len(base_ids)}, df shape: {df.shape}, columns: {df.columns.tolist()}')
+        expected_cols = ['name', 'description', 'freq', 'asset_type', 'table_name', 'column']
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(df.index.name, 'data_id')
+        for col in expected_cols:
+            self.assertIn(col, df.columns)
+        self.assertEqual(len(df), len(base_ids))
+
+    def test_find_history_data_pattern_matches_name_and_description(self):
+        print('\n[TestFindHistoryDataAPI] pattern matches name and description')
+        df = find_history_data('每股收益', as_data_frame=True)
+        print(f'  result shape: {df.shape}')
+        self.assertIsInstance(df, pd.DataFrame)
+        if not df.empty:
+            desc_contains = df['description'].astype(str).str.contains('每股收益')
+            self.assertTrue(desc_contains.any())
+
+    def test_find_history_data_filter_by_table_name(self):
+        print('\n[TestFindHistoryDataAPI] table_name filter')
+        df_all = find_history_data('pe', as_data_frame=True)
+        df_tbl = find_history_data('pe', table='stock_indicator', as_data_frame=True)
+        print(f'  all shape: {df_all.shape}, filtered shape: {df_tbl.shape}')
+        self.assertIsInstance(df_tbl, pd.DataFrame)
+        if not df_tbl.empty:
+            self.assertTrue(set(df_tbl['table_name']) == {'stock_indicator'})
+        self.assertLessEqual(len(df_tbl), len(df_all))
+
+    def test_find_history_data_invalid_freq_type_error(self):
+        print('\n[TestFindHistoryDataAPI] invalid freq type should raise TypeError')
+        with self.assertRaises(TypeError):
+            find_history_data('pe', freq=123, as_data_frame=True)
+
+    def test_find_history_data_invalid_asset_type_type_error(self):
+        print('\n[TestFindHistoryDataAPI] invalid asset_type type should raise TypeError')
+        with self.assertRaises(TypeError):
+            find_history_data('pe', asset_type=123, as_data_frame=True)
+
+    def test_find_history_data_invalid_table_type_error(self):
+        print('\n[TestFindHistoryDataAPI] invalid table type should raise TypeError')
+        with self.assertRaises(TypeError):
+            find_history_data('pe', table=123, as_data_frame=True)
+
+    def test_find_history_data_no_match_returns_empty(self):
+        print('\n[TestFindHistoryDataAPI] no match returns empty results')
+        pattern = '__non_exist_dtype__'
+        ids = find_history_data(pattern)
+        df = find_history_data(pattern, as_data_frame=True)
+        print(f'  pattern={pattern!r}, list len: {len(ids)}, df shape: {df.shape}')
+        self.assertIsInstance(ids, list)
+        self.assertEqual(ids, [])
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
 
 
 if __name__ == '__main__':

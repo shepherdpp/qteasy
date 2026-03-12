@@ -1311,6 +1311,26 @@ class HistoryPanel():
         if along == 'row':
             return pd.concat(df_dict, axis=0, keys=df_dict.keys())
 
+    def to_share_frame(self, share: Union[str, int]) -> pd.DataFrame:
+        """ 将单一股票在 HistoryPanel 中的所有数据类型切片为一个 DataFrame。
+
+        该方法是 ``slice_to_dataframe(share=...)`` 的语法糖，返回的 DataFrame
+        以时间为索引、以全部 ``htypes`` 为列，适合做单股票全指标分析。
+
+        Parameters
+        ----------
+        share : str or int
+            股票代码或层序号，语义与 ``slice_to_dataframe(share=...)`` 中的 ``share``
+            参数一致。
+
+        Returns
+        -------
+        pandas.DataFrame
+            行索引为 ``hdates``，列为 ``htypes``，包含该股票在所有时间点上的全部
+            历史数据。
+        """
+        return self.slice_to_dataframe(share=share)
+
     def to_multi_index_dataframe(self, along=None):
         """ 等同于HistoryPanel.flatten_to_dataframe()
 

@@ -1370,7 +1370,8 @@ def get_history_data(htypes=None,
                 if dts:
                     candidates[n].extend(dts)
             # 第二轮：对仍然没有候选的 name 使用更宽的频率集合重试，
-            # 这里使用小写形式的频率字符串，以便与 DATA_TYPE_MAP 中的原生 freq 定义（如 'q','m','d','h'）对齐
+            # 这里使用小写形式的频率字符串，以便与 DATA_TYPE_MAP 中的原生 freq 定义（如 'q','m','d','h'）对齐，
+            # 并允许 freq / asset_type 忽略匹配，以便由 history 层负责升/降频与资产类型整合。
             broad_freqs = [f.lower() for f in TIME_FREQ_LEVELS.keys()]
             for n in names:
                 if candidates[n]:
@@ -1381,8 +1382,8 @@ def get_history_data(htypes=None,
                         freqs=broad_freqs,
                         asset_types=asset_types_arg,
                         adj=None,
-                        allow_ignore_freq=False,
-                        allow_ignore_asset_type=False,
+                        allow_ignore_freq=True,
+                        allow_ignore_asset_type=True,
                     )
                 except Exception:
                     dts = []
@@ -1442,10 +1443,6 @@ def get_history_data(htypes=None,
                     f"Check spelling or define them in DATA_TYPE_MAP.",
                     UserWarning,
                     stacklevel=2,
-                )
-                raise ValueError(
-                    f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
-                    f"Please check spelling or add definitions via qt.define() / DATA_TYPE_MAP."
                 )
             return effective_dtypes
 
@@ -1663,3 +1660,131 @@ def run(op: Operator, **kwargs) -> Union[dict, list]:
             datasource=qteasy.QT_DATA_SOURCE,
             logger=qteasy.logger_core,
     )
+
+
+def get_kline(
+        shares,
+        start: str = None,
+        end: str = None,
+        rows: int = None,
+        freq: str = 'd',
+        adj: str = None,
+        asset_type: str = None,
+        as_panel: bool = False,
+        data_source=None,
+        b_days_only: bool = None,
+        trade_time_only: bool = None,
+        **kwargs,
+):
+    """ 获取指定标的的标准 OHLCV K 线数据。
+
+    本函数是基于 DataType / get_history_data 的高层封装，用于一行代码获取常见
+    K 线价格数据，统一输出列名为 ``open, high, low, close, vol``，便于在 Notebook
+    中进行快速数据探索与可视化。
+
+    Parameters
+    ----------
+    shares : str or list of str
+        需要获取 K 线数据的证券代码，可以是逗号分隔的字符串或字符串列表，例如：
+        ``'000001.SZ,000002.SZ'`` 或 ``['000001.SZ', '000002.SZ']``。
+    start : str, optional
+        起始日期，格式 ``YYYYMMDD`` 或 ``YYYYMMDD HH:MM:SS``。与 ``end`` 一起
+        指定时间区间；如给出，则 ``rows`` 参数被忽略。
+    end : str, optional
+        结束日期，格式同 ``start``。
+    rows : int, optional
+        需要获取的最近记录条数；仅在未指定 ``start`` 和 ``end`` 时生效。
+    freq : str, default 'd'
+        数据频率，默认为日线。可选值与 ``get_history_data`` 一致，如 ``'d'``、
+        ``'w'``、``'m'``、``'h'`` 等。
+    adj : str, optional
+        复权方式，语义与 ``get_history_data`` 保持一致；推荐在 DataType 名称中使
+        用 ``close|b`` 一类语法指定复权，本参数将在未来版本中移除。
+    asset_type : str, optional
+        资产类型过滤条件，如 ``'E'``（股票）、``'IDX'``（指数）等，具体含义与
+        ``get_history_data`` 中的 ``asset_type`` 参数一致。
+    as_panel : bool, default False
+        - False: 返回单标的 DataFrame 或多标的 ``Dict[str, DataFrame]``；
+        - True:  返回一个 ``HistoryPanel``，``htypes`` 固定为
+          ``['open', 'high', 'low', 'close', 'vol']``。
+    data_source : DataSource, optional
+        历史数据源，不提供时使用全局默认 ``QT_DATA_SOURCE``。
+    b_days_only : bool, optional
+        是否将自然日频率转换为工作日，传递给 ``get_history_data``，语义一致。
+    trade_time_only : bool, optional
+        是否仅在交易时段生成时间索引，传递给 ``get_history_data``，语义一致。
+    **kwargs :
+        其他将透传给 ``get_history_data`` 的参数（如 ``drop_nan``、``resample_method``、
+        交易时段参数等）。
+
+    Returns
+    -------
+    pandas.DataFrame or Dict[str, pandas.DataFrame] or HistoryPanel
+        - 当 ``as_panel=False`` 且 ``shares`` 为单个标的时，返回一个以时间为索引、
+          列为 ``open, high, low, close, vol`` 的 DataFrame；
+        - 当 ``as_panel=False`` 且 ``shares`` 为多个标的时，返回
+          ``Dict[str, DataFrame]``，每只标的一张 K 线表；
+        - 当 ``as_panel=True`` 时，返回一个 ``HistoryPanel``。
+
+    """
+
+    if isinstance(shares, str):
+        # 允许逗号分隔的字符串形式
+        share_list = [s.strip() for s in shares.split(',') if s.strip()]
+    elif isinstance(shares, (list, tuple)):
+        share_list = list(shares)
+    else:
+        raise TypeError(f'shares must be a string or a list of strings, got {type(shares)} instead')
+
+    if not share_list:
+        raise ValueError('shares can not be empty')
+
+    # rows 与 start/end 的优先级：如给出 start/end，则忽略 rows
+    if (start is not None) or (end is not None):
+        rows_arg = None
+    else:
+        rows_arg = rows
+
+    # 统一透传给底层 get_history_data
+    gh_kwargs = dict(
+        htype_names='open, high, low, close, volume',
+        data_source=data_source,
+        shares=','.join(share_list),
+        start=start,
+        end=end,
+        freq=freq,
+        rows=rows_arg,
+        asset_type=asset_type,
+        adj=adj,
+    )
+    if b_days_only is not None:
+        gh_kwargs['b_days_only'] = b_days_only
+    if trade_time_only is not None:
+        gh_kwargs['trade_time_only'] = trade_time_only
+    gh_kwargs.update(kwargs)
+
+    if as_panel:
+        # 直接返回 HistoryPanel，并将 'volume' 重命名为 'vol'
+        hp = get_history_data(as_data_frame=False, **gh_kwargs)
+        from qteasy.history import HistoryPanel  # 避免循环导入
+        if isinstance(hp, HistoryPanel) and 'volume' in hp.htypes:
+            new_htypes = ['vol' if h == 'volume' else h for h in hp.htypes]
+            hp.re_label(htypes=new_htypes)
+        return hp
+
+    # 返回 dict[str, DataFrame]
+    res = get_history_data(group_by='shares', **gh_kwargs)
+    # 统一将列名 'volume' 重命名为 'vol'
+    if isinstance(res, dict):
+        for sh, df in res.items():
+            if isinstance(df, pd.DataFrame) and 'volume' in df.columns:
+                res[sh] = df.rename(columns={'volume': 'vol'})
+        # 单标的时压缩为 DataFrame
+        if len(share_list) == 1:
+            return res[share_list[0]]
+        return res
+
+    # 理论上 group_by='shares' 应总是返回 dict，这里仅作兜底
+    if isinstance(res, pd.DataFrame) and 'volume' in res.columns:
+        return res.rename(columns={'volume': 'vol'})
+    return res
