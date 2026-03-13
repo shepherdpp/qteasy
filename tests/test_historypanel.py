@@ -1835,8 +1835,8 @@ class TestHistoryPanelKlineIndicators(unittest.TestCase):
         print('\n[TestHistoryPanelKlineIndicators] kline.sma')
         values = np.array(
                 [
-                    [[1.0, 2.0, 3.0, 4.0, 5.0]],
-                    [[10.0, 11.0, 12.0, 13.0, 14.0]],
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                    [[10.0], [11.0], [12.0], [13.0], [14.0]],
                 ]
         )
         shares = ['s1', 's2']
@@ -1850,7 +1850,7 @@ class TestHistoryPanelKlineIndicators(unittest.TestCase):
         self.assertEqual(out.htypes, ['close', 'sma_2'])
         self.assertEqual(out.shares, shares)
         self.assertEqual(out.shape, (2, 5, 2))
-        # s1 close 前2个: [1,2,3,4,5], sma(2) 第2个起 (1+2)/2=1.5, (2+3)/2=2.5, ...
+        # s1 close: [1,2,3,4,5]，sma(2): [nan,1.5,2.5,3.5,4.5]
         self.assertTrue(np.isnan(out.values[0, 0, 1]))
         self.assertAlmostEqual(out.values[0, 1, 1], 1.5)
         self.assertAlmostEqual(out.values[0, 2, 1], 2.5)
@@ -1860,7 +1860,7 @@ class TestHistoryPanelKlineIndicators(unittest.TestCase):
         print('\n[TestHistoryPanelKlineIndicators] kline.ema')
         values = np.array(
                 [
-                    [[1.0, 2.0, 3.0, 4.0, 5.0]],
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
                 ]
         )
         shares = ['s1']
@@ -1875,6 +1875,80 @@ class TestHistoryPanelKlineIndicators(unittest.TestCase):
         self.assertEqual(out.shape, (1, 5, 2))
         # 首点 EMA 常为 NaN 或等于价格，后续为指数均
         self.assertFalse(np.all(np.isnan(out.values[0, :, 1])))
+
+
+class TestHistoryPanelTAApplyAndPatterns(unittest.TestCase):
+    """ 测试 HistoryPanel.apply_ta 与 candle_pattern。"""
+
+    def test_apply_ta_sma_as_panel(self):
+        """ apply_ta('sma') 应等价于对每只股票调用 tafuncs.sma，并在 Panel 中追加一列。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] apply_ta sma as_panel')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                    [[2.0], [3.0], [4.0], [5.0], [6.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        hp_out = hp.apply_ta('sma', htype='close', as_panel=True, timeperiod=2)
+        print('  hp_out.htypes:', hp_out.htypes, 'shape:', hp_out.shape)
+
+        # 原 htypes 保留，并新增一个以 func_name 命名的列
+        self.assertIn('close', hp_out.htypes)
+        self.assertIn('sma', hp_out.htypes)
+        self.assertEqual(hp_out.shares, shares)
+
+        import qteasy.tafuncs as tafuncs
+        idx = pd.to_datetime(hdates)
+        for i, share in enumerate(shares):
+            s = pd.Series(values[i, :, 0], index=idx)
+            expected = tafuncs.sma(s, timeperiod=2)
+            got = hp_out.values[i, :, hp_out.htypes.index('sma')]
+            self.assertTrue(np.allclose(got, expected.values, equal_nan=True))
+
+    def test_apply_ta_invalid_name_raises(self):
+        """ func_name 不存在时应抛出 ValueError。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] apply_ta invalid func raises')
+        values = np.ones((1, 3, 1))
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close'])
+        with self.assertRaises(ValueError):
+            hp.apply_ta('non_exist_func', htype='close', as_panel=True)
+
+    def test_candle_pattern_basic(self):
+        """ candle_pattern 返回整型信号矩阵，与 tafuncs 中形态函数结果一致。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] candle_pattern basic')
+        # 构造一个简单的 OHLC 序列，这里不强求真是 hammer，只验证调用与对齐行为
+        values = np.array(
+                [
+                    [
+                        [10.0, 11.0, 9.5, 10.5],
+                        [10.5, 11.5, 10.0, 11.0],
+                    ],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02']
+        htypes = ['open', 'high', 'low', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        import qteasy.tafuncs as tafuncs
+        idx = pd.to_datetime(hdates)
+        open_s = pd.Series([10.0, 10.5], index=idx)
+        high_s = pd.Series([11.0, 11.5], index=idx)
+        low_s = pd.Series([9.5, 10.0], index=idx)
+        close_s = pd.Series([10.5, 11.0], index=idx)
+        expected = tafuncs.cdlhammer(open_s, high_s, low_s, close_s)
+
+        df = hp.candle_pattern('cdlhammer', as_panel=False)
+        print('  candle_pattern df:\n', df)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(list(df.index), list(idx))
+        self.assertEqual(list(df.columns), shares)
+        self.assertTrue(np.allclose(df['s1'].values, expected.values))
 
 
 if __name__ == '__main__':

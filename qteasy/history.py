@@ -1863,6 +1863,147 @@ class HistoryPanel():
         result = pd.DataFrame(res, index=self.shares)
         return result
 
+    def apply_ta(
+            self,
+            func_name: str,
+            htype: str = 'close',
+            shares: Optional[Iterable[str]] = None,
+            as_panel: bool = True,
+            **kwargs,
+    ):
+        """调用 qteasy.tafuncs 中的技术指标函数，并在多股票上广播计算。
+
+        Parameters
+        ----------
+        func_name : str
+            qteasy.tafuncs 中的函数名称，如 'sma'、'ema' 等。
+        htype : str, default 'close'
+            作为输入的一维时间序列的数据类型。
+        shares : list of str, optional
+            需要计算的股票列表，默认使用全部 shares。
+        as_panel : bool, default True
+            True 时返回新的 HistoryPanel，在 htypes 末尾追加输出列；
+            False 时返回 MultiIndex 列的 DataFrame（时间×[share, output_name]）。
+        """
+        if self.is_empty:
+            return HistoryPanel() if as_panel else pd.DataFrame()
+        import qteasy.tafuncs as tafuncs
+        if not hasattr(tafuncs, func_name):
+            raise ValueError(f'technical indicator function \"{func_name}\" not found in qteasy.tafuncs')
+        func = getattr(tafuncs, func_name)
+
+        if htype not in self.htypes:
+            raise ValueError(f'htype \"{htype}\" not found in HistoryPanel.htypes: {self.htypes}')
+
+        if shares is None:
+            share_list = list(self.shares)
+        else:
+            if isinstance(shares, str):
+                share_list = str_to_list(shares)
+            else:
+                share_list = list(shares)
+
+        ci = self.htypes.index(htype)
+        idx = pd.to_datetime(self.hdates)
+
+        # 收集各 share 的结果
+        result_arrays = {}
+        out_names = None
+        for share in share_list:
+            if share not in self.shares:
+                raise ValueError(f'share \"{share}\" not found in HistoryPanel.shares')
+            li = self.shares.index(share)
+            series = pd.Series(self.values[li, :, ci].astype(float), index=idx)
+            out = func(series, **kwargs)
+            if isinstance(out, (list, tuple)):
+                cols = [f'{func_name}_{i}' for i in range(len(out))]
+                arrs = [np.asarray(o, dtype=float).ravel() for o in out]
+            else:
+                cols = [func_name]
+                arrs = [np.asarray(out, dtype=float).ravel()]
+            if out_names is None:
+                out_names = cols
+            result_arrays[share] = arrs
+
+        if as_panel:
+            # 在原 Panel 后追加新 htypes
+            base = self.values.astype(float)
+            n_share, n_time, _ = base.shape
+            new_cols = list(self.htypes) + list(out_names)
+            add_values = np.zeros((n_share, n_time, len(out_names)), dtype=float)
+            add_values[:] = np.nan
+            for share, arrs in result_arrays.items():
+                li = self.shares.index(share)
+                for j, arr in enumerate(arrs):
+                    L = min(n_time, len(arr))
+                    add_values[li, -L:, j] = arr[-L:]
+            new_values = np.concatenate([base, add_values], axis=2)
+            return HistoryPanel(values=new_values, levels=self.shares, rows=self.hdates, columns=new_cols)
+
+        # 返回 DataFrame：MultiIndex 列 (share, output_name)
+        data = {}
+        for share, arrs in result_arrays.items():
+            for name, arr in zip(out_names, arrs):
+                data[(share, name)] = arr
+        df = pd.DataFrame(data, index=idx)
+        df.columns = pd.MultiIndex.from_tuples(df.columns, names=['share', 'output'])
+        return df
+
+    def candle_pattern(
+            self,
+            name: str,
+            price_htypes: tuple[str, str, str, str] = ('open', 'high', 'low', 'close'),
+            as_panel: bool = False,
+            **kwargs,
+    ):
+        """基于 ta-lib 形态函数计算蜡烛形态信号。
+
+        Parameters
+        ----------
+        name : str
+            形态函数名称，如 'cdlhammer'。
+        price_htypes : tuple of str, default ('open','high','low','close')
+            OHLC 对应的 htypes 名称。
+        as_panel : bool, default False
+            False 返回 DataFrame（时间×股票），True 返回单一 htype 的 HistoryPanel。
+        """
+        if self.is_empty:
+            return HistoryPanel() if as_panel else pd.DataFrame()
+        import qteasy.tafuncs as tafuncs
+        if not hasattr(tafuncs, name):
+            raise ValueError(f'candle pattern function \"{name}\" not found in qteasy.tafuncs')
+        func = getattr(tafuncs, name)
+
+        o_name, h_name, l_name, c_name = price_htypes
+        for nm in (o_name, h_name, l_name, c_name):
+            if nm not in self.htypes:
+                raise ValueError(f'price htype \"{nm}\" not found in HistoryPanel.htypes: {self.htypes}')
+
+        oi = self.htypes.index(o_name)
+        hi = self.htypes.index(h_name)
+        li = self.htypes.index(l_name)
+        ci = self.htypes.index(c_name)
+        idx = pd.to_datetime(self.hdates)
+
+        signals = np.zeros((self.level_count, self.row_count), dtype=float)
+        for s_idx, share in enumerate(self.shares):
+            o = pd.Series(self.values[s_idx, :, oi].astype(float), index=idx)
+            h = pd.Series(self.values[s_idx, :, hi].astype(float), index=idx)
+            l = pd.Series(self.values[s_idx, :, li].astype(float), index=idx)
+            c = pd.Series(self.values[s_idx, :, ci].astype(float), index=idx)
+            sig = func(o, h, l, c, **kwargs)
+            sig_arr = np.asarray(sig, dtype=float).ravel()
+            L = min(self.row_count, len(sig_arr))
+            signals[s_idx, -L:] = sig_arr[-L:]
+
+        if as_panel:
+            return HistoryPanel(values=signals.reshape(self.level_count, self.row_count, 1),
+                                levels=self.shares,
+                                rows=self.hdates,
+                                columns=[name])
+        df = pd.DataFrame(signals.T, index=idx, columns=self.shares)
+        return df
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
@@ -2464,6 +2605,18 @@ class _HistoryPanelKlineAccessor:
             d_arr[i, :] = dd
             j_arr[i, :] = jj
         return self._append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
+
+
+    def apply_ta(
+            self,
+            func_name: str,
+            htype: str = 'close',
+            shares: Optional[Iterable[str]] = None,
+            as_panel: bool = True,
+            **kwargs,
+    ):
+        """兼容旧计划的命名，为 kline 访问器预留统一 ta 接口（实际实现位于 HistoryPanel.apply_ta）。"""
+        return self._hp.apply_ta(func_name=func_name, htype=htype, shares=shares, as_panel=as_panel, **kwargs)
 
 
 class HistoryPanelRolling:
