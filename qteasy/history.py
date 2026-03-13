@@ -1745,6 +1745,124 @@ class HistoryPanel():
         """K 线技术指标访问器，提供 sma、ema、bbands、macd、kdj 等方法。"""
         return _HistoryPanelKlineAccessor(self)
 
+    def alpha_beta(
+            self,
+            benchmark: Union[pd.Series, pd.DataFrame],
+            price_htype: str = 'close',
+            method: str = 'simple',
+            freq: Optional[str] = None,
+            annualize: bool = True,
+    ) -> pd.DataFrame:
+        """计算各股票相对于给定基准收益率序列的 alpha / beta 等指标。
+
+        Parameters
+        ----------
+        benchmark : Series or DataFrame
+            基准价格时间序列，index 应与 HistoryPanel.hdates 对齐或至少有交集。
+            DataFrame 时只使用第一列作为基准价格。
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型。
+        method : {'simple', 'log'}, default 'simple'
+            收益率计算方式，与 returns() 一致。
+        freq : str, optional
+            收益率频率字符串，用于 alpha 年化时推断每年 bar 数，如 'D'、'W'、'M'。
+        annualize : bool, default True
+            是否对 alpha 进行年化。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index 为 shares，列为 ['alpha', 'beta', 'r2', 'n_obs']。
+        """
+        if self.is_empty:
+            return pd.DataFrame(columns=['alpha', 'beta', 'r2', 'n_obs'])
+
+        if not isinstance(benchmark, (pd.Series, pd.DataFrame)):
+            raise TypeError('benchmark must be pandas Series or DataFrame')
+
+        if isinstance(benchmark, pd.DataFrame):
+            if benchmark.shape[1] == 0:
+                raise ValueError('benchmark DataFrame has no columns')
+            bench_price = benchmark.iloc[:, 0]
+        else:
+            bench_price = benchmark
+
+        # 对齐时间索引
+        bench_price = bench_price.astype(float)
+        stock_ret = self.returns(price_htype=price_htype, method=method, periods=1, as_panel=False, dropna=False)
+
+        # 基准收益率
+        bench_ret = bench_price.copy()
+        bench_ret.iloc[:] = np.nan
+        for i in range(1, len(bench_price)):
+            p_prev = bench_price.iloc[i - 1]
+            p_curr = bench_price.iloc[i]
+            if np.isnan(p_prev) or np.isnan(p_curr) or p_prev <= 0:
+                bench_ret.iloc[i] = np.nan
+            elif method == 'simple':
+                bench_ret.iloc[i] = p_curr / p_prev - 1.0
+            else:
+                bench_ret.iloc[i] = np.log(p_curr) - np.log(p_prev)
+
+        # 按共同日期对齐
+        common_index = stock_ret.index.intersection(bench_ret.index)
+        stock_ret = stock_ret.loc[common_index]
+        bench_ret = bench_ret.loc[common_index]
+
+        # 每年 bar 数，用于 alpha 年化
+        if annualize:
+            if freq is not None:
+                freq_u = freq.upper()
+                if freq_u.startswith('D'):
+                    per_year = 252.0
+                elif freq_u.startswith('W'):
+                    per_year = 52.0
+                elif freq_u.startswith('M'):
+                    per_year = 12.0
+                else:
+                    raise ValueError(f'unsupported freq \"{freq}\" for annualization')
+            else:
+                per_year = 252.0
+        else:
+            per_year = 1.0
+
+        res = {'alpha': [], 'beta': [], 'r2': [], 'n_obs': []}
+        for share in self.shares:
+            if share not in stock_ret.columns:
+                res['alpha'].append(np.nan)
+                res['beta'].append(np.nan)
+                res['r2'].append(np.nan)
+                res['n_obs'].append(0)
+                continue
+            y = stock_ret[share]
+            x = bench_ret
+            mask = (~y.isna()) & (~x.isna())
+            xv = x[mask].to_numpy()
+            yv = y[mask].to_numpy()
+            n = len(xv)
+            if n < 2:
+                res['alpha'].append(np.nan)
+                res['beta'].append(np.nan)
+                res['r2'].append(np.nan)
+                res['n_obs'].append(n)
+                continue
+
+            # 线性回归 y = alpha + beta * x
+            beta, alpha = np.polyfit(xv, yv, 1)
+            # 拟合优度 R^2
+            y_hat = alpha + beta * xv
+            ss_res = np.sum((yv - y_hat) ** 2)
+            ss_tot = np.sum((yv - np.mean(yv)) ** 2)
+            r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
+
+            res['alpha'].append(alpha * per_year)
+            res['beta'].append(beta)
+            res['r2'].append(r2)
+            res['n_obs'].append(n)
+
+        result = pd.DataFrame(res, index=self.shares)
+        return result
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储

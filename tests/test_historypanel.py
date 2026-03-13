@@ -1781,13 +1781,50 @@ class TestHistoryPanelReturnsAndRisk(unittest.TestCase):
 
         self.assertIsInstance(vol_df, pd.DataFrame)
         self.assertEqual(list(vol_df.columns), shares)
-        # 前 window-1 行为 NaN
+        # 第一行 NaN，第二行起开始有滚动标准差（考虑 returns 首行 NaN 的影响）
         self.assertTrue(np.isnan(vol_df.iloc[0]['s1']))
         self.assertTrue(np.isnan(vol_df.iloc[1]['s1']))
-        # 第3行起有滚动标准差
+        # 第 3 行开始（索引 2）有首个有效波动率
         ret_s1 = hp.returns(price_htype='close', method='simple', as_panel=False)['s1']
         expected_std_2 = ret_s1.iloc[0:3].std()
         self.assertAlmostEqual(vol_df.iloc[2]['s1'], expected_std_2)
+
+    def test_alpha_beta_basic(self):
+        """ alpha_beta 基本回归：构造严格线性关系，beta≈2，alpha≈0。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] alpha_beta basic')
+        # 人为构造收益率: r_b=[0.1,0.2,0.3,0.4], r_s=2*r_b
+        r_b = np.array([0.1, 0.2, 0.3, 0.4])
+        r_s = 2 * r_b
+        # 将收益率积分为价格序列 p_t = p_{t-1} * (1 + r_t)
+        bench_prices = [1.0]
+        stock_prices = [1.0]
+        for rb, rs in zip(r_b, r_s):
+            bench_prices.append(bench_prices[-1] * (1.0 + rb))
+            stock_prices.append(stock_prices[-1] * (1.0 + rs))
+        bench_dates = pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'])
+        bench_price = pd.Series(bench_prices, index=bench_dates)
+
+        values = np.array(
+                [
+                    [[stock_prices[0]], [stock_prices[1]], [stock_prices[2]], [stock_prices[3]], [stock_prices[4]]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        res = hp.alpha_beta(benchmark=bench_price, price_htype='close', method='simple', freq=None, annualize=False)
+        print('  alpha_beta result:\n', res)
+
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertEqual(list(res.index), shares)
+        # 有效观测点为 4（首期 NaN 不参与）
+        self.assertEqual(res.loc['s1', 'n_obs'], 4)
+        # beta≈2, alpha≈0, R^2≈1
+        self.assertAlmostEqual(res.loc['s1', 'beta'], 2.0, places=6)
+        self.assertAlmostEqual(res.loc['s1', 'alpha'], 0.0, places=6)
+        self.assertAlmostEqual(res.loc['s1', 'r2'], 1.0, places=6)
 
 
 class TestHistoryPanelKlineIndicators(unittest.TestCase):
