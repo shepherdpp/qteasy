@@ -1590,6 +1590,161 @@ class HistoryPanel():
             raise ValueError(f'parameter \"by\" must be \"share\" or \"htype\", got {by}')
         return HistoryPanelRolling(self, window, min_periods, center, by)
 
+    def returns(
+            self,
+            price_htype: str = 'close',
+            method: str = 'simple',
+            periods: int = 1,
+            as_panel: bool = False,
+            dropna: bool = False,
+    ):
+        """基于指定价格序列计算收益率。
+
+        Parameters
+        ----------
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型，必须在 htypes 中存在。
+        method : {'simple', 'log'}, default 'simple'
+            - simple: r_t = p_t / p_{t-periods} - 1
+            - log: r_t = log(p_t) - log(p_{t-periods})
+        periods : int, default 1
+            收益率间隔的 bar 数。
+        as_panel : bool, default False
+            False 返回 DataFrame（index=时间，columns=shares）；
+            True 返回 HistoryPanel（htypes 仅含 ret_{price_htype}）。
+        dropna : bool, default False
+            True 时删除全为 NaN 的起始行。
+
+        Returns
+        -------
+        pandas.DataFrame or HistoryPanel
+        """
+        if self.is_empty:
+            if as_panel:
+                return HistoryPanel()
+            return pd.DataFrame()
+        if price_htype not in self.htypes:
+            raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
+        if method not in ('simple', 'log'):
+            raise ValueError(f'method must be "simple" or "log", got {method}')
+
+        ci = self.htypes.index(price_htype)
+        prices = self.values[:, :, ci].astype(float)  # (shares, times)
+
+        n_share, n_time = prices.shape
+        ret = np.full((n_share, n_time), np.nan, dtype=float)
+
+        for i in range(n_share):
+            p = prices[i, :]
+            for t in range(periods, n_time):
+                p_prev = p[t - periods]
+                p_curr = p[t]
+                if np.isnan(p_prev) or np.isnan(p_curr) or p_prev <= 0:
+                    ret[i, t] = np.nan
+                elif method == 'simple':
+                    ret[i, t] = p_curr / p_prev - 1.0
+                else:  # log
+                    ret[i, t] = np.log(p_curr) - np.log(p_prev)
+
+        if dropna:
+            # 删除整行全 NaN 的起始行
+            mask = np.any(~np.isnan(ret), axis=0)
+            ret = ret[:, mask]
+            used_hdates = [d for d, m in zip(self.hdates, mask) if m]
+        else:
+            used_hdates = list(self.hdates)
+
+        if as_panel:
+            new_htype = f'ret_{price_htype}'
+            return HistoryPanel(
+                values=ret.reshape(n_share, -1, 1),
+                levels=self.shares,
+                rows=used_hdates,
+                columns=[new_htype],
+            )
+        df = pd.DataFrame(ret.T, index=used_hdates, columns=self.shares)
+        return df
+
+    def volatility(
+            self,
+            window: int,
+            price_htype: str = 'close',
+            method: str = 'simple',
+            annualize: bool = True,
+            periods_per_year: Optional[int] = None,
+            as_panel: bool = False,
+    ):
+        """基于收益率序列计算滚动波动率（标准差）。
+
+        Parameters
+        ----------
+        window : int
+            滚动窗口长度（bar 数）。
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型。
+        method : {'simple', 'log'}, default 'simple'
+            收益率计算方式，与 returns() 一致。
+        annualize : bool, default True
+            是否年化（乘以 sqrt(periods_per_year)）。
+        periods_per_year : int, optional
+            年化时每年 bar 数；未指定且 annualize=True 时尝试从时间间隔推断，无法推断则报错。
+        as_panel : bool, default False
+            返回形式同 returns()。
+
+        Returns
+        -------
+        pandas.DataFrame or HistoryPanel
+        """
+        if self.is_empty:
+            if as_panel:
+                return HistoryPanel()
+            return pd.DataFrame()
+        ret_df = self.returns(price_htype=price_htype, method=method, periods=1, as_panel=False, dropna=False)
+        # 滚动标准差：为了在第 window 行即可得到第一个非 NaN 结果，
+        # 这里使用 min_periods=1，让 NaN 收益率自然通过跳过逻辑处理。
+        vol_df = ret_df.rolling(window=window, min_periods=1).std()
+
+        if annualize:
+            if periods_per_year is not None:
+                if not isinstance(periods_per_year, (int, float)) or periods_per_year <= 0:
+                    raise ValueError(f'periods_per_year must be a positive number, got {periods_per_year}')
+                scale = np.sqrt(periods_per_year)
+            else:
+                # 尝试从 hdates 推断：按平均间隔估算每年 bar 数
+                if len(self.hdates) < 2:
+                    raise ValueError('cannot infer periods_per_year from fewer than 2 dates; set periods_per_year explicitly')
+                try:
+                    idx = pd.DatetimeIndex(self.hdates)
+                    delta = idx[-1] - idx[0]
+                    n_bars = max(1, len(idx) - 1)
+                    avg_delta = delta / n_bars
+                    days = avg_delta.total_seconds() / 86400.0
+                    if days >= 1:
+                        scale = np.sqrt(252.0 / days)  # 日频约 252
+                    elif days * 5 >= 1:
+                        scale = np.sqrt(52.0 / (days * 5))  # 周频约 52
+                    else:
+                        scale = np.sqrt(252.0 * (1.0 / days))
+                except Exception as e:
+                    raise ValueError(f'could not infer periods_per_year from hdates: {e}; set periods_per_year explicitly')
+            vol_df = vol_df * scale
+
+        if as_panel:
+            vol_arr = vol_df.values.T  # (shares, times)
+            n_share, n_time = vol_arr.shape
+            return HistoryPanel(
+                values=vol_arr.reshape(n_share, n_time, 1),
+                levels=self.shares,
+                rows=list(vol_df.index),
+                columns=[f'vol_{window}'],
+            )
+        return vol_df
+
+    @property
+    def kline(self) -> "_HistoryPanelKlineAccessor":
+        """K 线技术指标访问器，提供 sma、ema、bbands、macd、kdj 等方法。"""
+        return _HistoryPanelKlineAccessor(self)
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
@@ -2029,6 +2184,168 @@ class HistoryPanel():
         :return:
         """
         raise NotImplementedError
+
+
+class _HistoryPanelKlineAccessor:
+    """HistoryPanel 的 K 线技术指标访问器，内部使用，通过 HistoryPanel.kline 访问。"""
+
+    def __init__(self, hp: HistoryPanel):
+        self._hp = hp
+
+    def _get_price(self, price_htype: str):
+        """取指定 htype 的价格矩阵 (shares, times)。"""
+        if self._hp.is_empty or price_htype not in self._hp.htypes:
+            raise ValueError(f'price_htype "{price_htype}" not in htypes: {self._hp.htypes}')
+        ci = self._hp.htypes.index(price_htype)
+        return self._hp.values[:, :, ci].astype(float)
+
+    def _append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
+        """在原有 Panel 后追加新 htype 列，new_arrays 为 list of (n_share, n_time) 数组。"""
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        base = hp.values.astype(float)
+        to_add = np.stack(new_arrays, axis=2)  # (L, R, C_new)
+        new_values = np.concatenate([base, to_add], axis=2)
+        new_htypes = list(hp.htypes) + list(new_columns)
+        return HistoryPanel(values=new_values, levels=hp.shares, rows=hp.hdates, columns=new_htypes)
+
+    def sma(self, window: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+        """简单移动平均。"""
+        from qteasy import tafuncs
+        default_name = f'sma_{window}'
+        if new_htype is None:
+            new_htype = default_name
+        if new_htype in self._hp.htypes:
+            raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        out = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            out[i, :] = tafuncs.sma(prices[i, :], timeperiod=window)
+        return self._append_htypes([new_htype], [out])
+
+    def ema(self, span: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+        """指数移动平均。"""
+        from qteasy import tafuncs
+        default_name = f'ema_{span}'
+        if new_htype is None:
+            new_htype = default_name
+        if new_htype in self._hp.htypes:
+            raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        out = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            res = tafuncs.ema(prices[i, :], span=span)
+            arr = np.atleast_1d(np.asarray(res, dtype=float)).ravel()
+            out[i, :min(n_time, len(arr))] = arr[:n_time]
+        return self._append_htypes([new_htype], [out])
+
+    def bbands(
+            self,
+            window: int = 20,
+            price_htype: str = 'close',
+            nbdev_up: float = 2.0,
+            nbdev_dn: float = 2.0,
+            ma_type: str = 'sma',
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """布林带。"""
+        from qteasy import tafuncs
+        tag = suffix if suffix is not None else f'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'
+        upper_name = f'bbands_upper_{tag}'
+        middle_name = f'bbands_middle_{tag}'
+        lower_name = f'bbands_lower_{tag}'
+        for n in (upper_name, middle_name, lower_name):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        matype = 0 if ma_type == 'sma' else 1  # tafuncs 使用 matype 整数
+        u = np.full_like(prices, np.nan, dtype=float)
+        m = np.full_like(prices, np.nan, dtype=float)
+        l = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            uu, mm, ll = tafuncs.bbands(
+                prices[i, :], timeperiod=window,
+                nbdevup=int(nbdev_up), nbdevdn=int(nbdev_dn), matype=matype,
+            )
+            uu = np.asarray(uu).ravel()
+            mm = np.asarray(mm).ravel()
+            ll = np.asarray(ll).ravel()
+            L = min(n_time, len(uu), len(mm), len(ll))
+            u[i, -L:] = uu[-L:]
+            m[i, -L:] = mm[-L:]
+            l[i, -L:] = ll[-L:]
+        return self._append_htypes([upper_name, middle_name, lower_name], [u, m, l])
+
+    def macd(
+            self,
+            price_htype: str = 'close',
+            fastperiod: int = 12,
+            slowperiod: int = 26,
+            signalperiod: int = 9,
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """MACD 指标。"""
+        from qteasy import tafuncs
+        tag = suffix if suffix is not None else f'{fastperiod}_{slowperiod}_{signalperiod}'
+        n1, n2, n3 = f'macd_{tag}', f'macd_signal_{tag}', f'macd_hist_{tag}'
+        for n in (n1, n2, n3):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        macd_arr = np.full_like(prices, np.nan, dtype=float)
+        sig_arr = np.full_like(prices, np.nan, dtype=float)
+        hist_arr = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            mc, sig, hist = tafuncs.macd(prices[i, :], fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=signalperiod)
+            mc, sig, hist = np.asarray(mc).ravel(), np.asarray(sig).ravel(), np.asarray(hist).ravel()
+            L = min(n_time, len(mc), len(sig), len(hist))
+            macd_arr[i, -L:] = mc[-L:]
+            sig_arr[i, -L:] = sig[-L:]
+            hist_arr[i, -L:] = hist[-L:]
+        return self._append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
+
+    def kdj(
+            self,
+            price_htype: str = 'close',
+            fastk_period: int = 9,
+            slowk_period: int = 3,
+            slowd_period: int = 3,
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """KDJ 随机指标，需要 high、low、close。"""
+        from qteasy import tafuncs
+        for h in ('high', 'low', 'close'):
+            if h not in self._hp.htypes:
+                raise ValueError(f'KDJ requires high/low/close in htypes, missing "{h}"')
+        tag = suffix if suffix is not None else f'{fastk_period}_{slowk_period}_{slowd_period}'
+        k_name = f'kdj_k_{tag}'
+        d_name = f'kdj_d_{tag}'
+        j_name = f'kdj_j_{tag}'
+        for n in (k_name, d_name, j_name):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        high = self._get_price('high')
+        low = self._get_price('low')
+        close = self._get_price('close')
+        n_share, n_time = high.shape
+        k_arr = np.full_like(close, np.nan, dtype=float)
+        d_arr = np.full_like(close, np.nan, dtype=float)
+        j_arr = np.full_like(close, np.nan, dtype=float)
+        for i in range(n_share):
+            kk, dd = tafuncs.stoch(high[i, :], low[i, :], close[i, :],
+                                   fastk_period=fastk_period, slowk_period=slowk_period, slowd_period=slowd_period)
+            kk = np.asarray(kk).ravel()[:n_time]
+            dd = np.asarray(dd).ravel()[:n_time]
+            jj = 3 * kk - 2 * dd  # J = 3*K - 2*D
+            k_arr[i, :] = kk
+            d_arr[i, :] = dd
+            j_arr[i, :] = jj
+        return self._append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
 
 
 class HistoryPanelRolling:

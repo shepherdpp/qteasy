@@ -1698,5 +1698,147 @@ class TestHistoryPanelRolling(unittest.TestCase):
             hp.rolling(window=2, by='wrong')
 
 
+class TestHistoryPanelReturnsAndRisk(unittest.TestCase):
+    """ 测试 HistoryPanel.returns 与 volatility。"""
+
+    def test_returns_simple_dataframe(self):
+        """ returns(method='simple') 返回 DataFrame，index=时间、columns=shares。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] returns simple as DataFrame')
+        # 价格 [1, 2, 4] -> 简单收益率 [nan, 1.0, 1.0]
+        values = np.array(
+                [
+                    [[1.0], [2.0], [4.0]],   # s1 close
+                    [[2.0], [4.0], [8.0]],   # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret_df = hp.returns(price_htype='close', method='simple', as_panel=False)
+        print('  ret_df:\n', ret_df)
+
+        self.assertIsInstance(ret_df, pd.DataFrame)
+        self.assertEqual(list(ret_df.index), list(pd.to_datetime(hdates)))
+        self.assertEqual(list(ret_df.columns), shares)
+        # 第一行无前值，应为 NaN
+        self.assertTrue(np.isnan(ret_df.loc[ret_df.index[0], 's1']))
+        self.assertTrue(np.isnan(ret_df.loc[ret_df.index[0], 's2']))
+        # s1: (2-1)/1=1, (4-2)/2=1
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[1], 's1'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[2], 's1'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[1], 's2'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[2], 's2'], 1.0)
+
+    def test_returns_log_and_as_panel(self):
+        """ returns(method='log', as_panel=True) 返回 HistoryPanel，htype 为 ret_close。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] returns log as_panel')
+        values = np.array(
+                [
+                    [[np.e], [np.e ** 2]],   # s1 close: 1期后 e^2/e = e, log(e)=1
+                    [[1.0], [2.0]],          # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret_hp = hp.returns(price_htype='close', method='log', as_panel=True)
+        print('  ret_hp.htypes:', ret_hp.htypes, 'shape:', ret_hp.shape)
+
+        self.assertIsInstance(ret_hp, HistoryPanel)
+        self.assertEqual(ret_hp.shares, shares)
+        self.assertEqual(ret_hp.hdates, list(pd.to_datetime(hdates)))
+        self.assertEqual(ret_hp.htypes, ['ret_close'])
+        self.assertEqual(ret_hp.shape, (2, 2, 1))
+        # 首期无前值 NaN
+        self.assertTrue(np.isnan(ret_hp.values[0, 0, 0]))
+        self.assertTrue(np.isnan(ret_hp.values[1, 0, 0]))
+        # s1 log(e^2/e)=1
+        self.assertAlmostEqual(ret_hp.values[0, 1, 0], 1.0)
+        # s2 log(2/1)=ln2
+        self.assertAlmostEqual(ret_hp.values[1, 1, 0], np.log(2.0))
+
+    def test_volatility_basic(self):
+        """ volatility 基于 returns 的滚动标准差，annualize 可关。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] volatility basic')
+        # 5 个时间点，便于 window=3 滚动
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],  # s1 close
+                    [[10.0], [11.0], [12.0], [13.0], [14.0]],  # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        vol_df = hp.volatility(window=3, price_htype='close', annualize=False, as_panel=False)
+        print('  vol_df:\n', vol_df)
+
+        self.assertIsInstance(vol_df, pd.DataFrame)
+        self.assertEqual(list(vol_df.columns), shares)
+        # 前 window-1 行为 NaN
+        self.assertTrue(np.isnan(vol_df.iloc[0]['s1']))
+        self.assertTrue(np.isnan(vol_df.iloc[1]['s1']))
+        # 第3行起有滚动标准差
+        ret_s1 = hp.returns(price_htype='close', method='simple', as_panel=False)['s1']
+        expected_std_2 = ret_s1.iloc[0:3].std()
+        self.assertAlmostEqual(vol_df.iloc[2]['s1'], expected_std_2)
+
+
+class TestHistoryPanelKlineIndicators(unittest.TestCase):
+    """ 测试 HistoryPanel.kline 访问器：sma、ema。"""
+
+    def test_kline_sma(self):
+        """ kline.sma 在 Panel 后追加 sma_{window} 列。"""
+        print('\n[TestHistoryPanelKlineIndicators] kline.sma')
+        values = np.array(
+                [
+                    [[1.0, 2.0, 3.0, 4.0, 5.0]],
+                    [[10.0, 11.0, 12.0, 13.0, 14.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        out = hp.kline.sma(window=2, price_htype='close')
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+
+        self.assertEqual(out.htypes, ['close', 'sma_2'])
+        self.assertEqual(out.shares, shares)
+        self.assertEqual(out.shape, (2, 5, 2))
+        # s1 close 前2个: [1,2,3,4,5], sma(2) 第2个起 (1+2)/2=1.5, (2+3)/2=2.5, ...
+        self.assertTrue(np.isnan(out.values[0, 0, 1]))
+        self.assertAlmostEqual(out.values[0, 1, 1], 1.5)
+        self.assertAlmostEqual(out.values[0, 2, 1], 2.5)
+
+    def test_kline_ema(self):
+        """ kline.ema 在 Panel 后追加 ema_{span} 列。"""
+        print('\n[TestHistoryPanelKlineIndicators] kline.ema')
+        values = np.array(
+                [
+                    [[1.0, 2.0, 3.0, 4.0, 5.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        out = hp.kline.ema(span=2, price_htype='close')
+        print('  out.htypes:', out.htypes)
+
+        self.assertEqual(out.htypes, ['close', 'ema_2'])
+        self.assertEqual(out.shape, (1, 5, 2))
+        # 首点 EMA 常为 NaN 或等于价格，后续为指数均
+        self.assertFalse(np.all(np.isnan(out.values[0, :, 1])))
+
+
 if __name__ == '__main__':
     unittest.main()
