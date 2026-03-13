@@ -11,7 +11,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional
+from typing import Union, Iterable, Any, Optional, Callable
 
 from qteasy.database import DataSource
 
@@ -1554,6 +1554,42 @@ class HistoryPanel():
 
         raise ValueError(f'parameter \"by\" must be \"share\", \"htype\" or None, got {by}')
 
+    def rolling(
+            self,
+            window: int,
+            min_periods: Optional[int] = None,
+            center: bool = False,
+            by: str = 'share',
+    ) -> "HistoryPanelRolling":
+        """基于 HistoryPanel 构造滚动窗口统计对象。
+
+        滚动仅沿时间轴（rows / hdates）进行，``window`` 为整数 bar 数。
+
+        Parameters
+        ----------
+        window : int
+            滚动窗口长度。
+        min_periods : int, optional
+            最小有效观测数，小于该数时结果为 ``NaN``。默认与 ``window`` 相同。
+        center : bool, default False
+            是否使用居中窗口，语义与 ``pandas.Series.rolling`` 一致。
+        by : {'share', 'htype'}, default 'share'
+            指定滚动的分组方式：
+            - 'share': 每只股票的每个 htype 独立做滚动统计（最常用）；
+            - 'htype': 每个 htype 在所有股票上独立做滚动统计。
+        """
+        if self.is_empty:
+            return HistoryPanelRolling(self, window, min_periods, center, by)
+        if not isinstance(window, int) or window <= 0:
+            raise ValueError(f'window must be a positive integer, got {window}')
+        if min_periods is None:
+            min_periods = window
+        if not isinstance(min_periods, int) or min_periods <= 0:
+            raise ValueError(f'min_periods must be a positive integer, got {min_periods}')
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter \"by\" must be \"share\" or \"htype\", got {by}')
+        return HistoryPanelRolling(self, window, min_periods, center, by)
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
@@ -1993,6 +2029,127 @@ class HistoryPanel():
         :return:
         """
         raise NotImplementedError
+
+
+class HistoryPanelRolling:
+    """HistoryPanel 的滚动窗口统计对象。
+
+    该对象通常由 :meth:`HistoryPanel.rolling` 创建，对应一个固定的窗口
+    参数组合，并提供 ``mean/std/sum/min/max/apply`` 等方法，返回新的
+    HistoryPanel。
+    """
+
+    def __init__(self,
+                 hp: HistoryPanel,
+                 window: int,
+                 min_periods: int,
+                 center: bool,
+                 by: str):
+        self._hp = hp
+        self._window = window
+        self._min_periods = min_periods
+        self._center = center
+        self._by = by
+
+    def _apply_rolling(self, func_name: str) -> HistoryPanel:
+        """内部通用滚动聚合实现。"""
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        values = hp.values.astype(float)
+        res = np.full_like(values, np.nan, dtype=float)
+
+        l_cnt, r_cnt, c_cnt = values.shape
+
+        if self._by == 'share':
+            # 每只股票、每个 htype 独立做时间滚动
+            for li in range(l_cnt):
+                for ci in range(c_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = getattr(roller, func_name)()
+                    res[li, :, ci] = rolled.values
+        else:  # by == 'htype'
+            for ci in range(c_cnt):
+                for li in range(l_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = getattr(roller, func_name)()
+                    res[li, :, ci] = rolled.values
+
+        return HistoryPanel(values=res, levels=hp.shares, rows=hp.hdates, columns=hp.htypes)
+
+    def mean(self) -> HistoryPanel:
+        """滚动窗口均值。"""
+        return self._apply_rolling('mean')
+
+    def std(self) -> HistoryPanel:
+        """滚动窗口标准差。"""
+        return self._apply_rolling('std')
+
+    def sum(self) -> HistoryPanel:
+        """滚动窗口求和。"""
+        return self._apply_rolling('sum')
+
+    def min(self) -> HistoryPanel:
+        """滚动窗口最小值。"""
+        return self._apply_rolling('min')
+
+    def max(self) -> HistoryPanel:
+        """滚动窗口最大值。"""
+        return self._apply_rolling('max')
+
+    def apply(self,
+              func: Callable[[np.ndarray], float],
+              raw: bool = False,
+              **kwargs) -> HistoryPanel:
+        """在滚动窗口上应用自定义函数。
+
+        Parameters
+        ----------
+        func : callable
+            自定义函数，接受一个窗口向量并返回标量。
+        raw : bool, default False
+            为 ``True`` 时向 func 传入 ``ndarray``，否则传入 ``Series``。
+        **kwargs :
+            透传给 func 的其他参数。
+        """
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        values = hp.values.astype(float)
+        res = np.full_like(values, np.nan, dtype=float)
+        l_cnt, r_cnt, c_cnt = values.shape
+
+        def _apply_series(s: pd.Series) -> float:
+            if raw:
+                return func(s.values, **kwargs)
+            return func(s, **kwargs)
+
+        if self._by == 'share':
+            for li in range(l_cnt):
+                for ci in range(c_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = roller.apply(_apply_series, raw=False)
+                    res[li, :, ci] = rolled.values
+        else:
+            for ci in range(c_cnt):
+                for li in range(l_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = roller.apply(_apply_series, raw=False)
+                    res[li, :, ci] = rolled.values
+
+        return HistoryPanel(values=res, levels=hp.shares, rows=hp.hdates, columns=hp.htypes)
 
 
 def hp_join(*historypanels):

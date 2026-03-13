@@ -1653,5 +1653,50 @@ class TestHistoryPanelToShareFrame(unittest.TestCase):
             hp.to_share_frame('000002.SZ')
 
 
+class TestHistoryPanelRolling(unittest.TestCase):
+    """ 测试 HistoryPanel.rolling 与 HistoryPanelRolling 的基本行为。"""
+
+    def test_rolling_mean_basic(self):
+        """ 简单滚动均值：对每个 (share, htype) 序列沿时间滚动。"""
+        print('\n[TestHistoryPanelRolling] basic rolling mean')
+        values = np.array(
+                [
+                    [[1.0, 10.0],
+                     [3.0, 14.0],
+                     [5.0, 18.0],
+                     [7.0, 22.0]],
+                    [[2.0, 20.0],
+                     [4.0, 24.0],
+                     [6.0, 28.0],
+                     [8.0, 32.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04']
+        htypes = ['close', 'open']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        rolling_hp = hp.rolling(window=2).mean()
+        print('  rolling mean values:\n', rolling_hp.values)
+
+        # 形状与标签不变
+        self.assertEqual(rolling_hp.shape, hp.shape)
+        self.assertEqual(rolling_hp.shares, shares)
+        self.assertEqual(rolling_hp.htypes, htypes)
+        self.assertEqual(rolling_hp.hdates, list(pd.to_datetime(hdates)))
+
+        # 对单个序列使用 pandas 计算期望结果进行对比
+        s1_close = pd.Series([1.0, 3.0, 5.0, 7.0], index=pd.to_datetime(hdates))
+        expected = s1_close.rolling(window=2, min_periods=2).mean().values
+        # s1, close 对应 level=0, htype=0
+        self.assertTrue(np.allclose(rolling_hp.values[0, :, 0], expected, equal_nan=True))
+
+        # 非法 window / by 参数抛出 ValueError
+        with self.assertRaises(ValueError):
+            hp.rolling(window=0)
+        with self.assertRaises(ValueError):
+            hp.rolling(window=2, by='wrong')
+
+
 if __name__ == '__main__':
     unittest.main()
