@@ -1951,5 +1951,68 @@ class TestHistoryPanelTAApplyAndPatterns(unittest.TestCase):
         self.assertTrue(np.allclose(df['s1'].values, expected.values))
 
 
+class TestHistoryPanelIntegration(unittest.TestCase):
+    """ HistoryPanel 统计 / 因子 / K 线 API 的简单集成验收。"""
+
+    def test_factor_flow_end_to_end(self):
+        """ 从价格 → 收益率 / 波动率 → 技术指标 → 形态识别 的最小闭环。"""
+        print('\n[TestHistoryPanelIntegration] factor flow end-to-end')
+        # 构造两只股票的 OHLC 序列
+        values = np.array(
+                [
+                    # s1: open, high, low, close
+                    [
+                        [10.0, 11.0, 9.5, 10.5],
+                        [10.5, 11.5, 10.0, 11.0],
+                        [11.0, 12.0, 10.5, 11.5],
+                        [11.5, 12.5, 11.0, 12.0],
+                        [12.0, 13.0, 11.5, 12.5],
+                    ],
+                    # s2: open, high, low, close
+                    [
+                        [20.0, 21.0, 19.5, 20.5],
+                        [20.5, 21.5, 20.0, 21.0],
+                        [21.0, 22.0, 20.5, 21.5],
+                        [21.5, 22.5, 21.0, 22.0],
+                        [22.0, 23.0, 21.5, 22.5],
+                    ],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['open', 'high', 'low', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        print('  hp shape:', hp.shape, 'shares:', hp.shares, 'htypes:', hp.htypes)
+
+        # 1) 收益率 & 波动率
+        ret_df = hp.returns(price_htype='close', method='simple', as_panel=False)
+        vol_df = hp.volatility(window=3, price_htype='close', annualize=False, as_panel=False)
+        print('  returns:\n', ret_df)
+        print('  volatility:\n', vol_df)
+
+        self.assertEqual(list(ret_df.columns), shares)
+        self.assertEqual(list(vol_df.columns), shares)
+        self.assertEqual(list(ret_df.index), list(pd.to_datetime(hdates)))
+
+        # 2) K 线指标（SMA）
+        hp_sma = hp.kline.sma(window=2, price_htype='close')
+        print('  hp_sma.htypes:', hp_sma.htypes)
+        self.assertIn('sma_2', hp_sma.htypes)
+        self.assertEqual(hp_sma.shares, shares)
+        self.assertEqual(hp_sma.hdates, list(pd.to_datetime(hdates)))
+
+        # 3) 通过 apply_ta 再生成一条 SMA 因子
+        hp_ta = hp_sma.apply_ta('sma', htype='close', as_panel=True, timeperiod=3)
+        print('  hp_ta.htypes:', hp_ta.htypes)
+        self.assertIn('sma', hp_ta.htypes)
+
+        # 4) 蜡烛形态识别
+        pattern_df = hp.candle_pattern('cdlhammer', as_panel=False)
+        print('  candle_pattern:\n', pattern_df)
+        self.assertIsInstance(pattern_df, pd.DataFrame)
+        self.assertEqual(list(pattern_df.columns), shares)
+        self.assertEqual(list(pattern_df.index), list(pd.to_datetime(hdates)))
+
+
 if __name__ == '__main__':
     unittest.main()
