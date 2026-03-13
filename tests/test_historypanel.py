@@ -1494,6 +1494,128 @@ class TestGetHistoryDataPackages(unittest.TestCase):
             )
 
 
+class TestHistoryPanelStats(unittest.TestCase):
+    """ 测试 HistoryPanel 的基础统计方法 describe/mean/std/min/max。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelStats] setUp basic HistoryPanel for stats')
+        # 构造一个小而可手工验证的 HistoryPanel
+        # shares: s1, s2; dates: 3; htypes: close, open
+        values = np.array(
+                [
+                    [[1.0, 4.0],
+                     [2.0, 5.0],
+                     [3.0, 6.0]],
+                    [[2.0, 1.0],
+                     [4.0, 3.0],
+                     [6.0, 5.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03']
+        htypes = ['close', 'open']
+        self.hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+    def test_mean_by_share_and_htype(self):
+        """ mean(by='share'/'htype') 应按约定轴向聚合，并返回 DataFrame。"""
+        print('\n[TestHistoryPanelStats] mean by share and by htype')
+        hp = self.hp
+
+        # by='share'：对每只股票在时间轴上求均值，结果形状 (shares, htypes)
+        mean_by_share = hp.mean(by='share')
+        print('  mean_by_share:\n', mean_by_share)
+        self.assertIsInstance(mean_by_share, pd.DataFrame)
+        self.assertEqual(list(mean_by_share.index), hp.shares)
+        self.assertEqual(list(mean_by_share.columns), hp.htypes)
+        # 手工计算期望值
+        expected_s1_close = np.mean([1.0, 2.0, 3.0])
+        expected_s1_open = np.mean([4.0, 5.0, 6.0])
+        expected_s2_close = np.mean([2.0, 4.0, 6.0])
+        expected_s2_open = np.mean([1.0, 3.0, 5.0])
+        self.assertAlmostEqual(mean_by_share.loc['s1', 'close'], expected_s1_close)
+        self.assertAlmostEqual(mean_by_share.loc['s1', 'open'], expected_s1_open)
+        self.assertAlmostEqual(mean_by_share.loc['s2', 'close'], expected_s2_close)
+        self.assertAlmostEqual(mean_by_share.loc['s2', 'open'], expected_s2_open)
+
+        # by='htype'：对每个 htype 在股票轴上求均值，结果形状 (htypes, shares)
+        mean_by_htype = hp.mean(by='htype')
+        print('  mean_by_htype:\n', mean_by_htype)
+        self.assertIsInstance(mean_by_htype, pd.DataFrame)
+        self.assertEqual(list(mean_by_htype.index), hp.htypes)
+        self.assertEqual(list(mean_by_htype.columns), hp.shares)
+        # close: (s1,s2) 在所有时间上的均值再按 share 维度聚合
+        expected_close_s1 = expected_s1_close
+        expected_close_s2 = expected_s2_close
+        self.assertAlmostEqual(mean_by_htype.loc['close', 's1'], expected_close_s1)
+        self.assertAlmostEqual(mean_by_htype.loc['close', 's2'], expected_close_s2)
+
+        # 非法 by 值应抛出 ValueError
+        with self.assertRaises(ValueError):
+            hp.mean(by='wrong_axis')
+
+    def test_std_min_max_by_share(self):
+        """ std/min/max(by='share') 返回形状正确，且数值与 numpy 结果一致。"""
+        print('\n[TestHistoryPanelStats] std/min/max by share')
+        hp = self.hp
+
+        std_by_share = hp.std(by='share')
+        min_by_share = hp.min(by='share')
+        max_by_share = hp.max(by='share')
+        print('  std_by_share:\n', std_by_share)
+        print('  min_by_share:\n', min_by_share)
+        print('  max_by_share:\n', max_by_share)
+
+        # 形状检查
+        for df in [std_by_share, min_by_share, max_by_share]:
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertEqual(list(df.index), hp.shares)
+            self.assertEqual(list(df.columns), hp.htypes)
+
+        # 数值检查（使用 numpy 手算）
+        data = hp.values
+        # share s1, close 系列: [1,2,3]
+        s1_close = data[0, :, 0]
+        s1_open = data[0, :, 1]
+        s2_close = data[1, :, 0]
+        s2_open = data[1, :, 1]
+        self.assertAlmostEqual(std_by_share.loc['s1', 'close'], np.std(s1_close, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s1', 'open'], np.std(s1_open, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s2', 'close'], np.std(s2_close, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s2', 'open'], np.std(s2_open, ddof=1))
+        self.assertEqual(min_by_share.loc['s1', 'close'], np.min(s1_close))
+        self.assertEqual(max_by_share.loc['s2', 'open'], np.max(s2_open))
+
+    def test_describe_by_share_and_global(self):
+        """ describe(by='share'/None) 应返回约定结构，并与 pandas.describe 保持一致。"""
+        print('\n[TestHistoryPanelStats] describe by share and global')
+        hp = self.hp
+
+        desc_by_share = hp.describe(by='share')
+        print('  desc_by_share:\n', desc_by_share)
+        self.assertIsInstance(desc_by_share, pd.DataFrame)
+        # index 为 shares，columns 为 MultiIndex[htype, stat]
+        self.assertEqual(list(desc_by_share.index), hp.shares)
+        self.assertTrue(isinstance(desc_by_share.columns, pd.MultiIndex))
+        self.assertEqual(sorted(set(l[0] for l in desc_by_share.columns)), sorted(hp.htypes))
+
+        # 用单只股票 + pandas.DataFrame.describe 比较一个 htype 的统计量
+        df_s1 = hp.slice_to_dataframe(share='s1')
+        pandas_desc = df_s1['close'].describe()
+        for stat in ['mean', 'std', 'min', 'max']:
+            self.assertAlmostEqual(
+                    desc_by_share.loc['s1', ('close', stat)],
+                    pandas_desc[stat],
+            )
+
+        # 全局 describe(by=None) 只返回一行，全局样本池描述
+        desc_global = hp.describe(by=None)
+        print('  desc_global:\n', desc_global)
+        self.assertIsInstance(desc_global, pd.DataFrame)
+        self.assertEqual(desc_global.shape[0], 1)
+        for stat in ['mean', 'std', 'min', 'max']:
+            self.assertIn(stat, desc_global.columns)
+
+
 class TestHistoryPanelToShareFrame(unittest.TestCase):
     """ 测试 HistoryPanel.to_share_frame 语法糖行为。"""
 

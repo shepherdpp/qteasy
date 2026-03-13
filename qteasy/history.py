@@ -1421,6 +1421,139 @@ class HistoryPanel():
         """
         return self.flatten_to_dataframe(along=along)
 
+    def mean(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的均值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmean(values, axis=1)
+        else:
+            agg_share = values.mean(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def std(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的标准差统计，ddof=1。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanstd(values, axis=1, ddof=1)
+        else:
+            agg_share = values.std(axis=1, ddof=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def min(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的最小值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmin(values, axis=1)
+        else:
+            agg_share = values.min(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def max(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的最大值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmax(values, axis=1)
+        else:
+            agg_share = values.max(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def describe(
+            self,
+            by: Optional[str] = 'share',
+            percentiles: tuple = (0.25, 0.5, 0.75),
+            include: str = 'numeric',
+            ddof: int = 1,
+    ) -> pd.DataFrame:
+        """对HistoryPanel进行基础统计描述。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        # 目前仅支持数值型统计，兼容老版本 pandas，这里不直接将 include 透传给 pandas.describe
+        if include not in ('numeric', None):
+            raise ValueError('only numeric include is supported for HistoryPanel.describe')
+
+        # by='share'：对每只股票的 DataFrame 做 describe，拼接为 MultiIndex 列
+        if by == 'share':
+            rows = {}
+            col_tuples = []
+            first = True
+            for share in self.shares:
+                df = self.slice_to_dataframe(share=share)
+                # DataFrame 仅包含数值列，不再传递 include 参数，以兼容当前 pandas 版本
+                desc = df.describe(percentiles=percentiles)
+                if first:
+                    stats_order = list(desc.index)
+                    for htype in df.columns:
+                        for stat in stats_order:
+                            col_tuples.append((htype, stat))
+                    first = False
+                values = []
+                for htype in df.columns:
+                    for stat in stats_order:
+                        values.append(desc.loc[stat, htype])
+                rows[share] = values
+            desc_df = pd.DataFrame.from_dict(rows, orient='index')
+            desc_df.columns = pd.MultiIndex.from_tuples(col_tuples, names=['htype', 'stat'])
+            return desc_df
+
+        # by='htype'：每个 htype 在所有股票与时间上的分布
+        if by == 'htype':
+            rows = {}
+            stats_index = None
+            for i, htype in enumerate(self.htypes):
+                arr = self.values[:, :, i].astype(float).ravel()
+                arr = arr[~np.isnan(arr)]
+                series = pd.Series(arr)
+                desc = series.describe(percentiles=percentiles)
+                if stats_index is None:
+                    stats_index = desc.index
+                rows[htype] = desc.values
+            desc_df = pd.DataFrame.from_dict(rows, orient='index', columns=stats_index)
+            return desc_df
+
+        # 全局 describe：所有数值视作一个整体样本池
+        if by is None:
+            arr = self.values.astype(float).ravel()
+            arr = arr[~np.isnan(arr)]
+            series = pd.Series(arr)
+            desc = series.describe(percentiles=percentiles)
+            if 'std' in desc.index:
+                desc['std'] = series.std(ddof=ddof)
+            return desc.to_frame().T
+
+        raise ValueError(f'parameter \"by\" must be \"share\", \"htype\" or None, got {by}')
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
