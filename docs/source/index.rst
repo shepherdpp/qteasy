@@ -178,6 +178,7 @@
    api/history_data.rst
    api/data_source.rst
    api/history_data_types.rst
+   api/HistoryPanel.rst
    api/data_types.rst
    api/built_in_strategies.rst
    api/Strategies.rst

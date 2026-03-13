@@ -126,6 +126,48 @@ Data refill completed! 154087 rows written into 2/2 table(s)!
 
 ![png](img/output_5_2.png)
 
+### 3.5 操作历史数据（HistoryPanel）
+
+在实际研究中，很多时候我们不仅需要“看 K 线”，还需要**在代码里对历史数据做统计、生成因子**。  
+`get_history_data()` 除了可以返回 `DataFrame` 外，还可以直接返回一个三维的 `HistoryPanel`，便于对多标的、多指标做统一计算：
+
+```python
+>>> # 获取 000300.SH 的 OHLCV 历史数据，并返回 HistoryPanel
+>>> hp = qt.get_history_data(
+...     htypes='open, high, low, close, vol',
+...     shares='000300.SH',
+...     start='20230101',
+...     end='20231231',
+...     as_data_frame=False,          # 关键：返回 HistoryPanel
+... )
+>>> print(hp.shape, hp.shares, hp.htypes)
+
+>>> # 1) 计算简单收益率矩阵（时间 × 股票）
+>>> ret = hp.returns(price_htype='close', method='simple')
+>>> print(ret.head())
+
+>>> # 2) 计算 20 日滚动波动率
+>>> vol = hp.volatility(window=20, price_htype='close', annualize=True)
+>>> print(vol.tail())
+
+>>> # 3) 生成 K 线技术指标（如 20 日均线、MACD）
+>>> hp_ma = hp.kline.sma(window=20)              # 在 htypes 中新增 'sma_20'
+>>> hp_ma_macd = hp_ma.kline.macd()              # 再追加 MACD 指标
+>>> print(hp_ma_macd.htypes)
+
+>>> # 4) 识别蜡烛形态（如锤头线）
+>>> hammer = hp.candle_pattern('cdlhammer')      # 返回 DataFrame，非 0 代表出现形态
+>>> print(hammer[hammer['000300.SH'] != 0].head())
+
+>>> # 5) 单只股票切片成 DataFrame，方便与 pandas / sklearn 等联动
+>>> df_300 = hp_ma_macd.to_share_frame('000300.SH')
+>>> print(df_300.tail())
+```
+
+上面的例子演示了从 `get_history_data(..., as_data_frame=False)` 得到 `HistoryPanel` 之后，如何在一两行代码内完成**收益率、波动率、技术指标与形态信号**的计算，并随时切回熟悉的 `DataFrame` 做进一步分析。
+
+更系统的 HistoryPanel 用法可以参考「使用教程」中“历史数据的操作和分析”一章，以及 [HistoryPanel API 参考](api/HistoryPanel.rst)。
+
 ### 4. 使用 DMA 策略做择时回测
 
 使用内置 **DMA** 均线择时策略，以 000300.SH 为交易标的，在已下载的十年数据上做回测。下面使用一组常用且表现较稳的参数（短均线 20、长均线 60、DMA 周期 10），直接得到回测结果与图表：
