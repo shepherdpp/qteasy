@@ -2411,12 +2411,134 @@ class HistoryPanel():
             row_count = self.shape[1]
         return self.isegment(- row_count, None)
 
-    # TODO: implement this method
-    def plot(self, *args, **kwargs):
-        """plot current HistoryPanel, settings according to args and kwargs
+    def plot(
+        self,
+        shares: Optional[Union[str, Iterable[str]]] = None,
+        layout: str = 'auto',
+        interactive: bool = False,
+        highlight: Optional[Any] = None,
+        **kwargs,
+    ):
         """
+        根据当前 HP 的 htypes 与 shares 自动选择图表类型并绘制（唯一超级入口）。
 
-        raise NotImplementedError
+        不计算、不扩展数据，仅就已有数据出图。图表类型由注册表根据 htypes 决定
+        （如 OHLC→K 线，vol→成交量，MACD 三列→MACD 图，其余→折线）。
+
+        Parameters
+        ----------
+        shares : str or sequence of str, optional
+            要参与绘图的标的子集；默认使用 HP 全部 shares。
+        layout : str, optional
+            'overlay' | 'stack' | 'auto'。多标的时 overlay 叠在同一组，stack 分组展示；auto 时 2 标用 overlay，3+ 用 stack。
+        interactive : bool, optional
+            为 True 时将来使用交互后端（如 Plotly）；当前仍返回静态 matplotlib Figure。
+        highlight : dict or str, optional
+            高亮配置。可为 {'condition': 'max'|'min' 或布尔数组, 'style': {...}} 或仅 'max'/'min'。
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            绘制结果。在 Notebook 中通常自动显示，脚本中可 fig.show() 或保存。
+
+        See Also
+        --------
+        qt.get_kline : 获取 K 线数据并可选 as_panel=True 得到 HistoryPanel。
+        """
+        if self.is_empty:
+            raise ValueError('Cannot plot an empty HistoryPanel')
+        from qteasy.hp_visual_spec import (
+            get_chart_type_registry,
+            build_kline_spec,
+            build_volume_spec,
+            build_macd_spec,
+            build_line_spec,
+        )
+        from qteasy.hp_visual_render import build_figure_from_specs
+        share_list = list(self.shares) if shares is None else (
+            [shares] if isinstance(shares, str) else list(shares)
+        )
+        share_list = [s for s in share_list if s in self.shares]
+        if not share_list:
+            share_list = list(self.shares)
+        if len(share_list) > 5:
+            try:
+                from qteasy import logger_core
+                logger_core.warning(
+                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
+                    'only the first 5 will be displayed.'
+                )
+            except Exception:
+                import warnings
+                warnings.warn(
+                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
+                    'only the first 5 will be displayed.',
+                    UserWarning,
+                    stacklevel=2,
+                )
+            share_list = share_list[:5]
+        registry = get_chart_type_registry()
+        types_info = registry.get_applicable_types(self.htypes)
+        if not types_info:
+            from qteasy.hp_visual_render import _HAS_MPL
+            if _HAS_MPL:
+                import matplotlib.pyplot as plt
+                fig, _ = plt.subplots(1, 1, figsize=(8, 4))
+                return fig
+            raise RuntimeError('No applicable chart types and matplotlib not available')
+        n_share = len(share_list)
+        if layout == 'auto':
+            layout = 'overlay' if n_share == 2 else 'stack'
+        if n_share == 1:
+            groups = [share_list]
+        elif layout == 'overlay' and n_share == 2:
+            groups = [share_list]
+        else:
+            groups = [[s] for s in share_list]
+        x_dates = list(self.hdates)
+        specs_per_group = []
+        group_titles = []
+        for grp in groups:
+            row = []
+            for info in types_info:
+                tid = info.id
+                if tid == 'kline':
+                    spec = build_kline_spec(self, shares=grp)
+                elif tid == 'volume':
+                    spec = build_volume_spec(self, shares=grp)
+                elif tid == 'macd':
+                    spec = build_macd_spec(self, shares=grp)
+                elif tid == 'line':
+                    spec = build_line_spec(self, shares=grp)
+                else:
+                    spec = None
+                if spec is not None and highlight is not None:
+                    spec = dict(spec)
+                    spec['highlight'] = (
+                        highlight if isinstance(highlight, dict) else {'condition': highlight}
+                    )
+                row.append(spec)
+            kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
+            vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
+            if (
+                kline_idx is not None and vol_idx is not None
+                and row[kline_idx] is not None and row[vol_idx] is not None
+                and 'open' in row[kline_idx].get('data', {}) and 'close' in row[kline_idx].get('data', {})
+            ):
+                vol_spec = dict(row[vol_idx])
+                vol_spec['data'] = dict(vol_spec.get('data', {}))
+                vol_spec['data']['open'] = row[kline_idx]['data']['open']
+                vol_spec['data']['close'] = row[kline_idx]['data']['close']
+                row[vol_idx] = vol_spec
+            specs_per_group.append(row)
+            group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
+        fig = build_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=x_dates,
+            group_titles=group_titles,
+        )
+        return fig
 
     # TODO: implement this method
     def candle(self, *args, **kwargs):

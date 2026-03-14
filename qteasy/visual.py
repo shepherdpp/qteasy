@@ -12,7 +12,6 @@
 import platform
 import warnings
 from typing import Optional, Union
-from xxsubtype import bench
 
 import mplfinance as mpf
 import matplotlib.pyplot as plt
