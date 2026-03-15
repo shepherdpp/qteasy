@@ -68,6 +68,7 @@ Issues = "https://github.com/shepherdpp/qteasy/issues"
 [project.optional-dependencies]
 talib = ["ta-lib"]
 feather = ["pyarrow>=3"]
+plotly = ["plotly>=5.0"]
 dev = [
     "ta-lib",
     "pymysql>=1.1.1",

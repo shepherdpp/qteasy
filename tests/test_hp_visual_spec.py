@@ -478,15 +478,38 @@ class TestHighlight(unittest.TestCase):
 
 
 class TestInteractiveBackend(unittest.TestCase):
-    """Phase 5：hp.plot(..., interactive=True) 返回类型与基本结构."""
+    """Phase 5：hp.plot(..., interactive=True) 返回 Plotly Figure，结构可用."""
 
     def test_plot_interactive_true_returns_figure(self):
         print('\n[Phase5] hp.plot(interactive=True) 返回 Figure，结构可用')
         hp = _make_hp(['close'], n_shares=1)
-        fig = hp.plot(interactive=True)
+        try:
+            fig = hp.plot(interactive=True)
+        except RuntimeError as e:
+            if 'plotly' in str(e).lower():
+                self.skipTest('plotly not installed, skip interactive test')
+            raise
         self.assertIsNotNone(fig)
-        self.assertGreaterEqual(len(fig.axes), 1)
-        print('  n_axes:', len(fig.axes))
+        if hasattr(fig, 'data'):
+            self.assertGreaterEqual(len(fig.data), 1, 'Plotly figure should have at least one trace')
+            print('  plotly fig.data traces:', len(fig.data))
+        else:
+            self.assertGreaterEqual(len(fig.axes), 1)
+            print('  n_axes:', len(fig.axes))
+
+    def test_plot_interactive_two_shares_stack(self):
+        print('\n[Phase5] 2 shares layout=stack interactive 返回多 trace、多组')
+        hp = _make_hp(['close'], n_shares=2)
+        try:
+            fig = hp.plot(interactive=True, layout='stack')
+        except RuntimeError as e:
+            if 'plotly' in str(e).lower():
+                self.skipTest('plotly not installed')
+            raise
+        self.assertIsNotNone(fig)
+        if hasattr(fig, 'data'):
+            self.assertGreaterEqual(len(fig.data), 2)
+            print('  plotly traces:', len(fig.data))
 
 
 if __name__ == '__main__':

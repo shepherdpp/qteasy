@@ -2432,14 +2432,16 @@ class HistoryPanel():
         layout : str, optional
             'overlay' | 'stack' | 'auto'。多标的时 overlay 叠在同一组，stack 分组展示；auto 时 2 标用 overlay，3+ 用 stack。
         interactive : bool, optional
-            为 True 时将来使用交互后端（如 Plotly）；当前仍返回静态 matplotlib Figure。
+            为 True 时使用 Plotly 交互后端（需安装 plotly）；为 False 时使用 matplotlib 静态图。
         highlight : dict or str, optional
             高亮配置。可为 {'condition': 'max'|'min' 或布尔数组, 'style': {...}} 或仅 'max'/'min'。
-
         Returns
         -------
-        matplotlib.figure.Figure
-            绘制结果。在 Notebook 中通常自动显示，脚本中可 fig.show() 或保存。
+        matplotlib.figure.Figure or plotly.graph_objs.FigureWidget or _PlotlyFigureWrapper
+            interactive=False 时返回 matplotlib Figure。
+            interactive=True 且在 Jupyter 中：返回 FigureWidget，表头为 annotations、点击 bar 更新表头，
+            缩放/平移时 Y 轴随可见数据自适应；直接输出 fig 即可显示。
+            interactive=True 且非 Jupyter：返回包装器（内嵌 HTML），表头在画布上方、点击更新表头，缩放/平移可用。
 
         See Also
         --------
@@ -2532,6 +2534,27 @@ class HistoryPanel():
                 row[vol_idx] = vol_spec
             specs_per_group.append(row)
             group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
+        if interactive:
+            from qteasy.hp_visual_plotly import (
+                _HAS_PLOTLY,
+                build_interactive_figure_from_specs,
+                _wrap_figure_for_notebook,
+                _can_use_figure_widget,
+                _create_figure_widget_with_callbacks,
+            )
+            if not _HAS_PLOTLY:
+                raise RuntimeError(
+                    'interactive=True requires plotly. Install with: pip install plotly'
+                )
+            fig = build_interactive_figure_from_specs(
+                specs_per_group,
+                types_info,
+                x_dates=x_dates,
+                group_titles=group_titles,
+            )
+            if _can_use_figure_widget():
+                return _create_figure_widget_with_callbacks(fig)
+            return _wrap_figure_for_notebook(fig)
         fig = build_figure_from_specs(
             specs_per_group,
             types_info,
