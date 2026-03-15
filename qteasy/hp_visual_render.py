@@ -69,6 +69,7 @@ def _get_theme() -> Dict[str, Any]:
         'axes_facecolor': (1, 1, 1),
         'grid_alpha': 0.3,
         'grid_linestyle': '-',
+        'highlight_color': 'black',
         'line_color_up': 'red',
         'line_color_down': 'green',
         'line_color_neutral': '#3498db',
@@ -167,6 +168,16 @@ def render_kline_spec(
             [_format_x_label(x_dates[i], theme.get('datetime_format', '%y/%m/%d')) for i in range(0, n, step)],
             rotation=theme.get('xrotation', 0),
         )
+    highlight = spec.get('highlight')
+    if highlight and isinstance(highlight, dict):
+        cond = highlight.get('condition')
+        style = highlight.get('style') or {}
+        mask = _resolve_highlight_condition(cond, c, n)
+        if mask is not None and np.any(mask):
+            color = style.get('color', theme['highlight_color'])
+            marker = style.get('marker', 'o')
+            size = style.get('s', 40)
+            ax.scatter(x[mask], c[mask], c=color, marker=marker, s=size, zorder=5)
     return fig
 
 
@@ -403,9 +414,9 @@ def build_figure_from_specs(
                         ax=ax,
                         share_idx=0,
                         x_dates=x_dates,
-                        show_x_labels=(t == n_types - 1),
+                        show_x_labels=(t == n_types - 1 and g == n_groups - 1),
                     )
-                if t < n_types - 1:
+                if t < n_types - 1 or g < n_groups - 1:
                     plt.setp(ax.get_xticklabels(), visible=False)
                 if group_titles and g < len(group_titles) and t == 0:
                     ax.set_title(group_titles[g], fontsize=title_font_size, fontweight='bold')

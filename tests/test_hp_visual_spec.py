@@ -373,9 +373,86 @@ class TestPlotOrchestrator(unittest.TestCase):
 
 
 class TestHighlight(unittest.TestCase):
-    """Phase 4：highlight 子模块 — condition + style，接入 hp.plot(..., highlight=...)."""
+    """Phase 4：highlight 子模块 — condition + style，接入 hp.plot(..., highlight=...). 对应计划 8.7."""
 
-    def test_plot_with_highlight_max_returns_figure(self):
+    def test_p4_1_highlight_none_no_error(self):
+        print('\n[P4-1] highlight=None 不报错，正常出图')
+        hp = _make_hp(['close'], n_shares=1)
+        fig = hp.plot(highlight=None)
+        self.assertIsNotNone(fig)
+        self.assertEqual(len(fig.axes), 1)
+        ax = fig.axes[0]
+        self.assertEqual(len(ax.collections), 0)
+        print('  n_axes:', len(fig.axes), 'n_collections:', len(ax.collections))
+
+    def test_p4_2_highlight_max_string_line(self):
+        print('\n[P4-2] highlight=\"max\" 折线图，仅 close 最大值点高亮')
+        hp = _make_hp(['close'], n_shares=1)
+        fig = hp.plot(highlight='max')
+        self.assertIsNotNone(fig)
+        ax = fig.axes[0]
+        collections = [c for c in ax.collections if hasattr(c, 'get_sizes')]
+        self.assertGreaterEqual(len(collections), 1)
+        print('  n_collections:', len(collections))
+
+    def test_p4_3_highlight_condition_min_line(self):
+        print('\n[P4-3] highlight={\"condition\": \"min\"} 折线图，最小值点高亮')
+        hp = _make_hp(['close'], n_shares=1)
+        spec = build_line_spec(hp)
+        self.assertIsNotNone(spec)
+        spec = dict(spec)
+        spec['highlight'] = {'condition': 'min'}
+        fig = render_line_spec(spec)
+        self.assertIsNotNone(fig)
+        ax = fig.axes[0]
+        self.assertGreaterEqual(len(ax.collections), 1)
+        print('  n_collections:', len(ax.collections))
+
+    def test_p4_4_highlight_with_style(self):
+        print('\n[P4-4] highlight 含 style，高亮点颜色与大小与 style 一致')
+        hp = _make_hp(['close'], n_shares=1, n_dates=10)
+        spec = build_line_spec(hp)
+        spec = dict(spec)
+        spec['highlight'] = {'condition': 'max', 'style': {'color': 'red', 's': 60}}
+        fig = render_line_spec(spec)
+        self.assertIsNotNone(fig)
+        ax = fig.axes[0]
+        self.assertGreaterEqual(len(ax.collections), 1)
+        coll = ax.collections[0]
+        self.assertEqual(coll.get_facecolor().shape[0], 1)
+        self.assertAlmostEqual(coll.get_sizes()[0], 60)
+        print('  collection sizes:', coll.get_sizes(), 'facecolor:', coll.get_facecolor())
+
+    def test_p4_5_highlight_condition_bool_array(self):
+        print('\n[P4-5] condition 为布尔数组，仅 True 处高亮')
+        hp = _make_hp(['close'], n_shares=1, n_dates=15)
+        spec = build_line_spec(hp)
+        self.assertIsNotNone(spec)
+        spec = dict(spec)
+        mask = np.zeros(15, dtype=bool)
+        mask[7] = True
+        spec['highlight'] = {'condition': mask}
+        fig = render_line_spec(spec)
+        self.assertIsNotNone(fig)
+        ax = fig.axes[0]
+        self.assertGreaterEqual(len(ax.collections), 1)
+        offs = ax.collections[0].get_offsets()
+        self.assertEqual(offs.shape[0], 1)
+        self.assertEqual(int(offs[0, 0]), 7)
+        print('  single scatter at index:', int(offs[0, 0]))
+
+    def test_p4_6_multi_group_stack_highlight(self):
+        print('\n[P4-6] 多组 stack 时 highlight=\"max\"，每组折线各自 close 最大值高亮')
+        hp = _make_hp(['close'], n_shares=2, n_dates=20)
+        fig = hp.plot(layout='stack', highlight='max')
+        self.assertIsNotNone(fig)
+        self.assertEqual(len(fig.axes), 2)
+        for i, ax in enumerate(fig.axes):
+            collections = [c for c in ax.collections if hasattr(c, 'get_sizes')]
+            self.assertGreaterEqual(len(collections), 1, f'group {i} should have highlight scatter')
+        print('  n_axes:', len(fig.axes), 'each has scatter')
+
+    def test_plot_with_highlight_max_dict(self):
         print('\n[Phase4] hp.plot(..., highlight={\"condition\": \"max\"}) 不报错，返回 Figure')
         hp = _make_hp(['close'], n_shares=1)
         fig = hp.plot(highlight={'condition': 'max'})
@@ -383,7 +460,7 @@ class TestHighlight(unittest.TestCase):
         self.assertEqual(len(fig.axes), 1)
         ax = fig.axes[0]
         collections = [c for c in ax.collections if hasattr(c, 'get_sizes')]
-        self.assertGreaterEqual(len(collections), 1, 'expect scatter (PathCollection) for highlight')
+        self.assertGreaterEqual(len(collections), 1)
         print('  n_axes:', len(fig.axes), 'n_collections:', len(ax.collections))
 
     def test_render_line_spec_with_highlight_min(self):
