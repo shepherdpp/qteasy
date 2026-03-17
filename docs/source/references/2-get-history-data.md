@@ -237,6 +237,117 @@ qt.get_table_overview()
     express            True        4.5MB         23K     2004-12-31   2021-12-31
 
 
+## HistoryPanel 与 `get_history_data`
+
+在 qteasy 2.x 中，`qt.get_history_data()` 的推荐用法是直接返回 `HistoryPanel`：
+
+```python
+import qteasy as qt
+
+hp = qt.get_history_data(
+    htypes='open, high, low, close, vol',
+    shares='000300.SH,000905.SH',
+    start='20230101',
+    end='20231231',
+)
+print(hp)
+```
+
+`HistoryPanel` 是一个三维数据容器，维度含义为：
+
+- **axis 0（shares）**：标的列表，例如股票或指数代码；
+- **axis 1（hdates）**：时间轴，每一行对应一个时间点（如交易日或分钟）；
+- **axis 2（htypes）**：历史数据类型，例如 `open`、`high`、`low`、`close`、`vol` 等。
+
+这样，策略与可视化都可以在同一份结构化数据上工作，避免重复转换。
+
+当你已有 `DataFrame` 或字典形式的数据时，可以使用
+`qt.dataframe_to_hp()` 将其适配为 HistoryPanel，再复用同一套 API。
+
+
+## 从 HistoryPanel 到可视化
+
+`HistoryPanel` 提供统一的可视化入口 `hp.plot()`，根据面板中已有的 htypes
+自动选择合适的图表类型（K 线、成交量、MACD 或普通折线），并支持多标的对比：
+
+```python
+import qteasy as qt
+
+hp = qt.get_history_data(
+    htypes='open, high, low, close, vol',
+    shares='000300.SH',
+    start='20230101',
+    end='20231231',
+)
+
+# 静态 K 线 + 成交量
+hp.plot(interactive=False)
+
+# 交互式 K 线（在 Jupyter 中体验更好）
+hp.plot(interactive=True)
+```
+
+可视化层严格遵循“**有什么画什么**”原则：
+
+- 只使用 HistoryPanel 中**已经存在**的列，不在绘图层计算新的指标；
+- 是否绘制 K 线、成交量或 MACD，仅取决于面板中是否存在对应的 htypes。
+
+典型 htypes 与默认图表类型的对应关系如下：
+
+| 图表类型 | 依赖的 htype 示例                 |
+|----------|----------------------------------|
+| K 线     | `open, high, low, close`        |
+| 成交量   | `vol` 或 `volume`               |
+| MACD     | `macd_*`, `macd_signal_*`, `macd_hist_*` |
+| 折线图   | 其它任意一维序列（如 `close`、`pe` 等） |
+
+若需要 MA/布林带/MACD 等指标，应在 HistoryPanel 上调用相应方法
+（例如 `hp.kline.ma()`、`hp.kline.bbands()`、`hp.kline.macd()`），
+将结果列追加进面板后再调用 `hp.plot()`。
+
+
+## `qt.candle` 与 HistoryPanel 的关系
+
+`qt.candle()` 是更高层的快捷入口，用于“一行代码画出某个标的的 K 线图”，
+其内部逻辑可以概括为：
+
+1. 解析 `stock`、`start`、`end` 等参数，从本地数据源取数；
+2. 将价格数据适配为单标的 `HistoryPanel`；
+3. 在 HistoryPanel 上追加用户需要的指标列（如 MA、布林带、MACD）；
+4. 调用 `hp.plot(...)` 绘制图表。
+
+因此，你可以在保留现有 `qt.candle` 调用方式的同时，直接在 HistoryPanel 上
+做更细粒度的控制。
+
+常见用法示例：
+
+```python
+import qteasy as qt
+
+# 快速绘制日 K 线（内部走 HistoryPanel 可视化）
+df = qt.candle(
+    stock='000300.SH',
+    start='2023-06-01',
+    end='2023-12-01',
+    asset_type='IDX',
+    plot_type='candle',
+    interactive=True,
+)
+
+print(df.head())  # df 为用于绘图的价格数据
+```
+
+其中 `plot_type` 的意义为：
+
+- `'candle'` / `'c'`：使用 OHLC 绘制蜡烛图；
+- `'ohlc'` / `'o'`：行为与 `'candle'` 接近，仅作为轻量别名保留；
+- `'line'` / `'l'`：只绘制一维价格折线（通常为 `close`）；
+- `'none'` / `'n'`：**只取数不绘图**，直接返回 `DataFrame`，方便你用
+  其它工具自行可视化。
+
+Renko 图（`'renko'` / `'r'`）在新版中已不再内置支持；若需要 Renko 图，
+建议使用专门的技术分析或画图库。
+
 ## 获取历史数据，并将数据保存在DataSource中
 如果`DataSource`中没有数据，那么`qteasy`将很难发挥所长，因此，首先需要将数据保存到`DataSource`中
 `DataSource`类提供了`_fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。

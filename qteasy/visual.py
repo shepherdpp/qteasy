@@ -58,16 +58,22 @@ ValidPlotTypes = ['candle', 'renko', 'ohlc', 'line']
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    """ 一个动态交互式图表类，基于matplotlib和mplfinance实现
+    """ 一个基于 matplotlib/mplfinance 的历史交互式图表类（已逐步弃用）
 
-    在合适的backend显示时，支持以下鼠标及键盘交互操作：
-    1, 鼠标点击K线图区域，左右拖放平移K线图
-    2, 鼠标滚轮在K线图区域滚动，放大或缩小K线图的显示范围
-    3, 鼠标双击K线图区域，切换不同的均线类型：移动平均及布林带线
-    4, 鼠标在指标图区域双击，切换不同的指标类型：macd、rsi、dema等
-    5, 按键盘左右键平移K线图
-    6, 按键盘上下键放大或缩小K线图的显示范围
-    7, 按键盘a键切换不同的指标类型
+    在合适的 backend 下，本类可以提供基于 mplfinance 的交互式蜡烛图，包括：
+
+    1. 鼠标点击 K 线图区域并拖动以平移视图；
+    2. 鼠标滚轮缩放显示范围；
+    3. 双击图表切换均线或指标类型；
+    4. 通过键盘方向键与快捷键调整显示区间和指标。
+
+    Notes
+    -----
+    - 从 2.2.0 版本起，推荐在新代码中优先使用基于 HistoryPanel 的 Plotly
+      交互后端，即 ``HistoryPanel.plot(interactive=True, ...)``，它在 Notebook
+      中提供更丰富且更易维护的交互能力。
+    - 本类主要为了兼容早期代码和文档示例而保留，后续大版本中可能被移除，
+      不建议在新项目中直接依赖。
 
     """
 
@@ -432,47 +438,57 @@ def candle(stock: Optional[str] = None,
            plot_type: str = 'candle',
            interactive: bool = False,
            data_source: Optional["DataSource"] = None, **kwargs):
-    """ 获取股票或证券的 K 线数据，并显示或返回对应的价格数据。
+    """ 获取股票或其它证券的 K 线数据，并基于 HistoryPanel 可视化栈显示图表
+
+    本函数是面向用户的**快捷入口**：负责解析证券代码和时间区间、从本地数据源
+    抽取价格数据并构建 ``HistoryPanel``，在面板上追加必要的指标列，然后调用
+    ``HistoryPanel.plot()`` 输出图表；函数自身始终只返回价格数据 ``DataFrame``。
 
     Parameters
     ----------
-    stock: str, default None
-        简化证券代码、完整证券代码或股票名称，根据该代码或名称匹配准确的证券代码
-        如果给出股票名称，支持使用%、？等通配符、支持模糊查找
-        如果匹配到多个证券代码，将打印出提示，并选择第一个匹配的证券代码输出图表
-    start: str, datetime, TimeStamp
-        K线图的起始日期
-    end: str, datetime, TimeStamp
-        K线图的终止日期
-    stock_data: pd.DataFrame, optional
-        直接用于出图和返回的价格数据。如果给出 stock_data，则忽略 stock/asset_type/data_source
-        等参数；否则使用其他参数从 data_source 读取对应标的的历史数据。
-    freq: str, default 'd'
-        K线图的时间频率，合法输入包括：
-        - D/d: 日K线
-        - W/w: 周K线
-        - M/m: 月K线
-        - XMin/Xmin: 分钟K线，接受1min/5min/15min/30min/60min等五种输入
-    asset_type: str, optional
-        证券类型，包含：
-        - E:    股票
-        - IDX:  指数
-        - FD:   基金
-        - FT:   期货
-        - OPT:  期权
-    plot_type: str, default: 'candle'
-        输出图表的类型，包括以下选项：
-        - 'candle' / 'cdl' / 'c':   显示蜡烛图
-        - 'ohlc' / 'o':             显示 OHLC K 线图（当前等价于蜡烛图）
-        - 'line' / 'l':             显示折线图（仅使用 close 或净值数据）
-        - 'none' / 'n':             只返回数据，不显示图表
-    interactive: bool, default False
+    stock : str, optional
+        简化证券代码、完整证券代码或名称，根据该字符串匹配唯一的证券代码。
+        - 支持使用 ``%``、``?`` 等通配符以及模糊查找；
+        - 若匹配到多个代码，将打印提示并选择第一个匹配项绘图。
+    start : str or datetime-like, optional
+        K 线数据的起始日期，字符串会自动转换为日期。
+    end : str or datetime-like, optional
+        K 线数据的终止日期，字符串会自动转换为日期。
+    stock_data : pd.DataFrame, optional
+        直接用于绘图的原始数据表。若提供该参数，则函数**不再从数据源取数**，
+        而是围绕该表构建 HistoryPanel 并绘图，其它取数相关参数将被忽略。
+    asset_type : str, optional
+        证券类型，常见取值包括：
+        - ``'E'``   股票
+        - ``'IDX'`` 指数
+        - ``'FD'``  基金
+        - ``'FT'``  期货
+        - ``'OPT'`` 期权
+    freq : str, optional
+        K 线的时间频率，合法输入包括：
+        - ``'D'/'d'``   日 K 线
+        - ``'W'/'w'``   周 K 线
+        - ``'M'/'m'``   月 K 线
+        - ``'XMin'/'Xmin'`` 分钟 K 线，接受 ``1min/5min/15min/30min/60min``。
+    plot_type : {'candle', 'ohlc', 'line', 'none'}, default 'candle'
+        输出图表的类型或行为：
+        - ``'candle'`` / ``'c'``：使用 OHLC 数据绘制标准蜡烛图；
+        - ``'ohlc'`` / ``'o'``：视为 K 线蜡烛图的轻量别名，行为与 ``'candle'`` 接近；
+        - ``'line'`` / ``'l'``：仅使用一维价格序列（通常为 ``close``）绘制折线图；
+        - ``'none'`` / ``'n'``：**只取数不绘图**，直接返回价格数据，不调用任何可视化逻辑。
+
+        传统的 ``'renko'`` / ``'r'`` 类型在新版中已不再支持，传入时会触发错误。
+    interactive : bool, default True
         是否输出交互式图表：
-        - False: 使用 HistoryPanel 的静态后端（matplotlib）出图。
-        - True:  使用 HistoryPanel 的交互 Plotly 后端出图（在 Notebook 中返回 Figure/FigureWidget，
-          在脚本环境中尽量调用 fig.show()）。
-    data_source: DataSource, optional
-        历史数据源，默认使用 qt 内置的数据源 QT_DATA_SOURCE；否则使用给定的 DataSource。
+        - ``True`` 时，内部会调用 ``HistoryPanel.plot(interactive=True, ...)``，
+          在支持 FigureWidget 的 Jupyter 环境中提供缩放、平移、悬停查看 OHLCV
+          等交互体验；
+        - ``False`` 时，调用 ``HistoryPanel.plot(interactive=False, ...)``，
+          返回 matplotlib 静态图。
+    data_source : DataSource, optional
+        历史数据源，默认使用 qteasy 内置的 ``QT_DATA_SOURCE``；仅在未提供
+        ``stock_data`` 时用于拉取原始价格数据。
+        否则使用给定的DataSource
     kwargs:
         用于传递至K线图的更多参数，包括：
         - adj:          str, 复权参数： 'none' / 'n'（不复权）、'b' / 'back'（后复权）、
@@ -499,12 +515,18 @@ def candle(stock: Optional[str] = None,
     Returns
     -------
     pd.DataFrame
-        包含相应股票数据及计算后技术指标列的 DataFrame。若 plot_type != 'none'，同时会触发
-        基于 HistoryPanel 的静态或交互式出图；若 plot_type == 'none'，则仅返回数据不出图。
+        返回用于绘图的价格数据表，通常包含 ``open/high/low/close`` 及成交量等列；
+        无论是否真正绘图，函数始终返回该数据表。
 
-    See Also
-    --------
-    更多介绍参见QTEASY文档
+    Notes
+    -----
+    - 从 2.2.0 版本起，``qt.candle()`` 不再直接依赖 ``InterCandle`` 等旧式
+      matplotlib 交互组件，而是统一走 HistoryPanel 可视化栈：
+      ``取数 → 构建 HistoryPanel → 在面板上追加指标列 → hp.plot(...)``。
+    - 函数自身的返回值保持为 ``DataFrame``，实际图表对象由内部的
+      ``HistoryPanel.plot()`` 创建和管理。
+    - Renko 图（``plot_type='renko'``）已被移除，不再内置支持；如需 Renko 图，
+      建议使用专门的可视化库或在外部构建。
     """
     from qteasy import logger_core
     no_visual = False

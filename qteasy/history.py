@@ -2547,13 +2547,19 @@ class HistoryPanel():
         )
         return fig
 
-    # TODO: implement this method
+    # 以下 legacy 方法仅保留占位，统一通过 HistoryPanel.plot() 实现可视化
     def candle(self, *args, **kwargs):
-        """ plot candle chart with data in the HistoryPanel, check data availability before plotting
+        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图（已由 ``plot()`` 统一处理）
+
+        Notes
+        -----
+        - 新版可视化推荐直接调用 ``HistoryPanel.plot()``，并通过 htypes / layout
+          控制是否输出 K 线、成交量等图表类型。
+        - 本方法在内部会委托给可视化子模块的统一入口实现，行为与 ``plot()`` 保持
+          一致，仅作为语义化别名存在。
         """
         raise NotImplementedError
 
-    # TODO: implement this method
     def ohlc(self, *args, **kwargs):
         """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
 

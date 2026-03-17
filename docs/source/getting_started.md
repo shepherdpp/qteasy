@@ -17,7 +17,7 @@ pip install qteasy
 输出如下：
 
 ```
-2.1.4
+2.2.0
 ```
 ---
 
@@ -92,10 +92,10 @@ Data refill completed! 154087 rows written into 2/2 table(s)!
 
 ### 3. 查看数据与 K 线图
 
-数据落地后，可用 `get_history_data` 取数、用 `candle` 画 K 线，确认数据与行情是否正常：
+数据落地后，可用 `get_history_data` 取数、用 `HistoryPanel.plot` 和 `qt.candle` 画 K 线，确认数据与行情是否正常：
 
 ```python
->>> # 获取近一年日线
+>>> # 获取近一年日线，直接返回 HistoryPanel
 >>> hp = qt.get_history_data(
 ...     htypes='open, high, low, close',  # 需要获取的数据类型分别为开盘价、最高价、最低价、收盘价
 ...     shares='000300.SH',  # 资产类型为沪深300指数
@@ -103,7 +103,9 @@ Data refill completed! 154087 rows written into 2/2 table(s)!
 ...     end='20231231',  # 数据结束日期
 ... )
 >>> print(hp)  # 查看数据结构与范围
->>> # 绘制 K 线（支持交互缩放与切换指标）
+>>> # 在 HistoryPanel 上绘制静态 K 线 + 成交量
+>>> hp.plot(interactive=False)
+>>> # 或者使用 qt.candle 快速绘制 K 线（内部同样基于 HistoryPanel）
 >>> qt.candle('000300.SH', start='2023-06-01', end='2023-12-01', asset_type='IDX')
 ```
 

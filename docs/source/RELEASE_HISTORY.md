@@ -1,5 +1,17 @@
 # RELEASE HISTORY
 
+## 2.2.0 (2026-03-17)
+- **Data visualization and charts**  
+  Introduced a new charting pipeline that automatically builds candlestick, volume, MACD and line charts from your historical data, so you can mix multiple indicators and compare several symbols in one view without extra code.
+- **Interactive K‑line experience**  
+  Added interactive charts that support zooming, panning and hovering to inspect OHLCV and key indicators directly in the notebook, making it much easier to explore price action and drill into specific bars.
+- **`qt.candle` behavior update**  
+  Updated `qt.candle` to use the new visualization pipeline under the hood while keeping the existing API, so your existing scripts continue to work but immediately benefit from the new static and interactive charts; Renko plots are no longer supported and the old interactive widget is now considered legacy.
+- **Logging and trade file maintenance**  
+  Improved how log and trade report files are stored and rotated, so system and trade logs, as well as value‑curve CSV files, are kept in predictable locations and old files are cleaned up automatically to save disk space.
+- **Backtest accuracy and time handling**  
+  Refined how different signal types and intraday time grids are executed in backtests, so portfolio rebalancing and intraday schedules better match real‑world trading behavior and are easier to reason about.
+
 ## 2.1.4 (2026-03-10)
 - **Evaluation fixes**  
   - Corrected the `oper_count` DataFrame in backtest.
