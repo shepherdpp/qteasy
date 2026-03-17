@@ -205,13 +205,6 @@ class HistoryPanel():
     @property
     def levels(self):
         """返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典
-
-        HistoryPanel的层标签是保存成一个字典形式的：
-        levels =    {share_name[0]: 0,
-                     share_name[1]: 1,
-                     share_name[2]: 2,
-                     ...
-                     share_name[l]: l}
         这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
             data = HP.values[levels[level_name[a], :, :]
         来访问
@@ -251,13 +244,6 @@ class HistoryPanel():
     @property
     def rows(self):
         """ 返回Hi storyPanel的日期字典，通过这个字典建立日期与行号的联系：
-
-        rows =  {row_date[0]: 0,
-                 row_date[1]: 1,
-                 row_date[2]: 2,
-                 ...
-                 row_date[r]: r
-                 }
         因此内部可以较快地进行数据切片或数据访问
 
         Returns
@@ -334,12 +320,6 @@ class HistoryPanel():
     @property
     def columns(self):
         """返回一个字典，代表HistoryPanel的历史数据，将历史数据与列号进行对应
-        columns = {htype_name[0]: 0,
-                   htype_naem[1]: 1,
-                   htype_name[2]: 2,
-                   ...
-                   htype_name[c]: c}
-
         这样便于内部根据股票代码对数据进行切片
         """
         return self._columns
@@ -496,6 +476,10 @@ class HistoryPanel():
                 [40, 10, 30],
                 [40, 10, 30]]])
         """
+        # TODO: 在以前版本的qteasy中，HistoryPanel是交易策略的数据调用的核心数据结构，因此对数据切片
+        #  的效率要求较高，因此在切片后直接返回一个ndarray数组，但是在2.0以后这个功能不再被需要，相反，
+        #  HistoryPanel切片后返回另一个HistoryPanel更有用，因此需要修改返回值为HistorPanel。
+
         if self.is_empty:
             return None
         else:
