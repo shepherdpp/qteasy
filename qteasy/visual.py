@@ -930,11 +930,36 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
             adj=adj,
             allow_ignore_freq=True,
     )
-    data = get_history_panel(data_types=data_types, shares=stock, start=start_date, end=end_date, freq=freq,
-                             data_source=data_source, resample_method='none').slice_to_dataframe(share=stock)
-    # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
+    data = get_history_panel(
+        data_types=data_types,
+        shares=stock,
+        start=start_date,
+        end=end_date,
+        freq=freq,
+        data_source=data_source,
+        resample_method='none',
+    ).slice_to_dataframe(share=stock)
+    if data.empty:
+        raise ValueError(f'Can not load historical price data for "{stock}" of type "{name_of[asset_type]}" '
+                         f'from data source "{ds.connection_type}"\n'
+                         f'please check if the data source is correct and contains historical price data for '
+                         f'this stock.')
+    # 处理复权列名：当 adj != 'none' 时，get_history_panel 可能返回如 'open|b','high|b' 等列名，
+    # 此处统一将其规范化为 'open','high','low','close','volume'，以便后续逻辑与绘图逻辑识别。
+    base_price_cols = {'open', 'high', 'low', 'close', 'volume'}
+    rename_map = {}
+    for col in data.columns:
+        root = col.split('|', 1)[0]
+        if root in base_price_cols:
+            rename_map[col] = root
+    if rename_map:
+        data = data.rename(columns=rename_map)
+
+    # 如果读取的是 nav 净值，将 nav 改为 close，并填充 open/high/low 三列为 NaN 值
     is_out_fund = False
-    if 'open' not in data.columns:
+    has_price_cols = all(c in data.columns for c in ['open', 'high', 'low', 'close'])
+    if not has_price_cols and len(data.columns) == 1:
+        # 仅在缺少完整 OHLC 而仍有单一 close 列时，按 nav 处理
         data.columns = ['close']
         data['open'] = np.nan
         data['high'] = np.nan

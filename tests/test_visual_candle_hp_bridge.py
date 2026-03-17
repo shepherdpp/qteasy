@@ -344,23 +344,19 @@ class TestCandleWithStockAndAssetType(_BaseCandleTestWithFixture):
 
     def test_candle_freq_variants_do_not_error(self):
         print('\n[V6-F1] 不同 freq 组合下 candle 不报错（依赖本地数据源）')
-        freqs = ['D', 'W', 'M', 'H', '30MIN']
+        freqs = ['D', 'W', 'M']  # data in 'H' and '30MIN' are not available yet
         for f in freqs:
-            try:
-                res = visual.candle(
-                    stock='000001.SZ',
-                    start=None,
-                    end=None,
-                    stock_data=None,
-                    asset_type='E',
-                    freq=f,
-                    plot_type='none',
-                    interactive=False,
-                    data_source=None,
-                )
-            except Exception as e:
-                self.skipTest(f'local data source not available for freq={f}: {e}')
-                return
+            res = visual.candle(
+                stock='000001.SZ',
+                start=None,
+                end=None,
+                stock_data=None,
+                asset_type='E',
+                freq=f,
+                plot_type='none',
+                interactive=False,
+                data_source=None,
+            )
             self.assertIsInstance(res, pd.DataFrame)
             self.assertGreater(len(res), 0)
         print('  all freqs executed without error:', freqs)
@@ -454,8 +450,7 @@ class TestCandleWithStockAndAssetType(_BaseCandleTestWithFixture):
                 data_source=None,
                 adj=adj,
             )
-            if not isinstance(res, pd.DataFrame):
-                self.fail(f'candle returned {type(res)} instead of DataFrame for adj={adj}')
+            self.assertIsInstance(res, pd.DataFrame)
             self.assertGreater(len(res), 0)
         print('  all adj variants executed without error:', adj_values)
 
