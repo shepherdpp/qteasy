@@ -424,12 +424,12 @@ class InterCandle:
 
 
 def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle',
-           interactive=True, data_source=None, **kwargs):
+           interactive: bool = False, data_source=None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
     Parameters
     ----------
-    stock: str,
+    stock: str, default None
         简化证券代码、完整证券代码或股票名称，根据该代码或名称匹配准确的证券代码
         如果给出股票名称，支持使用%、？等通配符、支持模糊查找
         如果匹配到多个证券代码，将打印出提示，并选择第一个匹配的证券代码输出图表
@@ -439,7 +439,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         K线图的终止日期
     stock_data: pd.DataFrame
         直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
-    freq: str
+    freq: str, default 'd'
         K线图的时间频率，合法输入包括：
         - D/d: 日K线
         - W/w: 周K线
@@ -452,14 +452,14 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         - FD:   基金
         - FT:   期货
         - OPT:  期权
-    plot_type: str
+    plot_type: str, default: 'candle'
         输出图表的类型，包括以下选项
         - candle:   显示蜡烛图
         - ohlc:     显示OHLC K线图
         - renko:    显示RENKO图
         - none:     只返回数据，不显示图表
-    interactive: Bool
-        是否输出可交互式图表
+    interactive: Bool, default False
+        是否输出可交互式图表，默认 False（静态图）
         （受matplotlib的backend限制，某些环境下交互式图表不可用，详情请参见
         https://matplotlib.org/stable/users/explain/backends.html）
     data_source: DataSource Object
@@ -468,7 +468,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     kwargs:
         用于传递至K线图的更多参数，包括：
         - adj:          str, 复权参数： none，back，forward
-        - mav:          list, 移动均线周期
+        - mav:          list of int, 移动均线周期
         - avg_type:     str, 均线类型，包括ma，bbands
         - indicator:    str, 指标类型，包括macd，rsi，dema
         - bb_par:       tuple, 布林带线参数
@@ -489,15 +489,14 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     no_visual = False
     if not isinstance(plot_type, str):
         raise TypeError(f'plot type should be a string, got {type(plot_type)} instead.')
-    if plot_type.lower() in ['candle', 'cdl', 'c']:
+    pt_lower = plot_type.lower()
+    if pt_lower in ['candle', 'cdl', 'c']:
         plot_type = 'candle'
-    elif plot_type.lower() in ['ohlc', 'o']:
+    elif pt_lower in ['ohlc', 'o']:
         plot_type = 'ohlc'
-    elif plot_type.lower() in ['renko', 'r']:
-        plot_type = 'renko'
-    elif plot_type.lower() in ['line', 'l']:
+    elif pt_lower in ['line', 'l']:
         plot_type = 'line'
-    elif plot_type.lower() in ['none', 'n']:
+    elif pt_lower in ['none', 'n']:
         plot_type = 'none'
         no_visual = True
     else:
@@ -555,21 +554,85 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     if data_source is None:
         data_source = qteasy.QT_DATA_SOURCE
 
-    return _mpf_plot(stock_data=stock_data, stock=stock, start=start, end=end, freq=freq,
-                     asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
-                     **kwargs)
+    return _mpf_plot(
+        stock_data=stock_data,
+        share_name=None,
+        stock=stock,
+        start=start,
+        end=end,
+        freq=freq,
+        asset_type=asset_type,
+        plot_type=plot_type,
+        no_visual=no_visual,
+        interactive=interactive,
+        data_source=data_source,
+        **kwargs,
+    )
 
 
-def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None, freq=None,
-              asset_type=None, plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
-              data_source=None, **kwargs):
-    """plot stock data or extracted data in renko form
-    """
+def _daily_dataframe_to_history_panel(
+        daily: pd.DataFrame,
+        share_code: str,
+        asset_type: str,
+        freq: str,
+) -> "HistoryPanel":
+    """将单标的 OHLCV DataFrame 适配为 HistoryPanel（1 share）。"""
+    from qteasy.history import HistoryPanel
+
+    if not isinstance(daily, pd.DataFrame):
+        raise TypeError(f'daily should be a DataFrame, got {type(daily)} instead.')
+    if daily.empty:
+        raise ValueError('daily price data is empty.')
+
+    cols = list(daily.columns)
+    normalized_cols = []
+    for c in cols:
+        if c == 'vol':
+            normalized_cols.append('volume')
+        else:
+            normalized_cols.append(c)
+    if normalized_cols != cols:
+        daily = daily.copy()
+        daily.columns = normalized_cols
+
+    htypes = list(daily.columns)
+    rows = daily.index
+    values = daily.to_numpy(dtype=float).reshape(1, len(rows), len(htypes))
+
+    return HistoryPanel(
+        values=values,
+        levels=[share_code],
+        rows=rows,
+        columns=htypes,
+    )
+
+
+def _mpf_plot(
+        stock_data=None,
+        share_name=None,
+        stock=None,
+        start=None,
+        end=None,
+        freq=None,
+        asset_type=None,
+        plot_type=None,
+        no_visual: bool = False,
+        interactive: bool = True,
+        mav=None,
+        avg_type: str = 'ma',
+        indicator: Optional[str] = None,
+        data_source=None,
+        **kwargs,
+):
+    """内部 K 线绘图入口：兼容旧参数，实际通过 HistoryPanel.plot() 完成可视化。"""
     from qteasy import logger_core
     freq_info = '日K线'
     adj = 'none'
     adj_info = ''
     multiplier = 1
+    user_specified_start = start is not None
+    user_specified_end = end is not None
+
     if plot_type is None:
         plot_type = 'candle'
     if freq is None:
@@ -613,6 +676,10 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         # 设置end为当天的14:59:59，以确保频率为分钟时也能准确定位到当天15:00的最后一个交易时段
         end += pd.Timedelta(899.5, 'm')
     start = pd.to_datetime(start)
+
+    # 记录用户期望的初始可见区间（仅当用户显式传入 start/end 时生效）
+    plot_start = start if (user_specified_start or user_specified_end) else None
+    plot_end = end if (user_specified_start or user_specified_end) else None
     # 当stock_data没有给出时，则从本地获取股票数据
     if stock_data is None:
         assert stock is not None
@@ -657,44 +724,116 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     # 如果给出或获取的数据没有volume列，则生成空数据列
     if 'volume' not in daily.columns:
         daily['volume'] = 0
-    # 处理并生成indicator
+
+    # 处理并生成 indicator（保持返回 daily 含 MA / MACD / RSI / DEMA 等列以兼容旧行为）
     if indicator is None:
         indicator = 'macd'
     if indicator not in ValidCandlePlotIndicators + ValidCandlePlotMATypes:
         raise KeyError(f'Invalid indicator: ({indicator})')
-    daily, parameters = _add_indicators(daily,
-                                        mav=mav,
-                                        **kwargs)
+    daily, parameters = _add_indicators(daily, mav=mav, **kwargs)
 
-    my_color = mpf.make_marketcolors(up='r',
-                                     down='g',
-                                     edge='inherit',
-                                     wick='inherit',
-                                     volume='inherit')
-    my_style = mpf.make_mpf_style(marketcolors=my_color,
-                                  figcolor='(0.82, 0.83, 0.85)',
-                                  gridcolor='(0.82, 0.83, 0.85)')
-    # 设置plot title info
-    plot_title_info = f'{share_name}-{freq_info}-{adj_info}/{parameters}'
+    # 基于 HistoryPanel 的新可视化路径（仅使用 OHLCV + HP 上的 ta 列）
     if not no_visual:
-        idx_start = np.searchsorted(daily.index, start)
-        idx_range = np.searchsorted(daily.index, end) - idx_start
-        # 当end太靠后时，产生的range会越界，因此需要判断是否越界，如果越界则重设range
-        if idx_range + idx_start >= len(daily.index):
-            idx_range = len(daily.index) - idx_start - 1
-        my_candle = InterCandle(data=daily,
-                                title_info=plot_title_info,
-                                plot_type=plot_type,
-                                style=my_style,
-                                avg_type=avg_type,
-                                indicator=indicator)
-        logger_core.info(f'Creating plot with data starts {idx_start} to {idx_start + idx_range}')
-        my_candle.refresh_texts(daily.iloc[idx_start + idx_range])
-        my_candle.refresh_plot(idx_start, idx_range + 1)
-        # 如果需要动态图表，需要传入特别的参数以进入交互模式
-        dynamic = False
-        if dynamic:
-            raise NotImplementedError
+        from qteasy.history import HistoryPanel
+        # 为 HP 适配提取基础 OHLCV，避免将旧 DataFrame 的 MA/BB/MACD 命名带入 HP htypes
+        basic_cols = ['open', 'high', 'low', 'close', 'volume']
+        basic_cols = [c for c in basic_cols if c in daily.columns]
+        daily_basic = daily[basic_cols].copy()
+
+        # DataFrame → HistoryPanel（单 share，全历史）
+        hp_full = _daily_dataframe_to_history_panel(
+            daily=daily_basic,
+            share_code=stock if stock is not None else (share_name or 'UNKNOWN'),
+            asset_type=asset_type,
+            freq=freq,
+        )
+
+        # 在 HP 上追加可视化所需指标（始终在全历史上计算）：
+        # - 均线：通过 kline.sma / kline.ema / kline.bbands
+        # - MACD：通过 kline.macd（rsi/dema 暂不在 HP 上实现，仅保留参数接口）
+        hp_with_ind = hp_full
+
+        # 处理均线 / 布林带
+        if avg_type is None:
+            avg_type = 'ma'
+        avg_type_lower = avg_type.lower()
+        if mav is None:
+            mav = [5, 10, 20, 60]
+        try:
+            if avg_type_lower == 'ma':
+                for win in mav:
+                    hp_with_ind = hp_with_ind.kline.sma(window=int(win))
+            elif avg_type_lower == 'ema':
+                for span in mav:
+                    hp_with_ind = hp_with_ind.kline.ema(span=int(span))
+            elif avg_type_lower in ['bb', 'bbands']:
+                bb_par = kwargs.get('bb_par', (20, 2, 2, 0))
+                window = int(bb_par[0])
+                nb_up = float(bb_par[1])
+                nb_dn = float(bb_par[2])
+                hp_with_ind = hp_with_ind.kline.bbands(
+                    window=window,
+                    nbdev_up=nb_up,
+                    nbdev_dn=nb_dn,
+                    ma_type='sma',
+                )
+        except Exception as e:
+            logger_core.warning(f'Failed to append MA/BBANDS indicators on HistoryPanel: {e}')
+
+        # 处理 MACD：仅在 indicator 为 macd 时追加，rsi/dema 暂不在 HP 上实现
+        try:
+            if indicator is None or indicator.lower() == 'macd':
+                hp_with_ind = hp_with_ind.kline.macd()
+        except Exception as e:
+            logger_core.warning(f'Failed to append MACD indicator on HistoryPanel: {e}')
+
+        # 静态图：在全历史上计算好指标后，根据用户 start/end 对 HP 时间做切片，仅显示子区间
+        # 动态图：始终显示全历史（用户可通过交互缩放/平移）
+        if not interactive and (plot_start is not None or plot_end is not None):
+            hdates = pd.to_datetime(hp_with_ind.hdates)
+            left = plot_start if plot_start is not None else hdates[0]
+            right = plot_end if plot_end is not None else hdates[-1]
+            mask = (hdates >= left) & (hdates <= right)
+            if mask.any():
+                idx = np.where(mask)[0]
+                values_sub = hp_with_ind.values[:, idx, :]
+                rows_sub = [hdates[i] for i in idx]
+                hp_for_plot = HistoryPanel(
+                    values=values_sub,
+                    levels=hp_with_ind.shares,
+                    rows=rows_sub,
+                    columns=hp_with_ind.htypes,
+                )
+            else:
+                hp_for_plot = hp_with_ind
+        else:
+            # interactive=True 或未指定 start/end：使用全历史
+            hp_for_plot = hp_with_ind
+
+        # 组标题沿用原有 share_name/freq/adj 信息
+        group_title = f'{share_name}-{freq_info}-{adj_info}'
+        try:
+            fig = hp_for_plot.plot(
+                shares=None,
+                layout='auto',
+                interactive=interactive,
+                highlight=None,
+                group_titles=[group_title],
+            )
+            # 为兼容旧行为：在脚本 / Notebook 中直接调用 qt.candle(...) 也会弹出图表
+            try:
+                from IPython.display import display  # type: ignore
+
+                display(fig)
+            except Exception:
+                # 非 IPython 环境或 display 失败时，回退到 fig.show（若可用）
+                if hasattr(fig, 'show'):
+                    try:
+                        fig.show()
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger_core.warning(f'Failed to plot HistoryPanel: {e}')
     return daily
 
 
