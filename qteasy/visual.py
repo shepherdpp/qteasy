@@ -423,8 +423,15 @@ class InterCandle:
         self.refresh_plot(self.idx_start, self.idx_range)
 
 
-def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle',
-           interactive: bool = False, data_source=None, **kwargs):
+def candle(stock: Optional[str] = None,
+           start: Optional[Union['datetime', "Timestamp"]] = None,
+           end: Optional[Union['datetime', 'Timestamp']] = None,
+           stock_data: Optional [pd.DataFrame] = None,
+           asset_type: Optional[str] = None,
+           freq: Optional[str] = None,
+           plot_type: str = 'candle',
+           interactive: bool = False,
+           data_source: Optional["DataSource"] = None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
     Parameters
@@ -437,7 +444,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         K线图的起始日期
     end: str, datetime, TimeStamp
         K线图的终止日期
-    stock_data: pd.DataFrame
+    stock_data: pd.DataFrame, optional
         直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
     freq: str, default 'd'
         K线图的时间频率，合法输入包括：
