@@ -432,7 +432,7 @@ def candle(stock: Optional[str] = None,
            plot_type: str = 'candle',
            interactive: bool = False,
            data_source: Optional["DataSource"] = None, **kwargs):
-    """ 获取股票或证券的K线数据，并显示股票的K线图
+    """ 获取股票或证券的 K 线数据，并显示或返回对应的价格数据。
 
     Parameters
     ----------
@@ -445,14 +445,15 @@ def candle(stock: Optional[str] = None,
     end: str, datetime, TimeStamp
         K线图的终止日期
     stock_data: pd.DataFrame, optional
-        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
+        直接用于出图和返回的价格数据。如果给出 stock_data，则忽略 stock/asset_type/data_source
+        等参数；否则使用其他参数从 data_source 读取对应标的的历史数据。
     freq: str, default 'd'
         K线图的时间频率，合法输入包括：
         - D/d: 日K线
         - W/w: 周K线
         - M/m: 月K线
         - XMin/Xmin: 分钟K线，接受1min/5min/15min/30min/60min等五种输入
-    asset_type: str
+    asset_type: str, optional
         证券类型，包含：
         - E:    股票
         - IDX:  指数
@@ -460,33 +461,46 @@ def candle(stock: Optional[str] = None,
         - FT:   期货
         - OPT:  期权
     plot_type: str, default: 'candle'
-        输出图表的类型，包括以下选项
-        - candle:   显示蜡烛图
-        - ohlc:     显示OHLC K线图
-        - renko:    显示RENKO图
-        - none:     只返回数据，不显示图表
-    interactive: Bool, default False
-        是否输出可交互式图表，默认 False（静态图）
-        （受matplotlib的backend限制，某些环境下交互式图表不可用，详情请参见
-        https://matplotlib.org/stable/users/explain/backends.html）
-    data_source: DataSource Object
-        历史数据源，默认使用qt内置的数据源QT_DATA_SOURCE
-        否则使用给定的DataSource
+        输出图表的类型，包括以下选项：
+        - 'candle' / 'cdl' / 'c':   显示蜡烛图
+        - 'ohlc' / 'o':             显示 OHLC K 线图（当前等价于蜡烛图）
+        - 'line' / 'l':             显示折线图（仅使用 close 或净值数据）
+        - 'none' / 'n':             只返回数据，不显示图表
+    interactive: bool, default False
+        是否输出交互式图表：
+        - False: 使用 HistoryPanel 的静态后端（matplotlib）出图。
+        - True:  使用 HistoryPanel 的交互 Plotly 后端出图（在 Notebook 中返回 Figure/FigureWidget，
+          在脚本环境中尽量调用 fig.show()）。
+    data_source: DataSource, optional
+        历史数据源，默认使用 qt 内置的数据源 QT_DATA_SOURCE；否则使用给定的 DataSource。
     kwargs:
         用于传递至K线图的更多参数，包括：
-        - adj:          str, 复权参数： none，back，forward
-        - mav:          list of int, 移动均线周期
-        - avg_type:     str, 均线类型，包括ma，bbands
-        - indicator:    str, 指标类型，包括macd，rsi，dema
-        - bb_par:       tuple, 布林带线参数
-        - macd_par:     tuple, MACD参数
-        - rsi_par:      tuple, RSI指标参数
-        - dema_par:     tuple, DEMA指标参数
+        - adj:          str, 复权参数： 'none' / 'n'（不复权）、'b' / 'back'（后复权）、
+                         'f' / 'forward'（前复权）；内部通过 infer_data_types/get_history_panel
+                         读取对应复权价格列，并在 _get_mpf_data 中将诸如 'open|b' 等列名规范为
+                         'open/high/low/close/volume'。
+        - mav:          list of int, 移动均线周期（如 [5,10,20,60]），用于在 DataFrame 中计算 MA*
+                         列，并在 HistoryPanel 上通过 kline.sma 追加 sma_* 列用于出图。
+        - avg_type:     str, 均线/带状类型，包括：
+                         'ma'  : 简单移动平均线（kline.sma）
+                         'ema' : 指数移动平均线（kline.ema）
+                         'bb' / 'bbands' : 布林带（kline.bbands）
+        - indicator:    str, 指标类型：
+                         'macd'（默认）：在 DataFrame 中计算 macd-m/s/h 列，并在 HistoryPanel 上
+                         通过 kline.macd 追加 macd_* 列用于出图；
+                         'rsi' / 'dema'：仅在 DataFrame 中计算 rsi/dema 列（历史兼容），当前
+                         HistoryPanel 侧暂不绘制对应子图。
+        - bb_par:       tuple, 布林带线参数 (window, nbdev_up, nbdev_dn, extra)，用于 _add_indicators
+                         与 kline.bbands。
+        - macd_par:     tuple, MACD 参数 (signalperiod, fastperiod, slowperiod)，用于 _add_indicators。
+        - rsi_par:      tuple, RSI 指标参数，用于 _add_indicators。
+        - dema_par:     tuple, DEMA 指标参数，用于 _add_indicators。
 
     Returns
     -------
     pd.DataFrame
-        包含相应股票数据的DataFrame
+        包含相应股票数据及计算后技术指标列的 DataFrame。若 plot_type != 'none'，同时会触发
+        基于 HistoryPanel 的静态或交互式出图；若 plot_type == 'none'，则仅返回数据不出图。
 
     See Also
     --------
@@ -631,7 +645,27 @@ def _mpf_plot(
         data_source=None,
         **kwargs,
 ):
-    """内部 K 线绘图入口：兼容旧参数，实际通过 HistoryPanel.plot() 完成可视化。"""
+    """内部 K 线绘图入口：兼容旧参数，实际通过 HistoryPanel.plot() 完成可视化。
+
+    本函数负责：
+
+    - 根据 freq 推断默认时间窗口（如日 K 线默认向前 60 个交易日）；
+    - 在未提供 stock_data 时，通过 _get_mpf_data 从 data_source 拉取全历史 OHLCV 数据；
+    - 调用 _add_indicators 在 DataFrame 上计算 MA/BBANDS/MACD/RSI/DEMA 等列（用于兼容旧
+      DataFrame 使用场景）；
+    - 将规范化后的 OHLCV 列适配为单 share 的 HistoryPanel（hp_full），并在 hp_full 上通过
+      HistoryPanel.kline.sma/ema/bbands/macd 追加可视化所需指标列（hp_with_ind）；
+    - 根据用户是否显式传入 start/end 以及 interactive：
+        * interactive=False 且提供 start/end 时，仅对 hp_with_ind 在时间轴上做一次子区间切
+          片（hp_for_plot），保证图表初始显示该区间，但所有指标是在全历史上计算的；
+        * 其它情况（包括 interactive=True），直接使用全历史 hp_with_ind 出图；
+    - 调用 hp_for_plot.plot(...) 完成静态或交互式绘制，并在 Notebook 环境下通过
+      IPython.display.display(fig) 或在脚本环境中尽量调用 fig.show()，以模拟旧 candle 的
+      “直接出图” 行为。
+
+    返回值始终为包含完整历史数据及指标列的 DataFrame；出图行为由 no_visual/interactive 控制，
+    与返回数据解耦。
+    """
     from qteasy import logger_core
     freq_info = '日K线'
     adj = 'none'
@@ -845,8 +879,7 @@ def _mpf_plot(
 
 
 def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None):
-    """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
-        并返回股票的名称。
+    """ 返回一只股票在全部历史区间上的价格数据，生成一个标准 OHLCV DataFrame，并返回股票名称。
 
     Parameters
     ----------
@@ -858,7 +891,17 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
 
     Returns
     -------
-    tuple：(pd.DataFrame, share_name)
+    tuple
+        (data, share_name)
+        data : pandas.DataFrame
+            标准化后的价格数据，至少包含以下列：
+            - open, high, low, close, volume（若原始列为 vol 或带有复权后缀，如 'open|b'，
+              会在此处统一重命名为标准列名）；
+            - 对于场外基金（asset_type='FD' 且 market='O'）且仅存在净值列时，会将该列视为
+              close，并补充 open/high/low 三列为 NaN。
+        share_name : str
+            形如 "<ts_code> - <name> [<类型>]" 的标的名称；当 is_out_fund 为 True 时，末尾
+            追加 'O' 以指示场外基金净值。
     """
     from qteasy import QT_DATA_SOURCE
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
