@@ -9,6 +9,7 @@ myst_parser==1.0.0
 sphinxcontrib-napoleon==0.7
 sphinx_markdown_checkbox==0.1.0
 pycmarkgfm==1.2.1
+tqdm==4.66.5
 tushare==1.2.89
 pymysql==1.1.1
 dbutils==3.1.0

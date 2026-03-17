@@ -81,3 +81,4 @@ qteasy/qteasy_backup.cfg
 /scripts
 /qteasy_doc_ipynbs
 *.json
+/_build
