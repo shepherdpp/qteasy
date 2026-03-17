@@ -36,97 +36,41 @@ from qteasy.datatypes import (
 
 
 class HistoryPanel():
-    """qteasy 量化投资系统使用的主要历史数据的数据类型
+    """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
 
-    一个HistoryPanel对象其本质是一个numpy.ndarray，这个ndarray是一个
-    三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。历史数据类型可以包括
-    类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
+    HistoryPanel 本质是一个三维 ``numpy.ndarray``，三条轴分别表示标的（shares）、时间
+    （hdates）和历史数据类型（htypes），支持按任意轴灵活切片、重标记以及与
+    pandas DataFrame 之间的互相转换，并作为 get_history_data 与可视化栈
+    （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
 
-    HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为：
-        axis 0: levels/层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
-        axis 1: rows/行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
-        axis 2: columns/列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
-
-    使用HistoryPanel类，用户可以：
-    1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
-       numpy ndarray。
-        为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates slicer]的顺序
-        传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活：
-        * 可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如：
-            HistoryPanel['close']: 选择所有股票品种的全部历史收盘价
-            HistoryPanel[,'000300.SH']: 选择000300股票品种的所有历史数据
-        * 可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如：
-            HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价
-        * 可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如：
-            HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据
-        * 可以通过int列表或str列表指定某几个品种或类型的数据，如：
-            HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', 'low']]
-            选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型
-        * 也可以通过常见的slicer对象来选择， 如：
-            HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据
-        * 上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如：
-            要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现：
-            HistoryPanel['close:high', ['000300', '000500', '000700'], '20100101:20101231']
-    2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）
-        HistoryPanel.shares     输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称
-        HistoryPanel.hdates     输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间
-        HistoryPanel.htypes     输出一个列表，包含按顺序排列的所有列标签，即所数据类型
-        HistoryPanel.levels     输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
-        HistoryPanel.columns    输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
-        HistoryPanel.rows       输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）
-    3, 方便地打印HistoryPanel的相关信息
-    4, 方便地打印及格式化输出HistoryPanel的内容
-    5, 方便地转化为 pandas DataFrame对象
-        HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
-        HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
-    6, 方便地由多个pandas DataFrame对象组合而成
-
-    Properties
-    ----------
-    is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空
-    values: np.ndarray, 该属性返回一个numpy ndarray，包含HistoryPanel的全部数据
-    levels: dict, 该属性返回一个dict， 包含所有层标签(股票代码)及其对应的层编号
-    rows: dict, 该属性返回一个dict， 包含所有行标签(交易日期)及其对应的行编号
-    columns: dict, 该属性返回一个dict， 包含所有列标签(数据类型)及其对应的列编号
-    shares: list, 该属性包含所有层标签，即所有股票代码
-    hdates: list, 该属性包含所有行标签，即所有日期时间
-    htypes: list, 该属性包含所有列标签，即所有历史数据类型
-
-    Methods
-    -------
-    __getitem__(self, slicer)
-        该方法用于对HistoryPanel进行切片，返回一个numpy ndarray
-    re_label(self, levels=None, rows=None, columns=None)
-        该方法用于重新设置HistoryPanel的标签，如果不输入任何参数，则会自动重新生成标签
-    join(self, other, how='outer', axis=0)
-        该方法用于将两个HistoryPanel对象合并为一个HistoryPanel对象
-    slice_to_dataframe(self, slicer)
-        该方法用于将HistoryPanel的一个切片转化为pandas DataFrame对象
-    flatten_to_dataframe(self, level=None, htype=None)
-        该方法用于将HistoryPanel转化为一个multi-index DataFrame对象
-
+    更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
 
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
-        """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
+        """初始化 HistoryPanel 对象，并根据输入的数据与轴标签构建三维历史数据结构。
 
-        在生成一个HistoryPanel的时候，可以同时输入层标签（股票代码）、行标签（日期时间）和列标签（历史数据类型）
-        如果不输入这些数据，HistoryPanel会自动生成标签。在某些qteasy应用中，要求输入正确的标签，如果标签不正确
-        可能导致报错。
+        可以在创建时同时给出标的（levels）、时间（rows）和数据类型（columns）标签，
+        若未显式给出则按数据形状自动补全；当仅给出部分标签或数组维度不足三维时，会根据
+        输入自动推断缺失维度并重塑为 ``(level, row, column)`` 结构。关于标签约定与
+        典型创建方式，详见文档「HistoryPanel 类」章节。
 
         Parameters
         ----------
-        values: ndarray
-            一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
-            如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        levels: str or [str] or (str)
-            HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-        rows: str or [str] or (str)
-            HistoryPanel的时间日期标签。
-            datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
-            行标签代表每一条数据对应的历史时间戳
-        columns: str or [str] or (str)
-            HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
+        values : numpy.ndarray, optional
+            历史数据数组，维度不能超过三维；若维度不足三维，将根据标签数量自动补齐维度。
+            为 None 或空数组时创建一个空的 HistoryPanel（其 ``is_empty`` 为 True）。
+        levels : str or sequence of str, optional
+            标的标签，数量应等于 ``values`` 第一维长度，每一层代表一种股票或资产。
+        rows : str or sequence of str, optional
+            时间标签，可以是可转换为 ``pandas.Timestamp`` 的字符串序列或 DatetimeIndex，
+            每个标签对应一条时间记录。
+        columns : str or sequence of str, optional
+            历史数据类型标签，每一列代表一种数据类型（如 open、high、close、volume 等）。
+
+        Returns
+        -------
+        HistoryPanel
+            新构建的 HistoryPanel 对象。
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
@@ -2403,33 +2347,48 @@ class HistoryPanel():
         highlight: Optional[Any] = None,
         **kwargs,
     ):
-        """
-        根据当前 HP 的 htypes 与 shares 自动选择图表类型并绘制（唯一超级入口）。
+        """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
 
-        不计算、不扩展数据，仅就已有数据出图。图表类型由注册表根据 htypes 决定
-        （如 OHLC→K 线，vol→成交量，MACD 三列→MACD 图，其余→折线）。
+        本方法只消费已有数据不做新增计算，图表类型由内部注册表基于 htypes 决定（如
+        OHLC→K 线，vol→成交量，MACD 三列→MACD 图，其余→折线），支持单标的与多标
+        的 overlay/stack 布局，以及基于 matplotlib 的静态图和基于 Plotly 的交互式图表。
 
         Parameters
         ----------
         shares : str or sequence of str, optional
-            要参与绘图的标的子集；默认使用 HP 全部 shares。
-        layout : str, optional
-            'overlay' | 'stack' | 'auto'。多标的时 overlay 叠在同一组，stack 分组展示；auto 时 2 标用 overlay，3+ 用 stack。
-        interactive : bool, optional
-            为 True 时使用 Plotly 交互后端（需安装 plotly）；为 False 时使用 matplotlib 静态图。
+            要参与绘图的标的子集；默认使用 HistoryPanel 的全部 shares。
+        layout : {'overlay', 'stack', 'auto'}, default 'auto'
+            多标的布局方式；'overlay' 为同组叠加，'stack' 为多组分行展示，'auto' 时
+            2 只标的用 overlay，3 只及以上用 stack。
+        interactive : bool, default False
+            为 True 时使用 Plotly 交互后端（需安装 plotly 及 anywidget/ipywidgets）；
+            为 False 时使用 matplotlib 静态后端。
         highlight : dict or str, optional
-            高亮配置。可为 {'condition': 'max'|'min' 或布尔数组, 'style': {...}} 或仅 'max'/'min'。
+            高亮配置，可为 ``{'condition': 'max'|'min' 或布尔数组, 'style': {...}}``，
+            或简写为 'max' / 'min'。
+        **kwargs
+            预留的扩展参数，当前版本中不使用。
+
         Returns
         -------
         matplotlib.figure.Figure or plotly.graph_objs.FigureWidget or _PlotlyFigureWrapper
-            interactive=False 时返回 matplotlib Figure。
-            interactive=True 且在 Jupyter 中：返回 FigureWidget，表头为 annotations、点击 bar 更新表头，
-            缩放/平移时 Y 轴随可见数据自适应；直接输出 fig 即可显示。
-            interactive=True 且非 Jupyter：返回包装器（内嵌 HTML），表头在画布上方、点击更新表头，缩放/平移可用。
+            interactive=False 时返回 matplotlib Figure；
+            interactive=True 且在 Jupyter 中返回 FigureWidget（支持表头信息与 Y 轴自适应）；
+            interactive=True 且非 Jupyter 环境时返回内嵌 HTML 包装器。
+
+        Examples
+        --------
+        >>> import qteasy as qt
+        >>> hp = qt.get_history_data(htype_names='open, high, low, close, vol',
+        ...                          shares='000300.SH', rows=200)
+        >>> fig = hp.plot()
+
+        >>> fig_interactive = hp.plot(interactive=True, highlight='max')
 
         See Also
         --------
-        qt.get_kline : 获取 K 线数据并可选 as_panel=True 得到 HistoryPanel。
+        qt.get_kline
+            获取 K 线数据并可选 ``as_panel=True`` 得到 HistoryPanel。
         """
         if self.is_empty:
             raise ValueError('Cannot plot an empty HistoryPanel')

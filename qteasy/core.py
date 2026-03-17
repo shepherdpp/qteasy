@@ -965,48 +965,51 @@ def get_history_data(htypes=None,
                      as_data_frame=None,
                      group_by=None,
                      **kwargs):
-    """ 从本地data_source获取所需的数据并组装为适应于策略需要的HistoryPanel数据对象
+    """根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。
 
-    需要获取的数据类型可以由data_types参数给出，如果不给出data_types参数，则可以通过htypes/htype_names等参数
-    结合freq和asset_type参数创建可能的htypes，如果给出了data_types参数，则htypes/htype_names参数将被忽略
+    可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` /
+    ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by``
+    的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。关于数据类型
+    推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」
+    相关章节。
 
     Parameters
     ----------
-    htype_names: [str], str
+    htype_names: [str] or str, optional
         需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
         所有可能的htypes。输入方式可以为str或list：
          - str:     'open, high, low, close'
          - list:    ['open', 'high', 'low', 'close']
-    htypes: [DataType], deprecated
+    htypes: [DataType], optional, deprecated
         需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
         所有可能的htypes。输入方式可以为str或list：
-    data_types: [DataType],
+    data_types: [DataType], optional
         需要获取的历史数据类型集合，必须是合法的数据类型对象。
         如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes
-    data_source: DataSource
+    data_source: DataSource, optional
         需要获取历史数据的数据源
-    shares: [str, list] 等同于symbols
+    shares: str or list of str, optional
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
          - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
          - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    symbols: [str, list] 等同于shares
+    symbols: str or list of str, optional
         需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
         如以下两种输入方式皆合法且等效：
         - str:     '000001, 000002, 000004, 000005'
         - list:    ['000001', '000002', '000004', '000005']
-    start: str
+    start: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-    end: str
+    end: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-    rows: int, default: 10
+    rows: int, default 10
         获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end]
         如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多
-    freq: str
+    freq: str, optional
         获取的历史数据的频率，包括以下选项：
          - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-    asset_type: str, list
+    asset_type: str or list of str, optional
         限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
         逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
          - any: 可以获取任意资产类型的证券数据(默认值)
@@ -1014,20 +1017,20 @@ def get_history_data(htypes=None,
          - IDX: 只获取指数类型证券的数据
          - FT:  只获取期货类型证券的数据
          - FD:  只获取基金类型证券的数据
-    adj: str, deprecated: adj is depreated since version 1.4 and will be removed
+    adj: str, optional, deprecated
         Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
          - none / n: 不复权(默认值)
          - back / b: 后复权
          - forward / fw / f: 前复权
          从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格
-    as_data_frame: bool, Default: True
-        True时返回HistoryPanel对象,False时返回一个包含DataFrame对象的字典
-    group_by: str, 默认'shares'
+    as_data_frame: bool, default True
+        True 时返回 HistoryPanel 对象，False 时返回一个包含 DataFrame 对象的字典。
+    group_by: str, default 'shares'
         如果返回DataFrame对象，设置dataframe的分组策略
         - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
         - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
-    **kwargs:
-        用于生成trade_time_index的参数，包括：
+    **kwargs
+        用于生成 trade_time_index 的参数以及频率转换行为控制，包括：
         drop_nan: bool
             是否保留全NaN的行
         resample_method: str
@@ -1092,10 +1095,10 @@ def get_history_data(htypes=None,
 
     Returns
     -------
-    HistoryPanel:
-        如果设置as_data_frame为False，则返回一个HistoryPanel对象
-    Dict of DataFrame:
-        如果设置as_data_frame为True，则返回一个Dict，其值为多个DataFrames
+    HistoryPanel
+        当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel 对象。
+    dict of pandas.DataFrame
+        当 ``as_data_frame`` 为 True 时，返回按 ``group_by`` 分组的 DataFrame 字典。
 
     Examples
     --------
@@ -1600,54 +1603,33 @@ def live_trade_accounts() -> pd.DataFrame:
 
 # noinspection PyTypeChecker
 def run(op: Operator, **kwargs) -> Union[dict, list]:
-    """ `qteasy`模块的主要入口函数
+    """根据当前配置运行给定的 Operator，并进入回测、优化或实盘等不同工作模式。
 
-    接受`operator`交易员对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
-    根据QT_CONFIG配置变量中的设置和运行模式（mode）进行不同的操作：
-
-    mode == 0, live trade mode, 实盘交易模式：
-        进入实盘交易模式，获取实时行情数据，根据operator对象中定义的投资策略生成交易信号并
-        创建交易订单，发送到Broker接口执行交易并记录交易结果。
-        详情参见qteasy文档：qteasy.readthedocs.io/zh-cn/latest
-
-    mode == 1, backtest mode, 回测模式，根据历史数据生成交易信号，执行交易：
-        读取回测交易区间的历史数据，基于operator对象中定义的投资策略生成交易信号，通过
-        模拟交易执行器执行交易并记录交易结果，最后输出回测结果报告。
-        回测的输出结果包括完整的交易记录、每日资金曲线、各项绩效指标等。同时可以生成详细
-        的回测交易日志和交易汇总清单保存在指定的文件夹中，便于后续分析和查阅。
-        详情参见qteasy文档：qteasy.readthedocs.io/zh-cn/latest
-
-    mode == 2, optimization mode, 优化模式，搜索最佳的可调参数组合、优化交易策略的性能表现，提高盈利能力降低风险
-        通过搜索最佳的可调参数组合、优化交易策略的性能表现，提高交易策略的盈利能力和风险
-        控制能力。
-        qteasy提供了多种优化算法，包括网格搜索、随机搜索和遗传算法等，用户可以根据实际需求选择
-        合适的优化方法。在优化过程中，qteasy会自动调整交易策略的参数，并对每组参数进行回测，评估其
-        表现。最终输出优化结果报告，包含最佳参数组合、对应的回测结果和各项绩效指标，帮助用户选择最优
-        的交易策略。
-        详情参见qteasy文档：qteasy.readthedocs.io/zh-cn/latest
-
-    mode == 3, tracing mode, 追踪模式, 用于跟踪策略在运行过程中的各变量变化情况，便于调试和分析策略表现
-        在追踪模式下，Operator会读取回测交易区间的历史数据并生成投资交易信号，在这个
-        过程中，用户可以在策略中设置追踪点，Operator记录整个历史区间中各个追踪点的变量
-        值变化情况，并生成追踪报告，帮助用户分析和调试交易策略。
-
-    mode == 4, predict mode, 预测评价模式，使用随机生成的历史数据对策略进行性能预测评价
-        为了测试交易策略在不同市场环境下的表现，qteasy提供了预测评价模式。在这个模式下，
-        Operator会生成大量随机的历史数据，并基于这些数据生成投资交易信号，回测后生成结果
-        的统计分析报告，帮助用户了解策略在未知市场条件下的表现。
+    本函数是 qteasy 的统一入口：根据全局配置 ``QT_CONFIG['mode']``（可通过
+    ``qt.configure(mode=...)`` 暂时覆盖），选择实盘模式、回测模式、优化模式等，
+    自动准备所需数据源与日志对象并调用 ``Operator.run()`` 执行完整流程。各模式
+    的详细行为与输出结构见文档「运行 qteasy 与工作模式」相关章节。
 
     Parameters
     ----------
     op : Operator
-        策略执行器对象
-    **kwargs:
-        可用的kwargs包括所有合法的qteasy配置参数，参见qteasy文档
+        已配置好策略与运行参数的 Operator 对象。
+    **kwargs
+        本次运行临时覆盖的配置项，键名需为合法的 qteasy 配置键，例如
+        ``mode``、``asset_pool``、``invest_start``、``invest_end`` 等。
 
     Returns
     -------
-        1, 在live_trade模式或模式0下，进入实盘交易Shell
-        2, 在back_test模式或模式1下, 返回: loop_result
-        3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
+    dict or list
+        当 ``mode == 1``（回测模式）时通常返回包含回测结果的字典；
+        当 ``mode == 2``（优化模式）时通常返回包含多组参数结果的列表；
+        实盘模式与其他模式的具体返回结构详见 Operator.run() 与相关文档说明。
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> op = qt.Operator('dma')
+    >>> qt.run(op, mode=1)  # 以回测模式运行
     """
 
     # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，

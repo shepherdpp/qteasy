@@ -941,22 +941,12 @@ def _symbolised(acquired_data) -> pd.DataFrame:
 
 
 class DataType:
-    """
-    DataType class, 代表qteasy可以使用的历史数据类型。
+    """qteasy 中用于描述单一历史数据类型（名称、频率与资产类型）的核心对象。
 
-    qteasy的每一个历史数据类型由三组参数定义：
-    - name: 数据类型的名称
-    - freq: 数据的频率
-    - asset_type: 数据的资产类型
-    以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。
-    如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。
-
-    用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。
-
-    一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。
-
-    需要获取数据时，通过DataType.get_data_from_source()方法获取。
-
+    每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于
+    统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程，
+    并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档
+    「DataType 与历史数据类型管理」章节。
     """
 
     acquisition_types = [
