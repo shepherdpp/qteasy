@@ -941,22 +941,12 @@ def _symbolised(acquired_data) -> pd.DataFrame:
 
 
 class DataType:
-    """
-    DataType class, 代表qteasy可以使用的历史数据类型。
+    """qteasy 中用于描述单一历史数据类型（名称、频率与资产类型）的核心对象。
 
-    qteasy的每一个历史数据类型由三组参数定义：
-    - name: 数据类型的名称
-    - freq: 数据的频率
-    - asset_type: 数据的资产类型
-    以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。
-    如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。
-
-    用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。
-
-    一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。
-
-    需要获取数据时，通过DataType.get_data_from_source()方法获取。
-
+    每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于
+    统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程，
+    并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档
+    「DataType 与历史数据类型管理」章节。
     """
 
     acquisition_types = [
@@ -4686,9 +4676,18 @@ def get_reference_data_from_source(
     return reference_data_acquired
 
 
-def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_type=None, match_threshold=0.85):
+def find_history_data(
+        s: str,
+        match_description: bool = False,
+        fuzzy: bool = False,
+        freq: str = None,
+        asset_type: str = None,
+        match_threshold: float = 0.85,
+        table: Union[str, list[str], None] = None,
+        as_data_frame: bool = False,
+) -> Union[list[str], pd.DataFrame]:
     """ 根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
-    查找匹配的历史数据类型。
+    查找匹配的历史数据类型，支持以 DataFrame 形式返回更结构化的结果。
 
     Parameters
     ----------
@@ -4696,12 +4695,12 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
         一个字符串，用于查找或匹配历史数据类型
     match_description: bool, Default: False
         是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True
-         - False: 仅匹配数据名称
-         - True:  同时匹配数据描述
+        - False: 仅匹配数据名称
+        - True:  同时匹配数据描述
     fuzzy: bool, Default: False
         是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True
-         - False: 精确匹配数据名称
-         - True:  模糊匹配数据名称或数据描述
+        - False: 精确匹配数据名称
+        - True:  模糊匹配数据名称或数据描述
     freq: str, Default: None
         数据频率，如果提供，则只匹配该频率的数据
         可以输入单个频率，也可以输入逗号分隔的多个频率
@@ -4710,11 +4709,25 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
         可以输入单个证券类型，也可以输入逗号分隔的多个证券类型
     match_threshold: float, default 0.85
         匹配度阈值，匹配度超过该阈值的项目会被判断为匹配
+    table: str or list of str, Default: None
+        数据表名称过滤条件，如果提供，则只匹配来自这些表的数据类型，可以是单个表名或逗号分隔字符串
+    as_data_frame: bool, Default: False
+        - False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息
+        - True:  返回包含匹配结果详细信息的 DataFrame，不强制依赖打印输出
 
     Returns
     -------
-    data_id: list
-        匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据
+    data_id: list[str]
+        当 as_data_frame 为 False 时，匹配到的数据类型的 data_id 列表，可以用于 qt.get_history_data() 下载数据
+    pandas.DataFrame
+        当 as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，
+        至少包含下列列：
+            - name:        数据类型名称
+            - description: 数据类型中文描述
+            - freq:        频率
+            - asset_type:  资产类型
+            - table_name:  底层数据表名称
+            - column:      对应的数据字段名
 
     Examples
     --------
@@ -4762,7 +4775,8 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
 
     Raises
     ------
-    TypeError: 输入的s不是字符串，或者freq/asset_type不是字符串或列表
+    TypeError
+        输入的 s 不是字符串，或者 freq/asset_type/table 不是字符串或列表
     """
 
     if not isinstance(s, str):
@@ -4801,6 +4815,13 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
             err = TypeError(f'asset_type should be a string or a list, got {type(asset_type)} instead')
             raise err
         data_table_map = data_table_map.loc[data_table_map['asset_type'].isin(asset_type)]
+    if table is not None:
+        if isinstance(table, str):
+            table = str_to_list(table)
+        if not isinstance(table, list):
+            err = TypeError(f'table should be a string or a list, got {type(table)} instead')
+            raise err
+        data_table_map = data_table_map.loc[data_table_map['table_name'].isin(table)]
 
     data_table_map['n_matched'] = 0  # name列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
     data_table_map['d_matched'] = 0  # description列的匹配度，模糊匹配的情况下，匹配度为0～1之间的数字
@@ -4834,9 +4855,16 @@ def find_history_data(s, match_description=False, fuzzy=False, freq=None, asset_
     data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
     data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
     data_table_map = data_table_map[['dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description']]
-    # data_table_map.drop(columns=['n_matched', 'd_matched', 'matched'], inplace=True)
     data_table_map.index = data_table_map.index.get_level_values(level=0)
     data_table_map.index.name = 'data_id'
+
+    # as_data_frame=True 时，直接返回结构化结果 DataFrame
+    if as_data_frame:
+        result_df = data_table_map.copy()
+        result_df = result_df.rename(columns={'dtype_name': 'name'})
+        return result_df[['name', 'description', 'freq', 'asset_type', 'table_name', 'column']]
+
+    # 兼容旧行为：打印匹配结果并返回 data_id 列表
     print(f'matched following history data, \n'
           f'use "qt.get_history_data()" to load these historical data by its data_id:\n'
           f'------------------------------------------------------------------------')

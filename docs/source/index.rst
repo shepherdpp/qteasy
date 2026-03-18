@@ -22,7 +22,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - 创建日期: 2019, July, 16
-- 最新版本: `2.1.4`
+- 最新版本: `2.2.0`
 - License: BSD 3-Clause
 
 简介
@@ -178,6 +178,7 @@
    api/history_data.rst
    api/data_source.rst
    api/history_data_types.rst
+   api/HistoryPanel.rst
    api/data_types.rst
    api/built_in_strategies.rst
    api/Strategies.rst

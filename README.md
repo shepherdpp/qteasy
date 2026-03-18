@@ -93,7 +93,8 @@
 
 - 方便地从多渠道获取大量金融历史数据，进行数据清洗后以统一格式进行本地存储
 - 通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂信息，也只需要一行代码即可获取
-- 基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化
+- 基于`HistoryPanel` 三维历史数据面板统一管理多标的 / 多数据类型，直接在其上完成统计、滚动窗口、收益 / 波动率、K 线技术指标与蜡烛形态识别等计算
+- 基于`DataType` / `HistoryPanel` 的金融数据可视化、统计分析以及分析结果可视化
 - 数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_5_2.png)
@@ -255,7 +256,7 @@ qt.get_history_data(htypes='open, high, low, close',
 ```
 除了价格数据以外，`qteasy`还可以下载并管理包括财务报表、技术指标、基本面数据等在内的大量金融数据，详情请参见[qteasy文档](https://qteasy.readthedocs.io/zh-cn/latest/manage_data/1.%20overview.html)
 
-股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图。
+股票的数据下载后，使用`qt.candle()`可以显示股票数据K线图，也可以直接使用 `HistoryPanel` 在代码中对历史数据做统计与因子计算。
 
 ```python
 data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='IDX')
@@ -285,6 +286,37 @@ qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
 # 场外基金净值曲线图，复权净值，不显示移动均线
 qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
+
+### 使用 HistoryPanel 操作历史数据
+
+在掌握了基础取数之后，可以进一步使用 `HistoryPanel` 对历史数据做统计和因子计算，例如：
+
+```python
+import qteasy as qt
+
+# 直接获取 HistoryPanel（三维数据：标的 × 时间 × 数据类型）
+hp = qt.get_history_data(
+        htypes='open, high, low, close, vol',
+        shares='000300.SH',
+        start='20230101',
+        end='20231231',
+        as_data_frame=False,    # 返回 HistoryPanel
+)
+
+# 计算简单收益率和 20 日波动率
+ret = hp.returns(price_htype='close', method='simple')
+vol = hp.volatility(window=20, price_htype='close', annualize=True)
+
+# 叠加 20 日均线和 MACD 指标
+hp_ma = hp.kline.sma(window=20, price_htype='close')
+hp_ma_macd = hp_ma.kline.macd(price_htype='close')
+
+# 识别蜡烛形态（如锤头线）
+hammer = hp.candle_pattern('cdlhammer')
+print(hammer[hammer['000300.SH'] != 0].head())
+```
+
+通过 `HistoryPanel`，可以在多标的、多指标维度上统一管理和计算历史数据，然后根据需要随时切换为 `DataFrame`，与 pandas / sklearn / statsmodels 等生态工具协同使用。
 
 ![png](https://raw.githubusercontent.com/shepherdpp/qteasy/master/docs/source/img/output_3_1.png)
 

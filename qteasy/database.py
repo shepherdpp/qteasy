@@ -44,26 +44,13 @@ from .datatables import (
 
 
 class DataSource:
-    """ DataSource 对象管理存储在本地的历史数据文件或数据库.
+    """管理本地历史数据存储（文件或数据库）的统一入口对象。
 
-    通过DataSource对象，History模块可以容易地从本地存储的数据中读取并组装所需要的历史数据
-    并确保历史数据符合HistoryPanel的要求。
-    所有的历史数据必须首先从网络数据提供商处下载下来并存储在本地文件或数据库中，DataSource
-    对象会检查数据的格式，确保格式正确并删除重复的数据。
-    下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样
-    的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf,
-    fth(feather)，兼容的数据库包括mysql和MariaDB。
-    如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会
-    返回空DataFrame。
-    DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作
-
-    Attributes
-    ----------
-
-    Methods
-    -------
-    overview(print_out=True)
-        以表格形式列出所有数据表的当前数据状态
+    DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览，
+    并保证生成的数据结构可以被 HistoryPanel 与上层 API 正确消费；当某些表缺失时，
+    DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` 等函数完成维护。
+    支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」
+    相关章节。
 
     """
 

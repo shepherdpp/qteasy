@@ -37,6 +37,7 @@ from qteasy.core import (
     get_data_overview,
     refill_data_source,
     get_history_data,
+    get_kline,
     filter_stock_codes,
     filter_stocks,
     get_table_info,
@@ -112,15 +113,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.1.4'
+__version__ = '2.2.0'
 version_info = Namespace(
         major=2,
-        minor=1,
-        patch=4,
-        short=(2, 1),
-        full=(2, 1, 4),
-        string='2.1.4',
-        tuple=('2', '1', '4'),
+        minor=2,
+        patch=0,
+        short=(2, 2),
+        full=(2, 2, 0),
+        string='2.2.0',
+        tuple=('2', '2', '0'),
         releaselevel='beta',
 )
 
@@ -391,7 +392,7 @@ __all__ = [
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config', 'Parameter',
     'get_table_info', 'get_table_overview', 'get_start_up_settings', 'find_history_data', 'DataType', 'StgData',
-    'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting',
+    'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting', 'get_kline',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
     'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',
     'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',

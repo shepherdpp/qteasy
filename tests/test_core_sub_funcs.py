@@ -872,5 +872,204 @@ class TestGetHistoryDataRealData(unittest.TestCase):
                         self.skipTest(f'{dtype_name}@{freq} 所有 share 全为 NaN')
 
 
+class TestGetKlineAPI(unittest.TestCase):
+    """ 使用临时 DataSource 测试高层行情接口 qt.get_kline 的典型场景与边界行为。"""
+
+    def setUp(self):
+        """创建临时数据源并写入 stock_daily、stock_weekly 等表。"""
+        print('\n[TestGetKlineAPI] setUp: create temp DataSource and fill tables')
+        self.test_data_path = tempfile.mkdtemp(prefix='temp_test_get_kline_')
+        self.data_source = DataSource(source_type='file', file_loc=self.test_data_path)
+        # 固定日期范围与标的，便于断言
+        self.dates = pd.date_range('2023-01-03', '2023-01-20', freq='B')
+        self.weekly_dates = pd.date_range('2023-01-02', '2023-01-20', freq='W-MON')
+        self.shares = ['000001.SZ', '000002.SZ', '000651.SZ']
+        self.start_str = '20230103'
+        self.end_str = '20230120'
+        n = len(self.dates)
+        wn = len(self.weekly_dates)
+
+        # stock_daily
+        for share in self.shares:
+            o = np.random.RandomState(42).rand(n) * 10 + 10
+            h = o + np.random.RandomState(43).rand(n) * 2
+            l = o - np.random.RandomState(44).rand(n) * 2
+            c = (h + l) / 2
+            vol = np.random.RandomState(45).randint(1000, 10000, n)
+            data = pd.DataFrame({
+                'ts_code': [share] * n,
+                'trade_date': self.dates,
+                'open': o, 'high': h, 'low': l, 'close': c,
+                'pre_close': c, 'change': 0.0, 'pct_chg': 0.0,
+                'vol': vol.astype(float), 'amount': (vol * c).astype(float),
+            })
+            self.data_source.update_table_data('stock_daily', df=data, merge_type='update')
+
+        # stock_weekly
+        for share in self.shares:
+            o = np.random.RandomState(52).rand(wn) * 10 + 10
+            h = o + np.random.RandomState(53).rand(wn) * 2
+            l = o - np.random.RandomState(54).rand(wn) * 2
+            c = (h + l) / 2
+            vol = np.random.RandomState(55).randint(1000, 10000, wn)
+            data = pd.DataFrame({
+                'ts_code': [share] * wn,
+                'trade_date': self.weekly_dates,
+                'open': o, 'high': h, 'low': l, 'close': c,
+                'pre_close': c, 'change': 0.0, 'pct_chg': 0.0,
+                'vol': vol.astype(float), 'amount': (vol * c).astype(float),
+            })
+            self.data_source.update_table_data('stock_weekly', df=data, merge_type='update')
+
+        print(' temp path:', self.test_data_path, 'dates len:', n, 'shares:', self.shares)
+
+    def tearDown(self):
+        """删除临时目录。"""
+        if os.path.exists(self.test_data_path):
+            shutil.rmtree(self.test_data_path)
+        print('[TestGetKlineAPI] tearDown: removed', self.test_data_path)
+
+    def test_get_kline_single_share_daily_df(self):
+        """ 单标的日线 K 线，返回 DataFrame，列为标准 OHLCV。"""
+        print('\n[TestGetKlineAPI] single share daily df')
+        df = qteasy.get_kline(
+            self.shares[0],
+            start=self.start_str,
+            end=self.end_str,
+            freq='d',
+            data_source=self.data_source,
+        )
+        print('  df shape:', df.shape, 'columns:', df.columns.tolist())
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(list(df.columns), ['open', 'high', 'low', 'close', 'vol'])
+        self.assertEqual(len(df), len(self.dates))
+        self.assertFalse(df.isna().all(axis=0).any())
+
+    def test_get_kline_multi_share_dict(self):
+        """ 多标的日线 K 线，返回 Dict[str, DataFrame]。"""
+        print('\n[TestGetKlineAPI] multi share dict')
+        res = qteasy.get_kline(
+            self.shares,
+            start=self.start_str,
+            end=self.end_str,
+            freq='d',
+            data_source=self.data_source,
+        )
+        print('  keys:', list(res.keys()))
+        self.assertIsInstance(res, dict)
+        self.assertEqual(set(res.keys()), set(self.shares))
+        for sh, df in res.items():
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertEqual(list(df.columns), ['open', 'high', 'low', 'close', 'vol'])
+            self.assertEqual(len(df), len(self.dates))
+        # index 对齐
+        idx_sets = {tuple(df.index) for df in res.values()}
+        self.assertEqual(len(idx_sets), 1)
+
+    def test_get_kline_shares_string_and_list_equivalence(self):
+        """ shares 为列表或逗号字符串时结果等价。"""
+        print('\n[TestGetKlineAPI] shares list vs string')
+        res_list = qteasy.get_kline(
+            self.shares,
+            start=self.start_str,
+            end=self.end_str,
+            freq='d',
+            data_source=self.data_source,
+        )
+        res_str = qteasy.get_kline(
+            ','.join(self.shares),
+            start=self.start_str,
+            end=self.end_str,
+            freq='d',
+            data_source=self.data_source,
+        )
+        for sh in self.shares:
+            pd.testing.assert_frame_equal(res_list[sh], res_str[sh], check_exact=False, rtol=1e-5)
+        print('  list/string inputs produce identical DataFrames')
+
+    def test_get_kline_multi_share_as_panel(self):
+        """ 多标的日线 K 线，as_panel=True 返回 HistoryPanel。"""
+        from qteasy.history import HistoryPanel
+
+        print('\n[TestGetKlineAPI] multi share as HistoryPanel')
+        hp = qteasy.get_kline(
+            self.shares,
+            start=self.start_str,
+            end=self.end_str,
+            freq='d',
+            as_panel=True,
+            data_source=self.data_source,
+        )
+        print('  panel shares:', hp.shares, 'htypes:', hp.htypes, 'shape:', hp.values.shape)
+        self.assertIsInstance(hp, HistoryPanel)
+        self.assertEqual(hp.shares, self.shares)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close', 'vol'])
+        self.assertEqual(len(hp.hdates), len(self.dates))
+        self.assertEqual(hp.values.shape, (len(self.shares), len(self.dates), 5))
+
+    def test_get_kline_rows_without_start_end(self):
+        """ 仅 rows 参数而不提供 start/end 时当前不支持，应抛出错误。"""
+        print('\n[TestGetKlineAPI] rows without start/end (not supported yet)')
+        with self.assertRaises(Exception):
+            qteasy.get_kline(
+                self.shares[0],
+                rows=5,
+                freq='d',
+                data_source=self.data_source,
+            )
+
+    def test_get_kline_start_end_override_rows(self):
+        """ 同时提供 start/end 与 rows 时，以时间区间为准。"""
+        print('\n[TestGetKlineAPI] start/end override rows')
+        df = qteasy.get_kline(
+            self.shares[0],
+            start=self.start_str,
+            end=self.end_str,
+            rows=1,
+            freq='d',
+            data_source=self.data_source,
+        )
+        print('  df shape:', df.shape)
+        self.assertGreaterEqual(len(df), len(self.dates))
+
+    def test_get_kline_weekly_stock(self):
+        """ 周频股票 K 线，使用 stock_weekly 表。"""
+        print('\n[TestGetKlineAPI] weekly stock')
+        df = qteasy.get_kline(
+            self.shares[0],
+            start=self.weekly_dates[0].strftime('%Y%m%d'),
+            end=self.weekly_dates[-1].strftime('%Y%m%d'),
+            freq='w',
+            data_source=self.data_source,
+        )
+        print('  df shape:', df.shape)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(list(df.columns), ['open', 'high', 'low', 'close', 'vol'])
+        self.assertEqual(len(df), len(self.weekly_dates))
+
+    def test_get_kline_invalid_freq_raises(self):
+        """ 非法 freq 应抛出异常。"""
+        print('\n[TestGetKlineAPI] invalid freq raises')
+        with self.assertRaises(Exception):
+            qteasy.get_kline(
+                self.shares[0],
+                start=self.start_str,
+                end=self.end_str,
+                freq='INVALID',
+                data_source=self.data_source,
+            )
+
+    def test_get_kline_invalid_shares_type_raises(self):
+        """ shares 类型非法时抛出 TypeError。"""
+        print('\n[TestGetKlineAPI] invalid shares type raises')
+        with self.assertRaises(TypeError):
+            qteasy.get_kline(
+                123,
+                start=self.start_str,
+                end=self.end_str,
+                freq='d',
+                data_source=self.data_source,
+            )
+
 if __name__ == '__main__':
     unittest.main()

@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 project = 'qteasy'
 copyright = '2023, Jackie PENG'
 author = 'Jackie PENG'
-version = '2.1'
-release = '2.1.4'
+version = '2.2'
+release = '2.2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.mermaid',
     # 'sphinx-markdown-checkbox',
 ]
 
@@ -64,6 +65,11 @@ myst_enable_extensions = [
     "tasklist",  # enables task lists with checkboxes in markdown, like:
     # - [ ] Task 1
     # - [x] Task 2 (completed)
+]
+
+# Treat ```mermaid fenced code blocks in Markdown as mermaid directives
+myst_fence_as_directive = [
+    "mermaid",
 ]
 
 # -- Options for HTML output -------------------------------------------------

@@ -48,40 +48,12 @@ SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
 
 
 class Operator:
-    """ Operator(交易员)类，用于生成Operator对象，qteasy的核心对象。
+    """qteasy 中的核心「交易员」对象，用于承载策略组并在统一时间表上生成交易信号。
 
-    Operator是一个策略容器，它包含一系列交易策略，保存每一个交易策略所需的历史数据，并且可以调用所有交易策略，生成交易信号，
-    同时根据保存的规则把所有交易策略生成的信号混合起来，形成一组最终的交易信号。就像一个交易员在实际交易中的行为一样。
-
-    创建一个Operator对象时，需要给出一组交易策略，并设定好交易员的交易模式和信号模式，交易模式和信号模式都是Operator对象最重要
-    的属性，他们共同决定了交易员的行为模式:
-
-    Properties
-    ----------
-    strategies:
-        一个列表，Operator对象包含的策略对象，可以给出自定义策略对象或内置
-        交易策略的id，
-        例如：
-         - ['macd', 'dma']:
-            一个包含两个内置交易策略的列表
-         - [ExampleStrategy(), 'macd']
-            一个包含两个交易策略，其中第一个是自定义策略的列表
-    op_type:
-        运行类型，Operator对象有两种不同的运行类型：
-         - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
-                            不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
-         - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
-                            交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
-                            特殊交易策略，也可以用于实时交易
-
-    Methods
-    -------
-    add_strategy():
-        向Operator对象中添加一个交易策略
-    add_strategies():
-        向Operator对象中添加多个交易策略
-
-
+    Operator 负责管理一个或多个策略组，准备并缓存运行所需的历史数据，按照运行频率
+    与时机调用各策略生成信号，并按组内/组间合并规则将信号合成为最终的交易指令，
+    可用于回测、优化和实盘运行。关于 Operator 与 Strategy / Group 的关系、run_freq /
+    run_timing 单一来源等架构细节，详见文档「Operator / Strategy / Group 架构」章节。
     """
 
     def __init__(self,
@@ -94,52 +66,49 @@ class Operator:
                  run_freq: str = 'd',
                  run_timing: str = 'close',
                  ) -> None:
-        """ 生成一个Operator对象
+        """生成一个 Operator 对象，并初始化其策略组、运行频率与信号模式等关键属性。
 
-        parameters
+        Parameters
         ----------
-        strategies : str, Strategy, list of str or Strategy
-            用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
-            如果不给出strategies，则会生成一个空的Operator对象
+        strategies : str or BaseStrategy or type or list of (str or BaseStrategy or type), optional
+            用于生成交易信号的交易策略清单，可以是内置策略 ID 字符串、自定义策略实例
+            或策略类本身；列表中可混合使用多种形式。为空时会创建一个暂不包含策略的
+            Operator。
         name : str, optional
-            Operator对象的名称
-        signal_type : str, {'pt', 'ps', 'vs'}, default 'pt'
-            交易信号模式，Operator支持为每个策略组设置三种不同的信号模式之一，分别如下：
-                - PT：positional target，生成的信号代表某种股票的目标仓位
-                - PS：proportion signal，比例买卖信号，代表每种股票的买卖百分比
-                - VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
-            在不同的信号模式下，交易信号代表不同的含义，交易的执行有所不同，具体含义见文档
-        op_type : str, {'batch', 'stepwise'}, default 'batch'  deprecated
-            运行类型，Operator对象有两种不同的运行类型：
-                - batch/b:         批量信号模式，此模式下交易信号是批量生成的，速度快效率高，但是
-                                   不支持某些特殊交易策略的模拟回测交易，也不支持实时交易
-                - stepwise/step/s: 实时信号模式，此模式下使用最近的历史数据和交易相关数据生成一条
-                                   交易信号，生成的交易信号考虑当前持仓及最近的交易结果，支持各种
-                                   特殊交易策略，也可以用于实时交易
-        group_merge_type : str, {'None', 'and', 'or'}, default 'None'
-            交易策略组的合并方式，决定了当一个Operator对象中包含多个交易策略组时，如何将这些策略组
-            生成的交易信号进行合并。可选的合并方式包括：
-                - None: 每个策略组独立生成交易信号，同一时刻生成的交易信号会分别独立执行
-                - and: 同一时刻不同策略组运行生成的信号会被加总后合并执行
-                - or:  同一时刻不同策略组运行生成的信号会被相乘后合并执行
-        run_freq: str, default 'd'
-            同时设置Operator对象中所有交易策略的运行频率
-        run_timing: str, default 'close'
-            同时设置Operator对象中所有交易策略的运行时机
+            Operator 对象名称，用于区分不同交易员实例，亦会体现在日志与 report 中。
+        signal_type : {'pt', 'ps', 'vs'} or None, default 'pt'
+            组内策略的交易信号模式：
+                - 'pt'：position target，信号表示目标持仓权重；
+                - 'ps'：proportional signal，信号表示相对总资产的买卖比例；
+                - 'vs'：value/volume signal，信号表示固定金额或数量的买卖指令。
+            详细含义与执行差异见文档中 PT/PS/VS 相关章节。
+        op_type : {'batch', 'stepwise'} or None, default 'batch', deprecated
+            运行类型；当前版本主要用于兼容旧代码，新实现以 Group 运行时间表为准。
+        group_merge_type : {'None', 'and', 'or'}, default 'None'
+            多个策略组在同一时间点生成信号时的合并方式：
+                - 'None'：各组信号独立执行；
+                - 'and'：各组信号按加总方式合并；
+                - 'or'：各组信号按相乘方式合并。
+        run_freq : str, default 'd'
+            新增策略时默认使用的运行频率字符串，需为合法时间频率之一（如 'd'、'30min' 等）。
+        run_timing : str, default 'close'
+            新增策略时默认使用的运行时机（如 'open'、'close'），决定信号在每个频率内的触发时点。
+
+        Returns
+        -------
+        Operator
+            新构建的 Operator 对象。
 
         Examples
         --------
         >>> import qteasy as qt
-        >>> op = Operator('dma, macd')
-        Operator([dma, macd], 'batch')
-        >>> op = Operator(['dma', 'macd'])
-        Operator([dma, macd], 'batch')
+        >>> op = qt.Operator('dma, macd')
+        >>> op.strategy_ids
+        ['dma', 'macd']
 
-        >>> stg_dma = qt.built_in.DMA
-        >>> stg_macd = qt.built_in.MACD
-        >>> op = Operator([stg_dma, stg_macd])
-        Operator([dma, macd], 'pt', 'batch')
-
+        >>> op2 = qt.Operator(['dma', 'macd'], signal_type='pt', run_freq='d', run_timing='close')
+        >>> isinstance(op2, qt.Operator)
+        True
         """
 
         # 全局 signal 行号（与 op_signal_index 对齐），用于 tracing 与 process data 对齐

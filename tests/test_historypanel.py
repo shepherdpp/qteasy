@@ -24,6 +24,7 @@ from qteasy.datatypes import (
     DataType,
 )
 from qteasy.history import (
+    HistoryPanel,
     stack_dataframes,
     ffill_3d_data,
     get_history_data_packages
@@ -1491,6 +1492,526 @@ class TestGetHistoryDataPackages(unittest.TestCase):
                     start='2024-01-01',
                     end='2024-01-10'
             )
+
+
+class TestHistoryPanelStats(unittest.TestCase):
+    """ 测试 HistoryPanel 的基础统计方法 describe/mean/std/min/max。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelStats] setUp basic HistoryPanel for stats')
+        # 构造一个小而可手工验证的 HistoryPanel
+        # shares: s1, s2; dates: 3; htypes: close, open
+        values = np.array(
+                [
+                    [[1.0, 4.0],
+                     [2.0, 5.0],
+                     [3.0, 6.0]],
+                    [[2.0, 1.0],
+                     [4.0, 3.0],
+                     [6.0, 5.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03']
+        htypes = ['close', 'open']
+        self.hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+    def test_mean_by_share_and_htype(self):
+        """ mean(by='share'/'htype') 应按约定轴向聚合，并返回 DataFrame。"""
+        print('\n[TestHistoryPanelStats] mean by share and by htype')
+        hp = self.hp
+
+        # by='share'：对每只股票在时间轴上求均值，结果形状 (shares, htypes)
+        mean_by_share = hp.mean(by='share')
+        print('  mean_by_share:\n', mean_by_share)
+        self.assertIsInstance(mean_by_share, pd.DataFrame)
+        self.assertEqual(list(mean_by_share.index), hp.shares)
+        self.assertEqual(list(mean_by_share.columns), hp.htypes)
+        # 手工计算期望值
+        expected_s1_close = np.mean([1.0, 2.0, 3.0])
+        expected_s1_open = np.mean([4.0, 5.0, 6.0])
+        expected_s2_close = np.mean([2.0, 4.0, 6.0])
+        expected_s2_open = np.mean([1.0, 3.0, 5.0])
+        self.assertAlmostEqual(mean_by_share.loc['s1', 'close'], expected_s1_close)
+        self.assertAlmostEqual(mean_by_share.loc['s1', 'open'], expected_s1_open)
+        self.assertAlmostEqual(mean_by_share.loc['s2', 'close'], expected_s2_close)
+        self.assertAlmostEqual(mean_by_share.loc['s2', 'open'], expected_s2_open)
+
+        # by='htype'：对每个 htype 在股票轴上求均值，结果形状 (htypes, shares)
+        mean_by_htype = hp.mean(by='htype')
+        print('  mean_by_htype:\n', mean_by_htype)
+        self.assertIsInstance(mean_by_htype, pd.DataFrame)
+        self.assertEqual(list(mean_by_htype.index), hp.htypes)
+        self.assertEqual(list(mean_by_htype.columns), hp.shares)
+        # close: (s1,s2) 在所有时间上的均值再按 share 维度聚合
+        expected_close_s1 = expected_s1_close
+        expected_close_s2 = expected_s2_close
+        self.assertAlmostEqual(mean_by_htype.loc['close', 's1'], expected_close_s1)
+        self.assertAlmostEqual(mean_by_htype.loc['close', 's2'], expected_close_s2)
+
+        # 非法 by 值应抛出 ValueError
+        with self.assertRaises(ValueError):
+            hp.mean(by='wrong_axis')
+
+    def test_std_min_max_by_share(self):
+        """ std/min/max(by='share') 返回形状正确，且数值与 numpy 结果一致。"""
+        print('\n[TestHistoryPanelStats] std/min/max by share')
+        hp = self.hp
+
+        std_by_share = hp.std(by='share')
+        min_by_share = hp.min(by='share')
+        max_by_share = hp.max(by='share')
+        print('  std_by_share:\n', std_by_share)
+        print('  min_by_share:\n', min_by_share)
+        print('  max_by_share:\n', max_by_share)
+
+        # 形状检查
+        for df in [std_by_share, min_by_share, max_by_share]:
+            self.assertIsInstance(df, pd.DataFrame)
+            self.assertEqual(list(df.index), hp.shares)
+            self.assertEqual(list(df.columns), hp.htypes)
+
+        # 数值检查（使用 numpy 手算）
+        data = hp.values
+        # share s1, close 系列: [1,2,3]
+        s1_close = data[0, :, 0]
+        s1_open = data[0, :, 1]
+        s2_close = data[1, :, 0]
+        s2_open = data[1, :, 1]
+        self.assertAlmostEqual(std_by_share.loc['s1', 'close'], np.std(s1_close, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s1', 'open'], np.std(s1_open, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s2', 'close'], np.std(s2_close, ddof=1))
+        self.assertAlmostEqual(std_by_share.loc['s2', 'open'], np.std(s2_open, ddof=1))
+        self.assertEqual(min_by_share.loc['s1', 'close'], np.min(s1_close))
+        self.assertEqual(max_by_share.loc['s2', 'open'], np.max(s2_open))
+
+    def test_describe_by_share_and_global(self):
+        """ describe(by='share'/None) 应返回约定结构，并与 pandas.describe 保持一致。"""
+        print('\n[TestHistoryPanelStats] describe by share and global')
+        hp = self.hp
+
+        desc_by_share = hp.describe(by='share')
+        print('  desc_by_share:\n', desc_by_share)
+        self.assertIsInstance(desc_by_share, pd.DataFrame)
+        # index 为 shares，columns 为 MultiIndex[htype, stat]
+        self.assertEqual(list(desc_by_share.index), hp.shares)
+        self.assertTrue(isinstance(desc_by_share.columns, pd.MultiIndex))
+        self.assertEqual(sorted(set(l[0] for l in desc_by_share.columns)), sorted(hp.htypes))
+
+        # 用单只股票 + pandas.DataFrame.describe 比较一个 htype 的统计量
+        df_s1 = hp.slice_to_dataframe(share='s1')
+        pandas_desc = df_s1['close'].describe()
+        for stat in ['mean', 'std', 'min', 'max']:
+            self.assertAlmostEqual(
+                    desc_by_share.loc['s1', ('close', stat)],
+                    pandas_desc[stat],
+            )
+
+        # 全局 describe(by=None) 只返回一行，全局样本池描述
+        desc_global = hp.describe(by=None)
+        print('  desc_global:\n', desc_global)
+        self.assertIsInstance(desc_global, pd.DataFrame)
+        self.assertEqual(desc_global.shape[0], 1)
+        for stat in ['mean', 'std', 'min', 'max']:
+            self.assertIn(stat, desc_global.columns)
+
+
+class TestHistoryPanelToShareFrame(unittest.TestCase):
+    """ 测试 HistoryPanel.to_share_frame 语法糖行为。"""
+
+    def test_to_share_frame_basic(self):
+        """ 单股票全指标切片，index 为 hdates，columns 为全部 htypes。"""
+        print('\n[TestHistoryPanelToShareFrame] basic to_share_frame')
+        values = np.array(
+                [
+                    [[1.0, 2.0, 3.0],
+                     [4.0, 5.0, 6.0]],
+                    [[7.0, 8.0, 9.0],
+                     [10.0, 11.0, 12.0]],
+                ]
+        )
+        shares = ['000001.SZ', '000002.SZ']
+        hdates = ['2023-01-03', '2023-01-04']
+        htypes = ['open', 'high', 'low']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        df = hp.to_share_frame('000001.SZ')
+        print('  df shape:', df.shape, 'index:', df.index.tolist(), 'columns:', df.columns.tolist())
+        expected = hp.slice_to_dataframe(share='000001.SZ')
+        pd.testing.assert_frame_equal(df, expected)
+        self.assertEqual(list(df.index), list(hp.hdates))
+        self.assertEqual(list(df.columns), htypes)
+
+    def test_to_share_frame_invalid_share_raises(self):
+        """ 非法 share 时应抛出 KeyError。"""
+        print('\n[TestHistoryPanelToShareFrame] invalid share raises')
+        values = np.ones((1, 2, 2))
+        shares = ['000001.SZ']
+        hdates = ['2023-01-03', '2023-01-04']
+        htypes = ['open', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        with self.assertRaises(KeyError):
+            hp.to_share_frame('000002.SZ')
+
+
+class TestHistoryPanelRolling(unittest.TestCase):
+    """ 测试 HistoryPanel.rolling 与 HistoryPanelRolling 的基本行为。"""
+
+    def test_rolling_mean_basic(self):
+        """ 简单滚动均值：对每个 (share, htype) 序列沿时间滚动。"""
+        print('\n[TestHistoryPanelRolling] basic rolling mean')
+        values = np.array(
+                [
+                    [[1.0, 10.0],
+                     [3.0, 14.0],
+                     [5.0, 18.0],
+                     [7.0, 22.0]],
+                    [[2.0, 20.0],
+                     [4.0, 24.0],
+                     [6.0, 28.0],
+                     [8.0, 32.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04']
+        htypes = ['close', 'open']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        rolling_hp = hp.rolling(window=2).mean()
+        print('  rolling mean values:\n', rolling_hp.values)
+
+        # 形状与标签不变
+        self.assertEqual(rolling_hp.shape, hp.shape)
+        self.assertEqual(rolling_hp.shares, shares)
+        self.assertEqual(rolling_hp.htypes, htypes)
+        self.assertEqual(rolling_hp.hdates, list(pd.to_datetime(hdates)))
+
+        # 对单个序列使用 pandas 计算期望结果进行对比
+        s1_close = pd.Series([1.0, 3.0, 5.0, 7.0], index=pd.to_datetime(hdates))
+        expected = s1_close.rolling(window=2, min_periods=2).mean().values
+        # s1, close 对应 level=0, htype=0
+        self.assertTrue(np.allclose(rolling_hp.values[0, :, 0], expected, equal_nan=True))
+
+        # 非法 window / by 参数抛出 ValueError
+        with self.assertRaises(ValueError):
+            hp.rolling(window=0)
+        with self.assertRaises(ValueError):
+            hp.rolling(window=2, by='wrong')
+
+
+class TestHistoryPanelReturnsAndRisk(unittest.TestCase):
+    """ 测试 HistoryPanel.returns 与 volatility。"""
+
+    def test_returns_simple_dataframe(self):
+        """ returns(method='simple') 返回 DataFrame，index=时间、columns=shares。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] returns simple as DataFrame')
+        # 价格 [1, 2, 4] -> 简单收益率 [nan, 1.0, 1.0]
+        values = np.array(
+                [
+                    [[1.0], [2.0], [4.0]],   # s1 close
+                    [[2.0], [4.0], [8.0]],   # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret_df = hp.returns(price_htype='close', method='simple', as_panel=False)
+        print('  ret_df:\n', ret_df)
+
+        self.assertIsInstance(ret_df, pd.DataFrame)
+        self.assertEqual(list(ret_df.index), list(pd.to_datetime(hdates)))
+        self.assertEqual(list(ret_df.columns), shares)
+        # 第一行无前值，应为 NaN
+        self.assertTrue(np.isnan(ret_df.loc[ret_df.index[0], 's1']))
+        self.assertTrue(np.isnan(ret_df.loc[ret_df.index[0], 's2']))
+        # s1: (2-1)/1=1, (4-2)/2=1
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[1], 's1'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[2], 's1'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[1], 's2'], 1.0)
+        self.assertAlmostEqual(ret_df.loc[ret_df.index[2], 's2'], 1.0)
+
+    def test_returns_log_and_as_panel(self):
+        """ returns(method='log', as_panel=True) 返回 HistoryPanel，htype 为 ret_close。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] returns log as_panel')
+        values = np.array(
+                [
+                    [[np.e], [np.e ** 2]],   # s1 close: 1期后 e^2/e = e, log(e)=1
+                    [[1.0], [2.0]],          # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret_hp = hp.returns(price_htype='close', method='log', as_panel=True)
+        print('  ret_hp.htypes:', ret_hp.htypes, 'shape:', ret_hp.shape)
+
+        self.assertIsInstance(ret_hp, HistoryPanel)
+        self.assertEqual(ret_hp.shares, shares)
+        self.assertEqual(ret_hp.hdates, list(pd.to_datetime(hdates)))
+        self.assertEqual(ret_hp.htypes, ['ret_close'])
+        self.assertEqual(ret_hp.shape, (2, 2, 1))
+        # 首期无前值 NaN
+        self.assertTrue(np.isnan(ret_hp.values[0, 0, 0]))
+        self.assertTrue(np.isnan(ret_hp.values[1, 0, 0]))
+        # s1 log(e^2/e)=1
+        self.assertAlmostEqual(ret_hp.values[0, 1, 0], 1.0)
+        # s2 log(2/1)=ln2
+        self.assertAlmostEqual(ret_hp.values[1, 1, 0], np.log(2.0))
+
+    def test_volatility_basic(self):
+        """ volatility 基于 returns 的滚动标准差，annualize 可关。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] volatility basic')
+        # 5 个时间点，便于 window=3 滚动
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],  # s1 close
+                    [[10.0], [11.0], [12.0], [13.0], [14.0]],  # s2 close
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        vol_df = hp.volatility(window=3, price_htype='close', annualize=False, as_panel=False)
+        print('  vol_df:\n', vol_df)
+
+        self.assertIsInstance(vol_df, pd.DataFrame)
+        self.assertEqual(list(vol_df.columns), shares)
+        # 第一行 NaN，第二行起开始有滚动标准差（考虑 returns 首行 NaN 的影响）
+        self.assertTrue(np.isnan(vol_df.iloc[0]['s1']))
+        self.assertTrue(np.isnan(vol_df.iloc[1]['s1']))
+        # 第 3 行开始（索引 2）有首个有效波动率
+        ret_s1 = hp.returns(price_htype='close', method='simple', as_panel=False)['s1']
+        expected_std_2 = ret_s1.iloc[0:3].std()
+        self.assertAlmostEqual(vol_df.iloc[2]['s1'], expected_std_2)
+
+    def test_alpha_beta_basic(self):
+        """ alpha_beta 基本回归：构造严格线性关系，beta≈2，alpha≈0。"""
+        print('\n[TestHistoryPanelReturnsAndRisk] alpha_beta basic')
+        # 人为构造收益率: r_b=[0.1,0.2,0.3,0.4], r_s=2*r_b
+        r_b = np.array([0.1, 0.2, 0.3, 0.4])
+        r_s = 2 * r_b
+        # 将收益率积分为价格序列 p_t = p_{t-1} * (1 + r_t)
+        bench_prices = [1.0]
+        stock_prices = [1.0]
+        for rb, rs in zip(r_b, r_s):
+            bench_prices.append(bench_prices[-1] * (1.0 + rb))
+            stock_prices.append(stock_prices[-1] * (1.0 + rs))
+        bench_dates = pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'])
+        bench_price = pd.Series(bench_prices, index=bench_dates)
+
+        values = np.array(
+                [
+                    [[stock_prices[0]], [stock_prices[1]], [stock_prices[2]], [stock_prices[3]], [stock_prices[4]]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        res = hp.alpha_beta(benchmark=bench_price, price_htype='close', method='simple', freq=None, annualize=False)
+        print('  alpha_beta result:\n', res)
+
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertEqual(list(res.index), shares)
+        # 有效观测点为 4（首期 NaN 不参与）
+        self.assertEqual(res.loc['s1', 'n_obs'], 4)
+        # beta≈2, alpha≈0, R^2≈1
+        self.assertAlmostEqual(res.loc['s1', 'beta'], 2.0, places=6)
+        self.assertAlmostEqual(res.loc['s1', 'alpha'], 0.0, places=6)
+        self.assertAlmostEqual(res.loc['s1', 'r2'], 1.0, places=6)
+
+
+class TestHistoryPanelKlineIndicators(unittest.TestCase):
+    """ 测试 HistoryPanel.kline 访问器：sma、ema。"""
+
+    def test_kline_sma(self):
+        """ kline.sma 在 Panel 后追加 sma_{window} 列。"""
+        print('\n[TestHistoryPanelKlineIndicators] kline.sma')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                    [[10.0], [11.0], [12.0], [13.0], [14.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        out = hp.kline.sma(window=2, price_htype='close')
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+
+        self.assertEqual(out.htypes, ['close', 'sma_2'])
+        self.assertEqual(out.shares, shares)
+        self.assertEqual(out.shape, (2, 5, 2))
+        # s1 close: [1,2,3,4,5]，sma(2): [nan,1.5,2.5,3.5,4.5]
+        self.assertTrue(np.isnan(out.values[0, 0, 1]))
+        self.assertAlmostEqual(out.values[0, 1, 1], 1.5)
+        self.assertAlmostEqual(out.values[0, 2, 1], 2.5)
+
+    def test_kline_ema(self):
+        """ kline.ema 在 Panel 后追加 ema_{span} 列。"""
+        print('\n[TestHistoryPanelKlineIndicators] kline.ema')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        out = hp.kline.ema(span=2, price_htype='close')
+        print('  out.htypes:', out.htypes)
+
+        self.assertEqual(out.htypes, ['close', 'ema_2'])
+        self.assertEqual(out.shape, (1, 5, 2))
+        # 首点 EMA 常为 NaN 或等于价格，后续为指数均
+        self.assertFalse(np.all(np.isnan(out.values[0, :, 1])))
+
+
+class TestHistoryPanelTAApplyAndPatterns(unittest.TestCase):
+    """ 测试 HistoryPanel.apply_ta 与 candle_pattern。"""
+
+    def test_apply_ta_sma_as_panel(self):
+        """ apply_ta('sma') 应等价于对每只股票调用 tafuncs.sma，并在 Panel 中追加一列。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] apply_ta sma as_panel')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                    [[2.0], [3.0], [4.0], [5.0], [6.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        hp_out = hp.apply_ta('sma', htype='close', as_panel=True, timeperiod=2)
+        print('  hp_out.htypes:', hp_out.htypes, 'shape:', hp_out.shape)
+
+        # 原 htypes 保留，并新增一个以 func_name 命名的列
+        self.assertIn('close', hp_out.htypes)
+        self.assertIn('sma', hp_out.htypes)
+        self.assertEqual(hp_out.shares, shares)
+
+        import qteasy.tafuncs as tafuncs
+        idx = pd.to_datetime(hdates)
+        for i, share in enumerate(shares):
+            s = pd.Series(values[i, :, 0], index=idx)
+            expected = tafuncs.sma(s, timeperiod=2)
+            got = hp_out.values[i, :, hp_out.htypes.index('sma')]
+            self.assertTrue(np.allclose(got, expected.values, equal_nan=True))
+
+    def test_apply_ta_invalid_name_raises(self):
+        """ func_name 不存在时应抛出 ValueError。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] apply_ta invalid func raises')
+        values = np.ones((1, 3, 1))
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close'])
+        with self.assertRaises(ValueError):
+            hp.apply_ta('non_exist_func', htype='close', as_panel=True)
+
+    def test_candle_pattern_basic(self):
+        """ candle_pattern 返回整型信号矩阵，与 tafuncs 中形态函数结果一致。"""
+        print('\n[TestHistoryPanelTAApplyAndPatterns] candle_pattern basic')
+        # 构造一个简单的 OHLC 序列，这里不强求真是 hammer，只验证调用与对齐行为
+        values = np.array(
+                [
+                    [
+                        [10.0, 11.0, 9.5, 10.5],
+                        [10.5, 11.5, 10.0, 11.0],
+                    ],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02']
+        htypes = ['open', 'high', 'low', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        import qteasy.tafuncs as tafuncs
+        idx = pd.to_datetime(hdates)
+        open_s = pd.Series([10.0, 10.5], index=idx)
+        high_s = pd.Series([11.0, 11.5], index=idx)
+        low_s = pd.Series([9.5, 10.0], index=idx)
+        close_s = pd.Series([10.5, 11.0], index=idx)
+        expected = tafuncs.cdlhammer(open_s, high_s, low_s, close_s)
+
+        df = hp.candle_pattern('cdlhammer', as_panel=False)
+        print('  candle_pattern df:\n', df)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(list(df.index), list(idx))
+        self.assertEqual(list(df.columns), shares)
+        self.assertTrue(np.allclose(df['s1'].values, expected.values))
+
+
+class TestHistoryPanelIntegration(unittest.TestCase):
+    """ HistoryPanel 统计 / 因子 / K 线 API 的简单集成验收。"""
+
+    def test_factor_flow_end_to_end(self):
+        """ 从价格 → 收益率 / 波动率 → 技术指标 → 形态识别 的最小闭环。"""
+        print('\n[TestHistoryPanelIntegration] factor flow end-to-end')
+        # 构造两只股票的 OHLC 序列
+        values = np.array(
+                [
+                    # s1: open, high, low, close
+                    [
+                        [10.0, 11.0, 9.5, 10.5],
+                        [10.5, 11.5, 10.0, 11.0],
+                        [11.0, 12.0, 10.5, 11.5],
+                        [11.5, 12.5, 11.0, 12.0],
+                        [12.0, 13.0, 11.5, 12.5],
+                    ],
+                    # s2: open, high, low, close
+                    [
+                        [20.0, 21.0, 19.5, 20.5],
+                        [20.5, 21.5, 20.0, 21.0],
+                        [21.0, 22.0, 20.5, 21.5],
+                        [21.5, 22.5, 21.0, 22.0],
+                        [22.0, 23.0, 21.5, 22.5],
+                    ],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['open', 'high', 'low', 'close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+        print('  hp shape:', hp.shape, 'shares:', hp.shares, 'htypes:', hp.htypes)
+
+        # 1) 收益率 & 波动率
+        ret_df = hp.returns(price_htype='close', method='simple', as_panel=False)
+        vol_df = hp.volatility(window=3, price_htype='close', annualize=False, as_panel=False)
+        print('  returns:\n', ret_df)
+        print('  volatility:\n', vol_df)
+
+        self.assertEqual(list(ret_df.columns), shares)
+        self.assertEqual(list(vol_df.columns), shares)
+        self.assertEqual(list(ret_df.index), list(pd.to_datetime(hdates)))
+
+        # 2) K 线指标（SMA）
+        hp_sma = hp.kline.sma(window=2, price_htype='close')
+        print('  hp_sma.htypes:', hp_sma.htypes)
+        self.assertIn('sma_2', hp_sma.htypes)
+        self.assertEqual(hp_sma.shares, shares)
+        self.assertEqual(hp_sma.hdates, list(pd.to_datetime(hdates)))
+
+        # 3) 通过 apply_ta 再生成一条 SMA 因子
+        hp_ta = hp_sma.apply_ta('sma', htype='close', as_panel=True, timeperiod=3)
+        print('  hp_ta.htypes:', hp_ta.htypes)
+        self.assertIn('sma', hp_ta.htypes)
+
+        # 4) 蜡烛形态识别
+        pattern_df = hp.candle_pattern('cdlhammer', as_panel=False)
+        print('  candle_pattern:\n', pattern_df)
+        self.assertIsInstance(pattern_df, pd.DataFrame)
+        self.assertEqual(list(pattern_df.columns), shares)
+        self.assertEqual(list(pattern_df.index), list(pd.to_datetime(hdates)))
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional
+from typing import Union, Iterable, Any, Optional, Callable
 
 from qteasy.database import DataSource
 
@@ -36,97 +36,41 @@ from qteasy.datatypes import (
 
 
 class HistoryPanel():
-    """qteasy 量化投资系统使用的主要历史数据的数据类型
+    """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
 
-    一个HistoryPanel对象其本质是一个numpy.ndarray，这个ndarray是一个
-    三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。历史数据类型可以包括
-    类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
+    HistoryPanel 本质是一个三维 ``numpy.ndarray``，三条轴分别表示标的（shares）、时间
+    （hdates）和历史数据类型（htypes），支持按任意轴灵活切片、重标记以及与
+    pandas DataFrame 之间的互相转换，并作为 get_history_data 与可视化栈
+    （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
 
-    HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为：
-        axis 0: levels/层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
-        axis 1: rows/行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
-        axis 2: columns/列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
-
-    使用HistoryPanel类，用户可以：
-    1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
-       numpy ndarray。
-        为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates slicer]的顺序
-        传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活：
-        * 可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如：
-            HistoryPanel['close']: 选择所有股票品种的全部历史收盘价
-            HistoryPanel[,'000300.SH']: 选择000300股票品种的所有历史数据
-        * 可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如：
-            HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价
-        * 可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如：
-            HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据
-        * 可以通过int列表或str列表指定某几个品种或类型的数据，如：
-            HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', 'low']]
-            选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型
-        * 也可以通过常见的slicer对象来选择， 如：
-            HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据
-        * 上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如：
-            要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现：
-            HistoryPanel['close:high', ['000300', '000500', '000700'], '20100101:20101231']
-    2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）
-        HistoryPanel.shares     输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称
-        HistoryPanel.hdates     输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间
-        HistoryPanel.htypes     输出一个列表，包含按顺序排列的所有列标签，即所数据类型
-        HistoryPanel.levels     输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
-        HistoryPanel.columns    输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
-        HistoryPanel.rows       输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）
-    3, 方便地打印HistoryPanel的相关信息
-    4, 方便地打印及格式化输出HistoryPanel的内容
-    5, 方便地转化为 pandas DataFrame对象
-        HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
-        HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
-    6, 方便地由多个pandas DataFrame对象组合而成
-
-    Properties
-    ----------
-    is_empty: bool, 该属性返回一个bool值，表示HistoryPanel是否为空
-    values: np.ndarray, 该属性返回一个numpy ndarray，包含HistoryPanel的全部数据
-    levels: dict, 该属性返回一个dict， 包含所有层标签(股票代码)及其对应的层编号
-    rows: dict, 该属性返回一个dict， 包含所有行标签(交易日期)及其对应的行编号
-    columns: dict, 该属性返回一个dict， 包含所有列标签(数据类型)及其对应的列编号
-    shares: list, 该属性包含所有层标签，即所有股票代码
-    hdates: list, 该属性包含所有行标签，即所有日期时间
-    htypes: list, 该属性包含所有列标签，即所有历史数据类型
-
-    Methods
-    -------
-    __getitem__(self, slicer)
-        该方法用于对HistoryPanel进行切片，返回一个numpy ndarray
-    re_label(self, levels=None, rows=None, columns=None)
-        该方法用于重新设置HistoryPanel的标签，如果不输入任何参数，则会自动重新生成标签
-    join(self, other, how='outer', axis=0)
-        该方法用于将两个HistoryPanel对象合并为一个HistoryPanel对象
-    slice_to_dataframe(self, slicer)
-        该方法用于将HistoryPanel的一个切片转化为pandas DataFrame对象
-    flatten_to_dataframe(self, level=None, htype=None)
-        该方法用于将HistoryPanel转化为一个multi-index DataFrame对象
-
+    更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
 
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
-        """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
+        """初始化 HistoryPanel 对象，并根据输入的数据与轴标签构建三维历史数据结构。
 
-        在生成一个HistoryPanel的时候，可以同时输入层标签（股票代码）、行标签（日期时间）和列标签（历史数据类型）
-        如果不输入这些数据，HistoryPanel会自动生成标签。在某些qteasy应用中，要求输入正确的标签，如果标签不正确
-        可能导致报错。
+        可以在创建时同时给出标的（levels）、时间（rows）和数据类型（columns）标签，
+        若未显式给出则按数据形状自动补全；当仅给出部分标签或数组维度不足三维时，会根据
+        输入自动推断缺失维度并重塑为 ``(level, row, column)`` 结构。关于标签约定与
+        典型创建方式，详见文档「HistoryPanel 类」章节。
 
         Parameters
         ----------
-        values: ndarray
-            一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
-            如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        levels: str or [str] or (str)
-            HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
-        rows: str or [str] or (str)
-            HistoryPanel的时间日期标签。
-            datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
-            行标签代表每一条数据对应的历史时间戳
-        columns: str or [str] or (str)
-            HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
+        values : numpy.ndarray, optional
+            历史数据数组，维度不能超过三维；若维度不足三维，将根据标签数量自动补齐维度。
+            为 None 或空数组时创建一个空的 HistoryPanel（其 ``is_empty`` 为 True）。
+        levels : str or sequence of str, optional
+            标的标签，数量应等于 ``values`` 第一维长度，每一层代表一种股票或资产。
+        rows : str or sequence of str, optional
+            时间标签，可以是可转换为 ``pandas.Timestamp`` 的字符串序列或 DatetimeIndex，
+            每个标签对应一条时间记录。
+        columns : str or sequence of str, optional
+            历史数据类型标签，每一列代表一种数据类型（如 open、high、close、volume 等）。
+
+        Returns
+        -------
+        HistoryPanel
+            新构建的 HistoryPanel 对象。
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
@@ -205,13 +149,6 @@ class HistoryPanel():
     @property
     def levels(self):
         """返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典
-
-        HistoryPanel的层标签是保存成一个字典形式的：
-        levels =    {share_name[0]: 0,
-                     share_name[1]: 1,
-                     share_name[2]: 2,
-                     ...
-                     share_name[l]: l}
         这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
             data = HP.values[levels[level_name[a], :, :]
         来访问
@@ -251,13 +188,6 @@ class HistoryPanel():
     @property
     def rows(self):
         """ 返回Hi storyPanel的日期字典，通过这个字典建立日期与行号的联系：
-
-        rows =  {row_date[0]: 0,
-                 row_date[1]: 1,
-                 row_date[2]: 2,
-                 ...
-                 row_date[r]: r
-                 }
         因此内部可以较快地进行数据切片或数据访问
 
         Returns
@@ -334,12 +264,6 @@ class HistoryPanel():
     @property
     def columns(self):
         """返回一个字典，代表HistoryPanel的历史数据，将历史数据与列号进行对应
-        columns = {htype_name[0]: 0,
-                   htype_naem[1]: 1,
-                   htype_name[2]: 2,
-                   ...
-                   htype_name[c]: c}
-
         这样便于内部根据股票代码对数据进行切片
         """
         return self._columns
@@ -496,6 +420,10 @@ class HistoryPanel():
                 [40, 10, 30],
                 [40, 10, 30]]])
         """
+        # TODO: 在以前版本的qteasy中，HistoryPanel是交易策略的数据调用的核心数据结构，因此对数据切片
+        #  的效率要求较高，因此在切片后直接返回一个ndarray数组，但是在2.0以后这个功能不再被需要，相反，
+        #  HistoryPanel切片后返回另一个HistoryPanel更有用，因此需要修改返回值为HistorPanel。
+
         if self.is_empty:
             return None
         else:
@@ -1311,6 +1239,26 @@ class HistoryPanel():
         if along == 'row':
             return pd.concat(df_dict, axis=0, keys=df_dict.keys())
 
+    def to_share_frame(self, share: Union[str, int]) -> pd.DataFrame:
+        """ 将单一股票在 HistoryPanel 中的所有数据类型切片为一个 DataFrame。
+
+        该方法是 ``slice_to_dataframe(share=...)`` 的语法糖，返回的 DataFrame
+        以时间为索引、以全部 ``htypes`` 为列，适合做单股票全指标分析。
+
+        Parameters
+        ----------
+        share : str or int
+            股票代码或层序号，语义与 ``slice_to_dataframe(share=...)`` 中的 ``share``
+            参数一致。
+
+        Returns
+        -------
+        pandas.DataFrame
+            行索引为 ``hdates``，列为 ``htypes``，包含该股票在所有时间点上的全部
+            历史数据。
+        """
+        return self.slice_to_dataframe(share=share)
+
     def to_multi_index_dataframe(self, along=None):
         """ 等同于HistoryPanel.flatten_to_dataframe()
 
@@ -1400,6 +1348,589 @@ class HistoryPanel():
                2020-01-02    2.6   3.2    20020.0
         """
         return self.flatten_to_dataframe(along=along)
+
+    def mean(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的均值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmean(values, axis=1)
+        else:
+            agg_share = values.mean(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def std(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的标准差统计，ddof=1。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanstd(values, axis=1, ddof=1)
+        else:
+            agg_share = values.std(axis=1, ddof=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def min(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的最小值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmin(values, axis=1)
+        else:
+            agg_share = values.min(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def max(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """计算HistoryPanel的最大值统计。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmax(values, axis=1)
+        else:
+            agg_share = values.max(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def describe(
+            self,
+            by: Optional[str] = 'share',
+            percentiles: tuple = (0.25, 0.5, 0.75),
+            include: str = 'numeric',
+            ddof: int = 1,
+    ) -> pd.DataFrame:
+        """对HistoryPanel进行基础统计描述。"""
+        if self.is_empty:
+            return pd.DataFrame()
+        # 目前仅支持数值型统计，兼容老版本 pandas，这里不直接将 include 透传给 pandas.describe
+        if include not in ('numeric', None):
+            raise ValueError('only numeric include is supported for HistoryPanel.describe')
+
+        # by='share'：对每只股票的 DataFrame 做 describe，拼接为 MultiIndex 列
+        if by == 'share':
+            rows = {}
+            col_tuples = []
+            first = True
+            for share in self.shares:
+                df = self.slice_to_dataframe(share=share)
+                # DataFrame 仅包含数值列，不再传递 include 参数，以兼容当前 pandas 版本
+                desc = df.describe(percentiles=percentiles)
+                if first:
+                    stats_order = list(desc.index)
+                    for htype in df.columns:
+                        for stat in stats_order:
+                            col_tuples.append((htype, stat))
+                    first = False
+                values = []
+                for htype in df.columns:
+                    for stat in stats_order:
+                        values.append(desc.loc[stat, htype])
+                rows[share] = values
+            desc_df = pd.DataFrame.from_dict(rows, orient='index')
+            desc_df.columns = pd.MultiIndex.from_tuples(col_tuples, names=['htype', 'stat'])
+            return desc_df
+
+        # by='htype'：每个 htype 在所有股票与时间上的分布
+        if by == 'htype':
+            rows = {}
+            stats_index = None
+            for i, htype in enumerate(self.htypes):
+                arr = self.values[:, :, i].astype(float).ravel()
+                arr = arr[~np.isnan(arr)]
+                series = pd.Series(arr)
+                desc = series.describe(percentiles=percentiles)
+                if stats_index is None:
+                    stats_index = desc.index
+                rows[htype] = desc.values
+            desc_df = pd.DataFrame.from_dict(rows, orient='index', columns=stats_index)
+            return desc_df
+
+        # 全局 describe：所有数值视作一个整体样本池
+        if by is None:
+            arr = self.values.astype(float).ravel()
+            arr = arr[~np.isnan(arr)]
+            series = pd.Series(arr)
+            desc = series.describe(percentiles=percentiles)
+            if 'std' in desc.index:
+                desc['std'] = series.std(ddof=ddof)
+            return desc.to_frame().T
+
+        raise ValueError(f'parameter \"by\" must be \"share\", \"htype\" or None, got {by}')
+
+    def rolling(
+            self,
+            window: int,
+            min_periods: Optional[int] = None,
+            center: bool = False,
+            by: str = 'share',
+    ) -> "HistoryPanelRolling":
+        """基于 HistoryPanel 构造滚动窗口统计对象。
+
+        滚动仅沿时间轴（rows / hdates）进行，``window`` 为整数 bar 数。
+
+        Parameters
+        ----------
+        window : int
+            滚动窗口长度。
+        min_periods : int, optional
+            最小有效观测数，小于该数时结果为 ``NaN``。默认与 ``window`` 相同。
+        center : bool, default False
+            是否使用居中窗口，语义与 ``pandas.Series.rolling`` 一致。
+        by : {'share', 'htype'}, default 'share'
+            指定滚动的分组方式：
+            - 'share': 每只股票的每个 htype 独立做滚动统计（最常用）；
+            - 'htype': 每个 htype 在所有股票上独立做滚动统计。
+        """
+        if self.is_empty:
+            return HistoryPanelRolling(self, window, min_periods, center, by)
+        if not isinstance(window, int) or window <= 0:
+            raise ValueError(f'window must be a positive integer, got {window}')
+        if min_periods is None:
+            min_periods = window
+        if not isinstance(min_periods, int) or min_periods <= 0:
+            raise ValueError(f'min_periods must be a positive integer, got {min_periods}')
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter \"by\" must be \"share\" or \"htype\", got {by}')
+        return HistoryPanelRolling(self, window, min_periods, center, by)
+
+    def returns(
+            self,
+            price_htype: str = 'close',
+            method: str = 'simple',
+            periods: int = 1,
+            as_panel: bool = False,
+            dropna: bool = False,
+    ):
+        """基于指定价格序列计算收益率。
+
+        Parameters
+        ----------
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型，必须在 htypes 中存在。
+        method : {'simple', 'log'}, default 'simple'
+            - simple: r_t = p_t / p_{t-periods} - 1
+            - log: r_t = log(p_t) - log(p_{t-periods})
+        periods : int, default 1
+            收益率间隔的 bar 数。
+        as_panel : bool, default False
+            False 返回 DataFrame（index=时间，columns=shares）；
+            True 返回 HistoryPanel（htypes 仅含 ret_{price_htype}）。
+        dropna : bool, default False
+            True 时删除全为 NaN 的起始行。
+
+        Returns
+        -------
+        pandas.DataFrame or HistoryPanel
+        """
+        if self.is_empty:
+            if as_panel:
+                return HistoryPanel()
+            return pd.DataFrame()
+        if price_htype not in self.htypes:
+            raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
+        if method not in ('simple', 'log'):
+            raise ValueError(f'method must be "simple" or "log", got {method}')
+
+        ci = self.htypes.index(price_htype)
+        prices = self.values[:, :, ci].astype(float)  # (shares, times)
+
+        n_share, n_time = prices.shape
+        ret = np.full((n_share, n_time), np.nan, dtype=float)
+
+        for i in range(n_share):
+            p = prices[i, :]
+            for t in range(periods, n_time):
+                p_prev = p[t - periods]
+                p_curr = p[t]
+                if np.isnan(p_prev) or np.isnan(p_curr) or p_prev <= 0:
+                    ret[i, t] = np.nan
+                elif method == 'simple':
+                    ret[i, t] = p_curr / p_prev - 1.0
+                else:  # log
+                    ret[i, t] = np.log(p_curr) - np.log(p_prev)
+
+        if dropna:
+            # 删除整行全 NaN 的起始行
+            mask = np.any(~np.isnan(ret), axis=0)
+            ret = ret[:, mask]
+            used_hdates = [d for d, m in zip(self.hdates, mask) if m]
+        else:
+            used_hdates = list(self.hdates)
+
+        if as_panel:
+            new_htype = f'ret_{price_htype}'
+            return HistoryPanel(
+                values=ret.reshape(n_share, -1, 1),
+                levels=self.shares,
+                rows=used_hdates,
+                columns=[new_htype],
+            )
+        df = pd.DataFrame(ret.T, index=used_hdates, columns=self.shares)
+        return df
+
+    def volatility(
+            self,
+            window: int,
+            price_htype: str = 'close',
+            method: str = 'simple',
+            annualize: bool = True,
+            periods_per_year: Optional[int] = None,
+            as_panel: bool = False,
+    ):
+        """基于收益率序列计算滚动波动率（标准差）。
+
+        Parameters
+        ----------
+        window : int
+            滚动窗口长度（bar 数）。
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型。
+        method : {'simple', 'log'}, default 'simple'
+            收益率计算方式，与 returns() 一致。
+        annualize : bool, default True
+            是否年化（乘以 sqrt(periods_per_year)）。
+        periods_per_year : int, optional
+            年化时每年 bar 数；未指定且 annualize=True 时尝试从时间间隔推断，无法推断则报错。
+        as_panel : bool, default False
+            返回形式同 returns()。
+
+        Returns
+        -------
+        pandas.DataFrame or HistoryPanel
+        """
+        if self.is_empty:
+            if as_panel:
+                return HistoryPanel()
+            return pd.DataFrame()
+        ret_df = self.returns(price_htype=price_htype, method=method, periods=1, as_panel=False, dropna=False)
+        # 滚动标准差：为了在第 window 行即可得到第一个非 NaN 结果，
+        # 这里使用 min_periods=1，让 NaN 收益率自然通过跳过逻辑处理。
+        vol_df = ret_df.rolling(window=window, min_periods=1).std()
+
+        if annualize:
+            if periods_per_year is not None:
+                if not isinstance(periods_per_year, (int, float)) or periods_per_year <= 0:
+                    raise ValueError(f'periods_per_year must be a positive number, got {periods_per_year}')
+                scale = np.sqrt(periods_per_year)
+            else:
+                # 尝试从 hdates 推断：按平均间隔估算每年 bar 数
+                if len(self.hdates) < 2:
+                    raise ValueError('cannot infer periods_per_year from fewer than 2 dates; set periods_per_year explicitly')
+                try:
+                    idx = pd.DatetimeIndex(self.hdates)
+                    delta = idx[-1] - idx[0]
+                    n_bars = max(1, len(idx) - 1)
+                    avg_delta = delta / n_bars
+                    days = avg_delta.total_seconds() / 86400.0
+                    if days >= 1:
+                        scale = np.sqrt(252.0 / days)  # 日频约 252
+                    elif days * 5 >= 1:
+                        scale = np.sqrt(52.0 / (days * 5))  # 周频约 52
+                    else:
+                        scale = np.sqrt(252.0 * (1.0 / days))
+                except Exception as e:
+                    raise ValueError(f'could not infer periods_per_year from hdates: {e}; set periods_per_year explicitly')
+            vol_df = vol_df * scale
+
+        if as_panel:
+            vol_arr = vol_df.values.T  # (shares, times)
+            n_share, n_time = vol_arr.shape
+            return HistoryPanel(
+                values=vol_arr.reshape(n_share, n_time, 1),
+                levels=self.shares,
+                rows=list(vol_df.index),
+                columns=[f'vol_{window}'],
+            )
+        return vol_df
+
+    @property
+    def kline(self) -> "_HistoryPanelKlineAccessor":
+        """K 线技术指标访问器，提供 sma、ema、bbands、macd、kdj 等方法。"""
+        return _HistoryPanelKlineAccessor(self)
+
+    def alpha_beta(
+            self,
+            benchmark: Union[pd.Series, pd.DataFrame],
+            price_htype: str = 'close',
+            method: str = 'simple',
+            freq: Optional[str] = None,
+            annualize: bool = True,
+    ) -> pd.DataFrame:
+        """计算各股票相对于给定基准收益率序列的 alpha / beta 等指标。
+
+        Parameters
+        ----------
+        benchmark : Series or DataFrame
+            基准价格时间序列，index 应与 HistoryPanel.hdates 对齐或至少有交集。
+            DataFrame 时只使用第一列作为基准价格。
+        price_htype : str, default 'close'
+            用于计算收益率的价格类型。
+        method : {'simple', 'log'}, default 'simple'
+            收益率计算方式，与 returns() 一致。
+        freq : str, optional
+            收益率频率字符串，用于 alpha 年化时推断每年 bar 数，如 'D'、'W'、'M'。
+        annualize : bool, default True
+            是否对 alpha 进行年化。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index 为 shares，列为 ['alpha', 'beta', 'r2', 'n_obs']。
+        """
+        if self.is_empty:
+            return pd.DataFrame(columns=['alpha', 'beta', 'r2', 'n_obs'])
+
+        if not isinstance(benchmark, (pd.Series, pd.DataFrame)):
+            raise TypeError('benchmark must be pandas Series or DataFrame')
+
+        if isinstance(benchmark, pd.DataFrame):
+            if benchmark.shape[1] == 0:
+                raise ValueError('benchmark DataFrame has no columns')
+            bench_price = benchmark.iloc[:, 0]
+        else:
+            bench_price = benchmark
+
+        # 对齐时间索引
+        bench_price = bench_price.astype(float)
+        stock_ret = self.returns(price_htype=price_htype, method=method, periods=1, as_panel=False, dropna=False)
+
+        # 基准收益率
+        bench_ret = bench_price.copy()
+        bench_ret.iloc[:] = np.nan
+        for i in range(1, len(bench_price)):
+            p_prev = bench_price.iloc[i - 1]
+            p_curr = bench_price.iloc[i]
+            if np.isnan(p_prev) or np.isnan(p_curr) or p_prev <= 0:
+                bench_ret.iloc[i] = np.nan
+            elif method == 'simple':
+                bench_ret.iloc[i] = p_curr / p_prev - 1.0
+            else:
+                bench_ret.iloc[i] = np.log(p_curr) - np.log(p_prev)
+
+        # 按共同日期对齐
+        common_index = stock_ret.index.intersection(bench_ret.index)
+        stock_ret = stock_ret.loc[common_index]
+        bench_ret = bench_ret.loc[common_index]
+
+        # 每年 bar 数，用于 alpha 年化
+        if annualize:
+            if freq is not None:
+                freq_u = freq.upper()
+                if freq_u.startswith('D'):
+                    per_year = 252.0
+                elif freq_u.startswith('W'):
+                    per_year = 52.0
+                elif freq_u.startswith('M'):
+                    per_year = 12.0
+                else:
+                    raise ValueError(f'unsupported freq \"{freq}\" for annualization')
+            else:
+                per_year = 252.0
+        else:
+            per_year = 1.0
+
+        res = {'alpha': [], 'beta': [], 'r2': [], 'n_obs': []}
+        for share in self.shares:
+            if share not in stock_ret.columns:
+                res['alpha'].append(np.nan)
+                res['beta'].append(np.nan)
+                res['r2'].append(np.nan)
+                res['n_obs'].append(0)
+                continue
+            y = stock_ret[share]
+            x = bench_ret
+            mask = (~y.isna()) & (~x.isna())
+            xv = x[mask].to_numpy()
+            yv = y[mask].to_numpy()
+            n = len(xv)
+            if n < 2:
+                res['alpha'].append(np.nan)
+                res['beta'].append(np.nan)
+                res['r2'].append(np.nan)
+                res['n_obs'].append(n)
+                continue
+
+            # 线性回归 y = alpha + beta * x
+            beta, alpha = np.polyfit(xv, yv, 1)
+            # 拟合优度 R^2
+            y_hat = alpha + beta * xv
+            ss_res = np.sum((yv - y_hat) ** 2)
+            ss_tot = np.sum((yv - np.mean(yv)) ** 2)
+            r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
+
+            res['alpha'].append(alpha * per_year)
+            res['beta'].append(beta)
+            res['r2'].append(r2)
+            res['n_obs'].append(n)
+
+        result = pd.DataFrame(res, index=self.shares)
+        return result
+
+    def apply_ta(
+            self,
+            func_name: str,
+            htype: str = 'close',
+            shares: Optional[Iterable[str]] = None,
+            as_panel: bool = True,
+            **kwargs,
+    ):
+        """调用 qteasy.tafuncs 中的技术指标函数，并在多股票上广播计算。
+
+        Parameters
+        ----------
+        func_name : str
+            qteasy.tafuncs 中的函数名称，如 'sma'、'ema' 等。
+        htype : str, default 'close'
+            作为输入的一维时间序列的数据类型。
+        shares : list of str, optional
+            需要计算的股票列表，默认使用全部 shares。
+        as_panel : bool, default True
+            True 时返回新的 HistoryPanel，在 htypes 末尾追加输出列；
+            False 时返回 MultiIndex 列的 DataFrame（时间×[share, output_name]）。
+        """
+        if self.is_empty:
+            return HistoryPanel() if as_panel else pd.DataFrame()
+        import qteasy.tafuncs as tafuncs
+        if not hasattr(tafuncs, func_name):
+            raise ValueError(f'technical indicator function \"{func_name}\" not found in qteasy.tafuncs')
+        func = getattr(tafuncs, func_name)
+
+        if htype not in self.htypes:
+            raise ValueError(f'htype \"{htype}\" not found in HistoryPanel.htypes: {self.htypes}')
+
+        if shares is None:
+            share_list = list(self.shares)
+        else:
+            if isinstance(shares, str):
+                share_list = str_to_list(shares)
+            else:
+                share_list = list(shares)
+
+        ci = self.htypes.index(htype)
+        idx = pd.to_datetime(self.hdates)
+
+        # 收集各 share 的结果
+        result_arrays = {}
+        out_names = None
+        for share in share_list:
+            if share not in self.shares:
+                raise ValueError(f'share \"{share}\" not found in HistoryPanel.shares')
+            li = self.shares.index(share)
+            series = pd.Series(self.values[li, :, ci].astype(float), index=idx)
+            out = func(series, **kwargs)
+            if isinstance(out, (list, tuple)):
+                cols = [f'{func_name}_{i}' for i in range(len(out))]
+                arrs = [np.asarray(o, dtype=float).ravel() for o in out]
+            else:
+                cols = [func_name]
+                arrs = [np.asarray(out, dtype=float).ravel()]
+            if out_names is None:
+                out_names = cols
+            result_arrays[share] = arrs
+
+        if as_panel:
+            # 在原 Panel 后追加新 htypes
+            base = self.values.astype(float)
+            n_share, n_time, _ = base.shape
+            new_cols = list(self.htypes) + list(out_names)
+            add_values = np.zeros((n_share, n_time, len(out_names)), dtype=float)
+            add_values[:] = np.nan
+            for share, arrs in result_arrays.items():
+                li = self.shares.index(share)
+                for j, arr in enumerate(arrs):
+                    L = min(n_time, len(arr))
+                    add_values[li, -L:, j] = arr[-L:]
+            new_values = np.concatenate([base, add_values], axis=2)
+            return HistoryPanel(values=new_values, levels=self.shares, rows=self.hdates, columns=new_cols)
+
+        # 返回 DataFrame：MultiIndex 列 (share, output_name)
+        data = {}
+        for share, arrs in result_arrays.items():
+            for name, arr in zip(out_names, arrs):
+                data[(share, name)] = arr
+        df = pd.DataFrame(data, index=idx)
+        df.columns = pd.MultiIndex.from_tuples(df.columns, names=['share', 'output'])
+        return df
+
+    def candle_pattern(
+            self,
+            name: str,
+            price_htypes: tuple[str, str, str, str] = ('open', 'high', 'low', 'close'),
+            as_panel: bool = False,
+            **kwargs,
+    ):
+        """基于 ta-lib 形态函数计算蜡烛形态信号。
+
+        Parameters
+        ----------
+        name : str
+            形态函数名称，如 'cdlhammer'。
+        price_htypes : tuple of str, default ('open','high','low','close')
+            OHLC 对应的 htypes 名称。
+        as_panel : bool, default False
+            False 返回 DataFrame（时间×股票），True 返回单一 htype 的 HistoryPanel。
+        """
+        if self.is_empty:
+            return HistoryPanel() if as_panel else pd.DataFrame()
+        import qteasy.tafuncs as tafuncs
+        if not hasattr(tafuncs, name):
+            raise ValueError(f'candle pattern function \"{name}\" not found in qteasy.tafuncs')
+        func = getattr(tafuncs, name)
+
+        o_name, h_name, l_name, c_name = price_htypes
+        for nm in (o_name, h_name, l_name, c_name):
+            if nm not in self.htypes:
+                raise ValueError(f'price htype \"{nm}\" not found in HistoryPanel.htypes: {self.htypes}')
+
+        oi = self.htypes.index(o_name)
+        hi = self.htypes.index(h_name)
+        li = self.htypes.index(l_name)
+        ci = self.htypes.index(c_name)
+        idx = pd.to_datetime(self.hdates)
+
+        signals = np.zeros((self.level_count, self.row_count), dtype=float)
+        for s_idx, share in enumerate(self.shares):
+            o = pd.Series(self.values[s_idx, :, oi].astype(float), index=idx)
+            h = pd.Series(self.values[s_idx, :, hi].astype(float), index=idx)
+            l = pd.Series(self.values[s_idx, :, li].astype(float), index=idx)
+            c = pd.Series(self.values[s_idx, :, ci].astype(float), index=idx)
+            sig = func(o, h, l, c, **kwargs)
+            sig_arr = np.asarray(sig, dtype=float).ravel()
+            L = min(self.row_count, len(sig_arr))
+            signals[s_idx, -L:] = sig_arr[-L:]
+
+        if as_panel:
+            return HistoryPanel(values=signals.reshape(self.level_count, self.row_count, 1),
+                                levels=self.shares,
+                                rows=self.hdates,
+                                columns=[name])
+        df = pd.DataFrame(signals.T, index=idx, columns=self.shares)
+        return df
 
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
@@ -1808,20 +2339,186 @@ class HistoryPanel():
             row_count = self.shape[1]
         return self.isegment(- row_count, None)
 
-    # TODO: implement this method
-    def plot(self, *args, **kwargs):
-        """plot current HistoryPanel, settings according to args and kwargs
+    def plot(
+        self,
+        shares: Optional[Union[str, Iterable[str]]] = None,
+        layout: str = 'auto',
+        interactive: bool = False,
+        highlight: Optional[Any] = None,
+        **kwargs,
+    ):
+        """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
+
+        本方法只消费已有数据不做新增计算，图表类型由内部注册表基于 htypes 决定（如
+        OHLC→K 线，vol→成交量，MACD 三列→MACD 图，其余→折线），支持单标的与多标
+        的 overlay/stack 布局，以及基于 matplotlib 的静态图和基于 Plotly 的交互式图表。
+
+        Parameters
+        ----------
+        shares : str or sequence of str, optional
+            要参与绘图的标的子集；默认使用 HistoryPanel 的全部 shares。
+        layout : {'overlay', 'stack', 'auto'}, default 'auto'
+            多标的布局方式；'overlay' 为同组叠加，'stack' 为多组分行展示，'auto' 时
+            2 只标的用 overlay，3 只及以上用 stack。
+        interactive : bool, default False
+            为 True 时使用 Plotly 交互后端（需安装 plotly 及 anywidget/ipywidgets）；
+            为 False 时使用 matplotlib 静态后端。
+        highlight : dict or str, optional
+            高亮配置，可为 ``{'condition': 'max'|'min' 或布尔数组, 'style': {...}}``，
+            或简写为 'max' / 'min'。
+        **kwargs
+            预留的扩展参数，当前版本中不使用。
+
+        Returns
+        -------
+        matplotlib.figure.Figure or plotly.graph_objs.FigureWidget or _PlotlyFigureWrapper
+            interactive=False 时返回 matplotlib Figure；
+            interactive=True 且在 Jupyter 中返回 FigureWidget（支持表头信息与 Y 轴自适应）；
+            interactive=True 且非 Jupyter 环境时返回内嵌 HTML 包装器。
+
+        Examples
+        --------
+        >>> import qteasy as qt
+        >>> hp = qt.get_history_data(htype_names='open, high, low, close, vol',
+        ...                          shares='000300.SH', rows=200)
+        >>> fig = hp.plot()
+
+        >>> fig_interactive = hp.plot(interactive=True, highlight='max')
+
+        See Also
+        --------
+        qt.get_kline
+            获取 K 线数据并可选 ``as_panel=True`` 得到 HistoryPanel。
         """
+        if self.is_empty:
+            raise ValueError('Cannot plot an empty HistoryPanel')
+        from qteasy.hp_visual_spec import (
+            get_chart_type_registry,
+            build_kline_spec,
+            build_volume_spec,
+            build_macd_spec,
+            build_line_spec,
+        )
+        from qteasy.hp_visual_render import build_figure_from_specs
+        share_list = list(self.shares) if shares is None else (
+            [shares] if isinstance(shares, str) else list(shares)
+        )
+        share_list = [s for s in share_list if s in self.shares]
+        if not share_list:
+            share_list = list(self.shares)
+        if len(share_list) > 5:
+            try:
+                from qteasy import logger_core
+                logger_core.warning(
+                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
+                    'only the first 5 will be displayed.'
+                )
+            except Exception:
+                import warnings
+                warnings.warn(
+                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
+                    'only the first 5 will be displayed.',
+                    UserWarning,
+                    stacklevel=2,
+                )
+            share_list = share_list[:5]
+        registry = get_chart_type_registry()
+        types_info = registry.get_applicable_types(self.htypes)
+        if not types_info:
+            from qteasy.hp_visual_render import _HAS_MPL
+            if _HAS_MPL:
+                import matplotlib.pyplot as plt
+                fig, _ = plt.subplots(1, 1, figsize=(8, 4))
+                return fig
+            raise RuntimeError('No applicable chart types and matplotlib not available')
+        n_share = len(share_list)
+        if layout == 'auto':
+            layout = 'overlay' if n_share == 2 else 'stack'
+        if n_share == 1:
+            groups = [share_list]
+        elif layout == 'overlay' and n_share == 2:
+            groups = [share_list]
+        else:
+            groups = [[s] for s in share_list]
+        x_dates = list(self.hdates)
+        specs_per_group = []
+        group_titles = []
+        for grp in groups:
+            row = []
+            for info in types_info:
+                tid = info.id
+                if tid == 'kline':
+                    spec = build_kline_spec(self, shares=grp)
+                elif tid == 'volume':
+                    spec = build_volume_spec(self, shares=grp)
+                elif tid == 'macd':
+                    spec = build_macd_spec(self, shares=grp)
+                elif tid == 'line':
+                    spec = build_line_spec(self, shares=grp)
+                else:
+                    spec = None
+                if spec is not None and highlight is not None:
+                    spec = dict(spec)
+                    spec['highlight'] = (
+                        highlight if isinstance(highlight, dict) else {'condition': highlight}
+                    )
+                row.append(spec)
+            kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
+            vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
+            if (
+                kline_idx is not None and vol_idx is not None
+                and row[kline_idx] is not None and row[vol_idx] is not None
+                and 'open' in row[kline_idx].get('data', {}) and 'close' in row[kline_idx].get('data', {})
+            ):
+                vol_spec = dict(row[vol_idx])
+                vol_spec['data'] = dict(vol_spec.get('data', {}))
+                vol_spec['data']['open'] = row[kline_idx]['data']['open']
+                vol_spec['data']['close'] = row[kline_idx]['data']['close']
+                row[vol_idx] = vol_spec
+            specs_per_group.append(row)
+            group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
+        if interactive:
+            from qteasy.hp_visual_plotly import (
+                _HAS_PLOTLY,
+                build_interactive_figure_from_specs,
+                _wrap_figure_for_notebook,
+                _can_use_figure_widget,
+                _create_figure_widget_with_callbacks,
+            )
+            if not _HAS_PLOTLY:
+                raise RuntimeError(
+                    'interactive=True requires plotly. Install with: pip install plotly'
+                )
+            fig = build_interactive_figure_from_specs(
+                specs_per_group,
+                types_info,
+                x_dates=x_dates,
+                group_titles=group_titles,
+            )
+            if _can_use_figure_widget():
+                return _create_figure_widget_with_callbacks(fig)
+            return _wrap_figure_for_notebook(fig)
+        fig = build_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=x_dates,
+            group_titles=group_titles,
+        )
+        return fig
 
-        raise NotImplementedError
-
-    # TODO: implement this method
+    # 以下 legacy 方法仅保留占位，统一通过 HistoryPanel.plot() 实现可视化
     def candle(self, *args, **kwargs):
-        """ plot candle chart with data in the HistoryPanel, check data availability before plotting
+        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图（已由 ``plot()`` 统一处理）
+
+        Notes
+        -----
+        - 新版可视化推荐直接调用 ``HistoryPanel.plot()``，并通过 htypes / layout
+          控制是否输出 K 线、成交量等图表类型。
+        - 本方法在内部会委托给可视化子模块的统一入口实现，行为与 ``plot()`` 保持
+          一致，仅作为语义化别名存在。
         """
         raise NotImplementedError
 
-    # TODO: implement this method
     def ohlc(self, *args, **kwargs):
         """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
 
@@ -1840,6 +2537,301 @@ class HistoryPanel():
         :return:
         """
         raise NotImplementedError
+
+
+class _HistoryPanelKlineAccessor:
+    """HistoryPanel 的 K 线技术指标访问器，内部使用，通过 HistoryPanel.kline 访问。"""
+
+    def __init__(self, hp: HistoryPanel):
+        self._hp = hp
+
+    def _get_price(self, price_htype: str):
+        """取指定 htype 的价格矩阵 (shares, times)。"""
+        if self._hp.is_empty or price_htype not in self._hp.htypes:
+            raise ValueError(f'price_htype "{price_htype}" not in htypes: {self._hp.htypes}')
+        ci = self._hp.htypes.index(price_htype)
+        return self._hp.values[:, :, ci].astype(float)
+
+    def _append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
+        """在原有 Panel 后追加新 htype 列，new_arrays 为 list of (n_share, n_time) 数组。"""
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        base = hp.values.astype(float)
+        to_add = np.stack(new_arrays, axis=2)  # (L, R, C_new)
+        new_values = np.concatenate([base, to_add], axis=2)
+        new_htypes = list(hp.htypes) + list(new_columns)
+        return HistoryPanel(values=new_values, levels=hp.shares, rows=hp.hdates, columns=new_htypes)
+
+    def sma(self, window: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+        """简单移动平均。"""
+        from qteasy import tafuncs
+        default_name = f'sma_{window}'
+        if new_htype is None:
+            new_htype = default_name
+        if new_htype in self._hp.htypes:
+            raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        out = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            out[i, :] = tafuncs.sma(prices[i, :], timeperiod=window)
+        return self._append_htypes([new_htype], [out])
+
+    def ema(self, span: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+        """指数移动平均。"""
+        from qteasy import tafuncs
+        default_name = f'ema_{span}'
+        if new_htype is None:
+            new_htype = default_name
+        if new_htype in self._hp.htypes:
+            raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        out = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            res = tafuncs.ema(prices[i, :], span=span)
+            arr = np.atleast_1d(np.asarray(res, dtype=float)).ravel()
+            out[i, :min(n_time, len(arr))] = arr[:n_time]
+        return self._append_htypes([new_htype], [out])
+
+    def bbands(
+            self,
+            window: int = 20,
+            price_htype: str = 'close',
+            nbdev_up: float = 2.0,
+            nbdev_dn: float = 2.0,
+            ma_type: str = 'sma',
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """布林带。"""
+        from qteasy import tafuncs
+        tag = suffix if suffix is not None else f'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'
+        upper_name = f'bbands_upper_{tag}'
+        middle_name = f'bbands_middle_{tag}'
+        lower_name = f'bbands_lower_{tag}'
+        for n in (upper_name, middle_name, lower_name):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        matype = 0 if ma_type == 'sma' else 1  # tafuncs 使用 matype 整数
+        u = np.full_like(prices, np.nan, dtype=float)
+        m = np.full_like(prices, np.nan, dtype=float)
+        l = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            uu, mm, ll = tafuncs.bbands(
+                prices[i, :], timeperiod=window,
+                nbdevup=int(nbdev_up), nbdevdn=int(nbdev_dn), matype=matype,
+            )
+            uu = np.asarray(uu).ravel()
+            mm = np.asarray(mm).ravel()
+            ll = np.asarray(ll).ravel()
+            L = min(n_time, len(uu), len(mm), len(ll))
+            u[i, -L:] = uu[-L:]
+            m[i, -L:] = mm[-L:]
+            l[i, -L:] = ll[-L:]
+        return self._append_htypes([upper_name, middle_name, lower_name], [u, m, l])
+
+    def macd(
+            self,
+            price_htype: str = 'close',
+            fastperiod: int = 12,
+            slowperiod: int = 26,
+            signalperiod: int = 9,
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """MACD 指标。"""
+        from qteasy import tafuncs
+        tag = suffix if suffix is not None else f'{fastperiod}_{slowperiod}_{signalperiod}'
+        n1, n2, n3 = f'macd_{tag}', f'macd_signal_{tag}', f'macd_hist_{tag}'
+        for n in (n1, n2, n3):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        prices = self._get_price(price_htype)
+        n_share, n_time = prices.shape
+        macd_arr = np.full_like(prices, np.nan, dtype=float)
+        sig_arr = np.full_like(prices, np.nan, dtype=float)
+        hist_arr = np.full_like(prices, np.nan, dtype=float)
+        for i in range(n_share):
+            mc, sig, hist = tafuncs.macd(prices[i, :], fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=signalperiod)
+            mc, sig, hist = np.asarray(mc).ravel(), np.asarray(sig).ravel(), np.asarray(hist).ravel()
+            L = min(n_time, len(mc), len(sig), len(hist))
+            macd_arr[i, -L:] = mc[-L:]
+            sig_arr[i, -L:] = sig[-L:]
+            hist_arr[i, -L:] = hist[-L:]
+        return self._append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
+
+    def kdj(
+            self,
+            price_htype: str = 'close',
+            fastk_period: int = 9,
+            slowk_period: int = 3,
+            slowd_period: int = 3,
+            suffix: Optional[str] = None,
+    ) -> HistoryPanel:
+        """KDJ 随机指标，需要 high、low、close。"""
+        from qteasy import tafuncs
+        for h in ('high', 'low', 'close'):
+            if h not in self._hp.htypes:
+                raise ValueError(f'KDJ requires high/low/close in htypes, missing "{h}"')
+        tag = suffix if suffix is not None else f'{fastk_period}_{slowk_period}_{slowd_period}'
+        k_name = f'kdj_k_{tag}'
+        d_name = f'kdj_d_{tag}'
+        j_name = f'kdj_j_{tag}'
+        for n in (k_name, d_name, j_name):
+            if n in self._hp.htypes:
+                raise ValueError(f'htype "{n}" already exists')
+        high = self._get_price('high')
+        low = self._get_price('low')
+        close = self._get_price('close')
+        n_share, n_time = high.shape
+        k_arr = np.full_like(close, np.nan, dtype=float)
+        d_arr = np.full_like(close, np.nan, dtype=float)
+        j_arr = np.full_like(close, np.nan, dtype=float)
+        for i in range(n_share):
+            kk, dd = tafuncs.stoch(high[i, :], low[i, :], close[i, :],
+                                   fastk_period=fastk_period, slowk_period=slowk_period, slowd_period=slowd_period)
+            kk = np.asarray(kk).ravel()[:n_time]
+            dd = np.asarray(dd).ravel()[:n_time]
+            jj = 3 * kk - 2 * dd  # J = 3*K - 2*D
+            k_arr[i, :] = kk
+            d_arr[i, :] = dd
+            j_arr[i, :] = jj
+        return self._append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
+
+
+    def apply_ta(
+            self,
+            func_name: str,
+            htype: str = 'close',
+            shares: Optional[Iterable[str]] = None,
+            as_panel: bool = True,
+            **kwargs,
+    ):
+        """兼容旧计划的命名，为 kline 访问器预留统一 ta 接口（实际实现位于 HistoryPanel.apply_ta）。"""
+        return self._hp.apply_ta(func_name=func_name, htype=htype, shares=shares, as_panel=as_panel, **kwargs)
+
+
+class HistoryPanelRolling:
+    """HistoryPanel 的滚动窗口统计对象。
+
+    该对象通常由 :meth:`HistoryPanel.rolling` 创建，对应一个固定的窗口
+    参数组合，并提供 ``mean/std/sum/min/max/apply`` 等方法，返回新的
+    HistoryPanel。
+    """
+
+    def __init__(self,
+                 hp: HistoryPanel,
+                 window: int,
+                 min_periods: int,
+                 center: bool,
+                 by: str):
+        self._hp = hp
+        self._window = window
+        self._min_periods = min_periods
+        self._center = center
+        self._by = by
+
+    def _apply_rolling(self, func_name: str) -> HistoryPanel:
+        """内部通用滚动聚合实现。"""
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        values = hp.values.astype(float)
+        res = np.full_like(values, np.nan, dtype=float)
+
+        l_cnt, r_cnt, c_cnt = values.shape
+
+        if self._by == 'share':
+            # 每只股票、每个 htype 独立做时间滚动
+            for li in range(l_cnt):
+                for ci in range(c_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = getattr(roller, func_name)()
+                    res[li, :, ci] = rolled.values
+        else:  # by == 'htype'
+            for ci in range(c_cnt):
+                for li in range(l_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = getattr(roller, func_name)()
+                    res[li, :, ci] = rolled.values
+
+        return HistoryPanel(values=res, levels=hp.shares, rows=hp.hdates, columns=hp.htypes)
+
+    def mean(self) -> HistoryPanel:
+        """滚动窗口均值。"""
+        return self._apply_rolling('mean')
+
+    def std(self) -> HistoryPanel:
+        """滚动窗口标准差。"""
+        return self._apply_rolling('std')
+
+    def sum(self) -> HistoryPanel:
+        """滚动窗口求和。"""
+        return self._apply_rolling('sum')
+
+    def min(self) -> HistoryPanel:
+        """滚动窗口最小值。"""
+        return self._apply_rolling('min')
+
+    def max(self) -> HistoryPanel:
+        """滚动窗口最大值。"""
+        return self._apply_rolling('max')
+
+    def apply(self,
+              func: Callable[[np.ndarray], float],
+              raw: bool = False,
+              **kwargs) -> HistoryPanel:
+        """在滚动窗口上应用自定义函数。
+
+        Parameters
+        ----------
+        func : callable
+            自定义函数，接受一个窗口向量并返回标量。
+        raw : bool, default False
+            为 ``True`` 时向 func 传入 ``ndarray``，否则传入 ``Series``。
+        **kwargs :
+            透传给 func 的其他参数。
+        """
+        hp = self._hp
+        if hp.is_empty:
+            return HistoryPanel()
+        values = hp.values.astype(float)
+        res = np.full_like(values, np.nan, dtype=float)
+        l_cnt, r_cnt, c_cnt = values.shape
+
+        def _apply_series(s: pd.Series) -> float:
+            if raw:
+                return func(s.values, **kwargs)
+            return func(s, **kwargs)
+
+        if self._by == 'share':
+            for li in range(l_cnt):
+                for ci in range(c_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = roller.apply(_apply_series, raw=False)
+                    res[li, :, ci] = rolled.values
+        else:
+            for ci in range(c_cnt):
+                for li in range(l_cnt):
+                    series = pd.Series(values[li, :, ci], index=hp.hdates)
+                    roller = series.rolling(window=self._window,
+                                            min_periods=self._min_periods,
+                                            center=self._center)
+                    rolled = roller.apply(_apply_series, raw=False)
+                    res[li, :, ci] = rolled.values
+
+        return HistoryPanel(values=res, levels=hp.shares, rows=hp.hdates, columns=hp.htypes)
 
 
 def hp_join(*historypanels):
