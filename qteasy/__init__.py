@@ -391,7 +391,7 @@ __all__ = [
     'info', 'is_ready', 'configure', 'configuration', 'save_config', 'load_config', 'reset_config',
     'get_basic_info', 'get_stock_info', 'get_data_overview', 'refill_data_source',
     'get_history_data', 'filter_stock_codes', 'filter_stocks', 'start_up_config', 'Parameter',
-    'get_table_info', 'get_table_overview', 'get_start_up_settings', 'find_history_data', 'DataType', 'StgData',
+    'get_table_info', 'get_table_overview', 'get_start_up_settings', 'DataType', 'StgData',
     'HistoryPanel', 'dataframe_to_hp', 'stack_dataframes', 'start_up_settings', 'update_start_up_setting', 'get_kline',
     'Operator', 'BaseStrategy', 'RuleIterator', 'GeneralStg', 'FactorSorter', 'remove_start_up_setting',
     'built_ins', 'built_in_list', 'built_in_strategies', 'get_built_in_strategy',

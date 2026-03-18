@@ -6,3 +6,4 @@ DataSource 负责对接本地历史数据存储，可以管理基于文件的存
 下载与更新通常通过 ``qt.refill_data_source()`` 完成，而非由 DataSource 自动拉取。
 
 .. autoclass:: qteasy.DataSource
+    :members:

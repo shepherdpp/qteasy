@@ -579,7 +579,6 @@ def update_start_up_setting(**kwargs) -> None:
     Examples
     --------
     >>> import qteasy as qt
-
     >>> qt.start_up_settings()
     Start up settings:
     --------------------
@@ -812,8 +811,7 @@ def _parse_start_up_config_lines(config_lines) -> dict:
 
 
 def reset_config(config=None):
-    """ 重设config对象，将所有的参数都设置为默认值
-        如果config为None，则重设qt.QT_CONFIG
+    """ 重设config对象，将所有的参数都设置为默认值，如果config为None，则重设qt.QT_CONFIG
 
     Parameters
     ----------

@@ -9,6 +9,10 @@
 文档与 manage_strategies 系列文档。
 
 .. autoclass:: qteasy.BaseStrategy
+    :members:
+
+三种交易策略类
+-----------------------
 
 .. autoclass:: qteasy.GeneralStg
 
@@ -16,4 +20,10 @@
 
 .. autoclass:: qteasy.RuleIterator
 
+交易策略的可调参数
+-----------------------
+
+
+
 .. autoclass:: qteasy.Parameter
+    :members:

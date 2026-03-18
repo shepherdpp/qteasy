@@ -149,11 +149,10 @@ class HistoryPanel():
     @property
     def levels(self):
         """返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典
+
         这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
             data = HP.values[levels[level_name[a], :, :]
-        来访问
-
-        不过这是HistoryPanel内部的处理机制，在HistoryPanel的外部，可以通过切片的方式快速访问不同的数据。
+        来访问，不过这是HistoryPanel内部的处理机制，在HistoryPanel的外部，可以通过切片的方式快速访问不同的数据。
         """
         return self._levels
 
@@ -549,14 +548,12 @@ class HistoryPanel():
         2015-01-08    10    20   30     40      50
         2015-01-09    10    20   30     40      50
         2015-01-10    10    20   30     40      50
-
         share 1, label: 000200
                     open  high  low  close  volume
         2015-01-07    10    20   30     40      50
         2015-01-08    10    20   30     40      50
         2015-01-09    10    20   30     40      50
         2015-01-10    10    20   30     40      50
-
         share 2, label: 000300
                     open  high  low  close  volume
         2015-01-07    10    20   30     40      50
@@ -584,8 +581,10 @@ class HistoryPanel():
 
         Parameters
         ----------
-        start_index: 开始日期序号
-        end_index: 结束日期序号
+        start_index: pd.TimeStamp
+            开始日期序号
+        end_index: pd.TimeStamp
+            结束日期序号
 
         Returns
         -------
@@ -604,13 +603,11 @@ class HistoryPanel():
         2015-01-07    10    20   30     40      50
         2015-01-08    10    20   30     40      50
         2015-01-09    10    20   30     40      50
-
         share 1, label: 000200
                     open  high  low  close  volume
         2015-01-07    10    20   30     40      50
         2015-01-08    10    20   30     40      50
         2015-01-09    10    20   30     40      50
-
         share 2, label: 000300
                     open  high  low  close  volume
         2015-01-07    10    20   30     40      50
@@ -641,9 +638,34 @@ class HistoryPanel():
         Examples
         --------
         >>> hp = HistoryPanel(np.array([[[10, 20, 30, 40, 50]]*10]*3),
-        ...                          levels=['000001', '000002', '000003'],
-        ...                          rows=pd.date_range('2015-01-05', periods=10),
-        ...                          columns=['open', 'high', 'low', 'close', 'volume'])
+        ...                   levels=['000001', '000002', '000003'],
+        ...                   rows=pd.date_range('2015-01-05', periods=10),
+        ...                   columns=['open', 'high', 'low', 'close', 'volume'])
+        >>> hp.slice(shares='000001,000003', htypes='close, open')
+        share 0, label: 000001
+                    close  open
+        2015-01-05     40    10
+        2015-01-06     40    10
+        2015-01-07     40    10
+        2015-01-08     40    10
+        2015-01-09     40    10
+        2015-01-10     40    10
+        2015-01-11     40    10
+        2015-01-12     40    10
+        2015-01-13     40    10
+        2015-01-14     40    10
+        share 2, label: 000003
+                    close  open
+        2015-01-05     40    10
+        2015-01-06     40    10
+        2015-01-07     40    10
+        2015-01-08     40    10
+        2015-01-09     40    10
+        2015-01-10     40    10
+        2015-01-11     40    10
+        2015-01-12     40    10
+        2015-01-13     40    10
+        2015-01-14     40    10
         """
         if self.is_empty:
             return self
@@ -778,7 +800,6 @@ class HistoryPanel():
         2015-01-12     10     20     30     40     50
         2015-01-13     10     20     30     40     50
         2015-01-14     10     20     30     40     50
-
         share 1, label: 000200
                     typeA  typeB  typeC  typeD  typeE
         2015-01-05     10     20     30     40     50
@@ -791,7 +812,6 @@ class HistoryPanel():
         2015-01-12     10     20     30     40     50
         2015-01-13     10     20     30     40     50
         2015-01-14     10     20     30     40     50
-
         share 2, label: 000300
                     typeA  typeB  typeC  typeD  typeE
         2015-01-05     10     20     30     40     50
@@ -931,7 +951,7 @@ class HistoryPanel():
 
         Examples
         --------
-        # 如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+        >>> # 如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
         >>> hp1 = HistoryPanel(np.array([[[8, 9, 9], [7, 5, 5], [4, 8, 4], [1, 0, 7], [8, 7, 9]],
         ...                                     [[2, 3, 3], [5, 4, 6], [2, 8, 7], [3, 3, 4], [8, 8, 7]]]),
         ...                           levels=['000200', '000300'],
@@ -957,6 +977,7 @@ class HistoryPanel():
         2020-01-03      2     8     7
         2020-01-04      3     3     4
         2020-01-05      8     8     7
+
         >>> hp2
         share 0, label: 000400
                     close  open  high
@@ -1350,7 +1371,33 @@ class HistoryPanel():
         return self.flatten_to_dataframe(along=along)
 
     def mean(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
-        """计算HistoryPanel的均值统计。"""
+        """按标的或数据类型对 HistoryPanel 进行均值统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度：
+            - 'share'：对每只股票在时间轴上的均值，返回 index 为 shares、columns 为 htypes 的 DataFrame；
+            - 'htype'：对每个 htype 在所有股票上的均值，返回转置后的 DataFrame。
+        skipna : bool, default True
+            是否在计算均值时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的均值结果表。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.random.rand(2, 3, 2),
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['open', 'close'])
+        >>> hp.mean()
+                    open     close
+        000001.SZ  0.456789  0.567890
+        000002.SZ  0.345678  0.456789
+        """
         if self.is_empty:
             return pd.DataFrame()
         if by not in ('share', 'htype'):
@@ -1367,7 +1414,31 @@ class HistoryPanel():
         return df_share.T
 
     def std(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
-        """计算HistoryPanel的标准差统计，ddof=1。"""
+        """按标的或数据类型对 HistoryPanel 进行标准差统计（ddof=1）。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算标准差时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的标准差结果表。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.random.rand(2, 4, 2),
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=4),
+        ...                   columns=['open', 'close'])
+        >>> hp.std()
+                    open     close
+        000001.SZ  0.129099  0.086603
+        000002.SZ  0.149361  0.110769
+        """
         if self.is_empty:
             return pd.DataFrame()
         if by not in ('share', 'htype'):
@@ -1384,7 +1455,33 @@ class HistoryPanel():
         return df_share.T
 
     def min(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
-        """计算HistoryPanel的最小值统计。"""
+        """按标的或数据类型对 HistoryPanel 进行最小值统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算最小值时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的最小值结果表。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.]],
+        ...                  [[5., 6.], [7., 8.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=2),
+        ...                   columns=['open', 'close'])
+        >>> hp.min()
+                    open  close
+        000001.SZ   1.0    2.0
+        000002.SZ   5.0    6.0
+        """
         if self.is_empty:
             return pd.DataFrame()
         if by not in ('share', 'htype'):
@@ -1401,7 +1498,33 @@ class HistoryPanel():
         return df_share.T
 
     def max(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
-        """计算HistoryPanel的最大值统计。"""
+        """按标的或数据类型对 HistoryPanel 进行最大值统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算最大值时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的最大值结果表。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.]],
+        ...                  [[5., 6.], [7., 8.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=2),
+        ...                   columns=['open', 'close'])
+        >>> hp.max()
+                    open  close
+        000001.SZ   3.0    4.0
+        000002.SZ   7.0    8.0
+        """
         if self.is_empty:
             return pd.DataFrame()
         if by not in ('share', 'htype'):
@@ -1424,7 +1547,64 @@ class HistoryPanel():
             include: str = 'numeric',
             ddof: int = 1,
     ) -> pd.DataFrame:
-        """对HistoryPanel进行基础统计描述。"""
+        """对 HistoryPanel 进行基础统计描述，类似 pandas.DataFrame.describe。
+
+        可以按标的（share）、历史数据类型（htype）或全局视角对数值数据做 count、
+        mean、std、min、max 及给定分位数等统计描述。
+
+        Parameters
+        ----------
+        by : {'share', 'htype', None}, default 'share'
+            统计视角：
+            - 'share'：每只股票一个 describe 结果，拼接成列为 (htype, stat) 的 MultiIndex；
+            - 'htype'：每个 htype 在所有股票与时间上的分布；
+            - None：将全部数值视作一个整体样本池。
+        percentiles : tuple of float, default (0.25, 0.5, 0.75)
+            需要计算的分位数列表，值应在 (0, 1) 区间。
+        include : {'numeric', None}, default 'numeric'
+            当前仅支持数值型统计，非数值列会被自动忽略。
+        ddof : int, default 1
+            计算标准差时的自由度参数，仅在 ``by is None`` 时生效。
+
+        Returns
+        -------
+        pandas.DataFrame
+            描述性统计结果表，其 index/columns 结构取决于 by 的取值。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.random.rand(2, 10, 2),
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=10),
+        ...                   columns=['open', 'close'])
+        >>> desc_share = hp.describe(by='share')
+        >>> desc_share
+        share 0, label: 000001.SZ
+                    open      close
+        count  10.000000  10.000000
+        mean    0.456789   0.567890
+        std     0.129099   0.086603
+        min     0.123456   0.234567
+        25%     0.234567   0.345678
+        50%     0.345678   0.456789
+        75%     0.567890   0.678901
+        share 1, label: 000002.SZ
+                    open      close
+        count  10.000000  10.000000
+        mean    0.345678   0.456789
+        std     0.149361   0.110769
+        min     0.012345   0.123456
+        25%     0.123456   0.234567
+        50%     0.234567   0.345678
+        75%     0.456789   0.567890
+
+        >>> sorted(desc_share.columns.get_level_values('stat').unique().tolist())
+        ['25%', '50%', '75%', 'count', 'max', 'mean', 'min', 'std']
+
+        >>> desc_htype = hp.describe(by='htype')
+        >>> 'open' in desc_htype.index
+        True
+        """
         if self.is_empty:
             return pd.DataFrame()
         # 目前仅支持数值型统计，兼容老版本 pandas，这里不直接将 include 透传给 pandas.describe
@@ -1505,6 +1685,28 @@ class HistoryPanel():
             指定滚动的分组方式：
             - 'share': 每只股票的每个 htype 独立做滚动统计（最常用）；
             - 'htype': 每个 htype 在所有股票上独立做滚动统计。
+
+        Returns
+        -------
+        HistoryPanelRolling
+                滚动窗口统计对象，支持调用 mean(), std(), min(), max() 等
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.array([[[12.3, 12.5, 1020010], [12.6, 13.2, 1020020]],
+        ...                                    [[2.3, 2.5, 20010], [2.6, 3.2, 20020]]]),
+        ...                          levels=['000300', '000001'],
+        ...                          rows=['2020-01-01', '2020-01-02'],
+        ...                          columns=['close', 'open', 'vol'])
+        >>> hp.rolling(window=2, by='share').mean()
+        share 0, label: 000300
+                    close  open        vol
+        2020-01-01    NaN   NaN        NaN
+        2020-01-02   12.45  12.85  1020015.0
+        share 1, label: 000001
+                    close  open        vol
+        2020-01-01    NaN   NaN        NaN
+        2020-01-02    2.45   2.85  20015.0
         """
         if self.is_empty:
             return HistoryPanelRolling(self, window, min_periods, center, by)
@@ -2516,25 +2718,6 @@ class HistoryPanel():
           控制是否输出 K 线、成交量等图表类型。
         - 本方法在内部会委托给可视化子模块的统一入口实现，行为与 ``plot()`` 保持
           一致，仅作为语义化别名存在。
-        """
-        raise NotImplementedError
-
-    def ohlc(self, *args, **kwargs):
-        """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
-
-        args:
-        kwargs:
-        :return:
-        """
-        raise NotImplementedError
-
-    # TODO: implement this method
-    def renko(self, *args, **kwargs):
-        """ plot renko chart with data in the HistoryPanel, check data availability before plotting
-
-        args:
-        kwargs:
-        :return:
         """
         raise NotImplementedError
 

@@ -199,20 +199,17 @@ def filter_stock_codes(date: str = 'today', **kwargs) -> list:
 
 
 def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
-    """ 等同于get_stock_info()
-        根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
+    """ 等同于get_stock_info()，根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
 
     Parameters
     ----------
-    code_or_name:
+    code_or_name: str
         证券代码或名称：
-
         - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
         - 如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
-    asset_types: 默认None
+    asset_types: str, list of str, optional
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
-
         - E     股票
         - IDX   指数
         - FD    基金
@@ -224,15 +221,13 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         如果为True，打印匹配到的结果
     verbose: bool, default False
         当匹配到的证券太多时（多于五个），是否显示完整的信息
-
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
 
     Returns
     -------
-    dict
+    stock_basic: dict
         当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
-
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
@@ -410,34 +405,31 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
 
     Parameters
     ----------
-    code_or_name:
+    code_or_name: str
         证券代码或名称，
         如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
         如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
-    asset_types:
+    asset_types: str or list of str, optional
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
-
         - E     股票
         - IDX   指数
         - FD    基金
         - FT    期货
         - OPT   期权
-    match_full_name: bool
+    match_full_name: bool, default False
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
-    printout: bool
+    printout: bool, default True
         如果为True，打印匹配到的结果
-    verbose: bool
+    verbose: bool, default False
         当匹配到的证券太多时（多于五个），是否显示完整的信息
-
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
 
     Returns
     -------
-    dict
+    stock_info: dict
         当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
-
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
@@ -458,11 +450,10 @@ def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, p
 
 
 def get_table_info(table_name, data_source=None, verbose=True) -> dict:
-    """ 获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容
-        以及数据列的名称、数据类型及说明
+    """ 获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容以及数据列的名称、数据类型及说明
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     table_name: str
         需要查询的数据表名称
     data_source: DataSource
@@ -472,7 +463,8 @@ def get_table_info(table_name, data_source=None, verbose=True) -> dict:
 
     Returns
     -------
-    一个dict，包含数据表的结构化信息：
+    data_struct: dict
+        数据表的结构化信息：
         {
             table name:    数据表名称
             table_exists:  bool，数据表是否存在
@@ -681,7 +673,6 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选
         参数"exchange"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。
         例如，下载stock_basic表数据时，下载以下输入均为合法输入：
-
         - 'SZSE'
             仅下载深圳交易所的股票数据
         - ['SSE', 'SZSE']
@@ -1120,6 +1111,7 @@ def get_history_data(htypes=None,
     2020-01-09  16.81  16.93  16.53  16.79  1031636.65
     2020-01-10  16.79  16.81  16.52  16.69   585548.45
     }
+
     >>> # 除了股票的价格数据以外，也可以获取基金、指数的价格数据，如下面的代码获取000300.SH的指数价格
     >>> qt.get_history_data(htype_names='close', shares='000300.SH', start='20191225', end='20200105')
     {'000300.SH':
@@ -1132,6 +1124,7 @@ def get_history_data(htypes=None,
     2020-01-02  4152.24
     2020-01-03  4144.96
     }
+
     >>> # 以及基金的净值数据
     >>> qt.get_history_data(htype_names='unit_nav, accum_nav', shares='000001.OF', start='20191225', end='20200105')
     {'000001.OF':
@@ -1144,6 +1137,7 @@ def get_history_data(htypes=None,
     2020-01-02     1.123      3.584
     2020-01-03     1.127      3.588
     }
+
     >>> # 不光价格数据，其他类型的数据也可以同时获取：
     >>> qt.get_history_data(htype_names='close, pe, pb', shares='000001.SZ', start='20191225', end='20200105')
     {'000001.SZ':
@@ -1156,6 +1150,7 @@ def get_history_data(htypes=None,
     2020-01-02  16.87  13.1911  1.2210
     2020-01-03  17.18  13.4335  1.2434
     }
+
     >>> # 可以同时混合获取多只股票、指数、多种数据类型的数据，如果某些数据类型缺失，会用NaN填充，注意000001.SZ是股票平安银行，000001.SH是上证指数
     >>> qt.get_history_data(htype_names='close, pe, pb, total_mv, eps', shares='000001.SZ, 000001.SH', start='20191225', end='20200105')
     {'000001.SZ':
@@ -1177,6 +1172,7 @@ def get_history_data(htypes=None,
     2020-01-02  3085.20  14.22  1.42  4.128453e+13  NaN
     2020-01-03  3083.79  14.22  1.42  4.127933e+13  NaN
     }
+
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
     >>> qt.get_history_data(htype_names='open:b, high:b, low:b, close:b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
      {'000001.SZ':
@@ -1198,6 +1194,7 @@ def get_history_data(htypes=None,
     2020-01-03 14:00:00  1863.51483  1889.71539  1863.51483  1884.25694
     2020-01-03 15:00:00  1884.25694  1884.25694  1872.24835  1875.52342
     }
+
     >>> # 可以设置b_days_only参数来将价格填充到非交易日，形成完整的日期序列
     >>> qt.get_history_data(htype_names='open, high, low, close, vol', shares='000001.SZ', start='20191225', end='20200105', b_days_only=False)
     {'000001.SZ':
@@ -1215,6 +1212,7 @@ def get_history_data(htypes=None,
      2020-01-04  16.94  17.31  16.92  17.18  1116194.81
      2020-01-05  16.94  17.31  16.92  17.18  1116194.81
      }
+
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
     >>> qt.get_history_data(htype_names='wt_id:000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
