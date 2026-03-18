@@ -1159,11 +1159,7 @@ class BaseStrategy:
 
 
 class GeneralStg(BaseStrategy):
-    """ 通用交易策略类，用户需要完整定义策略的所有交易逻辑，并在realize()方法中定义策略
-    的信号输出。
-
-    realize()方法的输出：
-    realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
+    """ 通用交易策略类，用户需要完整定义策略的所有交易逻辑，并在realize()方法中定义策略的信号输出。
 
     关于GeneralStg类的更详细说明，请参见qteasy的文档。
     """
@@ -1200,48 +1196,7 @@ class FactorSorter(BaseStrategy):
     这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
     用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。
     策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定数量的股票，最后根据它
-    们的因子值分配权重或信号值。
-
-    这些选股因子的排序和筛选条件，由6个选股参数来控制，因此用户只需要在策略属性中设置好相应的参数，
-    策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
-    因子的筛选排序取舍逻辑了。
-
-    这六个选股参数如下：
-
-        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
-        *condition:         str ,   确定股票的筛选条件，默认值'any'
-                                    'any'        :默认值，选择所有可用股票
-                                    'greater'    :筛选出因子大于ubound的股票
-                                    'less'       :筛选出因子小于lbound的股票
-                                    'between'    :筛选出因子介于lbound与ubound之间的股票
-                                    'not_between':筛选出因子不在lbound与ubound之间的股票
-        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
-        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
-        *sort_ascending:    bool,   排序方法，默认值: False, True: 优先选择因子最小的股票, False, 优先选择因子最大的股票
-        *weighting:         str ,   确定如何分配选中股票的权重
-                                    默认值: 'even'
-                                    'even'       :所有被选中的股票都获得同样的权重
-                                    'linear'     :权重根据因子排序线性分配
-                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
-                                    'proportion' :权重与股票的因子分值成正比
-
-    realize()方法的输出：
-    FactorSorter交易策略的输出信号为1D ndarray，这个数组不是交易信号，而是选股因子，策略会根据选股因子
-    自动生成股票的交易信号，通常交易信号类型应该为PT，即使用选股因子控制股票的目标仓位。
-
-        output：
-                np.array(arr), 如： np.array[0.1, 1.0, 10.0, 100.0]
-
-    根据上述选股因子，FactorSorter()策略会根据其配置参数生成各个股票的目标仓位，
-        例如：当
-                max_sel_count=0.5
-                condition='greater',
-                ubound=0.5,
-                weighting='even'
-        时，上述因子的选股结果为:
-                np.array[0.0, 0.0, 0.5, 0.5]
-
-    关于Strategy类的更详细说明，请参见qteasy的文档。
+    们的因子值分配权重或信号值。关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
     __metaclass__ = ABCMeta
@@ -1434,35 +1389,7 @@ class RuleIterator(BaseStrategy):
 
     RuleIterator策略类的特殊功能是可以对同一套交易规则，将不同的参数应用到投资组合中的不同股票上。
     例如，用户可以设计一个均线交叉策略，并将其应用到投资组合中的所有股票上，同时可以为每只股票
-    设定不同的均线周期参数。
-
-    例如，用户可以为投资组合中的股票分别设定不同的均线参数：
-        stock1: short_window=5, long_window=20
-        stock2: short_window=10, long_window=50
-        stock3: short_window=20, long_window=100
-        stock4: short_window=30, long_window=200
-
-    这样，用户只需要编写一套均线交叉的交易规则，就可以将其应用到投资组合中的所有股票上，同时
-    还可以为每只股票设定不同的均线参数。这种特殊的交易策略，需要用到RuleIterator类的
-    multi_pars属性。
-
-    这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则，
-    策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。
-
-    realize()方法的输出：
-    realize()方法的输出就是交易信号，该交易信号是一个数字，策略会将其推广到整个投资组合：
-
-        def realize(): -> int
-
-        投资组合： [share1, share2, share3, share4]
-                    |        |       |       |
-                 [ int1,   int2,   int3,   int4 ] -> np.array[ int1,   int2,   int3,   int4]
-
-    按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
-    中，并产生交易信号了。
-
-    关于Strategy类的更详细说明，请参见qteasy的文档。
-    RuleIterator 策略类继承了交易策略基类
+    设定不同的均线周期参数。关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
     __metaclass__ = ABCMeta
