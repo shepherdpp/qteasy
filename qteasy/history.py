@@ -2723,20 +2723,82 @@ class HistoryPanel():
 
 
 class _HistoryPanelKlineAccessor:
-    """HistoryPanel 的 K 线技术指标访问器，内部使用，通过 HistoryPanel.kline 访问。"""
+    """HistoryPanel 的 K 线/技术指标访问器（内部使用）。
+
+    该访问器通过 ``HistoryPanel.kline`` 属性暴露，封装了对 ``HistoryPanel`` 中价格序列
+    的常用技术指标计算（如均线、布林带、MACD、KDJ 等）。所有指标计算均遵循以下约定：
+
+    - **输入**：从原始 ``HistoryPanel`` 的某个 ``htype``（如 ``close``）读取价格序列；
+    - **输出**：返回一个新的 ``HistoryPanel``，其 values 为原面板 values 与新增指标列
+      在第三轴（htypes 轴）上拼接后的结果；
+    - **标签保持**：shares 与 hdates 标签保持不变；新增列名由参数或默认规则生成；
+    - **不修改原对象**：不会原地修改传入的 ``HistoryPanel``。
+
+    Notes
+    -----
+    - 本类为内部工具类，主要服务于可视化与策略研究中的快速派生数据生成。
+    - 指标函数内部依赖 ``qteasy.tafuncs``（对 TA-Lib 风格函数做了封装/适配）。
+    """
 
     def __init__(self, hp: HistoryPanel):
+        """创建一个绑定到指定 ``HistoryPanel`` 的 K 线访问器。
+
+        Parameters
+        ----------
+        hp : HistoryPanel
+            需要进行技术指标派生计算的历史数据容器。
+
+        Returns
+        -------
+        None
+            该方法不返回值，仅在内部保存 ``hp`` 引用。
+        """
         self._hp = hp
 
     def _get_price(self, price_htype: str):
-        """取指定 htype 的价格矩阵 (shares, times)。"""
+        """从 ``HistoryPanel`` 读取指定 ``htype`` 的二维价格矩阵。
+
+        Parameters
+        ----------
+        price_htype : str
+            价格数据对应的 ``htype`` 名称，典型值为 ``'close'``、``'open'``、``'high'``、
+            ``'low'`` 等，必须存在于 ``self._hp.htypes`` 中。
+
+        Returns
+        -------
+        numpy.ndarray
+            二维矩阵，形状为 ``(n_share, n_time)``，dtype 为 float。
+
+        Raises
+        ------
+        ValueError
+            当 ``HistoryPanel`` 为空或 ``price_htype`` 不存在于 ``htypes`` 中时抛出。
+        """
         if self._hp.is_empty or price_htype not in self._hp.htypes:
             raise ValueError(f'price_htype "{price_htype}" not in htypes: {self._hp.htypes}')
         ci = self._hp.htypes.index(price_htype)
         return self._hp.values[:, :, ci].astype(float)
 
     def _append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
-        """在原有 Panel 后追加新 htype 列，new_arrays 为 list of (n_share, n_time) 数组。"""
+        """将派生出的指标列追加到原 ``HistoryPanel`` 的 htypes 轴上并返回新面板。
+
+        Parameters
+        ----------
+        new_columns : list of str
+            新增列名列表（对应新增的 htypes）。
+        new_arrays : list of numpy.ndarray
+            新增列数据列表。列表长度应与 ``new_columns`` 一致；每个数组形状必须为
+            ``(n_share, n_time)``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加指标列后的新 ``HistoryPanel``。当原面板为空时返回空面板。
+
+        Notes
+        -----
+        - 本方法是内部通用拼接工具，不对列名冲突做额外处理（由调用方负责检查）。
+        """
         hp = self._hp
         if hp.is_empty:
             return HistoryPanel()
@@ -2747,7 +2809,42 @@ class _HistoryPanelKlineAccessor:
         return HistoryPanel(values=new_values, levels=hp.shares, rows=hp.hdates, columns=new_htypes)
 
     def sma(self, window: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
-        """简单移动平均。"""
+        """计算简单移动平均（SMA）并以新 ``htype`` 追加到面板中。
+
+        Parameters
+        ----------
+        window : int, default 20
+            滚动窗口长度（周期数）。
+        price_htype : str, default 'close'
+            用于计算均线的价格 ``htype`` 名称。
+        new_htype : str, optional
+            新增均线列名；为 None 时使用默认列名 ``'sma_{window}'``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加均线列后的新 ``HistoryPanel``。
+
+        Raises
+        ------
+        ValueError
+            当 ``price_htype`` 不存在，或 ``new_htype`` 已存在于原面板 ``htypes`` 中时抛出。
+
+        Examples
+        --------
+        >>> hp = qt.get_history_data(htype_names='open,high,low,close', shares='000001.SZ', rows=60, as_data_frame=False)
+        >>> hp2 = hp.kline.sma(window=20, price_htype='close')
+        >>> hp2
+        share 0, label: 000001
+                    close,  open,   sma_20
+        2020-01-01  10.0,   9.5,    NaN
+        2020-01-02  10.5,   10.0,   NaN
+        2020-01-03  10.8,   10.5,   NaN
+        ...
+        2020-02-19  11.2,   10.8,   10.75
+        2020-02-20  11.5,   11.2,   10.85
+        2020-02-21  11.8,   11.5,   10.95
+        """
         from qteasy import tafuncs
         default_name = f'sma_{window}'
         if new_htype is None:
@@ -2762,7 +2859,27 @@ class _HistoryPanelKlineAccessor:
         return self._append_htypes([new_htype], [out])
 
     def ema(self, span: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
-        """指数移动平均。"""
+        """计算指数移动平均（EMA）并以新 ``htype`` 追加到面板中。
+
+        Parameters
+        ----------
+        span : int, default 20
+            指数平滑跨度（周期数）。
+        price_htype : str, default 'close'
+            用于计算 EMA 的价格 ``htype`` 名称。
+        new_htype : str, optional
+            新增 EMA 列名；为 None 时使用默认列名 ``'ema_{span}'``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加 EMA 列后的新 ``HistoryPanel``。
+
+        Raises
+        ------
+        ValueError
+            当 ``price_htype`` 不存在，或 ``new_htype`` 已存在于原面板 ``htypes`` 中时抛出。
+        """
         from qteasy import tafuncs
         default_name = f'ema_{span}'
         if new_htype is None:
@@ -2787,7 +2904,34 @@ class _HistoryPanelKlineAccessor:
             ma_type: str = 'sma',
             suffix: Optional[str] = None,
     ) -> HistoryPanel:
-        """布林带。"""
+        """计算布林带（Bollinger Bands）并追加上轨/中轨/下轨三列。
+
+        Parameters
+        ----------
+        window : int, default 20
+            滚动窗口长度。
+        price_htype : str, default 'close'
+            用于计算布林带的价格 ``htype`` 名称。
+        nbdev_up : float, default 2.0
+            上轨标准差倍数。
+        nbdev_dn : float, default 2.0
+            下轨标准差倍数。
+        ma_type : {'sma', 'ema'}, default 'sma'
+            中轨移动平均类型。当前实现会映射为底层 ``tafuncs`` 的 ``matype`` 参数。
+        suffix : str, optional
+            列名后缀；为 None 时使用默认规则 ``'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加三列后的新 ``HistoryPanel``，新增列名分别为
+            ``bbands_upper_{tag}``、``bbands_middle_{tag}``、``bbands_lower_{tag}``。
+
+        Raises
+        ------
+        ValueError
+            当新增列名与现有 ``htypes`` 冲突时抛出。
+        """
         from qteasy import tafuncs
         tag = suffix if suffix is not None else f'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'
         upper_name = f'bbands_upper_{tag}'
@@ -2824,7 +2968,32 @@ class _HistoryPanelKlineAccessor:
             signalperiod: int = 9,
             suffix: Optional[str] = None,
     ) -> HistoryPanel:
-        """MACD 指标。"""
+        """计算 MACD 指标并追加 DIF/DEA/HIST 三列。
+
+        Parameters
+        ----------
+        price_htype : str, default 'close'
+            用于计算 MACD 的价格 ``htype`` 名称。
+        fastperiod : int, default 12
+            快线周期。
+        slowperiod : int, default 26
+            慢线周期。
+        signalperiod : int, default 9
+            信号线周期。
+        suffix : str, optional
+            列名后缀；为 None 时使用默认规则 ``'{fastperiod}_{slowperiod}_{signalperiod}'``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加三列后的新 ``HistoryPanel``，新增列名分别为
+            ``macd_{tag}``、``macd_signal_{tag}``、``macd_hist_{tag}``。
+
+        Raises
+        ------
+        ValueError
+            当新增列名与现有 ``htypes`` 冲突时抛出。
+        """
         from qteasy import tafuncs
         tag = suffix if suffix is not None else f'{fastperiod}_{slowperiod}_{signalperiod}'
         n1, n2, n3 = f'macd_{tag}', f'macd_signal_{tag}', f'macd_hist_{tag}'
@@ -2853,7 +3022,35 @@ class _HistoryPanelKlineAccessor:
             slowd_period: int = 3,
             suffix: Optional[str] = None,
     ) -> HistoryPanel:
-        """KDJ 随机指标，需要 high、low、close。"""
+        """计算 KDJ 随机指标并追加 K/D/J 三列。
+
+        该指标依赖 ``high``、``low``、``close`` 三个价格序列，因此要求它们存在于
+        原面板 ``htypes`` 中。
+
+        Parameters
+        ----------
+        price_htype : str, default 'close'
+            预留参数，保持接口风格一致；KDJ 实际会固定使用 ``high/low/close`` 三列。
+        fastk_period : int, default 9
+            RSV 计算窗口长度。
+        slowk_period : int, default 3
+            K 线平滑窗口长度。
+        slowd_period : int, default 3
+            D 线平滑窗口长度。
+        suffix : str, optional
+            列名后缀；为 None 时使用默认规则 ``'{fastk_period}_{slowk_period}_{slowd_period}'``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加三列后的新 ``HistoryPanel``，新增列名分别为
+            ``kdj_k_{tag}``、``kdj_d_{tag}``、``kdj_j_{tag}``。
+
+        Raises
+        ------
+        ValueError
+            当缺少 ``high`` / ``low`` / ``close`` 任一列，或新增列名冲突时抛出。
+        """
         from qteasy import tafuncs
         for h in ('high', 'low', 'close'):
             if h not in self._hp.htypes:
@@ -2892,7 +3089,30 @@ class _HistoryPanelKlineAccessor:
             as_panel: bool = True,
             **kwargs,
     ):
-        """兼容旧计划的命名，为 kline 访问器预留统一 ta 接口（实际实现位于 HistoryPanel.apply_ta）。"""
+        """在当前面板上应用 ``tafuncs`` 中的技术指标函数（委托给 ``HistoryPanel.apply_ta``）。
+
+        该方法主要用于对齐历史接口/旧计划中的调用方式：将对 ``HistoryPanel`` 的
+        技术指标计算入口统一暴露在 ``hp.kline`` 下，但实际实现与参数解析逻辑位于
+        :meth:`HistoryPanel.apply_ta`。
+
+        Parameters
+        ----------
+        func_name : str
+            指标函数名（``qteasy.tafuncs`` 中的函数名）。
+        htype : str, default 'close'
+            输入数据列名（``HistoryPanel`` 的 ``htypes`` 之一）。
+        shares : Iterable[str], optional
+            限定计算的标的集合；为 None 时对所有 shares 计算。
+        as_panel : bool, default True
+            返回值类型控制；含义与 :meth:`HistoryPanel.apply_ta` 一致。
+        **kwargs :
+            透传给指标函数的其他关键字参数。
+
+        Returns
+        -------
+        Any
+            返回值与 :meth:`HistoryPanel.apply_ta` 保持一致。
+        """
         return self._hp.apply_ta(func_name=func_name, htype=htype, shares=shares, as_panel=as_panel, **kwargs)
 
 
@@ -2910,6 +3130,29 @@ class HistoryPanelRolling:
                  min_periods: int,
                  center: bool,
                  by: str):
+        """创建一个绑定到指定 ``HistoryPanel`` 的滚动窗口统计对象。
+
+        Parameters
+        ----------
+        hp : HistoryPanel
+            需要进行滚动统计的历史数据容器。
+        window : int
+            滚动窗口长度（周期数）。
+        min_periods : int
+            计算结果不为 NaN 所需的最小样本数，小于该值时结果为 NaN。
+        center : bool
+            是否将窗口标签居中。含义与 pandas 的 ``Series.rolling(center=...)`` 一致。
+        by : {'share', 'htype'}
+            滚动维度控制：
+
+            - ``'share'``：每个 share、每个 htype 的时间序列分别滚动计算；
+            - ``'htype'``：预留维度，与 ``'share'`` 的行为保持一致，用于兼容不同调用习惯。
+
+        Returns
+        -------
+        None
+            该方法不返回值，仅保存滚动参数以供后续聚合方法调用。
+        """
         self._hp = hp
         self._window = window
         self._min_periods = min_periods
@@ -2917,7 +3160,20 @@ class HistoryPanelRolling:
         self._by = by
 
     def _apply_rolling(self, func_name: str) -> HistoryPanel:
-        """内部通用滚动聚合实现。"""
+        """对面板数据应用指定的滚动聚合函数并返回新面板（内部方法）。
+
+        Parameters
+        ----------
+        func_name : str
+            pandas ``Rolling`` 对象的方法名，例如 ``'mean'``、``'std'``、``'sum'``、
+            ``'min'``、``'max'``。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动聚合后的新 ``HistoryPanel``，shares/hdates/htypes 标签保持不变。
+            当原面板为空时返回空面板。
+        """
         hp = self._hp
         if hp.is_empty:
             return HistoryPanel()
@@ -2949,23 +3205,53 @@ class HistoryPanelRolling:
         return HistoryPanel(values=res, levels=hp.shares, rows=hp.hdates, columns=hp.htypes)
 
     def mean(self) -> HistoryPanel:
-        """滚动窗口均值。"""
+        """计算滚动窗口均值并返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动均值结果面板，标签与原面板一致。
+        """
         return self._apply_rolling('mean')
 
     def std(self) -> HistoryPanel:
-        """滚动窗口标准差。"""
+        """计算滚动窗口标准差并返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动标准差结果面板，标签与原面板一致。
+        """
         return self._apply_rolling('std')
 
     def sum(self) -> HistoryPanel:
-        """滚动窗口求和。"""
+        """计算滚动窗口求和并返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动求和结果面板，标签与原面板一致。
+        """
         return self._apply_rolling('sum')
 
     def min(self) -> HistoryPanel:
-        """滚动窗口最小值。"""
+        """计算滚动窗口最小值并返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动最小值结果面板，标签与原面板一致。
+        """
         return self._apply_rolling('min')
 
     def max(self) -> HistoryPanel:
-        """滚动窗口最大值。"""
+        """计算滚动窗口最大值并返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            滚动最大值结果面板，标签与原面板一致。
+        """
         return self._apply_rolling('max')
 
     def apply(self,
@@ -2982,6 +3268,48 @@ class HistoryPanelRolling:
             为 ``True`` 时向 func 传入 ``ndarray``，否则传入 ``Series``。
         **kwargs :
             透传给 func 的其他参数。
+
+        Returns
+        -------
+        HistoryPanel
+            应用自定义函数后的滚动结果面板，shares/hdates/htypes 标签保持不变。
+
+        Notes
+        -----
+        - 与 pandas 一致：当窗口内有效样本数小于 ``min_periods`` 时，结果为 NaN。
+        - ``func`` 应返回标量数值；返回数组或非数值类型可能导致 pandas 报错或产生
+          不符合预期的结果。
+
+        Examples
+        --------
+        >>> hp = qt.get_history_data(htype_names='close', shares='000001.SZ', rows=30, as_data_frame=False)
+        >>> roller = hp.rolling(window=5, min_periods=5)
+        >>> hp_mean = roller.mean()
+        >>> hp_mean
+        share 0, label: 000001
+                    close
+        2020-01-01  NaN
+        2020-01-02  NaN
+        2020-01-03  NaN
+        2020-01-04  NaN
+        2020-01-05  10.0
+        2020-01-06  10.5
+        ...
+        2020-01-30  11.2
+        
+        >>> hp_mad = roller.apply(lambda x: float(np.mean(np.abs(x - np.mean(x)))), raw=True)
+        >>> hp_mad
+        share 0, label: 000001
+                    close
+        2020-01-01  NaN
+        2020-01-02  NaN
+        2020-01-03  NaN
+        2020-01-04  NaN
+        2020-01-05  0.0
+        2020-01-06  0.5
+        ...
+        2020-01-30  0.4
+
         """
         hp = self._hp
         if hp.is_empty:

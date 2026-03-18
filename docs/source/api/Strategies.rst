@@ -123,7 +123,7 @@ RuleIterator 策略类继承了交易策略基类
 .. autoclass:: qteasy.RuleIterator
 
 交易策略的可调参数
------------------------
+===========================
 
 Parameter对象包含Space对象的一个维度，Parameter对象有四种类型：
 
