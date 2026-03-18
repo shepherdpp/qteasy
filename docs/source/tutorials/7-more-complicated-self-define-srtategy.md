@@ -34,7 +34,6 @@ $ pip install qteasy -U
 同时，`qteasy`的回测框架也做了相当多的特殊设计，可以完全避免您无意中在交易策略中导入"未来函数"，确保您的交易策略在回测时完全基于过去的数据，同时也使用了很多预处理技术以及JIT技术对内核关键函数进行了编译，以实现不亚于C语言的运行速度。
 
 不过，为了实现理论上无限可能的交易策略，仅仅使用内置交易策略以及策略混合就不一定够用了，一些特定的交易策略，或者一些特别复杂的交易策略是无法通过内置策略混合而成的，这就需要我们使用`qteasy`提供的`Strategy`基类，基于一定的规则创建一个自定义交易策略了。
-
 ## 本节的目标
                         
 在本节中，我们将介绍`qteasy`的交易策略基类，通过一个具体的例子详细讲解如何基于这几个基类，创建一个只属于您自己的交易策略。为了说明
@@ -45,111 +44,106 @@ $ pip install qteasy -U
 在这个例子中，我们使用
 
 ```python
-import qteasy as qt
-import numpy as np
+>>> import qteasy as qt
+>>> import numpy as np
+>>> from qteasy import Parameter, StgData
 
-from qteasy import Parameter, StgData
+>>> def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
+...    """ 根据mv_target和bp_target计算市值加权收益率，在策略中调用此函数计算加权收益率  """
+...    sel = (mv_cat == mv_target) & (bp_cat == bp_target)
+...    mv_total = np.nansum(mv[sel])
+...    mv_weight = mv / mv_total
+...    return_total = np.nansum(stock_return[sel] * mv_weight[sel])
+...     return return_total
 
-def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
-    """ 根据mv_target和bp_target计算市值加权收益率，在策略中调用此函数计算加权收益率
-
-    """
-    sel = (mv_cat == mv_target) & (bp_cat == bp_target)
-    mv_total = np.nansum(mv[sel])
-    mv_weight = mv / mv_total
-    return_total = np.nansum(stock_return[sel] * mv_weight[sel])
-    return return_total
-
-
-class MultiFactors(qt.FactorSorter):
-    """ 开始定义交易策略
-    """
-
-    def __init__(self, par_values: tuple = (0.5, 0.3, 0.7)):
-        """交易策略的初始化参数"""
-        super().__init__(
-                pars=[Parameter((0.01, 0.99), par_type='float', name='size_gate', value=0.5),  # 参数1:大小市值分类界限
-                      Parameter((0.01, 0.49), par_type='float', name='bp_s_gate', value=0.3),  # 参数2:小/中bp分界线
-                      Parameter((0.50, 0.99), par_type='float', name='bp_l_gate', value=0.7)],  # 参数3，中/大bp分界线
-                name='MultiFactor',
-                description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
-                data_types=[StgData('pb', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),  # 执行选股需要用到的股票数据
-                             StgData('total_mv', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),
-                             StgData('close', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),
-                             StgData('close-000300.SH', freq='d', asset_type='IDX', window_length=20, use_latest_data_cycle=True)],  # 选股需要用到市场收益率，使用沪深300指数的收盘价计算
-                max_sel_count=10,  # 最多选出10支股票
-                sort_ascending=True,  # 选择因子最小的股票
-                condition='less',  # 仅选择因子小于某个值的股票
-                lbound=0,  # 仅选择因子小于0的股票
-                ubound=0,  # 仅选择因子小于0的股票 
-        )
-
-    def realize(self):
-        """ 策略的选股逻辑在realize()函数中定义
-        """
-
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate', 'bp_s_gate', 'bp_l_gate')
-        # 读取投资组合的数据PB和total_MV的最新值
-        pb = self.get_data('pb_E_d')[-1]  # 当前所有股票的PB值
-        mv = self.get_data('total_mv_E_d')[-1]  # 当前所有股票的市值
-        pre_close = self.get_data('close_E_d')[-1]  # 当前所有股票的前收盘价
-        close = self.get_data('close_E_d')[-2]  # 当前所有股票的最新收盘价
-        
-        market_pre_close = self.get_data('close-000300.SH_IDX_d')[-2]  # HS300的昨收价
-        market_close = self.get_data('close-000300.SH_IDX_d')[-1]  # HS300的收盘价
-    
-        # 计算账面市值比，为pb的倒数
-        bp = pb ** -1
-        # 计算市值的50%的分位点,用于后面的分类
-        size_gate = np.nanquantile(mv, size_gate_percentile)
-        # 计算账面市值比的30%和70%分位点,用于后面的分类
-        bm_30_gate = np.nanquantile(bp, bp_small_percentile)
-        bm_70_gate = np.nanquantile(bp, bp_large_percentile)
-        # 计算每只股票的当日收益率
-        stock_return = pre_close / close - 1
-    
-        # 根据每只股票的账面市值比和市值，给它们分配bp分类和mv分类
-        # 市值小于size_gate的cat为1，否则为2
-        mv_cat = np.ones_like(mv)
-        mv_cat += (mv > size_gate).astype('float')
-        # bp小于30%的cat为1，30%～70%之间为2，大于70%为3
-        bp_cat = np.ones_like(bp)
-        bp_cat += (bp > bm_30_gate).astype('float')
-        bp_cat += (bp > bm_70_gate).astype('float')
-    
-        # 获取小市值组合的市值加权组合收益率
-        smb_s = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 1) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 2) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 3)) / 3
-        # 获取大市值组合的市值加权组合收益率
-        smb_b = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 1) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 2) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 3)) / 3
-        smb = smb_s - smb_b
-        # 获取大账面市值比组合的市值加权组合收益率
-        hml_b = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 3) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 3)) / 2
-        # 获取小账面市值比组合的市值加权组合收益率
-        hml_s = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 1) +
-                 market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 1)) / 2
-        hml = hml_b - hml_s
-    
-        # 计算市场收益率
-        market_return = market_pre_close / market_close - 1
-    
-        coff_pool = []
-        # 对每只股票进行回归获取其alpha值
-        for rtn in stock_return:
-            x = np.array([[market_return, smb, hml, 1.0]])
-            y = np.array([[rtn]])
-            # OLS估计系数
-            coff = np.linalg.lstsq(x, y)[0][3][0]
-            coff_pool.append(coff)
-    
-        # 以alpha值为股票组合的选股因子执行选股
-        factors = np.array(coff_pool)
-        
-        return factors
+>>> class MultiFactors(qt.FactorSorter):
+...     """ 开始定义交易策略 """
+... 
+...     def __init__(self, par_values: tuple = (0.5, 0.3, 0.7)):
+...         """交易策略的初始化参数"""
+...         super().__init__(
+...                 pars=[Parameter((0.01, 0.99), par_type='float', name='size_gate', value=0.5),  # 参数1:大小市值分类界限
+...                       Parameter((0.01, 0.49), par_type='float', name='bp_s_gate', value=0.3),  # 参数2:小/中bp分界线
+...                       Parameter((0.50, 0.99), par_type='float', name='bp_l_gate', value=0.7)],  # 参数3，中/大bp分界线
+...                 name='MultiFactor',
+...                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
+...                 data_types=[StgData('pb', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),  # 执行选股需要用到的股票数据
+...                              StgData('total_mv', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),
+...                              StgData('close', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),
+...                              StgData('close-000300.SH', freq='d', asset_type='IDX', window_length=20, use_latest_data_cycle=True)],  # 选股需要用到市场收益率，使用沪深300指数的收盘价计算
+...                 max_sel_count=10,  # 最多选出10支股票
+...                 sort_ascending=True,  # 选择因子最小的股票
+...                 condition='less',  # 仅选择因子小于某个值的股票
+...                 lbound=0,  # 仅选择因子小于0的股票
+...                 ubound=0,  # 仅选择因子小于0的股票 
+...         )
+... 
+...     def realize(self):
+...         """ 策略的选股逻辑在realize()函数中定义
+...         """
+... 
+...         size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate', 'bp_s_gate', 'bp_l_gate')
+...         # 读取投资组合的数据PB和total_MV的最新值
+...         pb = self.get_data('pb_E_d')[-1]  # 当前所有股票的PB值
+...         mv = self.get_data('total_mv_E_d')[-1]  # 当前所有股票的市值
+...         pre_close = self.get_data('close_E_d')[-1]  # 当前所有股票的前收盘价
+...         close = self.get_data('close_E_d')[-2]  # 当前所有股票的最新收盘价
+...         
+...         market_pre_close = self.get_data('close-000300.SH_IDX_d')[-2]  # HS300的昨收价
+...         market_close = self.get_data('close-000300.SH_IDX_d')[-1]  # HS300的收盘价
+...     
+...         # 计算账面市值比，为pb的倒数
+...         bp = pb ** -1
+...         # 计算市值的50%的分位点,用于后面的分类
+...         size_gate = np.nanquantile(mv, size_gate_percentile)
+...         # 计算账面市值比的30%和70%分位点,用于后面的分类
+...         bm_30_gate = np.nanquantile(bp, bp_small_percentile)
+...         bm_70_gate = np.nanquantile(bp, bp_large_percentile)
+...         # 计算每只股票的当日收益率
+...         stock_return = pre_close / close - 1
+...     
+...         # 根据每只股票的账面市值比和市值，给它们分配bp分类和mv分类
+...         # 市值小于size_gate的cat为1，否则为2
+...         mv_cat = np.ones_like(mv)
+...         mv_cat += (mv > size_gate).astype('float')
+...         # bp小于30%的cat为1，30%～70%之间为2，大于70%为3
+...         bp_cat = np.ones_like(bp)
+...         bp_cat += (bp > bm_30_gate).astype('float')
+...         bp_cat += (bp > bm_70_gate).astype('float')
+...     
+...         # 获取小市值组合的市值加权组合收益率
+...         smb_s = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 1) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 2) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 3)) / 3
+...         # 获取大市值组合的市值加权组合收益率
+...         smb_b = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 1) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 2) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 3)) / 3
+...         smb = smb_s - smb_b
+...         # 获取大账面市值比组合的市值加权组合收益率
+...         hml_b = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 3) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 3)) / 2
+...         # 获取小账面市值比组合的市值加权组合收益率
+...         hml_s = (market_value_weighted(stock_return, mv, mv_cat, bp_cat, 1, 1) +
+...                  market_value_weighted(stock_return, mv, mv_cat, bp_cat, 2, 1)) / 2
+...         hml = hml_b - hml_s
+...     
+...         # 计算市场收益率
+...         market_return = market_pre_close / market_close - 1
+...     
+...         coff_pool = []
+...         # 对每只股票进行回归获取其alpha值
+...         for rtn in stock_return:
+...             x = np.array([[market_return, smb, hml, 1.0]])
+...             y = np.array([[rtn]])
+...             # OLS估计系数
+...             coff = np.linalg.lstsq(x, y)[0][3][0]
+...             coff_pool.append(coff)
+...     
+...         # 以alpha值为股票组合的选股因子执行选股
+...         factors = np.array(coff_pool)
+...         
+...         return factors
 ```
 ### 策略和回测参数配置，并开始回测
 定义好上面的策略之后，就可以开始进行回测了，我们需要在`qteasy`中创建一个交易员对象，操作前面创建的策略：
@@ -164,16 +158,16 @@ op = qt.Operator(alpha, signal_type='PT',
                  run_freq='M',  # 每月执行一次选股（每周或每天都可以）
                 )  # 生成交易员对象，操作alpha策略，交易信号的类型为‘PT'，意思是生成的信号代表持仓比例，例如1代表100%持有股票，0.35表示持有股票占资产的35%
 # 设置回测参数，并开始回测
-qt.run(op=op,
-       mode=1,  # 回测模式
-       invest_start='20160405',  # 回测开始日期
-       invest_end='20210201',  # 回测结束日期
-       asset_type='E',  # 投资品种为股票
-       asset_pool=shares,  # shares包含同期沪深300指数的成份股
-       trade_batch_size=100,  # 买入批量为100股
-       sell_batch_size=1,  # 卖出批量为整数股
-       trade_log=True,  # 生成交易记录
-      )  # 开始运行
+>>> qt.run(op=op,
+...        mode=1,  # 回测模式
+...        invest_start='20160405',  # 回测开始日期
+...        invest_end='20210201',  # 回测结束日期
+...        asset_type='E',  # 投资品种为股票
+...        asset_pool=shares,  # shares包含同期沪深300指数的成份股
+...        trade_batch_size=100,  # 买入批量为100股
+...        sell_batch_size=1,  # 卖出批量为整数股
+...        trade_log=True,  # 生成交易记录
+...       )  # 开始运行
 ```
 运行结果如下：
 
