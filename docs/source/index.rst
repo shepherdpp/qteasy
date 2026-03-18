@@ -180,7 +180,10 @@
    api/HistoryPanel.rst
    api/data_types.rst
    api/built_in_strategies.rst
+   api/Operators.rst
    api/Strategies.rst
+   api/Backtest.rst
+   api/Optimization.rst
    api/use_qteasy.rst
 
 

@@ -24,8 +24,35 @@ from qteasy.blender import (
 
 
 class Group:
+    """ 策略组，包含多个策略成员，定义了成员策略的信号类型、混合方式、运行频率和时机等属性。 """
+
     def __init__(self, name: str, signal_type: str = 'pt', blender: str = None,
                  run_freq: str = 'd', run_timing: str = 'close'):
+        """ 初始化一个策略组
+
+        Parameters
+        ----------
+        name: str
+            策略组名称，必须为字符串。
+        signal_type: str, optional
+            策略组信号类型，默认为 'pt'（position），可选
+            'ps'（probability）和 'vs'（value）。
+        blender: str, optional
+            混合器表达式字符串，默认为 None，表示使用默认混合方式
+            （'pt' 类型默认乘积，'ps' 和 'vs' 类型默认求和）。如果提供了 blender 字符串，
+            将使用 blender_parser 解析该字符串来构建混合器。
+        run_freq: str, optional
+            运行频率，默认为 'd'（daily）。必须为字符串，且不能为空。
+        run_timing: str, optional
+            运行时机，默认为 'close'（收盘）。必须为字符串，且不能为空。
+
+        Raises
+        ------
+        TypeError
+            如果 name、signal_type、run_freq 或 run_timing 不是字符串类型。
+        ValueError
+            如果 signal_type 不是 'pt'、'ps' 或 'vs'，或者 run_freq 或 run_timing 为空。
+        """
 
         if not isinstance(name, str):
             raise TypeError(f'name should be a string, got {type(name)} instead')
@@ -158,15 +185,15 @@ class Group:
         return self.name
 
     def add_strategy(self, strategy: BaseStrategy) -> None:
-        """Add a strategy to the group.
+        """ 添加一个策略到组中，策略将成为该组的成员。
         
-        The strategy's run_freq and run_timing will be delegated from this group.
-        Group is the single source of truth for run_freq and run_timing.
+        新增的策略必须是 BaseStrategy 的实例，并且不能已经是该组的成员，否则将引发 ValueError。
+        新增策略的 group_id 将被设置为该组的 group_id，以便在策略中访问所属组的信息。
 
         Parameters
         ----------
         strategy: BaseStrategy
-            The strategy to add to the group.
+            需要添加到组中的策略实例，必须是 BaseStrategy 的子类实例。
 
         Returns
         -------
@@ -175,7 +202,9 @@ class Group:
         Raises
         ------
         ValueError
-            If the strategy is already a member of the group.
+            当 strategy 已经是该组的成员时，抛出 ValueError，提示策略已存在于组中。
+        TypeError
+            当 strategy 不是 BaseStrategy 的实例时，抛出 TypeError，提示策略类型错误。
         """
 
         if strategy in self.members:
@@ -185,6 +214,27 @@ class Group:
         strategy._group_id = self.group_id
 
     def remove_strategy(self, strategy: BaseStrategy):
+        """ 从组中移除一个策略，策略将不再是该组的成员。
+
+        被移除的策略必须是该组的成员，否则将引发 ValueError。
+        被移除策略的 group_id 将被设置为 None，以表示不再属于任何组。
+
+        Parameters
+        ----------
+        strategy: BaseStrategy
+            需要从组中移除的策略实例，必须是该组的成员。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            当 strategy 不是该组的成员时，抛出 ValueError，提示策略不在组中。
+        TypeError
+            当 strategy 不是 BaseStrategy 的实例时，抛出 TypeError，提示策略类型错误。
+        """
         if strategy in self.members:
             self.members.remove(strategy)
             strategy._group = None
@@ -192,6 +242,9 @@ class Group:
             raise ValueError(f"Strategy {strategy.name} is not a member of the group {self.name}.")
 
     def clear_strategies(self):
+        """ 清空组中的所有策略，所有成员策略将不再是该组的成员。
+
+        """
         for strategy in self.members:
             strategy._group = None
         self.members = []

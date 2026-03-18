@@ -153,4 +153,11 @@ Parameter对象最重要的方法是gen_value()方法，代表从数轴的所有
 另外Parameter对象还有常规的set_value方法等
 
 .. autoclass:: qteasy.Parameter
-    :members:
+
+.. autofunction:: qteasy.Parameter.__init__
+
+.. autofunction:: qteasy.Parameter.get_value
+
+.. autofunction:: qteasy.Parameter.set_value
+
+.. autofunction:: qteasy.Parameter.update_par_range

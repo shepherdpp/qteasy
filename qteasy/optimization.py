@@ -266,12 +266,6 @@ def _flash_evaluate_parameter(
 
 class Optimizer:
     """ 最优参数搜索器对象
-
-    Parameters
-    ----------
-
-    Returns
-    -------
     """
 
     def __init__(self,
