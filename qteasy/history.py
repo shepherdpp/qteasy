@@ -3296,7 +3296,7 @@ class HistoryPanelRolling:
         2020-01-06  10.5
         ...
         2020-01-30  11.2
-        
+
         >>> hp_mad = roller.apply(lambda x: float(np.mean(np.abs(x - np.mean(x)))), raw=True)
         >>> hp_mad
         share 0, label: 000001
@@ -4495,9 +4495,9 @@ def check_and_prepare_trade_prices(op,
     else:
         combined_trade_prices = list(trade_prices_per_group.values())[0]
 
-    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点
+    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点，但是不需要填充NaN值，当价格为NaN时（例如停牌），就保持为NaN值，表示该时间点价格不可用
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
-    combined_trade_prices.ffill(inplace=True)
+    # combined_trade_prices.ffill(inplace=True)
     # 强制列对齐到完整资产池，避免 backtest_price_adj 等导致列数不足
     combined_trade_prices = combined_trade_prices.reindex(columns=shares)
 

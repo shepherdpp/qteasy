@@ -2276,15 +2276,16 @@ class Operator:
                 price_adj=config['backtest_price_adj'],
                 datasource=datasource,
         )
-        # 确保trade_prices包含所有交易时间点，并进行前向填充
+        # 确保trade_prices包含所有交易时间点，但是不需要填充NaN值价格，当价格为NaN（例如停牌）时，回测引擎会自动跳过交易
         trade_prices = trade_prices.reindex(index=self.op_signal_index.get_level_values(0))
-        trade_prices.ffill(inplace=True)
+        # trade_prices.ffill(inplace=True)
 
         # 如果trace_price存在完全为NaN的列，说明有可能数据不完整，或者数据不需要使用
         if any(np.isnan(trade_prices)):
             # warnings.warn('There are all-NaN columns in trade_prices, that means missing data or '
             #               'unnecessary shares', UserWarning)
-            trade_prices.fillna(1.0, inplace=True)
+            # trade_prices.fillna(1.0, inplace=True)
+            pass
 
         hist_benchmark = check_and_prepare_benchmark_data(
                 op=self,

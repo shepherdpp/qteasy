@@ -27,6 +27,7 @@ class TestCost(unittest.TestCase):
         self.cash_to_spend = np.array([0., 20000., 0.])
         self.short_cash_to_spend = np.array([0., -20555., 0.])
         self.prices = np.array([10., 20., 10.])
+        self.prices_with_nan = np.array([10., np.nan, np.nan])
         self.r = qt.set_cost()
 
     def test_rate_creation(self):
@@ -38,6 +39,49 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_min'], 5.0, 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 0.0, 'Item got is incorrect')
         self.assertEqual(self.r['slippage'], 0.0, 'Item got is incorrect')
+
+    def test_price_with_nan(self):
+        """测试价格中包含NaN的情况, 此时交易结果应该为0, 交易费用应该为0"""
+        self.r['buy_rate'] = 0.003
+        self.r['sell_rate'] = 0.001
+        self.r['buy_fix'] = 0.
+        self.r['sell_fix'] = 0.
+        self.r['buy_min'] = 0.
+        self.r['sell_min'] = 0.
+        self.r['slippage'] = 0.
+        r = get_cost_params(self.r)
+
+        print('\nSell result with price containing NaN:')
+        print(f'selling {self.amounts_to_sell} with prices {self.prices_with_nan}')
+        test_price_with_nan_result = get_selling_result(self.prices_with_nan, self.amounts_to_sell, 0, r)
+        print(f'result {test_price_with_nan_result}')
+        self.assertIs(np.allclose(test_price_with_nan_result[0], [0., 0., 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[1].sum(), 0., msg='result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[2].sum(), 0., msg='result incorrect')
+
+        print('\nSell short result with price containing NaN:')
+        print(f'selling short {self.short_amounts_to_sell} with prices {self.prices_with_nan}')
+        test_price_with_nan_result = get_selling_result(self.prices_with_nan, self.short_amounts_to_sell, 0, r)
+        print(f'result{test_price_with_nan_result}')
+        self.assertIs(np.allclose(test_price_with_nan_result[0], [0., 0., 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[1].sum(), 0., msg='result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[2].sum(), 0., msg='result incorrect')
+
+        print(f'\nPurchase result with price containing NaN:')
+        print(f'buying with cash {self.cash_to_spend} and prices {self.prices_with_nan}')
+        test_price_with_nan_result = get_purchase_result(self.prices_with_nan, self.cash_to_spend, 0, r)
+        print(f'result{test_price_with_nan_result}')
+        self.assertIs(np.allclose(test_price_with_nan_result[0], [0., 0., 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[1].sum(), 0.0, msg='result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[2].sum(), 0.0, msg='result incorrect')
+
+        print(f'\nPurchase short result with price containing NaN:')
+        print(f'buying short with cash {self.short_cash_to_spend} and prices {self.prices_with_nan}')
+        test_price_with_nan_result = get_purchase_result(self.prices_with_nan, self.short_cash_to_spend, 0, r)
+        print(f'result{test_price_with_nan_result}')
+        self.assertIs(np.allclose(test_price_with_nan_result[0], [0., 0., 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[1].sum(), 0., msg='result incorrect')
+        self.assertAlmostEqual(test_price_with_nan_result[2].sum(), 0., msg='result incorrect')
 
     def test_rate_fee(self):
         """测试买卖交易费率"""

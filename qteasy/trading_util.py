@@ -450,7 +450,8 @@ def parse_pt_signals(signals: np.ndarray,
     """
 
     # 计算当前总资产
-    total_value = np.sum(prices * own_amounts) + own_cash
+    # import pdb; pdb.set_trace()
+    total_value = np.nansum(prices * own_amounts) + own_cash
 
     ptbt = pt_buy_threshold
     ptst = -pt_sell_threshold

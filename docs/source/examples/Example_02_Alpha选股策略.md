@@ -50,63 +50,69 @@ EV/EBITDA = (Market Capitalization + Total Debt - Total Cash) / EBITDA
 
 ```python
 >>> class AlphaPS(qt.GeneralStg):
->>>     def realize(self, h, r=None, t=None, pars=None):
->>>         # 从历史数据编码中读取四种历史数据的最新数值
->>>         total_mv = h[:, -1, 0]  # 总市值
->>>         total_liab = h[:, -1, 1]  # 总负债
->>>         cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
->>>         ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
->>>         # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
->>>         own_amounts = t[:, 0]
->>>         owned = np.where(own_amounts > 0)[0]  # 所有持仓股的序号
->>>         not_owned = np.where(own_amounts == 0)[0]  # 所有未持仓的股票序号
->>>         # 选股因子为EV/EBIDTA，使用下面公式计算
->>>         factors = (total_mv + total_liab - cash_equ) / ebitda
->>>         # 处理交易信号，将所有小于0的因子变为NaN
->>>         factors = np.where(factors < 0, np.nan, factors)
->>>         # 选出数值最小的30个股票的序号
->>>         arg_partitioned = factors.argpartition(30)
->>>         selected = arg_partitioned[:30]  # 被选中的30个股票的序号
->>>         not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
->>>         # 开始生成交易信号
->>>         signal = np.zeros_like(factors)
->>>         # 如果持仓为正，且未被选中，生成全仓卖出交易信号
->>>         own_but_not_selected = np.intersect1d(owned, not_selected)
->>>         signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
->>>         # 如果持仓为零，且被选中，生成全仓买入交易信号
->>>         selected_but_not_own = np.intersect1d(not_owned, selected)
->>>         signal[selected_but_not_own] = 0.0333  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
->>>         return signal
+...     
+...     def realize(self):
+... 
+...         # 从历史数据编码中读取四种历史数据的最新数值
+...         total_mv = self.get_data('total_mv_E_d')[-1]  # 总市值
+...         total_liab = self.get_data('total_liab_E_q')[-1]  # 总负债
+...         cash_equ = self.get_data('c_cash_equ_end_period_E_q')[-1]  # 现金及现金等价物总额
+...         ebitda = self.get_data('ebitda_E_q')[-1]  # ebitda，息税折旧摊销前利润
+...         
+...         # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
+...         own_amounts = self.get_data('proc.own_amounts')
+...         owned = np.where(own_amounts > 0)[0]  # 所有持仓股的序号
+...         not_owned = np.where(own_amounts == 0)[0]  # 所有未持仓的股票序号
+...         
+...         # 选股因子为EV/EBIDTA，使用下面公式计算
+...         factors = (total_mv + total_liab - cash_equ) / ebitda
+...         # 处理交易信号，将所有小于0的因子变为NaN
+...         factors = np.where(factors < 0, np.nan, factors)
+...         # 选出数值最小的30个股票的序号
+...         arg_partitioned = factors.argpartition(30)
+...         selected = arg_partitioned[:30]  # 被选中的30个股票的序号
+...         not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+...         
+...         # 开始生成交易信号
+...         signal = np.zeros_like(factors)
+...         # 如果持仓为正，且未被选中，生成全仓卖出交易信号
+...         own_but_not_selected = np.intersect1d(owned, not_selected)
+...         signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
+...         
+...         # 如果持仓为零，且被选中，生成全仓买入交易信号
+...         selected_but_not_own = np.intersect1d(not_owned, selected)
+...         signal[selected_but_not_own] = 0.0333  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
+...     
+...         return signal
 ```
 定义好交易策略之后，就可以开始创建Operator对象并启动回测了：
 
 
 ```python
+>>> import numpy as np
 >>> alpha = AlphaPS(pars=[],
->>>                  name='AlphaPS',
->>>                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
->>>                  data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
->>>                  strategy_run_freq='m',
->>>                  data_freq='d',
->>>                  window_length=100)
+...                 name='AlphaPS',
+...                 description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+...                 data_types=[DataType('total_mv', asset_type='E'),
+...                             DataType('total_liab'),
+...                             DataType('c_cash_equ_end_period'),
+...                             DataType('ebitda')],
+...                 window_length=10)  
 >>> op = qt.Operator(alpha, signal_type='PS')
->>> op.op_type = 'stepwise'
->>> op.run(mode=1,
->>>        asset_type='E',
->>>        asset_pool=shares,
->>>        trade_batch_size=100,
->>>        sell_batch_size=1,
->>>        trade_log=True)
->>> print()
+>>> qt.run(op=op,
+...        mode=1,
+...        asset_type='E',
+...        asset_pool=shares,
+...        invest_start='20160405',
+...        invest_end='20210201',
+...        trade_batch_size=100,
+...        sell_batch_size=1,
+...        trade_log=True)
 ```
 
 输出如下：
 
-```
-
-
-
-
+```text
      ====================================
      |                                  |
      |       BACK TESTING RESULT        |
@@ -182,61 +188,68 @@ Max drawdown:                    19.42%
 
 ```python
 >>> class AlphaPT(qt.GeneralStg):
->>>     def realize(self, h, r=None, t=None, pars=None):
->>>         # 从历史数据编码中读取四种历史数据的最新数值
->>>         total_mv = h[:, -1, 0]  # 总市值
->>>         total_liab = h[:, -1, 1]  # 总负债
->>>         cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
->>>         ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
->>>         # 选股因子为EV/EBIDTA，使用下面公式计算
->>>         factors = (total_mv + total_liab - cash_equ) / ebitda
->>>         # 处理交易信号，将所有小于0的因子变为NaN
->>>         factors = np.where(factors < 0, np.nan, factors)
->>>         # 选出数值最小的30个股票的序号
->>>         arg_partitioned = factors.argpartition(30)
->>>         selected = arg_partitioned[:30]  # 被选中的30个股票的序号
->>>         not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
->>>         # 开始生成PT交易信号
->>>         signal = np.zeros_like(factors)
->>>         # 所有被选中的股票的持仓目标被设置为0.03，表示持有3.3%
->>>         signal[selected] = 0.0333
->>>         # 其余未选中的所有股票持仓目标在PT信号模式下被设置为0，代表目标仓位为0
->>>         signal[not_selected] = 0
->>>         return signal
+...     
+...     def realize(self):
+... 
+...         # 从历史数据编码中读取四种历史数据的最新数值
+...         total_mv = self.get_data('total_mv_E_d')[-1]  # 总市值
+...         total_liab = self.get_data('total_liab_E_q')[-1]  # 总负债
+...         cash_equ = self.get_data('c_cash_equ_end_period_E_q')[-1]  # 现金及现金等价物总额
+...         ebitda = self.get_data('ebitda_E_q')[-1]  # ebitda，息税折旧摊销前利润
+...         
+...         # 选股因子为EV/EBIDTA，使用下面公式计算
+...         factors = (total_mv + total_liab - cash_equ) / ebitda
+...         # 处理交易信号，将所有小于0的因子变为NaN
+...         factors = np.where(factors < 0, np.nan, factors)
+...         # 选出数值最小的30个股票的序号
+...         arg_partitioned = factors.argpartition(30)
+...         selected = arg_partitioned[:30]  # 被选中的30个股票的序号，此时股票可能有NaN被选中的情况，需要去掉
+...         not_selected = arg_partitioned[30:]  # 未被选中的其他股票的序号（包括因子为NaN的股票）
+... 
+...         #如果选出的股票中有因子为NaN的，则剔除掉
+...         selected = selected[~np.isnan(selected)]
+...         sel_count = len(selected)
+...         
+...         # 开始生成PT交易信号
+...         signal = np.zeros_like(factors)
+...         # 所有被选中的股票的持仓目标被设置为0.03，表示持有3.3%
+...         signal[selected] = 1 / sel_count
+...         # 其余未选中的所有股票持仓目标在PT信号模式下被设置为0，代表目标仓位为0
+...         signal[not_selected] = 0  
+...         
+...         return signal
 ```
 使用同样的方法创建一个Operator对象并启动回测。
 
 
 ```python
+>>> import numpy as np
 >>> alpha = AlphaPT(pars=(),
->>>                  par_count=0,
->>>                  par_types=[],
->>>                  par_range=[],
->>>                  name='AlphaSel',
->>>                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
->>>                  data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
->>>                  strategy_run_freq='m',
->>>                  data_freq='d',
->>>                  window_length=100)
->>> op = qt.Operator(alpha, signal_type='PT')
->>> res = op.run(mode=1,
->>>              asset_type='E',
->>>              asset_pool=shares,
->>>              PT_buy_threshold=0.00,  # 如果设置PBT=0.00，PST=0.03，最终收益会达到30万元
->>>              PT_sell_threshold=0.00,
->>>              trade_batch_size=100,
->>>              sell_batch_size=1,
->>>              trade_log=True
->>>             )
+...                 name='AlphaSel',
+...                 description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+...                 data_types=[DataType('total_mv', asset_type='E'),
+...                             DataType('total_liab'),
+...                             DataType('c_cash_equ_end_period'),
+...                             DataType('ebitda')],
+...                 window_length=10)  
+>>> op = qt.Operator(alpha, signal_type='PT', run_freq='M')
+>>> res = qt.run(op=op, 
+...              mode=1,
+...              asset_type='E',
+...              asset_pool=shares,
+...              invest_start='20160405',
+...              invest_end='20210201',
+...              PT_buy_threshold=0.00,  # 如果设置PBT=0.00，PST=0.03，最终收益会达到30万元
+...              PT_sell_threshold=0.00,
+...              trade_batch_size=100,
+...              sell_batch_size=1,
+...              trade_log=True
+...             )
 ```
 
 输出如下：
 
-```
-
-
-
-
+```text
      ====================================
      |                                  |
      |       BACK TESTING RESULT        |
@@ -313,44 +326,51 @@ FactorSorter策略的选股参数实现选股
 
 ```python
 >>> class AlphaFac(qt.FactorSorter):
->>>     def realize(self, h, r=None, t=None, pars=None):
->>>         # 从历史数据编码中读取四种历史数据的最新数值
->>>         total_mv = h[:, -1, 0]  # 总市值
->>>         total_liab = h[:, -1, 1]  # 总负债
->>>         cash_equ = h[:, -1, 2]  # 现金及现金等价物总额
->>>         ebitda = h[:, -1, 3]  # ebitda，息税折旧摊销前利润
->>>         # 选股因子为EV/EBIDTA，使用下面公式计算
->>>         factor = (total_mv + total_liab - cash_equ) / ebitda
->>>         # 由于使用因子排序选股策略，因此直接返回选股因子即可，策略会自动根据设置条件选股
->>>         return factor
+...     
+...     def realize(self):
+... 
+...         # 从历史数据编码中读取四种历史数据的最新数值
+...         total_mv = self.get_data('total_mv_E_d')[-1]  # 总市值
+...         total_liab = self.get_data('total_liab_E_q')[-1]  # 总负债
+...         cash_equ = self.get_data('c_cash_equ_end_period_E_q')[-1]  # 现金及现金等价物总额
+...         ebitda = self.get_data('ebitda_E_q')[-1]  # ebitda，息税折旧摊销前利润
+...         
+...         # 选股因子为EV/EBIDTA，使用下面公式计算
+...         factor = (total_mv + total_liab - cash_equ) / ebitda
+... 
+...         # 由于使用因子排序选股策略，因此直接返回选股因子即可，策略会自动根据设置条件选股
+...         return factor
 ```
 使用同样的方法创建一个Operator对象并启动回测。
 
 
 ```python
 >>> alpha = AlphaFac(pars=(),
->>>                  par_count=0,
->>>                  par_types=[],
->>>                  par_range=[],
->>>                  name='AlphaSel',
->>>                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
->>>                  data_types='total_mv, total_liab, c_cash_equ_end_period, ebitda',
->>>                  strategy_run_freq='m',
->>>                  data_freq='d',
->>>                  window_length=100,
->>>                  max_sel_count=30,  # 设置选股数量，最多选出30个股票
->>>                  condition='greater',  # 设置筛选条件，仅筛选因子大于ubound的股票
->>>                  ubound=0.0,  # 设置筛选条件，仅筛选因子大于0的股票
->>>                  weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
->>>                  sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
->>> op = qt.Operator(alpha, signal_type='PT')
->>> res = op.run(mode=1,
->>>        asset_type='E',
->>>        asset_pool=shares,
->>>        PT_buy_threshold=0.0,
->>>        PT_sell_threshold=0.0,
->>>        trade_batch_size=100,
->>>        sell_batch_size=1)
+...                  name='AlphaSel',
+...                  description='本策略每隔1个月定时触发计算SHSE.000300成份股的过去的EV/EBITDA并选取EV/EBITDA大于0的股票',
+...                  data_types=[DataType('total_mv', asset_type='E'),
+...                              DataType('total_liab'),
+...                              DataType('c_cash_equ_end_period'),
+...                              DataType('ebitda')],
+...                  window_length=10,  
+...                  max_sel_count=30,  # 设置选股数量，最多选出30个股票
+...                  condition='greater',  # 设置筛选条件，仅筛选因子大于ubound的股票
+...                  ubound=0.0,  # 设置筛选条件，仅筛选因子大于0的股票
+...                  weighting='even',  # 设置股票权重，所有选中的股票平均分配权重
+...                  sort_ascending=True)  # 设置排序方式，因子从小到大排序选择头30名
+>>> op = qt.Operator(alpha, signal_type='PT', run_freq='ME')
+>>> res = qt.run(op=op, 
+...              mode=1,
+...              asset_type='E',
+...              asset_pool=shares,
+...              invest_start='20160405',
+...              invest_end='20210201',
+...              PT_buy_threshold=0.00,  # 如果设置PBT=0.00，PST=0.03，最终收益会达到30万元
+...              PT_sell_threshold=0.00,
+...              trade_batch_size=1,
+...              sell_batch_size=1,
+...              trade_log=True
+...             )
 ```
 
 输出如下：

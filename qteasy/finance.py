@@ -193,14 +193,16 @@ def get_selling_result(prices: np.ndarray,
         a_sold = np.copy(a_to_sell)
     else:
         a_sold = np.trunc(a_to_sell / moq) * moq
+    # 当price含有NaN时，将a_sold置为0
+    a_sold = np.where(np.isnan(prices), 0, a_sold)
     sold_values = a_sold * prices
 
     rates = cost_params[1] - cost_params[4] * sold_values
     fees = np.where(sold_values, np.fmax(np.abs(sold_values * rates), cost_params[3]), 0)  # sell_min
     cash_gained = - (sold_values + fees)
 
-    # 多头卖出且所得现金小于0时（如小额卖出+最低手续费导致净收入为负），将该笔置为不成交
-    need_zero = (a_sold < 0) & (cash_gained < 0)
+    # 多头卖出且所得现金小于0时（如小额卖出+最低手续费导致净收入为负），或价格为NaN，将该笔置为不成交
+    need_zero = (a_sold < 0) & (cash_gained < 0) | np.isnan(prices)
     a_sold[need_zero] = 0
     fees[need_zero] = 0
     cash_gained[need_zero] = 0
@@ -254,6 +256,8 @@ def get_purchase_result(prices: np.ndarray,
         a_purchased = np.where(prices,
                                np.trunc(cash_to_spend / rated_prices / moq) * moq,
                                0.)
+    # 当a_purchased有NaN值时，将其置为0
+    a_purchased = np.where(np.isnan(a_purchased), 0, a_purchased)
     # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
     fees = np.where(a_purchased, np.fmax(np.abs(a_purchased * prices * rates), buy_min), 0.)
     purchased_values = a_purchased * prices + fees

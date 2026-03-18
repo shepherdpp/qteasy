@@ -353,8 +353,8 @@ def calculate_trade_results(
                 allow_sell_short=allow_sell_short
         )
         # DEBUG
-        # print(f'parsed PT signals, trimmed_op_signal: {trimmed_op_signal.round(6)}, '
-        #       f'cash_to_spend: {cash_to_spend.round(6)}, amounts_to_sell: {amounts_to_sell.round(6)}')
+        # print(f'parsed PT signals, trimmed_op_signal: {trimmed_op_signal.round(3)}, \n'
+        #       f'cash_to_spend: {cash_to_spend.round(2)}, amounts_to_sell: {amounts_to_sell.round(2)}')
 
     elif signal_type == 1:  # PS信号
         cash_to_spend, amounts_to_sell = parse_ps_signals(
@@ -390,6 +390,9 @@ def calculate_trade_results(
 
     else:
         raise ValueError('Invalid signal_type')
+    # # 这里还需要考虑交易价格为NaN的情况，如果价格为NaN，则不进行交易，直接将交易计划中的买入金额和卖出数量调整为0
+    # cash_to_spend = np.where(np.isnan(prices), 0, cash_to_spend)
+    # amounts_to_sell = np.where(np.isnan(prices), 0, amounts_to_sell)
 
     # 3, 根据可用股票数量或多空持仓限额调整卖出计划。
 
@@ -412,6 +415,9 @@ def calculate_trade_results(
         cash_to_spend += excesive_short_amounts_to_sell * prices
         amounts_to_sell -= excesive_long_amounts_to_sell + excesive_short_amounts_to_sell
 
+    # DEBUG
+    # print(f'Processed signals, calculated and adjusted'
+    #       f'\ncash_to_spend: {cash_to_spend.round(2)}, \namounts_to_sell: {amounts_to_sell.round(2)}')
     # 4，批量提交股份卖出计划，计算实际卖出份额和交易费用
     amount_sold, cash_gained, fee_selling = get_selling_result(
             prices=prices,
@@ -419,6 +425,10 @@ def calculate_trade_results(
             moq=moq_sell,
             cost_params=cost_params,
     )
+    # DEBUG
+    # print(f'calculated amount sell result:\n'
+    #       f'amount sold: {amount_sold.round(2)}\n'
+    #       f'cash gained: {cash_gained.round(2)}')
 
     if np.allclose(cash_to_spend, 0.0, atol=0.001):
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
@@ -484,11 +494,18 @@ def calculate_trade_results(
             cost_params=cost_params,
     )
     # DEBUG
-    # print(f'calculated purchase result: amount_purchased: {amount_purchased.round(2)}'
+    # print(f'calculated purchase result: \namount_purchased: {amount_purchased.round(2)}'
     #       f'cash_spent: {cash_spent}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
+    # DEBUG
+    # print(f'finished calculation: \n'
+    #       f'cash_gained: {cash_gained.round(2)}\n'
+    #       f'amount_sold: {amount_sold.round(2)}\n'
+    #       f'amount_purchased: {amount_purchased.round(2)}'
+    #       f'cash_spent: {cash_spent}\n'
+    #       f'fee: {fee.round(2)}\n')
 
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
@@ -607,7 +624,7 @@ def process_backtest_delivery(cash_delivery_queue: np.ndarray,
     return cash_delivered, stocks_delivered
 
 
-@njit(nogil=True, cache=True)
+# @njit(nogil=True, cache=True)
 def backtest_batch_steps(
         signal_types: np.ndarray,
         op_signals: np.ndarray,
