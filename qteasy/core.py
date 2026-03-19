@@ -1439,11 +1439,9 @@ def get_history_data(htypes=None,
                     continue
                 effective_dtypes.extend(freq_filtered)
             if missing_names:
-                warn(
-                    f"The following data type name(s) could not be matched to any DataType: {missing_names}. "
-                    f"Check spelling or define them in DATA_TYPE_MAP.",
-                    UserWarning,
-                    stacklevel=2,
+                raise ValueError(
+                    f"The following data type name(s) are not defined or could not be matched: {missing_names}. "
+                    f"Check spelling or define them in DATA_TYPE_MAP."
                 )
             return effective_dtypes
 

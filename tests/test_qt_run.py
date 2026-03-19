@@ -26,6 +26,7 @@ from qteasy.trading_util import trade_time_index as tti
 from qteasy.history import (
     check_and_prepare_backtest_data,
     check_and_prepare_trade_prices,
+    check_and_prepare_evaluate_price_data,
     check_and_prepare_benchmark_data,
 )
 
@@ -909,7 +910,7 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
                 index=daily_index,
         )
         stock_daily_df_000001['ts_code'] = '000001.SZ'
-        # 删除2020-06-15的数据，制造一个缺口
+        # 删除2020-06-15的数据，制造一个缺口（清单3：明确“停牌”时点）
         stock_daily_df_000001 = stock_daily_df_000001.drop(pd.to_datetime('2020-06-15'), errors='ignore')
 
         stock_daily_df_000002 = pd.DataFrame(
@@ -918,6 +919,8 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
                 index=daily_index,
         )
         stock_daily_df_000002['ts_code'] = '000002.SZ'
+        # 删除2020-06-10的数据，制造第二个“停牌/无行情”缺口，用于验证 NaN 保留且不污染
+        stock_daily_df_000002 = stock_daily_df_000002.drop(pd.to_datetime('2020-06-10'), errors='ignore')
         stock_daily_df = pd.concat([stock_daily_df_000001, stock_daily_df_000002])
 
         # 生成000001/000002的stock_1min数据
@@ -1087,11 +1090,15 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(share, result.columns)
 
-        # 检查数据全部是数值类型且不含NaN
+        # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_list_with_complex_operator(self):
         """测试用例：正常输入参数，shares为列表，复杂operator"""
@@ -1119,11 +1126,15 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(share, result.columns)
 
-        # 检查数据全部是数值类型且不含NaN
+        # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_list_with_monthly_operator(self):
         """测试用例：正常输入参数，月度运行operator，测试各种share组合"""
@@ -1151,11 +1162,15 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.shares_list:
             self.assertIn(share, result.columns)
 
-        # 检查数据全部是数值类型且不含NaN
+        # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
         for share in self.shares_list:
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_single_share_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1243,10 +1258,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1274,10 +1293,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_simple_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1305,10 +1328,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_complex_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1336,10 +1363,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_open_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1367,10 +1398,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_timing_operator(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1398,10 +1433,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_timing_operator_forward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1429,10 +1468,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_share_index_fund_with_timing_operator_backward(self):
         """测试用例：shares参数为单个股票字符串"""
@@ -1460,10 +1503,14 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
         for share in self.share_index_fund_list:
             self.assertIn(share, result.columns)
 
-            # 检查数据全部是数值类型且不含NaN
+            # 检查数据为数值类型；允许NaN（停牌/无行情），但不允许整列全NaN
             self.assertIn(result[share].dtype, [np.dtype('float64'), np.dtype('float32'),
                                                 np.dtype('int64'), np.dtype('int32')])
-            self.assertFalse(result[share].isnull().any())
+            self.assertFalse(result[share].isnull().all(),
+                            msg=f'trade_prices column {share} is all NaN')
+            if result[share].isnull().any():
+                nan_ts = result.index[result[share].isna()].tolist()
+                print(f' [TestCheckAndPrepareTradePrices] NaN at: {nan_ts} for {share}')
 
     def test_with_problematic_parameters(self):
         """测试有问题的输入参数"""
@@ -1498,6 +1545,120 @@ class TestCheckAndPrepareTradePrices(unittest.TestCase):
                     price_adj='back',
                     datasource=self.datasource
             )
+
+    def test_trade_prices_preserves_nan_at_halt_days(self):
+        """清单3：夹具中 000001 缺 2020-06-15、000002 缺 2020-06-10；验证 NaN 被保留且不污染其他标的/日期。"""
+        print('\n[TestCheckAndPrepareTradePrices] test_trade_prices_preserves_nan_at_halt_days')
+        result = check_and_prepare_trade_prices(
+                op=self.op_simple,
+                shares=self.shares_list,
+                price_adj='none',
+                datasource=self.datasource,
+        )
+        # 000001 在 2020-06-15 无数据，应为 NaN
+        mask_0615 = result.index.normalize() == pd.Timestamp('2020-06-15').normalize()
+        if mask_0615.any():
+            self.assertTrue(
+                    result.loc[mask_0615, '000001.SZ'].isna().all(),
+                    msg='000001.SZ should be NaN on 2020-06-15 (halt day)',
+            )
+            print(' 000001.SZ NaN on 2020-06-15 as expected (halt)')
+        # 000002 在 2020-06-10 无数据，应为 NaN
+        mask_0610 = result.index.normalize() == pd.Timestamp('2020-06-10').normalize()
+        if mask_0610.any():
+            self.assertTrue(
+                    result.loc[mask_0610, '000002.SZ'].isna().all(),
+                    msg='000002.SZ should be NaN on 2020-06-10 (halt day)',
+            )
+            print(' 000002.SZ NaN on 2020-06-10 as expected (halt)')
+        # 不污染：两列均不能整列全 NaN
+        self.assertFalse(result['000001.SZ'].isnull().all(), msg='000001.SZ should have some non-NaN')
+        self.assertFalse(result['000002.SZ'].isnull().all(), msg='000002.SZ should have some non-NaN')
+        print(' no pollution: both columns have non-NaN values')
+
+
+class TestCheckAndPrepareEvaluatePriceData(unittest.TestCase):
+    """check_and_prepare_evaluate_price_data 的单元测试：评价用日频收盘价应无 NaN（用于净值曲线等）。"""
+
+    def setUp(self):
+        """复用与 TestCheckAndPrepareTradePrices 一致的夹具：日线含 2020-06-15 缺口（000001）。"""
+        self.test_dir = tempfile.mkdtemp()
+        self.db_path = os.path.join(self.test_dir, 'test_db')
+        os.makedirs(self.db_path)
+        self.datasource = DataSource(source_type='file', file_loc=self.db_path)
+        self.daily_strategy = DailyStrategy()
+        self.op_simple = Operator(strategies=[self.daily_strategy], run_freq='d', run_timing='close')
+        daily_index = tti(start='20200101', end='20201231', freq='d', trade_days_only=True)
+        stock_daily_df_000001 = pd.DataFrame(
+                np.random.randint(10, 100, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        stock_daily_df_000001['ts_code'] = '000001.SZ'
+        stock_daily_df_000001 = stock_daily_df_000001.drop(pd.to_datetime('2020-06-15'), errors='ignore')
+        stock_daily_df_000002 = pd.DataFrame(
+                np.random.randint(20, 200, size=(len(daily_index), 6)),
+                columns=['open', 'high', 'low', 'close', 'vol', 'amount'],
+                index=daily_index,
+        )
+        stock_daily_df_000002['ts_code'] = '000002.SZ'
+        stock_daily_df = pd.concat([stock_daily_df_000001, stock_daily_df_000002])
+        self.datasource.update_table_data(
+                'stock_daily',
+                df=stock_daily_df.reset_index().rename(columns={'index': 'trade_date'}),
+        )
+        self.op_simple.prepare_running_schedule(start_date='20200525', end_date='20200630')
+        self.shares_list = ['000001.SZ', '000002.SZ']
+        self.backtest_start = '20200525'
+        self.backtest_end = '20200630'
+
+    def tearDown(self):
+        self.datasource.allow_drop_table = True
+        self.datasource.drop_table_data('stock_daily')
+        if os.path.exists(self.db_path):
+            shutil.rmtree(self.db_path)
+
+    def test_evaluate_price_data_no_nan_normal_range(self):
+        """用例 A：正常区间内评价用价格应无 NaN。"""
+        print('\n[TestCheckAndPrepareEvaluatePriceData] test_evaluate_price_data_no_nan_normal_range')
+        result = check_and_prepare_evaluate_price_data(
+                op=self.op_simple,
+                shares=self.shares_list,
+                datasource=self.datasource,
+                backtest_start=self.backtest_start,
+                backtest_end=self.backtest_end,
+                backtest_price_adj='none',
+        )
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+        for share in self.shares_list:
+            self.assertIn(share, result.columns)
+            self.assertFalse(
+                    result[share].isnull().any(),
+                    msg=f'evaluate_price_data column {share} should have no NaN for valuation curve',
+            )
+        print(' evaluate_price_data shape:', result.shape, 'no NaN as expected')
+
+    def test_evaluate_price_data_no_nan_with_gap_filled(self):
+        """用例 B1：存在单日缺口（如 2020-06-15）时，评价用价格经 ffill 后应无 NaN。"""
+        print('\n[TestCheckAndPrepareEvaluatePriceData] test_evaluate_price_data_no_nan_with_gap_filled')
+        result = check_and_prepare_evaluate_price_data(
+                op=self.op_simple,
+                shares=self.shares_list,
+                datasource=self.datasource,
+                backtest_start='20200601',
+                backtest_end='20200620',
+                backtest_price_adj='none',
+        )
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertFalse(result.empty)
+        for share in self.shares_list:
+            self.assertIn(share, result.columns)
+            self.assertFalse(
+                    result[share].isnull().any(),
+                    msg=f'evaluate_price_data column {share} should have no NaN after ffill (B1)',
+            )
+        print(' evaluate_price_data with gap (2020-06-15) filled, no NaN:', result.shape)
 
 
 class TestCheckAndPrepareBenchmarkData(unittest.TestCase):
