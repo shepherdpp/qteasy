@@ -511,7 +511,9 @@ def parse_ps_signals(signals: np.ndarray,
     """
 
     # 计算当前总资产
-    total_value = np.sum(prices * own_amounts) + own_cash
+    # 注意：prices 中可能存在 NaN（例如停牌/无行情），此时不能让整个 total_value 变成 NaN，
+    # 否则会污染所有标的的 cash_to_spend 解析结果。
+    total_value = np.nansum(prices * own_amounts) + own_cash
 
     # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
     # 当持有份额大于零时，平多仓：卖出数量 = 交易信号 * 持仓份额，此时持仓份额需大于零
@@ -585,6 +587,10 @@ def parse_vs_signals(signals: np.ndarray,
         np.fmax(buy_min, cash_to_spend * buy_rate),
         0.
     )
+
+    # prices 为 NaN 时，该标的不可成交；将解析层面的买入现金规模置 0，
+    # 避免 NaN 在后续步骤继续传播（成交执行层仍会再次用 prices 屏蔽 NaN）。
+    cash_to_spend = np.where(np.isnan(prices), 0.0, cash_to_spend)
 
     return cash_to_spend, amounts_to_sell
 

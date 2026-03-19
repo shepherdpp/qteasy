@@ -113,15 +113,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.2.0'
+__version__ = '2.2.1'
 version_info = Namespace(
         major=2,
         minor=2,
-        patch=0,
+        patch=1,
         short=(2, 2),
-        full=(2, 2, 0),
-        string='2.2.0',
-        tuple=('2', '2', '0'),
+        full=(2, 2, 1),
+        string='2.2.1',
+        tuple=('2', '2', '1'),
         releaselevel='beta',
 )
 

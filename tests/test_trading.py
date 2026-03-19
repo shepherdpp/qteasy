@@ -3369,6 +3369,84 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(list(cash_to_spend), [1500.0, 0.0, 0.0, 0.0, -1500.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
 
+    def test_parse_ps_signals_nan_prices(self):
+        """测试 parse_ps_signals 在 prices 含 NaN 时不污染解析结果"""
+        print('\n[TestPSNaN] parse_ps_signals with NaN prices')
+        signals = np.array([0.5, -0.5])
+        prices = np.array([10.0, np.nan])
+        own_amounts = np.array([100.0, 100.0])
+        own_cash = 1000.0
+
+        cash_to_spend, amounts_to_sell = parse_ps_signals(
+                signals=signals,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                allow_sell_short=False,
+        )
+        print('cash_to_spend:', cash_to_spend, 'amounts_to_sell:', amounts_to_sell)
+
+        self.assertTrue(not np.isnan(cash_to_spend).any(), 'cash_to_spend contains NaN')
+        self.assertTrue(not np.isnan(amounts_to_sell).any(), 'amounts_to_sell contains NaN')
+        self.assertTrue(np.allclose(cash_to_spend, np.array([1000.0, 0.0])), 'cash_to_spend incorrect')
+        self.assertTrue(np.allclose(amounts_to_sell, np.array([0.0, -50.0])), 'amounts_to_sell incorrect')
+
+    def test_parse_vs_and_pt_nan_prices(self):
+        """测试 parse_vs_signals / parse_pt_signals 在 prices 含 NaN 时的解析输出"""
+        print('\n[TestVSPTNaN] parse_vs_signals / parse_pt_signals with NaN prices')
+
+        prices = np.array([10.0, np.nan])
+        own_amounts = np.array([100.0, 100.0])
+        own_cash = 1000.0
+        cost_params = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+
+        # VS: 正信号（买入），cash_to_spend 受 price 影响，NaN 对应位置应置 0
+        signals_pos = np.array([50.0, 50.0])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals_pos,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=False,
+                cost_params=cost_params,
+        )
+        print('VS pos cash_to_spend:', cash_to_spend, 'amounts_to_sell:', amounts_to_sell)
+        self.assertTrue(not np.isnan(cash_to_spend).any(), 'VS pos cash_to_spend contains NaN')
+        self.assertTrue(not np.isnan(amounts_to_sell).any(), 'VS pos amounts_to_sell contains NaN')
+        self.assertTrue(np.allclose(cash_to_spend, np.array([500.0, 0.0])), 'VS pos cash_to_spend incorrect')
+        self.assertTrue(np.allclose(amounts_to_sell, np.array([0.0, 0.0])), 'VS pos amounts_to_sell incorrect')
+
+        # VS: 负信号（卖出），amounts_to_sell 不受 price 影响，应保留信号对应数量
+        signals_neg = np.array([-50.0, -50.0])
+        cash_to_spend, amounts_to_sell = parse_vs_signals(
+                signals=signals_neg,
+                prices=prices,
+                own_amounts=own_amounts,
+                allow_sell_short=False,
+                cost_params=cost_params,
+        )
+        print('VS neg cash_to_spend:', cash_to_spend, 'amounts_to_sell:', amounts_to_sell)
+        self.assertTrue(not np.isnan(cash_to_spend).any(), 'VS neg cash_to_spend contains NaN')
+        self.assertTrue(not np.isnan(amounts_to_sell).any(), 'VS neg amounts_to_sell contains NaN')
+        self.assertTrue(np.allclose(cash_to_spend, np.array([0.0, 0.0])), 'VS neg cash_to_spend incorrect')
+        self.assertTrue(np.allclose(amounts_to_sell, np.array([-50.0, -50.0])), 'VS neg amounts_to_sell incorrect')
+
+        # PT: 目标持仓信号，NaN 应只影响 NaN 对应标的，不应污染其它标的
+        signals_pt = np.array([0.25, 0.25])
+        cash_to_spend, amounts_to_sell = parse_pt_signals(
+                signals=signals_pt,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=own_cash,
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                allow_sell_short=False,
+        )
+        print('PT cash_to_spend:', cash_to_spend, 'amounts_to_sell:', amounts_to_sell)
+        self.assertTrue(not np.isnan(cash_to_spend).any(), 'PT cash_to_spend contains NaN')
+        self.assertTrue(not np.isnan(amounts_to_sell).any(), 'PT amounts_to_sell contains NaN')
+        self.assertTrue(np.allclose(cash_to_spend, np.array([0.0, 0.0])), 'PT cash_to_spend incorrect')
+        self.assertTrue(np.allclose(amounts_to_sell, np.array([-50.0, 0.0])), 'PT amounts_to_sell incorrect')
+
     def test_parse_vs_signals(self):
         """ test parse_vs_signals function """
         # test parsing vs signals with only one symbol

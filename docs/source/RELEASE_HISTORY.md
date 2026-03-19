@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.2.1 (2026-03-19)
+- **NaN-price safe in Backtest**
+  Fixed a problem that NaN prices will no longer pullut signal parsing and trade result calculation in Backtest result.
+
 ## 2.2.0 (2026-03-17)
 - **Data visualization and charts**  
   Introduced a new charting pipeline that automatically builds candlestick, volume, MACD and line charts from your historical data, so you can mix multiple indicators and compare several symbols in one view without extra code.
