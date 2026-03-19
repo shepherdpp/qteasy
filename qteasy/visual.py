@@ -754,6 +754,9 @@ def _mpf_plot(
                                               asset_type=asset_type,
                                               freq=freq,
                                               adj=adj)
+        except NotImplementedError:
+            # 不支持的资产类型应向上抛出，便于调用方与测试明确感知
+            raise
         except Exception as e:
             print(f'{e}')
             return
