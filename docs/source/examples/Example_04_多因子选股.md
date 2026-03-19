@@ -21,8 +21,7 @@
 ```python
 import qteasy as qt
 import numpy as np
-
-
+from qteasy import Parameter, StgData
 def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target):
     """ 根据mv_target和bp_target计算市值加权收益率
 
@@ -35,41 +34,38 @@ def market_value_weighted(stock_return, mv, mv_cat, bp_cat, mv_target, bp_target
 
 
 class MultiFactors(qt.FactorSorter):
-
+    
     def __init__(self, pars: tuple = (0.5, 0.3, 0.7)):
         super().__init__(
-                pars=pars,
-                par_count=3,
-                par_types=['float', 'float', 'float'],  # 参数1:大小市值分类界限，参数2:小/中bp分界线，参数3，中/大bp分界线
-                par_range=[(0.01, 0.99), (0.01, 0.49), (0.50, 0.99)],
                 name='MultiFactor',
                 description='根据Fama-French三因子回归模型估算HS300成分股的alpha值选股',
-                strategy_run_timing='close',  # 在周期结束（收盘）时运行
-                run_freq='m',  # 每月执行一次选股（每周或每天都可以）
-                strategy_data_types='pb, total_mv, close',  # 执行选股需要用到的股票数据
-                data_freq='d',  # 数据频率（包括股票数据和参考数据）
-                window_length=20,
-                use_latest_data_cycle=True,
-                reference_data_types='close-000300.SH',  # 选股需要用到市场收益率，作为参考数据传入
+                pars=[Parameter((0.01, 0.99), par_type='float', name='size_gate', value=0.5),  # 参数1:大小市值分类界限
+                      Parameter((0.01, 0.49), par_type='float', name='pb_s', value=0.3),  # 参数2:小/中bp分界线
+                      Parameter((0.50, 0.99), par_type='float', name='pb_l', value=0.7)],  # 参数3，中/大bp分界线
+                data_types=[StgData('pb', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True), 
+                            StgData('total_mv', freq='d', asset_type='E', window_length=2, use_latest_data_cycle=True), 
+                            StgData('close', freq='d', asset_type='E', window_length=20, use_latest_data_cycle=True),
+                            StgData('close-000300.SH', freq='d', asset_type='IDX', window_length=20, use_latest_data_cycle=True)],  # 执行选股需要用到的股票数据
                 max_sel_count=10,  # 最多选出10支股票
                 sort_ascending=True,  # 选择因子最小的股票
                 condition='less',  # 仅选择因子小于某个值的股票
                 lbound=0,  # 仅选择因子小于0的股票
                 ubound=0,  # 仅选择因子小于0的股票
         )
+    
+    def realize(self):
 
-    def realize(self, h, r=None, t=None, pars=None):
-
-        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.par_values
+        size_gate_percentile, bp_small_percentile, bp_large_percentile = self.get_pars('size_gate', 'pb_s', 'pb_l')
         # 读取投资组合的数据PB和total_MV的最新值
-        pb = h[:, -1, 0]  # 当前所有股票的PB值
-        mv = h[:, -1, 1]  # 当前所有股票的市值
-        pre_close = h[:, -2, 2]  # 当前所有股票的前收盘价
-        close = h[:, -1, 2]  # 当前所有股票的最新收盘价
+        pb, mv, closes, market_closes = self.get_data('pb_E_d', 'total_mv_E_d', 'close_E_d', 'close-000300.SH_IDX_d')
+        pb = pb[-1]  # 当前所有股票的PB值
+        mv = mv[-1]  # 当前所有股票的市值
+        pre_close = closes[-2]  # 当前所有股票的前收盘价
+        close = closes[-1]  # 当前所有股票的最新收盘价
 
         # 读取参考数据(r)
-        market_pre_close = r[-2, 0]  # HS300的昨收价
-        market_close = r[-1, 0]  # HS300的收盘价
+        market_pre_close = market_closes[-2]  # HS300的昨收价
+        market_close = market_closes[-1]  # HS300的收盘价
 
         # 计算账面市值比，为pb的倒数
         bp = pb ** -1
@@ -123,8 +119,6 @@ class MultiFactors(qt.FactorSorter):
         factors = np.array(coff_pool)
 
         return factors
-
-# 策略定义完毕
 ```
 
 ## 运行策略
@@ -132,21 +126,19 @@ class MultiFactors(qt.FactorSorter):
 设置回测参数，运行策略
 ```python
 shares = qt.filter_stock_codes(index='000300.SH', date='20190501')
-alpha = MultiFactors()  # 实例化策略
-op = qt.Operator(alpha, signal_type='PT')  # 创建Operator交易员对象，使用PT信号类型（仓位目标信号）
-op.op_type = 'stepwise'
-op.set_blender('1.0*s0', "close")  # 设置仓位调整公式，仓位目标为1.0*s0，即持仓百分比总和等于100%
-op.run(mode=1,
-       invest_start='20190501',  # 回测起始时间
-       invest_end='20220501',  # 回测结束时间
-       asset_type='E',  # 股票
-       asset_pool=shares,  # 股票池
-       trade_batch_size=100,  # 交易最小批量
-       sell_batch_size=1,  # 卖出最小批量
-       trade_log=True,  # 产生交易记录
-      )
 
-print()
+alpha = MultiFactors()
+op = qt.Operator(alpha, signal_type='PT', run_freq='ME')
+qt.run(op=op,
+       mode=1,
+       invest_start='20160405',
+       invest_end='20210201',
+       asset_type='E',
+       asset_pool=shares,
+       trade_batch_size=100,
+       sell_batch_size=1,
+       trade_log=True,
+      )
 ```
 
 运行结果如下：
