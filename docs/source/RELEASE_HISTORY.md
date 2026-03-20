@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.2.2 (2026-03-20)
+- **DataSource robustness and compatibility**
+  Fixed a bug where `DataSource` could fail when optional file backends (e.g. `tables`/`pyarrow`) were missing; fallback to `csv` now guarantees the data directory is available, added `hdf5` alias for `hdf`, and improved fallback warnings for clearer diagnosis.
+
 ## 2.2.1 (2026-03-19)
 - **NaN-price safe in Backtest**
   Fixed a problem that NaN prices will no longer pullut signal parsing and trade result calculation in Backtest result.

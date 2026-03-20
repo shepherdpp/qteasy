@@ -51,7 +51,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `2.2.1`
+- Latest Version: `2.2.2`
 - Document: [https://qteasy.readthedocs.io/zh-cn/latest/](https://qteasy.readthedocs.io/zh-cn/latest/)
 - License: BSD 3-Clause License
 
