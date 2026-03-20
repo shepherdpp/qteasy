@@ -7,27 +7,23 @@
 
 
 ```python
-import qteasy as qt
-import pandas as pd
-import numpy as np
+>>> import qteasy as qt
+>>> import pandas as pd
+>>> import numpy as np
 ```
 
 
 ```python
-htypes = 'open, close'
-shares = qt.filter_stock_codes(index='000300.SH', date='20220131')
-print(shares[0:10])
-dt = qt.get_history_data(htypes, shares=shares, asset_type='any', freq='m')
-
-one_share = shares[24]
-
-df = dt[one_share]
-
+>>> htypes = 'open, close'
+>>> shares = qt.filter_stock_codes(index='000300.SH', date='20220131')
+>>> print(shares[0:10])
+>>> dt = qt.get_history_data(htypes, shares=shares, asset_type='any', freq='m')
 ```
 
+```text
     ['000001.SZ', '000002.SZ', '000063.SZ', '000066.SZ', '000069.SZ', '000100.SZ', '000157.SZ', '000166.SZ', '000301.SZ', '000333.SZ']
 
-
+```
 
 
 ## 第一种自定义策略设置方法，使用持仓数据和选股数据直接生成比例交易信号`PS`信号：
@@ -42,80 +38,76 @@ df = dt[one_share]
 
 
 ```python
-
-class GroupPS(qt.GeneralStg):
-    
-    def realize(self, h, r=None, t=None, pars=None):
-        
-        # 读取策略参数（开盘价大于收盘价的天数）
-        if pars is None:
-            n_day = self.pars[0]
-        else:
-            n_day = pars[0]
-
-        # 从历史数据编码中读取四种历史数据的最新数值
-        opens = h[:, -30:, 0]  # 从前一交易日起前30天内开盘价
-        closes = h[:, -31:-1, 1]  # 从两个交易日前开始前30天内收盘价
-        
-        # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
-        own_amounts = t[:, 0]
-        owned = np.where(own_amounts > 0)[0]  # 所有持仓股的序号
-        not_owned = np.where(own_amounts == 0)[0]  # 所有未持仓的股票序号
-        
-        # 选股因子为开盘价大于收盘价的天数，使用astype将True/False结果改为1/0，便于加总
-        factors = ((opens - closes) > 0).astype('float')
-        # 所有开盘价-收盘价>0的结果会被转化为1，其余结果转化为0，因此可以用sum得到开盘价大于收盘价的天数
-        factors = factors.sum(axis=1)
-        # 选出开盘价大于收盘价天数大于十天的所有股票的序号
-        all_args = np.arange(len(factors))
-        selected = np.where(factors > n_day)[0]
-        not_selected = np.setdiff1d(all_args, selected)
-        # 计算选出的股票的数量
-        selected_count = len(selected)
-        
-        # 开始生成交易信号
-        signal = np.zeros_like(factors)
-        # 如果持仓为正，且未被选中，生成全仓卖出交易信号
-        own_but_not_selected = np.intersect1d(owned, not_selected)
-        signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
-        
-        if selected_count == 0:
-            # 如果选中的数量为0，则不需要生成买入信号，可以直接返回只有卖出的信号
-            return signal
-        
-        # 如果持仓为零，且被选中，生成全仓买入交易信号
-        selected_but_not_own = np.intersect1d(not_owned, selected)
-        signal[selected_but_not_own] = 1. / selected_count  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
-
-        return signal
+>>> import numpy as np
+>>> class GroupPS(qt.GeneralStg):
+...     
+...     def realize(self):
+...         
+...         # 读取策略参数（开盘价大于收盘价的天数）
+...         n_day = self.get_pars('n_day')
+... 
+...         # 从历史数据编码中读取四种历史数据的最新数值
+...         opens, closes = self.get_data('open_E_d', 'close_E_d')  
+...         opens = opens[-30:]  # 从前一交易日起前30天内开盘价
+...         closes = closes[-30:]  # 
+...         
+...         # 从持仓数据中读取当前的持仓数量，并找到持仓股序号
+...         own_amounts = self.get_data('proc.own_amounts')
+...         owned = np.where(own_amounts > 0)[1]  # 所有持仓股的序号
+...         not_owned = np.where(own_amounts == 0)[1]  # 所有未持仓的股票序号
+...         
+...         # 选股因子为开盘价大于收盘价的天数，使用astype将True/False结果改为1/0，便于加总
+...         factors = ((opens - closes) > 0).astype('float')
+...         # 所有开盘价-收盘价>0的结果会被转化为1，其余结果转化为0，因此可以用sum得到开盘价大于收盘价的天数
+...         factors = factors.sum(axis=0)
+...         # 选出开盘价大于收盘价天数大于十天的所有股票的序号
+...         all_args = np.arange(len(factors))
+...         selected = np.where(factors > n_day)[0]
+...         not_selected = np.setdiff1d(all_args, selected)
+...         # 计算选出的股票的数量
+...         selected_count = len(selected)
+...         
+...         # 开始生成交易信号
+...         signal = np.zeros_like(factors)
+...         # 如果持仓为正，且未被选中，生成全仓卖出交易信号
+...         own_but_not_selected = np.intersect1d(owned, not_selected)
+...         signal[own_but_not_selected] = -1  # 在PS信号模式下 -1 代表全仓卖出
+...         
+...         if selected_count == 0:
+...             # 如果选中的数量为0，则不需要生成买入信号，可以直接返回只有卖出的信号
+...             return signal
+...         
+...         # 如果持仓为零，且被选中，生成全仓买入交易信号
+...         selected_but_not_own = np.intersect1d(not_owned, selected)
+...         signal[selected_but_not_own] = 1. / selected_count  # 在PS信号模式下，+1 代表全仓买进 （如果多只股票均同时全仓买进，则会根据资金总量平均分配资金）
+... 
+...         return signal
 ```
 创建一个`Operator`对象，并回测交易策略
 
 ```python
-alpha = GroupPS(pars=(10,),
-                par_count=1,
-                par_types=['int'],
-                par_range=[(3, 25)],
-                name='GroupPS',
-                description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
-                data_types='open, close',
-                run_freq='m',
-                data_freq='d',
-                window_length=32)  
-op = qt.Operator(alpha, signal_type='PS')
-op.op_type = 'stepwise'
-op.set_parameter(0, (20,))
-op.run(mode=1,
-       asset_type='E',
-       asset_pool=shares,
-       trade_batch_size=100,
-       sell_batch_size=1,
-       trade_log=True)
-print()
+>>> from qteasy import Parameter, StgData
+>>> alpha = GroupPS(name='GroupPS',
+...                 description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
+...                 pars=[Parameter((3, 25), par_type='int', name='n_day', value=10)],
+...                 data_types=[StgData('open', freq='d', asset_type='E', window_length=32), 
+...                                      StgData('close', freq='d', asset_type='E', window_length=32)],
+...                )  
+>>> op = qt.Operator(alpha, signal_type='PS', run_freq='ME')
+>>> op.op_type = 'stepwise'
+>>> op.set_parameter(0, par_values=(20,))
+>>> qt.run(op=op, mode=1,
+...        asset_type='E',
+...        asset_pool=shares,
+...        invest_start='20160405',
+...        invest_end='20210201',
+...        trade_batch_size=100,
+...        sell_batch_size=1,
+...        trade_log=True)
 ```
 运行结果如下：
 
-    
+```text
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -178,87 +170,80 @@ print()
         recovered on:         2019-04-18
     
     ===========END OF REPORT=============
-    
-
-
+```
 
     
 ![png](img/output_4_1_2.png)
     
 
-## 第二种自定义策略设置方，使用PT交易信号设置持仓目标：
+## 第二种自定义策略设置方法，使用PT交易信号设置持仓目标：
 
 在完成选股因子的计算之后，直接设置每个股票的持仓目标，这样就不需要使用知道持仓数据，直接输出持仓目标信号
 ，在回测过程中根据实际持仓量生成交易信号。
-    
 
 
 ```python
-
-class GroupPT(qt.GeneralStg):
-    
-    def realize(self, h, r=None, t=None, pars=None):
-
-        # 读取策略参数（开盘价大于收盘价的天数）
-        if pars is None:
-            n_day = self.pars[0]
-        else:
-            n_day = pars[0]
-        
-        # 从历史数据编码中读取四种历史数据的最新数值
-        opens = h[:, -30:, 0]  # 从前一交易日起前30天内开盘价
-        closes = h[:, -31:-1, 1]  # 从两个交易日前开始前30天内收盘价
-        
-        # 选股因子为开盘价大于收盘价的天数，使用astype将True/False结果改为1/0，便于加总
-        factors = ((opens - closes) > 0).astype('float')
-        # 所有开盘价-收盘价>0的结果会被转化为1，其余结果转化为0，因此可以用sum得到开盘价大于收盘价的天数
-        factors = factors.sum(axis=1)
-        
-        # 选出开盘价大于收盘价天数大于十天的所有股票的序号
-        all_args = np.arange(len(factors))
-        selected = np.where(factors > n_day)[0]
-        not_selected = np.setdiff1d(all_args, selected)
-        # 计算选出的股票的数量
-        selected_count = len(selected)
-        
-        # 开始生成交易信号
-        signal = np.zeros_like(factors)
-        if selected_count == 0:
-            return signal
-        # 所有被选中的股票均设置为正持仓目标
-        signal[selected] = 1. / selected_count  
-        # 未被选中的股票持仓目标被设置为0
-        signal[not_selected] = 0
-        
-        return signal
-    
+>>> class GroupPT(qt.GeneralStg):
+...     
+...     def realize(self):
+... 
+...         # 读取策略参数（开盘价大于收盘价的天数）
+...         
+...         # 读取策略参数（开盘价大于收盘价的天数）
+...         n_day = self.get_pars('n_day')
+... 
+...         # 从历史数据编码中读取四种历史数据的最新数值
+...         opens, closes = self.get_data('open_E_d', 'close_E_d')  # 从前一交易日起前30天内开盘价
+...         opens = opens[-30:]
+...         closes = closes[-30:]
+...         
+...         # 选股因子为开盘价大于收盘价的天数，使用astype将True/False结果改为1/0，便于加总
+...         factors = ((opens - closes) > 0).astype('float')
+...         # 所有开盘价-收盘价>0的结果会被转化为1，其余结果转化为0，因此可以用sum得到开盘价大于收盘价的天数
+...         factors = factors.sum(axis=0)
+...         # import pdb; pdb.set_trace()
+...         # 选出开盘价大于收盘价天数大于十天的所有股票的序号
+...         all_args = np.arange(len(factors))
+...         selected = np.where(factors > n_day)[0]
+...         not_selected = np.setdiff1d(all_args, selected)
+...         # 计算选出的股票的数量
+...         selected_count = len(selected)
+...         print(f'now {selected_count} shares are selected!')
+...         
+...         # 开始生成交易信号
+...         signal = np.zeros_like(factors)
+...         if selected_count == 0:
+...             return signal
+...         # 所有被选中的股票均设置为正持仓目标
+...         signal[selected] = 1. / selected_count  
+...         # 未被选中的股票持仓目标被设置为0
+...         signal[not_selected] = 0
+...         
+...         return signal
 ```
 创建一个Operator对象，开始回测交易策略
 
 ```python
-alpha = GroupPT(pars=(10,),
-                par_count=1,
-                par_types=['int'],
-                par_range=[(3, 25)],
-                name='GroupPS',
-                description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
-                data_types='open, close',
-                run_freq='m',
-                data_freq='d',
-                window_length=32)  
-op = qt.Operator(alpha, signal_type='PT')
-op.op_type = 'batch'
-op.set_parameter(0, (20,))
-op.run(mode=1,
-       asset_type='E',
-       asset_pool=shares,
-       trade_batch_size=100,
-       sell_batch_size=1,
-       trade_log=True)
-print()
+>>> alpha = GroupPT(name='GroupPS',
+...                 description='本策略每隔1个月定时触发, 从SHSE.000300成份股中选择过去30天内开盘价大于前收盘价的天数大于10天的股票买入',
+...                 pars=[Parameter((3, 25), par_type='int', name='n_day', value=10)],
+...                 data_types=[StgData('open', freq='d', asset_type='E', window_length=32), 
+...                             StgData('close', freq='d', asset_type='E', window_length=32)],
+...                )  
+>>> op = qt.Operator(alpha, signal_type='PT', run_freq='ME')
+>>> op.set_parameter(0, par_values=(20,))
+>>> qt.run(op=op, mode=1,
+...        asset_type='E',
+...        asset_pool=shares,
+...        invest_start='20160405',
+...        invest_end='20210201',
+...        trade_batch_size=100,
+...        sell_batch_size=1,
+...        trade_log=True)
 ```
 交易回测结果如下：
     
+```text
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -321,8 +306,7 @@ print()
         recovered on:         2017-09-27
     
     ===========END OF REPORT=============
-    
-
+```
     
 ![png](img/output_6_1.png)
     
