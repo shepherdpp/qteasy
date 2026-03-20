@@ -174,36 +174,64 @@ class DataSource:
 
         if source_type.lower() == 'file':
             from qteasy import QT_ROOT_PATH
+            # 规范化用户传入的 file_type，同时保留“原始请求值”以便提示信息更准确。
+            # 注意：qteasy 物理实现仅覆盖 hdf 与 fth；hdf5 视为 hdf 的别名。
+            file_type_original = file_type
+            if not isinstance(file_type, str):
+                err = TypeError(f'file type should be a string, got {type(file_type)} instead!')
+                raise err
+            file_type = file_type.lower()
+            assert file_type in AVAILABLE_DATA_FILE_TYPES, (
+                f'Wrong file type! supported file types are {AVAILABLE_DATA_FILE_TYPES}'
+            )
+
+            normalized_file_type = file_type
+            if normalized_file_type == 'hdf5':
+                normalized_file_type = 'hdf'
+            if normalized_file_type in ['feather', 'fth']:
+                normalized_file_type = 'fth'
+
+            # 对文件型数据源，先确保目录可用：
+            # 即使可选依赖缺失并回退到 csv，也不能遗漏 file_path 的初始化与目录创建。
             try:
-                file_type = file_type.lower()
-                assert file_type in AVAILABLE_DATA_FILE_TYPES, (f'Wrong file type!'
-                                                                f'supported file types are {AVAILABLE_DATA_FILE_TYPES}')
-                if file_type in ['hdf']:
-                    import tables
-                    file_type = 'hdf'
-                if file_type in ['feather', 'fth']:
-                    import pyarrow
-                    file_type = 'fth'
-
                 self.file_path = path.join(QT_ROOT_PATH, file_loc)
-                os.makedirs(self.file_path, exist_ok=True)  # 确保数据dir不存在时创建一个
-            except AssertionError as e:
-                err = AssertionError(f'{str(e)}')
-                raise err
-            except TypeError as e:
-                err = TypeError(f'{str(e)}, file type should be a string, got {type(file_type)} instead!')
-                raise err
-            except ImportError as e:
-                msg = f'Missing optional dependency \'pytables\' for datasource file type ' \
-                      f'\'hdf\'. Please install pytables: $ conda install pytables\n' \
-                      f'Can not create data source with file type {file_type}, will fall back to csv file'
-                warnings.warn(msg, RuntimeWarning, stacklevel=2)
-
-                file_type = 'csv'
+                os.makedirs(self.file_path, exist_ok=True)  # 确保数据目录存在
             except Exception as e:
-                err = SystemError(f'{str(e)}, Failed creating data directory \'{file_loc}\' in qt root path, '
-                                  f'please check your input.')
+                err = SystemError(
+                    f'{str(e)}, Failed creating data directory \'{file_loc}\' in qt root path, please check your input.'
+                )
                 raise err
+
+            # 检查可选依赖；缺失则回退到 csv。
+            try:
+                if normalized_file_type == 'hdf':
+                    import tables  # 可选依赖
+                    file_type = 'hdf'
+                elif normalized_file_type == 'fth':
+                    import pyarrow  # 可选依赖
+                    file_type = 'fth'
+                else:
+                    file_type = 'csv'
+            except ImportError:
+                if normalized_file_type == 'hdf':
+                    msg = (
+                        f"Missing optional dependency 'tables' for datasource file type '{file_type_original}'. "
+                        f"Please install pytables: $ conda install pytables\n"
+                        f'Fallback to csv is applied.'
+                    )
+                elif normalized_file_type == 'fth':
+                    msg = (
+                        f"Missing optional dependency 'pyarrow' for datasource file type '{file_type_original}'. "
+                        f"Please install pyarrow: $ conda install pyarrow\n"
+                        f'Fallback to csv is applied.'
+                    )
+                else:
+                    msg = (
+                        f"Missing optional dependency for datasource file type '{file_type_original}'. "
+                        f'Fallback to csv is applied.'
+                    )
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
+                file_type = 'csv'
 
             self.source_type = 'file'
             self.file_type = file_type
