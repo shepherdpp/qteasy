@@ -414,6 +414,24 @@ class FastExperiments(unittest.TestCase):
                          )  # 生成交易员对象，操作alpha策略，交易信号的类型为‘PT'，意思是生成的信号代表持仓比例，例如1代表100%持有股票，0.35表示持有股票占资产的35%
         # op.set_blender('1.0*s0')  # 交易策略混合方式，只有一个策略，不需要混合
         qt.run(op=op)  # 开始运行
+        self.assertTrue(True)
+
+    def test_kline_with_adj_prices(self):
+        """ test history panel.kline with adj prices"""
+        panel = qt.get_history_data('open|b, high|b, low|b, close|b, volume', shares='000651.SZ', start='20210101', end='20210401', as_data_frame=False)
+        print('\n[test_kline_with_adj_prices] htypes:', panel.htypes)
+
+        macd_panel = panel.kline.macd()
+        print('[test_kline_with_adj_prices] macd htypes tail:', macd_panel.htypes[-3:])
+        self.assertTrue(any(str(h).startswith('macd_') for h in macd_panel.htypes))
+
+        vol_df = panel.volatility()
+        print('[test_kline_with_adj_prices] volatility shape:', vol_df.shape)
+        self.assertFalse(vol_df.empty)
+
+        ret_df = panel.returns()
+        print('[test_kline_with_adj_prices] returns shape:', ret_df.shape)
+        self.assertFalse(ret_df.empty)
 
 
 if __name__ == '__main__':

@@ -1753,12 +1753,11 @@ class HistoryPanel():
             if as_panel:
                 return HistoryPanel()
             return pd.DataFrame()
-        if price_htype not in self.htypes:
-            raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
+        resolved_price_htype = self._resolve_price_htype(price_htype)
         if method not in ('simple', 'log'):
             raise ValueError(f'method must be "simple" or "log", got {method}')
 
-        ci = self.htypes.index(price_htype)
+        ci = self.htypes.index(resolved_price_htype)
         prices = self.values[:, :, ci].astype(float)  # (shares, times)
 
         n_share, n_time = prices.shape
@@ -1797,7 +1796,7 @@ class HistoryPanel():
 
     def volatility(
             self,
-            window: int,
+            window: int = 20,
             price_htype: str = 'close',
             method: str = 'simple',
             annualize: bool = True,
@@ -1808,7 +1807,7 @@ class HistoryPanel():
 
         Parameters
         ----------
-        window : int
+        window : int, default 20
             滚动窗口长度（bar 数）。
         price_htype : str, default 'close'
             用于计算收益率的价格类型。
@@ -1874,6 +1873,45 @@ class HistoryPanel():
     def kline(self) -> "_HistoryPanelKlineAccessor":
         """K 线技术指标访问器，提供 sma、ema、bbands、macd、kdj 等方法。"""
         return _HistoryPanelKlineAccessor(self)
+
+    def _resolve_price_htype(self, price_htype: str) -> str:
+        """解析价格列的实际 htype 名称（支持复权列名自动映射）。
+
+        当面板的价格列使用了复权后缀（例如 ``close|b``），而调用方仍使用默认
+        ``price_htype='close'`` 时，本方法会自动选择面板中可用的复权价格列。
+
+        Parameters
+        ----------
+        price_htype : str
+            调用方期望使用的价格类型（例如 ``'close'``、``'high'`` 或带复权后缀的 ``'close|b'``）。
+
+        Returns
+        -------
+        str
+            面板中实际存在的 htype 名称。
+        """
+        if self.is_empty:
+            raise ValueError('HistoryPanel is empty')
+        if price_htype in self.htypes:
+            return price_htype
+
+        # 仅当用户传入的是无后缀的根价格名时，尝试从复权列中自动映射。
+        if '|' not in price_htype:
+            root = price_htype
+            # 优先顺序：back-adjusted -> forward-adjusted -> 其它同根后缀（稳定选择）
+            preferred = [f'{root}|b', f'{root}|f']
+            for cand in preferred:
+                if cand in self.htypes:
+                    return cand
+
+            matching = [h for h in self.htypes if h.startswith(f'{root}|')]
+            if matching:
+                for cand in preferred:
+                    if cand in matching:
+                        return cand
+                return sorted(matching)[0]
+
+        raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
 
     def alpha_beta(
             self,
@@ -2774,9 +2812,8 @@ class _HistoryPanelKlineAccessor:
         ValueError
             当 ``HistoryPanel`` 为空或 ``price_htype`` 不存在于 ``htypes`` 中时抛出。
         """
-        if self._hp.is_empty or price_htype not in self._hp.htypes:
-            raise ValueError(f'price_htype "{price_htype}" not in htypes: {self._hp.htypes}')
-        ci = self._hp.htypes.index(price_htype)
+        resolved_htype = self._hp._resolve_price_htype(price_htype)
+        ci = self._hp.htypes.index(resolved_htype)
         return self._hp.values[:, :, ci].astype(float)
 
     def _append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
@@ -3052,9 +3089,6 @@ class _HistoryPanelKlineAccessor:
             当缺少 ``high`` / ``low`` / ``close`` 任一列，或新增列名冲突时抛出。
         """
         from qteasy import tafuncs
-        for h in ('high', 'low', 'close'):
-            if h not in self._hp.htypes:
-                raise ValueError(f'KDJ requires high/low/close in htypes, missing "{h}"')
         tag = suffix if suffix is not None else f'{fastk_period}_{slowk_period}_{slowd_period}'
         k_name = f'kdj_k_{tag}'
         d_name = f'kdj_d_{tag}'
