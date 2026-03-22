@@ -11,9 +11,27 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+import html
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+
+from qteasy.hp_visual_bar_display import (
+    build_bar_display_data,
+    mpl_ohlc_header_segments,
+    primary_kline_group_index,
+    specs_contain_kline,
+)
+from qteasy.hp_visual_layout import compute_hp_visual_layout_spec, plotly_trace_row_1based
+from qteasy.hp_visual_theme_adapt import (
+    HeaderFontRole,
+    header_font_span_style,
+    merge_header_font_theme,
+    plotly_font_dict,
+    resolve_candle_style_plotly,
+    resolve_font_size,
+    resolve_header_font_plotly,
+)
 
 try:
     import plotly.graph_objects as go
@@ -58,7 +76,7 @@ class _PlotlyFigureWrapper:
         meta = getattr(self._figure, '_hp_plotly_meta', None)
         # 使用包装器时用独立 header div，不再在 figure 内显示 title 避免重复
         fig_for_html = self._figure
-        if meta and meta.get('initial_header_html'):
+        if meta and meta.get('show_ohlc_header') and meta.get('initial_header_html'):
             fig_for_html = go.Figure(self._figure)
             fig_for_html.update_layout(title=None, annotations=[])
         html = fig_for_html.to_html(
@@ -67,13 +85,17 @@ class _PlotlyFigureWrapper:
             full_html=False,
             div_id=div_id,
         )
-        # 表头置于画布最上方（独立 div），避免与第一组图表重叠
-        header_style = (
-            'min-height:52px;line-height:1.4;padding:6px 10px;font-size:11px;'
-            'background:#f8f8f8;border-bottom:1px solid #ddd;'
-        )
-        header_div = '<div id="hp-header-' + div_id + '" style="' + header_style + '"></div>\n'
-        html = header_div + html
+        # 表头置于画布最上方（独立 div）；无 K 线时不预留
+        if meta and meta.get('show_ohlc_header') and meta.get('initial_header_html'):
+            fs = 12
+            if meta.get('theme'):
+                fs = int(merge_header_font_theme(meta['theme'])['header_normal']['size'])
+            header_style = (
+                f'min-height:52px;line-height:1.4;padding:6px 10px;font-size:{fs}px;'
+                'background:#f8f8f8;border-bottom:1px solid #ddd;'
+            )
+            header_div = '<div id="hp-header-' + div_id + '" style="' + header_style + '"></div>\n'
+            html = header_div + html
         if meta is not None:
             meta_js = {k: v for k, v in meta.items() if k != 'theme'}
             html += '\n<script>window["HP_PLOTLY_META_' + div_id + '"] = ' + json.dumps(meta_js) + ';</script>\n'
@@ -276,40 +298,42 @@ def _click_update_header_script(div_id: str) -> str:
         '(function() {\n'
         '  var divId = ' + repr(div_id) + ';\n'
         '  function span(t, c, fs) { fs = fs || 11; return "<span style=\'color:"+c+";font-size:"+fs+"px\'>"+t+"</span>"; }\n'
-        '  function buildHeaderHTML(rec) {\n'
+        '  function buildHeaderHTML(rec, fsBody, fsEm) {\n'
+        '    fsBody = fsBody || 11; fsEm = fsEm || 16;\n'
         '    var c = rec.change, colorMain = (c != null) ? (c > 0 ? "red" : (c < 0 ? "green" : "black")) : "black";\n'
         '    var lowColor = (c != null && c < 0) ? "green" : "black";\n'
         '    var p1 = [];\n'
-        '    p1.push(span("开/收: ", "black"));\n'
-        '    if (rec.open != null && rec.close != null) p1.push(span(rec.open.toFixed(2)+" / "+rec.close.toFixed(2), colorMain, 16));\n'
-        '    p1.push(" &nbsp; "); p1.push(span("高: ", "black"));\n'
-        '    if (rec.high != null) p1.push(span(rec.high.toFixed(3), colorMain));\n'
-        '    p1.push(" &nbsp; "); p1.push(span("量(万手): ", "black"));\n'
-        '    if (rec.volume != null) p1.push(span((rec.volume/1e4).toFixed(3), "black"));\n'
-        '    p1.push(" &nbsp; "); p1.push(span("涨停: ", "black"));\n'
-        '    if (rec.upper_lim != null) p1.push(span(rec.upper_lim.toFixed(3), "red"));\n'
-        '    p1.push(" &nbsp; "); p1.push(span("均价: ", "black"));\n'
-        '    if (rec.ma && Object.keys(rec.ma).length) p1.push(span(parseFloat(rec.ma[Object.keys(rec.ma)[0]]).toFixed(3), "black"));\n'
+        '    p1.push(span("O/C: ", "black", fsBody));\n'
+        '    if (rec.open != null && rec.close != null) p1.push(span(rec.open.toFixed(2)+" / "+rec.close.toFixed(2), colorMain, fsEm));\n'
+        '    p1.push(" &nbsp; "); p1.push(span("H: ", "black", fsBody));\n'
+        '    if (rec.high != null) p1.push(span(rec.high.toFixed(3), colorMain, fsBody));\n'
+        '    p1.push(" &nbsp; "); p1.push(span("Vol(10k): ", "black", fsBody));\n'
+        '    if (rec.volume != null) p1.push(span((rec.volume/1e4).toFixed(3), "black", fsBody));\n'
+        '    p1.push(" &nbsp; "); p1.push(span("Up limit: ", "black", fsBody));\n'
+        '    if (rec.upper_lim != null) p1.push(span(rec.upper_lim.toFixed(3), "red", fsBody));\n'
+        '    p1.push(" &nbsp; "); p1.push(span("Avg: ", "black", fsBody));\n'
+        '    if (rec.ma && Object.keys(rec.ma).length) p1.push(span(parseFloat(rec.ma[Object.keys(rec.ma)[0]]).toFixed(3), "black", fsBody));\n'
         '    var p2 = [];\n'
-        '    p2.push(span(rec.date_str || "", "black"));\n'
-        '    if (rec.change != null) { p2.push(" &nbsp; "); p2.push(span(rec.change.toFixed(3), colorMain)); }\n'
-        '    if (rec.pct_change != null) p2.push(span(" ["+rec.pct_change.toFixed(3)+"%]", colorMain));\n'
-        '    p2.push(" &nbsp; "); p2.push(span("低: ", "black"));\n'
-        '    if (rec.low != null) p2.push(span(rec.low.toFixed(3), lowColor));\n'
-        '    p2.push(" &nbsp; "); p2.push(span("额(亿元): ", "black"));\n'
-        '    if (rec.value != null) p2.push(span((rec.value/1e8).toFixed(3), "black"));\n'
-        '    p2.push(" &nbsp; "); p2.push(span("跌停: ", "black"));\n'
-        '    if (rec.lower_lim != null) p2.push(span(rec.lower_lim.toFixed(3), "green"));\n'
-        '    p2.push(" &nbsp; "); p2.push(span("昨收: ", "black"));\n'
-        '    if (rec.last_close != null) p2.push(span(rec.last_close.toFixed(3), "black"));\n'
-        '    return "<div style=\'line-height:1.4;padding:6px 10px;font-size:11px;background:#f8f8f8;border-bottom:1px solid #ddd\'><div>"+p1.join("")+"</div><div>"+p2.join("")+"</div></div>";\n'
+        '    p2.push(span(rec.date_str || "", "black", fsBody));\n'
+        '    if (rec.change != null) { p2.push(" &nbsp; "); p2.push(span(rec.change.toFixed(3), colorMain, fsBody)); }\n'
+        '    if (rec.pct_change != null) p2.push(span(" ["+rec.pct_change.toFixed(3)+"%]", colorMain, fsBody));\n'
+        '    p2.push(" &nbsp; "); p2.push(span("L: ", "black", fsBody));\n'
+        '    if (rec.low != null) p2.push(span(rec.low.toFixed(3), lowColor, fsBody));\n'
+        '    p2.push(" &nbsp; "); p2.push(span("Turn(100M): ", "black", fsBody));\n'
+        '    if (rec.value != null) p2.push(span((rec.value/1e8).toFixed(3), "black", fsBody));\n'
+        '    p2.push(" &nbsp; "); p2.push(span("Dn limit: ", "black", fsBody));\n'
+        '    if (rec.lower_lim != null) p2.push(span(rec.lower_lim.toFixed(3), "green", fsBody));\n'
+        '    p2.push(" &nbsp; "); p2.push(span("Prev: ", "black", fsBody));\n'
+        '    if (rec.last_close != null) p2.push(span(rec.last_close.toFixed(3), "black", fsBody));\n'
+        '    return "<div style=\'line-height:1.4;padding:6px 10px;font-size:"+fsBody+"px;background:#f8f8f8;border-bottom:1px solid #ddd\'><div>"+p1.join("")+"</div><div>"+p2.join("")+"</div></div>";\n'
         '  }\n'
         '  function attach() {\n'
         '    var gd = document.getElementById(divId);\n'
         '    if (!gd || !gd.data) { setTimeout(attach, 80); return; }\n'
-        '    var meta = window["HP_PLOTLY_META_" + divId]; if (!meta) return;\n'
+        '    var meta = window["HP_PLOTLY_META_" + divId]; if (!meta || !meta.show_ohlc_header) return;\n'
         '    var nt = meta.n_types, ng = meta.n_groups || 1;\n'
         '    var hdr = document.getElementById("hp-header-" + divId);\n'
+        '    var fsB = meta.header_font_body || 11, fsE = meta.header_font_emphasis || 16;\n'
         '    if (hdr && meta.initial_header_html) hdr.innerHTML = meta.initial_header_html;\n'
         '    gd.on("plotly_click", function(ev) {\n'
         '      if (!ev || !ev.points || !ev.points.length) return;\n'
@@ -320,7 +344,7 @@ def _click_update_header_script(div_id: str) -> str:
         '      if (groupIdx < 0 || groupIdx >= ng) return;\n'
         '      var barData = meta.bar_data[groupIdx]; if (!barData || pointIndex >= barData.length) return;\n'
         '      var rec = barData[pointIndex];\n'
-        '      if (hdr) hdr.innerHTML = buildHeaderHTML(rec);\n'
+        '      if (hdr) hdr.innerHTML = buildHeaderHTML(rec, fsB, fsE);\n'
         '    });\n'
         '  }\n'
         '  if (document.readyState === "complete") attach(); else window.addEventListener("load", attach);\n'
@@ -426,7 +450,8 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     if not bar_data or not bar_data[0]:
         return fig
     theme = meta.get('theme') or _get_theme_internal()
-    first_bar_rec = bar_data[0][0]
+    show_header = bool(meta.get('show_ohlc_header'))
+    pk_fb = int(meta.get('ohlc_header_primary_group', 0))
     try:
         fw = FigureWidget(fig.data, fig.layout)
         fw._hp_plotly_meta = meta
@@ -434,8 +459,16 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     except Exception:
         return fig
 
-    # 表头：用 annotations 显示首条 bar，与包装器两行风格一致
-    fw.update_layout(annotations=_build_top_info_annotations(first_bar_rec, theme))
+    if show_header:
+        bd0 = bar_data[pk_fb] if pk_fb < len(bar_data) else bar_data[0]
+        init_rec = bd0[-1] if bd0 else {}
+        if init_rec:
+            n_sub = int(meta.get('subplot_annotation_count', 0))
+            base: List[Any] = []
+            if fw.layout.annotations:
+                n_sub = min(n_sub, len(fw.layout.annotations))
+                base = list(fw.layout.annotations[:n_sub])
+            fw.update_layout(annotations=base + _build_top_info_annotations(init_rec, theme))
 
     # 数据长度 n（X 为 0..n-1）
     n = 0
@@ -512,7 +545,10 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
 
                 # 根据当前可见区间自适应更新时间轴刻度密度
                 bar_data = getattr(fw, '_hp_plotly_meta', {}).get('bar_data', [])
-                dates = bar_data[0] if bar_data and bar_data[0] else []
+                pk = int(getattr(fw, '_hp_plotly_meta', {}).get('ohlc_header_primary_group', 0))
+                dates = (
+                    bar_data[pk] if pk < len(bar_data) and bar_data[pk] else (bar_data[0] if bar_data else [])
+                )
                 if dates:
                     theme_local = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
                     max_x_ticks = int(theme_local.get('max_x_ticks', 12))
@@ -535,6 +571,8 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             fw._hp_updating_y = False
 
     def _on_click(trace: Any, points: Any, selector: Any) -> None:
+        if not getattr(fw, '_hp_plotly_meta', {}).get('show_ohlc_header'):
+            return
         if not points or not getattr(points, 'point_inds', None):
             return
         try:
@@ -549,7 +587,12 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 return
             rec = bar_data[group][point_index]
             theme = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
-            new_annotations = _build_top_info_annotations(rec, theme)
+            n_sub = int(getattr(fw, '_hp_plotly_meta', {}).get('subplot_annotation_count', 0))
+            base: List[Any] = []
+            if fw.layout.annotations:
+                n_sub = min(n_sub, len(fw.layout.annotations))
+                base = list(fw.layout.annotations[:n_sub])
+            new_annotations = base + _build_top_info_annotations(rec, theme)
             fw.update_layout(annotations=new_annotations)
         except Exception:
             pass
@@ -585,104 +628,6 @@ def _theme_to_plotly_color(theme_val: Any) -> str:
         a = float(theme_val[3]) if len(theme_val) > 3 else 1.0
         return f'rgba({int(r*255)},{int(g*255)},{int(b*255)},{a})'
     return 'gray'
-
-
-def _build_bar_display_data(
-    specs_per_group: Sequence[Sequence[Optional[Dict[str, Any]]]],
-    types_info: Sequence[Any],
-    x_dates: Sequence[Any],
-) -> List[List[Dict[str, Any]]]:
-    """
-    为每组、每个时间索引构建顶部展示区所需的数据。
-    仅包含：close（突出）、date/time、open、high、low、volume、value、last_close、pct_change、upper_lim、lower_lim、MA。
-    """
-    from qteasy.hp_visual_render import _to_1d, _format_x_label
-
-    theme = _get_theme_internal()
-    fmt = theme.get('datetime_format', '%y/%m/%d')
-    out: List[List[Dict[str, Any]]] = []
-    n = len(x_dates) if x_dates else 0
-    if n == 0:
-        return out
-
-    for g, row in enumerate(specs_per_group):
-        group_data: List[Dict[str, Any]] = []
-        kline_spec = next((row[i] for i, t in enumerate(types_info) if t.id == 'kline' and row[i] is not None), None)
-        vol_spec = next((row[i] for i, t in enumerate(types_info) if t.id == 'volume' and row[i] is not None), None)
-
-        o = h = l = c = None
-        vol = None
-        ma_dict: Dict[str, np.ndarray] = {}
-
-        if kline_spec:
-            data = kline_spec.get('data', {})
-            for key in ('open', 'high', 'low', 'close'):
-                if key in data:
-                    arr = _to_1d(np.asarray(data[key]), 0)
-                    if key == 'open':
-                        o = arr[:n]
-                    elif key == 'high':
-                        h = arr[:n]
-                    elif key == 'low':
-                        l = arr[:n]
-                    else:
-                        c = arr[:n]
-            for key in data:
-                if key in ('open', 'high', 'low', 'close'):
-                    continue
-                if key.startswith('ma_') or key.startswith('sma_') or key.startswith('ema_'):
-                    ma_dict[key] = _to_1d(np.asarray(data[key]), 0)[:n]
-
-        if vol_spec:
-            data = vol_spec.get('data', {})
-            vol_name = next((k for k in ('vol', 'volume') if k in data), None)
-            if vol_name:
-                vol = _to_1d(np.asarray(data[vol_name]), 0)[:n]
-
-        close_ary = c if c is not None else np.full(n, np.nan)
-        last_close = np.roll(close_ary, 1)
-        last_close[0] = np.nan
-
-        for i in range(n):
-            rec: Dict[str, Any] = {
-                'date_str': _format_x_label(x_dates[i], fmt) if i < len(x_dates) else '',
-                'close': float(close_ary[i]) if np.isfinite(close_ary[i]) else None,
-                'open': float(o[i]) if o is not None and np.isfinite(o[i]) else None,
-                'high': float(h[i]) if h is not None and np.isfinite(h[i]) else None,
-                'low': float(l[i]) if l is not None and np.isfinite(l[i]) else None,
-            }
-            if vol is not None and np.isfinite(vol[i]):
-                rec['volume'] = float(vol[i])
-                rec['value'] = float(vol[i] * close_ary[i]) if np.isfinite(close_ary[i]) else None
-            else:
-                rec['volume'] = None
-                rec['value'] = None
-
-            lc = last_close[i]
-            if np.isfinite(lc) and lc != 0:
-                rec['last_close'] = float(lc)
-                chg = close_ary[i] - lc
-                rec['change'] = float(chg)
-                rec['pct_change'] = float(chg / lc * 100)
-                rec['upper_lim'] = float(lc * 1.1)
-                rec['lower_lim'] = float(lc * 0.9)
-            else:
-                rec['last_close'] = None
-                rec['change'] = None
-                rec['pct_change'] = None
-                rec['upper_lim'] = None
-                rec['lower_lim'] = None
-
-            rec['ma'] = {k: float(ma_dict[k][i]) for k in ma_dict if np.isfinite(ma_dict[k][i])}
-            group_data.append(rec)
-        out.append(group_data)
-    return out
-
-
-def _get_theme_internal() -> Dict[str, Any]:
-    """从静态渲染层获取主题，保证与静态图表一致。"""
-    from qteasy.hp_visual_render import _get_theme
-    return _get_theme()
 
 
 def _format_display_text(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
@@ -740,127 +685,51 @@ def _bar_data_to_json_serializable(
 
 
 def _build_header_html(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
-    """表头价格信息：生成独立 HTML 片段，置于画布最顶部（第一组图表上方），避免与绘图区重叠。"""
-    change = rec.get('change')
-    if change is not None:
-        color_main = 'red' if change > 0 else ('green' if change < 0 else 'black')
-    else:
-        color_main = 'black'
-    low_color = 'green' if (change or 0) < 0 else 'black'
+    """表头价格信息：独立 HTML 片段（英文），七种 ``header_font_*`` 与静态图一致。"""
 
-    def span(t: str, c: str = 'black', fs: int = 11) -> str:
-        return f'<span style="color:{c};font-size:{fs}px">{t}</span>'
+    def _render_line(segs: List[Tuple[str, HeaderFontRole]]) -> str:
+        parts: List[str] = []
+        for text, role in segs:
+            if not text:
+                continue
+            st = header_font_span_style(theme, role)
+            parts.append(f'<span style="{st}">{html.escape(text)}</span>')
+        return ''.join(parts)
 
-    parts: List[str] = []
-    # 第一行：开/收、高、量、涨停、均价
-    parts.append(span('开/收: ', 'black'))
-    o, c = rec.get('open'), rec.get('close')
-    if o is not None and c is not None:
-        parts.append(span(f'{o:.2f} / {c:.2f}', color_main, 16))
-    parts.append(' &nbsp; ')
-    parts.append(span('高: ', 'black'))
-    if rec.get('high') is not None:
-        parts.append(span(f'{rec["high"]:.3f}', color_main))
-    parts.append(' &nbsp; ')
-    parts.append(span('量(万手): ', 'black'))
-    if rec.get('volume') is not None:
-        parts.append(span(f'{rec["volume"]/1e4:.3f}', 'black'))
-    parts.append(' &nbsp; ')
-    parts.append(span('涨停: ', 'black'))
-    if rec.get('upper_lim') is not None:
-        parts.append(span(f'{rec["upper_lim"]:.3f}', 'red'))
-    parts.append(' &nbsp; ')
-    parts.append(span('均价: ', 'black'))
-    if rec.get('ma'):
-        vals = list(rec['ma'].values())
-        parts.append(span(f'{vals[0]:.3f}', 'black') if vals else '')
-    line1 = ''.join(parts)
-    parts = []
-    # 第二行：日期、涨跌、低、额、跌停、昨收
-    parts.append(span(str(rec.get('date_str', '')), 'black'))
-    if rec.get('change') is not None:
-        parts.append(' &nbsp; ')
-        parts.append(span(f'{rec["change"]:.3f}', color_main))
-    if rec.get('pct_change') is not None:
-        parts.append(span(f' [{rec["pct_change"]:.3f}%]', color_main))
-    parts.append(' &nbsp; ')
-    parts.append(span('低: ', 'black'))
-    if rec.get('low') is not None:
-        parts.append(span(f'{rec["low"]:.3f}', low_color))
-    parts.append(' &nbsp; ')
-    parts.append(span('额(亿元): ', 'black'))
-    if rec.get('value') is not None:
-        parts.append(span(f'{rec["value"]/1e8:.3f}', 'black'))
-    parts.append(' &nbsp; ')
-    parts.append(span('跌停: ', 'black'))
-    if rec.get('lower_lim') is not None:
-        parts.append(span(f'{rec["lower_lim"]:.3f}', 'green'))
-    parts.append(' &nbsp; ')
-    parts.append(span('昨收: ', 'black'))
-    if rec.get('last_close') is not None:
-        parts.append(span(f'{rec["last_close"]:.3f}', 'black'))
-    line2 = ''.join(parts)
+    line1_segs, line2_segs = mpl_ohlc_header_segments(rec)
+    line1 = _render_line(line1_segs)
+    line2 = _render_line(line2_segs)
+    fs_base = int(merge_header_font_theme(theme)['header_normal']['size'])
     return (
-        '<div style="line-height:1.4;padding:6px 10px;font-size:11px;background:#f8f8f8;border-bottom:1px solid #ddd;">'
+        f'<div style="line-height:1.4;padding:8px 12px;min-height:78px;'
+        f'font-size:{fs_base}px;background:#f8f8f8;border-bottom:1px solid #ddd;">'
         f'<div>{line1}</div><div>{line2}</div></div>'
     )
 
 
 def _build_top_info_annotations(rec: Dict[str, Any], theme: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """表头价格信息：两行 Plotly annotations，开/收大号 16px 且与 bar 同色，其余 11px；供官方 renderer 与点击更新。"""
+    """表头：两行 Plotly annotations，与 ``mpl_ohlc_header_segments`` 分段及七种字体一致。"""
     ann: List[Dict[str, Any]] = []
-    # 与组名（title_font_size=12）近似或稍小：正文 11，开/收 突出 16
-    font_norm = 11
-    font_open_close = 16
-    change = rec.get('change')
-    if change is not None:
-        color_main = 'red' if change > 0 else ('green' if change < 0 else 'black')
-    else:
-        color_main = 'black'
+    line1_segs, line2_segs = mpl_ohlc_header_segments(rec)
+    y1 = float(theme.get('plotly_header_annotation_y1', 1.115))
+    y2 = float(theme.get('plotly_header_annotation_y2', 1.085))
+    x0 = 0.02
 
-    def _ann(x: float, y: float, text: str, font_size: int = font_norm, color: str = 'black') -> None:
-        ann.append(dict(
-            x=x, y=y, xref='paper', yref='paper',
-            text=text, showarrow=False, xanchor='left', yanchor='top',
-            font=dict(size=font_size, color=color),
-        ))
+    def _add_line(segs: List[Tuple[str, HeaderFontRole]], y: float) -> None:
+        x = x0
+        for text, role in segs:
+            if not text:
+                continue
+            fd = resolve_header_font_plotly(theme, role)
+            ann.append(dict(
+                x=x, y=y, xref='paper', yref='paper',
+                text=text, showarrow=False, xanchor='left', yanchor='top',
+                font=fd,
+            ))
+            x += len(text) * 0.0082 * (float(fd['size']) / 12.0) + 0.002
 
-    # 整张画布最顶部，略高于第一组名称（paper y>1 可以利用上边距区域）
-    y1, y2 = 1.06, 1.03
-    _ann(0.02, y1, '开/收: ', font_norm, 'black')
-    o, c = rec.get('open'), rec.get('close')
-    if o is not None and c is not None:
-        _ann(0.08, y1, f'{o:.2f} / {c:.2f}', font_open_close, color_main)
-    if rec.get('change') is not None:
-        _ann(0.08, y2, f'{rec["change"]:.3f}', font_norm, color_main)
-    if rec.get('pct_change') is not None:
-        _ann(0.16, y2, f'[{rec["pct_change"]:.3f}%]', font_norm, color_main)
-    _ann(0.02, y2, str(rec.get('date_str', '')), font_norm, 'black')
-    _ann(0.28, y1, '高: ', font_norm, 'black')
-    if rec.get('high') is not None:
-        _ann(0.32, y1, f'{rec["high"]:.3f}', font_norm, color_main)
-    _ann(0.28, y2, '低: ', font_norm, 'black')
-    if rec.get('low') is not None:
-        _ann(0.32, y2, f'{rec["low"]:.3f}', font_norm, 'green' if (change or 0) < 0 else 'black')
-    _ann(0.45, y1, '量(万手): ', font_norm, 'black')
-    if rec.get('volume') is not None:
-        _ann(0.55, y1, f'{rec["volume"]/1e4:.3f}', font_norm, 'black')
-    _ann(0.45, y2, '额(亿元): ', font_norm, 'black')
-    if rec.get('value') is not None:
-        _ann(0.55, y2, f'{rec["value"]/1e8:.3f}', font_norm, 'black')
-    _ann(0.62, y1, '涨停: ', font_norm, 'black')
-    if rec.get('upper_lim') is not None:
-        _ann(0.68, y1, f'{rec["upper_lim"]:.3f}', font_norm, 'red')
-    _ann(0.62, y2, '跌停: ', font_norm, 'black')
-    if rec.get('lower_lim') is not None:
-        _ann(0.68, y2, f'{rec["lower_lim"]:.3f}', font_norm, 'green')
-    _ann(0.78, y1, '均价: ', font_norm, 'black')
-    if rec.get('ma'):
-        vals = list(rec['ma'].values())
-        _ann(0.84, y1, f'{vals[0]:.3f}' if vals else '', font_norm, 'black')
-    _ann(0.78, y2, '昨收: ', font_norm, 'black')
-    if rec.get('last_close') is not None:
-        _ann(0.84, y2, f'{rec["last_close"]:.3f}', font_norm, 'black')
+    _add_line(line1_segs, y1)
+    _add_line(line2_segs, y2)
     return ann
 
 
@@ -885,19 +754,9 @@ def build_interactive_figure_from_specs(
         fig = go.Figure()
         fig.update_layout(
             paper_bgcolor=_theme_to_plotly_color(theme.get('figure_facecolor', (0.82, 0.83, 0.85))),
-            margin=dict(t=80),
+            margin=dict(t=100),
         )
         return fig
-
-    # 高度比例与静态一致
-    type_ratios = []
-    for info in types_info:
-        imp = getattr(info, 'importance', 'secondary')
-        type_ratios.append(2.0 if imp == 'main' else 0.5)
-    has_main = any(getattr(t, 'importance', '') == 'main' for t in types_info)
-    has_secondary = any(getattr(t, 'importance', '') == 'secondary' for t in types_info)
-    if not (has_main and has_secondary):
-        type_ratios = [1.0] * n_types
 
     x_dates = x_dates or []
     n = len(x_dates)
@@ -912,64 +771,55 @@ def build_interactive_figure_from_specs(
         n = 1
     x_idx = list(range(n))
 
-    # 多组：垂直堆叠 + 组间 spacer
-    if n_groups > 1:
-        spacer = 0.4
-        row_heights_list: List[float] = []
-        for g in range(n_groups):
-            row_heights_list.extend(type_ratios)
-            if g < n_groups - 1:
-                row_heights_list.append(spacer)
-        n_rows_total = len(row_heights_list)
-        subplot_titles_list: List[str] = []
-        for g in range(n_groups):
-            for t in range(n_types):
-                subplot_titles_list.append(group_titles[g] if t == 0 and group_titles and g < len(group_titles) else '')
-            if g < n_groups - 1:
-                subplot_titles_list.append('')
-        fig = make_subplots(
-            rows=n_rows_total,
-            cols=1,
-            shared_xaxes=True,
-            vertical_spacing=0,
-            row_heights=row_heights_list,
-            subplot_titles=subplot_titles_list,
-        )
-    else:
-        subplot_titles_list = [
-            (group_titles[0] if group_titles else '') if t == 0 else ''
-            for t in range(n_types)
-        ]
-        fig = make_subplots(
-            rows=n_types,
-            cols=1,
-            shared_xaxes=True,
-            vertical_spacing=0,
-            row_heights=type_ratios,
-            subplot_titles=subplot_titles_list,
-        )
-        n_rows_total = n_types
+    from qteasy.hp_visual_render import _to_1d, _format_x_label
+
+    bar_data_per_group = build_bar_display_data(
+        specs_per_group, types_info, list(x_dates) if x_dates else x_idx, theme=theme,
+    )
+    show_ohlc_header = specs_contain_kline(specs_per_group, types_info)
+    pk = primary_kline_group_index(specs_per_group, types_info)
+    header_rec: Dict[str, Any] = {}
+    if show_ohlc_header and pk is not None and bar_data_per_group and pk < len(bar_data_per_group):
+        grp = bar_data_per_group[pk]
+        if grp:
+            header_rec = grp[-1]
+
+    row_off = 1 if (show_ohlc_header and bool(header_rec)) else 0
+    layout_spec = compute_hp_visual_layout_spec(
+        n_groups,
+        n_types,
+        types_info,
+        theme,
+        row_off=row_off,
+        show_ohlc_header=show_ohlc_header,
+        group_titles=group_titles,
+    )
+
+    fig = make_subplots(
+        rows=layout_spec['plotly_n_subplot_rows'],
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=layout_spec['plotly_vertical_spacing'],
+        row_heights=layout_spec['plotly_row_heights'],
+        subplot_titles=layout_spec['plotly_subplot_titles'],
+    )
 
     # 主题色
     paper_bg = _theme_to_plotly_color(theme.get('figure_facecolor'))
     plot_bg = _theme_to_plotly_color(theme.get('axes_facecolor'))
     color_up = theme.get('line_color_up', 'red')
     color_dn = theme.get('line_color_down', 'green')
-    font_size = theme.get('font_size', 10)
-    title_font_size = theme.get('title_font_size', 12)
 
-    from qteasy.hp_visual_render import _to_1d, _format_x_label
-
-    bar_data_per_group = _build_bar_display_data(specs_per_group, types_info, list(x_dates) if x_dates else x_idx)
-    first_bar_rec = bar_data_per_group[0][0] if bar_data_per_group and bar_data_per_group[0] else {}
+    cst_candle = resolve_candle_style_plotly(theme)
+    font_tick = resolve_font_size('plotly', 'axis_tick', theme)
+    font_ytitle = resolve_font_size('plotly', 'axis_ylabel', theme)
 
     row_idx = 0
     for g in range(n_groups):
-        for t, info in enumerate(types_info):
-            if n_groups > 1:
-                r = g * (n_types + 1) + t
-            else:
-                r = t
+        gt = (group_titles[g] if group_titles and g < len(group_titles) else '').strip()
+        name_prefix = f'{gt} | ' if n_groups > 1 and gt else ''
+        for t in range(n_types):
+            plot_row = plotly_trace_row_1based(layout_spec, g, t)
             spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
             if spec is None:
                 continue
@@ -990,12 +840,18 @@ def build_interactive_figure_from_specs(
                         high=h,
                         low=l,
                         close=c,
-                        increasing_line_color=color_up,
-                        decreasing_line_color=color_dn,
-                        name='Price',
+                        increasing_line_color=cst_candle['increasing_line_color'],
+                        decreasing_line_color=cst_candle['decreasing_line_color'],
+                        increasing_fillcolor=cst_candle['increasing_fillcolor'],
+                        decreasing_fillcolor=cst_candle['decreasing_fillcolor'],
+                        increasing_line_width=cst_candle['increasing_line_width'],
+                        decreasing_line_width=cst_candle['decreasing_line_width'],
+                        whiskerwidth=cst_candle['whiskerwidth'],
+                        name=f'{name_prefix}Price' if name_prefix else 'Price',
+                        legendgroup=f'g{g}',
                         customdata=group_custom,
                     ),
-                    row=r + 1,
+                    row=plot_row,
                     col=1,
                 )
                 # MA 线
@@ -1005,10 +861,13 @@ def build_interactive_figure_from_specs(
                     arr = _to_1d(np.asarray(data[key]), 0)[:n]
                     fig.add_trace(
                         go.Scatter(
-                            x=x_idx, y=arr, mode='lines', name=key, line=dict(width=1),
+                            x=x_idx, y=arr, mode='lines',
+                            name=f'{name_prefix}{key}' if name_prefix else key,
+                            legendgroup=f'g{g}',
+                            line=dict(width=1),
                             customdata=group_custom,
                         ),
-                        row=r + 1,
+                        row=plot_row,
                         col=1,
                     )
 
@@ -1024,10 +883,13 @@ def build_interactive_figure_from_specs(
                         colors = [theme.get('volume_color', color_dn)] * n
                     fig.add_trace(
                         go.Bar(
-                            x=x_idx, y=arr, marker_color=colors, name='Volume', showlegend=False,
+                            x=x_idx, y=arr, marker_color=colors,
+                            name=f'{name_prefix}Volume' if name_prefix else 'Volume',
+                            legendgroup=f'g{g}',
+                            showlegend=False,
                             customdata=group_custom,
                         ),
-                        row=r + 1,
+                        row=plot_row,
                         col=1,
                     )
 
@@ -1040,19 +902,25 @@ def build_interactive_figure_from_specs(
                         colors = [color_up if v >= 0 else color_dn for v in y_flat]
                         fig.add_trace(
                             go.Bar(
-                                x=x_idx, y=y_flat, marker_color=colors, name=key, showlegend=False,
+                                x=x_idx, y=y_flat, marker_color=colors,
+                                name=f'{name_prefix}{key}' if name_prefix else key,
+                                legendgroup=f'g{g}',
+                                showlegend=False,
                                 customdata=group_custom,
                             ),
-                            row=r + 1,
+                            row=plot_row,
                             col=1,
                         )
                     else:
                         fig.add_trace(
                             go.Scatter(
-                                x=x_idx, y=y_flat, mode='lines', name=key, line=dict(width=1),
+                                x=x_idx, y=y_flat, mode='lines',
+                                name=f'{name_prefix}{key}' if name_prefix else key,
+                                legendgroup=f'g{g}',
+                                line=dict(width=1),
                                 customdata=group_custom,
                             ),
-                            row=r + 1,
+                            row=plot_row,
                             col=1,
                         )
 
@@ -1061,41 +929,57 @@ def build_interactive_figure_from_specs(
                     y_flat = _to_1d(np.asarray(y), 0)[:n]
                     fig.add_trace(
                         go.Scatter(
-                            x=x_idx, y=y_flat, mode='lines', name=key, line=dict(width=1),
+                            x=x_idx, y=y_flat, mode='lines',
+                            name=f'{name_prefix}{key}' if name_prefix else key,
+                            legendgroup=f'g{g}',
+                            line=dict(width=1),
                             customdata=group_custom,
                         ),
-                        row=r + 1,
+                        row=plot_row,
                         col=1,
                     )
 
-            row_idx = r
-
-    last_row = n_rows_total
+    last_row = layout_spec['plotly_n_subplot_rows']
     fig_height = max(400, min(900, 200 * last_row))
     fig_width = 1000
-    # 表头仅由包装器顶部 div 显示，figure 内不画 annotations 避免与图表重叠
-    top_margin = 80
-    initial_header_html = _build_header_html(first_bar_rec, theme)
+    top_margin = layout_spec['plotly_margin_top']
+    initial_header_html = _build_header_html(header_rec, theme) if show_ohlc_header else ''
     bar_data_serializable = _bar_data_to_json_serializable(bar_data_per_group)
     n_subplot_titles = last_row
-    axis_common = dict(
+    axis_line = dict(
         showline=True,
         linecolor='#000000',
         linewidth=1,
         mirror=True,
         ticks='outside',
-        tickfont=dict(size=font_size),
     )
+    tick_font_x = dict(size=font_tick, family='Arial')
+    tick_font_y = plotly_font_dict(font_tick)
+    legend_cfg: Dict[str, Any] = dict(
+        orientation='v',
+        yanchor='top',
+        y=0.99,
+        yref='paper',
+        xanchor='left',
+        x=0.01,
+        xref='paper',
+        bgcolor='rgba(255,255,255,0.75)',
+        bordercolor='#cccccc',
+        borderwidth=1,
+    )
+    if n_groups > 1:
+        legend_cfg['tracegroupgap'] = 12
     layout_updates = dict(
         height=fig_height,
         width=fig_width,
-        margin=dict(t=top_margin, b=40, l=60, r=40),
+        margin=dict(t=top_margin, b=40, l=60, r=16),
         paper_bgcolor=paper_bg,
         plot_bgcolor=plot_bg,
-        font=dict(size=font_size),
+        font=dict(size=font_tick, family='Arial'),
         template='none',
         dragmode='pan',
         hovermode='x unified',
+        legend=legend_cfg,
     )
     fig.update_layout(**layout_updates)
     # 每组子图左侧 y 轴标签（与静态 set_ylabel 一致）；仅最下方显示 x 轴标签（日期）；Y 轴固定不随拖动
@@ -1121,7 +1005,8 @@ def build_interactive_figure_from_specs(
             showticklabels=(i == last_row),
             rangeslider=dict(visible=False),
             rangeselector=dict(visible=False),
-            **axis_common,
+            tickfont=tick_font_x,
+            **axis_line,
         )
         if i == last_row and x_ticktext is not None:
             xax_dict['tickmode'] = 'array'
@@ -1132,11 +1017,22 @@ def build_interactive_figure_from_specs(
         fig.update_layout({
             xax: xax_dict,
             yax: dict(
-                title=dict(text=ytitle, font=dict(size=font_size)),
+                title=dict(text=ytitle, font=plotly_font_dict(font_ytitle)),
                 fixedrange=True,
-                **axis_common,
+                tickfont=tick_font_y,
+                **axis_line,
             ),
         })
+
+    if fig.layout.annotations:
+        ft = resolve_header_font_plotly(theme, 'header_title')
+        for ann in fig.layout.annotations:
+            txt = getattr(ann, 'text', None)
+            if not txt:
+                continue
+            ann.update(font=dict(ft))
+
+    subplot_ann_count = len(fig.layout.annotations) if fig.layout.annotations else 0
 
     # 供前端点击更新表头 / FigureWidget 回调更新 annotations 的元数据
     fig._hp_plotly_meta = {
@@ -1145,6 +1041,12 @@ def build_interactive_figure_from_specs(
         'n_groups': n_groups,
         'n_subplot_titles': n_subplot_titles,
         'initial_header_html': initial_header_html,
+        'show_ohlc_header': show_ohlc_header,
+        'ohlc_header_primary_group': int(pk if pk is not None else 0),
+        'header_font_body': resolve_font_size('plotly', 'header_body', theme),
+        'header_font_emphasis': resolve_font_size('plotly', 'header_emphasis', theme),
+        'header_font_specs': {k: dict(v) for k, v in merge_header_font_theme(theme).items()},
+        'subplot_annotation_count': subplot_ann_count,
         'theme': theme,
     }
     return fig

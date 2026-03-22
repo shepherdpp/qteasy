@@ -11,9 +11,23 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
 
 import numpy as np
+
+from qteasy.hp_visual_bar_display import (
+    build_bar_display_data,
+    mpl_ohlc_header_segments,
+    primary_kline_group_index,
+    specs_contain_kline,
+)
+from qteasy.hp_visual_layout import compute_hp_visual_layout_spec, mpl_gridspec_row_index
+from qteasy.hp_visual_theme_adapt import (
+    HeaderFontRole,
+    resolve_candle_style_matplotlib,
+    resolve_font_size,
+    resolve_header_font_matplotlib,
+)
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -80,9 +94,44 @@ def _get_theme() -> Dict[str, Any]:
         'macd_hist_down': 'green',
         'font_size': 10,
         'title_font_size': 12,
+        # 逻辑字号：旧版 resolve_font_size(header_body/header_emphasis)，表头分段已改用 header_font_*
+        'header_font_size': 11,
+        'header_emphasis_font_size': 16,
+        # 可选：覆盖七种表头字体，见 hp_visual_theme_adapt.merge_header_font_theme
+        # 'header_font_title': {'size': 16},
+        # 蜡烛：逻辑线宽/透明度，经转译层落到 mpl / Plotly
+        'candle_wick_linewidth': 0.8,
+        'candle_body_edgewidth': 0.5,
+        'candle_doji_linewidth': 1.0,
+        'candle_bar_width': 0.6,
+        'candle_plotly_fill_alpha': 0.82,
+        'candle_plotly_line_width': 1.15,
+        'candle_plotly_whiskerwidth': 0.18,
         'datetime_format': '%y/%m/%d',
         'xrotation': 0,
         'max_x_ticks': 12,
+        # 表头占「表头 + 全部数据子图区」的垂直比例；用于单组/多组统一 MPL 表头行权重
+        'hp_header_vertical_fraction': 0.26 / (0.26 + 2.0 + 0.5),
+        # 若设为 float，则 MPL 表头 gridspec 行权重固定为该值，忽略 hp_header_vertical_fraction
+        'hp_mpl_header_height_ratio': None,
+        # MPL 表头绝对高度参考：用「该组数」对应的 fig 高度 × hp_header_vertical_fraction 作为目标英寸高度
+        'hp_mpl_header_ref_n_groups': 1.0,
+        # 表头轴与第一组子图之间的垂直留白（毫米）；仅 MPL；图总高增加等量英寸以免压缩表头/图表区
+        'hp_mpl_header_gap_below_mm': 8.0,
+        'hp_mpl_gridspec_hspace': 0.06,
+        'hp_spacer_ratio_between_groups': 0.4,
+        'hp_mpl_fig_width_inches': 12.0,
+        'hp_mpl_fig_height_base': 4.0,
+        'hp_mpl_fig_height_floor': 8.0,
+        'hp_mpl_fig_height_intercept': 1.0,
+        'plotly_margin_top_with_header': 120,
+        'plotly_margin_top_no_header': 80,
+        'plotly_header_annotation_y1': 1.115,
+        'plotly_header_annotation_y2': 1.085,
+        'hp_plotly_vertical_spacing': 0.0,
+        'mpl_header_line1_yaxes': 0.88,
+        'mpl_header_line2_yaxes': 0.38,
+        'hp_plot_title_pad': 14.0,
     }
 
 
@@ -133,34 +182,43 @@ def render_kline_spec(
     else:
         fig = ax.figure
     theme = _get_theme()
+    cst = resolve_candle_style_matplotlib(theme)
     ax.set_facecolor(theme['axes_facecolor'])
     ax.grid(True, alpha=theme['grid_alpha'], linestyle=theme['grid_linestyle'])
     o = _to_1d(data['open'], share_idx)[:n]
     h = _to_1d(data['high'], share_idx)[:n]
     l = _to_1d(data['low'], share_idx)[:n]
     c = _to_1d(data['close'], share_idx)[:n]
-    width = 0.6
+    width = cst['bar_width']
+    wick_lw = cst['wick_linewidth']
+    body_edge = cst['body_edgewidth']
+    doji_lw = cst['doji_linewidth']
     for i in range(len(x)):
-        color = theme['line_color_up'] if c[i] >= o[i] else theme['line_color_down']
+        color = cst['line_color_up'] if c[i] >= o[i] else cst['line_color_down']
         low_i, high_i = l[i], h[i]
         open_i, close_i = o[i], c[i]
         body_bottom = min(open_i, close_i)
         body_height = abs(close_i - open_i)
-        ax.vlines(x[i], low_i, high_i, color=color, linewidth=0.8)
+        ax.vlines(x[i], low_i, high_i, color=color, linewidth=wick_lw)
         if body_height > 0:
-            ax.bar(x[i], body_height, bottom=body_bottom, width=width, color=color, edgecolor=color, linewidth=0.5)
+            ax.bar(
+                x[i], body_height, bottom=body_bottom, width=width,
+                color=color, edgecolor=color, linewidth=body_edge,
+            )
         else:
-            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=1)
+            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=doji_lw)
     for key in data:
         if key in ('open', 'high', 'low', 'close'):
             continue
         arr = _to_1d(data[key], share_idx)[:n]
         ax.plot(x, arr, label=key, alpha=0.8)
     extra = [k for k in data if k not in ('open', 'high', 'low', 'close')]
+    fs_leg = resolve_font_size('matplotlib', 'legend', theme)
+    fs_y = resolve_font_size('matplotlib', 'axis_ylabel', theme)
     if extra:
-        ax.legend(loc='upper left', fontsize=theme['font_size'])
+        ax.legend(loc='upper left', fontsize=fs_leg)
     ylabel = 'Price, MA:' + str(extra) if extra else 'Price'
-    ax.set_ylabel(ylabel, fontsize=theme['font_size'])
+    ax.set_ylabel(ylabel, fontsize=fs_y)
     if show_x_labels and x_dates is not None and len(x_dates) >= n:
         step = max(1, n // theme.get('max_x_ticks', 12))
         ax.set_xticks(x[:: step])
@@ -216,7 +274,7 @@ def render_volume_spec(
         ax.bar(x, arr, color=colors, alpha=0.7, width=0.8)
     else:
         ax.bar(x, arr, color=theme['volume_color'], alpha=0.7, width=0.8)
-    ax.set_ylabel('Volume', fontsize=theme['font_size'])
+    ax.set_ylabel('Volume', fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if show_x_labels and x_dates is not None and len(x_dates) >= n:
         step = max(1, n // theme.get('max_x_ticks', 12))
         ax.set_xticks(x[:: step])
@@ -267,9 +325,9 @@ def render_macd_spec(
         ax.bar(x, bar_g, color=theme.get('macd_hist_down', 'green'), alpha=0.6, width=0.8)
     macd_par = spec.get('macd_par')  # optional, e.g. (12, 26, 9)
     ylabel = f'macd: \n{macd_par}' if macd_par else 'macd'
-    ax.set_ylabel(ylabel, fontsize=theme['font_size'])
+    ax.set_ylabel(ylabel, fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if len(data) > 1:
-        ax.legend(loc='upper left', fontsize=theme['font_size'])
+        ax.legend(loc='upper left', fontsize=resolve_font_size('matplotlib', 'legend', theme))
     if show_x_labels and x_dates is not None and len(x_dates) >= n:
         step = max(1, n // theme.get('max_x_ticks', 12))
         ax.set_xticks(x[:: step])
@@ -306,9 +364,9 @@ def render_line_spec(
     for col, arr in data.items():
         a = _to_1d(arr, share_idx)[:n]
         ax.plot(x, a, label=col, alpha=0.9)
-    ax.set_ylabel('Line', fontsize=theme['font_size'])
+    ax.set_ylabel('Line', fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if len(data) > 1:
-        ax.legend(loc='upper left', fontsize=theme['font_size'])
+        ax.legend(loc='upper left', fontsize=resolve_font_size('matplotlib', 'legend', theme))
     if show_x_labels and x_dates is not None and len(x_dates) >= n:
         step = max(1, n // theme.get('max_x_ticks', 12))
         ax.set_xticks(x[:: step])
@@ -353,6 +411,41 @@ def render_spec(
     raise RuntimeError('matplotlib is required for static rendering')
 
 
+def _draw_static_ohlc_header(
+    ax: Axes,
+    rec: Dict[str, Any],
+    theme: Dict[str, Any],
+    *,
+    line1_yaxes: Optional[float] = None,
+    line2_yaxes: Optional[float] = None,
+) -> None:
+    """在专用 Axes 上绘制英文 OHLC 摘要；字体由 theme 七种 ``header_font_*`` 统一规定。"""
+    setattr(ax, '_hp_ohlc_header', True)
+    ax.set_facecolor(theme.get('figure_facecolor', (1, 1, 1)))
+    ax.axis('off')
+    segs1, segs2 = mpl_ohlc_header_segments(rec)
+    y1 = float(line1_yaxes if line1_yaxes is not None else theme.get('mpl_header_line1_yaxes', 0.88))
+    y2 = float(line2_yaxes if line2_yaxes is not None else theme.get('mpl_header_line2_yaxes', 0.38))
+
+    def _draw_line(y_axes: float, segments: Sequence[Tuple[str, HeaderFontRole]]) -> None:
+        x = 0.01
+        for text, role in segments:
+            if not text:
+                continue
+            fd = resolve_header_font_matplotlib(theme, role)
+            fs = fd['fontsize']
+            ax.text(
+                x, y_axes, text, transform=ax.transAxes, va='top', ha='left',
+                clip_on=False, **fd,
+            )
+            x += len(text) * 0.0078 * (fs / 11.0) + 0.0025
+
+    if segs1:
+        _draw_line(y1, segs1)
+    if segs2:
+        _draw_line(y2, segs2)
+
+
 def build_figure_from_specs(
     specs_per_group: Sequence[Sequence[Optional[Dict[str, Any]]]],
     types_info: Sequence[Any],
@@ -374,66 +467,64 @@ def build_figure_from_specs(
     if n_types == 0:
         fig, _ = plt.subplots(1, 1, figsize=(12, 8))
         return fig
-    type_ratios = []
-    for info in types_info:
-        imp = getattr(info, 'importance', 'secondary')
-        type_ratios.append(2.0 if imp == 'main' else 0.5)
-    has_main = any(getattr(t, 'importance', '') == 'main' for t in types_info)
-    has_secondary = any(getattr(t, 'importance', '') == 'secondary' for t in types_info)
-    if not (has_main and has_secondary):
-        type_ratios = [1.0] * n_types
     theme = _get_theme()
-    title_font_size = theme.get('title_font_size', 12)
-    if n_groups > 1:
-        spacer_ratio = 0.4
-        n_rows_total = n_groups * n_types + (n_groups - 1)
-        height_ratios = []
-        for g in range(n_groups):
-            height_ratios.extend(type_ratios)
-            if g < n_groups - 1:
-                height_ratios.append(spacer_ratio)
-        fig = plt.figure(
-            figsize=(12, 4 * n_groups),
-            facecolor=theme['figure_facecolor'],
+    title_fd = resolve_header_font_matplotlib(theme, 'header_title')
+    tick_fs = resolve_font_size('matplotlib', 'axis_tick', theme)
+
+    show_header = specs_contain_kline(specs_per_group, types_info)
+    last_rec: Optional[Dict[str, Any]] = None
+    if show_header and x_dates is not None and len(x_dates) > 0:
+        bar_all = build_bar_display_data(specs_per_group, types_info, list(x_dates), theme=theme)
+        g_k = primary_kline_group_index(specs_per_group, types_info)
+        if g_k is not None and bar_all and g_k < len(bar_all) and bar_all[g_k]:
+            last_rec = bar_all[g_k][-1]
+
+    row_off = 1 if (show_header and bool(last_rec)) else 0
+
+    layout_spec = compute_hp_visual_layout_spec(
+        n_groups,
+        n_types,
+        types_info,
+        theme,
+        row_off=row_off,
+        show_ohlc_header=show_header,
+        group_titles=group_titles,
+    )
+    fig = plt.figure(
+        figsize=layout_spec['mpl_figsize'],
+        facecolor=theme['figure_facecolor'],
+    )
+    gs = fig.add_gridspec(
+        len(layout_spec['mpl_height_ratios']),
+        1,
+        height_ratios=layout_spec['mpl_height_ratios'],
+        hspace=layout_spec['mpl_hspace'],
+    )
+    if layout_spec['row_off'] and last_rec is not None:
+        ax_h = fig.add_subplot(gs[0, 0])
+        _draw_static_ohlc_header(
+            ax_h,
+            last_rec,
+            theme,
+            line1_yaxes=layout_spec['mpl_header_line1_yaxes'],
+            line2_yaxes=layout_spec['mpl_header_line2_yaxes'],
         )
-        gs = fig.add_gridspec(n_rows_total, 1, height_ratios=height_ratios, hspace=0)
-        for g in range(n_groups):
-            ax_share = None
-            for t in range(n_types):
-                row_idx = g * (n_types + 1) + t
-                spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
-                if ax_share is None:
-                    ax = fig.add_subplot(gs[row_idx, 0])
-                    ax_share = ax
-                else:
-                    ax = fig.add_subplot(gs[row_idx, 0], sharex=ax_share)
-                ax.set_facecolor(theme['axes_facecolor'])
-                if spec is not None:
-                    render_spec(
-                        spec,
-                        ax=ax,
-                        share_idx=0,
-                        x_dates=x_dates,
-                        show_x_labels=(t == n_types - 1 and g == n_groups - 1),
-                    )
-                if t < n_types - 1 or g < n_groups - 1:
-                    plt.setp(ax.get_xticklabels(), visible=False)
-                if group_titles and g < len(group_titles) and t == 0:
-                    ax.set_title(group_titles[g], fontsize=title_font_size, fontweight='bold')
-    else:
-        fig = plt.figure(
-            figsize=(12, 8),
-            facecolor=theme['figure_facecolor'],
-        )
-        gs = fig.add_gridspec(n_types, 1, height_ratios=type_ratios, hspace=0)
+    if layout_spec['mpl_pre_chart_rows'] >= 2:
+        ax_gap = fig.add_subplot(gs[1, 0])
+        ax_gap.axis('off')
+        ax_gap.set_navigate(False)
+        setattr(ax_gap, '_hp_mpl_gap', True)
+    title_pad = layout_spec['title_pad']
+    for g in range(n_groups):
         ax_share = None
-        for r in range(n_types):
-            spec = specs_per_group[0][r] if r < len(specs_per_group[0]) else None
+        for t in range(n_types):
+            row_idx = mpl_gridspec_row_index(layout_spec, g, t)
+            spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
             if ax_share is None:
-                ax = fig.add_subplot(gs[r, 0])
+                ax = fig.add_subplot(gs[row_idx, 0])
                 ax_share = ax
             else:
-                ax = fig.add_subplot(gs[r, 0], sharex=ax_share)
+                ax = fig.add_subplot(gs[row_idx, 0], sharex=ax_share)
             ax.set_facecolor(theme['axes_facecolor'])
             if spec is not None:
                 render_spec(
@@ -441,10 +532,24 @@ def build_figure_from_specs(
                     ax=ax,
                     share_idx=0,
                     x_dates=x_dates,
-                    show_x_labels=(r == n_types - 1),
+                    show_x_labels=(t == n_types - 1 and g == n_groups - 1),
                 )
-            if r < n_types - 1:
+            if t < n_types - 1 or g < n_groups - 1:
                 plt.setp(ax.get_xticklabels(), visible=False)
-            if group_titles and len(group_titles) > 0 and r == 0:
-                ax.set_title(group_titles[0], fontsize=title_font_size, fontweight='bold')
+            if group_titles and g < len(group_titles) and t == 0:
+                ax.set_title(
+                    group_titles[g],
+                    fontsize=title_fd['fontsize'],
+                    fontweight=title_fd['fontweight'],
+                    color=title_fd['color'],
+                    fontfamily=title_fd['fontfamily'],
+                    pad=title_pad,
+                )
+
+    for ax in fig.axes:
+        if getattr(ax, '_hp_ohlc_header', False):
+            continue
+        if getattr(ax, '_hp_mpl_gap', False):
+            continue
+        ax.tick_params(axis='both', labelsize=tick_fs)
     return fig

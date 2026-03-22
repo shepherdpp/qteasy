@@ -512,5 +512,187 @@ class TestInteractiveBackend(unittest.TestCase):
             print('  plotly traces:', len(fig.data))
 
 
+class TestHistoryPanelPlotP1Parity(unittest.TestCase):
+    """P1：静态/交互表头、字体转译、图例 inset、蜡烛转译（双模对齐）。"""
+
+    def test_p1a_static_ohlc_vol_header_last_bar(self):
+        print('\n[T-P1a-1] 静态 OHLC+vol：顶栏 axes + 末根 close 出现在摘要中')
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_dates=8, n_shares=1)
+        fig = hp.plot()
+        self.assertEqual(len(fig.axes), 4)
+        hdr = fig.axes[0]
+        self.assertTrue(getattr(hdr, '_hp_ohlc_header', False))
+        ci = hp.htypes.index('close')
+        last_close = float(hp.values[0, -1, ci])
+        blob = ''.join(t.get_text() for t in hdr.texts)
+        self.assertIn(f'{last_close:.2f}', blob)
+        print('  header texts contain last close:', last_close)
+
+    def test_p1a_no_kline_no_header_static_and_interactive_meta(self):
+        print('\n[T-P1a-2] 无 K 线：静态无顶栏；交互不启用 OHLC 表头')
+        hp = _make_hp(['close'], n_shares=1)
+        fig = hp.plot()
+        self.assertEqual(len(fig.axes), 1)
+        self.assertFalse(getattr(fig.axes[0], '_hp_ohlc_header', False))
+        try:
+            fig2 = hp.plot(interactive=True)
+        except RuntimeError as e:
+            if 'plotly' in str(e).lower():
+                self.skipTest('plotly not installed')
+            raise
+        base = fig2.figure if hasattr(fig2, 'figure') else fig2
+        meta = getattr(base, '_hp_plotly_meta', {})
+        self.assertFalse(meta.get('show_ohlc_header', True))
+        self.assertFalse(bool(meta.get('initial_header_html')))
+        print('  show_ohlc_header:', meta.get('show_ohlc_header'))
+
+    def test_p1b_font_resolve_plotly_tick_vs_mpl(self):
+        print('\n[T-P1b-1] 字体转译：plotly 轴刻度 = base+1；matplotlib 轴刻度 = max(7, base-1)')
+        from qteasy.hp_visual_render import _get_theme
+        from qteasy.hp_visual_theme_adapt import resolve_font_size
+
+        theme = _get_theme()
+        base = int(theme['font_size'])
+        mpl_t = resolve_font_size('matplotlib', 'axis_tick', theme)
+        ply_t = resolve_font_size('plotly', 'axis_tick', theme)
+        self.assertEqual(ply_t, base + 1)
+        self.assertEqual(mpl_t, max(7, base - 1))
+        print('  mpl axis_tick:', mpl_t, 'plotly axis_tick:', ply_t)
+
+    def test_p1c_plotly_legend_paper_inset(self):
+        print('\n[T-P1c-1] 交互 K 线+MA：图例为 paper 坐标左上 inset')
+        htypes = ['open', 'high', 'low', 'close', 'sma_20']
+        hp = _make_hp(htypes, n_dates=15, n_shares=1)
+        try:
+            fig = hp.plot(interactive=True)
+        except RuntimeError as e:
+            if 'plotly' in str(e).lower():
+                self.skipTest('plotly not installed')
+            raise
+        base = fig.figure if hasattr(fig, 'figure') else fig
+        leg = base.layout.legend
+        self.assertIsNotNone(leg)
+        self.assertEqual(getattr(leg, 'xref', None), 'paper')
+        self.assertLess(float(leg.x), 0.2)
+        print('  legend.x:', leg.x, 'y:', leg.y, 'xref:', leg.xref)
+
+    def test_p1d_candle_style_adapt_and_trace(self):
+        print('\n[T-P1d-1] 蜡烛颜色转译稳定且交互图含 Candlestick 样式')
+        from qteasy.hp_visual_render import _get_theme
+        from qteasy.hp_visual_theme_adapt import resolve_candle_style_plotly
+
+        theme = _get_theme()
+        c1 = resolve_candle_style_plotly(theme)
+        c2 = resolve_candle_style_plotly(theme)
+        self.assertEqual(c1, c2)
+        self.assertIn('increasing_line_color', c1)
+        w0 = float(theme.get('candle_plotly_whiskerwidth', 0.18))
+        self.assertAlmostEqual(c1['whiskerwidth'], w0)
+        hp = _make_hp(['open', 'high', 'low', 'close'])
+        try:
+            fig = hp.plot(interactive=True)
+        except RuntimeError as e:
+            if 'plotly' in str(e).lower():
+                self.skipTest('plotly not installed')
+            raise
+        base = fig.figure if hasattr(fig, 'figure') else fig
+        candle = next((tr for tr in base.data if getattr(tr, 'type', '') == 'candlestick'), None)
+        self.assertIsNotNone(candle)
+        inc = getattr(candle, 'increasing', None)
+        fill = getattr(inc, 'fillcolor', None) if inc is not None else None
+        self.assertIsNotNone(fill)
+        print('  whiskerwidth:', c1['whiskerwidth'], 'increasing.fillcolor:', fill)
+
+
+class TestHpVisualLayoutSpec(unittest.TestCase):
+    """HpVisualLayoutSpec：单组/多组 stack 共用布局，表头占整图垂直比例一致。"""
+
+    def test_mpl_header_absolute_inches_stable_across_group_count(self):
+        print('\n[layout] MPL：多组时表头绝对高度（英寸）与单组参考一致，不随 fig 变高而倍增')
+        from qteasy.hp_visual_layout import compute_hp_visual_layout_spec
+        from qteasy.hp_visual_render import _get_theme
+
+        class _TI:
+            def __init__(self, tid: str, imp: str) -> None:
+                self.id = tid
+                self.importance = imp
+
+        def _header_abs_inches(sp) -> float:
+            fh = sp['mpl_figsize'][1]
+            ratios = sp['mpl_height_ratios']
+            if not ratios or sp['row_off'] == 0:
+                return 0.0
+            return fh * ratios[0] / sum(ratios)
+
+        theme = _get_theme()
+        f = float(theme['hp_header_vertical_fraction'])
+        h_floor = float(theme['hp_mpl_fig_height_floor'])
+        h_base = float(theme['hp_mpl_fig_height_base'])
+        h_int = float(theme['hp_mpl_fig_height_intercept'])
+        fig_h_ref = max(h_floor, h_base * 1.0 + h_int)
+        target_abs = fig_h_ref * f
+        types_info = [_TI('kline', 'main'), _TI('volume', 'secondary')]
+
+        spec1 = compute_hp_visual_layout_spec(
+            1, 2, types_info, theme, row_off=1, show_ohlc_header=True,
+        )
+        spec5 = compute_hp_visual_layout_spec(
+            5, 2, types_info, theme, row_off=1, show_ohlc_header=True,
+        )
+        a1 = _header_abs_inches(spec1)
+        a5 = _header_abs_inches(spec5)
+        self.assertAlmostEqual(a1, target_abs, places=5)
+        self.assertAlmostEqual(a5, target_abs, places=5)
+        frac1 = spec1['mpl_height_ratios'][0] / sum(spec1['mpl_height_ratios'])
+        frac5 = spec5['mpl_height_ratios'][0] / sum(spec5['mpl_height_ratios'])
+        self.assertLess(frac5, frac1)
+        print('  header abs inches 1grp/5grp:', a1, a5, 'target:', target_abs, 'frac5<frac1:', frac5, frac1)
+
+    def test_plotly_row_heights_match_chart_ratios(self):
+        print('\n[layout] Plotly 行高列表与 chart_height_ratios 一致（无表头行）')
+        from qteasy.hp_visual_layout import compute_hp_visual_layout_spec
+        from qteasy.hp_visual_render import _get_theme
+
+        class _TI:
+            def __init__(self, tid: str, imp: str) -> None:
+                self.id = tid
+                self.importance = imp
+
+        theme = _get_theme()
+        types_info = [_TI('kline', 'main'), _TI('volume', 'secondary')]
+        spec = compute_hp_visual_layout_spec(
+            2, 2, types_info, theme, row_off=1, show_ohlc_header=True,
+        )
+        self.assertEqual(spec['plotly_row_heights'], spec['chart_height_ratios'])
+        self.assertEqual(spec['plotly_n_subplot_rows'], len(spec['chart_height_ratios']))
+        print('  plotly rows:', spec['plotly_n_subplot_rows'])
+
+    def test_mpl_header_gap_increases_fig_height_and_pre_chart_rows(self):
+        print('\n[layout] MPL：默认 8mm 间隔行，fig 高度 +D 英寸，mpl_pre_chart_rows==2')
+        from qteasy.hp_visual_layout import compute_hp_visual_layout_spec
+        from qteasy.hp_visual_render import _get_theme
+
+        class _TI:
+            def __init__(self, tid: str, imp: str) -> None:
+                self.id = tid
+                self.importance = imp
+
+        theme = _get_theme()
+        types_info = [_TI('kline', 'main'), _TI('volume', 'secondary')]
+        spec = compute_hp_visual_layout_spec(
+            1, 2, types_info, theme, row_off=1, show_ohlc_header=True,
+        )
+        d_exp = float(theme['hp_mpl_header_gap_below_mm']) / 25.4
+        h0 = max(
+            float(theme['hp_mpl_fig_height_floor']),
+            float(theme['hp_mpl_fig_height_base']) * 1.0 + float(theme['hp_mpl_fig_height_intercept']),
+        )
+        self.assertEqual(spec['mpl_pre_chart_rows'], 2)
+        self.assertAlmostEqual(spec['mpl_header_gap_below_inches'], d_exp, places=5)
+        self.assertAlmostEqual(spec['mpl_figsize'][1], h0 + d_exp, places=5)
+        self.assertEqual(len(spec['mpl_height_ratios']), 2 + len(spec['type_ratios']))
+        print('  fig_h:', spec['mpl_figsize'][1], 'h0+d:', h0 + d_exp, 'pre_chart_rows:', spec['mpl_pre_chart_rows'])
+
+
 if __name__ == '__main__':
     unittest.main()

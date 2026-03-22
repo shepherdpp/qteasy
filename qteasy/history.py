@@ -2616,6 +2616,12 @@ class HistoryPanel():
             interactive=True 且在 Jupyter 中返回 FigureWidget（支持表头信息与 Y 轴自适应）；
             interactive=True 且非 Jupyter 环境时返回内嵌 HTML 包装器。
 
+        Notes
+        -----
+        当注册表产出 **完整 OHLC K 线** 主图时，会显示顶部 OHLC 摘要区：静态图固定为时间轴上
+        **最后一根** bar 的摘要；交互图初始与之一致，点击某 bar 后更新为该 bar（面向用户的
+        摘要文案为英文）。无 K 线主图（例如仅 close 折线）时不显示该摘要区。
+
         Examples
         --------
         >>> import qteasy as qt
