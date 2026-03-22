@@ -1753,12 +1753,11 @@ class HistoryPanel():
             if as_panel:
                 return HistoryPanel()
             return pd.DataFrame()
-        if price_htype not in self.htypes:
-            raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
+        resolved_price_htype = self._resolve_price_htype(price_htype)
         if method not in ('simple', 'log'):
             raise ValueError(f'method must be "simple" or "log", got {method}')
 
-        ci = self.htypes.index(price_htype)
+        ci = self.htypes.index(resolved_price_htype)
         prices = self.values[:, :, ci].astype(float)  # (shares, times)
 
         n_share, n_time = prices.shape
@@ -1797,7 +1796,7 @@ class HistoryPanel():
 
     def volatility(
             self,
-            window: int,
+            window: int = 20,
             price_htype: str = 'close',
             method: str = 'simple',
             annualize: bool = True,
@@ -1808,7 +1807,7 @@ class HistoryPanel():
 
         Parameters
         ----------
-        window : int
+        window : int, default 20
             滚动窗口长度（bar 数）。
         price_htype : str, default 'close'
             用于计算收益率的价格类型。
@@ -1874,6 +1873,45 @@ class HistoryPanel():
     def kline(self) -> "_HistoryPanelKlineAccessor":
         """K 线技术指标访问器，提供 sma、ema、bbands、macd、kdj 等方法。"""
         return _HistoryPanelKlineAccessor(self)
+
+    def _resolve_price_htype(self, price_htype: str) -> str:
+        """解析价格列的实际 htype 名称（支持复权列名自动映射）。
+
+        当面板的价格列使用了复权后缀（例如 ``close|b``），而调用方仍使用默认
+        ``price_htype='close'`` 时，本方法会自动选择面板中可用的复权价格列。
+
+        Parameters
+        ----------
+        price_htype : str
+            调用方期望使用的价格类型（例如 ``'close'``、``'high'`` 或带复权后缀的 ``'close|b'``）。
+
+        Returns
+        -------
+        str
+            面板中实际存在的 htype 名称。
+        """
+        if self.is_empty:
+            raise ValueError('HistoryPanel is empty')
+        if price_htype in self.htypes:
+            return price_htype
+
+        # 仅当用户传入的是无后缀的根价格名时，尝试从复权列中自动映射。
+        if '|' not in price_htype:
+            root = price_htype
+            # 优先顺序：back-adjusted -> forward-adjusted -> 其它同根后缀（稳定选择）
+            preferred = [f'{root}|b', f'{root}|f']
+            for cand in preferred:
+                if cand in self.htypes:
+                    return cand
+
+            matching = [h for h in self.htypes if h.startswith(f'{root}|')]
+            if matching:
+                for cand in preferred:
+                    if cand in matching:
+                        return cand
+                return sorted(matching)[0]
+
+        raise ValueError(f'price_htype "{price_htype}" not found in htypes: {self.htypes}')
 
     def alpha_beta(
             self,
@@ -2547,6 +2585,7 @@ class HistoryPanel():
         layout: str = 'auto',
         interactive: bool = False,
         highlight: Optional[Any] = None,
+        plotly_backend_app: str = 'auto',
         **kwargs,
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
@@ -2568,6 +2607,11 @@ class HistoryPanel():
         highlight : dict or str, optional
             高亮配置，可为 ``{'condition': 'max'|'min' 或布尔数组, 'style': {...}}``，
             或简写为 'max' / 'min'。
+        plotly_backend_app : {'auto', 'FigureWidget', 'html'}, default 'auto'
+            仅当 ``interactive=True`` 时有效。在 Notebook 中选择 Plotly 呈现方式：
+            ``'auto'`` 优先 ``FigureWidget``，失败则回退 HTML 包装；``'FigureWidget'`` 强制
+            Widget，失败抛错；``'html'`` 强制 HTML 包装，失败抛错。非 Notebook 脚本环境下
+            ``'auto'`` 仍可能返回原始 ``Figure``。
         **kwargs
             预留的扩展参数，当前版本中不使用。
 
@@ -2575,8 +2619,13 @@ class HistoryPanel():
         -------
         matplotlib.figure.Figure or plotly.graph_objs.FigureWidget or _PlotlyFigureWrapper
             interactive=False 时返回 matplotlib Figure；
-            interactive=True 且在 Jupyter 中返回 FigureWidget（支持表头信息与 Y 轴自适应）；
-            interactive=True 且非 Jupyter 环境时返回内嵌 HTML 包装器。
+            interactive=True 时依 ``plotly_backend_app`` 返回 FigureWidget、HTML 包装器或原始 Figure。
+
+        Notes
+        -----
+        当注册表产出 **完整 OHLC K 线** 主图时，会显示顶部 OHLC 摘要区：静态图固定为时间轴上
+        **最后一根** bar 的摘要；交互图初始与之一致，点击某 bar 后更新为该 bar（面向用户的
+        摘要文案为英文）。无 K 线主图（例如仅 close 折线）时不显示该摘要区。
 
         Examples
         --------
@@ -2594,6 +2643,10 @@ class HistoryPanel():
         """
         if self.is_empty:
             raise ValueError('Cannot plot an empty HistoryPanel')
+        if not interactive and plotly_backend_app != 'auto':
+            raise ValueError(
+                "plotly_backend_app is only supported when interactive=True."
+            )
         from qteasy.hp_visual_spec import (
             get_chart_type_registry,
             build_kline_spec,
@@ -2682,24 +2735,22 @@ class HistoryPanel():
         if interactive:
             from qteasy.hp_visual_plotly import (
                 _HAS_PLOTLY,
+                _normalize_plotly_backend_app,
                 build_interactive_figure_from_specs,
-                _wrap_figure_for_notebook,
-                _can_use_figure_widget,
-                _create_figure_widget_with_callbacks,
+                _select_plotly_notebook_output,
             )
             if not _HAS_PLOTLY:
                 raise RuntimeError(
                     'interactive=True requires plotly. Install with: pip install plotly'
                 )
+            _normalize_plotly_backend_app(plotly_backend_app)
             fig = build_interactive_figure_from_specs(
                 specs_per_group,
                 types_info,
                 x_dates=x_dates,
                 group_titles=group_titles,
             )
-            if _can_use_figure_widget():
-                return _create_figure_widget_with_callbacks(fig)
-            return _wrap_figure_for_notebook(fig)
+            return _select_plotly_notebook_output(fig, plotly_backend_app)
         fig = build_figure_from_specs(
             specs_per_group,
             types_info,
@@ -2774,9 +2825,8 @@ class _HistoryPanelKlineAccessor:
         ValueError
             当 ``HistoryPanel`` 为空或 ``price_htype`` 不存在于 ``htypes`` 中时抛出。
         """
-        if self._hp.is_empty or price_htype not in self._hp.htypes:
-            raise ValueError(f'price_htype "{price_htype}" not in htypes: {self._hp.htypes}')
-        ci = self._hp.htypes.index(price_htype)
+        resolved_htype = self._hp._resolve_price_htype(price_htype)
+        ci = self._hp.htypes.index(resolved_htype)
         return self._hp.values[:, :, ci].astype(float)
 
     def _append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
@@ -3052,9 +3102,6 @@ class _HistoryPanelKlineAccessor:
             当缺少 ``high`` / ``low`` / ``close`` 任一列，或新增列名冲突时抛出。
         """
         from qteasy import tafuncs
-        for h in ('high', 'low', 'close'):
-            if h not in self._hp.htypes:
-                raise ValueError(f'KDJ requires high/low/close in htypes, missing "{h}"')
         tag = suffix if suffix is not None else f'{fastk_period}_{slowk_period}_{slowd_period}'
         k_name = f'kdj_k_{tag}'
         d_name = f'kdj_d_{tag}'

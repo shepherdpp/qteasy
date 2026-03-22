@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 2.2.3 (2026-03-22)
+- **HistoryPanel static vs interactive chart parity (P1)**  
+  OHLC summary headers are shown only when a candlestick panel is present: static charts use a dedicated top row for the **last** bar; interactive charts default the same and update the header when you click a bar (labels in English). Matplotlib and Plotly now share one logical theme with small adapter layers for font sizes and candlestick colors so the two backends look closer; the Plotly legend is inset at the upper-left (paper coordinates) to save horizontal space.
+- **`plotly_backend_app` on `HistoryPanel.plot()`**  
+  With `interactive=True`, pass `plotly_backend_app='auto'` (default: try FigureWidget, fall back to HTML), `'FigureWidget'` (force widget or raise), or `'html'` (force HTML wrapper or raise).
+
 ## 2.2.2 (2026-03-20)
 - **DataSource robustness and compatibility**
   Fixed a bug where `DataSource` could fail when optional file backends (e.g. `tables`/`pyarrow`) were missing; fallback to `csv` now guarantees the data directory is available, added `hdf5` alias for `hdf`, and improved fallback warnings for clearer diagnosis.

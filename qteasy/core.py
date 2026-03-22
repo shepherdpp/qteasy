@@ -1648,7 +1648,7 @@ def get_kline(
         freq: str = 'd',
         adj: str = None,
         asset_type: str = None,
-        as_panel: bool = False,
+        as_panel: bool = True,
         data_source=None,
         b_days_only: bool = None,
         trade_time_only: bool = None,
@@ -1681,7 +1681,7 @@ def get_kline(
     asset_type : str, optional
         资产类型过滤条件，如 ``'E'``（股票）、``'IDX'``（指数）等，具体含义与
         ``get_history_data`` 中的 ``asset_type`` 参数一致。
-    as_panel : bool, default False
+    as_panel : bool, default True
         - False: 返回单标的 DataFrame 或多标的 ``Dict[str, DataFrame]``；
         - True:  返回一个 ``HistoryPanel``，``htypes`` 固定为
           ``['open', 'high', 'low', 'close', 'vol']``。
