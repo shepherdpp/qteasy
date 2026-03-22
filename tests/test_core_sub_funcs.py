@@ -977,6 +977,7 @@ class TestGetKlineAPI(unittest.TestCase):
             end=self.end_str,
             freq='d',
             data_source=self.data_source,
+            as_panel=False,
         )
         res_str = qteasy.get_kline(
             ','.join(self.shares),
@@ -984,6 +985,7 @@ class TestGetKlineAPI(unittest.TestCase):
             end=self.end_str,
             freq='d',
             data_source=self.data_source,
+            as_panel=False,
         )
         for sh in self.shares:
             pd.testing.assert_frame_equal(res_list[sh], res_str[sh], check_exact=False, rtol=1e-5)
