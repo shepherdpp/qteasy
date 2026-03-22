@@ -938,6 +938,7 @@ class TestGetKlineAPI(unittest.TestCase):
             end=self.end_str,
             freq='d',
             data_source=self.data_source,
+            as_panel=False,
         )
         print('  df shape:', df.shape, 'columns:', df.columns.tolist())
         self.assertIsInstance(df, pd.DataFrame)
@@ -954,6 +955,7 @@ class TestGetKlineAPI(unittest.TestCase):
             end=self.end_str,
             freq='d',
             data_source=self.data_source,
+            as_panel=False,
         )
         print('  keys:', list(res.keys()))
         self.assertIsInstance(res, dict)
@@ -1041,6 +1043,7 @@ class TestGetKlineAPI(unittest.TestCase):
             end=self.weekly_dates[-1].strftime('%Y%m%d'),
             freq='w',
             data_source=self.data_source,
+            as_panel=False,
         )
         print('  df shape:', df.shape)
         self.assertIsInstance(df, pd.DataFrame)
