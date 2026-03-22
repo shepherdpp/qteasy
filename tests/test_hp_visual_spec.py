@@ -230,6 +230,79 @@ class TestLineSpecBuilder(unittest.TestCase):
         print('  line_spec htypes_used:', line_spec['htypes_used'])
 
 
+class TestQ01AdjOhlcKline(unittest.TestCase):
+    """Q01：复权列名 open|b…close|b 下 K 线注册与规格；裸价与复权并存时优先裸价族。"""
+
+    def setUp(self):
+        self.registry = get_chart_type_registry()
+
+    def test_q01_registry_back_adj_ohlc_returns_kline_volume_order(self):
+        print('\n[Q01-1] 注册表：open|b…close|b+vol 适用 kline(main)、volume，顺序正确')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b', 'vol']
+        result = self.registry.get_applicable_types(htypes)
+        ids = [t.id for t in result]
+        self.assertIn('kline', ids)
+        self.assertIn('volume', ids)
+        self.assertLess(ids.index('kline'), ids.index('volume'))
+        print('  applicable:', ids)
+
+    def test_q01_kline_spec_back_adj_data_keys_and_values(self):
+        print('\n[Q01-2] K 线规格：后复权四列 -> data 仍为 open…close 键，数值等于 HP 对应列')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec['chart_type'], 'kline')
+        for canon in ('open', 'high', 'low', 'close'):
+            self.assertIn(canon, spec['data'])
+        self.assertEqual(
+            spec['htypes_used'],
+            ['open|b', 'high|b', 'low|b', 'close|b'],
+        )
+        for canon, actual in zip(
+            ('open', 'high', 'low', 'close'),
+            ('open|b', 'high|b', 'low|b', 'close|b'),
+        ):
+            ci = hp.htypes.index(actual)
+            np.testing.assert_array_almost_equal(
+                spec['data'][canon],
+                hp.values[:, :, ci].astype(float),
+            )
+        print('  htypes_used:', spec['htypes_used'])
+
+    def test_q01_kline_prefers_bare_ohlc_when_both_suffix_and_bare_exist(self):
+        print('\n[Q01-3] 裸 OHLC 与 |b 全套并存时，K 线选用裸名四列')
+        htypes = ['open', 'high', 'low', 'close', 'open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec['htypes_used'], ['open', 'high', 'low', 'close'])
+        ci_open = hp.htypes.index('open')
+        np.testing.assert_array_almost_equal(
+            spec['data']['open'],
+            hp.values[:, :, ci_open].astype(float),
+        )
+        print('  selected htypes_used:', spec['htypes_used'])
+
+    def test_q01_line_spec_excludes_kline_adj_columns(self):
+        print('\n[Q01-4] 仅后复权四列时折线规格不包含 OHLC（避免与 K 线重复）')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        self.assertIsNotNone(build_kline_spec(hp))
+        line_spec = build_line_spec(hp)
+        self.assertIsNone(line_spec)
+        print('  build_line_spec:', line_spec)
+
+    def test_q01_render_kline_back_adj_smoke(self):
+        print('\n[Q01-5] 后复权 K 线规格 + 静态 render_kline_spec 烟测')
+        hp = _make_hp(['open|b', 'high|b', 'low|b', 'close|b'])
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        fig = render_kline_spec(spec)
+        self.assertEqual(len(fig.axes), 1)
+        print('  axes count:', len(fig.axes))
+
+
 class TestSpecDataFromHpOnly(unittest.TestCase):
     """规格数据仅来自 HP 切片，无额外计算."""
 

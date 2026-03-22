@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from collections import defaultdict
+from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
@@ -102,11 +103,55 @@ def _macd_matcher(htypes: Sequence[str]) -> Optional[Sequence[str]]:
     return list(t) if t else None
 
 
-# 固定列名：K 线必需 OHLC
+# 固定列名：K 线必需 OHLC（根名）；面板上可为裸名或复权列如 open|b、close|f
 OHLC = ('open', 'high', 'low', 'close')
 
 # 成交量列名（任选其一）
 VOL_NAMES = ('vol', 'volume')
+
+
+def _split_ohlc_htype(h: str) -> Optional[Tuple[str, str]]:
+    """若 h 为价格 OHLC 根名或 root|后缀，返回 (根名, 后缀)；后缀为 '' 或 '|b' 等。"""
+    for root in OHLC:
+        if h == root:
+            return (root, '')
+        if h.startswith(root + '|'):
+            return (root, h[len(root):])
+    return None
+
+
+def _match_ohlc_family(htypes: Sequence[str]) -> Optional[Tuple[str, str, str, str]]:
+    """从 htypes 中选出一套完整 OHLC 列名（同后缀族），顺序 open, high, low, close。
+
+    优先级：无后缀 > |b > |f > 其余后缀字典序。若无任何一族凑齐四列则返回 None。
+    """
+    groups: Dict[str, Dict[str, str]] = defaultdict(dict)
+    for h in htypes:
+        sp = _split_ohlc_htype(h)
+        if sp is None:
+            continue
+        root, suf = sp
+        groups[suf][root] = h
+
+    def complete(suf: str) -> bool:
+        g = groups.get(suf, {})
+        return all(r in g for r in OHLC)
+
+    for suf in ('', '|b', '|f'):
+        if complete(suf):
+            g = groups[suf]
+            return (g['open'], g['high'], g['low'], g['close'])
+    for suf in sorted(k for k in groups if k not in ('', '|b', '|f')):
+        if complete(suf):
+            g = groups[suf]
+            return (g['open'], g['high'], g['low'], g['close'])
+    return None
+
+
+def _kline_htype_matcher(htypes: Sequence[str]) -> Optional[Sequence[str]]:
+    """K 线注册用：返回实际四列名（open→high→low→close 顺序），不满足则 None。"""
+    t = _match_ohlc_family(htypes)
+    return list(t) if t else None
 
 
 def _build_default_registry() -> List[ChartTypeInfo]:
@@ -114,8 +159,8 @@ def _build_default_registry() -> List[ChartTypeInfo]:
     return [
         ChartTypeInfo(
             id='kline',
-            required_htypes=OHLC,
-            htype_matcher=None,
+            required_htypes=None,
+            htype_matcher=_kline_htype_matcher,
             importance='main',
             order=0,
         ),
@@ -228,20 +273,22 @@ def build_kline_spec(
     shares: Optional[Sequence[str]] = None,
 ) -> Optional[Dict[str, Any]]:
     """
-    若 HP 同时包含 open, high, low, close 则返回 K 线规格片段，否则返回 None。
+    若 HP 中存在一整套 OHLC（裸名或同后缀复权列如 open|b…close|b）则返回 K 线规格，否则 None。
+
+    规格 ``data`` 中仍使用标准键 open/high/low/close，数值来自匹配到的实际列切片。
     可选叠加 ma_*、bbands_* 列；不包含 vol/volume。
     """
     if hp.is_empty:
         return None
     htypes = list(hp.htypes)
-    for r in OHLC:
-        if r not in htypes:
-            return None
+    ohlc_cols = _match_ohlc_family(htypes)
+    if ohlc_cols is None:
+        return None
     data: Dict[str, np.ndarray] = {}
     htypes_used: List[str] = []
-    for h in OHLC:
-        data[h] = _hp_slice_htype(hp, h, shares)
-        htypes_used.append(h)
+    for canon, actual in zip(OHLC, ohlc_cols):
+        data[canon] = _hp_slice_htype(hp, actual, shares)
+        htypes_used.append(actual)
     for h in htypes:
         if h in data:
             continue
@@ -324,8 +371,9 @@ def build_line_spec(
     all_htypes = list(hp.htypes)
     if consumed_htypes is None:
         consumed = set()
-        if all(r in all_htypes for r in OHLC):
-            consumed.update(OHLC)
+        ohlc_family = _match_ohlc_family(all_htypes)
+        if ohlc_family is not None:
+            consumed.update(ohlc_family)
             bbands_triple = _match_bbands_htypes(all_htypes)
             if bbands_triple:
                 consumed.update(bbands_triple)
@@ -346,7 +394,7 @@ def build_line_spec(
         line_htypes = [h for h in all_htypes if h not in consumed]
     if not line_htypes:
         return None
-    has_kline = all(r in all_htypes for r in OHLC)
+    has_kline = _match_ohlc_family(all_htypes) is not None
     importance: ChartTypeImportance = 'secondary' if has_kline else 'main'
     data: Dict[str, np.ndarray] = {}
     for h in line_htypes:
