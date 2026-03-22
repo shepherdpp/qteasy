@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import html
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -363,6 +363,94 @@ def _can_use_figure_widget() -> bool:
         return False
 
 
+def _in_ipython_kernel() -> bool:
+    """是否在 Jupyter / IPython 内核中（不要求 ipywidgets）。"""
+    try:
+        from IPython import get_ipython
+        return get_ipython() is not None
+    except Exception:
+        return False
+
+
+def _normalize_plotly_backend_app(value: str) -> str:
+    """
+    校验 ``HistoryPanel.plot(..., plotly_backend_app=...)`` 取值。
+
+    Returns
+    -------
+    str
+        ``'auto'``、``'figurewidget'`` 或 ``'html'``（小写规范形式）。
+    """
+    k = (value or 'auto').strip().lower()
+    if k in ('auto', ''):
+        return 'auto'
+    if k == 'figurewidget':
+        return 'figurewidget'
+    if k == 'html':
+        return 'html'
+    raise ValueError(
+        "plotly_backend_app must be one of 'auto', 'FigureWidget', 'html'."
+    )
+
+
+def _is_plotly_figure_widget(obj: Any) -> bool:
+    """判断是否为 plotly FigureWidget 实例。"""
+    try:
+        from plotly.graph_objs import FigureWidget
+        return isinstance(obj, FigureWidget)
+    except Exception:
+        return False
+
+
+def _select_plotly_notebook_output(fig: Any, plotly_backend_app: str = 'auto') -> Any:
+    """
+    在 Notebook 环境下为交互图选择返回类型：FigureWidget、HTML 包装器或原始 Figure。
+
+    Parameters
+    ----------
+    fig : Any
+        ``build_interactive_figure_from_specs`` 产出的 Figure（含 ``_hp_plotly_meta``）。
+    plotly_backend_app : str, default 'auto'
+        ``'auto'``：优先 FigureWidget，失败则回退 HTML 包装；``'figurewidget'``：强制 Widget，失败抛错；
+        ``'html'``：强制 HTML 包装，失败抛错。
+
+    Returns
+    -------
+    Any
+        FigureWidget、``_PlotlyFigureWrapper`` 或无法包装时的原始 Figure（仅 ``auto`` 且非内核）。
+    """
+    mode = _normalize_plotly_backend_app(plotly_backend_app)
+    if mode == 'auto':
+        if _can_use_figure_widget():
+            out = _create_figure_widget_with_callbacks(fig)
+            if _is_plotly_figure_widget(out):
+                return out
+        return _wrap_figure_for_notebook(fig)
+    if mode == 'figurewidget':
+        if not _can_use_figure_widget():
+            raise RuntimeError(
+                "plotly_backend_app='FigureWidget' requires an active Jupyter/IPython environment "
+                "with plotly FigureWidget support (e.g. ipywidgets)."
+            )
+        out = _create_figure_widget_with_callbacks(fig)
+        if not _is_plotly_figure_widget(out):
+            raise RuntimeError(
+                "Failed to create plotly FigureWidget (plotly_backend_app='FigureWidget'). "
+                "Check bar data, ipywidgets, and plotly installation."
+            )
+        return out
+    if not _in_ipython_kernel():
+        raise RuntimeError(
+            "plotly_backend_app='html' requires an active Jupyter/IPython environment."
+        )
+    wrapped = _wrap_figure_for_notebook(fig)
+    if isinstance(wrapped, _PlotlyFigureWrapper):
+        return wrapped
+    raise RuntimeError(
+        "Failed to wrap plotly figure as HTML for notebook (plotly_backend_app='html')."
+    )
+
+
 def _wrap_figure_for_notebook(fig: Any) -> Any:
     """非 FigureWidget 时：若在 Jupyter 则返回包装器；否则返回原 Figure。"""
     try:
@@ -432,6 +520,112 @@ def _compute_y_ranges_for_x_range(
     return y_ranges
 
 
+def _mm_to_css_px(mm: float, theme: Mapping[str, Any]) -> float:
+    """
+    将毫米转为 CSS 像素（默认 96px/inch，与常见浏览器一致）。
+
+    Parameters
+    ----------
+    mm : float
+        长度（毫米）。
+    theme : mapping
+        可含 ``plotly_css_px_per_inch``。
+
+    Returns
+    -------
+    float
+        像素值。
+    """
+    px_per_inch = float(theme.get('plotly_css_px_per_inch', 96.0))
+    return float(mm) * px_per_inch / 25.4
+
+
+def _plotly_header_paper_y_from_layout(
+    height_px: float,
+    margin_t_px: float,
+    margin_b_px: float,
+    theme: Mapping[str, Any],
+) -> Tuple[float, float]:
+    """
+    根据 layout 高度与上下边距反解两行表头的 paper y，使文字上沿距整图顶边为固定毫米。
+
+    近似模型：绘图区高度 H_plot = height - margin_t - margin_b；paper 子图区 y∈[0,1]，
+    y>1 位于上边距；距整图顶 d_px 处 y = 1 + (margin_t - d_px) / H_plot（yanchor='top'）。
+    仅用于 FigureWidget；纯 HTML 顶栏不使用。
+
+    Parameters
+    ----------
+    height_px : float
+        ``layout.height``（像素）。
+    margin_t_px, margin_b_px : float
+        ``layout.margin.t`` / ``b``（像素）。
+    theme : mapping
+        含 ``plotly_header_line1_top_mm``、``plotly_header_line2_top_mm`` 等。
+
+    Returns
+    -------
+    tuple[float, float]
+        第一行、第二行的 paper ``y``（第一行更靠上，值更大）。
+    """
+    h_plot_min = float(theme.get('plotly_header_h_plot_px_min', 80.0))
+    h_plot = max(float(height_px) - float(margin_t_px) - float(margin_b_px), h_plot_min)
+    mm1 = float(theme.get('plotly_header_line1_top_mm', 6.0))
+    mm2 = float(theme.get('plotly_header_line2_top_mm', 14.5))
+    d1 = _mm_to_css_px(mm1, theme)
+    d2 = _mm_to_css_px(mm2, theme)
+    y1 = 1.0 + (float(margin_t_px) - d1) / h_plot
+    y2 = 1.0 + (float(margin_t_px) - d2) / h_plot
+    y_max = float(theme.get('plotly_header_paper_y_max', 1.42))
+    y_min = float(theme.get('plotly_header_paper_y_min', 1.02))
+    y1 = min(max(y1, y_min), y_max)
+    y2 = min(max(y2, y_min), y_max)
+    if y2 >= y1:
+        y2 = max(y_min, min(y1 - 0.03, y_max))
+    return y1, y2
+
+
+def _layout_height_margin_tb(
+    layout: Any,
+    theme: Mapping[str, Any],
+    *,
+    has_ohlc_header: bool,
+) -> Tuple[float, float, float]:
+    """
+    读取 Plotly layout 的 height 与 margin.t/b（缺省回退 theme）。
+
+    Parameters
+    ----------
+    layout : Any
+        Plotly ``layout`` 对象。
+    theme : mapping
+        用于缺省 ``margin.t``。
+    has_ohlc_header : bool
+        是否按「有 OHLC 顶栏」选用 ``plotly_margin_top_with_header``。
+
+    Returns
+    -------
+    tuple[float, float, float]
+        ``(height_px, margin_t, margin_b)``。
+    """
+    h = getattr(layout, 'height', None)
+    height_px = float(h) if h is not None else 600.0
+    default_t = float(
+        theme.get(
+            'plotly_margin_top_with_header' if has_ohlc_header else 'plotly_margin_top_no_header',
+            120 if has_ohlc_header else 80,
+        ),
+    )
+    default_b = 40.0
+    m = getattr(layout, 'margin', None)
+    if m is None:
+        return height_px, default_t, default_b
+    mt = getattr(m, 't', None)
+    mb = getattr(m, 'b', None)
+    margin_t = float(mt) if mt is not None else default_t
+    margin_b = float(mb) if mb is not None else default_b
+    return height_px, margin_t, margin_b
+
+
 def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     """
     方案 B：在 Jupyter 中返回 FigureWidget，并绑定：
@@ -468,7 +662,11 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             if fw.layout.annotations:
                 n_sub = min(n_sub, len(fw.layout.annotations))
                 base = list(fw.layout.annotations[:n_sub])
-            fw.update_layout(annotations=base + _build_top_info_annotations(init_rec, theme))
+            lay_h, mtb, mbb = _layout_height_margin_tb(fw.layout, theme, has_ohlc_header=True)
+            py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
+            fw.update_layout(
+                annotations=base + _build_top_info_annotations(init_rec, theme, y1=py1, y2=py2),
+            )
 
     # 数据长度 n（X 为 0..n-1）
     n = 0
@@ -592,7 +790,9 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             if fw.layout.annotations:
                 n_sub = min(n_sub, len(fw.layout.annotations))
                 base = list(fw.layout.annotations[:n_sub])
-            new_annotations = base + _build_top_info_annotations(rec, theme)
+            lay_h, mtb, mbb = _layout_height_margin_tb(fw.layout, theme, has_ohlc_header=True)
+            py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
+            new_annotations = base + _build_top_info_annotations(rec, theme, y1=py1, y2=py2)
             fw.update_layout(annotations=new_annotations)
         except Exception:
             pass
@@ -707,12 +907,32 @@ def _build_header_html(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
     )
 
 
-def _build_top_info_annotations(rec: Dict[str, Any], theme: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """表头：两行 Plotly annotations，与 ``mpl_ohlc_header_segments`` 分段及七种字体一致。"""
+def _build_top_info_annotations(
+    rec: Dict[str, Any],
+    theme: Dict[str, Any],
+    *,
+    y1: Optional[float] = None,
+    y2: Optional[float] = None,
+) -> List[Dict[str, Any]]:
+    """
+    表头：两行 Plotly annotations，与 ``mpl_ohlc_header_segments`` 分段及七种字体一致。
+
+    Parameters
+    ----------
+    y1, y2 : float, optional
+        paper 坐标行位置；FigureWidget 路径应传入 ``_plotly_header_paper_y_from_layout`` 结果。
+        未传时使用 theme 中 ``plotly_header_annotation_y1/y2``（非 Widget 兜底）。
+    """
     ann: List[Dict[str, Any]] = []
     line1_segs, line2_segs = mpl_ohlc_header_segments(rec)
-    y1 = float(theme.get('plotly_header_annotation_y1', 1.115))
-    y2 = float(theme.get('plotly_header_annotation_y2', 1.085))
+    if y1 is None:
+        y1 = float(theme.get('plotly_header_annotation_y1', 1.115))
+    else:
+        y1 = float(y1)
+    if y2 is None:
+        y2 = float(theme.get('plotly_header_annotation_y2', 1.085))
+    else:
+        y2 = float(y2)
     x0 = 0.02
 
     def _add_line(segs: List[Tuple[str, HeaderFontRole]], y: float) -> None:

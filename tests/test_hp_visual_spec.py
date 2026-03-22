@@ -511,6 +511,34 @@ class TestInteractiveBackend(unittest.TestCase):
             self.assertGreaterEqual(len(fig.data), 2)
             print('  plotly traces:', len(fig.data))
 
+    def test_plotly_backend_app_invalid_raises(self):
+        print('\n[Phase5] plotly_backend_app 非法取值抛 ValueError')
+        hp = _make_hp(['close'], n_shares=1)
+        try:
+            import plotly  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        with self.assertRaises(ValueError) as ctx:
+            hp.plot(interactive=True, plotly_backend_app='widget')
+        self.assertIn('plotly_backend_app', str(ctx.exception).lower())
+        print('  message:', ctx.exception)
+
+    def test_plotly_backend_app_requires_interactive(self):
+        print('\n[Phase5] plotly_backend_app 非 auto 时必须 interactive=True')
+        hp = _make_hp(['close'], n_shares=1)
+        with self.assertRaises(ValueError) as ctx:
+            hp.plot(interactive=False, plotly_backend_app='html')
+        self.assertIn('interactive', str(ctx.exception).lower())
+        print('  message:', ctx.exception)
+
+    def test_normalize_plotly_backend_app_aliases(self):
+        print('\n[Phase5] _normalize_plotly_backend_app 大小写与 auto')
+        from qteasy.hp_visual_plotly import _normalize_plotly_backend_app
+
+        self.assertEqual(_normalize_plotly_backend_app('auto'), 'auto')
+        self.assertEqual(_normalize_plotly_backend_app('FigureWidget'), 'figurewidget')
+        self.assertEqual(_normalize_plotly_backend_app('HTML'), 'html')
+
 
 class TestHistoryPanelPlotP1Parity(unittest.TestCase):
     """P1：静态/交互表头、字体转译、图例 inset、蜡烛转译（双模对齐）。"""
@@ -692,6 +720,45 @@ class TestHpVisualLayoutSpec(unittest.TestCase):
         self.assertAlmostEqual(spec['mpl_figsize'][1], h0 + d_exp, places=5)
         self.assertEqual(len(spec['mpl_height_ratios']), 2 + len(spec['type_ratios']))
         print('  fig_h:', spec['mpl_figsize'][1], 'h0+d:', h0 + d_exp, 'pre_chart_rows:', spec['mpl_pre_chart_rows'])
+
+
+class TestPlotlyFigureWidgetHeaderPaperY(unittest.TestCase):
+    """FigureWidget 表头：paper y 随 layout 高度反解，距顶毫米稳定。"""
+
+    def test_plotly_header_paper_y_formula_and_order(self):
+        print('\n[plotly-header-y] 反解 y1>y2，且随 height 变化')
+        from qteasy.hp_visual_plotly import _plotly_header_paper_y_from_layout
+        from qteasy.hp_visual_render import _get_theme
+
+        theme = dict(_get_theme())
+        mt, mb = 120.0, 40.0
+        y1_400, y2_400 = _plotly_header_paper_y_from_layout(400.0, mt, mb, theme)
+        y1_900, y2_900 = _plotly_header_paper_y_from_layout(900.0, mt, mb, theme)
+        self.assertGreater(y1_400, y2_400)
+        self.assertGreater(y1_900, y2_900)
+        h_plot_400 = 400.0 - mt - mb
+        d1 = float(theme['plotly_header_line1_top_mm']) * 96.0 / 25.4
+        exp_y1 = 1.0 + (mt - d1) / h_plot_400
+        self.assertAlmostEqual(y1_400, min(max(exp_y1, 1.02), 1.42), places=5)
+        self.assertNotAlmostEqual(y1_400, y1_900, places=3)
+        print('  y1@400/900:', y1_400, y1_900, 'y2@400:', y2_400)
+
+    def test_layout_height_margin_tb_defaults(self):
+        print('\n[plotly-header-y] _layout_height_margin_tb 缺省 margin')
+        from qteasy.hp_visual_plotly import _layout_height_margin_tb
+        from qteasy.hp_visual_render import _get_theme
+
+        theme = _get_theme()
+
+        class _Lay:
+            height = 500
+            margin = None
+
+        h, t, b = _layout_height_margin_tb(_Lay(), theme, has_ohlc_header=True)
+        self.assertEqual(h, 500.0)
+        self.assertEqual(t, float(theme['plotly_margin_top_with_header']))
+        self.assertEqual(b, 40.0)
+        print('  height', h, 'margin_t', t, 'margin_b', b)
 
 
 if __name__ == '__main__':

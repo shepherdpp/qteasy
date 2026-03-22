@@ -2585,6 +2585,7 @@ class HistoryPanel():
         layout: str = 'auto',
         interactive: bool = False,
         highlight: Optional[Any] = None,
+        plotly_backend_app: str = 'auto',
         **kwargs,
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
@@ -2606,6 +2607,11 @@ class HistoryPanel():
         highlight : dict or str, optional
             高亮配置，可为 ``{'condition': 'max'|'min' 或布尔数组, 'style': {...}}``，
             或简写为 'max' / 'min'。
+        plotly_backend_app : {'auto', 'FigureWidget', 'html'}, default 'auto'
+            仅当 ``interactive=True`` 时有效。在 Notebook 中选择 Plotly 呈现方式：
+            ``'auto'`` 优先 ``FigureWidget``，失败则回退 HTML 包装；``'FigureWidget'`` 强制
+            Widget，失败抛错；``'html'`` 强制 HTML 包装，失败抛错。非 Notebook 脚本环境下
+            ``'auto'`` 仍可能返回原始 ``Figure``。
         **kwargs
             预留的扩展参数，当前版本中不使用。
 
@@ -2613,8 +2619,7 @@ class HistoryPanel():
         -------
         matplotlib.figure.Figure or plotly.graph_objs.FigureWidget or _PlotlyFigureWrapper
             interactive=False 时返回 matplotlib Figure；
-            interactive=True 且在 Jupyter 中返回 FigureWidget（支持表头信息与 Y 轴自适应）；
-            interactive=True 且非 Jupyter 环境时返回内嵌 HTML 包装器。
+            interactive=True 时依 ``plotly_backend_app`` 返回 FigureWidget、HTML 包装器或原始 Figure。
 
         Notes
         -----
@@ -2638,6 +2643,10 @@ class HistoryPanel():
         """
         if self.is_empty:
             raise ValueError('Cannot plot an empty HistoryPanel')
+        if not interactive and plotly_backend_app != 'auto':
+            raise ValueError(
+                "plotly_backend_app is only supported when interactive=True."
+            )
         from qteasy.hp_visual_spec import (
             get_chart_type_registry,
             build_kline_spec,
@@ -2726,24 +2735,22 @@ class HistoryPanel():
         if interactive:
             from qteasy.hp_visual_plotly import (
                 _HAS_PLOTLY,
+                _normalize_plotly_backend_app,
                 build_interactive_figure_from_specs,
-                _wrap_figure_for_notebook,
-                _can_use_figure_widget,
-                _create_figure_widget_with_callbacks,
+                _select_plotly_notebook_output,
             )
             if not _HAS_PLOTLY:
                 raise RuntimeError(
                     'interactive=True requires plotly. Install with: pip install plotly'
                 )
+            _normalize_plotly_backend_app(plotly_backend_app)
             fig = build_interactive_figure_from_specs(
                 specs_per_group,
                 types_info,
                 x_dates=x_dates,
                 group_titles=group_titles,
             )
-            if _can_use_figure_widget():
-                return _create_figure_widget_with_callbacks(fig)
-            return _wrap_figure_for_notebook(fig)
+            return _select_plotly_notebook_output(fig, plotly_backend_app)
         fig = build_figure_from_specs(
             specs_per_group,
             types_info,

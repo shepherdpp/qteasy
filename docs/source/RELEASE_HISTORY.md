@@ -3,12 +3,6 @@
 ## 2.2.3 (2026-03-21)
 - **HistoryPanel static vs interactive chart parity (P1)**  
   OHLC summary headers are shown only when a candlestick panel is present: static charts use a dedicated top row for the **last** bar; interactive charts default the same and update the header when you click a bar (labels in English). Matplotlib and Plotly now share one logical theme with small adapter layers for font sizes and candlestick colors so the two backends look closer; the Plotly legend is inset at the upper-left (paper coordinates) to save horizontal space.
-- **Unified layout spec (`HpVisualLayoutSpec`)**  
-  Chart row heights, subplot indices, and related layout fields are computed in one place (`hp_visual_layout.py`) so matplotlib and Plotly stay aligned for stack/overlay group counts.
-- **Matplotlib header and spacing**  
-  Multi-group figures keep a **stable absolute header height** (no longer growing with figure height); a configurable **gap row** below the OHLC header separates header text from the first subplot title without shrinking the plot area (figure height grows by the same amount).
-- **Plotly FigureWidget header position**  
-  In Jupyter, when the figure is wrapped as a **FigureWidget**, the two header annotation lines use **paper** coordinates derived from `layout.height` and margins so the distance from the **top of the figure** stays consistent across layouts (defaults: ~6 mm / ~14.5 mm); the standalone HTML notebook path is unchanged.
 - **`plotly_backend_app` on `HistoryPanel.plot()`**  
   With `interactive=True`, pass `plotly_backend_app='auto'` (default: try FigureWidget, fall back to HTML), `'FigureWidget'` (force widget or raise), or `'html'` (force HTML wrapper or raise).
 

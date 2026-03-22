@@ -128,6 +128,13 @@ def _get_theme() -> Dict[str, Any]:
         'plotly_margin_top_no_header': 80,
         'plotly_header_annotation_y1': 1.115,
         'plotly_header_annotation_y2': 1.085,
+        # FigureWidget 表头：距整图顶边的目标毫米（paper y 由 layout 反解）
+        'plotly_header_line1_top_mm': 6.0,
+        'plotly_header_line2_top_mm': 14.5,
+        'plotly_css_px_per_inch': 96.0,
+        'plotly_header_h_plot_px_min': 80.0,
+        'plotly_header_paper_y_min': 1.02,
+        'plotly_header_paper_y_max': 1.42,
         'hp_plotly_vertical_spacing': 0.0,
         'mpl_header_line1_yaxes': 0.88,
         'mpl_header_line2_yaxes': 0.38,
