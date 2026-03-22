@@ -41,6 +41,36 @@ except ImportError:
     _HAS_PLOTLY = False
 
 
+def _annotations_for_plotly_html_export(layout: Any, meta: Optional[Mapping[str, Any]]) -> List[Any]:
+    """
+    供嵌入 Notebook HTML 的 Figure 使用的 ``layout.annotations`` 列表。
+
+    顶栏 OHLC 由独立 ``div`` 展示时，不再整表清空 annotations，仅保留
+    ``make_subplots(..., subplot_titles=...)`` 产生的前缀条数（与 FigureWidget
+    路径 ``subplot_annotation_count`` 语义一致），避免多组时分组标题丢失。
+
+    Parameters
+    ----------
+    layout : Any
+        Plotly ``layout`` 对象（含 ``annotations``）。
+    meta : mapping, optional
+        ``_hp_plotly_meta``；无 ``show_ohlc_header`` / ``initial_header_html`` 时不裁剪。
+
+    Returns
+    -------
+    list
+        写入 ``update_layout(annotations=...)`` 的 annotation 序列。
+    """
+    ann = list(layout.annotations) if getattr(layout, 'annotations', None) else []
+    if not meta or not meta.get('show_ohlc_header') or not meta.get('initial_header_html'):
+        return ann
+    n_meta = meta.get('subplot_annotation_count')
+    if n_meta is None:
+        return ann
+    n_sub = max(0, min(int(n_meta), len(ann)))
+    return ann[:n_sub]
+
+
 class _PlotlyFigureWrapper:
     """
     包装 Plotly Figure，在 Jupyter Notebook 中通过嵌入完整 HTML（含 Plotly.js CDN）
@@ -78,7 +108,8 @@ class _PlotlyFigureWrapper:
         fig_for_html = self._figure
         if meta and meta.get('show_ohlc_header') and meta.get('initial_header_html'):
             fig_for_html = go.Figure(self._figure)
-            fig_for_html.update_layout(title=None, annotations=[])
+            kept = _annotations_for_plotly_html_export(fig_for_html.layout, meta)
+            fig_for_html.update_layout(title=None, annotations=kept)
         html = fig_for_html.to_html(
             include_plotlyjs='cdn',
             config=config,

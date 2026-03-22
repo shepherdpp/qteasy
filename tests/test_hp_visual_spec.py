@@ -41,6 +41,49 @@ def _make_hp(htypes: list, n_shares: int = 1, n_dates: int = 20) -> HistoryPanel
     return HistoryPanel(values=values, levels=shares, rows=rows, columns=htypes)
 
 
+def _specs_per_group_stack_two_shares(hp: HistoryPanel):
+    """
+    模拟 ``HistoryPanel.plot(..., layout='stack')`` 且两只 share 时的
+    ``specs_per_group`` / ``types_info`` / ``group_titles``，供交互图单测。
+    """
+    registry = get_chart_type_registry()
+    types_info = registry.get_applicable_types(hp.htypes)
+    share_list = list(hp.shares)
+    if len(share_list) < 2:
+        raise ValueError('need at least 2 shares')
+    groups = [[share_list[0]], [share_list[1]]]
+    specs_per_group = []
+    group_titles = []
+    for grp in groups:
+        row = []
+        for info in types_info:
+            tid = info.id
+            if tid == 'kline':
+                spec = build_kline_spec(hp, shares=grp)
+            elif tid == 'volume':
+                spec = build_volume_spec(hp, shares=grp)
+            elif tid == 'macd':
+                spec = build_macd_spec(hp, shares=grp)
+            else:
+                spec = build_line_spec(hp, shares=grp)
+            row.append(spec)
+        kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
+        vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
+        if (
+            kline_idx is not None and vol_idx is not None
+            and row[kline_idx] is not None and row[vol_idx] is not None
+            and 'open' in row[kline_idx].get('data', {}) and 'close' in row[kline_idx].get('data', {})
+        ):
+            vol_spec = dict(row[vol_idx])
+            vol_spec['data'] = dict(vol_spec.get('data', {}))
+            vol_spec['data']['open'] = row[kline_idx]['data']['open']
+            vol_spec['data']['close'] = row[kline_idx]['data']['close']
+            row[vol_idx] = vol_spec
+        specs_per_group.append(row)
+        group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
+    return specs_per_group, types_info, group_titles
+
+
 class TestChartTypeRegistry(unittest.TestCase):
     """注册表：get_applicable_types 返回类型及重要性."""
 
@@ -611,6 +654,54 @@ class TestInteractiveBackend(unittest.TestCase):
         self.assertEqual(_normalize_plotly_backend_app('auto'), 'auto')
         self.assertEqual(_normalize_plotly_backend_app('FigureWidget'), 'figurewidget')
         self.assertEqual(_normalize_plotly_backend_app('HTML'), 'html')
+
+
+class TestQ02SubplotTitlesHtmlExport(unittest.TestCase):
+    """Q02：Notebook HTML 路径保留 subplot 分组标题，与 FigureWidget 的 annotation 前缀语义一致。"""
+
+    def test_q02_html_export_preserves_subplot_title_annotations(self):
+        print('\n[Q02] 双组 stack+OHLC：subplot_annotation_count 与 HTML 导出保留分组标题')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            _PlotlyFigureWrapper,
+            _annotations_for_plotly_html_export,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=12)
+        specs_per_group, types_info, group_titles = _specs_per_group_stack_two_shares(hp)
+        x_dates = list(hp.hdates)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=x_dates,
+            group_titles=group_titles,
+        )
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertTrue(meta.get('show_ohlc_header'))
+        n_sub = int(meta.get('subplot_annotation_count', 0))
+        self.assertGreater(n_sub, 0, 'stack two groups should have subplot title annotations')
+        ann_full = list(fig.layout.annotations) if fig.layout.annotations else []
+        self.assertEqual(len(ann_full), n_sub)
+        print('  subplot_annotation_count:', n_sub, 'len(layout.annotations):', len(ann_full))
+
+        kept = _annotations_for_plotly_html_export(fig.layout, meta)
+        self.assertEqual(len(kept), n_sub)
+        title_blob = ' '.join(str(getattr(a, 'text', '') or '') for a in kept)
+        self.assertIn('S000', title_blob)
+        self.assertIn('S001', title_blob)
+        print('  kept annotation texts contain share codes:', 'S000' in title_blob, 'S001' in title_blob)
+
+        wrapper = _PlotlyFigureWrapper(fig)
+        html_str = wrapper._repr_html_()
+        self.assertGreater(len(html_str), 100)
+        # 分组标题应出现在序列化后的 Plotly 数据中（不仅依赖 trace name_prefix）
+        self.assertIn('"S000"', html_str)
+        self.assertIn('"S001"', html_str)
+        print('  _repr_html_ contains quoted S000/S001 in payload')
 
 
 class TestHistoryPanelPlotP1Parity(unittest.TestCase):
