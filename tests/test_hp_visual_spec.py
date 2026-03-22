@@ -41,6 +41,49 @@ def _make_hp(htypes: list, n_shares: int = 1, n_dates: int = 20) -> HistoryPanel
     return HistoryPanel(values=values, levels=shares, rows=rows, columns=htypes)
 
 
+def _specs_per_group_stack_two_shares(hp: HistoryPanel):
+    """
+    模拟 ``HistoryPanel.plot(..., layout='stack')`` 且两只 share 时的
+    ``specs_per_group`` / ``types_info`` / ``group_titles``，供交互图单测。
+    """
+    registry = get_chart_type_registry()
+    types_info = registry.get_applicable_types(hp.htypes)
+    share_list = list(hp.shares)
+    if len(share_list) < 2:
+        raise ValueError('need at least 2 shares')
+    groups = [[share_list[0]], [share_list[1]]]
+    specs_per_group = []
+    group_titles = []
+    for grp in groups:
+        row = []
+        for info in types_info:
+            tid = info.id
+            if tid == 'kline':
+                spec = build_kline_spec(hp, shares=grp)
+            elif tid == 'volume':
+                spec = build_volume_spec(hp, shares=grp)
+            elif tid == 'macd':
+                spec = build_macd_spec(hp, shares=grp)
+            else:
+                spec = build_line_spec(hp, shares=grp)
+            row.append(spec)
+        kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
+        vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
+        if (
+            kline_idx is not None and vol_idx is not None
+            and row[kline_idx] is not None and row[vol_idx] is not None
+            and 'open' in row[kline_idx].get('data', {}) and 'close' in row[kline_idx].get('data', {})
+        ):
+            vol_spec = dict(row[vol_idx])
+            vol_spec['data'] = dict(vol_spec.get('data', {}))
+            vol_spec['data']['open'] = row[kline_idx]['data']['open']
+            vol_spec['data']['close'] = row[kline_idx]['data']['close']
+            row[vol_idx] = vol_spec
+        specs_per_group.append(row)
+        group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
+    return specs_per_group, types_info, group_titles
+
+
 class TestChartTypeRegistry(unittest.TestCase):
     """注册表：get_applicable_types 返回类型及重要性."""
 
@@ -228,6 +271,79 @@ class TestLineSpecBuilder(unittest.TestCase):
         self.assertIn('high', line_spec['htypes_used'])
         self.assertEqual(len(line_spec['data']), 2)
         print('  line_spec htypes_used:', line_spec['htypes_used'])
+
+
+class TestQ01AdjOhlcKline(unittest.TestCase):
+    """Q01：复权列名 open|b…close|b 下 K 线注册与规格；裸价与复权并存时优先裸价族。"""
+
+    def setUp(self):
+        self.registry = get_chart_type_registry()
+
+    def test_q01_registry_back_adj_ohlc_returns_kline_volume_order(self):
+        print('\n[Q01-1] 注册表：open|b…close|b+vol 适用 kline(main)、volume，顺序正确')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b', 'vol']
+        result = self.registry.get_applicable_types(htypes)
+        ids = [t.id for t in result]
+        self.assertIn('kline', ids)
+        self.assertIn('volume', ids)
+        self.assertLess(ids.index('kline'), ids.index('volume'))
+        print('  applicable:', ids)
+
+    def test_q01_kline_spec_back_adj_data_keys_and_values(self):
+        print('\n[Q01-2] K 线规格：后复权四列 -> data 仍为 open…close 键，数值等于 HP 对应列')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec['chart_type'], 'kline')
+        for canon in ('open', 'high', 'low', 'close'):
+            self.assertIn(canon, spec['data'])
+        self.assertEqual(
+            spec['htypes_used'],
+            ['open|b', 'high|b', 'low|b', 'close|b'],
+        )
+        for canon, actual in zip(
+            ('open', 'high', 'low', 'close'),
+            ('open|b', 'high|b', 'low|b', 'close|b'),
+        ):
+            ci = hp.htypes.index(actual)
+            np.testing.assert_array_almost_equal(
+                spec['data'][canon],
+                hp.values[:, :, ci].astype(float),
+            )
+        print('  htypes_used:', spec['htypes_used'])
+
+    def test_q01_kline_prefers_bare_ohlc_when_both_suffix_and_bare_exist(self):
+        print('\n[Q01-3] 裸 OHLC 与 |b 全套并存时，K 线选用裸名四列')
+        htypes = ['open', 'high', 'low', 'close', 'open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec['htypes_used'], ['open', 'high', 'low', 'close'])
+        ci_open = hp.htypes.index('open')
+        np.testing.assert_array_almost_equal(
+            spec['data']['open'],
+            hp.values[:, :, ci_open].astype(float),
+        )
+        print('  selected htypes_used:', spec['htypes_used'])
+
+    def test_q01_line_spec_excludes_kline_adj_columns(self):
+        print('\n[Q01-4] 仅后复权四列时折线规格不包含 OHLC（避免与 K 线重复）')
+        htypes = ['open|b', 'high|b', 'low|b', 'close|b']
+        hp = _make_hp(htypes)
+        self.assertIsNotNone(build_kline_spec(hp))
+        line_spec = build_line_spec(hp)
+        self.assertIsNone(line_spec)
+        print('  build_line_spec:', line_spec)
+
+    def test_q01_render_kline_back_adj_smoke(self):
+        print('\n[Q01-5] 后复权 K 线规格 + 静态 render_kline_spec 烟测')
+        hp = _make_hp(['open|b', 'high|b', 'low|b', 'close|b'])
+        spec = build_kline_spec(hp)
+        self.assertIsNotNone(spec)
+        fig = render_kline_spec(spec)
+        self.assertEqual(len(fig.axes), 1)
+        print('  axes count:', len(fig.axes))
 
 
 class TestSpecDataFromHpOnly(unittest.TestCase):
@@ -538,6 +654,54 @@ class TestInteractiveBackend(unittest.TestCase):
         self.assertEqual(_normalize_plotly_backend_app('auto'), 'auto')
         self.assertEqual(_normalize_plotly_backend_app('FigureWidget'), 'figurewidget')
         self.assertEqual(_normalize_plotly_backend_app('HTML'), 'html')
+
+
+class TestQ02SubplotTitlesHtmlExport(unittest.TestCase):
+    """Q02：Notebook HTML 路径保留 subplot 分组标题，与 FigureWidget 的 annotation 前缀语义一致。"""
+
+    def test_q02_html_export_preserves_subplot_title_annotations(self):
+        print('\n[Q02] 双组 stack+OHLC：subplot_annotation_count 与 HTML 导出保留分组标题')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            _PlotlyFigureWrapper,
+            _annotations_for_plotly_html_export,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=12)
+        specs_per_group, types_info, group_titles = _specs_per_group_stack_two_shares(hp)
+        x_dates = list(hp.hdates)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=x_dates,
+            group_titles=group_titles,
+        )
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertTrue(meta.get('show_ohlc_header'))
+        n_sub = int(meta.get('subplot_annotation_count', 0))
+        self.assertGreater(n_sub, 0, 'stack two groups should have subplot title annotations')
+        ann_full = list(fig.layout.annotations) if fig.layout.annotations else []
+        self.assertEqual(len(ann_full), n_sub)
+        print('  subplot_annotation_count:', n_sub, 'len(layout.annotations):', len(ann_full))
+
+        kept = _annotations_for_plotly_html_export(fig.layout, meta)
+        self.assertEqual(len(kept), n_sub)
+        title_blob = ' '.join(str(getattr(a, 'text', '') or '') for a in kept)
+        self.assertIn('S000', title_blob)
+        self.assertIn('S001', title_blob)
+        print('  kept annotation texts contain share codes:', 'S000' in title_blob, 'S001' in title_blob)
+
+        wrapper = _PlotlyFigureWrapper(fig)
+        html_str = wrapper._repr_html_()
+        self.assertGreater(len(html_str), 100)
+        # 分组标题应出现在序列化后的 Plotly 数据中（不仅依赖 trace name_prefix）
+        self.assertIn('"S000"', html_str)
+        self.assertIn('"S001"', html_str)
+        print('  _repr_html_ contains quoted S000/S001 in payload')
 
 
 class TestHistoryPanelPlotP1Parity(unittest.TestCase):

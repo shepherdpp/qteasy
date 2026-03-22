@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.2.4 (2026-03-22)
+- **HistoryPanel charts with adjusted OHLC columns (Q01)**  
+  Fixed a bug in `HistoryPanel.plot()` where adjusted price column names (e.g. `open|b`, `high|b`, `low|b`, `close|b`) are not recognized, now candlestick charts are rendered correctly for back-/forward-adjusted panels. When both raw and adjusted OHLC are present, the raw (unsuffixed) family is used for the candlestick, matching existing price-column resolution conventions.
+
 ## 2.2.3 (2026-03-22)
 - **HistoryPanel static vs interactive chart parity (P1)**  
   OHLC summary headers are shown only when a candlestick panel is present: static charts use a dedicated top row for the **last** bar; interactive charts default the same and update the header when you click a bar (labels in English). Matplotlib and Plotly now share one logical theme with small adapter layers for font sizes and candlestick colors so the two backends look closer; the Plotly legend is inset at the upper-left (paper coordinates) to save horizontal space.
