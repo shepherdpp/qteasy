@@ -59,5 +59,8 @@
 使用下载的数据——获取价格或技术指标
 ----------------------------------------------------
 
+**取数入口说明**：日常分析、策略与可视化准备应优先使用 ``qt.get_history_data()``。
+``qteasy.history.get_history_panel()`` 则面向已明确 ``DataType`` 列表与 ``DataSource``、需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以 ``get_history_data`` 为主线，详见 ``manage_data`` 中的 HistoryPanel 章节。
+
 .. autofunction:: qteasy.get_history_data
 
