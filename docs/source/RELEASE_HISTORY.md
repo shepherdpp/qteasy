@@ -3,6 +3,8 @@
 ## 2.2.4 (2026-03-22)
 - **HistoryPanel charts with adjusted OHLC columns (Q01)**  
   Fixed a bug in `HistoryPanel.plot()` where adjusted price column names (e.g. `open|b`, `high|b`, `low|b`, `close|b`) are not recognized, now candlestick charts are rendered correctly for back-/forward-adjusted panels. When both raw and adjusted OHLC are present, the raw (unsuffixed) family is used for the candlestick, matching existing price-column resolution conventions.
+- **Interactive chart x-axis zoom/pan (HTML and FigureWidget)**  
+  HTML-embedded charts apply the same x-axis clamp and minimum visible bar width as before (Q03). FigureWidget multi-row charts now listen on Plotly’s **master** shared x-axis and write the normalized range to **all** `xaxis*` entries, so panning past the data edge no longer leaves a persistent blank half-view.
 
 ## 2.2.3 (2026-03-22)
 - **HistoryPanel static vs interactive chart parity (P1)**  

@@ -704,6 +704,217 @@ class TestQ02SubplotTitlesHtmlExport(unittest.TestCase):
         print('  _repr_html_ contains quoted S000/S001 in payload')
 
 
+class TestQ03NormalizeXViewRange(unittest.TestCase):
+    """Q03：x 视图归一化、pan 平移越界、短序列放大限制；覆盖原需 Notebook 验收的 shared_x 主从轴与全轴 relayout。"""
+
+    def test_q03_expand_narrow_window_to_min_visible(self):
+        print('\n[Q03] n=100 过窄窗口扩至至少 15 根，中心近似保持')
+        from qteasy.hp_visual_plotly import HP_PLOTLY_MIN_VISIBLE_BARS, _hp_plotly_normalize_x_view_range
+
+        n = 100
+        x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(n, 50.0, 50.2)
+        self.assertGreaterEqual(j1 - j0 + 1, HP_PLOTLY_MIN_VISIBLE_BARS)
+        center_in = 0.5 * (50.0 + 50.2)
+        center_out = 0.5 * (x0 + x1)
+        self.assertLess(abs(center_out - center_in), 2.0)
+        print('  in center', center_in, 'out', center_out, 'j0,j1', j0, j1)
+
+    def test_q03_small_n_zoom_clamped_to_full_span(self):
+        print('\n[Q03] n<15 时禁止放大到窄于全部 bar（effective=min(15,n)=n）')
+        from qteasy.hp_visual_plotly import _hp_plotly_normalize_x_view_range
+
+        x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(10, 2.0, 3.0)
+        self.assertEqual(j0, 0)
+        self.assertEqual(j1, 9)
+        self.assertEqual(j1 - j0 + 1, 10)
+        self.assertAlmostEqual(x0, 0.0, places=6)
+        self.assertAlmostEqual(x1, 9.0, places=6)
+        print('  (2,3) -> full span j0,j1', j0, j1)
+
+    def test_q03_swap_and_translate_edges(self):
+        print('\n[Q03] x0>x1 交换；越界时平移保持视窗宽度（非两端独立 clamp）')
+        from qteasy.hp_visual_plotly import _hp_plotly_normalize_x_view_range
+
+        x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(100, 80.0, 20.0)
+        self.assertLessEqual(x0, x1)
+        self.assertGreaterEqual(x0, 0.0)
+        self.assertLessEqual(x1, 99.0)
+        print('  80,20 ->', x0, x1, j0, j1)
+
+        x0b, x1b, _, _ = _hp_plotly_normalize_x_view_range(100, -20.0, 5.0)
+        self.assertEqual(x0b, 0.0)
+        self.assertAlmostEqual(x1b, 25.0, places=10)
+        print('  -20,5 ->', x0b, x1b, '(span 25 保留)')
+
+    def test_q03_pan_overflow_preserves_span(self):
+        print('\n[Q03] 仅 pan 越界：保持窗口宽度平移回 [0,n-1]')
+        from qteasy.hp_visual_plotly import _hp_plotly_normalize_x_view_range
+
+        n = 89
+        max_x = float(n - 1)
+        x0, x1, _, _ = _hp_plotly_normalize_x_view_range(
+            n, -44.285714285714285, 43.71428571428571
+        )
+        self.assertAlmostEqual(x0, 0.0, places=6)
+        self.assertAlmostEqual(x1, max_x, places=10)
+        self.assertAlmostEqual(x1 - x0, max_x, places=10)
+        print('  视窗跨度等于全长 -> 占满 [0,max_x]', x0, x1)
+
+        x0b, x1b, _, _ = _hp_plotly_normalize_x_view_range(n, -20.0, 50.0)
+        self.assertAlmostEqual(x0b, 0.0, places=10)
+        self.assertAlmostEqual(x1b, 70.0, places=10)
+        self.assertAlmostEqual(x1b - x0b, 70.0, places=10)
+        print('  pan (-20,50) -> (0,70) 宽度 70 保留')
+
+    def test_q03_coincident_ends_expand_one(self):
+        print('\n[Q03] x0==x1 先扩 1 单位；n 足够大时再按最少 15 根扩窗')
+        from qteasy.hp_visual_plotly import HP_PLOTLY_MIN_VISIBLE_BARS, _hp_plotly_normalize_x_view_range
+
+        x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(100, 50.0, 50.0)
+        self.assertGreater(x1, x0)
+        self.assertGreaterEqual(j1 - j0 + 1, HP_PLOTLY_MIN_VISIBLE_BARS)
+        print('  n=100 x0==x1 ->', x0, x1, 'j0,j1', j0, j1)
+
+        x0s, x1s, j0s, j1s = _hp_plotly_normalize_x_view_range(12, 5.0, 5.0)
+        self.assertEqual(j0s, 0)
+        self.assertEqual(j1s, 11)
+        self.assertEqual(j1s - j0s + 1, 12)
+        print('  n=12 x0==x1 -> full span', x0s, x1s, 'j0,j1', j0s, j1s)
+
+    def test_q03_y_autorange_script_contract(self):
+        print('\n[Q03] _y_autorange_script 含 normalize、_hpXClampBusy、xaxis.range、relayout、min_visible_bars')
+        from qteasy.hp_visual_plotly import HP_PLOTLY_MIN_VISIBLE_BARS, _y_autorange_script
+
+        s = _y_autorange_script('dummy-div')
+        self.assertIn('normalizeXViewRange', s)
+        self.assertIn('effMvb', s)
+        self.assertIn('Math.min(mvb, n)', s)
+        self.assertIn('effMvb >= n', s)
+        self.assertIn('_hpXClampBusy', s)
+        self.assertIn('xaxis.range', s)
+        self.assertIn('Plotly.relayout', s)
+        self.assertIn('min_visible_bars', s)
+        self.assertIn(str(int(HP_PLOTLY_MIN_VISIBLE_BARS)), s)
+        print('  script length', len(s))
+
+    def test_q03_meta_carries_min_visible_and_subplot_rows(self):
+        print('\n[Q03] build_interactive_figure_from_specs 的 meta 含 min_visible_bars、plotly_n_subplot_rows')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            HP_PLOTLY_MIN_VISIBLE_BARS,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=1, n_dates=20)
+        registry = get_chart_type_registry()
+        types_info = registry.get_applicable_types(hp.htypes)
+        specs = []
+        for info in types_info:
+            if info.id == 'kline':
+                specs.append(build_kline_spec(hp))
+            elif info.id == 'volume':
+                specs.append(build_volume_spec(hp))
+            else:
+                specs.append(build_line_spec(hp))
+        specs_per_group = [specs]
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=['T'],
+        )
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertEqual(meta.get('min_visible_bars'), HP_PLOTLY_MIN_VISIBLE_BARS)
+        self.assertGreater(int(meta.get('plotly_n_subplot_rows', 0)), 0)
+        print('  min_visible_bars', meta.get('min_visible_bars'), 'plotly_n_subplot_rows', meta.get('plotly_n_subplot_rows'))
+
+    def test_q03_plotly_master_xaxis_detection_shared_subplots(self):
+        print('\n[Q03] make_subplots shared_xaxes：主 x 为 xaxis3（matches=None）')
+        try:
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            _hp_plotly_layout_xaxis_names,
+            _hp_plotly_master_xaxis_names,
+            _hp_plotly_x_range_layout_updates,
+        )
+
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
+        fig.add_trace(go.Scatter(x=[0, 1, 2], y=[1, 2, 3]), row=1, col=1)
+        fig.add_trace(go.Bar(x=[0, 1, 2], y=[3, 4, 5]), row=2, col=1)
+        fig.add_trace(go.Scatter(x=[0, 1, 2], y=[6, 7, 8]), row=3, col=1)
+        names = _hp_plotly_layout_xaxis_names(fig.layout)
+        masters = _hp_plotly_master_xaxis_names(fig.layout)
+        self.assertIn('xaxis', names)
+        self.assertIn('xaxis2', names)
+        self.assertIn('xaxis3', names)
+        self.assertEqual(masters, ['xaxis3'])
+        want_r = [1.0, 9.0]
+        upd = _hp_plotly_x_range_layout_updates(want_r[0], want_r[1], names)
+        self.assertEqual(len(upd), len(names), 'each xaxis must get a relayout key (Notebook 半边空白曾源于只写部分轴)')
+        for nm in names:
+            key = 'xaxis_range' if nm == 'xaxis' else f'{nm}_range'
+            self.assertEqual(upd.get(key), want_r, msg=key)
+        print('  xaxis names:', names)
+        print('  masters:', masters, 'relayout keys', len(upd))
+
+    def test_q03_seven_row_shared_xaxes_master_xaxis7(self):
+        print('\n[Q03] 七子图 shared_xaxes：主 x 为 xaxis7，relayout 须覆盖 xaxis…xaxis7（与 Notebook 多子图 K 线一致）')
+        try:
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            _hp_plotly_layout_xaxis_names,
+            _hp_plotly_master_xaxis_names,
+            _hp_plotly_x_range_layout_updates,
+        )
+
+        fig = make_subplots(rows=7, cols=1, shared_xaxes=True)
+        for r in range(1, 8):
+            fig.add_trace(go.Scatter(x=list(range(10)), y=[r] * 10), row=r, col=1)
+        names = _hp_plotly_layout_xaxis_names(fig.layout)
+        masters = _hp_plotly_master_xaxis_names(fig.layout)
+        self.assertEqual(len(names), 7)
+        self.assertEqual(masters, ['xaxis7'])
+        xr = [0.0, 87.0]
+        upd = _hp_plotly_x_range_layout_updates(xr[0], xr[1], names)
+        self.assertEqual(len(upd), 7)
+        for nm in names:
+            key = 'xaxis_range' if nm == 'xaxis' else f'{nm}_range'
+            self.assertEqual(upd.get(key), xr, msg=key)
+        print('  names', names, 'masters', masters)
+
+    def test_q03_full_window_identity_stable(self):
+        print('\n[Q03] 已显示全数据区间时平移归一不改变 range（稳定）')
+        from qteasy.hp_visual_plotly import _hp_plotly_normalize_x_view_range
+
+        n = 89
+        max_x = float(n - 1)
+        x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(n, 0.0, max_x)
+        self.assertAlmostEqual(x0, 0.0, places=9)
+        self.assertAlmostEqual(x1, max_x, places=9)
+        self.assertEqual(j0, 0)
+        self.assertEqual(j1, n - 1)
+        print('  n=', n, '->', x0, x1)
+
+    def test_q03_regression_dual_clamp_not_applied(self):
+        print('\n[Q03] 回归：(-20,5)@n=100 若为双端独立 clamp 会得到 (0,5)，应保留平移语义 (0,25)')
+        from qteasy.hp_visual_plotly import _hp_plotly_normalize_x_view_range
+
+        x0, x1, _, _ = _hp_plotly_normalize_x_view_range(100, -20.0, 5.0)
+        self.assertNotAlmostEqual(x1, 5.0, places=3)
+        self.assertAlmostEqual(x1, 25.0, places=9)
+        self.assertAlmostEqual(x1 - x0, 25.0, places=9)
+        print('  got', x0, x1, 'not dual-clamp (0,5)')
+
+
 class TestHistoryPanelPlotP1Parity(unittest.TestCase):
     """P1：静态/交互表头、字体转译、图例 inset、蜡烛转译（双模对齐）。"""
 

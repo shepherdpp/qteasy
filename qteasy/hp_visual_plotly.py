@@ -40,6 +40,150 @@ try:
 except ImportError:
     _HAS_PLOTLY = False
 
+# 交互图 x 轴：最少可见 bar 数（与 FigureWidget、HTML 内联脚本一致，Q03 / L1）
+HP_PLOTLY_MIN_VISIBLE_BARS: int = 15
+
+
+def _hp_plotly_translate_x_range_into_bounds(x0: float, x1: float, n: int) -> Tuple[float, float]:
+    """
+    在保持区间长度（不超过数据跨度）的前提下，将 ``[x0, x1]`` 平移落入 ``[0, n-1]``。
+
+    若对越界两端分别 ``clamp``，会缩短视窗宽度，视觉上像被 zoom；本函数用于纯 pan 越界时
+    只「平移」回数据域，与 ``_y_autorange_script`` 内联 JS 一致。
+    """
+    if n <= 1:
+        return 0.0, float(max(0, n - 1))
+    max_x = float(n - 1)
+    if x0 > x1:
+        x0, x1 = x1, x0
+    span = x1 - x0
+    if span <= 0:
+        return 0.0, min(max_x, 1.0)
+    if span >= max_x:
+        return 0.0, max_x
+    if x0 < 0:
+        x1 -= x0
+        x0 = 0.0
+    if x1 > max_x:
+        x0 -= (x1 - max_x)
+        x1 = max_x
+    if x0 < 0:
+        x0 = 0.0
+        x1 = min(max_x, span)
+    if x1 > max_x:
+        x1 = max_x
+        x0 = max(0.0, x1 - span)
+    return x0, x1
+
+
+def _hp_plotly_normalize_x_view_range(
+    n: int,
+    x0: float,
+    x1: float,
+    min_visible_bars: int = HP_PLOTLY_MIN_VISIBLE_BARS,
+) -> Tuple[float, float, int, int]:
+    """
+    将 Plotly x 轴视图范围规范到数据索引域 ``[0, n-1]``，并限制最小可见根数（Q03 / L1+L2）。
+
+    越界时优先 **保持视窗宽度、整段平移**（pan 语义），避免两端独立 clamp 造成视窗变窄。
+    算法须与 ``_y_autorange_script`` 中内联 JavaScript 的 ``normalizeXViewRange`` 保持一致。
+
+    Parameters
+    ----------
+    n : int
+        bar 根数，合法索引为 ``0 .. n-1``。
+    x0, x1 : float
+        视图左右端；若 ``x0 > x1`` 将交换。
+    min_visible_bars : int
+        期望的可见 bar 数下限。实际使用 ``effective = min(min_visible_bars, n)``：
+        当 ``n`` 大于 ``min_visible_bars`` 时至少显示 ``min_visible_bars`` 根；
+        当 ``n`` 不大于 ``min_visible_bars`` 时至少显示全部 ``n`` 根（禁止继续放大到更窄视窗）。
+
+    Returns
+    -------
+    tuple[float, float, int, int]
+        规范化后的 ``(x0, x1, j0, j1)``，其中 ``j0,j1`` 为 ``floor/ceil`` 后与 ``[0,n-1]`` 求交后的索引界。
+    """
+    if n <= 0:
+        n = 1
+    x0, x1 = float(x0), float(x1)
+    if x0 > x1:
+        x0, x1 = x1, x0
+    max_x = float(n - 1)
+    if x0 == x1:
+        x1 = min(max_x, x0 + 1.0)
+    x0, x1 = _hp_plotly_translate_x_range_into_bounds(x0, x1, n)
+    j0 = max(0, min(n - 1, int(np.floor(x0))))
+    j1 = max(0, min(n - 1, int(np.ceil(x1))))
+    if j0 > j1:
+        j0, j1 = j1, j0
+    visible_count = j1 - j0 + 1
+    effective_mvb = min(min_visible_bars, n)
+    if visible_count < effective_mvb:
+        if effective_mvb >= n:
+            x0, x1 = 0.0, max_x
+        else:
+            center = 0.5 * (x0 + x1)
+            half = 0.5 * float(effective_mvb - 1)
+            x0 = max(0.0, center - half)
+            x1 = min(max_x, center + half)
+            if x0 == x1:
+                x1 = min(max_x, x0 + 1.0)
+        j0 = max(0, min(n - 1, int(np.floor(x0))))
+        j1 = max(0, min(n - 1, int(np.ceil(x1))))
+        if j0 > j1:
+            j0, j1 = j1, j0
+    return x0, x1, j0, j1
+
+
+def _hp_plotly_layout_xaxis_names(layout: Any) -> List[str]:
+    """
+    列出 ``layout`` 上已存在的 x 轴属性名（``xaxis``, ``xaxis2``, …）。
+
+    供 FigureWidget 与 ``update_layout`` 多轴同步时使用。
+    """
+    names: List[str] = []
+    if getattr(layout, 'xaxis', None) is not None:
+        names.append('xaxis')
+    for i in range(2, 25):
+        key = f'xaxis{i}'
+        if getattr(layout, key, None) is not None:
+            names.append(key)
+    return names
+
+
+def _hp_plotly_master_xaxis_names(layout: Any) -> List[str]:
+    """
+    返回 ``matches`` 为空的 x 轴名（shared_x 链上的「主」轴，如 ``xaxis7``）。
+
+    多列子图时可能多于一个；本项目的交互图仅为单列，通常只有一个主 x。
+    """
+    masters: List[str] = []
+    for name in _hp_plotly_layout_xaxis_names(layout):
+        xa = getattr(layout, name)
+        m = getattr(xa, 'matches', None)
+        if m is None or m is False:
+            masters.append(name)
+    return masters
+
+
+def _hp_plotly_x_range_layout_updates(
+    x0: float,
+    x1: float,
+    xaxis_names: Sequence[str],
+) -> Dict[str, Any]:
+    """
+    构造 ``update_layout`` 用的 ``xaxis*_range`` 字典，使所有已存在的 x 轴共用一个 range。
+    """
+    upd: Dict[str, Any] = {}
+    for name in xaxis_names:
+        if name == 'xaxis':
+            upd['xaxis_range'] = [x0, x1]
+        else:
+            suffix = name.replace('xaxis', '', 1)
+            upd[f'xaxis{suffix}_range'] = [x0, x1]
+    return upd
+
 
 def _annotations_for_plotly_html_export(layout: Any, meta: Optional[Mapping[str, Any]]) -> List[Any]:
     """
@@ -133,6 +277,9 @@ class _PlotlyFigureWrapper:
         script = _click_update_header_script(div_id)
         if script:
             html = html.rstrip(' \n') + '\n' + script
+        y_script = _y_autorange_script(div_id)
+        if y_script:
+            html = html.rstrip(' \n') + '\n' + y_script
         return html
 
     def show(self) -> None:
@@ -145,10 +292,16 @@ class _PlotlyFigureWrapper:
 
 
 def _y_autorange_script(div_id: str) -> str:
-    """时间范围（X 轴）变化后，每张图表 Y 轴范围调整为该图可见数据的 MIN/MAX。"""
+    """
+    嵌入 HTML：在 x 轴范围变化后按可见区间调整各 y 轴，并与 FigureWidget 一致地钳制 x（Q03）。
+
+    x 视图归一化（clamp、最少可见根数）须与 ``_hp_plotly_normalize_x_view_range`` 保持一致。
+    """
+    _min_vis_js = str(int(HP_PLOTLY_MIN_VISIBLE_BARS))
     return (
         '<script type="text/javascript">\n'
         '(function() {\n'
+        f'  var HP_DEFAULT_MIN_VISIBLE = {_min_vis_js};\n'
         '  var divId = ' + repr(div_id) + ';\n'
         '  function getXRangeFromLayout(layout) {\n'
         '    var k, r;\n'
@@ -198,11 +351,47 @@ def _y_autorange_script(div_id: str) -> str:
         '    if (xMin === Infinity) return null;\n'
         '    return [xMin, xMax];\n'
         '  }\n'
+        '  function normalizeXViewRange(n, x0, x1, mvb) {\n'
+        '    var sw;\n'
+        '    if (n <= 0) n = 1;\n'
+        '    var maxX = n - 1;\n'
+        '    if (x0 > x1) { sw = x0; x0 = x1; x1 = sw; }\n'
+        '    if (x0 === x1) x1 = Math.min(maxX, x0 + 1);\n'
+        '    var span = x1 - x0;\n'
+        '    if (span <= 0) { x0 = 0; x1 = Math.min(maxX, 1); }\n'
+        '    else if (span >= maxX) { x0 = 0; x1 = maxX; }\n'
+        '    else {\n'
+        '      if (x0 < 0) { x1 -= x0; x0 = 0; }\n'
+        '      if (x1 > maxX) { x0 -= (x1 - maxX); x1 = maxX; }\n'
+        '      if (x0 < 0) { x0 = 0; x1 = Math.min(maxX, span); }\n'
+        '      if (x1 > maxX) { x1 = maxX; x0 = Math.max(0, x1 - span); }\n'
+        '    }\n'
+        '    var j0 = Math.max(0, Math.min(maxX, Math.floor(x0)));\n'
+        '    var j1 = Math.max(0, Math.min(maxX, Math.ceil(x1)));\n'
+        '    if (j0 > j1) { sw = j0; j0 = j1; j1 = sw; }\n'
+        '    var visibleCount = j1 - j0 + 1;\n'
+        '    var effMvb = Math.min(mvb, n);\n'
+        '    if (visibleCount < effMvb) {\n'
+        '      if (effMvb >= n) { x0 = 0; x1 = maxX; }\n'
+        '      else {\n'
+        '        var center = 0.5 * (x0 + x1);\n'
+        '        var half = 0.5 * (effMvb - 1);\n'
+        '        x0 = Math.max(0, center - half);\n'
+        '        x1 = Math.min(maxX, center + half);\n'
+        '        if (x0 === x1) x1 = Math.min(maxX, x0 + 1);\n'
+        '      }\n'
+        '      j0 = Math.max(0, Math.min(maxX, Math.floor(x0)));\n'
+        '      j1 = Math.max(0, Math.min(maxX, Math.ceil(x1)));\n'
+        '      if (j0 > j1) { sw = j0; j0 = j1; j1 = sw; }\n'
+        '    }\n'
+        '    return { x0: x0, x1: x1, j0: j0, j1: j1 };\n'
+        '  }\n'
         '  function applyYAutorangeWithXRange(gd, xrange) {\n'
         '    var data = gd.data;\n'
         '    if (!data || !data.length || !xrange || xrange.length < 2) return;\n'
+        '    if (gd._hpXClampBusy) return;\n'
         '    var full = gd._fullData;\n'
-        '    var x0 = Math.min(xrange[0], xrange[1]), x1 = Math.max(xrange[0], xrange[1]);\n'
+        '    var rx0 = Math.min(xrange[0], xrange[1]), rx1 = Math.max(xrange[0], xrange[1]);\n'
         '    var n = 0;\n'
         '    for (var i = 0; i < data.length; i++) {\n'
         '      var d = data[i], f = full && full[i];\n'
@@ -212,11 +401,17 @@ def _y_autorange_script(div_id: str) -> str:
         '      if ((d.y && d.y.length) || (f && f.y && f.y.length)) L = Math.max(L, (f && f.y && f.y.length) || 0, (d.y && d.y.length) || 0);\n'
         '      if (L > n) n = L;\n'
         '    }\n'
-        '    if (n > 0) {\n'
-        '      x0 = Math.max(0, Math.min(x0, n - 1)); x1 = Math.min(n - 1, Math.max(x1, 0));\n'
-        '      if (x0 > x1) { var t = x0; x0 = x1; x1 = t; }\n'
-        '    }\n'
-        '    var j0 = Math.max(0, Math.floor(x0)), j1 = Math.ceil(x1);\n'
+        '    if (n <= 0) return;\n'
+        '    var meta = {};\n'
+        '    try {\n'
+        '      var mk = "HP_PLOTLY_META_" + divId;\n'
+        '      if (typeof window !== "undefined" && window[mk]) meta = window[mk];\n'
+        '    } catch (e1) {}\n'
+        '    var mvb = (meta.min_visible_bars != null && meta.min_visible_bars > 0) ? meta.min_visible_bars : HP_DEFAULT_MIN_VISIBLE;\n'
+        '    var lastRow = (meta.plotly_n_subplot_rows != null && meta.plotly_n_subplot_rows > 0) ? meta.plotly_n_subplot_rows : 1;\n'
+        '    var norm = normalizeXViewRange(n, rx0, rx1, mvb);\n'
+        '    var x0 = norm.x0, x1 = norm.x1, j0 = norm.j0, j1 = norm.j1;\n'
+        '    var xNeedsFix = (Math.abs(x0 - rx0) > 1e-9 || Math.abs(x1 - rx1) > 1e-9);\n'
         '    var yaxes = {};\n'
         '    for (var i = 0; i < data.length; i++) {\n'
         '      var t = data[i], f = full && full[i], yax = t.yaxis || "y";\n'
@@ -247,6 +442,13 @@ def _y_autorange_script(div_id: str) -> str:
         '      }\n'
         '    }\n'
         '    var update = {};\n'
+        '    if (xNeedsFix) {\n'
+        '      var xr = [x0, x1];\n'
+        '      for (var xi = 1; xi <= lastRow; xi++) {\n'
+        '        var xk = (xi === 1) ? "xaxis.range" : ("xaxis" + xi + ".range");\n'
+        '        update[xk] = xr;\n'
+        '      }\n'
+        '    }\n'
         '    for (var k in yaxes) {\n'
         '      var r = yaxes[k];\n'
         '      if (r.min !== Infinity && isFinite(r.min) && isFinite(r.max)) {\n'
@@ -259,11 +461,17 @@ def _y_autorange_script(div_id: str) -> str:
         '      var hook = window.__HP_ON_Y_AUTORANGE || (window.parent && window.parent !== window && window.parent.__HP_ON_Y_AUTORANGE);\n'
         '      if (typeof hook === "function") hook(Object.keys(update).length ? update : { _empty: true, _n: n, _x0: x0, _x1: x1, _yaxesKeys: Object.keys(yaxes) });\n'
         '    } catch (e) {}\n'
-        '    if (Object.keys(update).length) {\n'
-        '      for (var key in update) {\n'
-        '        var one = {}; one[key] = update[key];\n'
-        '        try { Plotly.relayout(gd, one); } catch (e) {}\n'
+        '    if (!Object.keys(update).length) return;\n'
+        '    gd._hpXClampBusy = true;\n'
+        '    try {\n'
+        '      var p = Plotly.relayout(gd, update);\n'
+        '      if (p && typeof p.then === "function") {\n'
+        '        p.then(function() { gd._hpXClampBusy = false; }).catch(function() { gd._hpXClampBusy = false; });\n'
+        '      } else {\n'
+        '        setTimeout(function() { gd._hpXClampBusy = false; }, 0);\n'
         '      }\n'
+        '    } catch (e2) {\n'
+        '      gd._hpXClampBusy = false;\n'
         '    }\n'
         '  }\n'
         '  function applyYAutorange(gd, evOrRange) {\n'
@@ -284,6 +492,7 @@ def _y_autorange_script(div_id: str) -> str:
         '    });\n'
         '    gd.on("plotly_relayout", function(ev) {\n'
         '      try {\n'
+        '        if (gd._hpXClampBusy) return;\n'
         '        var xrange = ev ? getXRangeFromEvent(ev) : null;\n'
         '        try { if (typeof window.__HP_ON_Y_AUTORANGE === "function") window.__HP_ON_Y_AUTORANGE({_ev: !!ev, _xrange: xrange ? xrange.length : 0}); else if (window.parent && window.parent !== window && typeof window.parent.__HP_ON_Y_AUTORANGE === "function") window.parent.__HP_ON_Y_AUTORANGE({_ev: !!ev, _xrange: xrange ? xrange.length : 0}); } catch (e) {}\n'
         '        if (xrange && xrange.length >= 2) {\n'
@@ -711,65 +920,38 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     if n <= 0:
         n = 1
 
-    # 可见索引的最小根数限制
-    min_visible_bars = 15
+    _masters = _hp_plotly_master_xaxis_names(fw.layout)
+    if not _masters:
+        _masters = ['xaxis']
+    # shared_x 链上真正随平移/缩放更新的多为 matches=None 的主轴（如 xaxis7），
+    # 仅从 layout.xaxis 读会与从轴上脱节的 range，导致越界不纠正。
+    _x_read_name = _masters[-1]
 
     def _on_xaxis_change(layout_obj: Any, xrange: Any) -> None:
         if getattr(fw, '_hp_updating_y', False):
             return
         try:
-            # xrange 为 xaxis.range 的新值；若拿不到则从当前 layout 读取
-            if xrange and isinstance(xrange, (list, tuple)) and len(xrange) >= 2:
-                x0, x1 = float(xrange[0]), float(xrange[1])
-            else:
-                xaxis = getattr(fw.layout, 'xaxis', None)
-                x_range = getattr(xaxis, 'range', None) if xaxis is not None else None
-                if not x_range or len(x_range) < 2:
-                    x_range = [0, float(n - 1)]
+            # 始终从主 x 轴读取当前 range（与画面上空白/越界一致）
+            xa_m = getattr(fw.layout, _x_read_name, None)
+            x_range = getattr(xa_m, 'range', None) if xa_m is not None else None
+            if x_range and isinstance(x_range, (list, tuple)) and len(x_range) >= 2:
                 x0, x1 = float(x_range[0]), float(x_range[1])
+            else:
+                x0, x1 = 0.0, float(n - 1)
 
-            # 规范化与约束：保证 x0 <= x1，且在 [0, n-1] 范围内
-            if x0 > x1:
-                x0, x1 = x1, x0
-            x0 = max(0.0, min(float(n - 1), x0))
-            x1 = max(0.0, min(float(n - 1), x1))
-            if x0 == x1:
-                x1 = min(float(n - 1), x0 + 1.0)
-
-            # 根据当前范围计算可见 K 线数量，并控制最小缩放级别
-            j0 = max(0, min(n - 1, int(np.floor(x0))))
-            j1 = max(0, min(n - 1, int(np.ceil(x1))))
-            if j0 > j1:
-                j0, j1 = j1, j0
-            visible_count = j1 - j0 + 1
-
-            if n > min_visible_bars and visible_count < min_visible_bars:
-                # 放大过头时，强制回退到至少 min_visible_bars 根，以当前中心为基准
-                center = 0.5 * (x0 + x1)
-                half = 0.5 * float(min_visible_bars - 1)
-                x0 = max(0.0, center - half)
-                x1 = min(float(n - 1), center + half)
-                if x0 == x1:
-                    x1 = min(float(n - 1), x0 + 1.0)
-                j0 = max(0, min(n - 1, int(np.floor(x0))))
-                j1 = max(0, min(n - 1, int(np.ceil(x1))))
-                if j0 > j1:
-                    j0, j1 = j1, j0
+            x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(
+                n, x0, x1, HP_PLOTLY_MIN_VISIBLE_BARS,
+            )
 
             y_ranges = _compute_y_ranges_for_x_range(fw, x0, x1, n)
-            if not y_ranges:
-                return
+            xaxis_names = _hp_plotly_layout_xaxis_names(fw.layout)
+            update = _hp_plotly_x_range_layout_updates(x0, x1, xaxis_names)
+            for key, (ymin, ymax) in y_ranges.items():
+                pad = max((ymax - ymin) * 0.05, 1e-6)
+                update[f'{key}_range'] = [ymin - pad, ymax + pad]
+
             fw._hp_updating_y = True
             try:
-                update = {}
-                for key, (ymin, ymax) in y_ranges.items():
-                    pad = max((ymax - ymin) * 0.05, 1e-6)
-                    # Plotly 多 y 轴用 yaxis_range, yaxis2_range 等
-                    update[f'{key}_range'] = [ymin - pad, ymax + pad]
-
-                # 同步更新 X 轴范围，限制平移不超出 K 线两端
-                update['xaxis_range'] = [x0, x1]
-
                 fw.update_layout(**update)
 
                 # 根据当前可见区间自适应更新时间轴刻度密度
@@ -778,7 +960,7 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 dates = (
                     bar_data[pk] if pk < len(bar_data) and bar_data[pk] else (bar_data[0] if bar_data else [])
                 )
-                if dates:
+                if dates and y_ranges:
                     theme_local = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
                     max_x_ticks = int(theme_local.get('max_x_ticks', 12))
                     visible_count = j1 - j0 + 1
@@ -828,12 +1010,15 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
         except Exception:
             pass
 
-    # 监听 X 轴 range 变化（缩放/平移）实现 Y 轴自适应
+    # 在所有「主」x 轴上监听 range（单列 shared_x 通常仅一根，如 xaxis7）
     try:
-        if hasattr(fw.layout, 'xaxis') and hasattr(fw.layout.xaxis, 'on_change'):
-            fw.layout.xaxis.on_change(_on_xaxis_change, 'range')
-            # 初始化一次 Y 轴范围
-            _on_xaxis_change(fw.layout.xaxis, getattr(fw.layout.xaxis, 'range', [0, float(n - 1)]))
+        for _m in _masters:
+            xa_listen = getattr(fw.layout, _m, None)
+            if xa_listen is not None and hasattr(xa_listen, 'on_change'):
+                xa_listen.on_change(_on_xaxis_change, 'range')
+        xa0 = getattr(fw.layout, _x_read_name, None)
+        if xa0 is not None:
+            _on_xaxis_change(xa0, getattr(xa0, 'range', [0, float(n - 1)]))
     except Exception:
         pass
     try:
@@ -1299,5 +1484,7 @@ def build_interactive_figure_from_specs(
         'header_font_specs': {k: dict(v) for k, v in merge_header_font_theme(theme).items()},
         'subplot_annotation_count': subplot_ann_count,
         'theme': theme,
+        'min_visible_bars': int(HP_PLOTLY_MIN_VISIBLE_BARS),
+        'plotly_n_subplot_rows': int(last_row),
     }
     return fig
