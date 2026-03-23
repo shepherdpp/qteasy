@@ -915,6 +915,97 @@ class TestQ03NormalizeXViewRange(unittest.TestCase):
         print('  got', x0, x1, 'not dual-clamp (0,5)')
 
 
+class TestQ05SelectedCrosshairIndicator(unittest.TestCase):
+    """Q05：选中态十字交叉线与 hover 日期优先契约。"""
+
+    def test_q05_crosshair_meta_and_shapes_created(self):
+        print('\n[Q05] 十字交叉线：meta/shapes + hover 日期优先')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+
+        from qteasy.hp_visual_plotly import (
+            _hp_plotly_crosshair_mid_y_from_rec,
+            _hp_plotly_crosshair_shapes,
+            _PlotlyFigureWrapper,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=12)
+        specs_per_group, types_info, group_titles = _specs_per_group_stack_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertTrue(meta.get('crosshair_enabled'), 'crosshair should be enabled when K-line exists')
+
+        xref = meta.get('crosshair_xref_by_group', [])
+        yref = meta.get('crosshair_yref_by_group', [])
+        self.assertEqual(len(xref), meta.get('n_groups', 0))
+        self.assertEqual(len(yref), meta.get('n_groups', 0))
+        self.assertIn('crosshair_yaxis_layout_key_by_group', meta)
+
+        shapes = list(fig.layout.shapes) if fig.layout.shapes else []
+        self.assertGreaterEqual(len(shapes), 2, 'initial selected crosshair should create at least 2 shapes')
+        self.assertEqual(shapes[0].type, 'line')
+        print('  shapes:', len(shapes), 'first.type:', shapes[0].type)
+
+        mid = _hp_plotly_crosshair_mid_y_from_rec({'open': 1.0, 'close': 3.0})
+        self.assertAlmostEqual(mid, 2.0)
+        print('  mid_y(open=1,close=3)->', mid)
+
+        sh = _hp_plotly_crosshair_shapes(
+            xref='x',
+            yref='y',
+            mid_x=5.0,
+            x0=0.0,
+            x1=9.0,
+            y0=1.0,
+            y1=10.0,
+            mid_y=2.5,
+            dashed=False,
+        )
+        self.assertEqual(len(sh), 2)
+        self.assertEqual(sh[0]['x0'], sh[0]['x1'])
+
+        # 不再实现鼠标移动 label trace；hover 通过 date-first template 统一
+        label_traces = [
+            tr for tr in fig.data
+            if getattr(tr, 'name', '') and str(getattr(tr, 'name', '')).startswith('HP_CROSSHAIR_LABEL_')
+        ]
+        self.assertEqual(len(label_traces), 0)
+        print('  label_traces removed:', len(label_traces))
+
+        self.assertEqual(fig.layout.hovermode, 'closest')
+        first_trace = fig.data[0]
+        self.assertIn('%{text}', str(getattr(first_trace, 'hovertemplate', '') or ''))
+        hl = getattr(first_trace, 'hoverlabel', None)
+        self.assertIsNotNone(hl)
+        self.assertIn('rgba(255,255,255,0.75)', str(getattr(hl, 'bgcolor', '') or ''))
+        print('  hovermode:', fig.layout.hovermode, 'hovertemplate has %{text}:', '%{text}' in str(first_trace.hovertemplate))
+
+        # 副图柱状图（volume/MACD bar）不显示日期标签（hovertemplate 不含 %{text}）
+        bar_templates = []
+        for tr in fig.data:
+            if str(getattr(tr, 'type', '')).lower() == 'bar':
+                bar_templates.append(str(getattr(tr, 'hovertemplate', '') or ''))
+        self.assertGreater(len(bar_templates), 0)
+        self.assertTrue(all('%{text}' not in t for t in bar_templates))
+        print('  bar templates without %{text}:', len(bar_templates))
+
+        wrapper = _PlotlyFigureWrapper(fig)
+        html_str = wrapper._repr_html_()
+        self.assertIn('_hp_crosshair_selected', html_str)
+        self.assertIn('crosshair_xref_by_group', html_str)
+        self.assertIn('%{text}', html_str)
+        self.assertNotIn('showspikes', html_str)
+        print('  html contains date-first hover template, no showspikes')
+
+
 class TestHistoryPanelPlotP1Parity(unittest.TestCase):
     """P1：静态/交互表头、字体转译、图例 inset、蜡烛转译（双模对齐）。"""
 
@@ -963,7 +1054,7 @@ class TestHistoryPanelPlotP1Parity(unittest.TestCase):
         print('  mpl axis_tick:', mpl_t, 'plotly axis_tick:', ply_t)
 
     def test_p1c_plotly_legend_paper_inset(self):
-        print('\n[T-P1c-1] 交互 K 线+MA：图例为 paper 坐标左上 inset')
+        print('\n[T-P1c-1] 交互 K 线+MA：图例默认关闭（避免遮挡图表）')
         htypes = ['open', 'high', 'low', 'close', 'sma_20']
         hp = _make_hp(htypes, n_dates=15, n_shares=1)
         try:
@@ -973,11 +1064,8 @@ class TestHistoryPanelPlotP1Parity(unittest.TestCase):
                 self.skipTest('plotly not installed')
             raise
         base = fig.figure if hasattr(fig, 'figure') else fig
-        leg = base.layout.legend
-        self.assertIsNotNone(leg)
-        self.assertEqual(getattr(leg, 'xref', None), 'paper')
-        self.assertLess(float(leg.x), 0.2)
-        print('  legend.x:', leg.x, 'y:', leg.y, 'xref:', leg.xref)
+        self.assertFalse(bool(getattr(base.layout, 'showlegend', True)))
+        print('  showlegend:', base.layout.showlegend)
 
     def test_p1d_candle_style_adapt_and_trace(self):
         print('\n[T-P1d-1] 蜡烛颜色转译稳定且交互图含 Candlestick 样式')

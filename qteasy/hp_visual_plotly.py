@@ -254,6 +254,7 @@ class _PlotlyFigureWrapper:
             fig_for_html = go.Figure(self._figure)
             kept = _annotations_for_plotly_html_export(fig_for_html.layout, meta)
             fig_for_html.update_layout(title=None, annotations=kept)
+
         html = fig_for_html.to_html(
             include_plotlyjs='cdn',
             config=config,
@@ -457,6 +458,27 @@ def _y_autorange_script(div_id: str) -> str:
         '        update[layoutKey + ".range"] = [r.min - pad, r.max + pad];\n'
         '      }\n'
         '    }\n'
+        '    // Q05：选中态十字交叉线（随 pan/zoom 自动更新/隐藏）\n'
+        '    var sel = gd._hp_crosshair_selected;\n'
+        '    if (sel && meta && meta.crosshair_xref_by_group && meta.crosshair_yref_by_group) {\n'
+        '      var sg = (sel.groupIdx != null) ? sel.groupIdx : 0;\n'
+        '      var si = (sel.idx != null) ? sel.idx : 0;\n'
+        '      var midy = sel.mid_y;\n'
+        '      var xref = meta.crosshair_xref_by_group[sg] || "x";\n'
+        '      var yref = meta.crosshair_yref_by_group[sg] || "y";\n'
+        '      var yr = yaxes[yref];\n'
+        '      var ymin = yr ? yr.min : Infinity;\n'
+        '      var ymax = yr ? yr.max : -Infinity;\n'
+        '      var shapes = [];\n'
+        '      var visible = (si >= j0 && si <= j1);\n'
+        '      if (visible && midy != null && ymin !== Infinity && ymax !== -Infinity) {\n'
+        '        shapes = [\n'
+        '          {type:"line", x0:si, x1:si, y0:ymin, y1:ymax, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '          {type:"line", x0:j0, x1:j1, y0:midy, y1:midy, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '        ];\n'
+        '      }\n'
+        '      update.shapes = shapes;\n'
+        '    }\n'
         '    try {\n'
         '      var hook = window.__HP_ON_Y_AUTORANGE || (window.parent && window.parent !== window && window.parent.__HP_ON_Y_AUTORANGE);\n'
         '      if (typeof hook === "function") hook(Object.keys(update).length ? update : { _empty: true, _n: n, _x0: x0, _x1: x1, _yaxesKeys: Object.keys(yaxes) });\n'
@@ -578,13 +600,34 @@ def _click_update_header_script(div_id: str) -> str:
         '    gd.on("plotly_click", function(ev) {\n'
         '      if (!ev || !ev.points || !ev.points.length) return;\n'
         '      var pt = ev.points[0], pointIndex = pt.pointNumber != null ? pt.pointNumber : Math.round(pt.x);\n'
-        '      var trace = gd.data[pt.curveNumber]; var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
+        '      var trace = gd.data[pt.curveNumber];\n'
+        '      var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
         '      var row = (yax === "y") ? 1 : (parseInt(String(yax).replace(/^y/,""), 10) || 1);\n'
         '      var groupIdx = (ng > 1) ? Math.floor((row - 1) / (nt + 1)) : 0;\n'
         '      if (groupIdx < 0 || groupIdx >= ng) return;\n'
         '      var barData = meta.bar_data[groupIdx]; if (!barData || pointIndex >= barData.length) return;\n'
         '      var rec = barData[pointIndex];\n'
         '      if (hdr) hdr.innerHTML = buildHeaderHTML(rec, fsB, fsE);\n'
+        '      var midy = null;\n'
+        '      if (rec.open != null && rec.close != null) midy = 0.5 * (rec.open + rec.close);\n'
+        '      else if (rec.high != null && rec.low != null) midy = 0.5 * (rec.high + rec.low);\n'
+        '      gd._hp_crosshair_selected = { groupIdx: groupIdx, idx: pointIndex, mid_y: midy };\n'
+        '      var xRange = (gd.layout && gd.layout.xaxis && gd.layout.xaxis.range && gd.layout.xaxis.range.length >= 2) ? gd.layout.xaxis.range : [0, pointIndex];\n'
+        '      var x0 = xRange[0], x1 = xRange[1];\n'
+        '      var xref = (meta.crosshair_xref_by_group && meta.crosshair_xref_by_group[groupIdx]) ? meta.crosshair_xref_by_group[groupIdx] : "x";\n'
+        '      var yref = (meta.crosshair_yref_by_group && meta.crosshair_yref_by_group[groupIdx]) ? meta.crosshair_yref_by_group[groupIdx] : "y";\n'
+        '      var yaxisKey = (yref === "y") ? "yaxis" : ("yaxis" + String(yref).replace(/^y/, ""));\n'
+        '      var yaxisObj = gd.layout ? gd.layout[yaxisKey] : null;\n'
+        '      var yRange = (yaxisObj && yaxisObj.range && yaxisObj.range.length >= 2) ? yaxisObj.range : [rec.low || midy || 0, rec.high || midy || 1];\n'
+        '      var y0 = yRange[0], y1 = yRange[1];\n'
+        '      var shapes = [];\n'
+        '      if (midy != null && x0 != null && x1 != null) {\n'
+        '        shapes = [\n'
+        '          {type:"line", x0:pointIndex, x1:pointIndex, y0:y0, y1:y1, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '          {type:"line", x0:x0, x1:x1, y0:midy, y1:midy, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '        ];\n'
+        '      }\n'
+        '      Plotly.relayout(gd, {shapes: shapes});\n'
         '    });\n'
         '  }\n'
         '  if (document.readyState === "complete") attach(); else window.addEventListener("load", attach);\n'
@@ -908,6 +951,17 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 annotations=base + _build_top_info_annotations(init_rec, theme, y1=py1, y2=py2),
             )
 
+    # Q05：十字交叉线指示器状态（FigureWidget 路径）
+    meta_local = getattr(fw, '_hp_plotly_meta', {}) or {}
+    crosshair_enabled = bool(meta_local.get('crosshair_enabled'))
+    n_groups = int(meta_local.get('n_groups', 1) or 1)
+    if crosshair_enabled:
+        fw._hp_crosshair_selected = {
+            'group': int(meta_local.get('crosshair_selected_group', 0)),
+            'idx': int(meta_local.get('crosshair_selected_idx', 0)),
+            'mid_y': meta_local.get('crosshair_selected_mid_y', None),
+        }
+
     # 数据长度 n（X 为 0..n-1）
     n = 0
     if fw.data:
@@ -926,6 +980,67 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     # shared_x 链上真正随平移/缩放更新的多为 matches=None 的主轴（如 xaxis7），
     # 仅从 layout.xaxis 读会与从轴上脱节的 range，导致越界不纠正。
     _x_read_name = _masters[-1]
+
+    # Q05：十字交叉线 shapes 与 label trace 更新（FigureWidget）
+    def _hp_crosshair_get_current_j0_j1() -> Tuple[int, int]:
+        xa_m = getattr(fw.layout, _x_read_name, None)
+        x_range = getattr(xa_m, 'range', None) if xa_m is not None else None
+        if x_range and isinstance(x_range, (list, tuple)) and len(x_range) >= 2:
+            x0, x1 = float(x_range[0]), float(x_range[1])
+        else:
+            x0, x1 = 0.0, float(n - 1)
+        _, _, j0, j1 = _hp_plotly_normalize_x_view_range(
+            n, x0, x1, HP_PLOTLY_MIN_VISIBLE_BARS,
+        )
+        return j0, j1
+
+    def _hp_crosshair_read_y_range(
+        group: int,
+        y_ranges: Optional[Dict[str, List[float]]] = None,
+    ) -> Tuple[float, float]:
+        ykey = meta_local.get('crosshair_yaxis_layout_key_by_group', ['yaxis'] * n_groups)[group]
+        if y_ranges and ykey in y_ranges:
+            ymin, ymax = y_ranges[ykey]
+            return float(ymin), float(ymax)
+        yaxis_obj = getattr(fw.layout, ykey, None)
+        r = getattr(yaxis_obj, 'range', None) if yaxis_obj is not None else None
+        if r and isinstance(r, (list, tuple)) and len(r) >= 2:
+            return float(r[0]), float(r[1])
+        return 0.0, 1.0
+
+    def _hp_crosshair_update_shapes(j0: int, j1: int, *, y_ranges: Optional[Dict[str, List[float]]] = None) -> None:
+        if not crosshair_enabled:
+            return
+        if getattr(fw, '_hp_updating_crosshair', False):
+            return
+        fw._hp_updating_crosshair = True
+        try:
+            shapes: List[Dict[str, Any]] = []
+            sel = getattr(fw, '_hp_crosshair_selected', None) or {}
+            sel_group = int(sel.get('group', 0))
+            sel_idx = int(sel.get('idx', 0))
+            sel_mid_y = sel.get('mid_y', None)
+            if sel_mid_y is not None and j0 <= sel_idx <= j1:
+                y0, y1 = _hp_crosshair_read_y_range(sel_group, y_ranges)
+                xref = meta_local.get('crosshair_xref_by_group', ['x'] * n_groups)[sel_group]
+                yref = meta_local.get('crosshair_yref_by_group', ['y'] * n_groups)[sel_group]
+                shapes.extend(
+                    _hp_plotly_crosshair_shapes(
+                        xref=xref,
+                        yref=yref,
+                        mid_x=float(sel_idx),
+                        x0=float(j0),
+                        x1=float(j1),
+                        y0=y0,
+                        y1=y1,
+                        mid_y=float(sel_mid_y),
+                        dashed=False,
+                    )
+                )
+
+            fw.update_layout(shapes=shapes)
+        finally:
+            fw._hp_updating_crosshair = False
 
     def _on_xaxis_change(layout_obj: Any, xrange: Any) -> None:
         if getattr(fw, '_hp_updating_y', False):
@@ -976,6 +1091,10 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                             tickvals=tickvals,
                             ticktext=ticktext,
                         )
+
+                # Q05：缩放/平移后重算十字交叉线（选中态 + 悬停态）
+                fw._hp_crosshair_last_j0_j1 = (j0, j1)
+                _hp_crosshair_update_shapes(j0, j1, y_ranges=y_ranges)
             finally:
                 fw._hp_updating_y = False
         except Exception:
@@ -1007,6 +1126,17 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
             new_annotations = base + _build_top_info_annotations(rec, theme, y1=py1, y2=py2)
             fw.update_layout(annotations=new_annotations)
+
+            # Q05：点击任意子图点，更新选中态十字交叉线
+            if crosshair_enabled:
+                mid_y = _hp_plotly_crosshair_mid_y_from_rec(rec)
+                fw._hp_crosshair_selected = {
+                    'group': int(group),
+                    'idx': int(point_index),
+                    'mid_y': mid_y,
+                }
+                j0, j1 = _hp_crosshair_get_current_j0_j1()
+                _hp_crosshair_update_shapes(j0, j1)
         except Exception:
             pass
 
@@ -1073,6 +1203,82 @@ def _format_display_text(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
     if rec.get('ma'):
         lines.append("MA: " + ", ".join(f"{k}={v:.2f}" for k, v in rec['ma'].items()))
     return "  |  ".join(lines)
+
+
+def _hp_plotly_crosshair_mid_y_from_rec(rec: Mapping[str, Any]) -> Optional[float]:
+    """计算主价格 bar 的“柱子中点”Y，用于十字交叉线指示器。
+
+    目前采用 oc 定义：``(open + close) / 2``；若缺少 open/close 则回退 ``(high + low) / 2``。
+    """
+    open_v = rec.get('open', None)
+    close_v = rec.get('close', None)
+    if open_v is not None and close_v is not None:
+        try:
+            return 0.5 * (float(open_v) + float(close_v))
+        except Exception:
+            pass
+    high_v = rec.get('high', None)
+    low_v = rec.get('low', None)
+    if high_v is not None and low_v is not None:
+        try:
+            return 0.5 * (float(high_v) + float(low_v))
+        except Exception:
+            pass
+    return None
+
+
+def _hp_plotly_crosshair_shapes(
+    *,
+    xref: str,
+    yref: str,
+    mid_x: float,
+    x0: float,
+    x1: float,
+    y0: float,
+    y1: float,
+    mid_y: float,
+    dashed: bool,
+    color: str = 'black',
+    width: float = 1.0,
+) -> List[Dict[str, Any]]:
+    """生成十字交叉线 shapes（竖线 + 横线）。
+
+    Parameters
+    ----------
+    xref, yref : str
+        Plotly shapes 的轴引用，如 ``'x'/'x2'`` 与 ``'y'/'y2'``。
+    mid_x : float
+        竖线所在的 x 坐标（通常为 selected/hover 的 bar index）。
+    x0, x1 : float
+        横线覆盖的 x 轴区间（通常为当前可见区间的 j0/j1）。
+    y0, y1 : float
+        竖线覆盖的 y 轴区间（来自当前 yaxis range）。
+    mid_y : float
+        交点 Y（主价格 bar 的中点）。
+    dashed : bool
+        是否为虚线（悬停态用）。
+
+    Returns
+    -------
+    list
+        shapes 列表，顺序为 ``[vline, hline]``。
+    """
+    dash = 'dash' if dashed else 'solid'
+    vline = dict(
+        type='line',
+        x0=float(mid_x), x1=float(mid_x),
+        y0=float(y0), y1=float(y1),
+        xref=xref, yref=yref,
+        line=dict(color=color, width=width, dash=dash),
+    )
+    hline = dict(
+        type='line',
+        x0=float(x0), x1=float(x1),
+        y0=float(mid_y), y1=float(mid_y),
+        xref=xref, yref=yref,
+        line=dict(color=color, width=width, dash=dash),
+    )
+    return [vline, hline]
 
 
 def _bar_data_to_json_serializable(
@@ -1219,6 +1425,15 @@ def build_interactive_figure_from_specs(
         grp = bar_data_per_group[pk]
         if grp:
             header_rec = grp[-1]
+    crosshair_selected_group = int(pk if pk is not None else 0)
+    crosshair_selected_idx = int(max(0, n - 1))
+    crosshair_selected_mid_y = (
+        _hp_plotly_crosshair_mid_y_from_rec(header_rec)
+        if header_rec else None
+    )
+    crosshair_xref_by_group: List[str] = ['x'] * n_groups
+    crosshair_yref_by_group: List[str] = ['y'] * n_groups
+    crosshair_yaxis_layout_key_by_group: List[str] = ['yaxis'] * n_groups
 
     row_off = 1 if (show_ohlc_header and bool(header_rec)) else 0
     layout_spec = compute_hp_visual_layout_spec(
@@ -1254,6 +1469,10 @@ def build_interactive_figure_from_specs(
     for g in range(n_groups):
         gt = (group_titles[g] if group_titles and g < len(group_titles) else '').strip()
         name_prefix = f'{gt} | ' if n_groups > 1 and gt else ''
+        group_recs = bar_data_per_group[g] if g < len(bar_data_per_group) else []
+        hover_dates = [str(r.get('date_str', '')) for r in group_recs[:n]]
+        if len(hover_dates) < n:
+            hover_dates.extend([''] * (n - len(hover_dates)))
         for t in range(n_types):
             plot_row = plotly_trace_row_1based(layout_spec, g, t)
             spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
@@ -1286,10 +1505,23 @@ def build_interactive_figure_from_specs(
                         name=f'{name_prefix}Price' if name_prefix else 'Price',
                         legendgroup=f'g{g}',
                         customdata=group_custom,
+                        text=hover_dates,
+                        hovertemplate='%{text}<br>O:%{open:.3f} H:%{high:.3f} L:%{low:.3f} C:%{close:.3f}<extra></extra>',
+                        hoverlabel=dict(
+                            bgcolor='rgba(255,255,255,0.75)',
+                            bordercolor='rgba(0,0,0,0.55)',
+                            font=dict(color='black'),
+                        ),
                     ),
                     row=plot_row,
                     col=1,
                 )
+                # 主价格子图 axis ref：供十字交叉线 shapes 绘制与更新使用
+                xref = 'x' if plot_row == 1 else f'x{plot_row}'
+                yref = 'y' if plot_row == 1 else f'y{plot_row}'
+                crosshair_xref_by_group[g] = xref
+                crosshair_yref_by_group[g] = yref
+                crosshair_yaxis_layout_key_by_group[g] = 'yaxis' if plot_row == 1 else f'yaxis{plot_row}'
                 # MA 线
                 for key in data:
                     if key in ('open', 'high', 'low', 'close'):
@@ -1302,6 +1534,13 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             line=dict(width=1),
                             customdata=group_custom,
+                            text=hover_dates,
+                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1324,6 +1563,12 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             showlegend=False,
                             customdata=group_custom,
+                            hovertemplate='Vol:%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1343,6 +1588,12 @@ def build_interactive_figure_from_specs(
                                 legendgroup=f'g{g}',
                                 showlegend=False,
                                 customdata=group_custom,
+                                hovertemplate='%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
                             ),
                             row=plot_row,
                             col=1,
@@ -1355,6 +1606,13 @@ def build_interactive_figure_from_specs(
                                 legendgroup=f'g{g}',
                                 line=dict(width=1),
                                 customdata=group_custom,
+                                text=hover_dates,
+                                hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
                             ),
                             row=plot_row,
                             col=1,
@@ -1370,6 +1628,13 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             line=dict(width=1),
                             customdata=group_custom,
+                            text=hover_dates,
+                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1391,20 +1656,6 @@ def build_interactive_figure_from_specs(
     )
     tick_font_x = dict(size=font_tick, family='Arial')
     tick_font_y = plotly_font_dict(font_tick)
-    legend_cfg: Dict[str, Any] = dict(
-        orientation='v',
-        yanchor='top',
-        y=0.99,
-        yref='paper',
-        xanchor='left',
-        x=0.01,
-        xref='paper',
-        bgcolor='rgba(255,255,255,0.75)',
-        bordercolor='#cccccc',
-        borderwidth=1,
-    )
-    if n_groups > 1:
-        legend_cfg['tracegroupgap'] = 12
     layout_updates = dict(
         height=fig_height,
         width=fig_width,
@@ -1414,8 +1665,8 @@ def build_interactive_figure_from_specs(
         font=dict(size=font_tick, family='Arial'),
         template='none',
         dragmode='pan',
-        hovermode='x unified',
-        legend=legend_cfg,
+        hovermode='closest',
+        showlegend=False,
     )
     fig.update_layout(**layout_updates)
     # 每组子图左侧 y 轴标签（与静态 set_ylabel 一致）；仅最下方显示 x 轴标签（日期）；Y 轴固定不随拖动
@@ -1460,6 +1711,29 @@ def build_interactive_figure_from_specs(
             ),
         })
 
+    # 十字交叉线（选中态）初始化：初始 y 端点用 header_rec 的 high/low，随后在 FigureWidget 回调中重算
+    initial_shapes: List[Dict[str, Any]] = []
+    if show_ohlc_header and crosshair_selected_mid_y is not None:
+        sel_g = crosshair_selected_group
+        xref0 = crosshair_xref_by_group[sel_g]
+        yref0 = crosshair_yref_by_group[sel_g]
+        y0 = float(header_rec.get('low', crosshair_selected_mid_y))
+        y1 = float(header_rec.get('high', crosshair_selected_mid_y))
+        shapes = _hp_plotly_crosshair_shapes(
+            xref=xref0,
+            yref=yref0,
+            mid_x=float(crosshair_selected_idx),
+            x0=0.0,
+            x1=float(max(0, n - 1)),
+            y0=y0,
+            y1=y1,
+            mid_y=float(crosshair_selected_mid_y),
+            dashed=False,
+        )
+        initial_shapes = shapes
+    if initial_shapes:
+        fig.update_layout(shapes=initial_shapes)
+
     if fig.layout.annotations:
         ft = resolve_header_font_plotly(theme, 'header_title')
         for ann in fig.layout.annotations:
@@ -1483,6 +1757,14 @@ def build_interactive_figure_from_specs(
         'header_font_emphasis': resolve_font_size('plotly', 'header_emphasis', theme),
         'header_font_specs': {k: dict(v) for k, v in merge_header_font_theme(theme).items()},
         'subplot_annotation_count': subplot_ann_count,
+        # Q05：十字交叉线指示器（选中态 + FigureWidget 悬停态）
+        'crosshair_enabled': bool(show_ohlc_header and crosshair_selected_mid_y is not None),
+        'crosshair_selected_group': int(crosshair_selected_group),
+        'crosshair_selected_idx': int(crosshair_selected_idx),
+        'crosshair_selected_mid_y': crosshair_selected_mid_y,
+        'crosshair_xref_by_group': crosshair_xref_by_group,
+        'crosshair_yref_by_group': crosshair_yref_by_group,
+        'crosshair_yaxis_layout_key_by_group': crosshair_yaxis_layout_key_by_group,
         'theme': theme,
         'min_visible_bars': int(HP_PLOTLY_MIN_VISIBLE_BARS),
         'plotly_n_subplot_rows': int(last_row),

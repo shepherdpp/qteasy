@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 2.2.5 (2026-03-23)
+- **HistoryPanel interactive crosshair indicator (Q05)**
+  Added a reusable selected-bar crosshair indicator to interactive Plotly charts: clicking any bar (including points from secondary subplots like `Vol`) shows a solid crosshair in the main price panel at the bar midpoint (`(open+close)/2`). The indicator stays synced during pan/zoom and hides when the selected bar scrolls out of view. Hover behavior is simplified in both FigureWidget and HTML paths: no extra mouse-following crosshair is drawn, and hover content is normalized to show date-first labels instead of mixed index/date titles.
+- **Interactive hover/legend readability refinements**
+  Improved tooltip readability with semi-transparent white hover backgrounds and darker borders, removed date labels from volume/MACD bar tooltips to keep secondary panels concise, and disabled plot legends by default to avoid covering chart content.
+
 ## 2.2.4 (2026-03-22)
 - **HistoryPanel charts with adjusted OHLC columns (Q01)**  
   Fixed a bug in `HistoryPanel.plot()` where adjusted price column names (e.g. `open|b`, `high|b`, `low|b`, `close|b`) are not recognized, now candlestick charts are rendered correctly for back-/forward-adjusted panels. When both raw and adjusted OHLC are present, the raw (unsuffixed) family is used for the candlestick, matching existing price-column resolution conventions.
