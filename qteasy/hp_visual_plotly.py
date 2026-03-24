@@ -40,6 +40,150 @@ try:
 except ImportError:
     _HAS_PLOTLY = False
 
+# 交互图 x 轴：最少可见 bar 数（与 FigureWidget、HTML 内联脚本一致，Q03 / L1）
+HP_PLOTLY_MIN_VISIBLE_BARS: int = 15
+
+
+def _hp_plotly_translate_x_range_into_bounds(x0: float, x1: float, n: int) -> Tuple[float, float]:
+    """
+    在保持区间长度（不超过数据跨度）的前提下，将 ``[x0, x1]`` 平移落入 ``[0, n-1]``。
+
+    若对越界两端分别 ``clamp``，会缩短视窗宽度，视觉上像被 zoom；本函数用于纯 pan 越界时
+    只「平移」回数据域，与 ``_y_autorange_script`` 内联 JS 一致。
+    """
+    if n <= 1:
+        return 0.0, float(max(0, n - 1))
+    max_x = float(n - 1)
+    if x0 > x1:
+        x0, x1 = x1, x0
+    span = x1 - x0
+    if span <= 0:
+        return 0.0, min(max_x, 1.0)
+    if span >= max_x:
+        return 0.0, max_x
+    if x0 < 0:
+        x1 -= x0
+        x0 = 0.0
+    if x1 > max_x:
+        x0 -= (x1 - max_x)
+        x1 = max_x
+    if x0 < 0:
+        x0 = 0.0
+        x1 = min(max_x, span)
+    if x1 > max_x:
+        x1 = max_x
+        x0 = max(0.0, x1 - span)
+    return x0, x1
+
+
+def _hp_plotly_normalize_x_view_range(
+    n: int,
+    x0: float,
+    x1: float,
+    min_visible_bars: int = HP_PLOTLY_MIN_VISIBLE_BARS,
+) -> Tuple[float, float, int, int]:
+    """
+    将 Plotly x 轴视图范围规范到数据索引域 ``[0, n-1]``，并限制最小可见根数（Q03 / L1+L2）。
+
+    越界时优先 **保持视窗宽度、整段平移**（pan 语义），避免两端独立 clamp 造成视窗变窄。
+    算法须与 ``_y_autorange_script`` 中内联 JavaScript 的 ``normalizeXViewRange`` 保持一致。
+
+    Parameters
+    ----------
+    n : int
+        bar 根数，合法索引为 ``0 .. n-1``。
+    x0, x1 : float
+        视图左右端；若 ``x0 > x1`` 将交换。
+    min_visible_bars : int
+        期望的可见 bar 数下限。实际使用 ``effective = min(min_visible_bars, n)``：
+        当 ``n`` 大于 ``min_visible_bars`` 时至少显示 ``min_visible_bars`` 根；
+        当 ``n`` 不大于 ``min_visible_bars`` 时至少显示全部 ``n`` 根（禁止继续放大到更窄视窗）。
+
+    Returns
+    -------
+    tuple[float, float, int, int]
+        规范化后的 ``(x0, x1, j0, j1)``，其中 ``j0,j1`` 为 ``floor/ceil`` 后与 ``[0,n-1]`` 求交后的索引界。
+    """
+    if n <= 0:
+        n = 1
+    x0, x1 = float(x0), float(x1)
+    if x0 > x1:
+        x0, x1 = x1, x0
+    max_x = float(n - 1)
+    if x0 == x1:
+        x1 = min(max_x, x0 + 1.0)
+    x0, x1 = _hp_plotly_translate_x_range_into_bounds(x0, x1, n)
+    j0 = max(0, min(n - 1, int(np.floor(x0))))
+    j1 = max(0, min(n - 1, int(np.ceil(x1))))
+    if j0 > j1:
+        j0, j1 = j1, j0
+    visible_count = j1 - j0 + 1
+    effective_mvb = min(min_visible_bars, n)
+    if visible_count < effective_mvb:
+        if effective_mvb >= n:
+            x0, x1 = 0.0, max_x
+        else:
+            center = 0.5 * (x0 + x1)
+            half = 0.5 * float(effective_mvb - 1)
+            x0 = max(0.0, center - half)
+            x1 = min(max_x, center + half)
+            if x0 == x1:
+                x1 = min(max_x, x0 + 1.0)
+        j0 = max(0, min(n - 1, int(np.floor(x0))))
+        j1 = max(0, min(n - 1, int(np.ceil(x1))))
+        if j0 > j1:
+            j0, j1 = j1, j0
+    return x0, x1, j0, j1
+
+
+def _hp_plotly_layout_xaxis_names(layout: Any) -> List[str]:
+    """
+    列出 ``layout`` 上已存在的 x 轴属性名（``xaxis``, ``xaxis2``, …）。
+
+    供 FigureWidget 与 ``update_layout`` 多轴同步时使用。
+    """
+    names: List[str] = []
+    if getattr(layout, 'xaxis', None) is not None:
+        names.append('xaxis')
+    for i in range(2, 25):
+        key = f'xaxis{i}'
+        if getattr(layout, key, None) is not None:
+            names.append(key)
+    return names
+
+
+def _hp_plotly_master_xaxis_names(layout: Any) -> List[str]:
+    """
+    返回 ``matches`` 为空的 x 轴名（shared_x 链上的「主」轴，如 ``xaxis7``）。
+
+    多列子图时可能多于一个；本项目的交互图仅为单列，通常只有一个主 x。
+    """
+    masters: List[str] = []
+    for name in _hp_plotly_layout_xaxis_names(layout):
+        xa = getattr(layout, name)
+        m = getattr(xa, 'matches', None)
+        if m is None or m is False:
+            masters.append(name)
+    return masters
+
+
+def _hp_plotly_x_range_layout_updates(
+    x0: float,
+    x1: float,
+    xaxis_names: Sequence[str],
+) -> Dict[str, Any]:
+    """
+    构造 ``update_layout`` 用的 ``xaxis*_range`` 字典，使所有已存在的 x 轴共用一个 range。
+    """
+    upd: Dict[str, Any] = {}
+    for name in xaxis_names:
+        if name == 'xaxis':
+            upd['xaxis_range'] = [x0, x1]
+        else:
+            suffix = name.replace('xaxis', '', 1)
+            upd[f'xaxis{suffix}_range'] = [x0, x1]
+    return upd
+
 
 def _annotations_for_plotly_html_export(layout: Any, meta: Optional[Mapping[str, Any]]) -> List[Any]:
     """
@@ -110,6 +254,7 @@ class _PlotlyFigureWrapper:
             fig_for_html = go.Figure(self._figure)
             kept = _annotations_for_plotly_html_export(fig_for_html.layout, meta)
             fig_for_html.update_layout(title=None, annotations=kept)
+
         html = fig_for_html.to_html(
             include_plotlyjs='cdn',
             config=config,
@@ -133,6 +278,9 @@ class _PlotlyFigureWrapper:
         script = _click_update_header_script(div_id)
         if script:
             html = html.rstrip(' \n') + '\n' + script
+        y_script = _y_autorange_script(div_id)
+        if y_script:
+            html = html.rstrip(' \n') + '\n' + y_script
         return html
 
     def show(self) -> None:
@@ -145,10 +293,16 @@ class _PlotlyFigureWrapper:
 
 
 def _y_autorange_script(div_id: str) -> str:
-    """时间范围（X 轴）变化后，每张图表 Y 轴范围调整为该图可见数据的 MIN/MAX。"""
+    """
+    嵌入 HTML：在 x 轴范围变化后按可见区间调整各 y 轴，并与 FigureWidget 一致地钳制 x（Q03）。
+
+    x 视图归一化（clamp、最少可见根数）须与 ``_hp_plotly_normalize_x_view_range`` 保持一致。
+    """
+    _min_vis_js = str(int(HP_PLOTLY_MIN_VISIBLE_BARS))
     return (
         '<script type="text/javascript">\n'
         '(function() {\n'
+        f'  var HP_DEFAULT_MIN_VISIBLE = {_min_vis_js};\n'
         '  var divId = ' + repr(div_id) + ';\n'
         '  function getXRangeFromLayout(layout) {\n'
         '    var k, r;\n'
@@ -198,11 +352,47 @@ def _y_autorange_script(div_id: str) -> str:
         '    if (xMin === Infinity) return null;\n'
         '    return [xMin, xMax];\n'
         '  }\n'
+        '  function normalizeXViewRange(n, x0, x1, mvb) {\n'
+        '    var sw;\n'
+        '    if (n <= 0) n = 1;\n'
+        '    var maxX = n - 1;\n'
+        '    if (x0 > x1) { sw = x0; x0 = x1; x1 = sw; }\n'
+        '    if (x0 === x1) x1 = Math.min(maxX, x0 + 1);\n'
+        '    var span = x1 - x0;\n'
+        '    if (span <= 0) { x0 = 0; x1 = Math.min(maxX, 1); }\n'
+        '    else if (span >= maxX) { x0 = 0; x1 = maxX; }\n'
+        '    else {\n'
+        '      if (x0 < 0) { x1 -= x0; x0 = 0; }\n'
+        '      if (x1 > maxX) { x0 -= (x1 - maxX); x1 = maxX; }\n'
+        '      if (x0 < 0) { x0 = 0; x1 = Math.min(maxX, span); }\n'
+        '      if (x1 > maxX) { x1 = maxX; x0 = Math.max(0, x1 - span); }\n'
+        '    }\n'
+        '    var j0 = Math.max(0, Math.min(maxX, Math.floor(x0)));\n'
+        '    var j1 = Math.max(0, Math.min(maxX, Math.ceil(x1)));\n'
+        '    if (j0 > j1) { sw = j0; j0 = j1; j1 = sw; }\n'
+        '    var visibleCount = j1 - j0 + 1;\n'
+        '    var effMvb = Math.min(mvb, n);\n'
+        '    if (visibleCount < effMvb) {\n'
+        '      if (effMvb >= n) { x0 = 0; x1 = maxX; }\n'
+        '      else {\n'
+        '        var center = 0.5 * (x0 + x1);\n'
+        '        var half = 0.5 * (effMvb - 1);\n'
+        '        x0 = Math.max(0, center - half);\n'
+        '        x1 = Math.min(maxX, center + half);\n'
+        '        if (x0 === x1) x1 = Math.min(maxX, x0 + 1);\n'
+        '      }\n'
+        '      j0 = Math.max(0, Math.min(maxX, Math.floor(x0)));\n'
+        '      j1 = Math.max(0, Math.min(maxX, Math.ceil(x1)));\n'
+        '      if (j0 > j1) { sw = j0; j0 = j1; j1 = sw; }\n'
+        '    }\n'
+        '    return { x0: x0, x1: x1, j0: j0, j1: j1 };\n'
+        '  }\n'
         '  function applyYAutorangeWithXRange(gd, xrange) {\n'
         '    var data = gd.data;\n'
         '    if (!data || !data.length || !xrange || xrange.length < 2) return;\n'
+        '    if (gd._hpXClampBusy) return;\n'
         '    var full = gd._fullData;\n'
-        '    var x0 = Math.min(xrange[0], xrange[1]), x1 = Math.max(xrange[0], xrange[1]);\n'
+        '    var rx0 = Math.min(xrange[0], xrange[1]), rx1 = Math.max(xrange[0], xrange[1]);\n'
         '    var n = 0;\n'
         '    for (var i = 0; i < data.length; i++) {\n'
         '      var d = data[i], f = full && full[i];\n'
@@ -212,11 +402,17 @@ def _y_autorange_script(div_id: str) -> str:
         '      if ((d.y && d.y.length) || (f && f.y && f.y.length)) L = Math.max(L, (f && f.y && f.y.length) || 0, (d.y && d.y.length) || 0);\n'
         '      if (L > n) n = L;\n'
         '    }\n'
-        '    if (n > 0) {\n'
-        '      x0 = Math.max(0, Math.min(x0, n - 1)); x1 = Math.min(n - 1, Math.max(x1, 0));\n'
-        '      if (x0 > x1) { var t = x0; x0 = x1; x1 = t; }\n'
-        '    }\n'
-        '    var j0 = Math.max(0, Math.floor(x0)), j1 = Math.ceil(x1);\n'
+        '    if (n <= 0) return;\n'
+        '    var meta = {};\n'
+        '    try {\n'
+        '      var mk = "HP_PLOTLY_META_" + divId;\n'
+        '      if (typeof window !== "undefined" && window[mk]) meta = window[mk];\n'
+        '    } catch (e1) {}\n'
+        '    var mvb = (meta.min_visible_bars != null && meta.min_visible_bars > 0) ? meta.min_visible_bars : HP_DEFAULT_MIN_VISIBLE;\n'
+        '    var lastRow = (meta.plotly_n_subplot_rows != null && meta.plotly_n_subplot_rows > 0) ? meta.plotly_n_subplot_rows : 1;\n'
+        '    var norm = normalizeXViewRange(n, rx0, rx1, mvb);\n'
+        '    var x0 = norm.x0, x1 = norm.x1, j0 = norm.j0, j1 = norm.j1;\n'
+        '    var xNeedsFix = (Math.abs(x0 - rx0) > 1e-9 || Math.abs(x1 - rx1) > 1e-9);\n'
         '    var yaxes = {};\n'
         '    for (var i = 0; i < data.length; i++) {\n'
         '      var t = data[i], f = full && full[i], yax = t.yaxis || "y";\n'
@@ -247,6 +443,13 @@ def _y_autorange_script(div_id: str) -> str:
         '      }\n'
         '    }\n'
         '    var update = {};\n'
+        '    if (xNeedsFix) {\n'
+        '      var xr = [x0, x1];\n'
+        '      for (var xi = 1; xi <= lastRow; xi++) {\n'
+        '        var xk = (xi === 1) ? "xaxis.range" : ("xaxis" + xi + ".range");\n'
+        '        update[xk] = xr;\n'
+        '      }\n'
+        '    }\n'
         '    for (var k in yaxes) {\n'
         '      var r = yaxes[k];\n'
         '      if (r.min !== Infinity && isFinite(r.min) && isFinite(r.max)) {\n'
@@ -255,15 +458,42 @@ def _y_autorange_script(div_id: str) -> str:
         '        update[layoutKey + ".range"] = [r.min - pad, r.max + pad];\n'
         '      }\n'
         '    }\n'
+        '    // Q05：选中态十字交叉线（随 pan/zoom 自动更新/隐藏）\n'
+        '    var sel = gd._hp_crosshair_selected;\n'
+        '    if (sel && meta && meta.crosshair_xref_by_group && meta.crosshair_yref_by_group) {\n'
+        '      var sg = (sel.groupIdx != null) ? sel.groupIdx : 0;\n'
+        '      var si = (sel.idx != null) ? sel.idx : 0;\n'
+        '      var midy = sel.mid_y;\n'
+        '      var xref = meta.crosshair_xref_by_group[sg] || "x";\n'
+        '      var yref = meta.crosshair_yref_by_group[sg] || "y";\n'
+        '      var yr = yaxes[yref];\n'
+        '      var ymin = yr ? yr.min : Infinity;\n'
+        '      var ymax = yr ? yr.max : -Infinity;\n'
+        '      var shapes = [];\n'
+        '      var visible = (si >= j0 && si <= j1);\n'
+        '      if (visible && midy != null && ymin !== Infinity && ymax !== -Infinity) {\n'
+        '        shapes = [\n'
+        '          {type:"line", x0:si, x1:si, y0:ymin, y1:ymax, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '          {type:"line", x0:j0, x1:j1, y0:midy, y1:midy, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '        ];\n'
+        '      }\n'
+        '      update.shapes = shapes;\n'
+        '    }\n'
         '    try {\n'
         '      var hook = window.__HP_ON_Y_AUTORANGE || (window.parent && window.parent !== window && window.parent.__HP_ON_Y_AUTORANGE);\n'
         '      if (typeof hook === "function") hook(Object.keys(update).length ? update : { _empty: true, _n: n, _x0: x0, _x1: x1, _yaxesKeys: Object.keys(yaxes) });\n'
         '    } catch (e) {}\n'
-        '    if (Object.keys(update).length) {\n'
-        '      for (var key in update) {\n'
-        '        var one = {}; one[key] = update[key];\n'
-        '        try { Plotly.relayout(gd, one); } catch (e) {}\n'
+        '    if (!Object.keys(update).length) return;\n'
+        '    gd._hpXClampBusy = true;\n'
+        '    try {\n'
+        '      var p = Plotly.relayout(gd, update);\n'
+        '      if (p && typeof p.then === "function") {\n'
+        '        p.then(function() { gd._hpXClampBusy = false; }).catch(function() { gd._hpXClampBusy = false; });\n'
+        '      } else {\n'
+        '        setTimeout(function() { gd._hpXClampBusy = false; }, 0);\n'
         '      }\n'
+        '    } catch (e2) {\n'
+        '      gd._hpXClampBusy = false;\n'
         '    }\n'
         '  }\n'
         '  function applyYAutorange(gd, evOrRange) {\n'
@@ -284,6 +514,7 @@ def _y_autorange_script(div_id: str) -> str:
         '    });\n'
         '    gd.on("plotly_relayout", function(ev) {\n'
         '      try {\n'
+        '        if (gd._hpXClampBusy) return;\n'
         '        var xrange = ev ? getXRangeFromEvent(ev) : null;\n'
         '        try { if (typeof window.__HP_ON_Y_AUTORANGE === "function") window.__HP_ON_Y_AUTORANGE({_ev: !!ev, _xrange: xrange ? xrange.length : 0}); else if (window.parent && window.parent !== window && typeof window.parent.__HP_ON_Y_AUTORANGE === "function") window.parent.__HP_ON_Y_AUTORANGE({_ev: !!ev, _xrange: xrange ? xrange.length : 0}); } catch (e) {}\n'
         '        if (xrange && xrange.length >= 2) {\n'
@@ -369,13 +600,34 @@ def _click_update_header_script(div_id: str) -> str:
         '    gd.on("plotly_click", function(ev) {\n'
         '      if (!ev || !ev.points || !ev.points.length) return;\n'
         '      var pt = ev.points[0], pointIndex = pt.pointNumber != null ? pt.pointNumber : Math.round(pt.x);\n'
-        '      var trace = gd.data[pt.curveNumber]; var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
+        '      var trace = gd.data[pt.curveNumber];\n'
+        '      var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
         '      var row = (yax === "y") ? 1 : (parseInt(String(yax).replace(/^y/,""), 10) || 1);\n'
         '      var groupIdx = (ng > 1) ? Math.floor((row - 1) / (nt + 1)) : 0;\n'
         '      if (groupIdx < 0 || groupIdx >= ng) return;\n'
         '      var barData = meta.bar_data[groupIdx]; if (!barData || pointIndex >= barData.length) return;\n'
         '      var rec = barData[pointIndex];\n'
         '      if (hdr) hdr.innerHTML = buildHeaderHTML(rec, fsB, fsE);\n'
+        '      var midy = null;\n'
+        '      if (rec.open != null && rec.close != null) midy = 0.5 * (rec.open + rec.close);\n'
+        '      else if (rec.high != null && rec.low != null) midy = 0.5 * (rec.high + rec.low);\n'
+        '      gd._hp_crosshair_selected = { groupIdx: groupIdx, idx: pointIndex, mid_y: midy };\n'
+        '      var xRange = (gd.layout && gd.layout.xaxis && gd.layout.xaxis.range && gd.layout.xaxis.range.length >= 2) ? gd.layout.xaxis.range : [0, pointIndex];\n'
+        '      var x0 = xRange[0], x1 = xRange[1];\n'
+        '      var xref = (meta.crosshair_xref_by_group && meta.crosshair_xref_by_group[groupIdx]) ? meta.crosshair_xref_by_group[groupIdx] : "x";\n'
+        '      var yref = (meta.crosshair_yref_by_group && meta.crosshair_yref_by_group[groupIdx]) ? meta.crosshair_yref_by_group[groupIdx] : "y";\n'
+        '      var yaxisKey = (yref === "y") ? "yaxis" : ("yaxis" + String(yref).replace(/^y/, ""));\n'
+        '      var yaxisObj = gd.layout ? gd.layout[yaxisKey] : null;\n'
+        '      var yRange = (yaxisObj && yaxisObj.range && yaxisObj.range.length >= 2) ? yaxisObj.range : [rec.low || midy || 0, rec.high || midy || 1];\n'
+        '      var y0 = yRange[0], y1 = yRange[1];\n'
+        '      var shapes = [];\n'
+        '      if (midy != null && x0 != null && x1 != null) {\n'
+        '        shapes = [\n'
+        '          {type:"line", x0:pointIndex, x1:pointIndex, y0:y0, y1:y1, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '          {type:"line", x0:x0, x1:x1, y0:midy, y1:midy, xref:xref, yref:yref, line:{color:"black", width:1, dash:"solid"}},\n'
+        '        ];\n'
+        '      }\n'
+        '      Plotly.relayout(gd, {shapes: shapes});\n'
         '    });\n'
         '  }\n'
         '  if (document.readyState === "complete") attach(); else window.addEventListener("load", attach);\n'
@@ -699,6 +951,17 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 annotations=base + _build_top_info_annotations(init_rec, theme, y1=py1, y2=py2),
             )
 
+    # Q05：十字交叉线指示器状态（FigureWidget 路径）
+    meta_local = getattr(fw, '_hp_plotly_meta', {}) or {}
+    crosshair_enabled = bool(meta_local.get('crosshair_enabled'))
+    n_groups = int(meta_local.get('n_groups', 1) or 1)
+    if crosshair_enabled:
+        fw._hp_crosshair_selected = {
+            'group': int(meta_local.get('crosshair_selected_group', 0)),
+            'idx': int(meta_local.get('crosshair_selected_idx', 0)),
+            'mid_y': meta_local.get('crosshair_selected_mid_y', None),
+        }
+
     # 数据长度 n（X 为 0..n-1）
     n = 0
     if fw.data:
@@ -711,65 +974,99 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
     if n <= 0:
         n = 1
 
-    # 可见索引的最小根数限制
-    min_visible_bars = 15
+    _masters = _hp_plotly_master_xaxis_names(fw.layout)
+    if not _masters:
+        _masters = ['xaxis']
+    # shared_x 链上真正随平移/缩放更新的多为 matches=None 的主轴（如 xaxis7），
+    # 仅从 layout.xaxis 读会与从轴上脱节的 range，导致越界不纠正。
+    _x_read_name = _masters[-1]
+
+    # Q05：十字交叉线 shapes 与 label trace 更新（FigureWidget）
+    def _hp_crosshair_get_current_j0_j1() -> Tuple[int, int]:
+        xa_m = getattr(fw.layout, _x_read_name, None)
+        x_range = getattr(xa_m, 'range', None) if xa_m is not None else None
+        if x_range and isinstance(x_range, (list, tuple)) and len(x_range) >= 2:
+            x0, x1 = float(x_range[0]), float(x_range[1])
+        else:
+            x0, x1 = 0.0, float(n - 1)
+        _, _, j0, j1 = _hp_plotly_normalize_x_view_range(
+            n, x0, x1, HP_PLOTLY_MIN_VISIBLE_BARS,
+        )
+        return j0, j1
+
+    def _hp_crosshair_read_y_range(
+        group: int,
+        y_ranges: Optional[Dict[str, List[float]]] = None,
+    ) -> Tuple[float, float]:
+        ykey = meta_local.get('crosshair_yaxis_layout_key_by_group', ['yaxis'] * n_groups)[group]
+        if y_ranges and ykey in y_ranges:
+            ymin, ymax = y_ranges[ykey]
+            return float(ymin), float(ymax)
+        yaxis_obj = getattr(fw.layout, ykey, None)
+        r = getattr(yaxis_obj, 'range', None) if yaxis_obj is not None else None
+        if r and isinstance(r, (list, tuple)) and len(r) >= 2:
+            return float(r[0]), float(r[1])
+        return 0.0, 1.0
+
+    def _hp_crosshair_update_shapes(j0: int, j1: int, *, y_ranges: Optional[Dict[str, List[float]]] = None) -> None:
+        if not crosshair_enabled:
+            return
+        if getattr(fw, '_hp_updating_crosshair', False):
+            return
+        fw._hp_updating_crosshair = True
+        try:
+            shapes: List[Dict[str, Any]] = []
+            sel = getattr(fw, '_hp_crosshair_selected', None) or {}
+            sel_group = int(sel.get('group', 0))
+            sel_idx = int(sel.get('idx', 0))
+            sel_mid_y = sel.get('mid_y', None)
+            if sel_mid_y is not None and j0 <= sel_idx <= j1:
+                y0, y1 = _hp_crosshair_read_y_range(sel_group, y_ranges)
+                xref = meta_local.get('crosshair_xref_by_group', ['x'] * n_groups)[sel_group]
+                yref = meta_local.get('crosshair_yref_by_group', ['y'] * n_groups)[sel_group]
+                shapes.extend(
+                    _hp_plotly_crosshair_shapes(
+                        xref=xref,
+                        yref=yref,
+                        mid_x=float(sel_idx),
+                        x0=float(j0),
+                        x1=float(j1),
+                        y0=y0,
+                        y1=y1,
+                        mid_y=float(sel_mid_y),
+                        dashed=False,
+                    )
+                )
+
+            fw.update_layout(shapes=shapes)
+        finally:
+            fw._hp_updating_crosshair = False
 
     def _on_xaxis_change(layout_obj: Any, xrange: Any) -> None:
         if getattr(fw, '_hp_updating_y', False):
             return
         try:
-            # xrange 为 xaxis.range 的新值；若拿不到则从当前 layout 读取
-            if xrange and isinstance(xrange, (list, tuple)) and len(xrange) >= 2:
-                x0, x1 = float(xrange[0]), float(xrange[1])
-            else:
-                xaxis = getattr(fw.layout, 'xaxis', None)
-                x_range = getattr(xaxis, 'range', None) if xaxis is not None else None
-                if not x_range or len(x_range) < 2:
-                    x_range = [0, float(n - 1)]
+            # 始终从主 x 轴读取当前 range（与画面上空白/越界一致）
+            xa_m = getattr(fw.layout, _x_read_name, None)
+            x_range = getattr(xa_m, 'range', None) if xa_m is not None else None
+            if x_range and isinstance(x_range, (list, tuple)) and len(x_range) >= 2:
                 x0, x1 = float(x_range[0]), float(x_range[1])
+            else:
+                x0, x1 = 0.0, float(n - 1)
 
-            # 规范化与约束：保证 x0 <= x1，且在 [0, n-1] 范围内
-            if x0 > x1:
-                x0, x1 = x1, x0
-            x0 = max(0.0, min(float(n - 1), x0))
-            x1 = max(0.0, min(float(n - 1), x1))
-            if x0 == x1:
-                x1 = min(float(n - 1), x0 + 1.0)
-
-            # 根据当前范围计算可见 K 线数量，并控制最小缩放级别
-            j0 = max(0, min(n - 1, int(np.floor(x0))))
-            j1 = max(0, min(n - 1, int(np.ceil(x1))))
-            if j0 > j1:
-                j0, j1 = j1, j0
-            visible_count = j1 - j0 + 1
-
-            if n > min_visible_bars and visible_count < min_visible_bars:
-                # 放大过头时，强制回退到至少 min_visible_bars 根，以当前中心为基准
-                center = 0.5 * (x0 + x1)
-                half = 0.5 * float(min_visible_bars - 1)
-                x0 = max(0.0, center - half)
-                x1 = min(float(n - 1), center + half)
-                if x0 == x1:
-                    x1 = min(float(n - 1), x0 + 1.0)
-                j0 = max(0, min(n - 1, int(np.floor(x0))))
-                j1 = max(0, min(n - 1, int(np.ceil(x1))))
-                if j0 > j1:
-                    j0, j1 = j1, j0
+            x0, x1, j0, j1 = _hp_plotly_normalize_x_view_range(
+                n, x0, x1, HP_PLOTLY_MIN_VISIBLE_BARS,
+            )
 
             y_ranges = _compute_y_ranges_for_x_range(fw, x0, x1, n)
-            if not y_ranges:
-                return
+            xaxis_names = _hp_plotly_layout_xaxis_names(fw.layout)
+            update = _hp_plotly_x_range_layout_updates(x0, x1, xaxis_names)
+            for key, (ymin, ymax) in y_ranges.items():
+                pad = max((ymax - ymin) * 0.05, 1e-6)
+                update[f'{key}_range'] = [ymin - pad, ymax + pad]
+
             fw._hp_updating_y = True
             try:
-                update = {}
-                for key, (ymin, ymax) in y_ranges.items():
-                    pad = max((ymax - ymin) * 0.05, 1e-6)
-                    # Plotly 多 y 轴用 yaxis_range, yaxis2_range 等
-                    update[f'{key}_range'] = [ymin - pad, ymax + pad]
-
-                # 同步更新 X 轴范围，限制平移不超出 K 线两端
-                update['xaxis_range'] = [x0, x1]
-
                 fw.update_layout(**update)
 
                 # 根据当前可见区间自适应更新时间轴刻度密度
@@ -778,7 +1075,7 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 dates = (
                     bar_data[pk] if pk < len(bar_data) and bar_data[pk] else (bar_data[0] if bar_data else [])
                 )
-                if dates:
+                if dates and y_ranges:
                     theme_local = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
                     max_x_ticks = int(theme_local.get('max_x_ticks', 12))
                     visible_count = j1 - j0 + 1
@@ -794,6 +1091,10 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                             tickvals=tickvals,
                             ticktext=ticktext,
                         )
+
+                # Q05：缩放/平移后重算十字交叉线（选中态 + 悬停态）
+                fw._hp_crosshair_last_j0_j1 = (j0, j1)
+                _hp_crosshair_update_shapes(j0, j1, y_ranges=y_ranges)
             finally:
                 fw._hp_updating_y = False
         except Exception:
@@ -825,15 +1126,29 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
             new_annotations = base + _build_top_info_annotations(rec, theme, y1=py1, y2=py2)
             fw.update_layout(annotations=new_annotations)
+
+            # Q05：点击任意子图点，更新选中态十字交叉线
+            if crosshair_enabled:
+                mid_y = _hp_plotly_crosshair_mid_y_from_rec(rec)
+                fw._hp_crosshair_selected = {
+                    'group': int(group),
+                    'idx': int(point_index),
+                    'mid_y': mid_y,
+                }
+                j0, j1 = _hp_crosshair_get_current_j0_j1()
+                _hp_crosshair_update_shapes(j0, j1)
         except Exception:
             pass
 
-    # 监听 X 轴 range 变化（缩放/平移）实现 Y 轴自适应
+    # 在所有「主」x 轴上监听 range（单列 shared_x 通常仅一根，如 xaxis7）
     try:
-        if hasattr(fw.layout, 'xaxis') and hasattr(fw.layout.xaxis, 'on_change'):
-            fw.layout.xaxis.on_change(_on_xaxis_change, 'range')
-            # 初始化一次 Y 轴范围
-            _on_xaxis_change(fw.layout.xaxis, getattr(fw.layout.xaxis, 'range', [0, float(n - 1)]))
+        for _m in _masters:
+            xa_listen = getattr(fw.layout, _m, None)
+            if xa_listen is not None and hasattr(xa_listen, 'on_change'):
+                xa_listen.on_change(_on_xaxis_change, 'range')
+        xa0 = getattr(fw.layout, _x_read_name, None)
+        if xa0 is not None:
+            _on_xaxis_change(xa0, getattr(xa0, 'range', [0, float(n - 1)]))
     except Exception:
         pass
     try:
@@ -888,6 +1203,82 @@ def _format_display_text(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
     if rec.get('ma'):
         lines.append("MA: " + ", ".join(f"{k}={v:.2f}" for k, v in rec['ma'].items()))
     return "  |  ".join(lines)
+
+
+def _hp_plotly_crosshair_mid_y_from_rec(rec: Mapping[str, Any]) -> Optional[float]:
+    """计算主价格 bar 的“柱子中点”Y，用于十字交叉线指示器。
+
+    目前采用 oc 定义：``(open + close) / 2``；若缺少 open/close 则回退 ``(high + low) / 2``。
+    """
+    open_v = rec.get('open', None)
+    close_v = rec.get('close', None)
+    if open_v is not None and close_v is not None:
+        try:
+            return 0.5 * (float(open_v) + float(close_v))
+        except Exception:
+            pass
+    high_v = rec.get('high', None)
+    low_v = rec.get('low', None)
+    if high_v is not None and low_v is not None:
+        try:
+            return 0.5 * (float(high_v) + float(low_v))
+        except Exception:
+            pass
+    return None
+
+
+def _hp_plotly_crosshair_shapes(
+    *,
+    xref: str,
+    yref: str,
+    mid_x: float,
+    x0: float,
+    x1: float,
+    y0: float,
+    y1: float,
+    mid_y: float,
+    dashed: bool,
+    color: str = 'black',
+    width: float = 1.0,
+) -> List[Dict[str, Any]]:
+    """生成十字交叉线 shapes（竖线 + 横线）。
+
+    Parameters
+    ----------
+    xref, yref : str
+        Plotly shapes 的轴引用，如 ``'x'/'x2'`` 与 ``'y'/'y2'``。
+    mid_x : float
+        竖线所在的 x 坐标（通常为 selected/hover 的 bar index）。
+    x0, x1 : float
+        横线覆盖的 x 轴区间（通常为当前可见区间的 j0/j1）。
+    y0, y1 : float
+        竖线覆盖的 y 轴区间（来自当前 yaxis range）。
+    mid_y : float
+        交点 Y（主价格 bar 的中点）。
+    dashed : bool
+        是否为虚线（悬停态用）。
+
+    Returns
+    -------
+    list
+        shapes 列表，顺序为 ``[vline, hline]``。
+    """
+    dash = 'dash' if dashed else 'solid'
+    vline = dict(
+        type='line',
+        x0=float(mid_x), x1=float(mid_x),
+        y0=float(y0), y1=float(y1),
+        xref=xref, yref=yref,
+        line=dict(color=color, width=width, dash=dash),
+    )
+    hline = dict(
+        type='line',
+        x0=float(x0), x1=float(x1),
+        y0=float(mid_y), y1=float(mid_y),
+        xref=xref, yref=yref,
+        line=dict(color=color, width=width, dash=dash),
+    )
+    return [vline, hline]
 
 
 def _bar_data_to_json_serializable(
@@ -1034,6 +1425,15 @@ def build_interactive_figure_from_specs(
         grp = bar_data_per_group[pk]
         if grp:
             header_rec = grp[-1]
+    crosshair_selected_group = int(pk if pk is not None else 0)
+    crosshair_selected_idx = int(max(0, n - 1))
+    crosshair_selected_mid_y = (
+        _hp_plotly_crosshair_mid_y_from_rec(header_rec)
+        if header_rec else None
+    )
+    crosshair_xref_by_group: List[str] = ['x'] * n_groups
+    crosshair_yref_by_group: List[str] = ['y'] * n_groups
+    crosshair_yaxis_layout_key_by_group: List[str] = ['yaxis'] * n_groups
 
     row_off = 1 if (show_ohlc_header and bool(header_rec)) else 0
     layout_spec = compute_hp_visual_layout_spec(
@@ -1069,6 +1469,10 @@ def build_interactive_figure_from_specs(
     for g in range(n_groups):
         gt = (group_titles[g] if group_titles and g < len(group_titles) else '').strip()
         name_prefix = f'{gt} | ' if n_groups > 1 and gt else ''
+        group_recs = bar_data_per_group[g] if g < len(bar_data_per_group) else []
+        hover_dates = [str(r.get('date_str', '')) for r in group_recs[:n]]
+        if len(hover_dates) < n:
+            hover_dates.extend([''] * (n - len(hover_dates)))
         for t in range(n_types):
             plot_row = plotly_trace_row_1based(layout_spec, g, t)
             spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
@@ -1101,10 +1505,23 @@ def build_interactive_figure_from_specs(
                         name=f'{name_prefix}Price' if name_prefix else 'Price',
                         legendgroup=f'g{g}',
                         customdata=group_custom,
+                        text=hover_dates,
+                        hovertemplate='%{text}<br>O:%{open:.3f} H:%{high:.3f} L:%{low:.3f} C:%{close:.3f}<extra></extra>',
+                        hoverlabel=dict(
+                            bgcolor='rgba(255,255,255,0.75)',
+                            bordercolor='rgba(0,0,0,0.55)',
+                            font=dict(color='black'),
+                        ),
                     ),
                     row=plot_row,
                     col=1,
                 )
+                # 主价格子图 axis ref：供十字交叉线 shapes 绘制与更新使用
+                xref = 'x' if plot_row == 1 else f'x{plot_row}'
+                yref = 'y' if plot_row == 1 else f'y{plot_row}'
+                crosshair_xref_by_group[g] = xref
+                crosshair_yref_by_group[g] = yref
+                crosshair_yaxis_layout_key_by_group[g] = 'yaxis' if plot_row == 1 else f'yaxis{plot_row}'
                 # MA 线
                 for key in data:
                     if key in ('open', 'high', 'low', 'close'):
@@ -1117,6 +1534,13 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             line=dict(width=1),
                             customdata=group_custom,
+                            text=hover_dates,
+                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1139,6 +1563,12 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             showlegend=False,
                             customdata=group_custom,
+                            hovertemplate='Vol:%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1158,6 +1588,12 @@ def build_interactive_figure_from_specs(
                                 legendgroup=f'g{g}',
                                 showlegend=False,
                                 customdata=group_custom,
+                                hovertemplate='%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
                             ),
                             row=plot_row,
                             col=1,
@@ -1170,6 +1606,13 @@ def build_interactive_figure_from_specs(
                                 legendgroup=f'g{g}',
                                 line=dict(width=1),
                                 customdata=group_custom,
+                                text=hover_dates,
+                                hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
                             ),
                             row=plot_row,
                             col=1,
@@ -1185,6 +1628,13 @@ def build_interactive_figure_from_specs(
                             legendgroup=f'g{g}',
                             line=dict(width=1),
                             customdata=group_custom,
+                            text=hover_dates,
+                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
                         row=plot_row,
                         col=1,
@@ -1206,20 +1656,6 @@ def build_interactive_figure_from_specs(
     )
     tick_font_x = dict(size=font_tick, family='Arial')
     tick_font_y = plotly_font_dict(font_tick)
-    legend_cfg: Dict[str, Any] = dict(
-        orientation='v',
-        yanchor='top',
-        y=0.99,
-        yref='paper',
-        xanchor='left',
-        x=0.01,
-        xref='paper',
-        bgcolor='rgba(255,255,255,0.75)',
-        bordercolor='#cccccc',
-        borderwidth=1,
-    )
-    if n_groups > 1:
-        legend_cfg['tracegroupgap'] = 12
     layout_updates = dict(
         height=fig_height,
         width=fig_width,
@@ -1229,8 +1665,8 @@ def build_interactive_figure_from_specs(
         font=dict(size=font_tick, family='Arial'),
         template='none',
         dragmode='pan',
-        hovermode='x unified',
-        legend=legend_cfg,
+        hovermode='closest',
+        showlegend=False,
     )
     fig.update_layout(**layout_updates)
     # 每组子图左侧 y 轴标签（与静态 set_ylabel 一致）；仅最下方显示 x 轴标签（日期）；Y 轴固定不随拖动
@@ -1275,6 +1711,29 @@ def build_interactive_figure_from_specs(
             ),
         })
 
+    # 十字交叉线（选中态）初始化：初始 y 端点用 header_rec 的 high/low，随后在 FigureWidget 回调中重算
+    initial_shapes: List[Dict[str, Any]] = []
+    if show_ohlc_header and crosshair_selected_mid_y is not None:
+        sel_g = crosshair_selected_group
+        xref0 = crosshair_xref_by_group[sel_g]
+        yref0 = crosshair_yref_by_group[sel_g]
+        y0 = float(header_rec.get('low', crosshair_selected_mid_y))
+        y1 = float(header_rec.get('high', crosshair_selected_mid_y))
+        shapes = _hp_plotly_crosshair_shapes(
+            xref=xref0,
+            yref=yref0,
+            mid_x=float(crosshair_selected_idx),
+            x0=0.0,
+            x1=float(max(0, n - 1)),
+            y0=y0,
+            y1=y1,
+            mid_y=float(crosshair_selected_mid_y),
+            dashed=False,
+        )
+        initial_shapes = shapes
+    if initial_shapes:
+        fig.update_layout(shapes=initial_shapes)
+
     if fig.layout.annotations:
         ft = resolve_header_font_plotly(theme, 'header_title')
         for ann in fig.layout.annotations:
@@ -1298,6 +1757,16 @@ def build_interactive_figure_from_specs(
         'header_font_emphasis': resolve_font_size('plotly', 'header_emphasis', theme),
         'header_font_specs': {k: dict(v) for k, v in merge_header_font_theme(theme).items()},
         'subplot_annotation_count': subplot_ann_count,
+        # Q05：十字交叉线指示器（选中态 + FigureWidget 悬停态）
+        'crosshair_enabled': bool(show_ohlc_header and crosshair_selected_mid_y is not None),
+        'crosshair_selected_group': int(crosshair_selected_group),
+        'crosshair_selected_idx': int(crosshair_selected_idx),
+        'crosshair_selected_mid_y': crosshair_selected_mid_y,
+        'crosshair_xref_by_group': crosshair_xref_by_group,
+        'crosshair_yref_by_group': crosshair_yref_by_group,
+        'crosshair_yaxis_layout_key_by_group': crosshair_yaxis_layout_key_by_group,
         'theme': theme,
+        'min_visible_bars': int(HP_PLOTLY_MIN_VISIBLE_BARS),
+        'plotly_n_subplot_rows': int(last_row),
     }
     return fig
