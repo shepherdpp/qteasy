@@ -164,6 +164,7 @@ def render_kline_spec(
     spec: Dict[str, Any],
     ax: Optional[Axes] = None,
     share_idx: int = 0,
+    alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
 ) -> Figure:
@@ -206,19 +207,19 @@ def render_kline_spec(
         open_i, close_i = o[i], c[i]
         body_bottom = min(open_i, close_i)
         body_height = abs(close_i - open_i)
-        ax.vlines(x[i], low_i, high_i, color=color, linewidth=wick_lw)
+        ax.vlines(x[i], low_i, high_i, color=color, linewidth=wick_lw, alpha=alpha)
         if body_height > 0:
             ax.bar(
                 x[i], body_height, bottom=body_bottom, width=width,
-                color=color, edgecolor=color, linewidth=body_edge,
+                color=color, edgecolor=color, linewidth=body_edge, alpha=alpha,
             )
         else:
-            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=doji_lw)
+            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=doji_lw, alpha=alpha)
     for key in data:
         if key in ('open', 'high', 'low', 'close'):
             continue
         arr = _to_1d(data[key], share_idx)[:n]
-        ax.plot(x, arr, label=key, alpha=0.8)
+        ax.plot(x, arr, label=key, alpha=min(1.0, 0.8 * alpha))
     extra = [k for k in data if k not in ('open', 'high', 'low', 'close')]
     fs_leg = resolve_font_size('matplotlib', 'legend', theme)
     fs_y = resolve_font_size('matplotlib', 'axis_ylabel', theme)
@@ -250,6 +251,7 @@ def render_volume_spec(
     spec: Dict[str, Any],
     ax: Optional[Axes] = None,
     share_idx: int = 0,
+    alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
 ) -> Figure:
@@ -278,9 +280,9 @@ def render_volume_spec(
         color_up = theme.get('volume_color_up', 'red')
         color_dn = theme.get('volume_color_down', 'green')
         colors = np.where(up, color_up, color_dn)
-        ax.bar(x, arr, color=colors, alpha=0.7, width=0.8)
+        ax.bar(x, arr, color=colors, alpha=min(1.0, 0.7 * alpha), width=0.8)
     else:
-        ax.bar(x, arr, color=theme['volume_color'], alpha=0.7, width=0.8)
+        ax.bar(x, arr, color=theme['volume_color'], alpha=min(1.0, 0.7 * alpha), width=0.8)
     ax.set_ylabel('Volume', fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if show_x_labels and x_dates is not None and len(x_dates) >= n:
         step = max(1, n // theme.get('max_x_ticks', 12))
@@ -296,6 +298,7 @@ def render_macd_spec(
     spec: Dict[str, Any],
     ax: Optional[Axes] = None,
     share_idx: int = 0,
+    alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
 ) -> Figure:
@@ -323,13 +326,13 @@ def render_macd_spec(
         if kind == 'bar':
             hist_col = col
             continue
-        ax.plot(x, a, label=col, alpha=0.9)
+        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha))
     if hist_col and hist_col in data:
         a = _to_1d(data[hist_col], share_idx)[:n]
         bar_r = np.where(a > 0, a, 0)
         bar_g = np.where(a <= 0, a, 0)
-        ax.bar(x, bar_r, color=theme.get('macd_hist_up', 'red'), alpha=0.6, width=0.8)
-        ax.bar(x, bar_g, color=theme.get('macd_hist_down', 'green'), alpha=0.6, width=0.8)
+        ax.bar(x, bar_r, color=theme.get('macd_hist_up', 'red'), alpha=min(1.0, 0.6 * alpha), width=0.8)
+        ax.bar(x, bar_g, color=theme.get('macd_hist_down', 'green'), alpha=min(1.0, 0.6 * alpha), width=0.8)
     macd_par = spec.get('macd_par')  # optional, e.g. (12, 26, 9)
     ylabel = f'macd: \n{macd_par}' if macd_par else 'macd'
     ax.set_ylabel(ylabel, fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
@@ -349,6 +352,7 @@ def render_line_spec(
     spec: Dict[str, Any],
     ax: Optional[Axes] = None,
     share_idx: int = 0,
+    alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
 ) -> Figure:
@@ -370,7 +374,7 @@ def render_line_spec(
     ax.grid(True, alpha=theme['grid_alpha'], linestyle=theme['grid_linestyle'])
     for col, arr in data.items():
         a = _to_1d(arr, share_idx)[:n]
-        ax.plot(x, a, label=col, alpha=0.9)
+        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha))
     ax.set_ylabel('Line', fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if len(data) > 1:
         ax.legend(loc='upper left', fontsize=resolve_font_size('matplotlib', 'legend', theme))
@@ -399,19 +403,20 @@ def render_spec(
     spec: Dict[str, Any],
     ax: Optional[Axes] = None,
     share_idx: int = 0,
+    alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
 ) -> Figure:
     """根据 spec['chart_type'] 分发到对应渲染函数，返回 Figure。"""
     ct = spec.get('chart_type', '')
     if ct == 'kline':
-        return render_kline_spec(spec, ax=ax, share_idx=share_idx, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_kline_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
     if ct == 'volume':
-        return render_volume_spec(spec, ax=ax, share_idx=share_idx, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_volume_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
     if ct == 'macd':
-        return render_macd_spec(spec, ax=ax, share_idx=share_idx, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_macd_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
     if ct == 'line':
-        return render_line_spec(spec, ax=ax, share_idx=share_idx, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_line_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
     if _HAS_MPL:
         fig, ax = plt.subplots(1, 1, figsize=(6, 4))
         return fig
@@ -523,6 +528,20 @@ def build_figure_from_specs(
         setattr(ax_gap, '_hp_mpl_gap', True)
     title_pad = layout_spec['title_pad']
     for g in range(n_groups):
+        n_share_group = 1
+        for t in range(n_types):
+            spec_probe = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
+            if spec_probe is None:
+                continue
+            data_probe = spec_probe.get('data', {})
+            if not data_probe:
+                continue
+            arr_probe = next(iter(data_probe.values()), None)
+            if hasattr(arr_probe, 'ndim') and getattr(arr_probe, 'ndim', 1) == 2:
+                n_share_group = max(1, int(arr_probe.shape[0]))
+                break
+        is_overlay_group = n_share_group == 2
+        share_alpha = 0.55 if is_overlay_group else 1.0
         ax_share = None
         for t in range(n_types):
             row_idx = mpl_gridspec_row_index(layout_spec, g, t)
@@ -534,13 +553,39 @@ def build_figure_from_specs(
                 ax = fig.add_subplot(gs[row_idx, 0], sharex=ax_share)
             ax.set_facecolor(theme['axes_facecolor'])
             if spec is not None:
-                render_spec(
-                    spec,
-                    ax=ax,
-                    share_idx=0,
-                    x_dates=x_dates,
-                    show_x_labels=(t == n_types - 1 and g == n_groups - 1),
-                )
+                if is_overlay_group:
+                    # overlay 双标的：左轴主视觉、右轴次视觉，分别按各自数据自适应
+                    render_spec(
+                        spec,
+                        ax=ax,
+                        share_idx=0,
+                        alpha=1.0,
+                        x_dates=x_dates,
+                        show_x_labels=(t == n_types - 1 and g == n_groups - 1),
+                    )
+                    ax_r = ax.twinx()
+                    ax_r.set_facecolor((0, 0, 0, 0))
+                    render_spec(
+                        spec,
+                        ax=ax_r,
+                        share_idx=1,
+                        alpha=share_alpha,
+                        x_dates=x_dates,
+                        show_x_labels=False,
+                    )
+                    ylab = ax.get_ylabel()
+                    if ylab:
+                        ax_r.set_ylabel(f'{ylab} (R)')
+                else:
+                    for s_idx in range(n_share_group):
+                        render_spec(
+                            spec,
+                            ax=ax,
+                            share_idx=s_idx,
+                            alpha=share_alpha,
+                            x_dates=x_dates,
+                            show_x_labels=(t == n_types - 1 and g == n_groups - 1),
+                        )
             if t < n_types - 1 or g < n_groups - 1:
                 plt.setp(ax.get_xticklabels(), visible=False)
             if group_titles and g < len(group_titles) and t == 0:

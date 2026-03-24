@@ -34,6 +34,9 @@ from qteasy.datatypes import (
     infer_data_types,
 )
 
+# overlay 布局默认仅对两只标的启用，预留常量便于后续调整
+HP_OVERLAY_GROUP_SHARE_COUNT: int = 2
+
 
 class HistoryPanel():
     """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
@@ -2600,7 +2603,7 @@ class HistoryPanel():
             要参与绘图的标的子集；默认使用 HistoryPanel 的全部 shares。
         layout : {'overlay', 'stack', 'auto'}, default 'auto'
             多标的布局方式；'overlay' 为同组叠加，'stack' 为多组分行展示，'auto' 时
-            2 只标的用 overlay，3 只及以上用 stack。
+            ``HP_OVERLAY_GROUP_SHARE_COUNT`` 只标的用 overlay，其余用 stack。
         interactive : bool, default False
             为 True 时使用 Plotly 交互后端（需安装 plotly 及 anywidget/ipywidgets）；
             为 False 时使用 matplotlib 静态后端。
@@ -2688,10 +2691,10 @@ class HistoryPanel():
             raise RuntimeError('No applicable chart types and matplotlib not available')
         n_share = len(share_list)
         if layout == 'auto':
-            layout = 'overlay' if n_share == 2 else 'stack'
+            layout = 'overlay' if n_share == HP_OVERLAY_GROUP_SHARE_COUNT else 'stack'
         if n_share == 1:
             groups = [share_list]
-        elif layout == 'overlay' and n_share == 2:
+        elif layout == 'overlay' and n_share == HP_OVERLAY_GROUP_SHARE_COUNT:
             groups = [share_list]
         else:
             groups = [[s] for s in share_list]

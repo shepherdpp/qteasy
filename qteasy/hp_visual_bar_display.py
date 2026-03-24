@@ -46,6 +46,7 @@ def build_bar_display_data(
     types_info: Sequence[Any],
     x_dates: Sequence[Any],
     theme: Optional[Dict[str, Any]] = None,
+    share_idx: int = 0,
 ) -> List[List[Dict[str, Any]]]:
     """
     为每组、每个时间索引构建顶部展示区所需的数据。
@@ -80,7 +81,7 @@ def build_bar_display_data(
             data = kline_spec.get('data', {})
             for key in ('open', 'high', 'low', 'close'):
                 if key in data:
-                    arr = _to_1d(np.asarray(data[key]), 0)
+                    arr = _to_1d(np.asarray(data[key]), share_idx)
                     if key == 'open':
                         o = arr[:n]
                     elif key == 'high':
@@ -93,13 +94,13 @@ def build_bar_display_data(
                 if key in ('open', 'high', 'low', 'close'):
                     continue
                 if key.startswith('ma_') or key.startswith('sma_') or key.startswith('ema_'):
-                    ma_dict[key] = _to_1d(np.asarray(data[key]), 0)[:n]
+                    ma_dict[key] = _to_1d(np.asarray(data[key]), share_idx)[:n]
 
         if vol_spec:
             data = vol_spec.get('data', {})
             vol_name = next((k for k in ('vol', 'volume') if k in data), None)
             if vol_name:
-                vol = _to_1d(np.asarray(data[vol_name]), 0)[:n]
+                vol = _to_1d(np.asarray(data[vol_name]), share_idx)[:n]
 
         close_ary = c if c is not None else np.full(n, np.nan)
         last_close = np.roll(close_ary, 1)

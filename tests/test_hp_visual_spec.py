@@ -84,6 +84,46 @@ def _specs_per_group_stack_two_shares(hp: HistoryPanel):
     return specs_per_group, types_info, group_titles
 
 
+def _specs_per_group_overlay_two_shares(hp: HistoryPanel):
+    """
+    模拟 ``HistoryPanel.plot(..., layout='overlay')`` 且两只 share 时的
+    ``specs_per_group`` / ``types_info`` / ``group_titles``，供 Q09 测试。
+    """
+    registry = get_chart_type_registry()
+    types_info = registry.get_applicable_types(hp.htypes)
+    share_list = list(hp.shares)
+    if len(share_list) < 2:
+        raise ValueError('need at least 2 shares')
+    grp = [share_list[0], share_list[1]]
+    row = []
+    for info in types_info:
+        tid = info.id
+        if tid == 'kline':
+            spec = build_kline_spec(hp, shares=grp)
+        elif tid == 'volume':
+            spec = build_volume_spec(hp, shares=grp)
+        elif tid == 'macd':
+            spec = build_macd_spec(hp, shares=grp)
+        else:
+            spec = build_line_spec(hp, shares=grp)
+        row.append(spec)
+    kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
+    vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
+    if (
+        kline_idx is not None and vol_idx is not None
+        and row[kline_idx] is not None and row[vol_idx] is not None
+        and 'open' in row[kline_idx].get('data', {}) and 'close' in row[kline_idx].get('data', {})
+    ):
+        vol_spec = dict(row[vol_idx])
+        vol_spec['data'] = dict(vol_spec.get('data', {}))
+        vol_spec['data']['open'] = row[kline_idx]['data']['open']
+        vol_spec['data']['close'] = row[kline_idx]['data']['close']
+        row[vol_idx] = vol_spec
+    specs_per_group = [row]
+    group_titles = [','.join(grp)]
+    return specs_per_group, types_info, group_titles
+
+
 class TestChartTypeRegistry(unittest.TestCase):
     """注册表：get_applicable_types 返回类型及重要性."""
 
@@ -1183,6 +1223,92 @@ class TestHpVisualLayoutSpec(unittest.TestCase):
         self.assertAlmostEqual(spec['mpl_figsize'][1], h0 + d_exp, places=5)
         self.assertEqual(len(spec['mpl_height_ratios']), 2 + len(spec['type_ratios']))
         print('  fig_h:', spec['mpl_figsize'][1], 'h0+d:', h0 + d_exp, 'pre_chart_rows:', spec['mpl_pre_chart_rows'])
+
+
+class TestQ09OverlayMvp(unittest.TestCase):
+    """Q09-MVP：overlay 两 share 同轴叠加 + 动态主次透明度与按 share 表头数据契约。"""
+
+    def test_q09_static_overlay_two_share_same_axis(self):
+        print('\n[Q09-MVP] 静态 overlay：同一主图轴叠加两套 K 线（artist 数明显增加）')
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=18)
+        fig = hp.plot(layout='overlay')
+        self.assertIsNotNone(fig)
+        self.assertGreaterEqual(len(fig.axes), 4)
+        price_axes = [
+            ax for ax in fig.axes
+            if not getattr(ax, '_hp_ohlc_header', False) and not getattr(ax, '_hp_mpl_gap', False)
+        ]
+        self.assertGreaterEqual(len(price_axes), 2)
+        price_ax = price_axes[0]
+        price_ax_r = price_axes[1]
+        print('  price axis line count:', len(price_ax.lines), 'containers:', len(price_ax.containers))
+        self.assertGreaterEqual(len(price_ax.containers), 10)
+        self.assertIsNotNone(price_ax_r.get_ylabel())
+        self.assertIn('(R)', price_ax_r.get_ylabel())
+
+    def test_q09_plotly_overlay_has_two_candles_and_opacity_split(self):
+        print('\n[Q09-MVP] 动态 overlay：同 row 两套 candlestick，含主次透明度与 group/share customdata')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            HP_OVERLAY_PRIMARY_OPACITY,
+            HP_OVERLAY_SECONDARY_OPACITY,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=20)
+        specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        candles = [tr for tr in fig.data if str(getattr(tr, 'type', '')).lower() == 'candlestick']
+        self.assertEqual(len(candles), 2)
+        op_set = {float(getattr(tr, 'opacity', 1.0) or 1.0) for tr in candles}
+        self.assertIn(float(HP_OVERLAY_PRIMARY_OPACITY), op_set)
+        self.assertIn(float(HP_OVERLAY_SECONDARY_OPACITY), op_set)
+        yaxis_set = {str(getattr(tr, 'yaxis', 'y')) for tr in candles}
+        self.assertEqual(len(yaxis_set), 2)
+        self.assertIn('[S0]', str(getattr(fig.layout.yaxis.title, 'text', '') or ''))
+        self.assertIn('[S1]', str(getattr(fig.layout.yaxis2.title, 'text', '') or ''))
+        cd0 = getattr(candles[0], 'customdata', None)
+        self.assertIsNotNone(cd0)
+        self.assertGreater(len(cd0), 0)
+        self.assertEqual(len(cd0[0]), 2)
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertIn('bar_data_by_share', meta)
+        self.assertTrue(bool(meta.get('overlay_group_flags', [False])[0]))
+        print('  candles:', len(candles), 'opacity set:', sorted(list(op_set)))
+
+    def test_q09_html_script_contains_share_click_switch(self):
+        print('\n[Q09-MVP] HTML 脚本契约：点击后按 share 切换 header 与透明度主次')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import _PlotlyFigureWrapper, build_interactive_figure_from_specs
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=20)
+        specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        html_str = _PlotlyFigureWrapper(fig)._repr_html_()
+        self.assertIn('bar_data_by_share', html_str)
+        self.assertIn('overlay_active_share_by_group', html_str)
+        self.assertIn('overlay_plot_rows_by_group', html_str)
+        self.assertIn('overlay_row_axis_map_by_group', html_str)
+        self.assertIn('pt.customdata', html_str)
+        self.assertIn('tr.opacity', html_str)
+        self.assertIn('tr2.yaxis', html_str)
+        print('  html length:', len(html_str))
 
 
 class TestPlotlyFigureWidgetHeaderPaperY(unittest.TestCase):
