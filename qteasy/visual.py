@@ -876,8 +876,11 @@ def _mpf_plot(
             # interactive=True 或未指定 start/end：使用全历史
             hp_for_plot = hp_with_ind
 
-        # 组标题沿用原有 share_name/freq/adj 信息
-        group_title = f'{share_name}-{freq_info}-{adj_info}'
+        # 组标题：CODE [NAME] FREQ - ADJ
+        # share_name 来自数据源 basic 表或调用方传入，优先复用；取不到则退化为 UNKNOWN
+        code = stock if stock is not None else (share_name or 'UNKNOWN')
+        name = share_name or 'N/A'
+        group_title = f'{code} [{name}] {freq_info} - {adj_info}'
         try:
             fig = hp_for_plot.plot(
                 shares=None,
