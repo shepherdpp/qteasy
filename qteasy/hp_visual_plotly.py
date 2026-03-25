@@ -23,6 +23,15 @@ from qteasy.hp_visual_bar_display import (
     specs_contain_kline,
 )
 from qteasy.hp_visual_layout import compute_hp_visual_layout_spec, plotly_trace_row_1based
+from qteasy.hp_visual_overlay_style import (
+    HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    HP_OVERLAY_PRIMARY_OPACITY,
+    HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
+    HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    HP_OVERLAY_SECONDARY_OPACITY,
+    HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
+    overlay_trace_visual_bundle as _overlay_trace_visual_bundle,
+)
 from qteasy.hp_visual_theme_adapt import (
     HeaderFontRole,
     header_font_span_style,
@@ -42,6 +51,41 @@ except ImportError:
 
 # 交互图 x 轴：最少可见 bar 数（与 FigureWidget、HTML 内联脚本一致，Q03 / L1）
 HP_PLOTLY_MIN_VISIBLE_BARS: int = 15
+
+
+def _hp_plotly_overlay_apply_trace_visual(
+    tr: Any,
+    *,
+    s0: int,
+    primary_share: int,
+    meta_now: Mapping[str, Any],
+) -> None:
+    """动态路径点击后：按当前主 share 更新单条 trace 的透明度与线宽（Scatter/Candlestick）。"""
+    is_pri = s0 == primary_share
+    pri_op = float(meta_now.get('overlay_primary_opacity', HP_OVERLAY_PRIMARY_OPACITY))
+    sec_op = float(meta_now.get('overlay_secondary_opacity', HP_OVERLAY_SECONDARY_OPACITY))
+    tr.opacity = pri_op if is_pri else sec_op
+    typ = str(getattr(tr, 'type', '') or '').lower()
+    if typ == 'scatter':
+        pri_lw = float(meta_now.get('overlay_pri_scatter_lw', HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH))
+        sec_lw = float(meta_now.get('overlay_sec_scatter_lw', HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH))
+        lw = pri_lw if is_pri else sec_lw
+        if getattr(tr, 'line', None) is None:
+            tr.line = dict(width=lw)
+        else:
+            tr.line.width = lw
+    elif typ == 'candlestick':
+        pri_i = float(meta_now.get('overlay_pri_candle_inc', 1.0))
+        sec_i = float(meta_now.get('overlay_sec_candle_inc', 1.0))
+        pri_d = float(meta_now.get('overlay_pri_candle_dec', 1.0))
+        sec_d = float(meta_now.get('overlay_sec_candle_dec', 1.0))
+        wi = pri_i if is_pri else sec_i
+        wd = pri_d if is_pri else sec_d
+        try:
+            tr.increasing.line.width = wi
+            tr.decreasing.line.width = wd
+        except Exception:
+            pass
 
 
 def _hp_plotly_translate_x_range_into_bounds(x0: float, x1: float, n: int) -> Tuple[float, float]:
@@ -601,13 +645,94 @@ def _click_update_header_script(div_id: str) -> str:
         '      if (!ev || !ev.points || !ev.points.length) return;\n'
         '      var pt = ev.points[0], pointIndex = pt.pointNumber != null ? pt.pointNumber : Math.round(pt.x);\n'
         '      var trace = gd.data[pt.curveNumber];\n'
-        '      var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
-        '      var row = (yax === "y") ? 1 : (parseInt(String(yax).replace(/^y/,""), 10) || 1);\n'
-        '      var groupIdx = (ng > 1) ? Math.floor((row - 1) / (nt + 1)) : 0;\n'
+        '      var groupIdx = 0, shareIdx = 0;\n'
+        '      if (pt.customdata && pt.customdata.length >= 2) {\n'
+        '        groupIdx = parseInt(pt.customdata[0], 10) || 0;\n'
+        '        shareIdx = parseInt(pt.customdata[1], 10) || 0;\n'
+        '      } else {\n'
+        '        var cd = (trace && trace.customdata && pointIndex != null && pointIndex < trace.customdata.length) ? trace.customdata[pointIndex] : null;\n'
+        '        if (cd && cd.length >= 2) {\n'
+        '          groupIdx = parseInt(cd[0], 10) || 0;\n'
+        '          shareIdx = parseInt(cd[1], 10) || 0;\n'
+        '        }\n'
+        '        var yax = (trace && trace.yaxis) ? trace.yaxis : "y";\n'
+        '        var row = (yax === "y") ? 1 : (parseInt(String(yax).replace(/^y/,""), 10) || 1);\n'
+        '        groupIdx = (ng > 1) ? Math.floor((row - 1) / (nt + 1)) : 0;\n'
+        '      }\n'
         '      if (groupIdx < 0 || groupIdx >= ng) return;\n'
-        '      var barData = meta.bar_data[groupIdx]; if (!barData || pointIndex >= barData.length) return;\n'
+        '      var barShare = (meta.bar_data_by_share && meta.bar_data_by_share[groupIdx]) ? meta.bar_data_by_share[groupIdx][shareIdx] : null;\n'
+        '      var barData = barShare || (meta.bar_data ? meta.bar_data[groupIdx] : null);\n'
+        '      if (!barData || pointIndex >= barData.length) return;\n'
         '      var rec = barData[pointIndex];\n'
         '      if (hdr) hdr.innerHTML = buildHeaderHTML(rec, fsB, fsE);\n'
+        '      var ogf = meta.overlay_group_flags || [];\n'
+        '      if (ogf[groupIdx]) {\n'
+        '        var secOp = (meta.overlay_secondary_opacity != null) ? meta.overlay_secondary_opacity : 0.45;\n'
+        '        var priOp = (meta.overlay_primary_opacity != null) ? meta.overlay_primary_opacity : 1.0;\n'
+        '        var priSL = (meta.overlay_pri_scatter_lw != null) ? meta.overlay_pri_scatter_lw : 1.35;\n'
+        '        var secSL = (meta.overlay_sec_scatter_lw != null) ? meta.overlay_sec_scatter_lw : 0.65;\n'
+        '        var priCI = (meta.overlay_pri_candle_inc != null) ? meta.overlay_pri_candle_inc : 1.0;\n'
+        '        var secCI = (meta.overlay_sec_candle_inc != null) ? meta.overlay_sec_candle_inc : 0.82;\n'
+        '        var priCD = (meta.overlay_pri_candle_dec != null) ? meta.overlay_pri_candle_dec : 1.0;\n'
+        '        var secCD = (meta.overlay_sec_candle_dec != null) ? meta.overlay_sec_candle_dec : 0.82;\n'
+        '        if (!meta.overlay_active_share_by_group) meta.overlay_active_share_by_group = [];\n'
+        '        meta.overlay_active_share_by_group[groupIdx] = shareIdx;\n'
+        '        for (var i = 0; i < gd.data.length; i++) {\n'
+        '          var tr = gd.data[i];\n'
+        '          if (!tr.customdata || !tr.customdata.length || !tr.customdata[0] || tr.customdata[0].length < 2) continue;\n'
+        '          var g0 = parseInt(tr.customdata[0][0], 10) || 0;\n'
+        '          var s0 = parseInt(tr.customdata[0][1], 10) || 0;\n'
+        '          if (g0 !== groupIdx) continue;\n'
+        '          tr.opacity = (s0 === shareIdx) ? priOp : secOp;\n'
+        '          if (tr.type === "scatter" && tr.line) { tr.line.width = (s0 === shareIdx) ? priSL : secSL; }\n'
+        '          if (tr.type === "candlestick") {\n'
+        '            var cw = (s0 === shareIdx) ? priCI : secCI;\n'
+        '            var cwd = (s0 === shareIdx) ? priCD : secCD;\n'
+        '            if (!tr.increasing) tr.increasing = { line: {} };\n'
+        '            if (!tr.increasing.line) tr.increasing.line = {};\n'
+        '            tr.increasing.line.width = cw;\n'
+        '            if (!tr.decreasing) tr.decreasing = { line: {} };\n'
+        '            if (!tr.decreasing.line) tr.decreasing.line = {};\n'
+        '            tr.decreasing.line.width = cwd;\n'
+        '          }\n'
+        '        }\n'
+        '        var rowsByGroup = meta.overlay_plot_rows_by_group || [];\n'
+        '        var rows = rowsByGroup[groupIdx] || [];\n'
+        '        var axisMapByGroup = meta.overlay_row_axis_map_by_group || [];\n'
+        '        var axisMaps = axisMapByGroup[groupIdx] || [];\n'
+        '        var rel = {};\n'
+        '        for (var rr = 0; rr < rows.length; rr++) {\n'
+        '          var rowNo = parseInt(rows[rr], 10) || 0;\n'
+        '          if (rowNo <= 0) continue;\n'
+        '          var lIdx = 2 * rowNo - 1, rIdx = 2 * rowNo;\n'
+        '          var lKey = (lIdx === 1) ? "yaxis" : ("yaxis" + lIdx);\n'
+        '          var rKey = "yaxis" + rIdx;\n'
+        '          var t0 = (gd.layout && gd.layout[lKey] && gd.layout[lKey].title && gd.layout[lKey].title.text) ? String(gd.layout[lKey].title.text) : "Y";\n'
+        '          var base = t0.split(" [S")[0] || "Y";\n'
+        '          rel[lKey + ".title.text"] = base + " [S" + shareIdx + "]";\n'
+        '          rel[rKey + ".title.text"] = base + " [S" + (1 - shareIdx) + "]";\n'
+        '        }\n'
+        '        for (var i2 = 0; i2 < gd.data.length; i2++) {\n'
+        '          var tr2 = gd.data[i2];\n'
+        '          if (!tr2.customdata || !tr2.customdata.length || !tr2.customdata[0] || tr2.customdata[0].length < 2) continue;\n'
+        '          var gg = parseInt(tr2.customdata[0][0], 10) || 0;\n'
+        '          var ss = parseInt(tr2.customdata[0][1], 10) || 0;\n'
+        '          if (gg !== groupIdx) continue;\n'
+        '          var yNow = tr2.yaxis || "y";\n'
+        '          for (var amIdx = 0; amIdx < axisMaps.length; amIdx++) {\n'
+        '            var am = axisMaps[amIdx] || {};\n'
+        '            var lRef = am.left_ref || "y";\n'
+        '            var rRef = am.right_ref || "y2";\n'
+        '            if (yNow !== lRef && yNow !== rRef) continue;\n'
+        '            tr2.yaxis = (ss === shareIdx) ? lRef : rRef;\n'
+        '            break;\n'
+        '          }\n'
+        '        }\n'
+        '        var xrNow = (gd.layout && gd.layout.xaxis && gd.layout.xaxis.range && gd.layout.xaxis.range.length >= 2) ? gd.layout.xaxis.range : null;\n'
+        '        if (xrNow) rel["xaxis.range"] = [xrNow[0], xrNow[1]];\n'
+        '        if (Object.keys(rel).length) Plotly.relayout(gd, rel);\n'
+        '        Plotly.redraw(gd);\n'
+        '      }\n'
         '      var midy = null;\n'
         '      if (rec.open != null && rec.close != null) midy = 0.5 * (rec.open + rec.close);\n'
         '      else if (rec.high != null && rec.low != null) midy = 0.5 * (rec.high + rec.low);\n'
@@ -937,7 +1062,14 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
         return fig
 
     if show_header:
-        bd0 = bar_data[pk_fb] if pk_fb < len(bar_data) else bar_data[0]
+        active_shares = meta.get('overlay_active_share_by_group', []) or []
+        act_s = int(active_shares[pk_fb]) if pk_fb < len(active_shares) else 0
+        by_share = meta.get('bar_data_by_share', []) or []
+        bd0 = None
+        if pk_fb < len(by_share) and act_s < len(by_share[pk_fb]):
+            bd0 = by_share[pk_fb][act_s]
+        if bd0 is None:
+            bd0 = bar_data[pk_fb] if pk_fb < len(bar_data) else bar_data[0]
         init_rec = bd0[-1] if bd0 else {}
         if init_rec:
             n_sub = int(meta.get('subplot_annotation_count', 0))
@@ -1111,12 +1243,29 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 return
             point_index = int(inds[0])
             custom = getattr(trace, 'customdata', None)
-            group = int(custom[point_index]) if custom is not None and point_index < len(custom) else 0
-            bar_data = getattr(fw, '_hp_plotly_meta', {}).get('bar_data', [])
-            if group >= len(bar_data) or point_index >= len(bar_data[group]):
+            group = 0
+            share_idx = 0
+            if custom is not None and point_index < len(custom):
+                item = custom[point_index]
+                if isinstance(item, (list, tuple)) and len(item) >= 2:
+                    group = int(item[0])
+                    share_idx = int(item[1])
+                else:
+                    group = int(item)
+            bar_data_by_share = getattr(fw, '_hp_plotly_meta', {}).get('bar_data_by_share', [])
+            if group >= len(bar_data_by_share) or share_idx >= len(bar_data_by_share[group]):
                 return
-            rec = bar_data[group][point_index]
+            if point_index >= len(bar_data_by_share[group][share_idx]):
+                return
+            rec = bar_data_by_share[group][share_idx][point_index]
             theme = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
+            meta_now = getattr(fw, '_hp_plotly_meta', {}) or {}
+            ogf = meta_now.get('overlay_group_flags', [])
+            is_overlay_group = group < len(ogf) and bool(ogf[group])
+            overlay_active = meta_now.get('overlay_active_share_by_group', []) or []
+            old_active_share = int(overlay_active[group]) if is_overlay_group and group < len(overlay_active) else 0
+            clicked_is_main_share = (int(share_idx) == old_active_share) if is_overlay_group else True
+
             n_sub = int(getattr(fw, '_hp_plotly_meta', {}).get('subplot_annotation_count', 0))
             base: List[Any] = []
             if fw.layout.annotations:
@@ -1125,10 +1274,122 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             lay_h, mtb, mbb = _layout_height_margin_tb(fw.layout, theme, has_ohlc_header=True)
             py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
             new_annotations = base + _build_top_info_annotations(rec, theme, y1=py1, y2=py2)
-            fw.update_layout(annotations=new_annotations)
+            # 仅当用户点击“当前主视觉”share 时更新 header；切换次视觉时保持不变，减少闪烁。
+            if clicked_is_main_share:
+                fw.update_layout(annotations=new_annotations)
+
+            # overlay 组：点击后主次视觉交换（轻量：透明度交换）
+            if group < len(ogf) and bool(ogf[group]):
+                active = list(meta_now.get('overlay_active_share_by_group', []))
+                while len(active) <= group:
+                    active.append(0)
+                active[group] = int(share_idx)
+                meta_now['overlay_active_share_by_group'] = active
+                fw._hp_plotly_meta = meta_now
+                for tr in fw.data:
+                    c0 = getattr(tr, 'customdata', None)
+                    if c0 is None or len(c0) <= 0:
+                        continue
+                    item0 = c0[0]
+                    if not (isinstance(item0, (list, tuple)) and len(item0) >= 2):
+                        continue
+                    g0 = int(item0[0])
+                    s0 = int(item0[1])
+                    if g0 != group:
+                        continue
+                    _hp_plotly_overlay_apply_trace_visual(
+                        tr, s0=s0, primary_share=int(share_idx), meta_now=meta_now,
+                    )
+                # 极简主次切换：不互换 yaxis，不重算 yaxis range，只通过 y 轴标题加粗来标识主视觉。
+                titles_update: Dict[str, Any] = {}
+                rows_by_group = meta_now.get('overlay_plot_rows_by_group', [])
+                rows = rows_by_group[group] if group < len(rows_by_group) else []
+                active_share = int(share_idx)
+                main_tick_color = '#000000'
+                sec_tick_color = '#1a1a1a'  # 接近 RGB(0.1,0.1,0.1)，深灰更易辨识
+                for row in rows:
+                    if row < 1:
+                        continue
+                    left_idx = 2 * int(row) - 1
+                    right_idx = 2 * int(row)
+                    left_key = 'yaxis' if left_idx == 1 else f'yaxis{left_idx}'
+                    right_key = f'yaxis{right_idx}'
+
+                    left_is_main = (active_share == 0)
+                    right_is_main = (active_share == 1)
+                    left_weight = 'bold' if left_is_main else 'normal'
+                    right_weight = 'bold' if right_is_main else 'normal'
+                    left_color = main_tick_color if left_is_main else sec_tick_color
+                    right_color = main_tick_color if right_is_main else sec_tick_color
+
+                    left_obj = getattr(fw.layout, left_key, None)
+                    t_obj = getattr(left_obj, 'title', None) if left_obj is not None else None
+                    left_font_obj = getattr(t_obj, 'font', None) if t_obj is not None else None
+                    left_font = dict(left_font_obj) if isinstance(left_font_obj, dict) else {}
+                    left_font['weight'] = left_weight
+                    left_font['color'] = left_color
+                    titles_update[f'{left_key}_title'] = dict(font=left_font)
+
+                    left_tick_obj = getattr(left_obj, 'tickfont', None) if left_obj is not None else None
+                    left_tick_font = dict(left_tick_obj) if isinstance(left_tick_obj, dict) else {}
+                    if left_tick_font:
+                        left_tick_font['weight'] = left_weight
+                        left_tick_font['color'] = left_color
+                        titles_update[f'{left_key}_tickfont'] = dict(left_tick_font)
+                    else:
+                        titles_update[f'{left_key}_tickfont'] = dict(color=left_color, weight=left_weight)
+
+                    right_obj = getattr(fw.layout, right_key, None)
+                    t2_obj = getattr(right_obj, 'title', None) if right_obj is not None else None
+                    right_font_obj = getattr(t2_obj, 'font', None) if t2_obj is not None else None
+                    right_font = dict(right_font_obj) if isinstance(right_font_obj, dict) else {}
+                    right_font['weight'] = right_weight
+                    right_font['color'] = right_color
+                    titles_update[f'{right_key}_title'] = dict(font=right_font)
+
+                    right_tick_obj = getattr(right_obj, 'tickfont', None) if right_obj is not None else None
+                    right_tick_font = dict(right_tick_obj) if isinstance(right_tick_obj, dict) else {}
+                    if right_tick_font:
+                        right_tick_font['weight'] = right_weight
+                        right_tick_font['color'] = right_color
+                        titles_update[f'{right_key}_tickfont'] = dict(right_tick_font)
+                    else:
+                        titles_update[f'{right_key}_tickfont'] = dict(color=right_color, weight=right_weight)
+
+                if titles_update:
+                    fw.update_layout(titles_update)
 
             # Q05：点击任意子图点，更新选中态十字交叉线
-            if crosshair_enabled:
+            if crosshair_enabled and clicked_is_main_share:
+                # overlay 极简切换下：我们不再互换 yaxis 坐标系，
+                # 但十字线的横线 y 坐标解释仍依赖 yref。
+                # 当当前主视觉是右侧 share(share_idx==1) 时，需要切换 crosshair 的 yref/yaxis_key。
+                if is_overlay_group:
+                    try:
+                        left_yref_by_group = meta_now.get('overlay_left_yref_by_group', [])
+                        right_yref_by_group = meta_now.get('overlay_right_yref_by_group', [])
+                        if group < len(left_yref_by_group) and group < len(right_yref_by_group):
+                            active_yref = (
+                                left_yref_by_group[group]
+                                if int(share_idx) == 0 else right_yref_by_group[group]
+                            )
+                            # yref: 'y' -> yaxis, 'y2'/'y3' -> yaxis{idx}
+                            if str(active_yref) == 'y':
+                                yaxis_key = 'yaxis'
+                            else:
+                                y_idx = int(str(active_yref)[1:]) if str(active_yref).startswith('y') else 1
+                                yaxis_key = 'yaxis' if y_idx == 1 else f'yaxis{y_idx}'
+                            cyrefs = meta_now.get('crosshair_yref_by_group', [])
+                            cykeys = meta_now.get('crosshair_yaxis_layout_key_by_group', [])
+                            if group < len(cyrefs):
+                                cyrefs[group] = active_yref
+                            if group < len(cykeys):
+                                cykeys[group] = yaxis_key
+                            meta_now['crosshair_yref_by_group'] = cyrefs
+                            meta_now['crosshair_yaxis_layout_key_by_group'] = cykeys
+                            fw._hp_plotly_meta = meta_now
+                    except Exception:
+                        pass
                 mid_y = _hp_plotly_crosshair_mid_y_from_rec(rec)
                 fw._hp_crosshair_selected = {
                     'group': int(group),
@@ -1418,6 +1679,28 @@ def build_interactive_figure_from_specs(
     bar_data_per_group = build_bar_display_data(
         specs_per_group, types_info, list(x_dates) if x_dates else x_idx, theme=theme,
     )
+    bar_data_by_share_per_group: List[List[List[Dict[str, Any]]]] = []
+    for g in range(n_groups):
+        n_share_group = 1
+        row_specs = specs_per_group[g] if g < len(specs_per_group) else []
+        for spec_probe in row_specs:
+            if spec_probe is None:
+                continue
+            data_probe = spec_probe.get('data', {})
+            if not data_probe:
+                continue
+            arr_probe = next(iter(data_probe.values()), None)
+            if hasattr(arr_probe, 'ndim') and getattr(arr_probe, 'ndim', 1) == 2:
+                n_share_group = max(1, int(arr_probe.shape[0]))
+                break
+        group_share_rows: List[List[Dict[str, Any]]] = []
+        for s_idx in range(n_share_group):
+            sub_specs = [specs_per_group[g]] if g < len(specs_per_group) else [[]]
+            sub_bar = build_bar_display_data(
+                sub_specs, types_info, list(x_dates) if x_dates else x_idx, theme=theme, share_idx=s_idx,
+            )
+            group_share_rows.append(sub_bar[0] if sub_bar else [])
+        bar_data_by_share_per_group.append(group_share_rows)
     show_ohlc_header = specs_contain_kline(specs_per_group, types_info)
     pk = primary_kline_group_index(specs_per_group, types_info)
     header_rec: Dict[str, Any] = {}
@@ -1434,6 +1717,8 @@ def build_interactive_figure_from_specs(
     crosshair_xref_by_group: List[str] = ['x'] * n_groups
     crosshair_yref_by_group: List[str] = ['y'] * n_groups
     crosshair_yaxis_layout_key_by_group: List[str] = ['yaxis'] * n_groups
+    overlay_left_yref_by_group: List[str] = ['y'] * n_groups
+    overlay_right_yref_by_group: List[str] = ['y2'] * n_groups
 
     row_off = 1 if (show_ohlc_header and bool(header_rec)) else 0
     layout_spec = compute_hp_visual_layout_spec(
@@ -1449,6 +1734,7 @@ def build_interactive_figure_from_specs(
     fig = make_subplots(
         rows=layout_spec['plotly_n_subplot_rows'],
         cols=1,
+        specs=[[{'secondary_y': True}] for _ in range(layout_spec['plotly_n_subplot_rows'])],
         shared_xaxes=True,
         vertical_spacing=layout_spec['plotly_vertical_spacing'],
         row_heights=layout_spec['plotly_row_heights'],
@@ -1462,11 +1748,41 @@ def build_interactive_figure_from_specs(
     color_dn = theme.get('line_color_down', 'green')
 
     cst_candle = resolve_candle_style_plotly(theme)
+    overlay_meta_pri_c_inc = max(
+        0.35, float(cst_candle['increasing_line_width']) * HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_sec_c_inc = max(
+        0.35, float(cst_candle['increasing_line_width']) * HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_pri_c_dec = max(
+        0.35, float(cst_candle['decreasing_line_width']) * HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_sec_c_dec = max(
+        0.35, float(cst_candle['decreasing_line_width']) * HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    )
     font_tick = resolve_font_size('plotly', 'axis_tick', theme)
     font_ytitle = resolve_font_size('plotly', 'axis_ylabel', theme)
 
-    row_idx = 0
+    overlay_group_flags: List[bool] = []
+    overlay_active_share_by_group: List[int] = []
+    overlay_plot_rows_by_group: List[List[int]] = [[] for _ in range(n_groups)]
+    overlay_row_axis_map_by_group: List[List[Dict[str, str]]] = [[] for _ in range(n_groups)]
     for g in range(n_groups):
+        n_share_group = 1
+        for t in range(n_types):
+            spec_probe = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
+            if spec_probe is None:
+                continue
+            data_probe = spec_probe.get('data', {})
+            if not data_probe:
+                continue
+            arr_probe = next(iter(data_probe.values()), None)
+            if hasattr(arr_probe, 'ndim') and getattr(arr_probe, 'ndim', 1) == 2:
+                n_share_group = max(1, int(arr_probe.shape[0]))
+                break
+        is_overlay_group = (n_share_group == 2)
+        overlay_group_flags.append(is_overlay_group)
+        overlay_active_share_by_group.append(0)
         gt = (group_titles[g] if group_titles and g < len(group_titles) else '').strip()
         name_prefix = f'{gt} | ' if n_groups > 1 and gt else ''
         group_recs = bar_data_per_group[g] if g < len(bar_data_per_group) else []
@@ -1475,6 +1791,20 @@ def build_interactive_figure_from_specs(
             hover_dates.extend([''] * (n - len(hover_dates)))
         for t in range(n_types):
             plot_row = plotly_trace_row_1based(layout_spec, g, t)
+            if is_overlay_group and plot_row not in overlay_plot_rows_by_group[g]:
+                overlay_plot_rows_by_group[g].append(plot_row)
+                left_idx = 2 * plot_row - 1
+                right_idx = 2 * plot_row
+                left_ref = 'y' if left_idx == 1 else f'y{left_idx}'
+                right_ref = f'y{right_idx}'
+                left_key = 'yaxis' if left_idx == 1 else f'yaxis{left_idx}'
+                right_key = f'yaxis{right_idx}'
+                overlay_row_axis_map_by_group[g].append({
+                    'left_ref': left_ref,
+                    'right_ref': right_ref,
+                    'left_key': left_key,
+                    'right_key': right_key,
+                })
             spec = specs_per_group[g][t] if g < len(specs_per_group) and t < len(specs_per_group[g]) else None
             if spec is None:
                 continue
@@ -1482,130 +1812,82 @@ def build_interactive_figure_from_specs(
             ct = spec.get('chart_type', '')
             data = spec.get('data', {})
 
-            group_custom = [g] * n  # 供点击回调区分 group
             if ct == 'kline' and all(k in data for k in ('open', 'high', 'low', 'close')):
-                o = _to_1d(np.asarray(data['open']), 0)[:n]
-                h = _to_1d(np.asarray(data['high']), 0)[:n]
-                l = _to_1d(np.asarray(data['low']), 0)[:n]
-                c = _to_1d(np.asarray(data['close']), 0)[:n]
-                fig.add_trace(
-                    go.Candlestick(
-                        x=x_idx,
-                        open=o,
-                        high=h,
-                        low=l,
-                        close=c,
-                        increasing_line_color=cst_candle['increasing_line_color'],
-                        decreasing_line_color=cst_candle['decreasing_line_color'],
-                        increasing_fillcolor=cst_candle['increasing_fillcolor'],
-                        decreasing_fillcolor=cst_candle['decreasing_fillcolor'],
-                        increasing_line_width=cst_candle['increasing_line_width'],
-                        decreasing_line_width=cst_candle['decreasing_line_width'],
-                        whiskerwidth=cst_candle['whiskerwidth'],
-                        name=f'{name_prefix}Price' if name_prefix else 'Price',
-                        legendgroup=f'g{g}',
-                        customdata=group_custom,
-                        text=hover_dates,
-                        hovertemplate='%{text}<br>O:%{open:.3f} H:%{high:.3f} L:%{low:.3f} C:%{close:.3f}<extra></extra>',
-                        hoverlabel=dict(
-                            bgcolor='rgba(255,255,255,0.75)',
-                            bordercolor='rgba(0,0,0,0.55)',
-                            font=dict(color='black'),
+                for s_idx in range(n_share_group):
+                    group_custom = [[g, s_idx]] * n  # 供点击回调区分 group/share
+                    o = _to_1d(np.asarray(data['open']), s_idx)[:n]
+                    h = _to_1d(np.asarray(data['high']), s_idx)[:n]
+                    l = _to_1d(np.asarray(data['low']), s_idx)[:n]
+                    c = _to_1d(np.asarray(data['close']), s_idx)[:n]
+                    trace_opacity, _slw_k, c_inc_w, c_dec_w = _overlay_trace_visual_bundle(
+                        is_overlay_group,
+                        s_idx,
+                        overlay_active_share_by_group[g],
+                        base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                        base_candle_dec_w=float(cst_candle['decreasing_line_width']),
+                    )
+                    fig.add_trace(
+                        go.Candlestick(
+                            x=x_idx,
+                            open=o,
+                            high=h,
+                            low=l,
+                            close=c,
+                            increasing_line_color=cst_candle['increasing_line_color'],
+                            decreasing_line_color=cst_candle['decreasing_line_color'],
+                            increasing_fillcolor=cst_candle['increasing_fillcolor'],
+                            decreasing_fillcolor=cst_candle['decreasing_fillcolor'],
+                            increasing_line_width=c_inc_w,
+                            decreasing_line_width=c_dec_w,
+                            whiskerwidth=cst_candle['whiskerwidth'],
+                            name=f'{name_prefix}Price[S{s_idx}]' if name_prefix else f'Price[S{s_idx}]',
+                            legendgroup=f'g{g}s{s_idx}',
+                            customdata=group_custom,
+                            opacity=trace_opacity,
+                            text=hover_dates,
+                            hovertemplate='%{text}<br>O:%{open:.3f} H:%{high:.3f} L:%{low:.3f} C:%{close:.3f}<extra></extra>',
+                            hoverlabel=dict(
+                                bgcolor='rgba(255,255,255,0.75)',
+                                bordercolor='rgba(0,0,0,0.55)',
+                                font=dict(color='black'),
+                            ),
                         ),
-                    ),
-                    row=plot_row,
-                    col=1,
-                )
+                        row=plot_row,
+                        col=1,
+                        secondary_y=(is_overlay_group and s_idx == 1),
+                    )
                 # 主价格子图 axis ref：供十字交叉线 shapes 绘制与更新使用
                 xref = 'x' if plot_row == 1 else f'x{plot_row}'
-                yref = 'y' if plot_row == 1 else f'y{plot_row}'
+                left_y_idx = 2 * plot_row - 1
+                right_y_idx = 2 * plot_row
+                yref = 'y' if left_y_idx == 1 else f'y{left_y_idx}'
                 crosshair_xref_by_group[g] = xref
                 crosshair_yref_by_group[g] = yref
-                crosshair_yaxis_layout_key_by_group[g] = 'yaxis' if plot_row == 1 else f'yaxis{plot_row}'
+                crosshair_yaxis_layout_key_by_group[g] = 'yaxis' if left_y_idx == 1 else f'yaxis{left_y_idx}'
+                overlay_left_yref_by_group[g] = yref
+                overlay_right_yref_by_group[g] = f'y{right_y_idx}'
                 # MA 线
-                for key in data:
-                    if key in ('open', 'high', 'low', 'close'):
-                        continue
-                    arr = _to_1d(np.asarray(data[key]), 0)[:n]
-                    fig.add_trace(
-                        go.Scatter(
-                            x=x_idx, y=arr, mode='lines',
-                            name=f'{name_prefix}{key}' if name_prefix else key,
-                            legendgroup=f'g{g}',
-                            line=dict(width=1),
-                            customdata=group_custom,
-                            text=hover_dates,
-                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
-                            hoverlabel=dict(
-                                bgcolor='rgba(255,255,255,0.75)',
-                                bordercolor='rgba(0,0,0,0.55)',
-                                font=dict(color='black'),
-                            ),
-                        ),
-                        row=plot_row,
-                        col=1,
-                    )
-
-            elif ct == 'volume':
-                vol_name = next((k for k in ('vol', 'volume') if k in data), next(iter(data), None))
-                if vol_name:
-                    arr = _to_1d(np.asarray(data[vol_name]), 0)[:n]
-                    open_1d = _to_1d(np.asarray(data['open']), 0)[:n] if data.get('open') is not None else None
-                    close_1d = _to_1d(np.asarray(data['close']), 0)[:n] if data.get('close') is not None else None
-                    if open_1d is not None and close_1d is not None:
-                        colors = [color_up if close_1d[i] >= open_1d[i] else color_dn for i in range(n)]
-                    else:
-                        colors = [theme.get('volume_color', color_dn)] * n
-                    fig.add_trace(
-                        go.Bar(
-                            x=x_idx, y=arr, marker_color=colors,
-                            name=f'{name_prefix}Volume' if name_prefix else 'Volume',
-                            legendgroup=f'g{g}',
-                            showlegend=False,
-                            customdata=group_custom,
-                            hovertemplate='Vol:%{y:.3f}<extra></extra>',
-                            hoverlabel=dict(
-                                bgcolor='rgba(255,255,255,0.75)',
-                                bordercolor='rgba(0,0,0,0.55)',
-                                font=dict(color='black'),
-                            ),
-                        ),
-                        row=plot_row,
-                        col=1,
-                    )
-
-            elif ct == 'macd':
-                series_kind = spec.get('series_kind', {})
-                for key, y in data.items():
-                    y_flat = _to_1d(np.asarray(y), 0)[:n]
-                    kind = series_kind.get(key, 'line')
-                    if kind == 'bar':
-                        colors = [color_up if v >= 0 else color_dn for v in y_flat]
-                        fig.add_trace(
-                            go.Bar(
-                                x=x_idx, y=y_flat, marker_color=colors,
-                                name=f'{name_prefix}{key}' if name_prefix else key,
-                                legendgroup=f'g{g}',
-                                showlegend=False,
-                                customdata=group_custom,
-                                hovertemplate='%{y:.3f}<extra></extra>',
-                                hoverlabel=dict(
-                                    bgcolor='rgba(255,255,255,0.75)',
-                                    bordercolor='rgba(0,0,0,0.55)',
-                                    font=dict(color='black'),
-                                ),
-                            ),
-                            row=plot_row,
-                            col=1,
+                for s_idx in range(n_share_group):
+                    group_custom = [[g, s_idx]] * n
+                    for key in data:
+                        if key in ('open', 'high', 'low', 'close'):
+                            continue
+                        arr = _to_1d(np.asarray(data[key]), s_idx)[:n]
+                        trace_opacity, slw_ma, _i0, _d0 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                         )
-                    else:
                         fig.add_trace(
                             go.Scatter(
-                                x=x_idx, y=y_flat, mode='lines',
-                                name=f'{name_prefix}{key}' if name_prefix else key,
-                                legendgroup=f'g{g}',
-                                line=dict(width=1),
+                                x=x_idx, y=arr, mode='lines',
+                                name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
+                                legendgroup=f'g{g}s{s_idx}',
+                                line=dict(width=slw_ma),
                                 customdata=group_custom,
+                                opacity=trace_opacity,
                                 text=hover_dates,
                                 hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
                                 hoverlabel=dict(
@@ -1616,29 +1898,137 @@ def build_interactive_figure_from_specs(
                             ),
                             row=plot_row,
                             col=1,
+                            secondary_y=(is_overlay_group and s_idx == 1),
                         )
 
-            elif ct == 'line':
-                for key, y in data.items():
-                    y_flat = _to_1d(np.asarray(y), 0)[:n]
-                    fig.add_trace(
-                        go.Scatter(
-                            x=x_idx, y=y_flat, mode='lines',
-                            name=f'{name_prefix}{key}' if name_prefix else key,
-                            legendgroup=f'g{g}',
-                            line=dict(width=1),
-                            customdata=group_custom,
-                            text=hover_dates,
-                            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
-                            hoverlabel=dict(
-                                bgcolor='rgba(255,255,255,0.75)',
-                                bordercolor='rgba(0,0,0,0.55)',
-                                font=dict(color='black'),
+            elif ct == 'volume':
+                vol_name = next((k for k in ('vol', 'volume') if k in data), next(iter(data), None))
+                if vol_name:
+                    for s_idx in range(n_share_group):
+                        group_custom = [[g, s_idx]] * n
+                        arr = _to_1d(np.asarray(data[vol_name]), s_idx)[:n]
+                        open_1d = _to_1d(np.asarray(data['open']), s_idx)[:n] if data.get('open') is not None else None
+                        close_1d = _to_1d(np.asarray(data['close']), s_idx)[:n] if data.get('close') is not None else None
+                        if open_1d is not None and close_1d is not None:
+                            colors = [color_up if close_1d[i] >= open_1d[i] else color_dn for i in range(n)]
+                        else:
+                            colors = [theme.get('volume_color', color_dn)] * n
+                        trace_opacity, _v0, _v1, _v2 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
+                        )
+                        fig.add_trace(
+                            go.Bar(
+                                x=x_idx, y=arr, marker_color=colors,
+                                name=f'{name_prefix}Volume[S{s_idx}]' if name_prefix else f'Volume[S{s_idx}]',
+                                legendgroup=f'g{g}s{s_idx}',
+                                showlegend=False,
+                                customdata=group_custom,
+                                opacity=trace_opacity,
+                                hovertemplate='Vol:%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
                             ),
-                        ),
-                        row=plot_row,
-                        col=1,
-                    )
+                            row=plot_row,
+                            col=1,
+                            secondary_y=(is_overlay_group and s_idx == 1),
+                        )
+
+            elif ct == 'macd':
+                series_kind = spec.get('series_kind', {})
+                for s_idx in range(n_share_group):
+                    group_custom = [[g, s_idx]] * n
+                    for key, y in data.items():
+                        y_flat = _to_1d(np.asarray(y), s_idx)[:n]
+                        kind = series_kind.get(key, 'line')
+                        trace_opacity, slw_m, _m0, _m1 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
+                        )
+                        if kind == 'bar':
+                            colors = [color_up if v >= 0 else color_dn for v in y_flat]
+                            fig.add_trace(
+                                go.Bar(
+                                    x=x_idx, y=y_flat, marker_color=colors,
+                                    name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
+                                    legendgroup=f'g{g}s{s_idx}',
+                                    showlegend=False,
+                                    customdata=group_custom,
+                                    opacity=trace_opacity,
+                                    hovertemplate='%{y:.3f}<extra></extra>',
+                                    hoverlabel=dict(
+                                        bgcolor='rgba(255,255,255,0.75)',
+                                        bordercolor='rgba(0,0,0,0.55)',
+                                        font=dict(color='black'),
+                                    ),
+                                ),
+                                row=plot_row,
+                                col=1,
+                                secondary_y=(is_overlay_group and s_idx == 1),
+                            )
+                        else:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=x_idx, y=y_flat, mode='lines',
+                                    name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
+                                    legendgroup=f'g{g}s{s_idx}',
+                                    line=dict(width=slw_m),
+                                    customdata=group_custom,
+                                    opacity=trace_opacity,
+                                    text=hover_dates,
+                                    hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                                    hoverlabel=dict(
+                                        bgcolor='rgba(255,255,255,0.75)',
+                                        bordercolor='rgba(0,0,0,0.55)',
+                                        font=dict(color='black'),
+                                    ),
+                                ),
+                                row=plot_row,
+                                col=1,
+                                secondary_y=(is_overlay_group and s_idx == 1),
+                            )
+
+            elif ct == 'line':
+                for s_idx in range(n_share_group):
+                    group_custom = [[g, s_idx]] * n
+                    for key, y in data.items():
+                        y_flat = _to_1d(np.asarray(y), s_idx)[:n]
+                        trace_opacity, slw_l, _l0, _l1 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
+                        )
+                        fig.add_trace(
+                            go.Scatter(
+                                x=x_idx, y=y_flat, mode='lines',
+                                name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
+                                legendgroup=f'g{g}s{s_idx}',
+                                line=dict(width=slw_l),
+                                customdata=group_custom,
+                                opacity=trace_opacity,
+                                text=hover_dates,
+                                hovertemplate='%{text}<br>%{y:.3f}<extra></extra>',
+                                hoverlabel=dict(
+                                    bgcolor='rgba(255,255,255,0.75)',
+                                    bordercolor='rgba(0,0,0,0.55)',
+                                    font=dict(color='black'),
+                                ),
+                            ),
+                            row=plot_row,
+                            col=1,
+                            secondary_y=(is_overlay_group and s_idx == 1),
+                        )
 
     last_row = layout_spec['plotly_n_subplot_rows']
     fig_height = max(400, min(900, 200 * last_row))
@@ -1646,6 +2036,10 @@ def build_interactive_figure_from_specs(
     top_margin = layout_spec['plotly_margin_top']
     initial_header_html = _build_header_html(header_rec, theme) if show_ohlc_header else ''
     bar_data_serializable = _bar_data_to_json_serializable(bar_data_per_group)
+    bar_data_by_share_serializable = [
+        _bar_data_to_json_serializable(group_rows)
+        for group_rows in bar_data_by_share_per_group
+    ]
     n_subplot_titles = last_row
     axis_line = dict(
         showline=True,
@@ -1681,7 +2075,10 @@ def build_interactive_figure_from_specs(
     )
     for i in range(1, last_row + 1):
         xax = 'xaxis' if i == 1 else f'xaxis{i}'
-        yax = 'yaxis' if i == 1 else f'yaxis{i}'
+        left_idx = 2 * i - 1
+        right_idx = 2 * i
+        yax = 'yaxis' if left_idx == 1 else f'yaxis{left_idx}'
+        yax_r = f'yaxis{right_idx}'
         if n_groups > 1:
             type_idx = (i - 1) % (n_types + 1)
             ytitle = '' if type_idx == n_types else type_to_ylabel.get(types_info[type_idx].id, '')
@@ -1709,7 +2106,32 @@ def build_interactive_figure_from_specs(
                 tickfont=tick_font_y,
                 **axis_line,
             ),
+            yax_r: dict(
+                title=dict(text='', font=plotly_font_dict(font_ytitle)),
+                fixedrange=True,
+                tickfont=tick_font_y,
+                side='right',
+                overlaying='y' if left_idx == 1 else f'y{left_idx}',
+                **axis_line,
+            ),
         })
+
+    # overlay 组初始化：左/右轴标题分别对应主/次视觉（默认 S0/S1）
+    for g in range(n_groups):
+        if not overlay_group_flags[g]:
+            continue
+        for row in overlay_plot_rows_by_group[g]:
+            if row < 1 or row > len(types_info):
+                continue
+            ytitle_base = type_to_ylabel.get(types_info[row - 1].id, '')
+            left_idx = 2 * row - 1
+            right_idx = 2 * row
+            left_key = 'yaxis' if left_idx == 1 else f'yaxis{left_idx}'
+            right_key = f'yaxis{right_idx}'
+            fig.update_layout({
+                left_key: dict(title=dict(text=f'{ytitle_base} [S0]', font=plotly_font_dict(font_ytitle))),
+                right_key: dict(title=dict(text=f'{ytitle_base} [S1]', font=plotly_font_dict(font_ytitle))),
+            })
 
     # 十字交叉线（选中态）初始化：初始 y 端点用 header_rec 的 high/low，随后在 FigureWidget 回调中重算
     initial_shapes: List[Dict[str, Any]] = []
@@ -1747,6 +2169,7 @@ def build_interactive_figure_from_specs(
     # 供前端点击更新表头 / FigureWidget 回调更新 annotations 的元数据
     fig._hp_plotly_meta = {
         'bar_data': bar_data_serializable,
+        'bar_data_by_share': bar_data_by_share_serializable,
         'n_types': n_types,
         'n_groups': n_groups,
         'n_subplot_titles': n_subplot_titles,
@@ -1768,5 +2191,19 @@ def build_interactive_figure_from_specs(
         'theme': theme,
         'min_visible_bars': int(HP_PLOTLY_MIN_VISIBLE_BARS),
         'plotly_n_subplot_rows': int(last_row),
+        'overlay_group_flags': overlay_group_flags,
+        'overlay_active_share_by_group': overlay_active_share_by_group,
+        'overlay_secondary_opacity': float(HP_OVERLAY_SECONDARY_OPACITY),
+        'overlay_primary_opacity': float(HP_OVERLAY_PRIMARY_OPACITY),
+        'overlay_pri_scatter_lw': float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH),
+        'overlay_sec_scatter_lw': float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH),
+        'overlay_pri_candle_inc': float(overlay_meta_pri_c_inc),
+        'overlay_sec_candle_inc': float(overlay_meta_sec_c_inc),
+        'overlay_pri_candle_dec': float(overlay_meta_pri_c_dec),
+        'overlay_sec_candle_dec': float(overlay_meta_sec_c_dec),
+        'overlay_left_yref_by_group': overlay_left_yref_by_group,
+        'overlay_right_yref_by_group': overlay_right_yref_by_group,
+        'overlay_plot_rows_by_group': overlay_plot_rows_by_group,
+        'overlay_row_axis_map_by_group': overlay_row_axis_map_by_group,
     }
     return fig

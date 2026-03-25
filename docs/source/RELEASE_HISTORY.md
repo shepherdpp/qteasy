@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 2.2.6 (2026-03-25)
+- **HistoryPanel overlay (Q09) interactive polish**  
+  For two-symbol overlay on interactive Plotly charts, primary vs secondary series now differ not only in opacity but also in line width (including candlestick outline widths and indicator lines such as MACD). FigureWidget and HTML click-to-focus updates keep these styles in sync when you switch which share is primary.
+- **Static vs interactive overlay line-weight parity**  
+  Matplotlib static charts now use the same overlay line-width scales as Plotly (shared constants in `hp_visual_overlay_style`), so K-line strokes, MA lines, MACD lines, and pure line panels look consistent across backends.
+
 ## 2.2.5 (2026-03-23)
 - **HistoryPanel interactive plot visual improvement**
   Added a reusable selected-bar crosshair indicator to interactive Plotly charts: clicking any bar shows a solid crosshair in the main price panel at the bar midpoint. The indicator stays synced during pan/zoom and hides when the selected bar scrolls out of view. 
