@@ -1,6 +1,6 @@
 # RELEASE HISTORY
 
-## 2.2.6 (2026-03-24)
+## 2.2.6 (2026-03-25)
 - **HistoryPanel overlay (Q09) interactive polish**  
   For two-symbol overlay on interactive Plotly charts, primary vs secondary series now differ not only in opacity but also in line width (including candlestick outline widths and indicator lines such as MACD). FigureWidget and HTML click-to-focus updates keep these styles in sync when you switch which share is primary.
 - **Static vs interactive overlay line-weight parity**  

@@ -1259,6 +1259,13 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                 return
             rec = bar_data_by_share[group][share_idx][point_index]
             theme = getattr(fw, '_hp_plotly_meta', {}).get('theme') or _get_theme_internal()
+            meta_now = getattr(fw, '_hp_plotly_meta', {}) or {}
+            ogf = meta_now.get('overlay_group_flags', [])
+            is_overlay_group = group < len(ogf) and bool(ogf[group])
+            overlay_active = meta_now.get('overlay_active_share_by_group', []) or []
+            old_active_share = int(overlay_active[group]) if is_overlay_group and group < len(overlay_active) else 0
+            clicked_is_main_share = (int(share_idx) == old_active_share) if is_overlay_group else True
+
             n_sub = int(getattr(fw, '_hp_plotly_meta', {}).get('subplot_annotation_count', 0))
             base: List[Any] = []
             if fw.layout.annotations:
@@ -1267,11 +1274,11 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             lay_h, mtb, mbb = _layout_height_margin_tb(fw.layout, theme, has_ohlc_header=True)
             py1, py2 = _plotly_header_paper_y_from_layout(lay_h, mtb, mbb, theme)
             new_annotations = base + _build_top_info_annotations(rec, theme, y1=py1, y2=py2)
-            fw.update_layout(annotations=new_annotations)
+            # 仅当用户点击“当前主视觉”share 时更新 header；切换次视觉时保持不变，减少闪烁。
+            if clicked_is_main_share:
+                fw.update_layout(annotations=new_annotations)
 
             # overlay 组：点击后主次视觉交换（轻量：透明度交换）
-            meta_now = getattr(fw, '_hp_plotly_meta', {}) or {}
-            ogf = meta_now.get('overlay_group_flags', [])
             if group < len(ogf) and bool(ogf[group]):
                 active = list(meta_now.get('overlay_active_share_by_group', []))
                 while len(active) <= group:
@@ -1293,18 +1300,13 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                     _hp_plotly_overlay_apply_trace_visual(
                         tr, s0=s0, primary_share=int(share_idx), meta_now=meta_now,
                     )
-                    yref_now = str(getattr(tr, 'yaxis', 'y') or 'y')
-                    row_axis_map = meta_now.get('overlay_row_axis_map_by_group', [])
-                    axis_maps = row_axis_map[group] if group < len(row_axis_map) else []
-                    for am in axis_maps:
-                        left_ref = str(am.get('left_ref', 'y'))
-                        right_ref = str(am.get('right_ref', 'y2'))
-                        if yref_now not in (left_ref, right_ref):
-                            continue
-                        tr.yaxis = left_ref if s0 == share_idx else right_ref
-                        break
+                # 极简主次切换：不互换 yaxis，不重算 yaxis range，只通过 y 轴标题加粗来标识主视觉。
+                titles_update: Dict[str, Any] = {}
                 rows_by_group = meta_now.get('overlay_plot_rows_by_group', [])
                 rows = rows_by_group[group] if group < len(rows_by_group) else []
+                active_share = int(share_idx)
+                main_tick_color = '#000000'
+                sec_tick_color = '#1a1a1a'  # 接近 RGB(0.1,0.1,0.1)，深灰更易辨识
                 for row in rows:
                     if row < 1:
                         continue
@@ -1312,39 +1314,82 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                     right_idx = 2 * int(row)
                     left_key = 'yaxis' if left_idx == 1 else f'yaxis{left_idx}'
                     right_key = f'yaxis{right_idx}'
-                    try:
-                        left_obj = getattr(fw.layout, left_key, None)
-                        t_obj = getattr(left_obj, 'title', None) if left_obj is not None else None
-                        t_text = getattr(t_obj, 'text', '') if t_obj is not None else ''
-                        base = str(t_text).split(' [S', 1)[0] if t_text else ''
-                    except Exception:
-                        base = ''
-                    if not base:
-                        base = 'Y'
-                    fw.update_layout({
-                        f'{left_key}_title': dict(text=f'{base} [S{int(share_idx)}]'),
-                        f'{right_key}_title': dict(text=f'{base} [S{1 - int(share_idx)}]'),
-                    })
-                # 点击后立即按当前视窗重算 Y 轴范围，避免“需拖动/缩放后才正确刷新”
-                xa_m = getattr(fw.layout, _x_read_name, None)
-                x_range_now = getattr(xa_m, 'range', None) if xa_m is not None else None
-                if x_range_now and isinstance(x_range_now, (list, tuple)) and len(x_range_now) >= 2:
-                    x0_now, x1_now = float(x_range_now[0]), float(x_range_now[1])
-                else:
-                    x0_now, x1_now = 0.0, float(n - 1)
-                x0_now, x1_now, _, _ = _hp_plotly_normalize_x_view_range(
-                    n, x0_now, x1_now, HP_PLOTLY_MIN_VISIBLE_BARS,
-                )
-                y_ranges_now = _compute_y_ranges_for_x_range(fw, x0_now, x1_now, n)
-                upd_now: Dict[str, Any] = {}
-                for key, (ymin, ymax) in y_ranges_now.items():
-                    pad = max((ymax - ymin) * 0.05, 1e-6)
-                    upd_now[f'{key}_range'] = [ymin - pad, ymax + pad]
-                if upd_now:
-                    fw.update_layout(**upd_now)
+
+                    left_is_main = (active_share == 0)
+                    right_is_main = (active_share == 1)
+                    left_weight = 'bold' if left_is_main else 'normal'
+                    right_weight = 'bold' if right_is_main else 'normal'
+                    left_color = main_tick_color if left_is_main else sec_tick_color
+                    right_color = main_tick_color if right_is_main else sec_tick_color
+
+                    left_obj = getattr(fw.layout, left_key, None)
+                    t_obj = getattr(left_obj, 'title', None) if left_obj is not None else None
+                    left_font_obj = getattr(t_obj, 'font', None) if t_obj is not None else None
+                    left_font = dict(left_font_obj) if isinstance(left_font_obj, dict) else {}
+                    left_font['weight'] = left_weight
+                    left_font['color'] = left_color
+                    titles_update[f'{left_key}_title'] = dict(font=left_font)
+
+                    left_tick_obj = getattr(left_obj, 'tickfont', None) if left_obj is not None else None
+                    left_tick_font = dict(left_tick_obj) if isinstance(left_tick_obj, dict) else {}
+                    if left_tick_font:
+                        left_tick_font['weight'] = left_weight
+                        left_tick_font['color'] = left_color
+                        titles_update[f'{left_key}_tickfont'] = dict(left_tick_font)
+                    else:
+                        titles_update[f'{left_key}_tickfont'] = dict(color=left_color, weight=left_weight)
+
+                    right_obj = getattr(fw.layout, right_key, None)
+                    t2_obj = getattr(right_obj, 'title', None) if right_obj is not None else None
+                    right_font_obj = getattr(t2_obj, 'font', None) if t2_obj is not None else None
+                    right_font = dict(right_font_obj) if isinstance(right_font_obj, dict) else {}
+                    right_font['weight'] = right_weight
+                    right_font['color'] = right_color
+                    titles_update[f'{right_key}_title'] = dict(font=right_font)
+
+                    right_tick_obj = getattr(right_obj, 'tickfont', None) if right_obj is not None else None
+                    right_tick_font = dict(right_tick_obj) if isinstance(right_tick_obj, dict) else {}
+                    if right_tick_font:
+                        right_tick_font['weight'] = right_weight
+                        right_tick_font['color'] = right_color
+                        titles_update[f'{right_key}_tickfont'] = dict(right_tick_font)
+                    else:
+                        titles_update[f'{right_key}_tickfont'] = dict(color=right_color, weight=right_weight)
+
+                if titles_update:
+                    fw.update_layout(titles_update)
 
             # Q05：点击任意子图点，更新选中态十字交叉线
-            if crosshair_enabled:
+            if crosshair_enabled and clicked_is_main_share:
+                # overlay 极简切换下：我们不再互换 yaxis 坐标系，
+                # 但十字线的横线 y 坐标解释仍依赖 yref。
+                # 当当前主视觉是右侧 share(share_idx==1) 时，需要切换 crosshair 的 yref/yaxis_key。
+                if is_overlay_group:
+                    try:
+                        left_yref_by_group = meta_now.get('overlay_left_yref_by_group', [])
+                        right_yref_by_group = meta_now.get('overlay_right_yref_by_group', [])
+                        if group < len(left_yref_by_group) and group < len(right_yref_by_group):
+                            active_yref = (
+                                left_yref_by_group[group]
+                                if int(share_idx) == 0 else right_yref_by_group[group]
+                            )
+                            # yref: 'y' -> yaxis, 'y2'/'y3' -> yaxis{idx}
+                            if str(active_yref) == 'y':
+                                yaxis_key = 'yaxis'
+                            else:
+                                y_idx = int(str(active_yref)[1:]) if str(active_yref).startswith('y') else 1
+                                yaxis_key = 'yaxis' if y_idx == 1 else f'yaxis{y_idx}'
+                            cyrefs = meta_now.get('crosshair_yref_by_group', [])
+                            cykeys = meta_now.get('crosshair_yaxis_layout_key_by_group', [])
+                            if group < len(cyrefs):
+                                cyrefs[group] = active_yref
+                            if group < len(cykeys):
+                                cykeys[group] = yaxis_key
+                            meta_now['crosshair_yref_by_group'] = cyrefs
+                            meta_now['crosshair_yaxis_layout_key_by_group'] = cykeys
+                            fw._hp_plotly_meta = meta_now
+                    except Exception:
+                        pass
                 mid_y = _hp_plotly_crosshair_mid_y_from_rec(rec)
                 fw._hp_crosshair_selected = {
                     'group': int(group),

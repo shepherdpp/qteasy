@@ -627,6 +627,31 @@ def build_figure_from_specs(
                     ylab = ax.get_ylabel()
                     if ylab:
                         ax_r.set_ylabel(f'{ylab} (R)')
+
+                    # overlay 双标的：主（左）加粗黑色，次（右）不加粗深灰。
+                    # 为避免与浅背景融为一体，次要刻度/标签使用更深灰色。
+                    main_color = '#000000'
+                    sec_color = '#1a1a1a'
+
+                    try:
+                        ax.yaxis.label.set_color(main_color)
+                        ax.yaxis.label.set_fontweight('bold')
+                        ax.tick_params(axis='y', colors=main_color)
+                        for lbl in ax.get_yticklabels():
+                            lbl.set_color(main_color)
+                            lbl.set_fontweight('bold')
+                    except Exception:
+                        pass
+
+                    try:
+                        ax_r.yaxis.label.set_color(sec_color)
+                        ax_r.yaxis.label.set_fontweight('normal')
+                        ax_r.tick_params(axis='y', colors=sec_color)
+                        for lbl in ax_r.get_yticklabels():
+                            lbl.set_color(sec_color)
+                            lbl.set_fontweight('normal')
+                    except Exception:
+                        pass
                 else:
                     for s_idx in range(n_share_group):
                         render_spec(
