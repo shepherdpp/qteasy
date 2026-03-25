@@ -1254,11 +1254,13 @@ class TestQ09OverlayMvp(unittest.TestCase):
             self.skipTest('plotly not installed')
         from qteasy.hp_visual_plotly import (
             HP_OVERLAY_PRIMARY_OPACITY,
+            HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
             HP_OVERLAY_SECONDARY_OPACITY,
+            HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
             build_interactive_figure_from_specs,
         )
 
-        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=20)
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol', 'ma_5'], n_shares=2, n_dates=20)
         specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
         fig = build_interactive_figure_from_specs(
             specs_per_group,
@@ -1271,6 +1273,12 @@ class TestQ09OverlayMvp(unittest.TestCase):
         op_set = {float(getattr(tr, 'opacity', 1.0) or 1.0) for tr in candles}
         self.assertIn(float(HP_OVERLAY_PRIMARY_OPACITY), op_set)
         self.assertIn(float(HP_OVERLAY_SECONDARY_OPACITY), op_set)
+        wick_set = {float(tr.increasing.line.width) for tr in candles}
+        self.assertEqual(len(wick_set), 2)
+        scatters = [tr for tr in fig.data if str(getattr(tr, 'type', '')).lower() == 'scatter']
+        self.assertGreaterEqual(len(scatters), 2)
+        self.assertIn(float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH), {float(tr.line.width) for tr in scatters})
+        self.assertIn(float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH), {float(tr.line.width) for tr in scatters})
         yaxis_set = {str(getattr(tr, 'yaxis', 'y')) for tr in candles}
         self.assertEqual(len(yaxis_set), 2)
         self.assertIn('[S0]', str(getattr(fig.layout.yaxis.title, 'text', '') or ''))
@@ -1282,7 +1290,8 @@ class TestQ09OverlayMvp(unittest.TestCase):
         meta = getattr(fig, '_hp_plotly_meta', {})
         self.assertIn('bar_data_by_share', meta)
         self.assertTrue(bool(meta.get('overlay_group_flags', [False])[0]))
-        print('  candles:', len(candles), 'opacity set:', sorted(list(op_set)))
+        self.assertIn('overlay_pri_scatter_lw', meta)
+        print('  candles:', len(candles), 'opacity set:', sorted(list(op_set)), 'wick widths:', wick_set)
 
     def test_q09_html_script_contains_share_click_switch(self):
         print('\n[Q09-MVP] HTML 脚本契约：点击后按 share 切换 header 与透明度主次')
@@ -1308,7 +1317,101 @@ class TestQ09OverlayMvp(unittest.TestCase):
         self.assertIn('pt.customdata', html_str)
         self.assertIn('tr.opacity', html_str)
         self.assertIn('tr2.yaxis', html_str)
+        self.assertIn('overlay_pri_scatter_lw', html_str)
+        self.assertIn('tr.increasing.line.width', html_str)
         print('  html length:', len(html_str))
+
+
+class TestQ09OverlayFull(unittest.TestCase):
+    """Q09-Full：无 volume / 含 MACD / 纯 line 等边界下 overlay 仍成立；主次线宽契约。"""
+
+    def test_q09_overlay_ohlc_only_two_candles(self):
+        print('\n[Q09-Full] 仅 OHLC、无 volume：overlay 仍为两套 K 线')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import build_interactive_figure_from_specs
+
+        hp = _make_hp(['open', 'high', 'low', 'close'], n_shares=2, n_dates=16)
+        specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        candles = [tr for tr in fig.data if str(getattr(tr, 'type', '')).lower() == 'candlestick']
+        self.assertEqual(len(candles), 2)
+        bars = [tr for tr in fig.data if str(getattr(tr, 'type', '')).lower() == 'bar']
+        self.assertEqual(len(bars), 0)
+        print('  traces:', len(fig.data), 'candles:', len(candles))
+
+    def test_q09_overlay_kline_volume_macd_rows(self):
+        print('\n[Q09-Full] K+成交量+MACD：MACD 行 Scatter 具备主次线宽')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
+            HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
+            build_interactive_figure_from_specs,
+        )
+
+        ht = [
+            'open', 'high', 'low', 'close', 'vol',
+            'macd_demo', 'macd_signal_demo', 'macd_hist_demo',
+        ]
+        hp = _make_hp(ht, n_shares=2, n_dates=18)
+        specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        macd_scatters = [
+            tr for tr in fig.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'macd' in str(getattr(tr, 'name', '') or '').lower()
+        ]
+        self.assertGreaterEqual(len(macd_scatters), 2)
+        lws = {float(tr.line.width) for tr in macd_scatters}
+        self.assertIn(float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH), lws)
+        self.assertIn(float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH), lws)
+        print('  macd scatter count:', len(macd_scatters), 'line widths:', lws)
+
+    def test_q09_overlay_line_only_two_shares(self):
+        print('\n[Q09-Full] 仅 close 折线、两 share：双 trace 双 y、主次线宽')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+        from qteasy.hp_visual_plotly import (
+            HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
+            HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
+            build_interactive_figure_from_specs,
+        )
+
+        hp = _make_hp(['close'], n_shares=2, n_dates=14)
+        specs_per_group, types_info, group_titles = _specs_per_group_overlay_two_shares(hp)
+        fig = build_interactive_figure_from_specs(
+            specs_per_group,
+            types_info,
+            x_dates=list(hp.hdates),
+            group_titles=group_titles,
+        )
+        sc = [tr for tr in fig.data if str(getattr(tr, 'type', '')).lower() == 'scatter']
+        self.assertEqual(len(sc), 2)
+        yaxis_set = {str(getattr(tr, 'yaxis', 'y')) for tr in sc}
+        self.assertEqual(len(yaxis_set), 2)
+        lws = {float(tr.line.width) for tr in sc}
+        self.assertIn(float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH), lws)
+        self.assertIn(float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH), lws)
+        meta = getattr(fig, '_hp_plotly_meta', {})
+        self.assertTrue(bool(meta.get('overlay_group_flags', [False])[0]))
+        print('  scatter line widths:', lws)
 
 
 class TestPlotlyFigureWidgetHeaderPaperY(unittest.TestCase):

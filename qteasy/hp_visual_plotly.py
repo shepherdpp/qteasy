@@ -44,6 +44,74 @@ except ImportError:
 HP_PLOTLY_MIN_VISIBLE_BARS: int = 15
 HP_OVERLAY_SECONDARY_OPACITY: float = 0.45
 HP_OVERLAY_PRIMARY_OPACITY: float = 1.0
+# Q09 Full：主次除透明度外，Scatter 线宽与蜡烛边线宽度做一致分级（FigureWidget / HTML 点击后同步）。
+HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH: float = 1.35
+HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH: float = 0.65
+HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE: float = 1.18
+HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE: float = 0.82
+
+
+def _overlay_trace_visual_bundle(
+    is_overlay_group: bool,
+    s_idx: int,
+    active_share: int,
+    *,
+    base_candle_inc_w: float,
+    base_candle_dec_w: float,
+) -> Tuple[float, float, float, float]:
+    """overlay 下单 trace 的 (opacity, scatter_line_width, candle_inc_w, candle_dec_w)。
+
+    非 overlay 时scatter 线宽为 ``1.0``，蜡烛宽度沿用主题基准。
+    """
+    if not is_overlay_group:
+        return (
+            HP_OVERLAY_PRIMARY_OPACITY,
+            1.0,
+            float(base_candle_inc_w),
+            float(base_candle_dec_w),
+        )
+    primary = s_idx == active_share
+    op = HP_OVERLAY_PRIMARY_OPACITY if primary else HP_OVERLAY_SECONDARY_OPACITY
+    slw = HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH if primary else HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH
+    k_inc = HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE if primary else HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE
+    inc = max(0.35, float(base_candle_inc_w) * k_inc)
+    dec = max(0.35, float(base_candle_dec_w) * k_inc)
+    return op, slw, inc, dec
+
+
+def _hp_plotly_overlay_apply_trace_visual(
+    tr: Any,
+    *,
+    s0: int,
+    primary_share: int,
+    meta_now: Mapping[str, Any],
+) -> None:
+    """动态路径点击后：按当前主 share 更新单条 trace 的透明度与线宽（Scatter/Candlestick）。"""
+    is_pri = s0 == primary_share
+    pri_op = float(meta_now.get('overlay_primary_opacity', HP_OVERLAY_PRIMARY_OPACITY))
+    sec_op = float(meta_now.get('overlay_secondary_opacity', HP_OVERLAY_SECONDARY_OPACITY))
+    tr.opacity = pri_op if is_pri else sec_op
+    typ = str(getattr(tr, 'type', '') or '').lower()
+    if typ == 'scatter':
+        pri_lw = float(meta_now.get('overlay_pri_scatter_lw', HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH))
+        sec_lw = float(meta_now.get('overlay_sec_scatter_lw', HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH))
+        lw = pri_lw if is_pri else sec_lw
+        if getattr(tr, 'line', None) is None:
+            tr.line = dict(width=lw)
+        else:
+            tr.line.width = lw
+    elif typ == 'candlestick':
+        pri_i = float(meta_now.get('overlay_pri_candle_inc', 1.0))
+        sec_i = float(meta_now.get('overlay_sec_candle_inc', 1.0))
+        pri_d = float(meta_now.get('overlay_pri_candle_dec', 1.0))
+        sec_d = float(meta_now.get('overlay_sec_candle_dec', 1.0))
+        wi = pri_i if is_pri else sec_i
+        wd = pri_d if is_pri else sec_d
+        try:
+            tr.increasing.line.width = wi
+            tr.decreasing.line.width = wd
+        except Exception:
+            pass
 
 
 def _hp_plotly_translate_x_range_into_bounds(x0: float, x1: float, n: int) -> Tuple[float, float]:
@@ -627,6 +695,12 @@ def _click_update_header_script(div_id: str) -> str:
         '      if (ogf[groupIdx]) {\n'
         '        var secOp = (meta.overlay_secondary_opacity != null) ? meta.overlay_secondary_opacity : 0.45;\n'
         '        var priOp = (meta.overlay_primary_opacity != null) ? meta.overlay_primary_opacity : 1.0;\n'
+        '        var priSL = (meta.overlay_pri_scatter_lw != null) ? meta.overlay_pri_scatter_lw : 1.35;\n'
+        '        var secSL = (meta.overlay_sec_scatter_lw != null) ? meta.overlay_sec_scatter_lw : 0.65;\n'
+        '        var priCI = (meta.overlay_pri_candle_inc != null) ? meta.overlay_pri_candle_inc : 1.0;\n'
+        '        var secCI = (meta.overlay_sec_candle_inc != null) ? meta.overlay_sec_candle_inc : 0.82;\n'
+        '        var priCD = (meta.overlay_pri_candle_dec != null) ? meta.overlay_pri_candle_dec : 1.0;\n'
+        '        var secCD = (meta.overlay_sec_candle_dec != null) ? meta.overlay_sec_candle_dec : 0.82;\n'
         '        if (!meta.overlay_active_share_by_group) meta.overlay_active_share_by_group = [];\n'
         '        meta.overlay_active_share_by_group[groupIdx] = shareIdx;\n'
         '        for (var i = 0; i < gd.data.length; i++) {\n'
@@ -636,6 +710,17 @@ def _click_update_header_script(div_id: str) -> str:
         '          var s0 = parseInt(tr.customdata[0][1], 10) || 0;\n'
         '          if (g0 !== groupIdx) continue;\n'
         '          tr.opacity = (s0 === shareIdx) ? priOp : secOp;\n'
+        '          if (tr.type === "scatter" && tr.line) { tr.line.width = (s0 === shareIdx) ? priSL : secSL; }\n'
+        '          if (tr.type === "candlestick") {\n'
+        '            var cw = (s0 === shareIdx) ? priCI : secCI;\n'
+        '            var cwd = (s0 === shareIdx) ? priCD : secCD;\n'
+        '            if (!tr.increasing) tr.increasing = { line: {} };\n'
+        '            if (!tr.increasing.line) tr.increasing.line = {};\n'
+        '            tr.increasing.line.width = cw;\n'
+        '            if (!tr.decreasing) tr.decreasing = { line: {} };\n'
+        '            if (!tr.decreasing.line) tr.decreasing.line = {};\n'
+        '            tr.decreasing.line.width = cwd;\n'
+        '          }\n'
         '        }\n'
         '        var rowsByGroup = meta.overlay_plot_rows_by_group || [];\n'
         '        var rows = rowsByGroup[groupIdx] || [];\n'
@@ -1214,8 +1299,6 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
             meta_now = getattr(fw, '_hp_plotly_meta', {}) or {}
             ogf = meta_now.get('overlay_group_flags', [])
             if group < len(ogf) and bool(ogf[group]):
-                sec_op = float(meta_now.get('overlay_secondary_opacity', HP_OVERLAY_SECONDARY_OPACITY))
-                pri_op = float(meta_now.get('overlay_primary_opacity', HP_OVERLAY_PRIMARY_OPACITY))
                 active = list(meta_now.get('overlay_active_share_by_group', []))
                 while len(active) <= group:
                     active.append(0)
@@ -1233,7 +1316,9 @@ def _create_figure_widget_with_callbacks(fig: Any) -> Any:
                     s0 = int(item0[1])
                     if g0 != group:
                         continue
-                    tr.opacity = pri_op if s0 == share_idx else sec_op
+                    _hp_plotly_overlay_apply_trace_visual(
+                        tr, s0=s0, primary_share=int(share_idx), meta_now=meta_now,
+                    )
                     yref_now = str(getattr(tr, 'yaxis', 'y') or 'y')
                     row_axis_map = meta_now.get('overlay_row_axis_map_by_group', [])
                     axis_maps = row_axis_map[group] if group < len(row_axis_map) else []
@@ -1644,6 +1729,18 @@ def build_interactive_figure_from_specs(
     color_dn = theme.get('line_color_down', 'green')
 
     cst_candle = resolve_candle_style_plotly(theme)
+    overlay_meta_pri_c_inc = max(
+        0.35, float(cst_candle['increasing_line_width']) * HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_sec_c_inc = max(
+        0.35, float(cst_candle['increasing_line_width']) * HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_pri_c_dec = max(
+        0.35, float(cst_candle['decreasing_line_width']) * HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    )
+    overlay_meta_sec_c_dec = max(
+        0.35, float(cst_candle['decreasing_line_width']) * HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    )
     font_tick = resolve_font_size('plotly', 'axis_tick', theme)
     font_ytitle = resolve_font_size('plotly', 'axis_ylabel', theme)
 
@@ -1703,10 +1800,12 @@ def build_interactive_figure_from_specs(
                     h = _to_1d(np.asarray(data['high']), s_idx)[:n]
                     l = _to_1d(np.asarray(data['low']), s_idx)[:n]
                     c = _to_1d(np.asarray(data['close']), s_idx)[:n]
-                    trace_opacity = (
-                        HP_OVERLAY_PRIMARY_OPACITY
-                        if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
-                        else HP_OVERLAY_SECONDARY_OPACITY
+                    trace_opacity, _slw_k, c_inc_w, c_dec_w = _overlay_trace_visual_bundle(
+                        is_overlay_group,
+                        s_idx,
+                        overlay_active_share_by_group[g],
+                        base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                        base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                     )
                     fig.add_trace(
                         go.Candlestick(
@@ -1719,8 +1818,8 @@ def build_interactive_figure_from_specs(
                             decreasing_line_color=cst_candle['decreasing_line_color'],
                             increasing_fillcolor=cst_candle['increasing_fillcolor'],
                             decreasing_fillcolor=cst_candle['decreasing_fillcolor'],
-                            increasing_line_width=cst_candle['increasing_line_width'],
-                            decreasing_line_width=cst_candle['decreasing_line_width'],
+                            increasing_line_width=c_inc_w,
+                            decreasing_line_width=c_dec_w,
                             whiskerwidth=cst_candle['whiskerwidth'],
                             name=f'{name_prefix}Price[S{s_idx}]' if name_prefix else f'Price[S{s_idx}]',
                             legendgroup=f'g{g}s{s_idx}',
@@ -1755,17 +1854,19 @@ def build_interactive_figure_from_specs(
                         if key in ('open', 'high', 'low', 'close'):
                             continue
                         arr = _to_1d(np.asarray(data[key]), s_idx)[:n]
-                        trace_opacity = (
-                            HP_OVERLAY_PRIMARY_OPACITY
-                            if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
-                            else HP_OVERLAY_SECONDARY_OPACITY
+                        trace_opacity, slw_ma, _i0, _d0 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                         )
                         fig.add_trace(
                             go.Scatter(
                                 x=x_idx, y=arr, mode='lines',
                                 name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
                                 legendgroup=f'g{g}s{s_idx}',
-                                line=dict(width=1),
+                                line=dict(width=slw_ma),
                                 customdata=group_custom,
                                 opacity=trace_opacity,
                                 text=hover_dates,
@@ -1793,10 +1894,12 @@ def build_interactive_figure_from_specs(
                             colors = [color_up if close_1d[i] >= open_1d[i] else color_dn for i in range(n)]
                         else:
                             colors = [theme.get('volume_color', color_dn)] * n
-                        trace_opacity = (
-                            HP_OVERLAY_PRIMARY_OPACITY
-                            if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
-                            else HP_OVERLAY_SECONDARY_OPACITY
+                        trace_opacity, _v0, _v1, _v2 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                         )
                         fig.add_trace(
                             go.Bar(
@@ -1825,10 +1928,12 @@ def build_interactive_figure_from_specs(
                     for key, y in data.items():
                         y_flat = _to_1d(np.asarray(y), s_idx)[:n]
                         kind = series_kind.get(key, 'line')
-                        trace_opacity = (
-                            HP_OVERLAY_PRIMARY_OPACITY
-                            if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
-                            else HP_OVERLAY_SECONDARY_OPACITY
+                        trace_opacity, slw_m, _m0, _m1 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                         )
                         if kind == 'bar':
                             colors = [color_up if v >= 0 else color_dn for v in y_flat]
@@ -1857,7 +1962,7 @@ def build_interactive_figure_from_specs(
                                     x=x_idx, y=y_flat, mode='lines',
                                     name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
                                     legendgroup=f'g{g}s{s_idx}',
-                                    line=dict(width=1),
+                                    line=dict(width=slw_m),
                                     customdata=group_custom,
                                     opacity=trace_opacity,
                                     text=hover_dates,
@@ -1878,17 +1983,19 @@ def build_interactive_figure_from_specs(
                     group_custom = [[g, s_idx]] * n
                     for key, y in data.items():
                         y_flat = _to_1d(np.asarray(y), s_idx)[:n]
-                        trace_opacity = (
-                            HP_OVERLAY_PRIMARY_OPACITY
-                            if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
-                            else HP_OVERLAY_SECONDARY_OPACITY
+                        trace_opacity, slw_l, _l0, _l1 = _overlay_trace_visual_bundle(
+                            is_overlay_group,
+                            s_idx,
+                            overlay_active_share_by_group[g],
+                            base_candle_inc_w=float(cst_candle['increasing_line_width']),
+                            base_candle_dec_w=float(cst_candle['decreasing_line_width']),
                         )
                         fig.add_trace(
                             go.Scatter(
                                 x=x_idx, y=y_flat, mode='lines',
                                 name=f'{name_prefix}{key}[S{s_idx}]' if name_prefix else f'{key}[S{s_idx}]',
                                 legendgroup=f'g{g}s{s_idx}',
-                                line=dict(width=1),
+                                line=dict(width=slw_l),
                                 customdata=group_custom,
                                 opacity=trace_opacity,
                                 text=hover_dates,
@@ -2069,6 +2176,12 @@ def build_interactive_figure_from_specs(
         'overlay_active_share_by_group': overlay_active_share_by_group,
         'overlay_secondary_opacity': float(HP_OVERLAY_SECONDARY_OPACITY),
         'overlay_primary_opacity': float(HP_OVERLAY_PRIMARY_OPACITY),
+        'overlay_pri_scatter_lw': float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH),
+        'overlay_sec_scatter_lw': float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH),
+        'overlay_pri_candle_inc': float(overlay_meta_pri_c_inc),
+        'overlay_sec_candle_inc': float(overlay_meta_sec_c_inc),
+        'overlay_pri_candle_dec': float(overlay_meta_pri_c_dec),
+        'overlay_sec_candle_dec': float(overlay_meta_sec_c_dec),
         'overlay_left_yref_by_group': overlay_left_yref_by_group,
         'overlay_right_yref_by_group': overlay_right_yref_by_group,
         'overlay_plot_rows_by_group': overlay_plot_rows_by_group,
