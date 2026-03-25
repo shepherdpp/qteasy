@@ -11,7 +11,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional, Callable
+from typing import Union, Iterable, Any, Optional, Callable, Sequence
 
 from qteasy.database import DataSource
 
@@ -2589,6 +2589,7 @@ class HistoryPanel():
         interactive: bool = False,
         highlight: Optional[Any] = None,
         plotly_backend_app: str = 'auto',
+        group_titles: Optional[Sequence[str]] = None,
         **kwargs,
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
@@ -2700,7 +2701,111 @@ class HistoryPanel():
             groups = [[s] for s in share_list]
         x_dates = list(self.hdates)
         specs_per_group = []
-        group_titles = []
+
+        def _infer_freq_info_from_hdates() -> str:
+            """从 hdates 推断频率说明（中文），用于图表标题。"""
+            try:
+                idx = pd.DatetimeIndex(self.hdates)
+                if len(idx) >= 3:
+                    f = pd.infer_freq(idx)
+                else:
+                    f = None
+            except Exception:
+                f = None
+            if not f:
+                # 交易日序列在节假日处可能不规则，infer_freq() 常返回 None。
+                # 为保证标题稳定，这里用相邻时间间隔的中位数做鲁棒推断。
+                try:
+                    if len(idx) < 2:
+                        return 'K线'
+                    deltas = (idx[1:] - idx[:-1]).total_seconds()
+                    deltas = np.array([d for d in deltas if d and d > 0], dtype=float)
+                    if deltas.size == 0:
+                        return 'K线'
+                    med_sec = float(np.median(deltas))
+                    day = 86400.0
+                    if med_sec >= 0.75 * day and med_sec <= 1.5 * day:
+                        return '日K'
+                    if med_sec >= 6.0 * day and med_sec <= 9.0 * day:
+                        return '周K'
+                    if med_sec >= 25.0 * day and med_sec <= 35.0 * day:
+                        return '月K'
+                    if med_sec >= 70.0 * day and med_sec <= 100.0 * day:
+                        return '季K'
+                    if med_sec >= 300.0 * day:
+                        return '年K'
+                    # 子日频：小时 / 分钟
+                    if med_sec <= 2.0 * 3600.0 and med_sec >= 0.5 * 3600.0:
+                        return '小时K'
+                    mins = int(round(med_sec / 60.0))
+                    if mins > 0:
+                        return f'{mins}分钟K'
+                except Exception:
+                    pass
+                return 'K线'
+            fu = str(f).upper()
+            if fu.startswith('B') or fu.startswith('D'):
+                return '日K'
+            if fu.startswith('W'):
+                return '周K'
+            if fu.startswith('M'):
+                return '月K'
+            if fu.startswith('Q'):
+                return '季K'
+            if fu.startswith('Y') or fu.startswith('A'):
+                return '年K'
+            if 'H' == fu or fu.endswith('H'):
+                return '小时K'
+            if fu.endswith('MIN') or fu.endswith('T'):
+                # pandas 可能返回 30T/15T 等
+                num = ''.join(ch for ch in fu if ch.isdigit())
+                return f'{num}分钟K' if num else '分钟K'
+            return 'K线'
+
+        def _infer_adj_info_from_htypes() -> str:
+            """从 htypes 推断复权信息（中文）。"""
+            hset = set(self.htypes)
+            roots = ('open', 'high', 'low', 'close')
+            if any(f'{r}|b' in hset for r in roots):
+                return '后复权'
+            if any(f'{r}|f' in hset for r in roots):
+                return '前复权'
+            return '未复权'
+
+        freq_info = _infer_freq_info_from_hdates()
+        adj_info = _infer_adj_info_from_htypes()
+
+        names_by_symbol: Dict[str, str] = {}
+        try:
+            from qteasy.trading_util import get_symbol_names
+            # get_symbol_names 内部会在 datasource=None 时自动使用 QT_DATA_SOURCE
+            names = get_symbol_names(datasource=None, symbols=share_list)
+            if isinstance(names, list) and len(names) == len(share_list):
+                for s, n in zip(share_list, names):
+                    if n and n != 'N/A':
+                        names_by_symbol[str(s)] = str(n)
+        except Exception:
+            names_by_symbol = {}
+
+        def _format_group_title(grp: Sequence[str]) -> str:
+            """格式化组标题：CODE [NAME] FREQ - ADJ（NAME 不可用时省略）。"""
+            if not grp:
+                return ''
+            # 与旧逻辑兼容：标题里 share 列表最多展示前三个
+            shown = list(grp[:3])
+            shown_text = ','.join(shown) if len(grp) > 1 else shown[0]
+            shown_names = [names_by_symbol.get(s, '') for s in shown]
+            shown_names = [n for n in shown_names if n]
+            name_part = f" [{','.join(shown_names)}]" if shown_names else ''
+            return f'{shown_text}{name_part} {freq_info} - {adj_info}'.strip()
+
+        # 若调用方显式传入 group_titles，则优先使用；否则按 shares 组装默认标题
+        auto_group_titles: List[str] = []
+        if group_titles is None:
+            for grp in groups:
+                auto_group_titles.append(_format_group_title(grp))
+        else:
+            auto_group_titles = list(group_titles)
         for grp in groups:
             row = []
             for info in types_info:
@@ -2734,7 +2839,6 @@ class HistoryPanel():
                 vol_spec['data']['close'] = row[kline_idx]['data']['close']
                 row[vol_idx] = vol_spec
             specs_per_group.append(row)
-            group_titles.append(grp[0] if len(grp) == 1 else ','.join(grp[:3]))
         if interactive:
             from qteasy.hp_visual_plotly import (
                 _HAS_PLOTLY,
@@ -2751,14 +2855,14 @@ class HistoryPanel():
                 specs_per_group,
                 types_info,
                 x_dates=x_dates,
-                group_titles=group_titles,
+                group_titles=auto_group_titles,
             )
             return _select_plotly_notebook_output(fig, plotly_backend_app)
         fig = build_figure_from_specs(
             specs_per_group,
             types_info,
             x_dates=x_dates,
-            group_titles=group_titles,
+            group_titles=auto_group_titles,
         )
         return fig
 
