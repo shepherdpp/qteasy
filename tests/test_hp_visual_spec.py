@@ -1246,6 +1246,27 @@ class TestQ09OverlayMvp(unittest.TestCase):
         self.assertIsNotNone(price_ax_r.get_ylabel())
         self.assertIn('(R)', price_ax_r.get_ylabel())
 
+    def test_q09_static_overlay_line_widths_match_interactive_constants(self):
+        print('\n[Q09] 静态 overlay：主次线宽与 hp_visual_overlay_style 常量一致（含 MA）')
+        from qteasy.hp_visual_overlay_style import (
+            HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
+            HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
+        )
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol', 'ma_5'], n_shares=2, n_dates=18)
+        fig = hp.plot(layout='overlay')
+        price_axes = [
+            ax for ax in fig.axes
+            if not getattr(ax, '_hp_ohlc_header', False) and not getattr(ax, '_hp_mpl_gap', False)
+        ]
+        self.assertGreaterEqual(len(price_axes), 2)
+        ax_l, ax_r = price_axes[0], price_axes[1]
+        lw_left = {float(ln.get_linewidth()) for ln in ax_l.lines}
+        lw_right = {float(ln.get_linewidth()) for ln in ax_r.lines}
+        self.assertIn(float(HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH), lw_left)
+        self.assertIn(float(HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH), lw_right)
+        print('  MA linewidths L/R:', lw_left, lw_right)
+
     def test_q09_plotly_overlay_has_two_candles_and_opacity_split(self):
         print('\n[Q09-MVP] 动态 overlay：同 row 两套 candlestick，含主次透明度与 group/share customdata')
         try:

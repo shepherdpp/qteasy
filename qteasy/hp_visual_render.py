@@ -22,6 +22,12 @@ from qteasy.hp_visual_bar_display import (
     specs_contain_kline,
 )
 from qteasy.hp_visual_layout import compute_hp_visual_layout_spec, mpl_gridspec_row_index
+from qteasy.hp_visual_overlay_style import (
+    OverlayVisualRole,
+    mpl_overlay_candle_strokes,
+    mpl_overlay_plot_line_width,
+    overlay_visual_role_to_share_idx,
+)
 from qteasy.hp_visual_theme_adapt import (
     HeaderFontRole,
     resolve_candle_style_matplotlib,
@@ -167,8 +173,15 @@ def render_kline_spec(
     alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
+    overlay_visual: OverlayVisualRole = None,
 ) -> Figure:
-    """将 K 线规格绘制到 axes；若无 ax 则创建新 figure。返回所在 Figure。"""
+    """将 K 线规格绘制到 axes；若无 ax 则创建新 figure。返回所在 Figure。
+
+    Parameters
+    ----------
+    overlay_visual : {'primary', 'secondary'}, optional
+        双标的 overlay 静态图专用：与交互图相同主次线宽标尺；``None`` 为普通单序列绘制。
+    """
     if not _HAS_MPL:
         raise RuntimeError('matplotlib is required for static rendering')
     data = spec.get('data', {})
@@ -201,25 +214,37 @@ def render_kline_spec(
     wick_lw = cst['wick_linewidth']
     body_edge = cst['body_edgewidth']
     doji_lw = cst['doji_linewidth']
+    if overlay_visual is None:
+        wick_eff, body_eff, doji_eff = float(wick_lw), float(body_edge), float(doji_lw)
+        plot_lw_opt: Optional[float] = None
+    else:
+        s_ov = overlay_visual_role_to_share_idx(overlay_visual)
+        wick_eff, body_eff, doji_eff = mpl_overlay_candle_strokes(
+            s_ov, 0, wick_lw=float(wick_lw), body_edge=float(body_edge), doji_lw=float(doji_lw),
+        )
+        plot_lw_opt = mpl_overlay_plot_line_width(s_ov, 0)
     for i in range(len(x)):
         color = cst['line_color_up'] if c[i] >= o[i] else cst['line_color_down']
         low_i, high_i = l[i], h[i]
         open_i, close_i = o[i], c[i]
         body_bottom = min(open_i, close_i)
         body_height = abs(close_i - open_i)
-        ax.vlines(x[i], low_i, high_i, color=color, linewidth=wick_lw, alpha=alpha)
+        ax.vlines(x[i], low_i, high_i, color=color, linewidth=wick_eff, alpha=alpha)
         if body_height > 0:
             ax.bar(
                 x[i], body_height, bottom=body_bottom, width=width,
-                color=color, edgecolor=color, linewidth=body_edge, alpha=alpha,
+                color=color, edgecolor=color, linewidth=body_eff, alpha=alpha,
             )
         else:
-            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=doji_lw, alpha=alpha)
+            ax.hlines(open_i, x[i] - width / 2, x[i] + width / 2, colors=color, linewidth=doji_eff, alpha=alpha)
     for key in data:
         if key in ('open', 'high', 'low', 'close'):
             continue
         arr = _to_1d(data[key], share_idx)[:n]
-        ax.plot(x, arr, label=key, alpha=min(1.0, 0.8 * alpha))
+        plot_kw: Dict[str, Any] = {}
+        if plot_lw_opt is not None:
+            plot_kw['linewidth'] = plot_lw_opt
+        ax.plot(x, arr, label=key, alpha=min(1.0, 0.8 * alpha), **plot_kw)
     extra = [k for k in data if k not in ('open', 'high', 'low', 'close')]
     fs_leg = resolve_font_size('matplotlib', 'legend', theme)
     fs_y = resolve_font_size('matplotlib', 'axis_ylabel', theme)
@@ -254,6 +279,7 @@ def render_volume_spec(
     alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
+    overlay_visual: OverlayVisualRole = None,
 ) -> Figure:
     """将成交量柱状图规格绘制到 axes。若有 open/close 则按涨跌着色（红涨绿跌）。"""
     if not _HAS_MPL:
@@ -301,6 +327,7 @@ def render_macd_spec(
     alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
+    overlay_visual: OverlayVisualRole = None,
 ) -> Figure:
     """将 MACD 规格绘制到 axes（线 + 柱）；柱按 macd_hist 正负分红绿。"""
     if not _HAS_MPL:
@@ -320,13 +347,17 @@ def render_macd_spec(
     ax.set_facecolor(theme['axes_facecolor'])
     ax.grid(True, alpha=theme['grid_alpha'], linestyle=theme['grid_linestyle'])
     hist_col = None
+    plot_kw: Dict[str, Any] = {}
+    if overlay_visual is not None:
+        s_ov = overlay_visual_role_to_share_idx(overlay_visual)
+        plot_kw['linewidth'] = mpl_overlay_plot_line_width(s_ov, 0)
     for col, arr in data.items():
         a = _to_1d(arr, share_idx)[:n]
         kind = series_kind.get(col, 'line')
         if kind == 'bar':
             hist_col = col
             continue
-        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha))
+        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha), **plot_kw)
     if hist_col and hist_col in data:
         a = _to_1d(data[hist_col], share_idx)[:n]
         bar_r = np.where(a > 0, a, 0)
@@ -355,6 +386,7 @@ def render_line_spec(
     alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
+    overlay_visual: OverlayVisualRole = None,
 ) -> Figure:
     """将折线规格绘制到 axes。"""
     if not _HAS_MPL:
@@ -372,9 +404,13 @@ def render_line_spec(
     theme = _get_theme()
     ax.set_facecolor(theme['axes_facecolor'])
     ax.grid(True, alpha=theme['grid_alpha'], linestyle=theme['grid_linestyle'])
+    plot_kw: Dict[str, Any] = {}
+    if overlay_visual is not None:
+        s_ov = overlay_visual_role_to_share_idx(overlay_visual)
+        plot_kw['linewidth'] = mpl_overlay_plot_line_width(s_ov, 0)
     for col, arr in data.items():
         a = _to_1d(arr, share_idx)[:n]
-        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha))
+        ax.plot(x, a, label=col, alpha=min(1.0, 0.9 * alpha), **plot_kw)
     ax.set_ylabel('Line', fontsize=resolve_font_size('matplotlib', 'axis_ylabel', theme))
     if len(data) > 1:
         ax.legend(loc='upper left', fontsize=resolve_font_size('matplotlib', 'legend', theme))
@@ -406,17 +442,30 @@ def render_spec(
     alpha: float = 1.0,
     x_dates: Optional[Sequence] = None,
     show_x_labels: bool = True,
+    overlay_visual: OverlayVisualRole = None,
 ) -> Figure:
     """根据 spec['chart_type'] 分发到对应渲染函数，返回 Figure。"""
     ct = spec.get('chart_type', '')
     if ct == 'kline':
-        return render_kline_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_kline_spec(
+            spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates,
+            show_x_labels=show_x_labels, overlay_visual=overlay_visual,
+        )
     if ct == 'volume':
-        return render_volume_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_volume_spec(
+            spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates,
+            show_x_labels=show_x_labels, overlay_visual=overlay_visual,
+        )
     if ct == 'macd':
-        return render_macd_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_macd_spec(
+            spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates,
+            show_x_labels=show_x_labels, overlay_visual=overlay_visual,
+        )
     if ct == 'line':
-        return render_line_spec(spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates, show_x_labels=show_x_labels)
+        return render_line_spec(
+            spec, ax=ax, share_idx=share_idx, alpha=alpha, x_dates=x_dates,
+            show_x_labels=show_x_labels, overlay_visual=overlay_visual,
+        )
     if _HAS_MPL:
         fig, ax = plt.subplots(1, 1, figsize=(6, 4))
         return fig
@@ -554,7 +603,7 @@ def build_figure_from_specs(
             ax.set_facecolor(theme['axes_facecolor'])
             if spec is not None:
                 if is_overlay_group:
-                    # overlay 双标的：左轴主视觉、右轴次视觉，分别按各自数据自适应
+                    # overlay 双标的：左轴主视觉、右轴次视觉，线宽与交互图 overlay 标尺一致
                     render_spec(
                         spec,
                         ax=ax,
@@ -562,6 +611,7 @@ def build_figure_from_specs(
                         alpha=1.0,
                         x_dates=x_dates,
                         show_x_labels=(t == n_types - 1 and g == n_groups - 1),
+                        overlay_visual='primary',
                     )
                     ax_r = ax.twinx()
                     ax_r.set_facecolor((0, 0, 0, 0))
@@ -572,6 +622,7 @@ def build_figure_from_specs(
                         alpha=share_alpha,
                         x_dates=x_dates,
                         show_x_labels=False,
+                        overlay_visual='secondary',
                     )
                     ylab = ax.get_ylabel()
                     if ylab:

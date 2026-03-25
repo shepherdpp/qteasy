@@ -23,6 +23,15 @@ from qteasy.hp_visual_bar_display import (
     specs_contain_kline,
 )
 from qteasy.hp_visual_layout import compute_hp_visual_layout_spec, plotly_trace_row_1based
+from qteasy.hp_visual_overlay_style import (
+    HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE,
+    HP_OVERLAY_PRIMARY_OPACITY,
+    HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH,
+    HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE,
+    HP_OVERLAY_SECONDARY_OPACITY,
+    HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH,
+    overlay_trace_visual_bundle as _overlay_trace_visual_bundle,
+)
 from qteasy.hp_visual_theme_adapt import (
     HeaderFontRole,
     header_font_span_style,
@@ -42,41 +51,6 @@ except ImportError:
 
 # 交互图 x 轴：最少可见 bar 数（与 FigureWidget、HTML 内联脚本一致，Q03 / L1）
 HP_PLOTLY_MIN_VISIBLE_BARS: int = 15
-HP_OVERLAY_SECONDARY_OPACITY: float = 0.45
-HP_OVERLAY_PRIMARY_OPACITY: float = 1.0
-# Q09 Full：主次除透明度外，Scatter 线宽与蜡烛边线宽度做一致分级（FigureWidget / HTML 点击后同步）。
-HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH: float = 1.35
-HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH: float = 0.65
-HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE: float = 1.18
-HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE: float = 0.82
-
-
-def _overlay_trace_visual_bundle(
-    is_overlay_group: bool,
-    s_idx: int,
-    active_share: int,
-    *,
-    base_candle_inc_w: float,
-    base_candle_dec_w: float,
-) -> Tuple[float, float, float, float]:
-    """overlay 下单 trace 的 (opacity, scatter_line_width, candle_inc_w, candle_dec_w)。
-
-    非 overlay 时scatter 线宽为 ``1.0``，蜡烛宽度沿用主题基准。
-    """
-    if not is_overlay_group:
-        return (
-            HP_OVERLAY_PRIMARY_OPACITY,
-            1.0,
-            float(base_candle_inc_w),
-            float(base_candle_dec_w),
-        )
-    primary = s_idx == active_share
-    op = HP_OVERLAY_PRIMARY_OPACITY if primary else HP_OVERLAY_SECONDARY_OPACITY
-    slw = HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH if primary else HP_OVERLAY_SECONDARY_SCATTER_LINE_WIDTH
-    k_inc = HP_OVERLAY_PRIMARY_CANDLE_LINE_SCALE if primary else HP_OVERLAY_SECONDARY_CANDLE_LINE_SCALE
-    inc = max(0.35, float(base_candle_inc_w) * k_inc)
-    dec = max(0.35, float(base_candle_dec_w) * k_inc)
-    return op, slw, inc, dec
 
 
 def _hp_plotly_overlay_apply_trace_visual(
