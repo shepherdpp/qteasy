@@ -17,7 +17,7 @@ pip install qteasy
 输出如下：
 
 ```
-2.2.6
+2.2.7
 ```
 ---
 
@@ -108,6 +108,37 @@ Data refill completed! 154087 rows written into 2/2 table(s)!
 >>> # 或者使用 qt.candle 快速绘制 K 线（内部同样基于 HistoryPanel）
 >>> qt.candle('000300.SH', start='2023-06-01', end='2023-12-01', asset_type='IDX')
 ```
+
+#### 3.1 交互式图表（Plotly）与依赖
+
+如果你希望在 Notebook 里缩放、平移并查看每根 K 线/指标对应的具体数值，可以使用交互式绘图：
+
+```python
+>>> hp.plot(interactive=True)
+```
+
+交互式图表依赖 Plotly。建议按你的使用环境选择安装：
+
+- **基础交互（Plotly Figure）**：
+
+```bash
+pip install plotly
+```
+
+- **Notebook 更完整交互（FigureWidget + 回调）**：
+
+```bash
+pip install ipywidgets anywidget
+```
+
+在 Notebook 中，qteasy 会优先尝试提供更完整的 FigureWidget 体验；如果当前内核/依赖不满足，则会回退到 HTML 方式展示。若未安装 Plotly，`interactive=True` 会直接抛出英文错误提示（通常包含 “requires plotly”）。
+
+#### 3.2 最常用的交互参数
+
+- `plotly_backend_app='auto'|'FigureWidget'|'html'`：在 Notebook 中选择输出方式（默认 `'auto'`）。
+- `layout='auto'|'overlay'|'stack'`：多标的布局。`'overlay'` 仅对 **两标的**叠加对比最常用；`'auto'` 会在“两标的 → overlay，其余 → stack”间自动选择。
+- `highlight='max'|'min'`：高亮最大/最小值点（静态与交互均可用）。
+
 
 输出如下：
 

@@ -82,3 +82,4 @@ qteasy/qteasy_backup.cfg
 /qteasy_doc_ipynbs
 *.json
 /_build
+/docs/promotion

@@ -287,6 +287,66 @@ hp.plot(interactive=False)
 hp.plot(interactive=True)
 ```
 
+### HistoryPanel.plot 交互式可视化（Plotly）
+
+当你使用 `hp.plot(interactive=True)` 时，qteasy 会使用 Plotly 生成交互式图表，支持缩放、平移与悬停查看数据。在 Notebook 中，如果你的环境支持 FigureWidget（通常需要安装 `ipywidgets` 与 `anywidget`），qteasy 会优先返回更完整的交互体验；否则会回退到 HTML 方式展示。你也可以通过 `plotly_backend_app='auto'|'FigureWidget'|'html'` 明确指定输出方式。
+
+#### 依赖与安装
+
+- **基础交互（Plotly Figure）**：
+
+```bash
+pip install plotly
+```
+
+- **Notebook 更完整交互（FigureWidget + 回调）**：
+
+```bash
+pip install ipywidgets anywidget
+```
+
+注意：若未安装 Plotly，调用 `interactive=True` 会直接抛出英文错误提示（例如包含 “requires plotly” 的信息）；这是为了让依赖缺失问题尽早暴露，避免生成一个不可交互的“空图”。
+
+#### `plotly_backend_app`：输出方式与回退
+
+`plotly_backend_app` 仅在 `interactive=True` 时生效：
+
+- `plotly_backend_app='auto'`：在 Notebook 中优先使用 FigureWidget；否则回退到 HTML 包装；在脚本环境中也可能返回原始 Plotly Figure。
+- `plotly_backend_app='FigureWidget'`：强制使用 FigureWidget；若当前不是 Notebook 或缺少依赖会直接报错（英文提示）。
+- `plotly_backend_app='html'`：强制使用 HTML 包装；若当前不是 Notebook 也会直接报错（英文提示）。
+
+#### 关键交互能力（用户视角）
+
+- **缩放/平移一致性**：HTML 与 FigureWidget 在缩放/平移时遵循同一套 x 轴约束：保持最少可见 bar 数、越界时按 pan 语义平移回数据域。
+- **顶部 OHLC 摘要**：当面板中存在完整 OHLC 主图（蜡烛图）时，会显示顶部摘要；交互图初始为最后一根 bar，点击某根 bar 会更新摘要。无 K 线主图（例如仅 close 折线）时不显示该摘要区。
+- **两标的 overlay**：当你用 `layout='overlay'` 对比两只标的时，点击某根 bar 会切换主次标的：主次透明度与线宽会联动更新；如果你启用了 `highlight`，高亮点默认仅对当前主标的可见，并随主次切换。
+- **选中态十字交叉线**：点击后在主价格图上显示选中态十字交叉线；缩放/平移时保持同步；当选中 bar 滚动出可见区域时会隐藏。
+
+#### 示例：最常用的两种交互调用
+
+**示例 1：单标的交互式 K 线**
+
+```python
+hp.plot(interactive=True, plotly_backend_app='auto')
+```
+
+**示例 2：两标的 overlay + 高亮**
+
+```python
+hp2 = qt.get_history_data(
+    htypes='open, high, low, close, vol',
+    shares='000300.SH,000905.SH',
+    start='20230101',
+    end='20231231',
+)
+hp2.plot(
+    interactive=True,
+    layout='overlay',
+    highlight='max',
+    plotly_backend_app='html',
+)
+```
+
 可视化层严格遵循“**有什么画什么**”原则：
 
 - 只使用 HistoryPanel 中**已经存在**的列，不在绘图层计算新的指标；
