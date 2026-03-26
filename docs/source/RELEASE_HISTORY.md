@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.2.7 (2026-03-26)
+- **HistoryPanel interactive highlight (Q06)**  
+  `hp.plot(..., highlight=...)` now works on interactive Plotly charts for both line and candlestick panels. In two-symbol overlay mode, the highlight marker is shown only for the current primary share and switches together with the primary/secondary focus when you click.
+
 ## 2.2.6 (2026-03-25)
 - **HistoryPanel interactive plot polish**  
   For two-symbol overlay on interactive Plotly charts, primary vs secondary series now differ not only in opacity but also in line width. FigureWidget and HTML click-to-focus updates keep these styles in sync when you switch which share is primary.
