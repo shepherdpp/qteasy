@@ -697,6 +697,138 @@ class TestInteractiveBackend(unittest.TestCase):
         self.assertEqual(_normalize_plotly_backend_app('HTML'), 'html')
 
 
+class TestQ08PlotlyBackendAppNonNotebookContracts(unittest.TestCase):
+    """Q08：非 Notebook 环境下 plotly_backend_app 的回退/报错契约。"""
+
+    def test_q08_select_plotly_notebook_output_non_kernel_contract(self):
+        print('\n[Q08] _select_plotly_notebook_output：非 Notebook 下 auto 返回原 Figure；html/FigureWidget 抛错')
+        try:
+            import plotly.graph_objects as go  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+
+        from qteasy.hp_visual_plotly import _in_ipython_kernel, _select_plotly_notebook_output
+
+        if _in_ipython_kernel():
+            self.skipTest('running inside IPython/Jupyter kernel, non-notebook contract not applicable')
+
+        fig = go.Figure()
+        out = _select_plotly_notebook_output(fig, plotly_backend_app='auto')
+        self.assertIs(out, fig)
+        print('  auto -> returned original figure:', out is fig)
+
+        with self.assertRaises(RuntimeError) as ctx1:
+            _select_plotly_notebook_output(fig, plotly_backend_app='html')
+        self.assertIn('requires an active jupyter', str(ctx1.exception).lower())
+        print('  html error:', ctx1.exception)
+
+        with self.assertRaises(RuntimeError) as ctx2:
+            _select_plotly_notebook_output(fig, plotly_backend_app='FigureWidget')
+        self.assertIn('requires an active jupyter', str(ctx2.exception).lower())
+        print('  FigureWidget error:', ctx2.exception)
+
+
+class TestQ08OverlayTraceVisualApply(unittest.TestCase):
+    """Q08：overlay 下 trace 视觉更新函数的纯逻辑契约（无需 Plotly 真对象）。"""
+
+    def test_q08_overlay_apply_trace_visual_primary_secondary_and_highlight(self):
+        print('\n[Q08] overlay trace visual：主次透明度/线宽 + 高亮点 primary-only')
+        from qteasy.hp_visual_plotly import _hp_plotly_overlay_apply_trace_visual
+
+        class _Line:
+            def __init__(self) -> None:
+                self.width = 0.0
+
+        class _IncDec:
+            def __init__(self) -> None:
+                self.line = _Line()
+
+        class _Trace:
+            def __init__(self, typ: str, name: str) -> None:
+                self.type = typ
+                self.name = name
+                self.opacity = None
+                self.line = _Line() if typ == 'scatter' else None
+                self.increasing = _IncDec() if typ == 'candlestick' else None
+                self.decreasing = _IncDec() if typ == 'candlestick' else None
+
+        meta = {
+            'overlay_primary_opacity': 1.0,
+            'overlay_secondary_opacity': 0.15,
+            'overlay_pri_scatter_lw': 3.0,
+            'overlay_sec_scatter_lw': 1.0,
+            'overlay_pri_candle_inc': 2.0,
+            'overlay_sec_candle_inc': 1.0,
+            'overlay_pri_candle_dec': 2.0,
+            'overlay_sec_candle_dec': 1.0,
+        }
+
+        # scatter 主/次
+        t_pri = _Trace('scatter', 'S0-close')
+        t_sec = _Trace('scatter', 'S1-close')
+        _hp_plotly_overlay_apply_trace_visual(t_pri, s0=0, primary_share=0, meta_now=meta)
+        _hp_plotly_overlay_apply_trace_visual(t_sec, s0=1, primary_share=0, meta_now=meta)
+        self.assertEqual(float(t_pri.opacity), 1.0)
+        self.assertEqual(float(t_sec.opacity), 0.15)
+        self.assertEqual(float(t_pri.line.width), 3.0)
+        self.assertEqual(float(t_sec.line.width), 1.0)
+        print('  scatter op/lw pri/sec:', t_pri.opacity, t_pri.line.width, '/', t_sec.opacity, t_sec.line.width)
+
+        # candlestick 主/次
+        c_pri = _Trace('candlestick', 'S0-candle')
+        c_sec = _Trace('candlestick', 'S1-candle')
+        _hp_plotly_overlay_apply_trace_visual(c_pri, s0=0, primary_share=0, meta_now=meta)
+        _hp_plotly_overlay_apply_trace_visual(c_sec, s0=1, primary_share=0, meta_now=meta)
+        self.assertEqual(float(c_pri.opacity), 1.0)
+        self.assertEqual(float(c_sec.opacity), 0.15)
+        self.assertEqual(float(c_pri.increasing.line.width), 2.0)
+        self.assertEqual(float(c_sec.increasing.line.width), 1.0)
+        print('  candle op/inc_w pri/sec:', c_pri.opacity, c_pri.increasing.line.width, '/', c_sec.opacity, c_sec.increasing.line.width)
+
+        # highlight：次标的隐藏
+        h_pri = _Trace('scatter', 'Highlight[S0]-max')
+        h_sec = _Trace('scatter', 'Highlight[S1]-max')
+        _hp_plotly_overlay_apply_trace_visual(h_pri, s0=0, primary_share=0, meta_now=meta)
+        _hp_plotly_overlay_apply_trace_visual(h_sec, s0=1, primary_share=0, meta_now=meta)
+        self.assertEqual(float(h_pri.opacity), 1.0)
+        self.assertEqual(float(h_sec.opacity), 0.0)
+        print('  highlight op pri/sec:', h_pri.opacity, h_sec.opacity)
+
+
+class TestQ08HtmlWrapperHighlightAndCrosshairContract(unittest.TestCase):
+    """Q08：HTML wrapper 同屏 contract（overlay + highlight + crosshair 的关键 token）。"""
+
+    def test_q08_html_contains_overlay_highlight_crosshair_tokens(self):
+        print('\n[Q08] HTML wrapper：overlay+highlight+crosshair token contract')
+        try:
+            import plotly  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+
+        from qteasy.hp_visual_plotly import _PlotlyFigureWrapper
+
+        hp = _make_hp(['open', 'high', 'low', 'close', 'vol'], n_shares=2, n_dates=28)
+        fig = hp.plot(interactive=True, layout='overlay', highlight='max', plotly_backend_app='auto')
+        base = fig.figure if hasattr(fig, 'figure') else fig
+        html_str = _PlotlyFigureWrapper(base)._repr_html_()
+
+        # overlay 主次切换相关 token
+        self.assertIn('overlay_active_share_by_group', html_str)
+        self.assertIn('bar_data_by_share', html_str)
+
+        # crosshair token
+        self.assertIn('_hp_crosshair_selected', html_str)
+
+        # highlight token（trace name 序列化）
+        self.assertIn('Highlight', html_str)
+
+        # x/y autorange 脚本 token（Q03 合同）
+        self.assertIn('_hpXClampBusy', html_str)
+        self.assertIn('normalizeXViewRange', html_str)
+
+        print('  html length:', len(html_str))
+
+
 class TestQ06PlotlyHighlight(unittest.TestCase):
     """Q06：Plotly 下 highlight 生效（line + kline），overlay 默认仅主 share 显示高亮点。"""
 
