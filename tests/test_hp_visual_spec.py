@@ -11,6 +11,7 @@
 import unittest
 import numpy as np
 import pandas as pd
+from typing import Any
 
 from qteasy.history import HistoryPanel
 from qteasy.hp_visual_spec import (
@@ -694,6 +695,95 @@ class TestInteractiveBackend(unittest.TestCase):
         self.assertEqual(_normalize_plotly_backend_app('auto'), 'auto')
         self.assertEqual(_normalize_plotly_backend_app('FigureWidget'), 'figurewidget')
         self.assertEqual(_normalize_plotly_backend_app('HTML'), 'html')
+
+
+class TestQ06PlotlyHighlight(unittest.TestCase):
+    """Q06：Plotly 下 highlight 生效（line + kline），overlay 默认仅主 share 显示高亮点。"""
+
+    def _skip_if_no_plotly(self) -> None:
+        try:
+            import plotly  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+
+    def _get_plotly_figure(self, fig: Any) -> Any:
+        """兼容 _PlotlyFigureWrapper / FigureWidget / Figure。"""
+        if hasattr(fig, 'figure'):
+            return fig.figure
+        return fig
+
+    def test_q06_line_highlight_markers_exist(self):
+        print('\n[Q06] interactive line + highlight=\"max\"：应出现 markers 高亮点 trace')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['close'], n_shares=1, n_dates=20)
+        fig = hp.plot(interactive=True, highlight='max')
+        pf = self._get_plotly_figure(fig)
+        self.assertTrue(hasattr(pf, 'data'))
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  total traces:', len(pf.data), 'highlight markers traces:', len(markers))
+        for tr in markers[:5]:
+            print('   - name:', getattr(tr, 'name', ''), 'opacity:', getattr(tr, 'opacity', None))
+        self.assertGreaterEqual(len(markers), 1)
+
+    def test_q06_kline_highlight_markers_exist(self):
+        print('\n[Q06] interactive kline + highlight=\"max\"：应出现 markers 高亮点 trace（基于 close）')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['open', 'high', 'low', 'close'], n_shares=1, n_dates=30)
+        fig = hp.plot(interactive=True, highlight='max')
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  total traces:', len(pf.data), 'highlight markers traces:', len(markers))
+        self.assertGreaterEqual(len(markers), 1)
+
+    def test_q06_overlay_primary_only_highlight_visible(self):
+        print('\n[Q06] overlay(2 shares) + highlight=\"max\"：应存在两套高亮点，但默认仅主 share 可见')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['close'], n_shares=2, n_dates=25)
+        fig = hp.plot(interactive=True, layout='overlay', highlight='max')
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  highlight markers traces:', len(markers))
+        for tr in markers:
+            print('   -', getattr(tr, 'name', ''), 'opacity:', getattr(tr, 'opacity', None))
+        self.assertGreaterEqual(len(markers), 2)
+        opacities = [float(getattr(tr, 'opacity', 1.0) or 0.0) for tr in markers]
+        self.assertGreaterEqual(max(opacities), 0.9)
+        self.assertLessEqual(min(opacities), 0.05)
+
+    def test_q06_overlay_kline_highlight_secondary_hidden(self):
+        print('\n[Q06] overlay(2 shares) K 线 + highlight=\"max\"：两套高亮点，默认仅主 share 可见')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['open', 'high', 'low', 'close'], n_shares=2, n_dates=22)
+        fig = hp.plot(interactive=True, layout='overlay', highlight='max')
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  highlight markers traces:', len(markers))
+        for tr in markers:
+            print('   -', getattr(tr, 'name', ''), 'opacity:', getattr(tr, 'opacity', None))
+        self.assertGreaterEqual(len(markers), 2)
+        opacities = [float(getattr(tr, 'opacity', 1.0) or 0.0) for tr in markers]
+        self.assertGreaterEqual(max(opacities), 0.9)
+        self.assertLessEqual(min(opacities), 0.05)
 
 
 class TestQ02SubplotTitlesHtmlExport(unittest.TestCase):

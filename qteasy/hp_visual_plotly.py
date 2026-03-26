@@ -64,7 +64,13 @@ def _hp_plotly_overlay_apply_trace_visual(
     is_pri = s0 == primary_share
     pri_op = float(meta_now.get('overlay_primary_opacity', HP_OVERLAY_PRIMARY_OPACITY))
     sec_op = float(meta_now.get('overlay_secondary_opacity', HP_OVERLAY_SECONDARY_OPACITY))
-    tr.opacity = pri_op if is_pri else sec_op
+    tr_name = str(getattr(tr, 'name', '') or '')
+    is_highlight = ('Highlight[' in tr_name) or tr_name.startswith('Highlight')
+    # Q06：overlay 下仅主 share 显示高亮点，次 share 高亮点隐藏。
+    if is_highlight and (not is_pri):
+        tr.opacity = 0.0
+    else:
+        tr.opacity = pri_op if is_pri else sec_op
     typ = str(getattr(tr, 'type', '') or '').lower()
     if typ == 'scatter':
         pri_lw = float(meta_now.get('overlay_pri_scatter_lw', HP_OVERLAY_PRIMARY_SCATTER_LINE_WIDTH))
@@ -683,7 +689,10 @@ def _click_update_header_script(div_id: str) -> str:
         '          var g0 = parseInt(tr.customdata[0][0], 10) || 0;\n'
         '          var s0 = parseInt(tr.customdata[0][1], 10) || 0;\n'
         '          if (g0 !== groupIdx) continue;\n'
-        '          tr.opacity = (s0 === shareIdx) ? priOp : secOp;\n'
+        '          var trNm = String(tr.name || "");\n'
+        '          var isHl = (trNm.indexOf("Highlight[") >= 0 || trNm.indexOf("Highlight") === 0);\n'
+        '          if (isHl && s0 !== shareIdx) { tr.opacity = 0; }\n'
+        '          else { tr.opacity = (s0 === shareIdx) ? priOp : secOp; }\n'
         '          if (tr.type === "scatter" && tr.line) { tr.line.width = (s0 === shareIdx) ? priSL : secSL; }\n'
         '          if (tr.type === "candlestick") {\n'
         '            var cw = (s0 === shareIdx) ? priCI : secCI;\n'
@@ -1437,6 +1446,130 @@ def _theme_to_plotly_color(theme_val: Any) -> str:
     return 'gray'
 
 
+def _plotly_marker_symbol_from_mpl(marker: Any) -> str:
+    """将 matplotlib 风格的 marker 简单映射到 Plotly symbol。"""
+    m = str(marker or '').strip()
+    if not m:
+        return 'circle'
+    mp = {
+        'o': 'circle',
+        '.': 'circle',
+        's': 'square',
+        '^': 'triangle-up',
+        'v': 'triangle-down',
+        '<': 'triangle-left',
+        '>': 'triangle-right',
+        'x': 'x',
+        '+': 'cross',
+        '*': 'star',
+        'D': 'diamond',
+        'd': 'diamond',
+    }
+    return mp.get(m, 'circle')
+
+
+def _plotly_add_highlight_markers(
+    fig: Any,
+    *,
+    highlight: Any,
+    x_idx: Sequence[int],
+    y_series: np.ndarray,
+    n: int,
+    row: int,
+    secondary_y: bool,
+    name: str,
+    legendgroup: str,
+    customdata: Any,
+    theme: Mapping[str, Any],
+    opacity: float = 1.0,
+    hover_dates: Optional[Sequence[str]] = None,
+) -> None:
+    """
+    在指定 subplot row 上追加一条 markers trace 作为高亮点。
+
+    Parameters
+    ----------
+    fig : Any
+        Plotly Figure（make_subplots 返回）。
+    highlight : Any
+        规格中的 highlight dict，如 {'condition': 'max', 'style': {...}}。
+    x_idx : Sequence[int]
+        X 轴索引（0..n-1）。
+    y_series : np.ndarray
+        用于解析 condition 的主序列（1d）。
+    n : int
+        bar 数。
+    row : int
+        subplot 行号（1-based）。
+    secondary_y : bool
+        是否绘制到 secondary y。
+    name : str
+        trace name（用于测试与调试）。
+    legendgroup : str
+        与主序列一致的 legendgroup。
+    customdata : Any
+        与主序列一致的 customdata（供 FigureWidget 点击回调识别 group/share）。
+    theme : mapping
+        主题，提供默认颜色。
+    opacity : float
+        overlay 场景下用于控制主/次可见性。
+    hover_dates : Sequence[str], optional
+        与 x_idx 对齐的日期字符串；用于 hovertemplate。
+    """
+    if not highlight or not isinstance(highlight, dict):
+        return
+    cond = highlight.get('condition')
+    style = highlight.get('style') or {}
+    try:
+        from qteasy.hp_visual_render import _resolve_highlight_condition
+    except Exception:
+        return
+    mask = _resolve_highlight_condition(cond, np.asarray(y_series)[:n], n)
+    if mask is None or not np.any(mask):
+        return
+    xs: List[int] = []
+    ys: List[float] = []
+    for i in range(min(n, len(x_idx))):
+        if bool(mask[i]):
+            xs.append(int(x_idx[i]))
+            ys.append(float(np.asarray(y_series)[i]))
+    if not xs:
+        return
+    color = style.get('color', theme.get('highlight_color', theme.get('line_color_up', 'red')))
+    # Q06：Plotly 默认 marker 稍小，避免遮挡 K 线与折线
+    size = style.get('s', 15)
+    symbol = _plotly_marker_symbol_from_mpl(style.get('marker', 'o'))
+    text = list(hover_dates) if hover_dates is not None else None
+    fig.add_trace(
+        go.Scatter(
+            x=xs,
+            y=ys,
+            mode='markers',
+            name=name,
+            legendgroup=legendgroup,
+            showlegend=False,
+            customdata=customdata,
+            opacity=float(opacity),
+            marker=dict(
+                color=color,
+                size=size,
+                symbol=symbol,
+                line=dict(color='rgba(0,0,0,0.35)', width=0.5),
+            ),
+            text=text,
+            hovertemplate='%{text}<br>%{y:.3f}<extra></extra>' if text is not None else '%{y:.3f}<extra></extra>',
+            hoverlabel=dict(
+                bgcolor='rgba(255,255,255,0.75)',
+                bordercolor='rgba(0,0,0,0.55)',
+                font=dict(color='black'),
+            ),
+        ),
+        row=int(row),
+        col=1,
+        secondary_y=bool(secondary_y),
+    )
+
+
 def _format_display_text(rec: Dict[str, Any], theme: Dict[str, Any]) -> str:
     """将单 bar 的展示数据格式化为顶部区单行摘要（备用）。"""
     lines: List[str] = []
@@ -1856,6 +1989,27 @@ def build_interactive_figure_from_specs(
                         col=1,
                         secondary_y=(is_overlay_group and s_idx == 1),
                     )
+                    # Q06：overlay 下高亮点仅主 share 可见；K 线本体仍用主次透明度。
+                    hl_op_k = (
+                        1.0
+                        if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
+                        else 0.0
+                    )
+                    _plotly_add_highlight_markers(
+                        fig,
+                        highlight=spec.get('highlight'),
+                        x_idx=x_idx,
+                        y_series=c,
+                        n=n,
+                        row=plot_row,
+                        secondary_y=(is_overlay_group and s_idx == 1),
+                        name=f'{name_prefix}Highlight[S{s_idx}]' if name_prefix else f'Highlight[S{s_idx}]',
+                        legendgroup=f'g{g}s{s_idx}',
+                        customdata=group_custom,
+                        theme=theme,
+                        opacity=float(hl_op_k),
+                        hover_dates=hover_dates,
+                    )
                 # 主价格子图 axis ref：供十字交叉线 shapes 绘制与更新使用
                 xref = 'x' if plot_row == 1 else f'x{plot_row}'
                 left_y_idx = 2 * plot_row - 1
@@ -2000,6 +2154,10 @@ def build_interactive_figure_from_specs(
             elif ct == 'line':
                 for s_idx in range(n_share_group):
                     group_custom = [[g, s_idx]] * n
+                    first_key = next(iter(data), None)
+                    first_series = None
+                    if first_key is not None:
+                        first_series = _to_1d(np.asarray(data[first_key]), s_idx)[:n]
                     for key, y in data.items():
                         y_flat = _to_1d(np.asarray(y), s_idx)[:n]
                         trace_opacity, slw_l, _l0, _l1 = _overlay_trace_visual_bundle(
@@ -2028,6 +2186,28 @@ def build_interactive_figure_from_specs(
                             row=plot_row,
                             col=1,
                             secondary_y=(is_overlay_group and s_idx == 1),
+                        )
+                    if first_series is not None:
+                        # line 高亮：以第一条序列作为主序列（与静态端一致）
+                        hl_op_l = (
+                            1.0
+                            if (not is_overlay_group or s_idx == overlay_active_share_by_group[g])
+                            else 0.0
+                        )
+                        _plotly_add_highlight_markers(
+                            fig,
+                            highlight=spec.get('highlight'),
+                            x_idx=x_idx,
+                            y_series=first_series,
+                            n=n,
+                            row=plot_row,
+                            secondary_y=(is_overlay_group and s_idx == 1),
+                            name=f'{name_prefix}Highlight[S{s_idx}]' if name_prefix else f'Highlight[S{s_idx}]',
+                            legendgroup=f'g{g}s{s_idx}',
+                            customdata=group_custom,
+                            theme=theme,
+                            opacity=float(hl_op_l),
+                            hover_dates=hover_dates,
                         )
 
     last_row = layout_spec['plotly_n_subplot_rows']
