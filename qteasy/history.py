@@ -9,6 +9,9 @@
 # data manipulating functions.
 # ======================================
 
+import operator
+from numbers import Number
+
 import pandas as pd
 import numpy as np
 from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple
@@ -38,6 +41,75 @@ from qteasy.datatypes import (
 HP_OVERLAY_GROUP_SHARE_COUNT: int = 2
 
 
+class _HistoryPanelLocIndexer:
+    """只读索引器：沿 ``hdates`` 时间轴选取，``hp.loc[key]`` 等价于 ``hp[:, :, key]``。
+
+    不接受 ``where()`` 产生的 ``(M, L, N)`` 三维布尔掩码；格点级条件请使用
+    :meth:`HistoryPanel.where` 与后续 API 的 ``mask=``。
+    """
+
+    __slots__ = ('_hp',)
+
+    def __init__(self, hp: 'HistoryPanel') -> None:
+        self._hp = hp
+
+    def __getitem__(self, key: Any) -> 'HistoryPanel':
+        """按时间轴键取出子面板，语义与 ``HistoryPanel[:, :, key]`` 一致。
+
+        Parameters
+        ----------
+        key : slice, list, 或 numpy.ndarray 等
+            与第三轴（``hdates``）上 ``list_or_slice`` 支持的输入一致；一维 ``bool``
+            列表或 ``ndarray`` 长度须等于 ``row_count``。禁止传入 ``(M, L, N)`` 布尔数组。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板；视图语义与 ``__getitem__`` 的 ``copy=False`` 一致。
+
+        Raises
+        ------
+        TypeError
+            传入与 ``where`` 输出同形的格点级三维布尔掩码时抛出（英文）。
+        ValueError
+            布尔轴长度不匹配、或二维布尔数组等非法形状时抛出（英文）。
+        """
+        hp = self._hp
+        if isinstance(key, list) and len(key) > 0 and isinstance(key[0], (bool, np.bool_)):
+            L = int(hp.row_count)
+            if len(key) != L:
+                raise ValueError(
+                    f'Boolean mask length {len(key)} does not match number of hdates ({L}).'
+                )
+        if isinstance(key, np.ndarray) and key.dtype == bool:
+            if key.ndim == 3:
+                if (not hp.is_empty) and key.shape == hp.shape:
+                    raise TypeError(
+                        'Use HistoryPanel.where(...) and mask= for per-cell boolean masks, not loc.'
+                    )
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates). Use where() and mask= for (M,L,N) masks.'
+                )
+            if key.ndim == 2:
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates). Use where() and mask= for (M,L) or (M,L,N) masks.'
+                )
+            if key.ndim != 1:
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates).'
+                )
+            L = int(hp.row_count)
+            if key.size != L:
+                raise ValueError(
+                    f'Boolean mask length {key.size} does not match number of hdates ({L}).'
+                )
+            key = key.tolist()
+        return hp[:, :, key]
+
+
 class HistoryPanel():
     """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
 
@@ -51,6 +123,10 @@ class HistoryPanel():
     ``panel['列名'] = value`` 由 ``__setitem__`` 实现（仅非空面板、仅 ``str`` 键），
     值广播为 ``(标的数, 时间长度)`` 并以 ``float64`` 存储；覆盖已有列或追加新列。
     子面板与父对象共享缓冲时的语义见 ``__getitem__`` / ``subpanel`` / ``__setitem__`` 各方法说明。
+
+    **体验向 API**：合法 Python 标识符且存在于 ``htypes`` 的列名可用属性只读访问（如 ``panel.close``，
+    等价 ``panel['close']``）；比较运算（如 ``panel.close > panel.open``）返回 ``numpy`` 布尔数组；
+    ``panel.loc[key]`` 等价 ``panel[:, :, key]``，仅沿时间轴筛选（不接 ``where`` 的三维掩码）。
 
     更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
@@ -297,6 +373,11 @@ class HistoryPanel():
     def htype_count(self):
         """获取HistoryPanel的历史数据类型数量"""
         return self._c_count
+
+    @property
+    def loc(self) -> _HistoryPanelLocIndexer:
+        """沿 ``hdates`` 时间轴选取子面板；``hp.loc[k]`` 与 ``hp[:, :, k]`` 等价。"""
+        return _HistoryPanelLocIndexer(self)
 
     @property
     def shape(self):
@@ -652,6 +733,43 @@ class HistoryPanel():
         htype_slice, share_slice, hdate_slice = self._parse_getitem_keys(keys)
         return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
 
+    def __getattr__(self, name: str) -> Any:
+        """将合法标识符列名解析为 ``self[name]``（只读）；非标识符或未知列名请用方括号索引。
+
+        列赋值仍请使用 ``hp['col'] = ...``；不与 pandas 的属性写路径对齐。
+
+        Parameters
+        ----------
+        name : str
+            属性名；须为合法 Python 标识符才可能对应到 ``htypes`` 列（非空面板）。
+
+        Returns
+        -------
+        HistoryPanel
+            与 ``self[name]`` 相同的子面板；空面板上委托 ``__getitem__``，返回空子面板。
+
+        Raises
+        ------
+        AttributeError
+            非法标识符、或当前面板中不存在的列名（英文，提示使用 bracket indexing）。
+        """
+        if not isinstance(name, str):
+            raise AttributeError(name)
+        if not name.isidentifier():
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'. "
+                'Use bracket indexing for non-identifier htype names, e.g. hp["close|b"].'
+            )
+        if self.is_empty:
+            return self[name]
+        htypes = self.htypes
+        if isinstance(htypes, list) and name not in htypes:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'. "
+                'Use bracket indexing for htype columns, e.g. hp["column_name"].'
+            )
+        return self[name]
+
     def _prepare_column_array_for_inplace(self, value: Any) -> np.ndarray:
         """将赋值右侧解析并广播为与当前面板 ``(level_count, row_count)`` 一致的 float64 二维数组。
 
@@ -806,6 +924,193 @@ class HistoryPanel():
 
     def __repr__(self):
         return self.__str__()
+
+    def _history_panel_compare(
+            self,
+            other: Any,
+            op: Callable[[Any, Any], Any],
+    ) -> Any:
+        """对 ``self.values`` 与另一面板或标量/可广播数组做逐元素比较。
+
+        Parameters
+        ----------
+        other : HistoryPanel, numbers.Number, numpy.ndarray 等
+            右操作数；不支持的类型返回 ``NotImplemented``。
+        op : callable
+            二元比较函数（如 ``operator.lt``）。
+
+        Returns
+        -------
+        numpy.ndarray
+            ``dtype=bool``，与广播后的数值形状一致。
+        NotImplemented
+            左操作数无法与 ``other`` 比较时交由 Python 反射协议处理。
+        """
+        if isinstance(other, HistoryPanel):
+            if self.is_empty and other.is_empty:
+                return np.asarray(op(self.to_numpy(copy=False), other.to_numpy(copy=False)), dtype=bool)
+            if self.is_empty or other.is_empty:
+                raise ValueError(
+                    'Cannot compare HistoryPanel objects when only one is empty.'
+                )
+            if self.shares != other.shares or self.hdates != other.hdates:
+                raise ValueError(
+                    'HistoryPanel comparisons require identical shares and hdates order.'
+                )
+            if self.htypes != other.htypes:
+                if not (self.shape[2] == 1 and other.shape[2] == 1):
+                    raise ValueError(
+                        'HistoryPanel comparisons require identical htypes order unless both '
+                        'operands are single-column slices (e.g. hp["close"] vs hp["open"]).'
+                    )
+            try:
+                left, right = np.broadcast_arrays(self.values, other.values)
+            except ValueError as err:
+                raise ValueError(
+                    'Cannot broadcast the two HistoryPanel value arrays for comparison.'
+                ) from err
+            return np.asarray(op(left, right), dtype=bool)
+        if other is None:
+            return NotImplemented
+        if isinstance(other, np.ndarray):
+            try:
+                left = self.to_numpy(copy=False) if self.is_empty else self.values
+                return np.asarray(op(left, other), dtype=bool)
+            except ValueError as err:
+                raise ValueError(
+                    'Cannot broadcast comparison between HistoryPanel values and the given array.'
+                ) from err
+        if isinstance(other, Number):
+            left = self.to_numpy(copy=False) if self.is_empty else self.values
+            return np.asarray(op(left, other), dtype=bool)
+        return NotImplemented
+
+    def __lt__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self < other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            标量、可广播 ``ndarray`` 或另一 ``HistoryPanel``（须满足对齐规则）。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+
+        Raises
+        ------
+        TypeError
+            不支持的操作数类型（英文）。
+        ValueError
+            两面板无法按规则对齐或广播时抛出（英文）。
+        """
+        out = self._history_panel_compare(other, operator.lt)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for <: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __le__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self <= other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.le)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for <=: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __gt__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self > other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.gt)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for >: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __ge__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self >= other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.ge)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for >=: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __eq__(self, other: Any) -> Any:
+        """逐元素 ``self == other``；不支持的类型返回 ``NotImplemented``。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数。
+
+        Returns
+        -------
+        numpy.ndarray or NotImplemented
+            可比较时为 ``bool`` 数组；否则 ``NotImplemented``。
+        """
+        out = self._history_panel_compare(other, operator.eq)
+        if out is NotImplemented:
+            return NotImplemented
+        return out
+
+    def __ne__(self, other: Any) -> Any:
+        """逐元素 ``self != other``；不支持的类型返回 ``NotImplemented``。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数。
+
+        Returns
+        -------
+        numpy.ndarray or NotImplemented
+            可比较时为 ``bool`` 数组；否则 ``NotImplemented``。
+        """
+        out = self._history_panel_compare(other, operator.ne)
+        if out is NotImplemented:
+            return NotImplemented
+        return out
 
     def __add__(self, other):
         if isinstance(other, (float, int, np.ndarray)):

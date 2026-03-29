@@ -2448,5 +2448,258 @@ class TestHistoryPanelPhase3Where(unittest.TestCase):
         self.assertTrue(np.all(out))
 
 
+class TestHistoryPanelPhase13HtypeAttr(unittest.TestCase):
+    """阶段十三：合法 htype 属性访问与 hp['col'] 对齐。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] setUp')
+        np.random.seed(7)
+        self.data = np.random.randint(1, 100, size=(3, 8, 4)).astype(float)
+        self.index = pd.date_range('2020-01-01', periods=8, freq='D')
+        self.hp = qt.HistoryPanel(
+            values=self.data,
+            levels=['A', 'B', 'C'],
+            rows=self.index,
+            columns=['open', 'high', 'low', 'close'],
+        )
+
+    def test_attr_close_open_align_bracket(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] close/open vs bracket')
+        for col in ('close', 'open'):
+            sub_b = self.hp[col]
+            sub_a = getattr(self.hp, col)
+            self.assertIsInstance(sub_a, qt.HistoryPanel)
+            self.assertEqual(sub_a.shape, sub_b.shape)
+            self.assertEqual(sub_a.htypes, sub_b.htypes)
+            self.assertTrue(np.allclose(sub_a.values, sub_b.values))
+
+    def test_attr_low_matches_full_getitem(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] low vs bracket / htype axis')
+        sub = self.hp.low
+        self.assertTrue(np.allclose(sub.values, self.hp['low'].values))
+        self.assertTrue(np.allclose(sub.values, self.hp['low', :, :].values))
+
+    def test_non_identifier_htype_only_bracket(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] close|b getattr')
+        data = np.ones((2, 4, 1))
+        idx = pd.date_range('2021-01-01', periods=4, freq='D')
+        hp = qt.HistoryPanel(values=data, levels=['X', 'Y'], rows=idx, columns=['close|b'])
+        self.assertIn('close|b', hp.htypes)
+        with self.assertRaises(AttributeError) as ctx:
+            getattr(hp, 'close|b')
+        self.assertIn('bracket', str(ctx.exception).lower())
+        sub = hp['close|b']
+        self.assertEqual(sub.shape, (2, 4, 1))
+
+    def test_reserved_api_not_shadowed_by_column_where(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] column where vs method')
+        data = np.random.rand(2, 3, 3)
+        idx = pd.date_range('2020-06-01', periods=3, freq='D')
+        hp = qt.HistoryPanel(
+            values=data,
+            levels=['S0', 'S1'],
+            rows=idx,
+            columns=['close', 'open', 'where'],
+        )
+        self.assertTrue(callable(hp.where))
+        wcol = hp['where']
+        self.assertIsInstance(wcol, qt.HistoryPanel)
+        self.assertEqual(wcol.shape, (2, 3, 1))
+        self.assertEqual(wcol.htypes, ['where'])
+
+    def test_unknown_attr_attribute_error(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] unknown attr')
+        with self.assertRaises(AttributeError) as ctx:
+            _ = self.hp.not_a_real_column_xyz
+        self.assertIn('bracket', str(ctx.exception).lower())
+
+    def test_empty_panel_attr_matches_getitem(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] empty panel')
+        empty = qt.HistoryPanel()
+        sub_g = empty['close']
+        sub_a = empty.close
+        self.assertIsInstance(sub_g, qt.HistoryPanel)
+        self.assertIsInstance(sub_a, qt.HistoryPanel)
+        self.assertTrue(sub_g.is_empty and sub_a.is_empty)
+
+    def test_values_property_still_ndarray_or_none(self):
+        print('\n[TestHistoryPanelPhase13HtypeAttr] values not column')
+        self.assertTrue(
+            self.hp.values is None or isinstance(self.hp.values, np.ndarray)
+        )
+
+
+class TestHistoryPanelPhase14Compare(unittest.TestCase):
+    """阶段十四：比较运算返回 bool ndarray 并与 where 衔接。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase14Compare] setUp')
+        np.random.seed(11)
+        self.data = np.random.randint(1, 50, size=(4, 6, 3)).astype(float)
+        self.data[0, 0, 0] = np.nan
+        self.index = pd.date_range('2019-01-01', periods=6, freq='D')
+        self.hp = qt.HistoryPanel(
+            values=self.data,
+            levels=['a', 'b', 'c', 'd'],
+            rows=self.index,
+            columns=['close', 'open', 'vol'],
+        )
+
+    def test_full_panel_gt_scalar(self):
+        print('\n[TestHistoryPanelPhase14Compare] full > 0')
+        m = self.hp > 0
+        self.assertEqual(m.dtype, bool)
+        self.assertEqual(m.shape, self.hp.shape)
+        self.assertTrue(np.array_equal(m, self.hp.values > 0))
+
+    def test_full_panel_eq_self(self):
+        print('\n[TestHistoryPanelPhase14Compare] hp == hp')
+        m = self.hp == self.hp
+        self.assertTrue(np.array_equal(m, self.hp.values == self.hp.values))
+
+    def test_close_gt_scalar_and_where(self):
+        print('\n[TestHistoryPanelPhase14Compare] close > 15 + where')
+        m1 = self.hp.close > 15
+        m2 = self.hp['close'] > 15
+        self.assertTrue(np.array_equal(m1, m2))
+        out = self.hp.where(self.hp.close > 15)
+        self.assertEqual(out.shape, self.hp.shape)
+        self.assertEqual(out.dtype, bool)
+        self.assertTrue(np.array_equal(out, _where_broadcast_bool(m1, self.hp.shape)))
+
+    def test_close_gt_open_where_chain(self):
+        print('\n[TestHistoryPanelPhase14Compare] close > open')
+        m = self.hp['close'] > self.hp['open']
+        exp = self.hp['close'].values > self.hp['open'].values
+        self.assertTrue(np.array_equal(m, exp))
+        out = self.hp.where(self.hp.close > self.hp.open)
+        self.assertTrue(np.array_equal(out, _where_broadcast_bool(m, self.hp.shape)))
+
+    def test_reflected_comparison(self):
+        print('\n[TestHistoryPanelPhase14Compare] 5 < hp')
+        m_left = 5 < self.hp
+        m_right = self.hp > 5
+        self.assertTrue(np.array_equal(m_left, m_right))
+
+    def test_mismatched_labels_value_error(self):
+        print('\n[TestHistoryPanelPhase14Compare] label mismatch')
+        hp2 = qt.HistoryPanel(
+            values=self.data.copy(),
+            levels=['a', 'b', 'c', 'd'],
+            rows=self.index,
+            columns=['open', 'close', 'vol'],
+        )
+        with self.assertRaises(ValueError):
+            _ = self.hp > hp2
+
+    def test_compare_ndarray_bad_broadcast_value_error(self):
+        print('\n[TestHistoryPanelPhase14Compare] ndarray bad broadcast')
+        bad = np.zeros((2, 3))
+        with self.assertRaises(ValueError):
+            _ = self.hp['close'] > bad
+
+    def test_compare_str_type_error(self):
+        print('\n[TestHistoryPanelPhase14Compare] str operand')
+        with self.assertRaises(TypeError):
+            _ = self.hp > 'x'
+
+    def test_nan_compare_numpy_rules(self):
+        print('\n[TestHistoryPanelPhase14Compare] NaN rules')
+        v = self.hp.values
+        eq = self.hp == self.hp
+        self.assertFalse(bool(eq[0, 0, 0]))
+        gt = self.hp > 0
+        self.assertFalse(bool(gt[0, 0, 0]))
+        ne = self.hp != self.hp
+        self.assertTrue(bool(ne[0, 0, 0]))
+        self.assertTrue(np.isnan(v[0, 0, 0]))
+
+    def test_empty_panel_compare_scalar(self):
+        print('\n[TestHistoryPanelPhase14Compare] empty panel')
+        empty = qt.HistoryPanel()
+        m = empty > 1
+        self.assertEqual(m.shape, (0, 0, 0))
+        self.assertEqual(m.dtype, bool)
+
+
+class TestHistoryPanelPhase15Loc(unittest.TestCase):
+    """阶段十五：loc 等价 hp[:, :, key]；拒绝三维 bool。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase15Loc] setUp')
+        np.random.seed(13)
+        self.data = np.random.rand(3, 7, 2)
+        self.index = pd.date_range('2022-01-01', periods=7, freq='D')
+        self.hp = qt.HistoryPanel(
+            values=self.data,
+            levels=['u', 'v', 'w'],
+            rows=self.index,
+            columns=['c0', 'c1'],
+        )
+
+    def _assert_loc_equiv(self, key):
+        a = self.hp.loc[key]
+        b = self.hp[:, :, key]
+        self.assertTrue(np.allclose(a.values, b.values))
+        self.assertEqual(a.shares, b.shares)
+        self.assertEqual(a.hdates, b.hdates)
+        self.assertEqual(a.htypes, b.htypes)
+
+    def test_loc_equiv_slice_single_list_colon(self):
+        print('\n[TestHistoryPanelPhase15Loc] slice date list colon')
+        self._assert_loc_equiv(slice(0, 4))
+        self._assert_loc_equiv(self.index[2])
+        self._assert_loc_equiv([self.index[1], self.index[3]])
+        self._assert_loc_equiv(slice(None, None, None))
+
+    def test_loc_bool_list_and_ndarray(self):
+        print('\n[TestHistoryPanelPhase15Loc] 1d bool')
+        L = len(self.hp.hdates)
+        mask_l = [True, True, True] + [False] * (L - 3)
+        self._assert_loc_equiv(mask_l)
+        self._assert_loc_equiv(np.array(mask_l, dtype=bool))
+
+    def test_loc_slice_shares_memory(self):
+        print('\n[TestHistoryPanelPhase15Loc] shares_memory')
+        sub = self.hp.loc[1:5]
+        self.assertTrue(np.shares_memory(sub.values, self.hp.values))
+        sub_copy = self.hp.subpanel(hdates=slice(1, 5), copy=True)
+        self.assertFalse(np.shares_memory(sub_copy.values, self.hp.values))
+
+    def test_loc_rejects_mln_where_mask(self):
+        print('\n[TestHistoryPanelPhase15Loc] reject MLN bool')
+        w = self.hp.where(lambda p: p.values > 0.5)
+        msg = None
+        with self.assertRaises((TypeError, ValueError)) as ctx:
+            _ = self.hp.loc[w]
+        msg = str(ctx.exception).lower()
+        self.assertTrue('where' in msg or 'mask' in msg)
+
+    def test_loc_rejects_wrong_length_bool(self):
+        print('\n[TestHistoryPanelPhase15Loc] bool length')
+        with self.assertRaises(ValueError) as ctx:
+            _ = self.hp.loc[[True, False]]
+        self.assertIn('length', str(ctx.exception).lower())
+
+    def test_loc_rejects_ml_bool(self):
+        print('\n[TestHistoryPanelPhase15Loc] ML bool')
+        bad = np.zeros((3, 7), dtype=bool)
+        with self.assertRaises(ValueError):
+            _ = self.hp.loc[bad]
+
+    def test_loc_empty_panel(self):
+        print('\n[TestHistoryPanelPhase15Loc] empty')
+        empty = qt.HistoryPanel()
+        self.assertTrue(empty.loc[:].is_empty)
+
+    def test_getitem_third_axis_ndarray_bool_matches_loc(self):
+        print('\n[TestHistoryPanelPhase15Loc] [:,:,ndarray] vs loc')
+        L = len(self.hp.hdates)
+        mask = np.array([True] * 2 + [False] * (L - 2))
+        a = self.hp.loc[mask]
+        b = self.hp[:, :, mask]
+        self.assertTrue(np.allclose(a.values, b.values))
+
+
 if __name__ == '__main__':
     unittest.main()
