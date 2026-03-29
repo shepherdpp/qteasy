@@ -405,25 +405,162 @@ class HistoryPanel():
     def to_numpy(self, copy: bool = False) -> np.ndarray:
         """返回与 ``values`` 相同形状的 ndarray；需要独立副本时使用 ``copy=True``。
 
-        空面板返回形状为 ``(0, 0, 0)`` 的 float 数组。非空时 ``copy=False`` 语义与 ``numpy.asarray(self.values)``
-        一致，可能与内部缓冲区共享内存。若在父对象上随后用 ``__setitem__`` **追加** 新列，内部会换新缓冲；
-        此前保存的 ``copy=False`` 结果 **不会** 自动更新，不宜再当作当前面板的权威数据。
+        空面板返回形状为 ``(0, 0, 0)`` 的 float 数组。非空时 ``copy=False`` 与 ``numpy.asarray(self.values)``
+        语义一致，可与内部缓冲区共享内存。若之后在父对象上用 ``__setitem__`` **追加** 新列，父对象会替换
+        整块缓冲；此前用 ``copy=False`` 拿到的数组 **不会** 自动带上新列，不宜再视为当前面板的权威快照。
 
         Parameters
         ----------
         copy : bool, default False
-            为 True 时返回数组的拷贝，修改结果不影响本对象数据。
+            为 True 时返回数组拷贝，修改返回值不影响本对象数据。
 
         Returns
         -------
-        np.ndarray
-            三维历史数据数组。
+        numpy.ndarray
+            与 ``values`` 同形状的三维数组；空面板时为 ``(0, 0, 0)``。
         """
         if self.is_empty:
             return np.empty((0, 0, 0), dtype=float)
         if copy:
             return np.array(self._values, copy=True)
         return np.asarray(self._values)
+
+    def where(
+            self,
+            condition: Union[np.ndarray, Callable[['HistoryPanel'], np.ndarray]],
+    ) -> np.ndarray:
+        """将条件广播为与 ``values`` 同形的 bool 掩码，供研究 API 的 ``mask=`` 等参数使用。
+
+        不改变本对象。返回数组为 ``dtype=bool``、形状 ``(share 数, 时间长度, htype 数)``，与
+        ``panel.values`` 一致。条件可为数组（可广播到上述形状）或 ``callable(panel)`` 返回类数组。
+
+        研究向掩码与 Backtester 中 NaN 价格处理无关。整数 ``0``/``1`` 等会按 numpy 规则转为 bool。
+
+        形状 **恰好为** ``(M, L)`` 的数组视为「每个 ``(share, 时间)`` 对所有 ``htype`` 共用同一布尔值」，
+        内部会先变为 ``(M, L, 1)`` 再广播到 ``(M, L, N)``（因标准 numpy 无法将二维 ``(M,L)`` 直接广播到三维）。
+        一维 ``(M,)`` 与二维 ``(M, 1)`` 视为仅随标的变化，会展开为 ``(M, 1, 1)`` 再广播。
+
+        Parameters
+        ----------
+        condition : numpy.ndarray or callable
+            类数组：先 ``np.asarray(..., dtype=bool)`` 再广播到 ``self.shape``。
+            若为 ``callable``，则调用 ``condition(self)`` 得到数组后再处理。
+            裸 ``str`` 不接受，将引发 ``TypeError``（英文）。
+
+        Returns
+        -------
+        numpy.ndarray
+            与 ``self.shape`` 相同的三维 bool 数组（拷贝，与内部 ``values`` 不共享写缓冲）。
+
+        Raises
+        ------
+        TypeError
+            ``condition`` 为 ``str`` 时抛出（英文）。
+        ValueError
+            无法将返回值转为 bool 数组或无法广播到 ``self.shape`` 时抛出（英文）。
+
+        Notes
+        -----
+        后续 ``cum_return`` / ``normalize`` / ``portfolio`` 等参数的 ``mask=`` 建议使用本方法返回值或
+        与其同形同 dtype 的数组；阶段四及以后相关 API 发布后即可直接传入 ``mask=panel.where(...)``。
+        更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
+        「研究与掩码（where）」小节。
+
+        Examples
+        --------
+        空面板得到 ``(0,0,0)`` 的 bool 数组：
+
+        >>> empty = HistoryPanel()
+        >>> empty.where(True).shape
+        (0, 0, 0)
+
+        与 ``values`` 同形的比较结果可直接传入：
+
+        >>> import pandas as pd
+        >>> hp = HistoryPanel(
+        ...     np.arange(24, dtype=float).reshape(2, 3, 4),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['a', 'b', 'c', 'd'],
+        ... )
+        >>> m = hp.where(hp.values > 10)
+        >>> m.shape == hp.shape
+        True
+        >>> not bool(m[0, 0, 0]) and bool(m[-1, -1, -1])
+        True
+
+        标量 ``True`` / ``False`` 填满整块：
+
+        >>> import numpy as np
+        >>> hp.where(True).all() and not hp.where(False).any()
+        True
+
+        ``(M, L)`` 条件沿 htype 轴广播（例如事件日）：
+
+        >>> ev = np.zeros((2, 3), dtype=bool)
+        >>> ev[:, 1] = True
+        >>> m2 = hp.where(ev)
+        >>> bool(m2[0, 1, 0]) and bool(m2[0, 1, 3])
+        True
+
+        ``(M, L, 1)`` 与 ``(M, L)`` 语义一致，沿 htype 维复制：
+
+        >>> c_ml1 = (hp.values[:, :, :1] > 10)
+        >>> m2b = hp.where(c_ml1)
+        >>> m2b.shape == hp.shape
+        True
+
+        使用 ``lambda`` 基于面板数据构造条件：
+
+        >>> m3 = hp.where(lambda p: p.values[:, :, 0] >= 3)
+        >>> m3.shape == hp.shape
+        True
+
+        复合布尔条件：
+
+        >>> m4 = hp.where(lambda p: (p.values >= 5) & (p.values <= 18))
+        >>> m4.dtype == bool
+        True
+        """
+        if self.is_empty:
+            return np.empty((0, 0, 0), dtype=bool)
+        if isinstance(condition, str):
+            raise TypeError(
+                'HistoryPanel.where() does not accept str conditions; '
+                'pass a numpy array or a callable that returns an array.'
+            )
+        if callable(condition):
+            raw = condition(self)
+        else:
+            raw = condition
+        try:
+            b = np.asarray(raw, dtype=bool)
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f'Cannot convert where() condition to a boolean array: {e}'
+            ) from e
+        m, l_count, n = self._l_count, self._r_count, self._c_count
+        target = (m, l_count, n)
+        if b.shape == target:
+            return np.array(b, dtype=bool, copy=True)
+        if b.ndim == 0:
+            broad = np.broadcast_to(b, target)
+            return np.array(broad, dtype=bool, copy=True)
+        # (M,L) 与 (M,)、(M,1)：沿 htype 轴复制（numpy 无法把二维 (M,L) 直接广播到 (M,L,N)）
+        if b.ndim == 2 and b.shape == (m, l_count):
+            b = b[:, :, np.newaxis]
+        elif b.ndim == 1 and b.shape == (m,):
+            b = b.reshape(m, 1, 1)
+        elif b.ndim == 2 and b.shape == (m, 1):
+            b = b.reshape(m, 1, 1)
+        try:
+            broad = np.broadcast_to(b, target)
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast condition with shape {getattr(b, "shape", ())} '
+                f'to panel shape {target}.'
+            ) from None
+        return np.array(broad, dtype=bool, copy=True)
 
     def subpanel(
             self,
@@ -453,7 +590,12 @@ class HistoryPanel():
         Returns
         -------
         HistoryPanel
-            子面板，轴标签为所选子集。
+            所选轴子集构成的子面板；空输入对应空面板。
+
+        Notes
+        -----
+        与 ``__getitem__`` 的 ``copy=False`` 切片类似：父级 ``__setitem__`` **追加列**后，``copy=False``
+        子对象通常不含新列；需要稳定快照请保持 ``copy=True``（默认）。
         """
         if self.is_empty:
             return HistoryPanel()
@@ -511,22 +653,25 @@ class HistoryPanel():
         return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
 
     def _prepare_column_array_for_inplace(self, value: Any) -> np.ndarray:
-        """将写入值解析并广播为与 ``(level_count, row_count)`` 一致的 float64 数组。
+        """将赋值右侧解析并广播为与当前面板 ``(level_count, row_count)`` 一致的 float64 二维数组。
+
+        仅供非空面板在 ``__setitem__`` 等内部路径调用；空面板应在入口处拒绝赋值。
 
         Parameters
         ----------
         value : Any
-            标量、可转为 ``ndarray`` 的序列，或形状可广播到 ``(M, L)`` 的数组（含 ``(M, L, 1)``）。
+            标量、可转为 ``ndarray`` 的序列，或可广播到 ``(M, L)`` 的数组；若形状恰为 ``(M, L, 1)``，
+            会先规整为 ``(M, L)`` 再广播。
 
         Returns
         -------
         numpy.ndarray
-            形状 ``(M, L)``、``dtype=float64`` 的连续数组副本。
+            形状为 ``(level_count, row_count)``、``dtype=float64``、C 连续的数组副本。
 
         Raises
         ------
         ValueError
-            当无法广播到当前面板的 ``(M, L)`` 时抛出（英文信息）。
+            无法广播到当前面板的 ``(M, L)`` 时抛出；用户可见信息为英文。
         """
         m, l_count = self._l_count, self._r_count
         arr = np.asarray(value, dtype=np.float64)
@@ -541,16 +686,26 @@ class HistoryPanel():
         return np.array(b, dtype=np.float64, copy=True)
 
     def _set_htype_column_inplace(self, name: str, column_2d: np.ndarray) -> None:
-        """在原地面覆盖已有列或追加新列；必要时将 ``_values`` 转为 float64。
+        """在原地覆盖已有 htype 列或沿第三轴追加新列，并在必要时把 ``_values`` 提升为 float64。
 
-        供 ``__setitem__`` 与后续 ``kline(..., inplace=True)`` 等路径复用。
+        供 ``__setitem__`` 与后续 ``kline(..., inplace=True)`` 等路径复用，避免重复拼接逻辑。
 
         Parameters
         ----------
         name : str
-            列名（htype）。
+            列名（htype）；调用方须已校验非空且与 ``self`` 轴一致。
         column_2d : numpy.ndarray
-            形状 ``(level_count, row_count)`` 的 float64 数据。
+            与 ``(level_count, row_count)`` 同形的二维数据（通常为 float64）。
+
+        Returns
+        -------
+        None
+            直接修改 ``self._values``、``self._columns`` 与 ``self._c_count``，无返回值。
+
+        Raises
+        ------
+        ValueError
+            当 ``column_2d.shape`` 与 ``(level_count, row_count)`` 不一致时抛出（英文信息，属内部一致性检查）。
         """
         if column_2d.shape != (self._l_count, self._r_count):
             raise ValueError(
@@ -571,30 +726,32 @@ class HistoryPanel():
         self._columns = labels_to_dict(new_htypes, range(self._c_count))
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        """按列名原地写入或追加一列数据（扩列）。
+        """按列名原地追加一列或覆盖已有列（``htypes`` 第三轴）。
 
-        仅支持 **单列名字符串** ``key``；多列赋值请使用后续 ``assign`` 等 API。写入值将广播到
-        与当前面板一致的 ``(share 数, 时间长度)``，并以 ``float64`` 存储。已存在的列名会被
-        **静默覆盖**（与 pandas 列赋值语义一致）。
-
-        通过 ``__getitem__`` / ``subpanel(copy=False)`` 得到的子面板可能与父面板 **共享**
-        底层数组视图；在父面板上 **追加新列** 时会替换父对象的 ``values`` 缓冲区，子面板 **不会**
-        自动出现新列，且仍可能指向扩列前的旧缓冲区。需要独立快照时请使用 ``subpanel(..., copy=True)``
-        或 ``to_numpy(copy=True)``。
+        仅接受运行期为 **非空** 字符串的 ``key``；多列批量赋值由后续 ``assign`` 等 API 提供。
+        ``value`` 将广播到 ``(share 数, 时间长度)`` 并以 ``float64`` 落盘；已存在列名 **静默覆盖**，
+        语义对齐 pandas 单列赋值。父面板上 **追加** 新列会替换整块 ``values``：``subpanel(copy=False)``
+        / ``__getitem__`` 子视图通常 **看不到** 新列且可能仍指向旧缓冲；``subpanel(..., copy=True)``
+        与 ``to_numpy(copy=True)`` 不受影响。父 **覆盖** 已有列时，与父共享底层块的子视图会随父更新。
 
         Parameters
         ----------
-        key : str
-            列名（htype）；非字符串类型将触发 ``TypeError``。
+        key : Any
+            列名（htype）。须为 ``str``；非 ``str`` 抛 ``TypeError``，空字符串抛 ``ValueError``（英文信息）。
         value : Any
-            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值（含标量、``(M,L)``、``(M,L,1)`` 等）。
+            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值（标量、``(M, L)``、``(M, L, 1)`` 等）。
+
+        Returns
+        -------
+        None
+            原地修改本对象，无返回值。
 
         Raises
         ------
         TypeError
-            当 ``key`` 不是 ``str`` 时抛出（英文信息）。
+            ``key`` 不是 ``str`` 时抛出（英文信息）。
         ValueError
-            当面板为空、列名为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出（英文信息）。
+            面板为空、``key`` 为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出（英文信息）。
 
         Examples
         --------

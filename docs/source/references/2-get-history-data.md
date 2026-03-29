@@ -261,6 +261,8 @@ print(hp)
 
 使用 `hp[...]` 按轴切片时，结果类型为 **子 `HistoryPanel`**（带正确的轴标签），不再直接得到 `ndarray`。需要裸矩阵时请使用 **`hp['close'].values`** 或 **`hp['close'].to_numpy(copy=True)`**；具名切片与默认拷贝行为见 **`hp.subpanel(..., copy=True)`**。
 
+研究向布尔掩码与后续带 **`mask=`** 的 API 可使用 **`hp.where(condition)`**：返回与 **`hp.values`** 同形的 **`dtype=bool`** 数组（不改变 `hp`），详见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 与教程 [使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md)。
+
 这样，策略与可视化都可以在同一份结构化数据上工作，避免重复转换。
 
 当你已有 `DataFrame` 或字典形式的数据时，可以使用

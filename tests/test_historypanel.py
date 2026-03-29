@@ -2185,5 +2185,268 @@ class TestHistoryPanelPhase2Setitem(unittest.TestCase):
         print('  parent htypes:', hp.htypes, 'sub htypes:', sub.htypes)
 
 
+def _where_broadcast_bool(cond, target_shape):
+    """与 ``HistoryPanel.where`` 一致的期望：含 (M,L)/(M,)/(M,1) 沿 htype 轴展开。"""
+    m, l_count, n = target_shape
+    b = np.asarray(cond, dtype=bool)
+    if b.shape == target_shape:
+        return np.array(b, copy=True)
+    if b.ndim == 0:
+        return np.broadcast_to(b, target_shape)
+    if b.ndim == 2 and b.shape == (m, l_count):
+        b = b[:, :, np.newaxis]
+    elif b.ndim == 1 and b.shape == (m,):
+        b = b.reshape(m, 1, 1)
+    elif b.ndim == 2 and b.shape == (m, 1):
+        b = b.reshape(m, 1, 1)
+    return np.broadcast_to(b, target_shape)
+
+
+def _make_history_panel_345():
+    """阶段三功能性用例金标准：shape (3,4,5)，values[m,l,n]=20*m+5*l+n。"""
+    values = np.arange(60, dtype=np.float64).reshape(3, 4, 5)
+    rows = pd.date_range('2020-01-01', periods=4, freq='D')
+    return qt.HistoryPanel(
+        values=values,
+        levels=['S0', 'S1', 'S2'],
+        rows=rows,
+        columns=['h0', 'h1', 'h2', 'h3', 'h4'],
+    )
+
+
+class TestHistoryPanelPhase3Where(unittest.TestCase):
+    """阶段三：where 广播为 (M,L,N) bool 与 mask 契约。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase3Where] setUp (5,10,4)')
+        np.random.seed(7)
+        self.data = np.random.randint(10, size=(5, 10, 4))
+        self.index = pd.date_range(start='20200101', freq='d', periods=10)
+        self.shares = '000100,000101,000102,000103,000104'
+        self.htypes = 'close,open,high,low'
+        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
+
+    # --- §3.1 边界与契约 ---
+
+    def test_where_empty_panel_returns_bool_zeros_shape(self):
+        """空面板 where -> (0,0,0) bool。"""
+        print('\n[TestHistoryPanelPhase3Where] empty panel')
+        empty = qt.HistoryPanel()
+        out = empty.where(True)
+        self.assertEqual(out.shape, (0, 0, 0))
+        self.assertEqual(out.dtype, bool)
+        self.assertEqual(out.size, 0)
+
+    def test_where_mln_same_shape_passthrough_values(self):
+        """(M,L,N) bool 与输出逐元素一致；不修改 hp 与传入数组。"""
+        print('\n[TestHistoryPanelPhase3Where] mln passthrough')
+        cond = np.random.rand(5, 10, 4) > 0.5
+        cond = np.asarray(cond, dtype=bool)
+        cond_copy = cond.copy()
+        vals_before = self.hp.values.copy()
+        out = self.hp.where(cond)
+        self.assertTrue(np.array_equal(out, cond))
+        self.assertEqual(out.shape, self.hp.shape)
+        self.assertTrue(np.array_equal(self.hp.values, vals_before))
+        self.assertTrue(np.array_equal(cond, cond_copy))
+
+    def test_where_ml_broadcasts_to_mln(self):
+        """(M,L) True 则整根 n 为 True。"""
+        print('\n[TestHistoryPanelPhase3Where] ml broadcast')
+        cond = np.zeros((5, 10), dtype=bool)
+        cond[2, 7] = True
+        out = self.hp.where(cond)
+        self.assertEqual(out.shape, self.hp.shape)
+        self.assertTrue(bool(out[2, 7, 0]) and bool(out[2, 7, 3]))
+        self.assertFalse(bool(out[0, 0, 0]))
+
+    def test_where_ml1_broadcasts_to_mln(self):
+        """(M,L,1) 与 (M,L) 等价广播。"""
+        print('\n[TestHistoryPanelPhase3Where] ml1 broadcast')
+        cond = np.zeros((5, 10, 1), dtype=bool)
+        cond[1, 3, 0] = True
+        out = self.hp.where(cond)
+        self.assertTrue(bool(out[1, 3, 2]))
+        self.assertFalse(bool(out[1, 4, 2]))
+
+    def test_where_scalar_broadcasts(self):
+        """标量 True/False。"""
+        print('\n[TestHistoryPanelPhase3Where] scalar')
+        t = self.hp.where(True)
+        self.assertTrue(np.all(t))
+        f = self.hp.where(False)
+        self.assertFalse(np.any(f))
+
+    def test_where_all_true_all_false(self):
+        """全 True / 全 False 的 (M,L,N)。"""
+        print('\n[TestHistoryPanelPhase3Where] all true false')
+        tt = np.ones(self.hp.shape, dtype=bool)
+        ff = np.zeros(self.hp.shape, dtype=bool)
+        self.assertTrue(np.array_equal(self.hp.where(tt), tt))
+        self.assertTrue(np.array_equal(self.hp.where(ff), ff))
+
+    def test_where_callable_returns_ml(self):
+        """callable 返回 (M,L)。"""
+        print('\n[TestHistoryPanelPhase3Where] callable ml')
+        out = self.hp.where(lambda p: np.ones((5, 10), dtype=bool))
+        self.assertTrue(np.all(out))
+        self.assertEqual(out.shape, self.hp.shape)
+
+    def test_where_callable_returns_mln(self):
+        """callable 返回与 values 同形比较。"""
+        print('\n[TestHistoryPanelPhase3Where] callable mln')
+        expected = self.hp.values > 0.5
+        out = self.hp.where(lambda p: p.values > 0.5)
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_does_not_mutate_panel(self):
+        """where 不改变面板。"""
+        print('\n[TestHistoryPanelPhase3Where] no mutate')
+        h = self.hp
+        before_v = h.values.copy()
+        before_ht = list(h.htypes)
+        before_sh = list(h.shares)
+        _ = h.where(lambda p: p.values >= 0)
+        self.assertTrue(np.array_equal(h.values, before_v))
+        self.assertEqual(list(h.htypes), before_ht)
+        self.assertEqual(list(h.shares), before_sh)
+
+    def test_where_wrong_shape_raises_valueerror(self):
+        """不可广播形状 -> ValueError（英文）。"""
+        print('\n[TestHistoryPanelPhase3Where] wrong shape')
+        with self.assertRaises(ValueError) as ctx:
+            self.hp.where(np.zeros((5, 9), dtype=bool))
+        self.assertIn('broadcast', str(ctx.exception).lower())
+        with self.assertRaises(ValueError):
+            self.hp.where(np.zeros((4, 10), dtype=bool))
+        with self.assertRaises(ValueError):
+            self.hp.where(np.zeros((5, 10, 3), dtype=bool))
+
+    def test_where_invalid_type_raises_typeerror(self):
+        """str -> TypeError。"""
+        print('\n[TestHistoryPanelPhase3Where] str -> TypeError')
+        with self.assertRaises(TypeError) as ctx:
+            self.hp.where('not_valid')
+        self.assertIn('str', str(ctx.exception).lower())
+
+    # --- §3.2 功能性 (3,4,5) ---
+
+    def test_where_functional_scalar_true(self):
+        print('\n[TestHistoryPanelPhase3Where] F1 scalar True')
+        hp = _make_history_panel_345()
+        out = hp.where(True)
+        expected = np.ones((3, 4, 5), dtype=bool)
+        self.assertTrue(np.array_equal(out, expected))
+        print('  out.sum():', out.sum())
+
+    def test_where_functional_scalar_false(self):
+        print('\n[TestHistoryPanelPhase3Where] F2 scalar False')
+        hp = _make_history_panel_345()
+        out = hp.where(False)
+        expected = np.zeros((3, 4, 5), dtype=bool)
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_threshold_on_full_values(self):
+        print('\n[TestHistoryPanelPhase3Where] F3 threshold')
+        hp = _make_history_panel_345()
+        cond = hp.values > 35
+        out = hp.where(cond)
+        self.assertTrue(np.array_equal(out, hp.values > 35))
+        print('  true count:', out.sum())
+
+    def test_where_functional_time_slice_ml(self):
+        print('\n[TestHistoryPanelPhase3Where] F4 time slice')
+        hp = _make_history_panel_345()
+        cond_ml = np.zeros((3, 4), dtype=bool)
+        cond_ml[:, 2] = True
+        out = hp.where(cond_ml)
+        expected = _where_broadcast_bool(cond_ml, (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_share_dimension(self):
+        print('\n[TestHistoryPanelPhase3Where] F5 share dim')
+        hp = _make_history_panel_345()
+        cond_m = np.array([False, True, False], dtype=bool).reshape(3, 1)
+        out = hp.where(cond_m)
+        expected = _where_broadcast_bool(cond_m, (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_ml1_replicate_across_htypes(self):
+        print('\n[TestHistoryPanelPhase3Where] F6 ml1 replicate')
+        hp = _make_history_panel_345()
+        values = hp.values
+        cond = np.zeros((3, 4, 1), dtype=bool)
+        cond[:, :, 0] = (values[:, :, 0] % 3 == 0)
+        out = hp.where(cond)
+        expected = _where_broadcast_bool(cond, (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_htype_axis_broadcast(self):
+        print('\n[TestHistoryPanelPhase3Where] F6b htype axis')
+        hp = _make_history_panel_345()
+        cond = np.zeros((1, 1, 5), dtype=bool)
+        cond[0, 0, 1] = True
+        cond[0, 0, 3] = True
+        out = hp.where(cond)
+        expected = _where_broadcast_bool(cond, (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_single_share_leading_dim(self):
+        print('\n[TestHistoryPanelPhase3Where] F7 leading 1 on share')
+        hp = _make_history_panel_345()
+        values = hp.values
+        cond = np.zeros((1, 4, 5), dtype=bool)
+        cond[0, :, :] = values[0, :, :] < 12
+        out = hp.where(cond)
+        expected = _where_broadcast_bool(cond, (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_nan_mask(self):
+        print('\n[TestHistoryPanelPhase3Where] F8 nan')
+        hp = _make_history_panel_345()
+        values2 = hp.values.copy()
+        values2[1, 2, 3] = np.nan
+        hp_nan = qt.HistoryPanel(
+            values=values2,
+            levels=hp.shares,
+            rows=hp.hdates,
+            columns=hp.htypes,
+        )
+        out = hp_nan.where(np.isnan(hp_nan.values))
+        self.assertTrue(np.array_equal(out, np.isnan(values2)))
+
+    def test_where_functional_integer01_ml(self):
+        print('\n[TestHistoryPanelPhase3Where] F9 int01')
+        hp = _make_history_panel_345()
+        g = np.indices((3, 4))
+        cond = ((g[0] + g[1]) % 2).astype(np.int32)
+        out = hp.where(cond)
+        expected = _where_broadcast_bool(cond.astype(bool), (3, 4, 5))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_callable_compare_first_htype(self):
+        print('\n[TestHistoryPanelPhase3Where] F10 callable first htype')
+        hp = _make_history_panel_345()
+        values = hp.values
+        slab = (values[:, :, 0] >= 15)[:, :, np.newaxis]
+        expected = _where_broadcast_bool(slab, (3, 4, 5))
+        out = hp.where(lambda p: p.values[:, :, 0] >= 15)
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_callable_compound(self):
+        print('\n[TestHistoryPanelPhase3Where] F11 compound')
+        hp = _make_history_panel_345()
+        values = hp.values
+        expected = (values >= 10) & (values <= 50)
+        out = hp.where(lambda p: (p.values >= 10) & (p.values <= 50))
+        self.assertTrue(np.array_equal(out, expected))
+
+    def test_where_functional_callable_reads_panel(self):
+        print('\n[TestHistoryPanelPhase3Where] F12 callable reads panel')
+        hp = _make_history_panel_345()
+        out = hp.where(lambda p: np.ones(p.shape, dtype=bool) & (p.values == p.values))
+        self.assertTrue(np.all(out))
+
+
 if __name__ == '__main__':
     unittest.main()

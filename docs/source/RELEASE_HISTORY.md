@@ -7,6 +7,8 @@
   Added `subpanel(htypes=..., shares=..., hdates=..., copy=True)` for named-axis slicing (default `copy=True` detaches from the parent buffer). Added `to_numpy(copy=False)` for an explicit ndarray exit; empty panels yield shape `(0, 0, 0)`.
 - **`HistoryPanel` in-place column assignment (`__setitem__`)**  
   Use `panel['factor'] = ndarray_or_scalar` to append or overwrite a single column: values broadcast to `(n_shares, n_rows)` and are stored as `float64`. Only `str` keys are allowed (`TypeError` otherwise); empty panels raise `ValueError`. Existing names are overwritten in place (pandas-like). Sub-panels from `subpanel(copy=True)` remain unchanged when the parent grows; `copy=False` / plain slicing views do not pick up new columns after the parent reallocates—use `kline.*` when you prefer a **new** panel without mutating the original.
+- **`HistoryPanel.where()` for research masks**  
+  Added `where(condition)` returning a `bool` ndarray with the same shape as `panel.values` `(n_shares, n_rows, n_htypes)`, for use as `mask=` in upcoming research helpers (`cum_return`, `normalize`, `portfolio`, etc.). Accepts a boolean array (broadcastable after `(M,L)` is expanded along the htype axis), or `callable(panel)` returning an array. Empty panels return shape `(0,0,0)`; string conditions raise `TypeError`. **Usage examples:** see the method docstring (Examples), [HistoryPanel API](api/HistoryPanel.rst) (*Research masks / where*), and tutorial *2.5-historypanel-data-analysis* (section 6).
 
 ## 2.2.7 (2026-03-26)
 - **HistoryPanel interactive highlight (Q06)**  
