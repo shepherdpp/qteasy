@@ -1,5 +1,8 @@
 # RELEASE HISTORY
 
+## 2.2.8 (2026-03-30)
+- **HistoryPanel (research-oriented workflow)** — Bracket indexing returns a labeled sub-panel (breaking); `subpanel` / `to_numpy`, in-place columns via `__setitem__`, `where()` masks, read-only htype attributes (e.g. `panel.close`), comparisons yielding bool ndarrays for `where` chaining, and `loc` for time-axis selection. Docstrings, [HistoryPanel API](api/HistoryPanel.rst), and tutorial [2.5-historypanel-data-analysis](tutorials/2.5-historypanel-data-analysis.md) describe behavior and limits (vs pandas).
+
 ## 2.2.7 (2026-03-26)
 - **HistoryPanel interactive highlight (Q06)**  
   `hp.plot(..., highlight=...)` now works on interactive Plotly charts for both line and candlestick panels. In two-symbol overlay mode, the highlight marker is shown only for the current primary share and switches together with the primary/secondary focus when you click.

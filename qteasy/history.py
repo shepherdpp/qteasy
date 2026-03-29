@@ -9,9 +9,12 @@
 # data manipulating functions.
 # ======================================
 
+import operator
+from numbers import Number
+
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional, Callable, Sequence
+from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple
 
 from qteasy.database import DataSource
 
@@ -38,6 +41,82 @@ from qteasy.datatypes import (
 HP_OVERLAY_GROUP_SHARE_COUNT: int = 2
 
 
+class _HistoryPanelLocIndexer:
+    """只读索引器：沿 ``hdates`` 时间轴选取，``hp.loc[key]`` 等价于 ``hp[:, :, key]``。
+
+    与 pandas ``DataFrame.loc`` 仅 **类比**（按「行」筛日期）；本类 **只接受单参数**
+    时间轴键，**不**实现二维 ``loc[row, col]`` 全语义。
+
+    不接受 ``where()`` 产生的 ``(M, L, N)`` 三维布尔掩码；格点级条件请使用
+    :meth:`HistoryPanel.where` 与后续 API 的 ``mask=``。
+
+    Notes
+    -----
+    更多约定见类 :class:`HistoryPanel` 概述及 Sphinx **HistoryPanel** 文档中「列属性访问、比较与 loc」小节。
+    """
+
+    __slots__ = ('_hp',)
+
+    def __init__(self, hp: 'HistoryPanel') -> None:
+        self._hp = hp
+
+    def __getitem__(self, key: Any) -> 'HistoryPanel':
+        """按时间轴键取出子面板，语义与 ``HistoryPanel[:, :, key]`` 一致。
+
+        Parameters
+        ----------
+        key : slice, list, 或 numpy.ndarray 等
+            与第三轴（``hdates``）上 ``list_or_slice`` 支持的输入一致；一维 ``bool``
+            列表或 ``ndarray`` 长度须等于 ``row_count``。禁止传入 ``(M, L, N)`` 布尔数组。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板；视图语义与 ``__getitem__`` 的 ``copy=False`` 一致。
+
+        Raises
+        ------
+        TypeError
+            传入与 ``where`` 输出同形的格点级三维布尔掩码时抛出（英文）。
+        ValueError
+            布尔轴长度不匹配、或二维布尔数组等非法形状时抛出（英文）。
+        """
+        hp = self._hp
+        if isinstance(key, list) and len(key) > 0 and isinstance(key[0], (bool, np.bool_)):
+            L = int(hp.row_count)
+            if len(key) != L:
+                raise ValueError(
+                    f'Boolean mask length {len(key)} does not match number of hdates ({L}).'
+                )
+        if isinstance(key, np.ndarray) and key.dtype == bool:
+            if key.ndim == 3:
+                if (not hp.is_empty) and key.shape == hp.shape:
+                    raise TypeError(
+                        'Use HistoryPanel.where(...) and mask= for per-cell boolean masks, not loc.'
+                    )
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates). Use where() and mask= for (M,L,N) masks.'
+                )
+            if key.ndim == 2:
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates). Use where() and mask= for (M,L) or (M,L,N) masks.'
+                )
+            if key.ndim != 1:
+                raise ValueError(
+                    'Boolean array for loc must be one-dimensional with length equal to the '
+                    'number of dates (hdates).'
+                )
+            L = int(hp.row_count)
+            if key.size != L:
+                raise ValueError(
+                    f'Boolean mask length {key.size} does not match number of hdates ({L}).'
+                )
+            key = key.tolist()
+        return hp[:, :, key]
+
+
 class HistoryPanel():
     """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
 
@@ -45,6 +124,17 @@ class HistoryPanel():
     （hdates）和历史数据类型（htypes），支持按任意轴灵活切片、重标记以及与
     pandas DataFrame 之间的互相转换，并作为 get_history_data 与可视化栈
     （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
+
+    **索引与数组出口**：``__getitem__`` 始终返回带正确轴标签的子 ``HistoryPanel``；需要
+    裸 ``ndarray`` 时用 ``.values`` 或 ``.to_numpy(copy=...)``。**单列原地赋值**
+    ``panel['列名'] = value`` 由 ``__setitem__`` 实现（仅非空面板、仅 ``str`` 键），
+    值广播为 ``(标的数, 时间长度)`` 并以 ``float64`` 存储；覆盖已有列或追加新列。
+    子面板与父对象共享缓冲时的语义见 ``__getitem__`` / ``subpanel`` / ``__setitem__`` 各方法说明。
+
+    **体验向 API**：合法 Python 标识符且存在于 ``htypes`` 的列名可用属性只读访问（如 ``panel.close``，
+    等价 ``panel['close']``）；比较运算（如 ``panel.close > panel.open``）返回 ``numpy`` 布尔数组；
+    ``panel.loc[key]`` 等价 ``panel[:, :, key]``，仅沿时间轴筛选（不接 ``where`` 的三维掩码）。
+    用户文档见 Sphinx **HistoryPanel** 页与教程「使用 HistoryPanel 操作和分析历史数据」（§6 及 §6.1）。
 
     更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
@@ -146,7 +236,19 @@ class HistoryPanel():
 
     @property
     def values(self):
-        """返回HistoryPanel的values"""
+        """返回当前对象内部的三维数据缓冲区（与 ``_values`` 同一引用）。
+
+        非空时与 ``to_numpy(copy=False)`` 指向同一块内存；修改返回值会直接改动本对象数据。
+        通过 ``__setitem__`` 追加新列时，内部可能 **替换** 整块数组，此前由子视图
+        （``__getitem__`` / ``subpanel(copy=False)``）持有的 ``values`` 可能仍指向扩列前的旧缓冲，
+        且不会自动出现新列。需要稳定快照请使用 ``subpanel(..., copy=True)`` 或 ``to_numpy(copy=True)``。
+        原地写入列时，若原数组非 ``float64``，内部会升级为 ``float64`` 再存储。
+
+        Returns
+        -------
+        numpy.ndarray or None
+            形状 ``(level_count, row_count, column_count)``；空面板为 ``None``。
+        """
         return self._values
 
     @property
@@ -281,6 +383,35 @@ class HistoryPanel():
         return self._c_count
 
     @property
+    def loc(self) -> _HistoryPanelLocIndexer:
+        """沿 ``hdates``（时间轴）选取子面板的只读索引器。
+
+        ``hp.loc[key]`` 与 ``hp[:, :, key]`` 等价，用于切片、时间标签、标签列表、``:`` 或
+        长度等于 ``row_count`` 的一维布尔掩码。格点级 ``(M,L,N)`` 布尔条件请用
+        :meth:`where` 与后续 ``mask=``，**不要**传入 ``loc``。
+
+        Returns
+        -------
+        _HistoryPanelLocIndexer
+            轻量代理；对其使用 ``[...]`` 即按时间轴取子面板。
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> hp = HistoryPanel(
+        ...     np.ones((2, 4, 1)),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=4),
+        ...     columns=['close'],
+        ... )
+        >>> sub = hp.loc[0:2]
+        >>> sub.shape[1] == 2
+        True
+        """
+        return _HistoryPanelLocIndexer(self)
+
+    @property
     def shape(self):
         """获取HistoryPanel的各个维度的尺寸"""
         return self._l_count, self._r_count, self._c_count
@@ -294,32 +425,337 @@ class HistoryPanel():
         """
         return self._r_count
 
-    def __getitem__(self, keys=None):
-        """获取历史数据的一个切片，给定一个type、日期或股票代码, 输出相应的数据
-
-        允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
-        允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
-        item_key                    output
-        [1:3, :,:]                  输出第1个htype～第3个htype的所有历史数据
-        [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
-        [['close', 'high']]         输出close、high两个类型的所有历史数据
-        [0:1]                       输出0、1两个htype的所有历史数据
-        ['close,high']              输出close、high两个类型的所有历史数据
-        ['close:high']              输出close、high之间所有类型的历史数据（包含close和high）
-        [:,[0,1,3]]                 输出0、1、3三个股票的全部历史数据
-        [:,['000100', '000120']]    输出000100、000120两只股票的所有历史数据
-        [:,0:2]                     输出0、1、2三个股票的历史数据
-        [:,'000100,000120']         输出000100、000120两只股票的所有历史数据
+    @staticmethod
+    def _axis_labels_subset(
+            ordered: Sequence[Any],
+            spec: Union[slice, list, np.ndarray],
+    ) -> List[Any]:
+        """根据 ``list_or_slice`` 产出的下标规格，从有序轴标签列表中取子序列。
 
         Parameters
         ----------
-        keys: list/tuple/slice
-            历史数据的类型名，为空时给出所有类型的数据
+        ordered : sequence
+            与轴顺序一致的标签序列（如 ``shares`` / ``hdates`` / ``htypes`` 列表）。
+        spec : slice, list of int, or ndarray
+            ``list_or_slice`` 的返回值。
 
         Returns
         -------
-        out : ndarray
-            self.value的一个切片
+        list
+            子集标签，顺序与切片后的数组第一维（或对应维）一致。
+        """
+        if isinstance(spec, slice):
+            return list(ordered[spec])
+        if isinstance(spec, list):
+            return [ordered[int(i)] for i in spec]
+        if isinstance(spec, np.ndarray):
+            if spec.dtype == bool:
+                return [ordered[i] for i in range(len(ordered)) if bool(spec.flat[i])]
+            return [ordered[int(i)] for i in spec.flatten().tolist()]
+        raise TypeError(f'Unsupported index spec type: {type(spec)}')
+
+    def _parse_getitem_keys(self, keys: Any) -> Tuple[Any, Any, Any]:
+        """将 ``__getitem__`` 的 keys 解析为 (htype 轴, share 轴, hdate 轴) 三段的原始切片输入。"""
+        key_is_none = keys is None
+        key_is_tuple = isinstance(keys, tuple)
+        key_is_list = isinstance(keys, list)
+        key_is_slice = isinstance(keys, slice)
+        key_is_string = isinstance(keys, str)
+        key_is_number = isinstance(keys, int)
+
+        htype_slice: Any
+        share_slice: Any
+        hdate_slice: Any
+        if key_is_tuple:
+            if len(keys) == 2:
+                htype_slice, share_slice = keys
+                hdate_slice = slice(None, None, None)
+            elif len(keys) == 3:
+                htype_slice, share_slice, hdate_slice = keys
+            else:
+                htype_slice = slice(None, None, None)
+                share_slice = slice(None, None, None)
+                hdate_slice = slice(None, None, None)
+        elif key_is_slice or key_is_list or key_is_string or key_is_number:
+            htype_slice = keys
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+        elif key_is_none:
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+        else:
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+
+        htype_slice = list_or_slice(htype_slice, self.columns)
+        share_slice = list_or_slice(share_slice, self.levels)
+        hdate_slice = list_or_slice(hdate_slice, self.rows)
+        return htype_slice, share_slice, hdate_slice
+
+    def _select_subpanel(
+            self,
+            htype_slice: Any,
+            share_slice: Any,
+            hdate_slice: Any,
+            *,
+            copy: bool,
+    ) -> 'HistoryPanel':
+        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。
+
+        ``copy=False`` 时结果可能与父对象共享底层缓冲；父对象后续 ``__setitem__`` **追加** 列会替换
+        父级 ``_values``，已存在的子面板通常 **不会** 自动带上新列，详见 ``__getitem__`` / ``__setitem__``。
+        """
+        out_arr = self.values[share_slice][:, hdate_slice][:, :, htype_slice]
+        if copy:
+            out_arr = np.array(out_arr, copy=True)
+        share_labels = self._axis_labels_subset(self.shares, share_slice)
+        hdate_labels = self._axis_labels_subset(self.hdates, hdate_slice)
+        htype_labels = self._axis_labels_subset(self.htypes, htype_slice)
+        return HistoryPanel(values=out_arr, levels=share_labels, rows=hdate_labels, columns=htype_labels)
+
+    def to_numpy(self, copy: bool = False) -> np.ndarray:
+        """返回与 ``values`` 相同形状的 ndarray；需要独立副本时使用 ``copy=True``。
+
+        空面板返回形状为 ``(0, 0, 0)`` 的 float 数组。非空时 ``copy=False`` 与 ``numpy.asarray(self.values)``
+        语义一致，可与内部缓冲区共享内存。若之后在父对象上用 ``__setitem__`` **追加** 新列，父对象会替换
+        整块缓冲；此前用 ``copy=False`` 拿到的数组 **不会** 自动带上新列，不宜再视为当前面板的权威快照。
+
+        Parameters
+        ----------
+        copy : bool, default False
+            为 True 时返回数组拷贝，修改返回值不影响本对象数据。
+
+        Returns
+        -------
+        numpy.ndarray
+            与 ``values`` 同形状的三维数组；空面板时为 ``(0, 0, 0)``。
+        """
+        if self.is_empty:
+            return np.empty((0, 0, 0), dtype=float)
+        if copy:
+            return np.array(self._values, copy=True)
+        return np.asarray(self._values)
+
+    def where(
+            self,
+            condition: Union[np.ndarray, Callable[['HistoryPanel'], np.ndarray]],
+    ) -> np.ndarray:
+        """将条件广播为与 ``values`` 同形的 bool 掩码，供研究 API 的 ``mask=`` 等参数使用。
+
+        不改变本对象。返回数组为 ``dtype=bool``、形状 ``(share 数, 时间长度, htype 数)``，与
+        ``panel.values`` 一致。条件可为数组（可广播到上述形状）或 ``callable(panel)`` 返回类数组。
+
+        研究向掩码与 Backtester 中 NaN 价格处理无关。整数 ``0``/``1`` 等会按 numpy 规则转为 bool。
+
+        形状 **恰好为** ``(M, L)`` 的数组视为「每个 ``(share, 时间)`` 对所有 ``htype`` 共用同一布尔值」，
+        内部会先变为 ``(M, L, 1)`` 再广播到 ``(M, L, N)``（因标准 numpy 无法将二维 ``(M,L)`` 直接广播到三维）。
+        一维 ``(M,)`` 与二维 ``(M, 1)`` 视为仅随标的变化，会展开为 ``(M, 1, 1)`` 再广播。
+
+        Parameters
+        ----------
+        condition : numpy.ndarray or callable
+            类数组：先 ``np.asarray(..., dtype=bool)`` 再广播到 ``self.shape``。
+            若为 ``callable``，则调用 ``condition(self)`` 得到数组后再处理。
+            裸 ``str`` 不接受，将引发 ``TypeError``（英文）。
+
+        Returns
+        -------
+        numpy.ndarray
+            与 ``self.shape`` 相同的三维 bool 数组（拷贝，与内部 ``values`` 不共享写缓冲）。
+
+        Raises
+        ------
+        TypeError
+            ``condition`` 为 ``str`` 时抛出（英文）。
+        ValueError
+            无法将返回值转为 bool 数组或无法广播到 ``self.shape`` 时抛出（英文）。
+
+        Notes
+        -----
+        ``condition`` 可为 **富比较** 的直接结果（自 2.2.8 起）：例如 ``panel.where(panel.close > 100.0)``
+        或 ``panel.where(panel['close'] > panel['open'])``，其中 ``>`` 等对 ``HistoryPanel`` 与标量 /
+        可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
+        广播到与 ``panel.values`` 同形。
+
+        后续 ``cum_return`` / ``normalize`` / ``portfolio`` 等参数的 ``mask=`` 建议使用本方法返回值或
+        与其同形同 dtype 的数组；阶段四及以后相关 API 发布后即可直接传入 ``mask=panel.where(...)``。
+        更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
+        「研究与掩码（where）」小节。
+
+        Examples
+        --------
+        空面板得到 ``(0,0,0)`` 的 bool 数组：
+
+        >>> empty = HistoryPanel()
+        >>> empty.where(True).shape
+        (0, 0, 0)
+
+        与 ``values`` 同形的比较结果可直接传入：
+
+        >>> import pandas as pd
+        >>> hp = HistoryPanel(
+        ...     np.arange(24, dtype=float).reshape(2, 3, 4),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['a', 'b', 'c', 'd'],
+        ... )
+        >>> m = hp.where(hp.values > 10)
+        >>> m.shape == hp.shape
+        True
+        >>> not bool(m[0, 0, 0]) and bool(m[-1, -1, -1])
+        True
+
+        标量 ``True`` / ``False`` 填满整块：
+
+        >>> import numpy as np
+        >>> hp.where(True).all() and not hp.where(False).any()
+        True
+
+        ``(M, L)`` 条件沿 htype 轴广播（例如事件日）：
+
+        >>> ev = np.zeros((2, 3), dtype=bool)
+        >>> ev[:, 1] = True
+        >>> m2 = hp.where(ev)
+        >>> bool(m2[0, 1, 0]) and bool(m2[0, 1, 3])
+        True
+
+        ``(M, L, 1)`` 与 ``(M, L)`` 语义一致，沿 htype 维复制：
+
+        >>> c_ml1 = (hp.values[:, :, :1] > 10)
+        >>> m2b = hp.where(c_ml1)
+        >>> m2b.shape == hp.shape
+        True
+
+        使用 ``lambda`` 基于面板数据构造条件：
+
+        >>> m3 = hp.where(lambda p: p.values[:, :, 0] >= 3)
+        >>> m3.shape == hp.shape
+        True
+
+        复合布尔条件：
+
+        >>> m4 = hp.where(lambda p: (p.values >= 5) & (p.values <= 18))
+        >>> m4.dtype == bool
+        True
+        """
+        if self.is_empty:
+            return np.empty((0, 0, 0), dtype=bool)
+        if isinstance(condition, str):
+            raise TypeError(
+                'HistoryPanel.where() does not accept str conditions; '
+                'pass a numpy array or a callable that returns an array.'
+            )
+        if callable(condition):
+            raw = condition(self)
+        else:
+            raw = condition
+        try:
+            b = np.asarray(raw, dtype=bool)
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f'Cannot convert where() condition to a boolean array: {e}'
+            ) from e
+        m, l_count, n = self._l_count, self._r_count, self._c_count
+        target = (m, l_count, n)
+        if b.shape == target:
+            return np.array(b, dtype=bool, copy=True)
+        if b.ndim == 0:
+            broad = np.broadcast_to(b, target)
+            return np.array(broad, dtype=bool, copy=True)
+        # (M,L) 与 (M,)、(M,1)：沿 htype 轴复制（numpy 无法把二维 (M,L) 直接广播到 (M,L,N)）
+        if b.ndim == 2 and b.shape == (m, l_count):
+            b = b[:, :, np.newaxis]
+        elif b.ndim == 1 and b.shape == (m,):
+            b = b.reshape(m, 1, 1)
+        elif b.ndim == 2 and b.shape == (m, 1):
+            b = b.reshape(m, 1, 1)
+        try:
+            broad = np.broadcast_to(b, target)
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast condition with shape {getattr(b, "shape", ())} '
+                f'to panel shape {target}.'
+            ) from None
+        return np.array(broad, dtype=bool, copy=True)
+
+    def subpanel(
+            self,
+            htypes: Optional[Union[str, Sequence[str], slice, int, list]] = None,
+            shares: Optional[Union[str, Sequence[str], slice, int, list]] = None,
+            hdates: Optional[Union[str, slice, Sequence[Any], int, list]] = None,
+            *,
+            copy: bool = True,
+    ) -> 'HistoryPanel':
+        """按具名参数沿 htypes / shares / hdates 取子面板，避免三元组轴顺序混淆。
+
+        ``None`` 表示该轴全选。默认 ``copy=True``，得到与父对象数据缓冲区脱钩的副本；需要零拷贝时可设
+        ``copy=False``（子面板 ``values`` 可能与父面板共享内存）。父对象上 ``__setitem__`` 追加新列时会
+        替换父面板整块 ``values``，``copy=False`` 子面板通常 **不会** 自动带上新列，且可能仍引用扩列前的缓冲区。
+
+        Parameters
+        ----------
+        htypes : str, sequence, slice or int, optional
+            列（数据类型）选择，语义与 ``panel[htypes, ...]`` 第一段一致。
+        shares : str, sequence, slice or int, optional
+            标的层选择，语义与 ``panel[:, shares, ...]`` 第二段一致。
+        hdates : str, sequence, slice or int, optional
+            时间轴选择，语义与 ``panel[..., hdates]`` 第三段一致。
+        copy : bool, default True
+            为 True 时对切片结果做数组拷贝。
+
+        Returns
+        -------
+        HistoryPanel
+            所选轴子集构成的子面板；空输入对应空面板。
+
+        Notes
+        -----
+        与 ``__getitem__`` 的 ``copy=False`` 切片类似：父级 ``__setitem__`` **追加列**后，``copy=False``
+        子对象通常不含新列；需要稳定快照请保持 ``copy=True``（默认）。
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        hs = slice(None, None, None) if htypes is None else htypes
+        ss = slice(None, None, None) if shares is None else shares
+        ds = slice(None, None, None) if hdates is None else hdates
+        htype_slice = list_or_slice(hs, self.columns)
+        share_slice = list_or_slice(ss, self.levels)
+        hdate_slice = list_or_slice(ds, self.rows)
+        return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=copy)
+
+    def __getitem__(self, keys=None) -> 'HistoryPanel':
+        """按 htypes / shares / hdates 三轴切片，返回带正确轴标签的子 ``HistoryPanel``。
+
+        第一个切片为数据类型（htypes），第二个为标的（shares），第三个为时间（hdates）；省略时该轴为全选。
+        需要裸 ``ndarray`` 时请使用 ``sub.values`` 或 ``sub.to_numpy()``。子面板 ``values`` 可能与父面板
+        共享内存（numpy 视图规则）；需要独立副本请用 ``subpanel(..., copy=True)`` 或 ``sub.copy()``。
+
+        在 **父对象** 上使用 ``__setitem__`` 追加新列时，会替换父面板整块 ``values``：默认
+        ``copy=False`` 的子面板 **不会** 出现新列名，且其 ``values`` 可能仍指向扩列前的旧数组；
+        ``subpanel(copy=True)`` 得到的子对象不受影响。在父面板上 **覆盖** 已有列时，与子视图共享的
+        切片数据会随父缓冲一并更新（仍为同一底层块上的视图时）。
+
+        空面板（``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
+
+        Notes
+        -----
+        **时间轴（第三段 ``hdates``）** 除 ``slice`` / 整数 / 区间字符串外，还支持：在 ``rows``
+        字典中可查的 **单个时间标签**（如 ``pandas.Timestamp``）、**时间标签列表**，以及
+        长度等于 ``row_count`` 的一维 ``bool`` 列表或一维 ``bool`` ``ndarray``；与
+        :attr:`loc` 所接受的 ``key`` 一致。格点级 ``(M, L, N)`` 布尔数组 **不** 用作第三轴索引，
+        请使用 :meth:`where`。
+
+        Parameters
+        ----------
+        keys : list, tuple, slice, str, int or None
+            切片键；三元组 ``(htypes, shares, hdates)`` 与历史行为一致。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板；取矩阵请用其 ``.values`` / ``.to_numpy()``。
 
         Examples
         --------
@@ -327,145 +763,202 @@ class HistoryPanel():
         ...                   levels=['000001', '000002', '000003'],
         ...                   rows=pd.date_range('2015-01-05', periods=10),
         ...                   columns=['open', 'high', 'low', 'close', 'volume'])
-        >>> hp
-                share 0, label: 000001
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-
-        share 1, label: 000002
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-
-        share 2, label: 000003
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-        >>> hp['close']
-        array([[[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]],
-
-               [[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]],
-
-               [[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]]])
-        >>> hp['close, open, low', '000001:000002']
-        array([[[40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30]],
-
-               [[40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30]]])
+        >>> sub = hp['close']
+        >>> isinstance(sub, HistoryPanel)
+        True
+        >>> sub.shape
+        (3, 10, 1)
+        >>> sub.htypes
+        ['close']
+        >>> np.all(sub.values == 40)
+        True
         """
-        # TODO: 在以前版本的qteasy中，HistoryPanel是交易策略的数据调用的核心数据结构，因此对数据切片
-        #  的效率要求较高，因此在切片后直接返回一个ndarray数组，但是在2.0以后这个功能不再被需要，相反，
-        #  HistoryPanel切片后返回另一个HistoryPanel更有用，因此需要修改返回值为HistorPanel。
-
         if self.is_empty:
-            return None
-        else:
-            key_is_none = keys is None
-            key_is_tuple = isinstance(keys, tuple)
-            key_is_list = isinstance(keys, list)
-            key_is_slice = isinstance(keys, slice)
-            key_is_string = isinstance(keys, str)
-            key_is_number = isinstance(keys, int)
+            return HistoryPanel()
+        htype_slice, share_slice, hdate_slice = self._parse_getitem_keys(keys)
+        return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
 
-            # first make sure that htypes, share_pool, and hdates are either slice or list
-            htype_slice = []
-            share_slice = []
-            hdate_slice = []
-            if key_is_tuple:
-                if len(keys) == 2:
-                    htype_slice, share_slice = keys
-                    hdate_slice = slice(None, None, None)
-                elif len(keys) == 3:
-                    htype_slice, share_slice, hdate_slice = keys
-            elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
-                htype_slice = keys
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
-            elif key_is_none:
-                htype_slice = slice(None, None, None)
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
-            else:
-                htype_slice = slice(None, None, None)
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
+    def __getattr__(self, name: str) -> Any:
+        """将合法标识符列名解析为 ``self[name]``（只读）；非标识符或未知列名请用方括号索引。
 
-            # check and convert each of the slice segments to the right type: a slice or \
-            # a list of indices
-            htype_slice = list_or_slice(htype_slice, self.columns)
-            share_slice = list_or_slice(share_slice, self.levels)
-            hdate_slice = list_or_slice(hdate_slice, self.rows)
+        列赋值仍请使用 ``hp['col'] = ...``；不与 pandas 的属性写路径对齐。
 
-            return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
+        Parameters
+        ----------
+        name : str
+            属性名；须为合法 Python 标识符才可能对应到 ``htypes`` 列（非空面板）。
+
+        Returns
+        -------
+        HistoryPanel
+            与 ``self[name]`` 相同的子面板；空面板上委托 ``__getitem__``，返回空子面板。
+
+        Raises
+        ------
+        AttributeError
+            非法标识符、或当前面板中不存在的列名（英文，提示使用 bracket indexing）。
+
+        Notes
+        -----
+        已有方法名 / 描述符（如 ``where``、``values``）优先于列名：同名列仍须用
+        ``hp['where']`` 等形式访问。非标识符列名（如 ``close|b``）不可用点号。
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> hp = HistoryPanel(
+        ...     np.arange(24, dtype=float).reshape(2, 3, 4),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['a', 'b', 'c', 'd'],
+        ... )
+        >>> np.allclose(hp.a.values, hp['a'].values)
+        True
+        """
+        if not isinstance(name, str):
+            raise AttributeError(name)
+        if not name.isidentifier():
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'. "
+                'Use bracket indexing for non-identifier htype names, e.g. hp["close|b"].'
+            )
+        if self.is_empty:
+            return self[name]
+        htypes = self.htypes
+        if isinstance(htypes, list) and name not in htypes:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'. "
+                'Use bracket indexing for htype columns, e.g. hp["column_name"].'
+            )
+        return self[name]
+
+    def _prepare_column_array_for_inplace(self, value: Any) -> np.ndarray:
+        """将赋值右侧解析并广播为与当前面板 ``(level_count, row_count)`` 一致的 float64 二维数组。
+
+        仅供非空面板在 ``__setitem__`` 等内部路径调用；空面板应在入口处拒绝赋值。
+
+        Parameters
+        ----------
+        value : Any
+            标量、可转为 ``ndarray`` 的序列，或可广播到 ``(M, L)`` 的数组；若形状恰为 ``(M, L, 1)``，
+            会先规整为 ``(M, L)`` 再广播。
+
+        Returns
+        -------
+        numpy.ndarray
+            形状为 ``(level_count, row_count)``、``dtype=float64``、C 连续的数组副本。
+
+        Raises
+        ------
+        ValueError
+            无法广播到当前面板的 ``(M, L)`` 时抛出；用户可见信息为英文。
+        """
+        m, l_count = self._l_count, self._r_count
+        arr = np.asarray(value, dtype=np.float64)
+        if arr.ndim == 3 and arr.shape == (m, l_count, 1):
+            arr = arr.reshape(m, l_count)
+        try:
+            b = np.broadcast_to(arr, (m, l_count))
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast assignment value to shape ({m}, {l_count}) for column.'
+            ) from None
+        return np.array(b, dtype=np.float64, copy=True)
+
+    def _set_htype_column_inplace(self, name: str, column_2d: np.ndarray) -> None:
+        """在原地覆盖已有 htype 列或沿第三轴追加新列，并在必要时把 ``_values`` 提升为 float64。
+
+        供 ``__setitem__`` 与后续 ``kline(..., inplace=True)`` 等路径复用，避免重复拼接逻辑。
+
+        Parameters
+        ----------
+        name : str
+            列名（htype）；调用方须已校验非空且与 ``self`` 轴一致。
+        column_2d : numpy.ndarray
+            与 ``(level_count, row_count)`` 同形的二维数据（通常为 float64）。
+
+        Returns
+        -------
+        None
+            直接修改 ``self._values``、``self._columns`` 与 ``self._c_count``，无返回值。
+
+        Raises
+        ------
+        ValueError
+            当 ``column_2d.shape`` 与 ``(level_count, row_count)`` 不一致时抛出（英文信息，属内部一致性检查）。
+        """
+        if column_2d.shape != (self._l_count, self._r_count):
+            raise ValueError(
+                f'Internal error: column array shape {column_2d.shape} != '
+                f'{(self._l_count, self._r_count)}'
+            )
+        if self._values.dtype != np.float64:
+            self._values = np.asarray(self._values, dtype=np.float64)
+        if name in self._columns:
+            idx = self._columns[name]
+            self._values[:, :, idx] = column_2d
+            return
+        base = self._values
+        new_values = np.concatenate([base, column_2d[:, :, np.newaxis]], axis=2)
+        self._values = new_values
+        self._c_count = int(new_values.shape[2])
+        new_htypes = list(self.htypes) + [name]
+        self._columns = labels_to_dict(new_htypes, range(self._c_count))
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        """按列名原地追加一列或覆盖已有列（``htypes`` 第三轴）。
+
+        仅接受运行期为 **非空** 字符串的 ``key``；多列批量赋值由后续 ``assign`` 等 API 提供。
+        ``value`` 将广播到 ``(share 数, 时间长度)`` 并以 ``float64`` 落盘；已存在列名 **静默覆盖**，
+        语义对齐 pandas 单列赋值。父面板上 **追加** 新列会替换整块 ``values``：``subpanel(copy=False)``
+        / ``__getitem__`` 子视图通常 **看不到** 新列且可能仍指向旧缓冲；``subpanel(..., copy=True)``
+        与 ``to_numpy(copy=True)`` 不受影响。父 **覆盖** 已有列时，与父共享底层块的子视图会随父更新。
+
+        Parameters
+        ----------
+        key : Any
+            列名（htype）。须为 ``str``；非 ``str`` 抛 ``TypeError``，空字符串抛 ``ValueError``（英文信息）。
+        value : Any
+            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值（标量、``(M, L)``、``(M, L, 1)`` 等）。
+
+        Returns
+        -------
+        None
+            原地修改本对象，无返回值。
+
+        Raises
+        ------
+        TypeError
+            ``key`` 不是 ``str`` 时抛出（英文信息）。
+        ValueError
+            面板为空、``key`` 为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.ones((2, 5, 2)), levels=['A', 'B'],
+        ...                   rows=pd.date_range('2020-01-01', periods=5),
+        ...                   columns=['open', 'close'])
+        >>> hp['twice_close'] = hp['close'].values * 2
+        >>> 'twice_close' in hp.htypes
+        True
+        >>> hp['const'] = 0.5
+        >>> np.all(hp.values[:, :, hp.htypes.index('const')] == 0.5)
+        True
+        """
+        if not isinstance(key, str):
+            raise TypeError(
+                'HistoryPanel column assignment only accepts str column names; '
+                f'got {type(key).__name__}.'
+            )
+        if not key:
+            raise ValueError('Column name must be a non-empty string.')
+        if self.is_empty:
+            raise ValueError(
+                'Cannot assign columns to an empty HistoryPanel; construct a non-empty panel first.'
+            )
+        col = self._prepare_column_array_for_inplace(value)
+        self._set_htype_column_inplace(key, col)
 
     def __str__(self):
         """打印HistoryPanel"""
@@ -494,6 +987,198 @@ class HistoryPanel():
 
     def __repr__(self):
         return self.__str__()
+
+    def _history_panel_compare(
+            self,
+            other: Any,
+            op: Callable[[Any, Any], Any],
+    ) -> Any:
+        """对 ``self.values`` 与另一面板或标量/可广播数组做逐元素比较。
+
+        Parameters
+        ----------
+        other : HistoryPanel, numbers.Number, numpy.ndarray 等
+            右操作数；不支持的类型返回 ``NotImplemented``。
+        op : callable
+            二元比较函数（如 ``operator.lt``）。
+
+        Returns
+        -------
+        numpy.ndarray
+            ``dtype=bool``，与广播后的数值形状一致。
+        NotImplemented
+            左操作数无法与 ``other`` 比较时交由 Python 反射协议处理。
+
+        Notes
+        -----
+        两侧均为面板时：``shares``、``hdates`` 须一致；``htypes`` 须相同，或两侧均为单列切片
+        （``shape[2] == 1``）以便安全比较两列。与标量、``numpy`` 数组比较时按广播规则。
+        """
+        if isinstance(other, HistoryPanel):
+            if self.is_empty and other.is_empty:
+                return np.asarray(op(self.to_numpy(copy=False), other.to_numpy(copy=False)), dtype=bool)
+            if self.is_empty or other.is_empty:
+                raise ValueError(
+                    'Cannot compare HistoryPanel objects when only one is empty.'
+                )
+            if self.shares != other.shares or self.hdates != other.hdates:
+                raise ValueError(
+                    'HistoryPanel comparisons require identical shares and hdates order.'
+                )
+            if self.htypes != other.htypes:
+                if not (self.shape[2] == 1 and other.shape[2] == 1):
+                    raise ValueError(
+                        'HistoryPanel comparisons require identical htypes order unless both '
+                        'operands are single-column slices (e.g. hp["close"] vs hp["open"]).'
+                    )
+            try:
+                left, right = np.broadcast_arrays(self.values, other.values)
+            except ValueError as err:
+                raise ValueError(
+                    'Cannot broadcast the two HistoryPanel value arrays for comparison.'
+                ) from err
+            return np.asarray(op(left, right), dtype=bool)
+        if other is None:
+            return NotImplemented
+        if isinstance(other, np.ndarray):
+            try:
+                left = self.to_numpy(copy=False) if self.is_empty else self.values
+                return np.asarray(op(left, other), dtype=bool)
+            except ValueError as err:
+                raise ValueError(
+                    'Cannot broadcast comparison between HistoryPanel values and the given array.'
+                ) from err
+        if isinstance(other, Number):
+            left = self.to_numpy(copy=False) if self.is_empty else self.values
+            return np.asarray(op(left, other), dtype=bool)
+        return NotImplemented
+
+    def __lt__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self < other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            标量、可广播 ``ndarray`` 或另一 ``HistoryPanel``（须满足对齐规则）。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+
+        Raises
+        ------
+        TypeError
+            不支持的操作数类型（英文）。
+        ValueError
+            两面板无法按规则对齐或广播时抛出（英文）。
+        """
+        out = self._history_panel_compare(other, operator.lt)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for <: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __le__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self <= other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.le)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for <=: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __gt__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self > other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.gt)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for >: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __ge__(self, other: Any) -> np.ndarray:
+        """逐元素 ``self >= other``，返回 ``bool`` ``ndarray``（非子面板）。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数；语义同 :meth:`__lt__`。
+
+        Returns
+        -------
+        numpy.ndarray
+            布尔结果数组。
+        """
+        out = self._history_panel_compare(other, operator.ge)
+        if out is NotImplemented:
+            raise TypeError(
+                f'Unsupported operand type(s) for >=: '
+                f'{type(self).__name__!r} and {type(other).__name__!r}.'
+            )
+        return out
+
+    def __eq__(self, other: Any) -> Any:
+        """逐元素 ``self == other``；不支持的类型返回 ``NotImplemented``。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数。
+
+        Returns
+        -------
+        numpy.ndarray or NotImplemented
+            可比较时为 ``bool`` 数组；否则 ``NotImplemented``。
+        """
+        out = self._history_panel_compare(other, operator.eq)
+        if out is NotImplemented:
+            return NotImplemented
+        return out
+
+    def __ne__(self, other: Any) -> Any:
+        """逐元素 ``self != other``；不支持的类型返回 ``NotImplemented``。
+
+        Parameters
+        ----------
+        other : Any
+            右操作数。
+
+        Returns
+        -------
+        numpy.ndarray or NotImplemented
+            可比较时为 ``bool`` 数组；否则 ``NotImplemented``。
+        """
+        out = self._history_panel_compare(other, operator.ne)
+        if out is NotImplemented:
+            return NotImplemented
+        return out
 
     def __add__(self, other):
         if isinstance(other, (float, int, np.ndarray)):
@@ -574,7 +1259,7 @@ class HistoryPanel():
         sd_index = hdates.searchsorted(sd)
         ed_index = hdates.searchsorted(ed, side='right')
         new_dates = list(hdates[sd_index:ed_index])
-        new_values = self[:, :, sd_index:ed_index]
+        new_values = self[:, :, sd_index:ed_index].values
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def isegment(self, start_index=None, end_index=None):
@@ -619,7 +1304,7 @@ class HistoryPanel():
         """
         hdates = np.array(self.hdates)
         new_dates = list(hdates[start_index:end_index])
-        new_values = self[:, :, start_index:end_index]
+        new_values = self[:, :, start_index:end_index].values
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def slice(self, shares=None, htypes=None):
@@ -685,7 +1370,7 @@ class HistoryPanel():
             htypes = str_to_list(htypes)
         if not isinstance(htypes, list):
             raise KeyError(f'wrong htypes are given!')
-        new_values = self[htypes, shares]
+        new_values = self[htypes, shares].values
         return HistoryPanel(new_values, levels=shares, columns=htypes, rows=self.hdates)
 
     def info(self):
@@ -1181,7 +1866,7 @@ class HistoryPanel():
             if not htype in self.htypes:
                 raise KeyError(f'htype {htype} is not found!')
             # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
-            v = self[htype].T
+            v = self[htype].values.T
             v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.shares)
 
@@ -1192,7 +1877,7 @@ class HistoryPanel():
             if not share in self.shares:
                 raise KeyError(f'share {share} is not found!')
             # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
-            v = self[:, share]
+            v = self[:, share].values
             v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 

@@ -491,7 +491,13 @@ def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
         return unknown_input  # slice object can be directly used
     elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
         return np.array([unknown_input])
-    elif isinstance(unknown_input, str):  # string should be converted to numbers
+    else:
+        try:
+            if unknown_input in str_int_dict:
+                return [str_int_dict[unknown_input]]
+        except TypeError:
+            pass
+    if isinstance(unknown_input, str):  # string should be converted to numbers
         string_input = unknown_input
         if string_input.find(',') > 0:
             string_list = str_to_list(input_string=string_input, sep_char=',')
@@ -507,20 +513,27 @@ def list_or_slice(unknown_input: Union[slice, int, str, list], str_int_dict):
         else:
             return [str_int_dict[string_input]]
     elif isinstance(unknown_input, list):
+        if len(unknown_input) == 0:
+            return np.array([], dtype=int)
         is_list_of_str = isinstance(unknown_input[0], str)
         is_list_of_int = isinstance(unknown_input[0], int)
         is_list_of_bool = isinstance(unknown_input[0], bool)
         if is_list_of_bool:
             return np.array(list(str_int_dict.values()))[unknown_input]
-        else:
-            # convert all items into a number:
-            if is_list_of_str:
-                res = [str_int_dict[list_item] for list_item in unknown_input]
-            elif is_list_of_int:
-                res = [list_item for list_item in unknown_input]
-            else:
-                return None
+        if is_list_of_str:
+            res = [str_int_dict[list_item] for list_item in unknown_input]
             return np.array(res)
+        if is_list_of_int:
+            res = [list_item for list_item in unknown_input]
+            return np.array(res)
+        try:
+            return np.array([str_int_dict[list_item] for list_item in unknown_input])
+        except (KeyError, TypeError):
+            return None
+    elif isinstance(unknown_input, np.ndarray):
+        if unknown_input.dtype == bool and unknown_input.ndim == 1:
+            return list_or_slice(unknown_input.tolist(), str_int_dict)
+        return None
     else:
         return None
 
