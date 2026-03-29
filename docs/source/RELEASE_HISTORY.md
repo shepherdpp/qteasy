@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## 2.2.8 (2026-03-29)
+- **HistoryPanel indexing returns a sub-panel (breaking change)**  
+  `HistoryPanel[...]` now returns another `HistoryPanel` with the correct `shares` / `hdates` / `htypes` labels instead of a raw `ndarray`. Use `panel['close'].values` or `panel['close'].to_numpy(copy=True)` when you need a NumPy array. On an empty panel, indexing no longer returns `None`; it returns an empty `HistoryPanel`.
+- **`HistoryPanel.subpanel()` and `to_numpy()`**  
+  Added `subpanel(htypes=..., shares=..., hdates=..., copy=True)` for named-axis slicing (default `copy=True` detaches from the parent buffer). Added `to_numpy(copy=False)` for an explicit ndarray exit; empty panels yield shape `(0, 0, 0)`.
+
 ## 2.2.7 (2026-03-26)
 - **HistoryPanel interactive highlight (Q06)**  
   `hp.plot(..., highlight=...)` now works on interactive Plotly charts for both line and candlestick panels. In two-symbol overlay mode, the highlight marker is shown only for the current primary share and switches together with the primary/secondary focus when you click.

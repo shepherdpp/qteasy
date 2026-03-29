@@ -259,6 +259,8 @@ print(hp)
 - **axis 1（hdates）**：时间轴，每一行对应一个时间点（如交易日或分钟）；
 - **axis 2（htypes）**：历史数据类型，例如 `open`、`high`、`low`、`close`、`vol` 等。
 
+使用 `hp[...]` 按轴切片时，结果类型为 **子 `HistoryPanel`**（带正确的轴标签），不再直接得到 `ndarray`。需要裸矩阵时请使用 **`hp['close'].values`** 或 **`hp['close'].to_numpy(copy=True)`**；具名切片与默认拷贝行为见 **`hp.subpanel(..., copy=True)`**。
+
 这样，策略与可视化都可以在同一份结构化数据上工作，避免重复转换。
 
 当你已有 `DataFrame` 或字典形式的数据时，可以使用

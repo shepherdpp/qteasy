@@ -234,17 +234,17 @@ class TestHistoryPanel(unittest.TestCase):
     def test_history_panel_slicing(self):
         """测试HistoryPanel的各种切片方法
         包括通过标签名称切片，通过数字切片，通过逗号分隔的标签名称切片，通过冒号分隔的标签名称切片等切片方式"""
-        self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))
-        self.assertTrue(np.allclose(self.hp['close,open'], self.data[:, :, 0:2]))
-        self.assertTrue(np.allclose(self.hp[['close', 'open']], self.data[:, :, 0:2]))
-        self.assertTrue(np.allclose(self.hp['close:high'], self.data[:, :, 0:3]))
-        self.assertTrue(np.allclose(self.hp['close,high'], self.data[:, :, [0, 2]]))
-        self.assertTrue(np.allclose(self.hp[:, '000100'], self.data[0:1, :, ]))
-        self.assertTrue(np.allclose(self.hp[:, '000100,000101'], self.data[0:2, :]))
-        self.assertTrue(np.allclose(self.hp[:, ['000100', '000101']], self.data[0:2, :]))
-        self.assertTrue(np.allclose(self.hp[:, '000100:000102'], self.data[0:3, :]))
-        self.assertTrue(np.allclose(self.hp[:, '000100,000102'], self.data[[0, 2], :]))
-        self.assertTrue(np.allclose(self.hp['close,open', '000100,000102'], self.data[[0, 2], :, 0:2]))
+        self.assertTrue(np.allclose(self.hp['close'].values, self.data[:, :, 0:1]))
+        self.assertTrue(np.allclose(self.hp['close,open'].values, self.data[:, :, 0:2]))
+        self.assertTrue(np.allclose(self.hp[['close', 'open']].values, self.data[:, :, 0:2]))
+        self.assertTrue(np.allclose(self.hp['close:high'].values, self.data[:, :, 0:3]))
+        self.assertTrue(np.allclose(self.hp['close,high'].values, self.data[:, :, [0, 2]]))
+        self.assertTrue(np.allclose(self.hp[:, '000100'].values, self.data[0:1, :, ]))
+        self.assertTrue(np.allclose(self.hp[:, '000100,000101'].values, self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:, ['000100', '000101']].values, self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:, '000100:000102'].values, self.data[0:3, :]))
+        self.assertTrue(np.allclose(self.hp[:, '000100,000102'].values, self.data[[0, 2], :]))
+        self.assertTrue(np.allclose(self.hp['close,open', '000100,000102'].values, self.data[[0, 2], :, 0:2]))
         print('start testing HistoryPanel')
         data = np.random.randint(10, size=(10, 5))
         # index = pd.date_range(start='20200101', freq='d', periods=10)
@@ -267,33 +267,33 @@ class TestHistoryPanel(unittest.TestCase):
         hp = qt.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
         hp.info()
         print('==========================\n输出close类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp['close', :, :], data[:, :, 0:1], equal_nan=True))
+        self.assertTrue(np.allclose(hp['close', :, :].values, data[:, :, 0:1], equal_nan=True))
         print(f'==========================\n输出close和open类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[[0, 1], :, :], data[:, :, 0:2], equal_nan=True))
+        self.assertTrue(np.allclose(hp[[0, 1], :, :].values, data[:, :, 0:2], equal_nan=True))
         print(f'==========================\n输出第一只股票的所有类型历史数据\n')
-        self.assertTrue(np.allclose(hp[:, [0], :], data[0:1, :, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, [0], :].values, data[0:1, :, :], equal_nan=True))
         print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n')
-        self.assertTrue(np.allclose(hp[[0, 1, 2]], data[:, :, 0:3], equal_nan=True))
+        self.assertTrue(np.allclose(hp[[0, 1, 2]].values, data[:, :, 0:3], equal_nan=True))
         print('==========================\n输出close、high两个类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[['close', 'high']], data[:, :, [0, 2]], equal_nan=True))
+        self.assertTrue(np.allclose(hp[['close', 'high']].values, data[:, :, [0, 2]], equal_nan=True))
         print('==========================\n输出0、1两个htype的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[[0, 1]], data[:, :, 0:2], equal_nan=True))
+        self.assertTrue(np.allclose(hp[[0, 1]].values, data[:, :, 0:2], equal_nan=True))
         print('==========================\n输出close、high两个类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp['close,high'], data[:, :, [0, 2]], equal_nan=True))
+        self.assertTrue(np.allclose(hp['close,high'].values, data[:, :, [0, 2]], equal_nan=True))
         print('==========================\n输出close起到high止的三个类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp['close:high'], data[:, :, 0:3], equal_nan=True))
+        self.assertTrue(np.allclose(hp['close:high'].values, data[:, :, 0:3], equal_nan=True))
         print('==========================\n输出0、1、3三个股票的全部历史数据\n')
-        self.assertTrue(np.allclose(hp[:, [0, 1, 3]], data[[0, 1, 3], :, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, [0, 1, 3]].values, data[[0, 1, 3], :, :], equal_nan=True))
         print('==========================\n输出000100、000102两只股票的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[:, ['000100', '000102']], data[[0, 2], :, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, ['000100', '000102']].values, data[[0, 2], :, :], equal_nan=True))
         print('==========================\n输出0、1、2三个股票的历史数据\n', hp[:, 0: 3])
-        self.assertTrue(np.allclose(hp[:, 0: 3], data[0:3, :, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, 0: 3].values, data[0:3, :, :], equal_nan=True))
         print('==========================\n输出000100、000102两只股票的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[:, '000100, 000102'], data[[0, 2], :, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, '000100, 000102'].values, data[[0, 2], :, :], equal_nan=True))
         print('==========================\n输出所有股票的0-7日历史数据\n')
-        self.assertTrue(np.allclose(hp[:, :, 0:8], data[:, 0:8, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, :, 0:8].values, data[:, 0:8, :], equal_nan=True))
         print('==========================\n输出000100股票的0-7日历史数据\n')
-        self.assertTrue(np.allclose(hp[:, '000100', 0:8], data[0, 0:8, :], equal_nan=True))
+        self.assertTrue(np.allclose(hp[:, '000100', 0:8].values, data[0, 0:8, :], equal_nan=True))
         print('==========================\nstart testing multy axis slicing of HistoryPanel object')
         print('==========================\n输出000100、000120两只股票的close、open两组历史数据\n',
               hp['close,open', ['000100', '000102']])
@@ -356,13 +356,13 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertIsInstance(seg3, qt.HistoryPanel)
         # check values
         self.assertTrue(np.allclose(
-                seg1.values, test_hp[:, :, :]
+                seg1.values, test_hp[:, :, :].values
         ))
         self.assertTrue(np.allclose(
-                seg2.values, test_hp[:, :, 1:10]
+                seg2.values, test_hp[:, :, 1:10].values
         ))
         self.assertTrue(np.allclose(
-                seg3.values, test_hp[:, :, 2:6]
+                seg3.values, test_hp[:, :, 2:6].values
         ))
         # check that htypes and shares should be same
         self.assertEqual(seg1.htypes, test_hp.htypes)
@@ -386,13 +386,13 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertIsInstance(seg3, qt.HistoryPanel)
         # check values
         self.assertTrue(np.allclose(
-                seg1.values, test_hp[:, :, :]
+                seg1.values, test_hp[:, :, :].values
         ))
         self.assertTrue(np.allclose(
-                seg2.values, test_hp[:, :, 1:10]
+                seg2.values, test_hp[:, :, 1:10].values
         ))
         self.assertTrue(np.allclose(
-                seg3.values, test_hp[:, :, 1:6]
+                seg3.values, test_hp[:, :, 1:6].values
         ))
         # check that htypes and shares should be same
         self.assertEqual(seg1.htypes, test_hp.htypes)
@@ -412,7 +412,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertIsInstance(seg1, qt.HistoryPanel)
         # check values
         self.assertTrue(np.allclose(
-                seg1.values, test_hp[:, :, :]
+                seg1.values, test_hp[:, :, :].values
         ))
         # check that htypes and shares should be same
         self.assertEqual(seg1.htypes, test_hp.htypes)
@@ -438,7 +438,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(slc.shares, ['000101'])
         self.assertEqual(slc.htypes, test_hp.htypes)
         self.assertEqual(slc.hdates, test_hp.hdates)
-        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101']))
+        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101'].values))
 
         share = '000101, 000103'
         slc = test_hp.slice(shares=share)
@@ -446,7 +446,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(slc.shares, ['000101', '000103'])
         self.assertEqual(slc.htypes, test_hp.htypes)
         self.assertEqual(slc.hdates, test_hp.hdates)
-        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101, 000103']))
+        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101, 000103'].values))
 
         print(f'Test slice with htypes')
         htype = 'open'
@@ -455,7 +455,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(slc.shares, test_hp.shares)
         self.assertEqual(slc.htypes, ['open'])
         self.assertEqual(slc.hdates, test_hp.hdates)
-        self.assertTrue(np.allclose(slc.values, test_hp['open']))
+        self.assertTrue(np.allclose(slc.values, test_hp['open'].values))
 
         htype = 'open, close'
         slc = test_hp.slice(htypes=htype)
@@ -463,9 +463,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(slc.shares, test_hp.shares)
         self.assertEqual(slc.htypes, ['open', 'close'])
         self.assertEqual(slc.hdates, test_hp.hdates)
-        self.assertTrue(np.allclose(slc.values, test_hp['open, close']))
+        self.assertTrue(np.allclose(slc.values, test_hp['open, close'].values))
         # test that slicing of "open, close" does NOT equal to "close, open"
-        self.assertFalse(np.allclose(slc.values, test_hp['close, open']))
+        self.assertFalse(np.allclose(slc.values, test_hp['close, open'].values))
 
         print(f'Test slicing with both htypes and shares')
         share = '000103, 000101'
@@ -475,7 +475,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(slc.shares, ['000103', '000101'])
         self.assertEqual(slc.htypes, ['high', 'low', 'close'])
         self.assertEqual(slc.hdates, test_hp.hdates)
-        self.assertTrue(np.allclose(slc.values, test_hp['high, low, close', '000103, 000101']))
+        self.assertTrue(np.allclose(slc.values, test_hp['high, low, close', '000103, 000101'].values))
 
         print(f'Test Error cases')
         # duplicated input
@@ -585,7 +585,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
         values = df_test.values
-        self.assertTrue(np.allclose(self.hp[:, '000102'], values))
+        self.assertTrue(np.allclose(self.hp[:, '000102'].values, values))
 
         print(f'test DataFrame conversion with share == "000100"')
         df_test = self.hp.slice_to_dataframe(share='000100')
@@ -593,7 +593,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
         values = df_test.values
-        self.assertTrue(np.allclose(self.hp[:, '000100'], values))
+        self.assertTrue(np.allclose(self.hp[:, '000100'].values, values))
 
         print(f'test DataFrame conversion error: type incorrect')
         self.assertRaises(AssertionError, self.hp.slice_to_dataframe, share=3.0)
@@ -608,7 +608,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
         # noinspection PyTypeChecker
-        self.assertTrue(np.allclose(self.hp['close'].T, values))
+        self.assertTrue(np.allclose(self.hp['close'].values.T, values))
 
         print(f'test DataFrame conversion with htype == "high"')
         df_test = self.hp.slice_to_dataframe(htype='high')
@@ -617,7 +617,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
         # noinspection PyTypeChecker
-        self.assertTrue(np.allclose(self.hp['high'].T, values))
+        self.assertTrue(np.allclose(self.hp['high'].values.T, values))
 
         print(f'test DataFrame conversion with htype == "high" and dropna')
         v = self.hp.values.astype('float')
@@ -629,7 +629,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[4:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
-        target_values = test_hp['high'].T
+        target_values = test_hp['high'].values.T
         target_values = target_values[np.where(~np.isnan(target_values))].reshape(9, 5)
         self.assertTrue(np.allclose(target_values, values))
 
@@ -643,7 +643,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[5:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
-        target_values = test_hp['high'].T
+        target_values = test_hp['high'].values.T
         target_values = target_values[np.where(~np.isnan(target_values) & ~np.isinf(target_values))].reshape(8, 5)
         self.assertTrue(np.allclose(target_values, values))
 
@@ -1027,8 +1027,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(all(i in hp.shares for i in expected_shares))
         first_3_rows = hp[:, :, 0:3]
         row_9_til_10 = hp[:, :, 8:10]
-        self.assertTrue(np.all(np.isnan(first_3_rows)))
-        self.assertTrue(np.all(np.isnan(row_9_til_10)))
+        self.assertTrue(np.all(np.isnan(first_3_rows.values)))
+        self.assertTrue(np.all(np.isnan(row_9_til_10.values)))
 
         print('test getting history panel with row_counts and only end')
 
@@ -1050,7 +1050,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(all(i in expected_shares for i in hp.shares))
         self.assertTrue(all(i in hp.shares for i in expected_shares))
         all_idx_data = hp[:, '000300.SH']
-        self.assertTrue(np.all(np.isnan(all_idx_data)))
+        self.assertTrue(np.all(np.isnan(all_idx_data.values)))
         self.assertEqual(len(hp), 20)
 
         print('test getting history panel with row_counts and only start')
@@ -1074,7 +1074,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(all(i in hp.shares for i in expected_shares))
         # here check that all idx data are nan and row count is correct (20)
         all_idx_data = hp[:, '000300.SH']
-        self.assertTrue(np.all(np.isnan(all_idx_data)))
+        self.assertTrue(np.all(np.isnan(all_idx_data.values)))
         self.assertLessEqual(len(hp), 20)
 
         print('test get history panel data')
@@ -1164,7 +1164,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(df.shape, (hp.shape[0] * hp.shape[1], hp.shape[2]))
         self.assertEqual(df.columns.to_list(), hp.htypes)
         for share in hp.shares:
-            self.assertTrue(np.allclose(df.loc[share].values, hp[:, share].squeeze()))
+            self.assertTrue(np.allclose(df.loc[share].values, hp[:, share].values.squeeze()))
 
         print('test flatten_to_dataframe(along="col")')
         df = hp.flatten_to_dataframe(along='col')
@@ -1172,7 +1172,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(df.shape, (hp.shape[1], hp.shape[0] * hp.shape[2]))
         self.assertEqual(df.index.to_list(), hp.hdates)
         for share in hp.shares:
-            self.assertTrue(np.allclose(df[share].values, hp[:, share].squeeze()))
+            self.assertTrue(np.allclose(df[share].values, hp[:, share].values.squeeze()))
 
         print('test error raises')
         self.assertRaises(TypeError, hp.flatten_to_dataframe, along=35)
@@ -2012,6 +2012,72 @@ class TestHistoryPanelIntegration(unittest.TestCase):
         self.assertIsInstance(pattern_df, pd.DataFrame)
         self.assertEqual(list(pattern_df.columns), shares)
         self.assertEqual(list(pattern_df.index), list(pd.to_datetime(hdates)))
+
+
+class TestHistoryPanelPhase1Indexing(unittest.TestCase):
+    """阶段一：__getitem__ 返回子 HistoryPanel、to_numpy、subpanel。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase1Indexing] setUp')
+        self.data = np.random.randint(10, size=(5, 10, 4))
+        self.index = pd.date_range(start='20200101', freq='d', periods=10)
+        self.shares = '000100,000101,000102,000103,000104'
+        self.htypes = 'close,open,high,low'
+        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
+
+    def test_getitem_returns_history_panel(self):
+        """单列 / 单标的切片应为 HistoryPanel，且轴标签与数值与旧 ndarray 语义一致。"""
+        print('\n[TestHistoryPanelPhase1Indexing] getitem returns HistoryPanel')
+        sub = self.hp['close']
+        self.assertIsInstance(sub, qt.HistoryPanel)
+        self.assertEqual(sub.shape, (5, 10, 1))
+        self.assertEqual(sub.htypes, ['close'])
+        self.assertTrue(np.allclose(sub.values, self.data[:, :, 0:1]))
+        sub2 = self.hp['close', '000100']
+        print('  sub2.shape:', sub2.shape, 'htypes:', sub2.htypes, 'shares:', sub2.shares)
+        self.assertIsInstance(sub2, qt.HistoryPanel)
+        self.assertEqual(sub2.shares, ['000100'])
+        self.assertEqual(sub2.htypes, ['close'])
+        sub3 = self.hp[:, :, 0:3]
+        self.assertEqual(sub3.hdates, list(self.index[:3]))
+        self.assertTrue(np.allclose(sub3.values, self.data[:, 0:3, :]))
+
+    def test_empty_panel_getitem_returns_empty_panel(self):
+        """空面板上任意索引返回空 HistoryPanel，不返回 None。"""
+        print('\n[TestHistoryPanelPhase1Indexing] empty getitem -> empty panel')
+        empty = qt.HistoryPanel()
+        for keys in (None, slice(None), 'close'):
+            sub = empty[keys]
+            self.assertIsInstance(sub, qt.HistoryPanel, msg=f'keys={keys!r}')
+            self.assertTrue(sub.is_empty, msg=f'keys={keys!r}')
+
+    def test_to_numpy_copy_semantics(self):
+        """to_numpy(copy=False) 可与底层共享；copy=True 修改不污染原件；空面板形状 (0,0,0)。"""
+        print('\n[TestHistoryPanelPhase1Indexing] to_numpy copy semantics')
+        a0 = self.hp.to_numpy(copy=False)
+        a1 = self.hp.to_numpy(copy=True)
+        self.assertTrue(np.shares_memory(a0, self.hp.values))
+        a1[0, 0, 0] = -99999.0
+        self.assertNotEqual(self.hp.values[0, 0, 0], -99999.0)
+        empty = qt.HistoryPanel()
+        self.assertEqual(empty.to_numpy().shape, (0, 0, 0))
+
+    def test_subpanel_named_args_equivalent_to_getitem(self):
+        """subpanel 具名参数与等价 __getitem__ 在 copy=False 下数值与轴一致。"""
+        print('\n[TestHistoryPanelPhase1Indexing] subpanel vs getitem')
+        g = self.hp['close', '000100', 0:5]
+        s = self.hp.subpanel(htypes='close', shares='000100', hdates=slice(0, 5), copy=False)
+        self.assertTrue(np.allclose(g.values, s.values))
+        self.assertEqual(g.shares, s.shares)
+        self.assertEqual(g.hdates, s.hdates)
+        self.assertEqual(g.htypes, s.htypes)
+
+    def test_subpanel_copy_true_detaches_values(self):
+        """subpanel(copy=True) 得到的数据拷贝，修改子面板不改动父面板。"""
+        print('\n[TestHistoryPanelPhase1Indexing] subpanel copy=True detaches')
+        sub = self.hp.subpanel(htypes='close', shares='000100', copy=True)
+        sub.values[0, 0, 0] = -12345.0
+        self.assertNotEqual(self.hp.values[0, 0, 0], -12345.0)
 
 
 if __name__ == '__main__':

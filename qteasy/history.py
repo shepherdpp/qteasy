@@ -11,7 +11,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional, Callable, Sequence
+from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple
 
 from qteasy.database import DataSource
 
@@ -294,32 +294,171 @@ class HistoryPanel():
         """
         return self._r_count
 
-    def __getitem__(self, keys=None):
-        """获取历史数据的一个切片，给定一个type、日期或股票代码, 输出相应的数据
-
-        允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
-        允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
-        item_key                    output
-        [1:3, :,:]                  输出第1个htype～第3个htype的所有历史数据
-        [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
-        [['close', 'high']]         输出close、high两个类型的所有历史数据
-        [0:1]                       输出0、1两个htype的所有历史数据
-        ['close,high']              输出close、high两个类型的所有历史数据
-        ['close:high']              输出close、high之间所有类型的历史数据（包含close和high）
-        [:,[0,1,3]]                 输出0、1、3三个股票的全部历史数据
-        [:,['000100', '000120']]    输出000100、000120两只股票的所有历史数据
-        [:,0:2]                     输出0、1、2三个股票的历史数据
-        [:,'000100,000120']         输出000100、000120两只股票的所有历史数据
+    @staticmethod
+    def _axis_labels_subset(
+            ordered: Sequence[Any],
+            spec: Union[slice, list, np.ndarray],
+    ) -> List[Any]:
+        """根据 ``list_or_slice`` 产出的下标规格，从有序轴标签列表中取子序列。
 
         Parameters
         ----------
-        keys: list/tuple/slice
-            历史数据的类型名，为空时给出所有类型的数据
+        ordered : sequence
+            与轴顺序一致的标签序列（如 ``shares`` / ``hdates`` / ``htypes`` 列表）。
+        spec : slice, list of int, or ndarray
+            ``list_or_slice`` 的返回值。
 
         Returns
         -------
-        out : ndarray
-            self.value的一个切片
+        list
+            子集标签，顺序与切片后的数组第一维（或对应维）一致。
+        """
+        if isinstance(spec, slice):
+            return list(ordered[spec])
+        if isinstance(spec, list):
+            return [ordered[int(i)] for i in spec]
+        if isinstance(spec, np.ndarray):
+            if spec.dtype == bool:
+                return [ordered[i] for i in range(len(ordered)) if bool(spec.flat[i])]
+            return [ordered[int(i)] for i in spec.flatten().tolist()]
+        raise TypeError(f'Unsupported index spec type: {type(spec)}')
+
+    def _parse_getitem_keys(self, keys: Any) -> Tuple[Any, Any, Any]:
+        """将 ``__getitem__`` 的 keys 解析为 (htype 轴, share 轴, hdate 轴) 三段的原始切片输入。"""
+        key_is_none = keys is None
+        key_is_tuple = isinstance(keys, tuple)
+        key_is_list = isinstance(keys, list)
+        key_is_slice = isinstance(keys, slice)
+        key_is_string = isinstance(keys, str)
+        key_is_number = isinstance(keys, int)
+
+        htype_slice: Any
+        share_slice: Any
+        hdate_slice: Any
+        if key_is_tuple:
+            if len(keys) == 2:
+                htype_slice, share_slice = keys
+                hdate_slice = slice(None, None, None)
+            elif len(keys) == 3:
+                htype_slice, share_slice, hdate_slice = keys
+            else:
+                htype_slice = slice(None, None, None)
+                share_slice = slice(None, None, None)
+                hdate_slice = slice(None, None, None)
+        elif key_is_slice or key_is_list or key_is_string or key_is_number:
+            htype_slice = keys
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+        elif key_is_none:
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+        else:
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+
+        htype_slice = list_or_slice(htype_slice, self.columns)
+        share_slice = list_or_slice(share_slice, self.levels)
+        hdate_slice = list_or_slice(hdate_slice, self.rows)
+        return htype_slice, share_slice, hdate_slice
+
+    def _select_subpanel(
+            self,
+            htype_slice: Any,
+            share_slice: Any,
+            hdate_slice: Any,
+            *,
+            copy: bool,
+    ) -> 'HistoryPanel':
+        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。"""
+        out_arr = self.values[share_slice][:, hdate_slice][:, :, htype_slice]
+        if copy:
+            out_arr = np.array(out_arr, copy=True)
+        share_labels = self._axis_labels_subset(self.shares, share_slice)
+        hdate_labels = self._axis_labels_subset(self.hdates, hdate_slice)
+        htype_labels = self._axis_labels_subset(self.htypes, htype_slice)
+        return HistoryPanel(values=out_arr, levels=share_labels, rows=hdate_labels, columns=htype_labels)
+
+    def to_numpy(self, copy: bool = False) -> np.ndarray:
+        """返回与 ``values`` 相同形状的 ndarray；需要独立副本时使用 ``copy=True``。
+
+        空面板返回形状为 ``(0, 0, 0)`` 的 float 数组。非空时 ``copy=False`` 语义与 ``numpy.asarray(self.values)``
+        一致，可能与内部缓冲区共享内存。
+
+        Parameters
+        ----------
+        copy : bool, default False
+            为 True 时返回数组的拷贝，修改结果不影响本对象数据。
+
+        Returns
+        -------
+        np.ndarray
+            三维历史数据数组。
+        """
+        if self.is_empty:
+            return np.empty((0, 0, 0), dtype=float)
+        if copy:
+            return np.array(self._values, copy=True)
+        return np.asarray(self._values)
+
+    def subpanel(
+            self,
+            htypes: Optional[Union[str, Sequence[str], slice, int, list]] = None,
+            shares: Optional[Union[str, Sequence[str], slice, int, list]] = None,
+            hdates: Optional[Union[str, slice, Sequence[Any], int, list]] = None,
+            *,
+            copy: bool = True,
+    ) -> 'HistoryPanel':
+        """按具名参数沿 htypes / shares / hdates 取子面板，避免三元组轴顺序混淆。
+
+        ``None`` 表示该轴全选。默认 ``copy=True``，得到与父对象数据缓冲区脱钩的副本；需要零拷贝时可设
+        ``copy=False``（子面板 ``values`` 可能与父面板共享内存，父对象后续原地改列时需谨慎）。
+
+        Parameters
+        ----------
+        htypes : str, sequence, slice or int, optional
+            列（数据类型）选择，语义与 ``panel[htypes, ...]`` 第一段一致。
+        shares : str, sequence, slice or int, optional
+            标的层选择，语义与 ``panel[:, shares, ...]`` 第二段一致。
+        hdates : str, sequence, slice or int, optional
+            时间轴选择，语义与 ``panel[..., hdates]`` 第三段一致。
+        copy : bool, default True
+            为 True 时对切片结果做数组拷贝。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板，轴标签为所选子集。
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        hs = slice(None, None, None) if htypes is None else htypes
+        ss = slice(None, None, None) if shares is None else shares
+        ds = slice(None, None, None) if hdates is None else hdates
+        htype_slice = list_or_slice(hs, self.columns)
+        share_slice = list_or_slice(ss, self.levels)
+        hdate_slice = list_or_slice(ds, self.rows)
+        return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=copy)
+
+    def __getitem__(self, keys=None) -> 'HistoryPanel':
+        """按 htypes / shares / hdates 三轴切片，返回带正确轴标签的子 ``HistoryPanel``。
+
+        第一个切片为数据类型（htypes），第二个为标的（shares），第三个为时间（hdates）；省略时该轴为全选。
+        需要裸 ``ndarray`` 时请使用 ``sub.values`` 或 ``sub.to_numpy()``。子面板 ``values`` 可能与父面板
+        共享内存（numpy 视图规则）；需要独立副本请用 ``subpanel(..., copy=True)`` 或 ``sub.copy()``。
+
+        空面板（``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
+
+        Parameters
+        ----------
+        keys : list, tuple, slice, str, int or None
+            切片键；三元组 ``(htypes, shares, hdates)`` 与历史行为一致。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板；取矩阵请用其 ``.values`` / ``.to_numpy()``。
 
         Examples
         --------
@@ -327,145 +466,20 @@ class HistoryPanel():
         ...                   levels=['000001', '000002', '000003'],
         ...                   rows=pd.date_range('2015-01-05', periods=10),
         ...                   columns=['open', 'high', 'low', 'close', 'volume'])
-        >>> hp
-                share 0, label: 000001
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-
-        share 1, label: 000002
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-
-        share 2, label: 000003
-                    open  high  low  close  volume
-        2015-01-05    10    20   30     40      50
-        2015-01-06    10    20   30     40      50
-        2015-01-07    10    20   30     40      50
-        2015-01-08    10    20   30     40      50
-        2015-01-09    10    20   30     40      50
-        2015-01-10    10    20   30     40      50
-        2015-01-11    10    20   30     40      50
-        2015-01-12    10    20   30     40      50
-        2015-01-13    10    20   30     40      50
-        2015-01-14    10    20   30     40      50
-        >>> hp['close']
-        array([[[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]],
-
-               [[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]],
-
-               [[40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40],
-                [40]]])
-        >>> hp['close, open, low', '000001:000002']
-        array([[[40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30]],
-
-               [[40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30],
-                [40, 10, 30]]])
+        >>> sub = hp['close']
+        >>> isinstance(sub, HistoryPanel)
+        True
+        >>> sub.shape
+        (3, 10, 1)
+        >>> sub.htypes
+        ['close']
+        >>> np.all(sub.values == 40)
+        True
         """
-        # TODO: 在以前版本的qteasy中，HistoryPanel是交易策略的数据调用的核心数据结构，因此对数据切片
-        #  的效率要求较高，因此在切片后直接返回一个ndarray数组，但是在2.0以后这个功能不再被需要，相反，
-        #  HistoryPanel切片后返回另一个HistoryPanel更有用，因此需要修改返回值为HistorPanel。
-
         if self.is_empty:
-            return None
-        else:
-            key_is_none = keys is None
-            key_is_tuple = isinstance(keys, tuple)
-            key_is_list = isinstance(keys, list)
-            key_is_slice = isinstance(keys, slice)
-            key_is_string = isinstance(keys, str)
-            key_is_number = isinstance(keys, int)
-
-            # first make sure that htypes, share_pool, and hdates are either slice or list
-            htype_slice = []
-            share_slice = []
-            hdate_slice = []
-            if key_is_tuple:
-                if len(keys) == 2:
-                    htype_slice, share_slice = keys
-                    hdate_slice = slice(None, None, None)
-                elif len(keys) == 3:
-                    htype_slice, share_slice, hdate_slice = keys
-            elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
-                htype_slice = keys
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
-            elif key_is_none:
-                htype_slice = slice(None, None, None)
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
-            else:
-                htype_slice = slice(None, None, None)
-                share_slice = slice(None, None, None)
-                hdate_slice = slice(None, None, None)
-
-            # check and convert each of the slice segments to the right type: a slice or \
-            # a list of indices
-            htype_slice = list_or_slice(htype_slice, self.columns)
-            share_slice = list_or_slice(share_slice, self.levels)
-            hdate_slice = list_or_slice(hdate_slice, self.rows)
-
-            return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
+            return HistoryPanel()
+        htype_slice, share_slice, hdate_slice = self._parse_getitem_keys(keys)
+        return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
 
     def __str__(self):
         """打印HistoryPanel"""
@@ -574,7 +588,7 @@ class HistoryPanel():
         sd_index = hdates.searchsorted(sd)
         ed_index = hdates.searchsorted(ed, side='right')
         new_dates = list(hdates[sd_index:ed_index])
-        new_values = self[:, :, sd_index:ed_index]
+        new_values = self[:, :, sd_index:ed_index].values
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def isegment(self, start_index=None, end_index=None):
@@ -619,7 +633,7 @@ class HistoryPanel():
         """
         hdates = np.array(self.hdates)
         new_dates = list(hdates[start_index:end_index])
-        new_values = self[:, :, start_index:end_index]
+        new_values = self[:, :, start_index:end_index].values
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def slice(self, shares=None, htypes=None):
@@ -685,7 +699,7 @@ class HistoryPanel():
             htypes = str_to_list(htypes)
         if not isinstance(htypes, list):
             raise KeyError(f'wrong htypes are given!')
-        new_values = self[htypes, shares]
+        new_values = self[htypes, shares].values
         return HistoryPanel(new_values, levels=shares, columns=htypes, rows=self.hdates)
 
     def info(self):
@@ -1181,7 +1195,7 @@ class HistoryPanel():
             if not htype in self.htypes:
                 raise KeyError(f'htype {htype} is not found!')
             # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
-            v = self[htype].T
+            v = self[htype].values.T
             v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.shares)
 
@@ -1192,7 +1206,7 @@ class HistoryPanel():
             if not share in self.shares:
                 raise KeyError(f'share {share} is not found!')
             # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
-            v = self[:, share]
+            v = self[:, share].values
             v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 
