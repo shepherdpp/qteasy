@@ -1,20 +1,7 @@
 # RELEASE HISTORY
 
-## 2.2.8 (2026-03-29)
-- **HistoryPanel indexing returns a sub-panel (breaking change)**  
-  `HistoryPanel[...]` now returns another `HistoryPanel` with the correct `shares` / `hdates` / `htypes` labels instead of a raw `ndarray`. Use `panel['close'].values` or `panel['close'].to_numpy(copy=True)` when you need a NumPy array. On an empty panel, indexing no longer returns `None`; it returns an empty `HistoryPanel`.
-- **`HistoryPanel.subpanel()` and `to_numpy()`**  
-  Added `subpanel(htypes=..., shares=..., hdates=..., copy=True)` for named-axis slicing (default `copy=True` detaches from the parent buffer). Added `to_numpy(copy=False)` for an explicit ndarray exit; empty panels yield shape `(0, 0, 0)`.
-- **`HistoryPanel` in-place column assignment (`__setitem__`)**  
-  Use `panel['factor'] = ndarray_or_scalar` to append or overwrite a single column: values broadcast to `(n_shares, n_rows)` and are stored as `float64`. Only `str` keys are allowed (`TypeError` otherwise); empty panels raise `ValueError`. Existing names are overwritten in place (pandas-like). Sub-panels from `subpanel(copy=True)` remain unchanged when the parent grows; `copy=False` / plain slicing views do not pick up new columns after the parent reallocates—use `kline.*` when you prefer a **new** panel without mutating the original.
-- **`HistoryPanel.where()` for research masks**  
-  Added `where(condition)` returning a `bool` ndarray with the same shape as `panel.values` `(n_shares, n_rows, n_htypes)`, for use as `mask=` in upcoming research helpers (`cum_return`, `normalize`, `portfolio`, etc.). Accepts a boolean array (broadcastable after `(M,L)` is expanded along the htype axis), or `callable(panel)` returning an array. Empty panels return shape `(0,0,0)`; string conditions raise `TypeError`. **Usage examples:** see the method docstring (Examples), [HistoryPanel API](api/HistoryPanel.rst) (*Research masks / where*), and tutorial *2.5-historypanel-data-analysis* (section 6).
-- **`HistoryPanel` htype attribute access (read-only)**  
-  For column names that are valid Python identifiers, `panel.close` matches `panel['close']`. Non-identifier names (e.g. `close|b`) and unknown names still require bracket indexing; attribute assignment is not supported (use `panel['col'] = ...`).
-- **`HistoryPanel` comparisons and `where()`**  
-  Rich comparisons (`>`, `<`, `==`, etc.) against scalars, broadcastable `ndarray`s, or another `HistoryPanel` return a `bool` `ndarray` (not a sub-panel). Two-panel comparisons require the same `shares` and `hdates`; `htypes` must match unless both sides are single-column slices (e.g. `panel['close'] > panel['open']`). Use `panel.where(panel.close > x)` for full-shape masks.
-- **`HistoryPanel.loc` (time axis only)**  
-  `panel.loc[key]` is equivalent to `panel[:, :, key]` for slicing the **time (hdates)** axis (slices, timestamp labels, label lists, `:` , or a length-`L` 1-D boolean mask). It does **not** accept `where()`’s `(M, L, N)` mask; use `where(...)` and `mask=` for per-cell booleans. One-dimensional `bool` `ndarray` indices on the third axis are also accepted by plain `[..., ..., mask]` via `list_or_slice`.
+## 2.2.8 (2026-03-30)
+- **HistoryPanel (research-oriented workflow)** — Bracket indexing returns a labeled sub-panel (breaking); `subpanel` / `to_numpy`, in-place columns via `__setitem__`, `where()` masks, read-only htype attributes (e.g. `panel.close`), comparisons yielding bool ndarrays for `where` chaining, and `loc` for time-axis selection. Docstrings, [HistoryPanel API](api/HistoryPanel.rst), and tutorial [2.5-historypanel-data-analysis](tutorials/2.5-historypanel-data-analysis.md) describe behavior and limits (vs pandas).
 
 ## 2.2.7 (2026-03-26)
 - **HistoryPanel interactive highlight (Q06)**  

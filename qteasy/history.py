@@ -44,8 +44,15 @@ HP_OVERLAY_GROUP_SHARE_COUNT: int = 2
 class _HistoryPanelLocIndexer:
     """只读索引器：沿 ``hdates`` 时间轴选取，``hp.loc[key]`` 等价于 ``hp[:, :, key]``。
 
+    与 pandas ``DataFrame.loc`` 仅 **类比**（按「行」筛日期）；本类 **只接受单参数**
+    时间轴键，**不**实现二维 ``loc[row, col]`` 全语义。
+
     不接受 ``where()`` 产生的 ``(M, L, N)`` 三维布尔掩码；格点级条件请使用
     :meth:`HistoryPanel.where` 与后续 API 的 ``mask=``。
+
+    Notes
+    -----
+    更多约定见类 :class:`HistoryPanel` 概述及 Sphinx **HistoryPanel** 文档中「列属性访问、比较与 loc」小节。
     """
 
     __slots__ = ('_hp',)
@@ -127,6 +134,7 @@ class HistoryPanel():
     **体验向 API**：合法 Python 标识符且存在于 ``htypes`` 的列名可用属性只读访问（如 ``panel.close``，
     等价 ``panel['close']``）；比较运算（如 ``panel.close > panel.open``）返回 ``numpy`` 布尔数组；
     ``panel.loc[key]`` 等价 ``panel[:, :, key]``，仅沿时间轴筛选（不接 ``where`` 的三维掩码）。
+    用户文档见 Sphinx **HistoryPanel** 页与教程「使用 HistoryPanel 操作和分析历史数据」（§6 及 §6.1）。
 
     更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
@@ -376,7 +384,31 @@ class HistoryPanel():
 
     @property
     def loc(self) -> _HistoryPanelLocIndexer:
-        """沿 ``hdates`` 时间轴选取子面板；``hp.loc[k]`` 与 ``hp[:, :, k]`` 等价。"""
+        """沿 ``hdates``（时间轴）选取子面板的只读索引器。
+
+        ``hp.loc[key]`` 与 ``hp[:, :, key]`` 等价，用于切片、时间标签、标签列表、``:`` 或
+        长度等于 ``row_count`` 的一维布尔掩码。格点级 ``(M,L,N)`` 布尔条件请用
+        :meth:`where` 与后续 ``mask=``，**不要**传入 ``loc``。
+
+        Returns
+        -------
+        _HistoryPanelLocIndexer
+            轻量代理；对其使用 ``[...]`` 即按时间轴取子面板。
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> hp = HistoryPanel(
+        ...     np.ones((2, 4, 1)),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=4),
+        ...     columns=['close'],
+        ... )
+        >>> sub = hp.loc[0:2]
+        >>> sub.shape[1] == 2
+        True
+        """
         return _HistoryPanelLocIndexer(self)
 
     @property
@@ -752,6 +784,24 @@ class HistoryPanel():
         ------
         AttributeError
             非法标识符、或当前面板中不存在的列名（英文，提示使用 bracket indexing）。
+
+        Notes
+        -----
+        已有方法名 / 描述符（如 ``where``、``values``）优先于列名：同名列仍须用
+        ``hp['where']`` 等形式访问。非标识符列名（如 ``close|b``）不可用点号。
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> hp = HistoryPanel(
+        ...     np.arange(24, dtype=float).reshape(2, 3, 4),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['a', 'b', 'c', 'd'],
+        ... )
+        >>> np.allclose(hp.a.values, hp['a'].values)
+        True
         """
         if not isinstance(name, str):
             raise AttributeError(name)
@@ -945,6 +995,11 @@ class HistoryPanel():
             ``dtype=bool``，与广播后的数值形状一致。
         NotImplemented
             左操作数无法与 ``other`` 比较时交由 Python 反射协议处理。
+
+        Notes
+        -----
+        两侧均为面板时：``shares``、``hdates`` 须一致；``htypes`` 须相同，或两侧均为单列切片
+        （``shape[2] == 1``）以便安全比较两列。与标量、``numpy`` 数组比较时按广播规则。
         """
         if isinstance(other, HistoryPanel):
             if self.is_empty and other.is_empty:
