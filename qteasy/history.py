@@ -574,6 +574,11 @@ class HistoryPanel():
 
         Notes
         -----
+        ``condition`` 可为 **富比较** 的直接结果（自 2.2.8 起）：例如 ``panel.where(panel.close > 100.0)``
+        或 ``panel.where(panel['close'] > panel['open'])``，其中 ``>`` 等对 ``HistoryPanel`` 与标量 /
+        可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
+        广播到与 ``panel.values`` 同形。
+
         后续 ``cum_return`` / ``normalize`` / ``portfolio`` 等参数的 ``mask=`` 建议使用本方法返回值或
         与其同形同 dtype 的数组；阶段四及以后相关 API 发布后即可直接传入 ``mask=panel.where(...)``。
         更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
@@ -733,6 +738,14 @@ class HistoryPanel():
         切片数据会随父缓冲一并更新（仍为同一底层块上的视图时）。
 
         空面板（``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
+
+        Notes
+        -----
+        **时间轴（第三段 ``hdates``）** 除 ``slice`` / 整数 / 区间字符串外，还支持：在 ``rows``
+        字典中可查的 **单个时间标签**（如 ``pandas.Timestamp``）、**时间标签列表**，以及
+        长度等于 ``row_count`` 的一维 ``bool`` 列表或一维 ``bool`` ``ndarray``；与
+        :attr:`loc` 所接受的 ``key`` 一致。格点级 ``(M, L, N)`` 布尔数组 **不** 用作第三轴索引，
+        请使用 :meth:`where`。
 
         Parameters
         ----------

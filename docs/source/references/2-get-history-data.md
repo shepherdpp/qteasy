@@ -263,6 +263,8 @@ print(hp)
 
 研究向布尔掩码与后续带 **`mask=`** 的 API 可使用 **`hp.where(condition)`**：返回与 **`hp.values`** 同形的 **`dtype=bool`** 数组（不改变 `hp`），详见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 与教程 [使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md)。
 
+自 **2.2.8** 起还可：**合法标识符列名**用只读属性（如 **`hp.close`**，等价 **`hp['close']`**）；**比较运算**（如 **`hp.close > 100`**、两列子面板比较）得到 **`numpy` 布尔数组**，可直接作为 **`hp.where(...)`** 的输入；按 **交易日（时间轴）** 筛选可用 **`hp.loc[key]`**（等价 **`hp[:, :, key]`**，与 pandas 仅类比）。边界说明见 API 页「列属性访问、比较与 `loc`」与教程 §6.1。
+
 这样，策略与可视化都可以在同一份结构化数据上工作，避免重复转换。
 
 当你已有 `DataFrame` 或字典形式的数据时，可以使用
