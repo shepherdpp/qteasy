@@ -46,6 +46,12 @@ class HistoryPanel():
     pandas DataFrame 之间的互相转换，并作为 get_history_data 与可视化栈
     （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
 
+    **索引与数组出口**：``__getitem__`` 始终返回带正确轴标签的子 ``HistoryPanel``；需要
+    裸 ``ndarray`` 时用 ``.values`` 或 ``.to_numpy(copy=...)``。**单列原地赋值**
+    ``panel['列名'] = value`` 由 ``__setitem__`` 实现（仅非空面板、仅 ``str`` 键），
+    值广播为 ``(标的数, 时间长度)`` 并以 ``float64`` 存储；覆盖已有列或追加新列。
+    子面板与父对象共享缓冲时的语义见 ``__getitem__`` / ``subpanel`` / ``__setitem__`` 各方法说明。
+
     更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
 
@@ -146,7 +152,19 @@ class HistoryPanel():
 
     @property
     def values(self):
-        """返回HistoryPanel的values"""
+        """返回当前对象内部的三维数据缓冲区（与 ``_values`` 同一引用）。
+
+        非空时与 ``to_numpy(copy=False)`` 指向同一块内存；修改返回值会直接改动本对象数据。
+        通过 ``__setitem__`` 追加新列时，内部可能 **替换** 整块数组，此前由子视图
+        （``__getitem__`` / ``subpanel(copy=False)``）持有的 ``values`` 可能仍指向扩列前的旧缓冲，
+        且不会自动出现新列。需要稳定快照请使用 ``subpanel(..., copy=True)`` 或 ``to_numpy(copy=True)``。
+        原地写入列时，若原数组非 ``float64``，内部会升级为 ``float64`` 再存储。
+
+        Returns
+        -------
+        numpy.ndarray or None
+            形状 ``(level_count, row_count, column_count)``；空面板为 ``None``。
+        """
         return self._values
 
     @property
@@ -371,7 +389,11 @@ class HistoryPanel():
             *,
             copy: bool,
     ) -> 'HistoryPanel':
-        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。"""
+        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。
+
+        ``copy=False`` 时结果可能与父对象共享底层缓冲；父对象后续 ``__setitem__`` **追加** 列会替换
+        父级 ``_values``，已存在的子面板通常 **不会** 自动带上新列，详见 ``__getitem__`` / ``__setitem__``。
+        """
         out_arr = self.values[share_slice][:, hdate_slice][:, :, htype_slice]
         if copy:
             out_arr = np.array(out_arr, copy=True)
@@ -384,7 +406,8 @@ class HistoryPanel():
         """返回与 ``values`` 相同形状的 ndarray；需要独立副本时使用 ``copy=True``。
 
         空面板返回形状为 ``(0, 0, 0)`` 的 float 数组。非空时 ``copy=False`` 语义与 ``numpy.asarray(self.values)``
-        一致，可能与内部缓冲区共享内存。
+        一致，可能与内部缓冲区共享内存。若在父对象上随后用 ``__setitem__`` **追加** 新列，内部会换新缓冲；
+        此前保存的 ``copy=False`` 结果 **不会** 自动更新，不宜再当作当前面板的权威数据。
 
         Parameters
         ----------
@@ -413,7 +436,8 @@ class HistoryPanel():
         """按具名参数沿 htypes / shares / hdates 取子面板，避免三元组轴顺序混淆。
 
         ``None`` 表示该轴全选。默认 ``copy=True``，得到与父对象数据缓冲区脱钩的副本；需要零拷贝时可设
-        ``copy=False``（子面板 ``values`` 可能与父面板共享内存，父对象后续原地改列时需谨慎）。
+        ``copy=False``（子面板 ``values`` 可能与父面板共享内存）。父对象上 ``__setitem__`` 追加新列时会
+        替换父面板整块 ``values``，``copy=False`` 子面板通常 **不会** 自动带上新列，且可能仍引用扩列前的缓冲区。
 
         Parameters
         ----------
@@ -448,6 +472,11 @@ class HistoryPanel():
         需要裸 ``ndarray`` 时请使用 ``sub.values`` 或 ``sub.to_numpy()``。子面板 ``values`` 可能与父面板
         共享内存（numpy 视图规则）；需要独立副本请用 ``subpanel(..., copy=True)`` 或 ``sub.copy()``。
 
+        在 **父对象** 上使用 ``__setitem__`` 追加新列时，会替换父面板整块 ``values``：默认
+        ``copy=False`` 的子面板 **不会** 出现新列名，且其 ``values`` 可能仍指向扩列前的旧数组；
+        ``subpanel(copy=True)`` 得到的子对象不受影响。在父面板上 **覆盖** 已有列时，与子视图共享的
+        切片数据会随父缓冲一并更新（仍为同一底层块上的视图时）。
+
         空面板（``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
 
         Parameters
@@ -480,6 +509,118 @@ class HistoryPanel():
             return HistoryPanel()
         htype_slice, share_slice, hdate_slice = self._parse_getitem_keys(keys)
         return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
+
+    def _prepare_column_array_for_inplace(self, value: Any) -> np.ndarray:
+        """将写入值解析并广播为与 ``(level_count, row_count)`` 一致的 float64 数组。
+
+        Parameters
+        ----------
+        value : Any
+            标量、可转为 ``ndarray`` 的序列，或形状可广播到 ``(M, L)`` 的数组（含 ``(M, L, 1)``）。
+
+        Returns
+        -------
+        numpy.ndarray
+            形状 ``(M, L)``、``dtype=float64`` 的连续数组副本。
+
+        Raises
+        ------
+        ValueError
+            当无法广播到当前面板的 ``(M, L)`` 时抛出（英文信息）。
+        """
+        m, l_count = self._l_count, self._r_count
+        arr = np.asarray(value, dtype=np.float64)
+        if arr.ndim == 3 and arr.shape == (m, l_count, 1):
+            arr = arr.reshape(m, l_count)
+        try:
+            b = np.broadcast_to(arr, (m, l_count))
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast assignment value to shape ({m}, {l_count}) for column.'
+            ) from None
+        return np.array(b, dtype=np.float64, copy=True)
+
+    def _set_htype_column_inplace(self, name: str, column_2d: np.ndarray) -> None:
+        """在原地面覆盖已有列或追加新列；必要时将 ``_values`` 转为 float64。
+
+        供 ``__setitem__`` 与后续 ``kline(..., inplace=True)`` 等路径复用。
+
+        Parameters
+        ----------
+        name : str
+            列名（htype）。
+        column_2d : numpy.ndarray
+            形状 ``(level_count, row_count)`` 的 float64 数据。
+        """
+        if column_2d.shape != (self._l_count, self._r_count):
+            raise ValueError(
+                f'Internal error: column array shape {column_2d.shape} != '
+                f'{(self._l_count, self._r_count)}'
+            )
+        if self._values.dtype != np.float64:
+            self._values = np.asarray(self._values, dtype=np.float64)
+        if name in self._columns:
+            idx = self._columns[name]
+            self._values[:, :, idx] = column_2d
+            return
+        base = self._values
+        new_values = np.concatenate([base, column_2d[:, :, np.newaxis]], axis=2)
+        self._values = new_values
+        self._c_count = int(new_values.shape[2])
+        new_htypes = list(self.htypes) + [name]
+        self._columns = labels_to_dict(new_htypes, range(self._c_count))
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        """按列名原地写入或追加一列数据（扩列）。
+
+        仅支持 **单列名字符串** ``key``；多列赋值请使用后续 ``assign`` 等 API。写入值将广播到
+        与当前面板一致的 ``(share 数, 时间长度)``，并以 ``float64`` 存储。已存在的列名会被
+        **静默覆盖**（与 pandas 列赋值语义一致）。
+
+        通过 ``__getitem__`` / ``subpanel(copy=False)`` 得到的子面板可能与父面板 **共享**
+        底层数组视图；在父面板上 **追加新列** 时会替换父对象的 ``values`` 缓冲区，子面板 **不会**
+        自动出现新列，且仍可能指向扩列前的旧缓冲区。需要独立快照时请使用 ``subpanel(..., copy=True)``
+        或 ``to_numpy(copy=True)``。
+
+        Parameters
+        ----------
+        key : str
+            列名（htype）；非字符串类型将触发 ``TypeError``。
+        value : Any
+            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值（含标量、``(M,L)``、``(M,L,1)`` 等）。
+
+        Raises
+        ------
+        TypeError
+            当 ``key`` 不是 ``str`` 时抛出（英文信息）。
+        ValueError
+            当面板为空、列名为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(np.ones((2, 5, 2)), levels=['A', 'B'],
+        ...                   rows=pd.date_range('2020-01-01', periods=5),
+        ...                   columns=['open', 'close'])
+        >>> hp['twice_close'] = hp['close'].values * 2
+        >>> 'twice_close' in hp.htypes
+        True
+        >>> hp['const'] = 0.5
+        >>> np.all(hp.values[:, :, hp.htypes.index('const')] == 0.5)
+        True
+        """
+        if not isinstance(key, str):
+            raise TypeError(
+                'HistoryPanel column assignment only accepts str column names; '
+                f'got {type(key).__name__}.'
+            )
+        if not key:
+            raise ValueError('Column name must be a non-empty string.')
+        if self.is_empty:
+            raise ValueError(
+                'Cannot assign columns to an empty HistoryPanel; construct a non-empty panel first.'
+            )
+        col = self._prepare_column_array_for_inplace(value)
+        self._set_htype_column_inplace(key, col)
 
     def __str__(self):
         """打印HistoryPanel"""

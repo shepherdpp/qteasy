@@ -5,6 +5,8 @@
   `HistoryPanel[...]` now returns another `HistoryPanel` with the correct `shares` / `hdates` / `htypes` labels instead of a raw `ndarray`. Use `panel['close'].values` or `panel['close'].to_numpy(copy=True)` when you need a NumPy array. On an empty panel, indexing no longer returns `None`; it returns an empty `HistoryPanel`.
 - **`HistoryPanel.subpanel()` and `to_numpy()`**  
   Added `subpanel(htypes=..., shares=..., hdates=..., copy=True)` for named-axis slicing (default `copy=True` detaches from the parent buffer). Added `to_numpy(copy=False)` for an explicit ndarray exit; empty panels yield shape `(0, 0, 0)`.
+- **`HistoryPanel` in-place column assignment (`__setitem__`)**  
+  Use `panel['factor'] = ndarray_or_scalar` to append or overwrite a single column: values broadcast to `(n_shares, n_rows)` and are stored as `float64`. Only `str` keys are allowed (`TypeError` otherwise); empty panels raise `ValueError`. Existing names are overwritten in place (pandas-like). Sub-panels from `subpanel(copy=True)` remain unchanged when the parent grows; `copy=False` / plain slicing views do not pick up new columns after the parent reallocates—use `kline.*` when you prefer a **new** panel without mutating the original.
 
 ## 2.2.7 (2026-03-26)
 - **HistoryPanel interactive highlight (Q06)**  

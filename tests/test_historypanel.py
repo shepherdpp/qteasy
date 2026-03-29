@@ -2080,5 +2080,110 @@ class TestHistoryPanelPhase1Indexing(unittest.TestCase):
         self.assertNotEqual(self.hp.values[0, 0, 0], -12345.0)
 
 
+class TestHistoryPanelPhase2Setitem(unittest.TestCase):
+    """阶段二：__setitem__ 单列扩列/覆盖与 copy 语义。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase2Setitem] setUp')
+        np.random.seed(42)
+        self.data = np.random.randint(10, size=(5, 10, 4))
+        self.index = pd.date_range(start='20200101', freq='d', periods=10)
+        self.shares = '000100,000101,000102,000103,000104'
+        self.htypes = 'close,open,high,low'
+        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
+        print('  hp.shape:', self.hp.shape, 'htypes:', self.hp.htypes)
+
+    def test_setitem_raises_on_empty_panel(self):
+        """空面板上 __setitem__ 抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase2Setitem] empty panel -> ValueError')
+        empty = qt.HistoryPanel()
+        with self.assertRaises(ValueError) as ctx:
+            empty['x'] = 1.0
+        self.assertIn('empty', str(ctx.exception).lower())
+
+    def test_setitem_rejects_non_str_key(self):
+        """非 str 列名 -> TypeError（英文）。"""
+        print('\n[TestHistoryPanelPhase2Setitem] non-str key -> TypeError')
+        arr = np.zeros((5, 10), dtype=float)
+        with self.assertRaises(TypeError) as ctx:
+            self.hp[0] = arr
+        self.assertIn('str', str(ctx.exception).lower())
+        with self.assertRaises(TypeError):
+            self.hp[('close', '000100')] = arr
+
+    def test_setitem_new_column_scalar_broadcast(self):
+        """标量广播为新列，追加在 htypes 末尾。"""
+        print('\n[TestHistoryPanelPhase2Setitem] scalar broadcast new column')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        hp['factor_a'] = 3.0
+        self.assertEqual(hp.shape, (5, 10, 5))
+        self.assertEqual(hp.htypes[-1], 'factor_a')
+        self.assertTrue(np.all(hp.values[:, :, -1] == 3.0))
+
+    def test_setitem_new_column_2d_array(self):
+        """(M,L) 数组新列。"""
+        print('\n[TestHistoryPanelPhase2Setitem] 2d new column')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        arr = np.arange(50, dtype=float).reshape(5, 10)
+        hp['factor_b'] = arr
+        self.assertIn('factor_b', hp.htypes)
+        idx = hp.htypes.index('factor_b')
+        self.assertTrue(np.allclose(hp.values[:, :, idx], arr))
+
+    def test_setitem_new_column_broadcast_ml1(self):
+        """(M,L,1) 广播等价于 (M,L)。"""
+        print('\n[TestHistoryPanelPhase2Setitem] (M,L,1) broadcast')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        arr = np.arange(50, dtype=float).reshape(5, 10, 1)
+        hp['factor_c'] = arr
+        idx = hp.htypes.index('factor_c')
+        self.assertTrue(np.allclose(hp.values[:, :, idx].ravel(), np.arange(50, dtype=float)))
+
+    def test_setitem_overwrites_existing_column(self):
+        """同名列静默覆盖，htypes 长度不变。"""
+        print('\n[TestHistoryPanelPhase2Setitem] overwrite existing column')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        ncols_before = len(hp.htypes)
+        repl = np.full((5, 10), np.nan, dtype=float)
+        hp['close'] = repl
+        self.assertEqual(len(hp.htypes), ncols_before)
+        self.assertEqual(hp.htypes[0], 'close')
+        ci = hp.htypes.index('close')
+        self.assertTrue(np.all(np.isnan(hp.values[:, :, ci])))
+
+    def test_setitem_wrong_shape_raises_valueerror(self):
+        """无法广播到 (M,L) -> ValueError（英文）。"""
+        print('\n[TestHistoryPanelPhase2Setitem] wrong shape -> ValueError')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        with self.assertRaises(ValueError):
+            hp['bad'] = np.zeros((5, 9), dtype=float)
+        with self.assertRaises(ValueError):
+            hp['bad2'] = np.zeros((4, 10), dtype=float)
+        with self.assertRaises(ValueError):
+            hp['bad3'] = np.zeros((5, 10, 2), dtype=float)
+
+    def test_setitem_parent_mutate_does_not_affect_subpanel_copy_true(self):
+        """subpanel(copy=True) 在父扩列后不变。"""
+        print('\n[TestHistoryPanelPhase2Setitem] subpanel copy=True unchanged after parent setitem')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        sub = hp.subpanel(htypes='close', copy=True)
+        sub_close_before = sub.values.copy()
+        hp['newcol'] = 7.0
+        self.assertNotIn('newcol', sub.htypes)
+        self.assertTrue(np.allclose(sub.values, sub_close_before))
+
+    def test_setitem_after_getitem_copy_false_subpanel_does_not_see_new_column(self):
+        """父面板扩列后，copy=False 子面板不自动出现新列。"""
+        print('\n[TestHistoryPanelPhase2Setitem] copy=False subpanel does not see new column')
+        hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+        sub = hp['close']
+        self.assertEqual(sub.shape[2], 1)
+        hp['newcol'] = 5.0
+        self.assertEqual(hp.shape[2], 5)
+        self.assertNotIn('newcol', sub.htypes)
+        self.assertEqual(sub.shape[2], 1)
+        print('  parent htypes:', hp.htypes, 'sub htypes:', sub.htypes)
+
+
 if __name__ == '__main__':
     unittest.main()
