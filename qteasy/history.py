@@ -579,8 +579,8 @@ class HistoryPanel():
         可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
         广播到与 ``panel.values`` 同形。
 
-        后续 ``cum_return`` / ``normalize`` / ``portfolio`` 等参数的 ``mask=`` 建议使用本方法返回值或
-        与其同形同 dtype 的数组；阶段四及以后相关 API 发布后即可直接传入 ``mask=panel.where(...)``。
+        ``cum_return`` 与 ``normalize`` 的 ``mask=`` 可直接使用本方法返回值或与其同形、``dtype=bool``
+        的数组；后续 ``portfolio`` 等研究 API 仍建议与此约定一致。
         更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
         「研究与掩码（where）」小节。
 
@@ -2481,6 +2481,268 @@ class HistoryPanel():
             )
         df = pd.DataFrame(ret.T, index=used_hdates, columns=self.shares)
         return df
+
+    def _broadcast_bool_mask_for_panel(self, mask: Optional[np.ndarray]) -> np.ndarray:
+        """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组（全 True 表示无掩码）。
+
+        广播规则与 :meth:`where` 中非 callable 条件一致。
+        """
+        if self.is_empty:
+            raise ValueError('internal error: mask broadcast on empty HistoryPanel')
+        if mask is None:
+            return np.ones(self.shape, dtype=bool)
+        try:
+            b = np.asarray(mask, dtype=bool)
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f'Cannot convert mask to a boolean array: {e}'
+            ) from e
+        m, l_count, n = self._l_count, self._r_count, self._c_count
+        target = (m, l_count, n)
+        if b.shape == target:
+            return np.array(b, dtype=bool, copy=True)
+        if b.ndim == 0:
+            broad = np.broadcast_to(b, target)
+            return np.array(broad, dtype=bool, copy=True)
+        if b.ndim == 2 and b.shape == (m, l_count):
+            b = b[:, :, np.newaxis]
+        elif b.ndim == 1 and b.shape == (m,):
+            b = b.reshape(m, 1, 1)
+        elif b.ndim == 2 and b.shape == (m, 1):
+            b = b.reshape(m, 1, 1)
+        try:
+            broad = np.broadcast_to(b, target)
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast mask with shape {getattr(b, "shape", ())} '
+                f'to panel shape {target}.'
+            ) from None
+        return np.array(broad, dtype=bool, copy=True)
+
+    @staticmethod
+    def _cum_return_1d_along_time(p_eff: np.ndarray, method: str) -> np.ndarray:
+        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。"""
+        p_eff = np.asarray(p_eff, dtype=float).ravel()
+        l_cnt = p_eff.size
+        out = np.full(l_cnt, np.nan, dtype=float)
+        t0: Optional[int] = None
+        for t in range(l_cnt):
+            v = p_eff[t]
+            if np.isfinite(v) and v > 0:
+                t0 = t
+                break
+        if t0 is None:
+            return out
+        out[t0] = 0.0
+        p0 = p_eff[t0]
+        broken = False
+        for t in range(t0 + 1, l_cnt):
+            v = p_eff[t]
+            if broken or not np.isfinite(v) or v <= 0:
+                broken = True
+                out[t] = np.nan
+                continue
+            if method == 'simple':
+                out[t] = v / p0 - 1.0
+            else:
+                out[t] = np.log(v) - np.log(p0)
+        return out
+
+    @staticmethod
+    def _normalize_1d_along_time(
+            p_eff: np.ndarray,
+            base_index: int,
+            mask_1d: np.ndarray,
+    ) -> np.ndarray:
+        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。"""
+        p_eff = np.asarray(p_eff, dtype=float).ravel()
+        mask_1d = np.asarray(mask_1d, dtype=bool).ravel()
+        l_cnt = p_eff.size
+        if base_index < 0 or base_index >= l_cnt:
+            raise ValueError(f'base_index out of range for time axis: {base_index}')
+        if (not mask_1d[base_index]
+                or not np.isfinite(p_eff[base_index])
+                or p_eff[base_index] == 0.0):
+            return np.full(l_cnt, np.nan, dtype=float)
+        base = p_eff[base_index]
+        return p_eff / base
+
+    def _resolve_cum_norm_column_pairs(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]],
+    ) -> List[Tuple[str, int]]:
+        """解析列：返回 (用户标签, 全局列下标) 列表；``htypes is None`` 时等价于 ``close``。"""
+        if self.is_empty:
+            return []
+        if htypes is None:
+            labels = ['close']
+        elif isinstance(htypes, str):
+            labels = [htypes]
+        else:
+            labels = list(htypes)
+        if len(labels) != len(set(labels)):
+            raise ValueError('duplicate htype labels in htypes sequence')
+        pairs: List[Tuple[str, int]] = []
+        for lab in labels:
+            resolved = self._resolve_price_htype(lab)
+            j = self.htypes.index(resolved)
+            pairs.append((lab, j))
+        return pairs
+
+    def cum_return(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+            *,
+            method: str = 'simple',
+            mask: Optional[np.ndarray] = None,
+    ) -> 'HistoryPanel':
+        """沿时间维逐标的计算累计收益（研究向），返回新面板。
+
+        默认对 ``close`` 列（经 :meth:`_resolve_price_htype` 解析，支持 ``close|b`` 等）计算。
+        输出列名为 ``cumret_<用户传入的列名>``，与 :meth:`returns` 使用 ``ret_<price_htype>`` 的策略一致。
+        若时间路径上出现 NaN 或非正价格，自该点起后续结果均为 NaN（路径断开）。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            参与计算的列名；``None`` 时仅处理 ``close``（解析后）。
+        method : {'simple', 'log'}, default 'simple'
+            ``simple``：自首个有效正价 ``t0`` 起 ``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则；为 ``False`` 的位置在计算前视为缺失（``NaN``）。
+
+        Returns
+        -------
+        HistoryPanel
+            ``shares`` / ``hdates`` 与原面板一致，仅含累计收益列。
+
+        Raises
+        ------
+        ValueError
+            非法 ``method``、列无法解析、``mask`` 无法广播、或输出列名与现有 ``htypes`` 冲突时抛出（英文）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[10.0], [11.0], [12.0]]]),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2023-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> cr = hp.cum_return(method='simple')
+        >>> cr.htypes
+        ['cumret_close']
+        >>> float(cr.values[0, -1, 0])
+        0.2
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if method not in ('simple', 'log'):
+            raise ValueError(f'method must be "simple" or "log", got {method}')
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        pairs = self._resolve_cum_norm_column_pairs(htypes)
+        out_names = [f'cumret_{lab}' for lab, _ in pairs]
+        for name in out_names:
+            if name in self.htypes:
+                raise ValueError(
+                    f'output htype "{name}" already exists in panel; '
+                    'choose different columns or rename existing htypes.'
+                )
+        m, l_cnt, _ = self.shape
+        n_out = len(pairs)
+        out_arr = np.full((m, l_cnt, n_out), np.nan, dtype=float)
+        values_f = self.values.astype(float)
+        for k, (lab, j) in enumerate(pairs):
+            for i in range(m):
+                p = values_f[i, :, j]
+                m_ij = mask_full[i, :, j]
+                p_eff = np.where(m_ij, p, np.nan)
+                out_arr[i, :, k] = self._cum_return_1d_along_time(p_eff, method)
+        return HistoryPanel(
+            values=out_arr,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=out_names,
+        )
+
+    def normalize(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+            *,
+            base_index: int = 0,
+            mask: Optional[np.ndarray] = None,
+    ) -> 'HistoryPanel':
+        """将指定列按基准时点缩放到相对 1.0（研究向），返回新面板。
+
+        默认以 ``base_index`` 处有效价格为分母；该时点被 ``mask`` 排除、为 ``NaN`` 或为 0 时，
+        该 (share, 列) 整条时间序列输出均为 ``NaN``。输出列名为 ``norm_<用户传入的列名>``。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            参与计算的列；``None`` 时仅 ``close``（解析后）。
+        base_index : int, default 0
+            时间轴上的基准下标（从 0 起）；越界时抛出 ``ValueError``（英文）。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则。
+
+        Returns
+        -------
+        HistoryPanel
+            与原面板相同的 ``shares`` / ``hdates``，仅含归一化列。
+
+        Raises
+        ------
+        ValueError
+            列无法解析、``mask`` 无法广播、``base_index`` 越界、或输出列名冲突时抛出（英文）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[10.0], [20.0], [40.0]]]),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2023-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> nm = hp.normalize(base_index=0)
+        >>> float(nm.values[0, -1, 0])
+        4.0
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        pairs = self._resolve_cum_norm_column_pairs(htypes)
+        out_names = [f'norm_{lab}' for lab, _ in pairs]
+        for name in out_names:
+            if name in self.htypes:
+                raise ValueError(
+                    f'output htype "{name}" already exists in panel; '
+                    'choose different columns or rename existing htypes.'
+                )
+        m, l_cnt, _ = self.shape
+        n_out = len(pairs)
+        out_arr = np.full((m, l_cnt, n_out), np.nan, dtype=float)
+        values_f = self.values.astype(float)
+        for k, (lab, j) in enumerate(pairs):
+            for i in range(m):
+                p = values_f[i, :, j]
+                m_ij = mask_full[i, :, j]
+                p_eff = np.where(m_ij, p, np.nan)
+                out_arr[i, :, k] = self._normalize_1d_along_time(
+                    p_eff, base_index, m_ij,
+                )
+        return HistoryPanel(
+            values=out_arr,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=out_names,
+        )
 
     def volatility(
             self,

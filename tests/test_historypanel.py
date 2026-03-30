@@ -2701,5 +2701,269 @@ class TestHistoryPanelPhase15Loc(unittest.TestCase):
         self.assertTrue(np.allclose(a.values, b.values))
 
 
+class TestHistoryPanelPhase4CumReturnNormalize(unittest.TestCase):
+    """阶段四：cum_return / normalize（研究向，TDD）。"""
+
+    def test_c1_two_shares_close_no_mask(self):
+        print('\n[Phase4 C1] 两 share、单列 close，无 mask')
+        values = np.array(
+            [
+                [[10.0], [11.0], [12.0]],
+                [[100.0], [100.0], [110.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['s0', 's1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        cs = hp.cum_return(method='simple')
+        cl = hp.cum_return(method='log')
+        nz = hp.normalize(base_index=0)
+        print('  cum simple s0:', cs.values[0, :, 0])
+        self.assertEqual(cs.htypes, ['cumret_close'])
+        np.testing.assert_allclose(cs.values[0, :, 0], [0.0, 0.1, 0.2], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(cs.values[1, :, 0], [0.0, 0.0, 0.1], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(cl.values[0, :, 0], [0.0, np.log(1.1), np.log(1.2)], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(nz.values[0, :, 0], [1.0, 1.1, 1.2], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(nz.values[1, :, 0], [1.0, 1.0, 1.1], rtol=0, atol=1e-12)
+
+    def test_c2_multi_htypes_order_and_names(self):
+        print('\n[Phase4 C2] 多列 htypes 顺序与命名')
+        values = np.array(
+            [
+                [[10.0, 1.0], [20.0, 2.0]],
+                [[5.0, 3.0], [10.0, 6.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['a', 'b'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close', 'open'],
+        )
+        c = hp.cum_return(htypes=['close', 'open'], method='simple')
+        n = hp.normalize(htypes=['close', 'open'], base_index=0)
+        print('  cum htypes:', c.htypes)
+        self.assertEqual(c.htypes, ['cumret_close', 'cumret_open'])
+        self.assertEqual(n.htypes, ['norm_close', 'norm_open'])
+        np.testing.assert_allclose(c.values[0, :, 0], [0.0, 1.0], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(c.values[0, :, 1], [0.0, 1.0], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(n.values[1, :, 1], [1.0, 2.0], rtol=0, atol=1e-12)
+
+    def test_c3_aligns_with_returns_compound(self):
+        print('\n[Phase4 C3] cum_return 与 returns 复利末值一致')
+        p = np.array([[[1.0], [2.0], [4.0], [4.0], [8.0]]])
+        hp = HistoryPanel(
+            values=p,
+            levels=['x'],
+            rows=pd.date_range('2023-01-01', periods=5),
+            columns=['close'],
+        )
+        ret = hp.returns(price_htype='close', method='simple', as_panel=False)
+        r = ret['x'].values
+        finite = r[np.isfinite(r)]
+        prod_simple = np.prod(1.0 + finite) - 1.0
+        cs = hp.cum_return(method='simple')
+        print('  prod(1+r)-1:', prod_simple, 'cum last:', cs.values[0, -1, 0])
+        self.assertAlmostEqual(cs.values[0, -1, 0], prod_simple, places=12)
+
+        ret_log = hp.returns(price_htype='close', method='log', as_panel=False)
+        rl = ret_log['x'].values
+        sum_log = np.nansum(rl)
+        cl = hp.cum_return(method='log')
+        self.assertAlmostEqual(np.exp(cl.values[0, -1, 0]), np.exp(sum_log), places=12)
+        self.assertAlmostEqual(np.exp(sum_log) - 1.0, prod_simple, places=12)
+
+    def test_c4_adj_close_column_name_still_user_root(self):
+        print('\n[Phase4 C4] 仅 close|b，列名为 cumret_close')
+        values = np.array([[[100.0], [110.0]], [[50.0], [55.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['u', 'v'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close|b'],
+        )
+        cs = hp.cum_return()
+        print('  htypes:', cs.htypes, 's0:', cs.values[0, :, 0])
+        self.assertEqual(cs.htypes, ['cumret_close'])
+        np.testing.assert_allclose(cs.values[0, :, 0], [0.0, 0.1], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(cs.values[1, :, 0], [0.0, 0.1], rtol=0, atol=1e-12)
+
+    def test_c5_leading_nan_t0_shifted(self):
+        print('\n[Phase4 C5] 首段 NaN，t0 后移')
+        values = np.array([[[np.nan], [10.0], [11.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        cs = hp.cum_return(method='simple')
+        print('  cum:', cs.values[0, :, 0])
+        self.assertTrue(np.isnan(cs.values[0, 0, 0]))
+        np.testing.assert_allclose(cs.values[0, 1:, 0], [0.0, 0.1], rtol=0, atol=1e-12)
+
+    def test_c6_middle_nan_breaks_path(self):
+        print('\n[Phase4 C6] 中间 NaN，断点及之后为 NaN')
+        values = np.array([[[10.0], [np.nan], [12.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        cs = hp.cum_return(method='simple')
+        print('  cum simple:', cs.values[0, :, 0])
+        np.testing.assert_allclose(cs.values[0, 0, 0], 0.0, rtol=0, atol=1e-12)
+        self.assertTrue(np.isnan(cs.values[0, 1, 0]))
+        self.assertTrue(np.isnan(cs.values[0, 2, 0]))
+
+    def test_c7_non_positive_breaks_path(self):
+        print('\n[Phase4 C7] 非正价格，断点及之后 NaN')
+        values = np.array([[[10.0], [5.0], [-1.0], [20.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['close'],
+        )
+        cs = hp.cum_return(method='simple')
+        print('  cum:', cs.values[0, :, 0])
+        np.testing.assert_allclose(cs.values[0, 0, 0], 0.0, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(cs.values[0, 1, 0], -0.5, rtol=0, atol=1e-12)
+        self.assertTrue(np.isnan(cs.values[0, 2, 0]))
+        self.assertTrue(np.isnan(cs.values[0, 3, 0]))
+
+    def test_c8_mask_with_where(self):
+        print('\n[Phase4 C8] mask=hp.where(...)')
+        values = np.array(
+            [
+                [[10.0], [11.0], [12.0]],
+                [[1.0], [2.0], [3.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        m = hp.where(hp.values > 10.5)
+        cs = hp.cum_return(mask=m, method='simple')
+        print('  masked cum s0:', cs.values[0, :, 0])
+        self.assertTrue(np.isnan(cs.values[0, 0, 0]))
+        np.testing.assert_allclose(cs.values[0, 1, 0], 0.0, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(cs.values[0, 2, 0], 12.0 / 11.0 - 1.0, rtol=0, atol=1e-12)
+
+    def test_c9_mask_all_false_column_all_nan(self):
+        print('\n[Phase4 C9] 单列全 False mask')
+        values = np.array([[[1.0], [2.0], [3.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        m = np.zeros((1, 3, 1), dtype=bool)
+        cs = hp.cum_return(mask=m)
+        print('  cum:', cs.values[0, :, 0])
+        self.assertTrue(np.all(np.isnan(cs.values[0, :, 0])))
+
+    def test_c10_normalize_base_index_and_masked_base(self):
+        print('\n[Phase4 C10] normalize base_index 与基准被 mask')
+        values = np.array([[[1.0], [2.0], [6.0], [3.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['close'],
+        )
+        n = hp.normalize(base_index=2)
+        print('  norm:', n.values[0, :, 0])
+        np.testing.assert_allclose(
+            n.values[0, :, 0],
+            [1.0 / 6.0, 2.0 / 6.0, 1.0, 3.0 / 6.0],
+            rtol=0,
+            atol=1e-12,
+        )
+        m = np.ones((1, 4, 1), dtype=bool)
+        m[0, 2, 0] = False
+        n2 = hp.normalize(base_index=2, mask=m)
+        self.assertTrue(np.all(np.isnan(n2.values[0, :, 0])))
+        with self.assertRaises(ValueError):
+            hp.normalize(base_index=10)
+
+    def test_c11_empty_panel(self):
+        print('\n[Phase4 C11] 空面板')
+        empty = HistoryPanel()
+        self.assertTrue(empty.cum_return().is_empty)
+        self.assertTrue(empty.normalize().is_empty)
+
+    def test_b1_invalid_method(self):
+        print('\n[Phase4 B1] 非法 method')
+        hp = HistoryPanel(
+            values=np.array([[[1.0], [2.0]]]),
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.cum_return(method='compound')
+
+    def test_b2_mask_bad_shape(self):
+        print('\n[Phase4 B2] mask 无法广播')
+        hp = HistoryPanel(
+            values=np.ones((2, 3, 1)),
+            levels=['a', 'b'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        bad = np.zeros((2, 2), dtype=bool)
+        with self.assertRaises(ValueError):
+            hp.cum_return(mask=bad)
+
+    def test_b3_unknown_htype(self):
+        print('\n[Phase4 B3] 未知 htype')
+        hp = HistoryPanel(
+            values=np.ones((1, 2, 1)),
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.cum_return(htypes='nope')
+
+    def test_b4_single_bar(self):
+        print('\n[Phase4 B4] L=1')
+        hp = HistoryPanel(
+            values=np.array([[[100.0]]]),
+            levels=['s'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        cs = hp.cum_return(method='simple')
+        cl = hp.cum_return(method='log')
+        nz = hp.normalize(base_index=0)
+        print('  cum simple:', cs.values[0, 0, 0])
+        self.assertAlmostEqual(cs.values[0, 0, 0], 0.0)
+        self.assertAlmostEqual(cl.values[0, 0, 0], 0.0)
+        self.assertAlmostEqual(nz.values[0, 0, 0], 1.0)
+
+    def test_b5_output_name_conflict(self):
+        print('\n[Phase4 B5] 输出列名与已有列冲突')
+        values = np.array([[[10.0, 0.0], [11.0, 0.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['s'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close', 'cumret_close'],
+        )
+        with self.assertRaises(ValueError) as ctx:
+            hp.cum_return()
+        self.assertIn('cumret_close', str(ctx.exception).lower())
+
+
 if __name__ == '__main__':
     unittest.main()
