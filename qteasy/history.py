@@ -14,7 +14,7 @@ from numbers import Number
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple
+from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple, Dict
 
 from qteasy.database import DataSource
 
@@ -579,8 +579,8 @@ class HistoryPanel():
         可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
         广播到与 ``panel.values`` 同形。
 
-        ``cum_return`` 与 ``normalize`` 的 ``mask=`` 可直接使用本方法返回值或与其同形、``dtype=bool``
-        的数组；后续 ``portfolio`` 等研究 API 仍建议与此约定一致。
+        ``cum_return``、``normalize`` 与 ``portfolio`` 的 ``mask=`` 可直接使用本方法返回值或与其同形、
+        ``dtype=bool`` 的数组。
         更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
         「研究与掩码（where）」小节。
 
@@ -2742,6 +2742,264 @@ class HistoryPanel():
             levels=list(self.shares),
             rows=list(self.hdates),
             columns=out_names,
+        )
+
+    def _resolve_portfolio_htype_pairs(
+            self,
+            htypes: Union[str, Sequence[str]],
+    ) -> List[Tuple[str, int]]:
+        """解析 ``portfolio`` 参与聚合的列：``(用户标签, 列下标)``。"""
+        if isinstance(htypes, str):
+            labels = [htypes]
+        else:
+            labels = list(htypes)
+        pairs: List[Tuple[str, int]] = []
+        for lab in labels:
+            resolved = self._resolve_price_htype(lab)
+            j = self.htypes.index(resolved)
+            pairs.append((lab, j))
+        return pairs
+
+    @staticmethod
+    def _portfolio_aggregate_cell(
+            values_f: np.ndarray,
+            mask_full: np.ndarray,
+            share_indices: Sequence[int],
+            t: int,
+            j: int,
+            *,
+            mode: str,
+            weights: Optional[np.ndarray],
+            normalize_weights: bool,
+    ) -> float:
+        """单组、单时刻、单列上的组合值（等权或加权）。"""
+        xs: List[float] = []
+        wi_list: List[float] = []
+        for i in share_indices:
+            if not mask_full[i, t, j]:
+                continue
+            v = values_f[i, t, j]
+            if not np.isfinite(v):
+                continue
+            xs.append(float(v))
+            if mode == 'weighted':
+                if weights is None:
+                    raise ValueError('internal: weighted mode without weights')
+                if weights.ndim == 1:
+                    wi = float(weights[i])
+                elif weights.ndim == 2:
+                    wi = float(weights[i, t])
+                else:
+                    raise ValueError('weights must be 1D or 2D')
+                wi_list.append(wi)
+        if not xs:
+            return float('nan')
+        if mode == 'equal':
+            return float(np.mean(xs))
+        w_arr = np.asarray(wi_list, dtype=float)
+        x_arr = np.asarray(xs, dtype=float)
+        sw = float(np.sum(w_arr))
+        if sw == 0.0 or not np.isfinite(sw):
+            return float('nan')
+        if normalize_weights:
+            w_arr = w_arr / sw
+            return float(np.sum(w_arr * x_arr))
+        return float(np.sum(w_arr * x_arr) / sw)
+
+    def portfolio(
+            self,
+            htypes: Union[str, Sequence[str]] = 'close',
+            *,
+            mode: str = 'equal',
+            weights: Optional[np.ndarray] = None,
+            mask: Optional[np.ndarray] = None,
+            groups: Optional[Dict[str, Sequence[str]]] = None,
+            benchmark: Optional[str] = None,
+            benchmark_output: str = 'none',
+            new_share_name: str = 'PORTFOLIO',
+            normalize_weights: bool = True,
+            allow_ungrouped: str = 'error',
+    ) -> 'HistoryPanel':
+        """沿 share 维将多标的聚合成组合序列（研究向），返回新面板。
+
+        默认 ``benchmark_output='none'``；若设置 ``benchmark``，可用 ``tag_along`` 附加基准行，
+        或用 ``excess_only`` 仅保留 ``excess_<列名> = 组合 - 基准``。
+
+        ``groups`` 为 ``None`` 时，全面板聚成一行，名称为 ``new_share_name``。
+        ``groups`` 非空时，键为输出 share 标签（按 **插入序** 排列），值为组内原始 share 列表；
+        组间 share 不得重叠。``allow_ungrouped='error'`` 时，每个面板 share 必须恰好属于一组。
+
+        当 ``groups`` 为 ``None`` 且指定了 ``benchmark`` 时，**基准 share 不参与**组合聚合（避免把指数与个股权重混在一起），
+        仅用于 ``tag_along`` 或 ``excess_only``；若剔除后无可用 share（例如面板仅含基准）则抛出 ``ValueError``。
+
+        ``mask`` 广播规则与 :meth:`where` 一致；无效格点不参与聚合。
+
+        Parameters
+        ----------
+        htypes : str or sequence of str, default 'close'
+            参与聚合的列名；经 :meth:`_resolve_price_htype` 解析。
+        mode : {'equal', 'weighted'}, default 'equal'
+            等权平均或与 ``weights`` 联用的加权平均。
+        weights : numpy.ndarray, optional
+            形状 ``(M,)`` 或 ``(M, L)``，与 ``self.shares`` 顺序对齐；仅 ``mode='weighted'`` 时使用。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则。
+        groups : dict, optional
+            输出组名 → 组内 share 标签列表。
+        benchmark : str, optional
+            基准 share，须在 ``self.shares`` 中。
+        benchmark_output : {'none', 'tag_along', 'excess_only'}, default 'none'
+            基准输出形态；无 ``benchmark`` 时仅允许 ``'none'``。
+        new_share_name : str, default 'PORTFOLIO'
+            无 ``groups`` 时合成行的 share 名。
+        normalize_weights : bool, default True
+            加权时，在参与聚合的成员上对权重做归一后再加权求和（与 ``sum(w*x)/sum(w)`` 数值一致）。
+        allow_ungrouped : {'error', 'exclude'}, default 'error'
+            ``groups`` 非空时，是否要求覆盖全部 share。
+
+        Returns
+        -------
+        HistoryPanel
+            新对象；``hdates`` 与时间长度与原面板一致。
+
+        Raises
+        ------
+        ValueError
+            参数非法、share 不在面板、组重叠、mask 无法广播等（英文）。
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if benchmark is None and benchmark_output != 'none':
+            raise ValueError(
+                'benchmark is None but benchmark_output is not "none"; '
+                'set benchmark_output="none" or pass a valid benchmark share.'
+            )
+        if benchmark_output not in ('none', 'tag_along', 'excess_only'):
+            raise ValueError(
+                f'benchmark_output must be "none", "tag_along", or "excess_only", '
+                f'got {benchmark_output!r}'
+            )
+        if benchmark is not None and benchmark not in self.shares:
+            raise ValueError(f'benchmark "{benchmark}" not found in shares: {self.shares}')
+        if mode not in ('equal', 'weighted'):
+            raise ValueError(f'mode must be "equal" or "weighted", got {mode!r}')
+        if weights is None and mode != 'equal':
+            raise ValueError('mode="weighted" requires weights array')
+        if weights is not None and mode != 'weighted':
+            raise ValueError('weights are only used with mode="weighted"')
+        if allow_ungrouped not in ('error', 'exclude'):
+            raise ValueError('allow_ungrouped must be "error" or "exclude"')
+        m, l_cnt, _ = self.shape
+        if weights is not None:
+            w_arr = np.asarray(weights, dtype=float)
+            if w_arr.ndim == 1:
+                if w_arr.shape[0] != m:
+                    raise ValueError(
+                        f'weights length {w_arr.shape[0]} does not match share count {m}'
+                    )
+            elif w_arr.ndim == 2:
+                if w_arr.shape[0] != m or w_arr.shape[1] != l_cnt:
+                    raise ValueError(
+                        f'weights shape {w_arr.shape} does not match panel shape {(m, l_cnt)}'
+                    )
+            else:
+                raise ValueError('weights must be 1D or 2D')
+            weights_use: Optional[np.ndarray] = w_arr
+        else:
+            weights_use = None
+
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        htype_pairs = self._resolve_portfolio_htype_pairs(htypes)
+        n_col = len(htype_pairs)
+        values_f = self.values.astype(float)
+
+        share_index = {s: i for i, s in enumerate(self.shares)}
+        group_specs: List[Tuple[str, List[int]]]
+        if groups is None:
+            all_idx = list(range(m))
+            if benchmark is not None:
+                bi = share_index[benchmark]
+                all_idx = [i for i in all_idx if i != bi]
+                if not all_idx:
+                    raise ValueError(
+                        'cannot form portfolio: all shares would be excluded '
+                        'because benchmark is the only share in the panel'
+                    )
+            group_specs = [(new_share_name, all_idx)]
+        else:
+            if len(groups) == 0:
+                raise ValueError('groups must be non-empty when provided')
+            group_specs = []
+            assigned: Dict[str, str] = {}
+            for gname, members in groups.items():
+                if not members:
+                    raise ValueError(f'group "{gname}" has empty member list')
+                idxs: List[int] = []
+                for s in members:
+                    if s not in share_index:
+                        raise ValueError(f'share "{s}" in group "{gname}" not in panel shares')
+                    if s in assigned:
+                        raise ValueError(
+                            f'share "{s}" appears in more than one group '
+                            f'("{assigned[s]}" and "{gname}")'
+                        )
+                    assigned[s] = gname
+                    idxs.append(share_index[s])
+                group_specs.append((gname, idxs))
+            if allow_ungrouped == 'error':
+                for s in self.shares:
+                    if s not in assigned:
+                        raise ValueError(
+                            f'share "{s}" is not in any group; '
+                            'set allow_ungrouped="exclude" to omit unlisted shares'
+                        )
+
+        n_grp = len(group_specs)
+        port = np.full((n_grp, l_cnt, n_col), np.nan, dtype=float)
+        for gi, (_, sidxs) in enumerate(group_specs):
+            for t in range(l_cnt):
+                for jc, (_, j) in enumerate(htype_pairs):
+                    port[gi, t, jc] = self._portfolio_aggregate_cell(
+                        values_f,
+                        mask_full,
+                        sidxs,
+                        t,
+                        j,
+                        mode=mode,
+                        weights=weights_use,
+                        normalize_weights=normalize_weights,
+                    )
+
+        out_shares: List[str] = [name for name, _ in group_specs]
+        out_htypes: List[str]
+        out_vals: np.ndarray
+
+        if benchmark is not None and benchmark_output == 'excess_only':
+            bi = share_index[benchmark]
+            bench_block = np.stack(
+                [values_f[bi, :, j] for _, j in htype_pairs],
+                axis=1,
+            )
+            excess = port - bench_block[np.newaxis, :, :]
+            out_htypes = [f'excess_{lab}' for lab, _ in htype_pairs]
+            out_vals = excess
+        else:
+            out_htypes = [lab for lab, _ in htype_pairs]
+            out_vals = port
+            if benchmark is not None and benchmark_output == 'tag_along':
+                bi = share_index[benchmark]
+                bench_block = np.stack(
+                    [values_f[bi, :, j] for _, j in htype_pairs],
+                    axis=1,
+                )
+                out_vals = np.concatenate([out_vals, bench_block[np.newaxis, :, :]], axis=0)
+                out_shares = out_shares + [benchmark]
+
+        return HistoryPanel(
+            values=out_vals,
+            levels=out_shares,
+            rows=list(self.hdates),
+            columns=out_htypes,
         )
 
     def volatility(

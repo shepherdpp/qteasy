@@ -2965,5 +2965,333 @@ class TestHistoryPanelPhase4CumReturnNormalize(unittest.TestCase):
         self.assertIn('cumret_close', str(ctx.exception).lower())
 
 
+class TestHistoryPanelPhase5Portfolio(unittest.TestCase):
+    """阶段五：portfolio（研究向组合聚合，TDD）。"""
+
+    def test_f1_equal_weight_two_shares(self):
+        print('\n[Phase5 F1] 两 share 等权 close')
+        values = np.array(
+            [
+                [[10.0], [12.0]],
+                [[20.0], [16.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        out = hp.portfolio(htypes='close', mode='equal', benchmark_output='none')
+        print('  out shape:', out.shape, 'shares:', out.shares, 'values:', out.values)
+        self.assertEqual(out.shares, ['PORTFOLIO'])
+        self.assertEqual(out.htypes, ['close'])
+        self.assertEqual(out.shape, (1, 2, 1))
+        np.testing.assert_allclose(out.values[0, :, 0], [15.0, 14.0], rtol=0, atol=1e-12)
+
+    def test_f2_weighted_three_shares_normalize_true(self):
+        print('\n[Phase5 F2] 三 share 加权 normalize_weights=True')
+        values = np.array(
+            [
+                [[1.0], [2.0]],
+                [[2.0], [4.0]],
+                [[3.0], [6.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['s0', 's1', 's2'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        w = np.array([0.25, 0.25, 0.5])
+        out = hp.portfolio(
+            mode='weighted',
+            weights=w,
+            normalize_weights=True,
+            benchmark_output='none',
+        )
+        exp0 = 0.25 * 1.0 + 0.25 * 2.0 + 0.5 * 3.0
+        exp1 = 0.25 * 2.0 + 0.25 * 4.0 + 0.5 * 6.0
+        print('  t0 t1:', out.values[0, :, 0])
+        np.testing.assert_allclose(out.values[0, :, 0], [exp0, exp1], rtol=0, atol=1e-12)
+
+    def test_f3_weighted_normalize_false_same_as_ratio(self):
+        print('\n[Phase5 F3] 加权 normalize_weights=False 与 sum(wx)/sum(w)')
+        values = np.array(
+            [
+                [[1.0]],
+                [[2.0]],
+                [[3.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['s0', 's1', 's2'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        w = np.array([1.0, 1.0, 2.0])
+        out = hp.portfolio(
+            mode='weighted',
+            weights=w,
+            normalize_weights=False,
+            benchmark_output='none',
+        )
+        exp = (1.0 * 1.0 + 1.0 * 2.0 + 2.0 * 3.0) / (1.0 + 1.0 + 2.0)
+        print('  exp:', exp, 'got:', out.values[0, 0, 0])
+        self.assertAlmostEqual(out.values[0, 0, 0], exp, places=12)
+
+    def test_f4_groups_two_rows_order(self):
+        print('\n[Phase5 F4] groups 两组，键插入序')
+        values = np.array(
+            [
+                [[10.0]],
+                [[30.0]],
+                [[50.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['a', 'b', 'c'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        groups = {'G2': ['c'], 'G1': ['a', 'b']}
+        out = hp.portfolio(mode='equal', groups=groups, benchmark_output='none')
+        print('  shares:', out.shares, 'vals:', out.values[:, 0, 0])
+        self.assertEqual(out.shares, ['G2', 'G1'])
+        np.testing.assert_allclose(out.values[0, 0, 0], 50.0, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(out.values[1, 0, 0], 20.0, rtol=0, atol=1e-12)
+
+    def test_f5_close_b_resolve(self):
+        print('\n[Phase5 F5] 仅 close|b')
+        values = np.array([[[100.0], [110.0]], [[200.0], [220.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['x', 'y'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close|b'],
+        )
+        out = hp.portfolio(htypes='close', mode='equal', benchmark_output='none')
+        self.assertEqual(out.htypes, ['close'])
+        np.testing.assert_allclose(out.values[0, :, 0], [150.0, 165.0], rtol=0, atol=1e-12)
+
+    def test_f6_multi_htypes(self):
+        print('\n[Phase5 F6] close + open 两列')
+        values = np.array(
+            [
+                [[1.0, 10.0], [3.0, 30.0]],
+                [[5.0, 50.0], [7.0, 70.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close', 'open'],
+        )
+        out = hp.portfolio(htypes=['close', 'open'], mode='equal', benchmark_output='none')
+        self.assertEqual(out.htypes, ['close', 'open'])
+        np.testing.assert_allclose(out.values[0, 0, :], [3.0, 30.0], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(out.values[0, 1, :], [5.0, 50.0], rtol=0, atol=1e-12)
+
+    def test_f7_benchmark_tag_along(self):
+        print('\n[Phase5 F7] benchmark tag_along')
+        values = np.array(
+            [
+                [[10.0], [20.0]],
+                [[30.0], [40.0]],
+                [[1000.0], [2000.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B', 'IDX'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        out = hp.portfolio(
+            mode='equal',
+            benchmark='IDX',
+            benchmark_output='tag_along',
+            new_share_name='EW',
+        )
+        print('  shares:', out.shares)
+        self.assertEqual(out.shares, ['EW', 'IDX'])
+        np.testing.assert_allclose(out.values[0, :, 0], [20.0, 30.0], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(out.values[1, :, 0], [1000.0, 2000.0], rtol=0, atol=1e-12)
+
+    def test_f8_benchmark_excess_only(self):
+        print('\n[Phase5 F8] benchmark excess_only')
+        values = np.array(
+            [
+                [[10.0], [20.0]],
+                [[30.0], [60.0]],
+                [[100.0], [100.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B', 'BENCH'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        out = hp.portfolio(
+            mode='equal',
+            benchmark='BENCH',
+            benchmark_output='excess_only',
+            new_share_name='EW',
+        )
+        port = np.array([20.0, 40.0])
+        bench = np.array([100.0, 100.0])
+        self.assertEqual(out.shares, ['EW'])
+        self.assertEqual(out.htypes, ['excess_close'])
+        np.testing.assert_allclose(out.values[0, :, 0], port - bench, rtol=0, atol=1e-12)
+
+    def test_b1_mask_drops_share_one_day(self):
+        print('\n[Phase5 B1] mask 剔除某日一 share')
+        values = np.array(
+            [
+                [[10.0], [12.0]],
+                [[20.0], [16.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        m = np.ones((2, 2, 1), dtype=bool)
+        m[0, 1, 0] = False
+        out = hp.portfolio(mode='equal', mask=m, benchmark_output='none')
+        self.assertAlmostEqual(out.values[0, 0, 0], 15.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 16.0)
+
+    def test_b2_all_masked_nan(self):
+        print('\n[Phase5 B2] 全日无有效成员 -> NaN')
+        values = np.array([[[1.0]], [[2.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        m = np.zeros((2, 1, 1), dtype=bool)
+        out = hp.portfolio(mode='equal', mask=m, benchmark_output='none')
+        self.assertTrue(np.isnan(out.values[0, 0, 0]))
+
+    def test_b3_groups_overlap_raises(self):
+        print('\n[Phase5 B3] groups 重叠')
+        hp = HistoryPanel(
+            values=np.ones((2, 1, 1)),
+            levels=['A', 'B'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        groups = {'G1': ['A', 'B'], 'G2': ['B']}
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='equal', groups=groups, benchmark_output='none')
+
+    def test_b4_allow_ungrouped_error(self):
+        print('\n[Phase5 B4] allow_ungrouped=error 漏 share')
+        hp = HistoryPanel(
+            values=np.ones((3, 1, 1)),
+            levels=['A', 'B', 'C'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        groups = {'G1': ['A', 'B']}
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='equal', groups=groups, allow_ungrouped='error', benchmark_output='none')
+
+    def test_b5_benchmark_not_in_shares(self):
+        print('\n[Phase5 B5] benchmark 不存在')
+        hp = HistoryPanel(
+            values=np.ones((1, 1, 1)),
+            levels=['A'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(benchmark='Z', benchmark_output='tag_along')
+
+    def test_b6_weights_bad_length(self):
+        print('\n[Phase5 B6] weights 长度不等于 M')
+        hp = HistoryPanel(
+            values=np.ones((2, 1, 1)),
+            levels=['A', 'B'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='weighted', weights=np.array([1.0]), benchmark_output='none')
+
+    def test_b7_empty_panel(self):
+        print('\n[Phase5 B7] 空面板')
+        self.assertTrue(HistoryPanel().portfolio(benchmark_output='none').is_empty)
+
+    def test_b8_empty_group_raises(self):
+        print('\n[Phase5 B8] 空组')
+        hp = HistoryPanel(
+            values=np.ones((1, 1, 1)),
+            levels=['A'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(groups={'G': []}, benchmark_output='none')
+
+    def test_b9_mask_bad_broadcast(self):
+        print('\n[Phase5 B9] mask 形状错误')
+        hp = HistoryPanel(
+            values=np.ones((2, 3, 1)),
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(mask=np.zeros((2, 2), dtype=bool), benchmark_output='none')
+
+    def test_mode_weight_mismatch(self):
+        print('\n[Phase5] mode 与 weights 不一致')
+        hp = HistoryPanel(
+            values=np.ones((2, 1, 1)),
+            levels=['A', 'B'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='equal', weights=np.array([0.5, 0.5]), benchmark_output='none')
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='weighted', benchmark_output='none')
+
+    def test_benchmark_none_requires_output_none(self):
+        print('\n[Phase5] 无 benchmark 时 benchmark_output 须为 none')
+        hp = HistoryPanel(
+            values=np.ones((2, 1, 1)),
+            levels=['A', 'B'],
+            rows=['2023-01-01'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError):
+            hp.portfolio(mode='equal', benchmark_output='tag_along')
+
+    def test_f9_mask_via_where(self):
+        print('\n[Phase5 F9] mask=hp.where(...)')
+        values = np.array([[[10.0], [12.0]], [[20.0], [16.0]]])
+        hp = HistoryPanel(
+            values=values,
+            levels=['A', 'B'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        m = hp.where(hp.values >= 12.0)
+        out = hp.portfolio(mode='equal', mask=m, benchmark_output='none')
+        self.assertAlmostEqual(out.values[0, 0, 0], 20.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 14.0)
+
+
 if __name__ == '__main__':
     unittest.main()
