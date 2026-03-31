@@ -1483,6 +1483,7 @@ def _plotly_add_highlight_markers(
     theme: Mapping[str, Any],
     opacity: float = 1.0,
     hover_dates: Optional[Sequence[str]] = None,
+    share_index: Optional[int] = None,
 ) -> None:
     """
     在指定 subplot row 上追加一条 markers trace 作为高亮点。
@@ -1524,6 +1525,13 @@ def _plotly_add_highlight_markers(
         from qteasy.hp_visual_render import _resolve_highlight_condition
     except Exception:
         return
+    # Phase11: condition 允许二维 (M_group,L) mask；按 share_index 选取对应行
+    if isinstance(cond, np.ndarray) and cond.dtype == bool and cond.ndim == 2:
+        if share_index is None:
+            return
+        if share_index < 0 or share_index >= int(cond.shape[0]):
+            return
+        cond = cond[int(share_index), :]
     mask = _resolve_highlight_condition(cond, np.asarray(y_series)[:n], n)
     if mask is None or not np.any(mask):
         return
@@ -2009,6 +2017,7 @@ def build_interactive_figure_from_specs(
                         theme=theme,
                         opacity=float(hl_op_k),
                         hover_dates=hover_dates,
+                        share_index=int(s_idx),
                     )
                 # 主价格子图 axis ref：供十字交叉线 shapes 绘制与更新使用
                 xref = 'x' if plot_row == 1 else f'x{plot_row}'
@@ -2208,6 +2217,7 @@ def build_interactive_figure_from_specs(
                             theme=theme,
                             opacity=float(hl_op_l),
                             hover_dates=hover_dates,
+                            share_index=int(s_idx),
                         )
 
     last_row = layout_spec['plotly_n_subplot_rows']

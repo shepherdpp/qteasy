@@ -4607,9 +4607,57 @@ class HistoryPanel():
                     spec = None
                 if spec is not None and highlight is not None:
                     spec = dict(spec)
-                    spec['highlight'] = (
-                        highlight if isinstance(highlight, dict) else {'condition': highlight}
-                    )
+                    base_hl = highlight if isinstance(highlight, dict) else {'condition': highlight}
+                    # Phase11: condition 支持 (M,L) mask。为减少渲染层改动，这里将二维 mask
+                    # 解析为 per-share 的一维条件，并注入到每个 spec 的 highlight.condition。
+                    if isinstance(base_hl, dict) and 'condition' in base_hl:
+                        cond = base_hl.get('condition')
+                        style = base_hl.get('style')
+                        per_share_cond: Optional[Dict[str, np.ndarray]] = None
+                        if isinstance(cond, np.ndarray) and cond.dtype == bool:
+                            if cond.ndim == 2:
+                                mask_2d = np.asarray(cond, dtype=bool)
+                                L_full = len(self.hdates)
+                                if mask_2d.shape[1] != L_full:
+                                    raise ValueError(
+                                        f'highlight condition mask shape {mask_2d.shape} does not match '
+                                        f'hdates length L={L_full}.'
+                                    )
+                                # 允许 (M_plot,L) 或 (M_all,L)
+                                if mask_2d.shape[0] == len(share_list):
+                                    per_share_cond = {
+                                        s: mask_2d[i, :].copy()
+                                        for i, s in enumerate(share_list)
+                                    }
+                                elif mask_2d.shape[0] == len(self.shares):
+                                    idx_by_share = {s: i for i, s in enumerate(self.shares)}
+                                    per_share_cond = {
+                                        s: mask_2d[idx_by_share[s], :].copy()
+                                        for s in share_list
+                                    }
+                                else:
+                                    raise ValueError(
+                                        f'highlight condition mask shape {mask_2d.shape} cannot be aligned. '
+                                        f'Expected (M_plot={len(share_list)}, L={L_full}) for current plot shares '
+                                        f'or (M_all={len(self.shares)}, L={L_full}) for full panel shares.'
+                                    )
+                            elif cond.ndim != 1:
+                                raise ValueError(
+                                    f'highlight condition mask must be 1D or 2D bool ndarray, got ndim={cond.ndim}.'
+                                )
+                        if per_share_cond is not None:
+                            # 当前 spec 对应一组 shares：overlay 为 2 个 share，stack 为 1 个 share
+                            # 将每个 share 的一维 mask 传入渲染层；渲染层会自行处理 max/min/1D mask。
+                            base_hl = dict(base_hl)
+                            # 将本组 share 的 mask 聚合为 (M_group,L) 或 (1,L)，供后续按 share 顺序使用
+                            grp_masks = [per_share_cond[s] for s in grp if s in per_share_cond]
+                            if not grp_masks:
+                                # 理论上不应发生：grp 来自 share_list
+                                raise ValueError('Internal error: cannot map highlight mask to current plot shares.')
+                            base_hl['condition'] = np.vstack(grp_masks) if len(grp_masks) > 1 else grp_masks[0]
+                            if style is not None:
+                                base_hl['style'] = style
+                    spec['highlight'] = base_hl
                 row.append(spec)
             kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
             vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)
