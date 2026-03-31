@@ -2364,6 +2364,513 @@ class TestHistoryPanelIntegration(unittest.TestCase):
         self.assertEqual(list(pattern_df.index), list(pd.to_datetime(hdates)))
 
 
+class TestHistoryPanelPhase9CrossSection(unittest.TestCase):
+    """阶段九：横截面 rank / zscore。"""
+
+    def test_rank_basic_two_shares_two_dates(self):
+        """rank 基本功能：逐日截面排名。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank basic two shares two dates')
+        values = np.array(
+                [
+                    [[1.0], [2.0]],  # s1
+                    [[2.0], [1.0]],  # s2
+                ]
+        )
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01', '2023-01-02'], columns=['close'])
+        out = hp.rank(by='close')
+        print('  hp.htypes:', hp.htypes)
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertIsNot(out, hp)
+        self.assertEqual(hp.htypes, ['close'])
+        self.assertEqual(out.htypes, ['close', 'rank_close'])
+        self.assertEqual(out.shares, ['s1', 's2'])
+        self.assertEqual(out.hdates, list(pd.to_datetime(['2023-01-01', '2023-01-02'])))
+        rank_idx = out.htypes.index('rank_close')
+        # day1: s1=1.0 -> 1, s2=2.0 -> 2
+        self.assertAlmostEqual(out.values[0, 0, rank_idx], 1.0)
+        self.assertAlmostEqual(out.values[1, 0, rank_idx], 2.0)
+        # day2: s1=2.0 -> 2, s2=1.0 -> 1
+        self.assertAlmostEqual(out.values[0, 1, rank_idx], 2.0)
+        self.assertAlmostEqual(out.values[1, 1, rank_idx], 1.0)
+
+    def test_rank_method_min_average_dense_first(self):
+        """rank method 与 pandas 语义对齐（含并列）。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank method min/average/dense/first')
+        # 单日含并列值：s1=10, s2=10, s3=20
+        values = np.array([[[10.0]], [[10.0]], [[20.0]]])
+        hp = HistoryPanel(values=values, levels=['s1', 's2', 's3'], rows=['2023-01-01'], columns=['x'])
+        vec = pd.Series([10.0, 10.0, 20.0], index=['s1', 's2', 's3'])
+        for method in ('average', 'min', 'dense', 'first'):
+            out = hp.rank(by='x', method=method)
+            got = out.values[:, 0, out.htypes.index('rank_x')]
+            exp = vec.rank(method=method, na_option='keep').values.astype(float)
+            print('  method:', method, 'expected:', exp, 'got:', got)
+            self.assertTrue(np.allclose(got, exp, equal_nan=True))
+
+    def test_rank_by_resolve_price_htype_supports_adj_suffix(self):
+        """rank(by='close') 可解析 close|b 等复权列。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank resolves adj suffix')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0]],
+                    [[3.0], [2.0], [1.0]],
+                ]
+        )
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close|b'])
+        out = hp.rank(by='close')
+        print('  out.htypes:', out.htypes)
+        self.assertIn('rank_close', out.htypes)
+        rank_idx = out.htypes.index('rank_close')
+        # day1: [1,3] -> [1,2]
+        self.assertAlmostEqual(out.values[0, 0, rank_idx], 1.0)
+        self.assertAlmostEqual(out.values[1, 0, rank_idx], 2.0)
+
+    def test_rank_all_nan_cross_section_kept_nan(self):
+        """rank：某日截面全 NaN 时输出全 NaN。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank all NaN cross-section -> NaN')
+        values = np.array([[[np.nan]], [[np.nan]]])
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01'], columns=['x'])
+        out = hp.rank(by='x')
+        got = out.values[:, 0, out.htypes.index('rank_x')]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got).all())
+
+    def test_rank_axis_not_share_raises(self):
+        """rank axis 仅支持 share。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank axis not share raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.rank(by='x', axis='date')
+
+    def test_rank_unknown_method_raises(self):
+        """rank method 非法应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank unknown method raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.rank(by='x', method='foo')
+
+    def test_rank_new_htype_conflict_raises(self):
+        """rank new_htype 冲突应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank new_htype conflict raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.rank(by='x', new_htype='x')
+
+    def test_rank_empty_panel_returns_empty_panel(self):
+        """空面板上 rank 返回空面板。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] rank empty panel returns empty panel')
+        hp = HistoryPanel()
+        out = hp.rank(by='close')
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertTrue(out.is_empty)
+
+    def test_zscore_cs_basic_known_values(self):
+        """zscore(method='cs') 基本功能：逐日横截面标准化。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs basic known values')
+        # day1: [1,3] mean=2 std(ddof=1)=sqrt(2) => [-0.7071, 0.7071]
+        values = np.array(
+                [
+                    [[1.0], [2.0]],  # s1
+                    [[3.0], [4.0]],  # s2
+                ]
+        )
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        out = hp.zscore(by='x', method='cs')
+        zi = out.htypes.index('cs_z_x')
+        print('  out.htypes:', out.htypes)
+        self.assertIn('cs_z_x', out.htypes)
+        self.assertAlmostEqual(out.values[0, 0, zi], -1.0 / np.sqrt(2.0), places=6)
+        self.assertAlmostEqual(out.values[1, 0, zi], 1.0 / np.sqrt(2.0), places=6)
+        self.assertAlmostEqual(out.values[0, 1, zi], -1.0 / np.sqrt(2.0), places=6)
+        self.assertAlmostEqual(out.values[1, 1, zi], 1.0 / np.sqrt(2.0), places=6)
+
+    def test_zscore_cs_by_resolve_price_htype_supports_adj_suffix(self):
+        """zscore cs 可解析 close|b 等复权列。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs resolves adj suffix')
+        values = np.array([[[1.0]], [[3.0]]])
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01'], columns=['close|b'])
+        out = hp.zscore(by='close', method='cs')
+        print('  out.htypes:', out.htypes)
+        self.assertIn('cs_z_close', out.htypes)
+
+    def test_zscore_cs_sigma_zero_outputs_all_nan(self):
+        """zscore cs：σ=0 时输出全 NaN。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs sigma zero -> NaN')
+        values = np.array([[[1.0]], [[1.0]]])
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01'], columns=['x'])
+        out = hp.zscore(by='x', method='cs')
+        got = out.values[:, 0, out.htypes.index('cs_z_x')]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got).all())
+
+    def test_zscore_cs_all_nan_cross_section_outputs_all_nan(self):
+        """zscore cs：某日截面全 NaN 时输出全 NaN。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs all NaN cross-section -> NaN')
+        values = np.array([[[np.nan]], [[np.nan]]])
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01'], columns=['x'])
+        out = hp.zscore(by='x', method='cs')
+        got = out.values[:, 0, out.htypes.index('cs_z_x')]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got).all())
+
+    def test_zscore_cs_new_htype_conflict_raises(self):
+        """zscore cs new_htype 冲突应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs new_htype conflict raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.zscore(by='x', method='cs', new_htype='x')
+
+    def test_zscore_ts_window_2_basic_sequence(self):
+        """zscore(method='ts') window=2 基本序列。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts window=2 basic sequence')
+        values = np.array([[[1.0], [2.0], [3.0]]])
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        out = hp.zscore(by='x', method='ts', window=2)
+        zi = out.htypes.index('ts_z_x_2')
+        got = out.values[0, :, zi]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got[0]))
+        self.assertAlmostEqual(got[1], 1.0 / np.sqrt(2.0), places=6)
+        self.assertAlmostEqual(got[2], 1.0 / np.sqrt(2.0), places=6)
+
+    def test_zscore_ts_multi_shares_independent(self):
+        """zscore ts：每个 share 独立滚动。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts multi shares independent')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0]],     # s1
+                    [[10.0], [10.0], [12.0]],  # s2
+                ]
+        )
+        hp = HistoryPanel(values=values, levels=['s1', 's2'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        out = hp.zscore(by='x', method='ts', window=2)
+        zi = out.htypes.index('ts_z_x_2')
+        got_s1 = out.values[0, :, zi]
+        got_s2 = out.values[1, :, zi]
+        print('  got_s1:', got_s1)
+        print('  got_s2:', got_s2)
+        self.assertTrue(np.isnan(got_s1[0]) and np.isnan(got_s2[0]))
+        # s1: [1,2] -> z at t2 = 0.7071
+        self.assertAlmostEqual(got_s1[1], 1.0 / np.sqrt(2.0), places=6)
+        # s2: [10,10] std=0 -> NaN
+        self.assertTrue(np.isnan(got_s2[1]))
+
+    def test_zscore_ts_handles_nan_inside_window(self):
+        """zscore ts：窗口内有 NaN 且 min_periods=window 时输出 NaN。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts NaN inside window')
+        values = np.array([[[1.0], [np.nan], [3.0]]])
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        out = hp.zscore(by='x', method='ts', window=2)
+        got = out.values[0, :, out.htypes.index('ts_z_x_2')]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got[0]))
+        self.assertTrue(np.isnan(got[1]))
+        self.assertTrue(np.isnan(got[2]))
+
+    def test_zscore_ts_window_invalid_raises(self):
+        """zscore ts window 非法应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts invalid window raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        for w in (0, -1, 1.5):
+            with self.subTest(window=w):
+                with self.assertRaises(ValueError):
+                    _ = hp.zscore(by='x', method='ts', window=w)
+
+    def test_zscore_ts_sigma_zero_outputs_nan(self):
+        """zscore ts：滚动 std=0 时输出 NaN。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts sigma zero -> NaN')
+        values = np.array([[[10.0], [10.0], [10.0]]])
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        out = hp.zscore(by='x', method='ts', window=2)
+        got = out.values[0, :, out.htypes.index('ts_z_x_2')]
+        print('  got:', got)
+        self.assertTrue(np.isnan(got[0]))
+        self.assertTrue(np.isnan(got[1]))
+        self.assertTrue(np.isnan(got[2]))
+
+    def test_zscore_ts_empty_panel_returns_empty_panel(self):
+        """空面板上 zscore ts 返回空面板。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts empty panel returns empty panel')
+        hp = HistoryPanel()
+        out = hp.zscore(by='close', method='ts', window=2)
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertTrue(out.is_empty)
+
+    def test_zscore_unknown_method_raises(self):
+        """zscore method 非法应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore unknown method raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.zscore(by='x', method='foo')
+
+    def test_zscore_cs_window_not_allowed_raises(self):
+        """zscore cs 不允许传 window。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore cs window not allowed raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.zscore(by='x', method='cs', window=2)
+
+    def test_zscore_ts_window_required_raises(self):
+        """zscore ts 必须提供 window。"""
+        print('\n[TestHistoryPanelPhase9CrossSection] zscore ts window required raises')
+        hp = HistoryPanel(values=np.ones((1, 2, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.zscore(by='x', method='ts', window=None)
+
+
+class TestHistoryPanelPhase10AlignResample(unittest.TestCase):
+    """阶段十：resample / align_to（防 silent 错行）。"""
+
+    def test_align_to_inner_aligns_dates_and_shares_by_label(self):
+        """align_to(inner)：按 shares/hdates 标签取交集并对齐数值。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to inner aligns shares+hdates by label')
+        hp1 = HistoryPanel(
+                values=np.array([[[1.0], [2.0]], [[3.0], [4.0]]]),
+                levels=['s1', 's2'],
+                rows=['2023-01-01', '2023-01-02'],
+                columns=['x'],
+        )
+        hp2 = HistoryPanel(
+                values=np.array([[[10.0], [11.0]], [[20.0], [21.0]]]),
+                levels=['s2', 's3'],
+                rows=['2023-01-02', '2023-01-03'],
+                columns=['x'],
+        )
+        a1, a2 = hp1.align_to(hp2, join='inner')
+        print('  a1.shares:', a1.shares, 'a1.hdates:', a1.hdates, 'a1.htypes:', a1.htypes)
+        print('  a2.shares:', a2.shares, 'a2.hdates:', a2.hdates, 'a2.htypes:', a2.htypes)
+        self.assertEqual(a1.shares, ['s2'])
+        self.assertEqual(a2.shares, ['s2'])
+        self.assertEqual(a1.hdates, list(pd.to_datetime(['2023-01-02'])))
+        self.assertEqual(a2.hdates, list(pd.to_datetime(['2023-01-02'])))
+        self.assertEqual(a1.htypes, ['x'])
+        self.assertEqual(a2.htypes, ['x'])
+        self.assertAlmostEqual(float(a1.values[0, 0, 0]), 4.0)    # hp1: s2, 2023-01-02
+        self.assertAlmostEqual(float(a2.values[0, 0, 0]), 10.0)   # hp2: s2, 2023-01-02
+
+    def test_align_to_outer_fills_missing_with_fill_value(self):
+        """align_to(outer)：按并集对齐，缺失格点用 fill_value 填充。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to outer fills missing with fill_value')
+        hp1 = HistoryPanel(
+                values=np.array([[[1.0], [2.0]], [[3.0], [4.0]]]),
+                levels=['s1', 's2'],
+                rows=['2023-01-01', '2023-01-02'],
+                columns=['x'],
+        )
+        hp2 = HistoryPanel(
+                values=np.array([[[10.0], [11.0]], [[20.0], [21.0]]]),
+                levels=['s2', 's3'],
+                rows=['2023-01-02', '2023-01-03'],
+                columns=['x'],
+        )
+        a1, a2 = hp1.align_to(hp2, join='outer', fill_value=-1.0)
+        print('  a1.shares:', a1.shares, 'a1.hdates:', a1.hdates)
+        print('  a2.shares:', a2.shares, 'a2.hdates:', a2.hdates)
+        self.assertEqual(a1.shares, ['s1', 's2', 's3'])
+        self.assertEqual(a2.shares, ['s1', 's2', 's3'])
+        self.assertEqual(a1.hdates, list(pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03'])))
+        self.assertEqual(a2.hdates, list(pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03'])))
+        # hp1 缺失 s3 全时段
+        s3_idx = a1.shares.index('s3')
+        self.assertTrue(np.allclose(a1.values[s3_idx, :, 0], np.array([-1.0, -1.0, -1.0])))
+        # hp2 缺失 s1 全时段
+        s1_idx = a2.shares.index('s1')
+        self.assertTrue(np.allclose(a2.values[s1_idx, :, 0], np.array([-1.0, -1.0, -1.0])))
+        # 特定原值仍在正确位置
+        s2_idx = a1.shares.index('s2')
+        d2_idx = a1.hdates.index(pd.Timestamp('2023-01-02'))
+        self.assertAlmostEqual(float(a1.values[s2_idx, d2_idx, 0]), 4.0)
+        self.assertAlmostEqual(float(a2.values[s2_idx, d2_idx, 0]), 10.0)
+
+    def test_align_to_preserves_htypes_and_order(self):
+        """align_to：对齐后 htypes 必须完全一致且顺序不变。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to preserves htypes and order')
+        hp1 = HistoryPanel(
+                values=np.array([[[1.0, 2.0]], [[3.0, 4.0]]]),
+                levels=['s1', 's2'],
+                rows=['2023-01-01'],
+                columns=['a', 'b'],
+        )
+        hp2 = HistoryPanel(
+                values=np.array([[[10.0, 20.0]], [[30.0, 40.0]]]),
+                levels=['s2', 's3'],
+                rows=['2023-01-01'],
+                columns=['a', 'b'],
+        )
+        a1, a2 = hp1.align_to(hp2, join='outer', fill_value=np.nan)
+        print('  a1.htypes:', a1.htypes, 'a2.htypes:', a2.htypes)
+        self.assertEqual(a1.htypes, ['a', 'b'])
+        self.assertEqual(a2.htypes, ['a', 'b'])
+        # hp1: s1 在 a/b 两列的原值应保留
+        s1_idx = a1.shares.index('s1')
+        self.assertAlmostEqual(float(a1.values[s1_idx, 0, 0]), 1.0)
+        self.assertAlmostEqual(float(a1.values[s1_idx, 0, 1]), 2.0)
+
+    def test_align_to_idempotent_when_axes_equal(self):
+        """align_to：当轴标签完全一致时应保持数值一致且返回新对象。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to idempotent when axes equal')
+        hp1 = HistoryPanel(values=np.arange(2 * 3 * 2, dtype=float).reshape(2, 3, 2),
+                           levels=['s1', 's2'],
+                           rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+                           columns=['a', 'b'])
+        hp2 = HistoryPanel(values=np.arange(2 * 3 * 2, dtype=float).reshape(2, 3, 2) + 100.0,
+                           levels=['s1', 's2'],
+                           rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+                           columns=['a', 'b'])
+        a1, a2 = hp1.align_to(hp2, join='inner')
+        self.assertIsNot(a1, hp1)
+        self.assertIsNot(a2, hp2)
+        self.assertTrue(np.allclose(a1.values, hp1.values))
+        self.assertTrue(np.allclose(a2.values, hp2.values))
+
+    def test_align_to_invalid_join_raises(self):
+        """align_to：join 非法应抛 ValueError（英文）。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to invalid join raises')
+        hp = HistoryPanel(values=np.ones((1, 1, 1)), levels=['s1'], rows=['2023-01-01'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.align_to(hp, join='left')
+        with self.assertRaises(ValueError):
+            _ = hp.align_to(hp, join='')
+
+    def test_align_to_other_not_historypanel_raises(self):
+        """align_to：other 非 HistoryPanel 应抛 TypeError（英文）。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to other not HistoryPanel raises')
+        hp = HistoryPanel(values=np.ones((1, 1, 1)), levels=['s1'], rows=['2023-01-01'], columns=['x'])
+        with self.assertRaises(TypeError):
+            _ = hp.align_to(None)  # type: ignore
+        with self.assertRaises(TypeError):
+            _ = hp.align_to(np.ones((1, 1, 1)))  # type: ignore
+
+    def test_align_to_htypes_mismatch_raises(self):
+        """align_to：htypes 不一致应抛 ValueError（英文）。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to htypes mismatch raises')
+        hp1 = HistoryPanel(values=np.ones((1, 1, 1)), levels=['s1'], rows=['2023-01-01'], columns=['a'])
+        hp2 = HistoryPanel(values=np.ones((1, 1, 1)), levels=['s1'], rows=['2023-01-01'], columns=['b'])
+        with self.assertRaises(ValueError):
+            _ = hp1.align_to(hp2)
+
+    def test_align_to_empty_panels(self):
+        """align_to：空面板与非空面板的 inner/outer 行为。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] align_to empty panels behavior')
+        hp_empty = HistoryPanel()
+        hp = HistoryPanel(values=np.array([[[1.0], [2.0]]]),
+                          levels=['s1'],
+                          rows=['2023-01-01', '2023-01-02'],
+                          columns=['x'])
+        a1, a2 = hp_empty.align_to(hp, join='inner')
+        self.assertTrue(a1.is_empty)
+        self.assertTrue(a2.is_empty)
+        b1, b2 = hp_empty.align_to(hp, join='outer', fill_value=0.0)
+        print('  b1.shape:', b1.shape, 'b2.shape:', b2.shape)
+        self.assertEqual(b1.shares, ['s1'])
+        self.assertEqual(b1.htypes, ['x'])
+        self.assertEqual(b1.hdates, list(pd.to_datetime(['2023-01-01', '2023-01-02'])))
+        self.assertTrue(np.allclose(b1.values[:, :, :], 0.0))
+        self.assertTrue(np.allclose(b2.values, hp.values))
+
+    def test_resample_requires_agg_by_default(self):
+        """resample：agg=None 时必须抛 ValueError（英文）。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample requires agg by default')
+        hp = HistoryPanel(values=np.ones((1, 3, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.resample('W')
+
+    def test_resample_simple_last_on_single_column(self):
+        """resample：单列 last 聚合应正确。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample last on single column')
+        idx = pd.date_range('2023-01-01', periods=10, freq='D')
+        vals = np.arange(10, dtype=float).reshape(1, 10, 1)
+        hp = HistoryPanel(values=vals, levels=['s1'], rows=idx, columns=['x'])
+        out = hp.resample('W', agg={'x': 'last'})
+        print('  out.hdates:', out.hdates)
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertEqual(out.shares, ['s1'])
+        self.assertEqual(out.htypes, ['x'])
+        # W 周频：默认周日为 period end，包含末尾不完整周 => 2023-01-01, 2023-01-08, 2023-01-15
+        self.assertEqual(out.hdates, list(pd.to_datetime(['2023-01-01', '2023-01-08', '2023-01-15'])))
+        self.assertAlmostEqual(float(out.values[0, 0, 0]), 0.0)
+        self.assertAlmostEqual(float(out.values[0, 1, 0]), 7.0)
+        self.assertAlmostEqual(float(out.values[0, 2, 0]), 9.0)
+
+    def test_resample_ohlc_like_rules_explicit(self):
+        """resample：OHLCV 显式规则应正确。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample explicit ohlcv rules')
+        idx = pd.date_range('2023-01-01', periods=10, freq='D')
+        # 便于手算：open=0..9, high=open+10, low=open-1, close=open+1, vol=1
+        open_ = np.arange(10, dtype=float)
+        high_ = open_ + 10.0
+        low_ = open_ - 1.0
+        close_ = open_ + 1.0
+        vol_ = np.ones(10, dtype=float)
+        mat = np.stack([open_, high_, low_, close_, vol_], axis=1).reshape(1, 10, 5)
+        hp = HistoryPanel(values=mat, levels=['s1'], rows=idx, columns=['open', 'high', 'low', 'close', 'vol'])
+        out = hp.resample('W', agg={'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'vol': 'sum'})
+        print('  out.hdates:', out.hdates)
+        oi = {k: out.htypes.index(k) for k in out.htypes}
+        # week1 end 2023-01-01 only one day
+        self.assertAlmostEqual(float(out.values[0, 0, oi['open']]), 0.0)
+        self.assertAlmostEqual(float(out.values[0, 0, oi['high']]), 10.0)
+        self.assertAlmostEqual(float(out.values[0, 0, oi['low']]), -1.0)
+        self.assertAlmostEqual(float(out.values[0, 0, oi['close']]), 1.0)
+        self.assertAlmostEqual(float(out.values[0, 0, oi['vol']]), 1.0)
+        # week2 end 2023-01-08 covers days 2023-01-02..2023-01-08 => open first=1, high max=17, low min=0, close last=8, vol sum=7
+        self.assertAlmostEqual(float(out.values[0, 1, oi['open']]), 1.0)
+        self.assertAlmostEqual(float(out.values[0, 1, oi['high']]), 17.0)
+        self.assertAlmostEqual(float(out.values[0, 1, oi['low']]), 0.0)
+        self.assertAlmostEqual(float(out.values[0, 1, oi['close']]), 8.0)
+        self.assertAlmostEqual(float(out.values[0, 1, oi['vol']]), 7.0)
+
+    def test_resample_multiple_shares_independent(self):
+        """resample：多 share 聚合互不污染。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample multiple shares independent')
+        idx = pd.date_range('2023-01-01', periods=10, freq='D')
+        s1 = np.arange(10, dtype=float)
+        s2 = np.arange(10, dtype=float) + 100.0
+        vals = np.stack([s1, s2], axis=0).reshape(2, 10, 1)
+        hp = HistoryPanel(values=vals, levels=['s1', 's2'], rows=idx, columns=['x'])
+        out = hp.resample('W', agg={'x': 'last'})
+        print('  out.values:\n', out.values[:, :, 0])
+        self.assertAlmostEqual(float(out.values[0, 1, 0]), 7.0)
+        self.assertAlmostEqual(float(out.values[1, 1, 0]), 107.0)
+
+    def test_resample_empty_panel_returns_empty_panel(self):
+        """resample：空面板返回空面板。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample empty panel returns empty panel')
+        hp = HistoryPanel()
+        out = hp.resample('W', agg={'x': 'last'})
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertTrue(out.is_empty)
+
+    def test_resample_agg_contains_unknown_htype_raises(self):
+        """resample：agg 中包含不存在列名应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample agg unknown htype raises')
+        hp = HistoryPanel(values=np.ones((1, 3, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.resample('W', agg={'y': 'last'})
+
+    def test_resample_agg_missing_some_htypes_raises(self):
+        """resample：agg 未覆盖全部 htypes 应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample agg missing some htypes raises')
+        hp = HistoryPanel(values=np.ones((1, 3, 2)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['a', 'b'])
+        with self.assertRaises(ValueError):
+            _ = hp.resample('W', agg={'a': 'last'})
+
+    def test_resample_unknown_agg_method_raises(self):
+        """resample：未知聚合方法应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample unknown agg method raises')
+        hp = HistoryPanel(values=np.ones((1, 3, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.resample('W', agg={'x': 'foo'})
+
+    def test_resample_invalid_rule_raises(self):
+        """resample：非法 rule 应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase10AlignResample] resample invalid rule raises')
+        hp = HistoryPanel(values=np.ones((1, 3, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['x'])
+        with self.assertRaises(ValueError):
+            _ = hp.resample('', agg={'x': 'last'})
+
+
 class TestHistoryPanelPhase1Indexing(unittest.TestCase):
     """阶段一：__getitem__ 返回子 HistoryPanel、to_numpy、subpanel。"""
 
