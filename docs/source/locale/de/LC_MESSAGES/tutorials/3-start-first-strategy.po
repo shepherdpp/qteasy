@@ -71,8 +71,8 @@ msgstr ""
 "zum "
 
 #: ../../source/tutorials/3-start-first-strategy.md:20
-msgid "在[上一篇教程](2-get-data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
-msgstr "In [dem vorherigen Tutorial](2-get-data.md)"
+msgid "在[上一篇教程](2.0-get-data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
+msgstr "In [dem vorherigen Tutorial](2.0-get-data.md)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:22
 msgid "本节的目标"

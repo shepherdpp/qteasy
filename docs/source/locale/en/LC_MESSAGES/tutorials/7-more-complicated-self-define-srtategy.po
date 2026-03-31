@@ -68,8 +68,8 @@ msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
 msgstr "**Install and configure `qteasy`** —— [QTEASY教程1](1-get-started.md)"
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:25
-msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
-msgstr "**Set up a local data source**, and have downloaded enough historical data to the local ——[QTEASY教程2](2-get-data.md)"
+msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2.0-get-data.md)"
+msgstr "**Set up a local data source**, and have downloaded enough historical data to the local ——[QTEASY教程2](2.0-get-data.md)"
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:26
 msgid "**学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)"
