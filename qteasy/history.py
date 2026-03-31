@@ -960,6 +960,76 @@ class HistoryPanel():
         col = self._prepare_column_array_for_inplace(value)
         self._set_htype_column_inplace(key, col)
 
+    def assign(self, *, inplace: bool = False, **kwargs: Any) -> 'HistoryPanel':
+        """批量派生或更新列（htypes），支持多列一次性追加或覆盖。
+
+        ``assign()`` 提供类似 pandas 的列级 DSL：可以同时为多个新列命名，并通过
+        可调用对象或数组/标量在单次调用中完成派生；同一次调用中，后定义的列
+        可以依赖前面刚新增的列。该方法既支持返回新面板，也支持在原面板上原地
+        扩列/覆盖。
+
+        Parameters
+        ----------
+        inplace : bool, default False
+            为 ``True`` 时在当前 ``HistoryPanel`` 上原地追加/覆盖列并返回自身；
+            为 ``False`` 时在当前数据的拷贝上追加/覆盖列并返回新 ``HistoryPanel``。
+        **kwargs
+            每个关键字参数的键为新列名（htype），必须为非空字符串；值可以是
+            ``Callable[[HistoryPanel], np.ndarray]``，也可以是可被 ``np.asarray``
+            且可广播到 ``(M, L)`` 的数组/标量。
+
+        Returns
+        -------
+        HistoryPanel
+            当 ``inplace=False`` 时返回新增列后的新面板；``inplace=True`` 时返回原面板。
+
+        Raises
+        ------
+        ValueError
+            面板为空、列名为空字符串，或可调用对象/数组返回的结果无法广播到
+            ``(M, L)`` 时抛出（英文信息）。
+        TypeError
+            列名不是字符串时抛出（英文信息）。
+        """
+        if not kwargs:
+            return self
+        if self.is_empty:
+            raise ValueError('Cannot assign columns to an empty HistoryPanel.')
+        if inplace:
+            target = self
+        else:
+            target = HistoryPanel(
+                values=np.array(self.values, copy=True),
+                levels=list(self.shares),
+                rows=list(self.hdates),
+                columns=list(self.htypes),
+            )
+        M, L, _ = target.shape
+        for name, spec in kwargs.items():
+            if not isinstance(name, str):
+                raise TypeError(
+                    'assign() only accepts str keys as column names; '
+                    f'got {type(name).__name__}.'
+                )
+            if not name:
+                raise ValueError('Column name for assign() must be a non-empty string.')
+            if callable(spec):
+                arr = spec(target)
+            else:
+                arr = spec
+            arr_np = np.asarray(arr, dtype=float)
+            try:
+                if arr_np.ndim == 0:
+                    arr_b = np.full((M, L), float(arr_np), dtype=float)
+                else:
+                    arr_b = np.broadcast_to(arr_np, (M, L))
+            except ValueError as e:
+                raise ValueError(
+                    f'Cannot broadcast assign() result for column \"{name}\" to shape (M={M}, L={L}): {e}'
+                )
+            target[name] = arr_b
+        return target
+
     def __str__(self):
         """打印HistoryPanel"""
         res = []

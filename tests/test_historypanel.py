@@ -2081,6 +2081,152 @@ class TestHistoryPanelPhase7ResearchPreset(unittest.TestCase):
         self.assertIn('vol', msg.lower())
 
 
+class TestHistoryPanelPhase8Assign(unittest.TestCase):
+    """阶段八：列级 DSL assign。"""
+
+    def test_assign_inplace_false_returns_new_panel(self):
+        """inplace=False 返回新面板，不污染原面板。"""
+        print('\n[TestHistoryPanelPhase8Assign] inplace=False returns new panel')
+        values = np.array(
+                [
+                    [[1.0, 2.0], [2.0, 3.0], [3.0, 4.0], [4.0, 5.0], [5.0, 6.0]],
+                    [[10.0, 9.0], [11.0, 10.0], [12.0, 11.0], [13.0, 12.0], [14.0, 13.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close', 'open']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        hp2 = hp.assign(spread=lambda p: p['close'].values[:, :, 0] - p['open'].values[:, :, 0])
+        print('  hp.htypes:', hp.htypes)
+        print('  hp2.htypes:', hp2.htypes)
+        print('  spread first row:', hp2.values[0, :, hp2.htypes.index('spread')])
+
+        self.assertIsInstance(hp2, HistoryPanel)
+        self.assertIsNot(hp2, hp)
+        self.assertEqual(hp.htypes, ['close', 'open'])
+        self.assertIn('spread', hp2.htypes)
+        # s1: close-open = [-1,-1,-1,-1,-1]
+        spread_row0 = hp2.values[0, :, hp2.htypes.index('spread')]
+        self.assertTrue(np.allclose(spread_row0, [-1.0] * 5))
+
+    def test_assign_inplace_true_mutates_and_returns_self(self):
+        """inplace=True 原地扩列并返回原面板。"""
+        print('\n[TestHistoryPanelPhase8Assign] inplace=True mutates and returns self')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret = hp.assign(inplace=True, const=1.5)
+        print('  ret is hp:', ret is hp)
+        print('  hp.htypes:', hp.htypes)
+        self.assertIs(ret, hp)
+        self.assertIn('const', hp.htypes)
+        const_arr = hp.values[0, :, hp.htypes.index('const')]
+        self.assertTrue(np.allclose(const_arr, [1.5] * 5))
+
+    def test_assign_accepts_scalar_and_ml_array(self):
+        """标量与 (1,L) 数组可广播到 (M,L)。"""
+        print('\n[TestHistoryPanelPhase8Assign] scalar and (1,L) array broadcast')
+        M, L = 2, 5
+        values = np.zeros((M, L, 1), dtype=float)
+        hp = HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'],
+            columns=['close'],
+        )
+        hp2 = hp.assign(const=1.5, tag=np.arange(L, dtype=float).reshape(1, L))
+        print('  hp2.htypes:', hp2.htypes)
+        const_arr = hp2.values[0, :, hp2.htypes.index('const')]
+        tag_arr0 = hp2.values[0, :, hp2.htypes.index('tag')]
+        tag_arr1 = hp2.values[1, :, hp2.htypes.index('tag')]
+        print('  const row0:', const_arr)
+        print('  tag row0:', tag_arr0)
+        print('  tag row1:', tag_arr1)
+        self.assertTrue(np.allclose(const_arr, [1.5] * L))
+        self.assertTrue(np.allclose(tag_arr0, np.arange(L)))
+        self.assertTrue(np.allclose(tag_arr1, np.arange(L)))
+
+    def test_assign_allows_dependency_on_new_columns_in_same_call(self):
+        """同一次 assign 内，后定义列可依赖前面新增列。"""
+        print('\n[TestHistoryPanelPhase8Assign] dependency within same assign call')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        hp2 = hp.assign(
+            a=lambda p: p['close'].values[:, :, 0] + 1.0,
+            b=lambda p: p['a'].values[:, :, 0] * 2.0,
+        )
+        print('  hp2.htypes:', hp2.htypes)
+        a_arr = hp2.values[0, :, hp2.htypes.index('a')]
+        b_arr = hp2.values[0, :, hp2.htypes.index('b')]
+        print('  a:', a_arr, 'b:', b_arr)
+        self.assertTrue(np.allclose(a_arr, np.array([2.0, 3.0, 4.0, 5.0])))
+        self.assertTrue(np.allclose(b_arr, 2.0 * a_arr))
+
+    def test_assign_overwrites_existing_column(self):
+        """同名列应覆盖，而非报错。"""
+        print('\n[TestHistoryPanelPhase8Assign] overwrite existing column')
+        values = np.zeros((1, 4, 1), dtype=float)
+        hp = HistoryPanel(
+            values=values,
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['x'],
+        )
+        hp2 = hp.assign(x=lambda p: np.arange(4, dtype=float).reshape(1, 4))
+        hp3 = hp2.assign(x=0.0)
+        print('  hp2.x:', hp2.values[0, :, hp2.htypes.index('x')])
+        print('  hp3.x:', hp3.values[0, :, hp3.htypes.index('x')])
+        self.assertTrue(np.allclose(hp3.values[0, :, hp3.htypes.index('x')], [0.0] * 4))
+
+    def test_assign_invalid_key_raises(self):
+        """非法列名应抛英文错误。"""
+        print('\n[TestHistoryPanelPhase8Assign] invalid key raises')
+        values = np.zeros((1, 3, 1), dtype=float)
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close'])
+        with self.assertRaises(Exception) as cm:
+            hp.assign(**{'': np.ones((1, 3))})
+        msg = str(cm.exception)
+        print('  error message:', msg)
+        self.assertTrue('name' in msg.lower() or 'key' in msg.lower())
+
+    def test_assign_callable_returns_bad_shape_raises(self):
+        """callable 返回形状与 (M,L) 不兼容时抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase8Assign] bad callable shape raises')
+        values = np.zeros((1, 3, 1), dtype=float)
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close'])
+
+        def _bad(p: HistoryPanel) -> np.ndarray:
+            return np.zeros((2, 2), dtype=float)
+
+        with self.assertRaises(ValueError) as cm:
+            hp.assign(bad=_bad)
+        print('  error message:', cm.exception)
+
+    def test_assign_on_empty_panel_raises(self):
+        """空面板上 assign 应抛 ValueError。"""
+        print('\n[TestHistoryPanelPhase8Assign] empty panel raises')
+        hp = HistoryPanel()
+        with self.assertRaises(ValueError) as cm:
+            hp.assign(new_col=1.0)
+        print('  error message:', cm.exception)
+
 class TestHistoryPanelTAApplyAndPatterns(unittest.TestCase):
     """ 测试 HistoryPanel.apply_ta 与 candle_pattern。"""
 
