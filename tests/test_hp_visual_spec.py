@@ -529,6 +529,53 @@ class TestPlotOrchestrator(unittest.TestCase):
         print('  n_axes:', len(fig.axes))
 
 
+class TestPhase7PlotPaging(unittest.TestCase):
+    """Phase7：plot 多标的分页（不再静默只画前 5 个）。"""
+
+    def test_phase7_plot_paging_stack_titles_match_selected_shares(self):
+        print('\n[Phase7] plot paging: stack titles match selected shares')
+        hp = _make_hp(['close'], n_shares=7, n_dates=20)
+        # page=1 -> S000,S001,S002
+        fig1 = hp.plot(layout='stack', max_shares_per_figure=3, page=1)
+        titles1 = [ax.get_title() for ax in fig1.axes]
+        print('  titles page1:', titles1)
+        self.assertEqual(len(titles1), 3)
+        self.assertTrue(all(t.startswith('S000') or t.startswith('S001') or t.startswith('S002') for t in titles1))
+        self.assertTrue(titles1[0].startswith('S000'))
+        self.assertTrue(titles1[1].startswith('S001'))
+        self.assertTrue(titles1[2].startswith('S002'))
+
+        # page=2 -> S003,S004,S005
+        fig2 = hp.plot(layout='stack', max_shares_per_figure=3, page=2)
+        titles2 = [ax.get_title() for ax in fig2.axes]
+        print('  titles page2:', titles2)
+        self.assertEqual(len(titles2), 3)
+        self.assertTrue(titles2[0].startswith('S003'))
+        self.assertTrue(titles2[1].startswith('S004'))
+        self.assertTrue(titles2[2].startswith('S005'))
+
+        # page=3 -> S006
+        fig3 = hp.plot(layout='stack', max_shares_per_figure=3, page=3)
+        titles3 = [ax.get_title() for ax in fig3.axes]
+        print('  titles page3:', titles3)
+        self.assertEqual(len(titles3), 1)
+        self.assertTrue(titles3[0].startswith('S006'))
+
+    def test_phase7_plot_paging_page_out_of_range_raises(self):
+        print('\n[Phase7] plot paging: page out of range raises')
+        hp = _make_hp(['close'], n_shares=7, n_dates=20)
+        with self.assertRaises(ValueError) as cm:
+            hp.plot(layout='stack', max_shares_per_figure=3, page=4)
+        print('  error:', cm.exception)
+        self.assertIn('page', str(cm.exception).lower())
+
+    def test_phase7_plot_paging_invalid_max_shares_raises(self):
+        print('\n[Phase7] plot paging: invalid max_shares_per_figure raises')
+        hp = _make_hp(['close'], n_shares=2, n_dates=10)
+        with self.assertRaises(ValueError):
+            hp.plot(layout='stack', max_shares_per_figure=0, page=1)
+
+
 class TestHighlight(unittest.TestCase):
     """Phase 4：highlight 子模块 — condition + style，接入 hp.plot(..., highlight=...). 对应计划 8.7."""
 

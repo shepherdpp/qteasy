@@ -1877,6 +1877,210 @@ class TestHistoryPanelKlineIndicators(unittest.TestCase):
         self.assertFalse(np.all(np.isnan(out.values[0, :, 1])))
 
 
+class TestHistoryPanelPhase6KlineInplace(unittest.TestCase):
+    """阶段六：kline 访问器增加 inplace 参数。"""
+
+    def test_kline_sma_inplace_false_does_not_mutate(self):
+        """inplace=False 返回新面板，不污染原面板。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] sma inplace=False does not mutate')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                    [[10.0], [11.0], [12.0], [13.0], [14.0]],
+                ]
+        )
+        shares = ['s1', 's2']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        out = hp.kline.sma(window=2, price_htype='close', inplace=False)
+        print('  hp.htypes:', hp.htypes)
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertIsNot(out, hp)
+        self.assertEqual(hp.htypes, ['close'])
+        self.assertEqual(out.htypes, ['close', 'sma_2'])
+        self.assertEqual(out.shape, (2, 5, 2))
+        # 功能性断言：s1 close: [1,2,3,4,5]，sma(2): [nan,1.5,2.5,3.5,4.5]
+        self.assertTrue(np.isnan(out.values[0, 0, 1]))
+        self.assertAlmostEqual(out.values[0, 1, 1], 1.5)
+        self.assertAlmostEqual(out.values[0, 2, 1], 2.5)
+
+    def test_kline_sma_inplace_true_mutates_and_returns_self(self):
+        """inplace=True 原地扩列并返回绑定的 HistoryPanel。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] sma inplace=True mutates and returns self')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        ret = hp.kline.sma(window=2, price_htype='close', inplace=True)
+        print('  ret is hp:', ret is hp)
+        print('  hp.htypes:', hp.htypes, 'shape:', hp.shape)
+
+        self.assertIs(ret, hp)
+        self.assertEqual(hp.htypes, ['close', 'sma_2'])
+        # 关键数值点
+        sma_idx = hp.htypes.index('sma_2')
+        self.assertTrue(np.isnan(hp.values[0, 0, sma_idx]))
+        self.assertAlmostEqual(hp.values[0, 1, sma_idx], 1.5)
+
+    def test_kline_chain_inplace(self):
+        """连续 inplace 扩列可链式调用。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] chain inplace')
+        values = np.array(
+                [
+                    [[1.0], [2.0], [3.0], [4.0], [5.0], [6.0]],
+                ]
+        )
+        shares = ['s1']
+        hdates = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05', '2023-01-06']
+        htypes = ['close']
+        hp = HistoryPanel(values=values, levels=shares, rows=hdates, columns=htypes)
+
+        hp2 = hp.kline.sma(window=2, inplace=True).kline.ema(span=2, inplace=True)
+        print('  hp2 is hp:', hp2 is hp)
+        print('  hp.htypes:', hp.htypes)
+
+        self.assertIs(hp2, hp)
+        self.assertIn('sma_2', hp.htypes)
+        self.assertIn('ema_2', hp.htypes)
+
+    def test_kline_inplace_new_htype_conflict_raises(self):
+        """new_htype 冲突时应抛出 ValueError。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] new_htype conflict raises')
+        values = np.ones((1, 5, 1), dtype=float)
+        hp = HistoryPanel(values=values, levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05'], columns=['close'])
+        with self.assertRaises(ValueError):
+            hp.kline.sma(window=2, price_htype='close', new_htype='close', inplace=True)
+
+    def test_kline_inplace_empty_panel_raises(self):
+        """空面板上 kline 指标应抛出 ValueError（不返回空面板）。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] empty panel raises')
+        hp = HistoryPanel()
+        with self.assertRaises(ValueError):
+            hp.kline.sma(window=2, price_htype='close', inplace=False)
+
+    def test_kline_macd_inplace_true_adds_three_columns_and_hist_relation(self):
+        """macd(inplace=True) 原地追加三列，且 hist ≈ macd - signal。"""
+        print('\n[TestHistoryPanelPhase6KlineInplace] macd inplace=True adds columns and relation holds')
+        # 构造一条足够长的序列，避免全 NaN
+        close = np.linspace(10.0, 20.0, 60, dtype=float)
+        values = close.reshape(1, -1, 1)
+        hp = HistoryPanel(
+            values=values,
+            levels=['s1'],
+            rows=pd.date_range('2023-01-01', periods=60),
+            columns=['close'],
+        )
+        ret = hp.kline.macd(inplace=True)
+        self.assertIs(ret, hp)
+        print('  htypes tail:', hp.htypes[-3:])
+
+        tag = '12_26_9'
+        n1, n2, n3 = f'macd_{tag}', f'macd_signal_{tag}', f'macd_hist_{tag}'
+        self.assertIn(n1, hp.htypes)
+        self.assertIn(n2, hp.htypes)
+        self.assertIn(n3, hp.htypes)
+
+        macd_arr = hp.values[0, :, hp.htypes.index(n1)]
+        sig_arr = hp.values[0, :, hp.htypes.index(n2)]
+        hist_arr = hp.values[0, :, hp.htypes.index(n3)]
+        diff = macd_arr - sig_arr
+        print('  macd/signal/hist first valid:', macd_arr[~np.isnan(macd_arr)][:3], sig_arr[~np.isnan(sig_arr)][:3], hist_arr[~np.isnan(hist_arr)][:3])
+        self.assertTrue(np.allclose(hist_arr, diff, equal_nan=True))
+
+
+class TestHistoryPanelPhase7ResearchPreset(unittest.TestCase):
+    """阶段七：research_preset 作为第一入口。"""
+
+    def test_research_preset_ohlcv_macd_ma_inplace_false_returns_new_panel(self):
+        """inplace=False 返回新面板，新增列集合正确且结果关系满足定义。"""
+        print('\n[TestHistoryPanelPhase7ResearchPreset] ohlcv_macd_ma inplace=False returns new panel')
+        n = 60
+        close = np.linspace(10.0, 20.0, n, dtype=float)
+        open_ = close - 0.2
+        high = close + 0.3
+        low = close - 0.5
+        vol = np.linspace(1000.0, 2000.0, n, dtype=float)
+        values = np.stack([open_, high, low, close, vol], axis=1).reshape(1, n, 5)
+        hp = HistoryPanel(
+            values=values,
+            levels=['s1'],
+            rows=pd.date_range('2023-01-01', periods=n),
+            columns=['open', 'high', 'low', 'close', 'vol'],
+        )
+
+        hp2 = hp.research_preset('ohlcv_macd_ma', inplace=False)
+        print('  hp.htypes:', hp.htypes)
+        print('  hp2.htypes tail:', hp2.htypes[-8:])
+
+        self.assertIsInstance(hp2, HistoryPanel)
+        self.assertIsNot(hp2, hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close', 'vol'])
+        # 至少包含：MACD 三列 + 一条均线列
+        self.assertIn('macd_12_26_9', hp2.htypes)
+        self.assertIn('macd_signal_12_26_9', hp2.htypes)
+        self.assertIn('macd_hist_12_26_9', hp2.htypes)
+        self.assertIn('sma_20', hp2.htypes)
+
+        # 关系断言：hist = macd - signal
+        macd_arr = hp2.values[0, :, hp2.htypes.index('macd_12_26_9')]
+        sig_arr = hp2.values[0, :, hp2.htypes.index('macd_signal_12_26_9')]
+        hist_arr = hp2.values[0, :, hp2.htypes.index('macd_hist_12_26_9')]
+        self.assertTrue(np.allclose(hist_arr, macd_arr - sig_arr, equal_nan=True))
+
+        # 数值正确性：sma_20 与 tafuncs.sma 对齐（抽检末端 5 点）
+        import qteasy.tafuncs as tafuncs
+        expected = np.asarray(tafuncs.sma(close, timeperiod=20)).ravel()
+        got = hp2.values[0, :, hp2.htypes.index('sma_20')]
+        print('  sma_20 last 5 expected/got:', expected[-5:], got[-5:])
+        self.assertTrue(np.allclose(got[-5:], expected[-5:], equal_nan=True))
+
+    def test_research_preset_inplace_true_mutates_and_returns_self(self):
+        """inplace=True 原地扩列并返回原面板。"""
+        print('\n[TestHistoryPanelPhase7ResearchPreset] inplace=True mutates and returns self')
+        n = 40
+        close = np.linspace(1.0, 2.0, n, dtype=float)
+        values = np.stack([close - 0.1, close + 0.2, close - 0.2, close, np.ones(n) * 1000.0], axis=1).reshape(1, n, 5)
+        hp = HistoryPanel(values=values, levels=['s1'], rows=pd.date_range('2023-01-01', periods=n), columns=['open', 'high', 'low', 'close', 'vol'])
+        ret = hp.research_preset('ohlcv_macd_ma', inplace=True)
+        print('  ret is hp:', ret is hp)
+        self.assertIs(ret, hp)
+        self.assertIn('macd_12_26_9', hp.htypes)
+        self.assertIn('sma_20', hp.htypes)
+
+    def test_research_preset_invalid_name_raises_and_lists_available(self):
+        """非法 preset 名应抛 ValueError，并提示可用 preset。"""
+        print('\n[TestHistoryPanelPhase7ResearchPreset] invalid preset name raises')
+        hp = HistoryPanel(values=np.ones((1, 3, 1)), levels=['s1'], rows=['2023-01-01', '2023-01-02', '2023-01-03'], columns=['close'])
+        with self.assertRaises(ValueError) as cm:
+            hp.research_preset('not_exists', inplace=False)
+        msg = str(cm.exception)
+        print('  error message:', msg)
+        self.assertIn('available', msg.lower())
+
+    def test_research_preset_missing_columns_gives_suggestion(self):
+        """缺列时应抛 ValueError，信息包含 missing 列与建议。"""
+        print('\n[TestHistoryPanelPhase7ResearchPreset] missing columns gives suggestion')
+        # 只有 close，无 open/high/low/vol
+        hp = HistoryPanel(values=np.ones((1, 10, 1)), levels=['s1'], rows=pd.date_range('2023-01-01', periods=10), columns=['close'])
+        with self.assertRaises(ValueError) as cm:
+            hp.research_preset('ohlcv_macd_ma', inplace=False)
+        msg = str(cm.exception)
+        print('  error message:', msg)
+        self.assertIn('missing', msg.lower())
+        self.assertIn('open', msg.lower())
+        self.assertIn('vol', msg.lower())
+
+
 class TestHistoryPanelTAApplyAndPatterns(unittest.TestCase):
     """ 测试 HistoryPanel.apply_ta 与 candle_pattern。"""
 

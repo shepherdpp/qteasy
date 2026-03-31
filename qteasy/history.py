@@ -3787,6 +3787,69 @@ class HistoryPanel():
             row_count = self.shape[1]
         return self.isegment(- row_count, None)
 
+    def research_preset(self, name: str, *, inplace: bool = False) -> 'HistoryPanel':
+        """按预设快速生成研究常用列集合，并返回结果面板。
+
+        该方法旨在作为 ``HistoryPanel`` 的“第一入口”：在不引入回测语义的前提下，
+        快速拼出 OHLCV + 常用技术指标列（如 MACD、均线）以便直接绘图或继续做研究。
+
+        Parameters
+        ----------
+        name : str
+            预设名称。目前支持：
+
+            - ``'ohlcv_macd_ma'``：要求面板至少包含 ``open/high/low/close/vol``，并生成
+              ``macd_12_26_9``、``macd_signal_12_26_9``、``macd_hist_12_26_9`` 与 ``sma_20``。
+        inplace : bool, default False
+            为 True 时在原面板上原地追加预设列并返回原面板；为 False 时返回新增列后的新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            追加预设列后的 ``HistoryPanel``。当 ``inplace=True`` 时返回原对象。
+
+        Raises
+        ------
+        ValueError
+            当预设名称非法，或缺少预设所需的输入列时抛出（错误信息为英文）。
+        """
+        presets = {
+            'ohlcv_macd_ma': {
+                'required': ['open', 'high', 'low', 'close', 'vol'],
+                'builder': self._research_preset_ohlcv_macd_ma,
+            },
+        }
+        if not isinstance(name, str) or not name:
+            raise ValueError('name must be a non-empty string')
+        if name not in presets:
+            available = ', '.join(sorted(presets.keys()))
+            raise ValueError(f'Unknown research preset "{name}". Available presets: {available}')
+        required = presets[name]['required']
+        missing = [c for c in required if c not in self.htypes]
+        if missing:
+            required_str = ', '.join(required)
+            missing_str = ', '.join(missing)
+            raise ValueError(
+                f'Research preset "{name}" requires htypes: {required_str}. '
+                f'Missing: {missing_str}. '
+                'Please load data with required htypes or add them via bracket assignment.'
+            )
+        hp = self if inplace else HistoryPanel(
+            values=np.array(self.values, copy=True),
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=list(self.htypes),
+        )
+        return presets[name]['builder'](hp)
+
+    @staticmethod
+    def _research_preset_ohlcv_macd_ma(hp: 'HistoryPanel') -> 'HistoryPanel':
+        """构建 ``ohlcv_macd_ma`` 预设（内部使用）。"""
+        # 只使用公开 API：kline 指标统一走 kline accessor，并使用 inplace=True 扩列
+        hp.kline.macd(inplace=True)
+        hp.kline.sma(window=20, price_htype='close', inplace=True)
+        return hp
+
     def plot(
         self,
         shares: Optional[Union[str, Iterable[str]]] = None,
@@ -3795,6 +3858,8 @@ class HistoryPanel():
         highlight: Optional[Any] = None,
         plotly_backend_app: str = 'auto',
         group_titles: Optional[Sequence[str]] = None,
+        max_shares_per_figure: int = 5,
+        page: int = 1,
         **kwargs,
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
@@ -3821,6 +3886,12 @@ class HistoryPanel():
             ``'auto'`` 优先 ``FigureWidget``，失败则回退 HTML 包装；``'FigureWidget'`` 强制
             Widget，失败抛错；``'html'`` 强制 HTML 包装，失败抛错。非 Notebook 脚本环境下
             ``'auto'`` 仍可能返回原始 ``Figure``。
+        max_shares_per_figure : int, default 5
+            单张图中最多展示的 share 数量。当请求 shares 数量超过该值时，会按页分割；
+            可通过 ``page`` 参数选择要展示的页码。
+        page : int, default 1
+            要展示的页码（1-based）。当 shares 数量超过 ``max_shares_per_figure`` 时，
+            ``page=1`` 为第 1 页，``page=2`` 为第 2 页，以此类推。
         **kwargs
             预留的扩展参数，当前版本中不使用。
 
@@ -3870,22 +3941,35 @@ class HistoryPanel():
         share_list = [s for s in share_list if s in self.shares]
         if not share_list:
             share_list = list(self.shares)
-        if len(share_list) > 5:
+        if not isinstance(max_shares_per_figure, int) or max_shares_per_figure <= 0:
+            raise ValueError('max_shares_per_figure must be a positive int')
+        if not isinstance(page, int) or page <= 0:
+            raise ValueError('page must be a positive int (1-based)')
+        total = len(share_list)
+        total_pages = int(np.ceil(total / float(max_shares_per_figure))) if total > 0 else 1
+        if page > total_pages:
+            raise ValueError(
+                f'page {page} is out of range (total_pages={total_pages}, '
+                f'max_shares_per_figure={max_shares_per_figure}, total_shares={total})'
+            )
+        if total > max_shares_per_figure:
             try:
                 from qteasy import logger_core
                 logger_core.warning(
-                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
-                    'only the first 5 will be displayed.'
+                    f'HistoryPanel.plot: {total} shares requested, '
+                    f'displaying page {page}/{total_pages} with max_shares_per_figure={max_shares_per_figure}.'
                 )
             except Exception:
                 import warnings
                 warnings.warn(
-                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
-                    'only the first 5 will be displayed.',
+                    f'HistoryPanel.plot: {total} shares requested, '
+                    f'displaying page {page}/{total_pages} with max_shares_per_figure={max_shares_per_figure}.',
                     UserWarning,
                     stacklevel=2,
                 )
-            share_list = share_list[:5]
+        start = (page - 1) * max_shares_per_figure
+        end = start + max_shares_per_figure
+        share_list = share_list[start:end]
         registry = get_chart_type_registry()
         types_info = registry.get_applicable_types(self.htypes)
         if not types_info:
@@ -4170,7 +4254,51 @@ class _HistoryPanelKlineAccessor:
         new_htypes = list(hp.htypes) + list(new_columns)
         return HistoryPanel(values=new_values, levels=hp.shares, rows=hp.hdates, columns=new_htypes)
 
-    def sma(self, window: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+    def _inplace_append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
+        """将派生列原地追加到绑定的 ``HistoryPanel`` 并返回该面板。
+
+        Parameters
+        ----------
+        new_columns : list of str
+            新增列名列表（对应新增的 htypes）。
+        new_arrays : list of numpy.ndarray
+            新增列数据列表。列表长度应与 ``new_columns`` 一致；每个数组形状必须为
+            ``(n_share, n_time)``。
+
+        Returns
+        -------
+        HistoryPanel
+            原地追加后的同一个 ``HistoryPanel`` 对象。
+
+        Raises
+        ------
+        ValueError
+            当绑定面板为空，或新增列名与现有 ``htypes`` 冲突时抛出。
+
+        Notes
+        -----
+        - 本方法用于实现 ``kline`` 的 ``inplace=True`` 语义：复用 ``HistoryPanel.__setitem__``
+          的扩列逻辑，避免维护第二套拼接路径。
+        - 原地追加会改变 ``self._hp`` 的 ``values`` 与 ``htypes``，请在文档中明确。
+        """
+        hp = self._hp
+        if hp.is_empty:
+            raise ValueError('Cannot apply kline indicator on an empty HistoryPanel')
+        for name in new_columns:
+            if name in hp.htypes:
+                raise ValueError(f'htype "{name}" already exists')
+        for name, arr in zip(new_columns, new_arrays):
+            hp[name] = arr
+        return hp
+
+    def sma(
+            self,
+            window: int = 20,
+            price_htype: str = 'close',
+            new_htype: Optional[str] = None,
+            *,
+            inplace: bool = False,
+    ) -> HistoryPanel:
         """计算简单移动平均（SMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
@@ -4182,10 +4310,13 @@ class _HistoryPanelKlineAccessor:
         new_htype : str, optional
             新增均线列名；为 None 时使用默认列名 ``'sma_{window}'``。
 
+        inplace : bool, default False
+            为 True 时在原面板上原地追加均线列并返回原面板；为 False 时返回追加列后的新面板。
+
         Returns
         -------
         HistoryPanel
-            追加均线列后的新 ``HistoryPanel``。
+            ``inplace=False`` 时返回追加均线列后的新 ``HistoryPanel``；``inplace=True`` 时返回原面板。
 
         Raises
         ------
@@ -4211,6 +4342,8 @@ class _HistoryPanelKlineAccessor:
         default_name = f'sma_{window}'
         if new_htype is None:
             new_htype = default_name
+        if self._hp.is_empty:
+            raise ValueError('Cannot apply SMA on an empty HistoryPanel')
         if new_htype in self._hp.htypes:
             raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
         prices = self._get_price(price_htype)
@@ -4218,9 +4351,18 @@ class _HistoryPanelKlineAccessor:
         out = np.full_like(prices, np.nan, dtype=float)
         for i in range(n_share):
             out[i, :] = tafuncs.sma(prices[i, :], timeperiod=window)
+        if inplace:
+            return self._inplace_append_htypes([new_htype], [out])
         return self._append_htypes([new_htype], [out])
 
-    def ema(self, span: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+    def ema(
+            self,
+            span: int = 20,
+            price_htype: str = 'close',
+            new_htype: Optional[str] = None,
+            *,
+            inplace: bool = False,
+    ) -> HistoryPanel:
         """计算指数移动平均（EMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
@@ -4232,10 +4374,13 @@ class _HistoryPanelKlineAccessor:
         new_htype : str, optional
             新增 EMA 列名；为 None 时使用默认列名 ``'ema_{span}'``。
 
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 EMA 列并返回原面板；为 False 时返回追加列后的新面板。
+
         Returns
         -------
         HistoryPanel
-            追加 EMA 列后的新 ``HistoryPanel``。
+            ``inplace=False`` 时返回追加 EMA 列后的新 ``HistoryPanel``；``inplace=True`` 时返回原面板。
 
         Raises
         ------
@@ -4246,6 +4391,8 @@ class _HistoryPanelKlineAccessor:
         default_name = f'ema_{span}'
         if new_htype is None:
             new_htype = default_name
+        if self._hp.is_empty:
+            raise ValueError('Cannot apply EMA on an empty HistoryPanel')
         if new_htype in self._hp.htypes:
             raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
         prices = self._get_price(price_htype)
@@ -4255,6 +4402,8 @@ class _HistoryPanelKlineAccessor:
             res = tafuncs.ema(prices[i, :], span=span)
             arr = np.atleast_1d(np.asarray(res, dtype=float)).ravel()
             out[i, :min(n_time, len(arr))] = arr[:n_time]
+        if inplace:
+            return self._inplace_append_htypes([new_htype], [out])
         return self._append_htypes([new_htype], [out])
 
     def bbands(
@@ -4265,6 +4414,8 @@ class _HistoryPanelKlineAccessor:
             nbdev_dn: float = 2.0,
             ma_type: str = 'sma',
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算布林带（Bollinger Bands）并追加上轨/中轨/下轨三列。
 
@@ -4282,6 +4433,9 @@ class _HistoryPanelKlineAccessor:
             中轨移动平均类型。当前实现会映射为底层 ``tafuncs`` 的 ``matype`` 参数。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加三条布林带曲线并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -4320,6 +4474,8 @@ class _HistoryPanelKlineAccessor:
             u[i, -L:] = uu[-L:]
             m[i, -L:] = mm[-L:]
             l[i, -L:] = ll[-L:]
+        if inplace:
+            return self._inplace_append_htypes([upper_name, middle_name, lower_name], [u, m, l])
         return self._append_htypes([upper_name, middle_name, lower_name], [u, m, l])
 
     def macd(
@@ -4329,6 +4485,8 @@ class _HistoryPanelKlineAccessor:
             slowperiod: int = 26,
             signalperiod: int = 9,
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算 MACD 指标并追加 DIF/DEA/HIST 三列。
 
@@ -4344,6 +4502,9 @@ class _HistoryPanelKlineAccessor:
             信号线周期。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{fastperiod}_{slowperiod}_{signalperiod}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 MACD 三列并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -4374,6 +4535,8 @@ class _HistoryPanelKlineAccessor:
             macd_arr[i, -L:] = mc[-L:]
             sig_arr[i, -L:] = sig[-L:]
             hist_arr[i, -L:] = hist[-L:]
+        if inplace:
+            return self._inplace_append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
         return self._append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
 
     def kdj(
@@ -4383,6 +4546,8 @@ class _HistoryPanelKlineAccessor:
             slowk_period: int = 3,
             slowd_period: int = 3,
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算 KDJ 随机指标并追加 K/D/J 三列。
 
@@ -4401,6 +4566,9 @@ class _HistoryPanelKlineAccessor:
             D 线平滑窗口长度。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{fastk_period}_{slowk_period}_{slowd_period}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 K/D/J 三列并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -4437,6 +4605,8 @@ class _HistoryPanelKlineAccessor:
             k_arr[i, :] = kk
             d_arr[i, :] = dd
             j_arr[i, :] = jj
+        if inplace:
+            return self._inplace_append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
         return self._append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
 
 
