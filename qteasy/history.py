@@ -14,7 +14,7 @@ from numbers import Number
 
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple
+from typing import Union, Iterable, Any, Optional, Callable, Sequence, List, Tuple, Dict
 
 from qteasy.database import DataSource
 
@@ -579,8 +579,8 @@ class HistoryPanel():
         可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
         广播到与 ``panel.values`` 同形。
 
-        后续 ``cum_return`` / ``normalize`` / ``portfolio`` 等参数的 ``mask=`` 建议使用本方法返回值或
-        与其同形同 dtype 的数组；阶段四及以后相关 API 发布后即可直接传入 ``mask=panel.where(...)``。
+        ``cum_return``、``normalize`` 与 ``portfolio`` 的 ``mask=`` 可直接使用本方法返回值或与其同形、
+        ``dtype=bool`` 的数组。
         更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
         「研究与掩码（where）」小节。
 
@@ -959,6 +959,502 @@ class HistoryPanel():
             )
         col = self._prepare_column_array_for_inplace(value)
         self._set_htype_column_inplace(key, col)
+
+    def assign(self, *, inplace: bool = False, **kwargs: Any) -> 'HistoryPanel':
+        """批量派生或更新列（htypes），支持多列一次性追加或覆盖。
+
+        ``assign()`` 提供类似 pandas 的列级 DSL：可以同时为多个新列命名，并通过
+        可调用对象或数组/标量在单次调用中完成派生；同一次调用中，后定义的列
+        可以依赖前面刚新增的列。该方法既支持返回新面板，也支持在原面板上原地
+        扩列/覆盖。
+
+        Parameters
+        ----------
+        inplace : bool, default False
+            为 ``True`` 时在当前 ``HistoryPanel`` 上原地追加/覆盖列并返回自身；
+            为 ``False`` 时在当前数据的拷贝上追加/覆盖列并返回新 ``HistoryPanel``。
+        **kwargs
+            每个关键字参数的键为新列名（htype），必须为非空字符串；值可以是
+            ``Callable[[HistoryPanel], np.ndarray]``，也可以是可被 ``np.asarray``
+            且可广播到 ``(M, L)`` 的数组/标量。
+
+        Returns
+        -------
+        HistoryPanel
+            当 ``inplace=False`` 时返回新增列后的新面板；``inplace=True`` 时返回原面板。
+
+        Raises
+        ------
+        ValueError
+            面板为空、列名为空字符串，或可调用对象/数组返回的结果无法广播到
+            ``(M, L)`` 时抛出（英文信息）。
+        TypeError
+            列名不是字符串时抛出（英文信息）。
+        """
+        if not kwargs:
+            return self
+        if self.is_empty:
+            raise ValueError('Cannot assign columns to an empty HistoryPanel.')
+        if inplace:
+            target = self
+        else:
+            target = HistoryPanel(
+                values=np.array(self.values, copy=True),
+                levels=list(self.shares),
+                rows=list(self.hdates),
+                columns=list(self.htypes),
+            )
+        M, L, _ = target.shape
+        for name, spec in kwargs.items():
+            if not isinstance(name, str):
+                raise TypeError(
+                    'assign() only accepts str keys as column names; '
+                    f'got {type(name).__name__}.'
+                )
+            if not name:
+                raise ValueError('Column name for assign() must be a non-empty string.')
+            if callable(spec):
+                arr = spec(target)
+            else:
+                arr = spec
+            arr_np = np.asarray(arr, dtype=float)
+            try:
+                if arr_np.ndim == 0:
+                    arr_b = np.full((M, L), float(arr_np), dtype=float)
+                else:
+                    arr_b = np.broadcast_to(arr_np, (M, L))
+            except ValueError as e:
+                raise ValueError(
+                    f'Cannot broadcast assign() result for column \"{name}\" to shape (M={M}, L={L}): {e}'
+                )
+            target[name] = arr_b
+        return target
+
+    def rank(
+            self,
+            by: str,
+            *,
+            axis: str = 'share',
+            method: str = 'average',
+            new_htype: Optional[str] = None,
+    ) -> 'HistoryPanel':
+        """按时间逐日对横截面（share 维）做排名并追加一列返回新面板。
+
+        Parameters
+        ----------
+        by : str
+            参与排名的列名（htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
+            ``close|b`` 等复权后缀列。
+        axis : {'share'}, default 'share'
+            目前仅支持沿 share 维做截面排名。
+        method : {'average', 'min', 'max', 'first', 'dense'}, default 'average'
+            并列值（tie）的排名处理方式，语义与 pandas ``Series.rank(method=...)`` 一致。
+        new_htype : str, optional
+            输出列名；为 None 时默认使用 ``rank_{by}``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加排名列后的新面板；不修改原对象。空面板返回空面板。
+
+        Raises
+        ------
+        ValueError
+            当参数非法、列不存在、或输出列名冲突时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[1.0], [2.0]], [[2.0], [1.0]]]),
+        ...     levels=['s1', 's2'],
+        ...     rows=pd.date_range('2023-01-01', periods=2),
+        ...     columns=['close'],
+        ... )
+        >>> hp2 = hp.rank(by='close')
+        >>> 'rank_close' in hp2.htypes
+        True
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if axis != 'share':
+            raise ValueError(f'axis must be "share", got {axis}')
+        valid_methods = {'average', 'min', 'max', 'first', 'dense'}
+        if method not in valid_methods:
+            raise ValueError(
+                f'method must be one of {sorted(valid_methods)}, got {method}'
+            )
+        resolved = self._resolve_price_htype(by)
+        if new_htype is None:
+            new_htype = f'rank_{by}'
+        if new_htype in self.htypes:
+            raise ValueError(f'htype "{new_htype}" already exists')
+
+        ci = self.htypes.index(resolved)
+        x = self.values[:, :, ci].astype(float)  # (M, L)
+        M, L = x.shape
+        out = np.full((M, L), np.nan, dtype=float)
+        for li in range(L):
+            s = pd.Series(x[:, li], index=self.shares, dtype=float)
+            out[:, li] = s.rank(method=method, na_option='keep').values.astype(float)
+
+        new_values = np.concatenate([self.values.astype(float), out[:, :, np.newaxis]], axis=2)
+        new_htypes = list(self.htypes) + [new_htype]
+        return HistoryPanel(values=new_values, levels=list(self.shares), rows=list(self.hdates), columns=new_htypes)
+
+    def zscore(
+            self,
+            by: str,
+            *,
+            method: str = 'cs',
+            window: Optional[int] = None,
+            new_htype: Optional[str] = None,
+    ) -> 'HistoryPanel':
+        """对指定列计算标准化分数（zscore）并追加一列返回新面板。
+
+        本方法通过 ``method`` 参数显式区分两种常用语义：
+
+        - ``method='cs'``（cross-sectional）：固定每个时间点，在 share 维做截面标准化；
+        - ``method='ts'``（time-series rolling）：固定每个 share，在时间轴上做滚动标准化。
+
+        Parameters
+        ----------
+        by : str
+            参与标准化的列名（htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
+            ``close|b`` 等复权后缀列。
+        method : {'cs', 'ts'}, default 'cs'
+            标准化语义：截面（cs）或时序滚动（ts）。
+        window : int, optional
+            ``method='ts'`` 时的滚动窗口长度（bar 数），必须为正整数；``method='cs'``
+            时必须为 None。
+        new_htype : str, optional
+            输出列名；为 None 时默认使用 ``cs_z_{by}`` 或 ``ts_z_{by}_{window}``。
+
+        Returns
+        -------
+        HistoryPanel
+            追加 zscore 列后的新面板；不修改原对象。空面板返回空面板。
+
+        Raises
+        ------
+        ValueError
+            当参数非法、列不存在、或输出列名冲突时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[1.0], [2.0]], [[3.0], [4.0]]]),
+        ...     levels=['s1', 's2'],
+        ...     rows=pd.date_range('2023-01-01', periods=2),
+        ...     columns=['x'],
+        ... )
+        >>> hp_cs = hp.zscore(by='x', method='cs')
+        >>> hp_ts = hp.zscore(by='x', method='ts', window=2)
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if method not in ('cs', 'ts'):
+            raise ValueError(f'method must be "cs" or "ts", got {method}')
+        resolved = self._resolve_price_htype(by)
+        ci = self.htypes.index(resolved)
+        x = self.values[:, :, ci].astype(float)  # (M, L)
+
+        if method == 'cs':
+            if window is not None:
+                raise ValueError('window must be None when method="cs"')
+            if new_htype is None:
+                new_htype = f'cs_z_{by}'
+            if new_htype in self.htypes:
+                raise ValueError(f'htype "{new_htype}" already exists')
+            valid = ~np.isnan(x)
+            cnt = valid.sum(axis=0).astype(float)  # (L,)
+            sum_ = np.nansum(x, axis=0)  # (L,)
+            mu = np.full_like(sum_, np.nan, dtype=float)
+            has_mean = cnt > 0.0
+            mu[has_mean] = sum_[has_mean] / cnt[has_mean]
+            dev2 = np.where(valid, (x - mu[np.newaxis, :]) ** 2, 0.0)
+            denom = cnt - 1.0
+            sigma = np.full_like(mu, np.nan, dtype=float)
+            has_std = denom > 0.0
+            sigma[has_std] = np.sqrt(dev2.sum(axis=0)[has_std] / denom[has_std])
+            z = (x - mu[np.newaxis, :]) / sigma[np.newaxis, :]
+            invalid = (~np.isfinite(sigma)) | (sigma == 0.0)
+            if np.any(invalid):
+                z[:, invalid] = np.nan
+            out = z
+        else:
+            if window is None:
+                raise ValueError('window is required when method="ts"')
+            if not isinstance(window, int) or window <= 0:
+                raise ValueError(f'window must be a positive integer, got {window}')
+            if new_htype is None:
+                new_htype = f'ts_z_{by}_{window}'
+            if new_htype in self.htypes:
+                raise ValueError(f'htype "{new_htype}" already exists')
+            sub = HistoryPanel(
+                values=x[:, :, np.newaxis],
+                levels=list(self.shares),
+                rows=list(self.hdates),
+                columns=['_x_'],
+            )
+            mu_panel = sub.rolling(window=window, by='share').mean()
+            sigma_panel = sub.rolling(window=window, by='share').std()
+            mu = mu_panel.values[:, :, 0]
+            sigma = sigma_panel.values[:, :, 0]
+            z = (x - mu) / sigma
+            invalid = (~np.isfinite(sigma)) | (sigma == 0.0)
+            if np.any(invalid):
+                z[invalid] = np.nan
+            out = z
+
+        new_values = np.concatenate([self.values.astype(float), out[:, :, np.newaxis]], axis=2)
+        new_htypes = list(self.htypes) + [new_htype]
+        return HistoryPanel(values=new_values, levels=list(self.shares), rows=list(self.hdates), columns=new_htypes)
+
+    @staticmethod
+    def _stable_intersection(a: List[Any], b: List[Any]) -> List[Any]:
+        """返回列表交集，顺序以 a 为准（稳定）。"""
+        b_set = set(b)
+        return [x for x in a if x in b_set]
+
+    @staticmethod
+    def _stable_union(a: List[Any], b: List[Any]) -> List[Any]:
+        """返回列表并集，顺序为 a 先、再追加 b 中未出现元素（稳定）。"""
+        out = list(a)
+        a_set = set(a)
+        out.extend([x for x in b if x not in a_set])
+        return out
+
+    def align_to(
+            self,
+            other: 'HistoryPanel',
+            *,
+            join: str = 'inner',
+            fill_value: float = np.nan
+    ) -> Tuple['HistoryPanel', 'HistoryPanel']:
+        """将两个 HistoryPanel 沿 shares 与 hdates 轴按标签对齐，避免 silent 错行。
+
+        本方法**不会**按 iloc/位置对齐；仅使用 axis labels 做显式对齐。对齐后返回两块
+        新的面板，它们具有完全一致的 ``shares``、``hdates`` 与 ``htypes``，缺失格点用
+        ``fill_value`` 填充。
+
+        Parameters
+        ----------
+        other : HistoryPanel
+            需要对齐的另一个面板。
+        join : {'inner', 'outer'}, default 'inner'
+            对齐方式：\n
+            - ``inner``：取两者 shares 与 hdates 的交集；\n
+            - ``outer``：取两者 shares 与 hdates 的并集。\n
+            输出顺序为稳定顺序：交集以 ``self`` 的顺序为准；并集为 ``self`` 在前、再追加 ``other``
+            中未出现元素。
+        fill_value : float, default np.nan
+            对齐后缺失位置的填充值。
+
+        Returns
+        -------
+        (HistoryPanel, HistoryPanel)
+            对齐后的 ``(self_aligned, other_aligned)``。
+
+        Raises
+        ------
+        TypeError
+            ``other`` 不是 ``HistoryPanel`` 时抛出（英文信息）。
+        ValueError
+            ``join`` 非法、或两者 ``htypes`` 不完全一致时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> hp1 = HistoryPanel(np.array([[[1.0],[2.0]]]), levels=['s1'],
+        ...                   rows=pd.date_range('2023-01-01', periods=2), columns=['x'])
+        >>> hp2 = HistoryPanel(np.array([[[10.0],[11.0]]]), levels=['s2'],
+        ...                   rows=pd.date_range('2023-01-02', periods=2), columns=['x'])
+        >>> a1, a2 = hp1.align_to(hp2, join='outer', fill_value=np.nan)
+        >>> a1.shares
+        ['s1', 's2']
+        """
+        if not isinstance(other, HistoryPanel):
+            raise TypeError(
+                'other must be a HistoryPanel, '
+                f'got {type(other).__name__}.'
+            )
+        if join not in ('inner', 'outer'):
+            raise ValueError(f'join must be "inner" or "outer", got {join}')
+
+        if self.is_empty or other.is_empty:
+            if join == 'inner':
+                return HistoryPanel(), HistoryPanel()
+            if self.is_empty and other.is_empty:
+                return HistoryPanel(), HistoryPanel()
+            if self.is_empty:
+                out_shares = list(other.shares)
+                out_hdates = list(other.hdates)
+                out_htypes = list(other.htypes)
+                M, L, N = len(out_shares), len(out_hdates), len(out_htypes)
+                v1 = np.full((M, L, N), float(fill_value), dtype=float)
+                v2 = np.array(other.values, copy=True).astype(float)
+                return (
+                    HistoryPanel(values=v1, levels=out_shares, rows=out_hdates, columns=out_htypes),
+                    HistoryPanel(values=v2, levels=out_shares, rows=out_hdates, columns=out_htypes),
+                )
+            out_shares = list(self.shares)
+            out_hdates = list(self.hdates)
+            out_htypes = list(self.htypes) if not self.is_empty else list(other.htypes)
+            M, L, N = len(out_shares), len(out_hdates), len(out_htypes)
+            v1 = np.array(self.values, copy=True).astype(float)
+            v2 = np.full((M, L, N), float(fill_value), dtype=float)
+            return (
+                HistoryPanel(values=v1, levels=out_shares, rows=out_hdates, columns=out_htypes),
+                HistoryPanel(values=v2, levels=out_shares, rows=out_hdates, columns=out_htypes),
+            )
+
+        if list(self.htypes) != list(other.htypes):
+            raise ValueError(
+                'align_to() requires identical htypes (same names and order) for both panels.'
+            )
+
+        shares1 = list(self.shares)
+        shares2 = list(other.shares)
+        dates1 = list(self.hdates)
+        dates2 = list(other.hdates)
+        htypes = list(self.htypes)
+
+        if join == 'inner':
+            out_shares = self._stable_intersection(shares1, shares2)
+            out_hdates = self._stable_intersection(dates1, dates2)
+        else:
+            out_shares = self._stable_union(shares1, shares2)
+            out_hdates = self._stable_union(dates1, dates2)
+
+        M, L, N = len(out_shares), len(out_hdates), len(htypes)
+        v1 = np.full((M, L, N), float(fill_value), dtype=float)
+        v2 = np.full((M, L, N), float(fill_value), dtype=float)
+
+        out_share_pos = {s: i for i, s in enumerate(out_shares)}
+        out_date_pos = {d: i for i, d in enumerate(out_hdates)}
+        in1_share_pos = {s: i for i, s in enumerate(shares1)}
+        in1_date_pos = {d: i for i, d in enumerate(dates1)}
+        in2_share_pos = {s: i for i, s in enumerate(shares2)}
+        in2_date_pos = {d: i for i, d in enumerate(dates2)}
+
+        common_shares_1 = [s for s in out_shares if s in in1_share_pos]
+        common_dates_1 = [d for d in out_hdates if d in in1_date_pos]
+        if common_shares_1 and common_dates_1:
+            os_idx = [out_share_pos[s] for s in common_shares_1]
+            od_idx = [out_date_pos[d] for d in common_dates_1]
+            is_idx = [in1_share_pos[s] for s in common_shares_1]
+            id_idx = [in1_date_pos[d] for d in common_dates_1]
+            v1[np.ix_(os_idx, od_idx, list(range(N)))] = self.values[np.ix_(is_idx, id_idx, list(range(N)))].astype(float)
+
+        common_shares_2 = [s for s in out_shares if s in in2_share_pos]
+        common_dates_2 = [d for d in out_hdates if d in in2_date_pos]
+        if common_shares_2 and common_dates_2:
+            os_idx = [out_share_pos[s] for s in common_shares_2]
+            od_idx = [out_date_pos[d] for d in common_dates_2]
+            is_idx = [in2_share_pos[s] for s in common_shares_2]
+            id_idx = [in2_date_pos[d] for d in common_dates_2]
+            v2[np.ix_(os_idx, od_idx, list(range(N)))] = other.values[np.ix_(is_idx, id_idx, list(range(N)))].astype(float)
+
+        return (
+            HistoryPanel(values=v1, levels=out_shares, rows=out_hdates, columns=htypes),
+            HistoryPanel(values=v2, levels=out_shares, rows=out_hdates, columns=htypes),
+        )
+
+    def resample(self, rule: str, *, agg: Optional[dict] = None) -> 'HistoryPanel':
+        """沿时间轴（hdates）按规则重采样并返回新面板。
+
+        为避免聚合语义不明导致 silent 错行，本方法要求显式提供 ``agg``，并且必须覆盖
+        当前面板的全部 ``htypes``。
+
+        Parameters
+        ----------
+        rule : str
+            pandas 兼容的重采样规则字符串，如 ``'W'``、``'M'``、``'5D'`` 等。
+        agg : dict, required
+            聚合规则字典：``{htype_name: agg_name}``，其中 ``agg_name`` 支持
+            ``'first'|'last'|'min'|'max'|'sum'|'mean'``。必须覆盖全部 ``htypes``。
+
+        Returns
+        -------
+        HistoryPanel
+            重采样后的新面板；不修改原对象。空面板返回空面板。
+
+        Raises
+        ------
+        ValueError
+            当 ``agg`` 缺失、未覆盖全部列、包含未知列名、聚合方法非法或 ``rule`` 非法时抛出（英文信息）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> idx = pd.date_range('2023-01-01', periods=10, freq='D')
+        >>> hp = HistoryPanel(np.arange(10, dtype=float).reshape(1, 10, 1),
+        ...                   levels=['s1'], rows=idx, columns=['x'])
+        >>> out = hp.resample('W', agg={'x': 'last'})
+        >>> out.hdates
+        [Timestamp('2023-01-01 00:00:00'), Timestamp('2023-01-08 00:00:00')]
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if not isinstance(rule, str) or not rule:
+            raise ValueError('rule must be a non-empty string.')
+        if agg is None:
+            raise ValueError(
+                'resample() requires explicit agg= to avoid ambiguous aggregation semantics.'
+            )
+        if not isinstance(agg, dict) or not agg:
+            raise ValueError('agg must be a non-empty dict mapping htype -> aggregation method.')
+
+        htypes = list(self.htypes)
+        agg_keys = list(agg.keys())
+        if any(k not in htypes for k in agg_keys):
+            unknown = [k for k in agg_keys if k not in htypes]
+            raise ValueError(f'agg contains unknown htypes: {unknown}')
+        if set(agg_keys) != set(htypes):
+            missing = [k for k in htypes if k not in agg]
+            extra = [k for k in agg_keys if k not in htypes]
+            raise ValueError(f'agg must cover all htypes; missing={missing}, extra={extra}')
+
+        valid_aggs = {'first', 'last', 'min', 'max', 'sum', 'mean'}
+        bad = {k: v for k, v in agg.items() if v not in valid_aggs}
+        if bad:
+            raise ValueError(
+                f'Invalid aggregation methods: {bad}. '
+                f'Allowed: {sorted(valid_aggs)}'
+            )
+
+        agg_ordered = {k: agg[k] for k in htypes}
+
+        shares = list(self.shares)
+        resampled_index = None
+        out_blocks: List[np.ndarray] = []
+        for mi in range(len(shares)):
+            df = pd.DataFrame(self.values[mi, :, :].astype(float), index=pd.to_datetime(self.hdates), columns=htypes)
+            try:
+                r = df.resample(rule).agg(agg_ordered)
+            except Exception as e:
+                raise ValueError(f'Failed to resample with rule "{rule}": {e}')
+            if resampled_index is None:
+                resampled_index = r.index
+            else:
+                if not r.index.equals(resampled_index):
+                    raise ValueError('resample() produced inconsistent date index across shares.')
+            out_blocks.append(r.values.astype(float))
+
+        if resampled_index is None:
+            return HistoryPanel()
+        new_values = np.stack(out_blocks, axis=0)
+        return HistoryPanel(values=new_values, levels=shares, rows=list(resampled_index), columns=htypes)
 
     def __str__(self):
         """打印HistoryPanel"""
@@ -2482,6 +2978,526 @@ class HistoryPanel():
         df = pd.DataFrame(ret.T, index=used_hdates, columns=self.shares)
         return df
 
+    def _broadcast_bool_mask_for_panel(self, mask: Optional[np.ndarray]) -> np.ndarray:
+        """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组（全 True 表示无掩码）。
+
+        广播规则与 :meth:`where` 中非 callable 条件一致。
+        """
+        if self.is_empty:
+            raise ValueError('internal error: mask broadcast on empty HistoryPanel')
+        if mask is None:
+            return np.ones(self.shape, dtype=bool)
+        try:
+            b = np.asarray(mask, dtype=bool)
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f'Cannot convert mask to a boolean array: {e}'
+            ) from e
+        m, l_count, n = self._l_count, self._r_count, self._c_count
+        target = (m, l_count, n)
+        if b.shape == target:
+            return np.array(b, dtype=bool, copy=True)
+        if b.ndim == 0:
+            broad = np.broadcast_to(b, target)
+            return np.array(broad, dtype=bool, copy=True)
+        if b.ndim == 2 and b.shape == (m, l_count):
+            b = b[:, :, np.newaxis]
+        elif b.ndim == 1 and b.shape == (m,):
+            b = b.reshape(m, 1, 1)
+        elif b.ndim == 2 and b.shape == (m, 1):
+            b = b.reshape(m, 1, 1)
+        try:
+            broad = np.broadcast_to(b, target)
+        except ValueError:
+            raise ValueError(
+                f'Cannot broadcast mask with shape {getattr(b, "shape", ())} '
+                f'to panel shape {target}.'
+            ) from None
+        return np.array(broad, dtype=bool, copy=True)
+
+    @staticmethod
+    def _cum_return_1d_along_time(p_eff: np.ndarray, method: str) -> np.ndarray:
+        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。"""
+        p_eff = np.asarray(p_eff, dtype=float).ravel()
+        l_cnt = p_eff.size
+        out = np.full(l_cnt, np.nan, dtype=float)
+        t0: Optional[int] = None
+        for t in range(l_cnt):
+            v = p_eff[t]
+            if np.isfinite(v) and v > 0:
+                t0 = t
+                break
+        if t0 is None:
+            return out
+        out[t0] = 0.0
+        p0 = p_eff[t0]
+        broken = False
+        for t in range(t0 + 1, l_cnt):
+            v = p_eff[t]
+            if broken or not np.isfinite(v) or v <= 0:
+                broken = True
+                out[t] = np.nan
+                continue
+            if method == 'simple':
+                out[t] = v / p0 - 1.0
+            else:
+                out[t] = np.log(v) - np.log(p0)
+        return out
+
+    @staticmethod
+    def _normalize_1d_along_time(
+            p_eff: np.ndarray,
+            base_index: int,
+            mask_1d: np.ndarray,
+    ) -> np.ndarray:
+        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。"""
+        p_eff = np.asarray(p_eff, dtype=float).ravel()
+        mask_1d = np.asarray(mask_1d, dtype=bool).ravel()
+        l_cnt = p_eff.size
+        if base_index < 0 or base_index >= l_cnt:
+            raise ValueError(f'base_index out of range for time axis: {base_index}')
+        if (not mask_1d[base_index]
+                or not np.isfinite(p_eff[base_index])
+                or p_eff[base_index] == 0.0):
+            return np.full(l_cnt, np.nan, dtype=float)
+        base = p_eff[base_index]
+        return p_eff / base
+
+    def _resolve_cum_norm_column_pairs(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]],
+    ) -> List[Tuple[str, int]]:
+        """解析列：返回 (用户标签, 全局列下标) 列表；``htypes is None`` 时等价于 ``close``。"""
+        if self.is_empty:
+            return []
+        if htypes is None:
+            labels = ['close']
+        elif isinstance(htypes, str):
+            labels = [htypes]
+        else:
+            labels = list(htypes)
+        if len(labels) != len(set(labels)):
+            raise ValueError('duplicate htype labels in htypes sequence')
+        pairs: List[Tuple[str, int]] = []
+        for lab in labels:
+            resolved = self._resolve_price_htype(lab)
+            j = self.htypes.index(resolved)
+            pairs.append((lab, j))
+        return pairs
+
+    def cum_return(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+            *,
+            method: str = 'simple',
+            mask: Optional[np.ndarray] = None,
+    ) -> 'HistoryPanel':
+        """沿时间维逐标的计算累计收益（研究向），返回新面板。
+
+        默认对 ``close`` 列（经 :meth:`_resolve_price_htype` 解析，支持 ``close|b`` 等）计算。
+        输出列名为 ``cumret_<用户传入的列名>``，与 :meth:`returns` 使用 ``ret_<price_htype>`` 的策略一致。
+        若时间路径上出现 NaN 或非正价格，自该点起后续结果均为 NaN（路径断开）。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            参与计算的列名；``None`` 时仅处理 ``close``（解析后）。
+        method : {'simple', 'log'}, default 'simple'
+            ``simple``：自首个有效正价 ``t0`` 起 ``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则；为 ``False`` 的位置在计算前视为缺失（``NaN``）。
+
+        Returns
+        -------
+        HistoryPanel
+            ``shares`` / ``hdates`` 与原面板一致，仅含累计收益列。
+
+        Raises
+        ------
+        ValueError
+            非法 ``method``、列无法解析、``mask`` 无法广播、或输出列名与现有 ``htypes`` 冲突时抛出（英文）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[10.0], [11.0], [12.0]]]),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2023-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> cr = hp.cum_return(method='simple')
+        >>> cr.htypes
+        ['cumret_close']
+        >>> float(cr.values[0, -1, 0])
+        0.2
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if method not in ('simple', 'log'):
+            raise ValueError(f'method must be "simple" or "log", got {method}')
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        pairs = self._resolve_cum_norm_column_pairs(htypes)
+        out_names = [f'cumret_{lab}' for lab, _ in pairs]
+        for name in out_names:
+            if name in self.htypes:
+                raise ValueError(
+                    f'output htype "{name}" already exists in panel; '
+                    'choose different columns or rename existing htypes.'
+                )
+        m, l_cnt, _ = self.shape
+        n_out = len(pairs)
+        out_arr = np.full((m, l_cnt, n_out), np.nan, dtype=float)
+        values_f = self.values.astype(float)
+        for k, (lab, j) in enumerate(pairs):
+            for i in range(m):
+                p = values_f[i, :, j]
+                m_ij = mask_full[i, :, j]
+                p_eff = np.where(m_ij, p, np.nan)
+                out_arr[i, :, k] = self._cum_return_1d_along_time(p_eff, method)
+        return HistoryPanel(
+            values=out_arr,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=out_names,
+        )
+
+    def normalize(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+            *,
+            base_index: int = 0,
+            mask: Optional[np.ndarray] = None,
+    ) -> 'HistoryPanel':
+        """将指定列按基准时点缩放到相对 1.0（研究向），返回新面板。
+
+        默认以 ``base_index`` 处有效价格为分母；该时点被 ``mask`` 排除、为 ``NaN`` 或为 0 时，
+        该 (share, 列) 整条时间序列输出均为 ``NaN``。输出列名为 ``norm_<用户传入的列名>``。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            参与计算的列；``None`` 时仅 ``close``（解析后）。
+        base_index : int, default 0
+            时间轴上的基准下标（从 0 起）；越界时抛出 ``ValueError``（英文）。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则。
+
+        Returns
+        -------
+        HistoryPanel
+            与原面板相同的 ``shares`` / ``hdates``，仅含归一化列。
+
+        Raises
+        ------
+        ValueError
+            列无法解析、``mask`` 无法广播、``base_index`` 越界、或输出列名冲突时抛出（英文）。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.array([[[10.0], [20.0], [40.0]]]),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2023-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> nm = hp.normalize(base_index=0)
+        >>> float(nm.values[0, -1, 0])
+        4.0
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        pairs = self._resolve_cum_norm_column_pairs(htypes)
+        out_names = [f'norm_{lab}' for lab, _ in pairs]
+        for name in out_names:
+            if name in self.htypes:
+                raise ValueError(
+                    f'output htype "{name}" already exists in panel; '
+                    'choose different columns or rename existing htypes.'
+                )
+        m, l_cnt, _ = self.shape
+        n_out = len(pairs)
+        out_arr = np.full((m, l_cnt, n_out), np.nan, dtype=float)
+        values_f = self.values.astype(float)
+        for k, (lab, j) in enumerate(pairs):
+            for i in range(m):
+                p = values_f[i, :, j]
+                m_ij = mask_full[i, :, j]
+                p_eff = np.where(m_ij, p, np.nan)
+                out_arr[i, :, k] = self._normalize_1d_along_time(
+                    p_eff, base_index, m_ij,
+                )
+        return HistoryPanel(
+            values=out_arr,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=out_names,
+        )
+
+    def _resolve_portfolio_htype_pairs(
+            self,
+            htypes: Union[str, Sequence[str]],
+    ) -> List[Tuple[str, int]]:
+        """解析 ``portfolio`` 参与聚合的列：``(用户标签, 列下标)``。"""
+        if isinstance(htypes, str):
+            labels = [htypes]
+        else:
+            labels = list(htypes)
+        pairs: List[Tuple[str, int]] = []
+        for lab in labels:
+            resolved = self._resolve_price_htype(lab)
+            j = self.htypes.index(resolved)
+            pairs.append((lab, j))
+        return pairs
+
+    @staticmethod
+    def _portfolio_aggregate_cell(
+            values_f: np.ndarray,
+            mask_full: np.ndarray,
+            share_indices: Sequence[int],
+            t: int,
+            j: int,
+            *,
+            mode: str,
+            weights: Optional[np.ndarray],
+            normalize_weights: bool,
+    ) -> float:
+        """单组、单时刻、单列上的组合值（等权或加权）。"""
+        xs: List[float] = []
+        wi_list: List[float] = []
+        for i in share_indices:
+            if not mask_full[i, t, j]:
+                continue
+            v = values_f[i, t, j]
+            if not np.isfinite(v):
+                continue
+            xs.append(float(v))
+            if mode == 'weighted':
+                if weights is None:
+                    raise ValueError('internal: weighted mode without weights')
+                if weights.ndim == 1:
+                    wi = float(weights[i])
+                elif weights.ndim == 2:
+                    wi = float(weights[i, t])
+                else:
+                    raise ValueError('weights must be 1D or 2D')
+                wi_list.append(wi)
+        if not xs:
+            return float('nan')
+        if mode == 'equal':
+            return float(np.mean(xs))
+        w_arr = np.asarray(wi_list, dtype=float)
+        x_arr = np.asarray(xs, dtype=float)
+        sw = float(np.sum(w_arr))
+        if sw == 0.0 or not np.isfinite(sw):
+            return float('nan')
+        if normalize_weights:
+            w_arr = w_arr / sw
+            return float(np.sum(w_arr * x_arr))
+        return float(np.sum(w_arr * x_arr) / sw)
+
+    def portfolio(
+            self,
+            htypes: Union[str, Sequence[str]] = 'close',
+            *,
+            mode: str = 'equal',
+            weights: Optional[np.ndarray] = None,
+            mask: Optional[np.ndarray] = None,
+            groups: Optional[Dict[str, Sequence[str]]] = None,
+            benchmark: Optional[str] = None,
+            benchmark_output: str = 'none',
+            new_share_name: str = 'PORTFOLIO',
+            normalize_weights: bool = True,
+            allow_ungrouped: str = 'error',
+    ) -> 'HistoryPanel':
+        """沿 share 维将多标的聚合成组合序列（研究向），返回新面板。
+
+        默认 ``benchmark_output='none'``；若设置 ``benchmark``，可用 ``tag_along`` 附加基准行，
+        或用 ``excess_only`` 仅保留 ``excess_<列名> = 组合 - 基准``。
+
+        ``groups`` 为 ``None`` 时，全面板聚成一行，名称为 ``new_share_name``。
+        ``groups`` 非空时，键为输出 share 标签（按 **插入序** 排列），值为组内原始 share 列表；
+        组间 share 不得重叠。``allow_ungrouped='error'`` 时，每个面板 share 必须恰好属于一组。
+
+        当 ``groups`` 为 ``None`` 且指定了 ``benchmark`` 时，**基准 share 不参与**组合聚合（避免把指数与个股权重混在一起），
+        仅用于 ``tag_along`` 或 ``excess_only``；若剔除后无可用 share（例如面板仅含基准）则抛出 ``ValueError``。
+
+        ``mask`` 广播规则与 :meth:`where` 一致；无效格点不参与聚合。
+
+        Parameters
+        ----------
+        htypes : str or sequence of str, default 'close'
+            参与聚合的列名；经 :meth:`_resolve_price_htype` 解析。
+        mode : {'equal', 'weighted'}, default 'equal'
+            等权平均或与 ``weights`` 联用的加权平均。
+        weights : numpy.ndarray, optional
+            形状 ``(M,)`` 或 ``(M, L)``，与 ``self.shares`` 顺序对齐；仅 ``mode='weighted'`` 时使用。
+        mask : numpy.ndarray, optional
+            与 :meth:`where` 相同广播规则。
+        groups : dict, optional
+            输出组名 → 组内 share 标签列表。
+        benchmark : str, optional
+            基准 share，须在 ``self.shares`` 中。
+        benchmark_output : {'none', 'tag_along', 'excess_only'}, default 'none'
+            基准输出形态；无 ``benchmark`` 时仅允许 ``'none'``。
+        new_share_name : str, default 'PORTFOLIO'
+            无 ``groups`` 时合成行的 share 名。
+        normalize_weights : bool, default True
+            加权时，在参与聚合的成员上对权重做归一后再加权求和（与 ``sum(w*x)/sum(w)`` 数值一致）。
+        allow_ungrouped : {'error', 'exclude'}, default 'error'
+            ``groups`` 非空时，是否要求覆盖全部 share。
+
+        Returns
+        -------
+        HistoryPanel
+            新对象；``hdates`` 与时间长度与原面板一致。
+
+        Raises
+        ------
+        ValueError
+            参数非法、share 不在面板、组重叠、mask 无法广播等（英文）。
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if benchmark is None and benchmark_output != 'none':
+            raise ValueError(
+                'benchmark is None but benchmark_output is not "none"; '
+                'set benchmark_output="none" or pass a valid benchmark share.'
+            )
+        if benchmark_output not in ('none', 'tag_along', 'excess_only'):
+            raise ValueError(
+                f'benchmark_output must be "none", "tag_along", or "excess_only", '
+                f'got {benchmark_output!r}'
+            )
+        if benchmark is not None and benchmark not in self.shares:
+            raise ValueError(f'benchmark "{benchmark}" not found in shares: {self.shares}')
+        if mode not in ('equal', 'weighted'):
+            raise ValueError(f'mode must be "equal" or "weighted", got {mode!r}')
+        if weights is None and mode != 'equal':
+            raise ValueError('mode="weighted" requires weights array')
+        if weights is not None and mode != 'weighted':
+            raise ValueError('weights are only used with mode="weighted"')
+        if allow_ungrouped not in ('error', 'exclude'):
+            raise ValueError('allow_ungrouped must be "error" or "exclude"')
+        m, l_cnt, _ = self.shape
+        if weights is not None:
+            w_arr = np.asarray(weights, dtype=float)
+            if w_arr.ndim == 1:
+                if w_arr.shape[0] != m:
+                    raise ValueError(
+                        f'weights length {w_arr.shape[0]} does not match share count {m}'
+                    )
+            elif w_arr.ndim == 2:
+                if w_arr.shape[0] != m or w_arr.shape[1] != l_cnt:
+                    raise ValueError(
+                        f'weights shape {w_arr.shape} does not match panel shape {(m, l_cnt)}'
+                    )
+            else:
+                raise ValueError('weights must be 1D or 2D')
+            weights_use: Optional[np.ndarray] = w_arr
+        else:
+            weights_use = None
+
+        mask_full = self._broadcast_bool_mask_for_panel(mask)
+        htype_pairs = self._resolve_portfolio_htype_pairs(htypes)
+        n_col = len(htype_pairs)
+        values_f = self.values.astype(float)
+
+        share_index = {s: i for i, s in enumerate(self.shares)}
+        group_specs: List[Tuple[str, List[int]]]
+        if groups is None:
+            all_idx = list(range(m))
+            if benchmark is not None:
+                bi = share_index[benchmark]
+                all_idx = [i for i in all_idx if i != bi]
+                if not all_idx:
+                    raise ValueError(
+                        'cannot form portfolio: all shares would be excluded '
+                        'because benchmark is the only share in the panel'
+                    )
+            group_specs = [(new_share_name, all_idx)]
+        else:
+            if len(groups) == 0:
+                raise ValueError('groups must be non-empty when provided')
+            group_specs = []
+            assigned: Dict[str, str] = {}
+            for gname, members in groups.items():
+                if not members:
+                    raise ValueError(f'group "{gname}" has empty member list')
+                idxs: List[int] = []
+                for s in members:
+                    if s not in share_index:
+                        raise ValueError(f'share "{s}" in group "{gname}" not in panel shares')
+                    if s in assigned:
+                        raise ValueError(
+                            f'share "{s}" appears in more than one group '
+                            f'("{assigned[s]}" and "{gname}")'
+                        )
+                    assigned[s] = gname
+                    idxs.append(share_index[s])
+                group_specs.append((gname, idxs))
+            if allow_ungrouped == 'error':
+                for s in self.shares:
+                    if s not in assigned:
+                        raise ValueError(
+                            f'share "{s}" is not in any group; '
+                            'set allow_ungrouped="exclude" to omit unlisted shares'
+                        )
+
+        n_grp = len(group_specs)
+        port = np.full((n_grp, l_cnt, n_col), np.nan, dtype=float)
+        for gi, (_, sidxs) in enumerate(group_specs):
+            for t in range(l_cnt):
+                for jc, (_, j) in enumerate(htype_pairs):
+                    port[gi, t, jc] = self._portfolio_aggregate_cell(
+                        values_f,
+                        mask_full,
+                        sidxs,
+                        t,
+                        j,
+                        mode=mode,
+                        weights=weights_use,
+                        normalize_weights=normalize_weights,
+                    )
+
+        out_shares: List[str] = [name for name, _ in group_specs]
+        out_htypes: List[str]
+        out_vals: np.ndarray
+
+        if benchmark is not None and benchmark_output == 'excess_only':
+            bi = share_index[benchmark]
+            bench_block = np.stack(
+                [values_f[bi, :, j] for _, j in htype_pairs],
+                axis=1,
+            )
+            excess = port - bench_block[np.newaxis, :, :]
+            out_htypes = [f'excess_{lab}' for lab, _ in htype_pairs]
+            out_vals = excess
+        else:
+            out_htypes = [lab for lab, _ in htype_pairs]
+            out_vals = port
+            if benchmark is not None and benchmark_output == 'tag_along':
+                bi = share_index[benchmark]
+                bench_block = np.stack(
+                    [values_f[bi, :, j] for _, j in htype_pairs],
+                    axis=1,
+                )
+                out_vals = np.concatenate([out_vals, bench_block[np.newaxis, :, :]], axis=0)
+                out_shares = out_shares + [benchmark]
+
+        return HistoryPanel(
+            values=out_vals,
+            levels=out_shares,
+            rows=list(self.hdates),
+            columns=out_htypes,
+        )
+
     def volatility(
             self,
             window: int = 20,
@@ -3267,6 +4283,69 @@ class HistoryPanel():
             row_count = self.shape[1]
         return self.isegment(- row_count, None)
 
+    def research_preset(self, name: str, *, inplace: bool = False) -> 'HistoryPanel':
+        """按预设快速生成研究常用列集合，并返回结果面板。
+
+        该方法旨在作为 ``HistoryPanel`` 的“第一入口”：在不引入回测语义的前提下，
+        快速拼出 OHLCV + 常用技术指标列（如 MACD、均线）以便直接绘图或继续做研究。
+
+        Parameters
+        ----------
+        name : str
+            预设名称。目前支持：
+
+            - ``'ohlcv_macd_ma'``：要求面板至少包含 ``open/high/low/close/vol``，并生成
+              ``macd_12_26_9``、``macd_signal_12_26_9``、``macd_hist_12_26_9`` 与 ``sma_20``。
+        inplace : bool, default False
+            为 True 时在原面板上原地追加预设列并返回原面板；为 False 时返回新增列后的新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            追加预设列后的 ``HistoryPanel``。当 ``inplace=True`` 时返回原对象。
+
+        Raises
+        ------
+        ValueError
+            当预设名称非法，或缺少预设所需的输入列时抛出（错误信息为英文）。
+        """
+        presets = {
+            'ohlcv_macd_ma': {
+                'required': ['open', 'high', 'low', 'close', 'vol'],
+                'builder': self._research_preset_ohlcv_macd_ma,
+            },
+        }
+        if not isinstance(name, str) or not name:
+            raise ValueError('name must be a non-empty string')
+        if name not in presets:
+            available = ', '.join(sorted(presets.keys()))
+            raise ValueError(f'Unknown research preset "{name}". Available presets: {available}')
+        required = presets[name]['required']
+        missing = [c for c in required if c not in self.htypes]
+        if missing:
+            required_str = ', '.join(required)
+            missing_str = ', '.join(missing)
+            raise ValueError(
+                f'Research preset "{name}" requires htypes: {required_str}. '
+                f'Missing: {missing_str}. '
+                'Please load data with required htypes or add them via bracket assignment.'
+            )
+        hp = self if inplace else HistoryPanel(
+            values=np.array(self.values, copy=True),
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=list(self.htypes),
+        )
+        return presets[name]['builder'](hp)
+
+    @staticmethod
+    def _research_preset_ohlcv_macd_ma(hp: 'HistoryPanel') -> 'HistoryPanel':
+        """构建 ``ohlcv_macd_ma`` 预设（内部使用）。"""
+        # 只使用公开 API：kline 指标统一走 kline accessor，并使用 inplace=True 扩列
+        hp.kline.macd(inplace=True)
+        hp.kline.sma(window=20, price_htype='close', inplace=True)
+        return hp
+
     def plot(
         self,
         shares: Optional[Union[str, Iterable[str]]] = None,
@@ -3275,6 +4354,8 @@ class HistoryPanel():
         highlight: Optional[Any] = None,
         plotly_backend_app: str = 'auto',
         group_titles: Optional[Sequence[str]] = None,
+        max_shares_per_figure: int = 5,
+        page: int = 1,
         **kwargs,
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
@@ -3301,6 +4382,12 @@ class HistoryPanel():
             ``'auto'`` 优先 ``FigureWidget``，失败则回退 HTML 包装；``'FigureWidget'`` 强制
             Widget，失败抛错；``'html'`` 强制 HTML 包装，失败抛错。非 Notebook 脚本环境下
             ``'auto'`` 仍可能返回原始 ``Figure``。
+        max_shares_per_figure : int, default 5
+            单张图中最多展示的 share 数量。当请求 shares 数量超过该值时，会按页分割；
+            可通过 ``page`` 参数选择要展示的页码。
+        page : int, default 1
+            要展示的页码（1-based）。当 shares 数量超过 ``max_shares_per_figure`` 时，
+            ``page=1`` 为第 1 页，``page=2`` 为第 2 页，以此类推。
         **kwargs
             预留的扩展参数，当前版本中不使用。
 
@@ -3350,22 +4437,35 @@ class HistoryPanel():
         share_list = [s for s in share_list if s in self.shares]
         if not share_list:
             share_list = list(self.shares)
-        if len(share_list) > 5:
+        if not isinstance(max_shares_per_figure, int) or max_shares_per_figure <= 0:
+            raise ValueError('max_shares_per_figure must be a positive int')
+        if not isinstance(page, int) or page <= 0:
+            raise ValueError('page must be a positive int (1-based)')
+        total = len(share_list)
+        total_pages = int(np.ceil(total / float(max_shares_per_figure))) if total > 0 else 1
+        if page > total_pages:
+            raise ValueError(
+                f'page {page} is out of range (total_pages={total_pages}, '
+                f'max_shares_per_figure={max_shares_per_figure}, total_shares={total})'
+            )
+        if total > max_shares_per_figure:
             try:
                 from qteasy import logger_core
                 logger_core.warning(
-                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
-                    'only the first 5 will be displayed.'
+                    f'HistoryPanel.plot: {total} shares requested, '
+                    f'displaying page {page}/{total_pages} with max_shares_per_figure={max_shares_per_figure}.'
                 )
             except Exception:
                 import warnings
                 warnings.warn(
-                    f'HistoryPanel.plot: more than 5 shares requested ({len(share_list)}), '
-                    'only the first 5 will be displayed.',
+                    f'HistoryPanel.plot: {total} shares requested, '
+                    f'displaying page {page}/{total_pages} with max_shares_per_figure={max_shares_per_figure}.',
                     UserWarning,
                     stacklevel=2,
                 )
-            share_list = share_list[:5]
+        start = (page - 1) * max_shares_per_figure
+        end = start + max_shares_per_figure
+        share_list = share_list[start:end]
         registry = get_chart_type_registry()
         types_info = registry.get_applicable_types(self.htypes)
         if not types_info:
@@ -3650,7 +4750,51 @@ class _HistoryPanelKlineAccessor:
         new_htypes = list(hp.htypes) + list(new_columns)
         return HistoryPanel(values=new_values, levels=hp.shares, rows=hp.hdates, columns=new_htypes)
 
-    def sma(self, window: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+    def _inplace_append_htypes(self, new_columns: list, new_arrays: list) -> HistoryPanel:
+        """将派生列原地追加到绑定的 ``HistoryPanel`` 并返回该面板。
+
+        Parameters
+        ----------
+        new_columns : list of str
+            新增列名列表（对应新增的 htypes）。
+        new_arrays : list of numpy.ndarray
+            新增列数据列表。列表长度应与 ``new_columns`` 一致；每个数组形状必须为
+            ``(n_share, n_time)``。
+
+        Returns
+        -------
+        HistoryPanel
+            原地追加后的同一个 ``HistoryPanel`` 对象。
+
+        Raises
+        ------
+        ValueError
+            当绑定面板为空，或新增列名与现有 ``htypes`` 冲突时抛出。
+
+        Notes
+        -----
+        - 本方法用于实现 ``kline`` 的 ``inplace=True`` 语义：复用 ``HistoryPanel.__setitem__``
+          的扩列逻辑，避免维护第二套拼接路径。
+        - 原地追加会改变 ``self._hp`` 的 ``values`` 与 ``htypes``，请在文档中明确。
+        """
+        hp = self._hp
+        if hp.is_empty:
+            raise ValueError('Cannot apply kline indicator on an empty HistoryPanel')
+        for name in new_columns:
+            if name in hp.htypes:
+                raise ValueError(f'htype "{name}" already exists')
+        for name, arr in zip(new_columns, new_arrays):
+            hp[name] = arr
+        return hp
+
+    def sma(
+            self,
+            window: int = 20,
+            price_htype: str = 'close',
+            new_htype: Optional[str] = None,
+            *,
+            inplace: bool = False,
+    ) -> HistoryPanel:
         """计算简单移动平均（SMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
@@ -3662,10 +4806,13 @@ class _HistoryPanelKlineAccessor:
         new_htype : str, optional
             新增均线列名；为 None 时使用默认列名 ``'sma_{window}'``。
 
+        inplace : bool, default False
+            为 True 时在原面板上原地追加均线列并返回原面板；为 False 时返回追加列后的新面板。
+
         Returns
         -------
         HistoryPanel
-            追加均线列后的新 ``HistoryPanel``。
+            ``inplace=False`` 时返回追加均线列后的新 ``HistoryPanel``；``inplace=True`` 时返回原面板。
 
         Raises
         ------
@@ -3691,6 +4838,8 @@ class _HistoryPanelKlineAccessor:
         default_name = f'sma_{window}'
         if new_htype is None:
             new_htype = default_name
+        if self._hp.is_empty:
+            raise ValueError('Cannot apply SMA on an empty HistoryPanel')
         if new_htype in self._hp.htypes:
             raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
         prices = self._get_price(price_htype)
@@ -3698,9 +4847,18 @@ class _HistoryPanelKlineAccessor:
         out = np.full_like(prices, np.nan, dtype=float)
         for i in range(n_share):
             out[i, :] = tafuncs.sma(prices[i, :], timeperiod=window)
+        if inplace:
+            return self._inplace_append_htypes([new_htype], [out])
         return self._append_htypes([new_htype], [out])
 
-    def ema(self, span: int = 20, price_htype: str = 'close', new_htype: Optional[str] = None) -> HistoryPanel:
+    def ema(
+            self,
+            span: int = 20,
+            price_htype: str = 'close',
+            new_htype: Optional[str] = None,
+            *,
+            inplace: bool = False,
+    ) -> HistoryPanel:
         """计算指数移动平均（EMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
@@ -3712,10 +4870,13 @@ class _HistoryPanelKlineAccessor:
         new_htype : str, optional
             新增 EMA 列名；为 None 时使用默认列名 ``'ema_{span}'``。
 
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 EMA 列并返回原面板；为 False 时返回追加列后的新面板。
+
         Returns
         -------
         HistoryPanel
-            追加 EMA 列后的新 ``HistoryPanel``。
+            ``inplace=False`` 时返回追加 EMA 列后的新 ``HistoryPanel``；``inplace=True`` 时返回原面板。
 
         Raises
         ------
@@ -3726,6 +4887,8 @@ class _HistoryPanelKlineAccessor:
         default_name = f'ema_{span}'
         if new_htype is None:
             new_htype = default_name
+        if self._hp.is_empty:
+            raise ValueError('Cannot apply EMA on an empty HistoryPanel')
         if new_htype in self._hp.htypes:
             raise ValueError(f'new_htype "{new_htype}" already exists in htypes')
         prices = self._get_price(price_htype)
@@ -3735,6 +4898,8 @@ class _HistoryPanelKlineAccessor:
             res = tafuncs.ema(prices[i, :], span=span)
             arr = np.atleast_1d(np.asarray(res, dtype=float)).ravel()
             out[i, :min(n_time, len(arr))] = arr[:n_time]
+        if inplace:
+            return self._inplace_append_htypes([new_htype], [out])
         return self._append_htypes([new_htype], [out])
 
     def bbands(
@@ -3745,6 +4910,8 @@ class _HistoryPanelKlineAccessor:
             nbdev_dn: float = 2.0,
             ma_type: str = 'sma',
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算布林带（Bollinger Bands）并追加上轨/中轨/下轨三列。
 
@@ -3762,6 +4929,9 @@ class _HistoryPanelKlineAccessor:
             中轨移动平均类型。当前实现会映射为底层 ``tafuncs`` 的 ``matype`` 参数。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{window}_{int(nbdev_up)}_{int(nbdev_dn)}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加三条布林带曲线并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -3800,6 +4970,8 @@ class _HistoryPanelKlineAccessor:
             u[i, -L:] = uu[-L:]
             m[i, -L:] = mm[-L:]
             l[i, -L:] = ll[-L:]
+        if inplace:
+            return self._inplace_append_htypes([upper_name, middle_name, lower_name], [u, m, l])
         return self._append_htypes([upper_name, middle_name, lower_name], [u, m, l])
 
     def macd(
@@ -3809,6 +4981,8 @@ class _HistoryPanelKlineAccessor:
             slowperiod: int = 26,
             signalperiod: int = 9,
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算 MACD 指标并追加 DIF/DEA/HIST 三列。
 
@@ -3824,6 +4998,9 @@ class _HistoryPanelKlineAccessor:
             信号线周期。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{fastperiod}_{slowperiod}_{signalperiod}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 MACD 三列并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -3854,6 +5031,8 @@ class _HistoryPanelKlineAccessor:
             macd_arr[i, -L:] = mc[-L:]
             sig_arr[i, -L:] = sig[-L:]
             hist_arr[i, -L:] = hist[-L:]
+        if inplace:
+            return self._inplace_append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
         return self._append_htypes([n1, n2, n3], [macd_arr, sig_arr, hist_arr])
 
     def kdj(
@@ -3863,6 +5042,8 @@ class _HistoryPanelKlineAccessor:
             slowk_period: int = 3,
             slowd_period: int = 3,
             suffix: Optional[str] = None,
+            *,
+            inplace: bool = False,
     ) -> HistoryPanel:
         """计算 KDJ 随机指标并追加 K/D/J 三列。
 
@@ -3881,6 +5062,9 @@ class _HistoryPanelKlineAccessor:
             D 线平滑窗口长度。
         suffix : str, optional
             列名后缀；为 None 时使用默认规则 ``'{fastk_period}_{slowk_period}_{slowd_period}'``。
+
+        inplace : bool, default False
+            为 True 时在原面板上原地追加 K/D/J 三列并返回原面板；为 False 时返回新面板。
 
         Returns
         -------
@@ -3917,6 +5101,8 @@ class _HistoryPanelKlineAccessor:
             k_arr[i, :] = kk
             d_arr[i, :] = dd
             j_arr[i, :] = jj
+        if inplace:
+            return self._inplace_append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
         return self._append_htypes([k_name, d_name, j_name], [k_arr, d_arr, j_arr])
 
 
