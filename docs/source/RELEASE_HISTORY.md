@@ -1,5 +1,9 @@
 # RELEASE HISTORY
 
+## 2.2.9 (2026-03-31)
+- **HistoryPanel research operators (returns, portfolios, presets, and alignment)**  
+  Added `cum_return()` and `normalize()` for research-grade cumulative returns and base-1 normalization with mask-aware behavior; `portfolio()` to build equal/weighted portfolios, group-based portfolios, and optional benchmarks on top of HP price columns; `kline.*(inplace=)` to optionally append technical-indicator columns without copying; `research_preset()` and paged `plot()` for one-line OHLCV+indicator presets and multi-share pagination; `assign()` for column-level DSL; cross-sectional vs time-series `rank()` / `zscore(method='cs'|'ts')`; and explicit `align_to()` / `resample()` to avoid silent misalignment. See [HistoryPanel API](api/HistoryPanel.rst) and tutorial [2.5-historypanel-data-analysis](tutorials/2.5-historypanel-data-analysis.md) for examples and behavior details.
+
 ## 2.2.8 (2026-03-30)
 - **HistoryPanel (research-oriented workflow)** — Bracket indexing returns a labeled sub-panel (breaking); `subpanel` / `to_numpy`, in-place columns via `__setitem__`, `where()` masks, read-only htype attributes (e.g. `panel.close`), comparisons yielding bool ndarrays for `where` chaining, and `loc` for time-axis selection. Docstrings, [HistoryPanel API](api/HistoryPanel.rst), and tutorial [2.5-historypanel-data-analysis](tutorials/2.5-historypanel-data-analysis.md) describe behavior and limits (vs pandas).
 
