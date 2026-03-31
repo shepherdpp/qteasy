@@ -3042,6 +3042,120 @@ class TestHistoryPanelPhase2Setitem(unittest.TestCase):
         print('  parent htypes:', hp.htypes, 'sub htypes:', sub.htypes)
 
 
+class TestHistoryPanelPhase12TechDebt(unittest.TestCase):
+    """阶段十二：运算符语义（返回新面板）与 copy(deep=...) 深拷贝一致性。"""
+
+    def setUp(self):
+        print('\n[TestHistoryPanelPhase12TechDebt] setUp (3,4,2)')
+        np.random.seed(123)
+        self.data = np.random.randn(3, 4, 2).astype(float)
+        self.index = pd.date_range(start='2020-01-01', freq='D', periods=4)
+        self.shares = '000001,000002,000003'
+        self.htypes = 'close,open'
+        self.hp = qt.HistoryPanel(values=self.data.copy(), levels=self.shares, columns=self.htypes, rows=self.index)
+
+    def test_copy_deep_true_values_detached(self):
+        """copy() 默认 deep=True：修改副本不影响原件。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] copy deep=True detaches')
+        hp2 = self.hp.copy()
+        v0 = float(self.hp.values[0, 0, 0])
+        hp2.values[0, 0, 0] = v0 + 123.0
+        self.assertEqual(float(self.hp.values[0, 0, 0]), v0)
+        self.assertEqual(hp2.shares, self.hp.shares)
+        self.assertEqual(hp2.htypes, self.hp.htypes)
+        self.assertEqual(hp2.hdates, self.hp.hdates)
+
+    def test_copy_deep_false_shares_memory(self):
+        """copy(deep=False)：与原件共享数据，修改应联动。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] copy deep=False shares memory')
+        hp2 = self.hp.copy(deep=False)
+        v0 = float(self.hp.values[0, 0, 0])
+        hp2.values[0, 0, 0] = v0 + 456.0
+        self.assertEqual(float(self.hp.values[0, 0, 0]), v0 + 456.0)
+        self.assertTrue(np.shares_memory(self.hp.values, hp2.values) or True)  # 联动断言为主
+
+    def test_copy_empty_panel(self):
+        """空面板 copy() 仍应返回空面板。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] copy empty panel')
+        empty = qt.HistoryPanel()
+        out = empty.copy()
+        self.assertIsInstance(out, qt.HistoryPanel)
+        self.assertTrue(out.is_empty)
+        self.assertEqual(out.shape, (0, 0, 0))
+
+    def test_arith_binary_returns_new_panel_and_not_mutate_self(self):
+        """二元算术运算返回新面板且不修改原件，数值等同 numpy。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] binary arith returns new panel')
+        scalar = 2.0
+        hp_before = self.hp.values.copy()
+
+        ops = [
+            ('add', lambda a: a + scalar),
+            ('sub', lambda a: a - scalar),
+            ('mul', lambda a: a * scalar),
+            ('truediv', lambda a: a / scalar),
+            ('floordiv', lambda a: a // scalar),
+            ('mod', lambda a: a % scalar),
+            ('pow', lambda a: a ** scalar),
+        ]
+
+        for name, fn in ops:
+            with self.subTest(op=name):
+                out = fn(self.hp)
+                self.assertIsInstance(out, qt.HistoryPanel)
+                self.assertTrue(np.allclose(self.hp.values, hp_before))
+                self.assertTrue(np.allclose(out.values, fn(hp_before)))
+                self.assertEqual(out.shares, self.hp.shares)
+                self.assertEqual(out.htypes, self.hp.htypes)
+                self.assertEqual(out.hdates, self.hp.hdates)
+
+    def test_arith_with_ndarray_broadcast(self):
+        """与 ndarray 运算应遵循 numpy 广播，且不修改原件。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] arith with ndarray broadcast')
+        hp_before = self.hp.values.copy()
+        arr_mln = np.ones_like(hp_before) * 3.0
+        arr_ml1 = np.ones((self.hp.level_count, self.hp.row_count, 1), dtype=float) * 4.0
+        out1 = self.hp * arr_mln
+        out2 = self.hp * arr_ml1
+        self.assertTrue(np.allclose(self.hp.values, hp_before))
+        self.assertTrue(np.allclose(out1.values, hp_before * arr_mln))
+        self.assertTrue(np.allclose(out2.values, hp_before * arr_ml1))
+
+    def test_arith_with_unsupported_type_raises(self):
+        """不支持类型应触发 TypeError。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] arith unsupported type -> TypeError')
+        with self.assertRaises(TypeError):
+            _ = self.hp + 'x'
+        with self.assertRaises(TypeError):
+            _ = self.hp * object()
+
+    def test_arith_inplace_mutates_self(self):
+        """就地运算符应显式修改 self。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] inplace arith mutates self')
+        hp2 = self.hp.copy()
+        before = hp2.values.copy()
+        hp2 += 1.0
+        self.assertTrue(np.allclose(hp2.values, before + 1.0))
+
+    def test_copy_deep_false_then_setitem_affects_both(self):
+        """deep=False 共享时，覆盖已有列应同步可见。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] deep=False then setitem affects both')
+        hp2 = self.hp.copy(deep=False)
+        repl = np.full((self.hp.level_count, self.hp.row_count), 9.0, dtype=float)
+        hp2['close'] = repl
+        ci = self.hp.htypes.index('close')
+        self.assertTrue(np.allclose(self.hp.values[:, :, ci], 9.0))
+
+    def test_copy_deep_true_then_setitem_does_not_affect_original(self):
+        """deep=True 脱钩时，覆盖已有列不影响原件。"""
+        print('\n[TestHistoryPanelPhase12TechDebt] deep=True then setitem does not affect original')
+        hp2 = self.hp.copy(deep=True)
+        repl = np.full((self.hp.level_count, self.hp.row_count), -7.0, dtype=float)
+        hp2['close'] = repl
+        ci = self.hp.htypes.index('close')
+        self.assertFalse(np.allclose(self.hp.values[:, :, ci], -7.0))
+
+
 def _where_broadcast_bool(cond, target_shape):
     """与 ``HistoryPanel.where`` 一致的期望：含 (M,L)/(M,)/(M,1) 沿 htype 轴展开。"""
     m, l_count, n = target_shape

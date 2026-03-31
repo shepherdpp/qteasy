@@ -1676,33 +1676,110 @@ class HistoryPanel():
             return NotImplemented
         return out
 
-    def __add__(self, other):
+    def __add__(self, other: Any) -> Any:
+        """逐元素 ``self + other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values + other
+            return out
+        return NotImplemented
+
+    def __sub__(self, other: Any) -> Any:
+        """逐元素 ``self - other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values - other
+            return out
+        return NotImplemented
+
+    def __mul__(self, other: Any) -> Any:
+        """逐元素 ``self * other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values * other
+            return out
+        return NotImplemented
+
+    def __truediv__(self, other: Any) -> Any:
+        """逐元素 ``self / other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values / other
+            return out
+        return NotImplemented
+
+    def __floordiv__(self, other: Any) -> Any:
+        """逐元素 ``self // other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values // other
+            return out
+        return NotImplemented
+
+    def __mod__(self, other: Any) -> Any:
+        """逐元素 ``self % other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values % other
+            return out
+        return NotImplemented
+
+    def __pow__(self, other: Any) -> Any:
+        """逐元素 ``self ** other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values ** other
+            return out
+        return NotImplemented
+
+    def __iadd__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self += other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values += other
+            return self
+        return NotImplemented
 
-    def __sub__(self, other):
+    def __isub__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self -= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values -= other
+            return self
+        return NotImplemented
 
-    def __mul__(self, other):
+    def __imul__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self *= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values *= other
+            return self
+        return NotImplemented
 
-    def __truediv__(self, other):
+    def __itruediv__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self /= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values /= other
+            return self
+        return NotImplemented
 
-    def __floordiv__(self, other):
+    def __ifloordiv__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self //= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values //= other
+            return self
+        return NotImplemented
 
-    def __mod__(self, other):
+    def __imod__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self %= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values %= other
+            return self
+        return NotImplemented
 
-    def __pow__(self, other):
+    def __ipow__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self **= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values **= other
+            return self
+        return NotImplemented
 
     def segment(self, start_date=None, end_date=None):
         """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
@@ -1921,10 +1998,49 @@ class HistoryPanel():
             print(df)
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
-    def copy(self):
-        """ 返回一个新的HistoryPanel对象，其值和本对象相同"""
-        # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
-        return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
+    def copy(self, deep: bool = True) -> "HistoryPanel":
+        """复制一个新的 HistoryPanel 对象。
+
+        默认返回 **深拷贝**，即新对象与原对象的 ``values`` 底层数组互不影响；当需要与
+        NumPy 视图语义保持一致、在性能敏感场景中共享底层数据时，可设置 ``deep=False``。
+
+        Parameters
+        ----------
+        deep : bool, default True
+            是否深拷贝底层数值数组 ``values``：
+
+            - True：深拷贝，修改副本不影响原对象；
+            - False：浅拷贝（共享底层数组），修改副本会同步影响原对象。
+
+        Returns
+        -------
+        HistoryPanel
+            复制后的新对象，轴标签（``shares``/``hdates``/``htypes``）与原对象一致。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.arange(12, dtype=float).reshape(2, 3, 2),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close', 'open'],
+        ... )
+        >>> hp2 = hp.copy()  # deep=True
+        >>> hp2.values[0, 0, 0] = -1.0
+        >>> hp.values[0, 0, 0] != hp2.values[0, 0, 0]
+        True
+        >>> hp3 = hp.copy(deep=False)
+        >>> hp3.values[0, 0, 0] = -2.0
+        >>> hp.values[0, 0, 0] == hp3.values[0, 0, 0]
+        True
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        values = self.values.copy() if deep else self.values
+        return HistoryPanel(values=values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def len(self):
         """ 返回HistoryPanel对象的长度，即日期个数
