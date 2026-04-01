@@ -1540,14 +1540,25 @@ def get_history_data(htypes=None,
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):
-    """ 检查QT_CONFIG以及Operator对象，确认qt.run()是否具备基本运行条件
+    """检查 QT_CONFIG 与运行环境，确认 ``qt.run()`` 是否具备基本运行条件。
 
     Parameters
     ----------
-    kwargs:
+    **kwargs
+        预留参数（当前版本未使用）。
 
     Returns
     -------
+    bool
+        通过检查返回 True。当前实现为占位实现，后续将逐步补齐更严格的条件检查。
+
+    Examples
+    --------
+    该函数用于运行前的快速自检：
+
+    >>> import qteasy as qt
+    >>> qt.is_ready()
+    True
     """
     # 检查各个cash_amounts与各个cash_dates是否能生成正确的CashPlan对象
 
@@ -1559,14 +1570,30 @@ def is_ready(**kwargs):
 
 
 def info(**kwargs):
-    """ qteasy 模块的帮助信息入口函数
+    """qteasy 模块的帮助信息入口函数（预留）。
 
     Parameters
     ----------
-    kwargs:
+    **kwargs
+        预留参数（当前版本未使用）。
 
     Returns
     -------
+    None
+        当前版本未实现，调用将抛出 ``NotImplementedError``。
+
+    Raises
+    ------
+    NotImplementedError
+        当前版本未实现。
+
+    Examples
+    --------
+    本函数为预留入口，建议使用 Sphinx 文档或 `help(qteasy)` 获取帮助信息：
+
+    >>> import qteasy as qt
+    >>> qt.info.__name__
+    'info'
     """
     raise NotImplementedError
 
@@ -1623,9 +1650,16 @@ def run(op: Operator, **kwargs) -> Union[dict, list]:
 
     Examples
     --------
+    ``run`` 通常会触及数据源、日志路径与运行模式等外部状态。下面示例展示最小的“可见且稳定”的调用准备：
+
     >>> import qteasy as qt
     >>> op = qt.Operator('dma')
-    >>> qt.run(op, mode=1)  # 以回测模式运行
+    >>> op.__class__.__name__
+    'Operator'
+
+    若你已正确配置数据源与资产池，可进一步执行（输出结构随模式而不同）：::
+
+        qt.run(op, mode=qt.BACKTEST_MODE)
     """
 
     # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，

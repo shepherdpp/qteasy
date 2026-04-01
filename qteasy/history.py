@@ -400,14 +400,20 @@ class HistoryPanel():
         >>> import pandas as pd
         >>> import numpy as np
         >>> hp = HistoryPanel(
-        ...     np.ones((2, 4, 1)),
+        ...     np.arange(8, dtype=float).reshape(2, 4, 1),
         ...     levels=['A', 'B'],
         ...     rows=pd.date_range('2020-01-01', periods=4),
         ...     columns=['close'],
         ... )
-        >>> sub = hp.loc[0:2]
-        >>> sub.shape[1] == 2
-        True
+        >>> hp.loc[0:2]
+        share 0, label: A
+                    close
+        2020-01-01    0.0
+        2020-01-02    1.0
+        share 1, label: B
+                    close
+        2020-01-01    4.0
+        2020-01-02    5.0
         """
         return _HistoryPanelLocIndexer(self)
 
@@ -421,7 +427,16 @@ class HistoryPanel():
 
         Examples
         --------
-
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> hp = HistoryPanel(
+        ...     np.ones((1, 3, 1)),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> len(hp)
+        3
         """
         return self._r_count
 
@@ -502,10 +517,32 @@ class HistoryPanel():
             *,
             copy: bool,
     ) -> 'HistoryPanel':
-        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。
+        """按已解析的三轴下标取出子面板，返回新的 ``HistoryPanel``。
 
         ``copy=False`` 时结果可能与父对象共享底层缓冲；父对象后续 ``__setitem__`` **追加** 列会替换
         父级 ``_values``，已存在的子面板通常 **不会** 自动带上新列，详见 ``__getitem__`` / ``__setitem__``。
+
+        Parameters
+        ----------
+        htype_slice : Any
+            已经由 :func:`list_or_slice` 解析过的 htype 轴下标选择器。
+        share_slice : Any
+            已经由 :func:`list_or_slice` 解析过的 share 轴下标选择器。
+        hdate_slice : Any
+            已经由 :func:`list_or_slice` 解析过的时间轴下标选择器。
+        copy : bool
+            是否对切片结果数组做拷贝。为 True 时返回值与父面板数据脱钩；为 False 时遵循 NumPy 视图规则，
+            可能共享底层缓冲。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板对象，带正确的 ``shares`` / ``hdates`` / ``htypes`` 标签。
+
+        Raises
+        ------
+        Exception
+            本方法假设切片器已正确解析；如调用方传入非法切片器导致 NumPy 索引失败，将原样抛出底层异常。
         """
         out_arr = self.values[share_slice][:, hdate_slice][:, :, htype_slice]
         if copy:
@@ -531,6 +568,26 @@ class HistoryPanel():
         -------
         numpy.ndarray
             与 ``values`` 同形状的三维数组；空面板时为 ``(0, 0, 0)``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.arange(12, dtype=float).reshape(2, 3, 2),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close', 'open'],
+        ... )
+        >>> hp.to_numpy(copy=True)
+        array([[[ 0.,  1.],
+                [ 2.,  3.],
+                [ 4.,  5.]],
+        <BLANKLINE>
+               [[ 6.,  7.],
+                [ 8.,  9.],
+                [10., 11.]]])
         """
         if self.is_empty:
             return np.empty((0, 0, 0), dtype=float)
@@ -2028,14 +2085,65 @@ class HistoryPanel():
         ...     rows=pd.date_range('2020-01-01', periods=3),
         ...     columns=['close', 'open'],
         ... )
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01    0.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
         >>> hp2 = hp.copy()  # deep=True
         >>> hp2.values[0, 0, 0] = -1.0
-        >>> hp.values[0, 0, 0] != hp2.values[0, 0, 0]
-        True
+        >>> hp2
+        share 0, label: A
+                    close  open
+        2020-01-01   -1.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01    0.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
         >>> hp3 = hp.copy(deep=False)
         >>> hp3.values[0, 0, 0] = -2.0
-        >>> hp.values[0, 0, 0] == hp3.values[0, 0, 0]
-        True
+        >>> hp3
+        share 0, label: A
+                    close  open
+        2020-01-01   -2.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01   -2.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
         """
         if self.is_empty:
             return HistoryPanel()
@@ -3098,6 +3206,21 @@ class HistoryPanel():
         """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组（全 True 表示无掩码）。
 
         广播规则与 :meth:`where` 中非 callable 条件一致。
+
+        Parameters
+        ----------
+        mask : numpy.ndarray, optional
+            可广播到 ``self.shape`` 的布尔数组或可转为布尔数组的类数组；``None`` 表示不加掩码（全 True）。
+
+        Returns
+        -------
+        numpy.ndarray
+            与 ``self.shape`` 同形的 ``dtype=bool`` 数组（拷贝）。
+
+        Raises
+        ------
+        ValueError
+            空面板调用、无法转为布尔数组、或无法广播到 ``self.shape`` 时抛出（英文）。
         """
         if self.is_empty:
             raise ValueError('internal error: mask broadcast on empty HistoryPanel')
@@ -3133,7 +3256,20 @@ class HistoryPanel():
 
     @staticmethod
     def _cum_return_1d_along_time(p_eff: np.ndarray, method: str) -> np.ndarray:
-        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。"""
+        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。
+
+        Parameters
+        ----------
+        p_eff : numpy.ndarray
+            一维价格序列（已将 mask=False 位置置为 NaN）。
+        method : {'simple', 'log'}
+            ``simple``：``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
+
+        Returns
+        -------
+        numpy.ndarray
+            一维累计收益序列。首个有效正价 ``t0`` 处为 0；路径断开后为 NaN。
+        """
         p_eff = np.asarray(p_eff, dtype=float).ravel()
         l_cnt = p_eff.size
         out = np.full(l_cnt, np.nan, dtype=float)
@@ -3166,7 +3302,27 @@ class HistoryPanel():
             base_index: int,
             mask_1d: np.ndarray,
     ) -> np.ndarray:
-        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。"""
+        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。
+
+        Parameters
+        ----------
+        p_eff : numpy.ndarray
+            一维原始序列（已将 mask=False 位置置为 NaN）。
+        base_index : int
+            基准下标（从 0 起）。
+        mask_1d : numpy.ndarray
+            一维布尔掩码；与 ``p_eff`` 等长。
+
+        Returns
+        -------
+        numpy.ndarray
+            一维归一化序列。若基准点被 mask 排除、为 NaN 或为 0，则返回全 NaN。
+
+        Raises
+        ------
+        ValueError
+            ``base_index`` 越界时抛出（英文）。
+        """
         p_eff = np.asarray(p_eff, dtype=float).ravel()
         mask_1d = np.asarray(mask_1d, dtype=bool).ravel()
         l_cnt = p_eff.size
@@ -3183,7 +3339,23 @@ class HistoryPanel():
             self,
             htypes: Optional[Union[str, Sequence[str]]],
     ) -> List[Tuple[str, int]]:
-        """解析列：返回 (用户标签, 全局列下标) 列表；``htypes is None`` 时等价于 ``close``。"""
+        """解析 ``cum_return`` / ``normalize`` 的列输入，返回 (用户标签, 全局列下标) 列表。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            用户传入的列名或列名序列；``None`` 视为 ``close``（并经 :meth:`_resolve_price_htype` 解析）。
+
+        Returns
+        -------
+        list[tuple[str, int]]
+            ``(user_label, column_index)`` 列表，其中 ``column_index`` 为解析后的全局列下标。
+
+        Raises
+        ------
+        ValueError
+            输入列名重复时抛出（英文）。若列无法解析或不存在，将由下游 ``list.index`` 等抛出异常。
+        """
         if self.is_empty:
             return []
         if htypes is None:
@@ -3245,10 +3417,12 @@ class HistoryPanel():
         ...     columns=['close'],
         ... )
         >>> cr = hp.cum_return(method='simple')
-        >>> cr.htypes
-        ['cumret_close']
-        >>> float(cr.values[0, -1, 0])
-        0.2
+        >>> cr
+        share 0, label: S
+                    cumret_close
+        2023-01-01          0.0
+        2023-01-02          0.1
+        2023-01-03          0.2
         """
         if self.is_empty:
             return HistoryPanel()
@@ -3323,8 +3497,12 @@ class HistoryPanel():
         ...     columns=['close'],
         ... )
         >>> nm = hp.normalize(base_index=0)
-        >>> float(nm.values[0, -1, 0])
-        4.0
+        >>> nm
+        share 0, label: S
+                    norm_close
+        2023-01-01        1.0
+        2023-01-02        2.0
+        2023-01-03        4.0
         """
         if self.is_empty:
             return HistoryPanel()

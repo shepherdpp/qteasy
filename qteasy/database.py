@@ -52,6 +52,12 @@ class DataSource:
     支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」
     相关章节。
 
+    Examples
+    --------
+    下面示例展示 DataSource 类名（稳定输出）；实际使用时需要结合你的本地数据目录或数据库连接参数：\n
+    >>> import qteasy as qt
+    >>> qt.DataSource.__name__
+    'DataSource'
     """
 
     def __init__(self,
