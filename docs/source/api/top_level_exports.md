@@ -39,7 +39,9 @@
 
 对应文档入口：
 - `docs/source/api/HistoryPanel.rst`
-- `docs/source/tutorials/2.5-historypanel-data-analysis.md`
+- `docs/source/tutorials/2.5-historypanel-data-analysis.md`（含 §9–§11：研究→回测迁移、多源拼板、导出 statsmodels）
+- `docs/source/design/10-historypanel-factor-research-layer.md`（可选 FactorResearch 层评估）
+- 示例：`examples/historypanel_research_to_strategy.py`、`examples/historypanel_multisource_research.py`、`examples/historypanel_statsmodels_export.py`
 
 ### 1.4 策略与算子（operator / strategy / built_in）
 
