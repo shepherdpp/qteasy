@@ -68,7 +68,7 @@ msgid ""
 "设置了一个本地数据源，并已经将足够的历史数据下载到本地（包括交易日历、股票/基金/指数基本信息、股票/基金/指数的价格数据以及财务指标或其他财务数据——详情请参阅[QTEASY教程2](2"
 "-get-data.md)"
 msgstr ""
-"Set up a local data source and have downloaded enough historical data locally (including trading calendars, basic information of stocks/funds/indices, price data of stocks/funds/indices, and financial indicators or other financial data —— details please refer to [QTEASY tutorial 2](2-get-data.md)"
+"Set up a local data source and have downloaded enough historical data locally (including trading calendars, basic information of stocks/funds/indices, price data of stocks/funds/indices, and financial indicators or other financial data —— details please refer to [QTEASY tutorial 2](2.0-get-data.md)"
 
 #: ../../source/tutorials/4-build-in-strategies.md:19
 msgid ""

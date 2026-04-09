@@ -965,6 +965,159 @@ class TestQ06PlotlyHighlight(unittest.TestCase):
         self.assertLessEqual(min(opacities), 0.05)
 
 
+class TestPhase11PlotMaskHighlight(unittest.TestCase):
+    """Phase11：plot 接受 (M,L) mask 并映射到高亮（Plotly + matplotlib，overlay primary-only）。"""
+
+    def _skip_if_no_plotly(self) -> None:
+        try:
+            import plotly  # noqa: F401
+        except ImportError:
+            self.skipTest('plotly not installed')
+
+    def _get_plotly_figure(self, fig: Any) -> Any:
+        if hasattr(fig, 'figure'):
+            return fig.figure
+        return fig
+
+    def test_p11_plotly_stack_subset_shares_mask_mplotl_highlight_exists(self):
+        print('\n[Phase11] plotly stack subset shares: mask (M_plot,L) highlights exist')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['close'], n_shares=3, n_dates=20)
+        L = len(hp.hdates)
+        mask = np.zeros((2, L), dtype=bool)
+        mask[0, 5] = True
+        mask[1, 7] = True
+        fig = hp.plot(interactive=True, layout='stack', shares=['S000', 'S002'], highlight={'condition': mask})
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  total traces:', len(pf.data), 'highlight markers traces:', len(markers))
+        self.assertGreaterEqual(len(markers), 1)
+        # 至少有一条高亮 trace 的点数为 1（对应单个 True）
+        lens = [len(getattr(tr, 'x', []) or []) for tr in markers]
+        print('  highlight x lengths:', lens)
+        self.assertTrue(any(n == 1 for n in lens))
+
+    def test_p11_plotly_stack_subset_shares_mask_malll_extract_by_share_name(self):
+        print('\n[Phase11] plotly stack subset shares: mask (M_all,L) extracts by share name')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['close'], n_shares=3, n_dates=20)
+        L = len(hp.hdates)
+        mask_all = np.zeros((len(hp.shares), L), dtype=bool)
+        # 仅给 S002 的一个点 True
+        s2_idx = hp.shares.index('S002')
+        mask_all[s2_idx, 9] = True
+        fig = hp.plot(interactive=True, layout='stack', shares=['S000', 'S002'], highlight={'condition': mask_all})
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        # 只应对 S002 产生 1 个高亮点；S000 不应被高亮
+        xs = [list(getattr(tr, 'x', []) or []) for tr in markers]
+        total_pts = sum(len(x) for x in xs)
+        print('  highlight traces:', len(markers), 'total highlight points:', total_pts)
+        self.assertEqual(total_pts, 1)
+
+    def test_p11_plotly_overlay_primary_only_mask_visibility(self):
+        print('\n[Phase11] plotly overlay: primary-only visibility for mask (2,L)')
+        self._skip_if_no_plotly()
+        hp = _make_hp(['close'], n_shares=2, n_dates=25)
+        L = len(hp.hdates)
+        mask = np.zeros((2, L), dtype=bool)
+        mask[0, 3] = True
+        mask[1, 5] = True
+        fig = hp.plot(interactive=True, layout='overlay', highlight={'condition': mask})
+        pf = self._get_plotly_figure(fig)
+        markers = [
+            tr for tr in pf.data
+            if str(getattr(tr, 'type', '')).lower() == 'scatter'
+            and 'markers' in str(getattr(tr, 'mode', '')).lower()
+            and 'highlight' in str(getattr(tr, 'name', '')).lower()
+        ]
+        print('  highlight markers traces:', len(markers))
+        for tr in markers:
+            print('   -', getattr(tr, 'name', ''), 'opacity:', getattr(tr, 'opacity', None))
+        self.assertGreaterEqual(len(markers), 2)
+        opacities = [float(getattr(tr, 'opacity', 1.0) or 0.0) for tr in markers]
+        self.assertGreaterEqual(max(opacities), 0.9)
+        self.assertLessEqual(min(opacities), 0.05)
+
+    def test_p11_html_wrapper_tokens_and_mask_contract(self):
+        print('\n[Phase11] html wrapper token contract with mask highlight')
+        self._skip_if_no_plotly()
+        from qteasy.hp_visual_plotly import _PlotlyFigureWrapper
+        hp = _make_hp(['close'], n_shares=2, n_dates=20)
+        L = len(hp.hdates)
+        mask = np.zeros((2, L), dtype=bool)
+        mask[0, 2] = True
+        fig = hp.plot(interactive=True, layout='overlay', highlight={'condition': mask})
+        base = self._get_plotly_figure(fig)
+        html_str = _PlotlyFigureWrapper(base)._repr_html_()
+        self.assertIn('overlay_active_share_by_group', html_str)
+        self.assertIn('bar_data_by_share', html_str)
+        self.assertIn('Highlight', html_str)
+
+    def test_p11_mpl_stack_mask_2d_highlight_scatter_exists(self):
+        print('\n[Phase11] mpl stack: mask (M_plot,L) highlight scatter exists')
+        hp = _make_hp(['close'], n_shares=3, n_dates=20)
+        L = len(hp.hdates)
+        mask = np.zeros((2, L), dtype=bool)
+        mask[0, 4] = True
+        mask[1, 6] = True
+        fig = hp.plot(interactive=False, layout='stack', shares=['S000', 'S002'], highlight={'condition': mask})
+        self.assertIsNotNone(fig)
+        self.assertGreaterEqual(len(fig.axes), 2)
+        for ax in fig.axes:
+            collections = [c for c in ax.collections if hasattr(c, 'get_sizes')]
+            self.assertGreaterEqual(len(collections), 1)
+
+    def test_p11_mpl_overlay_primary_only_mask_visibility(self):
+        print('\n[Phase11] mpl overlay: primary-only visibility for mask (2,L)')
+        hp = _make_hp(['close'], n_shares=2, n_dates=25)
+        L = len(hp.hdates)
+        mask = np.zeros((2, L), dtype=bool)
+        mask[0, 1] = True
+        mask[1, 2] = True
+        fig = hp.plot(interactive=False, layout='overlay', highlight={'condition': mask})
+        self.assertIsNotNone(fig)
+        # overlay 单组：至少有 1 个轴
+        self.assertGreaterEqual(len(fig.axes), 1)
+        ax = fig.axes[0]
+        # 允许存在两套 scatter，但应有一套透明度接近 0（secondary hidden）
+        alphas = []
+        for coll in ax.collections:
+            a = getattr(coll, 'get_alpha', lambda: None)()
+            if a is not None:
+                alphas.append(float(a))
+        print('  collection alphas:', alphas)
+        # 若 alpha 未显式设置（None），此断言可能需要实现后调整为 facecolor alpha
+        if alphas:
+            self.assertGreaterEqual(max(alphas), 0.5)
+            self.assertLessEqual(min(alphas), 0.1)
+
+    def test_p11_mask_wrong_shape_raises_valueerror(self):
+        print('\n[Phase11] mask wrong shape raises ValueError')
+        hp = _make_hp(['close'], n_shares=2, n_dates=10)
+        L = len(hp.hdates)
+        bad = np.zeros((2, L - 1), dtype=bool)
+        with self.assertRaises(ValueError):
+            _ = hp.plot(interactive=False, layout='stack', shares=['S000', 'S001'], highlight={'condition': bad})
+
+    def test_p11_mask_bad_ndim_raises_valueerror(self):
+        print('\n[Phase11] mask bad ndim raises ValueError')
+        hp = _make_hp(['close'], n_shares=2, n_dates=10)
+        bad = np.zeros((2, 10, 1), dtype=bool)
+        with self.assertRaises(ValueError):
+            _ = hp.plot(interactive=False, highlight={'condition': bad})
+
+
 class TestQ02SubplotTitlesHtmlExport(unittest.TestCase):
     """Q02：Notebook HTML 路径保留 subplot 分组标题，与 FigureWidget 的 annotation 前缀语义一致。"""
 

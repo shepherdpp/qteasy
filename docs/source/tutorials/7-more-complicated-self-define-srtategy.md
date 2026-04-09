@@ -22,7 +22,7 @@ $ pip install qteasy -U
 在开始本节教程前，请先确保您已经掌握了下面的内容：
 
 - **安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)
-- **设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)
+- **设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2.0-get-data.md)
 - **学会创建交易员对象，使用内置交易策略**，——[QTEASY教程3](3-start-first-strategy.md)
 - **学会使用混合器，将多个简单策略混合成较为复杂的交易策略**——[QTEASY教程4](4-build-in-strategies.md)
 - **了解如何自定义交易策略**——[QTEASY教程5](5-first-self-defined-strategy.md)[QTEASY教程6](6-more-self-defined-strategies.md)

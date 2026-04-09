@@ -64,7 +64,7 @@ msgid "**安装、配置`qteasy`** —— [QTEASY教程1](1-get-started.md)"
 msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:19
-msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2-get-data.md)"
+msgid "**设置了一个本地数据源**，并已经将足够的历史数据下载到本地——[QTEASY教程2](2.0-get-data.md)"
 msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:20

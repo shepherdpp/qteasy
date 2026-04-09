@@ -947,6 +947,13 @@ class DataType:
     统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程，
     并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档
     「DataType 与历史数据类型管理」章节。
+
+    Examples
+    --------
+    下面示例展示 DataType 类名（稳定输出）。实际创建 DataType 时，需要提供 name/freq/asset_type：\n
+    >>> import qteasy as qt
+    >>> qt.DataType.__name__
+    'DataType'
     """
 
     acquisition_types = [

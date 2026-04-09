@@ -400,14 +400,20 @@ class HistoryPanel():
         >>> import pandas as pd
         >>> import numpy as np
         >>> hp = HistoryPanel(
-        ...     np.ones((2, 4, 1)),
+        ...     np.arange(8, dtype=float).reshape(2, 4, 1),
         ...     levels=['A', 'B'],
         ...     rows=pd.date_range('2020-01-01', periods=4),
         ...     columns=['close'],
         ... )
-        >>> sub = hp.loc[0:2]
-        >>> sub.shape[1] == 2
-        True
+        >>> hp.loc[0:2]
+        share 0, label: A
+                    close
+        2020-01-01    0.0
+        2020-01-02    1.0
+        share 1, label: B
+                    close
+        2020-01-01    4.0
+        2020-01-02    5.0
         """
         return _HistoryPanelLocIndexer(self)
 
@@ -421,7 +427,16 @@ class HistoryPanel():
 
         Examples
         --------
-
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> hp = HistoryPanel(
+        ...     np.ones((1, 3, 1)),
+        ...     levels=['S'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close'],
+        ... )
+        >>> len(hp)
+        3
         """
         return self._r_count
 
@@ -502,10 +517,32 @@ class HistoryPanel():
             *,
             copy: bool,
     ) -> 'HistoryPanel':
-        """按已解析的三轴下标取出子面板；``copy=True`` 时对数据数组做拷贝，与父数组脱钩。
+        """按已解析的三轴下标取出子面板，返回新的 ``HistoryPanel``。
 
         ``copy=False`` 时结果可能与父对象共享底层缓冲；父对象后续 ``__setitem__`` **追加** 列会替换
         父级 ``_values``，已存在的子面板通常 **不会** 自动带上新列，详见 ``__getitem__`` / ``__setitem__``。
+
+        Parameters
+        ----------
+        htype_slice : Any
+            已经由 :func:`list_or_slice` 解析过的 htype 轴下标选择器。
+        share_slice : Any
+            已经由 :func:`list_or_slice` 解析过的 share 轴下标选择器。
+        hdate_slice : Any
+            已经由 :func:`list_or_slice` 解析过的时间轴下标选择器。
+        copy : bool
+            是否对切片结果数组做拷贝。为 True 时返回值与父面板数据脱钩；为 False 时遵循 NumPy 视图规则，
+            可能共享底层缓冲。
+
+        Returns
+        -------
+        HistoryPanel
+            子面板对象，带正确的 ``shares`` / ``hdates`` / ``htypes`` 标签。
+
+        Raises
+        ------
+        Exception
+            本方法假设切片器已正确解析；如调用方传入非法切片器导致 NumPy 索引失败，将原样抛出底层异常。
         """
         out_arr = self.values[share_slice][:, hdate_slice][:, :, htype_slice]
         if copy:
@@ -531,6 +568,26 @@ class HistoryPanel():
         -------
         numpy.ndarray
             与 ``values`` 同形状的三维数组；空面板时为 ``(0, 0, 0)``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy.history import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.arange(12, dtype=float).reshape(2, 3, 2),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close', 'open'],
+        ... )
+        >>> hp.to_numpy(copy=True)
+        array([[[ 0.,  1.],
+                [ 2.,  3.],
+                [ 4.,  5.]],
+        <BLANKLINE>
+               [[ 6.,  7.],
+                [ 8.,  9.],
+                [10., 11.]]])
         """
         if self.is_empty:
             return np.empty((0, 0, 0), dtype=float)
@@ -1676,33 +1733,110 @@ class HistoryPanel():
             return NotImplemented
         return out
 
-    def __add__(self, other):
+    def __add__(self, other: Any) -> Any:
+        """逐元素 ``self + other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values + other
+            return out
+        return NotImplemented
+
+    def __sub__(self, other: Any) -> Any:
+        """逐元素 ``self - other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values - other
+            return out
+        return NotImplemented
+
+    def __mul__(self, other: Any) -> Any:
+        """逐元素 ``self * other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values * other
+            return out
+        return NotImplemented
+
+    def __truediv__(self, other: Any) -> Any:
+        """逐元素 ``self / other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values / other
+            return out
+        return NotImplemented
+
+    def __floordiv__(self, other: Any) -> Any:
+        """逐元素 ``self // other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values // other
+            return out
+        return NotImplemented
+
+    def __mod__(self, other: Any) -> Any:
+        """逐元素 ``self % other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values % other
+            return out
+        return NotImplemented
+
+    def __pow__(self, other: Any) -> Any:
+        """逐元素 ``self ** other``，返回新面板，不修改原对象。"""
+        if isinstance(other, (float, int, np.ndarray)):
+            out = self.copy(deep=True)
+            out._values = out._values ** other
+            return out
+        return NotImplemented
+
+    def __iadd__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self += other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values += other
+            return self
+        return NotImplemented
 
-    def __sub__(self, other):
+    def __isub__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self -= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values -= other
+            return self
+        return NotImplemented
 
-    def __mul__(self, other):
+    def __imul__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self *= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values *= other
+            return self
+        return NotImplemented
 
-    def __truediv__(self, other):
+    def __itruediv__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self /= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values /= other
+            return self
+        return NotImplemented
 
-    def __floordiv__(self, other):
+    def __ifloordiv__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self //= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values //= other
+            return self
+        return NotImplemented
 
-    def __mod__(self, other):
+    def __imod__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self %= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values %= other
+            return self
+        return NotImplemented
 
-    def __pow__(self, other):
+    def __ipow__(self, other: Any) -> "HistoryPanel":
+        """逐元素 ``self **= other``，就地修改并返回 self。"""
         if isinstance(other, (float, int, np.ndarray)):
             self._values **= other
+            return self
+        return NotImplemented
 
     def segment(self, start_date=None, end_date=None):
         """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
@@ -1921,10 +2055,100 @@ class HistoryPanel():
             print(df)
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
-    def copy(self):
-        """ 返回一个新的HistoryPanel对象，其值和本对象相同"""
-        # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
-        return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
+    def copy(self, deep: bool = True) -> "HistoryPanel":
+        """复制一个新的 HistoryPanel 对象。
+
+        默认返回 **深拷贝**，即新对象与原对象的 ``values`` 底层数组互不影响；当需要与
+        NumPy 视图语义保持一致、在性能敏感场景中共享底层数据时，可设置 ``deep=False``。
+
+        Parameters
+        ----------
+        deep : bool, default True
+            是否深拷贝底层数值数组 ``values``：
+
+            - True：深拷贝，修改副本不影响原对象；
+            - False：浅拷贝（共享底层数组），修改副本会同步影响原对象。
+
+        Returns
+        -------
+        HistoryPanel
+            复制后的新对象，轴标签（``shares``/``hdates``/``htypes``）与原对象一致。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> hp = HistoryPanel(
+        ...     np.arange(12, dtype=float).reshape(2, 3, 2),
+        ...     levels=['A', 'B'],
+        ...     rows=pd.date_range('2020-01-01', periods=3),
+        ...     columns=['close', 'open'],
+        ... )
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01    0.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp2 = hp.copy()  # deep=True
+        >>> hp2.values[0, 0, 0] = -1.0
+        >>> hp2
+        share 0, label: A
+                    close  open
+        2020-01-01   -1.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01    0.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp3 = hp.copy(deep=False)
+        >>> hp3.values[0, 0, 0] = -2.0
+        >>> hp3
+        share 0, label: A
+                    close  open
+        2020-01-01   -2.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        >>> hp
+        share 0, label: A
+                    close  open
+        2020-01-01   -2.0   1.0
+        2020-01-02    2.0   3.0
+        2020-01-03    4.0   5.0
+        share 1, label: B
+                    close  open
+        2020-01-01    6.0   7.0
+        2020-01-02    8.0   9.0
+        2020-01-03   10.0  11.0
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        values = self.values.copy() if deep else self.values
+        return HistoryPanel(values=values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def len(self):
         """ 返回HistoryPanel对象的长度，即日期个数
@@ -2982,6 +3206,21 @@ class HistoryPanel():
         """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组（全 True 表示无掩码）。
 
         广播规则与 :meth:`where` 中非 callable 条件一致。
+
+        Parameters
+        ----------
+        mask : numpy.ndarray, optional
+            可广播到 ``self.shape`` 的布尔数组或可转为布尔数组的类数组；``None`` 表示不加掩码（全 True）。
+
+        Returns
+        -------
+        numpy.ndarray
+            与 ``self.shape`` 同形的 ``dtype=bool`` 数组（拷贝）。
+
+        Raises
+        ------
+        ValueError
+            空面板调用、无法转为布尔数组、或无法广播到 ``self.shape`` 时抛出（英文）。
         """
         if self.is_empty:
             raise ValueError('internal error: mask broadcast on empty HistoryPanel')
@@ -3017,7 +3256,20 @@ class HistoryPanel():
 
     @staticmethod
     def _cum_return_1d_along_time(p_eff: np.ndarray, method: str) -> np.ndarray:
-        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。"""
+        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。
+
+        Parameters
+        ----------
+        p_eff : numpy.ndarray
+            一维价格序列（已将 mask=False 位置置为 NaN）。
+        method : {'simple', 'log'}
+            ``simple``：``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
+
+        Returns
+        -------
+        numpy.ndarray
+            一维累计收益序列。首个有效正价 ``t0`` 处为 0；路径断开后为 NaN。
+        """
         p_eff = np.asarray(p_eff, dtype=float).ravel()
         l_cnt = p_eff.size
         out = np.full(l_cnt, np.nan, dtype=float)
@@ -3050,7 +3302,27 @@ class HistoryPanel():
             base_index: int,
             mask_1d: np.ndarray,
     ) -> np.ndarray:
-        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。"""
+        """单 share 单列归一化；``mask_1d`` 与 ``p_eff`` 等长。
+
+        Parameters
+        ----------
+        p_eff : numpy.ndarray
+            一维原始序列（已将 mask=False 位置置为 NaN）。
+        base_index : int
+            基准下标（从 0 起）。
+        mask_1d : numpy.ndarray
+            一维布尔掩码；与 ``p_eff`` 等长。
+
+        Returns
+        -------
+        numpy.ndarray
+            一维归一化序列。若基准点被 mask 排除、为 NaN 或为 0，则返回全 NaN。
+
+        Raises
+        ------
+        ValueError
+            ``base_index`` 越界时抛出（英文）。
+        """
         p_eff = np.asarray(p_eff, dtype=float).ravel()
         mask_1d = np.asarray(mask_1d, dtype=bool).ravel()
         l_cnt = p_eff.size
@@ -3067,7 +3339,23 @@ class HistoryPanel():
             self,
             htypes: Optional[Union[str, Sequence[str]]],
     ) -> List[Tuple[str, int]]:
-        """解析列：返回 (用户标签, 全局列下标) 列表；``htypes is None`` 时等价于 ``close``。"""
+        """解析 ``cum_return`` / ``normalize`` 的列输入，返回 (用户标签, 全局列下标) 列表。
+
+        Parameters
+        ----------
+        htypes : str, sequence of str, optional
+            用户传入的列名或列名序列；``None`` 视为 ``close``（并经 :meth:`_resolve_price_htype` 解析）。
+
+        Returns
+        -------
+        list[tuple[str, int]]
+            ``(user_label, column_index)`` 列表，其中 ``column_index`` 为解析后的全局列下标。
+
+        Raises
+        ------
+        ValueError
+            输入列名重复时抛出（英文）。若列无法解析或不存在，将由下游 ``list.index`` 等抛出异常。
+        """
         if self.is_empty:
             return []
         if htypes is None:
@@ -3129,10 +3417,12 @@ class HistoryPanel():
         ...     columns=['close'],
         ... )
         >>> cr = hp.cum_return(method='simple')
-        >>> cr.htypes
-        ['cumret_close']
-        >>> float(cr.values[0, -1, 0])
-        0.2
+        >>> cr
+        share 0, label: S
+                    cumret_close
+        2023-01-01          0.0
+        2023-01-02          0.1
+        2023-01-03          0.2
         """
         if self.is_empty:
             return HistoryPanel()
@@ -3207,8 +3497,12 @@ class HistoryPanel():
         ...     columns=['close'],
         ... )
         >>> nm = hp.normalize(base_index=0)
-        >>> float(nm.values[0, -1, 0])
-        4.0
+        >>> nm
+        share 0, label: S
+                    norm_close
+        2023-01-01        1.0
+        2023-01-02        2.0
+        2023-01-03        4.0
         """
         if self.is_empty:
             return HistoryPanel()
@@ -4607,9 +4901,57 @@ class HistoryPanel():
                     spec = None
                 if spec is not None and highlight is not None:
                     spec = dict(spec)
-                    spec['highlight'] = (
-                        highlight if isinstance(highlight, dict) else {'condition': highlight}
-                    )
+                    base_hl = highlight if isinstance(highlight, dict) else {'condition': highlight}
+                    # Phase11: condition 支持 (M,L) mask。为减少渲染层改动，这里将二维 mask
+                    # 解析为 per-share 的一维条件，并注入到每个 spec 的 highlight.condition。
+                    if isinstance(base_hl, dict) and 'condition' in base_hl:
+                        cond = base_hl.get('condition')
+                        style = base_hl.get('style')
+                        per_share_cond: Optional[Dict[str, np.ndarray]] = None
+                        if isinstance(cond, np.ndarray) and cond.dtype == bool:
+                            if cond.ndim == 2:
+                                mask_2d = np.asarray(cond, dtype=bool)
+                                L_full = len(self.hdates)
+                                if mask_2d.shape[1] != L_full:
+                                    raise ValueError(
+                                        f'highlight condition mask shape {mask_2d.shape} does not match '
+                                        f'hdates length L={L_full}.'
+                                    )
+                                # 允许 (M_plot,L) 或 (M_all,L)
+                                if mask_2d.shape[0] == len(share_list):
+                                    per_share_cond = {
+                                        s: mask_2d[i, :].copy()
+                                        for i, s in enumerate(share_list)
+                                    }
+                                elif mask_2d.shape[0] == len(self.shares):
+                                    idx_by_share = {s: i for i, s in enumerate(self.shares)}
+                                    per_share_cond = {
+                                        s: mask_2d[idx_by_share[s], :].copy()
+                                        for s in share_list
+                                    }
+                                else:
+                                    raise ValueError(
+                                        f'highlight condition mask shape {mask_2d.shape} cannot be aligned. '
+                                        f'Expected (M_plot={len(share_list)}, L={L_full}) for current plot shares '
+                                        f'or (M_all={len(self.shares)}, L={L_full}) for full panel shares.'
+                                    )
+                            elif cond.ndim != 1:
+                                raise ValueError(
+                                    f'highlight condition mask must be 1D or 2D bool ndarray, got ndim={cond.ndim}.'
+                                )
+                        if per_share_cond is not None:
+                            # 当前 spec 对应一组 shares：overlay 为 2 个 share，stack 为 1 个 share
+                            # 将每个 share 的一维 mask 传入渲染层；渲染层会自行处理 max/min/1D mask。
+                            base_hl = dict(base_hl)
+                            # 将本组 share 的 mask 聚合为 (M_group,L) 或 (1,L)，供后续按 share 顺序使用
+                            grp_masks = [per_share_cond[s] for s in grp if s in per_share_cond]
+                            if not grp_masks:
+                                # 理论上不应发生：grp 来自 share_list
+                                raise ValueError('Internal error: cannot map highlight mask to current plot shares.')
+                            base_hl['condition'] = np.vstack(grp_masks) if len(grp_masks) > 1 else grp_masks[0]
+                            if style is not None:
+                                base_hl['style'] = style
+                    spec['highlight'] = base_hl
                 row.append(spec)
             kline_idx = next((i for i, t in enumerate(types_info) if t.id == 'kline'), None)
             vol_idx = next((i for i, t in enumerate(types_info) if t.id == 'volume'), None)

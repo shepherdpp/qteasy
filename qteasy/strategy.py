@@ -28,7 +28,29 @@ from qteasy.parameter import Parameter
 
 
 def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
-    """检查字典的键和值的类型"""
+    """检查字典参数的键和值是否符合约定格式。
+
+    Parameters
+    ----------
+    par_name : str
+        参数名，用于错误信息提示。
+    pars : Any
+        待检查的对象，期望为 dict。
+    value_type : type
+        dict 的 value 期望类型。
+    key_type : str
+        期望 value 对象上存在的属性名，该属性需为 str，用于与 dict 的 key 对齐。
+
+    Returns
+    -------
+    bool
+        检查通过返回 True。
+
+    Raises
+    ------
+    AssertionError
+        当 ``pars`` 非 dict、value 类型不匹配、或 key 与 value 对象属性不一致时抛出（英文）。
+    """
     assert isinstance(pars, dict), f'parameter "{par_name}" is invalid, please check your input'
     assert all(isinstance(dtype, value_type) for dtype in pars.values()), \
         f'parameter "{par_name}" should be a dict of {value_type} objects, got {pars} instead'
@@ -51,6 +73,13 @@ class BaseStrategy:
     的实数信号再由 Operator 按 PT/PS/VS 信号语义解析为实际交易指令。关于自定义策略
     实现步骤与 PT/PS/VS 的详细说明，见文档「交易策略与 BaseStrategy」相关章节。
 
+    Examples
+    --------
+    BaseStrategy 为抽象基类，通常通过继承实现自定义策略。下面示例展示其类型信息（稳定输出）：
+
+    >>> import qteasy as qt
+    >>> qt.BaseStrategy.__name__
+    'BaseStrategy'
     """
     __metaclass__ = ABCMeta
 
