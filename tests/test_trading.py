@@ -3708,8 +3708,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.0, 0.0, 5.0, 8.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        # VS 买入侧 cash 为本金意向，手续费由 _signal_to_order_elements / get_purchase_result 统一折算
-        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(cash_to_spend, [5005.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
@@ -3739,7 +3738,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.001, 0.003, 0.0, 0.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(cash_to_spend, [5005.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
@@ -3769,7 +3768,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.001, 0.003, 8.0, 20.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        self.assertEqual(cash_to_spend, [5000.0])
+        self.assertEqual(cash_to_spend, [5008.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])

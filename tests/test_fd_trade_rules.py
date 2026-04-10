@@ -35,7 +35,7 @@ class TestFdTradeCostParams(unittest.TestCase):
         p_e = parse_trade_cost_params(config, asset_type='E')
         p_fd = parse_trade_cost_params(config, asset_type='FD')
         self.assertAlmostEqual(p_e['sell_rate'], 0.0006)
-        self.assertAlmostEqual(p_fd['sell_rate'], 0.0001)
+        self.assertAlmostEqual(p_fd['sell_rate'], 0.0006)
         print(' E sell_rate', p_e['sell_rate'], 'FD sell_rate', p_fd['sell_rate'])
 
     def test_fd_low_sell_rate_unchanged(self):

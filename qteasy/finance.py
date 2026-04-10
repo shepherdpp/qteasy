@@ -267,7 +267,7 @@ def get_purchase_result(prices: np.ndarray,
     return a_purchased, cash_spent, fees
 
 
-@njit()
+@njit(cache=True)
 def apply_execution_slippage(
         prices: np.ndarray,
         amount_purchased: np.ndarray,
@@ -297,22 +297,14 @@ def apply_execution_slippage(
     """
     if slippage == 0.:
         return cash_gained, cash_spent, amount_purchased, amount_sold, fee
-    n = prices.size
-    # TODO: 需要优化，因为当amount_purchased和amount_sold中存在大量0时，会导致计算量过大，同时应使用向量化计算
-    for i in range(n):
-        px = prices[i]
-        if np.isnan(px):
-            continue
-        ap = amount_purchased[i]
-        if ap != 0.:
-            slip_cost = slippage * np.abs(ap * px)
-            cash_spent[i] -= slip_cost
-            fee[i] += slip_cost
-        av = amount_sold[i]
-        if av != 0.:
-            slip_cost = slippage * np.abs(av * px)
-            cash_gained[i] -= slip_cost
-            fee[i] += slip_cost
+    # 掩码避免 0*NaN 与无效价格传播；整段数组运算便于 Numba/LLVM 向量化
+    buy_ok = np.isfinite(prices) & (amount_purchased != 0.)
+    sell_ok = np.isfinite(prices) & (amount_sold != 0.)
+    slip_buy = np.where(buy_ok, slippage * np.abs(amount_purchased * prices), 0.)
+    slip_sell = np.where(sell_ok, slippage * np.abs(amount_sold * prices), 0.)
+    cash_spent -= slip_buy
+    cash_gained -= slip_sell
+    fee += slip_buy + slip_sell
     return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
 
