@@ -46,6 +46,9 @@ from qteasy.built_in import (
 
 SIGNAL_TYPE_ID = {'pt': 0, 'ps': 1, 'vs': 2}
 
+# 模拟实盘（live_trade）当前已验证可运行的资产类型代码（与 DataType 一致）
+_LIVE_TRADE_SUPPORTED_ASSET_TYPES = frozenset({'E', 'FD'})
+
 
 class Operator:
     """qteasy 中的核心「交易员」对象，用于承载策略组并在统一时间表上生成交易信号。
@@ -2102,12 +2105,14 @@ class Operator:
             parse_trade_cost_params,
         )
 
-        # 进入实时信号生成模式:
-        # 实盘运行模式只支持asset_type = 'E'的情况，因此需要检查并排除其他情况
-        if config['asset_type'] != 'E':
-            msg = f'Only stock market is supported for live trade mode, got {config["asset_type"]} instead\n' \
-                  f'please set asset_type="E" with: qt.configure(asset_type="E")'
-            raise ValueError(msg)
+        # 进入实时信号生成模式：仅允许已验证链路（股票 E、场内基金 FD 等）
+        _at = config['asset_type']
+        if _at not in _LIVE_TRADE_SUPPORTED_ASSET_TYPES:
+            allowed = ', '.join(sorted(_LIVE_TRADE_SUPPORTED_ASSET_TYPES))
+            raise ValueError(
+                f'Live trade mode supports asset_type in {{{allowed}}}, got {_at!r} instead. '
+                f'For example: qt.configure(asset_type="E") or asset_type="FD".'
+            )
 
         init_holdings = config['live_trade_init_holdings']
         account_id = config['live_trade_account_id']
@@ -2154,7 +2159,10 @@ class Operator:
         from qteasy.trader import Trader
         broker = get_broker(broker_type, broker_params)
 
-        cost_params = np.array(list(parse_trade_cost_params(config).values()), dtype='float')  # 交易成本参数
+        cost_params = np.array(
+                list(parse_trade_cost_params(config, asset_type=config.get('asset_type')).values()),
+                dtype='float',
+        )  # 交易成本参数
 
         trader = Trader(
                 operator=self,
@@ -2162,6 +2170,7 @@ class Operator:
                 broker=broker,
                 datasource=datasource,
                 asset_pool=config['asset_pool'],
+                asset_type=config['asset_type'],
                 time_zone=config['time_zone'],
                 exchange='SSE',
                 market_open_time_am=config['market_open_time_am'],

@@ -452,7 +452,7 @@ class Trader(object):
                 current_prices = get_history_data(
                         shares=positions.index.tolist(),
                         htypes='close',
-                        asset_type='E',
+                        asset_type=self.asset_type,
                         freq='d',
                         start=start_date,
                         end=end_date,
@@ -2689,10 +2689,11 @@ def refill_missing_datasource_data(operator,
         symbol_list = trader.asset_pool.copy()  # to prevent from changing the config
 
         symbol_list.extend(['000300.SH', '000905.SH', '000001.SH', '399001.SZ', '399006.SZ'])
-        asset_types = trader.asset_type
-        if 'IDX' not in asset_types:
-            # add index to make sure indices are downloaded
-            asset_types += ', IDX'
+        at_raw = str(trader.asset_type).strip()
+        at_parts = str_to_list(at_raw) if at_raw else ['E']
+        if 'IDX' not in at_parts:
+            at_parts.append('IDX')
+        refill_asset_types = ', '.join(at_parts)
         start_date = last_available_date
         end_date = trader.get_current_tz_datetime()
         from qteasy.core import refill_data_source
@@ -2703,6 +2704,7 @@ def refill_missing_datasource_data(operator,
                 start_date=start_date.strftime('%Y%m%d'),
                 end_date=end_date.to_pydatetime().strftime('%Y%m%d'),
                 symbols=symbol_list,
+                asset_types=refill_asset_types,
                 parallel=True,
                 refresh_trade_calendar=False,
                 refill_dependent_tables=False,

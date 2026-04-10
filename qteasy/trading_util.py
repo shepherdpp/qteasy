@@ -15,7 +15,7 @@ import os
 
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Optional, Union
 
 from numba import njit
 
@@ -30,6 +30,8 @@ from qteasy.utilfuncs import (
     pandas_freq_alias_version_conversion,
     sanitize_filename,
 )
+
+from qteasy.finance import get_purchase_result
 
 from qteasy.trade_recording import (
     read_trade_order,
@@ -372,6 +374,7 @@ def parse_trade_signal(signals,
         moq_buy=trade_batch_size,
         moq_sell=sell_batch_size,
         allow_sell_short=allow_sell_short,
+        cost_params=cost_params,
     )
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
@@ -540,6 +543,10 @@ def parse_vs_signals(signals: np.ndarray,
                      cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号，将信号解释为绝对金额/数量级订单
 
+    多头/开空买入侧 ``cash_to_spend`` 在 ``signals * prices`` 本金意向之上，叠加与
+    ``get_purchase_result`` 配套的佣金预算 ``max(buy_min, |本金| * buy_rate)``；**不含**滑点
+    （滑点仅在回测执行层追加）。
+
     Parameters
     ----------
     signals: np.ndarray
@@ -551,13 +558,8 @@ def parse_vs_signals(signals: np.ndarray,
     allow_sell_short: bool
         是否允许卖空
     cost_params: np.ndarray
-        VS信号类型直接给出交易数量，为了确保计算出的消耗现金数据准确，必须考虑交易成本
-        交易成本参数, 一个长度为7的数组，包含以下内容：
-        [0] - buy_rate: float, 交易成本：固定买入费率
-        [1] - sell_rate: float, 交易成本：固定卖出费率
-        [2] - buy_min: float, 交易成本：最低买入费用
-        [3] - sell_min: float, 交易成本：最低卖出费用
-        [4] - slippage: float, 交易成本：滑点
+        ``[buy_rate, sell_rate, buy_min, sell_min, slippage]``；本函数仅使用 ``buy_rate``、
+        ``buy_min``，不使用 ``slippage``。
 
     Returns
     -------
@@ -566,13 +568,16 @@ def parse_vs_signals(signals: np.ndarray,
         amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
-    buy_rate, sell_rate, buy_min, sell_min, slippage = cost_params
+    buy_rate = cost_params[0]
+    buy_min = cost_params[2]
 
     # 计算各个资产的计划买入金额和计划卖出数量
     # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals, 0.)
-    # 当持有份额不小于0且信号为正时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
-    cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
+    # 当持有份额不小于0且信号为正时，开多仓：本金 + 预估买入费用（不含滑点）
+    base_long = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
+    addon_long = np.where(base_long > 0., np.fmax(buy_min, base_long * buy_rate), 0.)
+    cash_to_spend = base_long + addon_long
 
     # 当允许买空卖空时，允许开启空头头寸：
     if allow_sell_short:
@@ -580,13 +585,6 @@ def parse_vs_signals(signals: np.ndarray,
         cash_to_spend += np.where((signals < 0) & (own_amounts <= 0), signals * prices, 0.)
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
-
-    # 计算交易成本对买入金额的影响，只有多头买入才需要考虑交易成本，因为空头买入的成本会从在收入的现金中扣除
-    cash_to_spend += np.where(
-        cash_to_spend > 0,
-        np.fmax(buy_min, cash_to_spend * buy_rate),
-        0.
-    )
 
     # prices 为 NaN 时，该标的不可成交；将解析层面的买入现金规模置 0，
     # 避免 NaN 在后续步骤继续传播（成交执行层仍会再次用 prices 屏蔽 NaN）。
@@ -603,7 +601,8 @@ def _signal_to_order_elements(shares,
                               available_amounts,
                               moq_buy=0,
                               moq_sell=0,
-                              allow_sell_short=False):
+                              allow_sell_short=False,
+                              cost_params: Optional[np.ndarray] = None):
     """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项转化为
     交易订单 trade_orders
 
@@ -631,6 +630,9 @@ def _signal_to_order_elements(shares,
         卖出的最小交易单位
     allow_sell_short: bool, default False
         是否允许卖空，如果允许，当可用资产不足时，会增加空头买入信号
+    cost_params: np.ndarray, optional
+        长度 5 的交易成本数组 [buy_rate, sell_rate, buy_min, sell_min, slippage]；
+        多头买入数量由 ``get_purchase_result`` 按此参数与 ``moq_buy`` 计算。默认全 0。
 
     Returns
     -------
@@ -640,8 +642,15 @@ def _signal_to_order_elements(shares,
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     - quoted_prices: list of float, 所有交易信号的交易报价
-    - remarks: list of str, 生成交易信号的说明，用于为trader提供提示
+    -     remarks: list of str, 生成交易信号的说明，用于为trader提供提示
     """
+
+    if cost_params is None:
+        cost_params = np.zeros(5, dtype=np.float64)
+    else:
+        cost_params = np.asarray(cost_params, dtype=np.float64).reshape(-1)
+        if cost_params.size < 5:
+            raise ValueError('cost_params must have at least 5 elements')
 
     # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
     total_cash_to_spend = np.sum(cash_to_spend)
@@ -661,12 +670,21 @@ def _signal_to_order_elements(shares,
     remarks = []  # 生成交易信号的说明，用于为trader提供提示
 
     for i, sym in enumerate(shares):
-        # 计算多头买入的数量
+        # 计算多头买入的数量（与回测共用 get_purchase_result，含费与 MOQ）
         if cash_to_spend[i] > 0.001:
-            # 计算买入的数量
-            quantity = np.round(cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
-            if moq_buy > 0:
-                quantity = np.trunc(quantity / moq_buy) * moq_buy
+            px = prices[i]
+            if (not np.isfinite(px)) or np.isnan(px) or px <= 0:
+                continue
+            p1 = np.array([float(px)], dtype=np.float64)
+            c1 = np.array([float(cash_to_spend[i])], dtype=np.float64)
+            a_purchased, _cash_spent, fees = get_purchase_result(
+                    p1, c1, float(moq_buy), cost_params,
+            )
+            quantity = float(a_purchased[0])
+            if moq_buy <= 0:
+                quantity = float(np.round(quantity, AMOUNT_DECIMAL_PLACES))
+            if quantity <= 0.001:
+                continue
             symbols.append(sym)
             positions.append('long')
             directions.append('buy')

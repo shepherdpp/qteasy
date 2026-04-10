@@ -367,10 +367,15 @@ class VolumeBasedDynamicStg(GeneralStg):
         """示意性逻辑：如果最近一次成交绝对量大于阈值，则本步信号为 0，否则买入 1 单位。"""
         threshold = self.get_pars('threshold')
         trades_hist = self.get_data('proc.trade_records')
+        print(f'trades_hist is {trades_hist}, size: {trades_hist.size}')
         if trades_hist.size == 0:
             # 第一步：发出买入信号
-            return np.array([1.0] + [0.0] * (self.share_count - 1), dtype=float)
+            signal = np.array([1.0] + [0.0] * (self.share_count - 1), dtype=float)
+            print(f'will generate initial signal: {signal}')
+            return signal
         last_trades = self.get_data('proc.trade_records', lag=0)[0]
+        print(f'last_trades: {last_trades}, abs_sum of last_trades: {np.abs(last_trades).sum()} compared to '
+              f'threshold: {threshold}')
         if np.abs(last_trades).sum() > threshold:
             # 最近一笔成交较大，本步不再加仓
             return np.zeros(self.share_count, dtype=float)
@@ -403,6 +408,7 @@ class TestDynamicStrategyWithProcessData(unittest.TestCase):
         backtested = op.backtested
         n_steps = backtested.own_amounts_array.shape[0] - 1  # 步数
         last_own = backtested.own_amounts_array[-1]
+        print(f'own amounts array: {backtested.own_amounts_array}')
         print('  n_steps:', n_steps, ', last own_amounts:', last_own)
 
         # 策略逻辑：第一步无历史则买 1 单位第一只；之后若上步成交绝对值和不大于阈值(1)则继续买

@@ -13,7 +13,7 @@
 import pandas as pd
 import numpy as np
 
-from typing import Any, Union, NamedTuple
+from typing import Any, Optional, Union, NamedTuple
 from warnings import warn
 
 from qteasy import QT_DATA_SOURCE
@@ -236,7 +236,11 @@ def build_backtest_config_view(config: Union[dict, ConfigDict]) -> BacktestConfi
     )
 
 
-def parse_trade_cost_params(config) -> dict:
+# A 股股票卖出侧常见印花税量级（模拟用）；场内基金（FD）卖出不计此部分
+_STAMP_TAX_RATE_SELL_STOCK_APPROX = 0.0005
+
+
+def parse_trade_cost_params(config, asset_type: Optional[str] = None) -> dict:
     """解析交易成本相关的配置参数:
         buy_rate: float, 交易成本：固定买入费率
         sell_rate: float, 交易成本：固定卖出费率
@@ -244,11 +248,22 @@ def parse_trade_cost_params(config) -> dict:
         sell_min: float, 交易成本：最低卖出费用
         slippage: float, 交易成本：滑点
 
+    Parameters
+    ----------
+    config: dict
+        含 cost_rate_* / cost_min_* / cost_slippage
+    asset_type: str, optional
+        若为 ``FD``（场内基金），在卖出费率上按常见股票口径扣除印花税近似项，避免把股票含印花税的
+        sell_rate 直接套到 ETF；未传则使用 ``config.get('asset_type')``。
+
     Returns
     -------
     trade_cost_params: dict
         交易成本相关的参数字典
     """
+    if asset_type is None:
+        asset_type = config.get('asset_type')
+
     cost_params = {
         'buy_rate':  config['cost_rate_buy'],
         'sell_rate': config['cost_rate_sell'],

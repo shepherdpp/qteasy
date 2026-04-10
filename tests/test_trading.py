@@ -18,6 +18,8 @@ import numpy as np
 
 from qteasy.database import DataSource
 
+from qteasy.finance import get_purchase_result
+
 from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
@@ -3706,7 +3708,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.0, 0.0, 5.0, 8.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        self.assertEqual(cash_to_spend, [5005.0])
+        # VS 买入侧 cash 为本金意向，手续费由 _signal_to_order_elements / get_purchase_result 统一折算
+        self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
@@ -3736,7 +3739,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.001, 0.003, 0.0, 0.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        self.assertEqual(cash_to_spend, [5005.0])
+        self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
@@ -3766,7 +3769,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 cost_params=np.array([0.001, 0.003, 8.0, 20.0, 0.0]),
         )
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
-        self.assertEqual(cash_to_spend, [5008.0])
+        self.assertEqual(cash_to_spend, [5000.0])
         self.assertEqual(amounts_to_sell, [0.0])
 
         signals = np.array([-500])
@@ -3800,6 +3803,42 @@ class TestTradingUtilFuncs(unittest.TestCase):
         print(f'with signal: {signals}, cash_to_spend: {cash_to_spend}, amounts_to_sell: {amounts_to_sell}')
         self.assertEqual(list(cash_to_spend), [5000.0, 0.0, 0.0, -2500.0, 0.0, 0.0])
         self.assertEqual(list(amounts_to_sell), [0.0, 0.0, -500.0, 0.0, 0.0, 250.0])
+
+    def test_parse_vs_signals_additive_budget_excludes_slippage(self):
+        """正 VS 预算含 buy_rate+buy_min，不含 slippage"""
+        print('\n[test_parse_vs_signals_additive_budget_excludes_slippage]')
+        prices = np.array([10.0])
+        own_amounts = np.array([0.0])
+        signals = np.array([100.0])
+        cp0 = np.array([0.01, 0.0, 5.0, 0.0, 0.0], dtype=np.float64)
+        cp_slip = np.array([0.01, 0.0, 5.0, 0.0, 0.99], dtype=np.float64)
+        c_a, _ = parse_vs_signals(signals, prices, own_amounts, True, cp0)
+        c_b, _ = parse_vs_signals(signals, prices, own_amounts, True, cp_slip)
+        principal = 1000.0
+        expected = principal + max(5.0, principal * 0.01)
+        print(' cash_a, cash_b, expected:', c_a[0], c_b[0], expected)
+        self.assertAlmostEqual(float(c_a[0]), expected)
+        self.assertAlmostEqual(float(c_b[0]), float(c_a[0]), msg='slippage must not change VS budget')
+
+    def test_parse_vs_plus_get_purchase_coherent_100_shares(self):
+        """VS 本金 100×10 + min fee 5 ⇒ get_purchase 100 股、费 5、支出 1005"""
+        print('\n[test_parse_vs_plus_get_purchase_coherent_100_shares]')
+        from qteasy.finance import get_purchase_result
+
+        prices = np.array([10.0])
+        signals = np.array([100.0])
+        own_amounts = np.array([0.0])
+        cost_params = np.array([0.0, 0.0, 5.0, 0.0, 0.0], dtype=np.float64)
+        cash_to_spend, _ = parse_vs_signals(
+                signals, prices, own_amounts, False, cost_params,
+        )
+        print(' parse_vs cash_to_spend:', cash_to_spend)
+        self.assertAlmostEqual(float(cash_to_spend[0]), 1005.0)
+        qty, cash_spent, fees = get_purchase_result(prices, cash_to_spend, 100.0, cost_params)
+        print(' qty, fees, cash_spent:', qty[0], fees[0], cash_spent[0])
+        self.assertAlmostEqual(float(qty[0]), 100.0)
+        self.assertAlmostEqual(float(fees[0]), 5.0)
+        self.assertAlmostEqual(float(cash_spent[0]), -1005.0)
 
     def test_get_symbol_names(self):
         """ test function get_symbol_names """
@@ -4432,6 +4471,163 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         self.assertRaises(RuntimeError, trade_time_index, start='20200101', end='20200105', freq='d',
                           market='WRONG_MKT')  # wrong periods
+
+
+class TestParseTradeSignalPrecost(unittest.TestCase):
+    """P0-signal-to-order-precost：多头买入数量与 get_purchase_result 单一来源对齐。"""
+
+    def test_signal_to_order_long_buy_qty_respects_fees_and_moq(self):
+        print('\n[TestParseTradeSignalPrecost] VS 买入数量与 get_purchase_result 一致')
+        shares = ['AAA']
+        prices = np.array([10.0])
+        signals = np.array([700.0])
+        own_amounts = np.array([0.0])
+        cost_params = np.array([0.001, 0.0, 5.0, 0.0, 0.0], dtype=float)
+        moq = 100.0
+        principal = float(signals[0] * prices[0])
+        cash_budget = principal + max(5.0, principal * cost_params[0])
+        exp_qty, _, fees = get_purchase_result(
+                np.array([10.0]), np.array([cash_budget]), moq, cost_params,
+        )
+        exp_q = float(exp_qty[0])
+        fee = float(fees[0])
+        print(' expected qty', exp_q, 'fee', fee, 'cash_budget (principal+fee est.)', cash_budget)
+        sym, pos, dire, qty, qpx, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=1_000_000.0,
+                available_cash=1_000_000.0,
+                cost_params=cost_params,
+                trade_batch_size=moq,
+                sell_batch_size=1.0,
+        )
+        self.assertEqual(dire, ['buy'])
+        self.assertEqual(len(qty), 1)
+        self.assertAlmostEqual(qty[0], exp_q, places=6)
+        spend = qty[0] * 10.0 + fee
+        self.assertLessEqual(spend, 1_000_000.0 + 1e-6)
+        self.assertLessEqual(spend, cash_budget + 1e-6, msg='total spend should not exceed VS budget')
+
+    def test_signal_to_order_buy_never_exceeds_available_after_moq_trunc(self):
+        print('\n[TestParseTradeSignalPrecost] 含费总支出不超过可用现金')
+        shares = ['AAA']
+        prices = np.array([10.0])
+        signals = np.array([800.0])
+        own_amounts = np.array([0.0])
+        cost_params = np.array([0.001, 0.0, 5.0, 0.0, 0.0], dtype=float)
+        moq = 100.0
+        available_cash = 8000.0
+        budget = float(signals[0] * prices[0])
+        _, _, dire, qty, _, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=available_cash,
+                available_cash=available_cash,
+                cost_params=cost_params,
+                trade_batch_size=moq,
+                sell_batch_size=1.0,
+        )
+        self.assertEqual(len(qty), 1)
+        # parse_vs 先放大预算再按 own_cash 等比压缩，单标的时有效买入现金仍为 min(aug, own)=8000
+        _, _, fees = get_purchase_result(
+                np.array([10.0]), np.array([budget]), moq, cost_params,
+        )
+        spend_line = qty[0] * prices[0] + float(fees[0])
+        print(' qty', qty[0], 'spend_line', spend_line, 'available', available_cash)
+        self.assertLessEqual(spend_line, available_cash + 1e-5)
+        self.assertAlmostEqual(qty[0], float(
+                get_purchase_result(np.array([10.0]), np.array([budget]), moq, cost_params)[0][0],
+        ), places=5)
+
+    def test_signal_to_order_buy_skips_nan_and_zero_price(self):
+        print('\n[TestParseTradeSignalPrecost] NaN 与 0 价格跳过买入')
+        shares = ['A', 'B']
+        prices = np.array([np.nan, 12.0])
+        signals = np.array([100.0, 100.0])
+        own_amounts = np.array([0.0, 0.0])
+        sym, _, dire, qty, _, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=1e9,
+                available_cash=1e9,
+                cost_params=np.zeros(5),
+                trade_batch_size=0.0,
+                sell_batch_size=1.0,
+        )
+        self.assertEqual(sym, ['B'])
+        self.assertEqual(qty[0], 100.0)
+
+        prices2 = np.array([0.0, 12.0])
+        sym2, _, _, qty2, _, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices2,
+                own_amounts=own_amounts,
+                own_cash=1e9,
+                available_cash=1e9,
+                cost_params=np.zeros(5),
+                trade_batch_size=0.0,
+                sell_batch_size=1.0,
+        )
+        self.assertEqual(sym2, ['B'])
+
+    def test_signal_to_order_buy_min_too_large_yields_no_order(self):
+        print('\n[TestParseTradeSignalPrecost] buy_min 过大则无买入单')
+        shares = ['AAA']
+        prices = np.array([10.0])
+        signals = np.array([10.0])
+        own_amounts = np.array([0.0])
+        cost_params = np.array([0.0, 0.0, 1e9, 0.0, 0.0], dtype=float)
+        sym, _, dire, qty, _, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=1e9,
+                available_cash=1e9,
+                cost_params=cost_params,
+                trade_batch_size=0.0,
+                sell_batch_size=1.0,
+        )
+        self.assertEqual(len(qty), 0)
+
+    def test_vs_buy_budget_no_double_fee_after_refactor(self):
+        print('\n[TestParseTradeSignalPrecost] VS 仅一次 get_purchase_result 计费')
+        shares = ['AAA']
+        prices = np.array([10.0])
+        signals = np.array([500.0])
+        own_amounts = np.array([0.0])
+        cost_params = np.array([0.001, 0.0, 5.0, 0.0, 0.0], dtype=float)
+        moq = 100.0
+        principal = float(signals[0] * prices[0])
+        budget = principal + max(5.0, principal * cost_params[0])
+        a1, _, _ = get_purchase_result(
+                np.array([10.0]), np.array([budget]), moq, cost_params,
+        )
+        _, _, _, qty, _, _ = parse_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=1e9,
+                available_cash=1e9,
+                cost_params=cost_params,
+                trade_batch_size=moq,
+                sell_batch_size=1.0,
+        )
+        self.assertAlmostEqual(qty[0], float(a1[0]), places=6)
 
 
 if __name__ == '__main__':

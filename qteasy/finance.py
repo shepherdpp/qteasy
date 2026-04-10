@@ -176,7 +176,7 @@ def get_selling_result(prices: np.ndarray,
         - sell_rate: float, 卖出费率
         - buy_min: float, 买入最低费用
         - sell_min: float, 卖出最低费用
-        - slippage: float, 滑点
+        - slippage: float, 滑点（本函数内不参与费率折算，由回测执行层单独处理）
 
     Returns
     -------
@@ -197,7 +197,8 @@ def get_selling_result(prices: np.ndarray,
     a_sold = np.where(np.isnan(prices), 0, a_sold)
     sold_values = a_sold * prices
 
-    rates = cost_params[1] - cost_params[4] * sold_values
+    # 滑点不参与成交数量与佣金费率折算；回测在 calculate_trade_results 末级单独施加执行层滑点
+    rates = cost_params[1]
     fees = np.where(sold_values, np.fmax(np.abs(sold_values * rates), cost_params[3]), 0)  # sell_min
     cash_gained = - (sold_values + fees)
 
@@ -228,14 +229,14 @@ def get_purchase_result(prices: np.ndarray,
         - sell_rate: float, 卖出费率
         - buy_min: float, 买入最低费用
         - sell_min: float, 卖出最低费用
-        - slippage: float, 滑点
+        - slippage: float, 滑点（本函数内不参与费率折算，由回测执行层单独处理）
 
     Returns
     -------
     tuple: (a_to_purchase, cash_spent, fee)
     a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
     cash_spent: ndarray,     花费的总金额，包括购买成本在内
-    fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
+    fee: ndarray,            花费的费用（佣金及最低费等，不含执行层滑点）
     """
 
     buy_min = cost_params[2]
@@ -243,7 +244,7 @@ def get_purchase_result(prices: np.ndarray,
     # 估算购买一定金额股票的交易费率，考虑最小费用，将绝对值小于buy_min的金额置0，因为此时无法买入
     abs_cash_to_spend = np.abs(cash_to_spend)  # buy_short时cash_to_spend为负值
     cash_to_spend = np.where(abs_cash_to_spend < buy_min, 0, cash_to_spend)
-    rates = cost_params[0] + cost_params[4] * cash_to_spend
+    rates = cost_params[0]
     pre_rates = np.where(cash_to_spend, np.fmax(rates, buy_min / (cash_to_spend - buy_min)), 0)  #
     # 在买入时，交易费率相当于提高了买入价格，计算该价格下能买入多少份额，但买入空头时，不需要提高价格
     rated_prices = np.where(cash_to_spend > 0, prices * (1 + pre_rates), prices)
@@ -264,6 +265,55 @@ def get_purchase_result(prices: np.ndarray,
     cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
 
     return a_purchased, cash_spent, fees
+
+
+@njit()
+def apply_execution_slippage(
+        prices: np.ndarray,
+        amount_purchased: np.ndarray,
+        amount_sold: np.ndarray,
+        cash_spent: np.ndarray,
+        cash_gained: np.ndarray,
+        fee: np.ndarray,
+        slippage: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """在已确定的成交数量上追加执行层滑点成本（回测专用）。
+
+    对每笔非零成交，按名义成交额 ``|qty * price|`` 乘以 ``slippage`` 增加成本：
+    买入侧调低 ``cash_spent``（更负）、卖出侧调低 ``cash_gained``，并同步调增 ``fee``。
+    不改变 ``amount_purchased`` / ``amount_sold``。
+
+    Parameters
+    ----------
+    prices, amount_purchased, amount_sold, cash_spent, cash_gained, fee
+        与 ``calculate_trade_results`` 输出同形的逐标的数组。
+    slippage : float
+        滑点率，非负。
+
+    Returns
+    -------
+    tuple
+        原地更新后的 ``(cash_gained, cash_spent, amount_purchased, amount_sold, fee)``。
+    """
+    if slippage == 0.:
+        return cash_gained, cash_spent, amount_purchased, amount_sold, fee
+    n = prices.size
+    # TODO: 需要优化，因为当amount_purchased和amount_sold中存在大量0时，会导致计算量过大，同时应使用向量化计算
+    for i in range(n):
+        px = prices[i]
+        if np.isnan(px):
+            continue
+        ap = amount_purchased[i]
+        if ap != 0.:
+            slip_cost = slippage * np.abs(ap * px)
+            cash_spent[i] -= slip_cost
+            fee[i] += slip_cost
+        av = amount_sold[i]
+        if av != 0.:
+            slip_cost = slippage * np.abs(av * px)
+            cash_gained[i] -= slip_cost
+            fee[i] += slip_cost
+    return cash_gained, cash_spent, amount_purchased, amount_sold, fee
 
 
 class CashPlan:

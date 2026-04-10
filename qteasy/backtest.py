@@ -35,6 +35,7 @@ from qteasy.evaluate import (
 )
 
 from qteasy.finance import (
+    apply_execution_slippage,
     get_selling_result,
     get_purchase_result,
 )
@@ -499,6 +500,9 @@ def calculate_trade_results(
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
+    apply_execution_slippage(
+            prices, amount_purchased, amount_sold, cash_spent, cash_gained, fee, cost_params[4],
+    )
     # DEBUG
     # print(f'finished calculation: \n'
     #       f'cash_gained: {cash_gained.round(2)}\n'
