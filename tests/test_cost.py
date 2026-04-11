@@ -574,6 +574,51 @@ class TestCost(unittest.TestCase):
         self.assertTrue(np.allclose(a_sold_short, [0., 0., 1.]), 'short sell a_sold should remain')
         self.assertAlmostEqual(cash_gained_short[2], -10. - 100., msg='short sell: cash_gained = -(sold_values+fees)')
 
+    def test_apply_execution_slippage_zero_slippage_returns_same_arrays(self):
+        """§5.11 AES-ZERO：slippage=0 时与拷贝数组逐元素一致（早退路径）。"""
+        print('\n[TestCost] AES-ZERO apply_execution_slippage slippage=0')
+        prices = np.array([10.0, 20.0])
+        amount_purchased = np.array([100.0, 0.0])
+        amount_sold = np.array([0.0, 50.0])
+        cash_spent = np.array([-1000.0, 0.0])
+        cash_gained = np.array([0.0, 900.0])
+        fee = np.array([10.0, 10.0])
+        cg0, cs0, ap0, as0, f0 = (
+                cash_gained.copy(),
+                cash_spent.copy(),
+                amount_purchased.copy(),
+                amount_sold.copy(),
+                fee.copy(),
+        )
+        out = apply_execution_slippage(
+                prices, amount_purchased, amount_sold, cash_spent, cash_gained, fee, 0.0,
+        )
+        print('  out is same tuple objects as inputs (early return):', out[0] is cash_gained)
+        self.assertTrue(np.allclose(cash_gained, cg0))
+        self.assertTrue(np.allclose(cash_spent, cs0))
+        self.assertTrue(np.allclose(amount_purchased, ap0))
+        self.assertTrue(np.allclose(amount_sold, as0))
+        self.assertTrue(np.allclose(fee, f0))
+
+    def test_apply_execution_slippage_inf_price_skips_slip_on_that_leg(self):
+        """§5.11 AES-INF：价格为 inf 的成交腿不追加执行层滑点。"""
+        print('\n[TestCost] AES-INF apply_execution_slippage price[0]=inf')
+        prices = np.array([np.inf, 20.0])
+        amount_purchased = np.array([100.0, 0.0])
+        amount_sold = np.array([0.0, 50.0])
+        cash_spent = np.array([-1000.0, 0.0])
+        cash_gained = np.array([0.0, 900.0])
+        fee = np.array([10.0, 10.0])
+        slip = 0.01
+        apply_execution_slippage(
+                prices, amount_purchased, amount_sold, cash_spent, cash_gained, fee, slip,
+        )
+        print('  cash_spent', cash_spent, 'cash_gained', cash_gained, 'fee', fee)
+        # 第一腿 buy_ok 为 False，无滑点；第二腿卖出 50@20 -> slip 10
+        self.assertAlmostEqual(float(cash_spent[0]), -1000.0)
+        self.assertAlmostEqual(float(cash_gained[1]), 890.0)
+        self.assertAlmostEqual(float(fee[1]), 20.0)
+
 
 if __name__ == '__main__':
     unittest.main()
