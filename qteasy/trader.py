@@ -45,7 +45,7 @@ from .trading_util import (
     get_position_by_id,
     get_symbol_names,
     process_account_delivery,
-    parse_trade_signal,
+    parse_live_trade_signal,
     process_trade_result,
     submit_order,
     deliver_trade_result,
@@ -2066,7 +2066,7 @@ class Trader(object):
             self.send_message(f'ran strategy and created signal: {op_signal}', debug=True)
 
             # 解析交易信号
-            symbols, positions, directions, quantities, quoted_prices, remarks = parse_trade_signal(
+            symbols, positions, directions, quantities, quoted_prices, remarks = parse_live_trade_signal(
                     signals=op_signal,
                     signal_type=signal_type,
                     shares=shares,

@@ -21,7 +21,7 @@ from qteasy.database import DataSource
 from qteasy.finance import get_purchase_result
 
 from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, _signal_to_order_elements
-from qteasy.trading_util import parse_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import parse_live_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
 from qteasy.trading_util import calculate_cost_change, trade_time_index
 
@@ -2316,8 +2316,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):
-        """ test parse_trade_signal function """
-        # test parse_trade_signal with three symbols, with three signal types
+        """ test parse_live_trade_signal function """
+        # test parse_live_trade_signal with three symbols, with three signal types
         # create basic test data
         shares = ['000001', '000002', '000003']
         prices = np.array([20., 20., 20.])
@@ -2358,7 +2358,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         }
         # create test data for PT signal and parse it
         pt_signal = np.array([0.1, 0.1, 0.1])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=pt_signal,
                 signal_type='pt',
                 shares=shares,
@@ -2375,7 +2375,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[2], ['buy', 'buy', 'sell'])
         self.assertEqual(parsed_signal_elements[3], [200.0, 200.0, 300.0])
         pt_signal = np.array([-0.1, 0.2, 0.3])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=pt_signal,
                 signal_type='pt',
                 shares=shares,
@@ -2394,7 +2394,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # create test data for PS signal and parse it
         ps_signal = np.array([0.1, 0.1, 0.1])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=ps_signal,
                 signal_type='ps',
                 shares=shares,
@@ -2411,7 +2411,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[2], ['buy', 'buy', 'buy'])
         self.assertEqual(parsed_signal_elements[3], [700.0, 700.0, 700.0])
         ps_signal = np.array([-1.5, -1, 0.3])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=ps_signal,
                 signal_type='ps',
                 shares=shares,
@@ -2430,7 +2430,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
 
         # create test data for VS signal and parse it
         vs_signal = np.array([300, 400, 500])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=vs_signal,
                 signal_type='vs',
                 shares=shares,
@@ -2447,7 +2447,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[2], ['buy', 'buy', 'buy'])
         self.assertEqual(parsed_signal_elements[3], [300.0, 400.0, 500.0])
         vs_signal = np.array([-1300, 400, -500])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=vs_signal,
                 signal_type='vs',
                 shares=shares,
@@ -2498,7 +2498,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         }
         # test pt signal previously used
         pt_signal = np.array([-0.1, 0.2, 0.3])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=pt_signal,
                 signal_type='pt',
                 shares=shares,
@@ -2516,7 +2516,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[3], [500.0, 900.0, 1100.0])
         # test ps signal previously used
         ps_signal = np.array([-1.5, -1, 0.3])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=ps_signal,
                 signal_type='ps',
                 shares=shares,
@@ -2534,7 +2534,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[3], [500.0, 500.0, 2100.0])
         # test vs signal previously used
         vs_signal = np.array([-1300, 400, -500])
-        parsed_signal_elements = parse_trade_signal(
+        parsed_signal_elements = parse_live_trade_signal(
                 signals=vs_signal,
                 signal_type='vs',
                 shares=shares,
@@ -2551,7 +2551,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'sell'])
         self.assertEqual(parsed_signal_elements[3], [500.0, 400.0, 500.0])
 
-        # TODO: test parse_trade_signal with different config:
+        # TODO: test parse_live_trade_signal with different config:
         #  1. vs type of signals done
         #  2, allow_sell_short = False done
         #  3. no available cash and no available shares
@@ -4491,7 +4491,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         exp_q = float(exp_qty[0])
         fee = float(fees[0])
         print(' expected qty', exp_q, 'fee', fee, 'cash_budget (principal+fee est.)', cash_budget)
-        sym, pos, dire, qty, qpx, _ = parse_trade_signal(
+        sym, pos, dire, qty, qpx, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,
@@ -4520,7 +4520,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         moq = 100.0
         available_cash = 8000.0
         budget = float(signals[0] * prices[0])
-        _, _, dire, qty, _, _ = parse_trade_signal(
+        _, _, dire, qty, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,
@@ -4550,7 +4550,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         prices = np.array([np.nan, 12.0])
         signals = np.array([100.0, 100.0])
         own_amounts = np.array([0.0, 0.0])
-        sym, _, dire, qty, _, _ = parse_trade_signal(
+        sym, _, dire, qty, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,
@@ -4566,7 +4566,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         self.assertEqual(qty[0], 100.0)
 
         prices2 = np.array([0.0, 12.0])
-        sym2, _, _, qty2, _, _ = parse_trade_signal(
+        sym2, _, _, qty2, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,
@@ -4587,7 +4587,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         signals = np.array([10.0])
         own_amounts = np.array([0.0])
         cost_params = np.array([0.0, 0.0, 1e9, 0.0, 0.0], dtype=float)
-        sym, _, dire, qty, _, _ = parse_trade_signal(
+        sym, _, dire, qty, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,
@@ -4614,7 +4614,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
         a1, _, _ = get_purchase_result(
                 np.array([10.0]), np.array([budget]), moq, cost_params,
         )
-        _, _, _, qty, _, _ = parse_trade_signal(
+        _, _, _, qty, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,

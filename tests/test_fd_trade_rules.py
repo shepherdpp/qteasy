@@ -16,7 +16,7 @@ import pandas as pd
 
 from qteasy.config_parser import parse_trade_cost_params
 from qteasy.finance import get_purchase_result
-from qteasy.trading_util import parse_trade_signal
+from qteasy.trading_util import parse_live_trade_signal
 
 
 class TestFdTradeCostParams(unittest.TestCase):
@@ -52,7 +52,7 @@ class TestFdTradeCostParams(unittest.TestCase):
 
 
 class TestFdMoqPointOne(unittest.TestCase):
-    """ETF 常见 0.1 最小单位与 get_purchase_result / parse_trade_signal 一致。"""
+    """ETF 常见 0.1 最小单位与 get_purchase_result / parse_live_trade_signal 一致。"""
 
     def test_parse_trade_signal_vs_moq_point_one(self):
         print('\n[TestFdMoqPointOne] trade_batch_size=0.1 与 get_purchase_result 一致')
@@ -66,7 +66,7 @@ class TestFdMoqPointOne(unittest.TestCase):
         exp_q = float(get_purchase_result(
                 np.array([2.0]), np.array([budget]), moq, cost_params,
         )[0][0])
-        _, _, _, qty, _, _ = parse_trade_signal(
+        _, _, _, qty, _, _ = parse_live_trade_signal(
                 signals=signals,
                 signal_type='vs',
                 shares=shares,

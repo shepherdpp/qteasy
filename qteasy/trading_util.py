@@ -240,23 +240,23 @@ def create_daily_task_schedule(operator,
 
 # Utility functions for live trade
 # @njit()
-def parse_trade_signal(signals,
-                       signal_type,
-                       shares,
-                       prices,
-                       own_amounts,
-                       own_cash,
-                       available_amounts=None,
-                       available_cash=None,
-                       cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
-                       pt_buy_threshold: float = 0.0,
-                       pt_sell_threshold: float = 0.0,
-                       allow_sell_short: bool = False,
-                       trade_batch_size: int = 0,
-                       sell_batch_size: int = 0,
-                       long_position_limit: float = 1.0,
-                       short_position_limit: float = -1.0,
-                       ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
+def parse_live_trade_signal(signals,
+                            signal_type,
+                            shares,
+                            prices,
+                            own_amounts,
+                            own_cash,
+                            available_amounts=None,
+                            available_cash=None,
+                            cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
+                            pt_buy_threshold: float = 0.0,
+                            pt_sell_threshold: float = 0.0,
+                            allow_sell_short: bool = False,
+                            trade_batch_size: int = 0,
+                            sell_batch_size: int = 0,
+                            long_position_limit: float = 1.0,
+                            short_position_limit: float = -1.0,
+                            ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易订单元素，包括
     资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
