@@ -336,7 +336,7 @@ def calculate_trade_results(
     total_value = own_cash + pre_values.sum()
     empty_array = np.zeros_like(op_signal)
 
-    # 2,制定交易计划，生成计划买入金额和计划卖出数量
+    # 2,制定交易计划，生成交易意图（计划买入金额和计划卖出数量）
     if signal_type == 0:  # PT信号
         # 限定PT信号在多空持仓限额范围内，这样就不需要在后续处理交易指令时调整交易数量了
         trimmed_op_signal = trim_pt_type_signals(
@@ -395,13 +395,16 @@ def calculate_trade_results(
     # cash_to_spend = np.where(np.isnan(prices), 0, cash_to_spend)
     # amounts_to_sell = np.where(np.isnan(prices), 0, amounts_to_sell)
 
-    # 3, 根据可用股票数量或多空持仓限额调整卖出计划。
+    # 3, 根据可用股票数量或多空持仓限额调整交易意图。
 
     # 如果不允许卖空交易，则根据可用股份数量调整卖出计划，确保卖出数量不超过可用数量，
     # 此时忽略long_pos_limit与short_pos_limit，因为pos_limit被可用金额自动限制在0～1之间
     if not allow_sell_short:
         amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
-    else:  # 如果允许卖空交易，则检查卖出计划是否超过own_amounts，将超过的部分转化为相应的空头/多头买入
+    else:
+        # 如果允许卖空交易，则检查卖出计划是否超过own_amounts，将超过的部分转化为相应的空头/多头买入
+        # 这里不需要对比long_pos_limit和short_pos_limit，因为只有多头/空头买进才会导致持仓超限，
+        # 在调整cash_to_spend的时候才需要
         excesive_long_amounts_to_sell = np.where(
                 (amounts_to_sell < 0) & (own_amounts + amounts_to_sell < 0),
                 own_amounts + amounts_to_sell,
