@@ -318,6 +318,8 @@ def parse_live_trade_signal(signals,
         available_cash = own_cash
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
 
+    # 1, 将交易信号解析为交易意图 trade_intentions (即cash_to_spend和amounts_to_sell)
+
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
         trimmed_signals = trim_pt_type_signals(
@@ -357,14 +359,11 @@ def parse_live_trade_signal(signals,
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
 
-    # 确认总现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
-    total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额
-    if total_cash_to_spend > own_cash:
-        # 将计划买入的金额调整为可用的最大值
-        cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
+    # 2，对交易意图进行Operator级风控处理
+    # TODO，在这里对cash_to_spend和amounts_to_sell进行交易意图风控
 
     # 将计算出的买入和卖出的数量转换为交易订单
-    symbols, positions, directions, quantities, quoted_prices, remarks= _signal_to_order_elements(
+    symbols, positions, directions, quantities, quoted_prices, remarks = _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,

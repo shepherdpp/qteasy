@@ -443,9 +443,10 @@ def calculate_trade_results(
     # 如果不允许卖空交易，则根据可用现金调整买入计划，确保买入总金额不超过可用现金。
     # 此时自动保证交易后的持仓比例在0～1之间。
     if not allow_sell_short:
-        # 对于 PT 信号，在现金交割周期为 0 时，可以在同一回测步中复用本期卖出获得的现金，
-        # 从而更好地贴合“目标仓位一次性调仓”的语义；对于 PS / VS 信号，始终仅使用期初可用现金。
+        # 当不允许空头操作时，忽略long_pos_limit和short_pos_limit，仅以可用现金为买入限制
         if signal_type == 0 and cash_delivery_period == 0:
+            # 对于 PT 信号，在现金交割周期为 0 时，可以在同一回测步中复用本期卖出获得的现金，
+            # 从而更好地贴合“目标仓位一次性调仓”的语义；对于 PS / VS 信号，始终仅使用期初可用现金。
             effective_available_cash = available_cash + cash_gained.sum()
         else:
             effective_available_cash = available_cash
@@ -464,16 +465,16 @@ def calculate_trade_results(
     elif signal_type >= 1:
         # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
         # 因为signal_type != 0，因此调整的比例以买入金额为准
-        next_own_amounts = own_amounts + amount_sold
+        next_own_values = (own_amounts + amount_sold) * prices
         long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
         total_long_cash_to_spend = long_cash_to_spend.sum()
         max_long_pos_to_buy = long_pos_limit * total_value - np.where(
-                cash_to_spend > 0.001, next_own_amounts * prices, 0).sum()
+                cash_to_spend > 0.001, next_own_values, 0).sum()
 
         short_cash_to_spend = np.where(cash_to_spend < -0.001, cash_to_spend, 0)
         total_short_cash_to_spend = short_cash_to_spend.sum()
         max_short_pos_to_buy = short_pos_limit * total_value - np.where(
-                cash_to_spend < -0.001, next_own_amounts * prices, 0).sum()
+                cash_to_spend < -0.001, next_own_values, 0).sum()
 
         if total_long_cash_to_spend > max_long_pos_to_buy:
             # 如果计划买入多头现金超过允许买入最大金额，按比例降低分配给每个拟买入多头资产的现金
@@ -484,7 +485,7 @@ def calculate_trade_results(
             short_cash_to_spend *= max_short_pos_to_buy / total_short_cash_to_spend
 
         cash_to_spend = long_cash_to_spend + short_cash_to_spend
-    else:
+    else: # signal_type == 0
         # 对于signal_type == 0，在生成买入数量前，仓位信号已经被限制在
         # long_pos_limit和short_pos_limit之间了，因此不需要再调整
         pass
