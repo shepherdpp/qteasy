@@ -1,6 +1,8 @@
 # RELEASE HISTORY
 
 ## 2.3.1 (2026-04-11)
+- **Configuration**  
+  Default ``trade_log_keep_days`` is now **3** (was 0): on each fresh Python process that imports qteasy, CSV trade reports older than the retention window under ``trade_log_file_path`` are removed once at startup. Set ``trade_log_keep_days`` to ``None`` or **0 or below** to disable automatic deletion. Documentation for rotation timing has been aligned with this behavior (cleanup is not run immediately before each new backtest CSV write).
 - **Bug fixes**  
   Fixed issue #257: Commission fees are now taken into consideration in live trade order generation, the way slippage involved in the operation result of backtest is now optimized
   Now asset type "FD" will no longer raise in live trade mode

@@ -281,6 +281,12 @@ qteasy的所有配置变量
        | 支持相对路径（相对 QT_ROOT_PATH）、绝对路径及以 ``~`` 开头的家目录路径；
        | 通过 ``qt.configure()`` / ``qt.set_config()`` 修改后立即生效（热修改），无需重新导入。
        | 路径中不得包含非法字符，否则抛出 ValueError。
+   * - ``trade_log_keep_days``
+     - 4
+     - ``3``
+     - | 回测写盘的 ``trade_log_*`` / ``trade_summary_*`` / ``value_curve_*`` 等 CSV 的保留天数；默认 **3**。
+       | 在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。
+       | 设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。
    * - ``trade_log``
      - 1
      - ``True``

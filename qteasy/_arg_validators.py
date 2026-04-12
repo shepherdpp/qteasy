@@ -467,10 +467,12 @@ def _valid_qt_kwargs():
              'text':      '明细交易日志的存储路径'},
 
         'trade_log_keep_days':
-            {'Default':   0,
+            {'Default':   3,
              'Validator': lambda value: isinstance(value, int) or value is None,
              'level':     4,
-             'text':      'trade_log与trade_summary文件的保留天数，None或小于等于0表示不自动删除旧文件'},
+             'text':      '回测写盘的 trade_log / trade_summary / value_curve 等 CSV 的保留天数；'
+                          '默认 3 天。进程加载 qteasy 时按该天数对 trade_log_file_path 目录做一次清理。'
+                          '若需关闭自动删除，请设为 None 或小于等于 0。'},
 
         'trade_log':
             {'Default':   True,
