@@ -178,6 +178,7 @@ def backtest_step(
     # print(f'\ncalculating trade results for day {day_num}, signal_type: {signal_type}, op_signal: {op_signal}')
     # if day_num == 1781:
     #     import pdb; pdb.set_trace()
+
     # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
     cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
             signal_type=signal_type,
@@ -323,6 +324,8 @@ def calculate_trade_results(
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
     moq_sell: float:
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    cash_delivery_period: int:
+        资金交割周期，单位为天
 
     Returns
     -------
