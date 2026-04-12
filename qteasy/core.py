@@ -765,7 +765,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
             tables=tables,
     )
     # 根据数据类型查找相应的数据表名称，并将这些数据表添加到下载清单中
-    if dtypes or freqs or asset_types:
+    # 仅当给出 dtypes（infer_data_types 的 names）时才扩展表清单；仅传 asset_types 时
+    # names 为 None 会触发 infer_data_types 报错（如 pre_open → refill_missing_datasource_data）。
+    if dtypes:
         data_types = infer_data_types(
                 names=dtypes,
                 freqs=freqs,

@@ -15,7 +15,7 @@ import os
 
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import NamedTuple, Optional, Union
 
 from numba import njit
 
@@ -30,6 +30,8 @@ from qteasy.utilfuncs import (
     pandas_freq_alias_version_conversion,
     sanitize_filename,
 )
+
+from qteasy.finance import get_purchase_result, get_selling_result
 
 from qteasy.trade_recording import (
     read_trade_order,
@@ -238,23 +240,24 @@ def create_daily_task_schedule(operator,
 
 # Utility functions for live trade
 # @njit()
-def parse_trade_signal(signals,
-                       signal_type,
-                       shares,
-                       prices,
-                       own_amounts,
-                       own_cash,
-                       available_amounts=None,
-                       available_cash=None,
-                       cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
-                       pt_buy_threshold: float = 0.0,
-                       pt_sell_threshold: float = 0.0,
-                       allow_sell_short: bool = False,
-                       trade_batch_size: int = 0,
-                       sell_batch_size: int = 0,
-                       long_position_limit: float = 1.0,
-                       short_position_limit: float = -1.0,
-                       ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
+def parse_live_trade_signal(signals,
+                            signal_type,
+                            shares,
+                            prices,
+                            own_amounts,
+                            own_cash,
+                            available_amounts=None,
+                            available_cash=None,
+                            cost_params: np.ndarray = np.array([0., 0., 0., 0., 0.,]),
+                            pt_buy_threshold: float = 0.0,
+                            pt_sell_threshold: float = 0.0,
+                            allow_sell_short: bool = False,
+                            trade_batch_size: int = 0,
+                            sell_batch_size: int = 0,
+                            long_position_limit: float = 1.0,
+                            short_position_limit: float = -1.0,
+                            cash_delivery_period: int = 0,
+                            ) -> tuple[list[str], list[str], list[str], list[float], list[float], list[str]]:
     """ 根据signal_type的值，将operator生成的qt交易信号解析为标准的交易订单元素，包括
     资产代码、头寸类型、交易方向、交易数量等, 不检查账户的可用资金和持仓数量
 
@@ -297,6 +300,8 @@ def parse_trade_signal(signals,
         多头持仓限制
     short_position_limit: float, default=-1.0
         空头持仓限制
+    cash_delivery_period: int, default=0
+        现金交割周期；与回测一致，``PT`` 且为 ``0`` 时买入意图可计入本期卖出现金预览。
 
     Returns
     -------
@@ -315,6 +320,8 @@ def parse_trade_signal(signals,
     if available_cash is None:
         available_cash = own_cash
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
+
+    # 1, 将交易信号解析为交易意图 trade_intentions (即cash_to_spend和amounts_to_sell)
 
     # PT交易信号和PS/VS交易信号需要分开解析
     if signal_type.lower() == 'pt':
@@ -355,14 +362,53 @@ def parse_trade_signal(signals,
     else:
         raise ValueError('Unknown signal type: {}'.format(signal_type))
 
-    # 确认总现金是否足够执行交易，如果不足，则将计划买入金额调整为可用的最大值，可用持仓检查可以分别进行
-    total_cash_to_spend = np.sum(cash_to_spend)  # 计划买进的总金额
-    if total_cash_to_spend > own_cash:
-        # 将计划买入的金额调整为可用的最大值
-        cash_to_spend = cash_to_spend * own_cash / total_cash_to_spend
+    if np.allclose(cash_to_spend, 0.) and np.allclose(amounts_to_sell, 0.):
+        return [], [], [], [], [], []
+
+    # 2，Operator 级风控：与回测 calculate_trade_results 同序
+    cash_to_spend, amounts_to_sell = sell_direction_adjustment(
+            cash_to_spend,
+            amounts_to_sell,
+            own_amounts,
+            available_amounts,
+            prices,
+            allow_sell_short,
+            cost_params,
+    )
+    moq_sell_f = float(sell_batch_size)
+    amount_sold_pv, cash_gained_pv, _fee_s = get_selling_result(
+            prices,
+            amounts_to_sell,
+            moq_sell_f,
+            cost_params,
+    )
+    st_lower = signal_type.lower()
+    if st_lower == 'pt':
+        signal_type_id = 0
+    elif st_lower == 'ps':
+        signal_type_id = 1
+    else:
+        signal_type_id = 2
+    if not np.allclose(cash_to_spend, 0.0, atol=0.001):
+        pre_values = own_amounts * prices
+        total_value_bt = float(own_cash) + float(np.sum(pre_values))
+        cash_to_spend = buy_direction_adjustment(
+                cash_to_spend,
+                signal_type_id,
+                int(cash_delivery_period),
+                float(available_cash),
+                cash_gained_pv,
+                amount_sold_pv,
+                own_amounts,
+                prices,
+                float(long_position_limit),
+                float(short_position_limit),
+                allow_sell_short,
+                total_value_bt,
+        )
 
     # 将计算出的买入和卖出的数量转换为交易订单
-    symbols, positions, directions, quantities, quoted_prices, remarks= _signal_to_order_elements(
+    symbols, positions, directions, quantities, quoted_prices, remarks = _signal_to_order_elements(
         shares=shares,
         cash_to_spend=cash_to_spend,
         amounts_to_sell=amounts_to_sell,
@@ -372,6 +418,7 @@ def parse_trade_signal(signals,
         moq_buy=trade_batch_size,
         moq_sell=sell_batch_size,
         allow_sell_short=allow_sell_short,
+        cost_params=cost_params,
     )
     return symbols, positions, directions, quantities, quoted_prices, remarks
 
@@ -540,6 +587,10 @@ def parse_vs_signals(signals: np.ndarray,
                      cost_params: np.ndarray, ) -> tuple[np.ndarray, np.ndarray]:
     """ 解析VS类型的交易信号，将信号解释为绝对金额/数量级订单
 
+    多头/开空买入侧 ``cash_to_spend`` 在 ``signals * prices`` 本金意向之上，叠加与
+    ``get_purchase_result`` 配套的佣金预算 ``max(buy_min, |本金| * buy_rate)``；**不含**滑点
+    （滑点仅在回测执行层追加）。
+
     Parameters
     ----------
     signals: np.ndarray
@@ -551,13 +602,8 @@ def parse_vs_signals(signals: np.ndarray,
     allow_sell_short: bool
         是否允许卖空
     cost_params: np.ndarray
-        VS信号类型直接给出交易数量，为了确保计算出的消耗现金数据准确，必须考虑交易成本
-        交易成本参数, 一个长度为7的数组，包含以下内容：
-        [0] - buy_rate: float, 交易成本：固定买入费率
-        [1] - sell_rate: float, 交易成本：固定卖出费率
-        [2] - buy_min: float, 交易成本：最低买入费用
-        [3] - sell_min: float, 交易成本：最低卖出费用
-        [4] - slippage: float, 交易成本：滑点
+        ``[buy_rate, sell_rate, buy_min, sell_min, slippage]``；本函数仅使用 ``buy_rate``、
+        ``buy_min``，不使用 ``slippage``。
 
     Returns
     -------
@@ -566,13 +612,16 @@ def parse_vs_signals(signals: np.ndarray,
         amounts_to_sell: np.ndarray, 卖出资产的数量
     """
 
-    buy_rate, sell_rate, buy_min, sell_min, slippage = cost_params
+    buy_rate = cost_params[0]
+    buy_min = cost_params[2]
 
     # 计算各个资产的计划买入金额和计划卖出数量
     # 当持有份额大于零且信号为负时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
     amounts_to_sell = np.where((signals < 0) & (own_amounts > 0), signals, 0.)
-    # 当持有份额不小于0且信号为正时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
-    cash_to_spend = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
+    # 当持有份额不小于0且信号为正时，开多仓：本金 + 预估买入费用（不含滑点）
+    base_long = np.where((signals > 0) & (own_amounts >= 0), signals * prices, 0.)
+    addon_long = np.where(base_long > 0., np.fmax(buy_min, base_long * buy_rate), 0.)
+    cash_to_spend = base_long + addon_long
 
     # 当允许买空卖空时，允许开启空头头寸：
     if allow_sell_short:
@@ -581,18 +630,144 @@ def parse_vs_signals(signals: np.ndarray,
         # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
         amounts_to_sell -= np.where((signals > 0) & (own_amounts < 0), -signals, 0.)
 
-    # 计算交易成本对买入金额的影响，只有多头买入才需要考虑交易成本，因为空头买入的成本会从在收入的现金中扣除
-    cash_to_spend += np.where(
-        cash_to_spend > 0,
-        np.fmax(buy_min, cash_to_spend * buy_rate),
-        0.
-    )
-
     # prices 为 NaN 时，该标的不可成交；将解析层面的买入现金规模置 0，
     # 避免 NaN 在后续步骤继续传播（成交执行层仍会再次用 prices 屏蔽 NaN）。
     cash_to_spend = np.where(np.isnan(prices), 0.0, cash_to_spend)
 
     return cash_to_spend, amounts_to_sell
+
+
+class TradeIntent(NamedTuple):
+    """Operator 级交易意图：解析后的计划买入现金与计划卖出数量向量。"""
+    cash_to_spend: np.ndarray
+    amounts_to_sell: np.ndarray
+
+
+@njit(cache=True)
+def sell_direction_adjustment(
+        cash_to_spend: np.ndarray,
+        amounts_to_sell: np.ndarray,
+        own_amounts: np.ndarray,
+        available_amounts: np.ndarray,
+        prices: np.ndarray,
+        allow_sell_short: bool,
+        cost_params: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """按可用持仓与卖空规则调整卖出意图；超额空头卖出转多头买入时叠加买入佣金预算。
+
+    Parameters
+    ----------
+    cash_to_spend : np.ndarray
+        计划买入现金（正多头、负空头）。
+    amounts_to_sell : np.ndarray
+        计划卖出数量（负为卖多、正为卖空）。
+    own_amounts, available_amounts, prices : np.ndarray
+        与标的维度一致。
+    allow_sell_short : bool
+        是否允许卖空。
+    cost_params : np.ndarray
+        ``[buy_rate, sell_rate, buy_min, sell_min, slippage]``；本函数仅用 ``buy_rate``、``buy_min``。
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        调整后的 ``(cash_to_spend, amounts_to_sell)``。
+    """
+    c_out = np.copy(cash_to_spend)
+    a_out = np.copy(amounts_to_sell)
+    if not allow_sell_short:
+        a_out = -np.fmin(-a_out, available_amounts)
+    else:
+        excesive_long = np.where(
+                (a_out < 0) & (own_amounts + a_out < 0),
+                own_amounts + a_out,
+                0.,
+        )
+        c_out = c_out + excesive_long * prices
+        excesive_short = np.where(
+                (a_out > 0) & (own_amounts + a_out > 0),
+                own_amounts + a_out,
+                0.,
+        )
+        principal = excesive_short * prices
+        buy_rate = cost_params[0]
+        buy_min = cost_params[2]
+        addon = np.where(principal > 0., np.fmax(buy_min, principal * buy_rate), 0.)
+        c_out = c_out + principal + addon
+        a_out = a_out - excesive_long - excesive_short
+    return c_out, a_out
+
+
+@njit(cache=True)
+def buy_direction_adjustment(
+        cash_to_spend: np.ndarray,
+        signal_type: int,
+        cash_delivery_period: int,
+        available_cash: float,
+        cash_gained: np.ndarray,
+        amount_sold: np.ndarray,
+        own_amounts: np.ndarray,
+        prices: np.ndarray,
+        long_pos_limit: float,
+        short_pos_limit: float,
+        allow_sell_short: bool,
+        total_value: float,
+) -> np.ndarray:
+    """在卖出预览之后，按可用现金与多空限额缩放买入意图 ``cash_to_spend``。
+
+    Parameters
+    ----------
+    cash_to_spend : np.ndarray
+        待调整的买入现金向量。
+    signal_type : int
+        ``0`` PT，``1`` PS，``2`` VS。
+    cash_delivery_period : int
+        现金交割周期；PT 且为 ``0`` 时可用本期 ``cash_gained`` 计入有效可用现金。
+    available_cash : float
+        期初可用现金标量。
+    cash_gained, amount_sold : np.ndarray
+        与 ``get_selling_result`` 输出一致。
+    own_amounts, prices : np.ndarray
+        期初持仓与价格。
+    long_pos_limit, short_pos_limit : float
+        多空仓位上限参数。
+    allow_sell_short : bool
+        是否允许卖空。
+    total_value : float
+        与回测一步开始时一致的期初总资产。
+
+    Returns
+    -------
+    np.ndarray
+        调整后的 ``cash_to_spend``。
+    """
+    c_out = np.copy(cash_to_spend)
+    if not allow_sell_short:
+        if signal_type == 0 and cash_delivery_period == 0:
+            effective_available_cash = available_cash + np.sum(cash_gained)
+        else:
+            effective_available_cash = available_cash
+        c_pos = np.where(c_out > 0.001, c_out, 0.)
+        s = np.sum(c_pos)
+        if s > effective_available_cash:
+            c_pos = c_pos * (effective_available_cash / s)
+        c_out = c_pos
+    elif signal_type >= 1:
+        next_own_values = (own_amounts + amount_sold) * prices
+        long_cash = np.where(c_out > 0.001, c_out, 0.)
+        total_long = np.sum(long_cash)
+        max_long = long_pos_limit * total_value - np.sum(
+                np.where(c_out > 0.001, next_own_values, 0.))
+        short_cash = np.where(c_out < -0.001, c_out, 0.)
+        total_short = np.sum(short_cash)
+        max_short = short_pos_limit * total_value - np.sum(
+                np.where(c_out < -0.001, next_own_values, 0.))
+        if total_long > max_long:
+            long_cash = long_cash * (max_long / total_long)
+        if total_short < max_short:
+            short_cash = short_cash * (max_short / total_short)
+        c_out = long_cash + short_cash
+    return c_out
 
 
 def _signal_to_order_elements(shares,
@@ -603,13 +778,12 @@ def _signal_to_order_elements(shares,
                               available_amounts,
                               moq_buy=0,
                               moq_sell=0,
-                              allow_sell_short=False):
-    """ 逐个计算每一只资产的买入和卖出的数量，将parse_pt/ps/vs_signal函数计算出的交易信号逐项转化为
-    交易订单 trade_orders
+                              allow_sell_short=False,
+                              cost_params: Optional[np.ndarray] = None):
+    """将经 Operator 风控后的 ``cash_to_spend`` / ``amounts_to_sell`` 展开为订单行。
 
-    在生成交易信号时，需要考虑可用现金的总量以及可用资产的总量
-    如果可用现金不足买入所有的股票，则将买入金额按照比例分配给各个股票
-    如果可用资产不足计划卖出数量，则降低卖出的数量，同时在允许卖空的情况下，增加对应的空头买入信号
+    可用现金与持仓截断已在 ``sell_direction_adjustment`` / ``buy_direction_adjustment`` 中完成；
+    本函数不再按比例缩放现金，不再因可用不足拆出对向腿。订单行顺序为**先全部卖出、再全部买入**。
 
     Parameters
     ----------
@@ -631,6 +805,9 @@ def _signal_to_order_elements(shares,
         卖出的最小交易单位
     allow_sell_short: bool, default False
         是否允许卖空，如果允许，当可用资产不足时，会增加空头买入信号
+    cost_params: np.ndarray, optional
+        长度 5 的交易成本数组 [buy_rate, sell_rate, buy_min, sell_min, slippage]；
+        多头买入数量由 ``get_purchase_result`` 按此参数与 ``moq_buy`` 计算。默认全 0。
 
     Returns
     -------
@@ -640,127 +817,91 @@ def _signal_to_order_elements(shares,
     - directions: list of str, 产生的交易信号的交易方向('buy', 'sell')
     - quantities: list of float, 所有交易信号的交易数量
     - quoted_prices: list of float, 所有交易信号的交易报价
-    - remarks: list of str, 生成交易信号的说明，用于为trader提供提示
+    -     remarks: list of str, 生成交易信号的说明，用于为trader提供提示
     """
 
-    # 计算总的买入金额，调整买入金额，使得买入金额不超过可用现金
-    total_cash_to_spend = np.sum(cash_to_spend)
+    if cost_params is None:
+        cost_params = np.zeros(5, dtype=np.float64)
+    else:
+        cost_params = np.asarray(cost_params, dtype=np.float64).reshape(-1)
+        if cost_params.size < 5:
+            raise ValueError('cost_params must have at least 5 elements')
+
+    symbols: list[str] = []
+    positions: list[str] = []
+    directions: list[str] = []
+    quantities: list[float] = []
+    quoted_prices: list[float] = []
+    remarks: list[str] = []
     base_remark = ''
-    if total_cash_to_spend > available_cash:
-        available_to_plan_ratio = available_cash / total_cash_to_spend
-        cash_to_spend = cash_to_spend * available_to_plan_ratio
-        base_remark = f'Not enough available cash ({available_cash:.3f}), ' \
-                      f'adjusted cash to spend to {available_to_plan_ratio:.1%}'
 
-    # 逐个计算每一只资产的买入和卖出的数量
-    symbols = []  # 股票代码
-    positions = []  # 持仓类型
-    directions = []  # 交易方向
-    quantities = []  # 交易数量
-    quoted_prices = []  # 交易报价
-    remarks = []  # 生成交易信号的说明，用于为trader提供提示
+    n = len(shares)
+    for i in range(n):
+        sym = shares[i]
+        if amounts_to_sell[i] < -0.001:
+            qty = float(np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES))
+            if moq_sell > 0:
+                qty = float(np.trunc(qty / moq_sell) * moq_sell)
+            if qty <= 0.001:
+                continue
+            symbols.append(sym)
+            positions.append('long')
+            directions.append('sell')
+            quantities.append(qty)
+            quoted_prices.append(float(prices[i]))
+            remarks.append(base_remark)
+        if allow_sell_short and amounts_to_sell[i] > 0.001:
+            qty = float(np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES))
+            if moq_sell > 0:
+                qty = float(np.trunc(qty / moq_sell) * moq_sell)
+            if qty <= 0.001:
+                continue
+            symbols.append(sym)
+            positions.append('short')
+            directions.append('sell')
+            quantities.append(qty)
+            quoted_prices.append(float(prices[i]))
+            remarks.append(base_remark)
 
-    for i, sym in enumerate(shares):
-        # 计算多头买入的数量
+    for i in range(n):
+        sym = shares[i]
         if cash_to_spend[i] > 0.001:
-            # 计算买入的数量
-            quantity = np.round(cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
-            if moq_buy > 0:
-                quantity = np.trunc(quantity / moq_buy) * moq_buy
+            px = prices[i]
+            if (not np.isfinite(px)) or np.isnan(px) or px <= 0:
+                continue
+            p1 = np.array([float(px)], dtype=np.float64)
+            c1 = np.array([float(cash_to_spend[i])], dtype=np.float64)
+            a_purchased, _cash_spent, _fees = get_purchase_result(
+                    p1, c1, float(moq_buy), cost_params,
+            )
+            quantity = float(a_purchased[0])
+            if moq_buy <= 0:
+                quantity = float(np.round(quantity, AMOUNT_DECIMAL_PLACES))
+            if quantity <= 0.001:
+                continue
             symbols.append(sym)
             positions.append('long')
             directions.append('buy')
             quantities.append(quantity)
-            quoted_prices.append(prices[i])
+            quoted_prices.append(float(prices[i]))
             remarks.append(base_remark)
-        # 计算空头买入的数量
         if (cash_to_spend[i] < -0.001) and allow_sell_short:
-            # 计算买入的数量
-            quantity = np.round(-cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES)
+            px = prices[i]
+            if (not np.isfinite(px)) or np.isnan(px) or px <= 0:
+                continue
+            quantity = float(np.round(-cash_to_spend[i] / prices[i], AMOUNT_DECIMAL_PLACES))
             if moq_buy > 0:
-                quantity = np.trunc(quantity / moq_buy) * moq_buy
+                quantity = float(np.trunc(quantity / moq_buy) * moq_buy)
+            if quantity <= 0.001:
+                continue
             symbols.append(sym)
             positions.append('short')
             directions.append('buy')
             quantities.append(quantity)
-            quoted_prices.append(prices[i])
+            quoted_prices.append(float(prices[i]))
             remarks.append(base_remark)
-        # 计算多头卖出的数量
-        if amounts_to_sell[i] < -0.001:
-            # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
-            if amounts_to_sell[i] < -available_amounts[i]:
-                # 计算卖出的数量
-                quantity = np.round(available_amounts[i], AMOUNT_DECIMAL_PLACES)
-                if moq_sell > 0:
-                    quantity = np.trunc(quantity / moq_sell) * moq_sell
-                symbols.append(sym)
-                positions.append('long')
-                directions.append('sell')
-                quantities.append(quantity)
-                quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Not enough available stock({available_amounts[i]}), '
-                                             f'sell qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
-                # 如果allow_sell_short，增加反向头寸的买入信号
-                if allow_sell_short:
-                    quantity = np.round(- amounts_to_sell[i] - available_amounts[i], AMOUNT_DECIMAL_PLACES)
-                    if moq_sell > 0:
-                        quantity =np.trunc(quantity / moq_sell) * moq_sell
-                    symbols.append(sym)
-                    positions.append('short')
-                    directions.append('buy')
-                    quantities.append(quantity)
-                    quoted_prices.append(prices[i])
-                    remarks.append(base_remark + f'Allow sell short, continue to buy short positions {quantity}')
-            else:
-                # 计算卖出的数量，如果可用资产足够，则直接卖出
-                quantity = np.round(-amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
-                if moq_sell > 0:
-                    quantity = np.trunc(quantity / moq_sell) * moq_sell
-                symbols.append(sym)
-                positions.append('long')
-                directions.append('sell')
-                quantities.append(quantity)
-                quoted_prices.append(prices[i])
-                remarks.append(base_remark)
-        # 计算空头卖出的数量
-        if (amounts_to_sell[i] > 0.001) and allow_sell_short:
-            # 计算卖出的数量，如果可用资产不足，则降低卖出的数量，并增加相反头寸的买入数量，买入剩余的数量
-            if amounts_to_sell[i] > available_amounts[i]:
-                # 计算卖出的数量
-                quantity = np.round(- available_amounts[i], 2)
-                if moq_sell > 0:
-                    quantity = np.trunc(quantity / moq_sell) * moq_sell
-                symbols.append(sym)
-                positions.append('short')
-                directions.append('sell')
-                quantities.append(quantity)
-                quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Not enough short position stock ({-available_amounts[i]}), '
-                                             f'sell short qty ({amounts_to_sell[i]}) reduced and rounded to {quantity}')
-                # 增加反向头寸的买入信号
-                quantity = np.round(amounts_to_sell[i] + available_amounts[i], AMOUNT_DECIMAL_PLACES)
-                if moq_sell > 0:
-                    quantity = np.trunc(quantity / moq_sell) * moq_sell
-                symbols.append(sym)
-                positions.append('long')
-                directions.append('buy')
-                quantities.append(quantity)
-                quoted_prices.append(prices[i])
-                remarks.append(base_remark + f'Allow sell short, continue to buy long positions {quantity}')
-            else:
-                # 计算卖出的数量，如果可用资产足够，则直接卖出
-                quantity = np.round(amounts_to_sell[i], AMOUNT_DECIMAL_PLACES)
-                if moq_sell > 0:
-                    quantity = np.trunc(quantity / moq_sell) * moq_sell
-                symbols.append(sym)
-                positions.append('short')
-                directions.append('sell')
-                quantities.append(quantity)
-                quoted_prices.append(prices[i])
-                remarks.append(base_remark)
 
-    order_elements = (symbols, positions, directions, quantities, quoted_prices, remarks)
-    return order_elements
+    return symbols, positions, directions, quantities, quoted_prices, remarks
 
 
 def output_trade_order():

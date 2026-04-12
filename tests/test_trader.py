@@ -1930,7 +1930,7 @@ class TestTraderTasksIndividual(unittest.TestCase):
         )
         self.trader._run_task('start')
         self.trader._run_task('wakeup')
-        # Avoid dependency on live price fetch; give valid current prices for parse_trade_signal
+        # Avoid dependency on live price fetch; give valid current prices for parse_live_trade_signal
         symbols = self.trader.asset_pool
         # 根据Trader._update_live_price的设计，live_price应当以symbols为index，以price为列保存当前价格
         self.trader.live_price = pd.DataFrame(

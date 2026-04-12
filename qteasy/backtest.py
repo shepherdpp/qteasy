@@ -35,6 +35,7 @@ from qteasy.evaluate import (
 )
 
 from qteasy.finance import (
+    apply_execution_slippage,
     get_selling_result,
     get_purchase_result,
 )
@@ -49,6 +50,8 @@ from qteasy.trading_util import (
     parse_ps_signals,
     parse_vs_signals,
     trim_pt_type_signals,
+    sell_direction_adjustment,
+    buy_direction_adjustment,
 )
 
 
@@ -175,6 +178,7 @@ def backtest_step(
     # print(f'\ncalculating trade results for day {day_num}, signal_type: {signal_type}, op_signal: {op_signal}')
     # if day_num == 1781:
     #     import pdb; pdb.set_trace()
+
     # 2，调用backtest_step函数，计算本次交易的现金变动、持仓变动和交易费用
     cash_gained, cash_spent, amount_purchased, amount_sold, fees = calculate_trade_results(
             signal_type=signal_type,
@@ -320,6 +324,8 @@ def calculate_trade_results(
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
     moq_sell: float:
         投资产品最小买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+    cash_delivery_period: int:
+        资金交割周期，单位为天
 
     Returns
     -------
@@ -335,7 +341,7 @@ def calculate_trade_results(
     total_value = own_cash + pre_values.sum()
     empty_array = np.zeros_like(op_signal)
 
-    # 2,制定交易计划，生成计划买入金额和计划卖出数量
+    # 2,制定交易计划，生成交易意图（计划买入金额和计划卖出数量）
     if signal_type == 0:  # PT信号
         # 限定PT信号在多空持仓限额范围内，这样就不需要在后续处理交易指令时调整交易数量了
         trimmed_op_signal = trim_pt_type_signals(
@@ -394,26 +400,16 @@ def calculate_trade_results(
     # cash_to_spend = np.where(np.isnan(prices), 0, cash_to_spend)
     # amounts_to_sell = np.where(np.isnan(prices), 0, amounts_to_sell)
 
-    # 3, 根据可用股票数量或多空持仓限额调整卖出计划。
-
-    # 如果不允许卖空交易，则根据可用股份数量调整卖出计划，确保卖出数量不超过可用数量，
-    # 此时忽略long_pos_limit与short_pos_limit，因为pos_limit被可用金额自动限制在0～1之间
-    if not allow_sell_short:
-        amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
-    else:  # 如果允许卖空交易，则检查卖出计划是否超过own_amounts，将超过的部分转化为相应的空头/多头买入
-        excesive_long_amounts_to_sell = np.where(
-                (amounts_to_sell < 0) & (own_amounts + amounts_to_sell < 0),
-                own_amounts + amounts_to_sell,
-                0
-        )
-        cash_to_spend += excesive_long_amounts_to_sell * prices
-        excesive_short_amounts_to_sell = np.where(
-                (amounts_to_sell > 0) & (own_amounts + amounts_to_sell > 0),
-                own_amounts + amounts_to_sell,
-                0
-        )
-        cash_to_spend += excesive_short_amounts_to_sell * prices
-        amounts_to_sell -= excesive_long_amounts_to_sell + excesive_short_amounts_to_sell
+    # 3, Operator 级卖出方向调整（可用持仓 / 卖空超额转化；空头超额转多头时含买入佣金预算）
+    cash_to_spend, amounts_to_sell = sell_direction_adjustment(
+            cash_to_spend,
+            amounts_to_sell,
+            own_amounts,
+            available_amounts,
+            prices,
+            allow_sell_short,
+            cost_params,
+    )
 
     # DEBUG
     # print(f'Processed signals, calculated and adjusted'
@@ -434,56 +430,22 @@ def calculate_trade_results(
         # 如果所有买入计划绝对值都小于1分钱，则直接跳过后续的计算
         return cash_gained, empty_array, empty_array, amount_sold, fee_selling
 
-    # 5，根据可用现金数量或多空持仓限额调整买入计划
-
-    # 如果不允许卖空交易，则根据可用现金调整买入计划，确保买入总金额不超过可用现金。
-    # 此时自动保证交易后的持仓比例在0～1之间。
-    if not allow_sell_short:
-        # 对于 PT 信号，在现金交割周期为 0 时，可以在同一回测步中复用本期卖出获得的现金，
-        # 从而更好地贴合“目标仓位一次性调仓”的语义；对于 PS / VS 信号，始终仅使用期初可用现金。
-        if signal_type == 0 and cash_delivery_period == 0:
-            effective_available_cash = available_cash + cash_gained.sum()
-        else:
-            effective_available_cash = available_cash
-        # 忽略cash_to_spend中的空头买入部分（不允许卖空时无意义）
-        cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
-        # DEBUG
-        # print(f'cash_to_spend adjusted, {cash_to_spend.round(6)} = np.where(cash_to_spend > 0.001,
-        # cash_to_spend, 0)\n')
-        # 确保总现金买入金额不超过有效可用现金，如果超过则按比例调降
-        if cash_to_spend.sum() > effective_available_cash:
-            cash_to_spend *= effective_available_cash / cash_to_spend.sum()
-            # DEBUG
-            # print(f'cash_to_spend adjusted by available_cash, cash_to_spend: {cash_to_spend.round(6)}, *= '
-            #       f'available_cash: {available_cash:.2f} / cash_to_spend.sum(): {cash_to_spend.sum():.2f}\n')
-
-    elif signal_type >= 1:
-        # 调整买入金额，确保产生的仓位不会超过long_pos_limit和short_pos_limit
-        # 因为signal_type != 0，因此调整的比例以买入金额为准
-        next_own_amounts = own_amounts + amount_sold
-        long_cash_to_spend = np.where(cash_to_spend > 0.001, cash_to_spend, 0)
-        total_long_cash_to_spend = long_cash_to_spend.sum()
-        max_long_pos_to_buy = long_pos_limit * total_value - np.where(
-                cash_to_spend > 0.001, next_own_amounts * prices, 0).sum()
-
-        short_cash_to_spend = np.where(cash_to_spend < -0.001, cash_to_spend, 0)
-        total_short_cash_to_spend = short_cash_to_spend.sum()
-        max_short_pos_to_buy = short_pos_limit * total_value - np.where(
-                cash_to_spend < -0.001, next_own_amounts * prices, 0).sum()
-
-        if total_long_cash_to_spend > max_long_pos_to_buy:
-            # 如果计划买入多头现金超过允许买入最大金额，按比例降低分配给每个拟买入多头资产的现金
-            long_cash_to_spend *= max_long_pos_to_buy / total_long_cash_to_spend
-
-        if total_short_cash_to_spend < max_short_pos_to_buy:
-            # 如果计划买入空头现金超过允许买入最大金额，按比例调降拟买入空头资产的现金
-            short_cash_to_spend *= max_short_pos_to_buy / total_short_cash_to_spend
-
-        cash_to_spend = long_cash_to_spend + short_cash_to_spend
-    else:
-        # 对于signal_type == 0，在生成买入数量前，仓位信号已经被限制在
-        # long_pos_limit和short_pos_limit之间了，因此不需要再调整
-        pass
+    # 5，买入方向调整（可用现金 / 多空限额；PT 且交割为 0 时可复用本期卖出现金）
+    avail_cash_f = float(available_cash)
+    cash_to_spend = buy_direction_adjustment(
+            cash_to_spend,
+            int(signal_type),
+            int(cash_delivery_period),
+            avail_cash_f,
+            cash_gained,
+            amount_sold,
+            own_amounts,
+            prices,
+            long_pos_limit,
+            short_pos_limit,
+            allow_sell_short,
+            float(total_value),
+    )
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用dflasjdf
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
@@ -499,6 +461,9 @@ def calculate_trade_results(
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
+    apply_execution_slippage(
+            prices, amount_purchased, amount_sold, cash_spent, cash_gained, fee, cost_params[4],
+    )
     # DEBUG
     # print(f'finished calculation: \n'
     #       f'cash_gained: {cash_gained.round(2)}\n'

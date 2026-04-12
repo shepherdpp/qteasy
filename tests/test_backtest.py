@@ -4288,6 +4288,32 @@ class TestBacktest(unittest.TestCase):
         print('this test is not implemented yet!')
         pass
 
+    def test_calculate_trade_results_invalid_signal_type_raises(self):
+        """§7.4 CTR-INV：非法 signal_type 应抛出 ValueError('Invalid signal_type')。"""
+        print('\n[TestBacktest] CTR-INV calculate_trade_results signal_type=99')
+        cost_params = get_cost_params(self.rate)
+        with self.assertRaises(ValueError) as ctx:
+            calculate_trade_results(
+                    signal_type=99,
+                    own_cash=10000.0,
+                    own_amounts=np.array([0.0]),
+                    available_cash=10000.0,
+                    available_amounts=np.array([0.0]),
+                    op_signal=np.array([0.0]),
+                    prices=np.array([10.0]),
+                    cost_params=cost_params,
+                    pt_buy_threshold=0.0,
+                    pt_sell_threshold=0.0,
+                    long_pos_limit=1.0,
+                    short_pos_limit=-1.0,
+                    allow_sell_short=False,
+                    moq_buy=0.0,
+                    moq_sell=0.0,
+                    cash_delivery_period=1,
+            )
+        print('  exception:', str(ctx.exception))
+        self.assertEqual(str(ctx.exception), 'Invalid signal_type')
+
 
 class TestBacktester(unittest.TestCase):
 
