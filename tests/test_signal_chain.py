@@ -14,26 +14,29 @@
 #   CTR -->|"PT"| TRIM[trim_pt_type_signals] --> PT[parse_pt_signals]
 #   CTR -->|"PS"| PS[parse_ps_signals]
 #   CTR -->|"VS"| VS[parse_vs_signals]
-#   PT --> ADJ[数组级调整]
-#   PS --> ADJ
-#   VS --> ADJ
-#   ADJ --> GSR[get_selling_result] --> GPR[get_purchase_result] --> AES[apply_execution_slippage]
+#   PT --> SD[sell_direction_adjustment]
+#   PS --> SD
+#   VS --> SD
+#   SD --> GSR[get_selling_result] --> BD[buy_direction_adjustment]
+#   BD --> GPR[get_purchase_result] --> AES[apply_execution_slippage]
 #
 # --- 摘录：图 B 实盘链（parse_live_trade_signal）---
 # flowchart TD
 #   PTS[parse_live_trade_signal] -->|"PT"| TRIM --> PT
 #   PTS -->|"PS"| PS
 #   PTS -->|"VS"| VS
-#   PT --> SCALE[own_cash 缩放]
-#   PS --> SCALE
-#   VS --> SCALE
-#   SCALE --> STE[_signal_to_order_elements] -->|"多头买入"| GPR[get_purchase_result]
+#   PT --> SD[sell_direction_adjustment]
+#   PS --> SD
+#   VS --> SD
+#   SD --> GSR[get_selling_result 预览] --> BD[buy_direction_adjustment]
+#   BD --> STE[_signal_to_order_elements] -->|"多头买入"| GPR[get_purchase_result]
 #
 # --- 摘录：图 C 同构/分叉要点 ---
-# - 共享：trim / parse_pt|ps|vs、买入侧 get_purchase_result。
-# - 仅回测：get_selling_result、apply_execution_slippage、CTR 内完整计划→成交。
-# - 仅实盘结构：parse_live_trade_signal、_signal_to_order_elements；卖出不经 get_selling_result。
-# - parse_live_trade_signal 先按 own_cash 缩放计划买入，_signal_to_order_elements 再按 available_cash 缩放。
+# - 共享：trim / parse_pt|ps|vs、sell_direction_adjustment、buy_direction_adjustment、买入侧 get_purchase_result。
+# - 仅回测：apply_execution_slippage、CTR 内完整计划→成交。
+# - 仅实盘结构：parse_live_trade_signal、_signal_to_order_elements；订单行先卖后买。
+# - Operator 级现金/持仓缩放已在 parse_live_trade_signal 内 buy_direction_adjustment 完成；
+#   _signal_to_order_elements 接收已风控向量。
 #
 import inspect
 import unittest
@@ -70,6 +73,7 @@ class TestTraderParseLiveTradeSignalContract(unittest.TestCase):
                 'sell_batch_size=self.sell_batch_size',
                 'long_position_limit=self.long_position_limit',
                 'short_position_limit=self.short_position_limit',
+                'cash_delivery_period=self.cash_delivery_period',
         ):
             self.assertIn(needle, src, msg=f'missing kwarg or call marker: {needle}')
             print('  ok:', needle)

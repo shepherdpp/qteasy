@@ -22,6 +22,7 @@ from qteasy.finance import get_purchase_result
 
 from qteasy.trading_util import parse_pt_signals, parse_ps_signals, parse_vs_signals, _signal_to_order_elements
 from qteasy.trading_util import parse_live_trade_signal, submit_order, get_last_trade_result_summary, get_symbol_names
+from qteasy.trading_util import sell_direction_adjustment, buy_direction_adjustment
 from qteasy.trading_util import process_trade_result, process_account_delivery, create_daily_task_schedule
 from qteasy.trading_util import calculate_cost_change, trade_time_index
 
@@ -1577,6 +1578,115 @@ class TestTradeRecording(unittest.TestCase):
             delete_account(3, data_source=self.test_ds)
 
 
+class TestOperatorTradeIntentRisk(unittest.TestCase):
+    """Operator 级风控内核 ``sell_direction_adjustment`` / ``buy_direction_adjustment`` 参数表回归。"""
+
+    def test_sell_direction_adjustment_param_table(self) -> None:
+        print('\n[TestOperatorTradeIntentRisk] sell_direction_adjustment 参数断言表')
+        cp0 = np.zeros(5, dtype=np.float64)
+        # SDA-N1 / SDA-N2
+        c, a = sell_direction_adjustment(
+                np.array([0.0]), np.array([-100.0]), np.array([100.0]), np.array([80.0]),
+                np.array([10.0]), False, cp0,
+        )
+        print(' SDA-N1 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [0.0])
+        np.testing.assert_allclose(a, [-80.0])
+        c, a = sell_direction_adjustment(
+                np.array([50.0]), np.array([-30.0]), np.array([100.0]), np.array([50.0]),
+                np.array([10.0]), False, cp0,
+        )
+        print(' SDA-N2 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [50.0])
+        np.testing.assert_allclose(a, [-30.0])
+        # SDA-S1
+        c, a = sell_direction_adjustment(
+                np.array([0.0]), np.array([-15.0]), np.array([10.0]), np.array([10.0]),
+                np.array([2.0]), True, cp0,
+        )
+        print(' SDA-S1 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [-10.0])
+        np.testing.assert_allclose(a, [-10.0])
+        # SDA-S1-Fee
+        cp_fee = np.array([0.5, 0.0, 100.0, 0.0, 0.0], dtype=np.float64)
+        c, a = sell_direction_adjustment(
+                np.array([0.0]), np.array([-15.0]), np.array([10.0]), np.array([10.0]),
+                np.array([2.0]), True, cp_fee,
+        )
+        print(' SDA-S1-Fee cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [-10.0])
+        np.testing.assert_allclose(a, [-10.0])
+        # SDA-S2 / SDA-S3 / SDA-S4
+        c0 = np.array([0.0])
+        a12 = np.array([12.0])
+        ownm = np.array([-10.0])
+        ava = np.array([10.0])
+        px5 = np.array([5.0])
+        c, a = sell_direction_adjustment(c0, a12, ownm, ava, px5, True, cp0)
+        print(' SDA-S2 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [10.0])
+        np.testing.assert_allclose(a, [10.0])
+        c, a = sell_direction_adjustment(
+                c0, a12, ownm, ava, px5, True,
+                np.array([0.0, 0.0, 1.0, 0.0, 0.0], dtype=np.float64),
+        )
+        print(' SDA-S3 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [11.0])
+        np.testing.assert_allclose(a, [10.0])
+        c, a = sell_direction_adjustment(
+                c0, a12, ownm, ava, px5, True,
+                np.array([0.02, 0.0, 0.5, 0.0, 0.0], dtype=np.float64),
+        )
+        print(' SDA-S4 cash', c, 'amt', a)
+        np.testing.assert_allclose(c, [10.5])
+        np.testing.assert_allclose(a, [10.0])
+
+    def test_buy_direction_adjustment_param_table(self) -> None:
+        print('\n[TestOperatorTradeIntentRisk] buy_direction_adjustment 参数断言表')
+        z2 = np.zeros(2, dtype=np.float64)
+        p1 = np.ones(2, dtype=np.float64)
+        # BDA-N1 / BDA-N2
+        out = buy_direction_adjustment(
+                np.array([100.0, 100.0]), 1, 1, 150.0, z2, z2, z2, p1,
+                1.0, -1.0, False, 1.0,
+        )
+        print(' BDA-N1', out)
+        np.testing.assert_allclose(out, [75.0, 75.0])
+        out = buy_direction_adjustment(
+                np.array([100.0, 50.0]), 1, 1, 300.0, z2, z2, z2, p1,
+                1.0, -1.0, False, 1.0,
+        )
+        print(' BDA-N2', out)
+        np.testing.assert_allclose(out, [100.0, 50.0])
+        # BDA-P0 / BDA-P1
+        cg = np.array([80.0])
+        out = buy_direction_adjustment(
+                np.array([100.0]), 0, 0, 0.0, cg, np.array([0.0]), np.array([0.0]), np.array([1.0]),
+                1.0, -1.0, False, 1.0,
+        )
+        print(' BDA-P0', out)
+        np.testing.assert_allclose(out, [80.0])
+        out = buy_direction_adjustment(
+                np.array([100.0]), 0, 1, 0.0, cg, np.array([0.0]), np.array([0.0]), np.array([1.0]),
+                1.0, -1.0, False, 1.0,
+        )
+        print(' BDA-P1', out)
+        np.testing.assert_allclose(out, [0.0])
+        # BDA-S1a / BDA-S1b
+        out = buy_direction_adjustment(
+                np.array([50.0, 30.0]), 1, 1, 1e9, z2, z2, np.array([4.0, 0.0]), np.array([10.0, 10.0]),
+                0.6, -1.0, True, 100.0,
+        )
+        print(' BDA-S1a', out)
+        np.testing.assert_allclose(out, [12.5, 7.5])
+        out = buy_direction_adjustment(
+                np.array([-150.0, 0.0]), 1, 1, 1e9, z2, z2, np.array([5.0, 0.0]), np.array([10.0, 10.0]),
+                1.0, -0.5, True, 100.0,
+        )
+        print(' BDA-S1b', out)
+        np.testing.assert_allclose(out, [-100.0, 0.0])
+
+
 class TestTradingUtilFuncs(unittest.TestCase):
     """ test trading util funcs """
 
@@ -2370,10 +2480,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with signal {pt_signal}: \n{parsed_signal_elements}')
-        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[0], ['000003', '000001', '000002'])
         self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
-        self.assertEqual(parsed_signal_elements[2], ['buy', 'buy', 'sell'])
-        self.assertEqual(parsed_signal_elements[3], [200.0, 200.0, 300.0])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [300.0, 200.0, 200.0])
         pt_signal = np.array([-0.1, 0.2, 0.3])
         parsed_signal_elements = parse_live_trade_signal(
                 signals=pt_signal,
@@ -2423,10 +2533,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 **parse_trade_signal_kwargs
         )
         print(f'parsed_signal_elements with ps signal {ps_signal}: \n{parsed_signal_elements}')
-        self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
-        self.assertEqual(parsed_signal_elements[1], ['long', 'short', 'long', 'long'])
-        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'sell', 'buy'])
-        self.assertEqual(parsed_signal_elements[3], [500.0, 250.0, 500.0, 2100.0])
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000001', '000003'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'short', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'sell', 'buy', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 500.0, 200.0, 2100.0])
 
         # create test data for VS signal and parse it
         vs_signal = np.array([300, 400, 500])
@@ -2459,10 +2569,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal}: \n{parsed_signal_elements}')
-        self.assertEqual(parsed_signal_elements[0], ['000001', '000001', '000002', '000003'])
-        self.assertEqual(parsed_signal_elements[1], ['long', 'short', 'long', 'long'])
-        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'buy', 'sell'])
-        self.assertEqual(parsed_signal_elements[3], [500.0, 800.0, 400.0, 500.0])
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000003', '000001', '000002'])
+        self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'short', 'long'])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'sell', 'buy', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 500.0, 800.0, 400.0])
 
         # test allow_sell_short = False
         test_config = {
@@ -2546,10 +2656,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 **parse_trade_signal_kwargs,
         )
         print(f'parsed_signal_elements with vs signal {vs_signal} not allow short: \n{parsed_signal_elements}')
-        self.assertEqual(parsed_signal_elements[0], ['000001', '000002', '000003'])
+        self.assertEqual(parsed_signal_elements[0], ['000001', '000003', '000002'])
         self.assertEqual(parsed_signal_elements[1], ['long', 'long', 'long'])
-        self.assertEqual(parsed_signal_elements[2], ['sell', 'buy', 'sell'])
-        self.assertEqual(parsed_signal_elements[3], [500.0, 400.0, 500.0])
+        self.assertEqual(parsed_signal_elements[2], ['sell', 'sell', 'buy'])
+        self.assertEqual(parsed_signal_elements[3], [500.0, 500.0, 400.0])
 
         # TODO: test parse_live_trade_signal with different config:
         #  1. vs type of signals done
@@ -2652,11 +2762,12 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(quoted_prices, [10.0])
         self.assertEqual(messages, [''])
 
-        # test _signal_to_order_elements with only one symbol, sell 1000 shares while only 700 shares available
+        # 经 Operator 风控后的意图：先卖可交割多头 700，再开空 300 股（现金意图 -3000）
+        print('\n[TestTradingUtilFuncs] _signal_to_order_elements 多头可卖不足时已拆分为卖+空头买意图')
         shares = ['000001']
         prices = np.array([10.])
-        cash_to_spend = np.array([0.0])
-        amounts_to_sell = np.array([-1000.0])
+        cash_to_spend = np.array([-3000.0])
+        amounts_to_sell = np.array([-700.0])
         available_cash = 10000.0
         available_amounts = np.array([700.0])
 
@@ -2675,16 +2786,14 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
-        self.assertEqual(messages, ['Not enough available stock(700.0), '
-                                    'sell qty (-1000.0) reduced and rounded to 700.0',
-                                    'Allow sell short, continue to buy short positions 300.0'])
+        self.assertEqual(messages, ['', ''])
 
-        # test _signal_to_order_elements with only one symbol,
-        # sell 1000 short shares while only 500 short shares available
+        # 经 Operator 风控：空头可平额度不足时，先卖空 700，再回补多头 300 股
+        print('\n[TestTradingUtilFuncs] _signal_to_order_elements 空头可卖不足时已拆分为卖空+多头买意图')
         shares = ['000001']
         prices = np.array([10.])
-        cash_to_spend = np.array([0.0])
-        amounts_to_sell = np.array([1000.0])
+        cash_to_spend = np.array([3000.0])
+        amounts_to_sell = np.array([700.0])
         available_cash = 10000.0
         available_amounts = np.array([-700.0])
 
@@ -2702,14 +2811,13 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['sell', 'buy'])
         self.assertEqual(quantities, [700.0, 300.0])
         self.assertEqual(quoted_prices, [10.0, 10.0])
-        self.assertEqual(messages, ['Not enough short position stock (700.0), '
-                                    'sell short qty (1000.0) reduced and rounded to 700.0',
-                                    'Allow sell short, continue to buy long positions 300.0'])
+        self.assertEqual(messages, ['', ''])
 
-        # test _signal_to_order_elements with only one symbol, buy shares with not enough cash
+        # 现金缩放已在 buy_direction_adjustment 完成，此处仅展开已缩放的买入意图
+        print('\n[TestTradingUtilFuncs] _signal_to_order_elements 买入现金已按可用资金预缩放')
         shares = ['000001']
         prices = np.array([10.])
-        cash_to_spend = np.array([10000.0])
+        cash_to_spend = np.array([5000.0])
         amounts_to_sell = np.array([0.0])
         available_cash = 5000.0
         available_amounts = np.array([1000.0])
@@ -2727,7 +2835,7 @@ class TestTradingUtilFuncs(unittest.TestCase):
         self.assertEqual(directions, ['buy'])
         self.assertEqual(quantities, [500.0])
         self.assertEqual(quoted_prices, [10.0])
-        self.assertEqual(messages, ['Not enough available cash (5000.000), adjusted cash to spend to 50.0%'])
+        self.assertEqual(messages, [''])
 
         # test _signal_to_order_elements with multiple symbols
         shares = ['000001', '000002', '000003', '000004', '000005', '000006']
@@ -2746,10 +2854,11 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 available_amounts=available_amounts,
                 allow_sell_short=True,
         )
-        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
-        self.assertEqual(positions, ['long', 'short', 'long', 'short', 'short', 'short'])
-        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
-        self.assertEqual(quantities, [500.0, 500.0, 350.0, 150.0, 100.0, 500.0])
+        print('\n[TestTradingUtilFuncs] 多标的订单行顺序：先全部卖出再全部买入')
+        self.assertEqual(symbols, ['000003', '000004', '000006', '000001', '000004', '000005'])
+        self.assertEqual(positions, ['short', 'short', 'short', 'long', 'long', 'short'])
+        self.assertEqual(directions, ['sell', 'sell', 'sell', 'buy', 'buy', 'buy'])
+        self.assertEqual(quantities, [500.0, 150.0, 500.0, 500.0, 350.0, 100.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
         self.assertEqual(messages, ['', '', '', '', '', ''])
 
@@ -2772,10 +2881,10 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 moq_sell=0.0,
                 allow_sell_short=True,
         )
-        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
-        self.assertEqual(positions, ['long', 'short', 'long', 'short', 'short', 'short'])
-        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
-        self.assertEqual(quantities, [505.0, 525.0, 352.4, 153.8, 100.1, 500.0])
+        self.assertEqual(symbols, ['000003', '000004', '000006', '000001', '000004', '000005'])
+        self.assertEqual(positions, ['short', 'short', 'short', 'long', 'long', 'short'])
+        self.assertEqual(directions, ['sell', 'sell', 'sell', 'buy', 'buy', 'buy'])
+        self.assertEqual(quantities, [525.0, 153.8, 500.0, 505.0, 352.4, 100.1])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
         self.assertEqual(messages, ['', '', '', '', '', ''])
 
@@ -2798,12 +2907,34 @@ class TestTradingUtilFuncs(unittest.TestCase):
                 moq_sell=10.0,
                 allow_sell_short=True,
         )
-        self.assertEqual(symbols, ['000001', '000003', '000004', '000004', '000005', '000006'])
-        self.assertEqual(positions, ['long', 'short', 'long', 'short', 'short', 'short'])
-        self.assertEqual(directions, ['buy', 'sell', 'buy', 'sell', 'buy', 'sell'])
-        self.assertEqual(quantities, [500.0, 520.0, 300.0, 150.0, 100.0, 500.0])
+        self.assertEqual(symbols, ['000003', '000004', '000006', '000001', '000004', '000005'])
+        self.assertEqual(positions, ['short', 'short', 'short', 'long', 'long', 'short'])
+        self.assertEqual(directions, ['sell', 'sell', 'sell', 'buy', 'buy', 'buy'])
+        self.assertEqual(quantities, [520.0, 150.0, 500.0, 500.0, 300.0, 100.0])
         self.assertEqual(quoted_prices, [10.0, 10.0, 10.0, 10.0, 10.0, 10.0])
         self.assertEqual(messages, ['', '', '', '', '', ''])
+
+    def test_signal_to_order_elements_sells_before_buys_same_symbol(self) -> None:
+        """LIVE-O1：同一标的经风控后的意图展开时，卖单行下标均小于买单行。"""
+        print('\n[TestTradingUtilFuncs] LIVE-O1 单标的先卖后买行序')
+        shares = ['DEMO']
+        prices = np.array([10.0])
+        cash_to_spend = np.array([1000.0])
+        amounts_to_sell = np.array([-50.0])
+        sy, pos, dire, qty, qp, msg = _signal_to_order_elements(
+                shares=shares,
+                cash_to_spend=cash_to_spend,
+                amounts_to_sell=amounts_to_sell,
+                prices=prices,
+                available_cash=1e9,
+                available_amounts=np.array([1000.0]),
+        )
+        print(' directions:', dire, 'quantities:', qty)
+        self.assertEqual(sy, ['DEMO', 'DEMO'])
+        self.assertEqual(dire, ['sell', 'buy'])
+        last_sell = max(i for i, d in enumerate(dire) if d == 'sell')
+        first_buy = min(i for i, d in enumerate(dire) if d == 'buy')
+        self.assertLess(last_sell, first_buy)
 
     def test_parse_pt_signals(self):
         """ test parsing trade signal from pt_type signal"""

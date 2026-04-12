@@ -205,6 +205,7 @@ class Trader(object):
                  short_position_limit: float = -1.0,
                  stock_delivery_period: int = 1,
                  cash_delivery_period: int = 0,
+                 submit_sell_before_buy: bool = True,
                  open_close_timing_offset: int = 1,
                  daily_refill_tables: str = '',
                  weekly_refill_tables: str = '',
@@ -222,6 +223,8 @@ class Trader(object):
             交易所对象，接受交易订单并返回交易结果
         datasource: DataSource
             数据源对象，从数据源获取数据
+        submit_sell_before_buy: bool, default True
+            为 True 时，在同一批解析出的订单中先提交卖出委托再提交买入委托。
         debug: bool, default False
             是否打印debug信息
         """
@@ -274,6 +277,7 @@ class Trader(object):
         self.short_position_limit = short_position_limit
         self.stock_delivery_period = stock_delivery_period
         self.cash_delivery_period = cash_delivery_period
+        self.submit_sell_before_buy = submit_sell_before_buy
 
         self.market_open_time_am = market_open_time_am
         self.market_close_time_am = market_close_time_am
@@ -2083,6 +2087,7 @@ class Trader(object):
                     sell_batch_size=self.sell_batch_size,
                     long_position_limit=self.long_position_limit,
                     short_position_limit=self.short_position_limit,
+                    cash_delivery_period=self.cash_delivery_period,
             )
             names = get_symbol_names(self._datasource, symbols)
 
@@ -2093,7 +2098,7 @@ class Trader(object):
                               f'quantities: {quantities}\n'
                               f'current_prices: {quoted_prices}\n',
                               debug=True)
-            for sym, name, pos, d, qty, price, remark in zip(
+            order_rows = list(zip(
                     symbols,
                     names,
                     positions,
@@ -2101,7 +2106,10 @@ class Trader(object):
                     quantities,
                     quoted_prices,
                     remarks,
-            ):
+            ))
+            if self.submit_sell_before_buy:
+                order_rows.sort(key=lambda r: (0 if r[3] == 'sell' else 1, r[0]))
+            for sym, name, pos, d, qty, price, remark in order_rows:
                 if remark:
                     self.send_message(remark)
                 if qty <= 0.001:
