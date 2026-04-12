@@ -2,8 +2,8 @@
 
 ## 2.3.1 (2026-04-11)
 - **Bug fixes**  
+  Fixed issue #257: Commission fees are now taken into consideration in live trade order generation, the way slippage involved in the operation result of backtest is now optimized
   Now asset type "FD" will no longer raise in live trade mode
-  The way slippage involved in the operation result of backtest is now optimized
   Positive VS signals are now treated in live trade mode the same way as in backtest mode, orders will no longer be silently omitted when order quantity is less than MOQ after commission.
 - **Data refill API**  
   Fixed `refill_data_source` so optional dtype inference runs only when data-type names are supplied; calling it with tables and `asset_types` alone (as in pre-open refill) no longer raises an error.
