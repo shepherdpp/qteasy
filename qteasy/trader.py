@@ -37,7 +37,10 @@ from .trade_recording import (
     query_trade_orders,
     record_trade_order,
     get_or_create_position,
+    read_trade_order,
 )
+
+from .trade_io import validate_trade_order
 
 from .trading_util import (
     cancel_order,
@@ -1566,6 +1569,9 @@ class Trader(object):
                            order_type: str, qty: int, price: float) -> dict:
         """ 提交订单
 
+        成功提交后从数据库回填 ``status`` / ``submitted_time``，并调用 ``trade_io.validate_trade_order``
+        保证返回 dict 满足进入 Broker 队列的契约。
+
         Parameters
         ----------
         symbol: str
@@ -1609,6 +1615,14 @@ class Trader(object):
         # 提交交易订单
         if submit_order(order_id=order_id, data_source=self._datasource) is not None:
             trade_order['order_id'] = order_id
+            saved = read_trade_order(order_id, data_source=self._datasource)
+            trade_order['status'] = saved['status']
+            st = saved.get('submitted_time')
+            if st is not None and not isinstance(st, str):
+                trade_order['submitted_time'] = pd.Timestamp(st).strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                trade_order['submitted_time'] = st
+            validate_trade_order(trade_order, context='Trader.submit_trade_order')
 
             return trade_order
 

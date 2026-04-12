@@ -18,6 +18,7 @@ import numba as nb
 import talib as ta
 
 from qteasy.trade_recording import new_account, get_or_create_position, record_trade_order, read_trade_order
+from qteasy.trading_util import submit_order
 
 from qteasy.broker import get_broker, Broker, SimulatorBroker, SimpleBroker, NotImplementedBroker
 from qteasy.broker import _verify_trade_result
@@ -155,10 +156,17 @@ class TestBroker(unittest.TestCase):
     def test_get_result(self):
         """ test the function get_result """
         bkr = get_broker('simple', params={'data_source': self.test_ds})
-        order = read_trade_order(1, data_source=self.test_ds)
+        submit_order(1, self.test_ds)
+        order = dict(read_trade_order(1, data_source=self.test_ds))
         order['order_id'] = 1
+        st = order.get('submitted_time')
+        if st is not None and not isinstance(st, str):
+            order['submitted_time'] = pd.Timestamp(st).strftime('%Y-%m-%d %H:%M:%S')
+        order['pos_id'] = int(order['pos_id'])
+        print('\n[TestBroker.test_get_result] order for _get_result:', order)
         bkr._get_result(order)
         result = bkr.result_queue.get()
+        print(' raw trade result:', result)
         self.assertIsInstance(result, dict)
         self.assertEqual(result['order_id'], 1)
         self.assertEqual(result['filled_qty'], 100.0)

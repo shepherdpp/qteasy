@@ -14,11 +14,13 @@
 
 from queue import Queue
 from abc import abstractmethod, ABCMeta
+from typing import Any, Mapping
 
 import numpy as np
 import time
 
 from qteasy import QT_CONFIG
+from qteasy.trade_io import validate_raw_trade_result, validate_trade_order
 from qteasy.utilfuncs import get_current_timezone_datetime
 
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
@@ -278,8 +280,10 @@ class Broker(object):
         order_type = order['order_type']
         return order_type, symbol, qty, price, direction, position
 
-    def _get_result(self, order):
+    def _get_result(self, order: Mapping[str, Any]) -> None:
         """ 解析订单信息，将关键信息提交给transaction，获取交易结果后，解析交易结果，将结果放入result_queue
+
+        入队前通过 ``qteasy.trade_io`` 校验订单 dict 与原始成交 dict，避免损坏 Trader 侧账本处理链。
 
         Parameters:
         -----------
@@ -307,6 +311,7 @@ class Broker(object):
              }
         """
 
+        validate_trade_order(dict(order), context='Broker._get_result.order')
         order_type, symbol, qty, price, direction, position = self._parse_order(order)
         for trade_result in self.transaction(
                 order_type=order_type,
@@ -349,6 +354,8 @@ class Broker(object):
                 'delivery_amount': 0,
                 'delivery_status': 'ND',
             }
+
+            validate_raw_trade_result(raw_trade_result, context='Broker._get_result.raw_trade_result')
 
             # 将trade_result放入result_queue
             if self.debug:
