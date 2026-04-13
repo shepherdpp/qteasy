@@ -1,5 +1,11 @@
 # RELEASE HISTORY
 
+## Unreleased
+- **Documentation (S1.3 closeout)**  
+  Added a dedicated live-trading documentation module (`docs/source/live_trading/`) that covers overview, configuration/run, risk and order lifecycle, broker adapter integration, and troubleshooting.  
+  Added a hands-on tutorial with dual simulator paths (`asset_type='E'` and `asset_type='FD'`) and a design note explaining S1.3 architecture decisions and compatibility boundaries.  
+  Refined simulation references (overview/CLI/TUI), API cross-links, and home-page navigation so users can reach live-trading guidance with a clearer path.
+
 ## 2.3.1 (2026-04-11)
 - **Configuration**  
   Default ``trade_log_keep_days`` is now **3** (was 0): on each fresh Python process that imports qteasy, CSV trade reports older than the retention window under ``trade_log_file_path`` are removed once at startup. Set ``trade_log_keep_days`` to ``None`` or **0 or below** to disable automatic deletion. Documentation for rotation timing has been aligned with this behavior (cleanup is not run immediately before each new backtest CSV write).

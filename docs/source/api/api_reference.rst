@@ -40,6 +40,25 @@ qteasy的所有配置变量
 
 下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。
 
+.. note::
+
+   关于 S1.3 完成后的模拟实盘文档入口（按使用目标）：
+
+   - 快速了解：``live_trading/1-overview.md``
+   - 先跑起来：``live_trading/2-configuration-and-run.md``
+   - 理解拒单与状态：``live_trading/3-risk-and-order-lifecycle.md``
+   - 扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``
+   - 排错复盘：``live_trading/5-artifacts-and-troubleshooting.md``
+   - 双路径实操教程：``tutorials/8-live-trade-risk-and-broker-walkthrough.md``
+
+   说明：
+
+   - ``live_trading`` 侧重模块能力与场景化说明；
+   - ``references`` 侧重 API 视角功能清单；
+   - ``api`` 侧重 autodoc 导出的接口明细。
+
+   用户可见拒单提示、错误信息、日志示例在文档中统一使用英文文案。
+
 .. list-table:: qteasy Configuration Variables
    :widths: 15 10 10 65
    :header-rows: 1
@@ -355,7 +374,7 @@ qteasy的所有配置变量
      - 0
      - ``None``
      - | 回测模式下的回测开始日期。
-       | 留空(None)时，将在运行时根据 ``invest_end``（或当前日期）自动推导为一年前的日期。
+       | 留空(None)时，将在运行时根据 invest_end（或当前日期）自动推导为一年前的日期。
        | 显式设置时格式为"YYYYMMDD"。
    * - ``invest_end``
      - 0
@@ -621,7 +640,7 @@ qteasy的所有配置变量
      - 3
      - ``1``
      - 使用穷举法搜索最佳策略时有用，搜索步长
-   * - ``| opti_sample_count``
+   * - ``opti_sample_count``
      - 3
      - ``256``
      - 使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量

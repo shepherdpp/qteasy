@@ -445,7 +445,7 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter(stg_id='dma', par_values=timing_pars1)
         self.op.set_parameter(stg_id='macd', par_values=timing_pars3)
 
-        print(f'current file: {print(qt.__file__)}\n'
+        print(f'current file: {qt.__file__}\n'
               f'current log file path: \n{qt.QT_TRADE_LOG_PATH}\n{qt.QT_CONFIG.get("trade_log_file_path")}')
 
     def test_configure(self):

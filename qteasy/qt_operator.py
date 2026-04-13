@@ -347,26 +347,15 @@ class Operator:
 
     @property
     def opt_space_par(self):
-        """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间Space信息
+        """返回参与优化的子策略参数空间信息，用于构造 ``Space``。
 
-        改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
-        Space对象
-
-        一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
-        stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
-        这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
-        {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
-         1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
-         2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
-
-         这个函数遍历operator对象中所有子策略，根据其优化类型选择它的参数空间信息，组合成一个多维向量用于创建可以用于生成所有相关
-         策略的参数的高维空间
+        遍历各子策略的 ``opt_tag``，汇总其 ``par_range`` / ``par_types`` 等字段，输出
+        ``(ranges, types)`` 二元组，可直接作为 ``Space`` 构造输入。
 
         Returns
         -------
-        ranges, types: list, list
-            两个列表，分别包含了所有参与优化的策略的参数空间的范围和类型信息，这两个列表可以直接用作Space对象的创建参数，用于
-            创建一个合适的Space对象
+        tuple[list, list]
+            ``ranges`` 与 ``types`` 两个列表，分别对应各参与优化维度的取值范围与类型标记。
         """
 
         ranges = []
@@ -460,14 +449,10 @@ class Operator:
     def is_ready(self,
                  tell_me_why: bool = False,
                  raise_error: bool = False, ) -> bool:
-        """ 检查Operator对象是否已经准备好，可以开始生成交易信号
+        """检查 Operator 是否已具备生成交易信号所需的最小条件。
 
-        返回True，表明Operator的各项属性已经具备以下条件：
-            1，Operator 已经有strategy
-            2，所有Strategy Group 的 blender已经设置
-            3，所有Strategy所需的历史数据类型都已经准备好（合法性检查以后再做）
-            4，交易策略组运行时间表已经生成（合法性检查以后再做）
-        只有满足以上条件，Operator对象才能开始生成交易信号
+        典型就绪条件包括：已挂载策略、各策略组已配置 blender、历史数据类型与运行时间表
+        等关键字段已就绪（更细的合法性校验在后续流程完成）。
 
         Parameters
         ----------
@@ -1078,17 +1063,15 @@ class Operator:
         return self._op_signal_shares[share]
 
     def set_opt_par_values(self, par_values):
-        """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
+        """优化器侧入口：将一条参数向量按各子策略 ``opt_tag`` 切片写回。
 
-        本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
-        在一个包含多个Strategy的Operator中，可能同时有几个不同的strategy需要寻优。这时，为了寻找最优解，需要建立一个Space，包含需要寻优的
-        几个strategy的所有参数空间。通过这个space生成参数空间后，空间中的每一个向量实际上包含了不同的策略的参数，因此需要将他们原样分配到不
-        同的策略中。
+        与 ``set_parameter`` 不同，本方法面向「一条向量对应多个策略子块」的优化流程；
+        调用方需保证 ``par_values`` 与 ``opt_space_par`` 展平顺序一致。
 
         Parameters
         ----------
-        par_values: Tuple
-            一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
+        par_values : tuple
+            优化器当前候选点对应的参数元组。
 
         Returns
         -------
@@ -1096,42 +1079,7 @@ class Operator:
 
         Notes
         -----
-        这里使用strategy.update_pars接口，不检查策略参数的合规性，因此需要提前确保参数符合strategy的设定
-
-        Examples
-        --------
-        一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
-        成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数：
-                 stg1:   stg2:       stg3:
-                 tag=1   tag=0       tag=1
-                [p0, p1, p2, p3, p4, p5, p6, p7]
-                 ==  ==              ==  ==  ==
-        为了寻优方便，可以建立一个五维参数空间，用于生成五维参数向量：
-                [v0, v1, v2, v3, v4]
-        set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为0，则将相应的参数赋值给strategy：
-                 stg1:   stg2:       stg3:
-                 tag=1   tag=0       tag=1
-                [p0, p1, p2, p3, p4, p5, p6, p7]
-                 ==  ==              ==  ==  ==
-                [v0, v1]            [v2, v3, v4]
-
-        在另一种情况下，一个策略的参数本身就以一个tuple的形式给出，一系列的合法参数组以enum的形式形成一个完整的参数空间，这时，opt_tag被
-        设置为2，此时参数空间中每个向量的一个分量就包含了完整的参数信息，例子如下：
-
-        一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
-        成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数，注意其中stg3的opt_tag被设置为2：
-                 stg1:   stg2:       stg3:
-                 tag=1   tag=0       tag=2
-                [p0, p1, p2, p3, p4, p5, p6, p7]
-                 ==  ==              ==  ==  ==
-        为了寻优建立一个3维参数空间，用于生成五维参数向量：
-                [v0, v1, v2]，其中v2 = (i0, i1, i2)
-        set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略
-                 stg1:   stg2:       stg3:
-                 tag=1   tag=0       tag=2
-                [p0, p1, p2, p3, p4, p5, p6, p7]
-                 ==  ==              ==  ==  ==
-                [v0, v1]         v2=[i0, i1, i2]
+        内部调用 ``Strategy.update_par_values``，不在此处做参数合法性校验。
         """
         s = 0
         k = 0
@@ -1162,12 +1110,10 @@ class Operator:
         blender: str or list of str or dict of str, optional
             一个合法的交易信号混合表达式当group为None时，可以接受list为参数，
             同时为所有的group设置混合表达式
-        group_id: str, optional
-            如果给出group_id则设置该group的策略的混合表达式
-            如果group_id为None，则设置所有group的策略的混合表达式，此时：
-                如果给出的blender为一个字符串，则设置所有的group为相同的表达式
-                如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个group的混合表达式，
-                如果blender中的元素不足，则重复最后一个混合表达式
+        group_id : str, optional
+            指定策略组 id 时仅更新该组；为 ``None`` 时更新全部策略组。后者在 ``blender`` 为
+            字符串时表示所有组使用同一表达式；为列表时按组顺序逐项设置，长度不足则复用
+            最后一项。
 
         Returns
         -------
@@ -2018,7 +1964,7 @@ class Operator:
                 self._trace_signal_index += 1
 
     def run_strategies(self, steps: Iterable) -> Iterable:
-        """ 运行Operator，返回运行结果，等同于qteasy.run(self, **kwargs)
+        """运行 Operator，返回运行结果；语义接近 ``qt.run(self, ...)`` 传入的关键字参数形式。
 
         Parameters
         ----------
