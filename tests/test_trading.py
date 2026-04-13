@@ -2424,6 +2424,68 @@ class TestTradingUtilFuncs(unittest.TestCase):
         #  and unfilled orders can be fully cancelled
         pass
 
+    def test_process_trade_result_partial_then_filled_status(self):
+        """测试同一订单分批成交时状态从 partial-filled 正确切换为 filled。"""
+        print('\n[TestTradingUtilFuncs] partial-filled -> filled status transition')
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        if self.test_ds.table_data_exists('sys_op_trade_orders'):
+            self.test_ds.drop_table_data('sys_op_trade_orders')
+        if self.test_ds.table_data_exists('sys_op_trade_results'):
+            self.test_ds.drop_table_data('sys_op_trade_results')
+
+        new_account(user_name='test_user_partial_fill', cash_amount=100000, data_source=self.test_ds)
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=['000001.SZ'],
+                positions=['long'],
+                directions=['buy'],
+                quantities=[500],
+                prices=[20.0],
+                data_source=self.test_ds,
+        )
+        order_id = int(order_ids[0])
+        print(' created order_id:', order_id)
+        submit_order(order_id, data_source=self.test_ds)
+
+        delivery_config = {'cash_delivery_period': 0, 'stock_delivery_period': 0}
+
+        raw_trade_result_1 = {
+            'order_id':        order_id,
+            'filled_qty':      300.0,
+            'price':           20.0,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
+        full_1 = process_trade_result(raw_trade_result_1, data_source=self.test_ds)
+        order_after_1 = read_trade_order_detail(order_id, data_source=self.test_ds)
+        print(' first fill full result:', full_1)
+        print(' order after first fill:', order_after_1)
+        self.assertEqual(order_after_1['status'], 'partial-filled')
+        self.assertEqual(full_1['order_status'], 'partial-filled')
+
+        raw_trade_result_2 = {
+            'order_id':        order_id,
+            'filled_qty':      200.0,
+            'price':           20.0,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
+        full_2 = process_trade_result(raw_trade_result_2, data_source=self.test_ds)
+        order_after_2 = read_trade_order_detail(order_id, data_source=self.test_ds)
+        result_rows = read_trade_results_by_order_id(order_id, data_source=self.test_ds)
+        filled_total = float(result_rows['filled_qty'].sum())
+        print(' second fill full result:', full_2)
+        print(' order after second fill:', order_after_2)
+        print(' filled_total:', filled_total, ' expected:', 500.0)
+        self.assertEqual(order_after_2['status'], 'filled')
+        self.assertEqual(full_2['order_status'], 'filled')
+        self.assertAlmostEqual(filled_total, 500.0, places=6)
+
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):
         """ test parse_live_trade_signal function """

@@ -13,7 +13,7 @@
 # ======================================
 
 from collections import deque
-from queue import Queue
+from queue import Queue, Empty
 from abc import abstractmethod, ABCMeta
 from typing import Any, Mapping, Optional
 
@@ -355,6 +355,31 @@ class Broker(object):
     def get_remote_cash(self, *, account_id: Optional[int] = None) -> Optional[float]:
         """返回券商侧现金占位结果，S1.3 默认 ``None``。"""
         return None
+
+    def drain_order_queue(self, *, max_items: Optional[int] = None) -> list[dict[str, Any]]:
+        """排空 legacy ``order_queue`` 并返回已取出的订单列表。
+
+        Parameters
+        ----------
+        max_items : int or None, optional
+            本次最多排空的订单数量；``None`` 表示全部排空。
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            已从 ``order_queue`` 中取出的订单 dict 列表。
+        """
+        drained_orders: list[dict[str, Any]] = []
+        while True:
+            if max_items is not None and len(drained_orders) >= int(max_items):
+                break
+            try:
+                order = self.order_queue.get_nowait()
+            except Empty:
+                break
+            drained_orders.append(order)
+            self.order_queue.task_done()
+        return drained_orders
 
     def _submit_order(self, order):
         """

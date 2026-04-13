@@ -1328,6 +1328,10 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
     )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
         raise TypeError(f'remaining qty {remaining_qty} is not a number!')
+    # 当前交易结果确认后的累计成交量，用于稳定判定订单状态，避免依赖上一笔结果先写库
+    filled_qty_after = np.round(filled_qty + raw_trade_result['filled_qty'], AMOUNT_DECIMAL_PLACES)
+    total_order_qty = np.round(order_detail['qty'], AMOUNT_DECIMAL_PLACES)
+
     # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
@@ -1341,20 +1345,16 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
             err = RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
             raise err
-        # TODO: bug
-        #  这里会有问题发生，如果一个订单在很短时间内产生两个交易结果，第二个交易结果
-        #  很可能会在第一个交易结果确认并计入系统之前就被处理，这样就会导致此时无法获得
-        #  正确的remaining_qty，从而导致错误的订单状态。例如
-        #  一个买入500股的订单分为2笔成交，第一笔300股，第二笔200股，那么正确的结果应
-        #  该是第一笔成交后状态为partial-filled，第二笔成交后变为filled。但如果第二
-        #  笔在第一笔交易结果存入数据库之前就处理，那么两笔交易结果的状态都会是partial-filled
-        # 如果filled_qty等于remaining_qty，则将交易订单的状态设置为 'filled'
-        elif raw_trade_result['filled_qty'] == remaining_qty:
+        # 如果当前结果确认后累计成交量达到整单数量，则订单应转为filled
+        if filled_qty_after == total_order_qty:
             order_detail['status'] = 'filled'
 
-        # 如果filled_qty小于remaining_qty，则将交易订单的状态设置为 'partial-filled'
-        elif raw_trade_result['filled_qty'] < remaining_qty:
+        # 如果累计成交量仍小于整单数量，则维持partial-filled
+        elif filled_qty_after < total_order_qty:
             order_detail['status'] = 'partial-filled'
+        else:
+            err = RuntimeError(f'filled_qty_after {filled_qty_after} exceeds order_qty {total_order_qty}')
+            raise err
 
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
     if order_detail['direction'] == 'sell':

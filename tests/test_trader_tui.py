@@ -17,6 +17,7 @@ from qteasy import Operator, DataSource
 from qteasy.trader_tui import TraderApp
 from qteasy.broker import SimulatorBroker
 from qteasy.trade_recording import new_account
+from qteasy.risk import MaxOrderQtyRule, RiskManager
 
 
 def _get_tui_test_data_dir():
@@ -100,6 +101,29 @@ class TestTraderTUI(unittest.TestCase):
         app.action_toggle_dark()
         self.assertEqual(app.dark, original, msg='two toggles should restore original')
         print('test_action_toggle_dark_twice_back_to_original: ok')
+
+    def test_submit_order_logs_risk_reject_summary(self):
+        """submit_order 在风控拒单时写入摘要日志。"""
+        print('\n[TestTraderTUI] submit_order writes risk reject summary')
+
+        class _DummySysLog:
+            def __init__(self):
+                self.messages = []
+
+            def write_with_timestamp(self, msg):
+                self.messages.append(str(msg))
+
+        app = TraderApp(trader=self.trader)
+        self.trader.risk_manager = RiskManager((MaxOrderQtyRule('mx', 5.0),))
+        dummy_log = _DummySysLog()
+        app.query_one = lambda *args, **kwargs: dummy_log
+
+        app.submit_order(symbol='000001.SZ', position='long', qty=100, price=10.0, direction='buy')
+        print(' syslog messages:', dummy_log.messages)
+        self.assertTrue(any('Order submission rejected by risk manager' in m for m in dummy_log.messages))
+        self.assertTrue(any('rule_id=' in m for m in dummy_log.messages))
+        self.assertTrue(any('reason=' in m for m in dummy_log.messages))
+        self.assertTrue(self.trader.broker.order_queue.empty())
 
 
 if __name__ == '__main__':

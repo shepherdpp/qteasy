@@ -43,7 +43,7 @@ from .trade_recording import (
 )
 
 from .trade_io import validate_trade_order
-from .risk import AccountSnapshot, OrderIntent, RiskManager
+from .risk import AccountSnapshot, OrderIntent, RiskDecision, RiskManager
 from .live_config import LiveTradeConfig, apply_live_trade_config_to_trader
 
 from .trading_util import (
@@ -326,6 +326,7 @@ class Trader(object):
 
         self.account = get_account(self.account_id, data_source=self._datasource)
         self.risk_manager = risk_manager
+        self._last_risk_decision: Optional[RiskDecision] = None
 
         if live_config is not None:
             apply_live_trade_config_to_trader(self, live_config)
@@ -346,6 +347,11 @@ class Trader(object):
     @property
     def prev_status(self) -> str:
         return self._prev_status
+
+    @property
+    def last_risk_decision(self) -> Optional[RiskDecision]:
+        """返回最近一次 ``submit_trade_order`` 的风控决策。"""
+        return self._last_risk_decision
 
     def _get_next_scheduled_task_and_countdown(self, current_time=None):
         """ 计算 task_daily_schedule 中下一个未到点任务及距其的秒数，供 next_task、count_down_to_next_task 使用。
@@ -1688,6 +1694,7 @@ class Trader(object):
         if order_type is None:
             order_type = 'market'
 
+        self._last_risk_decision = None
         if self.risk_manager is not None:
             snap = self.get_account_snapshot()
             intent = OrderIntent(
@@ -1701,6 +1708,7 @@ class Trader(object):
             )
             decision = self.risk_manager.evaluate(snap, intent)
             if not decision.allowed:
+                self._last_risk_decision = decision
                 reject_msg = (
                         f'<RISK REJECTED> rule_id={decision.rule_id!r} reason={decision.reason!r} '
                         f'symbol={symbol!r} direction={direction!r} position={position!r} qty={qty} price={price}'
@@ -2383,20 +2391,17 @@ class Trader(object):
             self.send_message('market is still open, post_close can not be executed during open time!', debug=True)
             return
 
-        # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
-        order_queue = self.broker.order_queue
+        # 检查broker中是否有尚未处理的legacy队列订单，统一通过Broker API排空后取消
+        pending_orders = self.broker.drain_order_queue()
         # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
         #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
         #   result_queue中的结果全部处理完毕，或者超过一定时间
-        if not order_queue.empty():
-            # TODO: 不应该在trader中操作broker的order_queue，应该通过broker的API获取order的信息
+        if pending_orders:
             self.send_message('unprocessed orders found, these orders will be canceled')
-            while not order_queue.empty():
-                order = order_queue.get()
+            for order in pending_orders:
                 order_id = order['order_id']
                 cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
                 self.send_message(f'canceled unprocessed order: {order_id}')
-                order_queue.task_done()
         # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,

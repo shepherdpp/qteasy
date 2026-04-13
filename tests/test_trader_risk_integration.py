@@ -278,6 +278,35 @@ class TestRiskRejectPaths(unittest.TestCase):
         self.assertTrue(any('rule_id=' in ln for ln in hit))
         self.assertTrue(any('reason=' in ln for ln in hit))
 
+    def test_last_risk_decision_set_on_reject_and_reset_on_allow(self) -> None:
+        print('\n[TestRiskRejectPaths] last_risk_decision on reject and allow')
+        rej = self.trader.submit_trade_order(
+            symbol='000002.SZ',
+            position='long',
+            direction='buy',
+            order_type='limit',
+            qty=10,
+            price=10.0,
+        )
+        print(' reject result:', rej, ' decision:', self.trader.last_risk_decision)
+        self.assertEqual(rej, {})
+        self.assertIsNotNone(self.trader.last_risk_decision)
+        self.assertFalse(self.trader.last_risk_decision.allowed)
+        self.assertIsNotNone(self.trader.last_risk_decision.rule_id)
+        self.assertIsNotNone(self.trader.last_risk_decision.reason)
+
+        ok = self.trader.submit_trade_order(
+            symbol='000001.SZ',
+            position='long',
+            direction='buy',
+            order_type='limit',
+            qty=10,
+            price=10.0,
+        )
+        print(' allow result:', ok, ' decision:', self.trader.last_risk_decision)
+        self.assertIn('order_id', ok)
+        self.assertIsNone(self.trader.last_risk_decision)
+
 
 class TestRiskAllowPaths(unittest.TestCase):
     """D. 风控放行。"""

@@ -81,7 +81,7 @@ class TestBrokerContract(unittest.TestCase):
         for broker in [SimulatorBroker(), SimpleBroker()]:
             for method_name in [
                 'connect', 'disconnect', 'submit', 'cancel', 'poll_fills',
-                'get_remote_orders', 'get_remote_positions', 'get_remote_cash',
+                'get_remote_orders', 'get_remote_positions', 'get_remote_cash', 'drain_order_queue',
             ]:
                 print(f' broker={broker.broker_name}, method={method_name}')
                 self.assertTrue(callable(getattr(broker, method_name)))
@@ -216,6 +216,31 @@ class TestBrokerContract(unittest.TestCase):
         self.assertIsInstance(positions, list)
         self.assertEqual(positions, [])
         self.assertIsNone(cash)
+
+    def test_drain_order_queue_returns_all_fifo(self):
+        print('\n[TestBrokerContract] drain_order_queue FIFO 排空')
+        broker = MinimalBrokerForContractTest()
+        payloads = [
+            {'order_id': 1, 'symbol': '000001.SZ'},
+            {'order_id': 2, 'symbol': '000002.SZ'},
+            {'order_id': 3, 'symbol': '000003.SZ'},
+        ]
+        for item in payloads:
+            broker.order_queue.put(item)
+        drained = broker.drain_order_queue()
+        print(' drained:', drained)
+        self.assertEqual(len(drained), 3)
+        self.assertEqual([it['order_id'] for it in drained], [1, 2, 3])
+        self.assertTrue(broker.order_queue.empty())
+
+    def test_drain_order_queue_idempotent_when_empty(self):
+        print('\n[TestBrokerContract] drain_order_queue 空队列幂等')
+        broker = MinimalBrokerForContractTest()
+        first = broker.drain_order_queue()
+        second = broker.drain_order_queue()
+        print(' first:', first, ' second:', second)
+        self.assertEqual(first, [])
+        self.assertEqual(second, [])
 
 
 if __name__ == '__main__':
