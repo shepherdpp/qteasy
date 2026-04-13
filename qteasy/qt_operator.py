@@ -2114,6 +2114,10 @@ class Operator:
                 f'For example: qt.configure(asset_type="E") or asset_type="FD".'
             )
 
+        from qteasy.live_config import build_live_trade_config
+
+        live_cfg = build_live_trade_config(config)
+
         init_holdings = config['live_trade_init_holdings']
         account_id = config['live_trade_account_id']
         # if init_holdings is not None then add holdings to account
@@ -2139,8 +2143,12 @@ class Operator:
                 )
 
         # if account is ready then create trader and broker
-        broker_type = config['live_trade_broker_type']
-        broker_params = config['live_trade_broker_params']
+        broker_type = live_cfg.live_trade_broker_type
+        broker_params = (
+            dict(live_cfg.live_trade_broker_params)
+            if live_cfg.live_trade_broker_params is not None
+            else config['live_trade_broker_params']
+        )
         if (broker_type == 'simulator') and (broker_params is None):
             broker_params = {
                 "fee_rate_buy":    config['cost_rate_buy'],
@@ -2200,6 +2208,7 @@ class Operator:
                 weekly_refill_tables=config['live_trade_weekly_refill_tables'],
                 monthly_refill_tables=config['live_trade_monthly_refill_tables'],
                 debug=False,
+                live_config=live_cfg,
         )
         trader.register_broker(debug=trader.debug)
         # find out datasource availabilities, refill data source if table data not available
@@ -2210,7 +2219,7 @@ class Operator:
                 datasource=datasource,
         )
 
-        ui_type = config['live_trade_ui_type']
+        ui_type = live_cfg.live_trade_ui_type
         if ui_type.lower() == 'cli':
             from .trader_cli import TraderShell
             TraderShell(trader).run()

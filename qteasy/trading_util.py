@@ -12,6 +12,7 @@
 # ======================================
 
 import os
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -1985,7 +1986,7 @@ def sys_log_file_path_name(account_id, datasource) -> str:
 
 
 def break_point_file_path_name(account_id, datasource) -> str:
-    """ 返回指定交易账户实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+    """ 返回指定交易账户实盘断点文件的路径和文件名，目录为 ``QT_SYS_LOG_PATH``（与系统日志同根）。
 
     Parameters
     ----------
@@ -1997,7 +1998,7 @@ def break_point_file_path_name(account_id, datasource) -> str:
     Returns
     -------
     file_path_name: str
-        完整的系统记录文件路径和文件名，含扩展名.cfg
+        完整的断点文件路径和文件名，含扩展名 .bkp
     """
 
     from qteasy import QT_SYS_LOG_PATH
@@ -2030,3 +2031,116 @@ def trade_log_file_path_name(account_id, datasource) -> str:
     )
     log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
     return log_file_path_name
+
+
+def risk_log_file_path_name(account_id: int, datasource) -> str:
+    """返回指定交易账户风控拒单审计日志文件的绝对路径，目录为 ``QT_TRADE_LOG_PATH``。
+
+    文件名与 ``account_log_file_name`` 一致并经 ``sanitize_filename`` 处理，扩展名为 ``.risk.log``。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    datasource : DataSource
+        账户所在数据源。
+
+    Returns
+    -------
+    str
+        风控审计日志完整路径。
+
+    Raises
+    ------
+    TypeError
+        ``datasource`` 不是 ``DataSource`` 实例。
+    KeyError
+        账户不存在（与 ``get_account`` 行为一致）。
+    """
+
+    from qteasy import DataSource, QT_TRADE_LOG_PATH
+
+    if not isinstance(datasource, DataSource):
+        raise TypeError(f'datasource must be a DataSource instance, got {type(datasource)} instead')
+    stem = sanitize_filename(account_log_file_name(account_id, datasource))
+    risk_file_name = stem + '.risk.log'
+    return os.path.join(QT_TRADE_LOG_PATH, risk_file_name)
+
+
+def list_live_trade_artifacts(account_id: int, data_source=None) -> dict[str, str]:
+    """枚举指定实盘账户相关的磁盘产物路径（不要求文件已存在）。
+
+    返回固定四键：``sys_log``、``trade_log``、``break_point``、``risk_log``，值均为
+    当前 ``QT_SYS_LOG_PATH`` / ``QT_TRADE_LOG_PATH`` 解析下的绝对路径。
+    若用户已通过 ``qt.configure`` 热更新日志目录，本函数与 ``delete_account`` 均与最新路径一致。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    data_source : DataSource, optional
+        数据源；默认 ``None`` 时使用 ``QT_DATA_SOURCE``。
+
+    Returns
+    -------
+    dict[str, str]
+        键为 ``sys_log`` / ``trade_log`` / ``break_point`` / ``risk_log`` 的路径字典。
+
+    Raises
+    ------
+    TypeError
+        ``data_source`` 非 ``None`` 且不是 ``DataSource`` 实例。
+    KeyError
+        账户不存在。
+    """
+
+    import qteasy as qt
+    from qteasy import DataSource
+
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+    return {
+        'sys_log': sys_log_file_path_name(account_id, data_source),
+        'trade_log': trade_log_file_path_name(account_id, data_source),
+        'break_point': break_point_file_path_name(account_id, data_source),
+        'risk_log': risk_log_file_path_name(account_id, data_source),
+    }
+
+
+def append_live_trade_risk_log_line(account_id: int, line: str, datasource) -> None:
+    """向账户风控审计日志追加一行 UTF-8 文本（用于 ``<RISK REJECTED>`` 等）。
+
+    写入失败时不抛出异常，仅发出英文 ``RuntimeWarning``，以免阻断拒单主流程。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    line : str
+        待写入的一行文本（可不含换行符，函数会补全）。
+    datasource : DataSource
+        账户所在数据源。
+
+    Returns
+    -------
+    None
+    """
+
+    from qteasy import DataSource
+
+    if not isinstance(datasource, DataSource):
+        raise TypeError(f'datasource must be a DataSource instance, got {type(datasource)} instead')
+    path = risk_log_file_path_name(account_id, datasource)
+    try:
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        payload = line if line.endswith('\n') else line + '\n'
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(payload)
+    except OSError as exc:
+        warnings.warn(
+            f'Failed to append live-trade risk log for account {account_id}: {exc}',
+            RuntimeWarning,
+            stacklevel=2,
+        )

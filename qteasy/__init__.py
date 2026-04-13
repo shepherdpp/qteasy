@@ -22,7 +22,7 @@ from typing import Optional
 import tushare as ts
 import numpy as np
 
-from qteasy.trade_recording import delete_account
+from qteasy.trade_recording import delete_account, list_live_trade_artifacts, risk_log_file_path_name
 from qteasy.qt_operator import Operator
 from qteasy.visual import candle
 from qteasy.parameter import Parameter
@@ -403,6 +403,7 @@ __all__ = [
     'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG', 'utilfuncs', 'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts', 'delete_account', 'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
+    'logger_core', 'live_trade_accounts', 'delete_account', 'list_live_trade_artifacts', 'risk_log_file_path_name',
+    'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
     'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
 ]
