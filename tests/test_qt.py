@@ -445,6 +445,9 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter(stg_id='dma', par_values=timing_pars1)
         self.op.set_parameter(stg_id='macd', par_values=timing_pars3)
 
+        print(f'current file: {print(qt.__file__)}\n'
+              f'current log file path: \n{qt.QT_TRADE_LOG_PATH}\n{qt.QT_CONFIG.get("trade_log_file_path")}')
+
     def test_configure(self):
         """测试参数设置
             通过configure设置参数
@@ -1427,7 +1430,9 @@ class TestQT(unittest.TestCase):
             cv = res['complete_values']
             
             print(f'complete_values head for frequency and timing {freq}, {timing}:\n'
-                  f'starting next test in 3 seconds...\n')
+                  f'starting next test in 3 seconds...\n'
+                  f'qt trade log path: {qt.QT_TRADE_LOG_PATH}\n'
+                  f'{qt.QT_CONFIG.get("trade_log_file_path")}')
             time.sleep(3)
 
             # ---------- 1. 结构约束：index 必须是投资区间内的所有交易日 15:00 ----------
