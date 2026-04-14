@@ -1,8 +1,14 @@
 # RELEASE HISTORY
 
 ## Unreleased
-- **Documentation (S1.3 closeout)**  
-  Added a dedicated live-trading documentation module (`docs/source/live_trading/`) that covers overview, configuration/run, risk and order lifecycle, broker adapter integration, and troubleshooting.  
+- (none)
+
+## 2.4.0 (2026-04-14)
+- **Live trading (S1.3 complete)**  
+  Added a configurable, testable live-trading foundation: `LiveTradeConfig` for validated runtime configuration; a pluggable `RiskManager` that can reject unsafe orders before submission with clear reasons; and broker-side adapter skeleton APIs (`connect/submit/cancel/poll_fills`) to prepare for future integrations (e.g. QMT).  
+  Improved observability and recovery for live runs: clearer artifacts inventory (logs/breakpoints/risk logs) and more consistent order lifecycle behaviors in CLI/TUI.
+- **Documentation**  
+  Added a dedicated live-trading documentation module (`docs/source/live_trading/`) covering overview, configuration/run, risk and order lifecycle, broker adapter integration, and troubleshooting.  
   Added a hands-on tutorial with dual simulator paths (`asset_type='E'` and `asset_type='FD'`) and a design note explaining S1.3 architecture decisions and compatibility boundaries.  
   Refined simulation references (overview/CLI/TUI), API cross-links, and home-page navigation so users can reach live-trading guidance with a clearer path.
 
