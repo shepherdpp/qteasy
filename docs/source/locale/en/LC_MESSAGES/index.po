@@ -9,15 +9,16 @@ msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 22:51+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/index.rst:89
 msgid "``qteasy`` 快速入门"
@@ -28,31 +29,28 @@ msgid "``qteasy`` 使用教程"
 msgstr "Tutorials"
 
 #: ../../source/index.rst:106
-#, fuzzy
 msgid "``qteasy`` 架构与设计"
-msgstr "QTEASY Quick Start"
+msgstr "``qteasy`` Architecture and Design"
 
 #: ../../source/index.rst:115
 msgid "下载并管理金融历史数据"
 msgstr "MANAGING DATA"
 
 #: ../../source/index.rst:124
-#, fuzzy
 msgid "创建并操作交易策略"
-msgstr "BUILD STRATEGIES"
+msgstr "Create and Manage Trading Strategies"
 
 #: ../../source/index.rst:133
 msgid "交易策略的回测并评价"
-msgstr ""
+msgstr "Backtest and Evaluate Trading Strategies"
 
 #: ../../source/index.rst:142
 msgid "优化交易策略"
 msgstr "OPTIMIZATION"
 
 #: ../../source/index.rst:151
-#, fuzzy
 msgid "模拟实盘交易模块"
-msgstr "LIVE SIMULATION"
+msgstr "Simulated Live Trading Module"
 
 #: ../../source/index.rst:160
 msgid "模拟实盘运行交易策略"
@@ -60,7 +58,7 @@ msgstr "LIVE SIMULATION"
 
 #: ../../source/index.rst:171
 msgid "QTEASY交易策略示例"
-msgstr ""
+msgstr "QTEASY Trading Strategy Examples"
 
 #: ../../source/index.rst:180
 msgid "API参考"
@@ -83,16 +81,19 @@ msgid "欢迎使用 ``QTEASY`` 文档!"
 msgstr "Welcome to ``QTEASY`` documentation!"
 
 #: ../../source/index.rst:15
-#, fuzzy
 msgid ""
-"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 "
-"``QTEASY`` 仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_"
-" 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
+"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交"
+"易策略的定义过程、提高了效率。 由于 ``QTEASY`` 仍处于测试中，软件中不免存在一些漏"
+"洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，"
+"也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
-"Currently, ``qteasy`` is under intense development, thus there might be "
-"some bugs in the software. If you encounter any problem, please `Report "
-"Issue`_ or submit `New Feature Request`_ , you can also use `Discussion`_"
-" to share your idea with us. Contributions are highly appreciated!"
+"`qteasy` has been upgraded to version 2.0, enabling trading strategies to use "
+"historical data more flexibly and effectively, while simplifying the process of "
+"defining trading strategies and improving efficiency. Since ``QTEASY`` is still "
+"in testing, the software inevitably contains some vulnerabilities and bugs. If "
+"you encounter any issues during use, you are welcome to `report an Issue`_ or "
+"submit a `new feature request`_ to me. You can also enter the `discussion "
+"forum`_ to participate in discussions. Contributions are welcome!"
 
 #: ../../source/index.rst:22
 msgid "作者: **Jackie PENG**"
@@ -107,9 +108,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Created: 2019, July, 16"
 
 #: ../../source/index.rst:25
-#, fuzzy
 msgid "最新版本: `2.4.0`"
-msgstr "Latest version: `1.4.11`"
+msgstr "Latest version: `2.4.0`"
 
 #: ../../source/index.rst:26
 msgid "License: BSD 3-Clause"
@@ -120,39 +120,66 @@ msgid "简介"
 msgstr "Brief Introduction"
 
 #: ../../source/index.rst:31
-#, fuzzy
 msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，其特点如下："
 msgstr ""
-"``QTEASY`` is a set of quantitative trading strategy development toolkits"
-" developed for quantitative trading personnel, with the following basic "
-"functions:"
+"``QTEASY`` is a quantitative trading strategy development toolkit built for "
+"quantitative traders, with the following features:"
 
 #: ../../source/index.rst:33
-msgid "**全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行，一站式完成"
+msgid ""
+"**全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行，一站"
+"式完成"
 msgstr ""
+"**End-to-end coverage** From financial data acquisition and storage to strategy "
+"development, backtesting, optimization, and live trading—everything in one place"
 
 #: ../../source/index.rst:34
-msgid "**完全本地化** 数据、回测与实盘运行均在本地完成，不依赖云端服务，配置清晰、结果可复现"
+msgid ""
+"**完全本地化** 数据、回测与实盘运行均在本地完成，不依赖云端服务，配置清晰、结果可"
+"复现"
 msgstr ""
+"**Fully local** Data, backtesting, and live trading all run locally, with no "
+"reliance on cloud services; configuration is clear and results are reproducible"
 
 #: ../../source/index.rst:35
 msgid ""
-"**回测可信、实盘一致** "
-"策略逻辑在回测与实盘中同一套运行，数据按「当时能看到的」历史严格注入，从机制上避免未来函数与数据泄露，减少「回测漂亮、实盘走样」的落差"
+"**回测可信、实盘一致** 策略逻辑在回测与实盘中同一套运行，数据按「当时能看到的」历"
+"史严格注入，从机制上避免未来函数与数据泄露，减少「回测漂亮、实盘走样」的落差"
 msgstr ""
+"**Reliable backtests, consistent live trading** The same strategy logic runs in "
+"both backtesting and live trading, with historical data injected strictly based "
+"on what was actually visible at the time—mechanistically avoiding lookahead bias "
+"and data leakage, and reducing the gap between “great backtests” and “distorted "
+"live results”"
 
 #: ../../source/index.rst:36
-msgid "**灵活易用** 多策略可像搭积木一样组合并自定义信号合并方式；内置超过70种策略开箱即用，涵盖常见技术指标、均线、突破、反转等"
+msgid ""
+"**灵活易用** 多策略可像搭积木一样组合并自定义信号合并方式；内置超过70种策略开箱即"
+"用，涵盖常见技术指标、均线、突破、反转等"
 msgstr ""
+"**Flexible and easy to use** Multiple strategies can be combined like building "
+"blocks, with customizable signal-merging methods; built-in 70+ ready-to-use "
+"strategies covering common technical indicators, moving averages, breakouts, "
+"reversals, and more"
 
 #: ../../source/index.rst:38
 msgid ""
-"**高性能回测与防未来函数**：回测核心采用向量化 + "
-"Numba，时间维顺序、标的维单步向量化，多进程并行优化；每步仅向策略注入当时可见的数据窗口，从机制上防未来函数。详见《架构与设计》中的 "
-":doc:`回测引擎与性能 <design/07-backtest-engine-and-"
+"**高性能回测与防未来函数**：回测核心采用向量化 + Numba，时间维顺序、标的维单步向"
+"量化，多进程并行优化；每步仅向策略注入当时可见的数据窗口，从机制上防未来函数。详"
+"见《架构与设计》中的 :doc:`回测引擎与性能 <design/07-backtest-engine-and-"
 "performance>`、:doc:`设计初衷与独特优势 <design/08-design-rationale-and-"
 "advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
 msgstr ""
+"**High-performance backtesting and prevention of look-ahead bias**: The "
+"backtesting core uses vectorization + Numba, with sequential processing along "
+"the time dimension and single-step vectorization along the instrument dimension, "
+"optimized with multiprocessing parallelism; at each step, only the data window "
+"visible at that time is injected into the strategy, preventing look-ahead bias "
+"at the mechanism level. See :doc:`Backtesting Engine and Performance <design/07-"
+"backtest-engine-and-performance>`, :doc:`Design Rationale and Unique Advantages "
+"<design/08-design-rationale-and-advantages>` in “Architecture and Design”, as "
+"well as the “Backtesting Engine and Performance” chapter under “Backtest and "
+"Evaluate Trading Strategies”."
 
 #: ../../source/index.rst:42
 msgid "``QTEASY`` 能做什么?"
@@ -165,66 +192,112 @@ msgstr "Acquire and manage financial historical data"
 #: ../../source/index.rst:47
 msgid "方便地从多渠道获取大量金融历史数据，进行数据清洗后以统一格式进行本地存储"
 msgstr ""
+"Conveniently obtain large amounts of historical financial data from multiple "
+"sources, clean the data, and store it locally in a unified format"
 
 #: ../../source/index.rst:48
-msgid "通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂信息，也只需要一行代码即可获取"
+msgid ""
+"通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂"
+"信息，也只需要一行代码即可获取"
 msgstr ""
+"Use the `DataType` object to manage available information in financial data in a "
+"structured way. Even for complex information such as adjusted prices and index "
+"constituents, you can retrieve it with just one line of code."
 
 #: ../../source/index.rst:49
 msgid "基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化"
 msgstr ""
+"Financial data visualization, statistical analysis, and visualization of "
+"analysis results based on `DataType` objects"
 
 #: ../../source/index.rst:50
 msgid "数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现"
 msgstr ""
+"Store data locally and retrieve it on demand, providing a consistent data "
+"foundation for backtesting and live trading, making results easier to reproduce"
 
 #: ../../source/index.rst:58
 msgid "以简单、安全的方式创建交易策略"
-msgstr ""
+msgstr "Create trading strategies in a simple and secure way"
 
 #: ../../source/index.rst:60
 msgid "通过`BaseStrategy`类，交易策略定义方法直观、逻辑清晰"
 msgstr ""
+"With the `BaseStrategy` class, the method for defining trading strategies is "
+"intuitive and the logic is clear."
 
 #: ../../source/index.rst:61
-msgid "内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而来，过程如同搭积木"
+msgid ""
+"内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而"
+"来，过程如同搭积木"
 msgstr ""
+"Over 70 built-in strategies out of the box, plus a unique strategy mixing and "
+"grouping mechanism—complex strategies can be assembled from simple ones, like "
+"building with blocks."
 
 #: ../../source/index.rst:62
-msgid "交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性"
+msgid ""
+"交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露"
+"等问题，保证策略运行结果的真实性和可靠性"
 msgstr ""
+"The data inputs and usage methods of trading strategies are fully encapsulated "
+"and secure, completely avoiding issues such as inadvertently introducing future "
+"functions and data leakage, ensuring the authenticity and reliability of "
+"strategy results."
 
 #: ../../source/index.rst:63
 msgid "同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差"
 msgstr ""
+"The same strategy logic is used for both backtesting and live trading, reducing "
+"the gap between “great backtest results” and “underwhelming live performance.”"
 
 #: ../../source/index.rst:71
-#, fuzzy
 msgid "交易策略的回测评价、优化和模拟自动化交易"
-msgstr "Create trading strategy, simulate automated trading"
+msgstr ""
+"Backtest evaluation, optimization, and simulated automated trading for trading "
+"strategies"
 
 #: ../../source/index.rst:73
-msgid "通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行多维度全方位评价，生成交易报告和结果图表"
+msgid ""
+"通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行"
+"多维度全方位评价，生成交易报告和结果图表"
 msgstr ""
+"Manage strategy execution through the `Operator` trader class, backtest "
+"strategies according to the real market trading rhythm, evaluate trading results "
+"comprehensively across multiple dimensions, and generate trading reports and "
+"result charts."
 
 #: ../../source/index.rst:74
-msgid "提供多种优化算法，包括模拟退火、遗传算法、贝叶斯优化等在大参数空间中优化策略性能"
+msgid ""
+"提供多种优化算法，包括模拟退火、遗传算法、贝叶斯优化等在大参数空间中优化策略性能"
 msgstr ""
+"Provides multiple optimization algorithms, including simulated annealing, "
+"genetic algorithms, Bayesian optimization, etc., to optimize strategy "
+"performance in large parameter spaces."
 
 #: ../../source/index.rst:75
-#, fuzzy
-msgid "获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr "Track and record trading logs, stock positions, account fund changes, etc."
+msgid ""
+"获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变"
+"化等信息"
+msgstr ""
+"Fetch real-time market data, run strategy simulations for automated trading, and "
+"track and record information such as trading logs, stock positions, and account "
+"balance changes."
 
 #: ../../source/index.rst:76
-msgid "回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查"
+msgid ""
+"回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现"
+"与排查"
 msgstr ""
+"Backtesting, optimization, and live trading use the same execution mechanism: "
+"write a strategy once and run it in all modes, with clear configuration for easy "
+"reproduction and troubleshooting."
 
 #: ../../source/index.rst:77
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
 msgstr ""
-"In the future, ``qteasy`` will be able to realize automatic live trading "
-"by connecting to trading APIs provided by brokers, such as QMT"
+"In the future, ``qteasy`` will be able to realize automatic live trading by "
+"connecting to trading APIs provided by brokers, such as QMT"
 
 #~ msgid "回测并评价交易策略"
 #~ msgstr "BACKTEST & EVALUATION"
@@ -233,39 +306,34 @@ msgstr ""
 #~ msgstr "EXAMPLE STRATEGIES"
 
 #~ msgid ""
-#~ "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
-#~ "``Tushare`` 、 ``EastMoney`` 等"
+#~ "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方"
+#~ "式，包括本地文件、MySQL数据库等，数据来源包括 ``Tushare`` 、 ``EastMoney`` 等"
 #~ msgstr ""
-#~ "Financial historical data acquisition, "
-#~ "cleaning, sorting, visualization, local "
-#~ "storage query and application; support "
-#~ "multiple data storage methods, including "
-#~ "local files, MySQL databases, etc., data"
-#~ " sources include ``Tushare`` , "
-#~ "``EastMoney`` etc."
+#~ "Financial historical data acquisition, cleaning, sorting, visualization, "
+#~ "local storage query and application; support multiple data storage methods, "
+#~ "including local files, MySQL databases, etc., data sources include "
+#~ "``Tushare`` , ``EastMoney`` etc."
 
-#~ msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
+#~ msgid ""
+#~ "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算"
+#~ "法实现交易策略的参数调优"
 #~ msgstr ""
-#~ "Investment trading strategy creation, "
-#~ "backtesting, performance evaluation, and "
-#~ "providing multiple optimization algorithms to"
-#~ " achieve parameter optimization of trading"
-#~ " strategies by defining the adjustable "
-#~ "parameters of the strategy"
+#~ "Investment trading strategy creation, backtesting, performance evaluation, "
+#~ "and providing multiple optimization algorithms to achieve parameter "
+#~ "optimization of trading strategies by defining the adjustable parameters of "
+#~ "the strategy"
 
-#~ msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
+#~ msgid ""
+#~ "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金"
+#~ "变化等信息"
 #~ msgstr ""
-#~ "Trading strategy deployment, real-time "
-#~ "operation, simulation of trading results, "
-#~ "and tracking and recording of trading"
-#~ " logs, stock positions, account fund "
-#~ "changes, etc."
+#~ "Trading strategy deployment, real-time operation, simulation of trading "
+#~ "results, and tracking and recording of trading logs, stock positions, account "
+#~ "fund changes, etc."
 
 #~ msgid "获取、清洗、本地存储大量金融历史数据"
 #~ msgstr ""
-#~ "Acquire, clean, and locally store a "
-#~ "large amount of financial historical "
-#~ "data"
+#~ "Acquire, clean, and locally store a large amount of financial historical data"
 
 #~ msgid "检索、处理、调用本地数据"
 #~ msgstr "Search, process, and call local data"
@@ -275,15 +343,12 @@ msgstr ""
 
 #~ msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
 #~ msgstr ""
-#~ "Create trading strategy quickly, use "
-#~ "more than 70 built-in trading "
-#~ "strategies or create trading strategy by"
-#~ " yourself"
+#~ "Create trading strategy quickly, use more than 70 built-in trading strategies "
+#~ "or create trading strategy by yourself"
 
 #~ msgid "获取实时市场数据，运行策略模拟自动化交易"
 #~ msgstr ""
-#~ "Acquire real-time market data, run "
-#~ "strategy simulation automated trading"
+#~ "Acquire real-time market data, run strategy simulation automated trading"
 
 #~ msgid "通过多种用户界面查看并控制交易程序"
 #~ msgstr "Monitor and control trading programs through multiple user interfaces"
@@ -293,16 +358,13 @@ msgstr ""
 
 #~ msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
 #~ msgstr ""
-#~ "Backtest trading strategies using historical"
-#~ " data, generate complete trading records,"
-#~ " and results"
+#~ "Backtest trading strategies using historical data, generate complete trading "
+#~ "records, and results"
 
 #~ msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
 #~ msgstr ""
-#~ "Evaluate the trading results from "
-#~ "multiple dimensions, generate trading reports"
-#~ " and result charts"
+#~ "Evaluate the trading results from multiple dimensions, generate trading "
+#~ "reports and result charts"
 
 #~ msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
 #~ msgstr "Optimize the strategy parameters with multiple optimization algorithms."
-

@@ -3,21 +3,23 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
+
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 22:19+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/api/history_data.rst:2
 msgid "历史数据获取和管理"
@@ -25,38 +27,23 @@ msgstr "Acquiring and Managing Data"
 
 #: ../../source/api/history_data.rst:4
 msgid "使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"
-msgstr ""
-"You can acquire and manage a large amount of historical data using "
-"qteasy. The historical data that qteasy can manage covers stocks, funds, "
-"indices, futures, etc., including price data, technical indicators, "
-"macroeconomics, company financial reports, macro finance, etc."
+msgstr "You can acquire and manage a large amount of historical data using qteasy. The historical data that qteasy can manage covers stocks, funds, indices, futures, etc., including price data, technical indicators, macroeconomics, company financial reports, macro finance, etc."
 
 #: ../../source/api/history_data.rst:6
 msgid "所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。"
-msgstr ""
-"All data can be obtained through the tushare interface. After downloading"
-" to the local, you can manage and call it through the qteasy interface."
+msgstr "All data can be obtained through the tushare interface. After downloading to the local, you can manage and call it through the qteasy interface."
 
 #: ../../source/api/history_data.rst:9
 msgid "查找支持历史数据"
 msgstr "Looking for supported Historical Data"
 
 #: ../../source/api/history_data.rst:11
-msgid ""
-"使用 ``qt.find_history_data()`` 可以按名称、中文描述或通配符在全部已知历史数据类型中 进行搜索，并按需要返回兼容 "
-"``get_history_data()`` 的 data_id 列表或结构化的 DataFrame 结果，便于探索可用的数据字段。"
-msgstr ""
+msgid "使用 ``qt.find_history_data()`` 可以按名称、中文描述或通配符在全部已知历史数据类型中 进行搜索，并按需要返回兼容 ``get_history_data()`` 的 data_id 列表或结构化的 DataFrame 结果，便于探索可用的数据字段。"
+msgstr "Use ``qt.find_history_data()`` to search across all known historical data types by name, Chinese description, or wildcard, and return either a list of data_id values compatible with ``get_history_data()`` or a structured DataFrame result as needed, making it easier to explore available data fields."
 
 #: of qteasy.datatypes.find_history_data:1
-#, fuzzy
-msgid ""
-"根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 "
-"查找匹配的历史数据类型，支持以 DataFrame 形式返回更结构化的结果。"
-msgstr ""
-"Look for or match historical data types based on the input string, and "
-"display detailed information about the historical data. Support fuzzy "
-"search, support wildcards, support matching historical data types through"
-" English characters or Chinese characters."
+msgid "根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型，支持以 DataFrame 形式返回更结构化的结果。"
+msgstr "Based on the input string, find or match historical data types and display detailed information about the historical data. Supports fuzzy search, wildcards, searching/matching historical data types using English characters or Chinese, and returning more structured results in the form of a DataFrame."
 
 #: ../../source/api/history_data.rst of qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_data_overview
@@ -64,202 +51,144 @@ msgstr ""
 #: qteasy.core.get_table_info qteasy.core.get_table_overview
 #: qteasy.core.refill_data_source
 msgid "参数"
-msgstr ""
+msgstr "Parameters"
 
 #: of qteasy.datatypes.find_history_data:4
 msgid "一个字符串，用于查找或匹配历史数据类型"
 msgstr "A string used to find or match historical data types"
 
 #: of qteasy.datatypes.find_history_data:6
-#, fuzzy
-msgid ""
-"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True - False: 仅匹配数据名称 - True:  "
-"同时匹配数据描述"
-msgstr ""
-"Whether to match the data description fuzzily, if the string contains "
-"non-Ascii characters, it will be automatically converted to True - False:"
-" Match only the data name - True:  Match both the data name and the data "
-"description"
+msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True - False: 仅匹配数据名称 - True:  同时匹配数据描述"
+msgstr "Whether to fuzzy-match the data description. If the provided string contains non-ASCII characters, it will automatically be set to True - False: Match only the data type name - True:  Match both the data type name and the data description"
 
 #: of qteasy.datatypes.find_history_data:10
-#, fuzzy
-msgid ""
-"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True - False: 精确匹配数据名称 - True:"
-"  模糊匹配数据名称或数据描述"
-msgstr ""
-"Whether to match the data name fuzzily, if the string contains non-Ascii "
-"characters or wildcards */?, it will be automatically converted to True  "
-"- False: Match the data name exactly  - True:  Fuzzy match the data name "
-"or the data description"
+msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True - False: 精确匹配数据名称 - True:  模糊匹配数据名称或数据描述"
+msgstr "Whether to fuzzy-match data names. If the provided string contains non-ASCII characters or the wildcard characters */?, it will automatically be set to True - False: exact match on data name - True:  fuzzy match on data name or data description"
 
 #: of qteasy.datatypes.find_history_data:14
 msgid "数据频率，如果提供，则只匹配该频率的数据 可以输入单个频率，也可以输入逗号分隔的多个频率"
-msgstr ""
-"Frequency of data, if provided, only match the frequency of data. You can"
-" enter a single frequency or multiple frequencies separated by commas"
+msgstr "Frequency of data, if provided, only match the frequency of data. You can enter a single frequency or multiple frequencies separated by commas"
 
 #: of qteasy.datatypes.find_history_data:17
 msgid "证券类型，如果提供，则只匹配该证券类型的数据 可以输入单个证券类型，也可以输入逗号分隔的多个证券类型"
-msgstr ""
-"Asset type, if provided, only match the asset type of data. You can enter"
-" a single asset type or multiple asset types separated by commas"
+msgstr "Asset type, if provided, only match the asset type of data. You can enter a single asset type or multiple asset types separated by commas"
 
 #: of qteasy.datatypes.find_history_data:20
 msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
-msgstr ""
-"Threshold for matching degree, items with a matching degree exceeding "
-"this threshold will be judged as matched"
+msgstr "Threshold for matching degree, items with a matching degree exceeding this threshold will be judged as matched"
 
 #: of qteasy.datatypes.find_history_data:22
 msgid "数据表名称过滤条件，如果提供，则只匹配来自这些表的数据类型，可以是单个表名或逗号分隔字符串"
-msgstr ""
+msgstr "Data table name filter. If provided, only match data types from these tables; can be a single table name or a comma-separated string"
 
 #: of qteasy.datatypes.find_history_data:24
-msgid ""
-"- False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息 - True:  返回包含匹配结果详细信息的 "
-"DataFrame，不强制依赖打印输出"
-msgstr ""
+msgid "- False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息 - True:  返回包含匹配结果详细信息的 DataFrame，不强制依赖打印输出"
+msgstr "- False: Return a backward-compatible list of data_id values, and print information about the matched data types - True:  Return a DataFrame containing detailed information about the matched results, without forcing reliance on printed output"
 
 #: of qteasy.datatypes.find_history_data:25
 msgid "False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息"
-msgstr ""
+msgstr "False: Return a backward-compatible list of data_id values, and print information about the matched data types"
 
 #: of qteasy.datatypes.find_history_data:26
 msgid "True:  返回包含匹配结果详细信息的 DataFrame，不强制依赖打印输出"
-msgstr ""
+msgstr "True:  Return a DataFrame containing detailed information about the matched results, without forcing reliance on printed output"
 
 #: ../../source/api/history_data.rst of qteasy.core.filter_stocks
 #: qteasy.core.get_basic_info qteasy.core.get_data_overview
 #: qteasy.core.get_history_data qteasy.core.get_stock_info
 #: qteasy.core.get_table_info
 msgid "返回"
-msgstr ""
+msgstr "Back"
 
 #: of qteasy.datatypes.find_history_data:29
-msgid ""
-"* **data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 "
-"data_id 列表，可以用于 qt.get_history_data() 下载数据 * *pandas.DataFrame* -- 当 "
-"as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，   至少包含下列列：       -"
-" name:        数据类型名称       - description: 数据类型中文描述       - freq:        "
-"频率       - asset_type:  资产类型       - table_name:  底层数据表名称       - column:"
-"      对应的数据字段名"
-msgstr ""
+msgid "* **data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id 列表，可以用于 qt.get_history_data() 下载数据 * *pandas.DataFrame* -- 当 as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，   至少包含下列列：       - name:        数据类型名称       - description: 数据类型中文描述       - freq:        频率       - asset_type:  资产类型       - table_name:  底层数据表名称       - column:      对应的数据字段名"
+msgstr "* **data_id** (*list[str]*) -- When as_data_frame is False, a list of data_id values for the matched data types, which can be used with qt.get_history_data() to download data\n"
+"* *pandas.DataFrame* -- When as_data_frame is True, returns a DataFrame where each row corresponds to a matched data type, and includes at least the following columns:\n"
+"      - name:        data type name\n"
+"      - description: Chinese description of the data type\n"
+"      - freq:        frequency\n"
+"      - asset_type:  asset type\n"
+"      - table_name:  underlying data table name\n"
+"      - column:      corresponding data field name"
 
 #: of qteasy.datatypes.find_history_data:29
-#, fuzzy
-msgid ""
-"**data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id "
-"列表，可以用于 qt.get_history_data() 下载数据"
-msgstr ""
-"**data_id** -- The data_id of the matched data type, which can be used to"
-" download data using qt.get_history_data()"
+msgid "**data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id 列表，可以用于 qt.get_history_data() 下载数据"
+msgstr "**data_id** (*list[str]*) -- When as_data_frame is False, the list of data_id values for the matched data types; can be used to download data via qt.get_history_data()"
 
 #: of qteasy.datatypes.find_history_data:30
-#, fuzzy
-msgid ""
-"*pandas.DataFrame* -- 当 as_data_frame 为 True 时，返回一个 "
-"DataFrame，每一行对应一个匹配到的数据类型， 至少包含下列列："
-msgstr ""
-"*Dict of DataFrame* -- If as_data_frame is set to True, a Dict is "
-"returned, with multiple DataFrames as values"
+msgid "*pandas.DataFrame* -- 当 as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型， 至少包含下列列："
+msgstr "*pandas.DataFrame* -- When as_data_frame is True, returns a DataFrame. Each row corresponds to a matched data type and contains at least the following columns:"
 
 #: of qteasy.datatypes.find_history_data:32
 msgid "name:        数据类型名称"
-msgstr ""
+msgstr "name:        Data type name"
 
 #: of qteasy.datatypes.find_history_data:33
 msgid "description: 数据类型中文描述"
-msgstr ""
+msgstr "description: Chinese description of the data type"
 
 #: of qteasy.datatypes.find_history_data:34
 msgid "freq:        频率"
-msgstr ""
+msgstr "freq:        Frequency"
 
 #: of qteasy.datatypes.find_history_data:35
 msgid "asset_type:  资产类型"
-msgstr ""
+msgstr "asset_type:  Asset type"
 
 #: of qteasy.datatypes.find_history_data:36
 msgid "table_name:  底层数据表名称"
-msgstr ""
+msgstr "table_name:  Underlying data table name"
 
 #: of qteasy.datatypes.find_history_data:37
 msgid "column:      对应的数据字段名"
-msgstr ""
+msgstr "column:      Corresponding data field name"
 
 #: of qteasy.core.filter_stocks:17 qteasy.core.get_basic_info:33
 #: qteasy.core.get_data_overview:16 qteasy.core.get_history_data:55
 #: qteasy.core.get_table_info:28 qteasy.core.refill_data_source:73
 #: qteasy.datatypes.find_history_data:40
 msgid "示例"
-msgstr ""
+msgstr "Example"
 
 #: ../../source/api/history_data.rst
 msgid "抛出"
-msgstr ""
+msgstr "Throw"
 
 #: of qteasy.datatypes.find_history_data:83
-#, fuzzy
 msgid "输入的 s 不是字符串，或者 freq/asset_type/table 不是字符串或列表"
-msgstr ""
-"If the input s is not a string, or freq/asset_type is not a string or "
-"list:"
+msgstr "The input s is not a string, or freq/asset_type/table is not a string or a list"
 
 #: ../../source/api/history_data.rst:18
 msgid "下载历史数据"
 msgstr "Download Historical Data"
 
 #: ../../source/api/history_data.rst:20
-msgid ""
-"通过 ``qt.refill_data_source()`` 可以从远端金融数据 API 批量下载指定表或用途的数据 "
-"（支持按数据类型、频率、资产类型等筛选），并在本地 DataSource 中完成清洗与写入； "
-"依赖表与交易日历的刷新会在内部自动处理，具体工作流与推荐参数组合见 manage_data 系列文档。"
-msgstr ""
+msgid "通过 ``qt.refill_data_source()`` 可以从远端金融数据 API 批量下载指定表或用途的数据 （支持按数据类型、频率、资产类型等筛选），并在本地 DataSource 中完成清洗与写入； 依赖表与交易日历的刷新会在内部自动处理，具体工作流与推荐参数组合见 manage_data 系列文档。"
+msgstr "With ``qt.refill_data_source()``, you can batch-download data for specified tables or purposes from a remote financial data API (supports filtering by data type, frequency, asset type, etc.), and complete cleaning and writing in the local DataSource; refreshing dependent tables and the trading calendar is handled automatically internally. For the specific workflow and recommended parameter combinations, see the manage_data series documentation."
 
 #: of qteasy.core.refill_data_source:1
 msgid "从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中"
-msgstr ""
-"Download data in batches from the API channel of the network data "
-"provider, clean it, and fill it into the local data source"
+msgstr "Download data in batches from the API channel of the network data provider, clean it, and fill it into the local data source"
 
 #: of qteasy.core.refill_data_source:3
-msgid ""
-"数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 'stock_daily, "
-"stock_weekly' 也可以给出数据表的用途，如 'data, basic'"
-msgstr ""
-"Data table name, must be the data table defined in the database, used to "
-"specify the data table to be downloaded. You can give the data table "
-"name, such as 'stock_daily, stock_weekly', or you can give the purpose of"
-" the data table, such as 'data, basic'"
+msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 'stock_daily, stock_weekly' 也可以给出数据表的用途，如 'data, basic'"
+msgstr "Data table name, must be the data table defined in the database, used to specify the data table to be downloaded. You can give the data table name, such as 'stock_daily, stock_weekly', or you can give the purpose of the data table, such as 'data, basic'"
 
 #: of qteasy.core.refill_data_source:7
 msgid "需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE"
-msgstr ""
-"DataSource to be filled with data. If None, fill the data source to "
-"QT_DATA_SOURCE"
+msgstr "DataSource to be filled with data. If None, fill the data source to QT_DATA_SOURCE"
 
 #: of qteasy.core.refill_data_source:9
-msgid ""
-"数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-" - 'akshare'     : 从AKshare API获取金融数据 - 'eastmoney'   : 从东方财富网获取金融数据"
-msgstr ""
-"Data acquisition channel, financial data API, supports the following "
-"options:  - 'tushare'     : Get financial data from Tushare API, please "
-"apply for the corresponding permission and points by yourself - 'akshare'"
-"     : Get financial data from AKshare API - 'eastmoney'   : Get "
-"financial data from Eastmoney"
+msgid "数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分 - 'akshare'     : 从AKshare API获取金融数据 - 'eastmoney'   : 从东方财富网获取金融数据"
+msgstr "Data acquisition channel, financial data API, supports the following options:  - 'tushare'     : Get financial data from Tushare API, please apply for the corresponding permission and points by yourself - 'akshare'     : Get financial data from AKshare API - 'eastmoney'   : Get financial data from Eastmoney"
 
 #: of qteasy.core.refill_data_source:9
 msgid "数据获取渠道，金融数据API，支持以下选项:"
-msgstr ""
-"Data acquisition channel, financial data API, supports the following "
-"options:"
+msgstr "Data acquisition channel, financial data API, supports the following options:"
 
 #: of qteasy.core.refill_data_source:11
 msgid "'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-msgstr ""
-"`tushare`     : Get financial data from Tushare API, please apply for the"
-" corresponding permission and points by yourself"
+msgstr "`tushare`     : Get financial data from Tushare API, please apply for the corresponding permission and points by yourself"
 
 #: of qteasy.core.refill_data_source:12
 msgid "'akshare'     : 从AKshare API获取金融数据"
@@ -271,27 +200,19 @@ msgstr "`eastmoney`   : Get financial data from Eastmoney"
 
 #: of qteasy.core.refill_data_source:15
 msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表"
-msgstr ""
-"Data table name, must be the data table defined in the database, used to "
-"specify the data table to be downloaded"
+msgstr "Data table name, must be the data table defined in the database, used to specify the data table to be downloaded"
 
 #: of qteasy.core.refill_data_source:17
 msgid "需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型"
-msgstr ""
-"Data type to be downloaded, used to further filter the data table, must "
-"be the data type defined in the database"
+msgstr "Data type to be downloaded, used to further filter the data table, must be the data type defined in the database"
 
 #: of qteasy.core.refill_data_source:19
 msgid "需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率"
-msgstr ""
-"Data frequency to be downloaded, used to further filter the data table, "
-"must be the data frequency defined in the database"
+msgstr "Data frequency to be downloaded, used to further filter the data table, must be the data frequency defined in the database"
 
 #: of qteasy.core.refill_data_source:21
 msgid "需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型"
-msgstr ""
-"Asset type to be downloaded, used to further filter the data table, must "
-"be the asset type defined in the database"
+msgstr "Asset type to be downloaded, used to further filter the data table, must be the asset type defined in the database"
 
 #: of qteasy.core.refill_data_source:23
 msgid "是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据"
@@ -299,49 +220,23 @@ msgstr "If True, the trade_calendar table will be downloaded"
 
 #: of qteasy.core.refill_data_source:25
 msgid "是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功"
-msgstr ""
-"If set to False, ignore the dependency table, which may cause data "
-"download failure"
+msgstr "If set to False, ignore the dependency table, which may cause data download failure"
 
 #: of qteasy.core.refill_data_source:27 qteasy.core.refill_data_source:29
 msgid "限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载"
-msgstr ""
-"Limit the time range of data download. If start_date/end_date is given, "
-"only the data within this time period will be downloaded"
+msgstr "Limit the time range of data download. If start_date/end_date is given, only the data within this time period will be downloaded"
 
 #: of qteasy.core.refill_data_source:31
-#, fuzzy
-msgid ""
-"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含"
-" 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
-"例如，下载stock_basic表数据时，下载以下输入均为合法输入： - 'SZSE'     仅下载深圳交易所的股票数据 - ['SSE', "
-"'SZSE'] - 'SSE, SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
-msgstr ""
-"The filtering parameters when downloading data. Some data tables provide "
-"filterable parameters in the form of a list, such as the stock_basic "
-"table, which has a filterable parameter \"exchange\" with options 'SSE', "
-"'SZSE', 'BSE'. You can limit the range of downloaded data through this "
-"parameter. If filter_arg is None, all data will be downloaded. For "
-"example, when downloading stock_basic table data, the following inputs "
-"are all valid:  - 'SZSE'     Only download stock data from Shenzhen Stock"
-" Exchange - ['SSE', 'SZSE'] - 'SSE, SZSE'     The above two writing "
-"methods are equivalent, downloading stock data from Shanghai and Shenzhen"
-" Stock Exchanges"
+msgid "限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 例如，下载stock_basic表数据时，下载以下输入均为合法输入： - 'SZSE'     仅下载深圳交易所的股票数据 - ['SSE', 'SZSE'] - 'SSE, SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
+msgstr "Filter parameters used to constrain downloads. Some data tables provide filterable parameters as a list; for example, the stock_basic table has a filter parameter \"exchange\" with options 'SSE', 'SZSE', 'BSE'. You can use this parameter to limit the scope of the download. If filter_arg is None, all data will be downloaded. For example, when downloading stock_basic table data, the following inputs are all valid:\n"
+"- 'SZSE'     download only stocks listed on the Shenzhen Stock Exchange\n"
+"- ['SSE', 'SZSE']\n"
+"- 'SSE, SZSE'     the two forms above are equivalent; download stocks listed on the Shanghai and Shenzhen Stock Exchanges"
 
 #: of qteasy.core.refill_data_source:31
-#, fuzzy
-msgid ""
-"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含"
-" 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
-"例如，下载stock_basic表数据时，下载以下输入均为合法输入： - 'SZSE'"
-msgstr ""
-"The filtering parameters when downloading data. Some data tables provide "
-"filterable parameters in the form of a list, such as the stock_basic "
-"table, which has a filterable parameter \"exchange\" with options 'SSE', "
-"'SZSE', 'BSE'. You can limit the range of downloaded data through this "
-"parameter. If filter_arg is None, all data will be downloaded. For "
-"example, when downloading stock_basic table data, the following inputs "
-"are all valid:"
+msgid "限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含 'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 例如，下载stock_basic表数据时，下载以下输入均为合法输入： - 'SZSE'"
+msgstr "Filter parameters used to constrain downloads. Some data tables provide filterable parameters as a list; for example, the stock_basic table has a filter parameter \"exchange\" with options 'SSE', 'SZSE', 'BSE'. You can use this parameter to limit the scope of the download. If filter_arg is None, all data will be downloaded. For example, when downloading stock_basic table data, the following input is valid:\n"
+"- 'SZSE'"
 
 #: of qteasy.core.refill_data_source:35
 msgid "仅下载深圳交易所的股票数据"
@@ -349,73 +244,47 @@ msgstr "Only download stock data from Shenzhen Stock Exchange"
 
 #: of qteasy.core.refill_data_source:36
 msgid "['SSE', 'SZSE']"
-msgstr ""
+msgstr "['SSE', 'SZSE']"
 
 #: of qteasy.core.refill_data_source:37
 msgid "'SSE, SZSE'"
-msgstr ""
+msgstr "'SSE, SZSE'"
 
 #: of qteasy.core.refill_data_source:38
 msgid "上面两种写法等效，下载上海和深圳交易所的股票数据"
-msgstr ""
-"Above two ways are equivalent, downloading stock data from Shanghai and "
-"Shenzhen Stock Exchanges"
+msgstr "Above two ways are equivalent, downloading stock data from Shanghai and Shenzhen Stock Exchanges"
 
 #: of qteasy.core.refill_data_source:40
 msgid "用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载"
-msgstr ""
-"Stock codes used to download data. If symbols are given, only the data of"
-" these stock codes will be downloaded"
+msgstr "Stock codes used to download data. If symbols are given, only the data of these stock codes will be downloaded"
 
 #: of qteasy.core.refill_data_source:42
 msgid "是否逆序参数下载数据， 默认False - True:  逆序参数下载数据 - False: 顺序参数下载数据"
-msgstr ""
-"If True, download data in reverse order - False: download data in normal "
-"order"
+msgstr "If True, download data in reverse order - False: download data in normal order"
 
 #: of qteasy.core.refill_data_source:46
 msgid "是否启用多线程下载数据 - True:  启用多线程下载数据 - False: 禁用多线程下载"
-msgstr ""
-"If True, enable multi-threaded data download - False: disable multi-"
-"threaded download"
+msgstr "If True, enable multi-threaded data download - False: disable multi-threaded download"
 
 #: of qteasy.core.refill_data_source:50
 msgid "启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数"
-msgstr ""
-"Number of threads opened simultaneously when multi-threaded download is "
-"enabled, default value is the number of CPU cores of the device"
+msgstr "Number of threads opened simultaneously when multi-threaded download is enabled, default value is the number of CPU cores of the device"
 
 #: of qteasy.core.refill_data_source:52
 msgid "保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后 再批量保存到本地，chunk_size即批量，默认值100"
-msgstr ""
-"Number of data to be accumulated before saving to local, chunk_size is "
-"the batch size, default value is 100"
+msgstr "Number of data to be accumulated before saving to local, chunk_size is the batch size, default value is 100"
 
 #: of qteasy.core.refill_data_source:55
-msgid ""
-"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
-"该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 如果为0，则不暂停，一次性下载所有数据"
-msgstr ""
-"Number of data to be downloaded before pausing, this parameter is only "
-"valid when parallel=False. If 0, no pause, download all data at once"
+msgid "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 如果为0，则不暂停，一次性下载所有数据"
+msgstr "Number of data to be downloaded before pausing, this parameter is only valid when parallel=False. If 0, no pause, download all data at once"
 
 #: of qteasy.core.refill_data_source:59
-msgid ""
-"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
-"该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 如果<=0，则不暂停，立即开始下一批数据下载"
-msgstr ""
-"Number of seconds to pause before continuing to download data, this "
-"parameter is only valid when parallel=False. If <=0, no pause, "
-"immediately start the next batch of data download"
+msgid "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 如果<=0，则不暂停，立即开始下一批数据下载"
+msgstr "Number of seconds to pause before continuing to download data, this parameter is only valid when parallel=False. If <=0, no pause, immediately start the next batch of data download"
 
 #: of qteasy.core.refill_data_source:63
-msgid ""
-"数据写入数据源时的合并方式，支持以下选项： - 'update'  : 更新数据，如果数据已存在，则更新数据 - 'ignore'  : "
-"忽略数据，如果数据已存在，则丢弃下载的数据"
-msgstr ""
-"Merge method when writing data to data source, supports the following "
-"options: - 'update'  : Update data, if data already exists, update data -"
-" 'ignore'  : Ignore data, if data already exists, discard downloaded data"
+msgid "数据写入数据源时的合并方式，支持以下选项： - 'update'  : 更新数据，如果数据已存在，则更新数据 - 'ignore'  : 忽略数据，如果数据已存在，则丢弃下载的数据"
+msgstr "Merge method when writing data to data source, supports the following options: - 'update'  : Update data, if data already exists, update data - 'ignore'  : Ignore data, if data already exists, discard downloaded data"
 
 #: of qteasy.core.refill_data_source:67
 msgid "是否记录数据下载日志"
@@ -426,24 +295,19 @@ msgstr "If True, record data download log"
 #: qteasy.core.get_table_info qteasy.core.get_table_overview
 #: qteasy.core.refill_data_source
 msgid "返回类型"
-msgstr ""
+msgstr "Return type"
 
 #: ../../source/api/history_data.rst:26
 msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
-msgstr ""
-"After downloading historical data to the local, you can check, manage, "
-"and call this data."
+msgstr "After downloading historical data to the local, you can check, manage, and call this data."
 
 #: ../../source/api/history_data.rst:29
 msgid "检查本地数据"
 msgstr "Check Local Data"
 
 #: of qteasy.core.get_table_info:1
-#, fuzzy
 msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容以及数据列的名称、数据类型及说明"
-msgstr ""
-"Acquire and print the information of a data table in the data source, "
-"including data volume, disk space occupied, primary key name, and content"
+msgstr "Retrieve and print information about a data table in the data source, including data volume, disk space usage, primary key name, contents, and the names, data types, and descriptions of the data columns."
 
 #: of qteasy.core.get_table_info:3
 msgid "需要查询的数据表名称"
@@ -451,98 +315,61 @@ msgstr "Datatable name to be queried"
 
 #: of qteasy.core.get_table_info:5
 msgid "需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息"
-msgstr ""
-"The data source to obtain the data table information, default None, at "
-"this time obtain the QT_DATA_SOURCE information"
+msgstr "The data source to obtain the data table information, default None, at this time obtain the QT_DATA_SOURCE information"
 
 #: of qteasy.core.get_table_info:7
 msgid "是否打印完整数据列名称及类型清单"
 msgstr "If True, print the complete list of data column names and types"
 
 #: of qteasy.core.get_table_info:10
-#, fuzzy
-msgid ""
-"**data_struct** -- 数据表的结构化信息： {     table name:    数据表名称     "
-"table_exists:  bool，数据表是否存在     table_size:    int/str，数据表占用磁盘空间，human "
-"为True时返回容易阅读的字符串     table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串"
-"     primary_key1:  str，数据表第一个主键名称     pk_count1:     int，数据表第一个主键记录数量"
-"     pk_min1:       obj，数据表主键1起始记录     pk_max1:       obj，数据表主键2最终记录     "
-"primary_key2:  str，数据表第二个主键名称     pk_count2:     int，数据表第二个主键记录     "
-"pk_min2:       obj，数据表主键2起始记录     pk_max2:       obj，数据表主键2最终记录 }"
-msgstr ""
-"table name:    Data table name table_exists:  bool, whether the data "
-"table exists table_size:    int/str, disk space occupied by the data "
-"table, human If True, return an easy-to-read string table_rows:    "
-"int/str, number of rows in the data table, human If True, return an easy-"
-"to-read string primary_key1:  str, name of the first primary key of the "
-"data table pk_count1:     int, number of records of the first primary key"
-" of the data table pk_min1:       obj, starting record of the primary key"
-" 1 of the data table pk_max1:       obj, final record of the primary key "
-"2 of the data table primary_key2:  str, name of the second primary key of"
-" the data table pk_count2:     int, number of records of the second "
-"primary key of the data table pk_min2:       obj, starting record of the "
-"primary key 2 of the data table pk_max2:       obj, final record of the "
-"primary key 2 of the data table"
+msgid "**data_struct** -- 数据表的结构化信息： {     table name:    数据表名称     table_exists:  bool，数据表是否存在     table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串     table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串     primary_key1:  str，数据表第一个主键名称     pk_count1:     int，数据表第一个主键记录数量     pk_min1:       obj，数据表主键1起始记录     pk_max1:       obj，数据表主键2最终记录     primary_key2:  str，数据表第二个主键名称     pk_count2:     int，数据表第二个主键记录     pk_min2:       obj，数据表主键2起始记录     pk_max2:       obj，数据表主键2最终记录 }"
+msgstr "**data_struct** -- Structured information about the data table:\n"
+"{\n"
+"    table_name:    Data table name\n"
+"    table_exists:  bool, whether the data table exists\n"
+"    table_size:    int/str, disk space used by the table; when human is True, returns a human-readable string\n"
+"    table_rows:    int/str, number of rows in the table; when human is True, returns a human-readable string\n"
+"    primary_key1:  str, name of the first primary key\n"
+"    pk_count1:     int, number of records for the first primary key\n"
+"    pk_min1:       obj, starting record for primary key 1\n"
+"    pk_max1:       obj, ending record for primary key 1\n"
+"    primary_key2:  str, name of the second primary key\n"
+"    pk_count2:     int, number of records for the second primary key\n"
+"    pk_min2:       obj, starting record for primary key 2\n"
+"    pk_max2:       obj, ending record for primary key 2\n"
+"}"
 
 #: of qteasy.core.get_table_info:10
 msgid "**data_struct** -- 数据表的结构化信息： {"
-msgstr ""
+msgstr "**data_struct** -- Structured information about the data table: {"
 
 #: of qteasy.core.get_table_info:12
-msgid ""
-"table name:    数据表名称 table_exists:  bool，数据表是否存在 table_size:    "
-"int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    "
-"int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  str，数据表第一个主键名称 "
-"pk_count1:     int，数据表第一个主键记录数量 pk_min1:       obj，数据表主键1起始记录 pk_max1:"
-"       obj，数据表主键2最终记录 primary_key2:  str，数据表第二个主键名称 pk_count2:     "
-"int，数据表第二个主键记录 pk_min2:       obj，数据表主键2起始记录 pk_max2:       "
-"obj，数据表主键2最终记录"
-msgstr ""
-"table name:    Data table name table_exists:  bool, whether the data "
-"table exists table_size:    int/str, disk space occupied by the data "
-"table, human If True, return an easy-to-read string table_rows:    "
-"int/str, number of rows in the data table, human If True, return an easy-"
-"to-read string primary_key1:  str, name of the first primary key of the "
-"data table pk_count1:     int, number of records of the first primary key"
-" of the data table pk_min1:       obj, starting record of the primary key"
-" 1 of the data table pk_max1:       obj, final record of the primary key "
-"2 of the data table primary_key2:  str, name of the second primary key of"
-" the data table pk_count2:     int, number of records of the second "
-"primary key of the data table pk_min2:       obj, starting record of the "
-"primary key 2 of the data table pk_max2:       obj, final record of the "
-"primary key 2 of the data table"
+msgid "table name:    数据表名称 table_exists:  bool，数据表是否存在 table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  str，数据表第一个主键名称 pk_count1:     int，数据表第一个主键记录数量 pk_min1:       obj，数据表主键1起始记录 pk_max1:       obj，数据表主键2最终记录 primary_key2:  str，数据表第二个主键名称 pk_count2:     int，数据表第二个主键记录 pk_min2:       obj，数据表主键2起始记录 pk_max2:       obj，数据表主键2最终记录"
+msgstr "table name:    Data table name table_exists:  bool, whether the data table exists table_size:    int/str, disk space occupied by the data table, human If True, return an easy-to-read string table_rows:    int/str, number of rows in the data table, human If True, return an easy-to-read string primary_key1:  str, name of the first primary key of the data table pk_count1:     int, number of records of the first primary key of the data table pk_min1:       obj, starting record of the primary key 1 of the data table pk_max1:       obj, final record of the primary key 2 of the data table primary_key2:  str, name of the second primary key of the data table pk_count2:     int, number of records of the second primary key of the data table pk_min2:       obj, starting record of the primary key 2 of the data table pk_max2:       obj, final record of the primary key 2 of the data table"
 
 #: of qteasy.core.get_table_info:24
 msgid "}"
-msgstr ""
+msgstr "}"
 
 #: ../../source/api/history_data.rst:34
 msgid "获取已经下载的本地数据总览"
 msgstr "Acquire the overview of the downloaded local data"
 
 #: ../../source/api/history_data.rst:36
-msgid ""
-"``qt.get_table_overview()`` 与 ``qt.get_data_overview()`` 会汇总展示本地数据源中各类 "
-"数据表当前是否有数据、占用磁盘空间、记录条数以及时间覆盖范围，适合作为检查数据准备 情况的入口。"
-msgstr ""
+msgid "``qt.get_table_overview()`` 与 ``qt.get_data_overview()`` 会汇总展示本地数据源中各类 数据表当前是否有数据、占用磁盘空间、记录条数以及时间覆盖范围，适合作为检查数据准备 情况的入口。"
+msgstr "``qt.get_table_overview()`` and ``qt.get_data_overview()`` summarize and display whether each type of data table in the local data source currently has data, disk space usage, record count, and time coverage range, making them suitable as an entry point for checking data readiness."
 
 #: of qteasy.core.get_table_overview:1
 msgid "显示默认数据源或指定数据源的数据总览"
-msgstr ""
-"Display the data overview of the default data source or the specified "
-"data source"
+msgstr "Display the data overview of the default data source or the specified data source"
 
 #: of qteasy.core.get_data_overview:5 qteasy.core.get_table_overview:3
 msgid "一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview"
-msgstr ""
-"A data_source object, default is None. If None, display the overview of "
-"the default data source"
+msgstr "A data_source object, default is None. If None, display the overview of the default data source"
 
 #: of qteasy.core.get_data_overview:7 qteasy.core.get_table_overview:5
 msgid "需要显示overview的数据表名称，如果为None，则显示所有数据表的overview"
-msgstr ""
-"If given, display the dat table overview, if None, display the overview "
-"of all data tables"
+msgstr "If given, display the dat table overview, if None, display the overview of all data tables"
 
 #: of qteasy.core.get_data_overview:9 qteasy.core.get_table_overview:7
 msgid "是否显示系统数据表的overview"
@@ -550,7 +377,7 @@ msgstr "If True, display the overview of system data tables"
 
 #: of qteasy.core.get_stock_info:34 qteasy.core.get_table_overview:13
 msgid "备注"
-msgstr ""
+msgstr "Note"
 
 #: of qteasy.core.get_table_overview:14
 msgid "用法示例参见get_data_overview()"
@@ -558,104 +385,69 @@ msgstr "Example usage see get_data_overview()"
 
 #: of qteasy.core.get_data_overview:1
 msgid "显示数据源的数据总览，等同于get_table_overview()"
-msgstr ""
-"Display the data overview of the data source, equivalent to "
-"get_table_overview()"
+msgstr "Display the data overview of the data source, equivalent to get_table_overview()"
 
 #: of qteasy.core.get_data_overview:3
 msgid "获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等"
-msgstr ""
-"Information includes the data volume of all data tables, disk space "
-"occupied, primary key name, content, etc."
+msgstr "Information includes the data volume of all data tables, disk space occupied, primary key name, content, etc."
 
 #: of qteasy.core.get_data_overview:12
 msgid "* *pd.DataFrame* * *返回一个包含数据表的overview信息的DataFrame*"
-msgstr ""
-"* *pd.DataFrame* * Returns a DataFrame containing the overview "
-"information of the data table"
+msgstr "* *pd.DataFrame* * Returns a DataFrame containing the overview information of the data table"
 
 #: of qteasy.core.get_data_overview:12
 msgid "*pd.DataFrame*"
-msgstr ""
+msgstr "*pd.DataFrame*"
 
 #: of qteasy.core.get_data_overview:13
 msgid "*返回一个包含数据表的overview信息的DataFrame*"
-msgstr ""
-"*Returns a DataFrame containing the overview information of the data "
-"table*"
+msgstr "*Returns a DataFrame containing the overview information of the data table*"
 
 #: ../../source/api/history_data.rst:45
 msgid "使用下载的数据——基础数据"
 msgstr "Use the downloaded data - Basic Data"
 
 #: ../../source/api/history_data.rst:47
-msgid ""
-"``qt.get_basic_info()`` 和 ``qt.get_stock_info()`` 提供按代码或名称查询股票/基金/指数等 "
-"基础信息的入口，可配合 ``filter_stock_codes()`` 与 ``filter_stocks()`` 构建资产池或 做前置筛选。"
-msgstr ""
+msgid "``qt.get_basic_info()`` 和 ``qt.get_stock_info()`` 提供按代码或名称查询股票/基金/指数等 基础信息的入口，可配合 ``filter_stock_codes()`` 与 ``filter_stocks()`` 构建资产池或 做前置筛选。"
+msgstr "``qt.get_basic_info()`` and ``qt.get_stock_info()`` provide entry points for querying basic information on stocks/funds/indices, etc. by code or name. They can be used together with ``filter_stock_codes()`` and ``filter_stocks()`` to build an asset pool or perform pre-filtering."
 
 #: of qteasy.core.get_basic_info:1
-#, fuzzy
 msgid "等同于get_stock_info()，根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
-msgstr ""
-"Look for the basic information of stocks, funds, indices, futures, or "
-"options based on the input information"
+msgstr "Equivalent to get_stock_info(); looks up basic information on stocks, funds, indices, or futures and options based on the input."
 
 #: of qteasy.core.get_basic_info:3
-#, fuzzy
-msgid ""
-"证券代码或名称： - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 - "
-"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
-msgstr ""
-"Stock code or name:  - If it is a stock code, it can contain suffixes or "
-"not. When it contains suffixes, it is precisely searched. When it does "
-"not contain suffixes, it is globally matched - If it is a stock name, it "
-"can contain wildcard fuzzy search, or fuzzy search by name - If an exact "
-"match is found for a stock code, return a dictionary containing the "
-"relevant information of the stock code"
+msgid "证券代码或名称： - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 - 如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+msgstr "Security code or name:\n"
+"- If it is a security code, it may include a suffix or not. With a suffix, perform an exact lookup; without a suffix, perform a global match.\n"
+"- If it is a security name, you can use wildcard patterns for fuzzy search, or perform a fuzzy search by name.\n"
+"- If exactly one security code is matched, return a dictionary containing information related to that security code."
 
 #: of qteasy.core.get_basic_info:8 qteasy.core.get_stock_info:9
-#, fuzzy
-msgid ""
-"证券类型，接受列表或逗号分隔字符串，包含认可的资产类型： - E     股票 - IDX   指数 - FD    基金 - FT    期货 "
-"- OPT   期权"
-msgstr ""
-"Asset type, accepts a list or comma-separated string, including "
-"recognized asset types:  - E     Stock - IDX   Index - FD    Fund - FT"
-"    Futures - OPT   Options"
+msgid "证券类型，接受列表或逗号分隔字符串，包含认可的资产类型： - E     股票 - IDX   指数 - FD    基金 - FT    期货 - OPT   期权"
+msgstr "Security type. Accepts a list or a comma-separated string, including the recognized asset types:\n"
+"- E     Stocks\n"
+"- IDX   Indices\n"
+"- FD    Funds\n"
+"- FT    Futures\n"
+"- OPT   Options"
 
 #: of qteasy.core.get_basic_info:15 qteasy.core.get_stock_info:16
 msgid "是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长"
-msgstr ""
-"If True, match the full name of the stock or fund, default is False. If "
-"the full name is matched, it takes longer"
+msgstr "If True, match the full name of the stock or fund, default is False. If the full name is matched, it takes longer"
 
 #: of qteasy.core.get_basic_info:17 qteasy.core.get_stock_info:18
 msgid "如果为True，打印匹配到的结果"
 msgstr "If True, print the matched results"
 
 #: of qteasy.core.get_basic_info:19 qteasy.core.get_stock_info:20
-#, fuzzy
 msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息 - False 默认值，只显示匹配度最高的内容 - True  显示所有匹配到的内容"
-msgstr ""
-"If the number of matched securities is too large (more than five), "
-"whether to display the complete information  - False default value, only "
-"display the highest matching content - True  display all matched content"
+msgstr "When too many securities are matched (more than five), whether to display full information\n"
+"- False (default): only show the highest-relevance matches\n"
+"- True: show all matched results"
 
 #: of qteasy.core.get_basic_info:24
-#, fuzzy
-msgid ""
-"**stock_basic** -- 当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同： - "
-"股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   "
-"基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
-msgstr ""
-"When only one match is found, return a dict containing the basic "
-"information found. Depending on the type of security, the information "
-"found is different:  - Stock information: company name, region, industry,"
-" full name, listing status, listing date - Index information: index name,"
-" full name, issuer, type, issue date - Fund:   fund name, manager, "
-"custodian, fund type, issue date, issue quantity, investment type, type -"
-" Futures:   futures name - Options:   options name"
+msgid "**stock_basic** -- 当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同： - 股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
+msgstr "**stock_basic** -- When only one match is found, returns a dict containing the basic information found. The information varies by security type: - Stock: company name, region, industry, full name, listing status, listing date - Index: index name, full name, issuer, category, issue date - Fund:   fund name, manager, custodian, fund type, issue date, issue amount, investment type, category - Futures: futures name - Options: options name"
 
 #: of qteasy.core.get_stock_info:1
 msgid "等同于get_basic_info()"
@@ -663,36 +455,23 @@ msgstr "Same as get_basic_info()"
 
 #: of qteasy.core.get_stock_info:2
 msgid "根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
-msgstr ""
-"Look for the basic information of stocks, funds, indices, futures, or "
-"options based on the input information"
+msgstr "Look for the basic information of stocks, funds, indices, futures, or options based on the input information"
 
 #: of qteasy.core.get_stock_info:4
-msgid ""
-"证券代码或名称， 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 "
-"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
-msgstr ""
-"Stock code or name, if it is a stock code, it can contain suffixes or "
-"not. When it contains suffixes, it is precisely searched. When it does "
-"not contain suffixes, it is globally matched. If it is a stock name, it "
-"can contain wildcard fuzzy search, or fuzzy search by name. If an exact "
-"match is found for a stock code, return a dictionary containing the "
-"relevant information of the stock code"
+msgid "证券代码或名称， 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+msgstr "Stock code or name, if it is a stock code, it can contain suffixes or not. When it contains suffixes, it is precisely searched. When it does not contain suffixes, it is globally matched. If it is a stock name, it can contain wildcard fuzzy search, or fuzzy search by name. If an exact match is found for a stock code, return a dictionary containing the relevant information of the stock code"
 
 #: of qteasy.core.get_stock_info:25
-#, fuzzy
-msgid ""
-"**stock_info** -- 当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同： - "
-"股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   "
-"基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
-msgstr ""
-"When only one match is found, return a dict containing the basic "
-"information found. Depending on the type of security, the information "
-"found is different:  - Stock information: company name, region, industry,"
-" full name, listing status, listing date - Index information: index name,"
-" full name, issuer, type, issue date - Fund:   fund name, manager, "
-"custodian, fund type, issue date, issue quantity, investment type, type -"
-" Futures:   futures name - Options:   options name"
+msgid "**stock_info** -- 当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同： - 股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
+msgstr "**stock_info** -- When only one match is found, return a dict containing the basic information found. The information varies by security type:\n"
+"- Stock info: company name, region, industry, full name, listing status, listing date\n"
+"- Index info: index name, full name, issuer, category, issue date\n"
+"- Fund:\n"
+"  fund name, manager, custodian, fund type, issue date, issue amount, investment type, type\n"
+"- Futures:\n"
+"  futures name\n"
+"- Options:\n"
+"  options name"
 
 #: of qteasy.core.get_stock_info:35
 msgid "用法示例参见：get_basic_info()"
@@ -700,203 +479,119 @@ msgstr "Example usage see: get_basic_info()"
 
 #: of qteasy.core.filter_stock_codes:1
 msgid "根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单"
-msgstr ""
-"Filter stocks based on the input parameters and call filter_stocks to "
-"return a list of stock codes"
+msgstr "Filter stocks based on the input parameters and call filter_stocks to return a list of stock codes"
 
 #: of qteasy.core.filter_stock_codes:3 qteasy.core.filter_stocks:3
 msgid "筛选股票的上市日期，在该日期以后上市的股票将会被剔除："
-msgstr ""
-"Filter the listing date of the stock. Stocks listed after this date will "
-"be excluded:"
+msgstr "Filter the listing date of the stock. Stocks listed after this date will be excluded:"
 
 #: of qteasy.core.filter_stock_codes:5
 msgid "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来"
-msgstr ""
-"You can filter stocks through the following parameters. Multiple "
-"filtering conditions can be input at the same time, and only stocks that "
-"meet the requirements will be filtered out"
+msgstr "You can filter stocks through the following parameters. Multiple filtering conditions can be input at the same time, and only stocks that meet the requirements will be filtered out"
 
 #: of qteasy.core.filter_stock_codes:10
 msgid ":obj:`filter_stocks`"
-msgstr ""
+msgstr ":obj:`filter_stocks`"
 
 #: of qteasy.core.filter_stocks:1
 msgid "根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame"
-msgstr ""
-"Filter stocks based on the input parameters and return a DataFrame "
-"containing stock codes and related information"
+msgstr "Filter stocks based on the input parameters and return a DataFrame containing stock codes and related information"
 
 #: of qteasy.core.filter_stocks:5
-msgid ""
-"可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来 - index:      "
-"根据指数筛选，不含在指定的指数内的股票将会被剔除 - industry:   公司所处行业，只有列举出来的行业会被选中 - area:"
-"       公司所处省份，只有列举出来的省份的股票才会被选中 - market:     市场，分为主板、创业板等 - exchange:   "
-"交易所，包括上海证券交易所和深圳股票交易所"
-msgstr ""
-"You can filter stocks through the following parameters. Multiple "
-"filtering conditions can be input at the same time, and only stocks that "
-"meet the requirements will be filtered out - index:      Filter by index,"
-" stocks not included in the specified index will be excluded - industry:"
-"   Industry of the company, only listed industries will be selected - "
-"area:       Province where the company is located, only stocks from "
-"listed provinces will be selected - market:     Market, divided into main"
-" board, GEM, etc. - exchange:   Exchange, including Shanghai Stock "
-"Exchange and Shenzhen Stock Exchange"
+msgid "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来 - index:      根据指数筛选，不含在指定的指数内的股票将会被剔除 - industry:   公司所处行业，只有列举出来的行业会被选中 - area:       公司所处省份，只有列举出来的省份的股票才会被选中 - market:     市场，分为主板、创业板等 - exchange:   交易所，包括上海证券交易所和深圳股票交易所"
+msgstr "You can filter stocks through the following parameters. Multiple filtering conditions can be input at the same time, and only stocks that meet the requirements will be filtered out - index:      Filter by index, stocks not included in the specified index will be excluded - industry:   Industry of the company, only listed industries will be selected - area:       Province where the company is located, only stocks from listed provinces will be selected - market:     Market, divided into main board, GEM, etc. - exchange:   Exchange, including Shanghai Stock Exchange and Shenzhen Stock Exchange"
 
 #: of qteasy.core.filter_stocks:13
 msgid "**DataFrame**"
-msgstr ""
+msgstr "**DataFrame**"
 
 #: ../../source/api/history_data.rst:60
 msgid "使用下载的数据——获取价格或技术指标"
 msgstr "Use the downloaded data - Get price or technical indicators"
 
 #: ../../source/api/history_data.rst:62
-msgid ""
-"**取数入口说明**：日常分析、策略与可视化准备应优先使用 ``qt.get_history_data()``。 "
-"``qteasy.history.get_history_panel()`` 则面向已明确 ``DataType`` 列表与 "
-"``DataSource``、需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以 ``get_history_data`` "
-"为主线，详见 ``manage_data`` 中的 HistoryPanel 章节。"
-msgstr ""
+msgid "**取数入口说明**：日常分析、策略与可视化准备应优先使用 ``qt.get_history_data()``。 ``qteasy.history.get_history_panel()`` 则面向已明确 ``DataType`` 列表与 ``DataSource``、需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以 ``get_history_data`` 为主线，详见 ``manage_data`` 中的 HistoryPanel 章节。"
+msgstr "**Data retrieval entry points**: For day-to-day analysis, strategy work, and visualization prep, prefer ``qt.get_history_data()``. ``qteasy.history.get_history_panel()`` is intended for lower-level scenarios where you already have an explicit ``DataType`` list and ``DataSource`` and need to assemble a ``HistoryPanel`` directly; the user docs mainly follow ``get_history_data``—see the HistoryPanel chapter in ``manage_data``."
 
 #: of qteasy.core.get_history_data:1
 msgid "根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。"
-msgstr ""
+msgstr "Given the specified instruments, data types, and frequency, fetch historical data from the local data source and assemble it into a structure that can be used directly by the strategy."
 
 #: of qteasy.core.get_history_data:3
-msgid ""
-"可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` / "
-"``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` "
-"的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。关于数据类型 推断、频率转换和 "
-"trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」 相关章节。"
-msgstr ""
+msgid "可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` / ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` 的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。关于数据类型 推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」 相关章节。"
+msgstr "You can specify the required data types via ``htype_names`` or ``data_types``, and combine them with ``shares`` / ``symbols``, a time range, and ``freq`` to control the retrieval scope; depending on the settings of ``as_data_frame`` and ``group_by``, the function returns a HistoryPanel or a dict of DataFrames grouped by instrument/data type. For advanced usage such as data type inference, frequency conversion, and trade_time_only, see the relevant sections in the documentation “Historical Data Retrieval get_history_data”."
 
 #: of qteasy.core.get_history_data:9
-msgid ""
-"需要获取的历史数据名称集合；可为逗号分隔字符串（如 ``'open, high, low, close'``） 或列表（如 ``['open', "
-"'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` / ``asset_type`` 等参数推断可用的 "
-"htypes。"
-msgstr ""
+msgid "需要获取的历史数据名称集合；可为逗号分隔字符串（如 ``'open, high, low, close'``） 或列表（如 ``['open', 'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` / ``asset_type`` 等参数推断可用的 htypes。"
+msgstr "Collection of historical data names to retrieve; can be a comma-separated string (e.g., ``'open, high, low, close'``) or a list (e.g., ``['open', 'high', 'low', 'close']``). If empty, the system will infer available htypes based on parameters such as ``freq`` / ``asset_type``."
 
 #: of qteasy.core.get_history_data:13
-msgid ""
-"历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` / ``data_types`` "
-"新接口。"
-msgstr ""
+msgid "历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` / ``data_types`` 新接口。"
+msgstr "List of historical data type objects; semantics are similar to ``htype_names``. Prefer the new ``htype_names`` / ``data_types`` interface."
 
 #: of qteasy.core.get_history_data:16
-msgid ""
-"需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
-"如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
-msgstr ""
-"The set of historical data types to be obtained, must be a legal data "
-"type object. If this parameter is given, htype_names will be ignored, "
-"otherwise possible htypes will be created based on the htype_names "
-"parameter"
+msgid "需要获取的历史数据类型集合，必须是合法的数据类型对象。 如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
+msgstr "The set of historical data types to be obtained, must be a legal data type object. If this parameter is given, htype_names will be ignored, otherwise possible htypes will be created based on the htype_names parameter"
 
 #: of qteasy.core.get_history_data:19
 msgid "需要获取历史数据的数据源"
 msgstr "Data source to obtain historical data"
 
 #: of qteasy.core.get_history_data:21
-msgid ""
-"证券代码集合；可为逗号分隔字符串（如 ``'000001.SZ, 000002.SZ'``）或列表 （如 ``['000001.SZ', "
-"'000002.SZ']``）。"
-msgstr ""
+msgid "证券代码集合；可为逗号分隔字符串（如 ``'000001.SZ, 000002.SZ'``）或列表 （如 ``['000001.SZ', '000002.SZ']``）。"
+msgstr "Collection of security codes; can be a comma-separated string (e.g., ``'000001.SZ, 000002.SZ'``) or a list (e.g., ``['000001.SZ', '000002.SZ']``)."
 
 #: of qteasy.core.get_history_data:24
 msgid "证券代码集合；可为逗号分隔字符串（如 ``'000001, 000002'``）或列表 （如 ``['000001', '000002']``）。"
-msgstr ""
+msgstr "Collection of security codes; can be a comma-separated string (e.g., ``'000001, 000002'``) or a list (e.g., ``['000001', '000002']``)."
 
 #: of qteasy.core.get_history_data:27
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
-msgstr ""
-"YYYYMMDD HH:MM:SS format date/time, start date/time of historical data to"
-" be obtained (if available)"
+msgstr "YYYYMMDD HH:MM:SS format date/time, start date/time of historical data to be obtained (if available)"
 
 #: of qteasy.core.get_history_data:29
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
-msgstr ""
-"YYYYMMDD HH:MM:SS format date/time, end date/time of historical data to "
-"be obtained (if available)"
+msgstr "YYYYMMDD HH:MM:SS format date/time, end date/time of historical data to be obtained (if available)"
 
 #: of qteasy.core.get_history_data:31
-msgid ""
-"获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
-"如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
-msgstr ""
-"Number of rows of historical data to be obtained. If start and end are "
-"specified, this parameter is ignored, and the time range of the obtained "
-"data is [start, end]. If start and end are not specified, the most recent"
-" rows of data in the data table will be obtained. Using row to obtain "
-"data is much slower than using date"
+msgid "获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] 如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
+msgstr "Number of rows of historical data to be obtained. If start and end are specified, this parameter is ignored, and the time range of the obtained data is [start, end]. If start and end are not specified, the most recent rows of data in the data table will be obtained. Using row to obtain data is much slower than using date"
 
 #: of qteasy.core.get_history_data:34
-msgid ""
-"频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 "
-"``H``/``D``/``W``/``M`` 等小时/日/周/月周期（如 K 线）。"
-msgstr ""
+msgid "频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 ``H``/``D``/``W``/``M`` 等小时/日/周/月周期（如 K 线）。"
+msgstr "Frequency; supports minute intervals such as ``1min``/``5min``/``15min``/``30min``, as well as hourly/daily/weekly/monthly intervals such as ``H``/``D``/``W``/``M`` (e.g., candlesticks)."
 
 #: of qteasy.core.get_history_data:37
-msgid ""
-"资产类型过滤；可用逗号分隔字符串（如 ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。 常见取值包括 "
-"``any``、``E``、``IDX``、``FT``、``FD`` 等。"
-msgstr ""
+msgid "资产类型过滤；可用逗号分隔字符串（如 ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。 常见取值包括 ``any``、``E``、``IDX``、``FT``、``FD`` 等。"
+msgstr "Asset type filter; can be a comma-separated string (e.g. ``'E, IDX'``) or a list (e.g. ``['E', 'IDX']``). Common values include ``any``, ``E``, ``IDX``, ``FT``, ``FD``, etc."
 
 #: of qteasy.core.get_history_data:40
-msgid ""
-"已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。 新代码请在 "
-"htype 中显式使用复权列名（如 ``close|b``）。"
-msgstr ""
+msgid "已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。 新代码请在 htype 中显式使用复权列名（如 ``close|b``）。"
+msgstr "Deprecated adjustment options (``none``/``n``, ``back``/``b``, ``forward``/``fw``/``f``). For new code, explicitly use the adjusted column name in htype (e.g. ``close|b``)."
 
 #: of qteasy.core.get_history_data:43
-#, fuzzy
 msgid "``True`` 时返回 ``HistoryPanel``；``False`` 时返回 ``DataFrame`` 字典。"
-msgstr ""
-"If True, return a HistoryPanel object. If False, return a dictionary "
-"containing DataFrame objects"
+msgstr "Returns ``HistoryPanel`` when ``True``; returns a dictionary of ``DataFrame`` when ``False``."
 
 #: of qteasy.core.get_history_data:45
-msgid ""
-"返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或 "
-"``'htypes'``/``'htype'``/``'h'``。"
-msgstr ""
+msgid "返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或 ``'htypes'``/``'htype'``/``'h'``。"
+msgstr "Grouping key when returning a dict of DataFrames; commonly ``'shares'``/``'share'``/``'s'`` or ``'htypes'``/``'htype'``/``'h'``."
 
 #: of qteasy.core.get_history_data:48
-msgid ""
-"透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。 "
-"详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` 说明。"
-msgstr ""
+msgid "透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。 详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` 说明。"
+msgstr "Additional parameters passed through to the underlying data retrieval / frequency conversion (e.g. ``drop_nan``, ``resample_method``, etc.). For detailed available values and semantics, see the documentation “Historical Data Retrieval get_history_data” and the ``infer_data_types`` notes."
 
 #: of qteasy.core.get_history_data:51
-#, fuzzy
-msgid ""
-"* *HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 "
-"HistoryPanel 对象。 * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 "
-"True 时，返回按 ``group_by`` 分组的 DataFrame 字典。"
-msgstr ""
-"**HistoryPanel** -- If as_data_frame is set to False, a HistoryPanel "
-"object is returned **Dict of DataFrame** -- If as_data_frame is set to "
-"True, a Dict is returned, with multiple DataFrames as values"
+msgid "* *HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel 对象。 * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 ``group_by`` 分组的 DataFrame 字典。"
+msgstr "* *HistoryPanel* -- When ``as_data_frame`` is False, returns a HistoryPanel object containing all requested data. * *dict of pandas.DataFrame* -- When ``as_data_frame`` is True, returns a dict of DataFrames grouped by ``group_by``."
 
 #: of qteasy.core.get_history_data:51
-#, fuzzy
-msgid ""
-"*HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel "
-"对象。"
-msgstr ""
-"*HistoryPanel* -- If as_data_frame is set to False, a HistoryPanel object"
-" is returned"
+msgid "*HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel 对象。"
+msgstr "*HistoryPanel* -- When ``as_data_frame`` is False, returns a HistoryPanel object containing all requested data."
 
 #: of qteasy.core.get_history_data:52
-#, fuzzy
-msgid ""
-"*dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 "
-"``group_by`` 分组的 DataFrame 字典。"
-msgstr ""
-"*Dict of DataFrame* -- If as_data_frame is set to True, a Dict is "
-"returned, with multiple DataFrames as values"
+msgid "*dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 ``group_by`` 分组的 DataFrame 字典。"
+msgstr "*dict of pandas.DataFrame* -- When ``as_data_frame`` is True, returns a dict of DataFrames grouped by ``group_by``."
 
 #~ msgid "参数"
 #~ msgstr "Parameters"
@@ -1666,4 +1361,3 @@ msgstr ""
 
 #~ msgid "下午交易时段是否包含结束时间"
 #~ msgstr "If True, the afternoon trading period includes end time"
-

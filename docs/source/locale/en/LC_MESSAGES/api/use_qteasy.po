@@ -3,21 +3,23 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
+
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 22:56+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/api/use_qteasy.rst:2
 msgid "启动QTEASY"
@@ -29,97 +31,87 @@ msgstr "Manage `qteasy` start up configurations"
 
 #: of qteasy.core.run:1
 msgid "根据当前配置运行给定的 Operator，并进入回测、优化或实盘等不同工作模式。"
-msgstr ""
+msgstr "Run the given Operator according to the current configuration and enter different working modes such as backtesting, optimization, or live trading."
 
 #: of qteasy.core.run:3
-msgid ""
-"本函数是 qteasy 的统一入口：根据全局配置 ``QT_CONFIG['mode']``（可通过 "
-"``qt.configure(mode=...)`` 暂时覆盖），选择实盘模式、回测模式、优化模式等， 自动准备所需数据源与日志对象并调用 "
-"``Operator.run()`` 执行完整流程。各模式 的详细行为与输出结构见文档「运行 qteasy 与工作模式」相关章节。"
-msgstr ""
+msgid "本函数是 qteasy 的统一入口：根据全局配置 ``QT_CONFIG['mode']``（可通过 ``qt.configure(mode=...)`` 暂时覆盖），选择实盘模式、回测模式、优化模式等， 自动准备所需数据源与日志对象并调用 ``Operator.run()`` 执行完整流程。各模式 的详细行为与输出结构见文档「运行 qteasy 与工作模式」相关章节。"
+msgstr "This function is qteasy’s unified entry point: based on the global configuration ``QT_CONFIG['mode']`` (which can be temporarily overridden via ``qt.configure(mode=...)``), it selects live trading mode, backtest mode, optimization mode, etc., automatically prepares the required data sources and log objects, and calls ``Operator.run()`` to execute the full workflow. For detailed behavior and output structure of each mode, see the relevant sections in the documentation “Running qteasy and Working Modes”."
 
 #: of qteasy.core.info qteasy.core.run
 msgid "参数"
-msgstr ""
+msgstr "Parameters"
 
 #: of qteasy.core.run:8
 msgid "已配置好策略与运行参数的 Operator 对象。"
-msgstr ""
+msgstr "An Operator object with strategies and runtime parameters already configured."
 
 #: of qteasy.core.run:10
-msgid ""
-"本次运行临时覆盖的配置项，键名需为合法的 qteasy 配置键，例如 "
-"``mode``、``asset_pool``、``invest_start``、``invest_end`` 等。"
-msgstr ""
+msgid "本次运行临时覆盖的配置项，键名需为合法的 qteasy 配置键，例如 ``mode``、``asset_pool``、``invest_start``、``invest_end`` 等。"
+msgstr "Configuration items temporarily overridden for this run; the key names must be valid qteasy configuration keys, such as ``mode``, ``asset_pool``, ``invest_start``, ``invest_end``, etc."
 
 #: of qteasy.core.info qteasy.core.run
 msgid "返回"
-msgstr ""
+msgstr "Returns"
 
 #: of qteasy.core.run:13
-msgid ""
-"当 ``mode == 1``（回测模式）时通常返回包含回测结果的字典； 当 ``mode == "
-"2``（优化模式）时通常返回包含多组参数结果的列表； 实盘模式与其他模式的具体返回结构详见 Operator.run() 与相关文档说明。"
-msgstr ""
+msgid "当 ``mode == 1``（回测模式）时通常返回包含回测结果的字典； 当 ``mode == 2``（优化模式）时通常返回包含多组参数结果的列表； 实盘模式与其他模式的具体返回结构详见 Operator.run() 与相关文档说明。"
+msgstr "When ``mode == 1`` (backtest mode), it usually returns a dict containing backtest results; when ``mode == 2`` (optimization mode), it usually returns a list containing results for multiple parameter sets; for the exact return structure in live trading mode and other modes, see Operator.run() and the related documentation."
 
 #: of qteasy.core.info qteasy.core.run
 msgid "返回类型"
-msgstr ""
+msgstr "Return type"
 
 #: of qteasy.core.info:11 qteasy.core.run:19
 msgid "示例"
-msgstr ""
+msgstr "Example"
 
 #: of qteasy.core.run:20
 msgid "``run`` 通常会触及数据源、日志路径与运行模式等外部状态。下面示例展示最小的“可见且稳定”的调用准备："
-msgstr ""
+msgstr "``run`` typically touches external state such as data sources, log paths, and run modes. The example below shows the minimal “visible and stable” call setup:"
 
 #: of qteasy.core.run:27
 msgid "若你已正确配置数据源与资产池，可进一步执行（输出结构随模式而不同）：::"
-msgstr ""
+msgstr "If you have correctly configured the data source and asset pool, you can further execute (the output structure varies by mode):::"
 
 #: of qteasy.core.info:1
-#, fuzzy
 msgid "qteasy 模块的帮助信息入口函数（预留）。"
-msgstr "Main entry function of `qteasy` module"
+msgstr "Entry function for qteasy module help information (reserved)."
 
 #: of qteasy.core.info:3
 msgid "预留参数（当前版本未使用）。"
-msgstr ""
+msgstr "Reserved parameter (not used in the current version)."
 
 #: of qteasy.core.info:5
 msgid "当前版本未实现，调用将抛出 ``NotImplementedError``。"
-msgstr ""
+msgstr "Not implemented in the current version; calling it will raise ``NotImplementedError``."
 
 #: of qteasy.core.info
 msgid "抛出"
-msgstr ""
+msgstr "Raises"
 
 #: of qteasy.core.info:8
 msgid "当前版本未实现。"
-msgstr ""
+msgstr "Not implemented in the current version."
 
 #: of qteasy.core.info:12
 msgid "本函数为预留入口，建议使用 Sphinx 文档或 `help(qteasy)` 获取帮助信息："
-msgstr ""
+msgstr "This function is a reserved entry point. It is recommended to use the Sphinx documentation or `help(qteasy)` to get help information:"
 
 #: ../../source/api/use_qteasy.rst:12
 msgid "运行模式与常量速查"
-msgstr ""
+msgstr "Run modes and constants quick reference"
 
 #: ../../source/api/use_qteasy.rst:14
-msgid ""
-"qteasy 使用一组全局常量表示运行模式（实盘/回测/优化/预测）。你可以在调用 ``qt.run`` 前后通过 "
-"``qt.configure(mode=...)`` 或在 ``qt.run(op, mode=...)`` 中临时覆盖。"
-msgstr ""
+msgid "qteasy 使用一组全局常量表示运行模式（实盘/回测/优化/预测）。你可以在调用 ``qt.run`` 前后通过 ``qt.configure(mode=...)`` 或在 ``qt.run(op, mode=...)`` 中临时覆盖。"
+msgstr "qteasy uses a set of global constants to represent run modes (live trading/backtest/optimization/forecast). You can override them temporarily before or after calling ``qt.run`` via ``qt.configure(mode=...)``, or within ``qt.run(op, mode=...)``."
 
 #: ../../source/api/use_qteasy.rst:17
 msgid "示例（常量值为稳定输出）：:"
-msgstr ""
+msgstr "Example (constant values produce stable output)::"
 
 #: ../../source/api/use_qteasy.rst:23
 msgid "日志与根目录路径常量（值受配置影响，尤其是日志路径支持运行时热更新）：:"
-msgstr ""
+msgstr "Log and root-directory path constants (values are affected by configuration, and in particular the log path supports runtime hot updates)::"
 
 #~ msgid "参数"
 #~ msgstr ""
@@ -513,4 +505,3 @@ msgstr ""
 
 #~ msgid "qteasy 模块的帮助信息入口函数"
 #~ msgstr ""
-
