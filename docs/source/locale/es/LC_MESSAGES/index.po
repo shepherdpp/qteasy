@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 21:24+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -19,51 +19,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
-#: ../../source/index.rst:84
+#: ../../source/index.rst:89
 msgid "``qteasy`` 快速入门"
 msgstr "Guía de inicio rápido de ``QTEASY``"
 
-#: ../../source/index.rst:92
+#: ../../source/index.rst:97
 msgid "``qteasy`` 使用教程"
 msgstr "Tutorial de ``QTEASY``"
 
-#: ../../source/index.rst:101
+#: ../../source/index.rst:106
+#, fuzzy
+msgid "``qteasy`` 架构与设计"
+msgstr "Guía de inicio rápido de ``QTEASY``"
+
+#: ../../source/index.rst:115
 msgid "下载并管理金融历史数据"
 msgstr "Descargar y gestionar datos históricos financieros"
 
-#: ../../source/index.rst:110
-msgid "创建交易策略"
+#: ../../source/index.rst:124
+#, fuzzy
+msgid "创建并操作交易策略"
 msgstr "Crear una estrategia comercial"
 
-#: ../../source/index.rst:120
-msgid "回测并评价交易策略"
-msgstr "Realizar pruebas retrospectivas y evaluar la estrategia comercial"
+#: ../../source/index.rst:133
+msgid "交易策略的回测并评价"
+msgstr ""
 
-#: ../../source/index.rst:131
+#: ../../source/index.rst:142
 msgid "优化交易策略"
 msgstr "Optimizar la estrategia comercial"
 
-#: ../../source/index.rst:141
+#: ../../source/index.rst:151
+#, fuzzy
+msgid "模拟实盘交易模块"
+msgstr "Simular una estrategia comercial en tiempo real"
+
+#: ../../source/index.rst:160
 msgid "模拟实盘运行交易策略"
 msgstr "Simular una estrategia comercial en tiempo real"
 
-#: ../../source/index.rst:152
-msgid "自定义策略示例"
-msgstr "Ejemplo de estrategia personalizada"
+#: ../../source/index.rst:171
+msgid "QTEASY交易策略示例"
+msgstr ""
 
-#: ../../source/index.rst:161
+#: ../../source/index.rst:180
 msgid "API参考"
 msgstr "Referencia API"
 
-#: ../../source/index.rst:177
+#: ../../source/index.rst:199
 msgid "LICENSE"
 msgstr "LICENCIA"
 
-#: ../../source/index.rst:183
+#: ../../source/index.rst:205
 msgid "关于 ``qteasy``"
 msgstr "Acerca de ``QTEASY``"
 
-#: ../../source/index.rst:195
+#: ../../source/index.rst:217
 msgid "常见问题"
 msgstr "Preguntas frecuentes"
 
@@ -72,9 +83,11 @@ msgid "欢迎使用 ``QTEASY`` 文档!"
 msgstr "¡Bienvenido a la documentación de ``QTEASY``!"
 
 #: ../../source/index.rst:15
+#, fuzzy
 msgid ""
-"目前 ``QTEASY`` 正处于密集开发测试阶段，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 "
-"`新功能需求`_ 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
+"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 "
+"``QTEASY`` 仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_"
+" 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
 "Actualmente, ``qteasy`` se encuentra en una etapa intensiva de desarrollo"
 " y prueba, y es inevitable que existan algunas vulnerabilidades y errores"
@@ -83,144 +96,232 @@ msgstr ""
 "ingresar al ``Área de discusión`` para participar en la discusión. "
 "¡Agradecemos mucho sus contribuciones!"
 
-#: ../../source/index.rst:21
+#: ../../source/index.rst:22
 msgid "作者: **Jackie PENG**"
 msgstr "Autor: **Jackie PENG**"
 
-#: ../../source/index.rst:22
+#: ../../source/index.rst:23
 msgid "email: *jackie_pengzhao@163.com*"
 msgstr "Correo electrónico: *jackie_pengzhao@163.com*"
 
-#: ../../source/index.rst:23
+#: ../../source/index.rst:24
 msgid "创建日期: 2019, July, 16"
 msgstr "Creado: 16 de julio de 2019"
 
-#: ../../source/index.rst:24
-msgid "最新版本: `1.4.11`"
+#: ../../source/index.rst:25
+#, fuzzy
+msgid "最新版本: `2.4.0`"
 msgstr "Última versión: `1.4.11`"
 
-#: ../../source/index.rst:25
+#: ../../source/index.rst:26
 msgid "License: BSD 3-Clause"
 msgstr "Licencia: BSD 3 cláusulas"
 
-#: ../../source/index.rst:28
+#: ../../source/index.rst:29
 msgid "简介"
 msgstr "Breve introducción"
 
-#: ../../source/index.rst:30
-msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，基本功能如下："
+#: ../../source/index.rst:31
+#, fuzzy
+msgid "``QTEASY`` 是为量化交易人员开发的一套量化交易策略开发工具包，其特点如下："
 msgstr ""
 "``QTEASY`` es un conjunto de herramientas de desarrollo de estrategias "
 "comerciales cuantitativas desarrollado para personal de comercio "
 "cuantitativo, con las siguientes funciones básicas:"
 
-#: ../../source/index.rst:32
-msgid ""
-"金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
-"``Tushare`` 、 ``EastMoney`` 等"
-msgstr ""
-"Adquisición, limpieza, clasificación, visualización, consulta y "
-"aplicación de datos históricos financieros; admite múltiples métodos de "
-"almacenamiento de datos, incluidos archivos locales, bases de datos "
-"MySQL, etc., las fuentes de datos incluyen ``Tushare``, ``EastMoney``, "
-"etc."
-
 #: ../../source/index.rst:33
-msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
+msgid "**全流程覆盖** 从金融数据获取、存储，到交易策略的开发、回测、优化、实盘运行，一站式完成"
 msgstr ""
-"Creación de estrategias de negociación de inversiones, pruebas "
-"retrospectivas, evaluación del rendimiento y provisión de múltiples "
-"algoritmos de optimización para lograr la optimización de parámetros de "
-"las estrategias de negociación mediante la definición de los parámetros "
-"ajustables de la estrategia"
 
 #: ../../source/index.rst:34
-msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
+msgid "**完全本地化** 数据、回测与实盘运行均在本地完成，不依赖云端服务，配置清晰、结果可复现"
 msgstr ""
-"Implementación de estrategia comercial, operación en tiempo real, "
-"simulación de resultados comerciales y seguimiento y registro de "
-"registros comerciales, posiciones de acciones, cambios en los fondos de "
-"la cuenta, etc."
 
-#: ../../source/index.rst:37
+#: ../../source/index.rst:35
+msgid ""
+"**回测可信、实盘一致** "
+"策略逻辑在回测与实盘中同一套运行，数据按「当时能看到的」历史严格注入，从机制上避免未来函数与数据泄露，减少「回测漂亮、实盘走样」的落差"
+msgstr ""
+
+#: ../../source/index.rst:36
+msgid "**灵活易用** 多策略可像搭积木一样组合并自定义信号合并方式；内置超过70种策略开箱即用，涵盖常见技术指标、均线、突破、反转等"
+msgstr ""
+
+#: ../../source/index.rst:38
+msgid ""
+"**高性能回测与防未来函数**：回测核心采用向量化 + "
+"Numba，时间维顺序、标的维单步向量化，多进程并行优化；每步仅向策略注入当时可见的数据窗口，从机制上防未来函数。详见《架构与设计》中的 "
+":doc:`回测引擎与性能 <design/07-backtest-engine-and-"
+"performance>`、:doc:`设计初衷与独特优势 <design/08-design-rationale-and-"
+"advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
+msgstr ""
+
+#: ../../source/index.rst:42
 msgid "``QTEASY`` 能做什么?"
 msgstr "¿Para qué está diseñado ``QTEASY``?"
 
-#: ../../source/index.rst:40
+#: ../../source/index.rst:45
 msgid "获取并管理金融历史数据"
 msgstr "Adquirir y gestionar datos históricos financieros"
 
-#: ../../source/index.rst:42
-msgid "获取、清洗、本地存储大量金融历史数据"
+#: ../../source/index.rst:47
+msgid "方便地从多渠道获取大量金融历史数据，进行数据清洗后以统一格式进行本地存储"
 msgstr ""
-"Adquirir, limpiar y almacenar localmente una gran cantidad de datos "
-"históricos financieros"
 
-#: ../../source/index.rst:43
-msgid "检索、处理、调用本地数据"
-msgstr "Buscar, procesar y llamar datos locales"
+#: ../../source/index.rst:48
+msgid "通过`DataType`对象结构化管理金融数据中的可用信息，即便是复权价格、指数成份等复杂信息，也只需要一行代码即可获取"
+msgstr ""
 
 #: ../../source/index.rst:49
-msgid "本地金融数据可视化"
-msgstr "Visualizar datos financieros locales"
+msgid "基于`DataType`对象的金融数据可视化、统计分析以及分析结果可视化"
+msgstr ""
 
-#: ../../source/index.rst:53
-msgid "创建交易策略，模拟自动化交易"
+#: ../../source/index.rst:50
+msgid "数据本地存储、按需取用，为回测与实盘提供一致的数据基础，便于复现"
+msgstr ""
+
+#: ../../source/index.rst:58
+msgid "以简单、安全的方式创建交易策略"
+msgstr ""
+
+#: ../../source/index.rst:60
+msgid "通过`BaseStrategy`类，交易策略定义方法直观、逻辑清晰"
+msgstr ""
+
+#: ../../source/index.rst:61
+msgid "内置超过70种策略开箱即用，独特的策略混合和组机制，复杂策略可以通过简单策略拼装而来，过程如同搭积木"
+msgstr ""
+
+#: ../../source/index.rst:62
+msgid "交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性"
+msgstr ""
+
+#: ../../source/index.rst:63
+msgid "同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差"
+msgstr ""
+
+#: ../../source/index.rst:71
+#, fuzzy
+msgid "交易策略的回测评价、优化和模拟自动化交易"
 msgstr "Crear una estrategia comercial, simular el comercio automatizado"
 
-#: ../../source/index.rst:55
-msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
+#: ../../source/index.rst:73
+msgid "通过`Operator`交易员类管理策略运行，按照真实市场交易节奏回测策略，对交易结果进行多维度全方位评价，生成交易报告和结果图表"
 msgstr ""
-"Cree una estrategia comercial rápidamente, utilice más de 70 estrategias "
-"comerciales integradas o cree una estrategia comercial usted mismo"
 
-#: ../../source/index.rst:56
-msgid "获取实时市场数据，运行策略模拟自动化交易"
+#: ../../source/index.rst:74
+msgid "提供多种优化算法，包括模拟退火、遗传算法、贝叶斯优化等在大参数空间中优化策略性能"
 msgstr ""
-"Adquiera datos del mercado en tiempo real y ejecute operaciones "
-"automatizadas con simulación de estrategias"
 
-#: ../../source/index.rst:57
-msgid "跟踪记录交易日志、股票持仓、账户资金变化等信息"
+#: ../../source/index.rst:75
+#, fuzzy
+msgid "获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息"
 msgstr ""
 "Realice un seguimiento y registre registros de operaciones, posiciones de"
 " acciones, cambios en los fondos de la cuenta, etc."
 
-#: ../../source/index.rst:58
-msgid "通过多种用户界面查看并控制交易程序"
+#: ../../source/index.rst:76
+msgid "回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查"
 msgstr ""
-"Supervise y controle los programas comerciales a través de múltiples "
-"interfaces de usuario"
 
-#: ../../source/index.rst:59
+#: ../../source/index.rst:77
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
 msgstr ""
 "En el futuro, ``qteasy`` podrá realizar operaciones automáticas en vivo "
 "conectándose a las API de operaciones proporcionadas por corredores, como"
 " QMT."
 
-#: ../../source/index.rst:73
-msgid "回测、评价、优化交易策略"
-msgstr ""
-"Realizar pruebas retrospectivas, evaluar y optimizar las estrategias "
-"comerciales"
+#~ msgid "回测并评价交易策略"
+#~ msgstr "Realizar pruebas retrospectivas y evaluar la estrategia comercial"
 
-#: ../../source/index.rst:75
-msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
-msgstr ""
-"Pruebe estrategias comerciales retrospectivamente utilizando datos "
-"históricos, genere registros comerciales completos y genere resultados "
-"comerciales"
+#~ msgid "自定义策略示例"
+#~ msgstr "Ejemplo de estrategia personalizada"
 
-#: ../../source/index.rst:76
-msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
-msgstr ""
-"Evalúe los resultados comerciales desde múltiples dimensiones, genere "
-"informes comerciales y gráficos de resultados"
+#~ msgid ""
+#~ "金融历史数据的获取、清洗、整理、可视化、本地存储查询及应用；支持多种数据存储方式，包括本地文件、MySQL数据库等，数据来源包括 "
+#~ "``Tushare`` 、 ``EastMoney`` 等"
+#~ msgstr ""
+#~ "Adquisición, limpieza, clasificación, visualización,"
+#~ " consulta y aplicación de datos "
+#~ "históricos financieros; admite múltiples "
+#~ "métodos de almacenamiento de datos, "
+#~ "incluidos archivos locales, bases de "
+#~ "datos MySQL, etc., las fuentes de "
+#~ "datos incluyen ``Tushare``, ``EastMoney``, "
+#~ "etc."
 
-#: ../../source/index.rst:77
-msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
-msgstr ""
-"Optimice los parámetros de la estrategia con múltiples algoritmos de "
-"optimización."
+#~ msgid "投资交易策略的创建、回测、性能评价，并且通过定义策略的可调参数，提供多种优化算法实现交易策略的参数调优"
+#~ msgstr ""
+#~ "Creación de estrategias de negociación "
+#~ "de inversiones, pruebas retrospectivas, "
+#~ "evaluación del rendimiento y provisión "
+#~ "de múltiples algoritmos de optimización "
+#~ "para lograr la optimización de "
+#~ "parámetros de las estrategias de "
+#~ "negociación mediante la definición de "
+#~ "los parámetros ajustables de la "
+#~ "estrategia"
+
+#~ msgid "交易策略的部署、实盘运行、模拟交易结果、并跟踪记录交易日志、股票持仓、账户资金变化等信息"
+#~ msgstr ""
+#~ "Implementación de estrategia comercial, "
+#~ "operación en tiempo real, simulación de"
+#~ " resultados comerciales y seguimiento y "
+#~ "registro de registros comerciales, posiciones"
+#~ " de acciones, cambios en los fondos"
+#~ " de la cuenta, etc."
+
+#~ msgid "获取、清洗、本地存储大量金融历史数据"
+#~ msgstr ""
+#~ "Adquirir, limpiar y almacenar localmente "
+#~ "una gran cantidad de datos históricos"
+#~ " financieros"
+
+#~ msgid "检索、处理、调用本地数据"
+#~ msgstr "Buscar, procesar y llamar datos locales"
+
+#~ msgid "本地金融数据可视化"
+#~ msgstr "Visualizar datos financieros locales"
+
+#~ msgid "快速搭建交易策略，使用超过70中内置交易策略或自行创建交易策略"
+#~ msgstr ""
+#~ "Cree una estrategia comercial rápidamente, "
+#~ "utilice más de 70 estrategias "
+#~ "comerciales integradas o cree una "
+#~ "estrategia comercial usted mismo"
+
+#~ msgid "获取实时市场数据，运行策略模拟自动化交易"
+#~ msgstr ""
+#~ "Adquiera datos del mercado en tiempo "
+#~ "real y ejecute operaciones automatizadas "
+#~ "con simulación de estrategias"
+
+#~ msgid "通过多种用户界面查看并控制交易程序"
+#~ msgstr ""
+#~ "Supervise y controle los programas "
+#~ "comerciales a través de múltiples "
+#~ "interfaces de usuario"
+
+#~ msgid "回测、评价、优化交易策略"
+#~ msgstr ""
+#~ "Realizar pruebas retrospectivas, evaluar y "
+#~ "optimizar las estrategias comerciales"
+
+#~ msgid "使用历史数据回测交易策略，生成完整的历史交易清单，生成交易结果"
+#~ msgstr ""
+#~ "Pruebe estrategias comerciales retrospectivamente"
+#~ " utilizando datos históricos, genere "
+#~ "registros comerciales completos y genere "
+#~ "resultados comerciales"
+
+#~ msgid "对交易结果进行多维度全方位评价，生成交易报告和结果图标"
+#~ msgstr ""
+#~ "Evalúe los resultados comerciales desde "
+#~ "múltiples dimensiones, genere informes "
+#~ "comerciales y gráficos de resultados"
+
+#~ msgid "提供多种优化算法，帮助搜索最优的策略参数，提高策略表现"
+#~ msgstr ""
+#~ "Optimice los parámetros de la estrategia"
+#~ " con múltiples algoritmos de optimización."
 

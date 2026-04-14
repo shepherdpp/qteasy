@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 01:06+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -20,14 +20,237 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/1-simulation-overview.md:1
-msgid "交易策略的模拟实盘运行"
+msgid "模拟实盘功能总览（API 视角）"
 msgstr ""
 
 #: ../../source/references/1-simulation-overview.md:3
-msgid "本文介绍如何使用`qteasy`模拟实盘运行交易策略。"
+msgid ""
+"本文从 API 和功能清单角度介绍 qteasy 的模拟实盘能力。   如需手把手操作，请阅读 `tutorials/8-live-trade-"
+"risk-and-broker-walkthrough.md`。"
 msgstr ""
 
-#: ../../source/references/1-simulation-overview.md:5
-msgid "未完待续"
+#: ../../source/references/1-simulation-overview.md:6
+msgid "0. 文档边界"
 msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:8
+msgid "本页只给出“对象/接口清单 + 行为速查 + 跳转索引”"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:9
+msgid "不展开步骤教程、不展开底层实现推导"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:11
+msgid "1. 核心对象与职责"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "对象"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "主要职责"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "常见入口"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`Operator`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "运行策略与生成信号"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`qt.run(op)`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`Trader`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "下单协同、风控衔接、状态维护"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "live 运行主链路"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`RiskManager`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "规则链评估与放行/拒绝决策"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`submit_trade_order` 前"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`Broker`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "提交、取消、回报、远端查询"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`submit/cancel/poll_fills`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`trade_io`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "订单与成交字典契约校验"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "提交前与回报后"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:21
+msgid "2. 功能分区清单"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "功能区"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "核心能力"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "对应页面"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "配置与启动"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "live 配置校验与运行快照"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "下单与风控"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "提交前评估、拒单可见性"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "成交与状态"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "分批成交与状态收敛"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "适配与扩展"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "adapter API 与兼容边界"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`live_trading/4-broker-adapter-and-integration.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "日志与排错"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`sys_log/trade_log/risk_log` 排查顺序"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md
+msgid "`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:31
+msgid "3. S1.3 行为变化速查"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:33
+msgid "`asset_type='FD'` 的模拟实盘可运行性增强"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:34
+msgid "风控拒单在 CLI/TUI 中更可见"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:35
+msgid "Broker 适配层接口补齐，便于后续柜台接入"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:36
+msgid "分批成交状态显示更一致"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:38
+msgid "4. 入口索引"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:40
+msgid "CLI 清单：`references/5-simulate-operation-in-CLI.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:41
+msgid "TUI 清单：`references/6-simulate-operation-in-TUI.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:42
+msgid "API 自动文档：`api/api_reference.rst`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:44
+msgid "5. 相关阅读"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:46
+msgid "模块总览：`live_trading/1-overview.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:47
+msgid "配置运行：`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:48
+msgid "风控与生命周期：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/1-simulation-overview.md:49
+msgid "排错手册：`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#~ msgid "交易策略的模拟实盘运行"
+#~ msgstr ""
+
+#~ msgid "本文介绍如何使用`qteasy`模拟实盘运行交易策略。"
+#~ msgstr ""
+
+#~ msgid "未完待续"
+#~ msgstr ""
 

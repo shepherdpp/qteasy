@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -74,7 +74,7 @@ msgid "输出30组最佳参数的测试结果"
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:24
-msgid "首先导入qteasy模块"
+msgid "首先导入`qteasy`模块"
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:29
@@ -87,49 +87,60 @@ msgid ""
 "这种策略可以把相同的规则迭代应用到投资组合中的所有股票上，适合在一个投资组合 中的所有股票上应用同一种择时规则。"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:100
+#: ../../source/examples/Example_01_双均线择时策略.md:90
 msgid "回测交易策略，查看结果"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:101
-msgid "使用历史数据回测交易策略，使用历史数据生成交易信号后进行模拟交易，记录并分析交易结果"
+#: ../../source/examples/Example_01_双均线择时策略.md:92
+msgid ""
+"定义好策略后，定一个`Operator`交易员对象，引用刚刚创建的策略，根据策略的规则设定交易员的信号模式为PS "
+"PS表示比例交易信号，此模式下信号在-1到1之间，1表示全仓买入，-1表示全部卖出，0表示不操作。 "
+"使用历史数据回测交易策略，使用历史数据生成交易信号后进行模拟交易，记录并分析交易结果"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:123
+#: ../../source/examples/Example_01_双均线择时策略.md:113
 msgid "交易结果如下；"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:169
-msgid "从上面的交易结果可以看到，十年间买入25次卖出24次，持仓时间为52%，最终收益率只有17.2%。"
+#: ../../source/examples/Example_01_双均线择时策略.md:158
+msgid "从上面的交易结果可以看到，十年间买入68次卖出68次，持仓时间为55%，最终收益率只有42.7%。"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:171
+#: ../../source/examples/Example_01_双均线择时策略.md:160
 msgid "下面是交易结果的可视化图表展示"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:173
-msgid "![png](img/output_3_2.png)"
+#: ../../source/examples/Example_01_双均线择时策略.md:162
+msgid "![png](img/Example_01_output_3_1.png)"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:173
+#: ../../source/examples/Example_01_双均线择时策略.md:162
 #: ../../source/examples/Example_01_双均线择时策略.md:325
 #: ../../source/examples/Example_01_双均线择时策略.md:392
 msgid "png"
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:176
+#: ../../source/examples/Example_01_双均线择时策略.md:165
 msgid "交叉线交易策略的长短周期选择很重要，可以使用`qteasy`来搜索最优的策略参数："
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:194
+#: ../../source/examples/Example_01_双均线择时策略.md:167
+msgid "策略参数的优化"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:169
+msgid "我们可以在历史数据上搜索最优的策略参数，找到在历史数据上表现最好的参数组合，并检验它们在独立测试区间上的表现，以检验是否过拟合。"
+msgstr ""
+
+#: ../../source/examples/Example_01_双均线择时策略.md:187
 msgid "策略优化可能会花很长时间，qt会显示一个进度条："
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:200
+#: ../../source/examples/Example_01_双均线择时策略.md:197
 msgid "优化完成，显示最好的30组参数及其相关信息："
 msgstr ""
 
-#: ../../source/examples/Example_01_双均线择时策略.md:261
+#: ../../source/examples/Example_01_双均线择时策略.md:259
 msgid "这三十组参数会被用于独立测试，以检验它们是否过拟合："
 msgstr ""
 
@@ -138,15 +149,19 @@ msgid "参数优化结果以及各个指标的可视化图表展示："
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:325
-msgid "![png](img/output_4_1.png)"
+msgid "![png](img/Example_01_output_4_5.png)"
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:327
 msgid "优化之后我们可以检验一下找到的最佳参数："
 msgstr ""
 
+#: ../../source/examples/Example_01_双均线择时策略.md:343
+msgid "得到结果："
+msgstr ""
+
 #: ../../source/examples/Example_01_双均线择时策略.md:387
-msgid "优化后总回报率达到了117%，比优化前的参数好很多。"
+msgid "优化后总回报率达到了98.85%，比优化前的参数好很多。"
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:389
@@ -154,6 +169,27 @@ msgid "优化后的结果可视化图表如下："
 msgstr ""
 
 #: ../../source/examples/Example_01_双均线择时策略.md:392
-msgid "![png](img/output_5_1.png)"
+msgid "![png](img/Example_01_output_6_1.png)"
 msgstr ""
+
+#~ msgid "首先导入qteasy模块"
+#~ msgstr ""
+
+#~ msgid "使用历史数据回测交易策略，使用历史数据生成交易信号后进行模拟交易，记录并分析交易结果"
+#~ msgstr ""
+
+#~ msgid "从上面的交易结果可以看到，十年间买入25次卖出24次，持仓时间为52%，最终收益率只有17.2%。"
+#~ msgstr ""
+
+#~ msgid "![png](img/output_3_2.png)"
+#~ msgstr ""
+
+#~ msgid "![png](img/output_4_1.png)"
+#~ msgstr ""
+
+#~ msgid "优化后总回报率达到了117%，比优化前的参数好很多。"
+#~ msgstr ""
+
+#~ msgid "![png](img/output_5_1.png)"
+#~ msgstr ""
 

@@ -1,0 +1,194 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:1
+msgid "HistoryPanel 可视化"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:3
+#, python-format
+msgid ""
+"上一章 [HistoryPanel（历史数据面板）](2.5.%20historypanel.md) "
+"介绍了如何把多标的、多指标的历史数据对齐到同一块面板。本章说明如何**直接用面板出图**：与「先 `to_share_frame` 再手写 "
+"matplotlib」相比，**`HistoryPanel.plot()`** 根据当前 `htypes` 自动组合 K "
+"线、成交量、MACD、折线等视图，使探索数据时的上下文与策略研究阶段保持一致。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:7
+msgid "`hp.plot()`：推荐的统一入口"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:9
+msgid ""
+"项目中将 **`HistoryPanel.plot()`** "
+"作为**唯一推荐的制图入口**（旧有接口若仍存在，语义上也应委托到同一套流水线）。你只需保证面板中非空且包含绘图所需的列（例如完整 OHLC "
+"才能出蜡烛图），其余图表类型由内部根据 `htypes` 自动判定。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:11
+msgid "常用参数含义如下（完整签名见 [HistoryPanel API](../api/HistoryPanel.rst)）："
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "参数"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "作用概要"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`shares`"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "要绘制的标的子集；默认使用面板内全部标的。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`layout`"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid ""
+"多标的布局：`'overlay'`（同一坐标系叠加）、`'stack'`（分组纵向分面）、`'auto'`（例如 2 只标的倾向 "
+"overlay，更多则 stack）。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`interactive`"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`False` 使用 **matplotlib** 静态图；`True` 使用 **Plotly** 交互图（缩放、平移、悬停等）。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`highlight`"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "高亮极值点等，例如 `'max'` / `'min'` 或传入配置字典。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid "`plotly_backend_app`"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md
+msgid ""
+"仅在 `interactive=True` 时有效：`'auto'`（优先 FigureWidget，失败则回退 HTML "
+"包装）、`'FigureWidget'`、`'html'`。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:21
+msgid ""
+"**说明**：当请求的标的数量较多时，实现可能会**限制实际绘制的标的数量**并发出警告，以避免单图过载；具体以当前版本行为为准。多标的布局的细微调整与历史修复说明见"
+" [RELEASE_HISTORY](../RELEASE_HISTORY.md) 中 2.2.x 相关条目。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:23
+msgid "静态图与交互图"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:25
+msgid ""
+"**`interactive=False`（默认）**：依赖 **matplotlib**，适合脚本批量出图、生成静态文件；不强制安装 "
+"Plotly。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:26
+msgid ""
+"**`interactive=True`**：依赖 **plotly**；在 Jupyter 中若 **`anywidget` 与 "
+"`ipywidgets`** 可用，通常可得到 **FigureWidget**，表头与坐标轴交互更完整；否则可能回退为 **HTML 包装** "
+"形式，仍具备基本交互，但与 Widget 路径在体验上略有差异。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:28
+msgid "极简示例（需本地已有 OHLCV 或等价列；仅作形式演示）："
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:43
+msgid ""
+"当主图为蜡烛图时，静态图会在时间轴**最后一根 K 线**上显示 OHLC 摘要；交互图默认一致，点击某根 K "
+"线后摘要会更新为该根（面向用户的摘要文案为英文）。无完整 OHLC 时不会出现该摘要区。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:45
+msgid "布局与多标的"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:47
+msgid "**`overlay`**：适合对比少数标的（如两只股票）在同一价格尺度下的走势（具体是否共享 y 轴以当前实现为准）。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:48
+msgid "**`stack`**：每个标的（或每组）单独占一行子图，适合标的较多、避免挤在同一坐标系。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:49
+msgid "**`auto`**：在标的数量较少时倾向叠加，较多时倾向分面，减少手动试错。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:51
+msgid "若某版本后布局语义有调整，**以对应版本的 [RELEASE_HISTORY](../RELEASE_HISTORY.md) 说明为准**。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:53
+msgid "依赖与安装提示"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:55
+msgid "**静态图**：一般需要 **matplotlib**（与 qteasy 常用环境一致）。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:56
+msgid ""
+"**交互图**：需要 **plotly**；完整 Notebook 交互体验建议同时安装 **ipywidgets** 与 "
+"**anywidget**。可选依赖的版本范围以项目 **`pyproject.toml`** 或安装文档为准，本文不逐条罗列版本号。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:58
+msgid "底层渲染模块名与扩展点仅供开发者阅读源码时使用；用户文档不展开文件级实现细节。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:60
+msgid "小结"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:62
+#, python-format
+msgid ""
+"数据准备仍通过 **`get_history_data`** 等与 [上一章](2.5.%20historypanel.md) 一致；制图统一走 "
+"**`hp.plot()`**。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:63
+msgid "**`interactive`** 与 **`layout`** 是日常最常被改动的两个开关；进阶参数见 API 文档。"
+msgstr ""
+
+#: ../../source/manage_data/02.6. historypanel_visual.md:64
+msgid ""
+"行为变更与可视化相关修复请查阅 **[RELEASE_HISTORY](../RELEASE_HISTORY.md)**；动手练习可配合教程 "
+"**[使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-data-"
+"analysis.md)**。"
+msgstr ""
+

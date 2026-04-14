@@ -1,0 +1,75 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/optimization/5. analyze_optimization.md:1
+msgid "优化结果的分析与使用"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:3
+msgid "结果分析"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:5
+msgid "从结果表中按**夏普**、**回撤**等列排序，比较不同参数组的稳定性与收益风险比。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:6
+msgid "可绘制参数与目标函数的关系图（若支持），观察敏感性与局部最优。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:8
+msgid "目标函数与约束（罗列并简短解释）"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:10
+msgid "**优化目标**：当前支持的如夏普最大化、回撤最小化、收益最大化等，以配置项或 API 为准。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:11
+msgid "**约束**：若有（如最大回撤上限、最小交易次数），在配置中指定；满足约束的解才参与排序。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:13
+msgid "将最优参数写回策略"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:15
+msgid ""
+"使用 **op.set_parameter(stg_id, pars=best_pars)** 将优化得到的最优参数应用到 "
+"Operator，即可用同一 Operator 进行后续回测（mode=1）或实盘，无需手动改代码。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:17
+msgid "注意事项"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:19
+msgid "**过拟合**：在样本内优化得到的参数可能在样本外表现变差，建议做样本外验证或滚动优化。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:20
+msgid "**样本内外**：可用不同时间区间做优化与验证。"
+msgstr ""
+
+#: ../../source/optimization/5. analyze_optimization.md:21
+msgid "**计算时间**：opti_sample_count 或迭代次数越大，耗时越长；可在精度与时间之间权衡。"
+msgstr ""
+

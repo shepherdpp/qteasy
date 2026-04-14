@@ -1,0 +1,445 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:1
+msgid "过程数据（proc.*）与动态回测（设计说明）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:3
+msgid ""
+"本章说明 qteasy 中**过程数据**（process "
+"data）的定义、访问方式，以及回测时**静态分支**与**动态分支**的选择与一致性约定，供实现与扩展时参考。使用层面的说明可在《策略如何声明与使用数据》与"
+" API 文档中配合阅读。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:5
+msgid "1. 背景与目标"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:7
+msgid "1.1 过程数据的含义"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:9
+msgid "部分策略需要依赖**随回测或实盘执行路径而变化**的数据，例如："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:11
+msgid "当前/历史持仓、可用现金；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:12
+msgid "历史成交数量、成交价格、交易成本；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:13
+msgid "由持仓与价格推导的市值、总资产等。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:15
+msgid ""
+"这类数据无法在回测开始前一次性预生成，只能由 Backtester（回测）或 "
+"Trader（实盘）在运行过程中维护，并在策略生成信号的每一步按“当前可见范围”提供给策略。我们将其统称为**过程数据**。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:17
+msgid "1.2 设计目标"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:19
+msgid "**统一入口**：过程数据与静态历史数据一样，通过 `Strategy.get_data()` 获取，降低学习成本。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:20
+msgid "**无前视**：策略在生成第 k 步信号时，不能看到第 k 步的成交结果，只能使用已完成步的历史。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:21
+msgid ""
+"**回测/实盘一致**：同一套策略与 `get_data('proc.xxx')` "
+"调用方式，在回测与实盘中均可使用；当需要过程数据时走动态执行路径，否则可与原有静态路径在结果上保持一致。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:23
+msgid "2. 过程数据的统一定义（proc.*）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:25
+msgid "2.1 命名与曝光方式"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:27
+msgid ""
+"所有过程数据对策略以 **`proc.<field_name>`** 的形式曝光，例如 "
+"`proc.own_cash`、`proc.trade_records`。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:28
+msgid ""
+"过程数据**不需要**在策略的 `__init__` 中通过 `data_types` 声明，由 Backtester / Trader "
+"在运行时注入，策略只需在 `realize()` 中按需调用 `get_data('proc.xxx', ...)`。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:30
+msgid "2.2 已实现的内建字段"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:32
+msgid "当前版本已实现并可在策略中使用的过程数据字段包括："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "类别"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "字段名"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "含义"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "账户标量"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.own_cash`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时账户总现金"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.available_cash`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时可用于下单的现金"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.total_value`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时总资产市值（持仓估值 + 现金）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "持仓向量"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.own_amounts`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时各标的总持仓数量"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.available_amounts`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时各标的可卖出数量"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.position_value`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "当前步开始时各标的持仓市值（由内部 price 与持仓计算）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "成交结果"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.trade_records`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "各步各标的的实际成交数量（正买负卖）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.trade_cost`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "各步各标的的交易成本"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "`proc.trade_price`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md
+msgid "各步各标的的成交价格"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:46
+msgid "上述字段在回测与实盘中的时间语义与可见性约束见第 4 节。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:48
+msgid "2.3 后续可扩展字段（可选）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:50
+msgid ""
+"设计上可继续扩展的字段包括：`proc.realized_pnl`、`proc.unrealized_pnl`、`proc.last_trade_price`、`proc.last_trade_volume`"
+" 等，具体以实现与文档为准。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:52
+msgid "3. 访问接口：Strategy.get_data() 与 proc.*"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:54
+msgid "3.1 静态数据（无 proc. 前缀）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:56
+msgid ""
+"单源：`self.get_data('close_E_d')`；多源：`self.get_data('close_E_d', "
+"'high_E_d')`。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:57
+msgid "静态数据**不支持** `lag` / `window` 参数；若传入则抛出英文 `ValueError`。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:59
+msgid "3.2 过程数据（proc. 前缀）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:61
+msgid "**调用示例**："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:62
+msgid "`self.get_data('proc.own_cash')`：截至当前步的现金序列；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:63
+msgid "`self.get_data('proc.own_cash', lag=0)`：最近一步的现金；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:64
+msgid "`self.get_data('proc.own_cash', lag='1d')`：按时间回溯 1 天对应的步；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:65
+msgid "`self.get_data('proc.own_cash', window='5d')`：过去 5 天内的窗口切片。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:66
+msgid "**约束**："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:67
+msgid "一次调用**仅允许一个** `proc.*` 字段；多字段或与静态数据混合调用时抛出英文 `ValueError`。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:68
+msgid ""
+"`lag` 与 `window` 不可同时指定；支持 `lag` 为整数（步）或字符串（如 `'1d'`、`'8h'`），`window` "
+"为字符串（如 `'5d'`、`'8h'`）。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:69
+msgid "**返回值**：统一为 `np.ndarray`，形状与数据类型以 API 文档为准。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:71
+msgid "4. 回测分支选择与过程数据协作"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:73
+msgid "4.1 静态分支与动态分支"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:75
+msgid ""
+"**静态分支**（`_backtest_static_operator`）：一次性对所有时间步调用 `run_strategies` "
+"生成全部信号，再用 Numba 向量化函数 `backtest_batch_steps` 等完成回测。适用于不依赖过程数据的策略。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:76
+msgid ""
+"**动态分支**（`_backtest_dynamic_operator`）：按时间步循环，每步生成信号 → 解析并模拟成交 → "
+"更新持仓与现金，再进入下一步。过程数据由 Backtester 维护并在每步前注入 Operator，供策略通过 "
+"`get_data('proc.xxx')` 访问。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:78
+msgid "Backtester 在运行前通过 **`Operator.check_dynamic_data()`** 决定走哪条分支。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:80
+msgid "4.2 check_dynamic_data() 的判定逻辑（当前实现）"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:82
+msgid "以下任一为真则返回 True，走动态分支："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:84
+msgid "**op_type == 'stepwise'**：Operator 显式配置为逐步模式。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:85
+msgid ""
+"**策略源码中使用 proc.***：通过 `_strategies_use_proc_data()` 检查各策略 `realize()` "
+"的源码是否包含 `'proc.'` 或 `\"proc.\"`，若包含则视为依赖过程数据。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:87
+msgid ""
+"因此，**只要在 realize() 中调用了 get_data('proc.xxx')，无需任何声明即可自动走动态分支**。过程数据仅通过 "
+"`proc.*` 访问，不再支持通过 DataType 声明（旧式 `op_*` 类型已移除）。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:89
+msgid "4.3 无前视保证"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:91
+msgid "策略在第 k 步生成信号时："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:92
+msgid "账户/持仓类（如 `own_cashes`、`own_amounts`）最多可见到索引 `[0..k]`（即当前步开始时的状态）；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:93
+msgid "成交类（如 `trade_records`、`trade_cost`）最多可见到 `[0..k-1]`，**不包含本步尚未发生的成交**。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:94
+msgid ""
+"实现上由 Operator 的 `_current_signal_index` 与 Strategy 的 "
+"`_get_process_data_single()` 按上述范围切片，Backtester 在每步生成信号前更新索引，保证无前视。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:96
+msgid "4.4 Backtester 与 Operator 的注入关系"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:98
+msgid ""
+"**Backtester**（动态分支）：在 `_backtest_dynamic_operator` 入口处将 "
+"`own_cashes`、`available_cashes`、`own_amounts_array`、`available_amounts_array`、`trade_records_array`、`trade_cost_array`、`trade_price_array`、`trade_price_data`"
+" 等以 **`_process_data_sources`** 注入 Operator，并将 **`_process_time_index`** "
+"设为与 `op_signal_index` 对齐的时间轴。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:99
+msgid ""
+"**Operator**：在 `run_strategy(step_index)` 中，在每次调用 `stg.generate()` 前根据 "
+"`group_timing_table` 与 `group_merge_type` 计算并更新 "
+"**`_current_signal_index`**，供 Strategy 截取“当前可见”的过程数据。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:101
+msgid "4.5 实盘（Trader）中的过程数据"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:103
+msgid "当 `operator.check_dynamic_data()` 为 True 时，Trader 在 `_run_strategy()` 中会："
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:105
+msgid ""
+"将当前账户现金、持仓、可用数量及当前价格等组装为**单步**的 `_process_data_sources` 与 "
+"`_process_time_index`（实盘单次运行视为一步）；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:106
+msgid ""
+"策略在该步内调用 `get_data('proc.own_cash')` "
+"等即可获得当前账户/持仓视图；成交历史在该步内为空，与“尚未发生本步成交”的语义一致。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:108
+msgid "5. 动态/静态路径一致性约定"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:110
+msgid "当策略**不使用**过程数据时：应走静态分支；若因其他原因走动态分支，回测结果应与静态分支在数值上**完全一致**（相同配置与数据下）。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:111
+msgid "当策略**使用**过程数据时：必须走动态分支，否则 `_process_data_sources` 未注入会触发 RuntimeError。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:112
+msgid ""
+"测试约定：使用 `StaticSignalStg`（纯静态）与 `ProcAwareButStaticLogicStg`（调用 proc "
+"但不用于信号）在相同配置下回测，对 `own_cashes`、`own_amounts_array`、`trade_records_array` "
+"等做数值一致性断言，见 `tests/test_process_data_api.py` 的 B 组。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:114
+msgid "6. 测试与文档索引"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:116
+msgid "**专门测试**：`tests/test_process_data_api.py`"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:117
+msgid "A 组：`check_dynamic_data()` 在纯静态 / 使用 proc.* 策略下的行为；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:118
+msgid "B 组：静态策略与“调用 proc 但逻辑等价”策略的回测数组一致性；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:119
+msgid "C 组：`get_data` 对静态多源、lag/window 拒绝、proc 单字段与混合调用的报错行为；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:120
+msgid "D 组：`proc.trade_records` 无前视验证；"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:121
+msgid "E 组：基于 process data 的真实动态策略路径正确性。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:122
+msgid "**项目记忆**：`.cursor/rules/process-data-and-dynamic-backtest.mdc`（实现与约定摘要）。"
+msgstr ""
+
+#: ../../source/design/09-process-data-and-dynamic-backtest.md:123
+msgid ""
+"**策略数据总览**： [策略如何声明与使用数据](03-data-in-"
+"strategies.md)；**回测入口与模式**：[回测、实盘与优化](06-backtest-live-optimization.md)。"
+msgstr ""
+

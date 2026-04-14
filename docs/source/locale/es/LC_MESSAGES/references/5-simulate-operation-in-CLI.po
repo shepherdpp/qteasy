@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 01:06+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -20,14 +20,149 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/5-simulate-operation-in-CLI.md:1
-msgid "模拟实盘交易——CLI"
+msgid "模拟实盘交易——CLI 功能清单"
 msgstr ""
 
 #: ../../source/references/5-simulate-operation-in-CLI.md:3
-msgid "本文介绍如何使用命令行界面（CLI）模拟实盘交易。"
+msgid ""
+"本文从命令与能力清单角度说明 CLI 中的模拟实盘功能。   如需按步骤操作，请阅读 `tutorials/8-live-trade-risk-"
+"and-broker-walkthrough.md`。"
 msgstr ""
 
-#: ../../source/references/5-simulate-operation-in-CLI.md:5
-msgid "未完待续"
+#: ../../source/references/5-simulate-operation-in-CLI.md:6
+msgid "0. 文档边界"
 msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:8
+msgid "本页是命令能力索引，不是逐步教程"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:9
+msgid "重点回答“有什么命令、看什么反馈、跳到哪里排查”"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:11
+msgid "1. 命令能力分组"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:13
+msgid "**运行控制**：启动、暂停、恢复、结束"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:14
+msgid "**交易操作**：买入、卖出、撤单"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:15
+msgid "**状态查询**：订单、成交、持仓、账户"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:16
+msgid "**诊断与日志**：系统消息、错误提示、任务状态"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:18
+msgid "2. 核心反馈语义"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:20
+msgid "拒单时可看到英文摘要（含 `rule_id` / `reason`）"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:21
+msgid "分批成交状态更容易在查询结果中识别"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:22
+msgid "收盘后处理行为通过统一 Broker API 协调"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:24
+msgid "示例（用户可见反馈）："
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:30
+msgid "3. 快速问题分流（CLI 视角）"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:32
+msgid "下单后没有订单记录：优先检查风控拒单提示"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:33
+msgid "有订单但无成交：检查 broker 回报与行情条件"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:34
+msgid "状态长时间不变：检查回报是否持续到达"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:36
+msgid "4. 命令-文档映射"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "关注点"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "先看哪里"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "运行是否配置正确"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "订单为何被拒或未成交"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "日志如何排查"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "完整实操路径"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md
+msgid "`tutorials/8-live-trade-risk-and-broker-walkthrough.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:45
+msgid "5. 跳转导航"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:47
+msgid "机制说明：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:48
+msgid "排错手册：`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#: ../../source/references/5-simulate-operation-in-CLI.md:49
+msgid "API 参考：`api/api_reference.rst`"
+msgstr ""
+
+#~ msgid "模拟实盘交易——CLI"
+#~ msgstr ""
+
+#~ msgid "本文介绍如何使用命令行界面（CLI）模拟实盘交易。"
+#~ msgstr ""
+
+#~ msgid "未完待续"
+#~ msgstr ""
 

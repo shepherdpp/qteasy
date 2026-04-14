@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -25,7 +25,9 @@ msgstr "Need help?"
 
 #: ../../source/help.md:3
 msgid "如果您在使用`qteasy`的过程中有任何问题或需要任何帮助，请随时联系我们，我们会尽力帮助您。"
-msgstr "If you have any questions or need help while using `qteasy`, please feel free to contact us, we will do our best to help you."
+msgstr ""
+"If you have any questions or need help while using `qteasy`, please feel "
+"free to contact us, we will do our best to help you."
 
 #: ../../source/help.md:5
 msgid "报告bug或者功能请求"
@@ -38,20 +40,23 @@ msgid ""
 "=bug-report---"
 "bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
 "=feature-request---新功能需求.md&title=)给我，"
-msgstr "Currently, `qteasy` is in the process of intensive development, and there might be bugs. Should you encounter any problem, please [Issue-"
-"Report bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
-"=bug-report---"
-"bug报告.md&title=) or [Submit new feature requests](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+msgstr ""
+"Currently, `qteasy` is in the process of intensive development, and there"
+" might be bugs. Should you encounter any problem, please [Issue-Report "
+"bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---bug报告.md&title=) or [Submit new feature "
+"requests](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
 "=feature-request---新功能需求.md&title=)."
 
 #: ../../source/help.md:9
+#, fuzzy
 msgid ""
-"在提交功能请求以前，请先访问我们的 "
-"[开发路线图](https://qteasy.readthedocs.io/zh/latest/roadmap.html) "
-"查阅你的功能请求是否已经在开发中。"
-msgstr "Before submitting a feature request, please visit our "
-"[Development Roadmap](https://qteasy.readthedocs.io/en/latest/roadmap.html) "
-"to see if your feature request is already in development."
+"在提交功能请求以前，请先访问我们的 [开发路线图](https://qteasy.readthedocs.io/zh-"
+"cn/latest/roadmap.html) 查阅你的功能请求是否已经在开发中。"
+msgstr ""
+"Before submitting a feature request, please visit our [Development "
+"Roadmap](https://qteasy.readthedocs.io/en/latest/roadmap.html) to see if "
+"your feature request is already in development."
 
 #: ../../source/help.md:11
 msgid "使用`qteasy`中遇到问题"
@@ -59,8 +64,10 @@ msgstr "Encounter problems with `qteasy`"
 
 #: ../../source/help.md:13
 msgid "如果你在使用`qteasy`中遇到问题，可以进入`qteasy`的[讨论区](https://github.com/shepherdpp/qteasy/discussions)提交问题参与讨论。"
-msgstr "If you encounter any problems while using `qteasy`, you can enter the [Discussion Area]("
-"https://github.com/shepherdpp/qteasy/discussions) to submit questions and participate in discussions."
+msgstr ""
+"If you encounter any problems while using `qteasy`, you can enter the "
+"[Discussion Area](https://github.com/shepherdpp/qteasy/discussions) to "
+"submit questions and participate in discussions."
 
 #: ../../source/help.md:15
 msgid "贡献代码"
@@ -68,7 +75,9 @@ msgstr "Make Contributions"
 
 #: ../../source/help.md:17
 msgid "如果你对`qteasy`感兴趣，欢迎参与`qteasy`的开发，欢迎提交Pull Request，在参与之前，请先阅读CONTRIBUTING文档。"
-msgstr "Participating in the development of `qteasy` is highly appreciated. You can submit a Pull Request.Please read the CONTRIBUTING document."
+msgstr ""
+"Participating in the development of `qteasy` is highly appreciated. You "
+"can submit a Pull Request.Please read the CONTRIBUTING document."
 
 #: ../../source/help.md:19
 msgid "联系我们"

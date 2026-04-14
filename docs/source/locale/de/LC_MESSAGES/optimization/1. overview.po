@@ -1,0 +1,85 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/optimization/1. overview.md:1
+msgid "交易策略优化总览"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:3
+msgid "优化旨在在参数空间中寻找使目标函数更优（如夏普最大化）的参数组合；本质是多次回测加目标函数比较。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:5
+msgid "总体介绍"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:7
+msgid "**目的**：在策略可调参数范围内，通过搜索或优化算法找到表现更好的参数（如均线周期、阈值等）。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:8
+msgid "**与回测的关系**：优化 = 多次回测（每次一组参数）+ 按目标函数（如夏普、回撤）比较并排序，选出最优或 Top-K 组。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:10
+msgid "优化流程概览"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:12
+msgid "**设定参数空间与目标**：策略的 Parameter 与 par_range 定义搜索空间；目标函数由配置指定（如夏普最大化）。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:13
+msgid "**选择优化算法**：opti_method 可选 grid、montecarlo、GA、SA、PSO、bayesian 等。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:14
+msgid "**qt.run(mode=2)**：运行策略优化。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:15
+msgid "**获取结果与最优参数**：从返回对象中读取最优参数组合及 Top-K 结果。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:17
+msgid "本目录各章导航"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:19
+msgid "**2. 如何运行策略优化** — 入口、优化算法与运行参数列表、参数空间、最小示例。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:20
+msgid "**3. 优化算法的区别与使用情境** — 各算法对比与选择建议。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:21
+msgid "**4. 优化结果的结构与读取** — 返回值、结果字段、读取最优与 Top-K。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:22
+msgid "**5. 优化结果的分析与使用** — 结果分析、目标函数与约束、将最优参数写回策略、注意事项。"
+msgstr ""
+
+#: ../../source/optimization/1. overview.md:24
+msgid "更多算法细节见《优化交易策略》references（如 references/5-optimize-strategy.md）。"
+msgstr ""
+

@@ -1,0 +1,254 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/api/top_level_exports.md:1
+msgid ""
+"本文件用于开发维护：列出 `qteasy/__init__.py::__all__` 顶层导出 API 的来源模块与文档落点，便于做全局 API "
+"文档一致性审计。"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:3
+msgid "注意：本文件不作为用户教程入口（不会自动出现在 Sphinx TOC 中），仅用于仓库内维护。"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:5
+msgid "1. 顶层导出（按 `__all__` 分类）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:7
+msgid "1.1 启动/运行入口（core / configure）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:9
+msgid "`run`（`qteasy/core.py`）：统一运行入口（回测/优化/实盘等）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:10
+msgid "`is_ready`（`qteasy/core.py`）：检查运行条件"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:11
+msgid "`info`（`qteasy/core.py`）：帮助/信息入口（目前未实现）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:12
+msgid "`configure`（`qteasy/configure.py`）：配置入口"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:13
+msgid "`set_config`（`qteasy/configure.py`）：配置别名"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:14
+msgid ""
+"`configuration` / `get_config` / "
+"`get_configurations`（`qteasy/configure.py`）：查看配置"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:15
+msgid ""
+"`save_config` / `load_config` / `reset_config` / "
+"`view_config_files`（`qteasy/configure.py`）：配置文件与重置"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:16
+msgid ""
+"`start_up_settings` / `update_start_up_setting` / "
+"`remove_start_up_setting` / "
+"`get_start_up_settings`（`qteasy/configure.py`）：启动配置维护"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:17
+msgid "`start_up_config`（`qteasy/__init__.py`）：启动配置解析结果（常量）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:19
+#: ../../source/api/top_level_exports.md:31
+#: ../../source/api/top_level_exports.md:40
+#: ../../source/api/top_level_exports.md:52
+#: ../../source/api/top_level_exports.md:62
+#: ../../source/api/top_level_exports.md:71
+#: ../../source/api/top_level_exports.md:80
+msgid "对应文档入口："
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:20
+msgid "`docs/source/api/use_qteasy.rst`（启动与运行）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:21
+msgid "`docs/source/api/api_reference.rst`（配置与参考）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:23
+msgid "1.2 数据获取/概览（core）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:25
+msgid "`get_basic_info` / `get_stock_info`（`qteasy/core.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:26
+msgid "`get_data_overview` / `refill_data_source`（`qteasy/core.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:27
+msgid "`get_history_data` / `get_kline`（`qteasy/core.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:28
+msgid "`filter_stock_codes` / `filter_stocks`（`qteasy/core.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:29
+msgid "`get_table_info` / `get_table_overview`（`qteasy/core.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:32
+msgid "`docs/source/api/history_data.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:33
+msgid "`docs/source/references/2-get-history-data.md`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:35
+msgid "1.3 研究容器（history）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:37
+msgid "`HistoryPanel`（`qteasy/history.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:38
+msgid "`dataframe_to_hp` / `stack_dataframes`（`qteasy/history.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:41
+msgid "`docs/source/api/HistoryPanel.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:42
+msgid ""
+"`docs/source/tutorials/2.5-historypanel-data-analysis.md`（含 "
+"§9–§11：研究→回测迁移、多源拼板、导出 statsmodels）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:43
+msgid ""
+"`docs/source/design/10-historypanel-factor-research-layer.md`（可选 "
+"FactorResearch 层评估）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:44
+msgid "示例：`examples/historypanel_research_to_strategy.py`、`examples/historypanel_multisource_research.py`、`examples/historypanel_statsmodels_export.py`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:46
+msgid "1.4 策略与算子（operator / strategy / built_in）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:48
+msgid "`Operator`（`qteasy/qt_operator.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:49
+msgid ""
+"`BaseStrategy` / `RuleIterator` / `GeneralStg` / "
+"`FactorSorter`（`qteasy/strategy.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:50
+msgid ""
+"`built_ins` / `built_in_list` / `built_in_strategies` / "
+"`get_built_in_strategy`（`qteasy/built_in.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:53
+msgid "`docs/source/api/Operators.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:54
+msgid "`docs/source/api/Strategies.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:55
+msgid "`docs/source/api/built_in_strategies.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:57
+msgid "1.5 数据源与数据类型（database / datatypes）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:59
+msgid "`DataSource`（`qteasy/database.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:60
+msgid "`DataType` / `StgData` / `find_history_data`（`qteasy/datatypes.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:63
+msgid "`docs/source/api/data_source.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:64
+msgid "`docs/source/api/data_types.rst`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:66
+msgid "1.6 可视化与费用（visual / finance）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:68
+msgid "`candle`（`qteasy/visual.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:69
+msgid "`CashPlan` / `set_cost` / `update_cost`（`qteasy/finance.py`）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:72
+msgid "`docs/source/api/use_qteasy.rst`（入口）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:74
+msgid "1.7 常量与全局对象（__init__）"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:76
+msgid "模式常量：`LIVE_MODE` / `BACKTEST_MODE` / `OPTIMIZE_MODE` / `PREDICT_MODE` 及别名"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:77
+msgid ""
+"路径与对象：`QT_ROOT_PATH` / `QT_SYS_LOG_PATH` / `QT_TRADE_LOG_PATH` / "
+"`QT_CONFIG` / `QT_DATA_SOURCE` / `logger_core`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:78
+msgid "版本：`__version__` / `version_info`"
+msgstr ""
+
+#: ../../source/api/top_level_exports.md:81
+msgid "`docs/source/api/use_qteasy.rst`（运行模式与常量速查）"
+msgstr ""
+

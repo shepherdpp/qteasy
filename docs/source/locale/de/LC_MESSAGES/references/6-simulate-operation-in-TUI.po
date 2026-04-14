@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 01:06+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -20,14 +20,143 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/6-simulate-operation-in-TUI.md:1
-msgid "模拟实盘交易——TUI"
+#, fuzzy
+msgid "模拟实盘交易——TUI 功能清单"
 msgstr "Simulieren Sie echten Handel – TUI"
 
 #: ../../source/references/6-simulate-operation-in-TUI.md:3
-msgid "本文介绍如何在 TUI 中模拟实盘交易。"
+msgid ""
+"本文从功能清单角度介绍 TUI 的模拟实盘能力。   如需手把手步骤，请阅读 `tutorials/8-live-trade-risk-and-"
+"broker-walkthrough.md`。"
 msgstr ""
 
-#: ../../source/references/6-simulate-operation-in-TUI.md:5
-msgid "未完待续"
+#: ../../source/references/6-simulate-operation-in-TUI.md:6
+msgid "0. 文档边界"
 msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:8
+msgid "本页是 TUI 能力索引，不替代步骤教程"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:9
+msgid "重点回答“在界面上看哪里、发生异常先看什么”"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:11
+msgid "1. 面板与交互能力"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:13
+msgid "账户与资金状态展示"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:14
+msgid "订单提交与撤单交互"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:15
+msgid "成交与历史信息查看"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:16
+msgid "系统日志与风险反馈显示"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:18
+msgid "2. 核心反馈语义"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:20
+msgid "风控拒单摘要在交互中更容易识别"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:21
+msgid "订单状态变化（特别是分批成交）更一致"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:22
+msgid "日志链路更清晰，便于从界面跳转排查"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:24
+msgid "示例（用户可见反馈）："
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:30
+msgid "3. 快速问题分流（TUI 视角）"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:32
+msgid "“界面没报错但下单失败”通常是风控拒绝，不是系统崩溃"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:33
+msgid "“订单一直 partial-filled”需要结合累计成交量判断最终状态"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:35
+msgid "4. 面板-文档映射"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "关注点"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "先看哪里"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "运行启动与配置核对"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "拒单/状态解释"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "日志排障"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "完整实操路径"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md
+msgid "`tutorials/8-live-trade-risk-and-broker-walkthrough.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:44
+msgid "5. 跳转导航"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:46
+msgid "配置与运行：`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:47
+msgid "生命周期：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/references/6-simulate-operation-in-TUI.md:48
+msgid "排错手册：`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#~ msgid "本文介绍如何在 TUI 中模拟实盘交易。"
+#~ msgstr ""
+
+#~ msgid "未完待续"
+#~ msgstr ""
 

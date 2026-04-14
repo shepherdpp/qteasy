@@ -1,0 +1,241 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:1
+msgid "Broker 适配层与集成"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:3
+msgid "本页面向需要扩展或接入新 Broker 的用户与开发者，重点说明 S1.3 引入的适配层边界。"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:5
+msgid "0. 适用场景"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:7
+msgid "你希望对接新的 broker（或未来柜台），并保持与现有 Trader 逻辑兼容"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:8
+msgid "你需要先打通“提交 -> 回报 -> 状态更新”的最小闭环，再逐步增强"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:10
+msgid "1. 适配层目标"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:12
+msgid "为 future broker（如 QMT）提供稳定接入点"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:13
+msgid "保持与现有 legacy queue 链路兼容"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:14
+msgid "在提交与回报阶段维持统一的数据契约"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:16
+msgid "2. 核心接口"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:18
+msgid "S1.3 中 Broker 适配层新增/明确了以下接口："
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:20
+msgid "`connect()`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:21
+msgid "`disconnect()`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:22
+msgid "`submit(order)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:23
+msgid "`cancel(broker_order_id)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:24
+msgid "`poll_fills(timeout=0.0)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:25
+msgid "`get_remote_orders(account_id=None)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:26
+msgid "`get_remote_positions(account_id=None)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:27
+msgid "`get_remote_cash(account_id=None)`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:29
+msgid "建议按“最小闭环优先”理解接口职责："
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:31
+msgid "连接语义：`connect` / `disconnect`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:32
+msgid "交易语义：`submit` / `cancel`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:33
+msgid "回报语义：`poll_fills`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:34
+msgid "查询语义：`get_remote_*`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:36
+msgid "3. 新旧链路并存关系"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:38
+msgid "适配层接口提供“同步提交 + 异步回报”的扩展路径"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:39
+msgid "legacy `run()+queue` 机制保持可用，确保历史行为兼容"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:40
+msgid "收盘处理等路径通过 Broker API 抽象，减少直接操作内部队列"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:42
+msgid "4. 契约与校验要点"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:44
+msgid "提交订单前应满足订单 dict 契约"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:45
+msgid "回报成交结果应满足原始成交 dict 契约"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:46
+msgid "不满足契约时应尽早失败，避免错误传播到账本阶段"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:48
+msgid "实践建议："
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:50
+msgid "先保证“字段齐全且类型正确”"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:51
+msgid "再优化“字段语义与边界行为”一致性"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:53
+msgid "5. 最小接入清单（建议）"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:55
+msgid "完成连接/断开语义"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:56
+msgid "打通 `submit -> poll_fills` 回路"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:57
+msgid "确保回报字段可通过契约校验"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:58
+msgid "补齐取消语义与异常路径"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:59
+msgid "在 CLI/TUI 场景下验证可观测性"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:61
+msgid "6. 边界语义提醒"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:63
+msgid "未连接时调用提交/轮询应给出明确错误"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:64
+msgid "取消未知订单应返回稳定且可预期的结果"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:65
+msgid "轮询超时时应返回空结果而非脏数据"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:67
+msgid "7. 最小验收标准"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:69
+msgid "`connect` 后可正常提交订单"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:70
+msgid "`submit` 之后可通过 `poll_fills` 获取回报"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:71
+msgid "回报可通过契约校验"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:72
+msgid "未连接/未知订单/超时等边界行为稳定"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:73
+msgid "CLI/TUI 场景下可观察到一致反馈"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:75
+msgid "8. 相关跳转"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:77
+msgid "生命周期：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:78
+msgid "排错手册：`live_trading/5-artifacts-and-troubleshooting.md`"
+msgstr ""
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:79
+msgid "设计说明：`design/10-live-trading-s1.3-architecture.md`"
+msgstr ""
+

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -28,8 +28,12 @@ msgid ""
 "本示例展示了如何使用qteasy模块下载、管理及提取本地存储的金融数据 "
 "QTEASY提供了一套比较完善的金融数据下载及管理工具，可以通过tushare服务器下载相当广泛的金融数据，将数据存储在本地，并在需要的时候自动从本地提取数据用于策略的回测或策略运行。"
 msgstr ""
-"This Example demonstrates how to download, manage, and extract financial data stored locally using the qteasy module. "
-"QTEASY supplies a complete set of tools to help you download and manage financial data. You can download a wide range of financial data from the tushare server, store it locally, and automatically extract it from the local storage when needed for backtesting or strategy execution."
+"This Example demonstrates how to download, manage, and extract financial "
+"data stored locally using the qteasy module. QTEASY supplies a complete "
+"set of tools to help you download and manage financial data. You can "
+"download a wide range of financial data from the tushare server, store it"
+" locally, and automatically extract it from the local storage when needed"
+" for backtesting or strategy execution."
 
 #: ../../source/references/2-get-history-data.md:6
 msgid "本地数据源对象`DataSource`"
@@ -37,19 +41,32 @@ msgstr "Loacl Data Source Object `DataSource`"
 
 #: ../../source/references/2-get-history-data.md:8
 msgid "在`qteasy`中定义了一个`DataSource`对象，这个对象定义了一个本地金融数据源，并提供了一系列内置的本地金融数据表和数据类型，用户可以直接通过各种数据类型的ID来直接读取相应的金融数据（前提是这些金融数据已经从网上下载并保存到了本地数据源中）。"
-msgstr "There is a `DataSource` object defined in `qteasy`, which defines a local financial data source and provides a series of built-in local financial data tables and data types. Users can directly read the corresponding financial data by using the ID of various data types (provided that these financial data have been downloaded from the Internet and saved to the local data source)."
+msgstr ""
+"There is a `DataSource` object defined in `qteasy`, which defines a local"
+" financial data source and provides a series of built-in local financial "
+"data tables and data types. Users can directly read the corresponding "
+"financial data by using the ID of various data types (provided that these"
+" financial data have been downloaded from the Internet and saved to the "
+"local data source)."
 
 #: ../../source/references/2-get-history-data.md:10
 msgid "大量常用的金融数据，例如'close' 'pe'都是预先定义并内置在`qteasy`中的，这些数据涵盖了相当广泛的范围，包括："
-msgstr "Large amounts of commonly used financial data, such as 'close' and 'pe', are predefined and built into `qteasy`. These data cover a wide range, including:"
+msgstr ""
+"Large amounts of commonly used financial data, such as 'close' and 'pe', "
+"are predefined and built into `qteasy`. These data cover a wide range, "
+"including:"
 
 #: ../../source/references/2-get-history-data.md:12
 msgid "量价数据，如开盘价open、收盘价close、最高价high，交易量vol等等"
-msgstr "Volume and prices, such as opening price open, closing price close, high price high, trading volume vol, etc."
+msgstr ""
+"Volume and prices, such as opening price open, closing price close, high "
+"price high, trading volume vol, etc."
 
 #: ../../source/references/2-get-history-data.md:13
 msgid "财务指标数据，如市盈率pe，市净率pb"
-msgstr "Financial indicators, such as price-earnings ratio pe, price-to-book ratio pb"
+msgstr ""
+"Financial indicators, such as price-earnings ratio pe, price-to-book "
+"ratio pb"
 
 #: ../../source/references/2-get-history-data.md:14
 msgid "财务报表数据，如ebidta、ebit等等"
@@ -57,15 +74,27 @@ msgstr "Financial statements, such as ebidta, ebit, etc."
 
 #: ../../source/references/2-get-history-data.md:15
 msgid "公司基本信息数据，如管理层姓名、公司行业信息"
-msgstr "Basic company information, such as management names and company industry information"
+msgstr ""
+"Basic company information, such as management names and company industry "
+"information"
 
 #: ../../source/references/2-get-history-data.md:17
 msgid "上面的数据都是以“数据表”的形式内置并定义在系统中的，如果需要使用这些数据，必须首先下载数据至本地。`DataSource`对象定义了数据存储的方式和位置。`qteasy`定义了一个默认的数据源对象`QT_DATA_SOURCE`，在不特殊指明的情况下，`qteasy`所操作及使用的数据都在这个数据源中。"
-msgstr "Above data is predefined and defined in the system in the form of 'data tables'. If you need to use this data, you must first download the data to the local. The `DataSource` object defines the method and location of data storage. `qteasy` defines a default data source object `QT_DATA_SOURCE`, and in the absence of special instructions, all data operated and used by `qteasy` are in this data source."
+msgstr ""
+"Above data is predefined and defined in the system in the form of 'data "
+"tables'. If you need to use this data, you must first download the data "
+"to the local. The `DataSource` object defines the method and location of "
+"data storage. `qteasy` defines a default data source object "
+"`QT_DATA_SOURCE`, and in the absence of special instructions, all data "
+"operated and used by `qteasy` are in this data source."
 
 #: ../../source/references/2-get-history-data.md:19
 msgid "`DataSource`对象可以将数据保存为文件格式（csv、fth等），也可以将数据保存在mysql数据库中，鉴于金融数据的体量，建议将数据保存在数据库中。数据存储方式及存储位置可以在`qteasy`的`configuration`中设置。"
-msgstr "`DataSource` object can save data in file format (csv, fth, etc.), or save data in a mysql database. Given the volume of financial data, it is recommended to save data in the database. The data storage method and location can be set in the `configuration` of `qteasy`."
+msgstr ""
+"`DataSource` object can save data in file format (csv, fth, etc.), or "
+"save data in a mysql database. Given the volume of financial data, it is "
+"recommended to save data in the database. The data storage method and "
+"location can be set in the `configuration` of `qteasy`."
 
 #: ../../source/references/2-get-history-data.md:22
 msgid "DataSource的两种数据源类型"
@@ -79,35 +108,56 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:26
 msgid "对于一个`DataSource`对象，用户可以选择将数据存储为不同的形式，也叫数据源。`DataSource`目前支持两种不同的数据源："
-msgstr "Users may choose to store data in different forms, also known as data sources, for a `DataSource` object. `DataSource` currently supports two different data sources:"
+msgstr ""
+"Users may choose to store data in different forms, also known as data "
+"sources, for a `DataSource` object. `DataSource` currently supports two "
+"different data sources:"
 
 #: ../../source/references/2-get-history-data.md:27
 msgid "db: 数据库，数据存储在mysql/Maria DB数据库中，通过建立数据库连接来访问"
-msgstr "db: data is stored in a mysql/Maria DB database, accessed by establishing a database connection"
+msgstr ""
+"db: data is stored in a mysql/Maria DB database, accessed by establishing"
+" a database connection"
 
 #: ../../source/references/2-get-history-data.md:28
 msgid "file: 文件，数据以文件的形式存储在指定的文件夹中，支持csv、hdf5以及feather三种文件格式"
-msgstr "file: data is stored in the specified folder in the form of a file, supporting three file formats: csv, hdf5, and feather"
+msgstr ""
+"file: data is stored in the specified folder in the form of a file, "
+"supporting three file formats: csv, hdf5, and feather"
 
 #: ../../source/references/2-get-history-data.md:30
 msgid "鉴于金融数据的数据量较大（例如，所有股票的日K线历史数据有超过一千万行数据，分钟级K线的数据量更加庞大），推荐使用`mysql`数据库来存储数据，如果使用本地文件存储数据，数据交换的效率将会很低。"
-msgstr "As the volume of financial data is large (for example, the historical data of daily K-line for all stocks has more than ten million rows of data, and the data volume of minute-level K-line is even larger), it is recommended to use the `mysql` database to store data. If you use local files to store data, the efficiency of data exchange will be very low."
+msgstr ""
+"As the volume of financial data is large (for example, the historical "
+"data of daily K-line for all stocks has more than ten million rows of "
+"data, and the data volume of minute-level K-line is even larger), it is "
+"recommended to use the `mysql` database to store data. If you use local "
+"files to store data, the efficiency of data exchange will be very low."
 
 #: ../../source/references/2-get-history-data.md:32
 msgid "使用下面的参数建立一个连接到本地数据库的DataSource对象："
-msgstr "Following parameters are used to establish a DataSource object connected to a local database:"
+msgstr ""
+"Following parameters are used to establish a DataSource object connected "
+"to a local database:"
 
 #: ../../source/references/2-get-history-data.md:40
 msgid "可以通过connection_type属性了解DataSource对象的连接性质"
-msgstr "You can learn about the connection nature of the DataSource object through the connection_type attribute"
+msgstr ""
+"You can learn about the connection nature of the DataSource object "
+"through the connection_type attribute"
 
 #: ../../source/references/2-get-history-data.md:54
 msgid "使用下面的参数可以建立一个使用本地文件夹的`DataSource`对象"
-msgstr "Following parameters can be used to establish a `DataSource` object using the local folder"
+msgstr ""
+"Following parameters can be used to establish a `DataSource` object using"
+" the local folder"
 
 #: ../../source/references/2-get-history-data.md:71
 msgid "使用`qt.configuration`可以查看当前的配置变量，使用`qt.QT_DATA_SOURCE`可以查看当前数据源的类型和参数"
-msgstr "View the current configuration variables using `qt.configuration`, and view the type and parameters of the current data source using `qt.QT_DATA_SOURCE`"
+msgstr ""
+"View the current configuration variables using `qt.configuration`, and "
+"view the type and parameters of the current data source using "
+"`qt.QT_DATA_SOURCE`"
 
 #: ../../source/references/2-get-history-data.md:86
 msgid "历史数据类型"
@@ -115,7 +165,11 @@ msgstr "Historical Data Types"
 
 #: ../../source/references/2-get-history-data.md:88
 msgid "qteasy可以管理多种不同的数据类型，自动下载这些类型的数据并储存在本地，供交易策略调用。每一种数据都有一个内置的数据id（data_id），根据这个data_id，用户可以查看、读取、下载相应的数据。"
-msgstr "qteasy can manage multiple data types, automatically download these types of data, and store them locally for trading strategies to call. Each type of data has a built-in data ID (data_id). Based on this data_id, users can view, read, and download the corresponding data."
+msgstr ""
+"qteasy can manage multiple data types, automatically download these types"
+" of data, and store them locally for trading strategies to call. Each "
+"type of data has a built-in data ID (data_id). Based on this data_id, "
+"users can view, read, and download the corresponding data."
 
 #: ../../source/references/2-get-history-data.md:90
 msgid ""
@@ -128,8 +182,10 @@ msgid ""
 "`qt.find_history_data()`可以查找qteasy内置的所有数据类型，列出数据的id，资产类型和频率，以及数据的详细说明。 "
 "使用`qt.get_history_data()`并将找到的数据id作为参数传入，则可以直接查看已经下载的历史数据"
 msgstr ""
-"`qt.find_history_data()` can find all built-in data types in qteasy, listing the data ID, asset type, frequency, and detailed description of the data. "
-"Using `qt.get_history_data()` and passing the found data ID as a parameter, you can directly view the downloaded historical data."
+"`qt.find_history_data()` can find all built-in data types in qteasy, "
+"listing the data ID, asset type, frequency, and detailed description of "
+"the data. Using `qt.get_history_data()` and passing the found data ID as "
+"a parameter, you can directly view the downloaded historical data."
 
 #: ../../source/references/2-get-history-data.md:99
 msgid "输出如下："
@@ -144,16 +200,22 @@ msgid ""
 "使用`qt.get_table_overview()`可以查看当前数据源中已经下载的数据量 "
 "当数据量较大时，需要花费几分钟时间分析所有的数据，并打印本地数据源中数据表的数据量、占用磁盘空间以及数据范围"
 msgstr ""
-"Using `qt.get_table_overview()` you can view the amount of data already downloaded in the current data source. "
-"When the amount of data is large, it takes a few minutes to analyze all the data and print the amount of data in the data table, disk space occupied, and data range in the local data source."
+"Using `qt.get_table_overview()` you can view the amount of data already "
+"downloaded in the current data source. When the amount of data is large, "
+"it takes a few minutes to analyze all the data and print the amount of "
+"data in the data table, disk space occupied, and data range in the local "
+"data source."
 
 #: ../../source/references/2-get-history-data.md:146
 msgid ""
 "本地数据存储在若干张数据表中，也可以通过`qt.get_table_info()`来获取某一张数据表的详细信息 "
 "包括数据表的主键类型和取值范围以外，还包括各数据列的名称、含义和数据类型"
 msgstr ""
-"Local data is stored in several data tables, and you can also use `qt.get_table_info()` to obtain detailed information about a specific data table. "
-" In addition to the primary key type and value range of the data table, it also includes the name, meaning, and data type of each data column."
+"Local data is stored in several data tables, and you can also use "
+"`qt.get_table_info()` to obtain detailed information about a specific "
+"data table.  In addition to the primary key type and value range of the "
+"data table, it also includes the name, meaning, and data type of each "
+"data column."
 
 #: ../../source/references/2-get-history-data.md:149
 msgid "`qt.get_table_info(table_name, data_source=None, verbose=True)`"
@@ -164,8 +226,11 @@ msgid ""
 "获取一张数据表的信息，包括数据量（数据行数），占用磁盘空间大小、数据主键的名称及数据范围 "
 "如果设置`verbose=True`，还可以查看数据表中的数据列完整信息，包括列名、数据类型和说明"
 msgstr ""
-"Get information about a data table, including the amount of data (number of rows), disk space occupied, name of the primary key, and data range. "
-"If `verbose=True` is set, you can also view the complete information of the data columns in the data table, including column names, data types, and descriptions."
+"Get information about a data table, including the amount of data (number "
+"of rows), disk space occupied, name of the primary key, and data range. "
+"If `verbose=True` is set, you can also view the complete information of "
+"the data columns in the data table, including column names, data types, "
+"and descriptions."
 
 #: ../../source/references/2-get-history-data.md:154
 msgid "`qt.get_table_overview(data_source=None)`"
@@ -173,7 +238,9 @@ msgstr ""
 
 #: ../../source/references/2-get-history-data.md:156
 msgid "统计数据源中所有数据表的数据量并打印总览"
-msgstr "Print an overview of the amount of data in all data tables in the data source"
+msgstr ""
+"Print an overview of the amount of data in all data tables in the data "
+"source"
 
 #: ../../source/references/2-get-history-data.md:159
 msgid "使用`qt.get_table_info()`可以获取一张数据表的信息："
@@ -181,418 +248,741 @@ msgstr "Acquire information about a data table using `qt.get_table_info()`:"
 
 #: ../../source/references/2-get-history-data.md:188
 msgid "使用`qt.get_table_overview()`可以检查并显示DataSource中保存的所有本地数据的总览"
-msgstr "Check and display an overview of all local data saved in DataSource using `qt.get_table_overview()`"
+msgstr ""
+"Check and display an overview of all local data saved in DataSource using"
+" `qt.get_table_overview()`"
 
 #: ../../source/references/2-get-history-data.md:240
+msgid "HistoryPanel 与 `get_history_data`"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:242
+msgid "在 qteasy 2.x 中，`qt.get_history_data()` 的推荐用法是直接返回 `HistoryPanel`："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:256
+msgid "`HistoryPanel` 是一个三维数据容器，维度含义为："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:258
+msgid "**axis 0（shares）**：标的列表，例如股票或指数代码；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:259
+msgid "**axis 1（hdates）**：时间轴，每一行对应一个时间点（如交易日或分钟）；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:260
+msgid "**axis 2（htypes）**：历史数据类型，例如 `open`、`high`、`low`、`close`、`vol` 等。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:262
+msgid ""
+"使用 `hp[...]` 按轴切片时，结果类型为 **子 `HistoryPanel`**（带正确的轴标签），不再直接得到 "
+"`ndarray`。需要裸矩阵时请使用 **`hp['close'].values`** 或 "
+"**`hp['close'].to_numpy(copy=True)`**；具名切片与默认拷贝行为见 **`hp.subpanel(..., "
+"copy=True)`**。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:264
+msgid ""
+"研究向布尔掩码与后续带 **`mask=`** 的 API 可使用 **`hp.where(condition)`**：返回与 "
+"**`hp.values`** 同形的 **`dtype=bool`** 数组（不改变 `hp`），详见 [HistoryPanel API "
+"参考](../api/HistoryPanel.rst) 与教程 [使用 HistoryPanel "
+"操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md)。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:266
+msgid ""
+"自 **2.2.8** 起还可：**合法标识符列名**用只读属性（如 **`hp.close`**，等价 "
+"**`hp['close']`**）；**比较运算**（如 **`hp.close > 100`**、两列子面板比较）得到 **`numpy` "
+"布尔数组**，可直接作为 **`hp.where(...)`** 的输入；按 **交易日（时间轴）** 筛选可用 "
+"**`hp.loc[key]`**（等价 **`hp[:, :, key]`**，与 pandas 仅类比）。边界说明见 API "
+"页「列属性访问、比较与 `loc`」与教程 §6.1。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:268
+msgid "这样，策略与可视化都可以在同一份结构化数据上工作，避免重复转换。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:270
+msgid ""
+"当你已有 `DataFrame` 或字典形式的数据时，可以使用 `qt.dataframe_to_hp()` 将其适配为 "
+"HistoryPanel，再复用同一套 API。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:274
+msgid "从 HistoryPanel 到可视化"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:276
+msgid ""
+"`HistoryPanel` 提供统一的可视化入口 `hp.plot()`，根据面板中已有的 htypes 自动选择合适的图表类型（K "
+"线、成交量、MACD 或普通折线），并支持多标的对比："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:296
+msgid "HistoryPanel.plot 交互式可视化（Plotly）"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:298
+msgid ""
+"当你使用 `hp.plot(interactive=True)` 时，qteasy 会使用 Plotly "
+"生成交互式图表，支持缩放、平移与悬停查看数据。在 Notebook 中，如果你的环境支持 FigureWidget（通常需要安装 "
+"`ipywidgets` 与 `anywidget`），qteasy 会优先返回更完整的交互体验；否则会回退到 HTML 方式展示。你也可以通过 "
+"`plotly_backend_app='auto'|'FigureWidget'|'html'` 明确指定输出方式。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:300
+msgid "依赖与安装"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:302
+msgid "**基础交互（Plotly Figure）**："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:308
+msgid "**Notebook 更完整交互（FigureWidget + 回调）**："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:314
+msgid ""
+"注意：若未安装 Plotly，调用 `interactive=True` 会直接抛出英文错误提示（例如包含 “requires plotly” "
+"的信息）；这是为了让依赖缺失问题尽早暴露，避免生成一个不可交互的“空图”。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:316
+msgid "`plotly_backend_app`：输出方式与回退"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:318
+msgid "`plotly_backend_app` 仅在 `interactive=True` 时生效："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:320
+msgid ""
+"`plotly_backend_app='auto'`：在 Notebook 中优先使用 FigureWidget；否则回退到 HTML "
+"包装；在脚本环境中也可能返回原始 Plotly Figure。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:321
+msgid ""
+"`plotly_backend_app='FigureWidget'`：强制使用 FigureWidget；若当前不是 Notebook "
+"或缺少依赖会直接报错（英文提示）。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:322
+msgid "`plotly_backend_app='html'`：强制使用 HTML 包装；若当前不是 Notebook 也会直接报错（英文提示）。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:324
+msgid "关键交互能力（用户视角）"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:326
+msgid ""
+"**缩放/平移一致性**：HTML 与 FigureWidget 在缩放/平移时遵循同一套 x 轴约束：保持最少可见 bar 数、越界时按 pan"
+" 语义平移回数据域。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:327
+msgid ""
+"**顶部 OHLC 摘要**：当面板中存在完整 OHLC 主图（蜡烛图）时，会显示顶部摘要；交互图初始为最后一根 bar，点击某根 bar "
+"会更新摘要。无 K 线主图（例如仅 close 折线）时不显示该摘要区。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:328
+msgid ""
+"**两标的 overlay**：当你用 `layout='overlay'` 对比两只标的时，点击某根 bar "
+"会切换主次标的：主次透明度与线宽会联动更新；如果你启用了 `highlight`，高亮点默认仅对当前主标的可见，并随主次切换。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:329
+msgid "**选中态十字交叉线**：点击后在主价格图上显示选中态十字交叉线；缩放/平移时保持同步；当选中 bar 滚动出可见区域时会隐藏。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:331
+msgid "示例：最常用的两种交互调用"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:333
+msgid "**示例 1：单标的交互式 K 线**"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:339
+msgid "**示例 2：两标的 overlay + 高亮**"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:356
+msgid "可视化层严格遵循“**有什么画什么**”原则："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:358
+msgid "只使用 HistoryPanel 中**已经存在**的列，不在绘图层计算新的指标；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:359
+msgid "是否绘制 K 线、成交量或 MACD，仅取决于面板中是否存在对应的 htypes。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:361
+msgid "典型 htypes 与默认图表类型的对应关系如下："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "图表类型"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "依赖的 htype 示例"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "K 线"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "`open, high, low, close`"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "成交量"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "`vol` 或 `volume`"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "MACD"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "`macd_*`, `macd_signal_*`, `macd_hist_*`"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "折线图"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md
+msgid "其它任意一维序列（如 `close`、`pe` 等）"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:370
+msgid ""
+"若需要 MA/布林带/MACD 等指标，应在 HistoryPanel 上调用相应方法 （例如 "
+"`hp.kline.ma()`、`hp.kline.bbands()`、`hp.kline.macd()`）， 将结果列追加进面板后再调用 "
+"`hp.plot()`。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:375
+msgid "`qt.candle` 与 HistoryPanel 的关系"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:377
+msgid "`qt.candle()` 是更高层的快捷入口，用于“一行代码画出某个标的的 K 线图”， 其内部逻辑可以概括为："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:380
+msgid "解析 `stock`、`start`、`end` 等参数，从本地数据源取数；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:381
+msgid "将价格数据适配为单标的 `HistoryPanel`；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:382
+msgid "在 HistoryPanel 上追加用户需要的指标列（如 MA、布林带、MACD）；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:383
+msgid "调用 `hp.plot(...)` 绘制图表。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:385
+msgid "因此，你可以在保留现有 `qt.candle` 调用方式的同时，直接在 HistoryPanel 上 做更细粒度的控制。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:388
+msgid "常见用法示例："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:406
+msgid "其中 `plot_type` 的意义为："
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:408
+msgid "`'candle'` / `'c'`：使用 OHLC 绘制蜡烛图；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:409
+msgid "`'ohlc'` / `'o'`：行为与 `'candle'` 接近，仅作为轻量别名保留；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:410
+msgid "`'line'` / `'l'`：只绘制一维价格折线（通常为 `close`）；"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:411
+msgid "`'none'` / `'n'`：**只取数不绘图**，直接返回 `DataFrame`，方便你用 其它工具自行可视化。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:414
+msgid "Renko 图（`'renko'` / `'r'`）在新版中已不再内置支持；若需要 Renko 图， 建议使用专门的技术分析或画图库。"
+msgstr ""
+
+#: ../../source/references/2-get-history-data.md:417
 msgid "获取历史数据，并将数据保存在DataSource中"
 msgstr "Acquire historical data and save it in DataSource"
 
-#: ../../source/references/2-get-history-data.md:241
+#: ../../source/references/2-get-history-data.md:418
 msgid ""
 "如果`DataSource`中没有数据，那么`qteasy`将很难发挥所长，因此，首先需要将数据保存到`DataSource`中 "
 "`DataSource`类提供了`_fetch_table_data_from_tushare()`函数，来获取并存储历史数据到`DataSource`中，在这个函数的参数中可以直接给出一个`DataFrame`、一个csv文件名或excel文件名，同样也可以连接网络数据提供商的API获取数据。"
 " 使用`DataSource`对象获取、更新数据的方法包括："
 msgstr ""
-"If there is no data in `DataSource`, it will be difficult for `qteasy` to play its role. Therefore, the first step is to save the data in `DataSource`. "
-"`DataSource` class provides the `_fetch_table_data_from_tushare()` function to acquire and store historical data in `DataSource`. "
-"In the parameters of this function, you can directly provide a `DataFrame`, a csv file name, or an excel file name. You can also connect to the API of the network data provider to acquire data. "
-" The methods to acquire and update data using the `DataSource` object include:"
+"If there is no data in `DataSource`, it will be difficult for `qteasy` to"
+" play its role. Therefore, the first step is to save the data in "
+"`DataSource`. `DataSource` class provides the "
+"`_fetch_table_data_from_tushare()` function to acquire and store "
+"historical data in `DataSource`. In the parameters of this function, you "
+"can directly provide a `DataFrame`, a csv file name, or an excel file "
+"name. You can also connect to the API of the network data provider to "
+"acquire data.  The methods to acquire and update data using the "
+"`DataSource` object include:"
 
-#: ../../source/references/2-get-history-data.md:245
+#: ../../source/references/2-get-history-data.md:422
 msgid ""
 "`DataSource._fetch_table_data_from_tushare(table, channel, df=None, "
 "f_name=None, **kwargs)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:246
+#: ../../source/references/2-get-history-data.md:423
 msgid "从外部数据源获取数据，调整清洗数据以使它与数据源中的数据表匹配"
-msgstr "Acquire data from external data sources, adjust and clean the data to match the data table in the data source"
+msgstr ""
+"Acquire data from external data sources, adjust and clean the data to "
+"match the data table in the data source"
 
-#: ../../source/references/2-get-history-data.md:248
+#: ../../source/references/2-get-history-data.md:425
 msgid "数据获取渠道，指定本地文件、金融数据API，或直接给出local_df，支持以下选项："
-msgstr "Channel for data acquisition, specify local files, financial data API, or directly provide local_df, supporting the following options:"
+msgstr ""
+"Channel for data acquisition, specify local files, financial data API, or"
+" directly provide local_df, supporting the following options:"
 
-#: ../../source/references/2-get-history-data.md:249
+#: ../../source/references/2-get-history-data.md:426
 msgid "'df'      : 通过参数传递一个df，该df的columns必须与table的定义相同"
-msgstr "`df` : pass a df through the parameter, and the columns of this df must be the same as the definition of the table"
+msgstr ""
+"`df` : pass a df through the parameter, and the columns of this df must "
+"be the same as the definition of the table"
 
-#: ../../source/references/2-get-history-data.md:250
+#: ../../source/references/2-get-history-data.md:427
 msgid "'csv'     : 通过本地csv文件导入数据，此时必须给出f_name参数"
-msgstr "`csv` : import data through the local csv file, and the f_name parameter must be given at this time"
+msgstr ""
+"`csv` : import data through the local csv file, and the f_name parameter "
+"must be given at this time"
 
-#: ../../source/references/2-get-history-data.md:251
+#: ../../source/references/2-get-history-data.md:428
 msgid "'excel'   : 通过一个Excel文件导入数据，此时必须给出f_name参数"
-msgstr "`excel` : import data through an Excel file, and the f_name parameter must be given at this time"
+msgstr ""
+"`excel` : import data through an Excel file, and the f_name parameter "
+"must be given at this time"
 
-#: ../../source/references/2-get-history-data.md:252
+#: ../../source/references/2-get-history-data.md:429
 msgid "'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-msgstr "`tushare` : acquire financial data from Tushare API, please apply for the corresponding permissions and points by yourself"
+msgstr ""
+"`tushare` : acquire financial data from Tushare API, please apply for the"
+" corresponding permissions and points by yourself"
 
-#: ../../source/references/2-get-history-data.md:253
+#: ../../source/references/2-get-history-data.md:430
 msgid "'other'   : 其他金融数据API，尚未开发"
 msgstr "`other` : other financial data API, not yet developed"
 
-#: ../../source/references/2-get-history-data.md:255
+#: ../../source/references/2-get-history-data.md:432
 msgid "`DataSource.update_table_data()`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:256
+#: ../../source/references/2-get-history-data.md:433
 msgid "检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤："
-msgstr "Inspect the input df, remove the columns or rows that do not meet the requirements, and merge the data into the table, including the following steps:"
+msgstr ""
+"Inspect the input df, remove the columns or rows that do not meet the "
+"requirements, and merge the data into the table, including the following "
+"steps:"
 
-#: ../../source/references/2-get-history-data.md:258
+#: ../../source/references/2-get-history-data.md:435
 msgid "检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列"
-msgstr "Inspect whether the column names of the downloaded data table are the same as the definition of the data table, and delete the extra columns"
+msgstr ""
+"Inspect whether the column names of the downloaded data table are the "
+"same as the definition of the data table, and delete the extra columns"
 
-#: ../../source/references/2-get-history-data.md:259
+#: ../../source/references/2-get-history-data.md:436
 msgid "如果datasource type是\"db\"，删除下载数据中与本地数据重复的部分，仅保留新增数据"
-msgstr "If the datasource type is \"db\", delete the part of the downloaded data that is duplicated with the local data, and only keep the new data"
+msgstr ""
+"If the datasource type is \"db\", delete the part of the downloaded data "
+"that is duplicated with the local data, and only keep the new data"
 
-#: ../../source/references/2-get-history-data.md:260
+#: ../../source/references/2-get-history-data.md:437
 msgid "如果datasource type是\"file\"，将下载的数据与本地数据合并并去重"
-msgstr "If the datasource type is \"file\", merge the downloaded data with the local data and remove duplicates"
+msgstr ""
+"If the datasource type is \"file\", merge the downloaded data with the "
+"local data and remove duplicates"
 
-#: ../../source/references/2-get-history-data.md:263
+#: ../../source/references/2-get-history-data.md:440
 msgid "`DataSource.read_table_data()`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:265
+#: ../../source/references/2-get-history-data.md:442
 msgid "通过本地文件获取数据，并保存到DataSource中："
 msgstr "Acquire data through local files and save it in DataSource:"
 
-#: ../../source/references/2-get-history-data.md:267
+#: ../../source/references/2-get-history-data.md:444
 msgid "下面的示例代码将存储在`DataFrame`中的数据保存在`DataSource`中"
-msgstr "Following example code saves the data stored in `DataFrame` in `DataSource`"
+msgstr ""
+"Following example code saves the data stored in `DataFrame` in "
+"`DataSource`"
 
-#: ../../source/references/2-get-history-data.md:276
+#: ../../source/references/2-get-history-data.md:453
 msgid "通过tushare获取数据，并保存到DataSource中："
 msgstr "Acquire data through tushare and save it in DataSource:"
 
-#: ../../source/references/2-get-history-data.md:277
+#: ../../source/references/2-get-history-data.md:454
 msgid ""
 "`tushare`是一个网络金融数据API，提供了大量的金融数据，不过某些数据需要积分才能获取，请自行申请`tushare`账号并获取相应积分 "
 "`tushare`的说明文档在这里：https://tushare.pro/document/2"
 msgstr ""
-"`tushare` is a web financial data API that provides a large amount of financial data. However, some data requires points to obtain. Please apply for a `tushare` account and obtain the corresponding points by yourself. "
-"`tushare` documentation is here: https://tushare.pro/document/2"
+"`tushare` is a web financial data API that provides a large amount of "
+"financial data. However, some data requires points to obtain. Please "
+"apply for a `tushare` account and obtain the corresponding points by "
+"yourself. `tushare` documentation is here: https://tushare.pro/document/2"
 
-#: ../../source/references/2-get-history-data.md:280
+#: ../../source/references/2-get-history-data.md:457
 msgid "连接到`tushare`获取数据的时候，只需要指定数据表的名称即可，`DataSource`会自行调用相应的`tushare API`下载数据："
-msgstr "You only need to specify the name of the data table when connecting to `tushare` to acquire data. `DataSource` will automatically call the corresponding `tushare API` to download the data:"
+msgstr ""
+"You only need to specify the name of the data table when connecting to "
+"`tushare` to acquire data. `DataSource` will automatically call the "
+"corresponding `tushare API` to download the data:"
 
-#: ../../source/references/2-get-history-data.md:288
+#: ../../source/references/2-get-history-data.md:465
 msgid "连接`tushare`下载数据并保存到本地数据源"
 msgstr "Download data from `tushare` and save it to the local data source"
 
-#: ../../source/references/2-get-history-data.md:290
+#: ../../source/references/2-get-history-data.md:467
 msgid ""
 "`qteasy`提供了`tushare`数据接口，在获取相应`tushare`权限后，可以直接从`tushare`批量下载金融数据，并将数据更新到本地数据源中"
 " 例如，下面的命令将2022年3月起到9月之间的所有股票日K线数据下载到本地： 在下载数据前检察`stock_daily`表的信息："
 msgstr ""
-"`qteasy` provides the `tushare` data interface. After obtaining the corresponding `tushare` permissions, you can directly download financial data in batches from `tushare` and update the data to the local data source. "
-" For example, the following command downloads all stock daily K-line data from March to September 2022 to the local: Check the information of the `stock_daily` table before downloading data:"
+"`qteasy` provides the `tushare` data interface. After obtaining the "
+"corresponding `tushare` permissions, you can directly download financial "
+"data in batches from `tushare` and update the data to the local data "
+"source.  For example, the following command downloads all stock daily "
+"K-line data from March to September 2022 to the local: Check the "
+"information of the `stock_daily` table before downloading data:"
 
-#: ../../source/references/2-get-history-data.md:294
+#: ../../source/references/2-get-history-data.md:471
 msgid "`qt.refill_data_source(data_source, *args, **kwargs)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:296
+#: ../../source/references/2-get-history-data.md:473
 msgid ""
 "连接到`tushare`下载所需的数据并保存到相应的数据表，给出需要下载的数据表名称，通过`start_date`和`end_date`限定数据的范围，同时可以通过`freq`、`asset_type`等指定不同的数据类型，即可下载表格数据并保存到合适的位置。"
 " 重复的数据会被忽略或覆盖已有的数据。"
 msgstr ""
-"Connect to `tushare` to download the required data and save it to the corresponding data table. Specify the name of the data table to be downloaded, limit the range of data through `start_date` and `end_date`, and specify different data types through `freq`, `asset_type`, etc. You can download table data and save it to the appropriate location. "
-" Duplicate data will be ignored or overwrite existing data."
+"Connect to `tushare` to download the required data and save it to the "
+"corresponding data table. Specify the name of the data table to be "
+"downloaded, limit the range of data through `start_date` and `end_date`, "
+"and specify different data types through `freq`, `asset_type`, etc. You "
+"can download table data and save it to the appropriate location.  "
+"Duplicate data will be ignored or overwrite existing data."
 
-#: ../../source/references/2-get-history-data.md:300
+#: ../../source/references/2-get-history-data.md:477
 msgid ""
 "`qt.refill_data_source()`的`tables`参数指定需要补充的数据表； "
 "除了直接给出表名称以外，还可以通过表类型同时下载多个数据表的数据："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:303
+#: ../../source/references/2-get-history-data.md:480
 msgid "`cal`     : 交易日历表，各个交易所的交易日历"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:304
+#: ../../source/references/2-get-history-data.md:481
 msgid "`basics`  : 所有的基础信息表，包括股票、基金、指数、期货、期权的基本信息表"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:305
+#: ../../source/references/2-get-history-data.md:482
 msgid "`adj`     : 所有的复权因子表，包括股票、基金的复权因子，用于生成复权价格"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:306
+#: ../../source/references/2-get-history-data.md:483
 msgid "`data`    : 所有的历史数据表，包括股票、基金、指数、期货、期权的日K线数据以及周、月K线数据"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:307
+#: ../../source/references/2-get-history-data.md:484
 msgid "`events`  : 所有的历史事件表，包括股票更名、更换基金经理、基金份额变动等数据"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:308
+#: ../../source/references/2-get-history-data.md:485
 msgid "`report`  : 财务报表，包括财务指标、三大财务报表、财务快报、月报、季报以及年报"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:309
+#: ../../source/references/2-get-history-data.md:486
 msgid "`comp`    : 指数成分表，包括各个指数的成份股及其百分比"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:310
+#: ../../source/references/2-get-history-data.md:487
 msgid "`all`     : 所有的数据表，以上所有数据表，由于数据量大，建议分批下载"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:313
+#: ../../source/references/2-get-history-data.md:490
 msgid "数据下载到本地后，可以使用`qt.get_history_data()`来获取数据，如果同时获取多个股票的历史数据，每个股票的历史数据会被分别保存到一个`dict`中。"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:317
+#: ../../source/references/2-get-history-data.md:494
 msgid "例如，通过检查发现，`stock_daily`表中的数据不够完整，最新的数据仅更新到2022年3月22日，数据共有1210万行："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:333
+#: ../../source/references/2-get-history-data.md:510
 msgid "此时使用`qt.refill_data_source()`函数，批量获取2022年3月以后一直到10月底的`stock_daily`数据"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:341
+#: ../../source/references/2-get-history-data.md:518
 msgid ""
 "数据下载过程中会通过进度条显示下载进度，同时显示下载读取的数据量和总耗时。由于数据需要分批下载，下载大量的数据可能非常耗时。默认情况下 "
 "qteasy会通过多线程并行下载提高速度，但下载频率过快可能会导致tushare权限问题。"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:348
+#: ../../source/references/2-get-history-data.md:525
 msgid "下载完成后重新检查`stock_daily`的数据：可以发现数据已经增加到1280万行，增加了70万行数据，数据覆盖的日期也达到了2022年10月31日。"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:366
+#: ../../source/references/2-get-history-data.md:543
 msgid "本地数据的获取和可视化"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:368
+#: ../../source/references/2-get-history-data.md:545
 msgid "只要本地数据源中有了数据，就可以非常容易地获取这些数据，如果是量价数据，还可以非常容易地可视化（打印为K线图或价格曲线图）"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:370
+#: ../../source/references/2-get-history-data.md:547
 msgid "股票或资产的基本信息数据"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:372
+#: ../../source/references/2-get-history-data.md:549
 msgid ""
 "`qt.get_basic_info(code_or_name: str, asset_types=None, "
 "match_full_name=False, printout=True, verbose=False)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:374
+#: ../../source/references/2-get-history-data.md:551
 msgid ""
 "获取一个股票或证券的基本信息，`code_or_name`可以是股票的代码，或者股票名称，默认情况下系统会进行全剧匹配查找匹配的证券，如`‘000001’`会匹配到多种不同的证券，所有匹配的证券都会被列出，除非在`asset_type`中指定一种或几种证券类型。"
 " 如果设置`match_full_name=True`，则会通过股票或基金的全名来模糊匹配证券"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:378
+#: ../../source/references/2-get-history-data.md:555
 msgid ""
 "`qt.get_stock_info(code_or_name: str, asset_types=None, "
 "match_full_name=False, printout=True, verbose=False)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:380
+#: ../../source/references/2-get-history-data.md:557
 msgid "`get_basic_info()`的别称"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:382
+#: ../../source/references/2-get-history-data.md:559
 msgid "筛选股票代码"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:384
+#: ../../source/references/2-get-history-data.md:561
 msgid "`qt.filter_stocks(date: str = 'today', **kwargs)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:386
+#: ../../source/references/2-get-history-data.md:563
 msgid "根据发行日期、地区、行业、规模、指数成份等多种可用的信息筛选出一部分股票，打印出股票的信息"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:388
+#: ../../source/references/2-get-history-data.md:565
 msgid "`qt.filter_stock_codes(date: str = 'today', **kwargs)`"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:390
+#: ../../source/references/2-get-history-data.md:567
 msgid "根据发行日期、地区、行业、规模、指数成份等多种可用的信息筛选出一部分股票，返回股票的完整代码"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:392
+#: ../../source/references/2-get-history-data.md:569
 msgid "提取金融历史数据"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:394
+#: ../../source/references/2-get-history-data.md:571
 msgid ""
 "**`qt.get_history_data(htypes, shares=None, start=None, end=None, "
 "freq=None, asset_type=None, adj=None, as_data_frame=True, group_by=None, "
 "**kwargs)`**"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:396
+#: ../../source/references/2-get-history-data.md:573
 msgid ""
 "这个函数从默认`QT_DATA_SOURCE`中提取数据，根据输入的数据类型、股票代码、日期范围以及频率等参数，输出多个`DataFrame`或`HistoryPanel`对象"
 " 这些`DataFrame`保存在一个dict中，这个dict的键为股票代码或数据类型，值为按股票代码或数据类型分组的数据框"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:399
+#: ../../source/references/2-get-history-data.md:576
 msgid "量价数据的可视化"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:401
+#: ../../source/references/2-get-history-data.md:578
 msgid ""
 "**`qt.candle(stock=None, start=None, end=None, stock_data=None, "
 "asset_type=None, freq=None, plot_type='candle', interactive=True, "
 "data_source=None, **kwargs）`**"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:403
+#: ../../source/references/2-get-history-data.md:580
 msgid "这个函数从本地数据源中提取股票的价格数据，并生成一张完整的动态高级K线图"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:406
+#: ../../source/references/2-get-history-data.md:583
 msgid "示例："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:408
+#: ../../source/references/2-get-history-data.md:585
 msgid "查找证券的基本信息"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:410
+#: ../../source/references/2-get-history-data.md:587
 msgid ""
 "使用`qt.get_basic_info()`获取证券的基本信息 "
 "在`DataSource`中准备好相关的金融数据后，还可以方便地查找证券的信息，通过证券代码（六位数字）或证券的名称搜索证券，并打印出详细信息。 "
 "使用证券名称搜索时，支持模糊查找或使用通配符："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:414
+#: ../../source/references/2-get-history-data.md:591
 msgid "例如，通过六位代码获取证券信息："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:434
+#: ../../source/references/2-get-history-data.md:611
 msgid "也可以直接通过证券名称来查找证券，模糊查找匹配多个证券，例如："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:477
+#: ../../source/references/2-get-history-data.md:654
 msgid "通过证券名称匹配证券时，支持通过通配符查找："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:497
+#: ../../source/references/2-get-history-data.md:674
 msgid "默认情况下，并不会查找证券的全名，如果有必要，可以匹配全名，例如:"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:504
-#: ../../source/references/2-get-history-data.md:517
-#: ../../source/references/2-get-history-data.md:909
+#: ../../source/references/2-get-history-data.md:681
+#: ../../source/references/2-get-history-data.md:694
+#: ../../source/references/2-get-history-data.md:1086
 msgid "结果如下："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:532
+#: ../../source/references/2-get-history-data.md:709
 msgid "`qt.filter_stocks`被用来根据某些标准筛选股票，例如："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:878
+#: ../../source/references/2-get-history-data.md:1055
 msgid "生成的结果是一个`dict`，默认情况下以股票代码为`key`，`value`是一个包含所有需要类型的历史数据的`DataFrame`："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:898
+#: ../../source/references/2-get-history-data.md:1075
 msgid "如果需要同时读取多个股票的多种数据，也可以实现。而且可以设置不同的数据频率"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:947
+#: ../../source/references/2-get-history-data.md:1124
 msgid "保存到本地的股票量价数据可以直接以K线图的形式显示出来，下面是一些示例："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:949
+#: ../../source/references/2-get-history-data.md:1126
 msgid "历史价格数据的可视化"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:950
+#: ../../source/references/2-get-history-data.md:1127
 msgid "`qteasy`支持使用动态K线图展示数据，此时不需要从`DataSource`中读取数据，直接使用`qt.candle()`函数即可实现："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:958
+#: ../../source/references/2-get-history-data.md:1135
 msgid "![png](../tutorials/img/output_20_2.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:958
-#: ../../source/references/2-get-history-data.md:970
-#: ../../source/references/2-get-history-data.md:982
-#: ../../source/references/2-get-history-data.md:1001
-#: ../../source/references/2-get-history-data.md:1004
-#: ../../source/references/2-get-history-data.md:1007
-#: ../../source/references/2-get-history-data.md:1010
-#: ../../source/references/2-get-history-data.md:1013
-#: ../../source/references/2-get-history-data.md:1016
-#: ../../source/references/2-get-history-data.md:1019
-#: ../../source/references/2-get-history-data.md:1022
-#: ../../source/references/2-get-history-data.md:1025
-#: ../../source/references/2-get-history-data.md:1028
-#: ../../source/references/2-get-history-data.md:1031
+#: ../../source/references/2-get-history-data.md:1135
+#: ../../source/references/2-get-history-data.md:1147
+#: ../../source/references/2-get-history-data.md:1159
+#: ../../source/references/2-get-history-data.md:1178
+#: ../../source/references/2-get-history-data.md:1181
+#: ../../source/references/2-get-history-data.md:1184
+#: ../../source/references/2-get-history-data.md:1187
+#: ../../source/references/2-get-history-data.md:1190
+#: ../../source/references/2-get-history-data.md:1193
+#: ../../source/references/2-get-history-data.md:1196
+#: ../../source/references/2-get-history-data.md:1199
+#: ../../source/references/2-get-history-data.md:1202
+#: ../../source/references/2-get-history-data.md:1205
+#: ../../source/references/2-get-history-data.md:1208
 msgid "png"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:962
+#: ../../source/references/2-get-history-data.md:1139
 msgid "`qt.candle()`函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，例如，传入下面的参数显示一段时间内的60分钟K线图，且使用后复权价格:"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:970
+#: ../../source/references/2-get-history-data.md:1147
 msgid "![png](../tutorials/img/output_22_2.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:974
+#: ../../source/references/2-get-history-data.md:1151
 msgid "`qt.candle()`函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。例如："
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:982
+#: ../../source/references/2-get-history-data.md:1159
 msgid "![png](../tutorials/img/output_24_2.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:984
+#: ../../source/references/2-get-history-data.md:1161
 msgid "下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1001
+#: ../../source/references/2-get-history-data.md:1178
 msgid "![png](../tutorials/img/output_18_1.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1004
+#: ../../source/references/2-get-history-data.md:1181
 msgid "![png](../tutorials/img/output_18_2.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1007
+#: ../../source/references/2-get-history-data.md:1184
 msgid "![png](../tutorials/img/output_18_3_copy.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1010
+#: ../../source/references/2-get-history-data.md:1187
 msgid "![png](../tutorials/img/output_18_4.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1013
+#: ../../source/references/2-get-history-data.md:1190
 msgid "![png](../tutorials/img/output_18_5.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1016
+#: ../../source/references/2-get-history-data.md:1193
 msgid "![png](../tutorials/img/output_18_6.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1019
+#: ../../source/references/2-get-history-data.md:1196
 msgid "![png](../tutorials/img/output_18_7.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1022
+#: ../../source/references/2-get-history-data.md:1199
 msgid "![png](../tutorials/img/output_18_8.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1025
+#: ../../source/references/2-get-history-data.md:1202
 msgid "![png](../tutorials/img/output_18_9.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1028
+#: ../../source/references/2-get-history-data.md:1205
 msgid "![png](../tutorials/img/output_18_10.png)"
 msgstr ""
 
-#: ../../source/references/2-get-history-data.md:1031
+#: ../../source/references/2-get-history-data.md:1208
 msgid "![png](../tutorials/img/output_18_11.png)"
 msgstr ""
 
