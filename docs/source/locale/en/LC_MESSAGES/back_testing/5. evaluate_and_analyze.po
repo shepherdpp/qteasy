@@ -9,127 +9,153 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 23:23+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Source-Language: zh_CN\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:1
 msgid "回测结果评价与分析"
-msgstr ""
+msgstr "Backtest Results Evaluation and Analysis"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:3
 msgid "绩效指标完整列表（罗列并简短解释）"
-msgstr ""
+msgstr "Complete list of performance metrics (list and briefly explain)"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:5
-msgid "以下为回测结果中常用或 **evaluate** 可用的指标，与 qteasy 2.0 一致为准。"
+msgid ""
+"以下为回测结果中常用或 **evaluate** 可用的指标，与 qteasy 2.0 一致为"
+"准。"
 msgstr ""
+"Below are commonly used metrics in backtest results or those available "
+"in **evaluate**, consistent with qteasy 2.0."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "指标"
-msgstr ""
+msgstr "Metrics"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "含义"
-msgstr ""
+msgstr "Meaning"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "总收益 / total_return"
-msgstr ""
+msgstr "Total return / total_return"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "区间累计收益率。"
-msgstr ""
+msgstr "Cumulative return over the period."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "年化收益 / annual_return"
-msgstr ""
+msgstr "Annualized return / annual_return"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "年化后的收益率。"
-msgstr ""
+msgstr "The annualized rate of return."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "夏普比率 / sharpe_ratio"
-msgstr ""
+msgstr "Sharpe ratio / sharpe_ratio"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "风险调整后收益。"
-msgstr ""
+msgstr "Risk-adjusted return."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "最大回撤 / max_drawdown"
-msgstr ""
+msgstr "Maximum drawdown / max_drawdown"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "区间内最大净值回撤。"
-msgstr ""
+msgstr "Maximum net value drawdown within the period."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "胜率 / win_rate"
-msgstr ""
+msgstr "Win rate / win_rate"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "盈利次数占交易次数比例。"
-msgstr ""
+msgstr "The proportion of winning trades out of total trades."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "盈亏比"
-msgstr ""
+msgstr "Profit/loss ratio"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "平均盈利/平均亏损（若有）。"
-msgstr ""
+msgstr "Average profit / average loss (if any)."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "其他"
-msgstr ""
+msgstr "Other"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md
 msgid "如 Calmar、波动率等，以 evaluate 输出为准。"
-msgstr ""
+msgstr "Such as Calmar, volatility, etc., refer to the evaluate output."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:17
 msgid "可视化"
-msgstr ""
+msgstr "Visualization"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:19
-msgid "**visual=True**：在 **qt.run(..., visual=True)** 时，会生成并展示资金曲线、回撤等图。"
+msgid ""
+"**visual=True**：在 **qt.run(..., visual=True)** 时，会生成并展示资金曲"
+"线、回撤等图。"
 msgstr ""
+"**visual=True**: When running **qt.run(..., visual=True)**, it will "
+"generate and display charts such as the equity curve and drawdown."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:20
 msgid "也可单独调用绘图接口（若有），传入结果对象得到相同或更多图表。"
 msgstr ""
+"You can also call the plotting interface (if available) separately and "
+"pass in the result object to get the same or more charts."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:22
 msgid "结果导出"
-msgstr ""
+msgstr "Export results"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:24
 msgid ""
-"将**资金曲线**、**交易列表**导出为 DataFrame 或 CSV：从结果对象中取出对应属性后使用 **to_csv()** 或 "
-"**to_excel()** 等。"
+"将**资金曲线**、**交易列表**导出为 DataFrame 或 CSV：从结果对象中取出对"
+"应属性后使用 **to_csv()** 或 **to_excel()** 等。"
 msgstr ""
+"Export the **equity curve** and **trade list** to a DataFrame or CSV: "
+"retrieve the corresponding attributes from the result object, then use "
+"**to_csv()** or **to_excel()**, etc."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:25
 msgid "便于在外部进行进一步分析或报告。"
 msgstr ""
+"This makes it easier to perform further analysis or create reports "
+"externally."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:27
 msgid "简要分析思路"
-msgstr ""
+msgstr "Brief analysis approach"
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:29
-msgid "结合 **trade_log** 与**绩效指标**：检查高回撤时段对应的交易、胜率与盈亏比的匹配度。"
+msgid ""
+"结合 **trade_log** 与**绩效指标**：检查高回撤时段对应的交易、胜率与盈亏"
+"比的匹配度。"
 msgstr ""
+"Combine **trade_log** with **performance metrics**: check the trades "
+"corresponding to high-drawdown periods and how well the win rate "
+"matches the profit/loss ratio."
 
 #: ../../source/back_testing/5. evaluate_and_analyze.md:30
-msgid "可对策略参数、标的池或区间做敏感性分析，或使用《优化交易策略》中的参数优化（mode=2）寻找更优参数。"
+msgid ""
+"可对策略参数、标的池或区间做敏感性分析，或使用《优化交易策略》中的参数"
+"优化（mode=2）寻找更优参数。"
 msgstr ""
-
+"You can run sensitivity analysis on strategy parameters, the universe, "
+"or time ranges, or use the parameter optimization (mode=2) in "
+"\"Optimize Trading Strategies\" to find better parameters."

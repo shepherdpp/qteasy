@@ -9,199 +9,226 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 23:05+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/back_testing/2. run_backtest.md:1
 msgid "如何运行回测"
-msgstr ""
+msgstr "How to run a backtest"
 
 #: ../../source/back_testing/2. run_backtest.md:3
 msgid "入口与配置方式"
-msgstr ""
+msgstr "Entry point and configuration method"
 
 #: ../../source/back_testing/2. run_backtest.md:5
 msgid ""
-"使用 **qt.run(op, mode=1, ...)** 运行回测。配置可通过 **qt.configure(...)** 预先设置，run "
-"时传入的 kwargs 会与当前配置合并（run 中参数优先）。"
+"使用 **qt.run(op, mode=1, ...)** 运行回测。配置可通过 "
+"**qt.configure(...)** 预先设置，run 时传入的 kwargs 会与当前配置合并"
+"（run 中参数优先）。"
 msgstr ""
+"Run the backtest using **qt.run(op, mode=1, ...)**. The configuration "
+"can be set in advance via **qt.configure(...)**. The kwargs passed to "
+"run will be merged with the current configuration (parameters passed to "
+"run take precedence)."
 
 #: ../../source/back_testing/2. run_backtest.md:7
 msgid "回测运行参数完整列表（罗列并简短解释）"
 msgstr ""
+"Complete list of backtest runtime parameters (list and briefly explain)"
 
 #: ../../source/back_testing/2. run_backtest.md:9
-msgid "以下为与 mode=1 回测相关的主要参数，具体以当前 qteasy 2.0 API 为准。"
+msgid ""
+"以下为与 mode=1 回测相关的主要参数，具体以当前 qteasy 2.0 API 为准。"
 msgstr ""
+"The following are the main parameters related to mode=1 backtesting; "
+"please refer to the current qteasy 2.0 API for specifics."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "参数名"
-msgstr ""
+msgstr "Parameter name"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "类型/可选值"
-msgstr ""
+msgstr "Type/optional values"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "含义"
-msgstr ""
+msgstr "Meaning"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "asset_pool"
-msgstr ""
+msgstr "asset_pool"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "str 或 list"
-msgstr ""
+msgstr "str or list"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "回测标的池（股票代码等）。"
-msgstr ""
+msgstr "Backtest universe (stock tickers, etc.)."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "asset_type"
-msgstr ""
+msgstr "asset_type"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "str"
-msgstr ""
+msgstr "str"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "资产类型（如 'E' 股票）。"
-msgstr ""
+msgstr "Asset type (e.g., 'E' for equities)."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "invest_start"
-msgstr ""
+msgstr "invest_start"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "回测开始日期。"
-msgstr ""
+msgstr "Backtest start date."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "invest_end"
-msgstr ""
+msgstr "invest_end"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "回测结束日期。"
-msgstr ""
+msgstr "Backtest end date."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "invest_cash_amounts"
-msgstr ""
+msgstr "invest_cash_amounts"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "list/float"
-msgstr ""
+msgstr "list/float"
 
+# GPT: “分批投入”也可译为“分期/分阶段投入”；此处按资金投入语境选用较常见的“in installments”。
 #: ../../source/back_testing/2. run_backtest.md
 msgid "初始或分批投入资金。"
-msgstr ""
+msgstr "Invest funds initially or in installments."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "invest_cash_dates"
-msgstr ""
+msgstr "invest_cash_dates"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "list"
-msgstr ""
+msgstr "list"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "与 invest_cash_amounts 对应的投入日期（若分批）。"
 msgstr ""
+"Investment dates corresponding to invest_cash_amounts (if in batches)."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "trade_batch_size"
-msgstr ""
+msgstr "trade_batch_size"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "float"
-msgstr ""
+msgstr "float"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "每笔交易最小数量单位（最小值 0.01，例如 A 股可设 100 表示一手）。"
 msgstr ""
+"Minimum quantity unit per trade (minimum 0.01; for example, for A-shares "
+"you can set it to 100 to represent one lot)."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "cost_rate_buy"
-msgstr ""
+msgstr "cost_rate_buy"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "买入成本率（佣金等）。"
-msgstr ""
+msgstr "Buy cost rate (commissions, etc.)."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "cost_rate_sell"
-msgstr ""
+msgstr "cost_rate_sell"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "卖出成本率。"
-msgstr ""
+msgstr "Sell cost rate."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "cost_min"
-msgstr ""
+msgstr "cost_min"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "单笔最小成本。"
-msgstr ""
+msgstr "Minimum cost per transaction."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "allow_sell_short"
-msgstr ""
+msgstr "allow_sell_short"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "bool"
-msgstr ""
+msgstr "bool"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "是否允许卖空。"
-msgstr ""
+msgstr "Whether short selling is allowed."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "trade_log"
-msgstr ""
+msgstr "trade_log"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "是否记录交易日志。"
-msgstr ""
+msgstr "Whether to record the trade log."
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "visual"
-msgstr ""
+msgstr "visual"
 
 #: ../../source/back_testing/2. run_backtest.md
 msgid "是否输出可视化图表。"
-msgstr ""
+msgstr "Whether to output visualization charts."
 
 #: ../../source/back_testing/2. run_backtest.md:27
-msgid "其他可能参数：滑点、交易单位、印花税等，请以 **qt.configure()** 或 run 的文档为准。"
+msgid ""
+"其他可能参数：滑点、交易单位、印花税等，请以 **qt.configure()** 或 run 的"
+"文档为准。"
 msgstr ""
+"Other possible parameters: slippage, trading unit, stamp duty, etc. "
+"Please refer to the documentation for **qt.configure()** or run."
 
 #: ../../source/back_testing/2. run_backtest.md:29
 msgid "最小可运行示例"
-msgstr ""
+msgstr "Minimum runnable example"
 
 #: ../../source/back_testing/2. run_backtest.md:40
 msgid "常见使用场景"
-msgstr ""
+msgstr "Common use cases"
 
 #: ../../source/back_testing/2. run_backtest.md:42
-msgid "**成本设置**：通过 cost_rate_buy、cost_rate_sell、cost_min 模拟佣金与印花税。"
+msgid ""
+"**成本设置**：通过 cost_rate_buy、cost_rate_sell、cost_min 模拟佣金与印花"
+"税。"
 msgstr ""
+"**Cost settings**: use cost_rate_buy, cost_rate_sell, and cost_min to "
+"simulate commissions and stamp duty."
 
 #: ../../source/back_testing/2. run_backtest.md:43
-msgid "**交易单位**：trade_batch_size 控制最小交易单位（最小值为 0.01，如 A 股可设为 100 股）。"
+msgid ""
+"**交易单位**：trade_batch_size 控制最小交易单位（最小值为 0.01，如 A 股可"
+"设为 100 股）。"
 msgstr ""
+"**Trading unit**: trade_batch_size controls the minimum trading unit "
+"(minimum is 0.01; for example, for A-shares it can be set to 100 shares)."
 
 #: ../../source/back_testing/2. run_backtest.md:44
 msgid "**是否允许卖空**：allow_sell_short=False 表示仅做多。"
 msgstr ""
-
+"**Whether short selling is allowed**: allow_sell_short=False means long-"
+"only."

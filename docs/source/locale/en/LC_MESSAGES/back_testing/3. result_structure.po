@@ -9,151 +9,183 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-14 23:05+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/back_testing/3. result_structure.md:1
 msgid "回测结果的结构"
-msgstr ""
+msgstr "Structure of Backtest Results"
 
 #: ../../source/back_testing/3. result_structure.md:3
 msgid "返回值说明"
-msgstr ""
+msgstr "Return Value Description"
 
 #: ../../source/back_testing/3. result_structure.md:5
 msgid ""
-"**qt.run(op, mode=1)** 返回的对象通常为回测结果容器（如 Backtester 或包含结果的结构），与 qteasy 2.0"
-" API 一致，具体类型以文档为准。"
+"**qt.run(op, mode=1)** 返回的对象通常为回测结果容器（如 Backtester 或包含"
+"结果的结构），与 qteasy 2.0 API 一致，具体类型以文档为准。"
 msgstr ""
+"The object returned by **qt.run(op, mode=1)** is usually a backtest "
+"result container (e.g., a Backtester or a structure containing results), "
+"consistent with the qteasy 2.0 API. The exact type depends on the "
+"documentation."
 
 #: ../../source/back_testing/3. result_structure.md:7
 msgid "回测结果字段完整列表（罗列并简短解释）"
-msgstr ""
+msgstr "Complete list of backtest result fields (list and briefly explain)"
 
 #: ../../source/back_testing/3. result_structure.md:9
 msgid "以下为回测结果中常见属性/键及其含义，具体以当前版本为准。"
 msgstr ""
+"Below are common attributes/keys in backtest results and their meanings; "
+"refer to the current version for specifics."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "字段/属性名"
-msgstr ""
+msgstr "Field/Attribute Name"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "类型"
-msgstr ""
+msgstr "Type"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "含义"
-msgstr ""
+msgstr "Meaning"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "loop_result"
-msgstr ""
+msgstr "loop_result"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "结构/列表"
-msgstr ""
+msgstr "Structure/List"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "按时间步的循环运行结果。"
-msgstr ""
+msgstr "Loop run results by time step."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "complete_values"
-msgstr ""
+msgstr "complete_values"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "DataFrame/array"
-msgstr ""
+msgstr "DataFrame/array"
 
 #: ../../source/back_testing/3. result_structure.md
-msgid "完整净值或资金曲线序列，含持仓、cash、value、fee 及 p-{股票代码} 当日价格列等。"
+msgid ""
+"完整净值或资金曲线序列，含持仓、cash、value、fee 及 p-{股票代码} 当日价格"
+"列等。"
 msgstr ""
+"A complete NAV or equity-curve series, including positions, cash, value, "
+"fee, and the p-{股票代码} daily price column(s), etc."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "oper_count"
-msgstr ""
+msgstr "oper_count"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "int/dict"
-msgstr ""
+msgstr "int/dict"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "操作次数或按类型统计。"
-msgstr ""
+msgstr "Number of operations or statistics by type."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "summary"
-msgstr ""
+msgstr "summary"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "dict/str"
-msgstr ""
+msgstr "dict/str"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "汇总信息（如总收益、夏普等）。"
-msgstr ""
+msgstr "Summary information (e.g., total return, Sharpe ratio, etc.)."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "资金曲线/净值"
-msgstr ""
+msgstr "Equity curve / net asset value"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "array/Series"
-msgstr ""
+msgstr "array/Series"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "每日或每周期净值。"
-msgstr ""
+msgstr "Daily or per-period NAV."
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "持仓"
-msgstr ""
+msgstr "Positions"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "DataFrame"
-msgstr ""
+msgstr "DataFrame"
 
 #: ../../source/back_testing/3. result_structure.md
 msgid "各时点持仓明细（若有）。"
-msgstr ""
+msgstr "Position details at each time point (if any)."
 
 #: ../../source/back_testing/3. result_structure.md:20
 msgid "其他可能字段：交易明细、费用汇总等，请以实际返回对象属性为准。"
 msgstr ""
+"Other possible fields: trade details, fee summaries, etc. Please refer "
+"to the actual properties of the returned object."
 
 #: ../../source/back_testing/3. result_structure.md:22
 msgid "资金曲线与持仓"
-msgstr ""
+msgstr "Equity curve and positions"
 
 #: ../../source/back_testing/3. result_structure.md:24
-msgid "从结果中取出**每日净值**：通常来自 complete_values 的 `value` 列或类似属性。"
+msgid ""
+"从结果中取出**每日净值**：通常来自 complete_values 的 `value` 列或类似属"
+"性。"
 msgstr ""
+"Extract **daily NAV** from the result: it usually comes from the `value` "
+"column of complete_values or a similar attribute."
 
 #: ../../source/back_testing/3. result_structure.md:25
-msgid "**当日价格**：complete_values 中的 `p-{股票代码}` 列为各标的当日收盘价，缺失时为 NaN。"
+msgid ""
+"**当日价格**：complete_values 中的 `p-{股票代码}` 列为各标的当日收盘价，"
+"缺失时为 NaN。"
 msgstr ""
+"**Same-day price**: In complete_values, the `p-{股票代码}` column "
+"contains each instrument’s closing price for that day; if missing, it is "
+"NaN."
 
 #: ../../source/back_testing/3. result_structure.md:26
 msgid "**持仓占比**：若结果提供持仓表，可按标的与日期汇总计算占比。"
 msgstr ""
+"**Position ratio**: If the results provide a positions table, you can "
+"aggregate by instrument and date to calculate the ratio."
 
 #: ../../source/back_testing/3. result_structure.md:28
 msgid "绩效指标"
-msgstr ""
+msgstr "Performance metrics"
 
 #: ../../source/back_testing/3. result_structure.md:30
-msgid "结果中可能已包含 **evaluate** 或内置绩效指标（夏普、最大回撤、年化收益、胜率等）。"
+msgid ""
+"结果中可能已包含 **evaluate** 或内置绩效指标（夏普、最大回撤、年化收益、"
+"胜率等）。"
 msgstr ""
+"The results may already include **evaluate** or built-in performance "
+"metrics (Sharpe ratio, maximum drawdown, annualized return, win rate, "
+"etc.)."
 
 #: ../../source/back_testing/3. result_structure.md:31
-msgid "获取方式：如 `result.summary`、`result.evaluate()` 或单独调用评价函数，以 API 文档为准。"
+msgid ""
+"获取方式：如 `result.summary`、`result.evaluate()` 或单独调用评价函数，"
+"以 API 文档为准。"
 msgstr ""
-
+"How to obtain it: e.g., `result.summary`, `result.evaluate()`, or "
+"calling an evaluation function separately—refer to the API documentation."
