@@ -601,6 +601,42 @@ class TestParseTradingMoqParams(unittest.TestCase):
         result = parse_trading_moq_params(config)
         self.assertEqual(result, expected_result)
 
+    def test_boundary_case_minimum_value(self):
+        """TC003A: 测试边界情况 - moq最小值0.01"""
+        print('\n[TestParseTradingMoqParams] TC003A minimum boundary 0.01')
+        config = {
+            'trade_batch_size': 0.01,
+            'sell_batch_size':  0.01
+        }
+        result = parse_trading_moq_params(config)
+        print(' parsed result:', result)
+        self.assertEqual(result['moq_buy'], 0.01)
+        self.assertEqual(result['moq_sell'], 0.01)
+
+    def test_exception_case_moq_buy_below_minimum(self):
+        """TC003B: 测试异常情况 - moq_buy小于最小值0.01"""
+        print('\n[TestParseTradingMoqParams] TC003B moq_buy below minimum')
+        config = {
+            'trade_batch_size': 0.005,
+            'sell_batch_size':  1.0
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        print(' error:', str(context.exception))
+        self.assertIn('moq_buy should be a float number greater than or equal to 0.01', str(context.exception))
+
+    def test_exception_case_moq_sell_below_minimum(self):
+        """TC003C: 测试异常情况 - moq_sell小于最小值0.01"""
+        print('\n[TestParseTradingMoqParams] TC003C moq_sell below minimum')
+        config = {
+            'trade_batch_size': 1.0,
+            'sell_batch_size':  0.005
+        }
+        with self.assertRaises(ValueError) as context:
+            parse_trading_moq_params(config)
+        print(' error:', str(context.exception))
+        self.assertIn('moq_sell should be a float number greater than or equal to 0.01', str(context.exception))
+
     def test_exception_case_moq_buy_negative(self):
         """TC004: 测试异常情况 - moq_buy为负数"""
         config = {
@@ -609,7 +645,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_buy should be a positive float number or zero', str(context.exception))
+        self.assertIn('moq_buy should be a float number greater than or equal to 0.01', str(context.exception))
 
     def test_exception_case_moq_buy_non_numeric(self):
         """TC006: 测试异常情况 - moq_buy为非数字类型"""
@@ -619,7 +655,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_buy should be a positive float number or zero', str(context.exception))
+        self.assertIn('moq_buy should be a float number greater than or equal to 0.01', str(context.exception))
 
     def test_exception_case_moq_sell_negative(self):
         """TC007: 测试异常情况 - moq_sell为负数"""
@@ -629,7 +665,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_sell should be a positive float number or zero', str(context.exception))
+        self.assertIn('moq_sell should be a float number greater than or equal to 0.01', str(context.exception))
 
     def test_exception_case_moq_sell_non_numeric(self):
         """TC009: 测试异常情况 - moq_sell为非数字类型"""
@@ -639,7 +675,7 @@ class TestParseTradingMoqParams(unittest.TestCase):
         }
         with self.assertRaises(ValueError) as context:
             parse_trading_moq_params(config)
-        self.assertIn('moq_sell should be a positive float number', str(context.exception))
+        self.assertIn('moq_sell should be a float number greater than or equal to 0.01', str(context.exception))
 
 
 class TestParseTradingDeliveryParams(unittest.TestCase):

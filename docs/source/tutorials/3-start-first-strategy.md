@@ -203,8 +203,8 @@ Filter lbound           -inf
 ...              cost_rate_sell=0.0001,  # 卖出资产时的交易费用为万分之一
 ...              invest_start='20110101',  # 模拟交易开始日期
 ...              invest_end='20201231',  # 模拟交易结束日期
-...              trade_batch_size=0,  # 买入资产时最小交易批量
-...              sell_batch_size=0,  # 卖出资产时最小交易批量
+...              trade_batch_size=0.01,  # 买入资产时最小交易批量
+...              sell_batch_size=0.01,  # 卖出资产时最小交易批量
 ... )
 ```
 上面的配置含义如下
@@ -215,8 +215,8 @@ Filter lbound           -inf
 - `cost_rate_sell=0.0001`：
 - `invest_start='20110101'`： 模拟交易开始日期
 - `invest_end='20201231'`：  模拟交易结束日期
-- `trade_batch_size=0`：  买入资产时最小交易批量，`0`代表可以交易任意份额，1代表只能交易整数份，这里可以输入任意大于`0`的数
-- `sell_batch_size=0`： 卖出资产时最小交易批量为`0`
+- `trade_batch_size=0.01`： 买入资产时最小交易批量，最小允许`0.01`，1代表只能交易整数份，这里可以输入任意大于等于`0.01`的数
+- `sell_batch_size=0.01`： 卖出资产时最小交易批量，最小允许`0.01`
 
 `qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/)。
 

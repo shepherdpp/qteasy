@@ -228,15 +228,30 @@ class TestBuildLiveTradeConfig(unittest.TestCase):
         cfg = build_live_trade_config(base)
         self.assertAlmostEqual(cfg.trade_batch_size, 0.01, places=6)
 
+    def test_rejects_sell_batch_size_below_minimum(self) -> None:
+        print('\n[TestBuildLiveTradeConfig] G3 sell_batch_size too small')
+        base = _minimal_valid_live_mapping()
+        base['sell_batch_size'] = 0.001
+        with self.assertRaises(ValueError) as ctx:
+            build_live_trade_config(base)
+        self.assertIn('sell_batch_size', str(ctx.exception))
+
+    def test_allows_sell_batch_size_equal_minimum(self) -> None:
+        print('\n[TestBuildLiveTradeConfig] G4 sell_batch_size boundary')
+        base = _minimal_valid_live_mapping()
+        base['sell_batch_size'] = 0.01
+        cfg = build_live_trade_config(base)
+        self.assertAlmostEqual(cfg.sell_batch_size, 0.01, places=6)
+
     def test_rejects_watched_price_refresh_below_five(self) -> None:
-        print('\n[TestBuildLiveTradeConfig] G3 watched_price_refresh_interval')
+        print('\n[TestBuildLiveTradeConfig] G5 watched_price_refresh_interval')
         base = _minimal_valid_live_mapping()
         base['watched_price_refresh_interval'] = 4
         with self.assertRaises(ValueError):
             build_live_trade_config(base)
 
     def test_allows_watched_price_refresh_equal_five(self) -> None:
-        print('\n[TestBuildLiveTradeConfig] G4 watched_price_refresh_interval=5')
+        print('\n[TestBuildLiveTradeConfig] G6 watched_price_refresh_interval=5')
         base = _minimal_valid_live_mapping()
         base['watched_price_refresh_interval'] = 5
         cfg = build_live_trade_config(base)

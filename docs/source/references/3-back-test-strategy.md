@@ -457,7 +457,7 @@ qt.configure(
     benchmark_asset = '000300.SH',  # 设置交易评价基准（类型由系统根据代码自动推断）
     asset_pool = '000300.SH',  # 设置交易资产组合
     asset_type = 'IDX',  # 交易资产组合的资产类型
-    trade_batch_size = 0,  # 设置允许最小交易批量
+    trade_batch_size = 0.01,  # 设置允许最小交易批量（最小0.01）
     invest_start = '20100105',  # 设置交易开始日期
     invest_end = '20201231',  # 设置交易终止日期
     invest_cash_amounts = [1000000],  # 设置初始交易投资金额为十万元

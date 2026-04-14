@@ -128,15 +128,15 @@ class TestParseLiveTradeSignalPlanned(unittest.TestCase):
                 available_cash=own_cash,
                 cost_params=cost_params,
                 allow_sell_short=True,
-                trade_batch_size=0.0,
-                sell_batch_size=0.0,
+                trade_batch_size=0.01,
+                sell_batch_size=0.01,
         )
         symbols, positions, directions, quantities, quoted_prices, remarks = parsed
         print('  parsed symbols', symbols, 'qty', quantities, 'qp', quoted_prices, 'remarks', remarks)
         self.assertEqual(symbols, ['A'])
         self.assertEqual(directions, ['buy'])
         self.assertAlmostEqual(quantities[0], 500.0)
-        ap, cs, fees = get_purchase_result(prices, np.array([5000.0]), 0.0, cost_params)
+        ap, cs, fees = get_purchase_result(prices, np.array([5000.0]), 0.01, cost_params)
         print('  get_purchase_result qty', ap[0], 'fees', fees[0], 'cash_spent', cs[0])
         self.assertAlmostEqual(float(ap[0]), 500.0)
         self.assertAlmostEqual(float(fees[0]), 0.0)

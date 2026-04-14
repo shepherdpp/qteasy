@@ -253,8 +253,8 @@ def parse_live_trade_signal(signals,
                             pt_buy_threshold: float = 0.0,
                             pt_sell_threshold: float = 0.0,
                             allow_sell_short: bool = False,
-                            trade_batch_size: int = 0,
-                            sell_batch_size: int = 0,
+                            trade_batch_size: float = 0.01,
+                            sell_batch_size: float = 0.01,
                             long_position_limit: float = 1.0,
                             short_position_limit: float = -1.0,
                             cash_delivery_period: int = 0,
@@ -293,9 +293,9 @@ def parse_live_trade_signal(signals,
         PT卖出阈值
     allow_sell_short: bool, default=False
         是否允许卖空
-    trade_batch_size: int, default=0
+    trade_batch_size: float, default=0.01
         买入交易批量大小
-    sell_batch_size: int, default=0
+    sell_batch_size: float, default=0.01
         卖出交易批量大小
     long_position_limit: float, default=1.0
         多头持仓限制
@@ -320,6 +320,14 @@ def parse_live_trade_signal(signals,
         available_amounts = own_amounts
     if available_cash is None:
         available_cash = own_cash
+    if not isinstance(trade_batch_size, (float, int)):
+        raise TypeError('trade_batch_size must be a number.')
+    if not isinstance(sell_batch_size, (float, int)):
+        raise TypeError('sell_batch_size must be a number.')
+    if float(trade_batch_size) < 0.01:
+        raise ValueError('trade_batch_size must be >= 0.01.')
+    if float(sell_batch_size) < 0.01:
+        raise ValueError('sell_batch_size must be >= 0.01.')
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
 
     # 1, 将交易信号解析为交易意图 trade_intentions (即cash_to_spend和amounts_to_sell)
