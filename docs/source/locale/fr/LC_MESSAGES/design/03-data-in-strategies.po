@@ -1,0 +1,185 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/design/03-data-in-strategies.md:1
+msgid "策略如何声明与使用数据"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:3
+msgid "1. 策略层在整体中的位置"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:5
+msgid ""
+"策略层负责两件事：**声明**“需要什么数据”（以及多长窗口、是否使用最新周期），以及**在 realize() "
+"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 "
+"id 获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:7
+msgid "2. 策略如何声明需要的数据"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:9
+msgid "在策略类初始化（`__init__`）时，通过以下属性声明对数据的需求："
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:11
+msgid ""
+"**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 DataType "
+"对应一种“可引用的信息”，并对应唯一的 **dtype_id**（如 `close_E_d`）。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:12
+msgid ""
+"**window_length**：历史数据窗口长度（如 20 表示最近 20 个周期）。可为标量（作用于所有声明的数据类型）或按 dtype "
+"分别指定。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:13
+msgid "**use_latest_data_cycle**：是否只使用“最新一个周期”的数据（如仅用最新截面做选股），可按 dtype 分别设置。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:15
+msgid "声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:17
+msgid "3. 运行时数据如何到达策略"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:19
+msgid ""
+"**准备阶段**：根据回测区间（或实盘当前时刻）、策略的 data_types 与 window_length，引擎从 DataSource "
+"取出对应区间内的数据，并按时间步预先或按需切出每个时间步的“数据窗口”。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:20
+msgid ""
+"**每步运行前**：对于当前要运行的 Group 内的每个策略，引擎调用 "
+"**update_running_data_window**，把当前步对应的数据窗口写入该策略的内部状态（按 dtype_id 索引）。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:21
+msgid ""
+"**realize() 内**：策略通过 **get_data(dtype_id)** 按 id 取出已注入的窗口数据（numpy "
+"数组），用于计算信号。无需传参，也无需关心数据来自哪张表。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:23
+msgid "因此，数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含任何“读表”或“拉取”逻辑。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:25
+msgid "4. 数据窗口的含义"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:27
+msgid ""
+"**时间维度**：window_length 表示“回溯多少个周期”。例如日频、window_length=20 表示最近 20 "
+"个交易日的数据；数组形状通常为 (n_periods,) 或 (n_assets, n_periods)，最后一维为时间，最后一列为最近一期。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:28
+msgid "**多资产时的形状**：不同策略基类对数据的组织方式略有差异："
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:29
+msgid "**RuleIterator**：通常按资产迭代，每次 realize() 看到的是单资产的时间序列或截面。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:30
+msgid "**FactorSorter**：多资产截面（如每只股票一个因子值），用于排序选股。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:31
+msgid "**GeneralStg**：多资产、多 dtype 的窗口，返回与资产数相同长度的信号数组。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:33
+msgid "具体形状以 API 与策略基类文档为准；本系列强调“窗口由引擎按声明准备、策略用 get_data 按 id 取用”。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:35
+msgid "5. 过程数据（proc.*）"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:37
+msgid ""
+"除上述“声明 → 引擎注入”的静态历史数据外，qteasy "
+"支持**过程数据**：依赖回测/实盘执行路径的状态（如当前持仓、现金、历史成交记录等）。过程数据**无需在 data_types 中声明**，由 "
+"Backtester（回测）或 Trader（实盘）在运行时维护并注入。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:39
+msgid ""
+"**访问方式**：在 `realize()` 中通过 "
+"`self.get_data('proc.own_cash')`、`self.get_data('proc.trade_records', "
+"lag=0)` 等形式按需获取；支持 `lag`（步或时间如 `'1d'`）与 `window`（如 `'5d'`）参数。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:40
+msgid ""
+"**约束**：一次调用仅允许一个 `proc.*` "
+"字段，且不得与静态数据混合调用；使用过程数据的策略将自动走**动态回测**路径（逐步生成信号、逐步成交）。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:42
+msgid "详见 [过程数据（proc.*）与动态回测](09-process-data-and-dynamic-backtest.md)。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:44
+msgid "6. 参考数据（若有）"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:46
+msgid ""
+"除策略声明的 data_types 外，qteasy "
+"支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的 "
+"dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:48
+msgid "7. 小结"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:50
+msgid "“声明 → 引擎注入 → get_data 引用”保证了："
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:52
+msgid "回测与实盘使用同一套数据视图与访问方式；"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:53
+msgid "策略无法越权访问未声明或未来的数据，从机制上避免未来函数；"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:54
+msgid "接口统一、易于维护与扩展。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:56
+msgid ""
+"“声明 → 引擎注入 → get_data "
+"引用”同样适用于过程数据，只是过程数据不需声明、由运行层按步注入，且仅在使用时触发动态回测路径。更多用法见《使用教程》与《API 参考》。"
+msgstr ""
+

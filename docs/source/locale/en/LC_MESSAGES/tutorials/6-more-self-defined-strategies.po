@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-26 09:45+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -103,7 +103,10 @@ msgstr ""
 "-first-self-defined-strategy.md)"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:24
-msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+#, fuzzy
+msgid ""
+"在[QTEASY文档](https://qteasy.readthedocs.io/zh-"
+"cn/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
 msgstr ""
 "In the [QTEASY documentation](https://qteasy.readthedocs.io/zh/latest/), "
 "you can find more information about using built-in trading strategies, "
@@ -154,7 +157,8 @@ msgstr ""
 "that the stocks are held in equal shares."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:35
-msgid "Alpha选股策略的排名依据每一支股票的两个财务指标：EV（企业市场价值）以及EBITDA（息税折旧摊销前利润）来计算，对每一支股票计算EV与EBITDA的比值，当这个比值大于0的时候，说明该上市公司是盈利的（因为EBITDA为正）。这时，这个比值代表该公司每赚到一块钱利润，需要投入的企业总价值。自然，这个比值越低越好。例如，下面两家上市公司数据如下："
+#, fuzzy
+msgid "Alpha选股策略的排名依据每一支股票的两个财务指标：`EV`（企业市场价值）以及`EBITDA`（息税折旧摊销前利润）来计算，对每一支股票计算EV与EBITDA的比值，当这个比值大于0的时候，说明该上市公司是盈利的（因为`EBITDA`为正）。这时，这个比值代表该公司每赚到一块钱利润，需要投入的企业总价值。自然，这个比值越低越好。例如，下面两家上市公司数据如下："
 msgstr ""
 "Alpha stock selection strategy is based on two financial indicators of "
 "each stock: EV (enterprise market value) and EBITDA (profit before "
@@ -167,14 +171,16 @@ msgstr ""
 "following two listed companies are as follows:"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:37
-msgid "A公司的EBITDA为一千万，而企业市场价值为一百亿，EV/EBITDA=1000.。说明该公司每一千元的市场价值可以挣到一元钱利润"
+#, fuzzy
+msgid "A公司的`EBITDA`为一千万，而企业市场价值为一百亿，`EV`/`EBITDA`=1000.。说明该公司每一千元的市场价值可以挣到一元钱利润"
 msgstr ""
 "Company A's EBITDA is 10 million, and the enterprise market value is 10 "
 "billion, EV/EBITDA=1000. It means that the company can earn one yuan "
 "profit for every 1000 yuan of market value"
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:38
-msgid "B公司的EBITDA同样为一千万，企业市场价值为一千亿，EV/EBITDA=10000，说明该公司每一万元的市场价值可以挣到一元钱利润"
+#, fuzzy
+msgid "B公司的`EBITDA`同样为一千万，企业市场价值为一千亿，`EV`/`EBITDA`=10000，说明该公司每一万元的市场价值可以挣到一元钱利润"
 msgstr ""
 "Company B's EBITDA is also 10 million, and the enterprise market value is"
 " 100 billion, EV/EBITDA=10000, which means that the company can earn one "
@@ -197,14 +203,27 @@ msgstr ""
 "companies to hold, which is the Alpha stock selection trading strategy."
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:44
-msgid "其实，类似于这样的指标排序选股策略，`qteasy`提供了一个内置交易策略可以直接实现："
+#, fuzzy
+msgid "其实，类似于这样的指标排序选股策略，`qteasy`提供了一个内置交易策略可以直接实现。"
 msgstr ""
 "Actually, for stock selection strategies similar to this indicator "
 "ranking, `qteasy` provides a built-in trading strategy that can be "
 "implemented directly:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:91
-msgid "不过这个内置交易策略仅支持以`qteasy`内置历史数据类型为选股因子，例如pe市盈率、profit利润等数据是`qteasy`的内置历史数据，可以直接引用。但如果是``qteasy``内置历史数据中找不到的选股因子，就不能直接使用内置交易策略了。EV/EBITDA这个指标是一个计算指标，因此，我们必须使用自定义交易策略。并在自定义策略中计算该指标。"
+#: ../../source/tutorials/6-more-self-defined-strategies.md:46
+msgid "使用`built_in_doc`来查看这个内置交易策略的文档："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:52
+#: ../../source/tutorials/6-more-self-defined-strategies.md:102
+#: ../../source/tutorials/6-more-self-defined-strategies.md:132
+#: ../../source/tutorials/6-more-self-defined-strategies.md:147
+msgid "输出如下："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:92
+#, fuzzy
+msgid "不过这个内置交易策略仅支持以`qteasy`内置历史数据类型为选股因子，例如pe市盈率、profit利润等数据是`qteasy`的内置历史数据，可以直接引用。但如果是``qteasy``内置历史数据中找不到的选股因子，就不能直接使用内置交易策略了。`EV`/`EBITDA`这个指标是一个计算指标，因此，我们必须使用自定义交易策略。并在自定义策略中计算该指标。"
 msgstr ""
 "But this built-in trading strategy only supports the use of `qteasy` "
 "built-in historical data types as stock selection factors. For example, "
@@ -215,71 +234,166 @@ msgstr ""
 "EV/EBITDA is a calculated indicator, so we must use a custom trading "
 "strategy. And calculate this indicator in the custom strategy."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:92
+#: ../../source/tutorials/6-more-self-defined-strategies.md:93
 msgid "计算选股指标"
 msgstr "Calculate stock selection indicators"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:94
+#: ../../source/tutorials/6-more-self-defined-strategies.md:95
 msgid "为了计算EV/EBITDA，我们必须至少先确认`qteasy`中是否已经提供了EV和EBITDA这两种历史数据："
 msgstr ""
 "To calculate EV/EBITDA, we must at least confirm whether `qteasy` has "
 "provided EV and EBITDA these two types of historical data:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:96
-msgid "我们可以使用`find_history_data()`来查看历史数据是否被`qteasy`支持"
+#: ../../source/tutorials/6-more-self-defined-strategies.md:97
+#, fuzzy
+msgid "我们可以使用API：`find_history_data()`来查看历史数据类型是否被`qteasy`支持，首先查找 `ebitda`"
 msgstr ""
 "We can use `find_history_data()` to see if the historical data is "
 "supported by `qteasy`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:119
-msgid ""
-"从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，可以通过'ebitda‘ / "
-"income_ebitda "
-"这两个ID来获取（我们将使用'ebitda'），但是EV企业现金价值并不在内置数据类型中，但我们知道EV可以通过下面的公式计算："
+#: ../../source/tutorials/6-more-self-defined-strategies.md:113
+msgid "`qteasy`中的数据类型需要通过`qteasy.DataType`来创建，`DataType`代表了一种历史数据类型，它代表了`qteasy`可以直接从历史数据中提取出的一类信息，通过数据类型对象，`qteasy`提供了统一的数据接口，使得用户可以非常容易地获取到各种历史数据信息，而不需要关心数据类型的存储方式、存储位置；同时，`qteasy`完全封装了所有数据类型的类型处理、频率转换、股票代码匹配等等非常繁杂的底层数据逻辑，使得用户可以完全不用关心每一种数据的存储方式、直接使用即可。"
 msgstr ""
-"From the above return value, it can be seen that in the built-in "
-"historical data types of `qteasy`, EBITDA is a standard historical data "
-"type, which can be obtained through 'ebitda' / income_ebitda these two "
-"IDs (we will use 'ebitda'), but EV enterprise cash value is not in the "
-"built-in data type, but we know that EV can be calculated by the "
-"following formula:"
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:115
+msgid ""
+"关于`qteasy`数据类型的更详细介绍，请参见[QTEASY文档](https://qteasy.readthedocs.io/zh-"
+"cn/latest/data_types.html)。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:117
+msgid "`qteasy`的`DataType`包含三个属性："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:119
+msgid "name: 数据类型的名称，例如上面返回值中的`ebitda`"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:120
+msgid "freq: 数据的频率，例如上面返回值中的`q`，代表季度数据"
+msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:121
-#, fuzzy
-msgid " EV = 总市值 + 总负债 - 总现金 "
-msgstr "$$ EV = Total Market Value + Total Liabilities - Total Cash $$"
+msgid "asset_type: 数据的资产类型，例如上面返回值中的`E`，代表股票数据"
+msgstr ""
 
 #: ../../source/tutorials/6-more-self-defined-strategies.md:123
+msgid "以上三个属性共同定义了一种唯一的数据类型。`qteasy`内置了大量的历史数据类型，用户可以直接使用这些数据类型来获取历史数据，而不需要自己去计算或者处理原始数据来得到这些数据类型。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:125
+msgid ""
+"从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，这个数据来自于上市公司财务指标表 "
+"`financial`， 数据频率为 `q`（季度）："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:127
+msgid "接下来查看EV："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:142
+msgid "表明在 `qteasy` 的内置历史数据类型中，没有找到名字为EV的历史数据类型，此时可以使用参数`fuzzy=True`来确认。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:165
+msgid ""
+"上面这张表格列出了`qteasy`中已经定义好且可以直接使用的数据类型，请注意 `name` / `freq` / `asset` "
+"这三列，分别代表了数据类型的名称、数据频率以及数据的资产类型，这三列共同定义了一个唯一的数据类型，用户可以通过`qteasy.DataType(name,"
+" freq, asset)`来创建一个数据类型对象来获取这种数据类型的历史数据。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:167
+msgid ""
+"尽管EV并不在 `qteasy` "
+"的内置历史数据类型中，但我们可以看到有一些与EV相关的历史数据类型，例如总收入、每股收入等等，这些数据类型虽然与EV相关，但并不是我们需要的EV。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:170
+msgid "不过，我们知道EV可以通过下面的公式计算："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:172
+#, fuzzy
+msgid " EV = MV 总市值 + TL 总负债 - Cash 总现金 "
+msgstr "$$ EV = Total Market Value + Total Liabilities - Total Cash $$"
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:174
 msgid "而上面几个财务指标都是`qteasy`直接支持的："
 msgstr "And the above financial indicators are directly supported by `qteasy`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:125
+#: ../../source/tutorials/6-more-self-defined-strategies.md:176
 msgid "总市值 - 数据类型： `total_mv`"
 msgstr "Total Market Value - Data Type: `total_mv`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:126
+#: ../../source/tutorials/6-more-self-defined-strategies.md:177
 msgid "总负债 - 数据类型： `total_liab`"
 msgstr "Total Liabilities - Data Type: `total_liab`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:127
+#: ../../source/tutorials/6-more-self-defined-strategies.md:178
 msgid "总现金 - 数据类型： `c_cash_equ_end_period`"
 msgstr "Total Cash - Data Type: `c_cash_equ_end_period`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:129
-msgid "我们可以测试一下："
-msgstr "Let's test it:"
+#: ../../source/tutorials/6-more-self-defined-strategies.md:180
+msgid "为此我们可以测试一下，查看这些数据类型的详细解释："
+msgstr ""
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:144
+#: ../../source/tutorials/6-more-self-defined-strategies.md:185
+msgid "得到如下输出："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:200
+msgid "这里需要注意的是`total_mv`这个数据类型有两个版本，一个是以万元为单位的，一个是以亿元为单位的，我们在计算EV/EBITDA的时候，严格说来单位并不重要，但是在其他情况下需要注意，我们这里将该数据乘以10000，以统一单位。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:202
+msgid "我们在这选择`DataType('total_mv', 'd', 'E')`，这个数据类型代表了上市公司每天的总市值，单位为万元。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:217
+msgid ""
+"在这里我们可以选择数据类型`DataType('total_liab', 'q', "
+"'E')`，这个数据类型代表了上市公司每个季度末的总负债，单位为元。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:266
+msgid ""
+"与cash相关的数据类型有很多，但我们需要的现金及现金等价物总额是`DataType(c_cash_equ_end_period, 'q', "
+"'E')`，这个数据类型代表了上市公司每个季度末的现金及现金等价物总额。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:268
+msgid "根据上面的信息，我们可以选择下面四种数据类型来计算EV："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:269
+msgid "**`DataType('total_mv', 'd', 'E')`**，这个数据类型代表了上市公司每天的总市值，单位为万元。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:270
+msgid "**`DataType('total_liab', 'q', 'E')`**，这个数据类型代表了上市公司每个季度末的总负债，单位为元。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:271
+msgid ""
+"**`DataType('c_cash_equ_end_period', 'q', "
+"'E')`**，这个数据类型代表了上市公司每个季度末的现金及现金等价物总额，单位为元。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:273
+msgid "我们可以测试一下，`qteasy`提供了一个非常方便的API：`get_history_data()`，可以直接获取到这些数据类型的历史数据："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:322
 msgid "可以看到选股因子已经计算出来了，那么我们可以开始定义交易策略了。"
 msgstr ""
 "We can see that the stock selection factor has been calculated, so we can"
 " start defining the trading strategy."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:145
+#: ../../source/tutorials/6-more-self-defined-strategies.md:324
 msgid "用`FactorSorter`定义Alpha选股策略"
 msgstr "Define Alpha stock selection strategy with `FactorSorter`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:147
+#: ../../source/tutorials/6-more-self-defined-strategies.md:326
 msgid "针对这种定时选股类型的交易策略，`qteasy`提供了`FactorSorter`交易策略类，顾名思义，这个交易策略基类允许用户在策略的实现方法中计算一组选股因子，这样策略就可以自动将所有的股票按照选股因子的值排序，并选出排名靠前的股票。至于排序方法、筛选规则、股票持仓权重等都可以通过策略参数设置。"
 msgstr ""
 "`qteasy` provides the `FactorSorter` trading strategy class for this type"
@@ -291,13 +405,13 @@ msgstr ""
 "As for the sorting method, screening rules, stock holding weights, etc., "
 "can be set through strategy parameters."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:149
+#: ../../source/tutorials/6-more-self-defined-strategies.md:328
 msgid "如果符合上面定义的交易策略，使用`FactorSorter`策略基类将会非常方便。"
 msgstr ""
 "If it meets the definition of the trading strategy above, using the "
 "`FactorSorter` strategy base class will be very convenient."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:151
+#: ../../source/tutorials/6-more-self-defined-strategies.md:330
 msgid "下面我们就来一步步定义看看，首先继承`FactorSorter`并定义一个类，在上一个章节中，我们在自定义策略的`__init__()`方法中定义名称、描述以及默认参数等信息，然而我们也可以忽略`__init__()`方法，仅仅在创建策略对象时传入参数等信息，这也是可以的，我们在这里就这样做："
 msgstr ""
 "Next, let's define it step by step. First, inherit `FactorSorter` and "
@@ -307,38 +421,40 @@ msgstr ""
 "the `__init__()` method and only pass in parameters when creating the "
 "strategy object. This is also possible. We do it here:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:160
+#: ../../source/tutorials/6-more-self-defined-strategies.md:346
 msgid ""
 "与上一节相同，在`realize()`中需要做的第一步是获取历史数据。我们知道历史数据包括`total_mv, total_liab, "
 "c_cash_equ_end_period, "
-"ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L,"
-" M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
+"ebitda`等四种，这四种历史数据将会被定义为四种`DataType`传入策略中。在策略中要使用这些历史数据，可以直接使用`self.get_data()`方法："
 msgstr ""
-"Same as the previous section, the first step to be done in `realize()` is"
-" to get historical data. We know that historical data includes `total_mv,"
-" total_liab, c_cash_equ_end_period, ebitda` and other four types, these "
-"historical data are also stored in the historical data attribute h after "
-"packaging. Unlike the previous chapter, h is a three-dimensional "
-"`ndarray` with a shape of (L, M, N), containing L layers, M rows, and N "
-"columns, representing each stock, each date, and each data type."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:162
-msgid "因此，要获取四种数据类型最后一个周期的所有股票的数据，应该使用如下方法切片："
+#: ../../source/tutorials/6-more-self-defined-strategies.md:356
+msgid "`self.get_data()`方法通过每一种数据的数据ID来获取相应的历史数据。而每一种数据的ID默认ID就是它的名称、资产类型和频率的组合，例如："
 msgstr ""
-"Therefore, to obtain the data of all stocks in the last period of the "
-"four data types, the following method"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:175
-msgid "这样我们获取到的每一种数据类型都是一个一维数组，这个数组的长度与我们传入的备选股票池中的股票数量相同，每一个元素代表该股票的数据。加入我们的投资股票池中有三支股票，那么total_mv中就会有三个数字，分别代表三支股票的总市值，以此类推。"
+#: ../../source/tutorials/6-more-self-defined-strategies.md:358
+msgid "**`DataType('total_mv', 'd', 'E')`**，这个数据类型的ID为 `total_mv_E_d`。"
 msgstr ""
-"Thus, the data type we obtain is a one-dimensional array, and the length "
-"of this array is the same as the number of stocks in the alternative "
-"stock pool we pass in, and each element represents the data of the stock."
-" If there are three stocks in our investment stock pool, then there will "
-"be three numbers in total_mv, representing the total market value of the "
-"three stocks, and so on."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:177
+#: ../../source/tutorials/6-more-self-defined-strategies.md:359
+msgid "**`DataType('total_liab', 'q', 'E')`**，这个数据类型的ID为：`total_liab_E_d`。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:361
+msgid "qteasy会在交易策略开始运行之前准备好相应的交易数据，所有的交易数据都是一个numpy数组，这个数组的行数与投资池中的股票数量相同，的每一列对应着股票池中的一支股票；而行数与时间窗口的长度相同，每一行对应着时间窗口中的一个时间点，且以升序排列，最后一列代表交易当时能看到的最新的历史数据。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:363
+msgid ""
+"按照这个规则，如果要获取第I支股票在交易日当天能看到的最近的历史数据，只要访问array(-1， "
+"i)即可，通过下面的循环即可访问同一时间内的所有股票的数据："
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:372
+msgid "不过，使用for-loop来访问数据的效率比较低，您最好在策略中尽量使用向量化的操作以节省时间。"
+msgstr ""
+
+#: ../../source/tutorials/6-more-self-defined-strategies.md:374
 msgid "做好上述准备后，计算选股因子就非常方便了，而且，由于我们使用了`FactorSorter`策略基类，计算好选股因子后，直接返回选股因子就可以了，`qteasy`会处理剩下的选股操作："
 msgstr ""
 "If you are ready for the above, it is very convenient to calculate the "
@@ -347,70 +463,70 @@ msgstr ""
 "can directly return the stock selection factor, and `qteasy` will handle "
 "the rest of the stock selection operation:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:189
+#: ../../source/tutorials/6-more-self-defined-strategies.md:383
 msgid "至此，仅仅用六行代码，一个自定义Alpha选股交易策略就定义好了。是不是非常简单？"
 msgstr ""
 "Now, with just six lines of code, a custom Alpha stock selection trading "
 "strategy is defined. Isn't it very simple?"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:191
+#: ../../source/tutorials/6-more-self-defined-strategies.md:385
 msgid "好了，我们来看看回测的结果如何？"
 msgstr "OK, let's see how the backtest results are?"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:193
+#: ../../source/tutorials/6-more-self-defined-strategies.md:387
 msgid "交易策略的回测结果"
 msgstr "Results of backtesting trading strategies"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:195
+#: ../../source/tutorials/6-more-self-defined-strategies.md:389
 msgid "由于我们忽略了策略类的`__init__()`方法，因此在实例化策略对象时，必须输入完整的策略参数："
 msgstr ""
 "Since we ignored the `__init__()` method of the strategy class, the "
 "complete strategy parameters must be entered when instantiating the "
 "strategy object:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:213
+#: ../../source/tutorials/6-more-self-defined-strategies.md:409
 msgid "然后创建一个`Operator`对象，因为我们希望控制持仓比例，因此最好使用“PT”信号类型："
 msgstr ""
 "Then create an `Operator` object, because we want to control the position"
 " ratio, it is best to use the 'PT' signal type:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:224
-#: ../../source/tutorials/6-more-self-defined-strategies.md:375
+#: ../../source/tutorials/6-more-self-defined-strategies.md:420
+#: ../../source/tutorials/6-more-self-defined-strategies.md:570
 msgid "回测结果如下："
 msgstr "Results of backtesting:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:289
+#: ../../source/tutorials/6-more-self-defined-strategies.md:485
 msgid "![在这里插入图片描述](../examples/img/output_5_1_2.png)"
 msgstr "![](../examples/img/output_5_1_2.png)"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:289
-#: ../../source/tutorials/6-more-self-defined-strategies.md:440
+#: ../../source/tutorials/6-more-self-defined-strategies.md:485
+#: ../../source/tutorials/6-more-self-defined-strategies.md:635
 msgid "在这里插入图片描述"
 msgstr "Insert image description here"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:292
+#: ../../source/tutorials/6-more-self-defined-strategies.md:488
 msgid "回测结果显示这个策略并不能非常有效地跑赢沪深300指数，不过总体来说回撤较小一些，风险较低，是一个不错的保底策略。"
 msgstr ""
 "Backtesting results show that this strategy cannot effectively outperform"
 " the Shanghai and Shenzhen 300 Index, but overall, the drawdown is "
 "relatively small and the risk is low, making it a good bottom strategy."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:294
+#: ../../source/tutorials/6-more-self-defined-strategies.md:490
 msgid "但策略的表现并不是我们讨论的重点，下面我们再来看一看，如果不用`FactorSorter`基类，如何定义同样的Alpha选股策略。"
 msgstr ""
 "But the performance of the strategy is not the focus of our discussion. "
 "Next, let's take a look at how to define the same Alpha stock selection "
 "strategy without using the `FactorSorter` base class."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:295
+#: ../../source/tutorials/6-more-self-defined-strategies.md:491
 msgid "用`GeneralStg`定义一个Alpha选股策略"
 msgstr "Define an Alpha stock selection strategy with `GeneralStg`"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:296
+#: ../../source/tutorials/6-more-self-defined-strategies.md:492
 msgid "前面已经提过了两种策略基类："
 msgstr "We have introduced two strategy base classes before:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:298
+#: ../../source/tutorials/6-more-self-defined-strategies.md:494
 msgid ""
 "**`RuleIterator`**： "
 "用户只需要针对一支股票定义选股规则，`qteasy`便能将同样的规则应用到股票池中所有的恶股票上，而且还能针对不同股票设置不同的可调参数"
@@ -420,7 +536,7 @@ msgstr ""
 " pool, and can also set different adjustable parameters for different "
 "stocks"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:299
+#: ../../source/tutorials/6-more-self-defined-strategies.md:495
 msgid "**`FactorSorter`**：用户只需要定义一个选股因子，`qteasy`便能根据选股因子自动排序后选择最优的股票持有，并卖掉不够格的股票。"
 msgstr ""
 "**`FactorSorter`**：Users only need to define a stock selection factor, "
@@ -428,7 +544,7 @@ msgstr ""
 "the stock selection factor after sorting, and sell the stocks that are "
 "not qualified."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:301
+#: ../../source/tutorials/6-more-self-defined-strategies.md:497
 msgid "而`GeneralStg`是`qteasy`提供的一个最基本的策略基类，它没有提供任何“语法糖”功能，帮助用户降低编码工作量，但是正是因为没有语法糖，它才是一个真正的“万能”策略类，可以用来更加自由地创建交易策略。"
 msgstr ""
 "While `GeneralStg` is a basic strategy base class provided by `qteasy`, "
@@ -437,37 +553,37 @@ msgstr ""
 "is a real \"universal\" strategy class that can be used to create trading"
 " strategies more freely."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:303
+#: ../../source/tutorials/6-more-self-defined-strategies.md:499
 msgid "上面的Alpha选股交易策略可以很容易用`FactorSorter`实现，但为了了解`GeneralStg`，我们来看看如何使用它来创建相同的策略："
 msgstr ""
 "Above Alpha stock selection trading strategy can be easily implemented "
 "with `FactorSorter`, but to understand `GeneralStg`, let's see how to use"
 " it to create the same strategy:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:305
+#: ../../source/tutorials/6-more-self-defined-strategies.md:501
 msgid "直接把完整的代码贴出来："
 msgstr "Here is the complete code:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:337
+#: ../../source/tutorials/6-more-self-defined-strategies.md:533
 msgid "将上面的代码与`FactorSorter`的代码对比，可以发现，`GeneralStg`的代码在计算出选股因子以后，还多出了因子处理的工作："
 msgstr ""
 "Compare the above code with the code of `FactorSorter`, you can find that"
 " the code of `GeneralStg` has more factor processing work after "
 "calculating the stock selection factor:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:339
+#: ../../source/tutorials/6-more-self-defined-strategies.md:535
 msgid "剔除小于零的因子"
 msgstr "Remove factors less than zero"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:340
+#: ../../source/tutorials/6-more-self-defined-strategies.md:536
 msgid "排序并选出剩余因子中最小的30个"
 msgstr "Sort and select the smallest 30 of the remaining factors"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:341
+#: ../../source/tutorials/6-more-self-defined-strategies.md:537
 msgid "选出股票后将他们的持仓比例设置为3.3%"
 msgstr "Set the position ratio of the selected stocks to 3.3%"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:343
+#: ../../source/tutorials/6-more-self-defined-strategies.md:539
 msgid "事实上，上面的这些工作都是`FactorSorter`提供的“语法糖”，在这里我们必须手动实现而已。值得注意的是，我在上面例子中使用的排序等代码都是从`FactorSorter`中直接提取出来的高度优化的`numpy`代码，它们的运行速度是很快的，比一般用户能写出的代码快很多，因此，只要条件允许，用户都应该尽量利用这些语法糖，只有在不得已的情况下才自己编写排序代码。"
 msgstr ""
 "In fact, all of the above work is the \"syntax sugar\" provided by "
@@ -479,38 +595,38 @@ msgstr ""
 "should try to use these syntax sugars as much as possible, and only write"
 " sorting code when necessary."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:345
+#: ../../source/tutorials/6-more-self-defined-strategies.md:541
 msgid "大家可以研究一下上面的代码，但是请注意，如果使用`GeneralStg`策略类，策略的输出应该是股票的目标仓位，而不是选股因子。"
 msgstr ""
 "You may study the above code, but please note that if you use the "
 "`GeneralStg` strategy class, the output of the strategy should be the "
 "target position of the stock, not the stock selection factor."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:347
+#: ../../source/tutorials/6-more-self-defined-strategies.md:543
 msgid "下面看看回测结果："
 msgstr "Here is the backtesting results:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:349
+#: ../../source/tutorials/6-more-self-defined-strategies.md:545
 msgid "回测结果："
 msgstr "Backtesting results:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:351
+#: ../../source/tutorials/6-more-self-defined-strategies.md:547
 msgid "使用同样的数据进行回测："
 msgstr "Backtesting with the same data:"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:440
+#: ../../source/tutorials/6-more-self-defined-strategies.md:635
 msgid "![在这里插入图片描述](../examples/img/output_7_1.png)"
 msgstr "![](../examples/img/output_7_1.png)"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:442
+#: ../../source/tutorials/6-more-self-defined-strategies.md:637
 msgid "两种交易策略的输出结果基本相同"
 msgstr "Results of the two trading strategies are basically the same"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:443
+#: ../../source/tutorials/6-more-self-defined-strategies.md:638
 msgid "本节回顾"
 msgstr "Recap"
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:445
+#: ../../source/tutorials/6-more-self-defined-strategies.md:640
 msgid "通过本节的学习，我们了解了`qteasy`提供的另外两种交易策略基类`FactorSorter`和`GeneralStg`的使用方法，实际创建了两个交易策略，虽然使用不同的基类，但是创建出了基本相同的Alpha选股交易策略。"
 msgstr ""
 "We have learned the usage of the other two trading strategy base classes "
@@ -518,10 +634,74 @@ msgstr ""
 " actually created two trading strategies. Although different base classes"
 " are used, the same Alpha stock selection trading strategy is created."
 
-#: ../../source/tutorials/6-more-self-defined-strategies.md:447
+#: ../../source/tutorials/6-more-self-defined-strategies.md:642
 msgid "在下一个章节中，我们仍然将继续介绍自定义交易策略，但是会用一个更加复杂的例子来演示自定义交易策略的使用方法。敬请期待！"
 msgstr ""
 "In the next section, we will continue to introduce custom trading "
 "strategies, but will use a more complex example to demonstrate the usage "
 "of custom trading strategies. Stay tuned!"
+
+#~ msgid ""
+#~ "从上面的返回值可以看出，在`qteasy`的内置历史数据类型中，EBITDA是一个标准的历史数据类型，可以通过'ebitda‘ "
+#~ "/ income_ebitda "
+#~ "这两个ID来获取（我们将使用'ebitda'），但是EV企业现金价值并不在内置数据类型中，但我们知道EV可以通过下面的公式计算："
+#~ msgstr ""
+#~ "From the above return value, it "
+#~ "can be seen that in the built-"
+#~ "in historical data types of `qteasy`,"
+#~ " EBITDA is a standard historical data"
+#~ " type, which can be obtained through"
+#~ " 'ebitda' / income_ebitda these two "
+#~ "IDs (we will use 'ebitda'), but EV"
+#~ " enterprise cash value is not in "
+#~ "the built-in data type, but we "
+#~ "know that EV can be calculated by"
+#~ " the following formula:"
+
+#~ msgid "我们可以测试一下："
+#~ msgstr "Let's test it:"
+
+#~ msgid ""
+#~ "与上一节相同，在`realize()`中需要做的第一步是获取历史数据。我们知道历史数据包括`total_mv, "
+#~ "total_liab, c_cash_equ_end_period, "
+#~ "ebitda`等四种，这些历史数据同样是打包后存储在历史数据属性h中的。与上一章节不同的是，h是一个三维`ndarray`，形状（`shape`）为(L,"
+#~ " M, N)，包含L层，M行、N列，分别代表每个股票、每个日期以及每种数据类型。"
+#~ msgstr ""
+#~ "Same as the previous section, the "
+#~ "first step to be done in "
+#~ "`realize()` is to get historical data."
+#~ " We know that historical data "
+#~ "includes `total_mv, total_liab, "
+#~ "c_cash_equ_end_period, ebitda` and other four"
+#~ " types, these historical data are "
+#~ "also stored in the historical data "
+#~ "attribute h after packaging. Unlike the"
+#~ " previous chapter, h is a three-"
+#~ "dimensional `ndarray` with a shape of"
+#~ " (L, M, N), containing L layers, "
+#~ "M rows, and N columns, representing "
+#~ "each stock, each date, and each "
+#~ "data type."
+
+#~ msgid "因此，要获取四种数据类型最后一个周期的所有股票的数据，应该使用如下方法切片："
+#~ msgstr ""
+#~ "Therefore, to obtain the data of "
+#~ "all stocks in the last period of"
+#~ " the four data types, the following"
+#~ " method"
+
+#~ msgid "这样我们获取到的每一种数据类型都是一个一维数组，这个数组的长度与我们传入的备选股票池中的股票数量相同，每一个元素代表该股票的数据。加入我们的投资股票池中有三支股票，那么total_mv中就会有三个数字，分别代表三支股票的总市值，以此类推。"
+#~ msgstr ""
+#~ "Thus, the data type we obtain is"
+#~ " a one-dimensional array, and the "
+#~ "length of this array is the same"
+#~ " as the number of stocks in the"
+#~ " alternative stock pool we pass in,"
+#~ " and each element represents the data"
+#~ " of the stock. If there are "
+#~ "three stocks in our investment stock "
+#~ "pool, then there will be three "
+#~ "numbers in total_mv, representing the "
+#~ "total market value of the three "
+#~ "stocks, and so on."
 

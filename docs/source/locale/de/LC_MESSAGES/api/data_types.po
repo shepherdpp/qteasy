@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 01:06+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -23,27 +23,117 @@ msgstr ""
 msgid "管理历史数据的类型——DataType对象"
 msgstr ""
 
+#: ../../source/api/data_types.rst:4
+msgid ""
+"DataType 用于以「名称 + 频率 + 资产类型」三元组的方式描述单一历史数据类型，是 "
+"数据管线与策略声明历史数据需求时的统一语言。qteasy 预置了大量常用 DataType， 也支持通过文档中介绍的接口定义用户自定义数据类型。"
+msgstr ""
+
 #: of qteasy.datatypes.DataType:1
-msgid "DataType class, 代表qteasy可以使用的历史数据类型。"
+msgid "qteasy 中用于描述单一历史数据类型（名称、频率与资产类型）的核心对象。"
 msgstr ""
 
 #: of qteasy.datatypes.DataType:3
 msgid ""
-"qteasy的每一个历史数据类型由三组参数定义： - name: 数据类型的名称 - freq: 数据的频率 - asset_type: "
-"数据的资产类型 "
-"以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。 "
-"如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。"
+"每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于 "
+"统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程， "
+"并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档 「DataType 与历史数据类型管理」章节。"
+msgstr ""
+
+#: of qteasy.datatypes.DataType:9
+msgid "示例"
 msgstr ""
 
 #: of qteasy.datatypes.DataType:10
-msgid "用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。"
+msgid "下面示例展示 DataType 类名（稳定输出）。实际创建 DataType 时，需要提供 name/freq/asset_type："
 msgstr ""
 
-#: of qteasy.datatypes.DataType:12
-msgid "一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。"
+#: of qteasy.DataType.asset_type:1 qteasy.DataType.asset_type_str:1
+msgid "资产类型的字符串表示形式，如'E'或'E,IDX'"
 msgstr ""
 
-#: of qteasy.datatypes.DataType:14
-msgid "需要获取数据时，通过DataType.get_data_from_source()方法获取。"
+#: of qteasy.DataType.asset_types:1
+msgid "所用用户定义的资产类型列表"
 msgstr ""
+
+#: of qteasy.DataType.data_table_names:1
+msgid "获取数据表名称，优先使用用户定义的数据表名称，如果没有用户定义的数据表名称，则使用内置数据表名称"
+msgstr ""
+
+#: of qteasy.DataType.dtype_id:1
+msgid "形如：close_E_d"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:1
+msgid "数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:4
+msgid "Properties"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:5
+msgid "asset_type: str"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:6
+msgid "资产类型，如'E'、'IDX'、'FD'等，因为现在支持多资产类型，所以需要指定资产类型以获取对应的可用时间"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:1
+msgid "Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:3
+msgid "如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据"
+msgstr ""
+
+#: ../../source/api/data_types.rst
+msgid "参数"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:5
+msgid "数据类型对象"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:7
+msgid "股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:9
+msgid "开始日期, YYYYMMDD格式"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:11
+msgid "结束日期, YYYYMMDD格式"
+msgstr ""
+
+#: of qteasy.DataType.id:1
+msgid "忽略数据频率的ID形如：close(E)，用于标记不同资产类型的数据"
+msgstr ""
+
+#: of qteasy.DataType.unsymbolized:1
+msgid ""
+"return True if this data type is unsymbolized data type (i.e. reference "
+"data type)"
+msgstr ""
+
+#~ msgid "DataType class, 代表qteasy可以使用的历史数据类型。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "qteasy的每一个历史数据类型由三组参数定义： - name: 数据类型的名称 - "
+#~ "freq: 数据的频率 - asset_type: 数据的资产类型 "
+#~ "以上三组参数唯一地定义了一个数据类型。qteasy定义了大量常用的数据类型，用户可以直接使用这些数据类型，也可以根据自己的需求定义新的数据类型。"
+#~ " 如果用户自定义新的数据类型，三组参数不能与已有的数据类型重复。"
+#~ msgstr ""
+
+#~ msgid "用户在自定义数据类型时，需要指定数据类型的描述、数据获取方式、以及获取数据的参数。详情参见qteasy文档。"
+#~ msgstr ""
+
+#~ msgid "一旦定义了数据类型，该数据类型就可以被qteasy用于历史数据的下载、处理、分析，也可以直接被用于交易策略的开发。"
+#~ msgstr ""
+
+#~ msgid "需要获取数据时，通过DataType.get_data_from_source()方法获取。"
+#~ msgstr ""
 

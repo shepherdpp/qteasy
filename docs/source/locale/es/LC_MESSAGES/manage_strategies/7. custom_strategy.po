@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:1
+msgid "自定义策略：从定义到使用"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:3
+msgid "自定义策略需要：定义可调参数、声明所需数据（DataType）、实现 ``realize()``，再将策略实例加入 Operator。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:5
+msgid "定义可调参数"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:7
+msgid ""
+"使用 **Parameter** 声明可调参数（par_range、name、par_type 等），在策略 ``__init__`` 中通过 "
+"**pars=[...]** 传入："
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:20
+msgid ""
+"这样在优化或手动设置时可通过 ``set_parameter(stg_id, pars={'short_period': 8, "
+"'long_period': 40})`` 调整。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:22
+msgid "定义所需数据"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:24
+msgid ""
+"在策略中声明 **DataType**、**window_length**（回溯长度）、**use_latest_data_cycle** "
+"等，以便框架在运行前准备数据并在 ``realize()`` 中通过 **get_data(dtype_id)** 获取。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:26
+msgid "实现 realize()"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:28
+msgid "**realize()** 无参数，内部通过 **get_pars()** 取当前参数、**get_data(dtype_id)** 取数据。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:29
+msgid "**返回值**：按策略类型约定（如 PT 为 0～1 的仓位标量或向量，PS 为选股列表等）。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:31
+msgid "加入 Operator"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:33
+msgid ""
+"使用 **add_strategy(MyStg(), run_freq=..., run_timing=...)** 将实例加入 "
+"Operator；run_freq/run_timing 决定归入哪一 Group。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:35
+msgid "完整小示例"
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:37
+msgid "以下为一个最小可运行的双均线择时示例（逻辑示意，继承基类与 DataType 以实际 API 为准）："
+msgstr ""
+
+#: ../../source/manage_strategies/7. custom_strategy.md:60
+msgid "更多示例见《使用教程》第 5～7 章。"
+msgstr ""
+

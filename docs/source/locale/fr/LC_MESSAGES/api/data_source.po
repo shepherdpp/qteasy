@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-04 20:57+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -23,23 +23,528 @@ msgstr ""
 msgid "历史数据的存储——DataSource对象"
 msgstr ""
 
+#: ../../source/api/data_source.rst:4
+msgid ""
+"DataSource 负责对接本地历史数据存储，可以管理基于文件的存储（如 csv/hdf/feather） 或基于数据库的存储（如 "
+"MySQL/MariaDB），对上层暴露统一的表结构与读取接口；数据的 下载与更新通常通过 ``qt.refill_data_source()``"
+" 完成，而非由 DataSource 自动拉取。"
+msgstr ""
+
 #: of qteasy.database.DataSource:1
-msgid "DataSource 对象管理存储在本地的历史数据文件或数据库."
+msgid "管理本地历史数据存储（文件或数据库）的统一入口对象。"
 msgstr ""
 
 #: of qteasy.database.DataSource:3
 msgid ""
-"通过DataSource对象，History模块可以容易地从本地存储的数据中读取并组装所需要的历史数据 "
-"并确保历史数据符合HistoryPanel的要求。 "
-"所有的历史数据必须首先从网络数据提供商处下载下来并存储在本地文件或数据库中，DataSource "
-"对象会检查数据的格式，确保格式正确并删除重复的数据。 下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样 "
-"的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf, "
-"fth(feather)，兼容的数据库包括mysql和MariaDB。 "
-"如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会 返回空DataFrame。 "
-"DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作"
+"DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览， 并保证生成的数据结构可以被 HistoryPanel "
+"与上层 API 正确消费；当某些表缺失时， DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` "
+"等函数完成维护。 支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」 相关章节。"
 msgstr ""
 
-#: of qteasy.database.DataSource:16
+#: of qteasy.database.DataSource:10
+#: qteasy.database.DataSource.get_table_data_coverage:15
+msgid "示例"
+msgstr ""
+
+#: of qteasy.database.DataSource:11
+msgid "下面示例展示 DataSource 类名（稳定输出）；实际使用时需要结合你的本地数据目录或数据库连接参数："
+msgstr ""
+
+#: of qteasy.DataSource.all_basic_tables:1
+msgid "获取所有基础数据表的清单"
+msgstr ""
+
+#: of qteasy.DataSource.all_data_tables:1
+msgid "获取所有历史数据表（不包括调整表）的清单"
+msgstr ""
+
+#: of qteasy.DataSource.all_sys_tables:1
+msgid "获取所有系统数据表的清单"
+msgstr ""
+
+#: of qteasy.DataSource.all_tables:1
+msgid "获取所有数据表的清单"
+msgstr ""
+
+#: of qteasy.DataSource.allow_drop_table:1
+msgid "获取是否允许删除数据表"
+msgstr ""
+
+#: of qteasy.database.DataSource.delete_sys_table_data:1
+msgid "删除系统数据表中的某些记录，被删除的记录的ID使用列表或tuple传入"
+msgstr ""
+
+#: ../../source/api/data_source.rst of
+#: qteasy.database.DataSource.get_table_data_coverage
+#: qteasy.database.DataSource.write_table_data
+msgid "参数"
+msgstr ""
+
+#: of qteasy.database.DataSource.delete_sys_table_data:3
+msgid "需要删除数据的表名"
+msgstr ""
+
+#: of qteasy.database.DataSource.delete_sys_table_data:5
+msgid "需要删除的记录的ID列表"
+msgstr ""
+
+#: ../../source/api/data_source.rst of
+#: qteasy.database.DataSource.write_table_data
+msgid "返回"
+msgstr ""
+
+#: of qteasy.database.DataSource.delete_sys_table_data:8
+msgid "删除的记录数量"
+msgstr ""
+
+#: ../../source/api/data_source.rst of
+#: qteasy.database.DataSource.get_table_data_coverage
+#: qteasy.database.DataSource.write_table_data
+msgid "返回类型"
+msgstr ""
+
+#: of qteasy.database.DataSource.drop_empty_tables:1
+msgid "从datasource中删除所有空表，即行数为0的表"
+msgstr ""
+
+#: of qteasy.database.DataSource.drop_empty_tables:3
+msgid "删除的表数量"
+msgstr ""
+
+#: of qteasy.database.DataSource.drop_table_data:1
+msgid "删除本地存储的数据表(操作不可撤销，谨慎使用) 如果数据源设置了allow_drop_table为False，则无法删除数据表并报错"
+msgstr ""
+
+#: of qteasy.database.DataSource.drop_table_data:4
+msgid "本地数据表的名称"
+msgstr ""
+
+#: ../../source/api/data_source.rst
+msgid "抛出"
+msgstr ""
+
+#: of qteasy.database.DataSource.drop_table_data:9
+msgid "当数据源设置了allow_drop_table为False时，无法删除数据表并报错:"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:1
+msgid "将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据或察看数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:3
+msgid ""
+"使用这个函数时，用户可以不用理会数据源的类型，只需要指定数据表名称，以及筛选条件即可 "
+"导出的数据会被保存为csv文件，用户可以自行指定文件名以及文件存储路径，如果不指定文件名， "
+"则默认使用数据表名称作为文件名，如果不指定文件存储路径，则默认使用当前工作目录作为 文件存储路径"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:8
+#: qteasy.database.DataSource.get_data_table_size:3
+#: qteasy.database.DataSource.get_sys_table_last_id:3
+#: qteasy.database.DataSource.get_table_info:7
+#: qteasy.database.DataSource.read_table_data:5
+msgid "数据表名称"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:10
+msgid "导出的文件名，如果不指定，则默认使用数据表名称作为文件名"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:12
+msgid "导出的文件存储路径，如果不指定，则默认使用当前工作目录作为文件存储路径"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:14
+msgid "ts_code筛选条件，为空时给出所有记录"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:16
+#: qteasy.database.DataSource.read_table_data:9
+msgid "YYYYMMDD格式日期，为空时不筛选"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:18
+#: qteasy.database.DataSource.read_table_data:11
+msgid "YYYYMMDD格式日期，当start不为空时有效，筛选日期范围"
+msgstr ""
+
+#: of qteasy.database.DataSource.export_table_data:21
+msgid "**file_path_name** -- 导出的文件的完整路径"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_all_basic_table_data:1
+msgid "一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度 如果设置refresh_cache为True，则清空缓存并重新下载数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_all_basic_table_data:4
+msgid "如果为True，则清空缓存并重新下载数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_all_basic_table_data:6
+msgid "如果为True，则在数据表为空时抛出ValueError"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_data_table_size:1
+msgid "获取数据表占用磁盘空间的大小"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_data_table_size:5
+msgid "True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_data_table_size:7
+msgid "True时以字符串形式返回结果，便于打印"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_data_table_size:10
+msgid "**tuple (size, rows)**"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_sys_table_last_id:1
+msgid "从已有的table中获取最后一个id"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_sys_table_last_id:6
+msgid "**last_id**"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_data_coverage:1
+msgid "获取本地数据表内容的覆盖范围，取出数据表的\"column\"列中的去重值并返回"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_data_coverage:3
+msgid "数据表的名称"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_data_coverage:5
+msgid "需要去重并返回的数据列"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_data_coverage:7
+msgid ""
+"为True时不需要返回整个数据列，仅返回最大值和最小值 如果仅返回最大值和和最小值，返回值为一个包含两个元素的列表， "
+"第一个元素是最小值，第二个是最大值，第三个是总数量"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:1
+msgid "获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:2
+msgid "以及数据下载方法"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:5
+msgid "Parameters:"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:6
+msgid "table: str"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:8
+msgid "verbose: bool, Default: True"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:9
+msgid "是否显示更多信息，如是，显示表结构等信息"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:10
+msgid "print_info: bool, Default: True"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:11
+msgid "是否打印输出所有结果"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:12
+msgid "human: bool, Default: True"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:13
+msgid "是否给出容易阅读的字符串形式"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info
+msgid "returns"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:15
+msgid "*一个dict，包含数据表的结构化信息：*"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:16
+msgid ""
+"*{* -- table name:    1, str, 数据表名称 table_exists:  2, bool，数据表是否存在 "
+"table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:"
+"    4, int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  5, "
+"str，数据表第一个主键名称 pk_count1:     6, int，数据表第一个主键记录数量 pk_min1:       7, "
+"obj，数据表主键1起始记录 pk_max1:       8, obj，数据表主键2最终记录 primary_key2:  9, "
+"str，数据表第二个主键名称 pk_count2:     10, int，数据表第二个主键记录 pk_min2:       11, "
+"obj，数据表主键2起始记录 pk_max2:       12, obj，数据表主键2最终记录"
+msgstr ""
+
+#: of qteasy.database.DataSource.get_table_info:28
+msgid "*}*"
+msgstr ""
+
+#: of qteasy.database.DataSource.info:1
+msgid "格式化打印database对象的各种主要信息"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:1
+msgid "插入系统操作表的数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:3
+msgid ""
+"一次插入一条记录，数据以dict形式给出 不需要给出数据的ID，因为ID会自动生成 如果给出的数据字段不完整，则抛出异常 "
+"如果给出的数据中有不可用的字段，则抛出异常"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:8
+#: qteasy.database.DataSource.update_sys_table_data:7
+msgid "需要更新的数据表名称"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:10
+msgid "需要更新或插入的数据，数据的key必须与数据库表的字段相同，否则会抛出异常"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:13
+msgid "**record_id** -- 更新的记录ID"
+msgstr ""
+
+#: of qteasy.database.DataSource.insert_sys_table_data:16
+msgid "当给出的字段不完整或者有不可用的字段时:"
+msgstr ""
+
+#: of qteasy.database.DataSource.none_sys_tables:1
+msgid "获取所有非系统数据表的清单"
+msgstr ""
+
+#: of qteasy.database.DataSource.overview:1
 msgid "以表格形式列出所有数据表的当前数据状态"
 msgstr ""
+
+#: of qteasy.database.DataSource.overview:3
+msgid "指定要列出的数据表，如果为None则列出所有数据表"
+msgstr ""
+
+#: of qteasy.database.DataSource.overview:5
+msgid "是否打印数据表总揽"
+msgstr ""
+
+#: of qteasy.database.DataSource.overview:7
+msgid "是否包含系统表"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_cached_table_data:1
+msgid "缓存数据表数据以缩短读取速度，这个函数用于加快本地提取数据时加速"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_cached_table_data:3
+msgid ""
+"在用户使用DataType对象大量读取数据时，通常需要重复从同一张数据表中以同样的参数获取数据 "
+"为了提升读取速度，可以将数据表的数据缓存到内存中，以减少读取时间，但在正常的数据表操作中 "
+"并不适合使用缓存，因为数据表通常需要实时刷新，因此本函数仅供DataType对象读取数据使用"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_data:1
+msgid "读取系统操作表的数据，包括读取所有记录，以及根据给定的条件读取记录"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_data:3
+msgid "返回的数据类型为pd.DataFrame，如果给出kwargs，返回根据条件筛选后的数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_data:5
+#: qteasy.database.DataSource.read_sys_table_record:6
+msgid "需要读取的数据表名称"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_data:7
+msgid "筛选数据的条件，包括用作筛选条件的字典如: {account_id = 123}"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_data:10
+msgid "返回的数据为DataFrame，如果给出kwargs，返回的数据仅包括筛选后的数据"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_record:1
+msgid "读取系统操作表的数据，根据指定的id读取数据，返回一个dict"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_record:3
+msgid ""
+"本函数调用read_sys_table_data()读取整个数据表，并返回record_id行的数据 "
+"返回的dict包含所有字段的值，key为字段名，value为字段值"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_record:8
+msgid "需要读取的数据的id"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_record:10
+msgid "筛选数据的条件，包括用作筛选条件的字典如: account_id = 123"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_sys_table_record:13
+msgid "**data** -- 读取的数据，包括数据表的结构化信息以及数据表中的记录"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_table_data:1
+msgid "从本地数据表中读取数据并返回DataFrame，不修改数据格式，primary_key为DataFrame的index"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_table_data:3
+msgid "在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_table_data:7
+msgid "ts_code筛选条件，逗号分隔字符串，为空时给出所有记录"
+msgstr ""
+
+#: of qteasy.database.DataSource.read_table_data:13
+msgid ""
+"是否将primary key设置为DataFrame的index 如果为False，primary "
+"key将作为普通的列返回，此时DataFrame的index为默认的整数index"
+msgstr ""
+
+#: of qteasy.database.DataSource.reconnect:1
+msgid "当数据库超时或其他原因丢失连接时，Ping数据库检查状态，"
+msgstr ""
+
+#: of qteasy.database.DataSource.reconnect:2
+msgid "如果可行的话，重新连接数据库"
+msgstr ""
+
+#: of qteasy.database.DataSource.reconnect:4
+msgid "* **True** (*连接成功*) * **False** (*连接失败*)"
+msgstr ""
+
+#: of qteasy.database.DataSource.reconnect:4
+msgid "**True** (*连接成功*)"
+msgstr ""
+
+#: of qteasy.database.DataSource.reconnect:5
+msgid "**False** (*连接失败*)"
+msgstr ""
+
+#: of qteasy.database.DataSource.table_data_exists:1
+msgid "逻辑层函数，判断数据表是否存在"
+msgstr ""
+
+#: of qteasy.database.DataSource.table_data_exists:6
+msgid "**bool**"
+msgstr ""
+
+#: of qteasy.DataSource.tables:1
+msgid "所有已经建立的tables的清单"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:1
+msgid "更新系统操作表的数据，根据指定的id更新数据，更新的内容由kwargs给出。"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:3
+msgid "每次只能更新一条数据，数据以dict形式给出 可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。 id必须存在，否则抛出异常"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:9
+msgid "需要更新的数据的id"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:11
+msgid "需要更新的数据，包括需要更新的字段如: account_id = 123"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:14
+msgid "**id** -- 更新的记录ID"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:17
+msgid "当给出的id不存在或为None时:"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_sys_table_data:18
+msgid "当给出的字段不存在时:"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_table_data:1
+msgid "检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤："
+msgstr ""
+
+#: of qteasy.database.DataSource.update_table_data:3
+msgid ""
+"1，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列 2，如果datasource "
+"type是\"db\"，删除下载数据中与本地数据重复的部分，仅保留新增数据 3，如果datasource "
+"type是\"file\"，将下载的数据与本地数据合并并去重 返回处理完毕的dataFrame"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_table_data:8
+msgid "数据表名，必须是database中定义的数据表"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_table_data:10
+msgid ""
+"指定如何合并下载数据和本地数据： - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据 - 'ignore' : "
+"如果下载数据与本地数据重复，忽略重复部分"
+msgstr ""
+
+#: of qteasy.database.DataSource.update_table_data:14
+msgid "通过传递一个DataFrame获取数据 如果数据获取渠道为\"df\"，则必须给出此参数"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:1
+msgid "将df中的数据写入本地数据表(本地文件或数据库)"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:3
+msgid ""
+"如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中 "
+"如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:6
+msgid "一个数据表，数据表的列名应该与本地数据表定义一致"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:8
+msgid "本地数据表名，"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:10
+msgid ""
+"重复数据处理方式(仅当mode==db的时候有效) -ignore: 默认方式，将全部数据写入数据库表的末尾 -update: "
+"将数据写入数据库表中，如果遇到重复的pk则修改表中的内容"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:15
+msgid "**int**"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:19
+msgid "备注"
+msgstr ""
+
+#: of qteasy.database.DataSource.write_table_data:20
+msgid "注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查 请使用update_table_data()来更新或写入数据到本地"
+msgstr ""
+
+#~ msgid "DataSource 对象管理存储在本地的历史数据文件或数据库."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "通过DataSource对象，History模块可以容易地从本地存储的数据中读取并组装所需要的历史数据 "
+#~ "并确保历史数据符合HistoryPanel的要求。 "
+#~ "所有的历史数据必须首先从网络数据提供商处下载下来并存储在本地文件或数据库中，DataSource "
+#~ "对象会检查数据的格式，确保格式正确并删除重复的数据。 "
+#~ "下载下来的历史数据可以存储成不同的格式，但是不管任何存储格式，所有数据表的结构都是一样 "
+#~ "的，而且都是与Pandas的DataFrame兼容的数据表格式。目前兼容的文件存储格式包括csv, hdf, "
+#~ "fth(feather)，兼容的数据库包括mysql和MariaDB。 "
+#~ "如果HistoryPanel所要求的数据未存放在本地，DataSource对象不会主动下载缺失的数据，仅会 "
+#~ "返回空DataFrame。 DataSource对象可以按要求定期刷新或从Provider拉取数据，也可以手动操作"
+#~ msgstr ""
 

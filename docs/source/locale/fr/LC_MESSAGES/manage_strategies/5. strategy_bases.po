@@ -1,0 +1,95 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/5. strategy_bases.md:1
+msgid "三种策略基类：RuleIterator、FactorSorter、GeneralStg"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:3
+msgid ""
+"qteasy 中自定义策略通常继承自三种基类之一，按使用场景选择：**RuleIterator** "
+"适用于择时或单规则迭代；**FactorSorter** 适用于因子选股；**GeneralStg** 适用于通用多资产或多规则信号。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:5
+msgid "何时用哪种基类"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:7
+msgid "**RuleIterator**：单标的或单规则、逐周期迭代（如均线择时、MACD 择时）。输入多为单标的或多标的的行情序列，输出为仓位或单一信号。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:8
+msgid ""
+"**FactorSorter**：多标的按某一因子排序，选取前 N 或后 N 名（选股）。需设置 "
+"**max_sel_count**、**sort_ascending** 等。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:9
+msgid ""
+"**GeneralStg**：更通用的多资产、多规则或自定义输入输出形状的策略，当 RuleIterator/FactorSorter "
+"无法满足时使用。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:11
+msgid "RuleIterator"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:13
+msgid ""
+"**输入/输出**：通常通过 ``get_data(dtype_id)`` 获取 OHLCV 等，在 ``realize()`` "
+"中计算并返回一维信号（如目标仓位 0～1）。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:14
+msgid "**典型用法**：均线金叉死叉、MACD 柱状图符号等。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:15
+msgid "简短示例（逻辑示意）："
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:29
+msgid "FactorSorter"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:31
+msgid ""
+"**输入/输出**：获取因子数据（如收益率、波动率），在 ``realize()`` 中返回每个标的的因子值；基类按 "
+"**sort_ascending** 排序后取前 **max_sel_count** 个形成选股列表。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:32
+msgid "**属性**：max_sel_count（选股数量）、sort_ascending（True 升序取最小，False 降序取最大）等。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:34
+msgid "GeneralStg"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:36
+msgid "**输入/输出**：更灵活，可自定义所需 DataType 与返回数组形状，适用于多资产权重、多规则组合等。"
+msgstr ""
+
+#: ../../source/manage_strategies/5. strategy_bases.md:37
+msgid "**适用场景**：不限于单标的择时或简单因子选股时的自定义逻辑。"
+msgstr ""
+

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 21:24+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -36,7 +36,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Creado el: 2019, Julio, 16"
 
 #: ../../source/about.md:7
-msgid "最新版本: `1.4.11`"
+#, fuzzy
+msgid "最新版本: `2.4.0`"
 msgstr "Última versión: `1.4.11`"
 
 #: ../../source/about.md:8

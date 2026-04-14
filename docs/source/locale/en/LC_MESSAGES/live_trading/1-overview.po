@@ -1,0 +1,151 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/live_trading/1-overview.md:1
+msgid "live_trading 模块总览"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:3
+msgid ""
+"`live_trading` 模块用于说明 qteasy 在模拟实盘（`mode=0`）下的核心能力与使用路径。   对于第一次进入 live "
+"运行的用户，本页只解决三个问题：能做什么、有哪些新变化、下一步看哪里。"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:6
+msgid "0. 适用场景"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:8
+msgid "你已经完成策略回测，准备进入模拟实盘阶段"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:9
+msgid "你需要快速建立“配置 -> 下单 -> 成交 -> 日志 -> 排错”的整体认知"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:10
+msgid "你计划后续扩展 broker 适配能力"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:12
+msgid "1. 这个模块解决什么问题"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:14
+msgid "统一解释 live 运行中“配置、下单、成交、日志、排错”的完整链路"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:15
+msgid "降低从回测切换到模拟实盘时的理解成本"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:16
+msgid "给后续扩展真实柜台适配（如 QMT）提供稳定文档入口"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:18
+msgid "2. S1.3 完成后的能力地图"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:20
+msgid "**配置可校验**：live 参数在运行前集中校验，错误更早暴露"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:21
+msgid "**风控可插拔**：订单提交前可执行规则链评估"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:22
+msgid "**拒单可审计**：拒因可通过 `rule_id` 和 `reason` 在日志中检索"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:23
+msgid "**Broker 可扩展**：新增适配层接口，兼容 legacy 队列链路"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:24
+msgid "**状态更一致**：`partial-filled -> filled` 的可见行为更准确"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:26
+msgid "3. 核心术语速览"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:28
+msgid "`LiveTradeConfig`：live 运行配置快照"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:29
+msgid "`RiskDecision`：风控评估结果（是否放行 + 拒因）"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:30
+msgid "`broker adapter`：`connect/submit/poll_fills` 等适配层接口"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:31
+msgid "`risk_log`：风险拒绝与相关风控事件日志"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:32
+msgid "`partial-filled`：订单部分成交状态"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:34
+msgid "4. 推荐阅读路径"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:36
+msgid "先读 :doc:`2-configuration-and-run`，完成最小可运行配置"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:37
+msgid "再读 :doc:`../tutorials/8-live-trade-risk-and-broker-walkthrough`，按步骤走一遍"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:38
+msgid "遇到问题时查 :doc:`5-artifacts-and-troubleshooting`"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:39
+msgid "需要扩展 Broker 时读 :doc:`4-broker-adapter-and-integration`"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:41
+msgid "5. 相关索引"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:43
+msgid "API 视角清单：`references/1-simulation-overview.md`"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:44
+msgid "CLI 功能清单：`references/5-simulate-operation-in-CLI.md`"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:45
+msgid "TUI 功能清单：`references/6-simulate-operation-in-TUI.md`"
+msgstr ""
+
+#: ../../source/live_trading/1-overview.md:46
+msgid "设计理念：`design/10-live-trading-s1.3-architecture.md`"
+msgstr ""
+

@@ -1,0 +1,202 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/design/07-backtest-engine-and-performance.md:1
+msgid "回测引擎与性能（设计视角）"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:3
+msgid ""
+"本章从**架构与实现**角度说明 qteasy 回测引擎的向量化与 Numba 使用方式，以及与 VectorBT "
+"等框架的差异，供需要深入理解或做技术选型的读者参考。使用层面的说明见《回测并评价交易策略》中的 [6. "
+"回测引擎与性能](../back_testing/6.%20backtest_engine_and_performance.md)。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:5
+msgid "1. 回测引擎在整体中的位置"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:7
+msgid ""
+"回测模式（mode=1）的流程在 [回测、实盘与优化](06-backtest-live-optimization.md) 中已概括：准备历史数据"
+" → 构建 Backtester → 按 group_timing_table 逐步运行 Operator 生成信号 → 解析信号并模拟成交 → "
+"评价与输出。其中，“解析信号并模拟成交”由 **backtest** 模块中的 Numba 函数完成，实现“时间维顺序、标的维向量化”。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:9
+msgid "2. Numba 使用点与向量化结构"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:11
+msgid "2.1 核心函数"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:13
+msgid "在 `qteasy/backtest.py` 中："
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:15
+msgid ""
+"**backtest_step**：`@njit(nogil=True, "
+"cache=True)`。单步内根据信号与当前持仓、现金、交割队列，计算买卖量、费用、持仓更新与交割队列更新；对整批标的做数组运算。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:16
+msgid "**calculate_trade_results**：`@njit`，用于交易结果与资金变动计算。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:17
+msgid ""
+"**backtest_batch_steps**：`@njit(nogil=True, cache=True)`。在 Numba 内按 "
+"`signal_count`（时间步数）循环，每步调用 `backtest_step`，完成整段回测，实现“时间维顺序、标的维向量化”。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:18
+msgid ""
+"**backtest_flash_steps**：`@njit(nogil=True, cache=True)`。与 "
+"`backtest_batch_steps` 类似，但不保留中间资金与持仓序列，仅保留最终状态，用于优化阶段多组参数回测时节省内存。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:20
+msgid "在 `qteasy/blender.py` 中，信号混合用的部分算子（如 `op_sum`、`op_floor` 等）也使用 `@njit` 加速。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:22
+msgid "2.2 时间维顺序与标的维向量化"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:24
+msgid "**时间维必须顺序**：因为存在交割队列、T+1、MOQ 等状态，下一笔交易依赖当前持仓与交割状态，无法在时间轴上完全并行或一次性矩阵化。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:25
+msgid ""
+"**标的维向量化**：在每一个时间步内，对所有标的的 signal、持仓、买卖量、费用等用 NumPy 数组与 Numba 内联运算，避免 "
+"Python 层循环。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:27
+msgid "因此，单次回测可以理解为：**一层 Numba 内的时间步循环 + 每步内的向量化计算**。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:29
+msgid "2.3 优化阶段"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:31
+msgid ""
+"在 `qteasy/optimization.py` 中，多组参数通过多进程（如 "
+"`ProcessPoolExecutor`）并行执行回测；每组内部使用 `backtest_flash_steps` "
+"等路径，只保留最终资金/持仓，以降低内存占用并提高吞吐。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:33
+msgid "3. 与 VectorBT 的架构差异"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "维度"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "qteasy"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "VectorBT"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "时间维度"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "顺序步进（for 步），每步内向量化"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "全时间轴一次性矩阵运算，无显式时间循环"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "标的维度"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "每步对全部标的做数组运算（1D 数组）"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "标的与时间一起参与广播，多策略/多参数可一并广播"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "核心加速"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid ""
+"backtest_step、backtest_batch_steps、backtest_flash_steps 等为 "
+"@njit；信号解析、交割队列等也用 Numba"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "NumPy + Numba，策略表达为纯数组运算"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "状态与约束"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "显式维护现金、持仓、交割队列（T+1 等），状态依赖下一笔，故时间维必须顺序"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md
+msgid "多为简化资金曲线，不强调 T+1/交割/MOQ，易做全矩阵"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:42
+msgid ""
+"**结论**：qteasy "
+"并非“缺乏向量化/Numba”，而是在保证**状态正确性**（T+1、交割、MOQ、多策略合并等）的前提下，选择了“时间顺序 + 标的维向量化 +"
+" Numba 单步”的折中；与 VectorBT 的“全矩阵广播”各有适用场景（qteasy 偏规则严谨与实盘一致，VectorBT "
+"偏海量参数快速筛选）。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:44
+msgid "4. 相关文档"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:46
+msgid "统一入口与模式：[回测、实盘与优化](06-backtest-live-optimization.md)。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:47
+msgid ""
+"使用侧说明：[回测并评价交易策略 - "
+"回测引擎与性能](../back_testing/6.%20backtest_engine_and_performance.md)。"
+msgstr ""
+
+#: ../../source/design/07-backtest-engine-and-performance.md:48
+msgid "设计初衷与数据隔离：[设计初衷与独特优势](08-design-rationale-and-advantages.md)。"
+msgstr ""
+

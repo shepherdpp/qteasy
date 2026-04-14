@@ -1,0 +1,154 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/back_testing/4. trade_log.md:1
+msgid "交易过程记录"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:3
+msgid "开启交易日志"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:5
+msgid ""
+"在 **qt.run(..., trade_log=True)** 中设置 **trade_log=True** "
+"即可在回测时记录每笔交易。相关配置（如日志保存路径）以 **qt.configure()** 或运行环境为准。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:7
+msgid "日志内容说明"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:9
+msgid "交易日志通常包含以下字段（罗列并简短解释），具体以实际输出为准："
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "字段"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "含义"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "时间/日期"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "成交时间或日期。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "标的"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "股票/合约代码。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "方向"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "买入/卖出。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "价格"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "成交价格。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "数量"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "成交数量。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "金额"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "成交金额。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "费用"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "佣金、印花税等。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "备注"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md
+msgid "其他说明（若有）。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:22
+msgid "查看与保存"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:24
+msgid "**查看**：回测结束后可通过结果对象或 API 读取 trade_log（如 DataFrame 或文件路径）。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:25
+msgid ""
+"**保存**：若框架将日志写入文件，路径由配置项 **trade_log_file_path** 决定（支持相对/绝对/家目录路径，可通过 "
+"**qt.configure()** 热修改），详见 API 文档。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:26
+msgid ""
+"**日志轮转（rotate）**：当 **trade_log_keep_days** 为正整数时，qteasy 在 **进程启动、成功导入 "
+"`qteasy` 模块之后**，按该保留天数对当前 **trade_log_file_path** 目录执行 **一次** 清理：删除早于保留期的"
+" `trade_log_*.csv`、`trade_summary_*.csv` 与 "
+"`value_curve_*.csv`（文件名中的时间戳或文件 mtime 用于判断新旧）。**不会在**每次回测结束写新 CSV "
+"之前再次自动清理；长时间运行的单次会话中若产生大量文件，可调用 **`qt.rotate_trade_logs()`** 手动清理。默认 "
+"**trade_log_keep_days** 为 **3**；设为 **None** 或 **小于等于 0** "
+"可关闭自动删除。轮转仅影响磁盘上的旧文件，不改变回测结果或任何对外 API。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:28
+msgid "与 result 的关系"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:30
+msgid ""
+"trade_log 与回测的 **loop_result**、**oper_count** 对应：每笔记录对应一次实际操作，oper_count "
+"可为汇总统计。"
+msgstr ""
+
+#: ../../source/back_testing/4. trade_log.md:31
+msgid "用于核对回测过程与绩效指标的一致性。"
+msgstr ""
+

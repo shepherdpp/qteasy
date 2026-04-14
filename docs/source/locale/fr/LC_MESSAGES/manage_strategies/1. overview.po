@@ -1,0 +1,100 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/1. overview.md:1
+msgid "使用交易策略"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:3
+msgid ""
+"在 qteasy 中，交易策略（Strategy）负责在每一个运行周期内根据历史数据生成交易信号；Operator "
+"是策略的容器与调度器，负责按既定频率与时间点运行策略并汇总信号；多个策略可归为 Group，同一 Group 内可通过 blender "
+"表达式混合信号。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:5
+msgid "总体介绍"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:7
+msgid "**Strategy**：根据 DataType 获取的数据和可调参数，在 ``realize()`` 中计算并返回信号（如目标仓位、选股列表等）。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:8
+msgid ""
+"**Operator**：持有若干 Strategy，配置 "
+"``signal_type``（PT/PS/VS）、``run_freq``、``run_timing``，在回测或实盘时按时间步调用策略并产出统一格式的信号。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:9
+msgid ""
+"**Group**：相同 ``run_freq`` 与 ``run_timing`` 的策略会被归入同一 Group；每个 Group 可配置 "
+"blender 将多策略信号合并。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:11
+msgid "主要内容概览"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:13
+msgid "**Operator 的创建与配置**：见《2. Operator：创建与基本配置》。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:14
+msgid "**Group 与 blender**：见《3. Group 与策略信号混合》。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:15
+msgid "**内置策略的查找与使用**：见《4. 内置策略的查找与使用》。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:16
+msgid "**三种策略基类**：RuleIterator、FactorSorter、GeneralStg，见《5. 三种策略基类》。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:17
+msgid "**自定义策略**：见《6. 自定义策略：从定义到使用》。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:19
+msgid "本目录各章导航"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:21
+msgid "**2. Operator：创建与基本配置** — 创建 Operator、添加策略、常用属性、设置参数、运行前检查。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:22
+msgid "**3. Group 与策略信号混合** — Group 的由来、blender 表达式、多组合并方式。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:23
+msgid "**4. 内置策略的查找与使用** — 查找与获取内置策略、在 Operator 中使用、所有内置策略清单。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:24
+msgid "**5. 三种策略基类** — RuleIterator、FactorSorter、GeneralStg 的适用场景与用法。"
+msgstr ""
+
+#: ../../source/manage_strategies/1. overview.md:25
+msgid "**6. 自定义策略：从定义到使用** — 可调参数、所需数据、realize() 实现、完整示例。"
+msgstr ""
+

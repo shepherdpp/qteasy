@@ -1,0 +1,215 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:1
+msgid "Live Trading S1.3 设计理念与架构"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:3
+msgid "本文从设计视角解释 S1.3 的 live trading 改造思路：为什么这样分层、如何保持兼容、以及这些设计如何帮助后续扩展。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:5
+msgid "0. 文档定位"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:7
+msgid "本文是设计说明，不是使用教程"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:8
+msgid "重点回答“为什么这样做”，而不是“如何一步步操作”"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:9
+msgid ""
+"若需要实操路径，请转到 `live_trading/2-configuration-and-run.md` 与 `tutorials/8"
+"-live-trade-risk-and-broker-walkthrough.md`"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:11
+msgid "1. 设计目标"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:13
+msgid "在不破坏既有用户路径的前提下，提升 live 链路的可校验性与可审计性"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:14
+msgid "把风险控制前置到“下单写库之前”"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:15
+msgid "抽象 Broker 适配层，为未来真实柜台接入预留稳定边界"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:17
+msgid "2. 分层结构"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:19
+msgid "S1.3 的 live 相关职责可抽象为："
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:21
+msgid "`Operator`：策略运行调度与信号来源"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:22
+msgid "`Trader`：订单意图落地、风险闸门与执行协调"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:23
+msgid "`RiskManager`：纯逻辑规则评估，不依赖 IO"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:24
+msgid "`Broker`：提交、取消、回报、连接语义"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:25
+msgid "`trade_io`：订单/成交数据契约校验"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:27
+msgid "3. 关键设计原则"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:29
+msgid "3.1 契约先行"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:31
+msgid "订单 dict 与成交 dict 在边界处校验，避免“结构错了还能跑”导致的静默错误。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:33
+msgid "3.2 风控前置"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:35
+msgid "风险评估在写库和入队之前完成，拒单不污染执行数据。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:37
+msgid "3.3 适配解耦"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:39
+msgid "通过 broker adapter API 承载未来接入，降低 Trader 与具体柜台的耦合度。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:41
+msgid "3.4 可审计"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:43
+msgid "拒因以 `rule_id` 和英文 `reason` 对外可见，支持运维检索与复盘。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:45
+msgid "4. 典型疑难点与取舍"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:47
+msgid "4.1 拒单兼容语义"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:49
+msgid "保持历史兼容（拒单可表现为空结果），同时增强可见性（CLI/TUI 摘要 + 日志）。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:51
+msgid "4.2 新旧链路并存"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:53
+msgid "保留 legacy queue 兼容路径，避免一次性迁移带来的回归风险。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:55
+msgid "4.3 状态一致性"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:57
+msgid "分批成交场景下，状态应以累计成交量为准，减少用户观察到的语义偏差。"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:59
+msgid "5. 与 S2.1 的关系"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:61
+msgid "S1.3 不是柜台接入终点，而是前置地基："
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:63
+msgid "先稳定接口边界"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:64
+msgid "再逐步接入真实柜台"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:65
+msgid "最后在不破坏上层用法的前提下扩展能力"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:67
+msgid "6. 对用户行为的影响"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:69
+msgid "配置错误更早暴露"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:70
+msgid "拒单原因更容易定位"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:71
+msgid "live 运行中的状态变化更容易解释"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:72
+msgid "扩展第三方 broker 的成本更可控"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:74
+msgid "7. 相关阅读"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:76
+msgid "模块总览：`live_trading/1-overview.md`"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:77
+msgid "运行与配置：`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:78
+msgid "风控与状态：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/design/10-live-trading-s1.3-architecture.md:79
+msgid "Broker 接入：`live_trading/4-broker-adapter-and-integration.md`"
+msgstr ""
+

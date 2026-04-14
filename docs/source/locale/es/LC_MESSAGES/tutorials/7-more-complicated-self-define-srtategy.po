@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -86,7 +86,9 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:30
-msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+msgid ""
+"在[QTEASY文档](https://qteasy.readthedocs.io/zh-"
+"cn/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
 msgstr ""
 
 #: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:32
@@ -117,35 +119,38 @@ msgstr ""
 msgid "在这个例子中，我们使用"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:154
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:148
 msgid "策略和回测参数配置，并开始回测"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:155
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:149
 msgid "定义好上面的策略之后，就可以开始进行回测了，我们需要在`qteasy`中创建一个交易员对象，操作前面创建的策略："
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:177
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:172
 msgid "运行结果如下："
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:244
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:239
 msgid "![png](img/output_4_4.png)"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:244
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:239
 msgid "png"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:246
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:241
 msgid "本节回顾"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:248
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:243
 msgid "在本节中，我们通过一个具体的例子，详细讲解了如何基于`qteasy`的交易策略基类，创建一个只属于您自己的交易策略。通过这个例子，您可以看到，`qteasy`的交易策略基类提供了足够的灵活性，可以实现您所设想的任何类型的交易策略。"
 msgstr ""
 
-#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:250
+#: ../../source/tutorials/7-more-complicated-self-define-srtategy.md:245
 msgid "从下一个教程开始，我们将会介绍`qteasy`交易策略优化方法，通过多种优化算法，找到最优的交易策略参数，以及评价交易策略的性能。"
 msgstr ""
+
+#~ msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于使用内置交易策略、创建自定义策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+#~ msgstr ""
 

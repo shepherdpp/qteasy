@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 21:27+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -318,6 +318,76 @@ msgstr ""
 
 #: ../../source/faq.md:260
 msgid "上述功能是在`qteasy`的`v1.1.11`版本中新增的，如果您的`qteasy`版本较低，请升级至最新版本。"
+msgstr ""
+
+#: ../../source/faq.md:264
+msgid "如何跑通从数据到回测/优化的最小流程？"
+msgstr ""
+
+#: ../../source/faq.md:266
+msgid ""
+"建议按《快速上手指南》中的「一分钟跑通」完成：配置 tushare Token → 下载数据 → 使用内置策略做一次回测。完整链路（配置数据源 →"
+" 下载数据 → 定义策略并回测 → 参数优化 → 模拟/实盘运行）及对应教程跳转见 [快速上手指南 - 端到端路线图 / "
+"教程](getting_started.md#端到端路线图--教程)。按该路线图中的顺序阅读各教程即可从零走通全流程。"
+msgstr ""
+
+#: ../../source/faq.md:270
+msgid "回测/优化为什么慢？"
+msgstr ""
+
+#: ../../source/faq.md:272
+msgid "可能原因包括："
+msgstr ""
+
+#: ../../source/faq.md:274
+msgid "**数据量与窗口长度**：回测区间越长、资产池越大、策略的 `window_length` 越大，单次回测需要准备与计算的数据越多。"
+msgstr ""
+
+#: ../../source/faq.md:275
+msgid "**参数组数**：优化模式（mode=2）下，参数组合越多，需要执行的单次回测次数越多；已通过多进程并行缓解，但仍与机器核心数及任务规模相关。"
+msgstr ""
+
+#: ../../source/faq.md:276
+msgid ""
+"**首次 Numba 编译**：核心回测函数（如 `backtest_step`、`backtest_batch_steps`）使用 Numba "
+"JIT，首次运行或参数类型变化时会触发编译，产生一次性延迟；后续同类型回测会复用缓存，速度会明显提升。"
+msgstr ""
+
+#: ../../source/faq.md:277
+msgid "**数据准备**：若 DataSource 中数据未提前准备好，回测前会触发数据拉取与窗口装配，也会增加首次运行时间。"
+msgstr ""
+
+#: ../../source/faq.md:279
+msgid ""
+"若需进一步了解回测引擎与性能设计，可参阅 "
+"[回测引擎与性能](back_testing/6.%20backtest_engine_and_performance.md) "
+"与《架构与设计》中的 [回测引擎与性能（设计视角）](design/07-backtest-engine-and-performance.md)。"
+msgstr ""
+
+#: ../../source/faq.md:283
+msgid "如何理解「防未来函数」？"
+msgstr ""
+
+#: ../../source/faq.md:285
+msgid ""
+"qteasy 从机制上避免策略在回测中“看到”未来数据：每个时间步运行时，引擎仅向策略注入**该步当时可见**的历史数据窗口，策略在 "
+"`realize()` 中通过 `get_data(dtype_id)` 取到的只是该窗口内的数据；在此窗口上计算指标（如 "
+"EMA）与实盘“当时仅能看到的历史”一致，因此不会无意中使用未来数据。详细设计理由（为何不做全时间轴向量化、数据窗口如何按步注入等）见《架构与设计》中的"
+" [设计初衷与独特优势](design/08-design-rationale-and-advantages.md)。"
+msgstr ""
+
+#: ../../source/faq.md:289
+msgid "use_latest_data_cycle 是什么，如何设置？"
+msgstr ""
+
+#: ../../source/faq.md:291
+msgid ""
+"**use_latest_data_cycle**（常简写为 ulc）控制策略所用数据窗口是否包含**当根 K 线**（当前时刻的最新数据）：设为"
+" `True` 时，窗口可含当前 bar（如收盘价），对应“交易时是否允许用当时最新价”；设为 `False` "
+"时，窗口严格为“过去已收盘”的数据。该选择在长期回测中会对收益产生显著影响，qteasy 将其作为可配置项在策略声明与运行配置中暴露。含义与影响见"
+" [设计初衷与独特优势 - use_latest_data_cycle](design/08-design-rationale-and-"
+"advantages.md)；具体设置方式见策略类的 `data_types` / `window_length` 声明及 "
+"[策略如何声明与使用数据](design/03-data-in-strategies.md)，以及当前版本文档与 API 中的配置说明。"
 msgstr ""
 
 #~ msgid "问题目录"

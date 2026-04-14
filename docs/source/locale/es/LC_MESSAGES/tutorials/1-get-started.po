@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -198,7 +198,9 @@ msgstr ""
 msgid ""
 "`qteasy`内置了大量的技术指标，这些技术指标的计算依赖于`TA-lib`，如果需要使用`qteasy`内置的所有技术指标，需要安装`TA-"
 "lib`。 "
-"如果跳过这一步，将只能使用以下内置策略，这里有[完整的内置策略清单及详细说明参考文档](https://qteasy.readthedocs.io/zh/latest/api/Built_In.html)以及[内置交易策略回测结果](https://qteasy.readthedocs.io/zh/latest/references/1"
+"如果跳过这一步，将只能使用以下内置策略，这里有[完整的内置策略清单及详细说明参考文档](https://qteasy.readthedocs.io"
+"/zh-"
+"cn/latest/api/Built_In.html)以及[内置交易策略回测结果](https://qteasy.readthedocs.io/zh/latest/references/1"
 "-build-in-results.html):"
 msgstr ""
 
@@ -612,7 +614,7 @@ msgid "为了方便用户编辑`qteasy`的初始配置文件，`qteasy`提供了
 msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:214
-msgid "1，使用`qteasy.update_start_up_setting()`方法"
+msgid "**方法1**，使用`qteasy.update_start_up_setting()`方法"
 msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:216
@@ -623,159 +625,194 @@ msgstr ""
 msgid "要查看当前的启动配置，使用函数`qteasy.start_up_settings()`打印当前的启动配置信息："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:227
+#: ../../source/tutorials/1-get-started.md:224
 msgid "第一次启动`qteasy`时启动配置文件为空，此时打印出的信息为空。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:229
+#: ../../source/tutorials/1-get-started.md:226
+#: ../../source/tutorials/1-get-started.md:239
+#: ../../source/tutorials/1-get-started.md:352
+#: ../../source/tutorials/1-get-started.md:380
+msgid "输出如下："
+msgstr ""
+
+#: ../../source/tutorials/1-get-started.md:233
 msgid "要修改或更新启动配置文件，直接调用函数`qteasy.update_start_up_setting(**kwargs)`,传入的参数将被写入启动配置文件："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:248
-msgid "如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效"
-msgstr ""
-
-#: ../../source/tutorials/1-get-started.md:250
-msgid "2，直接访问`qteasy.cfg`文件"
-msgstr ""
-
-#: ../../source/tutorials/1-get-started.md:252
-msgid "用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。"
+#: ../../source/tutorials/1-get-started.md:251
+msgid "可以看到启动配置文件已经被修改成功了，如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效"
 msgstr ""
 
 #: ../../source/tutorials/1-get-started.md:253
+msgid "**方法2**，直接访问`qteasy.cfg`文件"
+msgstr ""
+
+#: ../../source/tutorials/1-get-started.md:255
+msgid "用户可以在资源管理器、访达或者终端中找到`qteasy`的根目录，然后打开`qteasy.cfg`文件，修改其中的内容。"
+msgstr ""
+
+#: ../../source/tutorials/1-get-started.md:256
 msgid "在qteasy中可以通过`qt.QT_ROOT_PATH`查看qteasy的根目录"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:259
+#: ../../source/tutorials/1-get-started.md:261
 msgid "第一次初始化后的`qteasy.cfg`文件内容如下："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:268
+#: ../../source/tutorials/1-get-started.md:270
 msgid "用户可以直接在文件中添加配置信息，保存文件后重新导入`qteasy`即可使配置生效了，例如："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:274
+#: ../../source/tutorials/1-get-started.md:276
 msgid "以下几个配置信息是用户在使用`qteasy`前非常有必要配置的："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:276
+#: ../../source/tutorials/1-get-started.md:278
 msgid "配置`tushare`的API token"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:278
+#: ../../source/tutorials/1-get-started.md:280
 msgid ""
 "注意`tushare`是一个收费的数据服务，用户需要获取积分，积分越多，获取的数据种类越多，权限也越大，如果不配置`tushare "
 "token`，将无法正常使用`tushare`的数据服务。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:280
+#: ../../source/tutorials/1-get-started.md:282
 msgid "如果您按照教程前一节的内容创建了`tushare`账号并获取了`token`，可以将token写入`qteasy.cfg`文件中，这样在导入`qteasy`时就会自动读取这个`token`。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:282
+#: ../../source/tutorials/1-get-started.md:284
 msgid "在`qteasy.cfg`文件中添加以下内容："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:288
+#: ../../source/tutorials/1-get-started.md:290
 msgid "配置本地数据源"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:290
+#: ../../source/tutorials/1-get-started.md:292
 msgid "默认情况下，`qteasy`使用csv文件保存本地数据，速度较慢而且占用空间较大。为了更好地使用`qteasy`，用户还应该完成本地数据源的基本配置。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:292
+#: ../../source/tutorials/1-get-started.md:294
 msgid "如果您按照教程前一节的内容创建了`mysql`数据库，可以将数据库的配置信息写入`qteasy.cfg`文件中，这样`qteasy`就会连接到您指定的数据库，将金融数据存储到数据库中。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:294
-msgid "在`qteasy.cfg`文件中添加以下内容，"
+#: ../../source/tutorials/1-get-started.md:296
+msgid "在`qteasy`的启动配置文件中添加以下内容，"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:305
-msgid "或者使用`qteasy.update_start_up_setting()`："
-msgstr ""
-
-#: ../../source/tutorials/1-get-started.md:312
+#: ../../source/tutorials/1-get-started.md:307
 msgid "如果不做上述配置，`qteasy`会使用默认的csv文件作为本地数据源。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:314
-msgid "请注意，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。"
+#: ../../source/tutorials/1-get-started.md:309
+msgid "请注意，如果直接修改启动配置文件时，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:316
+#: ../../source/tutorials/1-get-started.md:311
 msgid "`qteasy`在解析配置文件的时候，会根据配置的类型，自动转换为正确的格式，例如，数据库端口`3306`应该是`int`变量，直接使用："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:322
+#: ../../source/tutorials/1-get-started.md:317
 msgid "即可。`qteasy`会将字符串`3306`转换为`int`型`3306`。·"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:324
+#: ../../source/tutorials/1-get-started.md:319
 msgid "下面这个配置文件的例子是正确的："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:338
+#: ../../source/tutorials/1-get-started.md:332
 msgid "开始下载第一批金融数据"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:340
+#: ../../source/tutorials/1-get-started.md:334
 msgid "完成上述配置以后，保存并关闭`qteasy.cfg`文件，恭喜你，`qteasy`已经安装并配置好了，现在可以开始使用`qteasy`了。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:342
+#: ../../source/tutorials/1-get-started.md:336
 msgid "首先，我们需要下载一些金融数据，交易策略的回测、优化、评价等所有功能都需要用到金融数据。 在这里，我们可以先下载一些股票数据，以便后续的教程中使用。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:345
-msgid "`qt.refill_data_source`是一个通用的数据下载函数，通过指定数据表名称，数据获取渠道（默认`tushare`)，开始日期/结束日期和股票代码，`qteasy`就能连接上相应的网络数据提供商，自动分批下载数据。当下载数据量很大时，该函数会自动处理数据拆分。同时，该函数会自动处理网络延迟导致的数据下载失败问题，同时提供了限流选项，防止下载流量过大导致连接失败。下载完成的数据会自动进行清洗整理和去重，确保写入`DataSource`中的数据是干净的。关于`refill_data_source()`函数的更多介绍，请参见[api_reference](../api/api_reference.rst)。"
+#: ../../source/tutorials/1-get-started.md:339
+msgid "`qt.refill_data_source`是一个通用的数据获取API，通过指定数据表名称，数据获取渠道（默认`tushare`)，开始日期/结束日期和股票代码，`qteasy`就能连接上相应的网络数据提供商，自动分批下载数据。当下载数据量很大时，该函数会自动处理数据拆分。同时，该函数会自动处理网络延迟导致的数据下载失败问题，同时提供了限流选项，防止下载流量过大导致连接失败。下载完成的数据会自动进行清洗整理和去重，确保写入`DataSource`中的数据是干净的。关于`refill_data_source()`函数的更多介绍，请参见[api_reference](../api/api_reference.rst)。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:347
+#: ../../source/tutorials/1-get-started.md:341
 msgid "通过`refill_data_source`函数，您可以下载股票、期货、指数、基金等金融数据，也可以下载宏观经济、财务报表、财务指标、公司基本信息等非交易数据。`qteasy`可以批量下载数据到本地，另外，还可以使用多线程并行下载，提供下载进度条，特别适合一次性下载大量历史数据保存到本地，也适合定期运行，定期补充增量数据，例如每月或每周补充下载本月或本周的所有数据。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:349
+#: ../../source/tutorials/1-get-started.md:343
 msgid ""
 "目前支持从`tushare` / `akshare` / `eastmoney` "
 "等渠道获取数据，不过暂时以`tushare`为主，`tushare`渠道涵盖了所有的数据API，其他两种渠道的API会随版本更新逐步添加。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:364
+#: ../../source/tutorials/1-get-started.md:350
+msgid "qteasy会自动下载所有数据，同时自动处理数据分组、分块下载，断线重试，数据清洗和去重等问题，下载中会显示进度条，下载完成后会将数据写入本地数据源中。"
+msgstr ""
+
+#: ../../source/tutorials/1-get-started.md:363
 msgid "在`qteasy`中，所有数据都保存在特定的数据表中，而且每一种数据都有数据ID，例如`pe`表示市盈率，`open`表示开盘价，等等；通过数据ID，用户可以在`qteasy`中随时获取所需的数据——只要数据已经下载到本地。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:366
+#: ../../source/tutorials/1-get-started.md:365
 msgid "同时，数据ID也是`qteasy`中交易策略的核心，用户可以通过数据ID在交易策略中\"订阅\"所需要的数据类型，并根据这些数据生成交易信号（关于交易信号和交易策略，请参见教程第四章）。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:368
+#: ../../source/tutorials/1-get-started.md:367
 msgid "根据您的网络环境和数据量大小，下载数据的时间可能会有所不同，下载完成后，2023年内的所有股票数据就可以直接获取了。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:370
+#: ../../source/tutorials/1-get-started.md:369
 msgid ""
 "要获取历史数据，可以使用`get_history_data`函数，在参数中指定数据类型、股票代码、开始日期和结束日期， "
 "下面的代码可以获取2023年1月1日到3月1日的股票000001.SZ的开盘价、最高价、最低价、收盘价、成交量、成交额等数据："
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:387
+#: ../../source/tutorials/1-get-started.md:393
 msgid "至此，如果您看到上面的数据，表明`qteasy`的安装和初始化工作已经完成，您已经可以开始使用`qteasy`了。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:389
+#: ../../source/tutorials/1-get-started.md:395
 msgid "在下一章节中，我们将会介绍`qteasy`的基本数据类型，以及如何使用`qteasy`来获取并管理金融数据。"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:391
+#: ../../source/tutorials/1-get-started.md:397
 msgid "API 参考"
 msgstr ""
 
-#: ../../source/tutorials/1-get-started.md:393
+#: ../../source/tutorials/1-get-started.md:399
 msgid ""
 "关于qteasy环境变量的AP，以及所有的环境变量，请参考 [Configuration "
 "APIs](../api/api_reference.rst)"
 msgstr ""
+
+#~ msgid ""
+#~ "`qteasy`内置了大量的技术指标，这些技术指标的计算依赖于`TA-"
+#~ "lib`，如果需要使用`qteasy`内置的所有技术指标，需要安装`TA-lib`。 "
+#~ "如果跳过这一步，将只能使用以下内置策略，这里有[完整的内置策略清单及详细说明参考文档](https://qteasy.readthedocs.io/zh/latest/api/Built_In.html)以及[内置交易策略回测结果](https://qteasy.readthedocs.io/zh/latest/references/1"
+#~ "-build-in-results.html):"
+#~ msgstr ""
+
+#~ msgid "1，使用`qteasy.update_start_up_setting()`方法"
+#~ msgstr ""
+
+#~ msgid "如果上述信息有错，可以随时修改，关闭IDE后重新`import qteasy`即可生效"
+#~ msgstr ""
+
+#~ msgid "2，直接访问`qteasy.cfg`文件"
+#~ msgstr ""
+
+#~ msgid "在`qteasy.cfg`文件中添加以下内容，"
+#~ msgstr ""
+
+#~ msgid "或者使用`qteasy.update_start_up_setting()`："
+#~ msgstr ""
+
+#~ msgid "请注意，在文件中给出配置信息的时候，请不要加`<`和`>`，否则，这些字符也会被认为是`token`或者数据库名的一部份。从而导致连接数据库失败。"
+#~ msgstr ""
+
+#~ msgid "`qt.refill_data_source`是一个通用的数据下载函数，通过指定数据表名称，数据获取渠道（默认`tushare`)，开始日期/结束日期和股票代码，`qteasy`就能连接上相应的网络数据提供商，自动分批下载数据。当下载数据量很大时，该函数会自动处理数据拆分。同时，该函数会自动处理网络延迟导致的数据下载失败问题，同时提供了限流选项，防止下载流量过大导致连接失败。下载完成的数据会自动进行清洗整理和去重，确保写入`DataSource`中的数据是干净的。关于`refill_data_source()`函数的更多介绍，请参见[api_reference](../api/api_reference.rst)。"
+#~ msgstr ""
 

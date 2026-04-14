@@ -1,0 +1,95 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/back_testing/1. overview.md:1
+msgid "交易策略的回测"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:3
+msgid ""
+"回测在 qteasy 中通过 **qt.run(op, mode=1, ...)** "
+"触发，用于在历史数据上模拟策略运行，得到资金曲线、交易记录与绩效指标，为评价与优化策略提供依据。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:5
+msgid "总体介绍"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:7
+msgid "**入口**：`qt.run(operator, mode=1, ...)`，其中 `mode=1` 表示回测模式。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:8
+msgid "**回测能提供**：资金曲线（净值、累计收益）、逐笔交易记录、绩效指标（如夏普、回撤、胜率等）。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:10
+msgid "回测流程概览"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:12
+msgid ""
+"**配置**：资产池（asset_pool）、回测区间（invest_start、invest_end）、初始/分批资金（invest_cash_amounts"
+" 等）。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:13
+msgid "**准备数据**：确保 DataSource 中有所需历史数据。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:14
+msgid "**按时间步运行 Operator**：在每个 run_timing 时刻调用策略生成信号。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:15
+msgid "**模拟成交**：按信号与成本、交易单位等规则生成买卖与持仓。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:16
+msgid "**输出结果与可选报告**：返回结果对象（如 Backtester）、可选 trade_log、visual 图表等。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:18
+msgid "本目录各章导航"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:20
+msgid "**2. 如何运行回测** — 入口、配置方式、回测运行参数完整列表、最小示例。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:21
+msgid "**3. 回测结果的结构** — 返回值、结果字段完整列表、资金曲线与绩效指标。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:22
+msgid "**4. 交易过程记录** — 开启 trade_log、日志内容、查看与保存。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:23
+msgid "**5. 回测结果评价与分析** — 绩效指标列表、可视化、结果导出与分析思路。"
+msgstr ""
+
+#: ../../source/back_testing/1. overview.md:25
+msgid ""
+"更多策略与混合器用法见《回测并评价交易策略》references（如 references/3-back-test-strategy.md、4"
+"-build-in-strategy-blender.md）。"
+msgstr ""
+

@@ -1,0 +1,117 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/2. operator.md:1
+msgid "Operator：创建与基本配置"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:3
+msgid "Operator 是 qteasy 中策略的容器与调度器，负责在回测或实盘中按既定频率与时间点运行策略并输出统一格式的信号。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:5
+msgid "创建 Operator"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:7
+msgid ""
+"使用 ``qt.Operator()`` 创建，可传入策略列表及 "
+"``signal_type``、``run_freq``、``run_timing`` 等："
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:19
+msgid "添加策略"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:21
+msgid ""
+"**add_strategy(stg, run_freq=None, run_timing=None)**：添加单个策略，可指定该策略的 "
+"``run_freq``/``run_timing``，与已有相同则归入同一 Group，否则新建 Group。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:22
+msgid ""
+"**add_strategies(stg_list, run_freq=None, run_timing=None)**：批量添加，同样按 "
+"``run_freq``/``run_timing`` 归组。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:30
+msgid "常用属性及含义"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "属性"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "含义"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "**signal_type**"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "信号类型：`PT` 择时（目标仓位）、`PS` 择股（选股列表）、`VS` 向量信号等。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "**run_freq**"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "运行频率，如 `'d'` 日、`'1min'` 分钟等，与 DataType 的 freq 对应。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "**run_timing**"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "运行时刻，如 `'open'` 开盘、`'close'` 收盘等。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "**groups**"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md
+msgid "各 Group 信息（相同 run_freq/run_timing 的策略为一组）。"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:39
+msgid "设置策略参数"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:41
+msgid ""
+"使用 **set_parameter(stg_id, pars=None, run_freq=None, run_timing=None, "
+"...)** 为指定策略设置可调参数或归组："
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:47
+msgid "运行前检查"
+msgstr ""
+
+#: ../../source/manage_strategies/2. operator.md:49
+msgid "**is_ready()**：检查 Operator 是否已配置好策略与数据要求，可用于回测/优化前自检。"
+msgstr ""
+

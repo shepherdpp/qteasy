@@ -1,0 +1,572 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:1
+msgid "用 HistoryPanel 研究横截面选股因子"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:3
+msgid "横向截面选股：多因子配比 -> 分组组合收益与 CAGR 对比"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:5
+msgid "做横向截面选股的时候，我们经常遇到一种“很真实但很别扭”的情况："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:7
+msgid "我们手里明明有一堆股票（几十只、上百只），也知道要用多个指标做筛选（PE、PB、EBITDA、动量、波动率……）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:8
+msgid "但一旦把条件写成代码，很容易出现“形状对不上”“条件广播错了”“筛出来的股票不稳定”"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:9
+msgid "最后得到一条组合曲线，却说不清楚：到底是哪几个条件在驱动收益差异"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:11
+msgid ""
+"本篇教程就按“先跑通，再增强”的节奏，把这条链路搭成一个可复用的研究流程：   **多因子（横向） -> 截面条件 -> `where` mask"
+" -> `portfolio + benchmark` -> `normalize/cum_return + CAGR` -> "
+"`plot/highlight` 解释。**"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:14
+msgid "同样先强调定位：这里依然是**研究向**粗聚合，不是交易回测引擎。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:18
+msgid "0. 开场：先跑通一个“横向筛选 -> 组合曲线对比”的最小版本"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:20
+msgid "我们先不追求因子多、也不追求参数精细。   最小可跑证明只要做到两件事："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:23
+msgid "多 shares 能跑通横向筛选；"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:24
+msgid "最终能画出一条组合曲线，并和 `000300.SH` 做对比。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:48
+msgid "不过，仅仅“能画出来”还远远不够。   如果我们真的要把它当成日常选股研究工具来用，至少会遇到下面这些问题："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:51
+msgid ""
+"**多因子条件怎么对齐**：PE/PB/动量/波动这些概念很好理解，但一写代码就会踩坑：有的因子是 `(M,L)`，有的被你写成 "
+"`(M,L,1)`，再加上 `HistoryPanel` "
+"自带的第三维字段列，最终很容易在广播时“对上了但不是你以为的那个对”。最麻烦的是，这类错往往不报错，只会让结果看起来“怪”。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:52
+msgid ""
+"**选股是截面决策**：横向选股不是“对每只股票单独下判断”，而是“同一天从一堆股票里挑一批”。这意味着你的持仓集合每天都可能变：今天 10 "
+"只，明天 3 只，后天可能 0 只。如果你不把“每天入选篮子”显式固化下来（例如用 mask），你根本没法复盘“那天到底选了谁”。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:53
+msgid ""
+"**没有 benchmark 对比就没结论**：组合曲线看起来不错并不等于有效，它可能只是踩中了市场 beta。把 `000300.SH` "
+"拉进来做对照，至少能回答一个最关键的问题：这套筛选是在创造超额，还是只是跟随大盘？"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:54
+msgid "**有收益没解释**：横向筛选很容易“只剩一条曲线”。但真正的研究需要解释：收益差异最大的那几天，是不是恰好发生了风格切换？是不是筛选条件把我们带到了高波动/高回撤的角落？能不能快速定位到“关键分化段”，再决定下一步该加强哪条因子？"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:56
+msgid "好在这些能力都可以一步步补齐。接下来我们就从“因子构造”开始。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:60
+msgid "0.5 先贴最终效果（我们最后会得到什么）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:62
+msgid "按本文做完，你会得到三个非常“研究友好”的产出："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:64
+msgid ""
+"**一张组合曲线对比图**：`LONG / SHORT / 000300.SH`（或至少 `LONG / 000300.SH`）统一从 1.0 "
+"起点归一化，肉眼就能看出筛选规则在样本期内是否有区分度。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:65
+msgid "**一张 CAGR 摘要表**：把累计收益折算成年化口径，方便不同区间横向比较。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:66
+msgid "**一张“关键差异日/分化段”高亮图**：把 long 组合与 benchmark 分化最明显的点标出来，便于复盘与解释。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:70
+msgid "1. 目标（我们这篇文章要完成什么）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:72
+msgid "获取多 shares + `000300.SH` 的 `HistoryPanel`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:73
+msgid "构造多因子（两条路线并列：代理因子固定阈值版 + 可选真实估值版）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:74
+msgid "把多因子条件组合成 `(M,L)` bool，并用 `where()` 生成研究 mask"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:75
+msgid "用 `portfolio(mask=...)` 得到 long/short 两组组合曲线，并与 benchmark 对比"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:76
+msgid "用 `normalize/cum_return` 推导 CAGR 表"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:77
+msgid "用 `plot(highlight=...)` 高亮“差异最大日/关键分化段”，做到可解释"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:78
+msgid "文末给出一段“单函数可跑”的完整代码"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:82
+msgid "2. 准备数据：多 shares + benchmark（控制数量，让图可读）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:84
+msgid "2.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:86
+msgid "横向截面研究最常见的陷阱之一是：   **股票太多，一次性画图读不动；股票太少，又体现不出“横向筛选”的意义。**"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:89
+msgid "所以我们建议先把样例控制在 30~80 只以内（实际你可以替换成自己的股票池）。   本节只做一件事：把数据拿到手并确认 `close` 存在。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:92
+msgid "2.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:94
+msgid ""
+"后面所有组合聚合默认都围绕 `close` 做，因此只要 `close` 在 `hp.htypes` 中，我们就能跑通完整闭环。   OHLC "
+"是否齐全决定我们能不能画 K 线、能不能做事件型解释；本篇以横向筛选为主，OHLC 可作为可选项。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:97
+msgid "2.3 可运行代码 + 预期效果"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:134
+msgid "3. 多因子构造（两条路线并列）：固定阈值代理版 + 可选真实估值版"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:136
+msgid "3.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:138
+msgid "这一步我们要得到的是：**能够直接组合成筛选条件的因子矩阵**。   在“横向截面”里，我们希望每一个因子最终都能落到同一个形状：`(M, L)`。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:141
+msgid "为简单起见，这里我们分成两条路线："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:143
+msgid "**路线 A（入门推荐）**：完全用行情/技术指标派生“代理因子”，配合**固定阈值**，保证所有人都能跑通"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:144
+msgid "**路线 B（可选增强）**：如果你的本地数据源里已经有 PE/PB/EBITDA 等估值字段，就把它们替换进来"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:146
+msgid "两条路线最终都输出同样的 `cond_long/cond_short`，后面的流程完全一致。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:148
+msgid "3.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:150
+msgid "`HistoryPanel.kline.*` 会返回带新增列的新面板，例如："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:152
+msgid "`sma_20`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:153
+msgid "`macd_hist_12_26_9`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:154
+msgid "`bbands_upper_20_2_2` 等"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:156
+msgid ""
+"这些列都能通过 `hp.htypes.index(name)` 定位成 `(M, L)` 的二维矩阵。   "
+"然后我们就可以写出固定阈值的多因子条件，并确保最终条件是 `(M, L)` 的 bool。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:159
+msgid "3.3 路线 A：代理因子（固定阈值，推荐先跑通）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:161
+msgid "3.3.1 要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:163
+msgid "我们用三个“非常直觉”的代理因子，让读者快速进入状态："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:165
+msgid "**价值代理**：`close / sma20`（偏离均线越低越“便宜”）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:166
+msgid "**动量代理**：`macd_hist`（强弱）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:167
+msgid "**风险代理**：布林带带宽（波动大小）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:169
+msgid "这里要强调两点“研究口径上的诚实”："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:171
+msgid "这些都是**代理**，不是财务意义上的“真估值”。它们的价值在于：**人人都能从行情数据派生出来**，并且在某些风格下确实能形成分层效果。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:172
+msgid ""
+"它们也有明显局限：`close/sma20` 可能把趋势当成便宜/贵；MACD "
+"可能在震荡区来回打脸；带宽过滤会把“波动带来的机会”也一起过滤掉。本文的重点是把链路跑通，阈值本身只是一个可复现的起点。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:174
+msgid "3.3.2 可运行代码 + 预期效果"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:210
+msgid "到这里我们就拿到了横向筛选的“核心原料”：`cond_long/cond_short (M,L bool)`。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:212
+msgid ""
+"下一步，我们还需要做一个非常实用的 sanity check：**每天到底选中了多少只股票**。   如果这个数量经常是 "
+"0（空篮子），你的组合曲线会断断续续，结论也很不稳定；如果这个数量几乎总是全部股票，那筛选就没有意义了。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:215
+msgid "你可以加上这段检查（不改逻辑，只帮我们判断阈值是否“太严/太松”）："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:225
+msgid "3.4 路线 B：真实估值因子（可选增强，字段名以 `hp.htypes` 为准）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:227
+msgid "3.4.1 要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:229
+msgid ""
+"如果你的本地数据源里已经下载过估值字段（例如 PE/PB/EBITDA），那我们就可以把它们替换进来。   "
+"这一节我们不写死字段名，因为不同数据源/数据类型的 htype 命名可能不一样。最稳妥的方式是："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:232
+msgid "先打印 `hp.htypes`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:233
+msgid "找到你本地实际列名"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:234
+msgid "再按固定阈值写条件"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:236
+msgid "3.4.2 可运行代码（示意）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:254
+msgid "只要最终你仍然得到 `(M, L)` 的 `cond_long/cond_short`，后面流程就与路线 A 完全一致。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:256
+msgid ""
+"如果你发现自己本地根本没有这些字段，也没关系：这正是我们把“代理因子版”放在正文主线的原因。路线 B "
+"作为增强分支存在，但不依赖它也能完整跑通研究闭环。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:260
+msgid "4. 横向筛选：条件组合 -> `where()` 研究 mask"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:262
+msgid "4.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:264
+msgid "我们把 `cond_long/cond_short` 变成可直接喂给 `portfolio(mask=...)` 的研究 mask。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:266
+msgid "4.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:268
+msgid ""
+"`hp.where()` 支持把 `(M, L)` 的 bool 条件规整成 `(M, L, N)` 的 mask。   "
+"这一步把“截面筛选规则”固化为“研究口径”，后面所有聚合与收益计算都以此为准。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:271
+msgid ""
+"这也是横向研究里最值得养成的一个习惯：**永远不要只保留一条“组合曲线”，要把“每天入选篮子”的规则也显式保留下来**。   mask "
+"就是这条规则。它让你能回答“那天到底选了谁”这种复盘问题。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:274
+msgid "4.3 可运行代码 + 预期效果"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:286
+msgid "5. 两组组合曲线 + benchmark：`portfolio(mask=...)`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:288
+msgid "5.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:290
+msgid "对每个交易日，把满足条件的股票集合聚合成一条组合曲线（long/short），并与 `000300.SH` 对比。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:292
+msgid "5.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:294
+msgid "`portfolio` 是研究粗聚合，不是交易执行"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:295
+msgid "`benchmark_output='tag_along'` 会把基准行追加进输出，便于同图对比"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:297
+msgid "你可以把它理解成：对每一天，把“当日入选的股票集合”做等权平均，得到一条曲线。   由于集合每天会变，所以这条曲线本质上是在回答一个问题："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:300
+msgid "如果我每天都只持有“符合条件的那一批”，这个动态篮子长期表现如何？"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:302
+msgid "5.3 可运行代码 + 预期效果"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:331
+msgid "6. `normalize / cum_return` + CAGR：给出可比较的年化摘要表"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:333
+msgid "6.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:335
+msgid "我们既想“看曲线”，也想“有一个能复用的数字总结”。   所以我们做两件事："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:338
+msgid "`normalize`：统一起点，便于目视"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:339
+msgid "`cum_return + CAGR`：输出表格摘要"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:341
+msgid "6.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:343
+msgid ""
+"`cum_return` 输出累计收益 `cumret_*`；用末值配合年数可以推导 CAGR。   （具体 CAGR "
+"定义见前文讨论；这里不再展开推导。）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:346
+msgid "6.3 可运行代码（示意）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:369
+msgid "建议你把它整理成一个小表（至少包含 LONG/SHORT/benchmark 三行），这样读者一眼就能比较："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:392
+msgid "7. 可视化与解释：用 `plot(highlight=...)` 高亮“关键差异日”"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:394
+msgid "7.1 本节要解决什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:396
+msgid "横向截面研究做到最后，最需要解释的一类问题是：   **long 和 benchmark 差异最大的一段，到底发生了什么？**"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:399
+msgid "因此我们用 `highlight` 高亮一段“关键差异日”（例如累计收益最大点/最小点，或你自己挑的区间），把读者的注意力拉回图上。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:401
+msgid "7.2 最小必要原理"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:403
+msgid ""
+"highlight 支持 `'max'/'min'` 的简写，也支持 1D bool 条件。   "
+"为了让教程稳定，我们先演示简写版（最不容易踩坑），后续再给 1D bool 的写法。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:406
+msgid "7.3 可运行代码 + 预期效果"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:413
+msgid ""
+"预期效果：图上会把 LONG 组合曲线的最大点（或某类图表定义的最大点）标出来。   在横向研究里，我们通常把这当成一个“提醒”：最大点附近往往是"
+" long 相对市场最顺风的一段，值得回头看当时筛选条件是否把我们带进了某种风格（例如强趋势、低波动等）。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:416
+msgid ""
+"如果你想更贴近“long vs benchmark 的分化”，可以用一个更实用的做法：先算超额曲线（long 与 benchmark "
+"的差值），再把超额曲线的最大点位置提出来，做成 1D bool 的 highlight 条件。（这里作为可选增强，不强制你在正文主线展开。）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:420
+msgid "8. 完整代码（单函数可跑版本）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:422
+msgid "下面给出一段“单函数可跑”的完整版本，方便你复制进 Notebook 一键运行。它覆盖："
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:424
+msgid "路线 A（代理因子固定阈值）主线；"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:425
+msgid "每天入选数量的 sanity check；"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:426
+msgid "`where -> portfolio -> cum_return -> CAGR` 的完整闭环；"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:427
+msgid "`plot(highlight=...)` 的一个稳定演示。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:588
+msgid "9. 小结与边界"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:590
+msgid ""
+"到这里，我们已经把“横向截面多因子选股”的研究闭环跑通了。   需要再次强调：`portfolio/cum_return` "
+"是研究向粗聚合，不含真实交易执行语义。   如果你要把这个筛选逻辑迁移到策略回测，建议把条件/因子输出成策略信号，并交给 "
+"`Operator/Backtester` 去处理交易层细节。"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:596
+msgid "附录：插图索引（建议你在 Notebook 里生成/截图）"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "插图"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "建议放置位置"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "你将看到什么"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "`img/3.2_minimal_run.png`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "§0"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "多 shares 的最小可跑出图"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "`img/3.2_pf_compare.png`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "§0.5 或 §6"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "`LONG/SHORT/000300.SH` 归一化曲线对比"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "`img/3.2_highlight_key_day.png`"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "§7"
+msgstr ""
+
+#: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
+msgid "高亮“关键点”的示例（例如 max 点）"
+msgstr ""
+

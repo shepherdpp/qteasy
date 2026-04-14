@@ -1,0 +1,253 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:1
+msgid "产物清单与排错"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:3
+msgid "本页提供 live 运行时最常用的排错路径与运维建议。"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:5
+msgid "0. 适用场景"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:7
+msgid "你已经在 live 模式运行，但遇到“提交失败 / 拒单 / 状态异常理解”等问题"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:8
+msgid "你希望按固定顺序快速定位问题来源，减少盲目排查"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:10
+msgid "1. 关键产物与用途"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:12
+msgid "`sys_log`：系统运行与关键流程日志"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:13
+msgid "`trade_log`：交易明细及相关输出"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:14
+msgid "`risk_log`：风控拒绝与风险相关事件"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:15
+msgid "断点文件：用于恢复运行状态"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:17
+msgid "建议把三类日志分别用于三类问题："
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:19
+msgid "运行是否正常：优先看 `sys_log`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:20
+msgid "下单为何被拒：优先看 `risk_log`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:21
+msgid "状态为何变化：优先看 `trade_log`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:23
+msgid "2. 建议排错顺序"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:25
+msgid "先看即时界面反馈（CLI/TUI）"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:26
+msgid "再看 `sys_log` 的错误与警告"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:27
+msgid "若是拒单，检查 `risk_log` 的 `rule_id` / `reason`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:28
+msgid "最后对照订单与成交记录确认状态是否符合预期"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:30
+msgid "如果是“看起来没报错但行为不对”，建议再补一步："
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:32
+msgid "回看本次运行配置快照（账户、资产类型、broker、频率）"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:34
+msgid "3. 高频故障剧本"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:36
+msgid "A. 订单被拒绝"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:38
+msgid "现象：下单后提示拒绝"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:39
+msgid "排查：定位对应 `rule_id` 与英文 `reason`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:40
+msgid "处理：调整规则阈值或订单参数，复测同一场景"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:42
+msgid "B. 提交失败"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:44
+msgid "现象：未产生有效提交记录"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:45
+msgid "排查：检查连接状态、契约字段完整性"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:46
+msgid "处理：先修复连接/字段问题，再重试并对照 `sys_log`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:48
+msgid "C. 状态理解偏差"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:50
+msgid "现象：订单长期 `partial-filled`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:51
+msgid "排查：确认累计成交量与目标量关系"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:52
+msgid "处理：结合成交回报判断是否应转为 `filled`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:54
+msgid "D. 收盘后订单处理疑问"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:56
+msgid "现象：收盘后订单状态变化不确定"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:57
+msgid "排查：查看收盘后处理日志与撤单记录"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:58
+msgid "处理：按收盘处理策略核对最终状态"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:60
+msgid "E. 界面与日志不一致"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:62
+msgid "现象：CLI/TUI 提示与日志感知不一致"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:63
+msgid "排查：按时间顺序对齐界面反馈和日志条目"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:64
+msgid "处理：以日志中的最终状态为准，复核同一订单 ID 的全链路记录"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:66
+msgid "4. 运维建议"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:68
+msgid "定期检查日志目录容量与保留策略"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:69
+msgid "保留至少一段可复盘窗口，便于问题复现"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:70
+msgid "对关键运行日保存配置快照与日志头信息"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:72
+msgid "5. 快速检查清单"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:74
+msgid "账户是否正确"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:75
+msgid "配置是否生效"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:76
+msgid "风控是否拒绝"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:77
+msgid "broker 是否连通"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:78
+msgid "回报是否满足契约"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:79
+msgid "日志是否完整可读"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:81
+msgid "6. 常用英文提示样例"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:91
+msgid "7. 相关跳转"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:93
+msgid "启动路径：`live_trading/2-configuration-and-run.md`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:94
+msgid "生命周期：`live_trading/3-risk-and-order-lifecycle.md`"
+msgstr ""
+
+#: ../../source/live_trading/5-artifacts-and-troubleshooting.md:95
+msgid "实操教程：`tutorials/8-live-trade-risk-and-broker-walkthrough.md`"
+msgstr ""
+

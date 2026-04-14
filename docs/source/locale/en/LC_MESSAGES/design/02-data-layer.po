@@ -1,0 +1,146 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/design/02-data-layer.md:1
+msgid "数据获取、存储与数据类型"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:3
+msgid "1. 数据层在整体中的位置"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:5
+msgid ""
+"数据层为策略层与运行层提供“按类型、按窗口”的历史信息。策略不直接访问原始数据表，而是声明自己需要哪些 **DataType** 以及多长的 "
+"**window_length**；运行前，引擎根据这些声明从 **DataSource** "
+"中取出对应数据、整理成数据窗口并注入策略。这样既保证了回测与实盘使用同一套数据视图，也从机制上避免了策略使用“未来数据”。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:7
+msgid "2. 从原始数据到本地存储"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:9
+msgid "2.1 数据流"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:11
+msgid ""
+"外部数据源（如 Tushare、东方财富等）→ 拉取与清洗（格式统一、去重、对齐）→ **DataSource**（文件或数据库）→ "
+"以统一结构写入多张**数据表**。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:13
+msgid "2.2 DataSource 的角色"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:15
+msgid "**统一存储抽象**：无论底层是 CSV/HDF/Feather 文件还是 MySQL 等数据库，对上层而言都是“按表名、按列”读写。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:16
+msgid "**多引擎支持**：可配置为 file（csv/hdf/fth）或 db（mysql 等），满足不同部署需求。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:17
+msgid ""
+"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 "
+"DataSource。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:19
+msgid "因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:21
+msgid "3. 数据表"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:23
+msgid ""
+"**内置表划分**：qteasy "
+"预定义了多张数据表，大致包括行情类（如日线、分钟线）、财务类（利润表、资产负债表等）、宏观与指数等。每张表有固定的表名、主键与列结构。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:24
+msgid ""
+"**表结构与 DataType 的对应关系**：一种“可被策略引用的信息”往往对应某张表的某列（或若干列经计算得到）。DataType 的 "
+"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id**"
+" 声明需求，无需关心具体表名或列名。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:26
+msgid "4. DataType：从“表里的数据”到“策略可引用的信息”"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:28
+msgid "4.1 name、freq、asset_type 与 dtype_id"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:30
+msgid "**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:31
+msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:32
+msgid "**asset_type**：适用的资产类型（如 E、IDX、ANY），用于区分股票、指数等。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:33
+msgid ""
+"**dtype_id**：由上述三者生成，规则为 `name_assettype_freq`，例如 "
+"`close_E_d`、`total_mv_E_q`。策略在 `get_data(dtype_id)` 时使用该 id。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:35
+msgid "4.2 内置 DataType 与数据表/列的映射"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:37
+msgid ""
+"系统内置大量 DataType，分别映射到不同数据表的列或衍生列。具体表名、列名及获取方式见《下载并管理金融历史数据》与 API "
+"文档中的数据类型与数据表说明；本系列仅强调：**策略只通过 "
+"DataType（dtype_id）引用数据，不直接依赖表结构**，这样表结构演进时只需调整映射关系，而不必改策略代码。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:39
+msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:41
+msgid "**一致性**：回测与实盘都通过同一套“声明 DataType + 引擎按窗口注入”的路径取数，避免两套逻辑。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:42
+msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:43
+msgid "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:45
+msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
+msgstr ""
+

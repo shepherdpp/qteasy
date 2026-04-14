@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -65,7 +65,7 @@ msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:18
 msgid ""
-"设置了一个本地数据源，并已经将足够的历史数据下载到本地（包括交易日历、股票/基金/指数基本信息、股票/基金/指数的价格数据以及财务指标或其他财务数据——详情请参阅[QTEASY教程2](2"
+"设置了一个本地数据源，并已经将足够的历史数据下载到本地（包括交易日历、股票/基金/指数基本信息、股票/基金/指数的价格数据以及财务指标或其他财务数据——详情请参阅[QTEASY教程2](2.0"
 "-get-data.md)"
 msgstr ""
 
@@ -76,7 +76,9 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:21
-msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于如何创建交易员对象运行策略，使用历史数据回测策略，检查回测交易记录，修改策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+msgid ""
+"在[QTEASY文档](https://qteasy.readthedocs.io/zh-"
+"cn/latest/)中，还能找到更多关于如何创建交易员对象运行策略，使用历史数据回测策略，检查回测交易记录，修改策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:23
@@ -84,20 +86,49 @@ msgid "本节的目标"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:25
+msgid "在上一节教程中，我们创建了一个Operator交易员对象，并且使该交易员运行了第一个选股交易策略。不过，在qteasy中，交易员的能耐可远不止运行一个交易策略这么简单。实际上，Operator对象类似于真正的交易员，它可以同时控制并运行任意多个交易策略，这些交易策略既可以在不同的时刻以不同的频率分别运行，也可以集中大量同时运行，而且，同时运行的策略还可以以任意指定的方式“混合”成需要的样子。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:27
+msgid "您可以把交易员想像成一名画家，手里的调色板上有着不同颜色的颜料，他既可以使用不同颜色的颜料勾勒出颜色鲜明的线条，也可以用几种不同颜色调配处柔和的过渡色；这样，即使画家手里的颜料只有寥寥数种，但是画笔下却可以调配出大千世界的亿万种色彩。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:29
+msgid "这正是`qteasy`的重要设计理念之一：Operator交易员对象通过下面两种工具，可以将非常简单的交易策略组合调配成非常复杂的交易策略，从而实现复杂的功能，这两种工具包括："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:31
+msgid ""
+"**Strategy Group "
+"策略组**：交易员可以将多个策略分组运行，每一组交易策略共享同样的运行频率（例如每日运行，每小时运行或每分钟运行）以及运行时机（例如每日收盘时运行或每天10:30运行），这样可以灵活地控制策略的运行时间。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:32
+msgid ""
+"**Blender "
+"策略混合器**：在同一组内同时运行的交易策略必然是同时运行的，此时各个策略会根据各自的运行逻辑生成一组交易信号，但是这一组交易信号必须被以某种方式“合并”成一组，这种合并的方式是通过混合器`blender`执行的，混合器专门负责将多个策略生成的交易信号融合成一组，而融合的逻辑完全由用户定义的`blender"
+" string`组合字符串确定，用户有完全控制权。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:34
 msgid "在本节中，我们将了解如果使用`qteasy`中更多的内置策略，如何使交易员同时运行多个交易策略，如何使用策略混合器`blender`来使用交易策略生成不同的组合策略，"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:28
+#: ../../source/tutorials/4-build-in-strategies.md:36
 msgid ""
 "目前`qteasy`支持超过70种内置交易策略，全部都是开箱即用，完整的内置交易策略清单请参见[参考文档](../references/4"
 "-build-in-strategy-blender.md)："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:34
-msgid "打印如下信息："
+#: ../../source/tutorials/4-build-in-strategies.md:38
+msgid "通过下面的API可以获取qteasy中提供的所有内置交易策略的清单："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:58
+#: ../../source/tutorials/4-build-in-strategies.md:44
+msgid "上面的API将返回qteasy所有内置交易策略："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:64
 msgid ""
 "下面清单罗列了部分`qteasy`内置开箱即用的交易策略，完整的清单请参见[参考文档](../references/4-build-in-"
 "strategy-blender.md)"
@@ -272,71 +303,72 @@ msgstr ""
 msgid "完整的内置策略清单请见[参考文档](../references/4-build-in-strategy-blender.md)"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:76
+#: ../../source/tutorials/4-build-in-strategies.md:82
+msgid "每一个内置交易策略都有自己的ID（例如上表中的`crossline`、`macd`、`dma`等等），用户可以通过这个ID来获取内置交易策略的实例，并将其加入到交易员对象中使用。例如："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:88
+msgid "得到输出："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:99
 msgid "如果需要查看每一个内置交易策略的详细解释，例如策略参数的含义、信号生成规则，可以查看每一个交易策略的`doc-string`："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:78
+#: ../../source/tutorials/4-build-in-strategies.md:101
 msgid "例如："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:83
+#: ../../source/tutorials/4-build-in-strategies.md:106
 msgid "可以看到"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:112
+#: ../../source/tutorials/4-build-in-strategies.md:135
 msgid "在`ipython`等交互式`python`环境中，也可以使用`?`来显示内置交易策略的详细信息，例如："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:118
+#: ../../source/tutorials/4-build-in-strategies.md:141
 msgid "可以看到："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:163
+#: ../../source/tutorials/4-build-in-strategies.md:186
 msgid "多重策略以及策略组合"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:165
-msgid "在`qteasy`中，一个`Operator`交易员对象可以同时运行多个交易策略。这些交易策略在运行的时候，都会分别提取各自所需的历史数据，独立生成不同的交易信号，这些交易信号会被组合成一组交易信号，统一执行。"
+#: ../../source/tutorials/4-build-in-strategies.md:188
+msgid "在`qteasy`中，一个`Operator`交易员对象可以同时分组运行任意多个交易策略。这些交易策略在运行的时候，都会分别提取各自所需的历史数据，独立生成不同的交易信号，这些交易信号会被组合成一组交易信号，统一执行。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:167
+#: ../../source/tutorials/4-build-in-strategies.md:190
 msgid "利用这种特性，用户可以在一个交易员对象中同时运行多个各有侧重的交易策略，例如，一个交易策略监控个股的股价，根据股价产生择信号，第二个交易策略专门负责监控大盘走势，通过大盘走势决定整体仓位。第三个交易策略专门负责止盈止损，在特定时刻止损。最终的交易信号以第一个交易策略为主，但受到第二个策略的节制，必要时会被第三个策略完全控制。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:169
+#: ../../source/tutorials/4-build-in-strategies.md:192
 msgid "或者，用户也可以很容易地制定出一个“委员会”策略，在一个综合性策略中由多个策略独立地做出交易决策，最终的交易信号由所有子策略组成的”委员会“投票决定，投票的方式可以是简单多数、绝对多数、加权投票结果等等。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:171
-msgid "上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。相信这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。"
+#: ../../source/tutorials/4-build-in-strategies.md:194
+msgid "上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:173
-msgid "不过，在一个`Operator`对象中，不同策略生成的交易信号可能运行的时机是不同的，例如，某些策略在开盘时运行，生成开盘价交易信号，而另一些策略在收盘前运行，生成的是收盘价交易信号，那么运行在不同时机的策略，生成的信号当然不应该混合。但只要是同时运行的交易策略生成的信号，都应该全部混合。"
+#: ../../source/tutorials/4-build-in-strategies.md:196
+msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个`ndarray`的函数，都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:175
-msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个`ndarray`的函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:176
+#: ../../source/tutorials/4-build-in-strategies.md:198
 msgid "定义策略组合方式`blender`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:178
-msgid "`qteasy`中的组合策略是由`blender`实现的。在一个`Operator`中，如果策略的数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。"
+#: ../../source/tutorials/4-build-in-strategies.md:200
+msgid "在一个`Operator`交易员对象中，所有的交易策略都必须被分配到某一个策略组中，如果策略组中的策略数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:180
-msgid ""
-"`blender "
-"expression`是用户自行定义的一个组合表达式，用户使用这个表达式确定不同交易策略的组合方式。这个组合表达式使用四则运算符、逻辑运算符、函数等符号规定策略信号是如何组合的。`blender`表达式中可以包括以下元素："
+#: ../../source/tutorials/4-build-in-strategies.md:202
+msgid "`blender_str`是用户自行定义的一个组合表达式，用户使用这个表达式确定不同交易策略的组合方式。这个组合表达式使用四则运算符、逻辑运算符、函数等符号规定策略信号是如何组合的。`blender`表达式中可以包括以下元素："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:182
-#: ../../source/tutorials/4-build-in-strategies.md:228
-msgid "`blender`表达式中支持的函数如下："
+#: ../../source/tutorials/4-build-in-strategies.md:204
+msgid "`blender`表达式中支持的符号如下："
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -356,7 +388,7 @@ msgid "`s0, s1...`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "以s开头，数字结尾的字符串，数字为`Operator`中的策略的序号，代表这个策略生成的交易信号"
+msgid "以s开头，数字结尾的字符串，数字为`Group`中的策略的序号，代表这个策略生成的交易信号"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -419,72 +451,76 @@ msgstr ""
 msgid "组合运算"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:194
+#: ../../source/tutorials/4-build-in-strategies.md:216
 msgid "`blender`示例"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:196
+#: ../../source/tutorials/4-build-in-strategies.md:218
 msgid "当一个`Operator`对象中有三个交易策略时（其序号分别为`s0`/`s1`/`s2`），按照以下方式定义的`blender`都是合法可用的，同时使用`Operator.set_blender()`来设置`blender`："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:198
+#: ../../source/tutorials/4-build-in-strategies.md:220
 msgid "使用四则运算符定义blender表达式"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:200
+#: ../../source/tutorials/4-build-in-strategies.md:222
 msgid "`'s0 + s1 + s2'`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:202
+#: ../../source/tutorials/4-build-in-strategies.md:224
 msgid "此时三个交易策略生成的交易信号会被加起来，成为最终的交易信号，如果策略0的结果为买入10%，策略1结果为买入10%，策略2结果为买入30%，则最终的结果为买入50%"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:204
+#: ../../source/tutorials/4-build-in-strategies.md:226
 msgid "使用逻辑运算符定义blender表达式："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:206
+#: ../../source/tutorials/4-build-in-strategies.md:228
 msgid "`'s0 and s1 and s2'`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:208
+#: ../../source/tutorials/4-build-in-strategies.md:230
 msgid "表示只有当交易策略1、2、3都出现交易信号的时候，才会最终形成交易信号。如策略1的结果为买入，策略2结果为买入，而策略3没有交易信号，则最终的结果为没有交易信号。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:210
+#: ../../source/tutorials/4-build-in-strategies.md:232
 msgid "blender表达式中还可以包含括号和一些函数："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:212
+#: ../../source/tutorials/4-build-in-strategies.md:234
 msgid "`'max(s0, s1) + s2'`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:214
+#: ../../source/tutorials/4-build-in-strategies.md:236
 msgid "表示策略1、2的结果中最大值与策略3的结果相加，成为最终交易信号。如果策略1的结果为买入10%，策略2结果为买入20%，策略3结果为买入30%，最终的结果为买入50%"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:216
+#: ../../source/tutorials/4-build-in-strategies.md:238
 msgid "blender 表达式中每个策略可以出现不止一次，也可以出现纯数字："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:218
+#: ../../source/tutorials/4-build-in-strategies.md:240
 msgid "`'(0.5 * s0 + 1.0 * s1 + 1.5 * s2) / 3 * min(s0, s1, s2)'`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:220
+#: ../../source/tutorials/4-build-in-strategies.md:242
 msgid "上面的`blender`表达式表示：首先计算三个策略信号的加权平均（权重分别为0.5、1.0、1.5），然后再乘以三个信号的最小值"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:222
+#: ../../source/tutorials/4-build-in-strategies.md:244
 msgid "blender 表达式中函数的操作参数在函数名中定义："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:224
+#: ../../source/tutorials/4-build-in-strategies.md:246
 msgid "`'clip_-0.5_0.5(s0 + s1 + s2) + pos_2_0.2(s0, s1, s2)'`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:226
+#: ../../source/tutorials/4-build-in-strategies.md:248
 msgid "上面的`blender`表达式定义了两种不同的函数操作，分别得到结果后相加得到最终结果。第一个函数是范围剪切，将三组策略信号相加后，剪切掉小于-0.5的信号值以及大于0.5的信号值，得到计算结果；第二个函数是仓位判断函数，统计三组信号中持仓大于0.2的时间段，将其定义为“多头”，然后再统计每一个时间段三个策略中持多头建议的数量，如果超过两个策略持多头建议，则输出满仓多头，否则输出空仓。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:250
+msgid "`blender`表达式中支持的函数如下："
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -496,11 +532,11 @@ msgid "`abs`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`abs(s0, s1, s2)`"
+msgid "`abs(s0)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "绝对值函数<br />计算所有交易信号的绝对值<br />输入信号的数量不限"
+msgid "绝对值函数<br />计算所有交易信号的绝对值<br />只能输入一个交易信号"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -508,7 +544,7 @@ msgid "`avg`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`avg(s0, s1, s2)`"
+msgid "`avg(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -520,7 +556,7 @@ msgid "`avgpos`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`avgpos_N_T(s0, s1, s2)`"
+msgid "`avgpos_N_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -559,7 +595,7 @@ msgid "`combo`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`combo(s0, s1, s2)`"
+msgid "`combo(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -571,12 +607,12 @@ msgid "`committee`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`cmt_N_T(s0, s1, s2)`"
+msgid "`cmt_N_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
 msgid ""
-"委员会函数（等同于累计持仓函数））<br "
+"委员会函数（等同于累计持仓函数pos））<br "
 "/>当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数数，当多头/空头信号的数量大于N时，输出-1/1，否则输出0.<br"
 " />输入信号的数量不限"
 msgstr ""
@@ -634,7 +670,7 @@ msgid "`max`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`max(s0, s1, s2)`"
+msgid "`max(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -646,7 +682,7 @@ msgid "`min`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`min(s0, s1, s2)`"
+msgid "`min(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -658,7 +694,7 @@ msgid "`pos`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`pos_N_T(s0, s1, s2)`"
+msgid "`pos_N_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -673,7 +709,7 @@ msgid "`position`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`position_N_T(s0, s1, s2)`"
+msgid "`position_N_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -681,7 +717,7 @@ msgid "`pow`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`pow(s0, s1, s2)`"
+msgid "`pow(s0, s1)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -693,7 +729,7 @@ msgid "`power`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`power(s0, s1, s2)`"
+msgid "`power(s0, s1)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -713,7 +749,7 @@ msgid "`str`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`str_T(s0, s1, s2)`"
+msgid "`str_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -725,7 +761,7 @@ msgid "`strength`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`strength_T(s0, s1, s2)`"
+msgid "`strength_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -733,7 +769,7 @@ msgid "`sum`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`sum(s0, s1, s2)`"
+msgid "`sum(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -753,7 +789,7 @@ msgid "`vote`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
-msgid "`vote_N_T(s0, s1, s2)`"
+msgid "`vote_N_T(s0, s1, ...)`"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md
@@ -763,143 +799,347 @@ msgid ""
 " />输入信号的数量不限"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:257
+#: ../../source/tutorials/4-build-in-strategies.md:279
 msgid "以下方法可以被用来设置或获取策略的`blender`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:259
-msgid "`operator.set_blender(blender=None, price_type=None)`"
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:260
-msgid "设置`blender`，直接传入一个表达式`blender expression`，这个表达式会被自动解析后用于组合交易策略。"
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:262
-msgid "`operator.view_blender()`"
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:263
-msgid ""
-"查看`blender`, "
-"注意此时为了便于人眼识别，混合器表达式中的策略代码`s0`,`s1`,`s2`会被自动替换为具体的策略ID，如下面例子所示："
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:271
-msgid "上面例子中的`s0`,`s1`,`s2`分别被`dma`、`macd`、`trix`代替，但如果`Operator`中包含多个相同的策略，它们会被自动分配不同的策略ID，以示区别："
-msgstr ""
-
-#: ../../source/tutorials/4-build-in-strategies.md:279
-msgid "`blender`使用示例"
-msgstr ""
-
 #: ../../source/tutorials/4-build-in-strategies.md:281
-msgid "下面使用一个例子来演示`blender`的工作方式："
+msgid "`operator.set_blender(blender_str=None, group_id=None)`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:283
-msgid "我们生成一个交易员对象，同时运行五个`DMA`交易策略，但五个交易策略分别有不同的可调参数，这时，我们可以理解为这个交易员同时运行五个同样的交易逻辑，但这五个交易逻辑被配置了不同的参数，因此在同样的输入条件下，产生不同的交易信号，意味着五个交易策略各有侧重，有的擅长于抓取长期变量，有的善于追踪短期趋势。"
+#: ../../source/tutorials/4-build-in-strategies.md:282
+msgid ""
+"设置`blender`，直接传入一个表达式`blender_str`，这个表达式会被自动解析后用于组合交易策略。 "
+"在使用`set_blender()`的时候，可以使用group_id参数来指定这个`blender`是用于哪个策略组的，如果不指定group_id，则默认这个`blender`是用于所有策略组的。"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:285
+msgid "`operator.view_blender()`"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:286
+msgid ""
+"查看`blender`, 注意此时为了便于人类阅读，混合器表达式中的策略代码`s0`,`s1`,`s2`会被自动替换为具体的策略ID， "
+"如下面例子所示："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:293
+msgid "`operator.view_blender()`输出一个字典，键为策略组ID，值为混合器表达式，其中混合器表达式中的`s0`,`s1`,`s2`已经被替换为具体的策略ID："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:295
+#: ../../source/tutorials/4-build-in-strategies.md:307
+#: ../../source/tutorials/4-build-in-strategies.md:319
+msgid "输出如下："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:301
+msgid "如果在调用`view_blender()`的时候指定了`group_id`参数，则只会输出这个策略组的混合器表达式："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:313
+msgid "上面例子中的`s0`,`s1`,`s2`分别被`dma`、`macd`、`trix`代替，但如果`Operator`中包含多个相同的策略，它们会被自动分配不同的策略ID，以示区别："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:326
+msgid "`blender`使用示例"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:328
+msgid "下面使用一个例子来演示`blender`的工作方式："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:330
+msgid "我们生成一个交易员对象，同时运行五个`DMA`交易策略，但五个交易策略分别有不同的可调参数，这时，我们可以理解为这个交易员同时运行五个同样的交易逻辑，但这五个交易逻辑被配置了不同的参数，因此在同样的输入条件下，产生不同的交易信号，意味着五个交易策略各有侧重，有的擅长于抓取长期变量，有的善于追踪短期趋势。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:332
 msgid "下面，同样是这五个交易策略，但我们会用三个不同的例子，来展示三种不同的混合方式，向您展示，即使完全相同的交易策略和交易参数，在同一段历史区间，不同的混合方式同样能影响最终的交易结果。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:287
+#: ../../source/tutorials/4-build-in-strategies.md:334
 msgid "第一种混合方式：加权平均混合"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:289
-msgid "第一种混合方式将五个交易策略的结果进行加权平均，混合表达式如下，其中的权值可以自行调整："
+#: ../../source/tutorials/4-build-in-strategies.md:336
+msgid "第一种混合方式将五个交易策略的结果进行加权平均，每个交易策略的权重如下："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:291
+#: ../../source/tutorials/4-build-in-strategies.md:338
+msgid "s0: 权重0.8"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:339
+msgid "s1: 权重1.2"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:340
+msgid "s2: 权重2.0"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:341
+msgid "s3: 权重0.5"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:342
+msgid "s4: 权重1.5"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:344
+msgid "为了实现上面的加权平均混合，我们可以定义如下的`blender`表达式，其含义是：首先将五个交易策略的结果分别乘以他们的权重，然后再除以权重之和（即5），得到加权平均的结果："
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:346
 msgid "`(0.8*s0+1.2*s1+2*s2+0.5*s3+1.5*s4)/5`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:359
-msgid "![png](../references/img/output_10_1.png)"
+#: ../../source/tutorials/4-build-in-strategies.md:348
+msgid "接下来，我们将这个`blender`表达式设置到交易员对象中，运行策略，得到回测结果："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:359
-#: ../../source/tutorials/4-build-in-strategies.md:430
+#: ../../source/tutorials/4-build-in-strategies.md:366
+msgid ""
+"得到回测结果报告如下：年化收益5.51%，夏普率0.44。关于回测结果报告的解读，请参见[教程第三节](../tutorials/3-start-"
+"first-strategy.md)的相关内容。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:368
+msgid "我们在这里并不关注如何改进交易策略的表现，而是关注同样的交易策略在不同的混合方式下，表现出不同的回测结果，这些回测结果的差异完全来自于混合方式的不同。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:413
+msgid "![png](../tutorials/img/output_15_1.png)"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:413
 #: ../../source/tutorials/4-build-in-strategies.md:490
+#: ../../source/tutorials/4-build-in-strategies.md:551
 msgid "png"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:361
+#: ../../source/tutorials/4-build-in-strategies.md:415
 msgid "如果仔细观察上面生成的收益曲线图，可以注意到图示的背景上绘制了深浅不同的绿色条纹，这些条纹代表该段时间段里的持仓比例，白色代表空仓持币，即完全不持有任何股票，而最深的绿色代表100%持股，介于中间的绿色代表0～100%之间的持股比例，持股比例越高，条纹的颜色越深。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:363
+#: ../../source/tutorials/4-build-in-strategies.md:417
+msgid "由于五个交易策略的输出结果是以加权平均的形式输出的，因此只要任意一个交易策略输出发生改变，就会导致最终的交易信号发生改变，这也导致整个交易历史区间的买卖次数非常频繁（共有370次卖出操作和354次买入操作），持仓比例也在0%～100%之间频繁波动。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:419
 msgid "从图中可以看到，整个交易历史区间存在着深浅不一的绿色，如果您非常仔细地检查每一个持股区间，会发现这些区间的持股比例正好对应着当时五个交易策略的混合结果：当全部交易策略都\"一致决定\"全仓买入时，它们的加权平均结果就是100%买入，但只要有一个或多个策略决定持有空仓，最终加权平均的结果就是持有一定百分比的股票，这个百分比等于五个策略信号的加权平均结果。最终的结果就是持仓比例在0%～100%之间波动，完全空仓和完全满仓的时间都不长。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:365
+#: ../../source/tutorials/4-build-in-strategies.md:421
 msgid "这也意味着我们不能通过空仓来完全避免单边下跌行情，不过，始终保持一定仓位却能更好地抓住上升通道。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:367
+#: ../../source/tutorials/4-build-in-strategies.md:423
 msgid "同时，您也应该可以观察到，由于仓位是灵活调整的，在单边下跌行情中的仓位（绿色的深浅幅度）明显更低，上涨行情仓位更高，这正是我们所期望的。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:369
+#: ../../source/tutorials/4-build-in-strategies.md:425
 msgid "接下来，让我们来看下一种完全不同的混合方式："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:371
+#: ../../source/tutorials/4-build-in-strategies.md:427
 msgid "第二种混合方式：委员会投票"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:373
+#: ../../source/tutorials/4-build-in-strategies.md:429
 msgid "这种方式让同样五个交易策略组成一个\"委员会\"，通过平等投票来决定仓位，且仓位必须是\"非黑即白\"的两种结果之一：要么满仓，要么空仓。其表达式如下："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:375
-msgid "`pos_3_0(s0, s1, s2, s3, s4)`"
+#: ../../source/tutorials/4-build-in-strategies.md:431
+msgid ""
+"这时我们需要用到blender_str支持的特殊函数“委员会函数”，`cmt_N_T(s0, s1, "
+"...)`,这个函数的含义是：当同一时间产生非空仓信号（输出信号绝对值>T）的策略数量大于N时，输出满仓多头（1）或满仓空头（-1），否则输出空仓（0）。因此当N=3，T=0时，表达式如下："
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:430
-msgid "![png](../references/img/output_11_1.png)"
+#: ../../source/tutorials/4-build-in-strategies.md:433
+msgid "`cmt_3_0(s0, s1, s2, s3, s4)`"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:432
-msgid "您一定看到了，这一次的输出结果跟前一次有了很大区别：上一次回测时持仓是渐变的，而这一次是非黑即白的，要么是满仓，要么是纯粹空仓，您如果仔细分析交易日志，会发现只有当三个交易策略举手赞成满仓时，才会满仓，其余时间空仓。因此在单边下跌行情中的收益曲线是一条直线。但满仓时如果股票下跌，也没有办法通过适当减仓来降低损失。"
+#: ../../source/tutorials/4-build-in-strategies.md:435
+msgid "这就相当于我们创建了一个由五个交易策略组成的委员会，只有当同一时间至少有三个策略输出多头满仓建议时，委员会才会输出多头满仓建议，否则输出空仓建议。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:434
-msgid "接下来，我们仍然使用这个委员会，但是现在只要有两票投满仓时，最终就会满仓："
+#: ../../source/tutorials/4-build-in-strategies.md:437
+msgid "因此最终的结果就是持仓比例要么是100%（当三个或以上的策略输出满仓建议时），要么是0%（当三个或以上的策略没有输出满仓建议时）。在单边下跌行情中，持仓比例要么是100%，要么是0%，没有任何中间状态。交易员Operator相当于执行了一个由五人投资委员会的投票结果来决定持仓的交易策略。委员会的成员各有自己的想法（因为他们的参数不同），但最终的决策是由多数人决定的。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:436
-msgid "第三种混合方式：委员会投票"
+#: ../../source/tutorials/4-build-in-strategies.md:445
+msgid "得到结果如下：年化收益6.43，夏普率0.487"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:490
-msgid "![png](../references/img/output_12_1_2.png)"
+msgid "![png](../tutorials/img/output_17_1.png)"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:492
-msgid "对比第二张图表和第三张图表，您可以发现，满仓的区间明显变长了，这是因为原来需要三张赞成票才能满仓的策略，现在只要两张赞成票就可以了，因此更容易出现满仓的结果"
+msgid "您一定看到了，这一次的输出结果跟前一次有了很大区别：上一次回测时持仓比例是渐变的(投资收益图背景绿色条带的颜色深浅代表持仓的比例)，而这一次是非黑即白的，要么是满仓，要么是空仓，而且交易的次数也大大减少，一共只有九次买进和十次卖出。您如果仔细分析交易日志，会发现只有当三个交易策略举手赞成满仓时，才会满仓，其余时间空仓。因此在单边下跌行情中的收益曲线是一条直线。但满仓时如果股票下跌，也没有办法通过适当减仓来降低损失。"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:494
-msgid "本篇回顾"
+msgid "接下来，我们仍然使用这个委员会，但是现在只要有两票投满仓时，最终就会满仓："
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:496
-msgid "好了，相信到了这里，您应该会对交易策略的混合有了一个基本的理解了。我们的教程还会继续，`qteasy`还有更多的方式实现您希望的交易策略，实际上，尽管`qteasy`的内核被设计为一个有利于高速回测和高速执行的向量化的策略内核，但仍然考虑到了足够的灵活性，理论上您可以实现您所设想的任何类型的交易策略。"
+msgid "第三种混合方式：委员会投票"
 msgstr ""
 
 #: ../../source/tutorials/4-build-in-strategies.md:498
+msgid "第三种组合方式：同样是委员会策略，但输出满仓多头的投票门槛变为2票，即只要有两个策略认为输出多头即可"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:505
+msgid "得到结果如下：年化收益8.46%，夏普率0.612"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:551
+msgid "![png](../tutorials/img/output_19_1.png)"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:553
+msgid "对比第二张图表和第三张图表，您可以发现，满仓的区间明显变长了，这是因为原来需要三张赞成票才能满仓的策略，现在只要两张赞成票就可以了，因此更容易出现满仓的结果"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:555
+msgid "本篇回顾"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:557
+msgid "好了，相信到了这里，您应该会对交易策略的混合有了一个初步的理解了。我们的教程还会继续，`qteasy`还有更多的方式实现您希望的交易策略，实际上，尽管`qteasy`的内核被设计为一个有利于高速回测和高速执行的向量化的策略内核，但仍然考虑到了足够的灵活性，理论上您可以实现您所设想的任何类型的交易策略。"
+msgstr ""
+
+#: ../../source/tutorials/4-build-in-strategies.md:559
 msgid "同时，`qteasy`的回测框架也做了相当多的特殊设计，可以完全避免您无意中在交易策略中导入\"未来函数\"，确保您的交易策略在回测时完全基于过去的数据，同时也使用了很多预处理技术以及JIT技术对内核关键函数进行了编译，以实现不亚于C语言的运行速度。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:500
+#: ../../source/tutorials/4-build-in-strategies.md:561
 msgid "不过，为了实现理论上无限可能的交易策略，仅仅使用内置交易策略以及策略混合就不一定够用了，一些特定的交易策略，或者一些特别复杂的交易策略是无法通过内置策略混合而成的，这就需要我们使用`qteasy`提供的`Strategy`基类，基于一定的规则创建一个自定义交易策略了。"
 msgstr ""
 
-#: ../../source/tutorials/4-build-in-strategies.md:502
+#: ../../source/tutorials/4-build-in-strategies.md:563
 msgid "在`qteasy`教程的下一节，我们将用一个例子来介绍如何创建一个自定义交易策略，如何定义策略的基本参数，如何定义策略所需的数据类型，如何设置交易信号的生成逻辑。。。"
 msgstr ""
+
+#~ msgid ""
+#~ "设置了一个本地数据源，并已经将足够的历史数据下载到本地（包括交易日历、股票/基金/指数基本信息、股票/基金/指数的价格数据以及财务指标或其他财务数据——详情请参阅[QTEASY教程2](2"
+#~ "-get-data.md)"
+#~ msgstr ""
+
+#~ msgid "在[QTEASY文档](https://qteasy.readthedocs.io/zh/latest/)中，还能找到更多关于如何创建交易员对象运行策略，使用历史数据回测策略，检查回测交易记录，修改策略等等相关内容。对`qteasy`的基本使用方法还不熟悉的同学，可以移步那里查看更多详细说明。"
+#~ msgstr ""
+
+#~ msgid "打印如下信息："
+#~ msgstr ""
+
+#~ msgid "在`qteasy`中，一个`Operator`交易员对象可以同时运行多个交易策略。这些交易策略在运行的时候，都会分别提取各自所需的历史数据，独立生成不同的交易信号，这些交易信号会被组合成一组交易信号，统一执行。"
+#~ msgstr ""
+
+#~ msgid "上述交易策略组合中，每一个独立的交易策略都很简单，很容易定义，而将他们组合起来，又能发挥更大的作用。同时每一个子策略都是独立的，可以自由组合出复杂的综合性交易策略。这样可以避免不断地重复开发策略，只需要对子策略重新排列组合，重新定义组合方式，就可以快速地搭建一系列的复杂综合性交易策略。相信这样能够极大地提高交易策略的搭建效率，缩短周期。时间就是金钱。"
+#~ msgstr ""
+
+#~ msgid "不过，在一个`Operator`对象中，不同策略生成的交易信号可能运行的时机是不同的，例如，某些策略在开盘时运行，生成开盘价交易信号，而另一些策略在收盘前运行，生成的是收盘价交易信号，那么运行在不同时机的策略，生成的信号当然不应该混合。但只要是同时运行的交易策略生成的信号，都应该全部混合。"
+#~ msgstr ""
+
+#~ msgid "交易信号的混合即交易信号的各种运算或函数，从简单的逻辑运算、加减运算一直到复杂的自定义函数，只要能够应用于一个`ndarray`的函数，理论上都可以用于混合交易信号，只要最终输出的交易信号有意义即可。"
+#~ msgstr ""
+
+#~ msgid "`qteasy`中的组合策略是由`blender`实现的。在一个`Operator`中，如果策略的数量多于1个，就必须定义一个`blender`。如果没有明确定义`blender`，而策略的数量超过1个时，`qteasy`会在运行`Operator`的时候创建一个默认的`blender`，但是为了让多重策略正确运行，用户需要自行定义`blender`。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`blender "
+#~ "expression`是用户自行定义的一个组合表达式，用户使用这个表达式确定不同交易策略的组合方式。这个组合表达式使用四则运算符、逻辑运算符、函数等符号规定策略信号是如何组合的。`blender`表达式中可以包括以下元素："
+#~ msgstr ""
+
+#~ msgid "以s开头，数字结尾的字符串，数字为`Operator`中的策略的序号，代表这个策略生成的交易信号"
+#~ msgstr ""
+
+#~ msgid "`abs(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "绝对值函数<br />计算所有交易信号的绝对值<br />输入信号的数量不限"
+#~ msgstr ""
+
+#~ msgid "`avg(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`avgpos_N_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`combo(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`cmt_N_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "委员会函数（等同于累计持仓函数））<br "
+#~ "/>当交易信号为持仓目标信号时，统计同一时间产生非空仓信号（输出信号绝对值>T）的个数数，当多头/空头信号的数量大于N时，输出-1/1，否则输出0.<br"
+#~ " />输入信号的数量不限"
+#~ msgstr ""
+
+#~ msgid "`max(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`min(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`pos_N_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`position_N_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`pow(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`power(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`str_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`strength_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`sum(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`vote_N_T(s0, s1, s2)`"
+#~ msgstr ""
+
+#~ msgid "`operator.set_blender(blender=None, price_type=None)`"
+#~ msgstr ""
+
+#~ msgid "设置`blender`，直接传入一个表达式`blender expression`，这个表达式会被自动解析后用于组合交易策略。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "查看`blender`, "
+#~ "注意此时为了便于人眼识别，混合器表达式中的策略代码`s0`,`s1`,`s2`会被自动替换为具体的策略ID，如下面例子所示："
+#~ msgstr ""
+
+#~ msgid "第一种混合方式将五个交易策略的结果进行加权平均，混合表达式如下，其中的权值可以自行调整："
+#~ msgstr ""
+
+#~ msgid "![png](../references/img/output_10_1.png)"
+#~ msgstr ""
+
+#~ msgid "`pos_3_0(s0, s1, s2, s3, s4)`"
+#~ msgstr ""
+
+#~ msgid "![png](../references/img/output_11_1.png)"
+#~ msgstr ""
+
+#~ msgid "您一定看到了，这一次的输出结果跟前一次有了很大区别：上一次回测时持仓是渐变的，而这一次是非黑即白的，要么是满仓，要么是纯粹空仓，您如果仔细分析交易日志，会发现只有当三个交易策略举手赞成满仓时，才会满仓，其余时间空仓。因此在单边下跌行情中的收益曲线是一条直线。但满仓时如果股票下跌，也没有办法通过适当减仓来降低损失。"
+#~ msgstr ""
+
+#~ msgid "![png](../references/img/output_12_1_2.png)"
+#~ msgstr ""
+
+#~ msgid "好了，相信到了这里，您应该会对交易策略的混合有了一个基本的理解了。我们的教程还会继续，`qteasy`还有更多的方式实现您希望的交易策略，实际上，尽管`qteasy`的内核被设计为一个有利于高速回测和高速执行的向量化的策略内核，但仍然考虑到了足够的灵活性，理论上您可以实现您所设想的任何类型的交易策略。"
+#~ msgstr ""
 

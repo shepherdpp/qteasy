@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-03 20:50+0800\n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -42,9 +42,8 @@ msgstr ""
 
 #: ../../source/help.md:9
 msgid ""
-"在提交功能请求以前，请先访问我们的 "
-"[开发路线图](https://qteasy.readthedocs.io/zh/latest/roadmap.html) "
-"查阅你的功能请求是否已经在开发中。"
+"在提交功能请求以前，请先访问我们的 [开发路线图](https://qteasy.readthedocs.io/zh-"
+"cn/latest/roadmap.html) 查阅你的功能请求是否已经在开发中。"
 msgstr ""
 
 #: ../../source/help.md:11
@@ -78,4 +77,10 @@ msgstr ""
 #: ../../source/help.md:23
 msgid "QQ: 32502972"
 msgstr ""
+
+#~ msgid ""
+#~ "在提交功能请求以前，请先访问我们的 "
+#~ "[开发路线图](https://qteasy.readthedocs.io/zh/latest/roadmap.html) "
+#~ "查阅你的功能请求是否已经在开发中。"
+#~ msgstr ""
 

@@ -1,0 +1,207 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/back_testing/2. run_backtest.md:1
+msgid "如何运行回测"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:3
+msgid "入口与配置方式"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:5
+msgid ""
+"使用 **qt.run(op, mode=1, ...)** 运行回测。配置可通过 **qt.configure(...)** 预先设置，run "
+"时传入的 kwargs 会与当前配置合并（run 中参数优先）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:7
+msgid "回测运行参数完整列表（罗列并简短解释）"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:9
+msgid "以下为与 mode=1 回测相关的主要参数，具体以当前 qteasy 2.0 API 为准。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "参数名"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "类型/可选值"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "含义"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "asset_pool"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "str 或 list"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "回测标的池（股票代码等）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "asset_type"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "str"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "资产类型（如 'E' 股票）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "invest_start"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "回测开始日期。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "invest_end"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "回测结束日期。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "invest_cash_amounts"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "list/float"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "初始或分批投入资金。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "invest_cash_dates"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "list"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "与 invest_cash_amounts 对应的投入日期（若分批）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "trade_batch_size"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "float"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "每笔交易最小数量单位（最小值 0.01，例如 A 股可设 100 表示一手）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "cost_rate_buy"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "买入成本率（佣金等）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "cost_rate_sell"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "卖出成本率。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "cost_min"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "单笔最小成本。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "allow_sell_short"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "bool"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "是否允许卖空。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "trade_log"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "是否记录交易日志。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "visual"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md
+msgid "是否输出可视化图表。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:27
+msgid "其他可能参数：滑点、交易单位、印花税等，请以 **qt.configure()** 或 run 的文档为准。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:29
+msgid "最小可运行示例"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:40
+msgid "常见使用场景"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:42
+msgid "**成本设置**：通过 cost_rate_buy、cost_rate_sell、cost_min 模拟佣金与印花税。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:43
+msgid "**交易单位**：trade_batch_size 控制最小交易单位（最小值为 0.01，如 A 股可设为 100 股）。"
+msgstr ""
+
+#: ../../source/back_testing/2. run_backtest.md:44
+msgid "**是否允许卖空**：allow_sell_short=False 表示仅做多。"
+msgstr ""
+
