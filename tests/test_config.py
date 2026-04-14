@@ -21,6 +21,31 @@ from qteasy.configure import _parse_start_up_config_lines
 class TestConfig(unittest.TestCase):
     """测试Config对象以及QT_CONFIG变量的设置和获取值"""
 
+    def setUp(self) -> None:
+        """快照与日志路径相关的全局配置，供 tearDown 恢复。
+
+        本类中的 ``qt.reset_config()`` 会把 ``QT_CONFIG`` 打回内置 Default（含
+        ``trade_log_file_path='tradelog/'``），且不重新读取 ``qteasy.cfg``；若不在
+        用例结束后恢复，后续测试进程内的 ``QT_TRADE_LOG_PATH`` 会与用户启动配置
+        不一致，导致回测 CSV 落到包内 ``tradelog/``。恢复须通过无 ``config`` 的
+        ``qt.configure(...)`` 以触发 ``_refresh_log_paths()``。
+        """
+        self._snap_sys_log_file_path = qt.QT_CONFIG.get('sys_log_file_path')
+        self._snap_trade_log_file_path = qt.QT_CONFIG.get('trade_log_file_path')
+        self._snap_trade_log_keep_days = qt.QT_CONFIG.get('trade_log_keep_days')
+
+    def tearDown(self) -> None:
+        """将日志路径与保留天数恢复为进入本用例前的快照，并刷新模块级路径。"""
+        qt.configure(
+                sys_log_file_path=self._snap_sys_log_file_path,
+                trade_log_file_path=self._snap_trade_log_file_path,
+                trade_log_keep_days=self._snap_trade_log_keep_days,
+        )
+        print(
+                '\n[TestConfig.tearDown] restored log path snapshot -> QT_TRADE_LOG_PATH:',
+                qt.QT_TRADE_LOG_PATH,
+        )
+
     def test_init(self):
         pass
 

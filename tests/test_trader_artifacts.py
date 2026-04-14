@@ -222,9 +222,15 @@ class TestConfigureArtifactPaths(unittest.TestCase):
         clear_tables(self.ds)
         new_account(user_name='cfg_art_u1', cash_amount=100000.0, data_source=self.ds)
 
+        print(f'after setUp current file: {qt.__file__}\n'
+              f'current log file path: \n{qt.QT_TRADE_LOG_PATH}\n{qt.QT_CONFIG.get("trade_log_file_path")}')
+
     def tearDown(self) -> None:
         clear_tables(self.ds)
         qt.configure(sys_log_file_path=self._old_sys, trade_log_file_path=self._old_trade)
+
+        print(f'after tearDone, current file: {qt.__file__}\n'
+              f'current log file path: \n{qt.QT_TRADE_LOG_PATH}\n{qt.QT_CONFIG.get("trade_log_file_path")}')
 
     def test_list_matches_post_configure_paths(self) -> None:
         print('\n[TestConfigureArtifactPaths] after configure paths')
