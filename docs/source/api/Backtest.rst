@@ -8,7 +8,9 @@ Backtester类用于对operator对象进行回测操作。
 
 这个类只有在operator对象被创建之后才能被实例化，因为Backtester类需要依赖operator对象来生成交易
 信号和执行交易。典型用法如下：
-```
+
+.. code-block:: python
+
     operator = Operator( ... )  # 创建Operator对象
     backtested = Operator.backtest( signal_count=100, share_count=10, **kwargs)  # 创建Backtester对象
     # get backtest raw results:
@@ -19,7 +21,6 @@ Backtester类用于对operator对象进行回测操作。
     result_df = backtested.value_records()
     trade_log_df = backtested.trade_logs()
     trade_summary_df = backtested.trade_summary()
-```
 
 .. autoclass:: qteasy.backtest.Backtester
     :members:

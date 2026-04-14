@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 import time
+from datetime import date, datetime
 
 import numpy as np
 import pandas as pd
@@ -33,11 +34,17 @@ from .data_channels import fetch_real_time_klines
 from .trade_recording import (
     get_account,
     get_account_position_details,
+    get_account_positions,
     get_account_cash_availabilities,
     query_trade_orders,
     record_trade_order,
     get_or_create_position,
+    read_trade_order,
 )
+
+from .trade_io import validate_trade_order
+from .risk import AccountSnapshot, OrderIntent, RiskDecision, RiskManager
+from .live_config import LiveTradeConfig, apply_live_trade_config_to_trader
 
 from .trading_util import (
     cancel_order,
@@ -53,6 +60,7 @@ from .trading_util import (
     break_point_file_path_name,
     sys_log_file_path_name,
     trade_log_file_path_name,
+    append_live_trade_risk_log_line,
 )
 
 from .utilfuncs import (
@@ -199,8 +207,8 @@ class Trader(object):
                  pt_buy_threshold: float = 0.,
                  pt_sell_threshold: float = 0.,
                  allow_sell_short: bool = False,
-                 trade_batch_size: int = 0.01,
-                 sell_batch_size: int = 0.01,
+                 trade_batch_size: float = 0.01,
+                 sell_batch_size: float = 0.01,
                  long_position_limit: float = 1.0,
                  short_position_limit: float = -1.0,
                  stock_delivery_period: int = 1,
@@ -210,7 +218,9 @@ class Trader(object):
                  daily_refill_tables: str = '',
                  weekly_refill_tables: str = '',
                  monthly_refill_tables: str = '',
-                 debug=False):
+                 debug=False,
+                 risk_manager: Optional[RiskManager] = None,
+                 live_config: Optional[LiveTradeConfig] = None):
         """ 初始化Trader
 
         Parameters
@@ -227,6 +237,10 @@ class Trader(object):
             为 True 时，在同一批解析出的订单中先提交卖出委托再提交买入委托。
         debug: bool, default False
             是否打印debug信息
+        risk_manager : RiskManager or None, optional
+            本地风控管理器；为 ``None`` 时不做 ``submit_trade_order`` 前置拦截（与历史行为一致）。
+        live_config : LiveTradeConfig or None, optional
+            已校验的实盘配置快照；非 ``None`` 时在 kwargs 初始化完成后覆盖与 live 相关的 ``Trader`` 属性。
         """
         err = None
         if not isinstance(account_id, int):
@@ -311,6 +325,11 @@ class Trader(object):
         self.live_sys_logger = live_sys_logger
 
         self.account = get_account(self.account_id, data_source=self._datasource)
+        self.risk_manager = risk_manager
+        self._last_risk_decision: Optional[RiskDecision] = None
+
+        if live_config is not None:
+            apply_live_trade_config_to_trader(self, live_config)
 
     # ================== properties ==================
     @property
@@ -328,6 +347,11 @@ class Trader(object):
     @property
     def prev_status(self) -> str:
         return self._prev_status
+
+    @property
+    def last_risk_decision(self) -> Optional[RiskDecision]:
+        """返回最近一次 ``submit_trade_order`` 的风控决策。"""
+        return self._last_risk_decision
 
     def _get_next_scheduled_task_and_countdown(self, current_time=None):
         """ 计算 task_daily_schedule 中下一个未到点任务及距其的秒数，供 next_task、count_down_to_next_task 使用。
@@ -1562,9 +1586,90 @@ class Trader(object):
             os.remove(break_point_file_name)
         return None
 
+    def _daily_turnover_used(self, trading_date: date) -> float:
+        """汇总 ``trading_date`` 当日已计入的订单名义成交额（不含本笔）。
+
+        仅统计 ``status`` 为 ``submitted`` / ``filled`` / ``partial-filled`` 的订单；
+        以 ``submitted_time`` 的日历日期为准；``submitted_time`` 为空则跳过。
+
+        Parameters
+        ----------
+        trading_date : date
+            交易日。
+
+        Returns
+        -------
+        float
+            ``abs(qty) * price`` 之和。
+        """
+        counted_statuses = frozenset({'submitted', 'filled', 'partial-filled'})
+        df = query_trade_orders(self.account_id, data_source=self._datasource)
+        if df is None or df.empty:
+            return 0.0
+        total = 0.0
+        for _, row in df.iterrows():
+            if row.get('status') not in counted_statuses:
+                continue
+            st = row.get('submitted_time')
+            if st is None or (isinstance(st, float) and pd.isna(st)):
+                continue
+            order_day = pd.to_datetime(st).date()
+            if order_day != trading_date:
+                continue
+            total += abs(float(row['qty'])) * float(row['price'])
+        return float(total)
+
+    def get_account_snapshot(
+            self,
+            as_of: Optional[datetime] = None,
+            trading_date: Optional[date] = None,
+    ) -> AccountSnapshot:
+        """从账本组装风控用账户快照。
+
+        Parameters
+        ----------
+        as_of : datetime or None, optional
+            评估时刻；为 ``None`` 时使用 ``get_current_tz_datetime()`` 的本地时间。
+        trading_date : date or None, optional
+            日成交额统计日；为 ``None`` 时使用 ``as_of.date()``。
+
+        Returns
+        -------
+        AccountSnapshot
+            含持仓映射与 ``daily_turnover_used``（见 ``_daily_turnover_used`` 契约）。
+        """
+        if as_of is None:
+            ts = self.get_current_tz_datetime()
+            as_of_dt = pd.Timestamp(ts).to_pydatetime()
+        else:
+            as_of_dt = pd.Timestamp(as_of).to_pydatetime()
+        td = trading_date if trading_date is not None else as_of_dt.date()
+
+        pos_map: dict[tuple[str, str], float] = {}
+        pos_df = get_account_positions(self.account_id, data_source=self._datasource)
+        if pos_df is not None and not pos_df.empty:
+            for _, row in pos_df.iterrows():
+                sym = str(row['symbol'])
+                pos = str(row['position'])
+                pos_map[(sym, pos)] = float(row['qty'])
+
+        used = self._daily_turnover_used(td)
+        return AccountSnapshot(
+                as_of=as_of_dt,
+                positions=pos_map,
+                daily_turnover_used=used,
+                trading_date=td,
+        )
+
     def submit_trade_order(self, symbol: str, position: str, direction: str,
                            order_type: str, qty: int, price: float) -> dict:
         """ 提交订单
+
+        若构造时传入 ``risk_manager``，则在本函数写库前调用 ``get_account_snapshot`` 与
+        ``RiskManager.evaluate``；拒绝时 ``send_message`` 记录英文拒单信息并返回空 ``dict``，
+        不创建持仓、不写 ``sys_op_trade_orders``。通过时行为与历史版本一致：成功提交后从数据库回填
+        ``status`` / ``submitted_time``，并调用 ``trade_io.validate_trade_order`` 保证返回 dict
+        满足进入 Broker 队列的契约。
 
         Parameters
         ----------
@@ -1584,10 +1689,33 @@ class Trader(object):
         Returns
         -------
         trade_order: dict
-            订单信息
+            订单信息；风控或提交失败时为空 ``dict``。
         """
         if order_type is None:
             order_type = 'market'
+
+        self._last_risk_decision = None
+        if self.risk_manager is not None:
+            snap = self.get_account_snapshot()
+            intent = OrderIntent(
+                    symbol=symbol,
+                    position=position,
+                    direction=direction,
+                    order_type=order_type,
+                    qty=float(qty),
+                    price=float(price),
+                    notional_override=None,
+            )
+            decision = self.risk_manager.evaluate(snap, intent)
+            if not decision.allowed:
+                self._last_risk_decision = decision
+                reject_msg = (
+                        f'<RISK REJECTED> rule_id={decision.rule_id!r} reason={decision.reason!r} '
+                        f'symbol={symbol!r} direction={direction!r} position={position!r} qty={qty} price={price}'
+                )
+                self.send_message(reject_msg, debug=False)
+                append_live_trade_risk_log_line(self.account_id, reject_msg, self._datasource)
+                return {}
 
         pos_id = get_or_create_position(account_id=self.account_id,
                                         symbol=symbol,
@@ -1609,6 +1737,14 @@ class Trader(object):
         # 提交交易订单
         if submit_order(order_id=order_id, data_source=self._datasource) is not None:
             trade_order['order_id'] = order_id
+            saved = read_trade_order(order_id, data_source=self._datasource)
+            trade_order['status'] = saved['status']
+            st = saved.get('submitted_time')
+            if st is not None and not isinstance(st, str):
+                trade_order['submitted_time'] = pd.Timestamp(st).strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                trade_order['submitted_time'] = st
+            validate_trade_order(trade_order, context='Trader.submit_trade_order')
 
             return trade_order
 
@@ -2255,20 +2391,17 @@ class Trader(object):
             self.send_message('market is still open, post_close can not be executed during open time!', debug=True)
             return
 
-        # 检查order_queue中是否有任务，如果有，全部都是未处理的交易信号，生成取消订单
-        order_queue = self.broker.order_queue
+        # 检查broker中是否有尚未处理的legacy队列订单，统一通过Broker API排空后取消
+        pending_orders = self.broker.drain_order_queue()
         # TODO: 已经submitted的订单如果已经有了成交结果，只是尚未记录的，则不应该取消，
         #   此处应该检查broker的result_queue，如果有结果，则推迟执行post_close，直到
         #   result_queue中的结果全部处理完毕，或者超过一定时间
-        if not order_queue.empty():
-            # TODO: 不应该在trader中操作broker的order_queue，应该通过broker的API获取order的信息
+        if pending_orders:
             self.send_message('unprocessed orders found, these orders will be canceled')
-            while not order_queue.empty():
-                order = order_queue.get()
+            for order in pending_orders:
                 order_id = order['order_id']
                 cancel_order(order_id, data_source=self._datasource)  # 生成订单取消记录，并记录到数据库
                 self.send_message(f'canceled unprocessed order: {order_id}')
-                order_queue.task_done()
         # 检查今日成交订单，确认是否有"部分成交"的订单，如果有，生成取消订单，取消尚未成交的部分
         partially_filled_orders = query_trade_orders(
                 account_id=self.account_id,

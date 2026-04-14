@@ -79,8 +79,8 @@ op.run(
         invest_cash_amounts=[1000000],
         asset_type='IDX',
         asset_pool=['000300.SH'],
-        trade_batch_size=0,
-        sell_batch_size=0,
+        trade_batch_size=0.01,
+        sell_batch_size=0.01,
         trade_log=True,
         allow_sell_short=True,
 )

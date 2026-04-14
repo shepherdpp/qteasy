@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 project = 'qteasy'
 copyright = '2023, Jackie PENG'
 author = 'Jackie PENG'
-version = '2.3'
-release = '2.3.1'
+version = '2.4'
+release = '2.4.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -80,7 +80,6 @@ html_static_path = ['_static']
 html_logo = "QTEASY_facebook_cover.png"
 html_theme_options = {
     'logo_only': True,
-    'display_version': False,
 }
 
 # -- Latex options ---------------------------------------------------------

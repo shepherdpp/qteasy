@@ -968,29 +968,24 @@ def get_history_data(htypes=None,
 
     Parameters
     ----------
-    htype_names: [str] or str, optional
-        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
-        所有可能的htypes。输入方式可以为str或list：
-         - str:     'open, high, low, close'
-         - list:    ['open', 'high', 'low', 'close']
-    htypes: [DataType], optional, deprecated
-        需要获取的历史数据的名称集合，如果htypes为空，则系统将尝试通过根据历史数据名称和freq/asset_type参数创建
-        所有可能的htypes。输入方式可以为str或list：
-    data_types: [DataType], optional
+    htype_names : str or list of str, optional
+        需要获取的历史数据名称集合；可为逗号分隔字符串（如 ``'open, high, low, close'``）
+        或列表（如 ``['open', 'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` /
+        ``asset_type`` 等参数推断可用的 htypes。
+    htypes : list of DataType, optional, deprecated
+        历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` /
+        ``data_types`` 新接口。
+    data_types : list of DataType, optional
         需要获取的历史数据类型集合，必须是合法的数据类型对象。
         如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes
     data_source: DataSource, optional
         需要获取历史数据的数据源
-    shares: str or list of str, optional
-        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-        如以下两种输入方式皆合法且等效：
-         - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
-         - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
-    symbols: str or list of str, optional
-        需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
-        如以下两种输入方式皆合法且等效：
-        - str:     '000001, 000002, 000004, 000005'
-        - list:    ['000001', '000002', '000004', '000005']
+    shares : str or list of str, optional
+        证券代码集合；可为逗号分隔字符串（如 ``'000001.SZ, 000002.SZ'``）或列表
+        （如 ``['000001.SZ', '000002.SZ']``）。
+    symbols : str or list of str, optional
+        证券代码集合；可为逗号分隔字符串（如 ``'000001, 000002'``）或列表
+        （如 ``['000001', '000002']``）。
     start: str, optional
         YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
     end: str, optional
@@ -998,93 +993,23 @@ def get_history_data(htypes=None,
     rows: int, default 10
         获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end]
         如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多
-    freq: str, optional
-        获取的历史数据的频率，包括以下选项：
-         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-    asset_type: str or list of str, optional
-        限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-        逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-         - any: 可以获取任意资产类型的证券数据(默认值)
-         - E:   只获取股票类型证券的数据
-         - IDX: 只获取指数类型证券的数据
-         - FT:  只获取期货类型证券的数据
-         - FD:  只获取基金类型证券的数据
-    adj: str, optional, deprecated
-        Deprecated: 对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-         - none / n: 不复权(默认值)
-         - back / b: 后复权
-         - forward / fw / f: 前复权
-         从下一个版本开始，adj参数将不再可用，请直接在htype中使用close:b等方式指定复权价格
-    as_data_frame: bool, default True
-        True 时返回 HistoryPanel 对象，False 时返回一个包含 DataFrame 对象的字典。
-    group_by: str, default 'shares'
-        如果返回DataFrame对象，设置dataframe的分组策略
-        - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
-        - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
+    freq : str, optional
+        频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 ``H``/``D``/``W``/``M``
+        等小时/日/周/月周期（如 K 线）。
+    asset_type : str or list of str, optional
+        资产类型过滤；可用逗号分隔字符串（如 ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。
+        常见取值包括 ``any``、``E``、``IDX``、``FT``、``FD`` 等。
+    adj : str, optional, deprecated
+        已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。
+        新代码请在 htype 中显式使用复权列名（如 ``close|b``）。
+    as_data_frame : bool, default True
+        ``True`` 时返回 ``HistoryPanel``；``False`` 时返回 ``DataFrame`` 字典。
+    group_by : str, default 'shares'
+        返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或
+        ``'htypes'``/``'htype'``/``'h'``。
     **kwargs
-        用于生成 trade_time_index 的参数以及频率转换行为控制，包括：
-        drop_nan: bool
-            是否保留全NaN的行
-        resample_method: str
-            如果数据需要升频或降频时，调整频率的方法
-            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
-            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
-            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
-            数据合并方法:
-            - 'last'/'close': 使用合并区间的最后一个值。如：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-            - 'first'/'open': 使用合并区间的第一个值。如：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-            - 'max'/'high': 使用合并区间的最大值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-            - 'min'/'low': 使用合并区间的最小值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-            - 'sum'/'total': 使用合并区间的平均值作为合并值：
-                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
-
-            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-            例如，填充下列数据(?表示插入的数据）
-                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-            缺失数据的填充方法如下:
-            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-            - 'nan': 使用NaN值填充缺失数据：
-                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-            - 'zero': 使用0值填充缺失数据：
-                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-        b_days_only: bool 默认True
-            是否强制转换自然日频率为工作日，即：
-            'D' -> 'B'
-            'W' -> 'W-FRI'
-            'M' -> 'BM'
-        trade_time_only: bool, default True
-            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
-        include_start: bool, default True
-            日期时间序列是否包含开始日期/时间
-        include_end: bool, default True
-            日期时间序列是否包含结束日期/时间
-        start_am:, str
-            早晨交易时段的开始时间
-        end_am:, str
-            早晨交易时段的结束时间
-        include_start_am: bool
-            早晨交易时段是否包括开始时间
-        include_end_am: bool
-            早晨交易时段是否包括结束时间
-        start_pm: str
-            下午交易时段的开始时间
-        end_pm: str
-            下午交易时段的结束时间
-        include_start_pm: bool
-            下午交易时段是否包含开始时间
-        include_end_pm: bool
-            下午交易时段是否包含结束时间
+        透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。
+        详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` 说明。
 
     Returns
     -------

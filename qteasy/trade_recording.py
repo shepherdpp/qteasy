@@ -13,7 +13,7 @@
 import os
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Union, Dict
 
 from qteasy.database import DataSource
 
@@ -256,7 +256,12 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
         return None
 
     # 删除账户遗留下来的trade_log文件、system_log文件以及break_point文件
-    from qteasy.trading_util import sys_log_file_path_name, trade_log_file_path_name, break_point_file_path_name
+    from qteasy.trading_util import (
+        sys_log_file_path_name,
+        trade_log_file_path_name,
+        break_point_file_path_name,
+        risk_log_file_path_name,
+    )
 
     print('Checking for system log file...')
     sys_log_file = sys_log_file_path_name(
@@ -270,6 +275,11 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
     )
     print(f'Checking for break point file...')
     break_point_file = break_point_file_path_name(
+            account_id=account_id,
+            datasource=data_source,
+    )
+    print('Checking for risk log file...')
+    risk_log_file = risk_log_file_path_name(
             account_id=account_id,
             datasource=data_source,
     )
@@ -322,6 +332,8 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
             os.remove(trade_log_file)
         if os.path.exists(break_point_file):
             os.remove(break_point_file)
+        if os.path.exists(risk_log_file):
+            os.remove(risk_log_file)
 
     except Exception as e:
         # 如果删除失败，则回滚删除操作
@@ -336,6 +348,50 @@ def delete_account(account_id: int, data_source=None, keep_account_id=True) -> N
         import warnings
         msg = f'Error occurred: {e}, delete account failed, rollback to previous state!'
         warnings.warn(msg, RuntimeWarning)
+
+
+def risk_log_file_path_name(account_id: int, datasource: DataSource) -> str:
+    """返回指定实盘账户风控审计日志文件的绝对路径（实现见 ``trading_util.risk_log_file_path_name``）。
+
+    通过本模块导出，供 ``import qteasy as qt`` 与 ``delete_account`` 等同源导入，避免包初始化阶段循环依赖。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    datasource : DataSource
+        数据源实例。
+
+    Returns
+    -------
+    str
+        风控审计日志完整路径。
+    """
+
+    from qteasy.trading_util import risk_log_file_path_name as _risk_log_file_path_name
+
+    return _risk_log_file_path_name(account_id, datasource)
+
+
+def list_live_trade_artifacts(account_id: int, data_source=None) -> Dict[str, str]:
+    """枚举实盘账户磁盘产物路径（实现见 ``trading_util.list_live_trade_artifacts``）。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    data_source : DataSource, optional
+        数据源；默认 ``None`` 时使用全局 ``QT_DATA_SOURCE``。
+
+    Returns
+    -------
+    dict
+        含 ``sys_log``、``trade_log``、``break_point``、``risk_log`` 四键的路径字典。
+    """
+
+    from qteasy.trading_util import list_live_trade_artifacts as _list_live_trade_artifacts
+
+    return _list_live_trade_artifacts(account_id, data_source)
 
 
 def get_position_by_id(pos_id, data_source=None):

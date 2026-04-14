@@ -348,10 +348,10 @@ def save_config(*, config=None, file_name=None, overwrite=True, initial_config=F
         文件名，如果为None，文件名为"saved_config.cfg"
     overwrite: bool, Default: True
         默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
-    initial_config: bool, Default: False ** FUNCTIONALITY NOT IMPLEMENTED **
-        保配置变量到初始配置文件 qteasy.cfg 中，如果qteasy.cfg中已经存在部配置变量了，则覆盖相配置变量
-        TODO: 实现将配置变量写入qteasy.cfg初始配置文件的功能
-         由于目前使用pickle写入对象为二进制文件，而qteasy.cfg是文本文件，所以需要实现一个新的写入方式
+    initial_config: bool, Default: False (functionality not implemented)
+        保存配置变量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已经存在配置变量，则覆盖对应变量。
+        TODO: 实现将配置变量写入 qteasy.cfg 初始配置文件的功能。
+        由于目前使用 pickle 写入对象为二进制文件，而 qteasy.cfg 是文本文件，所以需要实现新的写入方式。
 
     Returns
     -------

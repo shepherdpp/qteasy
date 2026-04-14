@@ -991,6 +991,15 @@ class TraderApp(App):
                     f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
                     f'at price {trade_order["price"]:.2f}'
             )
+        else:
+            decision = self.trader.last_risk_decision
+            if decision is not None and not decision.allowed:
+                syslog.write_with_timestamp(
+                        f'Order submission rejected by risk manager: '
+                        f'rule_id={decision.rule_id!r}, reason={decision.reason!r}'
+                )
+            else:
+                syslog.write_with_timestamp('Order submission failed.')
 
         if not self.trader.is_market_open:
             syslog.write_with_timestamp(

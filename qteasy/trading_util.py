@@ -12,6 +12,7 @@
 # ======================================
 
 import os
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -252,8 +253,8 @@ def parse_live_trade_signal(signals,
                             pt_buy_threshold: float = 0.0,
                             pt_sell_threshold: float = 0.0,
                             allow_sell_short: bool = False,
-                            trade_batch_size: int = 0,
-                            sell_batch_size: int = 0,
+                            trade_batch_size: float = 0.01,
+                            sell_batch_size: float = 0.01,
                             long_position_limit: float = 1.0,
                             short_position_limit: float = -1.0,
                             cash_delivery_period: int = 0,
@@ -292,9 +293,9 @@ def parse_live_trade_signal(signals,
         PT卖出阈值
     allow_sell_short: bool, default=False
         是否允许卖空
-    trade_batch_size: int, default=0
+    trade_batch_size: float, default=0.01
         买入交易批量大小
-    sell_batch_size: int, default=0
+    sell_batch_size: float, default=0.01
         卖出交易批量大小
     long_position_limit: float, default=1.0
         多头持仓限制
@@ -319,6 +320,14 @@ def parse_live_trade_signal(signals,
         available_amounts = own_amounts
     if available_cash is None:
         available_cash = own_cash
+    if not isinstance(trade_batch_size, (float, int)):
+        raise TypeError('trade_batch_size must be a number.')
+    if not isinstance(sell_batch_size, (float, int)):
+        raise TypeError('sell_batch_size must be a number.')
+    if float(trade_batch_size) < 0.01:
+        raise ValueError('trade_batch_size must be >= 0.01.')
+    if float(sell_batch_size) < 0.01:
+        raise ValueError('sell_batch_size must be >= 0.01.')
     # 如果没有提供交易信号的配置，使用QT_CONFIG中的默认配置
 
     # 1, 将交易信号解析为交易意图 trade_intentions (即cash_to_spend和amounts_to_sell)
@@ -1327,6 +1336,10 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
     )
     if not isinstance(remaining_qty, (int, float, np.int64, np.float64)):
         raise TypeError(f'remaining qty {remaining_qty} is not a number!')
+    # 当前交易结果确认后的累计成交量，用于稳定判定订单状态，避免依赖上一笔结果先写库
+    filled_qty_after = np.round(filled_qty + raw_trade_result['filled_qty'], AMOUNT_DECIMAL_PLACES)
+    total_order_qty = np.round(order_detail['qty'], AMOUNT_DECIMAL_PLACES)
+
     # 如果交易结果中的cancel_qty大于0，则将交易订单的状态设置为 'canceled'，同时确认 canceled_qty等于remaining_qty
     if raw_trade_result['canceled_qty'] > 0:
         if raw_trade_result['canceled_qty'] != remaining_qty:
@@ -1340,20 +1353,16 @@ def process_trade_result(raw_trade_result, data_source=None) -> dict:
             err = RuntimeError(f'filled_qty {raw_trade_result["filled_qty"]} '
                                f'is greater than remaining_qty {remaining_qty}')
             raise err
-        # TODO: bug
-        #  这里会有问题发生，如果一个订单在很短时间内产生两个交易结果，第二个交易结果
-        #  很可能会在第一个交易结果确认并计入系统之前就被处理，这样就会导致此时无法获得
-        #  正确的remaining_qty，从而导致错误的订单状态。例如
-        #  一个买入500股的订单分为2笔成交，第一笔300股，第二笔200股，那么正确的结果应
-        #  该是第一笔成交后状态为partial-filled，第二笔成交后变为filled。但如果第二
-        #  笔在第一笔交易结果存入数据库之前就处理，那么两笔交易结果的状态都会是partial-filled
-        # 如果filled_qty等于remaining_qty，则将交易订单的状态设置为 'filled'
-        elif raw_trade_result['filled_qty'] == remaining_qty:
+        # 如果当前结果确认后累计成交量达到整单数量，则订单应转为filled
+        if filled_qty_after == total_order_qty:
             order_detail['status'] = 'filled'
 
-        # 如果filled_qty小于remaining_qty，则将交易订单的状态设置为 'partial-filled'
-        elif raw_trade_result['filled_qty'] < remaining_qty:
+        # 如果累计成交量仍小于整单数量，则维持partial-filled
+        elif filled_qty_after < total_order_qty:
             order_detail['status'] = 'partial-filled'
+        else:
+            err = RuntimeError(f'filled_qty_after {filled_qty_after} exceeds order_qty {total_order_qty}')
+            raise err
 
     # 计算交易后持仓数量的变化 position_change 和现金的变化值 cash_change
     if order_detail['direction'] == 'sell':
@@ -1985,7 +1994,7 @@ def sys_log_file_path_name(account_id, datasource) -> str:
 
 
 def break_point_file_path_name(account_id, datasource) -> str:
-    """ 返回指定交易账户实盘交易设置文件的路径和文件名，文件路径为QT_TRADE_LOG_PATH
+    """ 返回指定交易账户实盘断点文件的路径和文件名，目录为 ``QT_SYS_LOG_PATH``（与系统日志同根）。
 
     Parameters
     ----------
@@ -1997,7 +2006,7 @@ def break_point_file_path_name(account_id, datasource) -> str:
     Returns
     -------
     file_path_name: str
-        完整的系统记录文件路径和文件名，含扩展名.cfg
+        完整的断点文件路径和文件名，含扩展名 .bkp
     """
 
     from qteasy import QT_SYS_LOG_PATH
@@ -2030,3 +2039,116 @@ def trade_log_file_path_name(account_id, datasource) -> str:
     )
     log_file_path_name = os.path.join(QT_TRADE_LOG_PATH, trade_log_file_name)
     return log_file_path_name
+
+
+def risk_log_file_path_name(account_id: int, datasource) -> str:
+    """返回指定交易账户风控拒单审计日志文件的绝对路径，目录为 ``QT_TRADE_LOG_PATH``。
+
+    文件名与 ``account_log_file_name`` 一致并经 ``sanitize_filename`` 处理，扩展名为 ``.risk.log``。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    datasource : DataSource
+        账户所在数据源。
+
+    Returns
+    -------
+    str
+        风控审计日志完整路径。
+
+    Raises
+    ------
+    TypeError
+        ``datasource`` 不是 ``DataSource`` 实例。
+    KeyError
+        账户不存在（与 ``get_account`` 行为一致）。
+    """
+
+    from qteasy import DataSource, QT_TRADE_LOG_PATH
+
+    if not isinstance(datasource, DataSource):
+        raise TypeError(f'datasource must be a DataSource instance, got {type(datasource)} instead')
+    stem = sanitize_filename(account_log_file_name(account_id, datasource))
+    risk_file_name = stem + '.risk.log'
+    return os.path.join(QT_TRADE_LOG_PATH, risk_file_name)
+
+
+def list_live_trade_artifacts(account_id: int, data_source=None) -> dict[str, str]:
+    """枚举指定实盘账户相关的磁盘产物路径（不要求文件已存在）。
+
+    返回固定四键：``sys_log``、``trade_log``、``break_point``、``risk_log``，值均为
+    当前 ``QT_SYS_LOG_PATH`` / ``QT_TRADE_LOG_PATH`` 解析下的绝对路径。
+    若用户已通过 ``qt.configure`` 热更新日志目录，本函数与 ``delete_account`` 均与最新路径一致。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    data_source : DataSource, optional
+        数据源；默认 ``None`` 时使用 ``QT_DATA_SOURCE``。
+
+    Returns
+    -------
+    dict[str, str]
+        键为 ``sys_log`` / ``trade_log`` / ``break_point`` / ``risk_log`` 的路径字典。
+
+    Raises
+    ------
+    TypeError
+        ``data_source`` 非 ``None`` 且不是 ``DataSource`` 实例。
+    KeyError
+        账户不存在。
+    """
+
+    import qteasy as qt
+    from qteasy import DataSource
+
+    if data_source is None:
+        data_source = qt.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        raise TypeError(f'data_source must be a DataSource instance, got {type(data_source)} instead')
+    return {
+        'sys_log': sys_log_file_path_name(account_id, data_source),
+        'trade_log': trade_log_file_path_name(account_id, data_source),
+        'break_point': break_point_file_path_name(account_id, data_source),
+        'risk_log': risk_log_file_path_name(account_id, data_source),
+    }
+
+
+def append_live_trade_risk_log_line(account_id: int, line: str, datasource) -> None:
+    """向账户风控审计日志追加一行 UTF-8 文本（用于 ``<RISK REJECTED>`` 等）。
+
+    写入失败时不抛出异常，仅发出英文 ``RuntimeWarning``，以免阻断拒单主流程。
+
+    Parameters
+    ----------
+    account_id : int
+        账户 ID。
+    line : str
+        待写入的一行文本（可不含换行符，函数会补全）。
+    datasource : DataSource
+        账户所在数据源。
+
+    Returns
+    -------
+    None
+    """
+
+    from qteasy import DataSource
+
+    if not isinstance(datasource, DataSource):
+        raise TypeError(f'datasource must be a DataSource instance, got {type(datasource)} instead')
+    path = risk_log_file_path_name(account_id, datasource)
+    try:
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        payload = line if line.endswith('\n') else line + '\n'
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(payload)
+    except OSError as exc:
+        warnings.warn(
+            f'Failed to append live-trade risk log for account {account_id}: {exc}',
+            RuntimeWarning,
+            stacklevel=2,
+        )

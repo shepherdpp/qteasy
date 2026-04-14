@@ -2424,6 +2424,68 @@ class TestTradingUtilFuncs(unittest.TestCase):
         #  and unfilled orders can be fully cancelled
         pass
 
+    def test_process_trade_result_partial_then_filled_status(self):
+        """测试同一订单分批成交时状态从 partial-filled 正确切换为 filled。"""
+        print('\n[TestTradingUtilFuncs] partial-filled -> filled status transition')
+        if self.test_ds.table_data_exists('sys_op_live_accounts'):
+            self.test_ds.drop_table_data('sys_op_live_accounts')
+        if self.test_ds.table_data_exists('sys_op_positions'):
+            self.test_ds.drop_table_data('sys_op_positions')
+        if self.test_ds.table_data_exists('sys_op_trade_orders'):
+            self.test_ds.drop_table_data('sys_op_trade_orders')
+        if self.test_ds.table_data_exists('sys_op_trade_results'):
+            self.test_ds.drop_table_data('sys_op_trade_results')
+
+        new_account(user_name='test_user_partial_fill', cash_amount=100000, data_source=self.test_ds)
+        order_ids = save_parsed_trade_orders(
+                account_id=1,
+                symbols=['000001.SZ'],
+                positions=['long'],
+                directions=['buy'],
+                quantities=[500],
+                prices=[20.0],
+                data_source=self.test_ds,
+        )
+        order_id = int(order_ids[0])
+        print(' created order_id:', order_id)
+        submit_order(order_id, data_source=self.test_ds)
+
+        delivery_config = {'cash_delivery_period': 0, 'stock_delivery_period': 0}
+
+        raw_trade_result_1 = {
+            'order_id':        order_id,
+            'filled_qty':      300.0,
+            'price':           20.0,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
+        full_1 = process_trade_result(raw_trade_result_1, data_source=self.test_ds)
+        order_after_1 = read_trade_order_detail(order_id, data_source=self.test_ds)
+        print(' first fill full result:', full_1)
+        print(' order after first fill:', order_after_1)
+        self.assertEqual(order_after_1['status'], 'partial-filled')
+        self.assertEqual(full_1['order_status'], 'partial-filled')
+
+        raw_trade_result_2 = {
+            'order_id':        order_id,
+            'filled_qty':      200.0,
+            'price':           20.0,
+            'transaction_fee': 5.0,
+            'canceled_qty':    0.0,
+        }
+        process_account_delivery(account_id=1, data_source=self.test_ds, **delivery_config)
+        full_2 = process_trade_result(raw_trade_result_2, data_source=self.test_ds)
+        order_after_2 = read_trade_order_detail(order_id, data_source=self.test_ds)
+        result_rows = read_trade_results_by_order_id(order_id, data_source=self.test_ds)
+        filled_total = float(result_rows['filled_qty'].sum())
+        print(' second fill full result:', full_2)
+        print(' order after second fill:', order_after_2)
+        print(' filled_total:', filled_total, ' expected:', 500.0)
+        self.assertEqual(order_after_2['status'], 'filled')
+        self.assertEqual(full_2['order_status'], 'filled')
+        self.assertAlmostEqual(filled_total, 500.0, places=6)
+
     # test top level functions related to signal generation and submission
     def test_parse_signal(self):
         """ test parse_live_trade_signal function """
@@ -2579,8 +2641,8 @@ class TestTradingUtilFuncs(unittest.TestCase):
             'PT_buy_threshold':     0.1,
             'PT_sell_threshold':    -0.1,
             'allow_sell_short':     False,
-            'trade_batch_size':     0.,
-            'sell_batch_size':      0.,
+            'trade_batch_size':     0.01,
+            'sell_batch_size':      0.01,
             'long_position_limit':  1.0,
             'short_position_limit': -1.0,
             'cost_rate_buy':        0.000,
@@ -4675,6 +4737,46 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
                 get_purchase_result(np.array([10.0]), np.array([budget]), moq, cost_params)[0][0],
         ), places=5)
 
+    def test_parse_live_trade_signal_accepts_batch_size_at_minimum(self):
+        print('\n[TestParseTradeSignalPrecost] batch_size=0.01 边界值可正常解析')
+        shares = ['AAA']
+        prices = np.array([10.0])
+        signals = np.array([100.0])
+        own_amounts = np.array([0.0])
+        result = parse_live_trade_signal(
+                signals=signals,
+                signal_type='vs',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=1e6,
+                available_cash=1e6,
+                cost_params=np.zeros(5),
+                trade_batch_size=0.01,
+                sell_batch_size=0.01,
+        )
+        print(' parsed symbols:', result[0], 'quantities:', result[3])
+        self.assertEqual(result[0], ['AAA'])
+        self.assertGreater(result[3][0], 0.0)
+
+    def test_parse_live_trade_signal_rejects_batch_size_below_minimum(self):
+        print('\n[TestParseTradeSignalPrecost] batch_size<0.01 触发异常')
+        with self.assertRaises(ValueError) as ctx:
+            parse_live_trade_signal(
+                    signals=np.array([100.0]),
+                    signal_type='vs',
+                    shares=['AAA'],
+                    prices=np.array([10.0]),
+                    own_amounts=np.array([0.0]),
+                    own_cash=1e6,
+                    available_cash=1e6,
+                    cost_params=np.zeros(5),
+                    trade_batch_size=0.005,
+                    sell_batch_size=0.01,
+            )
+        print(' error message:', str(ctx.exception))
+        self.assertIn('trade_batch_size must be >= 0.01', str(ctx.exception))
+
     def test_signal_to_order_buy_skips_nan_and_zero_price(self):
         print('\n[TestParseTradeSignalPrecost] NaN 与 0 价格跳过买入')
         shares = ['A', 'B']
@@ -4690,7 +4792,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
                 own_cash=1e9,
                 available_cash=1e9,
                 cost_params=np.zeros(5),
-                trade_batch_size=0.0,
+                trade_batch_size=0.01,
                 sell_batch_size=1.0,
         )
         self.assertEqual(sym, ['B'])
@@ -4706,7 +4808,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
                 own_cash=1e9,
                 available_cash=1e9,
                 cost_params=np.zeros(5),
-                trade_batch_size=0.0,
+                trade_batch_size=0.01,
                 sell_batch_size=1.0,
         )
         self.assertEqual(sym2, ['B'])
@@ -4727,7 +4829,7 @@ class TestParseTradeSignalPrecost(unittest.TestCase):
                 own_cash=1e9,
                 available_cash=1e9,
                 cost_params=cost_params,
-                trade_batch_size=0.0,
+                trade_batch_size=0.01,
                 sell_batch_size=1.0,
         )
         self.assertEqual(len(qty), 0)

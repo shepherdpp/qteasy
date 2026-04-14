@@ -44,7 +44,7 @@ HP_OVERLAY_GROUP_SHARE_COUNT: int = 2
 class _HistoryPanelLocIndexer:
     """只读索引器：沿 ``hdates`` 时间轴选取，``hp.loc[key]`` 等价于 ``hp[:, :, key]``。
 
-    与 pandas ``DataFrame.loc`` 仅 **类比**（按「行」筛日期）；本类 **只接受单参数**
+    与 pandas ``DataFrame.loc`` 仅 **类比** （按「行」筛日期）；本类 **只接受单参数**
     时间轴键，**不**实现二维 ``loc[row, col]`` 全语义。
 
     不接受 ``where()`` 产生的 ``(M, L, N)`` 三维布尔掩码；格点级条件请使用
@@ -66,7 +66,7 @@ class _HistoryPanelLocIndexer:
         Parameters
         ----------
         key : slice, list, 或 numpy.ndarray 等
-            与第三轴（``hdates``）上 ``list_or_slice`` 支持的输入一致；一维 ``bool``
+            与第三轴 （``hdates``）上 ``list_or_slice`` 支持的输入一致；一维 ``bool``
             列表或 ``ndarray`` 长度须等于 ``row_count``。禁止传入 ``(M, L, N)`` 布尔数组。
 
         Returns
@@ -77,9 +77,9 @@ class _HistoryPanelLocIndexer:
         Raises
         ------
         TypeError
-            传入与 ``where`` 输出同形的格点级三维布尔掩码时抛出（英文）。
+            传入与 ``where`` 输出同形的格点级三维布尔掩码时抛出 （英文）。
         ValueError
-            布尔轴长度不匹配、或二维布尔数组等非法形状时抛出（英文）。
+            布尔轴长度不匹配、或二维布尔数组等非法形状时抛出 （英文）。
         """
         hp = self._hp
         if isinstance(key, list) and len(key) > 0 and isinstance(key[0], (bool, np.bool_)):
@@ -120,29 +120,29 @@ class _HistoryPanelLocIndexer:
 class HistoryPanel():
     """qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。
 
-    HistoryPanel 本质是一个三维 ``numpy.ndarray``，三条轴分别表示标的（shares）、时间
-    （hdates）和历史数据类型（htypes），支持按任意轴灵活切片、重标记以及与
+    HistoryPanel 本质是一个三维 ``numpy.ndarray``，三条轴分别表示标的 （shares）、时间
+     （hdates）和历史数据类型 （htypes），支持按任意轴灵活切片、重标记以及与
     pandas DataFrame 之间的互相转换，并作为 get_history_data 与可视化栈
-    （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
+     （如 ``HistoryPanel.plot()`` 与 ``qt.candle``）之间的核心桥梁。
 
     **索引与数组出口**：``__getitem__`` 始终返回带正确轴标签的子 ``HistoryPanel``；需要
     裸 ``ndarray`` 时用 ``.values`` 或 ``.to_numpy(copy=...)``。**单列原地赋值**
-    ``panel['列名'] = value`` 由 ``__setitem__`` 实现（仅非空面板、仅 ``str`` 键），
+    ``panel['列名'] = value`` 由 ``__setitem__`` 实现 （仅非空面板、仅 ``str`` 键），
     值广播为 ``(标的数, 时间长度)`` 并以 ``float64`` 存储；覆盖已有列或追加新列。
     子面板与父对象共享缓冲时的语义见 ``__getitem__`` / ``subpanel`` / ``__setitem__`` 各方法说明。
 
-    **体验向 API**：合法 Python 标识符且存在于 ``htypes`` 的列名可用属性只读访问（如 ``panel.close``，
-    等价 ``panel['close']``）；比较运算（如 ``panel.close > panel.open``）返回 ``numpy`` 布尔数组；
-    ``panel.loc[key]`` 等价 ``panel[:, :, key]``，仅沿时间轴筛选（不接 ``where`` 的三维掩码）。
-    用户文档见 Sphinx **HistoryPanel** 页与教程「使用 HistoryPanel 操作和分析历史数据」（§6 及 §6.1）。
+    **体验向 API**：合法 Python 标识符且存在于 ``htypes`` 的列名可用属性只读访问 （如 ``panel.close``，
+    等价 ``panel['close']``）；比较运算 （如 ``panel.close > panel.open``）返回 ``numpy`` 布尔数组；
+    ``panel.loc[key]`` 等价 ``panel[:, :, key]``，仅沿时间轴筛选 （不接 ``where`` 的三维掩码）。
+    用户文档见 Sphinx **HistoryPanel** 页与教程「使用 HistoryPanel 操作和分析历史数据」 （§6 及 §6.1）。
 
-    更详细的结构说明（轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
+    更详细的结构说明 （轴标签、切片示例、标签管理等）见文档「HistoryPanel 类」相关章节。
     """
 
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
         """初始化 HistoryPanel 对象，并根据输入的数据与轴标签构建三维历史数据结构。
 
-        可以在创建时同时给出标的（levels）、时间（rows）和数据类型（columns）标签，
+        可以在创建时同时给出标的 （levels）、时间 （rows）和数据类型 （columns）标签，
         若未显式给出则按数据形状自动补全；当仅给出部分标签或数组维度不足三维时，会根据
         输入自动推断缺失维度并重塑为 ``(level, row, column)`` 结构。关于标签约定与
         典型创建方式，详见文档「HistoryPanel 类」章节。
@@ -151,14 +151,14 @@ class HistoryPanel():
         ----------
         values : numpy.ndarray, optional
             历史数据数组，维度不能超过三维；若维度不足三维，将根据标签数量自动补齐维度。
-            为 None 或空数组时创建一个空的 HistoryPanel（其 ``is_empty`` 为 True）。
+            为 None 或空数组时创建一个空的 HistoryPanel （其 ``is_empty`` 为 True）。
         levels : str or sequence of str, optional
             标的标签，数量应等于 ``values`` 第一维长度，每一层代表一种股票或资产。
         rows : str or sequence of str, optional
             时间标签，可以是可转换为 ``pandas.Timestamp`` 的字符串序列或 DatetimeIndex，
             每个标签对应一条时间记录。
         columns : str or sequence of str, optional
-            历史数据类型标签，每一列代表一种数据类型（如 open、high、close、volume 等）。
+            历史数据类型标签，每一列代表一种数据类型 （如 open、high、close、volume 等）。
 
         Returns
         -------
@@ -236,7 +236,7 @@ class HistoryPanel():
 
     @property
     def values(self):
-        """返回当前对象内部的三维数据缓冲区（与 ``_values`` 同一引用）。
+        """返回当前对象内部的三维数据缓冲区 （与 ``_values`` 同一引用）。
 
         非空时与 ``to_numpy(copy=False)`` 指向同一块内存；修改返回值会直接改动本对象数据。
         通过 ``__setitem__`` 追加新列时，内部可能 **替换** 整块数组，此前由子视图
@@ -253,11 +253,9 @@ class HistoryPanel():
 
     @property
     def levels(self):
-        """返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典
+        """返回 HistoryPanel 的层标签字典（股票代码到层下标的映射）。
 
-        这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
-            data = HP.values[levels[level_name[a], :, :]
-        来访问，不过这是HistoryPanel内部的处理机制，在HistoryPanel的外部，可以通过切片的方式快速访问不同的数据。
+        在库内部可与 ``values`` 组合做按层索引；外部请优先使用方括号切片访问各层数据。
         """
         return self._levels
 
@@ -384,11 +382,11 @@ class HistoryPanel():
 
     @property
     def loc(self) -> _HistoryPanelLocIndexer:
-        """沿 ``hdates``（时间轴）选取子面板的只读索引器。
+        """沿 ``hdates`` （时间轴）选取子面板的只读索引器。
 
         ``hp.loc[key]`` 与 ``hp[:, :, key]`` 等价，用于切片、时间标签、标签列表、``:`` 或
         长度等于 ``row_count`` 的一维布尔掩码。格点级 ``(M,L,N)`` 布尔条件请用
-        :meth:`where` 与后续 ``mask=``，**不要**传入 ``loc``。
+        :meth:`where` 与后续 ``mask=``；格点级条件不要传入 ``loc``。
 
         Returns
         -------
@@ -450,14 +448,14 @@ class HistoryPanel():
         Parameters
         ----------
         ordered : sequence
-            与轴顺序一致的标签序列（如 ``shares`` / ``hdates`` / ``htypes`` 列表）。
+            与轴顺序一致的标签序列 （如 ``shares`` / ``hdates`` / ``htypes`` 列表）。
         spec : slice, list of int, or ndarray
             ``list_or_slice`` 的返回值。
 
         Returns
         -------
         list
-            子集标签，顺序与切片后的数组第一维（或对应维）一致。
+            子集标签，顺序与切片后的数组第一维 （或对应维）一致。
         """
         if isinstance(spec, slice):
             return list(ordered[spec])
@@ -602,12 +600,12 @@ class HistoryPanel():
         """将条件广播为与 ``values`` 同形的 bool 掩码，供研究 API 的 ``mask=`` 等参数使用。
 
         不改变本对象。返回数组为 ``dtype=bool``、形状 ``(share 数, 时间长度, htype 数)``，与
-        ``panel.values`` 一致。条件可为数组（可广播到上述形状）或 ``callable(panel)`` 返回类数组。
+        ``panel.values`` 一致。条件可为数组 （可广播到上述形状）或 ``callable(panel)`` 返回类数组。
 
         研究向掩码与 Backtester 中 NaN 价格处理无关。整数 ``0``/``1`` 等会按 numpy 规则转为 bool。
 
         形状 **恰好为** ``(M, L)`` 的数组视为「每个 ``(share, 时间)`` 对所有 ``htype`` 共用同一布尔值」，
-        内部会先变为 ``(M, L, 1)`` 再广播到 ``(M, L, N)``（因标准 numpy 无法将二维 ``(M,L)`` 直接广播到三维）。
+        内部会先变为 ``(M, L, 1)`` 再广播到 ``(M, L, N)`` （因标准 numpy 无法将二维 ``(M,L)`` 直接广播到三维）。
         一维 ``(M,)`` 与二维 ``(M, 1)`` 视为仅随标的变化，会展开为 ``(M, 1, 1)`` 再广播。
 
         Parameters
@@ -615,31 +613,31 @@ class HistoryPanel():
         condition : numpy.ndarray or callable
             类数组：先 ``np.asarray(..., dtype=bool)`` 再广播到 ``self.shape``。
             若为 ``callable``，则调用 ``condition(self)`` 得到数组后再处理。
-            裸 ``str`` 不接受，将引发 ``TypeError``（英文）。
+            裸 ``str`` 不接受，将引发 ``TypeError`` （英文）。
 
         Returns
         -------
         numpy.ndarray
-            与 ``self.shape`` 相同的三维 bool 数组（拷贝，与内部 ``values`` 不共享写缓冲）。
+            与 ``self.shape`` 相同的三维 bool 数组 （拷贝，与内部 ``values`` 不共享写缓冲）。
 
         Raises
         ------
         TypeError
-            ``condition`` 为 ``str`` 时抛出（英文）。
+            ``condition`` 为 ``str`` 时抛出 （英文）。
         ValueError
-            无法将返回值转为 bool 数组或无法广播到 ``self.shape`` 时抛出（英文）。
+            无法将返回值转为 bool 数组或无法广播到 ``self.shape`` 时抛出 （英文）。
 
         Notes
         -----
-        ``condition`` 可为 **富比较** 的直接结果（自 2.2.8 起）：例如 ``panel.where(panel.close > 100.0)``
+        ``condition`` 可为 **富比较** 的直接结果 （自 2.2.8 起）：例如 ``panel.where(panel.close > 100.0)``
         或 ``panel.where(panel['close'] > panel['open'])``，其中 ``>`` 等对 ``HistoryPanel`` 与标量 /
-        可广播数组 / 另一面板（须满足对齐规则）返回 ``numpy.ndarray``（``dtype=bool``），再由本方法
+        可广播数组 / 另一面板 （须满足对齐规则）返回 ``numpy.ndarray`` （``dtype=bool``），再由本方法
         广播到与 ``panel.values`` 同形。
 
         ``cum_return``、``normalize`` 与 ``portfolio`` 的 ``mask=`` 可直接使用本方法返回值或与其同形、
         ``dtype=bool`` 的数组。
         更多场景见文档「使用 HistoryPanel 操作和分析历史数据」教程与 Sphinx **HistoryPanel** API 中
-        「研究与掩码（where）」小节。
+        「研究与掩码 （where）」小节。
 
         Examples
         --------
@@ -670,7 +668,7 @@ class HistoryPanel():
         >>> hp.where(True).all() and not hp.where(False).any()
         True
 
-        ``(M, L)`` 条件沿 htype 轴广播（例如事件日）：
+        ``(M, L)`` 条件沿 htype 轴广播 （例如事件日）：
 
         >>> ev = np.zeros((2, 3), dtype=bool)
         >>> ev[:, 1] = True
@@ -721,7 +719,7 @@ class HistoryPanel():
         if b.ndim == 0:
             broad = np.broadcast_to(b, target)
             return np.array(broad, dtype=bool, copy=True)
-        # (M,L) 与 (M,)、(M,1)：沿 htype 轴复制（numpy 无法把二维 (M,L) 直接广播到 (M,L,N)）
+        # (M,L) 与 (M,)、(M,1)：沿 htype 轴复制 （numpy 无法把二维 (M,L) 直接广播到 (M,L,N)）
         if b.ndim == 2 and b.shape == (m, l_count):
             b = b[:, :, np.newaxis]
         elif b.ndim == 1 and b.shape == (m,):
@@ -748,13 +746,13 @@ class HistoryPanel():
         """按具名参数沿 htypes / shares / hdates 取子面板，避免三元组轴顺序混淆。
 
         ``None`` 表示该轴全选。默认 ``copy=True``，得到与父对象数据缓冲区脱钩的副本；需要零拷贝时可设
-        ``copy=False``（子面板 ``values`` 可能与父面板共享内存）。父对象上 ``__setitem__`` 追加新列时会
+        ``copy=False`` （子面板 ``values`` 可能与父面板共享内存）。父对象上 ``__setitem__`` 追加新列时会
         替换父面板整块 ``values``，``copy=False`` 子面板通常 **不会** 自动带上新列，且可能仍引用扩列前的缓冲区。
 
         Parameters
         ----------
         htypes : str, sequence, slice or int, optional
-            列（数据类型）选择，语义与 ``panel[htypes, ...]`` 第一段一致。
+            列 （数据类型）选择，语义与 ``panel[htypes, ...]`` 第一段一致。
         shares : str, sequence, slice or int, optional
             标的层选择，语义与 ``panel[:, shares, ...]`` 第二段一致。
         hdates : str, sequence, slice or int, optional
@@ -769,8 +767,8 @@ class HistoryPanel():
 
         Notes
         -----
-        与 ``__getitem__`` 的 ``copy=False`` 切片类似：父级 ``__setitem__`` **追加列**后，``copy=False``
-        子对象通常不含新列；需要稳定快照请保持 ``copy=True``（默认）。
+        与 ``__getitem__`` 的 ``copy=False`` 切片类似：父级 ``__setitem__`` 追加列之后，``copy=False``
+        子对象通常不含新列；需要稳定快照请保持 ``copy=True`` （默认）。
         """
         if self.is_empty:
             return HistoryPanel()
@@ -785,22 +783,22 @@ class HistoryPanel():
     def __getitem__(self, keys=None) -> 'HistoryPanel':
         """按 htypes / shares / hdates 三轴切片，返回带正确轴标签的子 ``HistoryPanel``。
 
-        第一个切片为数据类型（htypes），第二个为标的（shares），第三个为时间（hdates）；省略时该轴为全选。
+        第一个切片为数据类型 （htypes），第二个为标的 （shares），第三个为时间 （hdates）；省略时该轴为全选。
         需要裸 ``ndarray`` 时请使用 ``sub.values`` 或 ``sub.to_numpy()``。子面板 ``values`` 可能与父面板
-        共享内存（numpy 视图规则）；需要独立副本请用 ``subpanel(..., copy=True)`` 或 ``sub.copy()``。
+        共享内存 （numpy 视图规则）；需要独立副本请用 ``subpanel(..., copy=True)`` 或 ``sub.copy()``。
 
         在 **父对象** 上使用 ``__setitem__`` 追加新列时，会替换父面板整块 ``values``：默认
         ``copy=False`` 的子面板 **不会** 出现新列名，且其 ``values`` 可能仍指向扩列前的旧数组；
         ``subpanel(copy=True)`` 得到的子对象不受影响。在父面板上 **覆盖** 已有列时，与子视图共享的
-        切片数据会随父缓冲一并更新（仍为同一底层块上的视图时）。
+        切片数据会随父缓冲一并更新 （仍为同一底层块上的视图时）。
 
-        空面板（``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
+        空面板 （``is_empty``）上任意索引均返回空的 ``HistoryPanel``。
 
         Notes
         -----
-        **时间轴（第三段 ``hdates``）** 除 ``slice`` / 整数 / 区间字符串外，还支持：在 ``rows``
-        字典中可查的 **单个时间标签**（如 ``pandas.Timestamp``）、**时间标签列表**，以及
-        长度等于 ``row_count`` 的一维 ``bool`` 列表或一维 ``bool`` ``ndarray``；与
+        **时间轴 （第三段 ``hdates``）** 除 ``slice`` / 整数 / 区间字符串外，还支持：在 ``rows``
+        字典中可查的 **单个时间标签** （如 ``pandas.Timestamp``）、**时间标签列表**，以及
+        长度等于 ``row_count`` 的一维 ``bool`` 列表或一维 ``numpy.ndarray`` （布尔 dtype）；与
         :attr:`loc` 所接受的 ``key`` 一致。格点级 ``(M, L, N)`` 布尔数组 **不** 用作第三轴索引，
         请使用 :meth:`where`。
 
@@ -836,14 +834,14 @@ class HistoryPanel():
         return self._select_subpanel(htype_slice, share_slice, hdate_slice, copy=False)
 
     def __getattr__(self, name: str) -> Any:
-        """将合法标识符列名解析为 ``self[name]``（只读）；非标识符或未知列名请用方括号索引。
+        """将合法标识符列名解析为 ``self[name]`` （只读）；非标识符或未知列名请用方括号索引。
 
         列赋值仍请使用 ``hp['col'] = ...``；不与 pandas 的属性写路径对齐。
 
         Parameters
         ----------
         name : str
-            属性名；须为合法 Python 标识符才可能对应到 ``htypes`` 列（非空面板）。
+            属性名；须为合法 Python 标识符才可能对应到 ``htypes`` 列 （非空面板）。
 
         Returns
         -------
@@ -853,12 +851,12 @@ class HistoryPanel():
         Raises
         ------
         AttributeError
-            非法标识符、或当前面板中不存在的列名（英文，提示使用 bracket indexing）。
+            非法标识符、或当前面板中不存在的列名 （英文，提示使用 bracket indexing）。
 
         Notes
         -----
-        已有方法名 / 描述符（如 ``where``、``values``）优先于列名：同名列仍须用
-        ``hp['where']`` 等形式访问。非标识符列名（如 ``close|b``）不可用点号。
+        已有方法名 / 描述符 （如 ``where``、``values``）优先于列名：同名列仍须用
+        ``hp['where']`` 等形式访问。非标识符列名 （如 ``close|b``）不可用点号。
 
         Examples
         --------
@@ -931,9 +929,9 @@ class HistoryPanel():
         Parameters
         ----------
         name : str
-            列名（htype）；调用方须已校验非空且与 ``self`` 轴一致。
+            列名 （htype）；调用方须已校验非空且与 ``self`` 轴一致。
         column_2d : numpy.ndarray
-            与 ``(level_count, row_count)`` 同形的二维数据（通常为 float64）。
+            与 ``(level_count, row_count)`` 同形的二维数据 （通常为 float64）。
 
         Returns
         -------
@@ -943,7 +941,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            当 ``column_2d.shape`` 与 ``(level_count, row_count)`` 不一致时抛出（英文信息，属内部一致性检查）。
+            当 ``column_2d.shape`` 与 ``(level_count, row_count)`` 不一致时抛出 （英文信息，属内部一致性检查）。
         """
         if column_2d.shape != (self._l_count, self._r_count):
             raise ValueError(
@@ -964,7 +962,7 @@ class HistoryPanel():
         self._columns = labels_to_dict(new_htypes, range(self._c_count))
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        """按列名原地追加一列或覆盖已有列（``htypes`` 第三轴）。
+        """按列名原地追加一列或覆盖已有列 （``htypes`` 第三轴）。
 
         仅接受运行期为 **非空** 字符串的 ``key``；多列批量赋值由后续 ``assign`` 等 API 提供。
         ``value`` 将广播到 ``(share 数, 时间长度)`` 并以 ``float64`` 落盘；已存在列名 **静默覆盖**，
@@ -975,9 +973,9 @@ class HistoryPanel():
         Parameters
         ----------
         key : Any
-            列名（htype）。须为 ``str``；非 ``str`` 抛 ``TypeError``，空字符串抛 ``ValueError``（英文信息）。
+            列名 （htype）。须为 ``str``；非 ``str`` 抛 ``TypeError``，空字符串抛 ``ValueError`` （英文信息）。
         value : Any
-            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值（标量、``(M, L)``、``(M, L, 1)`` 等）。
+            可 ``np.asarray`` 且可广播到 ``(M, L)`` 的数值 （标量、``(M, L)``、``(M, L, 1)`` 等）。
 
         Returns
         -------
@@ -987,9 +985,9 @@ class HistoryPanel():
         Raises
         ------
         TypeError
-            ``key`` 不是 ``str`` 时抛出（英文信息）。
+            ``key`` 不是 ``str`` 时抛出 （英文信息）。
         ValueError
-            面板为空、``key`` 为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出（英文信息）。
+            面板为空、``key`` 为空字符串、或 ``value`` 无法广播到 ``(M, L)`` 时抛出 （英文信息）。
 
         Examples
         --------
@@ -1018,7 +1016,7 @@ class HistoryPanel():
         self._set_htype_column_inplace(key, col)
 
     def assign(self, *, inplace: bool = False, **kwargs: Any) -> 'HistoryPanel':
-        """批量派生或更新列（htypes），支持多列一次性追加或覆盖。
+        """批量派生或更新列 （htypes），支持多列一次性追加或覆盖。
 
         ``assign()`` 提供类似 pandas 的列级 DSL：可以同时为多个新列命名，并通过
         可调用对象或数组/标量在单次调用中完成派生；同一次调用中，后定义的列
@@ -1031,7 +1029,7 @@ class HistoryPanel():
             为 ``True`` 时在当前 ``HistoryPanel`` 上原地追加/覆盖列并返回自身；
             为 ``False`` 时在当前数据的拷贝上追加/覆盖列并返回新 ``HistoryPanel``。
         **kwargs
-            每个关键字参数的键为新列名（htype），必须为非空字符串；值可以是
+            每个关键字参数的键为新列名 （htype），必须为非空字符串；值可以是
             ``Callable[[HistoryPanel], np.ndarray]``，也可以是可被 ``np.asarray``
             且可广播到 ``(M, L)`` 的数组/标量。
 
@@ -1044,9 +1042,9 @@ class HistoryPanel():
         ------
         ValueError
             面板为空、列名为空字符串，或可调用对象/数组返回的结果无法广播到
-            ``(M, L)`` 时抛出（英文信息）。
+            ``(M, L)`` 时抛出 （英文信息）。
         TypeError
-            列名不是字符串时抛出（英文信息）。
+            列名不是字符串时抛出 （英文信息）。
         """
         if not kwargs:
             return self
@@ -1095,17 +1093,17 @@ class HistoryPanel():
             method: str = 'average',
             new_htype: Optional[str] = None,
     ) -> 'HistoryPanel':
-        """按时间逐日对横截面（share 维）做排名并追加一列返回新面板。
+        """按时间逐日对横截面 （share 维）做排名并追加一列返回新面板。
 
         Parameters
         ----------
         by : str
-            参与排名的列名（htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
+            参与排名的列名 （htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
             ``close|b`` 等复权后缀列。
         axis : {'share'}, default 'share'
             目前仅支持沿 share 维做截面排名。
         method : {'average', 'min', 'max', 'first', 'dense'}, default 'average'
-            并列值（tie）的排名处理方式，语义与 pandas ``Series.rank(method=...)`` 一致。
+            并列值 （tie）的排名处理方式，语义与 pandas ``Series.rank(method=...)`` 一致。
         new_htype : str, optional
             输出列名；为 None 时默认使用 ``rank_{by}``。
 
@@ -1117,7 +1115,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            当参数非法、列不存在、或输出列名冲突时抛出（英文信息）。
+            当参数非法、列不存在、或输出列名冲突时抛出 （英文信息）。
 
         Examples
         --------
@@ -1169,22 +1167,22 @@ class HistoryPanel():
             window: Optional[int] = None,
             new_htype: Optional[str] = None,
     ) -> 'HistoryPanel':
-        """对指定列计算标准化分数（zscore）并追加一列返回新面板。
+        """对指定列计算标准化分数 （zscore）并追加一列返回新面板。
 
         本方法通过 ``method`` 参数显式区分两种常用语义：
 
-        - ``method='cs'``（cross-sectional）：固定每个时间点，在 share 维做截面标准化；
-        - ``method='ts'``（time-series rolling）：固定每个 share，在时间轴上做滚动标准化。
+        - ``method='cs'`` （cross-sectional）：固定每个时间点，在 share 维做截面标准化；
+        - ``method='ts'`` （time-series rolling）：固定每个 share，在时间轴上做滚动标准化。
 
         Parameters
         ----------
         by : str
-            参与标准化的列名（htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
+            参与标准化的列名 （htype）。会先经 :meth:`_resolve_price_htype` 解析，支持
             ``close|b`` 等复权后缀列。
         method : {'cs', 'ts'}, default 'cs'
-            标准化语义：截面（cs）或时序滚动（ts）。
+            标准化语义：截面 （cs）或时序滚动 （ts）。
         window : int, optional
-            ``method='ts'`` 时的滚动窗口长度（bar 数），必须为正整数；``method='cs'``
+            ``method='ts'`` 时的滚动窗口长度 （bar 数），必须为正整数；``method='cs'``
             时必须为 None。
         new_htype : str, optional
             输出列名；为 None 时默认使用 ``cs_z_{by}`` 或 ``ts_z_{by}_{window}``。
@@ -1197,7 +1195,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            当参数非法、列不存在、或输出列名冲突时抛出（英文信息）。
+            当参数非法、列不存在、或输出列名冲突时抛出 （英文信息）。
 
         Examples
         --------
@@ -1275,13 +1273,13 @@ class HistoryPanel():
 
     @staticmethod
     def _stable_intersection(a: List[Any], b: List[Any]) -> List[Any]:
-        """返回列表交集，顺序以 a 为准（稳定）。"""
+        """返回列表交集，顺序以 a 为准 （稳定）。"""
         b_set = set(b)
         return [x for x in a if x in b_set]
 
     @staticmethod
     def _stable_union(a: List[Any], b: List[Any]) -> List[Any]:
-        """返回列表并集，顺序为 a 先、再追加 b 中未出现元素（稳定）。"""
+        """返回列表并集，顺序为 a 先、再追加 b 中未出现元素 （稳定）。"""
         out = list(a)
         a_set = set(a)
         out.extend([x for x in b if x not in a_set])
@@ -1321,9 +1319,9 @@ class HistoryPanel():
         Raises
         ------
         TypeError
-            ``other`` 不是 ``HistoryPanel`` 时抛出（英文信息）。
+            ``other`` 不是 ``HistoryPanel`` 时抛出 （英文信息）。
         ValueError
-            ``join`` 非法、或两者 ``htypes`` 不完全一致时抛出（英文信息）。
+            ``join`` 非法、或两者 ``htypes`` 不完全一致时抛出 （英文信息）。
 
         Examples
         --------
@@ -1426,7 +1424,7 @@ class HistoryPanel():
         )
 
     def resample(self, rule: str, *, agg: Optional[dict] = None) -> 'HistoryPanel':
-        """沿时间轴（hdates）按规则重采样并返回新面板。
+        """沿时间轴 （hdates）按规则重采样并返回新面板。
 
         为避免聚合语义不明导致 silent 错行，本方法要求显式提供 ``agg``，并且必须覆盖
         当前面板的全部 ``htypes``。
@@ -1447,7 +1445,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            当 ``agg`` 缺失、未覆盖全部列、包含未知列名、聚合方法非法或 ``rule`` 非法时抛出（英文信息）。
+            当 ``agg`` 缺失、未覆盖全部列、包含未知列名、聚合方法非法或 ``rule`` 非法时抛出 （英文信息）。
 
         Examples
         --------
@@ -1553,7 +1551,7 @@ class HistoryPanel():
         other : HistoryPanel, numbers.Number, numpy.ndarray 等
             右操作数；不支持的类型返回 ``NotImplemented``。
         op : callable
-            二元比较函数（如 ``operator.lt``）。
+            二元比较函数 （如 ``operator.lt``）。
 
         Returns
         -------
@@ -1565,7 +1563,7 @@ class HistoryPanel():
         Notes
         -----
         两侧均为面板时：``shares``、``hdates`` 须一致；``htypes`` 须相同，或两侧均为单列切片
-        （``shape[2] == 1``）以便安全比较两列。与标量、``numpy`` 数组比较时按广播规则。
+         （``shape[2] == 1``）以便安全比较两列。与标量、``numpy`` 数组比较时按广播规则。
         """
         if isinstance(other, HistoryPanel):
             if self.is_empty and other.is_empty:
@@ -1607,12 +1605,12 @@ class HistoryPanel():
         return NotImplemented
 
     def __lt__(self, other: Any) -> np.ndarray:
-        """逐元素 ``self < other``，返回 ``bool`` ``ndarray``（非子面板）。
+        """等价于以 ``operator`` 模块的 ``lt`` 逐元素比较 ``self`` 与 ``other``；返回 dtype 为 ``bool`` 的 ``numpy.ndarray``  （非子面板）。
 
         Parameters
         ----------
         other : Any
-            标量、可广播 ``ndarray`` 或另一 ``HistoryPanel``（须满足对齐规则）。
+            标量、可广播 ``ndarray`` 或另一 ``HistoryPanel`` （须满足对齐规则）。
 
         Returns
         -------
@@ -1622,9 +1620,9 @@ class HistoryPanel():
         Raises
         ------
         TypeError
-            不支持的操作数类型（英文）。
+            不支持的操作数类型 （英文）。
         ValueError
-            两面板无法按规则对齐或广播时抛出（英文）。
+            两面板无法按规则对齐或广播时抛出 （英文）。
         """
         out = self._history_panel_compare(other, operator.lt)
         if out is NotImplemented:
@@ -1635,7 +1633,7 @@ class HistoryPanel():
         return out
 
     def __le__(self, other: Any) -> np.ndarray:
-        """逐元素 ``self <= other``，返回 ``bool`` ``ndarray``（非子面板）。
+        """等价于以 ``operator`` 模块的 ``le`` 逐元素比较 ``self`` 与 ``other``；返回 dtype 为 ``bool`` 的 ``numpy.ndarray``  （非子面板）。
 
         Parameters
         ----------
@@ -1656,7 +1654,7 @@ class HistoryPanel():
         return out
 
     def __gt__(self, other: Any) -> np.ndarray:
-        """逐元素 ``self > other``，返回 ``bool`` ``ndarray``（非子面板）。
+        """等价于以 ``operator`` 模块的 ``gt`` 逐元素比较 ``self`` 与 ``other``；返回 dtype 为 ``bool`` 的 ``numpy.ndarray``  （非子面板）。
 
         Parameters
         ----------
@@ -1677,7 +1675,7 @@ class HistoryPanel():
         return out
 
     def __ge__(self, other: Any) -> np.ndarray:
-        """逐元素 ``self >= other``，返回 ``bool`` ``ndarray``（非子面板）。
+        """等价于以 ``operator`` 模块的 ``ge`` 逐元素比较 ``self`` 与 ``other``；返回 dtype 为 ``bool`` 的 ``numpy.ndarray``  （非子面板）。
 
         Parameters
         ----------
@@ -2067,12 +2065,12 @@ class HistoryPanel():
             是否深拷贝底层数值数组 ``values``：
 
             - True：深拷贝，修改副本不影响原对象；
-            - False：浅拷贝（共享底层数组），修改副本会同步影响原对象。
+            - False：浅拷贝 （共享底层数组），修改副本会同步影响原对象。
 
         Returns
         -------
         HistoryPanel
-            复制后的新对象，轴标签（``shares``/``hdates``/``htypes``）与原对象一致。
+            复制后的新对象，轴标签 （``shares``/``hdates``/``htypes``）与原对象一致。
 
         Examples
         --------
@@ -2822,7 +2820,7 @@ class HistoryPanel():
         return df_share.T
 
     def std(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
-        """按标的或数据类型对 HistoryPanel 进行标准差统计（ddof=1）。
+        """按标的或数据类型对 HistoryPanel 进行标准差统计 （ddof=1）。
 
         Parameters
         ----------
@@ -2957,7 +2955,7 @@ class HistoryPanel():
     ) -> pd.DataFrame:
         """对 HistoryPanel 进行基础统计描述，类似 pandas.DataFrame.describe。
 
-        可以按标的（share）、历史数据类型（htype）或全局视角对数值数据做 count、
+        可以按标的 （share）、历史数据类型 （htype）或全局视角对数值数据做 count、
         mean、std、min、max 及给定分位数等统计描述。
 
         Parameters
@@ -3079,7 +3077,7 @@ class HistoryPanel():
     ) -> "HistoryPanelRolling":
         """基于 HistoryPanel 构造滚动窗口统计对象。
 
-        滚动仅沿时间轴（rows / hdates）进行，``window`` 为整数 bar 数。
+        滚动仅沿时间轴 （rows / hdates）进行，``window`` 为整数 bar 数。
 
         Parameters
         ----------
@@ -3091,7 +3089,7 @@ class HistoryPanel():
             是否使用居中窗口，语义与 ``pandas.Series.rolling`` 一致。
         by : {'share', 'htype'}, default 'share'
             指定滚动的分组方式：
-            - 'share': 每只股票的每个 htype 独立做滚动统计（最常用）；
+            - 'share': 每只股票的每个 htype 独立做滚动统计 （最常用）；
             - 'htype': 每个 htype 在所有股票上独立做滚动统计。
 
         Returns
@@ -3148,8 +3146,8 @@ class HistoryPanel():
         periods : int, default 1
             收益率间隔的 bar 数。
         as_panel : bool, default False
-            False 返回 DataFrame（index=时间，columns=shares）；
-            True 返回 HistoryPanel（htypes 仅含 ret_{price_htype}）。
+            False 返回 DataFrame （index=时间，columns=shares）；
+            True 返回 HistoryPanel （htypes 仅含 ret_{price_htype}）。
         dropna : bool, default False
             True 时删除全为 NaN 的起始行。
 
@@ -3203,24 +3201,24 @@ class HistoryPanel():
         return df
 
     def _broadcast_bool_mask_for_panel(self, mask: Optional[np.ndarray]) -> np.ndarray:
-        """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组（全 True 表示无掩码）。
+        """将 ``mask`` 广播为与 ``self.values`` 同形的 bool 数组 （全 True 表示无掩码）。
 
         广播规则与 :meth:`where` 中非 callable 条件一致。
 
         Parameters
         ----------
         mask : numpy.ndarray, optional
-            可广播到 ``self.shape`` 的布尔数组或可转为布尔数组的类数组；``None`` 表示不加掩码（全 True）。
+            可广播到 ``self.shape`` 的布尔数组或可转为布尔数组的类数组；``None`` 表示不加掩码 （全 True）。
 
         Returns
         -------
         numpy.ndarray
-            与 ``self.shape`` 同形的 ``dtype=bool`` 数组（拷贝）。
+            与 ``self.shape`` 同形的 ``dtype=bool`` 数组 （拷贝）。
 
         Raises
         ------
         ValueError
-            空面板调用、无法转为布尔数组、或无法广播到 ``self.shape`` 时抛出（英文）。
+            空面板调用、无法转为布尔数组、或无法广播到 ``self.shape`` 时抛出 （英文）。
         """
         if self.is_empty:
             raise ValueError('internal error: mask broadcast on empty HistoryPanel')
@@ -3256,12 +3254,12 @@ class HistoryPanel():
 
     @staticmethod
     def _cum_return_1d_along_time(p_eff: np.ndarray, method: str) -> np.ndarray:
-        """沿单 share 单列时间序列计算累计收益（已套用 mask 的 ``p_eff``）。
+        """沿单 share 单列时间序列计算累计收益 （已套用 mask 的 ``p_eff``）。
 
         Parameters
         ----------
         p_eff : numpy.ndarray
-            一维价格序列（已将 mask=False 位置置为 NaN）。
+            一维价格序列 （已将 mask=False 位置置为 NaN）。
         method : {'simple', 'log'}
             ``simple``：``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
 
@@ -3307,9 +3305,9 @@ class HistoryPanel():
         Parameters
         ----------
         p_eff : numpy.ndarray
-            一维原始序列（已将 mask=False 位置置为 NaN）。
+            一维原始序列 （已将 mask=False 位置置为 NaN）。
         base_index : int
-            基准下标（从 0 起）。
+            基准下标 （从 0 起）。
         mask_1d : numpy.ndarray
             一维布尔掩码；与 ``p_eff`` 等长。
 
@@ -3321,7 +3319,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            ``base_index`` 越界时抛出（英文）。
+            ``base_index`` 越界时抛出 （英文）。
         """
         p_eff = np.asarray(p_eff, dtype=float).ravel()
         mask_1d = np.asarray(mask_1d, dtype=bool).ravel()
@@ -3344,7 +3342,7 @@ class HistoryPanel():
         Parameters
         ----------
         htypes : str, sequence of str, optional
-            用户传入的列名或列名序列；``None`` 视为 ``close``（并经 :meth:`_resolve_price_htype` 解析）。
+            用户传入的列名或列名序列；``None`` 视为 ``close`` （并经 :meth:`_resolve_price_htype` 解析）。
 
         Returns
         -------
@@ -3354,7 +3352,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            输入列名重复时抛出（英文）。若列无法解析或不存在，将由下游 ``list.index`` 等抛出异常。
+            输入列名重复时抛出 （英文）。若列无法解析或不存在，将由下游 ``list.index`` 等抛出异常。
         """
         if self.is_empty:
             return []
@@ -3380,20 +3378,20 @@ class HistoryPanel():
             method: str = 'simple',
             mask: Optional[np.ndarray] = None,
     ) -> 'HistoryPanel':
-        """沿时间维逐标的计算累计收益（研究向），返回新面板。
+        """沿时间维逐标的计算累计收益 （研究向），返回新面板。
 
-        默认对 ``close`` 列（经 :meth:`_resolve_price_htype` 解析，支持 ``close|b`` 等）计算。
+        默认对 ``close`` 列 （经 :meth:`_resolve_price_htype` 解析，支持 ``close|b`` 等）计算。
         输出列名为 ``cumret_<用户传入的列名>``，与 :meth:`returns` 使用 ``ret_<price_htype>`` 的策略一致。
-        若时间路径上出现 NaN 或非正价格，自该点起后续结果均为 NaN（路径断开）。
+        若时间路径上出现 NaN 或非正价格，自该点起后续结果均为 NaN （路径断开）。
 
         Parameters
         ----------
         htypes : str, sequence of str, optional
-            参与计算的列名；``None`` 时仅处理 ``close``（解析后）。
+            参与计算的列名；``None`` 时仅处理 ``close`` （解析后）。
         method : {'simple', 'log'}, default 'simple'
             ``simple``：自首个有效正价 ``t0`` 起 ``p_t/p_{t0}-1``；``log``：``log(p_t)-log(p_{t0})``。
         mask : numpy.ndarray, optional
-            与 :meth:`where` 相同广播规则；为 ``False`` 的位置在计算前视为缺失（``NaN``）。
+            与 :meth:`where` 相同广播规则；为 ``False`` 的位置在计算前视为缺失 （``NaN``）。
 
         Returns
         -------
@@ -3403,7 +3401,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            非法 ``method``、列无法解析、``mask`` 无法广播、或输出列名与现有 ``htypes`` 冲突时抛出（英文）。
+            非法 ``method``、列无法解析、``mask`` 无法广播、或输出列名与现有 ``htypes`` 冲突时抛出 （英文）。
 
         Examples
         --------
@@ -3461,7 +3459,7 @@ class HistoryPanel():
             base_index: int = 0,
             mask: Optional[np.ndarray] = None,
     ) -> 'HistoryPanel':
-        """将指定列按基准时点缩放到相对 1.0（研究向），返回新面板。
+        """将指定列按基准时点缩放到相对 1.0 （研究向），返回新面板。
 
         默认以 ``base_index`` 处有效价格为分母；该时点被 ``mask`` 排除、为 ``NaN`` 或为 0 时，
         该 (share, 列) 整条时间序列输出均为 ``NaN``。输出列名为 ``norm_<用户传入的列名>``。
@@ -3469,9 +3467,9 @@ class HistoryPanel():
         Parameters
         ----------
         htypes : str, sequence of str, optional
-            参与计算的列；``None`` 时仅 ``close``（解析后）。
+            参与计算的列；``None`` 时仅 ``close`` （解析后）。
         base_index : int, default 0
-            时间轴上的基准下标（从 0 起）；越界时抛出 ``ValueError``（英文）。
+            时间轴上的基准下标 （从 0 起）；越界时抛出 ``ValueError`` （英文）。
         mask : numpy.ndarray, optional
             与 :meth:`where` 相同广播规则。
 
@@ -3483,7 +3481,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            列无法解析、``mask`` 无法广播、``base_index`` 越界、或输出列名冲突时抛出（英文）。
+            列无法解析、``mask`` 无法广播、``base_index`` 越界、或输出列名冲突时抛出 （英文）。
 
         Examples
         --------
@@ -3562,7 +3560,7 @@ class HistoryPanel():
             weights: Optional[np.ndarray],
             normalize_weights: bool,
     ) -> float:
-        """单组、单时刻、单列上的组合值（等权或加权）。"""
+        """单组、单时刻、单列上的组合值 （等权或加权）。"""
         xs: List[float] = []
         wi_list: List[float] = []
         for i in share_indices:
@@ -3610,17 +3608,17 @@ class HistoryPanel():
             normalize_weights: bool = True,
             allow_ungrouped: str = 'error',
     ) -> 'HistoryPanel':
-        """沿 share 维将多标的聚合成组合序列（研究向），返回新面板。
+        """沿 share 维将多标的聚合成组合序列 （研究向），返回新面板。
 
         默认 ``benchmark_output='none'``；若设置 ``benchmark``，可用 ``tag_along`` 附加基准行，
-        或用 ``excess_only`` 仅保留 ``excess_<列名> = 组合 - 基准``。
+        或用 ``excess_only`` 仅保留 excess 前缀列（组合减基准，列名带 excess 前缀）。
 
         ``groups`` 为 ``None`` 时，全面板聚成一行，名称为 ``new_share_name``。
-        ``groups`` 非空时，键为输出 share 标签（按 **插入序** 排列），值为组内原始 share 列表；
+        ``groups`` 非空时，键为输出 share 标签 （按插入序排列），值为组内原始 share 列表；
         组间 share 不得重叠。``allow_ungrouped='error'`` 时，每个面板 share 必须恰好属于一组。
 
-        当 ``groups`` 为 ``None`` 且指定了 ``benchmark`` 时，**基准 share 不参与**组合聚合（避免把指数与个股权重混在一起），
-        仅用于 ``tag_along`` 或 ``excess_only``；若剔除后无可用 share（例如面板仅含基准）则抛出 ``ValueError``。
+        当 ``groups`` 为 ``None`` 且指定了 ``benchmark`` 时，基准 share 不参与组合聚合 （避免把指数与个股权重混在一起），
+        仅用于 ``tag_along`` 或 ``excess_only``；若剔除后无可用 share （例如面板仅含基准）则抛出 ``ValueError``。
 
         ``mask`` 广播规则与 :meth:`where` 一致；无效格点不参与聚合。
 
@@ -3643,7 +3641,7 @@ class HistoryPanel():
         new_share_name : str, default 'PORTFOLIO'
             无 ``groups`` 时合成行的 share 名。
         normalize_weights : bool, default True
-            加权时，在参与聚合的成员上对权重做归一后再加权求和（与 ``sum(w*x)/sum(w)`` 数值一致）。
+            加权时，在参与聚合的成员上对权重做归一后再加权求和 （与 ``sum(w*x)/sum(w)`` 数值一致）。
         allow_ungrouped : {'error', 'exclude'}, default 'error'
             ``groups`` 非空时，是否要求覆盖全部 share。
 
@@ -3655,7 +3653,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            参数非法、share 不在面板、组重叠、mask 无法广播等（英文）。
+            参数非法、share 不在面板、组重叠、mask 无法广播等 （英文）。
         """
         if self.is_empty:
             return HistoryPanel()
@@ -3801,18 +3799,18 @@ class HistoryPanel():
             periods_per_year: Optional[int] = None,
             as_panel: bool = False,
     ):
-        """基于收益率序列计算滚动波动率（标准差）。
+        """基于收益率序列计算滚动波动率 （标准差）。
 
         Parameters
         ----------
         window : int, default 20
-            滚动窗口长度（bar 数）。
+            滚动窗口长度 （bar 数）。
         price_htype : str, default 'close'
             用于计算收益率的价格类型。
         method : {'simple', 'log'}, default 'simple'
             收益率计算方式，与 returns() 一致。
         annualize : bool, default True
-            是否年化（乘以 sqrt(periods_per_year)）。
+            是否年化 （乘以 sqrt(periods_per_year)）。
         periods_per_year : int, optional
             年化时每年 bar 数；未指定且 annualize=True 时尝试从时间间隔推断，无法推断则报错。
         as_panel : bool, default False
@@ -3873,15 +3871,15 @@ class HistoryPanel():
         return _HistoryPanelKlineAccessor(self)
 
     def _resolve_price_htype(self, price_htype: str) -> str:
-        """解析价格列的实际 htype 名称（支持复权列名自动映射）。
+        """解析价格列的实际 htype 名称 （支持复权列名自动映射）。
 
-        当面板的价格列使用了复权后缀（例如 ``close|b``），而调用方仍使用默认
+        当面板的价格列使用了复权后缀 （例如 ``close|b``），而调用方仍使用默认
         ``price_htype='close'`` 时，本方法会自动选择面板中可用的复权价格列。
 
         Parameters
         ----------
         price_htype : str
-            调用方期望使用的价格类型（例如 ``'close'``、``'high'`` 或带复权后缀的 ``'close|b'``）。
+            调用方期望使用的价格类型 （例如 ``'close'``、``'high'`` 或带复权后缀的 ``'close|b'``）。
 
         Returns
         -------
@@ -3896,7 +3894,7 @@ class HistoryPanel():
         # 仅当用户传入的是无后缀的根价格名时，尝试从复权列中自动映射。
         if '|' not in price_htype:
             root = price_htype
-            # 优先顺序：back-adjusted -> forward-adjusted -> 其它同根后缀（稳定选择）
+            # 优先顺序：back-adjusted -> forward-adjusted -> 其它同根后缀 （稳定选择）
             preferred = [f'{root}|b', f'{root}|f']
             for cand in preferred:
                 if cand in self.htypes:
@@ -4049,7 +4047,7 @@ class HistoryPanel():
             需要计算的股票列表，默认使用全部 shares。
         as_panel : bool, default True
             True 时返回新的 HistoryPanel，在 htypes 末尾追加输出列；
-            False 时返回 MultiIndex 列的 DataFrame（时间×[share, output_name]）。
+            False 时返回 MultiIndex 列的 DataFrame （时间×[share, output_name]）。
         """
         if self.is_empty:
             return HistoryPanel() if as_panel else pd.DataFrame()
@@ -4131,7 +4129,7 @@ class HistoryPanel():
         price_htypes : tuple of str, default ('open','high','low','close')
             OHLC 对应的 htypes 名称。
         as_panel : bool, default False
-            False 返回 DataFrame（时间×股票），True 返回单一 htype 的 HistoryPanel。
+            False 返回 DataFrame （时间×股票），True 返回单一 htype 的 HistoryPanel。
         """
         if self.is_empty:
             return HistoryPanel() if as_panel else pd.DataFrame()
@@ -4171,17 +4169,14 @@ class HistoryPanel():
         return df
 
     def to_df_dict(self, by: str = 'share') -> dict:
-        """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
-            这些数据以DataFrame的格式存储
+        """将 HistoryPanel 转为字典：键为 share 或 htype，值为对应的 ``pandas.DataFrame``。
 
         Parameters
         ----------
-        by: str, {'share', 'shares', 'htype', 'htypes'}, Default: 'share'
-            - 'share' 或 'shares': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
-            它的keys是股票的代码，每个股票代码一个DataFrame
-            - 'htype' 或 'htypes': 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
-
-            它的keys是历史数据类型，每种类型一个DataFrame
+        by : str, default 'share'
+            取 ``'share'`` / ``'shares'`` 时按标的维切分，字典键为股票代码，值为对应
+            ``DataFrame``；取 ``'htype'`` / ``'htypes'`` 时按数据类型维切分，字典键为
+            历史数据类型名，值为对应 ``DataFrame``。
 
         Returns
         -------
@@ -4581,7 +4576,7 @@ class HistoryPanel():
         """按预设快速生成研究常用列集合，并返回结果面板。
 
         该方法旨在作为 ``HistoryPanel`` 的“第一入口”：在不引入回测语义的前提下，
-        快速拼出 OHLCV + 常用技术指标列（如 MACD、均线）以便直接绘图或继续做研究。
+        快速拼出 OHLCV + 常用技术指标列 （如 MACD、均线）以便直接绘图或继续做研究。
 
         Parameters
         ----------
@@ -4601,7 +4596,7 @@ class HistoryPanel():
         Raises
         ------
         ValueError
-            当预设名称非法，或缺少预设所需的输入列时抛出（错误信息为英文）。
+            当预设名称非法，或缺少预设所需的输入列时抛出 （错误信息为英文）。
         """
         presets = {
             'ohlcv_macd_ma': {
@@ -4634,7 +4629,7 @@ class HistoryPanel():
 
     @staticmethod
     def _research_preset_ohlcv_macd_ma(hp: 'HistoryPanel') -> 'HistoryPanel':
-        """构建 ``ohlcv_macd_ma`` 预设（内部使用）。"""
+        """构建 ``ohlcv_macd_ma`` 预设 （内部使用）。"""
         # 只使用公开 API：kline 指标统一走 kline accessor，并使用 inplace=True 扩列
         hp.kline.macd(inplace=True)
         hp.kline.sma(window=20, price_htype='close', inplace=True)
@@ -4654,7 +4649,7 @@ class HistoryPanel():
     ):
         """根据 HistoryPanel 中已有的 htypes 与 shares 自动选择图表类型并绘制图表。
 
-        本方法只消费已有数据不做新增计算，图表类型由内部注册表基于 htypes 决定（如
+        本方法只消费已有数据不做新增计算，图表类型由内部注册表基于 htypes 决定 （如
         OHLC→K 线，vol→成交量，MACD 三列→MACD 图，其余→折线），支持单标的与多标
         的 overlay/stack 布局，以及基于 matplotlib 的静态图和基于 Plotly 的交互式图表。
 
@@ -4666,7 +4661,7 @@ class HistoryPanel():
             多标的布局方式；'overlay' 为同组叠加，'stack' 为多组分行展示，'auto' 时
             ``HP_OVERLAY_GROUP_SHARE_COUNT`` 只标的用 overlay，其余用 stack。
         interactive : bool, default False
-            为 True 时使用 Plotly 交互后端（需安装 plotly 及 anywidget/ipywidgets）；
+            为 True 时使用 Plotly 交互后端 （需安装 plotly 及 anywidget/ipywidgets）；
             为 False 时使用 matplotlib 静态后端。
         highlight : dict or str, optional
             高亮配置，可为 ``{'condition': 'max'|'min' 或布尔数组, 'style': {...}}``，
@@ -4680,7 +4675,7 @@ class HistoryPanel():
             单张图中最多展示的 share 数量。当请求 shares 数量超过该值时，会按页分割；
             可通过 ``page`` 参数选择要展示的页码。
         page : int, default 1
-            要展示的页码（1-based）。当 shares 数量超过 ``max_shares_per_figure`` 时，
+            要展示的页码 （1-based）。当 shares 数量超过 ``max_shares_per_figure`` 时，
             ``page=1`` 为第 1 页，``page=2`` 为第 2 页，以此类推。
         **kwargs
             预留的扩展参数，当前版本中不使用。
@@ -4694,8 +4689,8 @@ class HistoryPanel():
         Notes
         -----
         当注册表产出 **完整 OHLC K 线** 主图时，会显示顶部 OHLC 摘要区：静态图固定为时间轴上
-        **最后一根** bar 的摘要；交互图初始与之一致，点击某 bar 后更新为该 bar（面向用户的
-        摘要文案为英文）。无 K 线主图（例如仅 close 折线）时不显示该摘要区。
+        **最后一根** bar 的摘要；交互图初始与之一致，点击某 bar 后更新为该 bar （面向用户的
+        摘要文案为英文）。无 K 线主图 （例如仅 close 折线）时不显示该摘要区。
 
         Examples
         --------
@@ -4782,7 +4777,7 @@ class HistoryPanel():
         specs_per_group = []
 
         def _infer_freq_info_from_hdates() -> str:
-            """从 hdates 推断频率说明（中文），用于图表标题。"""
+            """从 hdates 推断频率说明 （中文），用于图表标题。"""
             try:
                 idx = pd.DatetimeIndex(self.hdates)
                 if len(idx) >= 3:
@@ -4842,7 +4837,7 @@ class HistoryPanel():
             return 'K线'
 
         def _infer_adj_info_from_htypes() -> str:
-            """从 htypes 推断复权信息（中文）。"""
+            """从 htypes 推断复权信息 （中文）。"""
             hset = set(self.htypes)
             roots = ('open', 'high', 'low', 'close')
             if any(f'{r}|b' in hset for r in roots):
@@ -4867,7 +4862,7 @@ class HistoryPanel():
             names_by_symbol = {}
 
         def _format_group_title(grp: Sequence[str]) -> str:
-            """格式化组标题：CODE [NAME] FREQ - ADJ（NAME 不可用时省略）。"""
+            """格式化组标题：CODE [NAME] FREQ - ADJ （NAME 不可用时省略）。"""
             if not grp:
                 return ''
             # 与旧逻辑兼容：标题里 share 列表最多展示前三个
@@ -4995,7 +4990,7 @@ class HistoryPanel():
 
     # 以下 legacy 方法仅保留占位，统一通过 HistoryPanel.plot() 实现可视化
     def candle(self, *args, **kwargs):
-        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图（已由 ``plot()`` 统一处理）
+        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图 （已由 ``plot()`` 统一处理）
 
         Notes
         -----
@@ -5008,21 +5003,21 @@ class HistoryPanel():
 
 
 class _HistoryPanelKlineAccessor:
-    """HistoryPanel 的 K 线/技术指标访问器（内部使用）。
+    """HistoryPanel 的 K 线/技术指标访问器 （内部使用）。
 
     该访问器通过 ``HistoryPanel.kline`` 属性暴露，封装了对 ``HistoryPanel`` 中价格序列
-    的常用技术指标计算（如均线、布林带、MACD、KDJ 等）。所有指标计算均遵循以下约定：
+    的常用技术指标计算 （如均线、布林带、MACD、KDJ 等）。所有指标计算均遵循以下约定：
 
-    - **输入**：从原始 ``HistoryPanel`` 的某个 ``htype``（如 ``close``）读取价格序列；
+    - **输入**：从原始 ``HistoryPanel`` 的某个 ``htype`` （如 ``close``）读取价格序列；
     - **输出**：返回一个新的 ``HistoryPanel``，其 values 为原面板 values 与新增指标列
-      在第三轴（htypes 轴）上拼接后的结果；
+      在第三轴 （htypes 轴）上拼接后的结果；
     - **标签保持**：shares 与 hdates 标签保持不变；新增列名由参数或默认规则生成；
     - **不修改原对象**：不会原地修改传入的 ``HistoryPanel``。
 
     Notes
     -----
     - 本类为内部工具类，主要服务于可视化与策略研究中的快速派生数据生成。
-    - 指标函数内部依赖 ``qteasy.tafuncs``（对 TA-Lib 风格函数做了封装/适配）。
+    - 指标函数内部依赖 ``qteasy.tafuncs`` （对 TA-Lib 风格函数做了封装/适配）。
     """
 
     def __init__(self, hp: HistoryPanel):
@@ -5069,7 +5064,7 @@ class _HistoryPanelKlineAccessor:
         Parameters
         ----------
         new_columns : list of str
-            新增列名列表（对应新增的 htypes）。
+            新增列名列表 （对应新增的 htypes）。
         new_arrays : list of numpy.ndarray
             新增列数据列表。列表长度应与 ``new_columns`` 一致；每个数组形状必须为
             ``(n_share, n_time)``。
@@ -5081,7 +5076,7 @@ class _HistoryPanelKlineAccessor:
 
         Notes
         -----
-        - 本方法是内部通用拼接工具，不对列名冲突做额外处理（由调用方负责检查）。
+        - 本方法是内部通用拼接工具，不对列名冲突做额外处理 （由调用方负责检查）。
         """
         hp = self._hp
         if hp.is_empty:
@@ -5098,7 +5093,7 @@ class _HistoryPanelKlineAccessor:
         Parameters
         ----------
         new_columns : list of str
-            新增列名列表（对应新增的 htypes）。
+            新增列名列表 （对应新增的 htypes）。
         new_arrays : list of numpy.ndarray
             新增列数据列表。列表长度应与 ``new_columns`` 一致；每个数组形状必须为
             ``(n_share, n_time)``。
@@ -5137,12 +5132,12 @@ class _HistoryPanelKlineAccessor:
             *,
             inplace: bool = False,
     ) -> HistoryPanel:
-        """计算简单移动平均（SMA）并以新 ``htype`` 追加到面板中。
+        """计算简单移动平均 （SMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
         ----------
         window : int, default 20
-            滚动窗口长度（周期数）。
+            滚动窗口长度 （周期数）。
         price_htype : str, default 'close'
             用于计算均线的价格 ``htype`` 名称。
         new_htype : str, optional
@@ -5201,12 +5196,12 @@ class _HistoryPanelKlineAccessor:
             *,
             inplace: bool = False,
     ) -> HistoryPanel:
-        """计算指数移动平均（EMA）并以新 ``htype`` 追加到面板中。
+        """计算指数移动平均 （EMA）并以新 ``htype`` 追加到面板中。
 
         Parameters
         ----------
         span : int, default 20
-            指数平滑跨度（周期数）。
+            指数平滑跨度 （周期数）。
         price_htype : str, default 'close'
             用于计算 EMA 的价格 ``htype`` 名称。
         new_htype : str, optional
@@ -5255,7 +5250,7 @@ class _HistoryPanelKlineAccessor:
             *,
             inplace: bool = False,
     ) -> HistoryPanel:
-        """计算布林带（Bollinger Bands）并追加上轨/中轨/下轨三列。
+        """计算布林带 （Bollinger Bands）并追加上轨/中轨/下轨三列。
 
         Parameters
         ----------
@@ -5456,7 +5451,7 @@ class _HistoryPanelKlineAccessor:
             as_panel: bool = True,
             **kwargs,
     ):
-        """在当前面板上应用 ``tafuncs`` 中的技术指标函数（委托给 ``HistoryPanel.apply_ta``）。
+        """在当前面板上应用 ``tafuncs`` 中的技术指标函数 （委托给 ``HistoryPanel.apply_ta``）。
 
         该方法主要用于对齐历史接口/旧计划中的调用方式：将对 ``HistoryPanel`` 的
         技术指标计算入口统一暴露在 ``hp.kline`` 下，但实际实现与参数解析逻辑位于
@@ -5465,9 +5460,9 @@ class _HistoryPanelKlineAccessor:
         Parameters
         ----------
         func_name : str
-            指标函数名（``qteasy.tafuncs`` 中的函数名）。
+            指标函数名 （``qteasy.tafuncs`` 中的函数名）。
         htype : str, default 'close'
-            输入数据列名（``HistoryPanel`` 的 ``htypes`` 之一）。
+            输入数据列名 （``HistoryPanel`` 的 ``htypes`` 之一）。
         shares : Iterable[str], optional
             限定计算的标的集合；为 None 时对所有 shares 计算。
         as_panel : bool, default True
@@ -5504,7 +5499,7 @@ class HistoryPanelRolling:
         hp : HistoryPanel
             需要进行滚动统计的历史数据容器。
         window : int
-            滚动窗口长度（周期数）。
+            滚动窗口长度 （周期数）。
         min_periods : int
             计算结果不为 NaN 所需的最小样本数，小于该值时结果为 NaN。
         center : bool
@@ -5527,7 +5522,7 @@ class HistoryPanelRolling:
         self._by = by
 
     def _apply_rolling(self, func_name: str) -> HistoryPanel:
-        """对面板数据应用指定的滚动聚合函数并返回新面板（内部方法）。
+        """对面板数据应用指定的滚动聚合函数并返回新面板 （内部方法）。
 
         Parameters
         ----------
@@ -5925,53 +5920,22 @@ def stack_dataframes(dfs: Union[list, dict],
                      shares: Iterable = None,
                      htypes: Iterable = None,
                      fill_value: Any = None):
-    """ 将多个dataframe组合成一个HistoryPanel.
+    """将多个 ``DataFrame`` 组合为一个 ``HistoryPanel``。
 
     Parameters
     ----------
-    dfs: list of DataFrames or dict of DataFrames
-        需要被堆叠的dataframe，可以为list或dict，
-        dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含
-        所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
-        （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
-    dataframe_as: str {'shares', 'htypes'}
-        每个dataframe代表的数据类型。
-        dataframe_as == 'shares'，
-            表示每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
-            层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
-            在这种模式下：
-            如果dfs是一个list，shares参数必须给出，且shares的数量必须与DataFrame的数量相同，作为HP的层标签
-            如果dfs是一个dict，shares参数不必给出，dfs的keys会被用于层标签，如果shares参数给出且符合要求，
-            shares参数将取代dfs的keys参数
-
-        dataframe_as == 'htypes'，
-            表示每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象
-            列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
-            在这种模式下，
-            如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签
-            如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求，
-            htypes参数将取代dfs的keys参数
-    shares: str or list of str
-        生成的HistoryPanel的层标签或股票名称标签。
-        如果堆叠方式为"shares"，则层标签必须以dict的key的形式给出或者在shares参数中给出
-        以下两种参数均有效且等效：
-        '000001.SZ, 000002.SZ, 000003.SZ'
-        ['000001.SZ', '000002.SZ', '000003.SZ']
-
-        如果堆叠方式为"htypes"，不需要给出shares，默认使用dfs的columns标签的并集作为输出的层标签
-        如果给出了shares，则会强制使用shares作为层标签，多出的标签会用fill_values填充，
-        多余的DataFrame数据会被丢弃
-    htypes: str or list of str
-        生成的HistoryPanel的列标签或数据类型标签。
-        如果堆叠方式为"htypes"，则层标签必须以dict的key的形式给出或者在shares参数中给出
-        以下两种参数均有效且等效：
-        '000001.SZ, 000002.SZ, 000003.SZ'
-        ['000001.SZ', '000002.SZ', '000003.SZ']
-        如果堆叠方式为"shares"，不需要给出htypes，默认使用dfs的columns标签的并集作为列标签
-        如果给出了htypes，则会强制用它作为列标签，多出的标签会用fill_values填充，
-        多余的DataFrame数据会被丢弃
-    fill_value:
-        多余的位置用fill_value填充
+    dfs : list of pandas.DataFrame or dict of pandas.DataFrame
+        待堆叠的数据表；``list`` 时通常需配合 ``shares``/``htypes`` 显式给出轴标签，
+        ``dict`` 时可用键作为默认标签来源。
+    dataframe_as : {'shares', 'htypes'}, default 'shares'
+        ``'shares'`` 表示每个 ``DataFrame`` 对应一个标的（列为 htype）；``'htypes'`` 表示
+        每个 ``DataFrame`` 对应一种数据类型（列为 share）。
+    shares : str or list of str, optional
+        输出面板在 ``dataframe_as='shares'`` 时的层标签；可为逗号分隔字符串或列表。
+    htypes : str or list of str, optional
+        输出面板在 ``dataframe_as='htypes'`` 时的列标签；可为逗号分隔字符串或列表。
+    fill_value : int or float, optional
+        对齐缺失位置时使用的填充值；默认 ``NaN``。
 
     Returns
     -------
@@ -6282,7 +6246,7 @@ def _adjust_freq(hist_data: pd.DataFrame,
     else:
         expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
     resampled = resampled.reindex(index=expanded_index)
-    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    # 如果在数据开始或末尾增加了空数据 （因为forced start/forced end），需要根据情况填充
     if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
         if method == 'ffill':
             resampled.ffill(inplace=True)
@@ -6305,8 +6269,8 @@ def get_history_data_packages(
         end=None,
         rows=None,
 ) -> dict[str, pd.DataFrame]:
-    """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并返回一个
-    data_package（包含不同数据类型的区间数据），返回的数据类型为dict，包含每一个data_type
+    """ 历史数据获取函数，从本地DataSource （数据库/csv/hdf/fth）获取所需的数据并返回一个
+    data_package （包含不同数据类型的区间数据），返回的数据类型为dict，包含每一个data_type
     的历史数据，其columns包括所有的shares。其index为start到end之间的DatatimeIndex，同时
     根据历史数据的类型，数据将被赋予正确的TimeOffset。
 
@@ -6418,7 +6382,7 @@ def get_history_panel(
         return_history_panel=True,
         **kwargs
 ) -> Union[HistoryPanel, dict[str, pd.DataFrame]]:
-    """ 历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为一个
+    """ 历史数据获取函数，从本地DataSource （数据库/csv/hdf/fth）获取所需的数据并组装为一个
     HistoryPanel数据对象，该HistoryPanel的数据时间频率由参数指定，查找数据时会自动匹配相应
     的数据类型，如果没有完全匹配频率的数据类型，则会找到最近的类型并通过升频或降频的方式调整为
     所需频率输出。
@@ -6684,7 +6648,7 @@ def check_and_prepare_backtest_data(op,
         包含回测所需的历史数据和资金计划的字典，键为股票代码，值为对应的历史数据DataFrame
     """
 
-    # 根据投资回测区间的开始日期及结束日期，确定需要获取的历史数据的起止日期（因为获取的数据必须覆盖交易策略的最大窗口长度）
+    # 根据投资回测区间的开始日期及结束日期，确定需要获取的历史数据的起止日期 （因为获取的数据必须覆盖交易策略的最大窗口长度）
     invest_start, invest_end = backtest_start, backtest_end
 
     # 获取回测所需历史数据的参数
@@ -6824,12 +6788,12 @@ def check_and_prepare_trade_prices(op,
                 return_history_panel=False,
         )
 
-        # 此时有两种情况，一种是获取的价格数据包含多个数据类型（如开盘价和累计净值），另一种是只包含一个数据类型
+        # 此时有两种情况，一种是获取的价格数据包含多个数据类型 （如开盘价和累计净值），另一种是只包含一个数据类型
         # 需要分别处理，如果包含多个数据类型，则需从多个DataFrame中选择合适的价格进行合并
         if len(trade_prices) == 1:
             price_data_type_name = list(trade_prices.keys())[0]
             trade_prices = trade_prices[price_data_type_name]
-        elif len(trade_prices) > 1:  # 此时检查所有的数据列，删除全部为NaN的列，然后将剩下的列进行合并，并补齐缺少的列（这种情况说明有数据未读到，后面应报错）
+        elif len(trade_prices) > 1:  # 此时检查所有的数据列，删除全部为NaN的列，然后将剩下的列进行合并，并补齐缺少的列 （这种情况说明有数据未读到，后面应报错）
             for dtype_name, df in trade_prices.items():
                 all_nan_cols = df.columns[df.isna().all()].tolist()
                 if all_nan_cols:
@@ -6862,7 +6826,7 @@ def check_and_prepare_trade_prices(op,
     else:
         combined_trade_prices = list(trade_prices_per_group.values())[0]
 
-    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点，但是不需要填充NaN值，当价格为NaN时（例如停牌），就保持为NaN值，表示该时间点价格不可用
+    # 对combined_trade_prices进行前向填充并确保包含所有交易时间点，但是不需要填充NaN值，当价格为NaN时 （例如停牌），就保持为NaN值，表示该时间点价格不可用
     combined_trade_prices = combined_trade_prices.reindex(all_trade_price_indices)
     # combined_trade_prices.ffill(inplace=True)
     # 强制列对齐到完整资产池，避免 backtest_price_adj 等导致列数不足

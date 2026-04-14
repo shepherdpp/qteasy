@@ -379,10 +379,10 @@ def parse_trading_moq_params(config) -> dict:
         'moq_sell': config['sell_batch_size'],
     }
     # raise if parameters are out of range or with wrong types
-    if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] >= 0):
-        raise ValueError('moq_buy should be a positive float number or zero')
-    if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] >= 0):
-        raise ValueError('moq_sell should be a positive float number or zero')
+    if not (isinstance(trading_moq_params['moq_buy'], (float, int)) and trading_moq_params['moq_buy'] >= 0.01):
+        raise ValueError('moq_buy should be a float number greater than or equal to 0.01')
+    if not (isinstance(trading_moq_params['moq_sell'], (float, int)) and trading_moq_params['moq_sell'] >= 0.01):
+        raise ValueError('moq_sell should be a float number greater than or equal to 0.01')
 
     return trading_moq_params
 

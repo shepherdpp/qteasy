@@ -40,6 +40,25 @@ qteasy的所有配置变量
 
 下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。
 
+.. note::
+
+   关于 S1.3 完成后的模拟实盘文档入口（按使用目标）：
+
+   - 快速了解：``live_trading/1-overview.md``
+   - 先跑起来：``live_trading/2-configuration-and-run.md``
+   - 理解拒单与状态：``live_trading/3-risk-and-order-lifecycle.md``
+   - 扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``
+   - 排错复盘：``live_trading/5-artifacts-and-troubleshooting.md``
+   - 双路径实操教程：``tutorials/8-live-trade-risk-and-broker-walkthrough.md``
+
+   说明：
+
+   - ``live_trading`` 侧重模块能力与场景化说明；
+   - ``references`` 侧重 API 视角功能清单；
+   - ``api`` 侧重 autodoc 导出的接口明细。
+
+   用户可见拒单提示、错误信息、日志示例在文档中统一使用英文文案。
+
 .. list-table:: qteasy Configuration Variables
    :widths: 15 10 10 65
    :header-rows: 1
@@ -149,17 +168,17 @@ qteasy的所有配置变量
        | 该数值不能低于5秒
    * - ``trade_batch_size``
      - 0
-     - ``0.0``
+     - ``0.01``
      - | 投资产品的最小申购批量大小，浮点数，例如：
-       | 0. : 可以购买任意份额的投资产品，包括小数份额
+       | 0.01 : 可以购买最小到0.01份的投资产品
        | 1. : 只能购买整数份额的投资产品
        | 100: 可以购买100的整数倍份额投资产品
        | n  : 可以购买的投资产品份额为n的整数倍，n不必为整数
    * - ``sell_batch_size``
      - 0
-     - ``0.0``
+     - ``0.01``
      - | 投资产品的最小卖出或赎回批量大小，浮点数，例如：
-       | 0. : 可以购买任意份额的投资产品，包括小数份额
+       | 0.01 : 可以卖出最小到0.01份的投资产品
        | 1. : 只能购买整数份额的投资产品
        | 100: 可以购买100的整数倍份额投资产品
        | n  : 可以购买的投资产品份额为n的整数倍，n不必为整数
@@ -281,6 +300,12 @@ qteasy的所有配置变量
        | 支持相对路径（相对 QT_ROOT_PATH）、绝对路径及以 ``~`` 开头的家目录路径；
        | 通过 ``qt.configure()`` / ``qt.set_config()`` 修改后立即生效（热修改），无需重新导入。
        | 路径中不得包含非法字符，否则抛出 ValueError。
+   * - ``trade_log_keep_days``
+     - 4
+     - ``3``
+     - | 回测写盘的 ``trade_log_*`` / ``trade_summary_*`` / ``value_curve_*`` 等 CSV 的保留天数；默认 **3**。
+       | 在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。
+       | 设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。
    * - ``trade_log``
      - 1
      - ``True``
@@ -349,7 +374,7 @@ qteasy的所有配置变量
      - 0
      - ``None``
      - | 回测模式下的回测开始日期。
-       | 留空(None)时，将在运行时根据 ``invest_end``（或当前日期）自动推导为一年前的日期。
+       | 留空(None)时，将在运行时根据 invest_end（或当前日期）自动推导为一年前的日期。
        | 显式设置时格式为"YYYYMMDD"。
    * - ``invest_end``
      - 0
@@ -615,7 +640,7 @@ qteasy的所有配置变量
      - 3
      - ``1``
      - 使用穷举法搜索最佳策略时有用，搜索步长
-   * - ``| opti_sample_count``
+   * - ``opti_sample_count``
      - 3
      - ``256``
      - 使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量

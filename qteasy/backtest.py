@@ -955,7 +955,9 @@ class Backtester:
 
     这个类只有在operator对象被创建之后才能被实例化，因为Backtester类需要依赖operator对象来生成交易
     信号和执行交易。典型用法如下：
-    ```
+
+    .. code-block:: python
+
         operator = Operator( ... )  # 创建Operator对象
         backtested = Operator.backtest( signal_count=100, share_count=10, **kwargs)  # 创建Backtester对象
         # get backtest raw results:
@@ -966,7 +968,6 @@ class Backtester:
         result_df = backtested.value_records()
         trade_log_df = backtested.trade_logs()
         trade_summary_df = backtested.trade_summary()
-    ```
 
     Attributes
     ----------
@@ -1502,18 +1503,21 @@ class Backtester:
             self,
             save_to_file_path: Union[str, None] = None,
     ) -> DataFrame:
-        """ 根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息：
-            每一个交易期间包含8行数据，分别为：
-                '0, trade signal', 每一支股票的当期交易信号
-                '1, price', 每一支股票的当期交易价格
-                '2, traded amounts', 每一支股票的当期交易数量，如果没有交易则为0
-                '3, cash changed', 每一支股票的当期现金变动金额，买入为负数，卖出为正数
-                '4, trade cost', 每一支股票的当期交易费用
-                '5, own amounts', 每一支股票的当期末持有数量
-                '6, available amounts', 每一支股票的当期末可用数量
-                '7, summary', 当期每一支股票的持仓价值，同时包含汇总数据：当期末持有现金、可用现金、总资产价值
-            以上信息以DataFrame形式保存，行索引为多级索引，第一/二层为时间/策略组索引，第三层为上述8个数据类别。
-            交易日志文件可以被保存为csv格式，文件名为'trade_log.csv'
+        """根据回测结果生成交易日志，交易日志是一份完整的交易记录文件，包含每一个交易期间的下列信息。
+
+        每一个交易期间包含 8 行数据，分别为：
+
+        - ``0, trade signal``：每一支股票的当期交易信号
+        - ``1, price``：每一支股票的当期交易价格
+        - ``2, traded amounts``：每一支股票的当期交易数量，如果没有交易则为 0
+        - ``3, cash changed``：每一支股票的当期现金变动金额，买入为负数，卖出为正数
+        - ``4, trade cost``：每一支股票的当期交易费用
+        - ``5, own amounts``：每一支股票的当期末持有数量
+        - ``6, available amounts``：每一支股票的当期末可用数量
+        - ``7, summary``：当期每一支股票的持仓价值，同时包含汇总数据（当期末持有现金、可用现金、总资产价值）
+
+        以上信息以 DataFrame 形式保存，行索引为多级索引，第一/二层为时间/策略组索引，第三层为上述 8 个数据类别。
+        交易日志文件可以被保存为 csv 格式，文件名为 ``trade_log.csv``。
 
         Parameters
         ----------

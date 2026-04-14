@@ -1326,6 +1326,15 @@ class TraderShell(Cmd):
             print(f'Order <{order_id}> has been submitted to broker: '
                   f'{trade_order["direction"]} {trade_order["qty"]:.1f} of {symbol} '
                   f'at price {trade_order["price"]:.2f}')
+        else:
+            decision = self.trader.last_risk_decision
+            if decision is not None and not decision.allowed:
+                print(
+                        f'Order submission rejected by risk manager: '
+                        f'rule_id={decision.rule_id!r}, reason={decision.reason!r}'
+                )
+            else:
+                print('Order submission failed.')
 
         if not self.trader.is_market_open:
             print(f'Market is not open, order might not be executed immediately')
@@ -1389,6 +1398,15 @@ class TraderShell(Cmd):
 
             if not self.trader.is_market_open:
                 print(f'Market is not open, order might not be executed immediately')
+        else:
+            decision = self.trader.last_risk_decision
+            if decision is not None and not decision.allowed:
+                print(
+                        f'Order submission rejected by risk manager: '
+                        f'rule_id={decision.rule_id!r}, reason={decision.reason!r}'
+                )
+            else:
+                print('Order submission failed.')
 
     def do_positions(self, arg):
         """usage: positions [-h]

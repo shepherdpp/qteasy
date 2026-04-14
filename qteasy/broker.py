@@ -12,13 +12,16 @@
 # different trading platforms or brokers
 # ======================================
 
-from queue import Queue
+from collections import deque
+from queue import Queue, Empty
 from abc import abstractmethod, ABCMeta
+from typing import Any, Mapping, Optional
 
 import numpy as np
 import time
 
 from qteasy import QT_CONFIG
+from qteasy.trade_io import validate_raw_trade_result, validate_trade_order
 from qteasy.utilfuncs import get_current_timezone_datetime
 
 CASH_DECIMAL_PLACES = QT_CONFIG['cash_decimal_places']
@@ -132,6 +135,10 @@ class Broker(object):
         self.order_queue = Queue()
         self.result_queue = Queue()
         self.broker_messages = Queue()
+        self._adapter_connected = False
+        self._broker_order_sequence = 0
+        self._submitted_order_map = {}
+        self._pending_fills = deque()
 
     @property
     def data_source(self):
@@ -227,6 +234,153 @@ class Broker(object):
             message += '_R'
         self.broker_messages.put(message)
 
+    def _ensure_adapter_connected(self) -> None:
+        """确保适配层会话已连接。"""
+        if not self._adapter_connected:
+            raise RuntimeError('Broker is not connected, call connect() before submit/poll_fills')
+
+    def connect(self) -> None:
+        """建立 Broker 适配层连接并将会话标记为可用。
+
+        Notes
+        -----
+        此方法为幂等实现，重复调用不会抛异常。
+        """
+        if not self.is_registered:
+            self.register(debug=self.debug)
+        self._adapter_connected = True
+
+    def disconnect(self) -> None:
+        """断开 Broker 适配层连接并清理临时缓冲。"""
+        self._adapter_connected = False
+        self._pending_fills.clear()
+        self._submitted_order_map.clear()
+
+    def submit(self, order: Mapping[str, Any]) -> str:
+        """同步受理一笔订单并返回 broker 侧追踪 ID。
+
+        Parameters
+        ----------
+        order: Mapping[str, Any]
+            订单数据，字段需满足 ``validate_trade_order`` 约束。
+
+        Returns
+        -------
+        str
+            broker 侧订单追踪 ID。
+        """
+        self._ensure_adapter_connected()
+        order_dict = dict(order)
+        validate_trade_order(order_dict, context='Broker.submit.order')
+
+        self._broker_order_sequence += 1
+        broker_order_id = f'{self.broker_name}:{int(order_dict["order_id"])}:{self._broker_order_sequence}'
+        self._submitted_order_map[broker_order_id] = order_dict
+
+        order_type, symbol, order_qty, order_price, direction, position = self._parse_order(order_dict)
+        for result_type, filled_qty, filled_price, fee in self.transaction(
+                symbol=symbol,
+                order_qty=order_qty,
+                order_price=order_price,
+                direction=direction,
+                position=position,
+                order_type=order_type,
+        ):
+            _verify_trade_result((result_type, filled_qty, filled_price, fee), order_qty)
+            current_datetime = get_current_timezone_datetime(self.time_zone)
+            normalized_qty = round(float(filled_qty), AMOUNT_DECIMAL_PLACES)
+            normalized_price = round(float(filled_price), CASH_DECIMAL_PLACES)
+            normalized_fee = round(float(fee), CASH_DECIMAL_PLACES)
+
+            raw_trade_result = {
+                'order_id':        int(order_dict['order_id']),
+                'filled_qty':      normalized_qty if result_type in ['filled', 'partial-filled'] else 0.0,
+                'price':           normalized_price,
+                'transaction_fee': normalized_fee,
+                'execution_time':  current_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                'canceled_qty':    normalized_qty if result_type == 'canceled' else 0.0,
+                'delivery_amount': 0.0,
+                'delivery_status': 'ND',
+                'broker_order_id': broker_order_id,
+                'status':          result_type,
+                'raw_status':      result_type,
+            }
+            validate_raw_trade_result(raw_trade_result, context='Broker.submit.raw_trade_result')
+            self._pending_fills.append(raw_trade_result)
+        return broker_order_id
+
+    def cancel(self, broker_order_id: str) -> bool:
+        """受理撤单请求，返回是否成功匹配待撤单据。"""
+        self._ensure_adapter_connected()
+        if not isinstance(broker_order_id, str) or not broker_order_id.strip():
+            raise TypeError(f'broker_order_id must be a non-empty str, got {type(broker_order_id)}')
+        if broker_order_id not in self._submitted_order_map:
+            return False
+        self._submitted_order_map.pop(broker_order_id, None)
+        self._pending_fills = deque(
+                [fill for fill in self._pending_fills if fill.get('broker_order_id') != broker_order_id]
+        )
+        return True
+
+    def poll_fills(self, timeout: float = 0.0) -> list[dict[str, Any]]:
+        """异步拉取成交回报。
+
+        Parameters
+        ----------
+        timeout: float, default 0.0
+            等待秒数，<=0 时立即返回。
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            最多返回一条成交回报，未取到则返回空列表。
+        """
+        self._ensure_adapter_connected()
+        if timeout > 0 and not self._pending_fills:
+            time.sleep(float(timeout))
+        if not self._pending_fills:
+            return []
+        fill = self._pending_fills.popleft()
+        validate_raw_trade_result(fill, context='Broker.poll_fills.raw_trade_result')
+        return [fill]
+
+    def get_remote_orders(self, *, account_id: Optional[int] = None) -> list[dict[str, Any]]:
+        """返回券商侧订单占位结果，S1.3 默认空列表。"""
+        return []
+
+    def get_remote_positions(self, *, account_id: Optional[int] = None) -> list[dict[str, Any]]:
+        """返回券商侧持仓占位结果，S1.3 默认空列表。"""
+        return []
+
+    def get_remote_cash(self, *, account_id: Optional[int] = None) -> Optional[float]:
+        """返回券商侧现金占位结果，S1.3 默认 ``None``。"""
+        return None
+
+    def drain_order_queue(self, *, max_items: Optional[int] = None) -> list[dict[str, Any]]:
+        """排空 legacy ``order_queue`` 并返回已取出的订单列表。
+
+        Parameters
+        ----------
+        max_items : int or None, optional
+            本次最多排空的订单数量；``None`` 表示全部排空。
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            已从 ``order_queue`` 中取出的订单 dict 列表。
+        """
+        drained_orders: list[dict[str, Any]] = []
+        while True:
+            if max_items is not None and len(drained_orders) >= int(max_items):
+                break
+            try:
+                order = self.order_queue.get_nowait()
+            except Empty:
+                break
+            drained_orders.append(order)
+            self.order_queue.task_done()
+        return drained_orders
+
     def _submit_order(self, order):
         """
 
@@ -278,8 +432,10 @@ class Broker(object):
         order_type = order['order_type']
         return order_type, symbol, qty, price, direction, position
 
-    def _get_result(self, order):
+    def _get_result(self, order: Mapping[str, Any]) -> None:
         """ 解析订单信息，将关键信息提交给transaction，获取交易结果后，解析交易结果，将结果放入result_queue
+
+        入队前通过 ``qteasy.trade_io`` 校验订单 dict 与原始成交 dict，避免损坏 Trader 侧账本处理链。
 
         Parameters:
         -----------
@@ -307,6 +463,7 @@ class Broker(object):
              }
         """
 
+        validate_trade_order(dict(order), context='Broker._get_result.order')
         order_type, symbol, qty, price, direction, position = self._parse_order(order)
         for trade_result in self.transaction(
                 order_type=order_type,
@@ -349,6 +506,8 @@ class Broker(object):
                 'delivery_amount': 0,
                 'delivery_status': 'ND',
             }
+
+            validate_raw_trade_result(raw_trade_result, context='Broker._get_result.raw_trade_result')
 
             # 将trade_result放入result_queue
             if self.debug:

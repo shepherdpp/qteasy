@@ -22,7 +22,7 @@ from typing import Optional
 import tushare as ts
 import numpy as np
 
-from qteasy.trade_recording import delete_account
+from qteasy.trade_recording import delete_account, list_live_trade_artifacts, risk_log_file_path_name
 from qteasy.qt_operator import Operator
 from qteasy.visual import candle
 from qteasy.parameter import Parameter
@@ -113,15 +113,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.3.1'
+__version__ = '2.4.0'
 version_info = Namespace(
         major=2,
-        minor=3,
-        patch=1,
-        short=(2, 3),
-        full=(2, 3, 1),
-        string='2.3.1',
-        tuple=('2', '3', '1'),
+        minor=4,
+        patch=0,
+        short=(2, 4),
+        full=(2, 4, 0),
+        string='2.4.0',
+        tuple=('2', '4', '0'),
         releaselevel='beta',
 )
 
@@ -243,11 +243,12 @@ def _refresh_log_paths() -> None:
 
 
 def _rotate_trade_logs(base_path: str, keep_days: int) -> list[str]:
-    """根据保留天数删除指定目录下的旧 trade_log / trade_summary 文件。
+    """根据保留天数删除指定目录下的旧 trade_log / trade_summary / value_curve CSV。
 
     优先从文件名中解析创建时间，格式参考 qt_operator 中的生成逻辑：
     trade_log_{operator_name}_%Y%m%d_%H%M%S.csv
     trade_summary_{operator_name}_%Y%m%d_%H%M%S.csv
+    value_curve_{operator_name}_%Y%m%d_%H%M%S.csv
     若解析失败，则退回使用文件修改时间近似作为创建时间。
     """
     from qteasy import QT_CONFIG  # 局部导入以避免循环引用
@@ -310,10 +311,10 @@ def _rotate_trade_logs(base_path: str, keep_days: int) -> list[str]:
 
 
 def _auto_rotate_trade_logs() -> None:
-    """在模块初始化阶段，根据配置自动对当前 trade_log 目录做一次轮换删除。"""
+    """在模块初始化阶段，根据 ``trade_log_keep_days``（默认 3）对当前 trade_log 目录做一次轮换删除。"""
     global QT_TRADE_LOG_PATH
 
-    keep_days = QT_CONFIG.get('trade_log_keep_days', 0)
+    keep_days = QT_CONFIG.get('trade_log_keep_days', 3)
     if keep_days is None or (isinstance(keep_days, int) and keep_days <= 0):
         return
 
@@ -321,7 +322,11 @@ def _auto_rotate_trade_logs() -> None:
 
 
 def rotate_trade_logs(days: Optional[int] = None) -> None:
-    """手动触发 trade_log / trade_summary 轮换删除。
+    """手动触发 trade_log / trade_summary / value_curve 轮换删除。
+
+    自动轮换仅在进程加载本模块时执行一次（见 ``_auto_rotate_trade_logs``），
+    本函数用于按需再次清理。全局配置 ``trade_log_keep_days`` 默认保留 3 天，
+    设为 None 或小于等于 0 时关闭自动删除。
 
     Parameters
     ----------
@@ -332,7 +337,7 @@ def rotate_trade_logs(days: Optional[int] = None) -> None:
     global QT_TRADE_LOG_PATH
 
     if days is None:
-        keep_days = QT_CONFIG.get('trade_log_keep_days', 0)
+        keep_days = QT_CONFIG.get('trade_log_keep_days', 3)
     else:
         if not isinstance(days, int):
             raise ValueError(f'Parameter "days" must be an integer or None, got {type(days).__name__}.')
@@ -398,6 +403,7 @@ __all__ = [
     'candle', 'CashPlan', 'set_cost', 'update_cost', 'DataSource', 'find_history_data',
     'QT_TRADE_CALENDAR', 'QT_TRADE_LOG_PATH', 'QT_ROOT_PATH', 'QT_SYS_LOG_PATH',
     'QT_DATA_SOURCE', 'QT_CONFIG', 'utilfuncs', 'QT_CONFIG', 'ConfigDict', '__version__', 'version_info',
-    'logger_core', 'live_trade_accounts', 'delete_account', 'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
+    'logger_core', 'live_trade_accounts', 'delete_account', 'list_live_trade_artifacts', 'risk_log_file_path_name',
+    'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
     'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
 ]

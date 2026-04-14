@@ -22,7 +22,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - 创建日期: 2019, July, 16
-- 最新版本: `2.3.1`
+- 最新版本: `2.4.0`
 - License: BSD 3-Clause
 
 简介
@@ -149,6 +149,15 @@
 
 
 .. toctree::
+    :caption: 模拟实盘交易模块
+    :numbered: 2
+    :maxdepth: 1
+    :glob:
+
+    live_trading/index
+
+
+.. toctree::
     :caption: 模拟实盘运行交易策略
     :numbered: 2
     :maxdepth: 1
@@ -211,4 +220,16 @@
    :glob:
 
    faq
+
+.. toctree::
+   :hidden:
+
+   api/top_level_exports
+   qteasy_2_migration_guide
+   references/1-build-in-results
+   references/2-get-history-data
+   references/2-historical_data_types
+   references/3-back-test-strategy
+   references/4-build-in-strategy-blender
+   references/5-optimize-strategy
 

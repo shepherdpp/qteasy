@@ -12,6 +12,8 @@
 import os
 import unittest
 import time
+import io
+from contextlib import redirect_stdout
 import pandas as pd
 
 from qteasy import DataSource, Operator
@@ -20,7 +22,9 @@ from qteasy.trader_cli import TraderShell
 from qteasy.trading_util import process_account_delivery, process_trade_result, submit_order, update_position
 from qteasy.trade_recording import new_account, read_trade_order_detail, save_parsed_trade_orders
 from qteasy.trade_recording import get_or_create_position, get_position_by_id, get_account
+from qteasy.trade_recording import query_trade_orders
 from qteasy.broker import SimulatorBroker
+from qteasy.risk import MaxOrderQtyRule, RiskManager
 
 
 def _get_cli_test_data_dir():
@@ -428,6 +432,24 @@ class TestTraderCLI(unittest.TestCase):
         self.assertFalse(tss.do_sell('100 000001.SZ -p -s long'))  # no price given
         self.assertFalse(tss.do_sell('-100 000001.SZ -p 10.0 -s long'))  # negative qty
         self.assertFalse(tss.do_sell('100 000001.SZ -p -10.0 -s long'))  # negative price
+
+    def test_command_buy_prints_risk_summary_on_reject(self):
+        """测试 buy 命令在风控拒单时输出摘要。"""
+        tss = self.tss
+        tss.trader.risk_manager = RiskManager((MaxOrderQtyRule('mx', 5.0),))
+        tss.trader.live_price = {'000001.SZ': 10.0}
+        before_count = len(query_trade_orders(tss.trader.account_id, data_source=tss.trader.datasource))
+        capture = io.StringIO()
+        with redirect_stdout(capture):
+            self.assertIsNone(tss.do_buy('100 000001.SZ -p 10.0'))
+        out = capture.getvalue()
+        after_count = len(query_trade_orders(tss.trader.account_id, data_source=tss.trader.datasource))
+        print('\n[TestTraderCLI] risk reject stdout:\n', out)
+        print(' order count before/after:', before_count, after_count)
+        self.assertIn('Order submission rejected by risk manager', out)
+        self.assertIn('rule_id=', out)
+        self.assertIn('reason=', out)
+        self.assertEqual(before_count, after_count)
 
     def test_command_positions(self):
         """ test positions command"""
