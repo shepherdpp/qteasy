@@ -65,6 +65,9 @@ Homepage = "https://github.com/shepherdpp/qteasy"
 Documentation = "https://qteasy.readthedocs.io/zh-cn/latest/"
 Issues = "https://github.com/shepherdpp/qteasy/issues"
 
+[project.scripts]
+qteasy-ai = "qteasy.ai.cli:main"
+
 [project.optional-dependencies]
 talib = ["ta-lib"]
 feather = ["pyarrow>=3"]
