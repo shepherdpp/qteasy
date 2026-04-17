@@ -9,183 +9,247 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:28+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/design/05-strategy-lifecycle.md:1
 msgid "Strategy 如何运行：时机、数据与参数"
-msgstr ""
+msgstr "How Strategy runs: timing, data, and parameters"
 
 #: ../../source/design/05-strategy-lifecycle.md:3
 msgid "1. 策略运行时机"
-msgstr ""
+msgstr "1. Strategy execution timing"
 
 #: ../../source/design/05-strategy-lifecycle.md:5
 msgid ""
-"策略的**运行时机**（何时、以何频率运行）不由策略类内部保存，而由其所处的 **Group** 决定。Group 的 "
-"**run_freq**、**run_timing** 在将策略加入 Operator 时指定（如 `add_strategy(stg, "
-"run_freq='d', run_timing='close')`）。因此，同一策略实例放入不同 run_freq/run_timing 的 "
-"Group，就会在不同时刻被调用。"
+"策略的**运行时机**（何时、以何频率运行）不由策略类内部保存，而由其所处的 "
+"**Group** 决定。Group 的 **run_freq**、**run_timing** 在将策略加入 Operator 时指"
+"定（如 `add_strategy(stg, run_freq='d', run_timing='close')`）。因此，同一策略实"
+"例放入不同 run_freq/run_timing 的 Group，就会在不同时刻被调用。"
 msgstr ""
+"The strategy’s **execution timing** (when and how frequently it runs) is not "
+"stored inside the strategy class, but is determined by the **Group** it belongs "
+"to. The Group’s **run_freq** and **run_timing** are specified when adding the "
+"strategy to an Operator (e.g., `add_strategy(stg, run_freq='d', "
+"run_timing='close')`). Therefore, placing the same strategy instance into "
+"Groups with different run_freq/run_timing will cause it to be invoked at "
+"different times."
 
 #: ../../source/design/05-strategy-lifecycle.md:7
 msgid "2. 单步运行流程（细化）"
-msgstr ""
+msgstr "2. Single-step execution flow (detailed)"
 
 #: ../../source/design/05-strategy-lifecycle.md:9
 msgid "对**当前时间步**（step_index）："
-msgstr ""
+msgstr "For the **current time step** (step_index):"
 
 #: ../../source/design/05-strategy-lifecycle.md:11
-msgid "**查 group_timing_table**：取该步对应行，得到本步要运行的 Group 列表（取值为 1 的列）。"
+msgid ""
+"**查 group_timing_table**：取该步对应行，得到本步要运行的 Group 列表（取值为 1 "
+"的列）。"
 msgstr ""
+"**Check group_timing_table**: take the row corresponding to this step to get "
+"the list of Groups to run at this step (columns with value 1)."
 
 #: ../../source/design/05-strategy-lifecycle.md:12
 msgid "**对每个运行中的 Group**："
-msgstr ""
+msgstr "**For each running Group**:"
 
 #: ../../source/design/05-strategy-lifecycle.md:13
 msgid ""
-"对该 Group 内**每个 Strategy**：根据其 data_types、window_length "
-"与当前步，从已准备的数据中切出本步的**数据窗口**，并调用 **update_running_data_window** 注入到该策略实例（按 "
-"dtype_id 写入）。"
+"对该 Group 内**每个 Strategy**：根据其 data_types、window_length 与当前步，从已"
+"准备的数据中切出本步的**数据窗口**，并调用 **update_running_data_window** 注入到"
+"该策略实例（按 dtype_id 写入）。"
 msgstr ""
+"For **each Strategy** within this Group: based on its data_types, "
+"window_length, and the current step, slice out this step’s **data window** from "
+"the prepared data, and call **update_running_data_window** to inject it into "
+"that strategy instance (written by dtype_id)."
 
 #: ../../source/design/05-strategy-lifecycle.md:14
-msgid "依次调用该 Group 内每个策略的 **generate()**（内部会调用无参的 **realize()**），收集各策略返回的信号，组成列表。"
+msgid ""
+"依次调用该 Group 内每个策略的 **generate()**（内部会调用无参的 **realize()**），"
+"收集各策略返回的信号，组成列表。"
 msgstr ""
+"Call **generate()** for each strategy in this Group in order (it will "
+"internally call the no-arg **realize()**), collect the signals returned by each "
+"strategy, and form a list."
 
 #: ../../source/design/05-strategy-lifecycle.md:15
 msgid "用该 Group 的 **blender** 将列表中的信号混合成该组的一个合并信号。"
 msgstr ""
+"Use this Group’s **blender** to blend the signals in the list into one merged "
+"signal for the group."
 
 #: ../../source/design/05-strategy-lifecycle.md:16
-msgid "**若本步有多个 Group 运行**：再按 **group_merge_type** 将各组合并信号合并为一个（或分别输出，依实现而定）。"
+msgid ""
+"**若本步有多个 Group 运行**：再按 **group_merge_type** 将各组合并信号合并为一个"
+"（或分别输出，依实现而定）。"
 msgstr ""
+"**If multiple Groups run in this step**: then merge the signals from each group "
+"into one according to **group_merge_type** (or output them separately, "
+"depending on the implementation)."
 
 #: ../../source/design/05-strategy-lifecycle.md:17
-msgid "该步的最终信号交给上层：回测时交给 Backtester 解析为买卖并更新持仓，实盘时交给 Trader/Broker 生成订单。"
+msgid ""
+"该步的最终信号交给上层：回测时交给 Backtester 解析为买卖并更新持仓，实盘时交给 "
+"Trader/Broker 生成订单。"
 msgstr ""
+"Hand the step’s final signal to the upper layer: in backtesting, pass it to the "
+"Backtester to parse into buys/sells and update positions; in live trading, pass "
+"it to the Trader/Broker to generate orders."
 
 #: ../../source/design/05-strategy-lifecycle.md:19
 msgid "3. Strategy 内部：realize() 与 get_pars / get_data"
-msgstr ""
+msgstr "3. Inside Strategy: realize() and get_pars / get_data"
 
 #: ../../source/design/05-strategy-lifecycle.md:21
 msgid ""
-"**realize()**：无参数。策略逻辑只在此方法内实现；不通过参数接收数据或时间，而是通过 **get_pars(name, ...)** "
-"取可调参数、**get_data(dtype_id)** 取本步已注入的数据窗口。"
+"**realize()**：无参数。策略逻辑只在此方法内实现；不通过参数接收数据或时间，而是"
+"通过 **get_pars(name, ...)** 取可调参数、**get_data(dtype_id)** 取本步已注入的数"
+"据窗口。"
 msgstr ""
+"**realize()**: Takes no arguments. Strategy logic is implemented only within "
+"this method; it does not receive data or time via parameters. Instead, use "
+"**get_pars(name, ...)** to fetch tunable parameters and **get_data(dtype_id)** "
+"to fetch the data window injected for the current step."
 
 #: ../../source/design/05-strategy-lifecycle.md:22
 msgid ""
-"**返回值**：标量或一维数组，依策略基类而定（RuleIterator 常为标量，FactorSorter 为因子数组，GeneralStg "
-"为每资产一个信号）。同一段 realize() 在回测与实盘中复用，保证行为一致。"
+"**返回值**：标量或一维数组，依策略基类而定（RuleIterator 常为标量，FactorSorter "
+"为因子数组，GeneralStg 为每资产一个信号）。同一段 realize() 在回测与实盘中复用，"
+"保证行为一致。"
 msgstr ""
+"**Return value**: A scalar or a 1D array, depending on the strategy base class "
+"(RuleIterator is often a scalar, FactorSorter returns a factor array, and "
+"GeneralStg returns one signal per asset). The same realize() code is reused in "
+"both backtesting and live trading to ensure consistent behavior."
 
 #: ../../source/design/05-strategy-lifecycle.md:24
 msgid "4. 可调参数（Parameter）"
-msgstr ""
+msgstr "4. Tunable parameters (Parameter)"
 
 #: ../../source/design/05-strategy-lifecycle.md:26
-msgid "**定义**：在策略类的 **__init__** 中通过 **pars**（Parameter 列表或字典）定义可调参数的名称、类型、取值范围等。"
+msgid ""
+"**定义**：在策略类的 **__init__** 中通过 **pars**（Parameter 列表或字典）定义可"
+"调参数的名称、类型、取值范围等。"
 msgstr ""
+"**Definition**: In the strategy class’s **__init__**, use **pars** (a Parameter "
+"list or dict) to define the names, types, value ranges, etc. of tunable "
+"parameters."
 
 #: ../../source/design/05-strategy-lifecycle.md:27
 msgid ""
 "**运行前设置**：通过 **set_parameter**（如 `op.set_parameter(stg_id, "
 "pars=(...))`）在运行前写入当前要用的参数值。"
 msgstr ""
+"**Pre-run setup**: use **set_parameter** (e.g., `op.set_parameter(stg_id, "
+"pars=(...))`) to write in the parameter values to be used before running."
 
 #: ../../source/design/05-strategy-lifecycle.md:28
 msgid ""
-"**优化**：Optimizer 在参数空间（由 Parameter 的 par_range 等确定）上采样或搜索，每组参数 set 到 "
-"Operator 后执行一次回测，根据目标函数（如夏普比）汇总结果，从而找到较优参数组合。"
+"**优化**：Optimizer 在参数空间（由 Parameter 的 par_range 等确定）上采样或搜索，"
+"每组参数 set 到 Operator 后执行一次回测，根据目标函数（如夏普比）汇总结果，从而"
+"找到较优参数组合。"
 msgstr ""
+"**Optimization**: The Optimizer samples or searches over the parameter space "
+"(determined by Parameter settings such as par_range). For each parameter set, "
+"it sets the parameters to the Operator and runs one backtest, aggregates "
+"results according to the objective function (e.g., Sharpe ratio), and thus "
+"finds a better parameter combination."
 
 #: ../../source/design/05-strategy-lifecycle.md:30
 msgid "5. 三种策略基类的输入/输出差异"
-msgstr ""
+msgstr "5. Input/output differences among the three strategy base classes"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "基类"
-msgstr ""
+msgstr "Base class"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "输入（get_data 等）"
-msgstr ""
+msgstr "Inputs (get_data, etc.)"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "输出（realize 返回值）"
-msgstr ""
+msgstr "Outputs (return value of realize)"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "典型用途"
-msgstr ""
+msgstr "Typical use cases"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "**RuleIterator**"
-msgstr ""
+msgstr "**RuleIterator**"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "单资产或多资产数据窗口，按 dtype_id 取"
-msgstr ""
+msgstr "Single-asset or multi-asset data window, retrieved by dtype_id"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "标量（如 1/-1/0），同一规则迭代作用于所有资产"
-msgstr ""
+msgstr "Scalar (e.g., 1/-1/0); the same rule iteration applies to all assets"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "择时、单规则多标的"
-msgstr ""
+msgstr "Timing, single rule with multiple instruments"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "**FactorSorter**"
-msgstr ""
+msgstr "**FactorSorter**"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "多资产截面（如每只股票的因子值）"
-msgstr ""
+msgstr "Multi-asset cross section (e.g., factor values for each stock)"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "一维因子数组，引擎按排序与筛选规则选股"
 msgstr ""
+"A 1D factor array; the engine selects stocks according to ranking and filtering "
+"rules"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "因子选股"
-msgstr ""
+msgstr "Factor-based stock selection"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "**GeneralStg**"
-msgstr ""
+msgstr "**GeneralStg**"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "多资产、多 dtype 的窗口"
-msgstr ""
+msgstr "Multi-asset, multi-dtype windows"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "一维信号数组（每资产一个目标仓位或比例）"
-msgstr ""
+msgstr "A 1D signal array (one target position or weight per asset)"
 
 #: ../../source/design/05-strategy-lifecycle.md
 msgid "通用多资产信号"
-msgstr ""
+msgstr "General-purpose multi-asset signals"
 
 #: ../../source/design/05-strategy-lifecycle.md:38
 msgid "6. 小结"
-msgstr ""
+msgstr "6. Summary"
 
 #: ../../source/design/05-strategy-lifecycle.md:40
 msgid ""
-"同一套“按步 → 准备数据 → 注入 → realize() → 混合”的流程，同时服务回测与实盘：策略不关心当前是回测还是实盘，只依赖 "
-"get_pars/get_data 与所属 Group 的时机；运行层负责在不同模式下提供对应数据并处理输出信号。更多实现细节见《使用教程》与 "
-"API 参考。"
+"同一套“按步 → 准备数据 → 注入 → realize() → 混合”的流程，同时服务回测与实盘：策"
+"略不关心当前是回测还是实盘，只依赖 get_pars/get_data 与所属 Group 的时机；运行层"
+"负责在不同模式下提供对应数据并处理输出信号。更多实现细节见《使用教程》与 API 参"
+"考。"
 msgstr ""
-
+"The same “step → prepare data → inject → realize() → mix” workflow serves both "
+"backtesting and live trading: the strategy does not care whether it is "
+"currently backtesting or live; it only depends on get_pars/get_data and the "
+"timing of its Group. The runtime layer is responsible for providing the "
+"corresponding data in different modes and handling the output signals. For more "
+"implementation details, see the “User Guide” and the API reference."

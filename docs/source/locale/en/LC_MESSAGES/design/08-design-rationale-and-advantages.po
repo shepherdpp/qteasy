@@ -9,169 +9,281 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:32+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:1
 msgid "设计初衷与独特优势"
-msgstr ""
+msgstr "Design Intent and Unique Advantages"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:3
 msgid ""
-"本章集中说明 qteasy 的**设计初衷**与**独特优势**：为何以高速向量化回测为目标却摒弃“全时间轴向量化”，如何通过“向量化 + "
-"数据隔离”兼顾速度与防未来函数，以及 **use_latest_data_cycle** 等可配置项对长期回测的影响。与 "
-"[总体架构与设计思路](00-overview.md)、[策略中的数据](03-data-in-strategies.md) 形成呼应。"
+"本章集中说明 qteasy 的**设计初衷**与**独特优势**：为何以高速向量化回测为目"
+"标却摒弃“全时间轴向量化”，如何通过“向量化 + 数据隔离”兼顾速度与防未来函"
+"数，以及 **use_latest_data_cycle** 等可配置项对长期回测的影响。与 [总体架"
+"构与设计思路](00-overview.md)、[策略中的数据](03-data-in-strategies.md) 形"
+"成呼应。"
 msgstr ""
+"This chapter focuses on qteasy’s **design intent** and **unique "
+"advantages**: why it targets high-speed vectorized backtesting yet "
+"abandons “full-timeline vectorization”, how it balances speed and "
+"prevention of look-ahead bias through “vectorization + data isolation”, "
+"and how configurable options such as **use_latest_data_cycle** affect "
+"long-horizon backtests. It echoes [Overall Architecture and Design "
+"Approach](00-overview.md) and [Data in Strategies](03-data-in-"
+"strategies.md)."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:5
 msgid "1. 为何不做全时间轴向量化"
-msgstr ""
+msgstr "1. Why Not Vectorize Across the Entire Timeline"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:7
 msgid "1.1 未来函数风险"
-msgstr ""
+msgstr "1.1 Future Function Risk"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:9
 msgid ""
-"若在整个时间轴上一次性计算指标（例如全历史 EMA），得到的历史序列与“按当时可见的历史窗口逐段计算”的结果**不一致**：全轴 EMA "
-"会用到后续价格，实盘无法复现，导致回测与实盘偏离。因此，qteasy "
-"不在时间维上做“整段一次性”的指标计算，而是**按步**只给策略当前步可见的数据窗口。"
+"若在整个时间轴上一次性计算指标（例如全历史 EMA），得到的历史序列与“按当时"
+"可见的历史窗口逐段计算”的结果**不一致**：全轴 EMA 会用到后续价格，实盘无法"
+"复现，导致回测与实盘偏离。因此，qteasy 不在时间维上做“整段一次性”的指标计"
+"算，而是**按步**只给策略当前步可见的数据窗口。"
 msgstr ""
+"If you compute indicators once over the entire timeline (e.g., an all-"
+"history EMA), the resulting historical series is **not consistent** with "
+"the result of “computing segment by segment using only the historical "
+"window visible at the time”: an all-axis EMA will use future prices, "
+"which cannot be reproduced in live trading, causing divergence between "
+"backtests and live trading. Therefore, qteasy does not compute indicators "
+"“in one shot for the whole segment” along the time dimension; instead, it "
+"provides the strategy, **step by step**, only the data window visible at "
+"the current step."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:11
 msgid "1.2 状态与规则无法表达"
-msgstr ""
+msgstr "1.2 States and Rules Cannot Be Expressed"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:13
 msgid "若在时间维上完全向量化，则难以正确实现："
 msgstr ""
+"If fully vectorized along the time dimension, it becomes difficult to "
+"implement correctly:"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:15
 msgid "**T+1 交割**、**交易费用**、**最小交易单位（MOQ）** 等约束；"
 msgstr ""
+"constraints such as **T+1 settlement**, **trading fees**, and **minimum "
+"order quantity (MOQ)**;"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:16
 msgid "**是否允许使用“交易当时”的最新数据**（当根 K 线）的建模选择。"
 msgstr ""
+"A modeling choice of **whether to allow using the latest data “at the "
+"time of trading”** (the current candlestick/K-line)."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:18
 msgid ""
-"这些细节在长期回测中会产生成倍的收益差异（例如十年回测中，“是否使用当根 K 线数据”的微小差异会显著改变累计收益）。qteasy "
-"将“是否用当根数据”显式做成 **use_latest_data_cycle** 配置项，而非隐式假设。"
+"这些细节在长期回测中会产生成倍的收益差异（例如十年回测中，“是否使用当根 K "
+"线数据”的微小差异会显著改变累计收益）。qteasy 将“是否用当根数据”显式做成 "
+"**use_latest_data_cycle** 配置项，而非隐式假设。"
 msgstr ""
+"These details can produce multiplied differences in returns in long-"
+"horizon backtests (e.g., in a ten-year backtest, the tiny difference of "
+"“whether to use the current bar’s K-line data” can significantly change "
+"cumulative returns). qteasy makes “whether to use current-bar data” an "
+"explicit **use_latest_data_cycle** configuration option rather than an "
+"implicit assumption."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:20
 msgid "2. 事件驱动的替代与取舍"
-msgstr ""
+msgstr "2. Event-Driven Alternatives and Trade-offs"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:22
 msgid ""
-"常见做法是采用**事件驱动**：每个交易事件逐标的取数、逐笔计算指标，从而彻底避免未来函数并贴近实盘，但**速度较慢**。qteasy "
-"的取舍是：保留“按时间步、按当时可见数据”的正确性，但在**单步内**用向量化 + Numba 加速，在保证正确性的前提下兼顾速度。"
+"常见做法是采用**事件驱动**：每个交易事件逐标的取数、逐笔计算指标，从而彻底"
+"避免未来函数并贴近实盘，但**速度较慢**。qteasy 的取舍是：保留“按时间步、按"
+"当时可见数据”的正确性，但在**单步内**用向量化 + Numba 加速，在保证正确性的"
+"前提下兼顾速度。"
 msgstr ""
+"A common approach is **event-driven**: for each trading event, fetch data "
+"per instrument and compute indicators tick by tick, thereby completely "
+"avoiding look-ahead bias and staying close to live trading, but it is "
+"**slow**. qteasy’s trade-off is: preserve correctness—“by time step, "
+"using only data visible at that time”—while using vectorization + Numba "
+"acceleration **within a single step**, balancing speed while ensuring "
+"correctness."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:24
 msgid "3. qteasy 的做法：向量化 + 数据隔离"
-msgstr ""
+msgstr "3. qteasy’s Approach: Vectorization + Data Isolation"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:26
 msgid "3.1 回测主体向量化"
-msgstr ""
+msgstr "3.1 Vectorization of the Backtesting Core"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:28
 msgid ""
-"回测循环与交易计算（买卖量、费用、持仓、交割）已用 **NumPy + Numba** 实现：时间维顺序步进，标的维在单步内向量化。参见 "
-"[回测引擎与性能（设计视角）](07-backtest-engine-and-performance.md)。"
+"回测循环与交易计算（买卖量、费用、持仓、交割）已用 **NumPy + Numba** 实"
+"现：时间维顺序步进，标的维在单步内向量化。参见 [回测引擎与性能（设计视"
+"角）](07-backtest-engine-and-performance.md)。"
 msgstr ""
+"The backtest loop and trading calculations (buy/sell volume, fees, "
+"positions, settlement) have been implemented with **NumPy + Numba**: "
+"stepping forward sequentially along the time dimension, and vectorizing "
+"across instruments within each step. See [Backtest Engine and Performance "
+"(Design Perspective)](07-backtest-engine-and-performance.md)."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:30
 msgid "3.2 数据提前打包装配与按步注入"
 msgstr ""
+"3.2 Pre-packaging and assembling data in advance, and step-by-step "
+"injection"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:32
 msgid ""
-"**准备阶段**：回测前通过 `check_and_prepare_backtest_data`、`prepare_data_buffer` 等从"
-" DataSource 拉取并缓存所需全量历史；再通过 `create_data_windows` 用 `rolling_window` "
-"生成**按运行节奏对齐的数据窗口流**（每个 step 对应一个固定长度的历史窗口）。"
+"**准备阶段**：回测前通过 `check_and_prepare_backtest_data`、"
+"`prepare_data_buffer` 等从 DataSource 拉取并缓存所需全量历史；再通过 "
+"`create_data_windows` 用 `rolling_window` 生成**按运行节奏对齐的数据窗口流"
+"**（每个 step 对应一个固定长度的历史窗口）。"
 msgstr ""
+"**Preparation stage**: before backtesting, pull and cache all required "
+"historical data from the DataSource via "
+"`check_and_prepare_backtest_data`, `prepare_data_buffer`, etc.; then use "
+"`create_data_windows` to generate a **data-window stream aligned to the "
+"run cadence** with `rolling_window` (each step corresponds to a fixed-"
+"length historical window)."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:33
 msgid ""
-"**每步运行前**：引擎调用 **update_running_data_window**，把**当前 step "
-"对应的数据窗口**写入策略属性；策略在 `realize()` 内通过 **get_data(dtype_id)** "
-"取到的仅是**该步可见的窗口**，在此窗口上计算 EMA 等指标，与实盘“当时仅能看到的历史”一致，从机制上避免未来函数。"
+"**每步运行前**：引擎调用 **update_running_data_window**，把**当前 step 对"
+"应的数据窗口**写入策略属性；策略在 `realize()` 内通过 "
+"**get_data(dtype_id)** 取到的仅是**该步可见的窗口**，在此窗口上计算 EMA 等"
+"指标，与实盘“当时仅能看到的历史”一致，从机制上避免未来函数。"
 msgstr ""
+"**Before each step runs**: the engine calls "
+"**update_running_data_window** to write the **data window corresponding "
+"to the current step** into strategy attributes; within `realize()`, the "
+"strategy can only obtain **the window visible for that step** via "
+"**get_data(dtype_id)**, and computes indicators such as EMA on that window"
+"—consistent with “only the history that was visible at the time” in live "
+"trading—thereby avoiding look-ahead bias by design."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:35
 msgid ""
-"数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含“读表”或“拉取”逻辑。详见 [策略如何声明与使用数据](03"
-"-data-in-strategies.md)。"
+"数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含“读表”或“拉"
+"取”逻辑。详见 [策略如何声明与使用数据](03-data-in-strategies.md)。"
 msgstr ""
+"The data flow is “declare → the engine injects step by step → referenced "
+"by get_data”, and strategy code contains no “read tables” or “fetch/pull” "
+"logic. See [How Strategies Declare and Use Data](03-data-in-"
+"strategies.md)."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:37
 msgid "3.3 use_latest_data_cycle（ulc）的含义与影响"
-msgstr ""
+msgstr "3.3 The meaning and impact of use_latest_data_cycle (ulc)"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:39
 msgid "**use_latest_data_cycle** 控制数据窗口是否包含**当根 K 线**："
 msgstr ""
+"**use_latest_data_cycle** controls whether the data window includes the "
+"**current bar (K-line)**:"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:41
-msgid "**True**：窗口可含当前 bar（如收盘价），对应“交易时是否允许用当时最新价”的建模。"
+msgid ""
+"**True**：窗口可含当前 bar（如收盘价），对应“交易时是否允许用当时最新价”的"
+"建模。"
 msgstr ""
+"**True**: The window may include the current bar (e.g., the closing "
+"price), corresponding to modeling “whether trading is allowed to use the "
+"latest price at that moment”."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:42
 msgid "**False**：窗口严格小于当前时刻，仅用“过去已收盘”的数据。"
 msgstr ""
+"**False**: The window is strictly earlier than the current moment, using "
+"only data that has “already closed” in the past."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:44
-msgid "该开关对长期回测结果影响显著，qteasy 将其作为可配置项在策略声明与运行配置中暴露，文档与 API 中应明确写出并指向配置说明。"
+msgid ""
+"该开关对长期回测结果影响显著，qteasy 将其作为可配置项在策略声明与运行配置"
+"中暴露，文档与 API 中应明确写出并指向配置说明。"
 msgstr ""
+"This switch has a significant impact on long-horizon backtest results. "
+"qteasy exposes it as a configurable option in strategy declarations and "
+"run configurations; the documentation and API should state it clearly and "
+"link to the configuration notes."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:46
 msgid "4. 独特优势小结"
-msgstr ""
+msgstr "4. Summary of unique advantages"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:48
-msgid "**高速 + 防未来函数**：在保证“每步仅用当时可见数据”的前提下，实现向量化 + Numba 的快速回测，兼顾速度与回测可信度。"
+msgid ""
+"**高速 + 防未来函数**：在保证“每步仅用当时可见数据”的前提下，实现向量化 + "
+"Numba 的快速回测，兼顾速度与回测可信度。"
 msgstr ""
+"**High speed + look-ahead prevention**: while ensuring “each step uses "
+"only data visible at that time”, it achieves fast backtesting with "
+"vectorization + Numba, balancing speed and backtest credibility."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:49
-msgid "**精细交易建模**：T+1、费用、交割、MOQ 以及“是否用当根数据”等均可建模，长期回测对这类细节敏感，qteasy 支持显式配置。"
+msgid ""
+"**精细交易建模**：T+1、费用、交割、MOQ 以及“是否用当根数据”等均可建模，长"
+"期回测对这类细节敏感，qteasy 支持显式配置。"
 msgstr ""
+"**Fine-grained trade modeling**: T+1, fees, settlement, MOQ, and “whether "
+"to use the current bar’s data”, etc., can all be modeled. Long-horizon "
+"backtests are sensitive to such details, and qteasy supports explicit "
+"configuration."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:50
 msgid ""
-"**简洁接口**：用户只需在 `realize()` 中 `get_data()` "
-"取数并计算信号，数据窗口与时间对齐由框架负责，降低误用未来数据的可能。"
+"**简洁接口**：用户只需在 `realize()` 中 `get_data()` 取数并计算信号，数据"
+"窗口与时间对齐由框架负责，降低误用未来数据的可能。"
 msgstr ""
+"**Concise interface**: Users only need to fetch data via `get_data()` in "
+"`realize()` and compute signals; the framework handles the data window "
+"and time alignment, reducing the chance of mistakenly using future data."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:52
 msgid "5. 代码依据摘要"
-msgstr ""
+msgstr "5. Code Basis Summary"
 
 #: ../../source/design/08-design-rationale-and-advantages.md:54
 msgid ""
-"数据准备与窗口：`history.py` 中 `check_and_prepare_backtest_data`；`qt_operator.py`"
-" 中 `prepare_data_buffer`、`create_data_windows`（对 `buffered_data.values` 做"
-" `rolling_window` 并与运行 schedule 对齐）；`ulc` 决定窗口是否含当根。"
+"数据准备与窗口：`history.py` 中 `check_and_prepare_backtest_data`；"
+"`qt_operator.py` 中 `prepare_data_buffer`、`create_data_windows`（对 "
+"`buffered_data.values` 做 `rolling_window` 并与运行 schedule 对齐）；"
+"`ulc` 决定窗口是否含当根。"
 msgstr ""
+"Data preparation and windows: `check_and_prepare_backtest_data` in "
+"`history.py`; `prepare_data_buffer` and `create_data_windows` in "
+"`qt_operator.py` (apply `rolling_window` to `buffered_data.values` and "
+"align it with the running schedule); `ulc` determines whether the window "
+"includes the current bar."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:55
 msgid ""
 "按步注入：`qt_operator.py` 中 `run_strategy(step_index)` 每步对策略调用 "
 "`update_running_data_window(..., window_index=step_index)`；`strategy.py` "
-"中 `update_running_data_window` 将对应数据窗口赋给策略属性，`get_data()` 读取的即为该步窗口。"
+"中 `update_running_data_window` 将对应数据窗口赋给策略属性，`get_data()` "
+"读取的即为该步窗口。"
 msgstr ""
+"Step-by-step injection: In `qt_operator.py`, `run_strategy(step_index)` "
+"calls `update_running_data_window(..., window_index=step_index)` on the "
+"strategy at each step; in `strategy.py`, `update_running_data_window` "
+"assigns the corresponding data window to the strategy’s attributes, and "
+"what `get_data()` reads is exactly that step’s window."
 
 #: ../../source/design/08-design-rationale-and-advantages.md:57
 msgid "更多实现细节见《架构与设计》各章与 API 参考。"
 msgstr ""
-
+"For more implementation details, see the chapters in *Architecture and "
+"Design* and the API reference."

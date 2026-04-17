@@ -9,15 +9,16 @@ msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-03 20:50+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:22+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: - ../../source/tutorials/Tutorial 06 交易策略的优化.md:1
 msgid "交易策略的优化"
@@ -25,5 +26,4 @@ msgstr "Optimize Strategies"
 
 #: - ../../source/tutorials/Tutorial 06 交易策略的优化.md:3
 msgid "TO BE COMPLETED"
-msgstr ""
-
+msgstr "TO BE COMPLETED"

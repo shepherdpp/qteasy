@@ -9,177 +9,282 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:25+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/design/03-data-in-strategies.md:1
 msgid "策略如何声明与使用数据"
-msgstr ""
+msgstr "How a strategy declares and uses data"
 
 #: ../../source/design/03-data-in-strategies.md:3
 msgid "1. 策略层在整体中的位置"
-msgstr ""
+msgstr "1. Where the strategy layer sits in the overall architecture"
 
 #: ../../source/design/03-data-in-strategies.md:5
 msgid ""
-"策略层负责两件事：**声明**“需要什么数据”（以及多长窗口、是否使用最新周期），以及**在 realize() "
-"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 "
-"id 获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
+"策略层负责两件事：**声明**“需要什么数据”（以及多长窗口、是否使用最新周"
+"期），以及**在 realize() 中**“用数据算信号”。数据不由策略主动拉取，而是由运"
+"行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 id 获"
+"取。这样回测与实盘使用完全相同的数据视图与调用方式。"
 msgstr ""
+"The strategy layer is responsible for two things: **declaring** “what data "
+"is needed” (and the window length, whether to use the latest period), and "
+"**in realize()** “using the data to compute signals”. Data is not actively "
+"pulled by the strategy; instead, the runtime prepares it at each step "
+"according to the declarations and injects it, and the strategy only "
+"retrieves it by id via `get_data(dtype_id)`. In this way, backtesting and "
+"live trading use exactly the same data view and calling pattern."
 
 #: ../../source/design/03-data-in-strategies.md:7
 msgid "2. 策略如何声明需要的数据"
-msgstr ""
+msgstr "2. How a strategy declares the data it needs"
 
 #: ../../source/design/03-data-in-strategies.md:9
 msgid "在策略类初始化（`__init__`）时，通过以下属性声明对数据的需求："
 msgstr ""
+"When initializing the strategy class (`__init__`), declare data "
+"requirements via the following attributes:"
 
 #: ../../source/design/03-data-in-strategies.md:11
 msgid ""
 "**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 DataType "
 "对应一种“可引用的信息”，并对应唯一的 **dtype_id**（如 `close_E_d`）。"
 msgstr ""
+"**data_types**: One or more **DataType** objects (or a list/dict). Each "
+"DataType corresponds to a kind of “referencable information” and maps to a "
+"unique **dtype_id** (e.g., `close_E_d`)."
 
 #: ../../source/design/03-data-in-strategies.md:12
 msgid ""
-"**window_length**：历史数据窗口长度（如 20 表示最近 20 个周期）。可为标量（作用于所有声明的数据类型）或按 dtype "
-"分别指定。"
+"**window_length**：历史数据窗口长度（如 20 表示最近 20 个周期）。可为标量"
+"（作用于所有声明的数据类型）或按 dtype 分别指定。"
 msgstr ""
+"**window_length**: The length of the historical data window (e.g., 20 "
+"means the most recent 20 cycles). Can be a scalar (applies to all declared "
+"data types) or specified separately by dtype."
 
 #: ../../source/design/03-data-in-strategies.md:13
-msgid "**use_latest_data_cycle**：是否只使用“最新一个周期”的数据（如仅用最新截面做选股），可按 dtype 分别设置。"
+msgid ""
+"**use_latest_data_cycle**：是否只使用“最新一个周期”的数据（如仅用最新截面做"
+"选股），可按 dtype 分别设置。"
 msgstr ""
+"**use_latest_data_cycle**: Whether to use only the data from the “latest "
+"single cycle” (e.g., using only the latest cross-section for stock "
+"selection). Can be set separately by dtype."
 
 #: ../../source/design/03-data-in-strategies.md:15
-msgid "声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
+msgid ""
+"声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的"
+"数据窗口并在每一步更新注入。"
 msgstr ""
+"After declaration, the engine will know which dtype_id the strategy needs "
+"and what window length, so it can prepare the corresponding data windows "
+"before running and update/inject them at each step."
 
 #: ../../source/design/03-data-in-strategies.md:17
 msgid "3. 运行时数据如何到达策略"
-msgstr ""
+msgstr "3. How runtime data reaches the strategy"
 
 #: ../../source/design/03-data-in-strategies.md:19
 msgid ""
-"**准备阶段**：根据回测区间（或实盘当前时刻）、策略的 data_types 与 window_length，引擎从 DataSource "
-"取出对应区间内的数据，并按时间步预先或按需切出每个时间步的“数据窗口”。"
+"**准备阶段**：根据回测区间（或实盘当前时刻）、策略的 data_types 与 "
+"window_length，引擎从 DataSource 取出对应区间内的数据，并按时间步预先或按需"
+"切出每个时间步的“数据窗口”。"
 msgstr ""
+"**Preparation stage**: based on the backtest period (or the current time "
+"in live trading), and the strategy’s data_types and window_length, the "
+"engine pulls the data for the corresponding period from the DataSource, "
+"and pre-slices (or slices on demand) the “data window” for each time step."
 
 #: ../../source/design/03-data-in-strategies.md:20
 msgid ""
 "**每步运行前**：对于当前要运行的 Group 内的每个策略，引擎调用 "
-"**update_running_data_window**，把当前步对应的数据窗口写入该策略的内部状态（按 dtype_id 索引）。"
+"**update_running_data_window**，把当前步对应的数据窗口写入该策略的内部状态"
+"（按 dtype_id 索引）。"
 msgstr ""
+"**Before each step runs**: for each strategy in the Group to be run at the "
+"current step, the engine calls **update_running_data_window** to write the "
+"data window for the current step into that strategy’s internal state "
+"(indexed by dtype_id)."
 
 #: ../../source/design/03-data-in-strategies.md:21
 msgid ""
-"**realize() 内**：策略通过 **get_data(dtype_id)** 按 id 取出已注入的窗口数据（numpy "
-"数组），用于计算信号。无需传参，也无需关心数据来自哪张表。"
+"**realize() 内**：策略通过 **get_data(dtype_id)** 按 id 取出已注入的窗口数"
+"据（numpy 数组），用于计算信号。无需传参，也无需关心数据来自哪张表。"
 msgstr ""
+"**Inside realize()**: the strategy retrieves the injected window data (a "
+"numpy array) by id via **get_data(dtype_id)** to compute signals. No "
+"parameters are needed, and there’s no need to care which table the data "
+"comes from."
 
 #: ../../source/design/03-data-in-strategies.md:23
-msgid "因此，数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含任何“读表”或“拉取”逻辑。"
+msgid ""
+"因此，数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含任何“读"
+"表”或“拉取”逻辑。"
 msgstr ""
+"Therefore, the data flow is “declaration → engine injects step by step → "
+"get_data references it”. The strategy code contains no “table reading” or "
+"“pulling/fetching” logic at all."
 
 #: ../../source/design/03-data-in-strategies.md:25
 msgid "4. 数据窗口的含义"
-msgstr ""
+msgstr "4. What a data window means"
 
 #: ../../source/design/03-data-in-strategies.md:27
 msgid ""
-"**时间维度**：window_length 表示“回溯多少个周期”。例如日频、window_length=20 表示最近 20 "
-"个交易日的数据；数组形状通常为 (n_periods,) 或 (n_assets, n_periods)，最后一维为时间，最后一列为最近一期。"
+"**时间维度**：window_length 表示“回溯多少个周期”。例如日频、"
+"window_length=20 表示最近 20 个交易日的数据；数组形状通常为 (n_periods,) "
+"或 (n_assets, n_periods)，最后一维为时间，最后一列为最近一期。"
 msgstr ""
+"**Time dimension**: window_length means “how many periods to look back”. "
+"For example, at daily frequency, window_length=20 means data for the most "
+"recent 20 trading days; the array shape is typically (n_periods,) or "
+"(n_assets, n_periods), with the last dimension being time and the last "
+"column being the most recent period."
 
 #: ../../source/design/03-data-in-strategies.md:28
 msgid "**多资产时的形状**：不同策略基类对数据的组织方式略有差异："
 msgstr ""
+"**Shapes in multi-asset cases**: different strategy base classes organize "
+"data slightly differently:"
 
 #: ../../source/design/03-data-in-strategies.md:29
-msgid "**RuleIterator**：通常按资产迭代，每次 realize() 看到的是单资产的时间序列或截面。"
+msgid ""
+"**RuleIterator**：通常按资产迭代，每次 realize() 看到的是单资产的时间序列或"
+"截面。"
 msgstr ""
+"**RuleIterator**: typically iterates by asset; each realize() sees a "
+"single-asset time series or cross section."
 
 #: ../../source/design/03-data-in-strategies.md:30
 msgid "**FactorSorter**：多资产截面（如每只股票一个因子值），用于排序选股。"
 msgstr ""
+"**FactorSorter**: a multi-asset cross section (e.g., one factor value per "
+"stock), used for ranking and stock selection."
 
 #: ../../source/design/03-data-in-strategies.md:31
-msgid "**GeneralStg**：多资产、多 dtype 的窗口，返回与资产数相同长度的信号数组。"
+msgid ""
+"**GeneralStg**：多资产、多 dtype 的窗口，返回与资产数相同长度的信号数组。"
 msgstr ""
+"**GeneralStg**: multi-asset, multi-dtype windows, returning a signal array "
+"with the same length as the number of assets."
 
 #: ../../source/design/03-data-in-strategies.md:33
-msgid "具体形状以 API 与策略基类文档为准；本系列强调“窗口由引擎按声明准备、策略用 get_data 按 id 取用”。"
+msgid ""
+"具体形状以 API 与策略基类文档为准；本系列强调“窗口由引擎按声明准备、策略用 "
+"get_data 按 id 取用”。"
 msgstr ""
+"The exact shapes are subject to the API and strategy base-class "
+"documentation; this series emphasizes “windows are prepared by the engine "
+"according to declarations, and the strategy retrieves them by id via "
+"get_data”."
 
 #: ../../source/design/03-data-in-strategies.md:35
 msgid "5. 过程数据（proc.*）"
-msgstr ""
+msgstr "5. Process data (proc.*)"
 
 #: ../../source/design/03-data-in-strategies.md:37
 msgid ""
-"除上述“声明 → 引擎注入”的静态历史数据外，qteasy "
-"支持**过程数据**：依赖回测/实盘执行路径的状态（如当前持仓、现金、历史成交记录等）。过程数据**无需在 data_types 中声明**，由 "
-"Backtester（回测）或 Trader（实盘）在运行时维护并注入。"
+"除上述“声明 → 引擎注入”的静态历史数据外，qteasy 支持**过程数据**：依赖回测/"
+"实盘执行路径的状态（如当前持仓、现金、历史成交记录等）。过程数据**无需在 "
+"data_types 中声明**，由 Backtester（回测）或 Trader（实盘）在运行时维护并注"
+"入。"
 msgstr ""
+"In addition to the static historical data described above (“declaration → "
+"engine injection”), qteasy supports **process data**: state that depends "
+"on the backtest/live execution path (such as current positions, cash, "
+"historical trade records, etc.). Process data **does not need to be "
+"declared in data_types**; it is maintained and injected at runtime by the "
+"Backtester (backtesting) or Trader (live trading)."
 
 #: ../../source/design/03-data-in-strategies.md:39
 msgid ""
-"**访问方式**：在 `realize()` 中通过 "
-"`self.get_data('proc.own_cash')`、`self.get_data('proc.trade_records', "
-"lag=0)` 等形式按需获取；支持 `lag`（步或时间如 `'1d'`）与 `window`（如 `'5d'`）参数。"
+"**访问方式**：在 `realize()` 中通过 `self.get_data('proc.own_cash')`、"
+"`self.get_data('proc.trade_records', lag=0)` 等形式按需获取；支持 `lag`（步"
+"或时间如 `'1d'`）与 `window`（如 `'5d'`）参数。"
 msgstr ""
+"**Access pattern**: in `realize()`, retrieve as needed via forms like "
+"`self.get_data('proc.own_cash')`, `self.get_data('proc.trade_records', "
+"lag=0)`, etc.; supports `lag` (steps or time such as `'1d'`) and `window` "
+"(such as `'5d'`) parameters."
 
 #: ../../source/design/03-data-in-strategies.md:40
 msgid ""
-"**约束**：一次调用仅允许一个 `proc.*` "
-"字段，且不得与静态数据混合调用；使用过程数据的策略将自动走**动态回测**路径（逐步生成信号、逐步成交）。"
+"**约束**：一次调用仅允许一个 `proc.*` 字段，且不得与静态数据混合调用；使用"
+"过程数据的策略将自动走**动态回测**路径（逐步生成信号、逐步成交）。"
 msgstr ""
+"**Constraint**: a single call allows only one `proc.*` field, and it must "
+"not be mixed with static data in the same call; any strategy that uses "
+"process data will automatically follow the **dynamic backtesting** path "
+"(generate signals step by step, execute trades step by step)."
 
 #: ../../source/design/03-data-in-strategies.md:42
-msgid "详见 [过程数据（proc.*）与动态回测](09-process-data-and-dynamic-backtest.md)。"
+msgid ""
+"详见 [过程数据（proc.*）与动态回测](09-process-data-and-dynamic-"
+"backtest.md)。"
 msgstr ""
+"See [Process Data (proc.*) and Dynamic Backtesting](09-process-data-and-"
+"dynamic-backtest.md) for details."
 
 #: ../../source/design/03-data-in-strategies.md:44
 msgid "6. 参考数据（若有）"
-msgstr ""
+msgstr "6. Reference data (if any)"
 
 #: ../../source/design/03-data-in-strategies.md:46
 msgid ""
-"除策略声明的 data_types 外，qteasy "
-"支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的 "
-"dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+"除策略声明的 data_types 外，qteasy 支持“参考数据”（如某只指数的收盘价，用于"
+"计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，"
+"在策略中也可通过相应的 dtype_id 或专用接口获取。具体配置与引用方式见当前版"
+"本文档与 API。"
 msgstr ""
+"Besides the data_types declared by the strategy, qteasy supports "
+"“reference data” (such as the closing price of an index, used to calculate "
+"market returns, etc.). The difference between reference data and primary "
+"data is that it usually does not have a one-to-one correspondence with the "
+"asset pool, and it can also be obtained in a strategy via the "
+"corresponding dtype_id or a dedicated interface. For specific "
+"configuration and referencing methods, see the documentation and API for "
+"the current version."
 
 #: ../../source/design/03-data-in-strategies.md:48
 msgid "7. 小结"
-msgstr ""
+msgstr "7. Summary"
 
 #: ../../source/design/03-data-in-strategies.md:50
 msgid "“声明 → 引擎注入 → get_data 引用”保证了："
-msgstr ""
+msgstr "“Declare → engine injects → get_data references” ensures that:"
 
 #: ../../source/design/03-data-in-strategies.md:52
 msgid "回测与实盘使用同一套数据视图与访问方式；"
 msgstr ""
+"Backtesting and live trading use the same data view and access pattern;"
 
 #: ../../source/design/03-data-in-strategies.md:53
 msgid "策略无法越权访问未声明或未来的数据，从机制上避免未来函数；"
 msgstr ""
+"The strategy cannot access undeclared or future data, preventing lookahead "
+"bias at the mechanism level;"
 
 #: ../../source/design/03-data-in-strategies.md:54
 msgid "接口统一、易于维护与扩展。"
-msgstr ""
+msgstr "A unified interface that is easy to maintain and extend."
 
 #: ../../source/design/03-data-in-strategies.md:56
 msgid ""
-"“声明 → 引擎注入 → get_data "
-"引用”同样适用于过程数据，只是过程数据不需声明、由运行层按步注入，且仅在使用时触发动态回测路径。更多用法见《使用教程》与《API 参考》。"
+"“声明 → 引擎注入 → get_data 引用”同样适用于过程数据，只是过程数据不需声明、"
+"由运行层按步注入，且仅在使用时触发动态回测路径。更多用法见《使用教程》与"
+"《API 参考》。"
 msgstr ""
-
+"“Declaration → engine injection → get_data reference” also applies to "
+"process data, except that process data does not need to be declared, is "
+"injected step by step by the runtime layer, and only triggers the dynamic "
+"backtesting path when it is used. For more usage, see the “User Guide” and "
+"the “API Reference”."

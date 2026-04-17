@@ -9,158 +9,244 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:33+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:1
 msgid "HistoryPanel 与可选「FactorResearch」辅助层（评估结论）"
 msgstr ""
+"HistoryPanel and the optional “FactorResearch” helper layer (evaluation "
+"conclusions)"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:3
 msgid ""
-"本文档回答路线图中的评估项：**是否需要在 `HistoryPanel` 之上再抽象一层轻量 API（工作名 "
-"`FactorResearch`），专门计算 IC/IR、分位数组合收益、long-short 曲线等？**"
+"本文档回答路线图中的评估项：**是否需要在 `HistoryPanel` 之上再抽象一层轻"
+"量 API（工作名 `FactorResearch`），专门计算 IC/IR、分位数组合收益、long-"
+"short 曲线等？**"
 msgstr ""
+"This document answers the evaluation item in the roadmap: **Do we need "
+"to add another lightweight API abstraction layer on top of "
+"`HistoryPanel` (working name `FactorResearch`), dedicated to computing "
+"IC/IR, quantile-portfolio returns, long-short curves, etc.?**"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:5
 msgid "1. 当前能力边界（已满足的部分）"
-msgstr ""
+msgstr "1. Current capability boundaries (what is already covered)"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:7
 msgid "以下能力已由 `HistoryPanel` 及相关 API 覆盖，无需重复造轮子："
 msgstr ""
+"The following capabilities are already covered by `HistoryPanel` and "
+"related APIs—no need to reinvent the wheel:"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:9
-msgid "**因子列生产**：`assign`、`__setitem__`、`returns`、`kline`、`apply_ta` 等；"
+msgid ""
+"**因子列生产**：`assign`、`__setitem__`、`returns`、`kline`、`apply_ta` "
+"等；"
 msgstr ""
+"**Factor column generation**: `assign`, `__setitem__`, `returns`, "
+"`kline`, `apply_ta`, etc.; "
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:10
 msgid "**截面变换**：`rank`、`zscore(method='cs'|'ts')`；"
 msgstr ""
+"**Cross-sectional transforms**: `rank`, `zscore(method='cs'|'ts')`; "
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:11
 msgid "**粗组合与基准**：`portfolio`（等权/加权、`groups`、`benchmark`）；"
 msgstr ""
+"**Coarse portfolios and benchmarks**: `portfolio` (equal-weight/"
+"weighted, `groups`, `benchmark`); "
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:12
 msgid "**研究向收益展示**：`cum_return`、`normalize` 与 `mask=`；"
 msgstr ""
+"**Research-oriented return display**: `cum_return`, `normalize`, and "
+"`mask=`; "
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:13
 msgid "**可视化**：`plot` 与 `(M,L)` mask 高亮；"
-msgstr ""
+msgstr "**Visualization**: `plot` and (M,L) mask highlighting; "
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:14
-msgid "**与计量工具衔接**：`to_df_dict`、手工长表化后接 pandas / statsmodels（见教程 2.5 §11）。"
+msgid ""
+"**与计量工具衔接**：`to_df_dict`、手工长表化后接 pandas / statsmodels（见"
+"教程 2.5 §11）。"
 msgstr ""
+"**Integration with measurement/analytics tools**: `to_df_dict`, or "
+"manually reshape to long format and then use pandas / statsmodels (see "
+"Tutorial 2.5 §11)."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:16
 msgid "对「轻量因子研究 + 粗验」目标，上述已构成**完整底座**。"
 msgstr ""
+"For the goal of “lightweight factor research + rough validation,” the "
+"above already forms a **complete foundation**."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:18
 msgid "2. 若增加 `FactorResearch` 层，能解决什么？"
-msgstr ""
+msgstr "2. If we add a `FactorResearch` layer, what can it solve?"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:20
 msgid "典型封装可包括："
-msgstr ""
+msgstr "Typical wrappers may include:"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:22
-msgid "给定 **因子列** 与 **收益列**（或标签），输出 **逐期 IC**、**IC 均值/IR**；"
+msgid ""
+"给定 **因子列** 与 **收益列**（或标签），输出 **逐期 IC**、**IC 均值/"
+"IR**；"
 msgstr ""
+"Given a **factor column** and a **return column** (or label), output "
+"**per-period IC**, **IC mean/IR**;"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:23
 msgid "**分位数组合**（按截面分桶）的净值或收益序列；"
 msgstr ""
+"A NAV or return series of a **quantile portfolio** (bucketed by cross-"
+"section);"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:24
 msgid "**多空组合**（top minus bottom）的时间序列。"
-msgstr ""
+msgstr "A time series of a **long-short portfolio** (top minus bottom)."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:26
 msgid ""
-"这些均可用现有 `rank` / `portfolio` / `values` + pandas "
-"**在用户侧或独立模块中**几十行实现；封装的价值在于 **API 稳定、参数约定统一、减少复制粘贴错误**。"
+"这些均可用现有 `rank` / `portfolio` / `values` + pandas **在用户侧或独立"
+"模块中**几十行实现；封装的价值在于 **API 稳定、参数约定统一、减少复制粘贴"
+"错误**。"
 msgstr ""
+"All of these can be implemented in a few dozen lines on the user side or "
+"in an independent module using existing `rank` / `portfolio` / `values` "
+"+ pandas; the value of wrapping lies in **stable APIs, unified parameter "
+"conventions, and fewer copy-paste errors**."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:28
 msgid "3. 结论（短期不引入类库级 `FactorResearch`）"
 msgstr ""
+"3. Conclusion (do not introduce a library-level `FactorResearch` in the "
+"short term)"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:30
-msgid "**结论：当前阶段不在 qteasy 内核或 HistoryPanel 上强制增加 `FactorResearch` 类/子模块。**"
+msgid ""
+"**结论：当前阶段不在 qteasy 内核或 HistoryPanel 上强制增加 "
+"`FactorResearch` 类/子模块。**"
 msgstr ""
+"**Conclusion: at the current stage, we will not force the addition of a "
+"`FactorResearch` class/submodule to the qteasy kernel or on top of "
+"HistoryPanel.**"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:32
 msgid "理由简述："
-msgstr ""
+msgstr "Brief rationale:"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:34
 msgid ""
-"**职责清晰**：`HistoryPanel` "
-"已定位为三维研究容器与显式对齐/重采样；IC/IR、分位组合等属于**研究工作流约定**更强的「分析配方」，放在独立教程、示例或未来可选包中更合适，避免"
-" HP API 膨胀。"
+"**职责清晰**：`HistoryPanel` 已定位为三维研究容器与显式对齐/重采样；IC/"
+"IR、分位组合等属于**研究工作流约定**更强的「分析配方」，放在独立教程、示"
+"例或未来可选包中更合适，避免 HP API 膨胀。"
 msgstr ""
+"**Clear responsibilities**: `HistoryPanel` is already positioned as a 3D "
+"research container with explicit alignment/resampling; IC/IR, quantile "
+"portfolios, etc. are “analysis recipes” with much stronger **research "
+"workflow conventions**. They fit better in standalone tutorials, "
+"examples, or a future optional package, to avoid HP API bloat."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:35
 msgid ""
-"**避免错误预期**：单独命名模块易让用户以为框架已内置「发表级因子检验」（如多重检验、样本划分、HAC 标准误），而实际仍需用户在 "
-"statsmodels 等侧完成推断。"
+"**避免错误预期**：单独命名模块易让用户以为框架已内置「发表级因子检验」"
+"（如多重检验、样本划分、HAC 标准误），而实际仍需用户在 statsmodels 等侧完"
+"成推断。"
 msgstr ""
+"**Avoid wrong expectations**: naming it as a standalone module can "
+"easily make users think the framework already includes “publication-"
+"grade factor testing” (e.g., multiple testing, sample splitting, HAC "
+"standard errors), while in reality users still need to do inference on "
+"the statsmodels side, etc."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:36
 msgid ""
-"**与中期「内置因子库」的关系**：顶层路线图中的 **内置因子库（M2.1）** 若落地，更自然的做法是 **因子定义 + 注册 + 与 "
-"FactorSorter/回测衔接**；批量 IC/分层可作为因子库周边的 **可选工具函数**，而非 HistoryPanel 实例方法。"
+"**与中期「内置因子库」的关系**：顶层路线图中的 **内置因子库（M2.1）** 若"
+"落地，更自然的做法是 **因子定义 + 注册 + 与 FactorSorter/回测衔接**；批"
+"量 IC/分层可作为因子库周边的 **可选工具函数**，而非 HistoryPanel 实例方"
+"法。"
 msgstr ""
+"**Relationship with the mid-term “built-in factor library”**: If the "
+"**built-in factor library (M2.1)** in the top-level roadmap is "
+"implemented, a more natural approach would be **factor definition + "
+"registration + integration with FactorSorter/backtesting**; batch IC/"
+"stratification can be **optional utility functions** around the factor "
+"library, rather than HistoryPanel instance methods."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:37
-msgid "**维护成本**：IC 需约定收益前瞻窗口、停牌、退市、权重（市值加权 vs 等权）等，参数组合多，若无统一数据契约易引发支持成本。"
+msgid ""
+"**维护成本**：IC 需约定收益前瞻窗口、停牌、退市、权重（市值加权 vs 等权）"
+"等，参数组合多，若无统一数据契约易引发支持成本。"
 msgstr ""
+"**Maintenance cost**: IC needs conventions for the forward return "
+"window, trading halts, delistings, weights (value-weighted vs equal-"
+"weighted), etc. There are many parameter combinations; without a unified "
+"data contract, it can easily drive up support costs."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:39
 msgid "4. 若未来引入，建议形态（备忘）"
-msgstr ""
+msgstr "4. If introduced in the future, suggested form (memo)"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:41
 msgid ""
-"若社区需求明确，推荐 **独立模块**（例如 `qteasy.research.factor_stats` 或项目外 `qteasy-"
-"research`），而非 `HistoryPanel` 方法："
+"若社区需求明确，推荐 **独立模块**（例如 `qteasy.research.factor_stats` 或"
+"项目外 `qteasy-research`），而非 `HistoryPanel` 方法："
 msgstr ""
+"If community demand is clear, recommend an **independent module** (e.g., "
+"`qteasy.research.factor_stats` or an external `qteasy-research` "
+"project), rather than `HistoryPanel` methods:"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:43
 msgid "入参：`HistoryPanel` 或 `DataFrame` + 列名 + 前瞻期数；"
 msgstr ""
+"Inputs: `HistoryPanel` or `DataFrame` + column name + forward-looking "
+"periods;"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:44
 msgid "出参：`DataFrame` / `Series`（可再绘图为辅）；"
 msgstr ""
+"Outputs: `DataFrame` / `Series` (optionally re-plotted as a supplement);"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:45
 msgid ""
-"文档：明确 **非** 替代 Backtester，且 **不** 内置 Fama–MacBeth / Newey–West（仍导出到 "
-"statsmodels）。"
+"文档：明确 **非** 替代 Backtester，且 **不** 内置 Fama–MacBeth / Newey–"
+"West（仍导出到 statsmodels）。"
 msgstr ""
+"Docs: clearly state that it is **not** a replacement for the Backtester, "
+"and that it **does not** have built-in Fama–MacBeth / Newey–West (still "
+"export to statsmodels)."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:47
-msgid "届时应配套 **TDD** 与英文 `ValueError` 契约，与现有 HP 测试风格一致。"
+msgid ""
+"届时应配套 **TDD** 与英文 `ValueError` 契约，与现有 HP 测试风格一致。"
 msgstr ""
+"At that point, it should come with **TDD** and English `ValueError` "
+"contracts, consistent with the existing HP test style."
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:49
 msgid "5. 与教程的关系"
-msgstr ""
+msgstr "5. Relationship to the tutorial"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:51
 msgid ""
-"实操路径以 [教程 2.5：使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-"
-"data-analysis.md) 的 §9–§11 为准；本设计文档仅记录 **架构层面的评估结论**，不增加用户必读的 API 面。"
+"实操路径以 [教程 2.5：使用 HistoryPanel 操作和分析历史数据](../tutorials/"
+"2.5-historypanel-data-analysis.md) 的 §9–§11 为准；本设计文档仅记录 **架"
+"构层面的评估结论**，不增加用户必读的 API 面。"
 msgstr ""
-
+"For the practical workflow, follow §9–§11 of [Tutorial 2.5: Using "
+"HistoryPanel to operate on and analyze historical data](../tutorials/2.5-"
+"historypanel-data-analysis.md); this design document only records "
+"**architecture-level evaluation conclusions** and does not add any must-"
+"read API surface for users."

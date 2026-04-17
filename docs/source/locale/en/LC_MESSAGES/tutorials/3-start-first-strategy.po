@@ -9,15 +9,16 @@ msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-14 21:02+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
+"PO-Revision-Date: 2026-04-17 17:14+0800\n"
+"Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../source/tutorials/3-start-first-strategy.md:1
 msgid "回测您的第一个交易策略"
@@ -25,9 +26,7 @@ msgstr "Build your first strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:3
 msgid "`qteasy`是一个完全本地化部署和运行的量化交易分析工具包，具备以下功能："
-msgstr ""
-"`qteasy` is a fully localized deployment and operation of quantitative "
-"trading analysis toolkit, with the following functions:"
+msgstr "`qteasy` is a fully localized deployment and operation of quantitative trading analysis toolkit, with the following functions:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
@@ -35,15 +34,11 @@ msgstr "Aquire, clean, store, process, visualize and use financial data"
 
 #: ../../source/tutorials/3-start-first-strategy.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
-msgstr ""
-"Create quantitative trading strategies, and provide a large number of "
-"built-in basic trading strategies"
+msgstr "Create quantitative trading strategies, and provide a large number of built-in basic trading strategies"
 
 #: ../../source/tutorials/3-start-first-strategy.md:7
 msgid "向量化的高速交易策略回测及交易结果评价"
-msgstr ""
-"Vectorized high-speed trading strategy backtesting and trading result "
-"evaluation"
+msgstr "Vectorized high-speed trading strategy backtesting and trading result evaluation"
 
 #: ../../source/tutorials/3-start-first-strategy.md:8
 msgid "交易策略参数的优化以及评价"
@@ -55,9 +50,7 @@ msgstr "Deployment and real-time operation of trading strategies"
 
 #: ../../source/tutorials/3-start-first-strategy.md:11
 msgid "通过本系列教程，您将会通过一系列的实际示例，充分了解`qteasy`的主要功能以及使用方法。"
-msgstr ""
-"You will understand the basic functions and usage of `qteasy` through a "
-"series of practical examples in this series of tutorials."
+msgstr "You will understand the basic functions and usage of `qteasy` through a series of practical examples in this series of tutorials."
 
 #: ../../source/tutorials/3-start-first-strategy.md:13
 msgid "开始前的准备工作"
@@ -65,28 +58,21 @@ msgstr "Before you start"
 
 #: ../../source/tutorials/3-start-first-strategy.md:15
 msgid "在开始本节教程前，请先确保您已经掌握了下面的内容："
-msgstr ""
-"Please make sure you have mastered the following content before starting "
-"this tutorial:"
+msgstr "Please make sure you have mastered the following content before starting this tutorial:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:17
 msgid "完成`qteasy`的安装并升级到最新版本，完成`qteasy`的初始化配置"
-msgstr ""
-"Install and upgrade `qteasy` to the latest version, and complete the "
-"initialization configuration of `qteasy`"
+msgstr "Install and upgrade `qteasy` to the latest version, and complete the initialization configuration of `qteasy`"
 
 #: ../../source/tutorials/3-start-first-strategy.md:18
 msgid "配置好本地数据源，掌握下载各种金融数据的方法，能够将指数、股票的各种历史价格数据、财务报表数据等下载到本地。"
-msgstr ""
-"Prepare the local data source, master the method of downloading various "
-"financial data, and be able to download various historical price data, "
-"financial statement data, etc. of indexes and stocks to the local."
+msgstr "Prepare the local data source, master the method of downloading various financial data, and be able to download various historical price data, financial statement data, etc. of indexes and stocks to the local."
 
 #: ../../source/tutorials/3-start-first-strategy.md:20
-msgid ""
-"在[上一篇教程](2.0-get-"
-"data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
+msgid "在[上一篇教程](2.0-get-data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
 msgstr ""
+"In the [previous tutorial](2.0-get-data.md), I explained how to configure a local data source, search for and download financial data locally, and extract data from the local data source. If you haven’t completed this step yet, please refer to the "
+"previous tutorial to learn how to download and work with the data."
 
 #: ../../source/tutorials/3-start-first-strategy.md:22
 msgid "本节的目标"
@@ -94,222 +80,160 @@ msgstr "Target of this chapter"
 
 #: ../../source/tutorials/3-start-first-strategy.md:24
 msgid "在本节中，我们将通过创建`qteasy`模块来测试一个大小盘轮动交易策略，"
-msgstr ""
-"We will test a large-cap and small-cap rotation trading strategy through "
-"the creation of the `qteasy` module in this chapter."
+msgstr "We will test a large-cap and small-cap rotation trading strategy through the creation of the `qteasy` module in this chapter."
 
 #: ../../source/tutorials/3-start-first-strategy.md:26
-msgid "大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格回测交易策略，分析策略的表现并对策略进行改进。"
+msgid ""
+"大小盘轮动是一个非常基本而且常见的交易策略，这个交易策略抓住大盘股和小盘股往往上涨和下跌不同步的特点，在大盘股和小盘股之间轮流切换持有，以期望获得更高的收益率。通过创建这个交易策略，可以非常方便地帮助我们了解如何使用`qteasy`创建交易策略，调用历史价格"
+"回测交易策略，分析策略的表现并对策略进行改进。"
 msgstr ""
-"The large-small cap rotation is a very basic and common trading strategy."
-" This trading strategy captures the characteristics of the asynchronous "
-"rise and fall of large-cap stocks and small-cap stocks, and alternately "
-"holds large-cap stocks and small-cap stocks in the hope of obtaining "
-"higher returns. By creating this trading strategy, we can easily "
-"understand how to use `qteasy` to create trading strategies, call "
-"historical price backtesting trading strategies, analyze the performance "
-"of strategies, and improve strategies."
+"The large-small cap rotation is a very basic and common trading strategy. This trading strategy captures the characteristics of the asynchronous rise and fall of large-cap stocks and small-cap stocks, and alternately holds large-cap stocks and small-"
+"cap stocks in the hope of obtaining higher returns. By creating this trading strategy, we can easily understand how to use `qteasy` to create trading strategies, call historical price backtesting trading strategies, analyze the performance of "
+"strategies, and improve strategies."
 
 #: ../../source/tutorials/3-start-first-strategy.md:28
 msgid "在这里，我们需要创建一个最简单的轮动策略：在前面提到的两个指数之间轮动，每天选择未来可能的涨幅较大的指数持有："
-msgstr ""
-"Now, we need to create the simplest rotation strategy: rotate between the"
-" two indices mentioned earlier, and hold the index with the larger "
-"possible increase in the future every day:"
+msgstr "Now, we need to create the simplest rotation strategy: rotate between the two indices mentioned earlier, and hold the index with the larger possible increase in the future every day:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:30
 msgid "分别计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr ""
-"Calculate the increase of the two indices in the past 20 days, that is, "
-"the increase of today's price relative to the price 20 days ago"
+msgstr "Calculate the increase of the two indices in the past 20 days, that is, the increase of today's price relative to the price 20 days ago"
 
 #: ../../source/tutorials/3-start-first-strategy.md:31
 msgid "选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr ""
-"Choose the index with the larger increase, hold it the next day, and sell"
-" the index with the smaller increase"
+msgstr "Choose the index with the larger increase, hold it the next day, and sell the index with the smaller increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:33
-#, fuzzy
 msgid "当日涨幅 = \\frac{Price_0}{Price_{20}} - 1"
-msgstr "$$Daily increase = \\frac{Price_0}{Price_{20}} - 1$$"
+msgstr "Daily return = \\frac{Price_0}{Price_{20}} - 1"
 
 #: ../../source/tutorials/3-start-first-strategy.md:35
 msgid "策略的实现"
 msgstr "Realize the strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:36
-msgid "根据上述的策略思路，我们很容易在`qteasy`中实现这样的轮动选股策略，因为`qteasy`中已经内置了近70个交易策略，所有的内置策略都有独特的名称，直接引用名称即可使用这些内置策略。`qteasy`中的所有交易策略都必须包含在一个名为`Operator`（交易员）的对象中，交易员对象实际是一个策略的容器，可以理解为一个交易员可以同时管理多个策略，并且同时运行这些策略来生成交易信号。"
+msgid ""
+"根据上述的策略思路，我们很容易在`qteasy`中实现这样的轮动选股策略，因为`qteasy`中已经内置了近70个交易策略，所有的内置策略都有独特的名称，直接引用名称即可使用这些内置策略。`qteasy`中的所有交易策略都必须包含在一个名为`Operator`（交易员）的对象中，交易员"
+"对象实际是一个策略的容器，可以理解为一个交易员可以同时管理多个策略，并且同时运行这些策略来生成交易信号。"
 msgstr ""
-"According to the above strategy idea, we can easily implement such a "
-"rotation stock selection strategy in `qteasy`, because `qteasy` has "
-"built-in nearly 70 trading strategies, all built-in strategies have "
-"unique names, and these built-in strategies can be used directly by "
-"referencing the names. All trading strategies in `qteasy` must be "
-"included in an object named `Operator`, which is actually a container for"
-" strategies. It can be understood that a trader can manage multiple "
-"strategies at the same time and run these strategies at the same time to "
-"generate trading signals."
+"According to the above strategy idea, we can easily implement such a rotation stock selection strategy in `qteasy`, because `qteasy` has built-in nearly 70 trading strategies, all built-in strategies have unique names, and these built-in strategies "
+"can be used directly by referencing the names. All trading strategies in `qteasy` must be included in an object named `Operator`, which is actually a container for strategies. It can be understood that a trader can manage multiple strategies at the "
+"same time and run these strategies at the same time to generate trading signals."
 
 #: ../../source/tutorials/3-start-first-strategy.md:38
 msgid "交易员对象可以直接通过`qt.Operator()`来创建，创建时传递`strategies`参数即可在创建时同时创建交易策略："
-msgstr ""
-"An Operator object can be created directly through `qt.Operator()`, and "
-"the `strategies` parameter can be passed when creating to create trading "
-"strategies at the same time:"
+msgstr "An Operator object can be created directly through `qt.Operator()`, and the `strategies` parameter can be passed when creating to create trading strategies at the same time:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:50
-#, fuzzy
-msgid "通过上面的代码，我们已经在`qteasy`中创建了一个单因子选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下文中会提到）。"
+msgid ""
+"通过上面的代码，我们已经在`qteasy`中创建了一个单因子选股策略（`ndayrate`），这个策略是一个内置选股策略，它根据“N日价格涨幅”来选股，它的选股逻辑是判断股票池中所有股票的N日价格涨幅，并且根据价格涨幅选择股票或资产（当然，选择的方法是通过参数配置的，在下"
+"文中会提到）。"
 msgstr ""
-"With the above code, we have created a stock selection strategy "
-"(`ndayrate`) in `qteasy`, which is a built-in stock selection strategy. "
-"It selects stocks based on the \"N-day price increase\". The stock "
-"selection logic is to judge the N-day price increase of all stocks in the"
-" stock pool, and select stocks or assets based on the price increase (of "
-"course, the selection method is configured through parameters, which will"
-" be mentioned in the following text)."
+"With the code above, we have already created a single-factor stock-selection strategy (`ndayrate`) in `qteasy`. This strategy is a built-in stock-selection strategy: it selects stocks based on the “N-day price increase.” Its selection logic is to "
+"evaluate the N-day price increase of all stocks in the stock pool, and then select stocks or assets based on that price increase (of course, the selection method is configured via parameters, which will be mentioned below)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:52
 msgid "使用`qt.built_ins()`函数，可以查看内置策略的详细介绍："
-msgstr ""
-"With the `qt.built_ins()` function, you can view detailed descriptions of"
-" built-in strategies:"
+msgstr "With the `qt.built_ins()` function, you can view detailed descriptions of built-in strategies:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:58
 msgid "输出如下:"
-msgstr ""
+msgstr "The output is as follows:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:95
 msgid "至此，一个`Operator`对象和交易策略就已经创建好了。"
 msgstr "Now, an `Operator` object and a trading strategy have been created."
 
 #: ../../source/tutorials/3-start-first-strategy.md:97
-#, fuzzy
 msgid "我们可以使用`Operator.info()`来查看交易员对象和交易策略的详细信息，同时，通过`Operator.strategies`属性可以访问其中的所有交易策略。"
-msgstr ""
-"We may use `Operator.info()` to view detailed information about the "
-"trader object and trading strategy. At the same time, all trading "
-"strategies can be accessed through its `strategies` attribute, and more "
-"detailed strategy parameters and information can be viewed through its "
-"`info()` method."
+msgstr "We can use `Operator.info()` to view detailed information about the trader object and the trading strategies. Meanwhile, we can access all trading strategies via the `Operator.strategies` attribute."
 
-#: ../../source/tutorials/3-start-first-strategy.md:106
-#: ../../source/tutorials/3-start-first-strategy.md:231
-#: ../../source/tutorials/3-start-first-strategy.md:512
+#: ../../source/tutorials/3-start-first-strategy.md:106 ../../source/tutorials/3-start-first-strategy.md:231 ../../source/tutorials/3-start-first-strategy.md:512
 msgid "输出如下："
-msgstr ""
+msgstr "The output is as follows:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:125
 msgid "通过交易策略的`info()`方法也可以查看更详细的策略参数和信息:"
-msgstr ""
+msgstr "You can also view more detailed strategy parameters and information via the trading strategy’s `info()` method:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:130
 msgid "输出如下"
-msgstr ""
+msgstr "Output as follows"
 
 #: ../../source/tutorials/3-start-first-strategy.md:144
 msgid "从上面的信息中可以看到，`ndayrate`策略有许多的可配置参数，通过调整这些参数，我们可以调整策略的选股方式，从而调整交易策略的表现。"
 msgstr ""
-"We can see from the above information that the `ndayrate` strategy has "
-"many configurable parameters. By adjusting these parameters, we can "
-"adjust the stock selection method of the strategy, thereby adjusting the "
-"performance of the trading strategy."
+"We can see from the above information that the `ndayrate` strategy has many configurable parameters. By adjusting these parameters, we can adjust the stock selection method of the strategy, thereby adjusting the performance of the trading strategy."
 
 #: ../../source/tutorials/3-start-first-strategy.md:146
 msgid "接下来，我们还需要做一些最基本的设定，确保这个选股策略能按照我们的想法选股。`Operator`对象中的所有参数都可以通过`op.set_parameter()`方法来实现。"
-msgstr ""
-"Now, we need to make some basic settings to ensure that this stock "
-"selection strategy selects stocks as we want. All parameters in the "
-"`Operator` object can be implemented through the `op.set_parameter()` "
-"method."
+msgstr "Now, we need to make some basic settings to ensure that this stock selection strategy selects stocks as we want. All parameters in the `Operator` object can be implemented through the `op.set_parameter()` method."
 
 #: ../../source/tutorials/3-start-first-strategy.md:161
 msgid "在上面的代码段中，我们通过几个简单的参数设置选股策略的基本行为："
-msgstr ""
-"In above code snippet, we set the basic behavior of the stock selection "
-"strategy through several simple parameter settings:"
+msgstr "In above code snippet, we set the basic behavior of the stock selection strategy through several simple parameter settings:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:163
-#, fuzzy
 msgid "`sort_ascending=False`：排序方式：该策略的操作方式是将选股指标排序后取前几位，因为需要取最大涨幅，因此需要降序排列，如果要取最小涨幅，则需要设置`sort_ascending=True`"
-msgstr ""
-"`sort_ascending=False`: The operation mode of this strategy is to sort "
-"all N-day increases and take the top few. Because the largest increase "
-"needs to be taken, it needs to be sorted in descending order. If the "
-"smallest increase needs to be taken, `sort_ascending=True` needs to be "
-"set."
+msgstr "`sort_ascending=False`: Sort order: This strategy sorts the selection metric and takes the top entries. Because it needs the largest return, it should be sorted in descending order. If you want the smallest return, set `sort_ascending=True`."
 
 #: ../../source/tutorials/3-start-first-strategy.md:164
-#, fuzzy
 msgid "`max_sel_count=1`：选股数量：这个参数控制选股因为从两个指数中固定二选一，因此设置此参数为1"
-msgstr ""
-"`proportion_or_quantity=1`: The number of stocks selected. Because one of"
-" the two indices is fixed, this parameter is set to 1."
+msgstr "`max_sel_count=1`: Number of selected securities: This parameter controls the number of securities selected. Since it always chooses one out of two indices, this parameter is set to 1."
 
 #: ../../source/tutorials/3-start-first-strategy.md:165
-#, fuzzy
 msgid "`par_values=(20, )`：策略参数值：这个策略使用一个可调参数N，表示表示根据N日涨幅选股，设置为20即根据20日股价涨幅作为选股因子"
-msgstr ""
-"`pars=(20, )`: Strategy parameter N, set to 20 to select stocks based on "
-"the 20-day increase"
+msgstr "`par_values=(20, )`: Strategy parameter values: This strategy uses a tunable parameter N, meaning it selects securities based on the N-day return. Setting it to 20 means using the 20-day price return as the selection factor."
 
 #: ../../source/tutorials/3-start-first-strategy.md:166
 msgid "`data_types=[qt.StgData(...)]`：数据类型：决定策略使用何种数据来计算选股因子，这里使用了一个StgData对象，该对象包含下面参数："
-msgstr ""
+msgstr "`data_types=[qt.StgData(...)]`: Data types: Determines what data the strategy uses to calculate the selection factor. Here, a StgData object is used, which contains the following parameters:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:167
 msgid "`freq='d'`: 这里我们使用收盘价计算价格涨幅，窗口长度设置为25，这样每一次策略运行的时候，都会读取当日以及"
-msgstr ""
+msgstr "`freq='d'`: Here we use the closing price to calculate price returns, and set the window length to 25, so each time the strategy runs, it will read the current day as well as"
 
 #: ../../source/tutorials/3-start-first-strategy.md:168
 msgid "`asset_type='ANY'`：数据类型：该策略适用于任何类型的资产，当然也可以设置为特定的资产类型，例如股票、指数、基金等等"
-msgstr ""
+msgstr "`asset_type='ANY'`: Asset type: This strategy applies to any type of asset. Of course, it can also be set to a specific asset type, such as stocks, indices, funds, etc."
 
 #: ../../source/tutorials/3-start-first-strategy.md:169
-msgid "`use_latest_data_cycle=True`：数据周期：该参数控制策略每次运行时使用的数据周期，设置为True代表使用最新的数据周期，也就是每次选股时都包括当天的收盘价在内，如果设置为False，则每次策略运行看到的数据都不包括当天的收盘价。在实际运行过程中，我们实际上是不可能使用当天的准确收盘价来交易的，因为收盘后就无法交易了，不过，我们可以在收盘前一分钟使用收盘前一分钟的实时价格来交易，通常这个价格与收盘价非常接近，在这里设置使用当天的收盘价是一种简化的回测处理方式。"
+msgid ""
+"`use_latest_data_cycle=True`：数据周期：该参数控制策略每次运行时使用的数据周期，设置为True代表使用最新的数据周期，也就是每次选股时都包括当天的收盘价在内，如果设置为False，则每次策略运行看到的数据都不包括当天的收盘价。在实际运行过程中，我们实际上是不"
+"可能使用当天的准确收盘价来交易的，因为收盘后就无法交易了，不过，我们可以在收盘前一分钟使用收盘前一分钟的实时价格来交易，通常这个价格与收盘价非常接近，在这里设置使用当天的收盘价是一种简化的回测处理方式。"
 msgstr ""
+"`use_latest_data_cycle=True`: Data cycle: This parameter controls the data cycle used each time the strategy runs. Setting it to True means using the latest data cycle—i.e., each stock selection includes that day’s closing price. If set to False, "
+"the data seen by each strategy run does not include that day’s closing price. In real operation, it’s actually impossible to trade using the exact closing price of the day, because you can’t trade after the market closes. However, we can trade using "
+"the real-time price one minute before the close; this price is usually very close to the closing price. Here, using the day’s closing price is a simplified backtesting approach."
 
 #: ../../source/tutorials/3-start-first-strategy.md:170
 msgid "`window_length=25`：数据窗口长度：qteasy确保策略每次运行时只能看到从运行当时回溯一段时间的数据，从而避免未来函数。设置为25代表每次选股时都只能看到从25天前到当天的25个价格，这样就可以保证在计算20日涨幅的时候有足够的数据了"
 msgstr ""
+"`window_length=25`: data window length. qteasy ensures that each time the strategy runs, it can only see data from a period looking back from the current run time, thereby avoiding look-ahead bias. Setting it to 25 means that each time you select "
+"stocks, you can only see the 25 prices from 25 days ago up to the current day, ensuring there is enough data when calculating the 20-day return."
 
 #: ../../source/tutorials/3-start-first-strategy.md:172
 msgid "准备回测数据"
 msgstr "Prepare backtest data"
 
 #: ../../source/tutorials/3-start-first-strategy.md:173
-msgid "配置好选股策略以后，需要通过回测检验策略的表现，也就是调用沪深300和创业板两个指数的实际历史数据，进行模拟交易，看看模拟交易的结果是否能够跑赢大盘。在实际操作中，卖卖大盘指数不太容易，不过一般都可以很容易找到跟踪大盘指数的ETF基金来代替大盘，在这里为了简单起见，我们这里就直接投资于2011年1月1日一直到2020年12月31日之间的沪深300和创业板指数，假设交易费率为万分之一，双向收费，看看投资的结果如何。"
+msgid ""
+"配置好选股策略以后，需要通过回测检验策略的表现，也就是调用沪深300和创业板两个指数的实际历史数据，进行模拟交易，看看模拟交易的结果是否能够跑赢大盘。在实际操作中，卖卖大盘指数不太容易，不过一般都可以很容易找到跟踪大盘指数的ETF基金来代替大盘，在这里为了"
+"简单起见，我们这里就直接投资于2011年1月1日一直到2020年12月31日之间的沪深300和创业板指数，假设交易费率为万分之一，双向收费，看看投资的结果如何。"
 msgstr ""
-"After configuring the stock selection strategy, it is necessary to verify"
-" the performance of the strategy through backtesting, that is, call the "
-"actual historical data of the Shanghai and Shenzhen 300 and ChiNext two "
-"indices, conduct simulated trading, and see if the results of simulated "
-"trading can outperform the market. In actual operation, it is not easy to"
-" buy and sell large-cap indices, but it is generally easy to find ETF "
-"funds that track large-cap indices to replace large-cap indices. For "
-"simplicity, we will invest in the Shanghai and Shenzhen 300 and ChiNext "
-"indices from January 1, 2011 to December 31, 2020, assuming a transaction"
-" fee rate of one thousandth, and see how the investment results are."
+"After configuring the stock selection strategy, it is necessary to verify the performance of the strategy through backtesting, that is, call the actual historical data of the Shanghai and Shenzhen 300 and ChiNext two indices, conduct simulated "
+"trading, and see if the results of simulated trading can outperform the market. In actual operation, it is not easy to buy and sell large-cap indices, but it is generally easy to find ETF funds that track large-cap indices to replace large-cap "
+"indices. For simplicity, we will invest in the Shanghai and Shenzhen 300 and ChiNext indices from January 1, 2011 to December 31, 2020, assuming a transaction fee rate of one thousandth, and see how the investment results are."
 
 #: ../../source/tutorials/3-start-first-strategy.md:175
 msgid "前面我们已经了解过如何下载历史数据了，这里我们需要沪深300和创业板指数从2013年到2022年底之间的所有数据。"
-msgstr ""
-"Previously, we have learned how to download historical data. Here we need"
-" all the data of the Shanghai and Shenzhen 300 and ChiNext indices from "
-"2013 to the end of 2022."
+msgstr "Previously, we have learned how to download historical data. Here we need all the data of the Shanghai and Shenzhen 300 and ChiNext indices from 2013 to the end of 2022."
 
 #: ../../source/tutorials/3-start-first-strategy.md:177
-msgid ""
-"**注意** "
-"在下载历史数据用于回测的时候，下载的数据需要比回测日期起点更多一些，例如，回测从2013年1月1日开始，实际需要的数据更多一些，因此下载数据的起点应该从2012年9月开始。关于这一点的详细分析，请参见[参考文档](http://qteasy.readthedocs.io)"
+msgid "**注意** 在下载历史数据用于回测的时候，下载的数据需要比回测日期起点更多一些，例如，回测从2013年1月1日开始，实际需要的数据更多一些，因此下载数据的起点应该从2012年9月开始。关于这一点的详细分析，请参见[参考文档](http://qteasy.readthedocs.io)"
 msgstr ""
-"**Note** When downloading historical data for backtesting, the downloaded"
-" data needs to be more than the starting point of the backtesting date. "
-"For example, if the backtesting starts on January 1, 2013, more data is "
-"actually needed, so the starting point of the downloaded data should "
-"start from September 2012. For a detailed analysis of this, please refer "
-"to the [reference document](http://qteasy.readthedocs.io)"
+"**Note** When downloading historical data for backtesting, the downloaded data needs to be more than the starting point of the backtesting date. For example, if the backtesting starts on January 1, 2013, more data is actually needed, so the starting "
+"point of the downloaded data should start from September 2012. For a detailed analysis of this, please refer to the [reference document](http://qteasy.readthedocs.io)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:180
 msgid "使用下面的代码下载相应的历史数据："
@@ -323,13 +247,8 @@ msgstr "Confirm whether the data is downloaded successfully:"
 msgid "![在这里插入图片描述](img/tutorial02-01.png)"
 msgstr "![insert image description](img/tutorial02-01.png)"
 
-#: ../../source/tutorials/3-start-first-strategy.md:190
-#: ../../source/tutorials/3-start-first-strategy.md:192
-#: ../../source/tutorials/3-start-first-strategy.md:337
-#: ../../source/tutorials/3-start-first-strategy.md:439
-#: ../../source/tutorials/3-start-first-strategy.md:449
-#: ../../source/tutorials/3-start-first-strategy.md:463
-#: ../../source/tutorials/3-start-first-strategy.md:475
+#: ../../source/tutorials/3-start-first-strategy.md:190 ../../source/tutorials/3-start-first-strategy.md:192 ../../source/tutorials/3-start-first-strategy.md:337 ../../source/tutorials/3-start-first-strategy.md:439
+#: ../../source/tutorials/3-start-first-strategy.md:449 ../../source/tutorials/3-start-first-strategy.md:463 ../../source/tutorials/3-start-first-strategy.md:475
 msgid "在这里插入图片描述"
 msgstr "Insert image description here"
 
@@ -342,54 +261,35 @@ msgid "配置回测参数"
 msgstr "Configure backtest parameters"
 
 #: ../../source/tutorials/3-start-first-strategy.md:196
-msgid "数据准备好之后，就可以开始配置回测参数并开始回测了。`qteasy`的策略回测完全是参数化的，在回测之前我们需要告诉系统所有的相关信息，例如投资的产品品种、投入资金的数量、回测开始日期和结束日期、回测过程的交易费用计算方法、交易批量等。我们可以通过`qt.configure()`对回测参数进行基本配置："
+msgid ""
+"数据准备好之后，就可以开始配置回测参数并开始回测了。`qteasy`的策略回测完全是参数化的，在回测之前我们需要告诉系统所有的相关信息，例如投资的产品品种、投入资金的数量、回测开始日期和结束日期、回测过程的交易费用计算方法、交易批量等。我们可以通过"
+"`qt.configure()`对回测参数进行基本配置："
 msgstr ""
-"After the data is ready, you can start configuring the backtest "
-"parameters and start backtesting. The strategy backtesting of `qteasy` is"
-" completely parameterized. Before backtesting, we need to tell the system"
-" all relevant information, such as the variety of investment products, "
-"the amount of funds invested, the start and end dates of backtesting, the"
-" transaction fee calculation method during backtesting, and the "
-"transaction batch, etc. We can use `qt.configure()` to configure the "
-"backtest parameters:"
+"After the data is ready, you can start configuring the backtest parameters and start backtesting. The strategy backtesting of `qteasy` is completely parameterized. Before backtesting, we need to tell the system all relevant information, such as the "
+"variety of investment products, the amount of funds invested, the start and end dates of backtesting, the transaction fee calculation method during backtesting, and the transaction batch, etc. We can use `qt.configure()` to configure the backtest "
+"parameters:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:210
 msgid "上面的配置含义如下"
 msgstr "The meaning of the above configuration is as follows"
 
 #: ../../source/tutorials/3-start-first-strategy.md:211
-msgid ""
-"`asset_pool=['000300.SH', "
-"'399006.SZ']`：投资目标指数用列表形式给出，如果要投资其他的指数或ETF基金，直接传入证券代码即可，如果要从三个或更多的证券中选股，直接加入列表中即可"
+msgid "`asset_pool=['000300.SH', '399006.SZ']`：投资目标指数用列表形式给出，如果要投资其他的指数或ETF基金，直接传入证券代码即可，如果要从三个或更多的证券中选股，直接加入列表中即可"
 msgstr ""
-"`asset_pool=['000300.SH', '399006.SZ']`：Investment target index is given "
-"in list form. If you want to invest in other indexes or ETF funds, you "
-"can directly pass in the security code. If you want to select stocks from"
-" three or more securities, you can directly add them to the list."
+"`asset_pool=['000300.SH', '399006.SZ']`：Investment target index is given in list form. If you want to invest in other indexes or ETF funds, you can directly pass in the security code. If you want to select stocks from three or more securities, you "
+"can directly add them to the list."
 
 #: ../../source/tutorials/3-start-first-strategy.md:212
 msgid "`invest_amounts=100000`： 投资金额为十万元，如果需要模拟多次分批投入，还可以传入一个列表，不过需要分别指定每次投入的具体日期"
-msgstr ""
-"`invest_amounts=100000`：The investment amount is one hundred thousand "
-"yuan. If you need to simulate multiple batch investments, you can also "
-"pass in a list, but you need to specify the specific date of each "
-"investment separately."
+msgstr "`invest_amounts=100000`：The investment amount is one hundred thousand yuan. If you need to simulate multiple batch investments, you can also pass in a list, but you need to specify the specific date of each investment separately."
 
 #: ../../source/tutorials/3-start-first-strategy.md:213
-msgid ""
-"`asset_type='IDX'`： 投资标的类型：`'E'`代表股票， `'IDX'`代表指数，` "
-"'FD'`代表基金，`'FT'`代表期货，`'OPT'`代表期权"
-msgstr ""
-"`asset_type='IDX'`：Investment target type: `'E'` represents stocks, "
-"`'IDX'` represents indexes, `'FD'` represents funds, `'FT'` represents "
-"futures, `'OPT'` represents options"
+msgid "`asset_type='IDX'`： 投资标的类型：`'E'`代表股票， `'IDX'`代表指数，` 'FD'`代表基金，`'FT'`代表期货，`'OPT'`代表期权"
+msgstr "`asset_type='IDX'`：Investment target type: `'E'` represents stocks, `'IDX'` represents indexes, `'FD'` represents funds, `'FT'` represents futures, `'OPT'` represents options"
 
 #: ../../source/tutorials/3-start-first-strategy.md:214
 msgid "`cost_rate_buy=0.0001`： 设置买入和卖出交易费用比例，`qteasy`还支持设置最低费用、固定费用等等，这里只简单设置费率即可"
-msgstr ""
-"`cost_rate_buy=0.0001`：Set the buy and sell transaction fee ratio. "
-"`qteasy` also supports setting the minimum fee, fixed fee, etc. Here, "
-"only the fee rate needs to be set."
+msgstr "`cost_rate_buy=0.0001`：Set the buy and sell transaction fee ratio. `qteasy` also supports setting the minimum fee, fixed fee, etc. Here, only the fee rate needs to be set."
 
 #: ../../source/tutorials/3-start-first-strategy.md:215
 msgid "`cost_rate_sell=0.0001`："
@@ -404,28 +304,16 @@ msgid "`invest_end='20201231'`：  模拟交易结束日期"
 msgstr "`invest_end='20201231'`：Simulation trading end date"
 
 #: ../../source/tutorials/3-start-first-strategy.md:218
-#, fuzzy
-msgid ""
-"`trade_batch_size=0.01`： "
-"买入资产时最小交易批量，最小允许`0.01`，1代表只能交易整数份，这里可以输入任意大于等于`0.01`的数"
-msgstr ""
-"`trade_batch_size=0`：  The minimum trading batch when buying assets. `0` "
-"means that any number of shares can be traded, 1 means that only integer "
-"shares can be traded. Any number greater than `0` can be entered here."
+msgid "`trade_batch_size=0.01`： 买入资产时最小交易批量，最小允许`0.01`，1代表只能交易整数份，这里可以输入任意大于等于`0.01`的数"
+msgstr "`trade_batch_size=0.01`: the minimum trading lot size when buying assets; the minimum allowed is `0.01`. A value of 1 means you can only trade whole shares/units; here you can enter any number greater than or equal to `0.01`."
 
 #: ../../source/tutorials/3-start-first-strategy.md:219
-#, fuzzy
 msgid "`sell_batch_size=0.01`： 卖出资产时最小交易批量，最小允许`0.01`"
-msgstr "`sell_batch_size=0`：The minimum trading batch when selling assets is `0`"
+msgstr "`sell_batch_size=0.01`: the minimum trading lot size when selling assets; the minimum allowed is `0.01`."
 
 #: ../../source/tutorials/3-start-first-strategy.md:221
-#, fuzzy
-msgid ""
-"`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-"
-"cn/latest/)。"
-msgstr ""
-"`qteasy` has other configuration parameters, see [QTEASY "
-"documentation](https://qteasy.readthedocs.io/zh/latest/)."
+msgid "`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/)。"
+msgstr "`qteasy` has other configuration parameters as well; see the [QTEASY documentation](https://qteasy.readthedocs.io/zh-cn/latest/)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:223
 msgid "策略的回测结果"
@@ -434,152 +322,145 @@ msgstr "Results of backtesting the strategy"
 #: ../../source/tutorials/3-start-first-strategy.md:225
 msgid "`qteasy`的策略回测非常简单，设置好所有的配置后，即可以开始回测了，我们可以调用`qt.run()`开始回测，回测的同时，我们开启可视化图表输出，并且开启交易明细记录："
 msgstr ""
-"It is very simple to backtest the strategy of `qteasy`. After setting all"
-" the configurations, you can start backtesting. You can call `qt.run()` "
-"to start backtesting. At the same time, we enable visual chart output and"
-" open trading details recording:"
+"It is very simple to backtest the strategy of `qteasy`. After setting all the configurations, you can start backtesting. You can call `qt.run()` to start backtesting. At the same time, we enable visual chart output and open trading details recording:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:229
-#, fuzzy
 msgid "等待片刻后，回测完成，`qteasy`会将打印回测报告在终端打印出来"
-msgstr ""
-"The backtest is completed after a while, and `qteasy` will automatically "
-"print the backtest report as follows:"
+msgstr "After waiting a moment, the backtest completes, and `qteasy` will print the backtest report to the terminal."
 
 #: ../../source/tutorials/3-start-first-strategy.md:233
 msgid "在报告中直接可以看到我们投资的总回报率以及同期沪深300指数的回报率的对比："
-msgstr ""
+msgstr "In the report, you can directly see a comparison between our total investment return and the return of the CSI 300 Index over the same period:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:261
-#, fuzzy
-msgid "从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右（4.84%），甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了19.86%，十年间总资产从十万元达到了六十多万元，翻了六倍多"
+msgid ""
+"从回测的结果可以很容易看出，这个策略是跑赢了沪深300大盘指数的，在这十年间沪深300的年化收益率只有可怜的5%左右（4.84%），甚至比某些收益较高的定期产品都不如，而我们这个策略的投资年化收益率达到了19.86%，十年间总资产从十万元达到了六十多万元，翻了六倍多"
 msgstr ""
-"It is easy to see from the backtest results that this strategy "
-"outperformed the Shanghai and Shenzhen 300 index. The annualized return "
-"of the Shanghai and Shenzhen 300 index was only about 5% in the past ten "
-"years, even lower than some higher-yield regular products. The annualized"
-" return on investment of our strategy reached 17.8%, and the total assets"
-" increased from one hundred thousand yuan to more than five hundred "
-"thousand yuan in ten years, more than five times."
+"From the backtest results, it is easy to see that this strategy outperformed the CSI 300 benchmark index. Over these ten years, the CSI 300’s annualized return was only a paltry ~5% (4.84%), even worse than some higher-yield fixed-term products, "
+"while our strategy’s annualized investment return reached 19.86%. Over ten years, total assets grew from 100,000 yuan to more than 600,000 yuan—more than a sixfold increase."
 
 #: ../../source/tutorials/3-start-first-strategy.md:263
 msgid "策略的进一步改进"
 msgstr "Improvement of the strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:264
-msgid "我们的策略获得了初步的成功，不过，光看总回报率还不能完全说明问题，策略在整个十年间的表现如何呢？这就需要进一步分析，看看能否进一步改进这个策略。这时我们需要进一步查看回测的结果，尤其是可视化结果和交易明细记录，通过这些记录和报告来找到策略的不足和改进点。"
+msgid ""
+"我们的策略获得了初步的成功，不过，光看总回报率还不能完全说明问题，策略在整个十年间的表现如何呢？这就需要进一步分析，看看能否进一步改进这个策略。这时我们需要进一步查看回测的结果，尤其是可视化结果和交易明细记录，通过这些记录和报告来找到策略的不足和改进"
+"点。"
 msgstr ""
-"Our strategy somewhat successful. However, just looking at the total "
-"return rate cannot fully explain the problem. How does the strategy "
-"perform throughout the ten years? This requires further analysis to see "
-"if the strategy can be further improved. At this time, we need to further"
-" check the results of the backtest, especially the visual results and "
-"trading details records, to find the shortcomings and improvement points "
-"of the strategy through these records and reports."
+"Our strategy somewhat successful. However, just looking at the total return rate cannot fully explain the problem. How does the strategy perform throughout the ten years? This requires further analysis to see if the strategy can be further improved. "
+"At this time, we need to further check the results of the backtest, especially the visual results and trading details records, to find the shortcomings and improvement points of the strategy through these records and reports."
 
 #: ../../source/tutorials/3-start-first-strategy.md:266
 msgid "为了进一步改进，我们需要更深入地分析策略的表现，找到策略的不足之处，并且找到改进的方向。为此，qteasy提供了下面这些工具，用于帮助用户分析回测结果："
-msgstr ""
+msgstr "To further improve, we need to analyze the strategy’s performance in greater depth, identify its shortcomings, and find directions for improvement. To this end, qteasy provides the following tools to help users analyze backtest results:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:268
 msgid "**回测报告**：需设置`report=True`，回测报告以文字的形式总结了回测的结果，便于快速掌握投资的回报率以及关键评价指标。"
-msgstr ""
+msgstr "**Backtest report**: you need to set `report=True`. The backtest report summarizes the backtest results in text form, making it easy to quickly grasp the investment return and key evaluation metrics."
 
 #: ../../source/tutorials/3-start-first-strategy.md:269
 msgid "**可视化报告**：需设置`visual=True`，可视化复合图表以图形的形式展示回测报告中的内容，并且提供了更多的细节信息，便于用户更加直观地理解回测结果。"
 msgstr ""
+"**Visual report**: set `visual=True`. A visual composite chart presents the contents of the backtest report in graphical form and provides more detailed information, making it easier for users to understand the backtest results more intuitively."
 
 #: ../../source/tutorials/3-start-first-strategy.md:270
 msgid "**交易日志文件**：需设置：`trade_log=True`，交易日志文件以csv文件的形式记录了回测过程中每一次策略运行的过程，记录策略运行的关键变量以及每一次的选股结果，便于用户分析策略的运行过程，找到策略的不足之处，并且找到改进的方向。"
 msgstr ""
+"**Trade log file**: Requires setting: `trade_log=True`. The trade log file records every strategy run during the backtest in the form of a CSV file, including key variables of the strategy run and the stock selection results each time. This makes it "
+"easier for users to analyze how the strategy runs, identify its shortcomings, and find directions for improvement."
 
 #: ../../source/tutorials/3-start-first-strategy.md:271
 msgid "**交易明细报告**：需设置：`trade_log=True`，交易明细报告以csv文件的形式记录了每一笔交易的详细信息，便于用户分析每一笔交易的细节，找到策略的不足之处，并且找到改进的方向。"
 msgstr ""
+"**Trade detail report**: set `trade_log=True`. The trade detail report records detailed information for each trade in a CSV file, making it easier for users to analyze the details of each trade, identify the strategy’s shortcomings, and find "
+"directions for improvement."
 
 #: ../../source/tutorials/3-start-first-strategy.md:273
 msgid "下面我们将详细了解每一项工具的内容和使用方法，帮助我们分析回测结果，找到策略的不足之处，并且找到改进的方向。"
-msgstr ""
+msgstr "Next, we will take a detailed look at the content and usage of each tool to help us analyze backtest results, identify the strategy’s shortcomings, and find directions for improvement."
 
 #: ../../source/tutorials/3-start-first-strategy.md:275
 msgid "回测报告详细解析："
-msgstr ""
+msgstr "Detailed explanation of the backtest report:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:277
 msgid "`qteasy`的回测报告包含大量的回测结果统计信息，我们来逐一详细了解："
-msgstr ""
+msgstr "The backtest report of `qteasy` contains a large amount of statistical information about backtest results. Let’s go through it in detail one by one:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:279
 msgid "第1部份：回测基本信息"
-msgstr ""
+msgstr "Part 1: Basic backtest information"
 
 #: ../../source/tutorials/3-start-first-strategy.md:281
 msgid "报告的第一部份包含了回测的基本信息，包括回测耗时、回测的起止日期、回测的总周期等等，这些信息可以帮助我们了解回测的基本情况："
-msgstr ""
+msgstr "The first part of the report contains the basic information of the backtest, including the time taken, the start and end dates, the total backtest period, and so on. This information helps us understand the basics of the backtest:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:292
 msgid "第2部份：交易操作统计"
-msgstr ""
+msgstr "Part 2: Trading operation statistics"
 
 #: ../../source/tutorials/3-start-first-strategy.md:293
 msgid "回测报告的第二部份是交易操作统计，以列表方式统计了每个投资标的的买入和卖出次数，以及持仓的时间占比："
-msgstr ""
+msgstr "The second part of the backtest report is trading operation statistics. In list form, it counts the number of buys and sells for each investment instrument, as well as the proportion of time it was held:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:295
 msgid "例如可以看出000300.SH（沪深300指数）在十年间被买入了75次，卖出了81次，持仓时间占比为47.7%，空仓时间占比为52.3%，而399006.SZ（创业板指数）在十年间被买入了105次，卖出了85次，持仓时间占比为47.9%，空仓时间占比为52.1%。"
 msgstr ""
+"For example, we can see that 000300.SH (CSI 300 Index) was bought 75 times and sold 81 times over ten years, with a position-holding time ratio of 47.7% and a cash (out-of-market) time ratio of 52.3%; whereas 399006.SZ (ChiNext Index) was bought 105 "
+"times and sold 85 times over ten years, with a position-holding time ratio of 47.9% and a cash (out-of-market) time ratio of 52.1%."
 
 #: ../../source/tutorials/3-start-first-strategy.md:305
 msgid "第3部份：回测结果统计"
-msgstr ""
+msgstr "Part 3: Backtest result statistics"
 
 #: ../../source/tutorials/3-start-first-strategy.md:306
 msgid "回测报告的第三部份是回测结果统计，包含了投资的总金额、最终的资产总额、总收益率、年化收益率、基准收益率等等重要的回测结果统计信息："
-msgstr ""
+msgstr "The third part of the backtest report is backtest result statistics, including important metrics such as the total amount invested, final total assets, total return, annualized return, benchmark return, and more:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:319
 msgid "第4部份：策略表现指标"
-msgstr ""
+msgstr "Part 4: Strategy performance metrics"
 
 #: ../../source/tutorials/3-start-first-strategy.md:320
-msgid ""
-"回测报告的第四部份是策略表现指标，包含了Alpha、Beta、Sharp Ratio、Info "
-"Ratio、250日波动率、最大回撤等等重要的策略表现指标"
-msgstr ""
+msgid "回测报告的第四部份是策略表现指标，包含了Alpha、Beta、Sharp Ratio、Info Ratio、250日波动率、最大回撤等等重要的策略表现指标"
+msgstr "The fourth part of the backtest report is strategy performance metrics, including important indicators such as Alpha, Beta, Sharpe Ratio, Information Ratio, 250-day volatility, maximum drawdown, and so on."
 
 #: ../../source/tutorials/3-start-first-strategy.md:333
-#, fuzzy
 msgid "可视化报告详解"
-msgstr "Use the visual report"
+msgstr "Detailed explanation of the visual report"
 
 #: ../../source/tutorials/3-start-first-strategy.md:335
 msgid "只要设置`qteasy`的环境配置变量`visual=True`，在回测报告的最后，就能看到运行结果的可视化图表报告："
-msgstr ""
+msgstr "As long as you set the `qteasy` environment configuration variable `visual=True`, you can see a visual chart report of the results at the end of the backtest report:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:337
-#, fuzzy
 msgid "![在这里插入图片描述](img/visual_report_overview.png)"
-msgstr "![insert image description](img/tutorial02-02.png)"
+msgstr "![Insert image description here](img/visual_report_overview.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:339
 msgid "可视化图表用复合图表的方式将回测报告中的所有信息以更加直观的方式显示出来。可以看到，这张图表的主体部分包括六张统一时间轴的历史曲线图，下面还有三张并列的柱状图，分别统计了历年和历月的收益率。"
 msgstr ""
+"The visualization charts present all the information in the backtest report in a more intuitive way using composite charts. As you can see, the main body of this chart includes six historical line charts sharing a unified time axis, and below are "
+"three side-by-side bar charts that summarize annual and monthly returns."
 
 #: ../../source/tutorials/3-start-first-strategy.md:341
 msgid "总体上，这张图表可以分为四个部分，我们逐一来了解："
-msgstr ""
+msgstr "Overall, this chart can be divided into four parts. Let’s go through them one by one:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:343
 msgid "第1部分，基本信息以及投资回报指标"
-msgstr ""
+msgstr "Part 1: Basic information and investment return metrics"
 
 #: ../../source/tutorials/3-start-first-strategy.md:345
 msgid "在图表的最上方，显示了回测的基本信息和投资回报指标，这些信息与回测报告中的内容基本一致，包括投资的总回报率、年化收益率、基准指数的回报率等等重要的投资回报指标，方便用户快速了解投资的表现。"
 msgstr ""
+"At the very top of the chart, it shows the basic backtest information and return metrics. This information is basically consistent with what’s in the backtest report, including important return metrics such as the investment’s total return, "
+"annualized return, and the benchmark index’s return, helping users quickly understand the investment’s performance."
 
 #: ../../source/tutorials/3-start-first-strategy.md:347
 msgid "![最大一次回撤持续了近五年](img/visual_report_part_1.png)"
-msgstr ""
+msgstr "![The maximum single drawdown lasted nearly five years](img/visual_report_part_1.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:347
 msgid "最大一次回撤持续了近五年"
@@ -587,180 +468,198 @@ msgstr "The maximum drawdown lasted for nearly five years"
 
 #: ../../source/tutorials/3-start-first-strategy.md:348
 msgid "第2部份，收益率曲线图"
-msgstr ""
+msgstr "Part 2: Return Curve Chart"
 
 #: ../../source/tutorials/3-start-first-strategy.md:350
 msgid "回测的历史回报率曲线图包括三张图表，显示的内容都是历史收益率，但是各有侧重。"
-msgstr ""
+msgstr "The backtest historical return curve section includes three charts. They all show historical returns, but each has a different focus."
 
 #: ../../source/tutorials/3-start-first-strategy.md:352
 msgid "![可视化图表第二部份](img/visual_report_part_2.png)"
-msgstr ""
+msgstr "![Part 2 of the Visualization Charts](img/visual_report_part_2.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:352
 msgid "可视化图表第二部份"
-msgstr ""
+msgstr "Part 2 of the Visualization Charts"
 
 #: ../../source/tutorials/3-start-first-strategy.md:354
 msgid "三张图表分别为："
-msgstr ""
+msgstr "The three charts are:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:356
 msgid ""
-"**收益率曲线图**：这个曲线图以百分比为单位，用红、绿两条线记录投资回报和基准回报（默认情况下投资基准是沪深300指数，可以通过环境配置变量`reference_asset`来设置其他指数）的收益率历史曲线。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。"
-" 这张曲线图包含了一些额外信息，可以通过环境变量来控制开启或关闭："
+"**收益率曲线图**：这个曲线图以百分比为单位，用红、绿两条线记录投资回报和基准回报（默认情况下投资基准是沪深300指数，可以通过环境配置变量`reference_asset`来设置其他指数）的收益率历史曲线。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。 这张曲"
+"线图包含了一些额外信息，可以通过环境变量来控制开启或关闭："
 msgstr ""
+"**Return Curve**: This curve chart uses percentages and records the historical return curves of investment returns and benchmark returns with two lines (by default, the benchmark is the CSI 300 Index; you can set other indices via the environment "
+"configuration variable `reference_asset`). The red curve represents the portfolio return, while the blue curve represents the reference index return. This chart includes some additional information that can be enabled or disabled via environment "
+"variables:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:358
 msgid "回撤指示器：在投资区间的最大一次回撤的峰值、谷值以及恢复日间使用黑色箭头标注出来，方便用户了解投资的最大回撤情况"
-msgstr ""
+msgstr "Drawdown indicator: uses black arrows to mark the peak, trough, and recovery date of the single largest drawdown within the investment period, making it easier for users to understand the investment’s maximum drawdown."
 
 #: ../../source/tutorials/3-start-first-strategy.md:359
 msgid "买卖指示器（设置`buy_sell_points=True`）：在表示基准收益曲线的绿色线上，会在买入和卖出的时间点用红色/绿色箭头标注每一次买进和卖出，红色表示"
-msgstr ""
+msgstr "Buy/sell indicator (set `buy_sell_points=True`): on the green line representing the benchmark return curve, each buy and sell is marked with a red/green arrow at the corresponding time point. Red indicates"
 
 #: ../../source/tutorials/3-start-first-strategy.md:360
 msgid "仓位指示器（设置`show_positions=True`）：图面背景用浅色的竖向条纹标注了每个时段的持仓比例，绿色代表持多仓，红色表示持空仓（上图中只有多仓，没有空仓），条纹颜色越深，代表持仓比例越高，反之则代表持仓比例较低"
 msgstr ""
+"Position indicator (set `show_positions=True`): the chart background uses light vertical stripes to indicate the position ratio for each period. Green represents a long position, and red represents a short position (the figure above has only long "
+"positions, no short positions). The darker the stripe color, the higher the position ratio; conversely, it indicates a lower position ratio."
 
 #: ../../source/tutorials/3-start-first-strategy.md:361
 msgid "**对数收益率曲线图**：这个曲线图以对数收益率为单位，显示投资回报和基准回报的历史曲线。对数收益率曲线图可以更好地显示投资回报率的变化趋势，尤其是在投资回报率较高或较低的时候，对数收益率曲线图能够更清晰地显示出投资回报率的变化情况。"
 msgstr ""
+"**Log Return Curve**: This curve chart uses log returns as the unit and shows the historical curves of investment returns and benchmark returns. The log return curve can better show the trend of changes in investment returns, especially when returns "
+"are relatively high or low, making changes in returns clearer."
 
 #: ../../source/tutorials/3-start-first-strategy.md:362
 msgid "**收益率柱状图**：这个图用柱状图显示了回测历史区间内每天的收益金额。"
-msgstr ""
+msgstr "**Return Bar Chart**: This chart uses bars to show the daily profit/loss amount within the backtest historical period."
 
 #: ../../source/tutorials/3-start-first-strategy.md:364
 msgid "从收益率曲线图上可以看到，整体收益率虽然还算不错，但是回撤较高，最大达到了45%。"
-msgstr ""
+msgstr "From the return curve chart, you can see that although the overall returns are fairly good, the drawdown is relatively high, with a maximum of 45%."
 
 #: ../../source/tutorials/3-start-first-strategy.md:366
 msgid "大家可以设想，投资者如果从2015年6月3日开始投资，结果将是：到2019年1月3日亏损45.9%，然后一直到2020年后才能解套！"
-msgstr ""
+msgstr "You can imagine that if an investor started investing on June 3, 2015, the result would be: a 45.9% loss by January 3, 2019, and they wouldn’t break even until after 2020!"
 
 #: ../../source/tutorials/3-start-first-strategy.md:368
 msgid "第3部分，评价指标曲线图"
-msgstr ""
+msgstr "Part 3: Performance metric curve chart"
 
 #: ../../source/tutorials/3-start-first-strategy.md:370
 msgid "图表的第三部份是策略性能指标图，主要用于评价策略的盈利能力和风险控制能力，同样包括三张图表："
-msgstr ""
+msgstr "The third part of the charts is the strategy performance metrics section, mainly used to evaluate the strategy’s profitability and risk control capability. It also includes three charts:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:372
 msgid "![可视化图表第三部份](img/visual_report_part_3.png)"
-msgstr ""
+msgstr "![Visualization chart part 3](img/visual_report_part_3.png)"
 
-#: ../../source/tutorials/3-start-first-strategy.md:372
-#: ../../source/tutorials/3-start-first-strategy.md:384
+#: ../../source/tutorials/3-start-first-strategy.md:372 ../../source/tutorials/3-start-first-strategy.md:384
 msgid "可视化图表第三部份"
-msgstr ""
+msgstr "Visualization chart part 3"
 
 #: ../../source/tutorials/3-start-first-strategy.md:374
-msgid "**盈利能力评价指标**：第一张图显示了策略的盈利能力评价指标，显示了夏普率和Alpha率两个指标在历史上的滚动变化值。这两个指标都被广泛用于评价交易策略产生超额利润（即超出基准）的能力，图表上显示的两条线上每一点都是以当日为终点，过去250个交易日的夏普率和Alpha率的滚动计算结果，因此可以看到这两条线在历史上的变化情况，夏普率越高，表明策略的风险调整收益率越好，Alpha率越高，表明策略相对于基准指数的超额收益率越好。"
+msgid ""
+"**盈利能力评价指标**：第一张图显示了策略的盈利能力评价指标，显示了夏普率和Alpha率两个指标在历史上的滚动变化值。这两个指标都被广泛用于评价交易策略产生超额利润（即超出基准）的能力，图表上显示的两条线上每一点都是以当日为终点，过去250个交易日的夏普率和"
+"Alpha率的滚动计算结果，因此可以看到这两条线在历史上的变化情况，夏普率越高，表明策略的风险调整收益率越好，Alpha率越高，表明策略相对于基准指数的超额收益率越好。"
 msgstr ""
+"**Profitability metrics**: The first chart shows the metrics used to evaluate the strategy’s profitability, displaying the historical rolling values of two indicators: the Sharpe ratio and alpha. Both indicators are widely used to evaluate a trading "
+"strategy’s ability to generate excess profits (i.e., above the benchmark). Each point on the two lines in the chart is the rolling Sharpe ratio and alpha calculated over the past 250 trading days ending on that day, so you can see how these two "
+"lines change over time. The higher the Sharpe ratio, the better the strategy’s risk-adjusted return; the higher the alpha, the better the strategy’s excess return relative to the benchmark index."
 
 #: ../../source/tutorials/3-start-first-strategy.md:375
 msgid "**风险控制能力评价指标**：第二张图显示了策略的风险控制能力评价指标，显示了Beta率和波动率两个指标在历史上的滚动变化值。这两个指标都评价策略能否控制风险，Beta率越低，表明策略相对于基准指数的系统风险越小，波动率越低，表明策略的收益率波动程度越小。"
 msgstr ""
+"**Risk control capability metrics**: The second chart shows the metrics used to evaluate the strategy’s risk control capability, displaying the historical rolling values of two indicators: beta and volatility. Both indicators assess whether the "
+"strategy can control risk. The lower the beta, the smaller the strategy’s systematic risk relative to the benchmark index; the lower the volatility, the smaller the fluctuation in the strategy’s returns."
 
 #: ../../source/tutorials/3-start-first-strategy.md:376
-msgid "**回撤控制能力指标**：第三张图是回撤潜水图，显示了策略的回撤控制能力评价指标，显示了投资回报率的历史曲线以及投资回报率的历史回撤曲线（也就是“underwater”曲线）。该曲线的每一次下探都代表着投资回报曲线相对前期高点出现了回撤，下探得越深就代表回撤越厉害，一次完整的下潜和上浮代表一次完整的回撤周期。同时在这张图上用灰色柱标注了历史上五次最深的回撤过程，灰色柱越宽表示回撤的持续时间越长。"
+msgid ""
+"**回撤控制能力指标**：第三张图是回撤潜水图，显示了策略的回撤控制能力评价指标，显示了投资回报率的历史曲线以及投资回报率的历史回撤曲线（也就是“underwater”曲线）。该曲线的每一次下探都代表着投资回报曲线相对前期高点出现了回撤，下探得越深就代表回撤越厉害，"
+"一次完整的下潜和上浮代表一次完整的回撤周期。同时在这张图上用灰色柱标注了历史上五次最深的回撤过程，灰色柱越宽表示回撤的持续时间越长。"
 msgstr ""
+"**Drawdown control capability metric**: The third chart is the drawdown underwater chart, showing the evaluation metric of the strategy’s drawdown control capability. It displays the historical curve of the investment return rate and the historical "
+"drawdown curve of the investment return rate (i.e., the “underwater” curve). Each dip in this curve indicates that the investment return curve has drawn down relative to a previous high; the deeper the dip, the more severe the drawdown. One complete "
+"dive and resurfacing represents one complete drawdown cycle. At the same time, this chart uses gray bars to mark the five deepest drawdown periods in history; the wider the gray bar, the longer the drawdown lasted."
 
 #: ../../source/tutorials/3-start-first-strategy.md:378
-msgid "从回撤潜水图上可以看出，整个十年间除了短短一两年以外，几乎都处于潜水套牢状态，而且潜水的深度最深达到了45%以上。在整个十年投资期间，总资产不断地出现回撤，45%回撤是最大最深的一次，但前期还有26%、22%等多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？"
+msgid ""
+"从回撤潜水图上可以看出，整个十年间除了短短一两年以外，几乎都处于潜水套牢状态，而且潜水的深度最深达到了45%以上。在整个十年投资期间，总资产不断地出现回撤，45%回撤是最大最深的一次，但前期还有26%、22%等多次回撤，而且长度都不短，整个投资就是“长期被套牢，"
+"偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？"
 msgstr ""
+"From the drawdown underwater chart, you can see that over the entire ten-year period, except for a brief one or two years, it was almost always in an underwater, trapped state, and the maximum underwater depth reached more than 45%. Throughout the "
+"ten-year investment period, total assets kept experiencing drawdowns; the 45% drawdown was the largest and deepest one, but earlier there were also multiple drawdowns such as 26% and 22%, and none of them were short. The whole investment was "
+"basically “being trapped for the long term, with occasional chances to recover.” I believe very few investors could endure that kind of ordeal, right?"
 
 #: ../../source/tutorials/3-start-first-strategy.md:380
 msgid "第4部分，收益率统计图"
-msgstr ""
+msgstr "Part 4: Return statistics chart"
 
 #: ../../source/tutorials/3-start-first-strategy.md:382
 msgid "最下面还有并列的三张图表，分别从不同角度统计历年或历月的收益率："
-msgstr ""
+msgstr "At the very bottom there are three charts side by side, which summarize annual or monthly returns from different perspectives:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:384
 msgid "![可视化图表第三部份](img/visual_report_part_4.png)"
-msgstr ""
+msgstr "![Visualization Charts Part 3](img/visual_report_part_4.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:386
 msgid "**月度收益热力图**：以填色方块的形式展示历年（纵坐标）每个月（横坐标）的收益率，颜色越偏绿表示收益越高、越偏红表示收益越低或亏损"
-msgstr ""
+msgstr "**Monthly Return Heatmap**: Displays returns for each month (x-axis) across years (y-axis) in colored blocks. The greener the color, the higher the return; the redder the color, the lower the return or the greater the loss."
 
 #: ../../source/tutorials/3-start-first-strategy.md:387
 msgid "**年度收益柱状图**：直观地显示每年的收益率，绿色柱代表正收益、红色柱表示亏损，柱子越高收益/亏损绝对值越高。"
-msgstr ""
+msgstr "**Annual Return Bar Chart**: Intuitively shows the return for each year. Green bars indicate positive returns, red bars indicate losses; the taller the bar, the larger the absolute value of the gain/loss."
 
 #: ../../source/tutorials/3-start-first-strategy.md:388
-msgid "**月度收益直方图**：统计所有月份的收益率并绘制它们的概率分布图，总体上来说这个图一般是呈类似正态分布的钟形曲线，但是根据策略的性能不同，钟形曲线会整体上向右偏移，表示总体产生正收益的概率高，或者产生偏斜等，从而帮助用户从统计上理解收益率的分布情况。"
+msgid ""
+"**月度收益直方图**：统计所有月份的收益率并绘制它们的概率分布图，总体上来说这个图一般是呈类似正态分布的钟形曲线，但是根据策略的性能不同，钟形曲线会整体上向右偏移，表示总体产生正收益的概率高，或者产生偏斜等，从而帮助用户从统计上理解收益率的分布情况。"
 msgstr ""
+"**Monthly return histogram**: It counts the returns for all months and plots their probability distribution. Overall, this chart usually resembles a bell curve similar to a normal distribution. However, depending on the strategy’s performance, the "
+"bell curve may shift to the right as a whole, indicating a higher overall probability of generating positive returns, or it may become skewed, helping users statistically understand the distribution of returns."
 
 #: ../../source/tutorials/3-start-first-strategy.md:390
-#, fuzzy
 msgid "通过上面三张图，可以看到整个十年中有三年（2011年、2016年和2018年）的收益率是负的，其余年份均实现了正收益，但是收益率波动很大，有些年份大赚，有些年份大亏，波动大表明策略风险高，风控能力较弱。"
 msgstr ""
-"There are three parallel charts at the bottom, which respectively "
-"summarize the annual or monthly returns in history. It can be seen that "
-"in the entire ten years, the returns of three years (2011, 2016, and "
-"2018) are negative, and the remaining years have achieved positive "
-"returns."
+"From the three charts above, you can see that over the entire decade there were three years (2011, 2016, and 2018) with negative returns, while all other years achieved positive returns. However, the returns fluctuate greatly: some years make big "
+"profits, while others suffer big losses. Large fluctuations indicate that the strategy carries high risk and has relatively weak risk control."
 
 #: ../../source/tutorials/3-start-first-strategy.md:392
 msgid "至此，通过分析图表，我们现在对交易策略的总体收益有了非常直观的了解：这个策略最大的问题是没有控制好回撤。"
-msgstr ""
+msgstr "At this point, by analyzing the charts, we now have a very intuitive understanding of the trading strategy’s overall returns: the biggest problem with this strategy is that it did not control drawdowns well."
 
 #: ../../source/tutorials/3-start-first-strategy.md:394
-#, fuzzy
 msgid "因此，应该想办法改进一下这个策略，看看如何能够降低回撤，提升策略的性能。为此，我们需要仔细分析模拟交易回测过程中的每一笔交易，寻找降低回撤的办法。要查看回测交易的每一个细节，那就需要查看交易日志文件。"
 msgstr ""
-"Therefore, we can try to improve this strategy to see how to reduce the "
-"drawdown and improve the performance of the strategy. For this, we need "
-"to carefully analyze every transaction in the simulated trading backtest "
-"process to find ways to reduce the drawdown. To view every detail of the "
-"backtest transaction, you need to view the trade details report."
+"Therefore, we should find ways to improve this strategy and see how we can reduce drawdowns and enhance performance. To do so, we need to carefully analyze every trade during the simulated trading backtest process to find ways to reduce drawdowns. "
+"To view every detail of the backtest trades, you need to check the trade log files."
 
 #: ../../source/tutorials/3-start-first-strategy.md:396
 msgid "下面我们来继续详解交易日志文件。"
-msgstr ""
+msgstr "Next, we will continue with a detailed explanation of the trading log file."
 
 #: ../../source/tutorials/3-start-first-strategy.md:398
 msgid "交易日志/交易报告详解"
-msgstr ""
+msgstr "Detailed Explanation of the Trading Log / Trading Report"
 
 #: ../../source/tutorials/3-start-first-strategy.md:399
 msgid ""
-"只要我们设置环境变量`trade_log=True`，系统就会在每次回测后生成多份 "
-"CSV（至少包括交易日志与交易明细报告；当前版本还会在启用该选项时写入净值曲线 `value_curve_*` "
-"等，以实际生成为准）。这些文件的保存路径由配置项`trade_log_file_path`控制，默认在`QT_ROOT_PATH/tradelog/`路径下。该路径支持相对路径、绝对路径以及以`~`开头的家目录路径，且可通过`qt.configure(trade_log_file_path='...')`在运行时修改并立即生效（热修改），无需重新导入。例如："
+"只要我们设置环境变量`trade_log=True`，系统就会在每次回测后生成多份 CSV（至少包括交易日志与交易明细报告；当前版本还会在启用该选项时写入净值曲线 `value_curve_*` 等，以实际生成为准）。这些文件的保存路径由配置项`trade_log_file_path`控制，默认在"
+"`QT_ROOT_PATH/tradelog/`路径下。该路径支持相对路径、绝对路径以及以`~`开头的家目录路径，且可通过`qt.configure(trade_log_file_path='...')`在运行时修改并立即生效（热修改），无需重新导入。例如："
 msgstr ""
+"As long as we set the environment variable `trade_log=True`, the system will generate multiple CSV files after each backtest (at least including the trade log and the trade detail report; in the current version, when this option is enabled it will "
+"also write the net value curve `value_curve_*`, etc.; refer to what is actually generated). The save path of these files is controlled by the configuration item `trade_log_file_path`, which defaults to `QT_ROOT_PATH/tradelog/`. This path supports "
+"relative paths, absolute paths, and home-directory paths starting with `~`, and it can be modified at runtime via `qt.configure(trade_log_file_path='...')` and take effect immediately (hot update) without re-importing. For example:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:401
-msgid ""
-"Windows "
-"指定到其他盘目录：`qt.configure(trade_log_file_path='C:\\\\qt_trade_logs\\\\')`"
-msgstr ""
+msgid "Windows 指定到其他盘目录：`qt.configure(trade_log_file_path='C:\\\\qt_trade_logs\\\\')`"
+msgstr "On Windows, specify a directory on another drive: `qt.configure(trade_log_file_path='C:\\\\qt_trade_logs\\\\')`"
 
 #: ../../source/tutorials/3-start-first-strategy.md:402
 msgid "macOS/Linux 指定到家目录：`qt.configure(trade_log_file_path='~/qt_trade_logs/')`"
-msgstr ""
+msgstr "On macOS/Linux, specify a directory under your home folder: `qt.configure(trade_log_file_path='~/qt_trade_logs/')`"
 
 #: ../../source/tutorials/3-start-first-strategy.md:404
 msgid ""
-"**磁盘保留策略**：配置项 **`trade_log_keep_days`** 默认为 **3**，表示在 **每次新进程导入 `qteasy`"
-" 之后** 会按该天数清理 `trade_log_file_path` 目录下过期的 "
-"`trade_log_*`、`trade_summary_*` 与 `value_curve_*` 等回测 "
-"CSV（不在每次回测写文件前自动清理）。若需长期保留全部历史文件，请将 **`trade_log_keep_days`** 设为 "
-"**`None`** 或 **小于等于 0**；也可随时调用 **`qt.rotate_trade_logs(days=...)`** 手动清理。"
+"**磁盘保留策略**：配置项 **`trade_log_keep_days`** 默认为 **3**，表示在 **每次新进程导入 `qteasy` 之后** 会按该天数清理 `trade_log_file_path` 目录下过期的 `trade_log_*`、`trade_summary_*` 与 `value_curve_*` 等回测 CSV（不在每次回测写文件前自动清"
+"理）。若需长期保留全部历史文件，请将 **`trade_log_keep_days`** 设为 **`None`** 或 **小于等于 0**；也可随时调用 **`qt.rotate_trade_logs(days=...)`** 手动清理。"
 msgstr ""
+"**Disk retention policy**: The configuration item **`trade_log_keep_days`** defaults to **3**, meaning that **after each time a new process imports `qteasy`** it will clean up expired backtest CSV files under the `trade_log_file_path` directory "
+"according to this number of days, such as `trade_log_*`, `trade_summary_*`, and `value_curve_*` (it does not automatically clean up before writing files for each backtest). To keep all historical files long-term, set **`trade_log_keep_days`** to "
+"**`None`** or **less than or equal to 0**; you can also call **`qt.rotate_trade_logs(days=...)`** at any time to clean up manually."
 
 #: ../../source/tutorials/3-start-first-strategy.md:406
 msgid "如果要查看当前的日志文件保存路径，请使用："
-msgstr ""
+msgstr "If you want to view the current log file save path, please use:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:412
 msgid "![两个交易明细报告](img/trade_log_path.png)"
-msgstr ""
+msgstr "![Two trade detail reports](img/trade_log_path.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:412
 msgid "两个交易明细报告"
@@ -768,219 +667,225 @@ msgstr "Two trade details reports"
 
 #: ../../source/tutorials/3-start-first-strategy.md:414
 msgid "打开路径文件夹，可以看到历次回测的报告，所有报告都保存为csv文件，便于用Excel打开，常见类型包括："
-msgstr ""
+msgstr "Open the folder at that path and you can see reports from each backtest. All reports are saved as CSV files for easy opening in Excel. Common types include:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:416
 msgid "**交易日志**：以“trade_log”打头是交易日志文件，罗列了每一次策略运行的详细信息"
-msgstr ""
+msgstr "**Trade log**: Files starting with “trade_log” are trade log files, listing detailed information for each strategy run."
 
 #: ../../source/tutorials/3-start-first-strategy.md:417
 msgid "**交易报告**：以“trade_summary”打头的是交易报告，里面罗列了每一笔交易的信息"
-msgstr ""
+msgstr "**Trade report**: Files starting with “trade_summary” are trade reports, listing information for each trade."
 
 #: ../../source/tutorials/3-start-first-strategy.md:418
 msgid "**净值曲线**（若已生成）：以“value_curve”打头，记录完整净值序列等"
-msgstr ""
+msgstr "**Net value curve** (if generated): Files starting with “value_curve” record the complete net value series, etc."
 
 #: ../../source/tutorials/3-start-first-strategy.md:420
 msgid "上述文件都以回测运行的日期/时间结尾，以区分不同时间生成的日志文件。我们分别解释："
-msgstr ""
+msgstr "All of the above files end with the date/time of the backtest run to distinguish log files generated at different times. We explain them separately:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:422
 msgid "交易日志解读"
-msgstr ""
+msgstr "Interpreting the Trade Logs"
 
 #: ../../source/tutorials/3-start-first-strategy.md:424
 msgid "使用Excel打开第一个文件可以看到交易日志，交易日志用表格记录了每一次策略运行时的资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录："
 msgstr ""
+"Open the first file with Excel to see the trade log. The trade log records, in a table, information such as changes in funds for each strategy run, changes in positions, and trade details for each stock. Regardless of whether there are trades or "
+"position changes, there is a record every day:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:426
 msgid "整个交易历史在表格中是按行排列的，每八行为一组，每一组记录一次交易，从第一次到最后一次交易的信息按顺序从上到下记录。"
-msgstr ""
+msgstr "The entire trading history is arranged by rows in the table, with every eight rows as one group. Each group records one trade, and the information from the first trade to the last is recorded in order from top to bottom."
 
 #: ../../source/tutorials/3-start-first-strategy.md:428
 msgid "每一组记录的八行分别记录下面的内容："
-msgstr ""
+msgstr "The eight lines in each group of records respectively capture the following:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:430
 #, python-format
-msgid ""
-"**0, trade signal 交易信号**: "
-"记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20trade%20signals.md)）"
+msgid "**0, trade signal 交易信号**: 记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20trade%20signals.md)）"
 msgstr ""
+"**0, trade signal Trade signals**: Records the trade signals generated after this run (trade signals are a set of numbers; after signal parsing they become trade orders. See [Trade Signals](../manage_strategies/3.%20trade%20signals.md) for details)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:431
 msgid "**1, price 交易价格**: 记录本次运行时的各个股票的交易价格"
-msgstr ""
+msgstr "**1, price Trade price**: Records the trading prices of each stock during this run."
 
 #: ../../source/tutorials/3-start-first-strategy.md:432
 msgid "**2, traded amounts交易数量**：记录本次运行后各个股票的实际交易数量，正数为买入数量，负数为卖出数量，0代表没有交易"
-msgstr ""
+msgstr "**2, traded amounts Traded quantity**: Records the actual traded quantity for each stock after this run. Positive numbers indicate buy quantity, negative numbers indicate sell quantity, and 0 means no trade."
 
 #: ../../source/tutorials/3-start-first-strategy.md:433
 msgid "**3, cash changed现金变动**：记录本次运行后各个股票实际交易导致的现金变动金额，正数代表现金增加，负数代表现金减少，0代表没有变动"
-msgstr ""
+msgstr "**3, cash changed Cash change**: Records the amount of cash change caused by actual trades for each stock after this run. Positive numbers indicate an increase in cash, negative numbers indicate a decrease in cash, and 0 means no change."
 
 #: ../../source/tutorials/3-start-first-strategy.md:434
 msgid "**4, trade cost交易费用**：记录本次运行后各个股票实际交易产生的交易费用"
-msgstr ""
+msgstr "**4, trade cost Transaction costs**: Records the transaction costs actually incurred for each stock after this run."
 
 #: ../../source/tutorials/3-start-first-strategy.md:435
 msgid "**5, own amounts持仓数量**: 记录本次运行后持有的各个股票的数量，正数代表持多头持仓数量，负数代表空头数量，0代表没有持股"
-msgstr ""
+msgstr "**5, own amounts Position size**: Records the quantity held for each stock after this run. Positive numbers indicate long position size, negative numbers indicate short position size, and 0 means no position."
 
 #: ../../source/tutorials/3-start-first-strategy.md:436
-msgid ""
-"**6, available "
-"amounts可用持仓**：记录本次运行后可用的各个股票的数量，正数代表可用的多头持仓数量，负数代表可用的空头持仓数量，0代表没有可用持股"
+msgid "**6, available amounts可用持仓**：记录本次运行后可用的各个股票的数量，正数代表可用的多头持仓数量，负数代表可用的空头持仓数量，0代表没有可用持股"
 msgstr ""
+"**6, available amounts Available positions**: Records the available quantity for each stock after this run. Positive numbers indicate available long position size, negative numbers indicate available short position size, and 0 means no available "
+"holdings."
 
 #: ../../source/tutorials/3-start-first-strategy.md:437
 msgid "**7, summary合计**：记录本次运行后持有/可用现金总计、持股总价值以及投资总价值"
-msgstr ""
+msgstr "**7, summary Summary**: Records the total held/available cash, total market value of holdings, and total portfolio value after this run."
 
 #: ../../source/tutorials/3-start-first-strategy.md:439
-msgid ""
-"![在这里插入图片描述](img/trade_log_overview.png) "
-"仔细察看交易日志，整张表格按列可分为三组或四组，分别提供不同角度的信息："
-msgstr ""
+msgid "![在这里插入图片描述](img/trade_log_overview.png) 仔细察看交易日志，整张表格按列可分为三组或四组，分别提供不同角度的信息："
+msgstr "![Insert image description here](img/trade_log_overview.png) By examining the trade log closely, the entire table can be divided by columns into three or four groups, each providing information from a different perspective:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:442
 #, python-format
 msgid "**表头区域**：表头区域第一列记录每一次运行的日期和时间，第二列记录每一次运行的策略组名称（详情参见[策略组](../manage_strategies/4.%20group_and_blender.md)），第三列标注每一行的名称，"
 msgstr ""
+"**Header area**: The first column in the header area records the date and time of each run, the second column records the strategy group name for each run (see [Strategy Groups](../manage_strategies/4.%20group_and_blender.md) for details), and the "
+"third column labels the name of each row,"
 
 #: ../../source/tutorials/3-start-first-strategy.md:443
 msgid "**持有现金记录**：在该区域的summary合计行，记录每次运行前新增投入的现金、期末持有现金总额/可用现金总额以及投资总额（包括现金总额和股票总价值）"
 msgstr ""
+"**Cash holdings record**: In the summary row of this area, it records the additional cash invested before each run, the total cash held at period end / total available cash, and the total portfolio value (including total cash and total stock market "
+"value)."
 
 #: ../../source/tutorials/3-start-first-strategy.md:444
 msgid "**策略运行变量追踪**：策略运行变量追踪是可选的，允许用户在策略中插入追踪点来追踪策略运行过程变量的值，这在策略调试过程中很有用，此处暂时掠过，详见"
 msgstr ""
+"**Strategy Runtime Variable Tracking**: Strategy runtime variable tracking is optional. It allows users to insert tracking points in the strategy to track the values of variables during strategy execution, which is very useful during strategy "
+"debugging. We will skip it for now; see details in"
 
 #: ../../source/tutorials/3-start-first-strategy.md:445
 msgid "**持股记录**：这个区域里显示投资股票池中每一个股票的持股数量、交易数量、交易价格等等信息，每一列显示一支股票的数据，列数与股票池中的股票数量相等"
 msgstr ""
+"**Holding Records**: This area shows information such as the number of shares held, the number of shares traded, and the trading price for each stock in the investment stock pool. Each column shows the data for one stock, and the number of columns "
+"equals the number of stocks in the stock pool."
 
 #: ../../source/tutorials/3-start-first-strategy.md:447
 msgid "基于上面的理解，我们可以分析一下策略的运行过程，看看策略是如何进行选股和换股的"
-msgstr ""
+msgstr "Based on the understanding above, we can analyze the strategy’s execution process and see how the strategy selects and rotates stocks."
 
 #: ../../source/tutorials/3-start-first-strategy.md:449
-#, fuzzy
 msgid "![在这里插入图片描述](img/trade_log_explain.png)"
-msgstr "![insert image description](img/tutorial02-02.png)"
+msgstr "![Insert image description here](img/trade_log_explain.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:451
 msgid "如上图，我们可以以前四天的运行记录深入理解策略的运行方式："
-msgstr ""
+msgstr "As shown above, we can use the run records from the first four days to gain a deeper understanding of how the strategy operates:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:453
 msgid "第一天：初始资金投入10万元，投资开始启动，同时我们可以看到当天的沪深300和创业板指的涨幅分别为0.76%和1.83%，根据策略规则，我们在收盘时买入86.56股创业板指，消耗资金99996.32元，交易后持仓86.56股创业板指；"
 msgstr ""
+"Day 1: An initial capital of 100,000 yuan was invested and the investment started. At the same time, we can see that the gains of the CSI 300 and the ChiNext Index that day were 0.76% and 1.83%, respectively. According to the strategy rules, we "
+"bought 86.56 shares of the ChiNext Index at the close, spending 99,996.32 yuan. After the trade, we held 86.56 shares of the ChiNext Index;"
 
 #: ../../source/tutorials/3-start-first-strategy.md:454
 msgid "第二天：创业板指和沪深300指数涨幅分别为-0.77%和-0.56%，两相比较仍然是创业板指胜出，因此持仓不变；"
-msgstr ""
+msgstr "Day 2: The gains of the ChiNext Index and the CSI 300 Index were -0.77% and -0.56%, respectively. Comparing the two, the ChiNext Index still came out ahead, so the position remains unchanged;"
 
 #: ../../source/tutorials/3-start-first-strategy.md:455
 msgid "第三天：沪深300指数涨幅反超创业板指，此时交易信号出现反转，同时产生了沪深300的买入信号和创业板的卖出信号，不过此时只有创业板指卖出信号得到执行，全仓卖出86.56股，但沪深300的买入信号无法执行，因为此时持有现金余额不足，只有3.68元可用。"
 msgstr ""
+"Day 3: The CSI 300 Index’s gain surpassed that of the ChiNext Index. At this point, the trading signal reversed, generating both a CSI 300 buy signal and a ChiNext sell signal. However, only the ChiNext sell signal was executed: we sold all 86.56 "
+"shares. The CSI 300 buy signal could not be executed because the cash balance was insufficient—only 3.68 yuan was available."
 
 #: ../../source/tutorials/3-start-first-strategy.md:456
 msgid "第四天：交易信号持续反转，此时沪深300买入信号发挥作用，全仓买入31.01股沪深300指数"
-msgstr ""
+msgstr "Day 4: The trading signals continued to reverse. At this point, the CSI 300 buy signal took effect, and we bought 31.01 shares of the CSI 300 Index with our full position."
 
 #: ../../source/tutorials/3-start-first-strategy.md:457
 msgid "..."
-msgstr ""
+msgstr "..."
 
 #: ../../source/tutorials/3-start-first-strategy.md:459
 msgid "按照上面提到的方式，交易日志文件完整地记录了十年里一共2431个交易日的全部交易信息，从而使我们可以仔细分析每一笔交易的得失。"
-msgstr ""
+msgstr "Using the method mentioned above, the trading log file fully records all trading information across a total of 2,431 trading days over ten years, allowing us to carefully analyze the gains and losses of each trade."
 
 #: ../../source/tutorials/3-start-first-strategy.md:461
-msgid "仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300："
+msgid ""
+"仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时"
+"策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300："
 msgstr ""
+"A careful analysis of the table above shows that this investment strategy is fully invested except when switching stocks, and this was also true during the mid-2015 stock market crash. Looking at that period, we find that starting from June 18, "
+"2015, the 20-day returns of both the CSI 300 Index and the ChiNext Index had already turned from positive to negative, indicating that the market had begun to decline. However, at that time the strategy still firmly held the ChiNext Index, because "
+"its decline was smaller than that of the CSI 300—in other words, its return was higher than that of the CSI 300:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:463
-#, fuzzy
 msgid "![在这里插入图片描述](img/trade_log_disaster.png)"
-msgstr "![insert image description](img/tutorial02-02.png)"
+msgstr "![Insert image description here](img/trade_log_disaster.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:465
 msgid "所以其实这时候我们的策略仍然选择了正确的指数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。"
-msgstr ""
+msgstr "So in fact, at this time our strategy still chose the correct index. It’s just that because both indices were falling, our strategy held the one that fell less, reducing our losses."
 
+# GPT: 原文时间线“从2025年6月一直持续到2020年”前后倒置，可能是笔误；英文按原文直译以保留原意表达。
 #: ../../source/tutorials/3-start-first-strategy.md:467
 msgid "但是正是这一段时间的操作，造成了我们十年投资历史中最大的回撤事件：从2025年6月一直持续到2020年，深度套牢长达五年！！"
-msgstr ""
+msgstr "But it was precisely our operations during this period that caused the biggest drawdown event in our ten-year investment history: from June 2025 all the way through to 2020, we were deeply trapped for as long as five years!!"
 
 #: ../../source/tutorials/3-start-first-strategy.md:469
-#, fuzzy
 msgid "交易报告解读"
-msgstr "Detailed trade report"
+msgstr "Interpreting the Trading Report"
 
 #: ../../source/tutorials/3-start-first-strategy.md:471
 msgid "交易日志虽然事无巨细地包含了所有的信息，但有时候我们并不需要察看那么多的数据，这时就可以使用交易报告了。"
-msgstr ""
+msgstr "Although the trading log contains all information in exhaustive detail, sometimes we don’t need to look at that much data. In that case, we can use the trading report."
 
 #: ../../source/tutorials/3-start-first-strategy.md:473
 msgid "交易报告是交易日志文件的紧凑版本，它忽略了所有没有实质性交易的策略运行记录，只保留了所有的实质性交易记录，包括交易日期、买卖方向、交易份额、价格、总金额、交易费率等等信息，由于只记录有交易的实际发生，因此信息更加紧凑："
 msgstr ""
+"The trading report is a compact version of the trading log file. It ignores all strategy run records without substantive trades and retains only all substantive trade records, including trade date, buy/sell direction, number of shares, price, total "
+"amount, transaction fee rate, and so on. Because it records only trades that actually occurred, the information is more compact:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:475
-#, fuzzy
 msgid "![在这里插入图片描述](img/trade_summary_overview.png)"
-msgstr "![insert image description](img/tutorial02-02.png)"
+msgstr "![Insert image description here](img/trade_summary_overview.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:477
 msgid "从上图可以看到，交易报告的每一行记录一条实质交易记录，如果同一天发生多条交易记录，那么他们会被记录在不同的行。"
-msgstr ""
+msgstr "As you can see from the figure above, each row of the trading report records one actual trade record. If multiple trade records occur on the same day, they will be recorded on different rows."
 
 #: ../../source/tutorials/3-start-first-strategy.md:479
 msgid "交易报告的每一行里都记录了交易信号、交易价格、交易数量、现金变动、交易费率、交易后持仓数量等等信息，列名称包含的信息与交易日志完全相同；"
 msgstr ""
+"Each row of the trading report records information such as the trading signal, trade price, trade quantity, cash change, transaction fee rate, and post-trade position size; the column names contain exactly the same information as the trading log."
 
 #: ../../source/tutorials/3-start-first-strategy.md:481
-#, fuzzy
 msgid "策略的改进思路"
-msgstr "Improvement of the strategy"
+msgstr "Ideas for Improving the Strategy"
 
 #: ../../source/tutorials/3-start-first-strategy.md:483
 msgid "综合上面我们对交易策略的分析，我们发现，这个交易策略虽然达到了较好的投资效果，但是在控制回撤方面，由于没有避开股灾区间，导致深度套牢。"
 msgstr ""
+"Based on the above analysis of the trading strategy, we found that although this strategy achieved relatively good investment results, it performed poorly in controlling drawdowns: because it did not avoid the stock market crash period, it ended up "
+"deeply trapped."
 
 #: ../../source/tutorials/3-start-first-strategy.md:485
 msgid "那么，我们可否从这里出发改进我们的策略呢？思路很简单，我们可以加一条规则："
-msgstr ""
-"Then, can we improve our strategy from here? The idea is simple. We can "
-"add a rule:"
+msgstr "Then, can we improve our strategy from here? The idea is simple. We can add a rule:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:487
 msgid "每天计算两个指数在过去20天的涨幅，也就是今天的价格相对于20天前价格的涨幅"
-msgstr ""
-"Calculate the increase of the two indices in the past 20 days every day, "
-"that is, the increase of today's price relative to the price 20 days ago"
+msgstr "Calculate the increase of the two indices in the past 20 days every day, that is, the increase of today's price relative to the price 20 days ago"
 
 #: ../../source/tutorials/3-start-first-strategy.md:488
 msgid "如果选股日两个指数都小于0，那么我们第二天就空仓，一个指数都不持有"
-msgstr ""
-"If both indices are less than 0 on the stock selection day, then we will "
-"be empty the next day, and we will not hold any index"
+msgstr "If both indices are less than 0 on the stock selection day, then we will be empty the next day, and we will not hold any index"
 
 #: ../../source/tutorials/3-start-first-strategy.md:489
 msgid "否则，选择涨幅较大的那个指数，在第二天持有，同时卖掉涨幅较小的指数"
-msgstr ""
-"Otherwise, choose the index with the larger increase, hold it the next "
-"day, and sell the index with the smaller increase"
+msgstr "Otherwise, choose the index with the larger increase, hold it the next day, and sell the index with the smaller increase"
 
 #: ../../source/tutorials/3-start-first-strategy.md:491
 msgid "我们在原来的简单选股规则基础上增加了一条“过滤条件”，将两个指数都小于0的情况排除在外，好了，那么在`qteasy`中如何调整，以反映这个新的修改呢？"
-msgstr ""
-"We need to add a \"filter condition\" to the original simple stock "
-"selection rule to exclude the situation where both indices are less than "
-"0. So, how to adjust in `qteasy` to reflect this new modification?"
+msgstr "We need to add a \"filter condition\" to the original simple stock selection rule to exclude the situation where both indices are less than 0. So, how to adjust in `qteasy` to reflect this new modification?"
 
 #: ../../source/tutorials/3-start-first-strategy.md:493
 msgid "改进后的策略设置"
@@ -989,33 +894,22 @@ msgstr "Improved strategy settings"
 #: ../../source/tutorials/3-start-first-strategy.md:495
 msgid "`qteasy`的内置选股策略提供了一个过滤条件`condition`属性，默认条件下`condition='any'`，代表没有过滤条件，现在我们需要把小于0的收益率过滤掉，因此可以设置`condition='greater'`同时设置过滤范围`ubound=0`即可："
 msgstr ""
-"`qteasy`'s built-in stock selection strategy provides a filter condition "
-"`condition` attribute. The default condition is `condition='any'`, which "
-"means there is no filter condition. Now we need to filter out the return "
-"rate less than 0, so you can set `condition='greater'` and set the filter"
-" range `ubound=0`."
+"`qteasy`'s built-in stock selection strategy provides a filter condition `condition` attribute. The default condition is `condition='any'`, which means there is no filter condition. Now we need to filter out the return rate less than 0, so you can "
+"set `condition='greater'` and set the filter range `ubound=0`."
 
 #: ../../source/tutorials/3-start-first-strategy.md:502
 msgid "上面的设置跟前一节基本相同，增加了两个参数："
-msgstr ""
-"Above settings are basically the same as the previous section, with two "
-"additional parameters:"
+msgstr "Above settings are basically the same as the previous section, with two additional parameters:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:504
 msgid "`condition='greater'`：含义是增加过滤条件，N日涨幅必须大于等于某个值才能参加选股，这个值在`ubound`参数中设置。也就是说排除掉小于这个值的股票，让其无法中选"
 msgstr ""
-"`condition='greater'`：it means a filter condition. The N-day increase "
-"must be greater than or equal to a certain value to participate in the "
-"stock selection. This value is set in the `ubound` parameter. That is, "
-"exclude stocks that are less than this value and make them unable to be "
-"selected"
+"`condition='greater'`：it means a filter condition. The N-day increase must be greater than or equal to a certain value to participate in the stock selection. This value is set in the `ubound` parameter. That is, exclude stocks that are less than "
+"this value and make them unable to be selected"
 
 #: ../../source/tutorials/3-start-first-strategy.md:505
 msgid "`ubound=0`： 设置为0，这样只有涨幅大于等于0的指数才能被选中，当然还可以设置为其他浮点数"
-msgstr ""
-"`ubound=0`：Set to 0, so that only indices with an increase greater than "
-"or equal to 0 can be selected. Of course, it can also be set to other "
-"floating-point numbers"
+msgstr "`ubound=0`：Set to 0, so that only indices with an increase greater than or equal to 0 can be selected. Of course, it can also be set to other floating-point numbers"
 
 #: ../../source/tutorials/3-start-first-strategy.md:507
 msgid "改进后的结果"
@@ -1023,275 +917,107 @@ msgstr "Improved results"
 
 #: ../../source/tutorials/3-start-first-strategy.md:508
 msgid "同样按照前面的配置，直接执行`qt.run()`。这里直接放结果："
-msgstr ""
-"Execute `qt.run()` directly according to the previous configuration. Here"
-" are the results:"
+msgstr "Execute `qt.run()` directly according to the previous configuration. Here are the results:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:556
 msgid "可视化图表如下： ![png](img/3-start-first-strategy_img02.png)"
-msgstr ""
+msgstr "The visualization chart is as follows: ![png](img/3-start-first-strategy_img02.png)"
 
 #: ../../source/tutorials/3-start-first-strategy.md:556
 msgid "png"
-msgstr ""
+msgstr "png"
 
 #: ../../source/tutorials/3-start-first-strategy.md:559
-#, fuzzy
 msgid "从资产收益率图上可以看到，原来一片绿色（全程持仓）变成了白绿相间（白色区间空仓持币），资产回撤情况得到了大幅度优化：从原来的50%回撤降低到了20%左右。而且总回报率也大大提升："
 msgstr ""
-"The visual chart is as follows: ![insert image "
-"description](img/tutorial02-10.png) From the asset return rate chart, you"
-" can see that the original all-green (full position) has become white-"
-"green (white interval empty position holding currency), and the asset "
-"drawdown situation has been greatly optimized: from the original 50% "
-"drawdown to about 20%. And the total return rate has also greatly "
-"improved:"
+"From the asset return chart, you can see that what used to be a solid block of green (fully invested throughout) has become alternating white and green (white intervals indicate being out of the market and holding cash). The drawdown has been "
+"greatly optimized: reduced from the original 50% drawdown to around 20%. And the total return has also increased significantly:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:561
-#, fuzzy
 msgid "资产总额从改进前的五十多万提高到九十多万"
-msgstr ""
-" The total assets increased from more than five hundred thousand to one "
-"million"
+msgstr "Total assets increased from a little over 500,000 before the improvement to a little over 900,000."
 
 #: ../../source/tutorials/3-start-first-strategy.md:562
-#, fuzzy
 msgid "总收益率从300%提升到了806%"
-msgstr "The total return rate increased from 400% to 900%"
+msgstr "The total return increased from 300% to 806%."
 
 #: ../../source/tutorials/3-start-first-strategy.md:563
-#, fuzzy
 msgid "年化收益率从17%提升到了24.68%"
-msgstr "Annualized return rate increased from 17% to 26%"
+msgstr "The annualized return increased from 17% to 24.68%."
 
 #: ../../source/tutorials/3-start-first-strategy.md:564
-#, fuzzy
 msgid "最大回撤从50%降低到了28%"
-msgstr "Maximum drawdown reduced from 50% to 20%"
+msgstr "The maximum drawdown decreased from 50% to 28%."
 
 #: ../../source/tutorials/3-start-first-strategy.md:566
 msgid "通过查看交易记录可知，的确策略在2015年6月底的股灾期间保持空仓，躲避了单边下跌的行情。"
-msgstr ""
-"By checking the transaction records, it is indeed that the strategy kept "
-"empty positions during the stock disaster at the end of June 2015, "
-"avoiding the one-way decline market."
+msgstr "By checking the transaction records, it is indeed that the strategy kept empty positions during the stock disaster at the end of June 2015, avoiding the one-way decline market."
 
 #: ../../source/tutorials/3-start-first-strategy.md:567
 msgid "本篇回顾"
 msgstr "Recap"
 
 #: ../../source/tutorials/3-start-first-strategy.md:569
-msgid "通过本教程，我们通过一个大小盘轮动交易策略的创建、回测、修改熟悉了解了`qteasy`的交易策略，知道如何通过引用内置交易策略，创建一个单策略交易员对象，并使交易员运行策略获得回测结果。从下一篇教程开始，我们将进一步详细讨论`qteasy`的内置交易策略，并且介绍组合策略的实现方式，在交易员对象中添加更多的策略并设定组合方式，通过策略组合实现更复杂的效果，并且了解更多策略控制和类型。"
+msgid ""
+"通过本教程，我们通过一个大小盘轮动交易策略的创建、回测、修改熟悉了解了`qteasy`的交易策略，知道如何通过引用内置交易策略，创建一个单策略交易员对象，并使交易员运行策略获得回测结果。从下一篇教程开始，我们将进一步详细讨论`qteasy`的内置交易策略，并且介绍组"
+"合策略的实现方式，在交易员对象中添加更多的策略并设定组合方式，通过策略组合实现更复杂的效果，并且了解更多策略控制和类型。"
 msgstr ""
-"In this tutorial, we familiarized ourselves with the trading strategy of "
-"`qteasy` through the creation, backtesting, and modification of a small-"
-"cap rotation trading strategy. We learned how to create a single strategy"
-" trader object by referencing the built-in trading strategy and run the "
-"strategy to obtain backtest results. Starting from the next tutorial, we "
-"will further discuss the built-in trading strategies of `qteasy` in "
-"detail and introduce the implementation of combination strategies. We "
-"will add more strategies to the trader object and set the combination "
-"method to achieve more complex effects through strategy combination, and "
-"understand more strategy control and types."
-
-#~ msgid "在[上一篇教程](https://blog.csdn.net/Shepherdppz/article/details/136098697)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "在[上一篇教程](2-get-"
-#~ "data.md)中，我介绍了如何配置本地数据源，查找、下载金融数据到本地，并从本地数据源中提取数据。如果还没有完成这一步的朋友，请移步前一篇教程了解如何下载和操作数据。"
-#~ msgstr ""
+"In this tutorial, we familiarized ourselves with the trading strategy of `qteasy` through the creation, backtesting, and modification of a small-cap rotation trading strategy. We learned how to create a single strategy trader object by referencing "
+"the built-in trading strategy and run the strategy to obtain backtest results. Starting from the next tutorial, we will further discuss the built-in trading strategies of `qteasy` in detail and introduce the implementation of combination strategies. "
+"We will add more strategies to the trader object and set the combination method to achieve more complex effects through strategy combination, and understand more strategy control and types."
 
 #~ msgid "`sample_freq='d'`: 每日选股，如果设置选股周期为`'w'`表示每周选股，`'2d'`表示每两天选股一次"
-#~ msgstr ""
-#~ "`sample_freq='d'`: Select stocks daily. If "
-#~ "the stock selection cycle is set "
-#~ "to `'w'`, it means selecting stocks "
-#~ "weekly, and `'2d'` means selecting "
-#~ "stocks every two days."
+#~ msgstr "`sample_freq='d'`: Select stocks daily. If the stock selection cycle is set to `'w'`, it means selecting stocks weekly, and `'2d'` means selecting stocks every two days."
 
 #~ msgid "`data_types='close'`：默认值，计算收盘价的涨幅"
-#~ msgstr ""
-#~ "`data_types='close'`: Default value, calculate "
-#~ "the increase of the closing price"
+#~ msgstr "`data_types='close'`: Default value, calculate the increase of the closing price"
 
 #~ msgid ""
-#~ "由于设置了`visual=True`，在回测报告的最后，还能看到运行结果的可视化图表报告如下： "
-#~ "![在这里插入图片描述](img/tutorial02-03.png) "
-#~ "可视化图表是`qteasy`的一个很有用的功能。首先我们可以看到回测的历史回报率曲线图。这个曲线图以百分比为单位，将投资组合的回报率曲线和一个参考曲线（默认情况下参考曲线是沪深300指数，可以通过`qt.configure(reference_asset='xxxxxx.xx')`来设置为不同的指数）的收益率对比。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。"
-#~ " "
-#~ "在这张图的参考指数曲线上，会用红、绿色箭头标注所有的买卖点，同时，图表在持有仓位的时间区间填充上绿色，响应没有持仓（空仓）的时段会保持为白色，这样就很容易看出整个投资历史上组合的回报率，以及买卖、持仓的大致时段和比例。"
+#~ "由于设置了`visual=True`，在回测报告的最后，还能看到运行结果的可视化图表报告如下： ![在这里插入图片描述](img/tutorial02-03.png) 可视化图表是`qteasy`的一个很有用的功能。首先我们可以看到回测的历史回报率曲线图。这个曲线图以百分比为单位，将投资组合的回"
+#~ "报率曲线和一个参考曲线（默认情况下参考曲线是沪深300指数，可以通过`qt.configure(reference_asset='xxxxxx.xx')`来设置为不同的指数）的收益率对比。红色曲线为投资组合的收益率，而蓝色曲线为参考指数收益率。 在这张图的参考指数曲线上，会用红、绿色箭头标注所"
+#~ "有的买卖点，同时，图表在持有仓位的时间区间填充上绿色，响应没有持仓（空仓）的时段会保持为白色，这样就很容易看出整个投资历史上组合的回报率，以及买卖、持仓的大致时段和比例。"
 #~ msgstr ""
-#~ "The visual report is displayed since "
-#~ "we set `visual=True`. At the end "
-#~ "of the backtest report, you can "
-#~ "see the visual chart report of the"
-#~ " running results as follows: ![insert "
-#~ "image description](img/tutorial02-03.png) The visual"
-#~ " chart is a very useful feature "
-#~ "of `qteasy`. First, we can see the"
-#~ " historical return rate curve of the"
-#~ " backtest. This curve chart is in "
-#~ "percentage, comparing the return rate "
-#~ "curve of the investment portfolio with"
-#~ " a reference curve (by default, the"
-#~ " reference curve is the Shanghai and"
-#~ " Shenzhen 300 index, which can be "
-#~ "set to a different index by "
-#~ "`qt.configure(reference_asset='xxxxxx.xx')`). The red "
-#~ "curve is the return rate of the"
-#~ " investment portfolio, and the blue "
-#~ "curve is the return rate of the"
-#~ " reference index. On the reference "
-#~ "index curve of this chart, all buy"
-#~ " and sell points are marked with "
-#~ "red and green arrows. At the same"
-#~ " time, the chart fills the time "
-#~ "interval of holding positions with "
-#~ "green, and the time interval of "
-#~ "not holding positions (empty positions) "
-#~ "will remain white, so it is easy"
-#~ " to see the return rate of the"
-#~ " portfolio throughout the investment "
-#~ "history, as well as the approximate "
-#~ "time and proportion of buying, selling,"
-#~ " and holding."
+#~ "The visual report is displayed since we set `visual=True`. At the end of the backtest report, you can see the visual chart report of the running results as follows: ![insert image description](img/tutorial02-03.png) The visual chart is a very "
+#~ "useful feature of `qteasy`. First, we can see the historical return rate curve of the backtest. This curve chart is in percentage, comparing the return rate curve of the investment portfolio with a reference curve (by default, the reference curve "
+#~ "is the Shanghai and Shenzhen 300 index, which can be set to a different index by `qt.configure(reference_asset='xxxxxx.xx')`). The red curve is the return rate of the investment portfolio, and the blue curve is the return rate of the reference "
+#~ "index. On the reference index curve of this chart, all buy and sell points are marked with red and green arrows. At the same time, the chart fills the time interval of holding positions with green, and the time interval of not holding positions "
+#~ "(empty positions) will remain white, so it is easy to see the return rate of the portfolio throughout the investment history, as well as the approximate time and proportion of buying, selling, and holding."
 
 #~ msgid "紧接着第一张图表，后续五张图表都是历史曲线图，显示了投资回报的多种不同的评价指标，这里面我感觉最有用的是“underwater”图，也就是第六张图，显示了投资资产回撤的情况，这个表我们过一会来仔细分析。"
 #~ msgstr ""
-#~ "Right below the first chart, the "
-#~ "next five charts are all historical "
-#~ "curve charts, showing various different "
-#~ "evaluation indicators of investment returns."
-#~ " I feel the most useful one is"
-#~ " the \"underwater\" chart, which is "
-#~ "the sixth chart, showing the situation"
-#~ " of investment asset drawdown. We "
-#~ "will analyze this table carefully in "
-#~ "a moment."
+#~ "Right below the first chart, the next five charts are all historical curve charts, showing various different evaluation indicators of investment returns. I feel the most useful one is the \"underwater\" chart, which is the sixth chart, showing "
+#~ "the situation of investment asset drawdown. We will analyze this table carefully in a moment."
 
 #~ msgid ""
-#~ "了解了可视化图表，我们来分析历史曲线，大家可以看着历史回报率曲线图，并开始设想，加入我按这个投资策略开始投资，从2015年6月3日开始，我的收益率会如何？结果是：到2016年6月13日亏损50.6%，然后一直到2020年2月才能解套！如下图："
-#~ " ![最大一次回撤持续了近五年](img/tutorial02-04.png) "
-#~ "同样，我们从第六张underwater图中也可以看到，在整个十年投资期间，总资产不断地出现回撤，50%回撤是最大最深的一次，但前期还有31%、22%的多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者能够熬得住这样的煎熬的，对吧？"
+#~ "了解了可视化图表，我们来分析历史曲线，大家可以看着历史回报率曲线图，并开始设想，加入我按这个投资策略开始投资，从2015年6月3日开始，我的收益率会如何？结果是：到2016年6月13日亏损50.6%，然后一直到2020年2月才能解套！如下图： ![最大一次回撤持续了近五年]"
+#~ "(img/tutorial02-04.png) 同样，我们从第六张underwater图中也可以看到，在整个十年投资期间，总资产不断地出现回撤，50%回撤是最大最深的一次，但前期还有31%、22%的多次回撤，而且长度都不短，整个投资就是“长期被套牢，偶尔能翻盘”的状况，我相信，没有几个投资者"
+#~ "能够熬得住这样的煎熬的，对吧？"
 #~ msgstr ""
-#~ "After understanding the visual chart, "
-#~ "let's analyze the historical curve. You"
-#~ " can look at the historical return"
-#~ " rate curve chart and start to "
-#~ "imagine. If I start investing according"
-#~ " to this investment strategy from "
-#~ "June 3, 2015, how will my return"
-#~ " rate be? The result is: a loss"
-#~ " of 50.6% until June 13, 2016, "
-#~ "and then it will take until "
-#~ "February 2020 to get out of the"
-#~ " trap! As shown below:  ![The maximum"
-#~ " drawdown lasted for nearly five "
-#~ "years](img/tutorial02-04.png) Similarly, we can "
-#~ "also see from the sixth underwater "
-#~ "chart that during the entire ten-"
-#~ "year investment period, the total assets"
-#~ " have continued to experience drawdowns."
-#~ " The 50% drawdown is the largest "
-#~ "and deepest one, but there are "
-#~ "also multiple drawdowns of 31% and "
-#~ "22% in the early stage, and the"
-#~ " lengths are not short. The entire"
-#~ " investment is in a situation of "
-#~ "\"long-term being trapped, occasionally "
-#~ "turning over\", I believe that few "
-#~ "investors can withstand such suffering, "
-#~ "right?"
+#~ "After understanding the visual chart, let's analyze the historical curve. You can look at the historical return rate curve chart and start to imagine. If I start investing according to this investment strategy from June 3, 2015, how will my "
+#~ "return rate be? The result is: a loss of 50.6% until June 13, 2016, and then it will take until February 2020 to get out of the trap! As shown below:  ![The maximum drawdown lasted for nearly five years](img/tutorial02-04.png) Similarly, we can "
+#~ "also see from the sixth underwater chart that during the entire ten-year investment period, the total assets have continued to experience drawdowns. The 50% drawdown is the largest and deepest one, but there are also multiple drawdowns of 31% and "
+#~ "22% in the early stage, and the lengths are not short. The entire investment is in a situation of \"long-term being trapped, occasionally turning over\", I believe that few investors can withstand such suffering, right?"
 
-#~ msgid ""
-#~ "![整个十年基本上都属于深度套牢状态](img/tutorial02-05.png) "
-#~ "如上图，整个十年间除2015年前后或者2020年下半年以外，几乎都处于潜水套牢状态。"
-#~ msgstr ""
-#~ "![The entire decade is basically in "
-#~ "a deep trap state](img/tutorial02-05.png) As"
-#~ " shown in the above figure, except"
-#~ " for around 2015 or the second "
-#~ "half of 2020, the entire decade is"
-#~ " almost in a deep underwater trap "
-#~ "state."
+#~ msgid "![整个十年基本上都属于深度套牢状态](img/tutorial02-05.png) 如上图，整个十年间除2015年前后或者2020年下半年以外，几乎都处于潜水套牢状态。"
+#~ msgstr "![The entire decade is basically in a deep trap state](img/tutorial02-05.png) As shown in the above figure, except for around 2015 or the second half of 2020, the entire decade is almost in a deep underwater trap state."
 
 #~ msgid "整个十年基本上都属于深度套牢状态"
 #~ msgstr "The entire decade is basically in a deep trap state"
 
 #~ msgid ""
-#~ "我们在回测的时候，设置了`print_backtest_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`qteasy/log`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开："
-#~ " ![两个交易明细报告](img/tutorial02-06.png) "
-#~ "打开第一个文件可以看到交易日志，交易日志中记录了每一个交易日资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录："
-#~ " ![在这里插入图片描述](img/tutorial02-07.png) "
-#~ "从上面的文件中可以看到，1月4日买入了31份沪深300指数，到1月5日收盘时卖出了持有的沪深300指数31份，并在1月6日收盘时买入87份创业板指，并在1月7日继续持有。。。"
-#~ " "
-#~ "而打开trade_records.csv文件可以看到，这里记录了每一笔成交的交易，包括交易日期、买卖方向、交易份额、价格、总金额、交易费率等等信息，由于只记录有交易的实际发生，因此信息更加紧凑："
-#~ " ![在这里插入图片描述](img/tutorial02-08.png) "
-#~ "仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300："
-#~ " ![在这里插入图片描述](img/tutorial02-09.png) "
-#~ "所以其实这时候我们的策略仍然选择了正确的指数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。"
+#~ "我们在回测的时候，设置了`print_backtest_log=True`，因此系统会生成详细的交易明细报告。这份报告被保存在了`qteasy/log`路径下，可以看到包含两个报告，两个报告都保存为csv文件，便于用Excel打开： ![两个交易明细报告](img/tutorial02-06.png) 打开第一个文件可"
+#~ "以看到交易日志，交易日志中记录了每一个交易日资金的变动，持股的变动、每种股票的交易明细等信息，不管是否有交易或持股变动，每天都有记录： ![在这里插入图片描述](img/tutorial02-07.png) 从上面的文件中可以看到，1月4日买入了31份沪深300指数，到1月5日收盘时"
+#~ "卖出了持有的沪深300指数31份，并在1月6日收盘时买入87份创业板指，并在1月7日继续持有。。。 而打开trade_records.csv文件可以看到，这里记录了每一笔成交的交易，包括交易日期、买卖方向、交易份额、价格、总金额、交易费率等等信息，由于只记录有交易的实际发生，"
+#~ "因此信息更加紧凑： ![在这里插入图片描述](img/tutorial02-08.png) 仔细分析上面的表格，会发现这个投资策略除了在换股的时候以外，都是满仓持有的，在2015年中的股灾期间也不例外，我们找到这段时间会发现，从2015年的6月18日开始，不管是沪深300指数还是创业板指"
+#~ "数，他们的20日收益率都已经由正转负，表明后市已经开始下跌了，然而此时策略仍然坚定地持有创业板指，这是因为创业板指的跌幅要小于沪深300，也就是收益率大于沪深300： ![在这里插入图片描述](img/tutorial02-09.png) 所以其实这时候我们的策略仍然选择了正确的指"
+#~ "数，只不过因为两个指数都在跌，我们的策略选择了跌的少的那一个持有，减少了我们的损失。"
 #~ msgstr ""
-#~ "When backtesting, we set "
-#~ "`print_backtest_log=True`, so the system will"
-#~ " generate a detailed trade details "
-#~ "report. This report is saved in "
-#~ "the `qteasy/log` path, and you can "
-#~ "see that there are two reports, "
-#~ "both saved as csv files, which are"
-#~ " easy to open with Excel:  ![Two "
-#~ "trade details reports](img/tutorial02-06.png) Open"
-#~ " the first file to see the "
-#~ "trade log. The trade log records "
-#~ "the change of funds on each "
-#~ "trading day, the change of holdings, "
-#~ "and the trading details of each "
-#~ "stock, etc., regardless of whether there"
-#~ " is a transaction or a change "
-#~ "in holdings, there is a record "
-#~ "every day:  ![insert image "
-#~ "description](img/tutorial02-07.png) From the above"
-#~ " file, you can see that 31 "
-#~ "shares of the Shanghai and Shenzhen "
-#~ "300 index were bought on January "
-#~ "4, and the 31 shares of the "
-#~ "Shanghai and Shenzhen 300 index were "
-#~ "sold at the close on January 5,"
-#~ " and 87 shares of the ChiNext "
-#~ "index were bought at the close on"
-#~ " January 6, and continued to hold "
-#~ "on January 7... Open the "
-#~ "trade_records.csv file to see that it"
-#~ " records every transaction, including the"
-#~ " transaction date, buy/sell direction, "
-#~ "transaction quantity, price, total amount, "
-#~ "transaction fee rate, etc. Since only"
-#~ " actual transactions are recorded, the "
-#~ "information is more compact:  ![insert "
-#~ "image description](img/tutorial02-08.png) Carefully "
-#~ "analyzing the above table, you will "
-#~ "find that this investment strategy is"
-#~ " fully held except when changing "
-#~ "stocks. During the stock disaster in "
-#~ "2015, we found that starting from "
-#~ "June 18, 2015, whether it is the"
-#~ " Shanghai and Shenzhen 300 index or"
-#~ " the ChiNext index, their 20-day "
-#~ "return rate has changed from positive"
-#~ " to negative, indicating that the "
-#~ "future market has begun to decline. "
-#~ "However, the strategy still firmly holds"
-#~ " the ChiNext index at this time "
-#~ "because the ChiNext index has a "
-#~ "smaller decline than the Shanghai and"
-#~ " Shenzhen 300 index, that is, the "
-#~ "return rate is higher than the "
-#~ "Shanghai and Shenzhen 300 index:  "
-#~ "![insert image description](img/tutorial02-09.png) "
-#~ "So, in fact, our strategy still "
-#~ "chose the correct index at this "
-#~ "time. It's just that because both "
-#~ "indices are falling, our strategy chose"
-#~ " to hold the one with the "
-#~ "smaller decline, reducing our losses."
-
+#~ "When backtesting, we set `print_backtest_log=True`, so the system will generate a detailed trade details report. This report is saved in the `qteasy/log` path, and you can see that there are two reports, both saved as csv files, which are easy to "
+#~ "open with Excel:  ![Two trade details reports](img/tutorial02-06.png) Open the first file to see the trade log. The trade log records the change of funds on each trading day, the change of holdings, and the trading details of each stock, etc., "
+#~ "regardless of whether there is a transaction or a change in holdings, there is a record every day:  ![insert image description](img/tutorial02-07.png) From the above file, you can see that 31 shares of the Shanghai and Shenzhen 300 index were "
+#~ "bought on January 4, and the 31 shares of the Shanghai and Shenzhen 300 index were sold at the close on January 5, and 87 shares of the ChiNext index were bought at the close on January 6, and continued to hold on January 7... Open the "
+#~ "trade_records.csv file to see that it records every transaction, including the transaction date, buy/sell direction, transaction quantity, price, total amount, transaction fee rate, etc. Since only actual transactions are recorded, the "
+#~ "information is more compact:  ![insert image description](img/tutorial02-08.png) Carefully analyzing the above table, you will find that this investment strategy is fully held except when changing stocks. During the stock disaster in 2015, we "
+#~ "found that starting from June 18, 2015, whether it is the Shanghai and Shenzhen 300 index or the ChiNext index, their 20-day return rate has changed from positive to negative, indicating that the future market has begun to decline. However, the "
+#~ "strategy still firmly holds the ChiNext index at this time because the ChiNext index has a smaller decline than the Shanghai and Shenzhen 300 index, that is, the return rate is higher than the Shanghai and Shenzhen 300 index:  ![insert image "
+#~ "description](img/tutorial02-09.png) So, in fact, our strategy still chose the correct index at this time. It's just that because both indices are falling, our strategy chose to hold the one with the smaller decline, reducing our losses."
