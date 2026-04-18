@@ -3,6 +3,10 @@
 ## Unreleased
 - (none)
 
+## 2.4.1 (2026-04-18)
+- **Live trader startup reliability**
+  Fixed a live-trading scheduler issue where starting Trader during market hours could replay overdue `pre_open/open_market/close_market` tasks in reverse order and leave the state machine stuck in `sleeping`. Overdue tasks are now enqueued in chronological order, so intraday startup can correctly catch up to the current market state and continue running strategy and live-price tasks.
+
 ## 2.4.0 (2026-04-14)
 - **Live trading (S1.3 complete)**  
   Added a configurable, testable live-trading foundation: `LiveTradeConfig` for validated runtime configuration; a pluggable `RiskManager` that can reject unsafe orders before submission with clear reasons; and broker-side adapter skeleton APIs (`connect/submit/cancel/poll_fills`) to prepare for future integrations (e.g. QMT).  
