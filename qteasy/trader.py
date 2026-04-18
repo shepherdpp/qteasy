@@ -2590,7 +2590,10 @@ class Trader(object):
         self.task_queue.put(task)
 
     def _add_task_from_schedule(self, current_time=None) -> None:
-        """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务
+        """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务。
+
+        当多条任务同时满足 ``task_time <= current_time`` 时，按计划时间升序入队，
+        以保证队列执行顺序与交易日时间顺序一致。
 
         Parameters
         ----------
@@ -2602,6 +2605,7 @@ class Trader(object):
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
         # 从后向前遍历，避免 pop(idx) 后后续索引错位导致漏处理
+        expired_tasks = []
         for idx in range(len(self.task_daily_schedule) - 1, -1, -1):
             task_tuple = self.task_daily_schedule[idx]
             task_time = pd.to_datetime(task_tuple[0], utc=True).time()
@@ -2617,9 +2621,14 @@ class Trader(object):
                     err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                     raise err
 
-                self.send_message(f'current time {current_time} >= task time {task_time}, '
-                                  f'adding task: {task} from agenda', debug=True)
-                self._add_task_to_queue(task)
+                expired_tasks.append((task_time, idx, task, task_tuple))
+
+        # 统一按时间正序入队，保证执行顺序与日程时间顺序一致
+        expired_tasks.sort(key=lambda item: (item[0], item[1]))
+        for task_time, _, task, task_tuple in expired_tasks:
+            self.send_message(f'current time {current_time} >= task time {task_time}, '
+                              f'adding task: {task} from agenda ({task_tuple})', debug=True)
+            self._add_task_to_queue(task)
 
     def _initialize_schedule(self, current_time=None) -> None:
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：

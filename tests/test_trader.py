@@ -1824,6 +1824,7 @@ class TestTraderTaskState(unittest.TestCase):
         self.assertEqual(self.trader.task_daily_schedule, [])
 
     def test_add_task_from_schedule_pops_past_tasks_into_queue(self):
+        print('\n[TestAddTaskFromSchedule] verify expired tasks enqueue in time order')
         self.trader._run_task('start')
         self.trader.task_daily_schedule = [
             ('08:00:00', 'pre_open'),
@@ -1837,10 +1838,38 @@ class TestTraderTaskState(unittest.TestCase):
         print(f'task schedule after adding tasks from schedule: {self.trader.task_daily_schedule}')
         self.assertEqual(len(self.trader.task_daily_schedule), 1)
         self.assertFalse(self.trader.task_queue.empty())
-        self.trader.task_queue.get()
+        first_task = self.trader.task_queue.get()
         self.trader.task_queue.task_done()
-        self.trader.task_queue.get()
+        second_task = self.trader.task_queue.get()
         self.trader.task_queue.task_done()
+        print(f'queued tasks: first={first_task}, second={second_task}')
+        self.assertEqual(first_task, 'pre_open')
+        self.assertEqual(second_task, 'open_market')
+
+    def test_add_task_from_schedule_expired_tasks_enqueued_in_time_order(self):
+        print('\n[TestMiddayCatchupOrder] verify four expired key tasks keep chronological order')
+        self.trader._run_task('start')
+        self.trader.task_daily_schedule = [
+            ('09:15:00', 'pre_open'),
+            ('09:30:00', 'open_market'),
+            ('11:35:00', 'close_market'),
+            ('12:55:00', 'open_market'),
+        ]
+        import datetime as dt
+        current = dt.time(13, 14, 50)
+        print(f'current: {current}, task schedule before add: {self.trader.task_daily_schedule}')
+
+        self.trader._add_task_from_schedule(current)
+        print(f'task schedule after add: {self.trader.task_daily_schedule}')
+        self.assertEqual(self.trader.task_daily_schedule, [])
+
+        queued_tasks = []
+        while not self.trader.task_queue.empty():
+            queued_tasks.append(self.trader.task_queue.get())
+            self.trader.task_queue.task_done()
+        print(f'queued_tasks: {queued_tasks}')
+
+        self.assertEqual(queued_tasks, ['pre_open', 'open_market', 'close_market', 'open_market'])
 
 
 # --------------- Plan 3.5: Individual tasks + TASK_WHITELIST ---------------
