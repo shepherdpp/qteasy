@@ -90,6 +90,30 @@ class TestQtOperatorLiveTradeAssetType(unittest.TestCase):
             self.assertEqual(trader.asset_type, at, msg=f'asset_type={at}')
             print(f' passed asset_type={at} -> trader.asset_type={trader.asset_type}')
 
+    @patch('qteasy.trader_cli.TraderShell')
+    @patch('qteasy.trader.refill_missing_datasource_data')
+    def test_run_live_trade_calls_set_shares_with_asset_pool(self, _mock_refill, _mock_shell):
+        print('\n[TestQtOperatorLiveTradeAssetType] test_run_live_trade_calls_set_shares_with_asset_pool')
+        cfg = _live_trade_config_base(self.live_account_id)
+        cfg['asset_type'] = 'E'
+        cfg['asset_pool'] = '000001.SZ,000002.SZ'
+        op = Operator(strategies=['macd'])
+        op.set_parameter(stg_id='macd', window_length=5, run_freq='d')
+
+        captured = {}
+        original_set_shares = op.set_shares
+
+        def wrapped_set_shares(shares):
+            captured['shares'] = shares
+            return original_set_shares(shares)
+
+        op.set_shares = wrapped_set_shares
+        op.run_live_trade(config=cfg, datasource=self.test_ds)
+
+        print(' captured set_shares arg:', captured.get('shares'))
+        self.assertIn('shares', captured)
+        self.assertEqual(captured['shares'], ['000001.SZ', '000002.SZ'])
+
     def test_run_live_trade_rejects_unsupported_asset_type(self):
         print('\n[TestQtOperatorLiveTradeAssetType] test_run_live_trade_rejects_unsupported_asset_type')
         cfg = _live_trade_config_base(self.live_account_id)
