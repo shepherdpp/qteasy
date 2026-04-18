@@ -3,6 +3,10 @@
 ## Unreleased
 - (none)
 
+## 2.4.2 (2026-04-18)
+- **Broker async replay reliability**
+  Added `Broker.wait_until_idle()` to provide a reliable synchronization point for replay scripts running with asynchronous broker workers. It waits for queued orders to be consumed and for all in-flight `_get_result` worker threads to finish, so replay steps no longer need to infer completion from `order_queue.empty()` and can avoid stale-position double-order issues.
+
 ## 2.4.1 (2026-04-18)
 - **Live trader startup reliability**
   Fixed a live-trading scheduler issue where starting Trader during market hours could replay overdue `pre_open/open_market/close_market` tasks in reverse order and leave the state machine stuck in `sleeping`. Overdue tasks are now enqueued in chronological order, so intraday startup can correctly catch up to the current market state and continue running strategy and live-price tasks.
