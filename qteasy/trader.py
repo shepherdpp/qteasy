@@ -1391,6 +1391,7 @@ class Trader(object):
                 qt_codes=self.asset_pool,
                 verbose=False,
                 matured_kline_only=True,  # 这里确保只获取成熟的K线数据
+                matured_kline_scope='all',  # 实盘刷新需要累计写入截至当前时刻的全部成熟K线
         )
         # 将real_time_data写入DataSource
         self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'

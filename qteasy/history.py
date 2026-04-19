@@ -6579,6 +6579,80 @@ def get_history_panel(
 # =================================================
 # 以下是一些独立的函数, 用于检查和准备历史数据
 # =================================================
+def _merge_live_prices_into_package(hist_data_package: dict[str, pd.DataFrame],
+                                    live_prices: pd.DataFrame,
+                                    trade_date: Union[str, pd.Timestamp]) -> dict[str, pd.DataFrame]:
+    """将实时价格合并进历史数据包，供实盘策略读取最新价格。"""
+
+    if not isinstance(hist_data_package, dict) or not hist_data_package:
+        return hist_data_package
+    if live_prices is None or live_prices.empty:
+        return hist_data_package
+
+    live_df = live_prices.copy()
+    symbol_col = None
+    if 'ts_code' in live_df.columns:
+        symbol_col = 'ts_code'
+    elif 'symbol' in live_df.columns:
+        symbol_col = 'symbol'
+    if symbol_col is not None:
+        live_df = live_df.set_index(symbol_col)
+    live_df = live_df[~live_df.index.duplicated(keep='last')]
+
+    trade_ts = pd.to_datetime(trade_date)
+    merge_ts = None
+    if 'trade_time' in live_df.columns:
+        trade_time_series = pd.to_datetime(live_df['trade_time'], errors='coerce')
+        if not trade_time_series.isna().all():
+            merge_ts = trade_time_series.max()
+
+    if ('close' not in live_df.columns) and ('price' in live_df.columns):
+        live_df['close'] = live_df['price']
+
+    source_col_candidates = {
+        'close': ['close', 'price'],
+        'open': ['open'],
+        'high': ['high'],
+        'low': ['low'],
+        'volume': ['volume', 'vol'],
+        'amount': ['amount'],
+    }
+
+    for dtype_name, hist_df in hist_data_package.items():
+        if not isinstance(hist_df, pd.DataFrame):
+            continue
+        if hist_df.empty:
+            continue
+        base_name = str(dtype_name).split('_', 1)[0].lower()
+        if base_name not in source_col_candidates:
+            continue
+
+        source_col = next((c for c in source_col_candidates[base_name] if c in live_df.columns), None)
+        if source_col is None:
+            continue
+
+        row_values = pd.to_numeric(live_df[source_col], errors='coerce').reindex(hist_df.columns)
+        row_values = row_values.dropna()
+        if row_values.empty:
+            continue
+
+        target_ts = merge_ts
+        if target_ts is None:
+            try:
+                max_idx = pd.to_datetime(hist_df.index).max()
+                target_ts = max_idx + pd.Timedelta(seconds=1)
+            except Exception:
+                target_ts = trade_ts
+        if target_ts < trade_ts:
+            target_ts = trade_ts
+
+        for col, value in row_values.items():
+            hist_df.loc[target_ts, col] = float(value)
+        hist_data_package[dtype_name] = hist_df.sort_index()
+
+    return hist_data_package
+
+
 def check_and_prepare_live_trade_data(op,
                                       trade_date: Union[str, pd.Timestamp],
                                       datasource: DataSource,
@@ -6607,13 +6681,16 @@ def check_and_prepare_live_trade_data(op,
         用于回测的历史参考数据，包含用于计算交易结果的所有历史参考数据
     """
 
-    return check_and_prepare_backtest_data(
+    hist_data_package = check_and_prepare_backtest_data(
             op=op,
             backtest_start=trade_date,
             backtest_end=trade_date,
             shares=shares,
             datasource=datasource,
     )
+    if live_prices is not None and isinstance(live_prices, pd.DataFrame) and (not live_prices.empty):
+        hist_data_package = _merge_live_prices_into_package(hist_data_package, live_prices, trade_date)
+    return hist_data_package
 
 
 def check_and_prepare_backtest_data(op,
