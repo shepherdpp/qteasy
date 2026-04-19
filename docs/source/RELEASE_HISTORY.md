@@ -1,7 +1,13 @@
 # RELEASE HISTORY
 
-## Unreleased
-- (none)
+## 2.4.2 (2026-04-19)
+- Multiple bug fixes:
+  - **Broker async replay reliability** #263
+    Added `Broker.wait_until_idle()` to provide a reliable synchronization point for replay scripts running with asynchronous broker workers. It waits for queued orders to be consumed and for all in-flight `_get_result` worker threads to finish, so replay steps no longer need to infer completion from `order_queue.empty()` and can avoid stale-position double-order issues.
+  - **Live datasource refresh table mapping by asset type** #265
+    Fixed a live refresh bug where minute/hourly realtime bars could be written to hardcoded stock tables regardless of `asset_type`. Refresh table resolution is now based on `(asset_type, unit)` mapping, so fund/index/future live bars are written into the correct datasource tables.
+  - **Live minute-signal data pipeline reliability** #266
+    Fixed a chain of issues that could leave minute strategies without enough intraday data in live mode.
 
 ## 2.4.1 (2026-04-18)
 - **Live trader startup reliability**

@@ -2117,13 +2117,25 @@ class Operator:
                 list(parse_trade_cost_params(config, asset_type=config.get('asset_type')).values()),
                 dtype='float',
         )  # 交易成本参数
+        # 与回测路径保持一致：在实盘启动前注入标的列表，确保策略 share_count / share_names 正确。
+        raw_asset_pool = config['asset_pool']
+        if isinstance(raw_asset_pool, str):
+            from qteasy.utilfuncs import str_to_list
+            live_asset_pool = str_to_list(raw_asset_pool)
+        elif isinstance(raw_asset_pool, list):
+            live_asset_pool = raw_asset_pool
+        else:
+            raise TypeError(
+                f'asset_pool should be str or list[str], got {type(raw_asset_pool)} instead'
+            )
+        self.set_shares(live_asset_pool)
 
         trader = Trader(
                 operator=self,
                 account_id=account_id,
                 broker=broker,
                 datasource=datasource,
-                asset_pool=config['asset_pool'],
+                asset_pool=live_asset_pool,
                 asset_type=config['asset_type'],
                 time_zone=config['time_zone'],
                 exchange='SSE',

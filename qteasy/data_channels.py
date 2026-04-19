@@ -444,6 +444,7 @@ def fetch_real_time_klines(
         time_zone: str = 'local',
         verbose: bool = True,
         matured_kline_only: bool = False,
+        matured_kline_scope: str = 'last',
         logger: Any = None,
 ) -> pd.DataFrame:
     """ 从 channels 调用实时K线接口获取当天的最新实时K线数据，K线频率最低为‘d'，最高为'1min'
@@ -477,6 +478,10 @@ def fetch_real_time_klines(
     matured_kline_only: bool, default False
         是否只返回已经成熟的(也就是完整的上一个)K线数据，如果为True，则只返回已经成熟的K线数据，即已经完整的上一根K线数据
         如果为False，则返回最新的K线数据，哪怕这根K线数据并未完整
+    matured_kline_scope: str, default 'last'
+        当 ``matured_kline_only=True`` 时，控制返回范围：
+        - 'last'：仅返回最后一根成熟K线（兼容旧行为）
+        - 'all'：返回截至当前时刻所有成熟K线
     logger: logger
         用于记录下载数据的日志
 
@@ -490,6 +495,13 @@ def fetch_real_time_klines(
     data = []
     if isinstance(qt_codes, str):
         qt_codes = str_to_list(qt_codes)
+
+    normalized_scope = str(matured_kline_scope).strip().lower()
+    if normalized_scope not in ('last', 'all'):
+        raise ValueError(
+            f'Invalid matured_kline_scope: {matured_kline_scope}. '
+            f'Expected one of ["last", "all"].'
+        )
 
     # 获取当前时间以及当天日期
     current_time = get_current_timezone_datetime(time_zone)
@@ -524,7 +536,12 @@ def fetch_real_time_klines(
                     # 根据当前时间确定哪个是matured kline，而不是直接取最后一个，因为最后一个可能是不完整的
                     if matured_kline_only:
                         last_matured_index = np.searchsorted(df.index, current_time, side='right') - 1
-                        k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
+                        if last_matured_index < 0:
+                            continue
+                        if normalized_scope == 'all':
+                            k_line = df.iloc[:last_matured_index + 1, :]
+                        else:
+                            k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
                     else:  # 否则就直接取最后一个，不管是否完整
                         k_line = df.iloc[-1:, :]
                     data.append(k_line)
@@ -537,7 +554,12 @@ def fetch_real_time_klines(
             # 根据当前时间确定哪个是matured kline，而不是直接取最后一个，因为最后一个可能是不完整的
             if matured_kline_only:
                 last_matured_index = np.searchsorted(df.index, current_time, side='right') - 1
-                k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
+                if last_matured_index < 0:
+                    continue
+                if normalized_scope == 'all':
+                    k_line = df.iloc[:last_matured_index + 1, :]
+                else:
+                    k_line = df.iloc[last_matured_index:last_matured_index + 1, :]
             else:  # 否则就直接取最后一个，不管是否完整
                 k_line = df.iloc[-1:, :]
             data.append(k_line)

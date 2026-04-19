@@ -320,6 +320,41 @@ def parse_live_trade_signal(signals,
         available_amounts = own_amounts
     if available_cash is None:
         available_cash = own_cash
+
+    # 在进入 numba 解析函数前统一参数形状和类型，避免广播错误信息不明确
+    signals = np.asarray(signals, dtype=np.float64).ravel()
+    prices = np.asarray(prices, dtype=np.float64).ravel()
+    own_amounts = np.asarray(own_amounts, dtype=np.float64).ravel()
+    available_amounts = np.asarray(available_amounts, dtype=np.float64).ravel()
+    own_cash_values = np.asarray(own_cash, dtype=np.float64).ravel()
+    available_cash_values = np.asarray(available_cash, dtype=np.float64).ravel()
+    if own_cash_values.size == 0:
+        raise ValueError('parse_live_trade_signal: own_cash must contain at least one value.')
+    if available_cash_values.size == 0:
+        raise ValueError('parse_live_trade_signal: available_cash must contain at least one value.')
+    own_cash = float(own_cash_values[0])
+    available_cash = float(available_cash_values[0])
+
+    _sig_len = signals.size
+    _prc_len = prices.size
+    _amt_len = own_amounts.size
+    _avail_len = available_amounts.size
+    if not (_sig_len == _prc_len == _amt_len == _avail_len):
+        raise ValueError(
+            f'parse_live_trade_signal: array length mismatch! '
+            f'signals({_sig_len}) vs prices({_prc_len}) vs own_amounts({_amt_len}) '
+            f'vs available_amounts({_avail_len}).'
+        )
+    try:
+        _share_len = len(shares)
+    except TypeError as err:
+        raise TypeError('parse_live_trade_signal: shares must be a sequence of symbols.') from err
+    if _share_len != _prc_len:
+        raise ValueError(
+            f'parse_live_trade_signal: shares length mismatch! '
+            f'shares({_share_len}) vs prices({_prc_len}).'
+        )
+
     if not isinstance(trade_batch_size, (float, int)):
         raise TypeError('trade_batch_size must be a number.')
     if not isinstance(sell_batch_size, (float, int)):

@@ -16,6 +16,7 @@ from collections import deque
 from queue import Queue, Empty
 from abc import abstractmethod, ABCMeta
 from typing import Any, Mapping, Optional
+import threading
 
 import numpy as np
 import time
@@ -139,6 +140,10 @@ class Broker(object):
         self._broker_order_sequence = 0
         self._submitted_order_map = {}
         self._pending_fills = deque()
+        self._inflight_get_result = 0
+        self._inflight_get_result_lock = threading.Lock()
+        self._all_get_result_done = threading.Event()
+        self._all_get_result_done.set()
 
     @property
     def data_source(self):
@@ -170,7 +175,6 @@ class Broker(object):
         一个Generator，可以分批返回交易结果，直至订单处理完毕或出现错误。每一个transaction都会在单
         独的线程中运行
         """
-        from threading import Thread
         if not self.is_registered:
             raise RuntimeError(f'broker is not registered!')
         if self.debug:
@@ -205,7 +209,10 @@ class Broker(object):
 
                 # order_queue不为空，提取交易订单，在一个单独的thread中调用self._get_result()处理交易订单
                 order = self.order_queue.get()  # order is a dict, should be packed in a tuple
-                t = Thread(target=self._get_result, args=(order, ), daemon=True)
+                with self._inflight_get_result_lock:
+                    self._inflight_get_result += 1
+                    self._all_get_result_done.clear()
+                t = threading.Thread(target=self._run_get_result_in_thread, args=(order,), daemon=True)
                 t.start()
 
             except KeyboardInterrupt:
@@ -223,6 +230,17 @@ class Broker(object):
                 continue
 
         return
+
+    def _run_get_result_in_thread(self, order: Mapping[str, Any]) -> None:
+        """在线程中执行 ``_get_result`` 并维护在途计数。"""
+        try:
+            self._get_result(order)
+        finally:
+            with self._inflight_get_result_lock:
+                self._inflight_get_result -= 1
+                if self._inflight_get_result <= 0:
+                    self._inflight_get_result = 0
+                    self._all_get_result_done.set()
 
     def send_message(self, message: str, new_line=True):
         """ 将消息放入broker的消息队列
@@ -380,6 +398,36 @@ class Broker(object):
             drained_orders.append(order)
             self.order_queue.task_done()
         return drained_orders
+
+    def wait_until_idle(self, timeout: Optional[float] = 5.0) -> bool:
+        """Wait until queued orders are consumed and all worker threads finish.
+
+        Parameters
+        ----------
+        timeout : float or None, default 5.0
+            Maximum seconds to wait. If ``None``, wait indefinitely.
+
+        Returns
+        -------
+        bool
+            ``True`` if broker reaches idle state before timeout, otherwise ``False``.
+        """
+        check_interval = 0.02
+        if timeout is not None and timeout < 0:
+            timeout = 0.0
+        deadline = None if timeout is None else (time.time() + float(timeout))
+
+        while not self.order_queue.empty():
+            if deadline is not None and time.time() >= deadline:
+                return False
+            time.sleep(check_interval)
+
+        if deadline is None:
+            self._all_get_result_done.wait()
+            return True
+
+        remaining = max(0.0, deadline - time.time())
+        return self._all_get_result_done.wait(timeout=remaining)
 
     def _submit_order(self, order):
         """
