@@ -12,6 +12,7 @@
 
 from .data_summary import build_data_summary_skill
 from .strategy_meta import build_strategy_meta_get_skill, build_strategy_meta_list_skill
+from .system_fallback import build_system_fallback_skill
 from .visual_export import build_visual_export_skill
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "build_strategy_meta_get_skill",
     "build_data_summary_skill",
     "build_visual_export_skill",
+    "build_system_fallback_skill",
 ]

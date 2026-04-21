@@ -16,6 +16,13 @@ export QTEASY_AI_API_KEY="your_api_key"
 export QTEASY_AI_BASE_URL="https://api.openai.com/v1"
 ```
 
+也可以直接查看 qteasy 全局 AI 配置：
+
+```python
+import qteasy as qt
+print(qt.configuration(["ai_model", "ai_base_url", "ai_timeout", "ai_home"]))
+```
+
 ## 2. CLI 方式
 
 ### 2.1 Ask 模式
@@ -38,6 +45,14 @@ qteasy-ai run "export kline 000300.SH to png"
 
 执行后可在返回结果中查看 `run_file`，并追溯每个 step 的输入输出。
 
+### 2.4 Provider 配置诊断
+
+```bash
+qteasy-ai provider-check
+```
+
+输出会包含 `mode/model/base_url/timeout/api_key_present/config_sources`，用于快速确认当前是规则模式、云端模型还是本地模型。
+
 ## 3. Notebook 方式
 
 ```python
@@ -47,7 +62,17 @@ from qteasy.ai.app import QteasyAssistant
 assistant = QteasyAssistant()
 plan_payload = assistant.plan("list built-in strategies")
 run_payload = assistant.run("export kline of 000300.SH")
+debug_payload = assistant.debug_config()
 ```
+
+其中 `debug_payload` 可用于核对当前配置来源与模式，不包含明文 API key。
+
+对于尚未实现的能力（例如下载/回测/优化/策略生成等），当前阶段会返回结构化回退结果，
+`payload.fallback_action` 可能为：
+
+- `plan_only`
+- `not_supported_yet`
+- `clarify_required`
 
 ## 4. 本地记忆文件
 
@@ -58,3 +83,9 @@ run_payload = assistant.run("export kline of 000300.SH")
 - `.qteasy/ai/runs/*.json`
 
 其中 runs 文件用于复盘每次 plan 的执行轨迹与产物路径。
+
+## 5. 语料回归入口（可选）
+
+- 语料文件：`tests/ai_corpus/*.json`
+- 人工记录模板：`tests/ai_corpus/manual_record_template.md`
+- 执行脚本：`python tests/run_ai_manual_corpus.py`

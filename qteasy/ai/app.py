@@ -30,6 +30,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from .config import ConfigCenter
 from .executor import PlanExecutor
 from .memory_store import MemoryStore
 from .planner import Planner
@@ -39,6 +40,7 @@ from .skills import (
     build_data_summary_skill,
     build_strategy_meta_get_skill,
     build_strategy_meta_list_skill,
+    build_system_fallback_skill,
     build_visual_export_skill,
 )
 
@@ -64,6 +66,7 @@ def build_default_registry() -> SkillRegistry:
         build_strategy_meta_get_skill,
         build_data_summary_skill,
         build_visual_export_skill,
+        build_system_fallback_skill,
     ]:
         metadata, handler = builder()
         registry.register(metadata, handler)
@@ -156,3 +159,19 @@ class QteasyAssistant:
         plan.execution_mode = "execute"
         payload = self.executor.execute(plan, confirm=True)
         return payload
+
+    def debug_config(self) -> Dict[str, Any]:
+        """返回当前 AI 配置诊断信息（不泄露密钥）。"""
+
+        config_center = ConfigCenter()
+        provider_cfg = config_center.resolve_provider_config()
+        trace = config_center.get_trace()
+        api_key = str(provider_cfg.get("api_key", "")).strip()
+        return {
+            "provider_enabled": self.planner.provider is not None,
+            "model": str(provider_cfg.get("model", "")).strip(),
+            "base_url": str(provider_cfg.get("base_url", "")).strip(),
+            "timeout": int(provider_cfg.get("timeout", 30)),
+            "api_key_present": bool(api_key),
+            "config_sources": {key: item.get("source", "") for key, item in trace.items()},
+        }

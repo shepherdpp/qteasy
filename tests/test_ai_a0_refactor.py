@@ -11,6 +11,8 @@
 import tempfile
 import unittest
 
+import qteasy as qt
+
 from qteasy.ai.config import ConfigCenter
 from qteasy.ai.contracts import SkillMetadata, SkillSideEffects, ToolPlan, ToolStep
 from qteasy.ai.executor import PlanExecutor
@@ -18,6 +20,7 @@ from qteasy.ai.memory_store import MemoryStore
 from qteasy.ai.planner import Planner
 from qteasy.ai.registry import SkillRegistry
 from qteasy.ai.runtime import SkillRuntime
+from qteasy.ai.app import QteasyAssistant
 
 
 class TestAiA0Refactor(unittest.TestCase):
@@ -61,6 +64,64 @@ class TestAiA0Refactor(unittest.TestCase):
         self.assertEqual(value_env, "model_from_env")
         self.assertEqual(value_qt, "model_from_qt")
         self.assertEqual(value_default, "model_default")
+
+    def test_qt_global_ai_config_registered(self) -> None:
+        """验证 ai_* 已注册到 qteasy 全局配置。"""
+
+        keys = ["ai_model", "ai_api_key", "ai_base_url", "ai_timeout", "ai_home"]
+        qt.configuration(keys)
+        current = {key: qt.QT_CONFIG.get(key) for key in keys}
+        print("\n[TestAiA0Refactor] global ai config:", current)
+        for key in keys:
+            self.assertIn(key, current)
+
+    def test_qt_configuration_and_config_center_consistency(self) -> None:
+        """验证 QT_CONFIG 与 ConfigCenter 读取一致。"""
+
+        backup = {
+            "ai_model": qt.QT_CONFIG.get("ai_model"),
+            "ai_base_url": qt.QT_CONFIG.get("ai_base_url"),
+            "ai_timeout": qt.QT_CONFIG.get("ai_timeout"),
+            "ai_home": qt.QT_CONFIG.get("ai_home"),
+        }
+        try:
+            qt.configure(
+                ai_model="unit_test_model",
+                ai_base_url="http://127.0.0.1:9000/v1",
+                ai_timeout=45,
+                ai_home=".qteasy/ai/unit_test_home",
+            )
+            from_qt = {
+                "ai_model": qt.QT_CONFIG.get("ai_model"),
+                "ai_base_url": qt.QT_CONFIG.get("ai_base_url"),
+                "ai_timeout": qt.QT_CONFIG.get("ai_timeout"),
+                "ai_home": qt.QT_CONFIG.get("ai_home"),
+            }
+            center = ConfigCenter(env={}, qt_config=qt.QT_CONFIG)
+            provider_cfg = center.resolve_provider_config()
+            home_val = center.resolve("ai_home", env_key="QTEASY_AI_HOME", qt_key="ai_home", default=".qteasy/ai/")
+            print("\n[TestAiA0Refactor] from qt:", from_qt)
+            print(" provider cfg:", provider_cfg)
+            print(" ai_home:", home_val)
+            self.assertEqual(provider_cfg["model"], "unit_test_model")
+            self.assertEqual(provider_cfg["base_url"], "http://127.0.0.1:9000/v1")
+            self.assertEqual(provider_cfg["timeout"], 45)
+            self.assertEqual(home_val, ".qteasy/ai/unit_test_home")
+        finally:
+            qt.configure(**backup)
+
+    def test_assistant_debug_config(self) -> None:
+        """验证 Notebook 入口配置诊断输出。"""
+
+        assistant = QteasyAssistant()
+        info = assistant.debug_config()
+        print("\n[TestAiA0Refactor] debug config:", info)
+        self.assertIn("provider_enabled", info)
+        self.assertIn("model", info)
+        self.assertIn("base_url", info)
+        self.assertIn("timeout", info)
+        self.assertIn("api_key_present", info)
+        self.assertIn("config_sources", info)
 
     def test_planner_hybrid_trace(self) -> None:
         """验证 Planner 三段式输出包含 planner_trace。"""

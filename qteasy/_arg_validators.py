@@ -421,6 +421,36 @@ def _valid_qt_kwargs():
              'level':     4,
              'text':      '确定本地历史数据文件存储路径'},
 
+        'ai_model':
+            {'Default':   '',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'AI 外壳默认模型名称。为空时表示不启用 Provider，使用规则模式。'},
+
+        'ai_api_key':
+            {'Default':   '',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'AI 外壳默认 API Key。建议通过环境变量配置，避免明文写入配置文件。'},
+
+        'ai_base_url':
+            {'Default':   'https://api.openai.com/v1',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'AI 外壳默认 OpenAI-compatible 基础 URL，不含 /chat/completions。'},
+
+        'ai_timeout':
+            {'Default':   30,
+             'Validator': lambda value: isinstance(value, int) and value > 0,
+             'level':     4,
+             'text':      'AI 外壳调用 Provider 的超时时间（秒），必须为正整数。'},
+
+        'ai_home':
+            {'Default':   '.qteasy/ai/',
+             'Validator': lambda value: isinstance(value, str),
+             'level':     4,
+             'text':      'AI 外壳本地记忆目录（profile/env_facts/runs）的默认根路径。'},
+
         'local_db_host':
             {'Default':   'localhost',
              'Validator': lambda value: isinstance(value, str),
