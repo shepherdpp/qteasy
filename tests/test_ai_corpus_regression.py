@@ -35,12 +35,12 @@ class TestAiCorpusRegression(unittest.TestCase):
             query = case["query"]
             mode = case.get("mode", "plan")
             if mode == "ask":
-                payload = assistant.ask(query)
+                payload = assistant.ask(query, response_style="raw")
                 steps = payload["plan"]["steps"]
                 print(" ask case:", case["id"], "steps:", len(steps))
                 self.assertEqual(steps, [])
             else:
-                payload = assistant.plan(query)
+                payload = assistant.plan(query, response_style="raw")
                 steps = payload["plan"]["steps"]
                 print(" plan case:", case["id"], "skill:", steps[0]["skill_name"] if steps else "")
                 self.assertGreaterEqual(len(steps), 1)
@@ -53,7 +53,7 @@ class TestAiCorpusRegression(unittest.TestCase):
         cases = self._load_cases("future_capabilities.json")
         print("\n[TestAiCorpusRegression] future capability cases:", len(cases))
         for case in cases:
-            payload = assistant.run(case["query"])
+            payload = assistant.run(case["query"], response_style="raw")
             result = payload["execution"]["steps"][0]["result"]
             action = result.get("payload", {}).get("fallback_action")
             error_code = (result.get("error") or {}).get("code", "")
@@ -68,7 +68,7 @@ class TestAiCorpusRegression(unittest.TestCase):
         cases = self._load_cases("error_corpus.json")
         print("\n[TestAiCorpusRegression] error cases:", len(cases))
         for case in cases:
-            payload = assistant.run(case["query"])
+            payload = assistant.run(case["query"], response_style="raw")
             status = payload["execution"]["status"]
             steps = payload["execution"]["steps"]
             print(" error case:", case["id"], "status:", status, "steps:", len(steps))
@@ -77,6 +77,18 @@ class TestAiCorpusRegression(unittest.TestCase):
             print("  error:", error)
             self.assertIn(error.get("code", ""), case["expected_error_codes"])
             self.assertIn("message", error)
+
+    def test_user_friendly_output_has_required_fields(self) -> None:
+        """验证 user_friendly 输出包含 narrative/code/preview。"""
+
+        assistant = QteasyAssistant()
+        output = assistant.plan("list built-in strategies", response_style="user_friendly")
+        output_dict = output.to_dict()
+        print("\n[TestAiCorpusRegression] user_friendly output:", output_dict)
+        self.assertTrue(output_dict["narrative"])
+        self.assertTrue(output_dict["python_code"])
+        self.assertIn("result_preview", output_dict)
+        self.assertIn("raw", output_dict)
 
 
 if __name__ == "__main__":

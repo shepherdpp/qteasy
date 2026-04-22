@@ -77,6 +77,16 @@ def _print_json(payload: Dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
+def _normalize_output(payload: Any) -> Dict[str, Any]:
+    """将 Assistant 输出转换为可序列化字典。"""
+
+    if hasattr(payload, "to_dict"):
+        return payload.to_dict()
+    if isinstance(payload, dict):
+        return payload
+    return {"output": str(payload)}
+
+
 def build_parser() -> argparse.ArgumentParser:
     """创建命令行参数解析器。"""
 
@@ -88,12 +98,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     ask_parser = sub.add_parser("ask", help="Ask mode, no skill execution.")
     ask_parser.add_argument("query", type=str, help="Natural language query")
+    ask_parser.add_argument("--pretty", action="store_true", help="Render user-friendly output")
+    ask_parser.add_argument("--raw", action="store_true", help="Force raw payload output")
 
     plan_parser = sub.add_parser("plan", help="Plan mode dry run.")
     plan_parser.add_argument("query", type=str, help="Natural language query")
+    plan_parser.add_argument("--pretty", action="store_true", help="Render user-friendly output")
+    plan_parser.add_argument("--raw", action="store_true", help="Force raw payload output")
 
     run_parser = sub.add_parser("run", help="Plan and execute.")
     run_parser.add_argument("query", type=str, help="Natural language query")
+    run_parser.add_argument("--pretty", action="store_true", help="Render user-friendly output")
+    run_parser.add_argument("--raw", action="store_true", help="Force raw payload output")
 
     sub.add_parser("provider-check", help="Check provider settings.")
     return parser
@@ -108,15 +124,20 @@ def main() -> int:
     memory_store = MemoryStore()
     provider = _build_provider_from_config()
     assistant = QteasyAssistant(provider=provider, memory_store=memory_store)
+    response_style = "raw"
+    if getattr(args, "pretty", False) and not getattr(args, "raw", False):
+        response_style = "user_friendly"
+    if getattr(args, "raw", False):
+        response_style = "raw"
 
     if args.command == "ask":
-        _print_json(assistant.ask(args.query))
+        _print_json(_normalize_output(assistant.ask(args.query, response_style=response_style)))
         return 0
     if args.command == "plan":
-        _print_json(assistant.plan(args.query))
+        _print_json(_normalize_output(assistant.plan(args.query, response_style=response_style)))
         return 0
     if args.command == "run":
-        _print_json(assistant.run(args.query))
+        _print_json(_normalize_output(assistant.run(args.query, response_style=response_style)))
         return 0
     if args.command == "provider-check":
         _print_json(_provider_check_payload())

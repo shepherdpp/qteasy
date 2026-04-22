@@ -28,8 +28,8 @@ class TestAiCliNotebookEntry(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             store = MemoryStore(base_dir=temp_dir)
             assistant = QteasyAssistant(registry=build_default_registry(), memory_store=store)
-            plan_payload = assistant.plan("list built-in strategies")
-            run_payload = assistant.run("list built-in strategies")
+            plan_payload = assistant.plan("list built-in strategies", response_style="raw")
+            run_payload = assistant.run("list built-in strategies", response_style="raw")
 
             print("\n[TestAiCliNotebookEntry] plan status:", plan_payload["execution"]["status"])
             print(" run status:", run_payload["execution"]["status"])
@@ -51,6 +51,19 @@ class TestAiCliNotebookEntry(unittest.TestCase):
 
         self.assertEqual(payload["execution"]["status"], "dry_run")
         self.assertIn("plan_id", payload["plan"])
+
+    def test_cli_plan_command_pretty(self) -> None:
+        """验证 CLI pretty 模式可输出用户友好结构。"""
+
+        cmd = [sys.executable, "-m", "qteasy.ai.cli", "plan", "list built-in strategies", "--pretty"]
+        completed = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        payload = json.loads(completed.stdout)
+
+        print("\n[TestAiCliNotebookEntry] cli pretty stdout:", completed.stdout[:240])
+        self.assertIn("narrative", payload)
+        self.assertIn("python_code", payload)
+        self.assertIn("result_preview", payload)
+        self.assertIn("raw", payload)
 
     def test_cli_provider_check_diagnostics(self) -> None:
         """验证 provider-check 返回配置诊断信息。"""

@@ -33,9 +33,12 @@ from typing import Any, Dict, Optional
 from .config import ConfigCenter
 from .executor import PlanExecutor
 from .memory_store import MemoryStore
+from .output import AssistantOutput
 from .planner import Planner
 from .provider import BaseLLMProvider
+from .renderer import OutputRenderer
 from .registry import SkillRegistry
+from .run_policy import RunStorePolicy
 from .skills import (
     build_data_summary_skill,
     build_strategy_meta_get_skill,
@@ -106,6 +109,7 @@ class QteasyAssistant:
         provider: Optional[BaseLLMProvider] = None,
         memory_store: Optional[MemoryStore] = None,
         registry: Optional[SkillRegistry] = None,
+        run_policy: Optional[RunStorePolicy] = None,
     ) -> None:
         # MemoryStore：负责持久化执行记录与轻量记忆。
         self.memory_store = memory_store or MemoryStore()
@@ -113,10 +117,20 @@ class QteasyAssistant:
         self.registry = registry or build_default_registry()
         # Planner：根据用户请求生成计划对象。
         self.planner = Planner(self.registry, provider=provider)
-        # Executor：负责按计划执行并落盘 run 记录。
+        # Executor：负责按计划执行。
         self.executor = PlanExecutor(self.registry, self.memory_store)
+        self.renderer = OutputRenderer()
+        self.run_policy = run_policy or RunStorePolicy()
+        self._last_run_id = ""
 
-    def ask(self, query: str) -> Dict[str, Any]:
+    def ask(
+        self,
+        query: str,
+        *,
+        response_style: str = "user_friendly",
+        persist: str | None = None,
+        keep: bool = False,
+    ) -> Dict[str, Any] | AssistantOutput:
         """Ask 模式：仅返回 plan，不执行技能。
 
         Parameters
@@ -131,10 +145,22 @@ class QteasyAssistant:
         """
 
         plan = self.planner.build_plan(query, mode="ask")
-        payload = self.executor.execute(plan, confirm=False)
-        return payload
+        return self._execute_and_format(
+            plan=plan,
+            confirm=False,
+            response_style=response_style,
+            persist=persist,
+            keep=keep,
+        )
 
-    def plan(self, query: str) -> Dict[str, Any]:
+    def plan(
+        self,
+        query: str,
+        *,
+        response_style: str = "user_friendly",
+        persist: str | None = None,
+        keep: bool = False,
+    ) -> Dict[str, Any] | AssistantOutput:
         """Plan 模式：生成 dry_run 计划。
 
         与 `ask()` 的区别在于：
@@ -143,10 +169,22 @@ class QteasyAssistant:
         """
 
         plan = self.planner.build_plan(query, mode="plan")
-        payload = self.executor.execute(plan, confirm=False)
-        return payload
+        return self._execute_and_format(
+            plan=plan,
+            confirm=False,
+            response_style=response_style,
+            persist=persist,
+            keep=keep,
+        )
 
-    def run(self, query: str) -> Dict[str, Any]:
+    def run(
+        self,
+        query: str,
+        *,
+        response_style: str = "user_friendly",
+        persist: str | None = None,
+        keep: bool = False,
+    ) -> Dict[str, Any] | AssistantOutput:
         """Plan + 确认执行。
 
         工作流程：
@@ -157,8 +195,59 @@ class QteasyAssistant:
 
         plan = self.planner.build_plan(query, mode="plan")
         plan.execution_mode = "execute"
-        payload = self.executor.execute(plan, confirm=True)
-        return payload
+        return self._execute_and_format(
+            plan=plan,
+            confirm=True,
+            response_style=response_style,
+            persist=persist,
+            keep=keep,
+        )
+
+    def _execute_and_format(
+        self,
+        *,
+        plan: Any,
+        confirm: bool,
+        response_style: str,
+        persist: str | None,
+        keep: bool,
+    ) -> Dict[str, Any] | AssistantOutput:
+        """执行并按策略处理落盘与渲染。"""
+
+        persist_mode = persist or self.run_policy.persist_mode
+        persist_run = persist_mode in {"bounded", "audit"}
+        payload = self.executor.execute(plan, confirm=confirm, persist_run=False)
+
+        if persist_run:
+            run_id = str(payload.get("run_id", "")).strip()
+            if run_id:
+                run_file = self.memory_store.save_run(run_id, payload)
+                payload["run_file"] = run_file
+                self._last_run_id = run_id
+                if persist_mode == "bounded":
+                    cleanup_report = self.memory_store.cleanup_runs(
+                        max_age_days=self.run_policy.max_age_days,
+                        max_count=self.run_policy.max_count,
+                        max_total_mb=self.run_policy.max_total_mb,
+                    )
+                else:
+                    cleanup_report = {"deleted_count": 0, "deleted_files": [], "remaining_count": len(self.memory_store.list_runs())}
+                payload["cleanup"] = cleanup_report
+                if keep:
+                    payload["pinned_file"] = self.memory_store.pin_run(run_id, tag="keep")
+        else:
+            payload["run_file"] = ""
+            payload["cleanup"] = {"deleted_count": 0, "deleted_files": [], "remaining_count": len(self.memory_store.list_runs())}
+
+        if response_style == "raw":
+            return payload
+
+        rendered = self.renderer.render(payload, style="user_friendly", context={"persist_mode": persist_mode})
+        if self.run_policy.show_save_hint:
+            run_file = payload.get("run_file", "")
+            hint = f"\nRun file: {run_file}" if run_file else "\nRun file: not persisted."
+            rendered.narrative = rendered.narrative + hint
+        return rendered
 
     def debug_config(self) -> Dict[str, Any]:
         """返回当前 AI 配置诊断信息（不泄露密钥）。"""
@@ -175,3 +264,10 @@ class QteasyAssistant:
             "api_key_present": bool(api_key),
             "config_sources": {key: item.get("source", "") for key, item in trace.items()},
         }
+
+    def pin_last_run(self, tag: str = "") -> str:
+        """将最近一次 run 记录钉住保存。"""
+
+        if not self._last_run_id:
+            raise ValueError("No run has been persisted yet.")
+        return self.memory_store.pin_run(self._last_run_id, tag=tag)
