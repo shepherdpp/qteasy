@@ -72,6 +72,48 @@ debug_payload = assistant.debug_config()
 `plan_output` / `run_output` 默认包含 `narrative/python_code/result_preview/raw` 四段信息。
 如需完全兼容旧版结构化输出，使用 `response_style="raw"`。
 
+### 3.1 Classic Notebook 魔法命令（无需 ipywidgets）
+
+在 Classic Notebook 中可直接加载扩展，用“只写 prompt”的方式交互：
+
+```python
+%load_ext qteasy.ai.notebook_magic
+```
+
+Plan（默认）：
+
+```python
+%%qtai --mode plan
+列出所有内置策略，并告诉我 macd 策略参数
+```
+
+Ask（纯只读）：
+
+```python
+%%qtai --mode ask
+解释一下 PT/PS/VS 信号语义差异
+```
+
+Run（先 plan，后 confirm）：
+
+```python
+%%qtai --mode run
+列出所有内置策略
+```
+
+输出会给出确认指令，再在下一个 cell 执行：
+
+```python
+%%qtai --confirm <plan_id>
+Execute.
+```
+
+可选参数：
+
+- `--raw`：返回原始结构化输出
+- `--persist {bounded,audit,none}`：覆盖本次留存策略
+- `--keep`：将本次 run 标记为保留
+
 对于尚未实现的能力（例如下载/回测/优化/策略生成等），当前阶段会返回结构化回退结果，
 `payload.fallback_action` 可能为：
 
