@@ -26,7 +26,7 @@ MemoryStore 是阶段A“可追溯”能力的核心支撑模块，解决三个�
 from __future__ import annotations
 
 import json
-import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -50,13 +50,15 @@ class MemoryStore:
             explicit=base_dir,
             env_key="QTEASY_AI_HOME",
             qt_key="ai_home",
-            default=os.path.join(os.getcwd(), ".qteasy", "ai"),
+            default=".qteasy/ai/",
         )
         self.base_dir = Path(base_dir)
         self.runs_dir = self.base_dir / "runs"
+        self.pinned_dir = self.base_dir / "pinned"
         # 初始化时确保目录存在，避免后续写入分支到处做 mkdir。
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.runs_dir.mkdir(parents=True, exist_ok=True)
+        self.pinned_dir.mkdir(parents=True, exist_ok=True)
 
     @property
     def profile_path(self) -> Path:
@@ -167,3 +169,67 @@ class MemoryStore:
 
         for path in self.runs_dir.glob("*.json"):
             path.unlink(missing_ok=True)
+
+    def list_pinned(self) -> List[str]:
+        """返回 pinned run_id 列表。"""
+
+        return sorted(path.stem.split("__", 1)[0] for path in self.pinned_dir.glob("*.json"))
+
+    def pin_run(self, run_id: str, *, tag: str = "") -> str:
+        """将 runs 中记录钉住到 pinned。"""
+
+        source = self.runs_dir / f"{run_id}.json"
+        if not source.exists():
+            raise FileNotFoundError(f"Run file not found for pinning: {run_id}")
+        safe_tag = "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in tag.strip()) if tag else ""
+        target_name = f"{run_id}.json" if not safe_tag else f"{run_id}__{safe_tag}.json"
+        target = self.pinned_dir / target_name
+        shutil.copy2(source, target)
+        return str(target)
+
+    def cleanup_runs(self, *, max_age_days: int, max_count: int, max_total_mb: int) -> Dict[str, Any]:
+        """按天数/数量/空间限制清理 runs。"""
+
+        max_age_days = max(0, int(max_age_days))
+        max_count = max(1, int(max_count))
+        max_total_bytes = max(1, int(max_total_mb)) * 1024 * 1024
+
+        now = datetime.utcnow().timestamp()
+        run_files = sorted(self.runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        deleted: List[str] = []
+
+        # 1) 先按 age 清理
+        for path in list(run_files):
+            age_days = (now - path.stat().st_mtime) / 86400
+            if age_days > max_age_days:
+                path.unlink(missing_ok=True)
+                deleted.append(path.name)
+
+        run_files = sorted(self.runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+
+        # 2) 按数量清理
+        if len(run_files) > max_count:
+            for path in run_files[max_count:]:
+                path.unlink(missing_ok=True)
+                deleted.append(path.name)
+            run_files = run_files[:max_count]
+
+        # 3) 按空间清理
+        total_bytes = sum(path.stat().st_size for path in run_files if path.exists())
+        if total_bytes > max_total_bytes:
+            for path in sorted(run_files, key=lambda p: p.stat().st_mtime):
+                if total_bytes <= max_total_bytes:
+                    break
+                size = path.stat().st_size
+                path.unlink(missing_ok=True)
+                deleted.append(path.name)
+                total_bytes -= size
+
+        remaining = sorted(self.runs_dir.glob("*.json"))
+        remaining_bytes = sum(path.stat().st_size for path in remaining)
+        return {
+            "deleted_count": len(deleted),
+            "deleted_files": sorted(set(deleted)),
+            "remaining_count": len(remaining),
+            "remaining_total_mb": round(remaining_bytes / 1024 / 1024, 4),
+        }

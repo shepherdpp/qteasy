@@ -2728,6 +2728,104 @@ class TestTradingUtilFuncs(unittest.TestCase):
         #  2, allow_sell_short = False done
         #  3. no available cash and no available shares
 
+    def test_parse_live_trade_signal_raises_on_array_length_mismatch(self):
+        print('\n[TestTradingUtilFuncs] parse_live_trade_signal should reject mismatched array lengths')
+        shares = ['000001', '000002']
+        signals = np.zeros(0, dtype=float)
+        prices = np.array([10.09, 1.90], dtype=float)
+        own_amounts = np.array([0.0, 0.0], dtype=float)
+        available_amounts = np.array([0.0, 0.0], dtype=float)
+        own_cash = 100000.0
+        available_cash = 100000.0
+        cost_params = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=float)
+        print(' shares:', shares)
+        print(' lengths:', len(signals), len(prices), len(own_amounts), len(available_amounts))
+        with self.assertRaises(ValueError) as cm:
+            parse_live_trade_signal(
+                    signals=signals,
+                    signal_type='pt',
+                    shares=shares,
+                    prices=prices,
+                    own_amounts=own_amounts,
+                    own_cash=own_cash,
+                    available_amounts=available_amounts,
+                    available_cash=available_cash,
+                    cost_params=cost_params,
+                    pt_buy_threshold=0.0,
+                    pt_sell_threshold=0.0,
+                    allow_sell_short=False,
+                    trade_batch_size=0.01,
+                    sell_batch_size=0.01,
+                    long_position_limit=1.0,
+                    short_position_limit=-1.0,
+            )
+        err_msg = str(cm.exception)
+        print(' error message:', err_msg)
+        self.assertIn('array length mismatch', err_msg)
+        self.assertIn('signals(0)', err_msg)
+
+    def test_parse_live_trade_signal_cash_normalization_keeps_result_consistent(self):
+        print('\n[TestTradingUtilFuncs] parse_live_trade_signal keeps result under cash input shape variants')
+        shares = ['000001', '000002', '000003']
+        signals = np.array([0.1, 0.1, 0.1], dtype=float)
+        prices = np.array([20.0, 20.0, 20.0], dtype=float)
+        own_amounts = np.array([500.0, 500.0, 1000.0], dtype=float)
+        available_amounts = np.array([500.0, 500.0, 1000.0], dtype=float)
+        cost_params = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=float)
+
+        baseline = parse_live_trade_signal(
+                signals=signals,
+                signal_type='pt',
+                shares=shares,
+                prices=prices,
+                own_amounts=own_amounts,
+                own_cash=100000.0,
+                available_amounts=available_amounts,
+                available_cash=100000.0,
+                cost_params=cost_params,
+                pt_buy_threshold=0.0,
+                pt_sell_threshold=0.0,
+                allow_sell_short=True,
+                trade_batch_size=0.01,
+                sell_batch_size=0.01,
+                long_position_limit=1.0,
+                short_position_limit=-1.0,
+        )
+        own_cash_variants = [
+            np.float64(100000.0),
+            np.array([100000.0], dtype=np.float64),
+            np.array([[100000.0]], dtype=np.float64),
+        ]
+        available_cash_variants = [
+            np.float64(100000.0),
+            np.array([100000.0], dtype=np.float64),
+            np.array([[100000.0]], dtype=np.float64),
+        ]
+        print(' baseline result:', baseline)
+        for idx, (own_cash_variant, available_cash_variant) in enumerate(
+                zip(own_cash_variants, available_cash_variants)
+        ):
+            parsed = parse_live_trade_signal(
+                    signals=signals,
+                    signal_type='pt',
+                    shares=shares,
+                    prices=prices,
+                    own_amounts=own_amounts,
+                    own_cash=own_cash_variant,
+                    available_amounts=available_amounts,
+                    available_cash=available_cash_variant,
+                    cost_params=cost_params,
+                    pt_buy_threshold=0.0,
+                    pt_sell_threshold=0.0,
+                    allow_sell_short=True,
+                    trade_batch_size=0.01,
+                    sell_batch_size=0.01,
+                    long_position_limit=1.0,
+                    short_position_limit=-1.0,
+            )
+            print(f' variant {idx} own_cash={own_cash_variant} available_cash={available_cash_variant}: {parsed}')
+            self.assertEqual(parsed, baseline)
+
     def test_itemize_trade_signals(self):
         """ test itemize trade signals"""
         # test _signal_to_order_elements with only one symbol, buy 500 shares in long position

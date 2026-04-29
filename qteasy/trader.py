@@ -71,14 +71,73 @@ from .utilfuncs import (
     get_current_timezone_datetime,
 )
 
-UNIT_TO_TABLE = {
-    'h':     'stock_hourly',
-    '30min': 'stock_30min',
-    '15min': 'stock_15min',
-    '5min':  'stock_5min',
-    '1min':  'stock_1min',
-    'min':   'stock_1min',
+ASSET_UNIT_TO_TABLE = {
+    # 股票
+    ('E', 'h'):     'stock_hourly',
+    ('E', '30min'): 'stock_30min',
+    ('E', '15min'): 'stock_15min',
+    ('E', '5min'):  'stock_5min',
+    ('E', '1min'):  'stock_1min',
+    ('E', 'min'):   'stock_1min',
+    # 基金
+    ('FD', 'h'):     'fund_hourly',
+    ('FD', '30min'): 'fund_30min',
+    ('FD', '15min'): 'fund_15min',
+    ('FD', '5min'):  'fund_5min',
+    ('FD', '1min'):  'fund_1min',
+    ('FD', 'min'):   'fund_1min',
+    # 指数
+    ('IDX', 'h'):     'index_hourly',
+    ('IDX', '30min'): 'index_30min',
+    ('IDX', '15min'): 'index_15min',
+    ('IDX', '5min'):  'index_5min',
+    ('IDX', '1min'):  'index_1min',
+    ('IDX', 'min'):   'index_1min',
+    # 期货
+    ('FT', 'h'):     'future_hourly',
+    ('FT', '30min'): 'future_30min',
+    ('FT', '15min'): 'future_15min',
+    ('FT', '5min'):  'future_5min',
+    ('FT', '1min'):  'future_1min',
+    ('FT', 'min'):   'future_1min',
 }
+
+
+def _resolve_tables_for_refresh(asset_type_str: Union[str, list[str], tuple[str, ...]],
+                                unit: str) -> list[str]:
+    """根据资产类型与频率解析实时刷新目标数据表列表。"""
+
+    if not isinstance(unit, str):
+        raise KeyError(f'Invalid unit type: {type(unit)}. unit must be str.')
+    normalized_unit = unit.strip().lower()
+    if not normalized_unit:
+        raise KeyError('Invalid unit: empty string.')
+
+    if isinstance(asset_type_str, str):
+        atypes = str_to_list(asset_type_str)
+    elif isinstance(asset_type_str, (list, tuple)):
+        atypes = [str(item).strip() for item in asset_type_str if str(item).strip()]
+    else:
+        raise KeyError(
+            f'Invalid asset_type type: {type(asset_type_str)}. '
+            f'asset_type must be str/list/tuple.'
+        )
+    if not atypes:
+        raise KeyError('Invalid asset_type: empty value.')
+
+    tables: list[str] = []
+    for atype in atypes:
+        normalized_asset_type = atype.upper()
+        key = (normalized_asset_type, normalized_unit)
+        if key not in ASSET_UNIT_TO_TABLE:
+            raise KeyError(
+                f'Unsupported refresh table mapping for asset_type={normalized_asset_type}, '
+                f'unit={normalized_unit}.'
+            )
+        table_name = ASSET_UNIT_TO_TABLE[key]
+        if table_name not in tables:
+            tables.append(table_name)
+    return tables
 
 
 def run_sync_task(task_func, *args) -> None:
@@ -1324,7 +1383,7 @@ class Trader(object):
 
     def refresh_datasource_price_data(self, unit: str) -> None:
         """ 从data_channel中下载最新的价格数据，并更新到数据源中，确保实盘运行前交易策略可以获取到最新的数据"""
-        table_to_update = UNIT_TO_TABLE[unit.lower()]
+        tables_to_update = _resolve_tables_for_refresh(self.asset_type, unit)
         # 这里不能将不完整的实时数据直接写入数据库，因为最新K线的数据可能尚不完整，只有上一个K线数据才是完整的
         real_time_data = fetch_real_time_klines(
                 freq=unit.lower(),
@@ -1332,19 +1391,25 @@ class Trader(object):
                 qt_codes=self.asset_pool,
                 verbose=False,
                 matured_kline_only=True,  # 这里确保只获取成熟的K线数据
+                matured_kline_scope='all',  # 实盘刷新需要累计写入截至当前时刻的全部成熟K线
         )
         # 将real_time_data写入DataSource
         self.send_message(message=f'got real time data from channel {self.live_price_channel}:\n'
                                   f'{real_time_data.to_string()}\n'
-                                  f'writing data to datasource: {self.datasource}...', debug=True)
+                                  f'writing data to datasource tables: {tables_to_update}, '
+                                  f'datasource: {self.datasource}...', debug=True)
 
-        rows_written = self._datasource.update_table_data(
-                table=table_to_update,
-                df=real_time_data,
-                merge_type='update',
-        )
-        self.send_message(message=f'{rows_written} rows real-time price data written to'
-                                  f'data source: {self.datasource}', debug=True)
+        for table_to_update in tables_to_update:
+            rows_written = self._datasource.update_table_data(
+                    table=table_to_update,
+                    df=real_time_data,
+                    merge_type='update',
+            )
+            self.send_message(
+                message=f'{rows_written} rows real-time price data written to table '
+                        f'{table_to_update} in datasource: {self.datasource}',
+                debug=True
+            )
 
     # ============= functions related to trade config and logging ====================
 
@@ -2590,7 +2655,10 @@ class Trader(object):
         self.task_queue.put(task)
 
     def _add_task_from_schedule(self, current_time=None) -> None:
-        """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务
+        """ 根据当前时间从任务日程中添加任务到任务队列，只有到时间时才添加任务。
+
+        当多条任务同时满足 ``task_time <= current_time`` 时，按计划时间升序入队，
+        以保证队列执行顺序与交易日时间顺序一致。
 
         Parameters
         ----------
@@ -2602,6 +2670,7 @@ class Trader(object):
             current_time = self.get_current_tz_datetime().time()  # 产生本地时间
         # 对比当前时间和任务日程中的任务时间，如果任务时间小于等于当前时间，添加任务到任务队列并删除该任务
         # 从后向前遍历，避免 pop(idx) 后后续索引错位导致漏处理
+        expired_tasks = []
         for idx in range(len(self.task_daily_schedule) - 1, -1, -1):
             task_tuple = self.task_daily_schedule[idx]
             task_time = pd.to_datetime(task_tuple[0], utc=True).time()
@@ -2617,9 +2686,14 @@ class Trader(object):
                     err = ValueError(f'Invalid task tuple: No task found in {task_tuple}')
                     raise err
 
-                self.send_message(f'current time {current_time} >= task time {task_time}, '
-                                  f'adding task: {task} from agenda', debug=True)
-                self._add_task_to_queue(task)
+                expired_tasks.append((task_time, idx, task, task_tuple))
+
+        # 统一按时间正序入队，保证执行顺序与日程时间顺序一致
+        expired_tasks.sort(key=lambda item: (item[0], item[1]))
+        for task_time, _, task, task_tuple in expired_tasks:
+            self.send_message(f'current time {current_time} >= task time {task_time}, '
+                              f'adding task: {task} from agenda ({task_tuple})', debug=True)
+            self._add_task_to_queue(task)
 
     def _initialize_schedule(self, current_time=None) -> None:
         """ 初始化交易日的任务日程, 在任务清单中添加以下任务：

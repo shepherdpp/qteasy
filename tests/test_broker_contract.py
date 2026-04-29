@@ -9,6 +9,8 @@
 # ======================================
 
 import unittest
+import threading
+import time
 
 from qteasy.broker import Broker, SimpleBroker, SimulatorBroker
 from qteasy.trade_io import validate_raw_trade_result
@@ -57,6 +59,28 @@ class LegacyMinimalBroker(Broker):
         )
 
     def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
+        yield 'filled', float(order_qty), float(order_price), 5.0
+
+
+class SlowAsyncBrokerForIdleWaitTest(Broker):
+    """用于验证 wait_until_idle 的慢速异步 Broker。"""
+
+    def __init__(self):
+        super().__init__(data_source=None)
+        self.broker_name = 'SlowAsyncBroker'
+
+    def _parse_order(self, order):
+        return (
+            order['order_type'],
+            order.get('symbol', '000001.SH'),
+            float(order['qty']),
+            float(order['price']),
+            order['direction'],
+            order.get('position', 'long'),
+        )
+
+    def transaction(self, symbol, order_qty, order_price, direction, position='long', order_type='market'):
+        time.sleep(0.3)
         yield 'filled', float(order_qty), float(order_price), 5.0
 
 
@@ -241,6 +265,33 @@ class TestBrokerContract(unittest.TestCase):
         print(' first:', first, ' second:', second)
         self.assertEqual(first, [])
         self.assertEqual(second, [])
+
+    def test_wait_until_idle_waits_for_async_get_result(self):
+        print('\n[TestBrokerContract] wait_until_idle 等待异步 _get_result 线程完成')
+        broker = SlowAsyncBrokerForIdleWaitTest()
+        broker.register(debug=True)
+        broker_thread = threading.Thread(target=broker.run, daemon=True)
+        broker_thread.start()
+        broker.order_queue.put(dict(self.order))
+
+        start_ts = time.time()
+        idle_ok = broker.wait_until_idle(timeout=2.0)
+        elapsed = time.time() - start_ts
+        print(f' wait_until_idle returned: {idle_ok}, elapsed: {elapsed:.3f}s')
+        self.assertTrue(idle_ok)
+        self.assertGreaterEqual(elapsed, 0.25)
+
+        self.assertFalse(broker.result_queue.empty())
+        raw_result = broker.result_queue.get()
+        broker.result_queue.task_done()
+        print(' raw_result:', raw_result)
+        validate_raw_trade_result(raw_result, context='test.wait_until_idle')
+        self.assertEqual(raw_result['order_id'], self.order['order_id'])
+        self.assertEqual(raw_result['filled_qty'], self.order['qty'])
+        self.assertEqual(raw_result['price'], self.order['price'])
+
+        broker.status = 'stopped'
+        broker_thread.join(timeout=1.0)
 
 
 if __name__ == '__main__':

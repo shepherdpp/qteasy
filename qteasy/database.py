@@ -487,8 +487,19 @@ class DataSource:
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
         if date_like_pk is not None:
-            start = pd.to_datetime(start).strftime('%Y-%m-%d')
-            end = pd.to_datetime(end).strftime('%Y-%m-%d')
+            start_dt = pd.to_datetime(start)
+            end_dt = pd.to_datetime(end)
+            pk_idx = primary_key.index(date_like_pk) if date_like_pk in primary_key else None
+            is_datetime_pk = (pk_idx is not None) and (pk_dtypes[pk_idx] == 'datetime')
+            if is_datetime_pk:
+                # datetime 主键应保留时分秒；若仅给了日期，则自动补齐到当天收尾时刻
+                if end_dt.hour == 0 and end_dt.minute == 0 and end_dt.second == 0:
+                    end_dt = end_dt.replace(hour=23, minute=59, second=59)
+                start = start_dt.strftime('%Y-%m-%d %H:%M:%S')
+                end = end_dt.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                start = start_dt.strftime('%Y-%m-%d')
+                end = end_dt.strftime('%Y-%m-%d')
 
         if self.file_type == 'csv':
             # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常

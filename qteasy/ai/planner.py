@@ -20,6 +20,7 @@ A0 目标是打通 Planner 三段式链路：
 
 from __future__ import annotations
 
+import datetime
 import re
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
@@ -186,7 +187,11 @@ class Planner:
         - 先把入口打通，再在后续阶段扩展多步DAG。
         """
 
-        if any(word in q_lower for word in ["strategy", "built-in", "built in", "策略"]):
+        fallback_inputs = self._infer_fallback_inputs(query=query, q_lower=q_lower)
+        if fallback_inputs is not None:
+            skill_name = "qt.ai.system.fallback"
+            inputs = fallback_inputs
+        elif any(word in q_lower for word in ["strategy", "built-in", "built in", "策略"]):
             match_id = self._extract_strategy_id(query)
             if match_id:
                 skill_name = "qt.ai.strategy_meta.get"
@@ -213,6 +218,90 @@ class Planner:
             on_fail="stop",
             retry_limit=0,
         )
+
+    @staticmethod
+    def _infer_fallback_inputs(*, query: str, q_lower: str) -> Optional[Dict[str, str]]:
+        """识别需要回退到统一响应的请求。"""
+
+        contains_live = any(item in q_lower for item in ["实盘", "live trade", "live"])
+        contains_download = any(item in q_lower for item in ["下载", "download", "refill"])
+        contains_backtest = any(item in q_lower for item in ["回测", "backtest"])
+        contains_optimize = any(item in q_lower for item in ["优化", "optimize"])
+        contains_codegen = any(item in q_lower for item in ["生成策略", "strategybuilder", "codegen"])
+        contains_dangerous = any(item in q_lower for item in ["rm -rf", "bash", "shell command", "cmd /c", "powershell"])
+        contains_bypass_confirm = any(item in q_lower for item in ["跳过确认", "skip confirmation", "write files directly"])
+
+        if contains_dangerous:
+            return {
+                "query": query,
+                "fallback_action": "clarify_required",
+                "reason": "unsafe_command_request",
+                "hint": "Shell command execution is not supported by qteasy AI skills.",
+            }
+
+        if contains_bypass_confirm:
+            return {
+                "query": query,
+                "fallback_action": "not_supported_yet",
+                "reason": "bypass_confirmation_not_allowed",
+                "hint": "High side-effect operations require explicit confirmation.",
+            }
+
+        high_risk_intents = [contains_live, contains_download, contains_backtest, contains_optimize, contains_codegen]
+        if sum(1 for flag in high_risk_intents if flag) >= 2:
+            return {
+                "query": query,
+                "fallback_action": "clarify_required",
+                "reason": "multi_intent_not_supported_in_single_step_planner",
+                "hint": "Please split request into smaller steps: download/backtest/optimize/live.",
+            }
+
+        if contains_live:
+            return {
+                "query": query,
+                "fallback_action": "plan_only",
+                "reason": "live_trade_requires_strong_confirmation",
+                "hint": "Live trade is not auto-executed. Please use plan mode and confirm manually.",
+            }
+
+        if contains_download or contains_backtest or contains_optimize or contains_codegen:
+            return {
+                "query": query,
+                "fallback_action": "not_supported_yet",
+                "reason": "feature_not_implemented_in_stage_a",
+                "hint": "This capability is planned for later stages. Use available read-only skills for now.",
+            }
+
+        date_match = re.findall(r"(20\d{2}[-/]?\d{2}[-/]?\d{2})", query)
+        if len(date_match) > 1:
+            start = date_match[0].replace("-", "").replace("/", "")
+            end = date_match[1].replace("-", "").replace("/", "")
+            try:
+                start_dt = datetime.datetime.strptime(start, "%Y%m%d")
+                end_dt = datetime.datetime.strptime(end, "%Y%m%d")
+                if start_dt > end_dt:
+                    return {
+                        "query": query,
+                        "fallback_action": "clarify_required",
+                        "reason": "invalid_date_range",
+                        "hint": "Start date must be earlier than or equal to end date.",
+                    }
+            except ValueError:
+                return {
+                    "query": query,
+                    "fallback_action": "clarify_required",
+                    "reason": "invalid_date_format",
+                    "hint": "Date format should be YYYYMMDD or YYYY-MM-DD.",
+                }
+
+        if "freq=" in q_lower and not re.search(r"\b(1min|5min|15min|30min|60min|d|w|m)\b", query, flags=re.IGNORECASE):
+            return {
+                "query": query,
+                "fallback_action": "clarify_required",
+                "reason": "invalid_frequency_expression",
+                "hint": "Supported freq: 1min/5min/15min/30min/60min/d/w/m.",
+            }
+        return None
 
     @staticmethod
     def _extract_strategy_id(query: str) -> Optional[str]:

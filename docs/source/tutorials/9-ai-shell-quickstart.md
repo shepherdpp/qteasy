@@ -16,6 +16,13 @@ export QTEASY_AI_API_KEY="your_api_key"
 export QTEASY_AI_BASE_URL="https://api.openai.com/v1"
 ```
 
+也可以直接查看 qteasy 全局 AI 配置：
+
+```python
+import qteasy as qt
+print(qt.configuration(["ai_model", "ai_base_url", "ai_timeout", "ai_home"]))
+```
+
 ## 2. CLI 方式
 
 ### 2.1 Ask 模式
@@ -28,6 +35,8 @@ qteasy-ai ask "list built-in strategies"
 
 ```bash
 qteasy-ai plan "show kline summary of 000300.SH from 20240101"
+qteasy-ai plan "show kline summary of 000300.SH from 20240101" --pretty
+qteasy-ai plan "show kline summary of 000300.SH from 20240101" --raw
 ```
 
 ### 2.3 Run 模式
@@ -38,6 +47,14 @@ qteasy-ai run "export kline 000300.SH to png"
 
 执行后可在返回结果中查看 `run_file`，并追溯每个 step 的输入输出。
 
+### 2.4 Provider 配置诊断
+
+```bash
+qteasy-ai provider-check
+```
+
+输出会包含 `mode/model/base_url/timeout/api_key_present/config_sources`，用于快速确认当前是规则模式、云端模型还是本地模型。
+
 ## 3. Notebook 方式
 
 ```python
@@ -45,9 +62,22 @@ import qteasy as qt
 from qteasy.ai.app import QteasyAssistant
 
 assistant = QteasyAssistant()
-plan_payload = assistant.plan("list built-in strategies")
-run_payload = assistant.run("export kline of 000300.SH")
+plan_output = assistant.plan("list built-in strategies")  # 默认 user_friendly
+run_output = assistant.run("export kline of 000300.SH", keep=True)
+raw_plan = assistant.plan("list built-in strategies", response_style="raw", persist="none")
+debug_payload = assistant.debug_config()
 ```
+
+其中 `debug_payload` 可用于核对当前配置来源与模式，不包含明文 API key。
+`plan_output` / `run_output` 默认包含 `narrative/python_code/result_preview/raw` 四段信息。
+如需完全兼容旧版结构化输出，使用 `response_style="raw"`。
+
+对于尚未实现的能力（例如下载/回测/优化/策略生成等），当前阶段会返回结构化回退结果，
+`payload.fallback_action` 可能为：
+
+- `plan_only`
+- `not_supported_yet`
+- `clarify_required`
 
 ## 4. 本地记忆文件
 
@@ -56,5 +86,13 @@ run_payload = assistant.run("export kline of 000300.SH")
 - `.qteasy/ai/profile.json`
 - `.qteasy/ai/env_facts.json`
 - `.qteasy/ai/runs/*.json`
+- `.qteasy/ai/pinned/*.json`
 
-其中 runs 文件用于复盘每次 plan 的执行轨迹与产物路径。
+其中 runs 文件用于复盘每次 plan 的执行轨迹与产物路径，默认采用有界留存（bounded）并自动清理；
+用户显式保留的记录会写入 `pinned/`，不参与自动清理。
+
+## 5. 语料回归入口（可选）
+
+- 语料文件：`tests/ai_corpus/*.json`
+- 人工记录模板：`tests/ai_corpus/manual_record_template.md`
+- 执行脚本：`python tests/run_ai_manual_corpus.py`

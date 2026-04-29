@@ -52,11 +52,11 @@ class PlanExecutor:
         本地记忆存储，负责 run 记录持久化。
     """
 
-    def __init__(self, registry: SkillRegistry, memory_store: MemoryStore) -> None:
+    def __init__(self, registry: SkillRegistry, memory_store: MemoryStore | None = None) -> None:
         self.registry = registry
         self.memory_store = memory_store
 
-    def execute(self, plan: ToolPlan, *, confirm: bool = False) -> Dict[str, Any]:
+    def execute(self, plan: ToolPlan, *, confirm: bool = False, persist_run: bool = True) -> Dict[str, Any]:
         """执行计划，支持 dry_run 与 execute。
 
         Parameters
@@ -90,8 +90,9 @@ class PlanExecutor:
                 "plan": self._plan_to_dict(plan),
                 "execution": self._execution_to_dict(record),
             }
-            run_file = self.memory_store.save_run(run_id, payload)
-            payload["run_file"] = run_file
+            if persist_run and self.memory_store is not None:
+                run_file = self.memory_store.save_run(run_id, payload)
+                payload["run_file"] = run_file
             return payload
 
         # execute 分支：按最小 DAG 规则执行（depends_on/run_if/on_fail/retry_limit）。
@@ -208,8 +209,9 @@ class PlanExecutor:
             "plan": self._plan_to_dict(plan),
             "execution": self._execution_to_dict(record),
         }
-        run_file = self.memory_store.save_run(run_id, payload)
-        payload["run_file"] = run_file
+        if persist_run and self.memory_store is not None:
+            run_file = self.memory_store.save_run(run_id, payload)
+            payload["run_file"] = run_file
         return payload
 
     @staticmethod
