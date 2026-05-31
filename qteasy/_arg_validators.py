@@ -185,21 +185,25 @@ def _valid_qt_kwargs():
 
         'live_price_acquire_channel':
             {'Default':   'eastmoney',
-             'Validator': lambda value: isinstance(value, str) and value.lower() in ['eastmoney', 'tushare', 'akshare'],
+             'Validator': lambda value: isinstance(value, str)
+                                       and value.lower() in ['eastmoney', 'emoney', 'tushare', 'akshare', 'sina'],
              'level':     2,
              'text':      '实盘交易时获取实时价格的方式：\n'
                           'eastmoney - 通过东方财富网获取实时价格\n'
                           'tushare  - 通过tushare获取实时价格(需要自行开通权限)\n'
-                          'akshare  - Not Implemented: 从akshare获取实时价格'},
+                          'akshare  - Not Implemented: 从akshare获取实时价格\n'
+                          'sina     - 通过新浪财经获取实时价格'},
 
         'live_trade_data_refill_channel':
             {'Default':   'eastmoney',
-             'Validator': lambda value: isinstance(value, str) and value in ['eastmoney', 'tushare', 'akshare'],
+             'Validator': lambda value: isinstance(value, str)
+                                       and value.lower() in ['eastmoney', 'emoney', 'tushare', 'akshare', 'sina'],
              'level':     4,
              'text':      '实盘交易时每天完成自动数据抓取的数据表的网络渠道:\n'
                           'eastmoney - 通过东方财富网获取数据表\n'
                           'tushare  - 通过tushare获取数据表\n'
-                          'akshare  - Not Implemented: 从akshare获取数据表'},
+                          'akshare  - Not Implemented: 从akshare获取数据表\n'
+                          'sina     - 通过新浪财经获取数据表'},
 
         'live_trade_data_refill_batch_size':
             {'Default':   0,

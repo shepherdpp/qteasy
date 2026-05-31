@@ -16,7 +16,8 @@ import pandas as pd
 import time
 import logging
 
-from typing import Generator, Union, Any, Optional
+from dataclasses import dataclass
+from typing import Generator, Union, Any, Optional, Callable
 from functools import lru_cache
 
 from concurrent.futures import (
@@ -61,6 +62,177 @@ data_channels.download_data(
 3，数据缓存组装，对于大量数据，进行优化组装，提高速度
 
 """
+
+BUILTIN_DATA_CHANNELS = ('tushare', 'akshare', 'eastmoney', 'sina')
+DATA_CHANNEL_ALIASES = {
+    'emoney': 'eastmoney',
+}
+
+
+class TableNotSupportedInChannelError(ValueError):
+    """数据通道不支持指定数据表时抛出的异常。"""
+
+
+class FeatureNotImplementedError(NotImplementedError):
+    """数据通道声明能力不存在时抛出的异常。"""
+
+
+@dataclass(frozen=True)
+class TableFetchSpec:
+    """描述数据表在某个通道中的下载参数规范。"""
+
+    api: str
+    fill_arg_name: str
+    fill_arg_type: str
+    arg_rng: str
+    allowed_code_suffix: str
+    allow_start_end: str
+    start_end_chunk_size: str
+
+    @classmethod
+    def from_raw(cls, raw_spec: Any) -> 'TableFetchSpec':
+        """从旧版 7 元组规范构建规范对象。"""
+        if isinstance(raw_spec, cls):
+            return raw_spec
+        if not isinstance(raw_spec, (list, tuple)):
+            raise TypeError(f'raw_spec should be a list or tuple, got {type(raw_spec)} instead.')
+        if len(raw_spec) != 7:
+            raise ValueError(f'raw_spec should contain 7 items, got {len(raw_spec)} instead.')
+        return cls(
+            api=raw_spec[0],
+            fill_arg_name=raw_spec[1],
+            fill_arg_type=raw_spec[2],
+            arg_rng=raw_spec[3],
+            allowed_code_suffix=raw_spec[4],
+            allow_start_end=raw_spec[5],
+            start_end_chunk_size=raw_spec[6],
+        )
+
+    def as_tuple(self) -> tuple[str, str, str, str, str, str, str]:
+        """按旧版 API_MAP 顺序导出为元组。"""
+        return (
+            self.api,
+            self.fill_arg_name,
+            self.fill_arg_type,
+            self.arg_rng,
+            self.allowed_code_suffix,
+            self.allow_start_end,
+            self.start_end_chunk_size,
+        )
+
+
+@dataclass(frozen=True)
+class DataChannel:
+    """数据通道抽象，封装通道能力与映射。"""
+
+    name: str
+    api_map_getter: Callable[[], dict]
+    fetch_table_func: Callable[..., pd.DataFrame]
+    fetch_realtime_kline_func: Callable[..., pd.DataFrame]
+    supports_realtime_klines: bool = True
+    supports_realtime_quotes: bool = False
+
+
+_CHANNEL_REGISTRY: dict[str, DataChannel] = {}
+
+
+def validate_channel(channel: str) -> str:
+    """校验并规范化 channel 名称（含别名）。"""
+    if not isinstance(channel, str):
+        raise TypeError(f'channel should be a str, got {type(channel)} instead')
+    normalized = channel.strip().lower()
+    normalized = DATA_CHANNEL_ALIASES.get(normalized, normalized)
+    if normalized not in BUILTIN_DATA_CHANNELS:
+        supported = ', '.join(BUILTIN_DATA_CHANNELS)
+        raise ValueError(f'channel should be one of "{supported}", got {channel} instead.')
+    return normalized
+
+
+def _build_channel_registry() -> dict[str, DataChannel]:
+    """构建内置通道注册表。"""
+    return {
+        'tushare': DataChannel(
+            name='tushare',
+            api_map_getter=lambda: TUSHARE_API_MAP,
+            fetch_table_func=_fetch_table_data_from_tushare,
+            fetch_realtime_kline_func=_fetch_realtime_kline_from_tushare,
+            supports_realtime_klines=True,
+            supports_realtime_quotes=False,
+        ),
+        'akshare': DataChannel(
+            name='akshare',
+            api_map_getter=lambda: AKSHARE_API_MAP,
+            fetch_table_func=_fetch_table_data_from_akshare,
+            fetch_realtime_kline_func=_fetch_realtime_kline_from_akshare,
+            supports_realtime_klines=True,
+            supports_realtime_quotes=False,
+        ),
+        'eastmoney': DataChannel(
+            name='eastmoney',
+            api_map_getter=lambda: EASTMONEY_API_MAP,
+            fetch_table_func=_fetch_table_data_from_eastmoney,
+            fetch_realtime_kline_func=_fetch_realtime_kline_from_eastmoney,
+            supports_realtime_klines=True,
+            supports_realtime_quotes=False,
+        ),
+        'sina': DataChannel(
+            name='sina',
+            api_map_getter=lambda: SINA_API_MAP,
+            fetch_table_func=_fetch_table_data_from_sina,
+            fetch_realtime_kline_func=_fetch_realtime_kline_from_sina,
+            supports_realtime_klines=True,
+            supports_realtime_quotes=False,
+        ),
+    }
+
+
+def _ensure_channel_registry() -> None:
+    """按需初始化通道注册表。"""
+    if not _CHANNEL_REGISTRY:
+        _CHANNEL_REGISTRY.update(_build_channel_registry())
+
+
+def get_channel(channel: str) -> DataChannel:
+    """获取规范化后的数据通道对象。"""
+    _ensure_channel_registry()
+    normalized = validate_channel(channel)
+    try:
+        return _CHANNEL_REGISTRY[normalized]
+    except KeyError as exc:
+        raise ValueError(f'Unknown channel: {channel}') from exc
+
+
+def list_builtin_channels() -> list[str]:
+    """返回内置通道名列表。"""
+    return list(BUILTIN_DATA_CHANNELS)
+
+
+def _get_channel_specs(channel: str) -> dict[str, TableFetchSpec]:
+    """获取指定通道的表抓取规范。"""
+    channel_obj = get_channel(channel)
+    raw_map = channel_obj.api_map_getter()
+    return {table: TableFetchSpec.from_raw(spec) for table, spec in raw_map.items()}
+
+
+def list_channel_tables(channel: str) -> list[str]:
+    """列出指定通道支持的数据表。"""
+    return list(_get_channel_specs(channel).keys())
+
+
+def channel_supports_table(channel: str, table: str) -> bool:
+    """判断指定通道是否支持某张数据表。"""
+    return table in _get_channel_specs(channel)
+
+
+def get_table_fetch_spec(channel: str, table: str) -> TableFetchSpec:
+    """获取指定通道/数据表的抓取规范。"""
+    specs = _get_channel_specs(channel)
+    if table not in specs:
+        normalized_channel = validate_channel(channel)
+        raise TableNotSupportedInChannelError(
+            f'table "{table}" is not supported in channel "{normalized_channel}".'
+        )
+    return specs[table]
 
 
 # =====================
@@ -203,30 +375,12 @@ def _get_fetch_table_func(channel: str):
     function:
         数据下载函数
     """
-    if channel == 'tushare':
-        return _fetch_table_data_from_tushare
-    elif channel == 'akshare':
-        return _fetch_table_data_from_akshare
-    elif channel in ['emoney', 'eastmoney']:
-        return _fetch_table_data_from_eastmoney
-    elif channel == 'sina':
-        return _fetch_table_data_from_sina
-    else:
-        raise NotImplementedError(f'channel {channel} is not supported')
+    return get_channel(channel).fetch_table_func
 
 
 def _get_realtime_kline_func(channel: str):
     """ 获取实时K线下载函数"""
-    if channel == 'tushare':
-        return _fetch_realtime_kline_from_tushare
-    elif channel == 'akshare':
-        return _fetch_realtime_kline_from_akshare
-    elif channel in ['emoney', 'eastmoney']:
-        return _fetch_realtime_kline_from_eastmoney
-    elif channel == 'sina':
-        return _fetch_realtime_kline_from_sina
-    else:
-        raise NotImplementedError(f'channel {channel} is not supported')
+    return get_channel(channel).fetch_realtime_kline_func
 
 
 # =====================
@@ -274,25 +428,17 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         用于下载数据的参数序列
     """
 
-    if channel == 'tushare':
-        API_MAP = TUSHARE_API_MAP
-    elif channel == 'akshare':
-        API_MAP = AKSHARE_API_MAP
-    elif channel == 'eastmoney':
-        API_MAP = EASTMONEY_API_MAP
-    else:
-        raise NotImplementedError(f'channel {channel} is not supported')
-
-    if table not in API_MAP:
+    channel = validate_channel(channel)
+    if not channel_supports_table(channel, table):
         return {}
 
-    # get all tables in the API mapping
-    arg_name = API_MAP[table][1]
-    arg_type = API_MAP[table][2]
-    arg_range = API_MAP[table][3]
-    allowed_code_suffix = API_MAP[table][4]
-    additional_start_end = API_MAP[table][5]
-    start_end_chunk_size = API_MAP[table][6]
+    fetch_spec = get_table_fetch_spec(channel, table)
+    arg_name = fetch_spec.fill_arg_name
+    arg_type = fetch_spec.fill_arg_type
+    arg_range = fetch_spec.arg_rng
+    allowed_code_suffix = fetch_spec.allowed_code_suffix
+    additional_start_end = fetch_spec.allow_start_end
+    start_end_chunk_size = fetch_spec.start_end_chunk_size
 
     if isinstance(symbols, list):
         symbols = list_to_str_format(symbols)
@@ -346,6 +492,93 @@ def parse_data_fetch_args(table, channel, symbols, start_date, end_date, list_ar
         raise ValueError('unexpected additional_start_end:', additional_start_end)
 
     return kwargs
+
+
+def iter_table_fetch_plan(
+        *,
+        table: str,
+        channel: str,
+        symbols: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        list_arg_filter: str = None,
+        reversed_par_seq: bool = False,
+) -> Generator[dict[str, Any], Any, None]:
+    """按数据表生成下载参数序列（parse_data_fetch_args 的语义化别名）。"""
+    kwargs_seq = parse_data_fetch_args(
+        table=table,
+        channel=channel,
+        symbols=symbols,
+        start_date=start_date,
+        end_date=end_date,
+        list_arg_filter=list_arg_filter,
+        reversed_par_seq=reversed_par_seq,
+    )
+    return (item for item in kwargs_seq)
+
+
+def fetch_table_once(*, channel: str, table: str, **kwargs) -> pd.DataFrame:
+    """从指定通道拉取单次数据表数据。"""
+    fetch_func = _get_fetch_table_func(channel)
+    return fetch_func(table, **kwargs)
+
+
+def fetch_basics(
+        *,
+        channel: str,
+        symbols: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        list_arg_filter: str = None,
+        reversed_par_seq: bool = False,
+) -> dict[str, list[dict[str, Any]]]:
+    """按 basics/cal 表用途生成下载计划。"""
+    from .datatables import get_tables_by_name_or_usage
+
+    table_set = get_tables_by_name_or_usage(tables='basics,cal')
+    plan = {}
+    for table in table_set:
+        if not channel_supports_table(channel, table):
+            continue
+        plan[table] = list(iter_table_fetch_plan(
+            table=table,
+            channel=channel,
+            symbols=symbols,
+            start_date=start_date,
+            end_date=end_date,
+            list_arg_filter=list_arg_filter,
+            reversed_par_seq=reversed_par_seq,
+        ))
+    return plan
+
+
+def fetch_bars(
+        *,
+        channel: str,
+        symbols: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        list_arg_filter: str = None,
+        reversed_par_seq: bool = False,
+) -> dict[str, list[dict[str, Any]]]:
+    """按 data/mins 表用途生成下载计划。"""
+    from .datatables import get_tables_by_name_or_usage
+
+    table_set = get_tables_by_name_or_usage(tables='data,mins')
+    plan = {}
+    for table in table_set:
+        if not channel_supports_table(channel, table):
+            continue
+        plan[table] = list(iter_table_fetch_plan(
+            table=table,
+            channel=channel,
+            symbols=symbols,
+            start_date=start_date,
+            end_date=end_date,
+            list_arg_filter=list_arg_filter,
+            reversed_par_seq=reversed_par_seq,
+        ))
+    return plan
 
 
 def _hist_dnld_thread_pool_max_workers(process_count: Optional[int] = None) -> int:
@@ -640,7 +873,29 @@ def fetch_real_time_quotes(
     -------
     pd.DataFrame
     """
-    raise NotImplementedError
+    channel_obj = get_channel(channel)
+    if not channel_obj.supports_realtime_quotes:
+        raise FeatureNotImplementedError(
+            f'realtime quotes are not implemented for channel "{channel_obj.name}".'
+        )
+    raise FeatureNotImplementedError(
+        f'realtime quotes fetcher for channel "{channel_obj.name}" is not implemented yet.'
+    )
+
+
+def normalize_table_frame(table: str, raw: pd.DataFrame) -> pd.DataFrame:
+    """按内置表结构规范化下载数据。"""
+    if not isinstance(raw, pd.DataFrame):
+        raise TypeError(f'raw should be a DataFrame, got {type(raw)} instead.')
+    if raw.empty:
+        return raw
+    from .datatables import get_built_in_table_schema, set_primary_key_frame
+
+    table_columns, _, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+    data = set_primary_key_frame(raw, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+    data = data.drop(columns=[col for col in data.columns if col not in table_columns], errors='ignore')
+    data = data.reindex(columns=table_columns, copy=False)
+    return data
 
 
 def scrub_table_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
@@ -658,16 +913,7 @@ def scrub_table_data(data: pd.DataFrame, table: str) -> pd.DataFrame:
     pd.DataFrame:
         清洗后的数据
     """
-    # TODO: this function is now not utilized; data scrubbing is done in datasource
-    #  but later data scrubbing shoule be done here, and datasource only does basic checks
-    #  following works should be done:
-    #  1, make sure data column numbers match table schema
-    #  2, remove all NaN data rows
-    #  3, reindex data column names
-    #  4, make DataFrame index according to table prime keys and remove duplicate indexes
-    #  5, check data types, make sure all data types fit table schema
-    #  6, cut off strings that exceeds varchar limit
-    raise NotImplementedError
+    return normalize_table_frame(table=table, raw=data)
 
 
 def scrub_realtime_quote_data(raw_data, verbose) -> pd.DataFrame:
@@ -1164,21 +1410,10 @@ def get_api_map(channel: str) -> pd.DataFrame:
         根据channel返回对应的API MAP表，DataFrame格式
     """
 
-    if channel == 'tushare':
-        API_MAP = TUSHARE_API_MAP
-        MAP_COLUMNS = API_MAP_COLUMNS
-    elif channel == 'akshare':
-        API_MAP = AKSHARE_API_MAP
-        MAP_COLUMNS = API_MAP_COLUMNS
-    elif channel == 'eastmoney':
-        API_MAP = EASTMONEY_API_MAP
-        MAP_COLUMNS = API_MAP_COLUMNS
-    else:
-        raise NotImplementedError(f'channel {channel} is not supported')
-
-    api_map = pd.DataFrame(API_MAP).T
-    api_map.columns = MAP_COLUMNS
-
+    channel = validate_channel(channel)
+    specs = _get_channel_specs(channel)
+    api_map = pd.DataFrame({name: spec.as_tuple() for name, spec in specs.items()}).T
+    api_map.columns = API_MAP_COLUMNS
     return api_map
 
 

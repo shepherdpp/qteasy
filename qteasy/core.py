@@ -743,7 +743,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         asset_types = str_to_list(asset_types)
 
     from .datatables import get_tables_by_name_or_usage
-    from .data_channels import get_dependent_table
+    from .data_channels import get_dependent_table, validate_channel, list_builtin_channels
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
@@ -754,12 +754,13 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
 
     if channel is None:
         channel = 'tushare'
-    if not isinstance(channel, str):
-        err = TypeError(f'channel should be a str, got {type(channel)} instead')
-        raise err
-    if channel not in ['tushare', 'akshare', 'eastmoney']:
-        err = ValueError(f'channel should be one of "tushare", "akshare", and "eastmoney", got {channel} instead.')
-        raise err
+    try:
+        channel = validate_channel(channel)
+    except TypeError:
+        raise
+    except ValueError as exc:
+        supported = ', '.join(list_builtin_channels())
+        raise ValueError(f'channel should be one of "{supported}", got {channel} instead.') from exc
 
     table_list = get_tables_by_name_or_usage(
             tables=tables,

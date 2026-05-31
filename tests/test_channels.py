@@ -35,6 +35,8 @@ from qteasy.data_channels import (
     _parse_additional_time_args,
     parse_data_fetch_args,
     get_dependent_table,
+    list_builtin_channels,
+    list_channel_tables,
 )
 
 
@@ -878,6 +880,21 @@ class TestHistDnldParallelWorkers(unittest.TestCase):
                 print(' max_workers:', mw, 'yielded chunks:', len(rows))
                 self.assertEqual(mw, 3)
                 self.assertEqual(len(rows), 2)
+
+
+class TestChannelDiscovery(unittest.TestCase):
+
+    def test_builtin_channel_listing_and_sina_tables(self):
+        print('\n[TestChannelDiscovery] check builtin channels and sina tables')
+        channels = list_builtin_channels()
+        sina_tables = list_channel_tables('sina')
+        ak_tables = list_channel_tables('akshare')
+        print(' channels:', channels)
+        print(' sina tables sample:', sina_tables[:5])
+        print(' akshare tables:', ak_tables)
+        self.assertIn('sina', channels)
+        self.assertIn('stock_daily', sina_tables)
+        self.assertEqual(ak_tables, [])
 
 
 if __name__ == '__main__':

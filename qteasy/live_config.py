@@ -16,14 +16,15 @@ from types import MappingProxyType
 from typing import Any, Mapping, Optional, Tuple, Union
 
 from qteasy.configure import ConfigDict
+from qteasy.data_channels import list_builtin_channels, validate_channel
 from qteasy.utilfuncs import str_to_list
 
 # 与 _arg_validators 中 live_trade / live_price 相关校验语义对齐
 _ALLOWED_LIVE_TRADE_BROKER_TYPES = frozenset({
     'simulator', 'simple', 'manual', 'random', 'xtquant',
 })
-_ALLOWED_LIVE_PRICE_CHANNELS = frozenset({'eastmoney', 'tushare', 'akshare'})
-_ALLOWED_REFILL_CHANNELS = frozenset({'eastmoney', 'tushare', 'akshare'})
+_ALLOWED_LIVE_PRICE_CHANNELS = frozenset(list_builtin_channels())
+_ALLOWED_REFILL_CHANNELS = frozenset(list_builtin_channels())
 _ALLOWED_LIVE_PRICE_FREQ = frozenset({'H', '30MIN', '15MIN', '5MIN', '1MIN', 'TICK'})
 _ALLOWED_LIVE_TRADE_UI = frozenset({'cli', 'tui'})
 
@@ -272,7 +273,7 @@ def build_live_trade_config(
         raise TypeError(
             f'live_price_acquire_channel must be str, got {type(lpc).__name__} instead.'
         )
-    lpc_norm = lpc.lower().strip()
+    lpc_norm = validate_channel(lpc)
     if lpc_norm not in _ALLOWED_LIVE_PRICE_CHANNELS:
         raise ValueError(
             f'Invalid live_price_acquire_channel: {lpc!r}. '
@@ -296,6 +297,7 @@ def build_live_trade_config(
         raise TypeError(
             f'live_trade_data_refill_channel must be str, got {type(refill).__name__} instead.'
         )
+    refill = validate_channel(refill)
     if refill not in _ALLOWED_REFILL_CHANNELS:
         raise ValueError(
             f'Invalid live_trade_data_refill_channel: {refill!r}. '
