@@ -235,10 +235,18 @@ class TestBuildLiveTradeConfig(unittest.TestCase):
             build_live_trade_config(base)
         self.assertTrue(str(ctx.exception).isascii())
 
-    def test_rejects_invalid_refill_channel(self) -> None:
-        print('\n[TestBuildLiveTradeConfig] F2 invalid refill channel (case-sensitive)')
+    def test_normalizes_refill_channel_case(self) -> None:
+        print('\n[TestBuildLiveTradeConfig] F2 refill channel case-insensitive via validate_channel')
         base = _minimal_valid_live_mapping()
         base['live_trade_data_refill_channel'] = 'Eastmoney'
+        cfg = build_live_trade_config(base)
+        print(' normalized refill channel:', cfg.live_trade_data_refill_channel)
+        self.assertEqual(cfg.live_trade_data_refill_channel, 'eastmoney')
+
+    def test_rejects_invalid_refill_channel(self) -> None:
+        print('\n[TestBuildLiveTradeConfig] F3 invalid refill channel')
+        base = _minimal_valid_live_mapping()
+        base['live_trade_data_refill_channel'] = 'invalid_ch'
         with self.assertRaises(ValueError) as ctx:
             build_live_trade_config(base)
         self.assertTrue(str(ctx.exception).isascii())

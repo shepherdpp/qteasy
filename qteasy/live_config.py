@@ -301,7 +301,7 @@ def build_live_trade_config(
     if refill not in _ALLOWED_REFILL_CHANNELS:
         raise ValueError(
             f'Invalid live_trade_data_refill_channel: {refill!r}. '
-            f'Allowed values (case-sensitive): {sorted(_ALLOWED_REFILL_CHANNELS)}.'
+            f'Allowed values: {sorted(_ALLOWED_REFILL_CHANNELS)}.'
         )
 
     batch_size = merged['live_trade_data_refill_batch_size']

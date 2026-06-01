@@ -10,6 +10,7 @@
 # table in the test datasource.
 # ======================================
 
+import logging
 import unittest
 import time
 import warnings
@@ -39,6 +40,78 @@ from qteasy.data_channels import (
     list_channel_tables,
 )
 
+# Tushare 权限/积分/频次限制类错误关键词（测试遇到时跳过当前表，不中断全表遍历）
+_TUSHARE_ACCESS_LIMIT_MARKERS = (
+    '权限',
+    '频率超限',
+    '频次超限',
+    '积分不足',
+    '没有权限',
+    'permission denied',
+    'insufficient privilege',
+)
+
+
+def _is_tushare_access_limited_error(exc: Exception) -> bool:
+    """判断异常是否由 Tushare 权限或频次限制导致。"""
+    msg = str(exc).lower()
+    return any(marker.lower() in msg for marker in _TUSHARE_ACCESS_LIMIT_MARKERS)
+
+
+# Eastmoney 公网 HTTP 瞬时失败（连接被对端关闭、代理不可用等）关键词
+_EASTMONEY_TRANSIENT_HTTP_MARKERS = (
+    'eastmoney k-line http request failed',
+    'eastmoney realtime quote http request failed',
+    'connection aborted',
+    'remotedisconnected',
+    'remote end closed connection without response',
+    'max retries exceeded',
+    'unable to connect to proxy',
+    'proxyerror',
+)
+
+
+def _exception_message_blob(exc: BaseException) -> str:
+    """合并异常及其 cause 链上的文本，便于匹配包装后的 requests 错误。"""
+    parts = [str(exc), repr(exc)]
+    cause = exc.__cause__
+    while cause is not None:
+        parts.append(str(cause))
+        parts.append(repr(cause))
+        cause = cause.__cause__
+    return ' '.join(parts).lower()
+
+
+def _is_eastmoney_transient_http_error(exc: BaseException) -> bool:
+    """判断异常或日志是否属于 Eastmoney 公网 HTTP 瞬时失败。"""
+    msg = _exception_message_blob(exc)
+    return any(marker in msg for marker in _EASTMONEY_TRANSIENT_HTTP_MARKERS)
+
+
+def _should_skip_channel_download_error(channel: str, exc: BaseException) -> bool:
+    """集成测试遇到通道侧限流/瞬时网络问题时是否跳过当前表。"""
+    if channel == 'tushare' and _is_tushare_access_limited_error(exc):
+        return True
+    if channel == 'eastmoney' and _is_eastmoney_transient_http_error(exc):
+        return True
+    return False
+
+
+class _EastmoneyLogCapture(logging.Handler):
+    """捕获 emfuncs 在 HTTP 失败时写入的 warning 文案。"""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.messages.append(record.getMessage())
+
+
+def _eastmoney_log_indicates_transient_http(handler: _EastmoneyLogCapture) -> bool:
+    """判断捕获的日志是否包含应跳过的 Eastmoney HTTP 失败信息。"""
+    return any(_is_eastmoney_transient_http_error(Exception(msg)) for msg in handler.messages)
+
 
 class TestChannels(unittest.TestCase):
 
@@ -56,7 +129,12 @@ class TestChannels(unittest.TestCase):
         print('test datasource created.')
 
     def test_get_table_data_from_channels(self):
-        """testing downloading small piece of data from tushare and store them in self.test_ds"""
+        """从各通道拉取小样本并写入测试库。
+
+        Eastmoney 通道说明：``EASTMONEY_API_MAP`` 中 ``fund_*`` / ``index_*`` 等表名
+        与 ``stock_*`` 共用同一套 ``emfuncs`` 函数（仅 ``qt_code`` 不同），映射元组
+        第一项是底层 API 名而非目标表名；日志里应区分 ``target_table`` 与 ``emfuncs_api``。
+        """
 
         channels_to_test = ['tushare', 'eastmoney']
         # channels_to_test = ['eastmoney']
@@ -144,22 +222,51 @@ class TestChannels(unittest.TestCase):
                     kwargs['start'] = '20241231'
                     kwargs['end'] = '20250110'
 
-                print(f'downloading data from channel "{channel}" for "{table}" '
-                      f'with api: {api_name} and kwargs: {kwargs}')
+                api_label = (
+                    f'emfuncs.{api_name}()'
+                    if channel == 'eastmoney' and api_name != table
+                    else api_name
+                )
+                print(
+                    f'downloading channel="{channel}" target_table="{table}" '
+                    f'emfuncs_api="{api_label}" kwargs={kwargs}'
+                )
 
                 # add retry parameters to shorten test time
                 kwargs['retry_count'] = 1
 
                 fetch_table_data_function = _get_fetch_table_func(channel=channel)
+                em_log_capture = None
+                em_logger = None
+                if channel == 'eastmoney':
+                    em_log_capture = _EastmoneyLogCapture()
+                    em_logger = logging.getLogger('qteasy.emfuncs')
+                    em_logger.addHandler(em_log_capture)
                 try:
                     dnld_data = fetch_table_data_function(table, **kwargs)
-                    print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
                 except Exception as e:
-                    print(f'error downloading data for table {table}: {e}')
-                    if '权限' in str(e):  # except tushare api authorization issues
+                    if _should_skip_channel_download_error(channel, e):
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": channel access or transient network — {e}'
+                        )
                         continue
-                    else:
-                        raise e
+                    print(f'error downloading data for table {table}: {e}')
+                    raise
+                finally:
+                    if em_logger is not None and em_log_capture is not None:
+                        em_logger.removeHandler(em_log_capture)
+
+                if channel == 'eastmoney' and em_log_capture is not None:
+                    if _eastmoney_log_indicates_transient_http(em_log_capture):
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": eastmoney transient HTTP failure '
+                            f'(warning logged during this table fetch; next line is another table)'
+                        )
+                        continue
+
+                print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
 
                 # TODO: clean up the data, making it ready to be written to the datasource
                 #  from qteasy.database import get_built_in_table_schema, set_primary_key_frame
@@ -883,6 +990,52 @@ class TestHistDnldParallelWorkers(unittest.TestCase):
 
 
 class TestChannelDiscovery(unittest.TestCase):
+
+    def test_is_tushare_access_limited_error(self) -> None:
+        print('\n[TestChannelDiscovery] check tushare access/rate-limit skip markers')
+        rate_err = Exception('抱歉，您访问接口(stk_mins)频率超限(1次/小时)')
+        perm_err = Exception('没有权限访问该接口')
+        other_err = Exception('connection timeout')
+        print(' rate_err skip:', _is_tushare_access_limited_error(rate_err))
+        print(' perm_err skip:', _is_tushare_access_limited_error(perm_err))
+        print(' other_err skip:', _is_tushare_access_limited_error(other_err))
+        self.assertTrue(_is_tushare_access_limited_error(rate_err))
+        self.assertTrue(_is_tushare_access_limited_error(perm_err))
+        self.assertFalse(_is_tushare_access_limited_error(other_err))
+
+    def test_is_eastmoney_transient_http_error(self) -> None:
+        print('\n[TestChannelDiscovery] check eastmoney transient HTTP skip markers')
+        remote_err = Exception(
+            "Eastmoney k-line HTTP request failed: ('Connection aborted.', "
+            "RemoteDisconnected('Remote end closed connection without response'))"
+        )
+        proxy_err = Exception(
+            'Eastmoney k-line HTTP request failed: HTTPSConnectionPool(...): '
+            'Max retries exceeded (Caused by ProxyError(...))'
+        )
+        other_err = Exception('invalid qt_code format')
+        print(' remote_err skip:', _is_eastmoney_transient_http_error(remote_err))
+        print(' proxy_err skip:', _is_eastmoney_transient_http_error(proxy_err))
+        print(' other_err skip:', _is_eastmoney_transient_http_error(other_err))
+        self.assertTrue(_is_eastmoney_transient_http_error(remote_err))
+        self.assertTrue(_is_eastmoney_transient_http_error(proxy_err))
+        self.assertFalse(_is_eastmoney_transient_http_error(other_err))
+        self.assertTrue(
+            _should_skip_channel_download_error('eastmoney', remote_err)
+        )
+        self.assertFalse(
+            _should_skip_channel_download_error('tushare', remote_err)
+        )
+
+    def test_eastmoney_fund_table_maps_to_stock_emfuncs_api(self) -> None:
+        """Eastmoney 通道：目标表名与 emfuncs 函数名可不同（共用 K 线接口）。"""
+        print('\n[TestChannelDiscovery] eastmoney fund_* -> stock_* emfuncs mapping')
+        fund_api = EASTMONEY_API_MAP['fund_15min'][0]
+        index_api = EASTMONEY_API_MAP['index_daily'][0]
+        print(' fund_15min emfuncs api:', fund_api)
+        print(' index_daily emfuncs api:', index_api)
+        self.assertEqual(fund_api, 'stock_15min')
+        self.assertEqual(index_api, 'stock_daily')
 
     def test_builtin_channel_listing_and_sina_tables(self):
         print('\n[TestChannelDiscovery] check builtin channels and sina tables')
