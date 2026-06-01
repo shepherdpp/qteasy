@@ -38,6 +38,7 @@ from qteasy.data_channels import (
     get_dependent_table,
     list_builtin_channels,
     list_channel_tables,
+    get_table_fetch_spec,
 )
 
 # Tushare 权限/积分/频次限制类错误关键词（测试遇到时跳过当前表，不中断全表遍历）
@@ -1047,7 +1048,22 @@ class TestChannelDiscovery(unittest.TestCase):
         print(' akshare tables:', ak_tables)
         self.assertIn('sina', channels)
         self.assertIn('stock_daily', sina_tables)
-        self.assertEqual(ak_tables, [])
+        self.assertIn('stock_daily', ak_tables)
+        self.assertIn('stock_1min', ak_tables)
+
+    def test_akshare_p0_spec_discovery(self) -> None:
+        print('\n[TestChannelDiscovery] check AKShare P0 table specs')
+        p0_tables = ['stock_daily', 'index_daily', 'fund_daily', 'stock_1min']
+        for table in p0_tables:
+            spec = get_table_fetch_spec('akshare', table)
+            print(
+                f' table={table}, api={spec.api}, '
+                f'fill_arg={spec.fill_arg_name}/{spec.fill_arg_type}, '
+                f'allow_start_end={spec.allow_start_end}'
+            )
+            self.assertEqual(spec.fill_arg_name, 'qt_code')
+            self.assertEqual(spec.fill_arg_type, 'table_index')
+            self.assertEqual(spec.allow_start_end.upper(), 'Y')
 
 
 if __name__ == '__main__':

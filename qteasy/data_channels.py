@@ -1813,15 +1813,31 @@ TUSHARE_REALTIME_API_MAP = {
 }
 
 AKSHARE_API_MAP = {
+    'stock_daily':
+        ['stock_daily', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
 
+    'stock_weekly':
+        ['stock_weekly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '90'],
+
+    'stock_monthly':
+        ['stock_monthly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '180'],
+
+    'stock_1min':
+        ['stock_1min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '1'],
+
+    'index_daily':
+        ['index_daily', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '30'],
+
+    'fund_daily':
+        ['fund_daily', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '30'],
 }
 
 AKSHARE_REALTIME_API_MAP = {
     'realtime_bars':  # 实时行情数据
-        ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', ''],
+        ['realtime_bars', 'qt_code', 'list', 'none', '', 'N', '', ''],
 
     'realtime_quotes':
-        ['not_implemented', 'symbols', 'list', 'none', '', 'N', '', '']
+        ['realtime_quotes', 'qt_code', 'list', 'none', '', 'N', '', '']
 }
 
 EASTMONEY_API_MAP = {  # 从EastMoney的数据API不区分asset_type，只要给出qt_code即可，因此index和stock共用API

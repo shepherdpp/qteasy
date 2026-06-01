@@ -12,12 +12,13 @@
 
 ---
 
-## 当前聚焦（2026-05-30）
+## 当前聚焦（2026-06-01）
 
 详见展望 **§7.4 战术偏移**：
 
-- **协作轨**：S2.1-XT（xtQuant P0→Spike→v0.1）
-- **Jackie 空窗期**：用户文档 → 设计理念草稿 → S1.2/S1.1 → 可选 S1.4
+- **Jackie 主线**：**S3.2** AKShare 全链路 — [执行计划](.cursor/plans/s3.2_akshare全链路打通_a2821834.plan.md)（S3.1 已完成）
+- **协作轨（低占用）**：S2.1-XT（xtQuant P0→Spike→v0.1）
+- **穿插**：S3.3 通道文档、S1.2 数据体验示例
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
 
@@ -32,4 +33,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-05-30 — 降级为入口页；进度见展望 §七。*
+*最后更新：2026-06-01 — 降级为入口页；进度见展望 §七。*

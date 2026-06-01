@@ -75,13 +75,17 @@ class TestDataChannelRegistry(unittest.TestCase):
         print(' akshare tables:', ak_tables)
         print(' sina tables sample:', sina_tables[:5])
         self.assertTrue(supports)
-        self.assertEqual(ak_tables, [])
+        self.assertIn('stock_daily', ak_tables)
+        self.assertIn('stock_1min', ak_tables)
         self.assertIn('stock_daily', sina_tables)
 
     def test_get_table_fetch_spec_raises(self):
         print('\n[TestDataChannelRegistry] check unsupported table error')
+        spec = get_table_fetch_spec('akshare', 'stock_daily')
+        print(' akshare stock_daily spec:', spec)
+        self.assertEqual(spec.api, 'stock_daily')
         with self.assertRaises(TableNotSupportedInChannelError):
-            get_table_fetch_spec('akshare', 'stock_daily')
+            get_table_fetch_spec('akshare', 'future_daily')
 
     def test_iter_table_fetch_plan_matches_existing_behavior(self):
         print('\n[TestDataChannelRegistry] check iter_table_fetch_plan output')
