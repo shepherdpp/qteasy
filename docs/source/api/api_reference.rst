@@ -152,7 +152,7 @@ qteasy的所有配置变量
      - | 实盘交易时获取实时价格的方式：
        | eastmoney - 通过东方财富网获取实时价格
        | tushare  - 通过tushare获取实时价格(需要自行开通权限)
-       | akshare  - Not Implemented: 从akshare获取实时价格
+       | akshare  - 通过AKShare获取实时价格(部分表已实现，详见数据通道文档)
    * - ``live_price_acquire_freq``
      - 2
      - ``15MIN``
