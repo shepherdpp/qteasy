@@ -18,7 +18,7 @@
 
 - **Jackie 主线**：**S1.2** 数据体验端到端示例（**S3.2** / **S3.3** 已收官）
 - **协作轨（低占用）**：S2.1-XT（xtQuant P0→Spike→v0.1）
-- **穿插**：S3.2 P1/P2 AKShare 扩表（见 checklist）、S4.x 文档
+- **穿插**：S3.2 P2（指数分钟/财报，见 checklist）、S4.x 文档
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
 
@@ -30,7 +30,8 @@
 | --- | --- |
 | [量化工具对比与 qteasy 展望](.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md) | 顶层战略计划（master-plan） |
 | [S3.3 数据通道配置与文档](.cursor/plans/s3.3_数据通道配置与文档_c7d4e8f1.plan.md) | 四通道用户文档（已收官） |
-| [S3.2 AKShare 全链路](.cursor/plans/s3.2_akshare全链路打通_a2821834.plan.md) | AKShare P0 实现（已收官） |
+| [S3.2 AKShare 全链路](.cursor/plans/s3.2_akshare全链路打通_a2821834.plan.md) | AKShare P0（已收官） |
+| [S3.2b AKShare P1 扩表](.cursor/plans/s3.2b_akshare_p1扩表_f45aead0.plan.md) | 25 表已实现（已收官） |
 | [空窗期短期开发建议](.cursor/plans/空窗期短期开发建议_20260527.plan.md) | 战术排序讨论稿 |
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |

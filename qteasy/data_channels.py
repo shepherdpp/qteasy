@@ -1813,6 +1813,18 @@ TUSHARE_REALTIME_API_MAP = {
 }
 
 AKSHARE_API_MAP = {
+    'trade_calendar':
+        ['trade_cal', 'exchange', 'list', 'SSE,SZSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
+
+    'stock_basic':
+        ['stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', ''],
+
+    'index_basic':
+        ['index_basic', 'exchange', 'list', 'ALL,SSE,SZSE', '', '', ''],
+
+    'fund_basic':
+        ['fund_basic', 'market', 'list', 'ALL,E', '', '', ''],
+
     'stock_daily':
         ['stock_daily', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
 
@@ -1825,11 +1837,56 @@ AKSHARE_API_MAP = {
     'stock_1min':
         ['stock_1min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '1'],
 
+    'stock_5min':
+        ['stock_5min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_15min':
+        ['stock_15min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_30min':
+        ['stock_30min', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_hourly':
+        ['stock_hourly', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '10'],
+
+    'stock_adj_factor':
+        ['stock_adj_factor', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
+
     'index_daily':
         ['index_daily', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '30'],
 
+    'index_weekly':
+        ['index_weekly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '90'],
+
+    'index_monthly':
+        ['index_monthly', 'qt_code', 'table_index', 'index_basic', 'SH,SZ', 'Y', '180'],
+
     'fund_daily':
         ['fund_daily', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '30'],
+
+    'fund_weekly':
+        ['fund_weekly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '90'],
+
+    'fund_monthly':
+        ['fund_monthly', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '180'],
+
+    'fund_1min':
+        ['fund_1min', 'qt_code', 'table_index', 'fund_basic', 'SH,SZ', 'Y', '1'],
+
+    'stock_suspend':
+        ['stock_suspend', 'trade_date', 'trade_date', '20000101', '', '', ''],
+
+    'money_flow':
+        ['money_flow', 'qt_code', 'table_index', 'stock_basic', '', 'Y', '30'],
+
+    'dividend':
+        ['dividend', 'qt_code', 'table_index', 'stock_basic', '', '', ''],
+
+    'new_share':
+        ['new_share', 'qt_code', 'table_index', 'stock_basic', '', 'Y', ''],
+
+    'stock_company':
+        ['stock_company', 'qt_code', 'table_index', 'stock_basic', '', '', ''],
 }
 
 AKSHARE_REALTIME_API_MAP = {

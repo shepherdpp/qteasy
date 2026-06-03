@@ -2,6 +2,15 @@
 
 本页记录 qteasy 各版本的**用户可见**变更。升级前可查阅对应版本；2.0 大版本请参阅 [2.0 迁移指南](qteasy_2_migration_guide.md)。
 
+## 2.6.0 (2026-06-01)
+
+- **数据通道（AKShare）**  
+  历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` 并联网）。在无 Tushare Pro token 或希望换源时，可拉取股票/指数/基金日线与多档分钟线、周月线、交易日历、股票列表、复权因子，以及停复牌、资金流向、分红、新股与上市公司简介等表（共 **25** 张内置表；完整支持范围见仓库 `tests/akshare_data_test_checklist.md`）。实时行情仍可通过 AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。
+- **四通道统一**  
+  `refill_data_source`、实盘自动补数及配置项 **`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** 均支持 **`tushare`**、**`akshare`**、**`eastmoney`**（别名 `emoney`）、**`sina`**；未指定 `channel` 时 refill 仍默认 **`tushare`**。各通道可下载的表范围不同，拉取失败或某表无映射时会跳过该表并继续其余表。
+- **文档与示例**  
+  数据通道教程补充四通道能力对照、AKShare 使用说明与切换方式；入门教程「获取数据」改为多通道表述。新增示例 **`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 AKShare 不再标注为未实现。
+
 ## 2.5.2 (2026-05-24)
 
 - **Trader Shell CLI 可用性**  

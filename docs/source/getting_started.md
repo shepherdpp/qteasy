@@ -17,7 +17,7 @@ pip install qteasy
 输出如下：
 
 ```
-2.5.2
+2.6.0
 ```
 
 - [qteasy发布历史](RELEASE_HISTORY.md) — 各版本变更说明，升级前可查阅

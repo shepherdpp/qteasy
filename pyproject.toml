@@ -15,7 +15,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qteasy"
-version = "2.5.2"
+version = "2.6.0"
 authors = [
   {name="jackie PENG", email="jackie.pengzhao@gmail.com" },
 ]
