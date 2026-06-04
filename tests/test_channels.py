@@ -8,6 +8,9 @@
 #   Testing download data from different
 # data channels for every possible data
 # table in the test datasource.
+#   全量通道表遍历（test_get_table_data_from_channels）在 setUp 中将
+#   hist_dnld_retry_cnt=1、wait=0.1、backoff=1；遇权限或 eastmoney 公网
+#   HTTP 不可恢复错误时跳过当前表并中止该通道剩余表（生产 refill 不受影响）。
 # ======================================
 
 import logging
@@ -19,7 +22,12 @@ from unittest.mock import patch
 
 import pandas as pd
 
+import qteasy as qt
 from qteasy.database import DataSource
+from qteasy.utilfuncs import (
+    classify_download_error,
+    download_error_should_not_retry,
+)
 from qteasy.data_channels import (
     EASTMONEY_API_MAP, TUSHARE_API_MAP, AKSHARE_API_MAP,
     _get_fetch_table_func,
@@ -42,61 +50,27 @@ from qteasy.data_channels import (
     get_table_fetch_spec,
 )
 
-# Tushare 权限/积分/频次限制类错误关键词（测试遇到时跳过当前表，不中断全表遍历）
-_TUSHARE_ACCESS_LIMIT_MARKERS = (
-    '权限',
-    '频率超限',
-    '频次超限',
-    '积分不足',
-    '没有权限',
-    'permission denied',
-    'insufficient privilege',
-)
+ChannelFullTableTestAction = str  # 'skip_table' | 'abort_channel' | 'raise'
 
 
-def _is_tushare_access_limited_error(exc: Exception) -> bool:
-    """判断异常是否由 Tushare 权限或频次限制导致。"""
-    msg = str(exc).lower()
-    return any(marker.lower() in msg for marker in _TUSHARE_ACCESS_LIMIT_MARKERS)
+def channel_full_table_test_action(channel: str, exc: BaseException) -> ChannelFullTableTestAction:
+    """全量通道表遍历测试：表级跳过、通道级中止或向上抛出。"""
+    kind = classify_download_error(exc, channel=channel)
+    if kind == 'other':
+        return 'raise'
+    if channel == 'tushare' and kind == 'permission':
+        return 'abort_channel'
+    if channel == 'eastmoney' and kind == 'transient_http':
+        return 'abort_channel'
+    return 'skip_table'
 
 
-# Eastmoney 公网 HTTP 瞬时失败（连接被对端关闭、代理不可用等）关键词
-_EASTMONEY_TRANSIENT_HTTP_MARKERS = (
-    'eastmoney k-line http request failed',
-    'eastmoney realtime quote http request failed',
-    'connection aborted',
-    'remotedisconnected',
-    'remote end closed connection without response',
-    'max retries exceeded',
-    'unable to connect to proxy',
-    'proxyerror',
-)
-
-
-def _exception_message_blob(exc: BaseException) -> str:
-    """合并异常及其 cause 链上的文本，便于匹配包装后的 requests 错误。"""
-    parts = [str(exc), repr(exc)]
-    cause = exc.__cause__
-    while cause is not None:
-        parts.append(str(cause))
-        parts.append(repr(cause))
-        cause = cause.__cause__
-    return ' '.join(parts).lower()
-
-
-def _is_eastmoney_transient_http_error(exc: BaseException) -> bool:
-    """判断异常或日志是否属于 Eastmoney 公网 HTTP 瞬时失败。"""
-    msg = _exception_message_blob(exc)
-    return any(marker in msg for marker in _EASTMONEY_TRANSIENT_HTTP_MARKERS)
-
-
-def _should_skip_channel_download_error(channel: str, exc: BaseException) -> bool:
-    """集成测试遇到通道侧限流/瞬时网络问题时是否跳过当前表。"""
-    if channel == 'tushare' and _is_tushare_access_limited_error(exc):
-        return True
-    if channel == 'eastmoney' and _is_eastmoney_transient_http_error(exc):
-        return True
-    return False
+def _eastmoney_log_test_action(messages: list[str]) -> ChannelFullTableTestAction:
+    """根据 emfuncs 捕获的 warning 判断 eastmoney 全量测试动作。"""
+    for msg in messages:
+        if classify_download_error(Exception(msg), channel='eastmoney') == 'transient_http':
+            return 'abort_channel'
+    return 'raise'
 
 
 class _EastmoneyLogCapture(logging.Handler):
@@ -110,25 +84,48 @@ class _EastmoneyLogCapture(logging.Handler):
         self.messages.append(record.getMessage())
 
 
-def _eastmoney_log_indicates_transient_http(handler: _EastmoneyLogCapture) -> bool:
-    """判断捕获的日志是否包含应跳过的 Eastmoney HTTP 失败信息。"""
-    return any(_is_eastmoney_transient_http_error(Exception(msg)) for msg in handler.messages)
-
-
 class TestChannels(unittest.TestCase):
 
     def setUp(self):
-        from qteasy import QT_CONFIG
+        """快照 hist_dnld 重试相关全局配置，全量通道测试使用激进重试参数。"""
+        self._snap_hist_dnld_retry_cnt = qt.QT_CONFIG.get('hist_dnld_retry_cnt')
+        self._snap_hist_dnld_retry_wait = qt.QT_CONFIG.get('hist_dnld_retry_wait')
+        self._snap_hist_dnld_backoff = qt.QT_CONFIG.get('hist_dnld_backoff')
+        qt.configure(
+                hist_dnld_retry_cnt=1,
+                hist_dnld_retry_wait=0.1,
+                hist_dnld_backoff=1.0,
+        )
+        print(
+                '\n[TestChannels.setUp] hist_dnld retry for channel tests:',
+                qt.QT_CONFIG['hist_dnld_retry_cnt'],
+                qt.QT_CONFIG['hist_dnld_retry_wait'],
+                qt.QT_CONFIG['hist_dnld_backoff'],
+        )
         self.ds = DataSource(
             'db',
-            host=QT_CONFIG['test_db_host'],
-            port=QT_CONFIG['test_db_port'],
-            user=QT_CONFIG['test_db_user'],
-            password=QT_CONFIG['test_db_password'],
-            db_name=QT_CONFIG['test_db_name'],
+            host=qt.QT_CONFIG['test_db_host'],
+            port=qt.QT_CONFIG['test_db_port'],
+            user=qt.QT_CONFIG['test_db_user'],
+            password=qt.QT_CONFIG['test_db_password'],
+            db_name=qt.QT_CONFIG['test_db_name'],
             allow_drop_table=True,
         )
         print('test datasource created.')
+
+    def tearDown(self) -> None:
+        """恢复 hist_dnld 重试配置，避免污染同进程其它测试。"""
+        qt.configure(
+                hist_dnld_retry_cnt=self._snap_hist_dnld_retry_cnt,
+                hist_dnld_retry_wait=self._snap_hist_dnld_retry_wait,
+                hist_dnld_backoff=self._snap_hist_dnld_backoff,
+        )
+        print(
+                '\n[TestChannels.tearDown] restored hist_dnld retry:',
+                qt.QT_CONFIG['hist_dnld_retry_cnt'],
+                qt.QT_CONFIG['hist_dnld_retry_wait'],
+                qt.QT_CONFIG['hist_dnld_backoff'],
+        )
 
     def test_get_table_data_from_channels(self):
         """从各通道拉取小样本并写入测试库。
@@ -168,7 +165,10 @@ class TestChannels(unittest.TestCase):
                     print(f'table {table} dropped.')
             print(f'{deleted} tables dropped.')
 
+            channel_aborted = False
             for table in all_tables:
+                if channel_aborted:
+                    break
 
                 # get all tables in the API mapping
                 api_name = API_MAP[table][0]
@@ -234,9 +234,6 @@ class TestChannels(unittest.TestCase):
                     f'emfuncs_api="{api_label}" kwargs={kwargs}'
                 )
 
-                # add retry parameters to shorten test time
-                kwargs['retry_count'] = 1
-
                 fetch_table_data_function = _get_fetch_table_func(channel=channel)
                 em_log_capture = None
                 em_logger = None
@@ -247,7 +244,19 @@ class TestChannels(unittest.TestCase):
                 try:
                     dnld_data = fetch_table_data_function(table, **kwargs)
                 except Exception as e:
-                    if _should_skip_channel_download_error(channel, e):
+                    action = channel_full_table_test_action(channel, e)
+                    if action == 'abort_channel':
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": unrecoverable fetch error — {e}'
+                        )
+                        print(
+                            f'[SKIP] channel="{channel}": aborting remaining tables '
+                            f'after unrecoverable fetch failure'
+                        )
+                        channel_aborted = True
+                        break
+                    if action == 'skip_table':
                         print(
                             f'\n[SKIP] channel="{channel}" target_table="{table}" '
                             f'emfuncs_api="{api_label}": channel access or transient network — {e}'
@@ -260,13 +269,19 @@ class TestChannels(unittest.TestCase):
                         em_logger.removeHandler(em_log_capture)
 
                 if channel == 'eastmoney' and em_log_capture is not None:
-                    if _eastmoney_log_indicates_transient_http(em_log_capture):
+                    log_action = _eastmoney_log_test_action(em_log_capture.messages)
+                    if log_action == 'abort_channel':
                         print(
                             f'\n[SKIP] channel="{channel}" target_table="{table}" '
                             f'emfuncs_api="{api_label}": eastmoney transient HTTP failure '
-                            f'(warning logged during this table fetch; next line is another table)'
+                            f'(warning logged during this table fetch)'
                         )
-                        continue
+                        print(
+                            f'[SKIP] channel="{channel}": aborting remaining tables '
+                            f'after eastmoney transient HTTP failure'
+                        )
+                        channel_aborted = True
+                        break
 
                 print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
 
@@ -1027,41 +1042,44 @@ class TestHistDnldParallelWorkers(unittest.TestCase):
 
 class TestChannelDiscovery(unittest.TestCase):
 
-    def test_is_tushare_access_limited_error(self) -> None:
-        print('\n[TestChannelDiscovery] check tushare access/rate-limit skip markers')
+    def test_classify_download_error(self) -> None:
+        print('\n[TestChannelDiscovery] classify_download_error markers')
         rate_err = Exception('抱歉，您访问接口(stk_mins)频率超限(1次/小时)')
         perm_err = Exception('没有权限访问该接口')
-        other_err = Exception('connection timeout')
-        print(' rate_err skip:', _is_tushare_access_limited_error(rate_err))
-        print(' perm_err skip:', _is_tushare_access_limited_error(perm_err))
-        print(' other_err skip:', _is_tushare_access_limited_error(other_err))
-        self.assertTrue(_is_tushare_access_limited_error(rate_err))
-        self.assertTrue(_is_tushare_access_limited_error(perm_err))
-        self.assertFalse(_is_tushare_access_limited_error(other_err))
-
-    def test_is_eastmoney_transient_http_error(self) -> None:
-        print('\n[TestChannelDiscovery] check eastmoney transient HTTP skip markers')
         remote_err = Exception(
             "Eastmoney k-line HTTP request failed: ('Connection aborted.', "
             "RemoteDisconnected('Remote end closed connection without response'))"
         )
-        proxy_err = Exception(
-            'Eastmoney k-line HTTP request failed: HTTPSConnectionPool(...): '
-            'Max retries exceeded (Caused by ProxyError(...))'
-        )
-        other_err = Exception('invalid qt_code format')
-        print(' remote_err skip:', _is_eastmoney_transient_http_error(remote_err))
-        print(' proxy_err skip:', _is_eastmoney_transient_http_error(proxy_err))
-        print(' other_err skip:', _is_eastmoney_transient_http_error(other_err))
-        self.assertTrue(_is_eastmoney_transient_http_error(remote_err))
-        self.assertTrue(_is_eastmoney_transient_http_error(proxy_err))
-        self.assertFalse(_is_eastmoney_transient_http_error(other_err))
-        self.assertTrue(
-            _should_skip_channel_download_error('eastmoney', remote_err)
-        )
-        self.assertFalse(
-            _should_skip_channel_download_error('tushare', remote_err)
-        )
+        other_err = Exception('connection timeout')
+        print(' rate_err kind:', classify_download_error(rate_err))
+        print(' perm_err kind:', classify_download_error(perm_err))
+        print(' remote_err kind:', classify_download_error(remote_err))
+        print(' other_err kind:', classify_download_error(other_err))
+        self.assertEqual(classify_download_error(rate_err), 'permission')
+        self.assertEqual(classify_download_error(perm_err), 'permission')
+        self.assertEqual(classify_download_error(remote_err), 'transient_http')
+        self.assertEqual(classify_download_error(other_err), 'other')
+
+    def test_download_error_should_not_retry(self) -> None:
+        print('\n[TestChannelDiscovery] download_error_should_not_retry (retry 装饰器对齐)')
+        perm_err = Exception('没有访问该接口的权限')
+        rate_err = Exception('频率超限')
+        print(' perm no-retry:', download_error_should_not_retry(perm_err))
+        print(' rate no-retry:', download_error_should_not_retry(rate_err))
+        self.assertTrue(download_error_should_not_retry(perm_err))
+        self.assertFalse(download_error_should_not_retry(rate_err))
+
+    def test_channel_full_table_test_action(self) -> None:
+        print('\n[TestChannelDiscovery] channel_full_table_test_action')
+        perm_err = Exception('积分不足')
+        remote_err = Exception('Eastmoney k-line HTTP request failed: Connection aborted')
+        other_err = Exception('unexpected')
+        print(' tushare perm:', channel_full_table_test_action('tushare', perm_err))
+        print(' eastmoney http:', channel_full_table_test_action('eastmoney', remote_err))
+        print(' tushare other:', channel_full_table_test_action('tushare', other_err))
+        self.assertEqual(channel_full_table_test_action('tushare', perm_err), 'abort_channel')
+        self.assertEqual(channel_full_table_test_action('eastmoney', remote_err), 'abort_channel')
+        self.assertEqual(channel_full_table_test_action('tushare', other_err), 'raise')
 
     def test_eastmoney_fund_table_maps_to_stock_emfuncs_api(self) -> None:
         """Eastmoney 通道：目标表名与 emfuncs 函数名可不同（共用 K 线接口）。"""

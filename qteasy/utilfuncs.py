@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from typing import Union
+from typing import Literal, Optional, Union
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -276,6 +276,86 @@ def next_main_freq(freq, direction='up'):
             return target_freq
 
 
+# hist 下载 retry 装饰器：命中后立即失败（与 2.6 前 str(e) 子串判断等价）
+_RETRY_IMMEDIATE_FAIL_MARKERS = (
+    '没有访问该接口的权限',
+    '权限',
+    '最多访问该接口',
+)
+
+# 通道全量测试等场景：权限/频次/积分类（在 message blob 上匹配）
+_DOWNLOAD_PERMISSION_MARKERS = _RETRY_IMMEDIATE_FAIL_MARKERS + (
+    '频率超限',
+    '频次超限',
+    '积分不足',
+    '没有权限',
+    'permission denied',
+    'insufficient privilege',
+)
+
+# 公网 HTTP 连接/代理/对端关闭等（主要在 eastmoney 测试跳过中使用）
+_DOWNLOAD_TRANSIENT_HTTP_MARKERS = (
+    'eastmoney k-line http request failed',
+    'eastmoney realtime quote http request failed',
+    'connection aborted',
+    'remotedisconnected',
+    'remote end closed connection without response',
+    'max retries exceeded',
+    'unable to connect to proxy',
+    'proxyerror',
+)
+
+DownloadErrorKind = Literal['permission', 'transient_http', 'other']
+
+
+def download_error_message_blob(exc: BaseException) -> str:
+    """合并异常及其 __cause__ 链上的文本（小写），便于匹配包装后的 requests 错误。"""
+    parts = [str(exc), repr(exc)]
+    cause = exc.__cause__
+    while cause is not None:
+        parts.append(str(cause))
+        parts.append(repr(cause))
+        cause = cause.__cause__
+    return ' '.join(parts).lower()
+
+
+def _download_markers_in_text(text: str, markers: tuple[str, ...]) -> bool:
+    text_lower = text.lower()
+    return any(marker.lower() in text_lower for marker in markers)
+
+
+def download_error_should_not_retry(exc: BaseException) -> bool:
+    """历史数据 acquire_data 的 retry 装饰器是否应立即放弃（不重试）。"""
+    return _download_markers_in_text(str(exc), _RETRY_IMMEDIATE_FAIL_MARKERS)
+
+
+def classify_download_error(
+        exc: BaseException,
+        channel: Optional[str] = None,
+) -> DownloadErrorKind:
+    """将下载异常归类为权限类、公网瞬时 HTTP 类或其它。
+
+    Parameters
+    ----------
+    exc : BaseException
+        异常或用于承载日志文案的伪异常（如 ``Exception(log_message)``）。
+    channel : str, optional
+        数据通道名；保留供后续按通道细分，当前分类仅依赖文案。
+
+    Returns
+    -------
+    DownloadErrorKind
+        ``permission``、``transient_http`` 或 ``other``。
+    """
+    del channel  # 预留扩展，避免未使用参数告警
+    blob = download_error_message_blob(exc)
+    if _download_markers_in_text(blob, _DOWNLOAD_PERMISSION_MARKERS):
+        return 'permission'
+    if _download_markers_in_text(blob, _DOWNLOAD_TRANSIENT_HTTP_MARKERS):
+        return 'transient_http'
+    return 'other'
+
+
 def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
@@ -305,8 +385,7 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
                     return f(*args, **kwargs)
                 except exception_to_check as e:
                     exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError, ]
-                    error_str = str(e)
-                    if ('没有访问该接口的权限' in error_str) or ('权限' in error_str) or ('最多访问该接口' in error_str):
+                    if download_error_should_not_retry(e):
                         raise e
                     if e.__class__ in exception_to_escape:
                         raise e
