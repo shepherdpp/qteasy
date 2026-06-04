@@ -1002,6 +1002,41 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
     return (item for item in arg_range if item in list_arg_filter)
 
 
+def _parse_yyyymmdd_arg(date_value, param_name: str) -> pd.Timestamp:
+    """将通道参数映射中的 start/end 解析为 Timestamp；类型或格式非法时抛错。"""
+    if not isinstance(date_value, str):
+        raise TypeError(
+            f'{param_name} must be a str in YYYYMMDD format, got {type(date_value).__name__}'
+        )
+    text = date_value.strip()
+    if len(text) != 8 or not text.isdigit():
+        raise ValueError(
+            f'Invalid {param_name} {date_value!r}: expected YYYYMMDD'
+        )
+    dt = pd.to_datetime(text, format='%Y%m%d', errors='coerce')
+    if pd.isna(dt):
+        raise ValueError(
+            f'Invalid {param_name} {date_value!r}: not a valid calendar date'
+        )
+    return pd.Timestamp(dt)
+
+
+def _bound_date_sequence(
+        first_date,
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
+) -> tuple:
+    """在表最早日期之后裁剪起止日期，必要时交换起止。"""
+    first_date = pd.Timestamp(pd.to_datetime(first_date))
+    if start_date < first_date:
+        start_date = first_date
+    if end_date < first_date:
+        end_date = first_date
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+    return start_date, end_date
+
+
 def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
                          freq: str = 'd', reversed_par_seq: bool = False):
     """ 根据开始和结束日期，生成数据获取的参数序列
@@ -1028,7 +1063,7 @@ def _parse_datetime_args(arg_range: str, start_date: str, end_date: str,
         用于下载数据的参数序列
     """
 
-    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date, strict=True)
 
     if freq is None:
         freq = 'd'
@@ -1172,7 +1207,7 @@ def _parse_quarter_args(arg_range: str, start_date: str, end_date: str, reversed
     list:
         用于下载数据的参数序列
     """
-    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date, strict=True)
 
     # calculate absolute quarter number
     start_quarter = _convert_date_to_absolute_quarter(start_date)
@@ -1259,7 +1294,7 @@ def _parse_month_args(arg_range: str, start_date: str, end_date: str, reversed_p
     list:
         用于下载数据的参数序列
     """
-    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date)
+    start_date, end_date = _ensure_date_sequence(arg_range, start_date, end_date, strict=True)
 
     # calculate absolute month number
     start_month = _convert_date_to_absolute_month(start_date)
@@ -1339,8 +1374,19 @@ def _normalize_refill_date(date_value, default: pd.Timestamp) -> pd.Timestamp:
     return pd.Timestamp(dt)
 
 
-def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
-    """ 确保开始和结束日期在first_date之后，如果不是，则交换开始和结束日期
+def _ensure_date_sequence(
+        first_date,
+        start_date,
+        end_date,
+        *,
+        strict: bool = False,
+) -> tuple:
+    """规范起止日期并裁剪到表最早日期之后，必要时交换起止。
+
+    strict=False（默认）用于 refill / 附加 start-end 分块：start/end 为 None、空串或
+    无法解析时分别回落到 first_date 与当天。strict=True 用于通道参数序列生成：
+    start/end 必须为 YYYYMMDD 字符串，非法类型或格式时抛错。
+
 
     Parameters
     ----------
@@ -1350,26 +1396,26 @@ def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
         数据下载的开始日期
     end_date: str,
         数据下载的结束日期
+    strict: bool, default False
+        是否严格检查日期格式，如果为True，则日期格式必须为YYYYMMDD，否则抛错
 
     Returns
     -------
-    tuple: start_date, end_date
-        确保开始和结束日期在first_date之后的开始和结束日期
+    tuple:
+        规范后的起止日期
     """
 
-    first_date = pd.to_datetime(first_date)
-    today = pd.Timestamp(pd.to_datetime('today').normalize())
-    start_date = _normalize_refill_date(start_date, first_date)
-    end_date = _normalize_refill_date(end_date, today)
+    first_ts = pd.Timestamp(pd.to_datetime(first_date))
+    default_end = pd.Timestamp(pd.to_datetime('today').normalize())
 
-    if start_date < first_date:
-        start_date = first_date
-    if end_date < first_date:
-        end_date = first_date
-    if end_date < start_date:
-        start_date, end_date = end_date, start_date
+    if strict:
+        start_date = _parse_yyyymmdd_arg(start_date, 'start_date')
+        end_date = _parse_yyyymmdd_arg(end_date, 'end_date')
+    else:
+        start_date = _normalize_refill_date(start_date, first_ts)
+        end_date = _normalize_refill_date(end_date, default_end)
 
-    return start_date, end_date
+    return _bound_date_sequence(first_ts, start_date, end_date)
 
 
 def get_dependent_table(table: str, channel: str) -> str or None:
