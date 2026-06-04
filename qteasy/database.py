@@ -10,6 +10,7 @@
 # ======================================
 
 import os
+import re
 import pandas as pd
 import numpy as np
 import warnings
@@ -41,6 +42,39 @@ from .datatables import (
     set_primary_key_index,
     set_primary_key_frame,
 )
+
+_VARCHAR_DTYPE_RE = re.compile(r'^varchar\((\d+)\)$', re.IGNORECASE)
+
+
+def _clip_df_to_column_dtypes(df: pd.DataFrame, columns: list, dtypes: list) -> pd.DataFrame:
+    """按表 schema 截断超长 varchar 字段，避免写入 MySQL 时 Data too long (1406)。"""
+    out = df
+    changed = False
+    for col, dtype in zip(columns, dtypes):
+        match = _VARCHAR_DTYPE_RE.match(str(dtype).strip())
+        if match is None or col not in out.columns:
+            continue
+        max_len = int(match.group(1))
+        series = out[col]
+        if not (series.dtype == object or pd.api.types.is_string_dtype(series)):
+            continue
+
+        def _clip_cell(value) -> Union[str, None]:
+            if value is None or (isinstance(value, float) and pd.isna(value)):
+                return None
+            text = str(value)
+            if not text:
+                return None
+            return text[:max_len]
+
+        clipped = series.map(_clip_cell)
+        if clipped.equals(series):
+            continue
+        if not changed:
+            out = out.copy()
+            changed = True
+        out[col] = clipped
+    return out
 
 
 class DataSource:
@@ -1570,6 +1604,7 @@ class DataSource:
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
         rows_affected = 0
         df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
+        df = _clip_df_to_column_dtypes(df, columns, dtypes)
         if self.source_type == 'file':
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             rows_affected = self._write_file(df, file_name=table)

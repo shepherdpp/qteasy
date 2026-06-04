@@ -31,6 +31,7 @@ from qteasy.data_channels import (
 
 from qteasy.database import (
     DataSource,
+    _clip_df_to_column_dtypes,
     set_primary_key_index,
     set_primary_key_frame,
 )
@@ -999,6 +1000,17 @@ class TestDataSource(unittest.TestCase):
         self.assertRaises(RuntimeError, self.ds_db._delete_database_records, table_name, 'wrong_key', [1])
         self.assertRaises(TypeError, self.ds_db._delete_database_records, table_name, 'account_id', 1)
         self.assertRaises(RuntimeError, self.ds_db._delete_database_records, table_name, 'account_id', '1, 2')
+
+    def test_clip_df_to_column_dtypes_truncates_long_varchar(self):
+        """超长 varchar 写入前应被截断，避免 MySQL 1406。"""
+        print('\n[TestDataSource] clip varchar columns to schema max length')
+        long_text = 'T' * 120
+        df = pd.DataFrame({'trade_time_desc': [long_text, None]})
+        clipped = _clip_df_to_column_dtypes(df, ['trade_time_desc'], ['varchar(80)'])
+        print(' original len:', len(long_text), ' clipped len:', len(clipped.iloc[0]['trade_time_desc']))
+        print(' clipped value head:', clipped.iloc[0]['trade_time_desc'][:40])
+        self.assertEqual(len(clipped.iloc[0]['trade_time_desc']), 80)
+        self.assertTrue(pd.isna(clipped.iloc[1]['trade_time_desc']))
 
     def test_update_database(self):
         """ test the function _update_database()"""

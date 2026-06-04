@@ -225,7 +225,7 @@ def _normalize_trade_calendar(raw_dates: pd.Series, exchange: str) -> pd.DataFra
     records = []
     for idx, dt in enumerate(dates):
         cal = pd.Timestamp(dt).strftime('%Y%m%d')
-        pre = pd.Timestamp(dates[idx - 1]).strftime('%Y%m%d') if idx > 0 else ''
+        pre = pd.Timestamp(dates[idx - 1]).strftime('%Y%m%d') if idx > 0 else None
         records.append({
             'cal_date': cal,
             'exchange': exchange,
@@ -261,8 +261,8 @@ def _normalize_stock_basic(raw_df: pd.DataFrame, exchange: str = '') -> pd.DataF
         'exchange': ts_codes.str.split('.').str[-1].map({'SH': 'SSE', 'SZ': 'SZSE', 'BJ': 'BSE'}),
         'curr_type': 'CNY',
         'list_status': 'L',
-        'list_date': '',
-        'delist_date': '',
+        'list_date': None,
+        'delist_date': None,
         'is_hs': '',
     })
     if exchange:
@@ -295,12 +295,12 @@ def _normalize_index_basic(raw_df: pd.DataFrame) -> pd.DataFrame:
         'market': '',
         'publisher': '',
         'category': '',
-        'base_date': '',
+        'base_date': None,
         'base_point': None,
-        'list_date': '',
+        'list_date': None,
         'weight_rule': '',
         'desc': '',
-        'exp_date': '',
+        'exp_date': None,
     }).reindex(columns=cols)
 
 
@@ -325,11 +325,11 @@ def _normalize_fund_basic(raw_df: pd.DataFrame) -> pd.DataFrame:
         'management': '',
         'custodian': '',
         'fund_type': '',
-        'found_date': '',
-        'due_date': '',
-        'list_date': '',
-        'issue_date': '',
-        'delist_date': '',
+        'found_date': None,
+        'due_date': None,
+        'list_date': None,
+        'issue_date': None,
+        'delist_date': None,
         'issue_amount': None,
         'm_fee': None,
         'c_fee': None,
@@ -342,8 +342,8 @@ def _normalize_fund_basic(raw_df: pd.DataFrame) -> pd.DataFrame:
         'invest_type': '',
         'type': '',
         'trustee': '',
-        'purc_startdate': '',
-        'redm_startdate': '',
+        'purc_startdate': None,
+        'redm_startdate': None,
         'market': 'E',
     }).reindex(columns=cols)
 

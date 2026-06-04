@@ -18,6 +18,7 @@ from qteasy.akfuncs import (
     _normalize_adj_frame,
     _normalize_daily_frame,
     _normalize_min_frame,
+    _normalize_stock_basic,
     _normalize_trade_calendar,
 )
 from qteasy.data_channels import (
@@ -184,9 +185,20 @@ class TestAKShare(unittest.TestCase):
         raw_dates = pd.Series(['2024-01-02', '2024-01-03'])
         norm = _normalize_trade_calendar(raw_dates, exchange='SSE')
         print(' calendar norm:\n', norm)
+        self.assertIsNone(norm.iloc[0]['pretrade_date'])
         self.assertEqual(norm.iloc[1]['pretrade_date'], '20240102')
         self.assertEqual(norm.iloc[1]['exchange'], 'SSE')
         self.assertEqual(int(norm.iloc[1]['is_open']), 1)
+
+    def test_akshare_stock_basic_date_columns_use_sql_null(self):
+        """stock_basic 未知上市/退市日期须为 None，避免 MySQL DATE 写入空串。"""
+        print('\n[TestAKShare] stock_basic date columns for SQL NULL')
+        raw = pd.DataFrame({'code': ['000001', '600000'], 'name': ['平安银行', '浦发银行']})
+        norm = _normalize_stock_basic(raw)
+        print(' stock_basic sample:\n', norm[['ts_code', 'list_date', 'delist_date']].head())
+        self.assertTrue(norm['list_date'].isna().all())
+        self.assertTrue(norm['delist_date'].isna().all())
+        self.assertEqual(norm.iloc[0]['ts_code'], '000001.SZ')
 
     def test_akshare_min_normalization_contract(self):
         """分钟字段规范化应输出 qteasy min_bars 标准列。"""
