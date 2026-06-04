@@ -41,9 +41,88 @@ from .datatables import (
     get_built_in_table_schema,
     set_primary_key_index,
     set_primary_key_frame,
+    table_is_basics,
 )
 
 _VARCHAR_DTYPE_RE = re.compile(r'^varchar\((\d+)\)$', re.IGNORECASE)
+
+
+def _download_value_is_empty(value, dtype: str) -> bool:
+    """判断下载单元格是否视为“无有效值”（patch 合并时不覆盖本地）。"""
+    if value is None:
+        return True
+    try:
+        if pd.isna(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    dtype_l = str(dtype).lower()
+    if dtype_l in ('text',) or dtype_l.startswith('varchar') or dtype_l.startswith('datetime'):
+        return not str(value).strip()
+    return False
+
+
+def _duplicate_update_assign_sql(column: str, dtype: str, patch_empty: bool) -> str:
+    """生成 ON DUPLICATE KEY UPDATE 中单列赋值子句。"""
+    if not patch_empty:
+        return f'`{column}`=VALUES(`{column}`)'
+    dtype_l = str(dtype).lower()
+    val_ref = f'VALUES(`{column}`)'
+    col_ref = f'`{column}`'
+    if dtype_l in ('text',) or dtype_l.startswith('varchar'):
+        return (f'{col_ref}=IF({val_ref} IS NULL OR {val_ref}=\'\', '
+                f'{col_ref}, {val_ref})')
+    if dtype_l == 'date' or dtype_l.startswith('datetime'):
+        return f'{col_ref}=IF({val_ref} IS NULL, {col_ref}, {val_ref})'
+    if dtype_l in ('float', 'double', 'int', 'tinyint'):
+        return f'{col_ref}=IF({val_ref} IS NULL, {col_ref}, {val_ref})'
+    return f'{col_ref}={val_ref}'
+
+
+def _patch_merge_basics_dataframes(
+        local_df: pd.DataFrame,
+        dnld_df: pd.DataFrame,
+        columns: list,
+        dtypes: list,
+        primary_keys: list,
+) -> pd.DataFrame:
+    """将 basics 表下载数据与本地数据按列 patch 合并（空下载值不覆盖本地）。"""
+    if dnld_df.empty:
+        return local_df
+    if local_df.empty:
+        return dnld_df
+    ldf = local_df.copy()
+    ddf = dnld_df.copy()
+    pk_dtypes = [dtypes[columns.index(pk)] for pk in primary_keys]
+    set_primary_key_index(ldf, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+    set_primary_key_index(ddf, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+
+    overlap = ddf.index.intersection(ldf.index)
+    only_local = ldf.index.difference(ddf.index)
+    only_dnld = ddf.index.difference(ldf.index)
+    parts = []
+    if len(only_local) > 0:
+        parts.append(ldf.loc[only_local])
+    for idx in overlap:
+        local_row = ldf.loc[idx]
+        dnld_row = ddf.loc[idx]
+        if isinstance(local_row, pd.DataFrame):
+            local_row = local_row.iloc[0]
+            dnld_row = dnld_row.iloc[0]
+        merged = local_row.copy()
+        for col, dtype in zip(columns, dtypes):
+            if col in primary_keys:
+                continue
+            new_val = dnld_row[col]
+            if not _download_value_is_empty(new_val, dtype):
+                merged[col] = new_val
+        parts.append(pd.DataFrame([merged], columns=columns))
+    if len(only_dnld) > 0:
+        parts.append(ddf.loc[only_dnld])
+    if not parts:
+        return dnld_df
+    merged = pd.concat(parts, axis=0)
+    return merged.reset_index()
 
 
 def _clip_df_to_column_dtypes(df: pd.DataFrame, columns: list, dtypes: list) -> pd.DataFrame:
@@ -1060,9 +1139,12 @@ class DataSource:
             sql += "%s, "
         sql += "%s)\n" \
                "ON DUPLICATE KEY UPDATE\n"
+        patch_empty = table_is_basics(db_table)
+        col_dtype_map = dict(zip(tbl_columns, get_built_in_table_schema(db_table)[1]))
         for col in update_cols[:-1]:
-            sql += f"`{col}`=VALUES(`{col}`),\n"
-        sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
+            sql += _duplicate_update_assign_sql(col, col_dtype_map[col], patch_empty) + ',\n'
+        last_col = update_cols[-1]
+        sql += _duplicate_update_assign_sql(last_col, col_dtype_map[last_col], patch_empty)
 
         rows_affected = self._db_execute_many(sql, df_tuple)
         return rows_affected
@@ -1635,7 +1717,9 @@ class DataSource:
             数据表名，必须是database中定义的数据表
         merge_type: str
             指定如何合并下载数据和本地数据：
-            - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据
+            - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据；
+              对 ``table_usage=='basics'`` 的表在重复主键上仅当下载字段非空时才覆盖该列（patch），
+              避免稀疏通道（如 AKShare）用空行业/日期等冲掉既有 Tushare 元数据
             - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
         df: pd.DataFrame
             通过传递一个DataFrame获取数据
@@ -1688,11 +1772,22 @@ class DataSource:
             if merge_type == 'ignore':
                 # 丢弃下载数据中的重叠部分
                 dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-            elif merge_type == 'update':  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分(仅用于本地文件保存的情况)
-                local_data = local_data[~local_data.index.isin(dnld_data.index)]
+            elif merge_type == 'update':
+                if table_is_basics(table):
+                    dnld_data = _patch_merge_basics_dataframes(
+                        local_data, dnld_data, table_columns, dtypes, primary_keys,
+                    )
+                    rows_affected = self.write_table_data(dnld_data, table=table)
+                else:
+                    # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地重叠行
+                    local_data = local_data[~local_data.index.isin(dnld_data.index)]
+                    rows_affected = self.write_table_data(
+                        pd.concat([local_data, dnld_data]), table=table,
+                    )
             else:  # for unexpected cases
                 raise KeyError(f'Invalid merge type, got "{merge_type}"')
-            rows_affected = self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
+            if merge_type == 'ignore':
+                rows_affected = self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
             rows_affected = self.write_table_data(df=dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case

@@ -122,6 +122,10 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
             targets = str_to_list(targets)
             kwargs[column] = targets
         all_column_values = share_basics[column].unique().tolist()
+        all_column_values = [
+            item for item in all_column_values
+            if isinstance(item, str) and item.strip()
+        ]
         target_not_matched = [item for item in targets if item not in all_column_values]
         if len(target_not_matched) > 0:
             kwargs[column] = list(set(targets) - set(target_not_matched))

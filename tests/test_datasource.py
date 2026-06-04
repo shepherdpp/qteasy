@@ -32,9 +32,11 @@ from qteasy.data_channels import (
 from qteasy.database import (
     DataSource,
     _clip_df_to_column_dtypes,
+    _patch_merge_basics_dataframes,
     set_primary_key_index,
     set_primary_key_frame,
 )
+from qteasy.datatables import get_built_in_table_schema, table_is_basics
 
 from qteasy.datatables import (
     get_primary_key_range,
@@ -1011,6 +1013,52 @@ class TestDataSource(unittest.TestCase):
         print(' clipped value head:', clipped.iloc[0]['trade_time_desc'][:40])
         self.assertEqual(len(clipped.iloc[0]['trade_time_desc']), 80)
         self.assertTrue(pd.isna(clipped.iloc[1]['trade_time_desc']))
+
+    def test_patch_merge_basics_preserves_nonempty_local_fields(self):
+        """basics 表 patch 合并：下载空 industry 不得覆盖本地非空 industry。"""
+        print('\n[TestDataSource] basics patch merge keeps local industry')
+        self.assertTrue(table_is_basics('stock_basic'))
+        columns, dtypes, primary_keys, _ = get_built_in_table_schema('stock_basic')
+        local = pd.DataFrame([{
+            'ts_code': '000001.SZ',
+            'symbol': '000001',
+            'name': '平安银行',
+            'area': '深圳',
+            'industry': '银行',
+            'market': '主板',
+            'fullname': '平安银行股份有限公司',
+            'enname': 'Ping An Bank',
+            'cnspell': 'payh',
+            'exchange': 'SZSE',
+            'curr_type': 'CNY',
+            'list_status': 'L',
+            'list_date': '19910403',
+            'delist_date': None,
+            'is_hs': 'S',
+        }])
+        sparse = pd.DataFrame([{
+            'ts_code': '000001.SZ',
+            'symbol': '000001',
+            'name': '平安银行',
+            'area': '',
+            'industry': '',
+            'market': '',
+            'fullname': '平安银行',
+            'enname': '',
+            'cnspell': '',
+            'exchange': 'SZSE',
+            'curr_type': 'CNY',
+            'list_status': 'L',
+            'list_date': None,
+            'delist_date': None,
+            'is_hs': '',
+        }])
+        merged = _patch_merge_basics_dataframes(local, sparse, columns, dtypes, primary_keys)
+        print(' merged industry:', merged.iloc[0]['industry'])
+        print(' merged name:', merged.iloc[0]['name'])
+        self.assertEqual(merged.iloc[0]['industry'], '银行')
+        self.assertEqual(merged.iloc[0]['area'], '深圳')
+        self.assertEqual(merged.iloc[0]['name'], '平安银行')
 
     def test_update_database(self):
         """ test the function _update_database()"""

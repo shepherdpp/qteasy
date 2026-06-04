@@ -1558,6 +1558,8 @@ def _lev_ratio(s, t):
 
     s = s.lower()
     t = t.lower()
+    if len(s) == 0 or len(t) == 0:
+        return 0.0
     # Initialize matrix of zeros
     rows = len(s) + 1
     cols = len(t) + 1

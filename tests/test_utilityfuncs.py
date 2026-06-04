@@ -578,6 +578,9 @@ class TestUtilityFuncs(unittest.TestCase):
 
         print(_partial_lev_ratio('平?', '万科企业股份有限公司'))
         print(_partial_lev_ratio('常?股份', '常州电站辅机股份有限公司'))
+        empty_ratio = _partial_lev_ratio('', '银行')
+        print(' partial lev ratio empty vs 银行:', empty_ratio)
+        self.assertEqual(empty_ratio, 0.0)
 
     def test_wildcard_match(self):
         """ 测试字符串通配符匹配"""

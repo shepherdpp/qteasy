@@ -1927,6 +1927,14 @@ def get_primary_key_range(df, primary_key: [str], pk_dtypes: [str]) -> dict:
     return res
 
 
+def table_is_basics(table: str) -> bool:
+    """判断内置表是否为 basics 用途表（update 合并时对空下载值保留本地字段）。"""
+    if table not in TABLE_MASTERS:
+        return False
+    usage = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('table_usage')]
+    return usage == 'basics'
+
+
 @lru_cache(maxsize=16)
 def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=True) -> tuple:
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
