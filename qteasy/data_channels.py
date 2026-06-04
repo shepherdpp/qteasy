@@ -1322,6 +1322,23 @@ def _parse_additional_time_args(chunk_size, start_date, end_date) -> list:
     return chunked_additional_args
 
 
+def _normalize_refill_date(date_value, default: pd.Timestamp) -> pd.Timestamp:
+    """将 refill 的 start/end 规范为 Timestamp；None、NaT 或空串时回落到 default。"""
+    if date_value is None:
+        return default
+    if isinstance(date_value, str) and not str(date_value).strip():
+        return default
+    dt = pd.to_datetime(date_value, errors='coerce')
+    if dt is None:
+        return default
+    try:
+        if pd.isna(dt):
+            return default
+    except (TypeError, ValueError):
+        return default
+    return pd.Timestamp(dt)
+
+
 def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
     """ 确保开始和结束日期在first_date之后，如果不是，则交换开始和结束日期
 
@@ -1341,8 +1358,9 @@ def _ensure_date_sequence(first_date, start_date, end_date) -> tuple:
     """
 
     first_date = pd.to_datetime(first_date)
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    today = pd.Timestamp(pd.to_datetime('today').normalize())
+    start_date = _normalize_refill_date(start_date, first_date)
+    end_date = _normalize_refill_date(end_date, today)
 
     if start_date < first_date:
         start_date = first_date

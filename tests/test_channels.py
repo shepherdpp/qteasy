@@ -34,6 +34,7 @@ from qteasy.data_channels import (
     _parse_month_args,
     _parse_table_index_args,
     _parse_additional_time_args,
+    _ensure_date_sequence,
     parse_data_fetch_args,
     get_dependent_table,
     list_builtin_channels,
@@ -490,6 +491,40 @@ class TestChannels(unittest.TestCase):
                     {'end': '20210321', 'start': '20210317'},
                 ]
         )
+
+        print('\n[TestChannels] ensure_date_sequence defaults when refill dates are None')
+        start_dt, end_dt = _ensure_date_sequence('19700101', None, None)
+        print(' normalized start:', start_dt, ' end:', end_dt)
+        self.assertIsInstance(start_dt, pd.Timestamp)
+        self.assertIsInstance(end_dt, pd.Timestamp)
+        self.assertEqual(start_dt, pd.Timestamp('1970-01-01'))
+        self.assertGreaterEqual(end_dt, start_dt)
+
+        print('\n[TestChannels] additional time args with None refill dates')
+        chunks = _parse_additional_time_args(None, None, None)
+        print(' single chunk:', chunks)
+        self.assertEqual(len(chunks), 1)
+        self.assertIn('start', chunks[0])
+        self.assertIn('end', chunks[0])
+
+    def test_new_share_parse_args_without_refill_dates(self):
+        """basics 中的 new_share 在未传 start/end 时应能解析参数而非 TypeError。"""
+        print('\n[TestChannels] new_share parse_data_fetch_args without start/end')
+        args = list(parse_data_fetch_args(
+            table='new_share',
+            channel='tushare',
+            symbols=None,
+            start_date=None,
+            end_date=None,
+            list_arg_filter=None,
+            reversed_par_seq=False,
+        ))
+        print(' arg count:', len(args))
+        print(' first arg:', args[0] if args else None)
+        self.assertGreater(len(args), 0)
+        self.assertIn('start', args[0])
+        self.assertIn('end', args[0])
+        self.assertLessEqual(args[0]['start'], args[0]['end'])
 
     def test_table_arg_parsing(self):
         """ testing parsing complete table download args """
