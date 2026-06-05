@@ -17,7 +17,7 @@ pip install qteasy
 输出如下：
 
 ```
-2.5.2
+2.6.0
 ```
 
 - [qteasy发布历史](RELEASE_HISTORY.md) — 各版本变更说明，升级前可查阅
@@ -82,13 +82,13 @@ tushare_token = 你的tushare_API_Token  # 直接打开文件并在其中新增�
 ```
 Filling data source file://csv@qt_root/data/ ...
 into 1 table(s) (parallely): {'trade_calendar'}
-<trade_calendar> 35000 wrn: 100%|████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
+<trade_calendar> 35000 wrn: 100%|█████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
 Data refill completed! 35000 rows written into 1/1 table(s)!
 
 Filling data source file://csv@qt_root/data/ ...
 into 2 table(s) (parallely): {'index_daily', 'index_basic'}
-<index_daily> 152760 wrn: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:05<00:00,  2.51s/task]
-<index_basic> 1327 wrn: 100%|████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
+<index_daily> 152760 wrn: 100%|███████████████████████████████████████████████████████| 2/2 [00:05<00:00,  2.51s/task]
+<index_basic> 1327 wrn: 100%|█████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.58task/s]
 Data refill completed! 154087 rows written into 2/2 table(s)!
 ```
 

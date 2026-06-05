@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from typing import Union
+from typing import Literal, Optional, Union
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -276,6 +276,86 @@ def next_main_freq(freq, direction='up'):
             return target_freq
 
 
+# hist 下载 retry 装饰器：命中后立即失败（与 2.6 前 str(e) 子串判断等价）
+_RETRY_IMMEDIATE_FAIL_MARKERS = (
+    '没有访问该接口的权限',
+    '权限',
+    '最多访问该接口',
+)
+
+# 通道全量测试等场景：权限/频次/积分类（在 message blob 上匹配）
+_DOWNLOAD_PERMISSION_MARKERS = _RETRY_IMMEDIATE_FAIL_MARKERS + (
+    '频率超限',
+    '频次超限',
+    '积分不足',
+    '没有权限',
+    'permission denied',
+    'insufficient privilege',
+)
+
+# 公网 HTTP 连接/代理/对端关闭等（主要在 eastmoney 测试跳过中使用）
+_DOWNLOAD_TRANSIENT_HTTP_MARKERS = (
+    'eastmoney k-line http request failed',
+    'eastmoney realtime quote http request failed',
+    'connection aborted',
+    'remotedisconnected',
+    'remote end closed connection without response',
+    'max retries exceeded',
+    'unable to connect to proxy',
+    'proxyerror',
+)
+
+DownloadErrorKind = Literal['permission', 'transient_http', 'other']
+
+
+def download_error_message_blob(exc: BaseException) -> str:
+    """合并异常及其 __cause__ 链上的文本（小写），便于匹配包装后的 requests 错误。"""
+    parts = [str(exc), repr(exc)]
+    cause = exc.__cause__
+    while cause is not None:
+        parts.append(str(cause))
+        parts.append(repr(cause))
+        cause = cause.__cause__
+    return ' '.join(parts).lower()
+
+
+def _download_markers_in_text(text: str, markers: tuple[str, ...]) -> bool:
+    text_lower = text.lower()
+    return any(marker.lower() in text_lower for marker in markers)
+
+
+def download_error_should_not_retry(exc: BaseException) -> bool:
+    """历史数据 acquire_data 的 retry 装饰器是否应立即放弃（不重试）。"""
+    return _download_markers_in_text(str(exc), _RETRY_IMMEDIATE_FAIL_MARKERS)
+
+
+def classify_download_error(
+        exc: BaseException,
+        channel: Optional[str] = None,
+) -> DownloadErrorKind:
+    """将下载异常归类为权限类、公网瞬时 HTTP 类或其它。
+
+    Parameters
+    ----------
+    exc : BaseException
+        异常或用于承载日志文案的伪异常（如 ``Exception(log_message)``）。
+    channel : str, optional
+        数据通道名；保留供后续按通道细分，当前分类仅依赖文案。
+
+    Returns
+    -------
+    DownloadErrorKind
+        ``permission``、``transient_http`` 或 ``other``。
+    """
+    del channel  # 预留扩展，避免未使用参数告警
+    blob = download_error_message_blob(exc)
+    if _download_markers_in_text(blob, _DOWNLOAD_PERMISSION_MARKERS):
+        return 'permission'
+    if _download_markers_in_text(blob, _DOWNLOAD_TRANSIENT_HTTP_MARKERS):
+        return 'transient_http'
+    return 'other'
+
+
 def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
@@ -305,8 +385,7 @@ def retry(exception_to_check, tries=3, delay=1., backoff=2., mute=False, logger=
                     return f(*args, **kwargs)
                 except exception_to_check as e:
                     exception_to_escape = [ValueError, TypeError, AttributeError, FileNotFoundError, PermissionError, ]
-                    error_str = str(e)
-                    if ('没有访问该接口的权限' in error_str) or ('权限' in error_str) or ('最多访问该接口' in error_str):
+                    if download_error_should_not_retry(e):
                         raise e
                     if e.__class__ in exception_to_escape:
                         raise e
@@ -679,22 +758,32 @@ def input_to_list(pars, dim=None, padder=None):
 
 
 def regulate_date_format(date_str: Union[str, object],
-                         force_format: str = None) -> str:
-    """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
-        将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
+                         force_format: str = None,
+                         boundary_mode: bool = False) -> str:
+    """把多种日期输入规范为指定 strftime 格式的字符串。
+
+    默认（``boundary_mode=False``）保持历史宽松语义：交由 ``pd.to_datetime`` 解析
+    斜杠、横杠、紧凑数字等多种字符串及 ``datetime`` / ``Timestamp`` 等对象。
+
+    ``boundary_mode=True`` 用于数据下载边界日期：仅接受 8 位 ``YYYYMMDD`` 字符串或
+    日历类型（``date`` / ``datetime`` / ``Timestamp`` / ``datetime64``），拒绝裸
+    ``int``/``float``、``None`` 及无法按边界规则解析的字符串。
 
     Parameters
     ----------
-    date_str: str, date time like
-        时间日期字符串
-    force_format: str, optional
-        强制使用某种格式输出，默认None, 可选'date': '%Y-%m-%d' 或 'datetime': '%Y-%m-%d %H:%M:%S'
-        或者其他给出的合法的strftime格式字符串
+    date_str : str or object
+        待规范化的日期或时间。
+    force_format : str, optional
+        强制输出格式；``None`` 时按是否含时分秒选择 ``%Y-%m-%d`` 或
+        ``%Y-%m-%d %H:%M:%S``；亦可为 ``'date'``、``'datetime'`` 或其它合法
+        ``strftime`` 格式（如 ``'%Y%m%d'``）。
+    boundary_mode : bool, default False
+        是否启用下载边界日期的严格输入规则。
 
     Returns
     -------
-    date_time: str
-    格式为'%Y-%m-%d' 或 '%Y-%m-%d %H:%M:%S'
+    str
+        按 ``force_format``（或默认规则）格式化后的日期时间字符串。
 
     Examples
     --------
@@ -705,23 +794,50 @@ def regulate_date_format(date_str: Union[str, object],
     >>> regulate_date_format('2023-08-01 11:22:33')
     '2023-08-01 11:22:33'
     """
-    try:
-        date_time = pd.to_datetime(date_str)
-    except Exception as e:
-        raise ValueError(f'{e}: {date_str} is not a valid date-time')
-    from datetime import time
+    from datetime import date as dt_date, datetime as dt_datetime, time
+
     if force_format is None:
-        if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
-            str_format = '%Y-%m-%d'
-        else:
-            str_format = '%Y-%m-%d %H:%M:%S'
+        str_format = None
+    elif force_format == 'date':
+        str_format = '%Y-%m-%d'
+    elif force_format == 'datetime':
+        str_format = '%Y-%m-%d %H:%M:%S'
     else:
-        if force_format == 'date':
-            str_format = '%Y-%m-%d'
-        elif force_format == 'datetime':
-            str_format = '%Y-%m-%d %H:%M:%S'
+        str_format = force_format
+
+    if boundary_mode:
+        if date_str is None:
+            raise TypeError('date value must not be None')
+        if isinstance(date_str, (int, float)):
+            raise TypeError(
+                f'expected str or calendar date, got {type(date_str).__name__}'
+            )
+        if isinstance(date_str, str):
+            text = date_str.strip()
+            if len(text) != 8 or not text.isdigit():
+                raise ValueError(f'Invalid date {date_str!r}: expected YYYYMMDD')
+            date_time = pd.to_datetime(text, format='%Y%m%d', errors='coerce')
+            if pd.isna(date_time):
+                raise ValueError(
+                    f'Invalid date {date_str!r}: not a valid calendar date'
+                )
+        elif isinstance(date_str, (dt_date, dt_datetime, pd.Timestamp, np.datetime64)):
+            date_time = pd.Timestamp(date_str)
         else:
-            str_format = force_format
+            raise TypeError(
+                f'expected str or calendar date, got {type(date_str).__name__}'
+            )
+    else:
+        try:
+            date_time = pd.to_datetime(date_str)
+        except Exception as e:
+            raise ValueError(f'{e}: {date_str} is not a valid date-time')
+
+    if str_format is None:
+        if date_time.time() == time.min:
+            str_format = '%Y-%m-%d'
+        else:
+            str_format = '%Y-%m-%d %H:%M:%S'
 
     return date_time.strftime(str_format)
 
@@ -1558,6 +1674,8 @@ def _lev_ratio(s, t):
 
     s = s.lower()
     t = t.lower()
+    if len(s) == 0 or len(t) == 0:
+        return 0.0
     # Initialize matrix of zeros
     rows = len(s) + 1
     cols = len(t) + 1

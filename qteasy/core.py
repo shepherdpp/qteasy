@@ -122,6 +122,10 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
             targets = str_to_list(targets)
             kwargs[column] = targets
         all_column_values = share_basics[column].unique().tolist()
+        all_column_values = [
+            item for item in all_column_values
+            if isinstance(item, str) and item.strip()
+        ]
         target_not_matched = [item for item in targets if item not in all_column_values]
         if len(target_not_matched) > 0:
             kwargs[column] = list(set(targets) - set(target_not_matched))
@@ -726,7 +730,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         data_source = QT_DATA_SOURCE
     if not isinstance(data_source, DataSource):
         raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
-    print(f'Filling data source {data_source} ...')
+    print(f'Filling data source {data_source} from channel {channel}...')
     if download_batch_interval is None:
         download_batch_interval = QT_CONFIG.hist_dnld_delay
     if download_batch_size is None:
@@ -743,7 +747,7 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
         asset_types = str_to_list(asset_types)
 
     from .datatables import get_tables_by_name_or_usage
-    from .data_channels import get_dependent_table
+    from .data_channels import get_dependent_table, validate_channel, list_builtin_channels
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
@@ -754,12 +758,13 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
 
     if channel is None:
         channel = 'tushare'
-    if not isinstance(channel, str):
-        err = TypeError(f'channel should be a str, got {type(channel)} instead')
-        raise err
-    if channel not in ['tushare', 'akshare', 'eastmoney']:
-        err = ValueError(f'channel should be one of "tushare", "akshare", and "eastmoney", got {channel} instead.')
-        raise err
+    try:
+        channel = validate_channel(channel)
+    except TypeError:
+        raise
+    except ValueError as exc:
+        supported = ', '.join(list_builtin_channels())
+        raise ValueError(f'channel should be one of "{supported}", got {channel} instead.') from exc
 
     table_list = get_tables_by_name_or_usage(
             tables=tables,

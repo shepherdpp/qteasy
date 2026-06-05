@@ -2,6 +2,19 @@
 
 本页记录 qteasy 各版本的**用户可见**变更。升级前可查阅对应版本；2.0 大版本请参阅 [2.0 迁移指南](qteasy_2_migration_guide.md)。
 
+## 2.6.0 (2026-06-01)
+
+- **数据通道（AKShare）**  
+  历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` 并联网）。在无 Tushare Pro token 或希望换源时，可拉取股票/指数/基金日线与多档分钟线、周月线、交易日历、股票/指数/基金列表、复权因子，以及停复牌、资金流向、分红、新股与上市公司简介等表（当前内置 **25** 张表；各通道支持范围见 [数据通道](manage_data/10.%20data_channels.md) 文档）。实时行情仍可通过 AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。
+- **四通道统一**  
+  **`refill_data_source`**、实盘自动补数及配置项 **`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** 均支持 **`tushare`**、**`akshare`**、**`eastmoney`**（别名 `emoney`）、**`sina`**；未指定 `channel` 时 refill 仍默认 **`tushare`**。各通道可下载的表范围不同，某表在当前通道无映射或拉取失败时会跳过该表并继续其余表。
+- **基础信息表更新**  
+  使用 **`refill_data_source(..., merge_type='update')`** 更新股票/指数/基金等**基础信息表**时：若下载源（如 AKShare）只带代码、简称等索引字段，而行业、地域、上市日期等为空，**不再用空值冲掉本地已有内容**，便于先用 Tushare 补全基本面，再用其他通道拉行情时顺带刷新代码列表。通过 AKShare 更新股票列表时，缺失的上市/退市日期在数据库中记为 **NULL**，避免在 MySQL 等库中因空日期写入失败。
+- **数据下载与按行业选股**  
+  修复从 Tushare 下载**期货合约基本信息**时，个别合约「交易时间说明」过长导致 MySQL 无法入库的问题；新建库已放宽相关说明字段容量，**已有 MySQL 库**可在备份后执行发行包中的列类型升级脚本（`docs/scripts/migrate_schema_text_p0_p1.sql`）。修复基础表中行业等字段被清空后，**`filter_stocks` / `filter_stock_codes`** 按行业筛选时可能报错的问题。未传 **`start_date` / `end_date`** 却指定 **`tables='basics'`**（含 IPO 新股表）时，现会默认从该表最早可用日下载至当天并分块执行，不再因未填日期而中断；该方式任务较多、耗时较长，不需要 IPO 数据时可只填具体表名或收窄日期范围。
+- **文档与示例**  
+  [数据通道](manage_data/10.%20data_channels.md) 教程补充四通道能力对照、AKShare 使用说明、基础表更新时空值不覆盖规则与未传日期的默认行为；入门教程「获取数据」改为多通道表述。新增示例 **`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 AKShare 不再标注为未实现。
+
 ## 2.5.2 (2026-05-24)
 
 - **Trader Shell CLI 可用性**  

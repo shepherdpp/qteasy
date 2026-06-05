@@ -34,7 +34,7 @@
 
  - ✅ 从tushare获取历史数据和实时数据
  - ✅ 从东方财经  ``eastmoney`` 获取历史数据和实时数据
- - ⬜ 从 ``akshare`` 获取数据
+ - ✅ 从 ``akshare`` 获取历史与实时数据（25 张表 + 实时，详见数据通道文档与 ``tests/akshare_data_test_checklist.md``）
  - ⬜ 从 ``baostock`` 获取数据
  - ⬜ 从 ``joinquant`` 获取数据
 

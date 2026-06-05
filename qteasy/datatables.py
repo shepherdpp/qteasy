@@ -22,7 +22,7 @@ from .utilfuncs import (
 
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'hdf5', 'feather', 'fth']
-AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare', 'akshare']
+AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare', 'akshare', 'eastmoney', 'sina']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
 TABLE_USAGES = [
     'sys',   # 系统数据表，用于存储系统数据
@@ -520,8 +520,8 @@ TABLE_SCHEMA = {
         {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname',
                         'enname', 'cnspell', 'market', 'exchange', 'curr_type', 'list_status',
                         'list_date', 'delist_date', 'is_hs'],
-         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)', 'varchar(50)',
-                        'varchar(120)', 'varchar(40)', 'varchar(6)', 'varchar(6)', 'varchar(6)', 'varchar(4)',
+         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)', 'text',
+                        'text', 'varchar(40)', 'varchar(6)', 'varchar(6)', 'varchar(6)', 'varchar(4)',
                         'date', 'date', 'varchar(2)'],
          'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称',
                         '英文全称', '拼音缩写', '市场类型', '交易所代码', '交易货币', '上市状态',
@@ -532,7 +532,7 @@ TABLE_SCHEMA = {
     'hk_stock_basic':  # 港股基本信息表
         {'columns':    ['ts_code', 'name', 'fullname', 'enname', 'cn_spell', 'market',
                         'list_status', 'list_date', 'delist_date', 'trade_unit', 'isin', 'curr_type'],
-         'dtypes':     ['varchar(20)', 'varchar(40)', 'text', 'varchar(80)', 'varchar(20)', 'varchar(6)',
+         'dtypes':     ['varchar(20)', 'varchar(40)', 'text', 'text', 'varchar(20)', 'varchar(6)',
                         'varchar(6)', 'datetime', 'datetime', 'float', 'varchar(16)', 'varchar(6)'],
          'remarks':    ['股票代码', '股票简称', '公司全称', '英文名称', '拼音', '市场类别',
                         '上市状态', '上市日期', '退市日期', '交易单位', 'ISIN代码', '货币代码'],
@@ -542,9 +542,9 @@ TABLE_SCHEMA = {
     'us_stock_basic':  # 美股基本信息表
         {'columns':    ['ts_code', 'name', 'enname', 'classify',
                         'list_date', 'delist_date'],
-         'dtypes':     ['varchar(20)', 'varchar(40)', 'varchar(80)', 'varchar(6)',
+         'dtypes':     ['varchar(20)', 'varchar(40)', 'text', 'varchar(6)',
                         'datetime', 'datetime'],
-         'remarks':    ['美股代码', '中文名称', '英文名称', '分类:ADR/GDR/EQT',
+        'remarks':    ['美股代码', '中文名称', '英文名称', '分类:ADR/GDR/EQT',
                         '上市日期', '退市日期'],
          'prime_keys': [0]
         },
@@ -562,8 +562,8 @@ TABLE_SCHEMA = {
                         'website', 'email', 'office', 'employees', 'main_business', 'business_scope'],
          'dtypes':     ['varchar(10)', 'varchar(10)', 'varchar(48)', 'varchar(48)', 'varchar(48)',
                         'float', 'date', 'varchar(20)', 'varchar(20)', 'text',
-                        'varchar(75)', 'text', 'text', 'int', 'text', 'text'],
-         'remarks':    ['股票代码', '交易所代码', '法人代表', '总经理', '董秘',
+                        'text', 'text', 'text', 'int', 'text', 'text'],
+        'remarks':    ['股票代码', '交易所代码', '法人代表', '总经理', '董秘',
                         '注册资本', '注册日期', '所在省份', '所在城市', '公司介绍',
                         '公司主页', '电子邮件', '办公室地址', '员工人数', '主要业务及产品', '经营范围'],
          'prime_keys': [0]
@@ -662,10 +662,10 @@ TABLE_SCHEMA = {
         {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher',
                         'index_type', 'category', 'base_date', 'base_point', 'list_date', 'weight_rule',
                         'desc', 'exp_date'],
-         'dtypes':     ['varchar(24)', 'varchar(80)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
+         'dtypes':     ['varchar(24)', 'text', 'text', 'varchar(8)', 'varchar(30)',
                         'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text',
                         'text', 'date'],
-         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方',
+        'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方',
                         '指数风格', '指数类别', '基期', '基点', '发布日期', '加权方式',
                         '描述', '终止日期'],
          'prime_keys': [0]
@@ -693,9 +693,9 @@ TABLE_SCHEMA = {
                         'per_unit', 'quote_unit', 'quote_unit_desc', 'd_mode_desc', 'list_date',
                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
          'dtypes':     ['varchar(24)', 'varchar(12)', 'varchar(8)', 'varchar(40)', 'varchar(12)',
-                        'float', 'varchar(4)', 'float', 'varchar(80)', 'varchar(80)', 'varchar(20)',
-                        'date', 'date', 'varchar(6)', 'date', 'varchar(80)'],
-         'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
+                        'float', 'varchar(4)', 'float', 'text', 'text', 'text',
+                        'date', 'date', 'varchar(6)', 'date', 'text'],
+        'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
          'prime_keys': [0]
@@ -1925,6 +1925,14 @@ def get_primary_key_range(df, primary_key: [str], pk_dtypes: [str]) -> dict:
         else:
             raise KeyError(f'invalid dtype: {dtype}')
     return res
+
+
+def table_is_basics(table: str) -> bool:
+    """判断内置表是否为 basics 用途表（update 合并时对空下载值保留本地字段）。"""
+    if table not in TABLE_MASTERS:
+        return False
+    usage = TABLE_MASTERS[table][TABLE_MASTER_COLUMNS.index('table_usage')]
+    return usage == 'basics'
 
 
 @lru_cache(maxsize=16)

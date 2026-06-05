@@ -38,6 +38,7 @@ from qteasy.trader import (
     _is_debug_sys_log_line,
 )
 from qteasy.trading_util import get_symbol_names, cancel_order
+from qteasy.data_channels import list_builtin_channels
 
 from qteasy.utilfuncs import (
     adjust_string_length,
@@ -68,6 +69,7 @@ CLI_COMMAND_ALIASES = {
 }
 
 BROKER_SUBCOMMANDS = ('status', 'connect', 'disconnect')
+SUPPORTED_DATA_CHANNELS = list_builtin_channels()
 
 
 def _terminal_width(fallback: int = 80) -> int:
@@ -1012,7 +1014,7 @@ class TraderShell(Cmd):
                         'help':    'days of data to cover'},
                        {'action':  'store',
                         'default': 'eastmoney',
-                        'choices': ['eastmoney', 'tushare', 'akshare'],
+                        'choices': SUPPORTED_DATA_CHANNELS,
                         'help':    'channel to fetch data from'}],
         'run':        [{'action': 'append',  # TODO: for python version >= 3.8, use action='extend' instead
                         'nargs':  '*',

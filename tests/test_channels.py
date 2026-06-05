@@ -8,17 +8,27 @@
 #   Testing download data from different
 # data channels for every possible data
 # table in the test datasource.
+#   全量通道表遍历（test_get_table_data_from_channels）在 setUp 中将
+#   hist_dnld_retry_cnt=1、wait=0.1、backoff=1；遇权限或 eastmoney 公网
+#   HTTP 不可恢复错误时跳过当前表并中止该通道剩余表（生产 refill 不受影响）。
 # ======================================
 
+import logging
 import unittest
 import time
 import warnings
+from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pandas as pd
 
+import qteasy as qt
 from qteasy.database import DataSource
+from qteasy.utilfuncs import (
+    classify_download_error,
+    download_error_should_not_retry,
+)
 from qteasy.data_channels import (
     EASTMONEY_API_MAP, TUSHARE_API_MAP, AKSHARE_API_MAP,
     _get_fetch_table_func,
@@ -33,28 +43,98 @@ from qteasy.data_channels import (
     _parse_month_args,
     _parse_table_index_args,
     _parse_additional_time_args,
+    _ensure_date_sequence,
     parse_data_fetch_args,
     get_dependent_table,
+    list_builtin_channels,
+    list_channel_tables,
+    get_table_fetch_spec,
 )
+
+ChannelFullTableTestAction = str  # 'skip_table' | 'abort_channel' | 'raise'
+
+
+def channel_full_table_test_action(channel: str, exc: BaseException) -> ChannelFullTableTestAction:
+    """全量通道表遍历测试：表级跳过、通道级中止或向上抛出。"""
+    kind = classify_download_error(exc, channel=channel)
+    if kind == 'other':
+        return 'raise'
+    if channel == 'tushare' and kind == 'permission':
+        return 'abort_channel'
+    if channel == 'eastmoney' and kind == 'transient_http':
+        return 'abort_channel'
+    return 'skip_table'
+
+
+def _eastmoney_log_test_action(messages: list[str]) -> ChannelFullTableTestAction:
+    """根据 emfuncs 捕获的 warning 判断 eastmoney 全量测试动作。"""
+    for msg in messages:
+        if classify_download_error(Exception(msg), channel='eastmoney') == 'transient_http':
+            return 'abort_channel'
+    return 'raise'
+
+
+class _EastmoneyLogCapture(logging.Handler):
+    """捕获 emfuncs 在 HTTP 失败时写入的 warning 文案。"""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.messages.append(record.getMessage())
 
 
 class TestChannels(unittest.TestCase):
 
     def setUp(self):
-        from qteasy import QT_CONFIG
+        """快照 hist_dnld 重试相关全局配置，全量通道测试使用激进重试参数。"""
+        self._snap_hist_dnld_retry_cnt = qt.QT_CONFIG.get('hist_dnld_retry_cnt')
+        self._snap_hist_dnld_retry_wait = qt.QT_CONFIG.get('hist_dnld_retry_wait')
+        self._snap_hist_dnld_backoff = qt.QT_CONFIG.get('hist_dnld_backoff')
+        qt.configure(
+                hist_dnld_retry_cnt=1,
+                hist_dnld_retry_wait=0.1,
+                hist_dnld_backoff=1.0,
+        )
+        print(
+                '\n[TestChannels.setUp] hist_dnld retry for channel tests:',
+                qt.QT_CONFIG['hist_dnld_retry_cnt'],
+                qt.QT_CONFIG['hist_dnld_retry_wait'],
+                qt.QT_CONFIG['hist_dnld_backoff'],
+        )
         self.ds = DataSource(
             'db',
-            host=QT_CONFIG['test_db_host'],
-            port=QT_CONFIG['test_db_port'],
-            user=QT_CONFIG['test_db_user'],
-            password=QT_CONFIG['test_db_password'],
-            db_name=QT_CONFIG['test_db_name'],
+            host=qt.QT_CONFIG['test_db_host'],
+            port=qt.QT_CONFIG['test_db_port'],
+            user=qt.QT_CONFIG['test_db_user'],
+            password=qt.QT_CONFIG['test_db_password'],
+            db_name=qt.QT_CONFIG['test_db_name'],
             allow_drop_table=True,
         )
         print('test datasource created.')
 
+    def tearDown(self) -> None:
+        """恢复 hist_dnld 重试配置，避免污染同进程其它测试。"""
+        qt.configure(
+                hist_dnld_retry_cnt=self._snap_hist_dnld_retry_cnt,
+                hist_dnld_retry_wait=self._snap_hist_dnld_retry_wait,
+                hist_dnld_backoff=self._snap_hist_dnld_backoff,
+        )
+        print(
+                '\n[TestChannels.tearDown] restored hist_dnld retry:',
+                qt.QT_CONFIG['hist_dnld_retry_cnt'],
+                qt.QT_CONFIG['hist_dnld_retry_wait'],
+                qt.QT_CONFIG['hist_dnld_backoff'],
+        )
+
     def test_get_table_data_from_channels(self):
-        """testing downloading small piece of data from tushare and store them in self.test_ds"""
+        """从各通道拉取小样本并写入测试库。
+
+        Eastmoney 通道说明：``EASTMONEY_API_MAP`` 中 ``fund_*`` / ``index_*`` 等表名
+        与 ``stock_*`` 共用同一套 ``emfuncs`` 函数（仅 ``qt_code`` 不同），映射元组
+        第一项是底层 API 名而非目标表名；日志里应区分 ``target_table`` 与 ``emfuncs_api``。
+        """
 
         channels_to_test = ['tushare', 'eastmoney']
         # channels_to_test = ['eastmoney']
@@ -86,7 +166,10 @@ class TestChannels(unittest.TestCase):
                     print(f'table {table} dropped.')
             print(f'{deleted} tables dropped.')
 
+            channel_aborted = False
             for table in all_tables:
+                if channel_aborted:
+                    break
 
                 # get all tables in the API mapping
                 api_name = API_MAP[table][0]
@@ -142,22 +225,66 @@ class TestChannels(unittest.TestCase):
                     kwargs['start'] = '20241231'
                     kwargs['end'] = '20250110'
 
-                print(f'downloading data from channel "{channel}" for "{table}" '
-                      f'with api: {api_name} and kwargs: {kwargs}')
-
-                # add retry parameters to shorten test time
-                kwargs['retry_count'] = 1
+                api_label = (
+                    f'emfuncs.{api_name}()'
+                    if channel == 'eastmoney' and api_name != table
+                    else api_name
+                )
+                print(
+                    f'downloading channel="{channel}" target_table="{table}" '
+                    f'emfuncs_api="{api_label}" kwargs={kwargs}'
+                )
 
                 fetch_table_data_function = _get_fetch_table_func(channel=channel)
+                em_log_capture = None
+                em_logger = None
+                if channel == 'eastmoney':
+                    em_log_capture = _EastmoneyLogCapture()
+                    em_logger = logging.getLogger('qteasy.emfuncs')
+                    em_logger.addHandler(em_log_capture)
                 try:
                     dnld_data = fetch_table_data_function(table, **kwargs)
-                    print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
                 except Exception as e:
-                    print(f'error downloading data for table {table}: {e}')
-                    if '权限' in str(e):  # except tushare api authorization issues
+                    action = channel_full_table_test_action(channel, e)
+                    if action == 'abort_channel':
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": unrecoverable fetch error — {e}'
+                        )
+                        print(
+                            f'[SKIP] channel="{channel}": aborting remaining tables '
+                            f'after unrecoverable fetch failure'
+                        )
+                        channel_aborted = True
+                        break
+                    if action == 'skip_table':
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": channel access or transient network — {e}'
+                        )
                         continue
-                    else:
-                        raise e
+                    print(f'error downloading data for table {table}: {e}')
+                    raise
+                finally:
+                    if em_logger is not None and em_log_capture is not None:
+                        em_logger.removeHandler(em_log_capture)
+
+                if channel == 'eastmoney' and em_log_capture is not None:
+                    log_action = _eastmoney_log_test_action(em_log_capture.messages)
+                    if log_action == 'abort_channel':
+                        print(
+                            f'\n[SKIP] channel="{channel}" target_table="{table}" '
+                            f'emfuncs_api="{api_label}": eastmoney transient HTTP failure '
+                            f'(warning logged during this table fetch)'
+                        )
+                        print(
+                            f'[SKIP] channel="{channel}": aborting remaining tables '
+                            f'after eastmoney transient HTTP failure'
+                        )
+                        channel_aborted = True
+                        break
+
+                print(f'{len(dnld_data)} rows of data downloaded:\n{dnld_data.head()}')
 
                 # TODO: clean up the data, making it ready to be written to the datasource
                 #  from qteasy.database import get_built_in_table_schema, set_primary_key_frame
@@ -255,6 +382,11 @@ class TestChannels(unittest.TestCase):
         res = _parse_datetime_args(arg_range, start, end, freq=freq)
         print(f'start, end: {start, end}:\n{res}')
         self.assertEqual(res, ['20210131', '20210228', '20210331'])
+
+        print('\n[TestChannels] parse_datetime_args accepts date objects (Trader refill path)')
+        res = _parse_datetime_args(arg_range, date(2021, 2, 1), date(2021, 2, 5))
+        print(' date start/end:', res)
+        self.assertEqual(res, ['20210201', '20210202', '20210203', '20210204', '20210205'])
 
         # testing error handling:
         with self.assertRaises(Exception):
@@ -380,6 +512,40 @@ class TestChannels(unittest.TestCase):
                     {'end': '20210321', 'start': '20210317'},
                 ]
         )
+
+        print('\n[TestChannels] ensure_date_sequence defaults when refill dates are None')
+        start_dt, end_dt = _ensure_date_sequence('19700101', None, None)
+        print(' normalized start:', start_dt, ' end:', end_dt)
+        self.assertIsInstance(start_dt, pd.Timestamp)
+        self.assertIsInstance(end_dt, pd.Timestamp)
+        self.assertEqual(start_dt, pd.Timestamp('1970-01-01'))
+        self.assertGreaterEqual(end_dt, start_dt)
+
+        print('\n[TestChannels] additional time args with None refill dates')
+        chunks = _parse_additional_time_args(None, None, None)
+        print(' single chunk:', chunks)
+        self.assertEqual(len(chunks), 1)
+        self.assertIn('start', chunks[0])
+        self.assertIn('end', chunks[0])
+
+    def test_new_share_parse_args_without_refill_dates(self):
+        """basics 中的 new_share 在未传 start/end 时应能解析参数而非 TypeError。"""
+        print('\n[TestChannels] new_share parse_data_fetch_args without start/end')
+        args = list(parse_data_fetch_args(
+            table='new_share',
+            channel='tushare',
+            symbols=None,
+            start_date=None,
+            end_date=None,
+            list_arg_filter=None,
+            reversed_par_seq=False,
+        ))
+        print(' arg count:', len(args))
+        print(' first arg:', args[0] if args else None)
+        self.assertGreater(len(args), 0)
+        self.assertIn('start', args[0])
+        self.assertIn('end', args[0])
+        self.assertLessEqual(args[0]['start'], args[0]['end'])
 
     def test_table_arg_parsing(self):
         """ testing parsing complete table download args """
@@ -878,6 +1044,85 @@ class TestHistDnldParallelWorkers(unittest.TestCase):
                 print(' max_workers:', mw, 'yielded chunks:', len(rows))
                 self.assertEqual(mw, 3)
                 self.assertEqual(len(rows), 2)
+
+
+class TestChannelDiscovery(unittest.TestCase):
+
+    def test_classify_download_error(self) -> None:
+        print('\n[TestChannelDiscovery] classify_download_error markers')
+        rate_err = Exception('抱歉，您访问接口(stk_mins)频率超限(1次/小时)')
+        perm_err = Exception('没有权限访问该接口')
+        remote_err = Exception(
+            "Eastmoney k-line HTTP request failed: ('Connection aborted.', "
+            "RemoteDisconnected('Remote end closed connection without response'))"
+        )
+        other_err = Exception('connection timeout')
+        print(' rate_err kind:', classify_download_error(rate_err))
+        print(' perm_err kind:', classify_download_error(perm_err))
+        print(' remote_err kind:', classify_download_error(remote_err))
+        print(' other_err kind:', classify_download_error(other_err))
+        self.assertEqual(classify_download_error(rate_err), 'permission')
+        self.assertEqual(classify_download_error(perm_err), 'permission')
+        self.assertEqual(classify_download_error(remote_err), 'transient_http')
+        self.assertEqual(classify_download_error(other_err), 'other')
+
+    def test_download_error_should_not_retry(self) -> None:
+        print('\n[TestChannelDiscovery] download_error_should_not_retry (retry 装饰器对齐)')
+        perm_err = Exception('没有访问该接口的权限')
+        rate_err = Exception('频率超限')
+        print(' perm no-retry:', download_error_should_not_retry(perm_err))
+        print(' rate no-retry:', download_error_should_not_retry(rate_err))
+        self.assertTrue(download_error_should_not_retry(perm_err))
+        self.assertFalse(download_error_should_not_retry(rate_err))
+
+    def test_channel_full_table_test_action(self) -> None:
+        print('\n[TestChannelDiscovery] channel_full_table_test_action')
+        perm_err = Exception('积分不足')
+        remote_err = Exception('Eastmoney k-line HTTP request failed: Connection aborted')
+        other_err = Exception('unexpected')
+        print(' tushare perm:', channel_full_table_test_action('tushare', perm_err))
+        print(' eastmoney http:', channel_full_table_test_action('eastmoney', remote_err))
+        print(' tushare other:', channel_full_table_test_action('tushare', other_err))
+        self.assertEqual(channel_full_table_test_action('tushare', perm_err), 'abort_channel')
+        self.assertEqual(channel_full_table_test_action('eastmoney', remote_err), 'abort_channel')
+        self.assertEqual(channel_full_table_test_action('tushare', other_err), 'raise')
+
+    def test_eastmoney_fund_table_maps_to_stock_emfuncs_api(self) -> None:
+        """Eastmoney 通道：目标表名与 emfuncs 函数名可不同（共用 K 线接口）。"""
+        print('\n[TestChannelDiscovery] eastmoney fund_* -> stock_* emfuncs mapping')
+        fund_api = EASTMONEY_API_MAP['fund_15min'][0]
+        index_api = EASTMONEY_API_MAP['index_daily'][0]
+        print(' fund_15min emfuncs api:', fund_api)
+        print(' index_daily emfuncs api:', index_api)
+        self.assertEqual(fund_api, 'stock_15min')
+        self.assertEqual(index_api, 'stock_daily')
+
+    def test_builtin_channel_listing_and_sina_tables(self):
+        print('\n[TestChannelDiscovery] check builtin channels and sina tables')
+        channels = list_builtin_channels()
+        sina_tables = list_channel_tables('sina')
+        ak_tables = list_channel_tables('akshare')
+        print(' channels:', channels)
+        print(' sina tables sample:', sina_tables[:5])
+        print(' akshare tables:', ak_tables)
+        self.assertIn('sina', channels)
+        self.assertIn('stock_daily', sina_tables)
+        self.assertIn('stock_daily', ak_tables)
+        self.assertIn('stock_1min', ak_tables)
+
+    def test_akshare_p0_spec_discovery(self) -> None:
+        print('\n[TestChannelDiscovery] check AKShare P0 table specs')
+        p0_tables = ['stock_daily', 'index_daily', 'fund_daily', 'stock_1min']
+        for table in p0_tables:
+            spec = get_table_fetch_spec('akshare', table)
+            print(
+                f' table={table}, api={spec.api}, '
+                f'fill_arg={spec.fill_arg_name}/{spec.fill_arg_type}, '
+                f'allow_start_end={spec.allow_start_end}'
+            )
+            self.assertEqual(spec.fill_arg_name, 'qt_code')
+            self.assertEqual(spec.fill_arg_type, 'table_index')
+            self.assertEqual(spec.allow_start_end.upper(), 'Y')
 
 
 if __name__ == '__main__':

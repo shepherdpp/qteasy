@@ -6,17 +6,26 @@
 
 ## 规划与执行的分工
 
-- **高层次规划**（阶段、优先级、范围、新想法与建议）在**规划专用 Chat** 中讨论，结论更新到：
-  - [.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md](../.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md)
-  - [ROADMAP.md](../ROADMAP.md)
-- **具体开发任务**在**独立 Chat Session** 中进行；新 Session 时通过 @ROADMAP.md 与 @展望文件 恢复上下文，再说明本步目标即可。
+- **高层次规划**（阶段、优先级、范围、新想法）在**规划专用 Chat** 中讨论，结论更新到：
+  - [.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md](../.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md)（`doc_role: master-plan`）
+- **具体开发任务**在**独立 Chat Session** 中进行。
 
----
+## 文档层级（2026-05-30 重构后）
 
-## 参考
+| 查什么 | 去哪里 |
+| --- | --- |
+| 市场定位、愿景、设计目标 | 展望 **§一～§四** |
+| 任务定义与工时估算 | 展望 **§五～§六** |
+| **进度与状态（唯一真源）** | 展望 **§七** |
+| 编辑规范 | 展望 **§八**；Cursor rule [qteasy-master-plan.mdc](../.cursor/rules/qteasy-master-plan.mdc) |
+| 具体拆工、契约、TDD | **§7.2** 链到的次顶层 `.cursor/plans/*.plan.md` |
+| 快捷入口 | [ROADMAP.md](../ROADMAP.md)（不维护完整任务表） |
 
-- 执行清单与「当前聚焦」：见项目根目录 [ROADMAP.md](../ROADMAP.md)。
-- 完整展望与时间表：见 [.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md](../.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md)。
+## 新 Session 推荐引用
+
+1. `@.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md`
+2. 任务 ID（如 `S1.2`）+ `@docs/DEV_CONTEXT.md`
+3. 展望 **§7.2** 中该任务对应的次顶层 plan
 
 ---
 
