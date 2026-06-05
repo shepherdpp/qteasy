@@ -758,22 +758,32 @@ def input_to_list(pars, dim=None, padder=None):
 
 
 def regulate_date_format(date_str: Union[str, object],
-                         force_format: str = None) -> str:
-    """ 把YY-MM-DD或YYYY/MM/DD等各种格式的纯日期转化为YYYY-MM-DD格式
-        将日期时间字符串转化为YYYY-MM-DD HH:MM:SS格式
+                         force_format: str = None,
+                         boundary_mode: bool = False) -> str:
+    """把多种日期输入规范为指定 strftime 格式的字符串。
+
+    默认（``boundary_mode=False``）保持历史宽松语义：交由 ``pd.to_datetime`` 解析
+    斜杠、横杠、紧凑数字等多种字符串及 ``datetime`` / ``Timestamp`` 等对象。
+
+    ``boundary_mode=True`` 用于数据下载边界日期：仅接受 8 位 ``YYYYMMDD`` 字符串或
+    日历类型（``date`` / ``datetime`` / ``Timestamp`` / ``datetime64``），拒绝裸
+    ``int``/``float``、``None`` 及无法按边界规则解析的字符串。
 
     Parameters
     ----------
-    date_str: str, date time like
-        时间日期字符串
-    force_format: str, optional
-        强制使用某种格式输出，默认None, 可选'date': '%Y-%m-%d' 或 'datetime': '%Y-%m-%d %H:%M:%S'
-        或者其他给出的合法的strftime格式字符串
+    date_str : str or object
+        待规范化的日期或时间。
+    force_format : str, optional
+        强制输出格式；``None`` 时按是否含时分秒选择 ``%Y-%m-%d`` 或
+        ``%Y-%m-%d %H:%M:%S``；亦可为 ``'date'``、``'datetime'`` 或其它合法
+        ``strftime`` 格式（如 ``'%Y%m%d'``）。
+    boundary_mode : bool, default False
+        是否启用下载边界日期的严格输入规则。
 
     Returns
     -------
-    date_time: str
-    格式为'%Y-%m-%d' 或 '%Y-%m-%d %H:%M:%S'
+    str
+        按 ``force_format``（或默认规则）格式化后的日期时间字符串。
 
     Examples
     --------
@@ -784,23 +794,50 @@ def regulate_date_format(date_str: Union[str, object],
     >>> regulate_date_format('2023-08-01 11:22:33')
     '2023-08-01 11:22:33'
     """
-    try:
-        date_time = pd.to_datetime(date_str)
-    except Exception as e:
-        raise ValueError(f'{e}: {date_str} is not a valid date-time')
-    from datetime import time
+    from datetime import date as dt_date, datetime as dt_datetime, time
+
     if force_format is None:
-        if date_time.time() == time.min:  # if datetime.time() == datetime.time(0, 0)
-            str_format = '%Y-%m-%d'
-        else:
-            str_format = '%Y-%m-%d %H:%M:%S'
+        str_format = None
+    elif force_format == 'date':
+        str_format = '%Y-%m-%d'
+    elif force_format == 'datetime':
+        str_format = '%Y-%m-%d %H:%M:%S'
     else:
-        if force_format == 'date':
-            str_format = '%Y-%m-%d'
-        elif force_format == 'datetime':
-            str_format = '%Y-%m-%d %H:%M:%S'
+        str_format = force_format
+
+    if boundary_mode:
+        if date_str is None:
+            raise TypeError('date value must not be None')
+        if isinstance(date_str, (int, float)):
+            raise TypeError(
+                f'expected str or calendar date, got {type(date_str).__name__}'
+            )
+        if isinstance(date_str, str):
+            text = date_str.strip()
+            if len(text) != 8 or not text.isdigit():
+                raise ValueError(f'Invalid date {date_str!r}: expected YYYYMMDD')
+            date_time = pd.to_datetime(text, format='%Y%m%d', errors='coerce')
+            if pd.isna(date_time):
+                raise ValueError(
+                    f'Invalid date {date_str!r}: not a valid calendar date'
+                )
+        elif isinstance(date_str, (dt_date, dt_datetime, pd.Timestamp, np.datetime64)):
+            date_time = pd.Timestamp(date_str)
         else:
-            str_format = force_format
+            raise TypeError(
+                f'expected str or calendar date, got {type(date_str).__name__}'
+            )
+    else:
+        try:
+            date_time = pd.to_datetime(date_str)
+        except Exception as e:
+            raise ValueError(f'{e}: {date_str} is not a valid date-time')
+
+    if str_format is None:
+        if date_time.time() == time.min:
+            str_format = '%Y-%m-%d'
+        else:
+            str_format = '%Y-%m-%d %H:%M:%S'
 
     return date_time.strftime(str_format)
 

@@ -32,6 +32,7 @@ from .utilfuncs import (
     list_truncate,
     list_to_str_format,
     get_current_timezone_datetime,
+    regulate_date_format,
 )
 
 """
@@ -1004,21 +1005,20 @@ def _parse_list_args(arg_range: str or [str], list_arg_filter: str or [str] = No
 
 def _parse_yyyymmdd_arg(date_value, param_name: str) -> pd.Timestamp:
     """将通道参数映射中的 start/end 解析为 Timestamp；类型或格式非法时抛错。"""
-    if not isinstance(date_value, str):
+    try:
+        text = regulate_date_format(
+                date_value,
+                force_format='%Y%m%d',
+                boundary_mode=True,
+        )
+    except TypeError as exc:
         raise TypeError(
-            f'{param_name} must be a str in YYYYMMDD format, got {type(date_value).__name__}'
-        )
-    text = date_value.strip()
-    if len(text) != 8 or not text.isdigit():
-        raise ValueError(
-            f'Invalid {param_name} {date_value!r}: expected YYYYMMDD'
-        )
-    dt = pd.to_datetime(text, format='%Y%m%d', errors='coerce')
-    if pd.isna(dt):
-        raise ValueError(
-            f'Invalid {param_name} {date_value!r}: not a valid calendar date'
-        )
-    return pd.Timestamp(dt)
+                f'{param_name} must be a str in YYYYMMDD format or a calendar date, '
+                f'got {type(date_value).__name__}'
+        ) from exc
+    except ValueError as exc:
+        raise ValueError(f'Invalid {param_name} {date_value!r}: {exc}') from exc
+    return pd.Timestamp(pd.to_datetime(text, format='%Y%m%d'))
 
 
 def _bound_date_sequence(

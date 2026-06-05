@@ -17,6 +17,7 @@ import logging
 import unittest
 import time
 import warnings
+from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
@@ -381,6 +382,11 @@ class TestChannels(unittest.TestCase):
         res = _parse_datetime_args(arg_range, start, end, freq=freq)
         print(f'start, end: {start, end}:\n{res}')
         self.assertEqual(res, ['20210131', '20210228', '20210331'])
+
+        print('\n[TestChannels] parse_datetime_args accepts date objects (Trader refill path)')
+        res = _parse_datetime_args(arg_range, date(2021, 2, 1), date(2021, 2, 5))
+        print(' date start/end:', res)
+        self.assertEqual(res, ['20210201', '20210202', '20210203', '20210204', '20210205'])
 
         # testing error handling:
         with self.assertRaises(Exception):

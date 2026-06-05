@@ -155,6 +155,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(input_to_list([5, 4], 3, 0), [5, 4, 0])
 
     def test_regulate_date_format(self):
+        print('\n[TestUtilityFuncs] regulate_date_format legacy path')
         self.assertEqual(regulate_date_format('2019/11/06'), '2019-11-06')
         self.assertEqual(regulate_date_format('2019-11-06'), '2019-11-06')
         self.assertEqual(regulate_date_format('20191106'), '2019-11-06')
@@ -166,6 +167,23 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(regulate_date_format(pd.Timestamp('2010.03.15')), '2010-03-15')
         self.assertRaises(ValueError, regulate_date_format, 'abc')
         self.assertRaises(ValueError, regulate_date_format, '2019/13/43')
+
+    def test_regulate_date_format_boundary_mode(self):
+        print('\n[TestUtilityFuncs] regulate_date_format boundary_mode')
+        cal_date = datetime.date(2021, 2, 1)
+        ymd = regulate_date_format(
+                cal_date,
+                force_format='%Y%m%d',
+                boundary_mode=True,
+        )
+        print(' calendar date ->', ymd)
+        self.assertEqual(ymd, '20210201')
+        self.assertEqual(
+                regulate_date_format('20210205', force_format='%Y%m%d', boundary_mode=True),
+                '20210205',
+        )
+        self.assertRaises(TypeError, regulate_date_format, 20201231, force_format='%Y%m%d', boundary_mode=True)
+        self.assertRaises(ValueError, regulate_date_format, 'not_a_date', force_format='%Y%m%d', boundary_mode=True)
 
     def test_list_to_str_format(self):
         self.assertEqual(list_to_str_format(['close', 'open', 'high', 'low']),
