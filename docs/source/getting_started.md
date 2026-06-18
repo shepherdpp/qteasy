@@ -316,6 +316,7 @@ Max drawdown:                    36.85%
 
 1. **配置数据源与 Token** → [教程：入门](tutorials/1-get-started.md)、[教程：获取数据](tutorials/2.0-get-data.md)
 2. **下载数据** → [教程：获取数据](tutorials/2.0-get-data.md)、[下载并管理金融历史数据](manage_data/1.%20overview.md)
+2b. **玩数据与简单因子（可选，建议策略回测前完成）** → [教程 2.0 最小数据集](tutorials/2.0-get-data.md) → [教程 2.5 §0 三十分钟闭环](tutorials/2.5-historypanel-data-analysis.md) →（进阶）[2.6](tutorials/2.6-historypanel-advanced-vertical-timeaxis.md) / [2.7](tutorials/2.7-historypanel-advanced-horizontal-multifactor.md) / [2.8](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)；可运行 `examples/data_playground_e2e.py`
 3. **定义策略并回测** → [教程：第一个策略](tutorials/3-start-first-strategy.md)、[教程：内置策略](tutorials/4-build-in-strategies.md)、[教程：自定义策略](tutorials/5-first-self-defined-strategy.md)、[如何运行回测](back_testing/2.%20run_backtest.md)
 4. **参数优化** → [教程：交易策略的优化](tutorials/Tutorial%2006%20-%20交易策略的优化.md)、[优化交易策略](optimization/1.%20overview.md)
 5. **模拟/实盘运行** → [教程：交易策略的部署及运行](tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)、[模拟实盘运行概览](references/1-simulation-overview.md)
@@ -327,6 +328,7 @@ Max drawdown:                    36.85%
 ## 接下来
 
 - [教程：获取数据](tutorials/2.0-get-data.md) — 配置数据源与下载更多数据
+- [教程：HistoryPanel 玩数据](tutorials/2.5-historypanel-data-analysis.md) — §0 三十分钟因子研究闭环
 - [教程：第一个策略](tutorials/3-start-first-strategy.md) — 使用内置策略与回测
 - [回测与评价](references/3-back-test-strategy.md) — 回测参数与结果解读
 - [API 参考](api/use_qteasy.rst) — 完整接口说明
