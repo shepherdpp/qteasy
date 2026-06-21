@@ -267,6 +267,20 @@ qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间
 
 ---
 
+## 只想做数据分析、暂不写策略怎么走？
+
+按 **数据体验支路** 即可，无需进入 Operator 回测：
+
+1. [教程 2.0：获取并管理金融数据](tutorials/2.0-get-data.md) — 配置 Token、下载 [最小数据集清单](tutorials/2.0-get-data.md#最小数据集清单供-25-使用)
+2. [教程 2.5 §0：三十分钟最小闭环](tutorials/2.5-historypanel-data-analysis.md) — `HistoryPanel` 取数、出图、简单因子与 benchmark 粗对比
+3. 运行 `python examples/data_playground_e2e.py` 验证本地数据与 API
+
+进阶可选：[2.6 纵向择时](tutorials/2.6-historypanel-advanced-vertical-timeaxis.md)、[2.7 横截面选股](tutorials/2.7-historypanel-advanced-horizontal-multifactor.md)、[2.8 事件型形态](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)。
+
+注意：`HistoryPanel.portfolio` / `cum_return` 等为**研究向**工具，不含交易成本与交割语义；若要严肃评价策略，仍须回到 [教程 3](tutorials/3-start-first-strategy.md) 或 2.5 §9 迁移路径。
+
+---
+
 ## 回测/优化为什么慢？
 
 可能原因包括：
