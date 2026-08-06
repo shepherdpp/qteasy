@@ -19,7 +19,7 @@
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S2.1** xtQuant 协作；**S3.2 P2**（指数分钟/财报等）；**S4.x / M1.1** 文档
-- **Jackie 副线（qteasy-ai）**：**Q-AI.1** Session 2 — 自 `qt_ai_dev` 迁移 Stage A（见 [s1.4_剥离_qteasy-ai_10ba0551.plan.md](.cursor/plans/s1.4_剥离_qteasy-ai_10ba0551.plan.md)）
+- **Jackie 副线（qteasy-ai）**：**Q-AI.1** Session 4 — 0.1.x 发布与人工测试（Stage A 已迁入 [qteasy-ai](https://github.com/shepherdpp/qteasy-ai)）
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -37,4 +37,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-06 — qteasy-ai 外置；进度见展望 §七。*
+*最后更新：2026-08-06 — Session 3：README/RELEASE/roadmap qteasy-ai 外置说明。*

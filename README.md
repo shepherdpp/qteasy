@@ -30,6 +30,7 @@
 - [为什么用 qteasy？——量化人关心的几点](#为什么用-qteasy量化人关心的几点)
 - [qteasy 能做什么](#qteasy能做什么)
 - [安装](#安装)
+- [可选：qteasy-ai（AI 编排外壳）](#可选qteasy-aiai-编排外壳)
 - [文档](#文档)
 - [10分钟了解 qteasy 的功能](#10分钟了解-qteasy-的功能)
   - [初始配置——本地数据源](#配置本地数据源)
@@ -126,6 +127,19 @@
 ```bash
 $ pip install qteasy
 ```
+
+## 可选：qteasy-ai（AI 编排外壳）
+
+自 **2026-08** 起，自然语言 **Ask / Plan / Run** 编排层已剥离为独立开源项目 **[qteasy-ai](https://github.com/shepherdpp/qteasy-ai)**（PyPI：`qteasy-ai`）。**qteasy 2.6.0 主线不包含 AI 模块**；需要 CLI、Notebook magic 或 skills 编排时，请额外安装：
+
+```bash
+pip install qteasy>=2.6.0
+pip install qteasy-ai
+```
+
+- **依赖关系**：`qteasy-ai` → `qteasy`（只读调用 `get_kline`、`built_in_list` 等 API，不修改内核）
+- **配置**：优先环境变量 `QTEASY_AI_HOME`、`QTEASY_AI_MODEL`、`QTEASY_AI_API_KEY` 等（详见 qteasy-ai 仓库文档）
+- **设计文档与 quickstart**：见 [qteasy-ai/docs](https://github.com/shepherdpp/qteasy-ai/tree/main/docs)
 
 ## 文档
 

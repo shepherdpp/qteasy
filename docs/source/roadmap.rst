@@ -105,3 +105,8 @@
 - ⬜ 产生交易信号后通过邮件/微信等方式发送通知
 
 
+可选扩展
+--------------
+
+- ✅ AI 自然语言编排外壳（**独立项目** `qteasy-ai <https://github.com/shepherdpp/qteasy-ai>`_，PyPI：``qteasy-ai``；依赖 qteasy 内核 API，不随 qteasy 版本发布）
+

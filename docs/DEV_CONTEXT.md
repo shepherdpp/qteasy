@@ -20,6 +20,7 @@
 | 编辑规范 | 展望 **§八**；Cursor rule [qteasy-master-plan.mdc](../.cursor/rules/qteasy-master-plan.mdc) |
 | 具体拆工、契约、TDD | **§7.2** 链到的次顶层 `.cursor/plans/*.plan.md` |
 | 快捷入口 | [ROADMAP.md](../ROADMAP.md)（不维护完整任务表） |
+| **qteasy-ai（独立仓）** | [GitHub qteasy-ai](https://github.com/shepherdpp/qteasy-ai)；Q-AI 计划仍在 `.cursor/plans/`；与 qteasy 同一 Cursor multi-root 工作区 |
 
 ## 新 Session 推荐引用
 
