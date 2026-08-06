@@ -19,7 +19,7 @@
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S2.1** xtQuant 协作；**S3.2 P2**（指数分钟/财报等）；**S4.x / M1.1** 文档
-- **Jackie 副线（qteasy-ai）**：**Q-AI.1** Session 4 — 0.1.x 发布与人工测试（Stage A 已迁入 [qteasy-ai](https://github.com/shepherdpp/qteasy-ai)）
+- **Jackie 副线（qteasy-ai）**：**Q-AI.1 收尾** — 三模式人工测试（[MANUAL_TEST.md](https://github.com/shepherdpp/qteasy-ai/blob/main/docs/MANUAL_TEST.md) · [s1.4a 金标准 plan](.cursor/plans/s1.4a人工测试金标准_6d66df64.plan.md)）；0.1.0 代码已就绪
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -32,9 +32,10 @@
 | --- | --- |
 | [量化工具对比与 qteasy 展望](.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md) | 顶层战略计划（master-plan） |
 | [qteasy-ai（GitHub）](https://github.com/shepherdpp/qteasy-ai) | AI 外壳独立代码仓 |
-| [S1.4 剥离 qteasy-ai 计划](.cursor/plans/s1.4_剥离_qteasy-ai_10ba0551.plan.md) | Q-AI Session 拆工 |
+| [S1.4 剥离 qteasy-ai 计划](.cursor/plans/s1.4_剥离_qteasy-ai_10ba0551.plan.md) | Q-AI Session 0～4 拆工与交付记录 |
+| [S1.4A 人工测试金标准](.cursor/plans/s1.4a人工测试金标准_6d66df64.plan.md) | Q-AI.1 三模式 smoke（Jackie） |
 | [S3.3 数据通道配置与文档](.cursor/plans/s3.3_数据通道配置与文档_c7d4e8f1.plan.md) | 四通道用户文档（已收官） |
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-06 — Session 3：README/RELEASE/roadmap qteasy-ai 外置说明。*
+*最后更新：2026-08-06 — Q-AI.1 Session 0～4 已记录；待 Jackie 人工测试 + Git push。*
