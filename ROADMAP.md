@@ -14,13 +14,14 @@
 
 ---
 
-## 当前聚焦（2026-08-06）
+## 当前聚焦（2026-08-08）
 
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S2.1** xtQuant 协作；**S3.2 P2**（指数分钟/财报等）；**S4.x / M1.1** 文档
-- **Jackie 副线（qteasy-ai）**：**Q-AI.1 收尾** — 三模式人工测试（[MANUAL_TEST.md](https://github.com/shepherdpp/qteasy-ai/blob/main/docs/MANUAL_TEST.md) · [s1.4a 金标准 plan](.cursor/plans/s1.4a人工测试金标准_6d66df64.plan.md)）；0.1.0 代码已就绪
+- **Jackie 副线（qteasy-ai）**：**Q-AI.1 ✅ 已完成**（0.1.0）；下一可选 **Q-AI.2** skills 扩展
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
+- **待办**：Git push `docs/qteasy-ai-split` + qteasy-ai `main`（网络/PAT 恢复后）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
 
@@ -38,4 +39,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-06 — Q-AI.1 Session 0～4 已记录；待 Jackie 人工测试 + Git push。*
+*最后更新：2026-08-08 — Q-AI.1 已完成（Jackie smoke 2026-08-08）。*
