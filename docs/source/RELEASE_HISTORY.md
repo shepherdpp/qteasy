@@ -2,6 +2,11 @@
 
 本页记录 qteasy 各版本的**用户可见**变更。升级前可查阅对应版本；2.0 大版本请参阅 [2.0 迁移指南](qteasy_2_migration_guide.md)。
 
+## 未发布（Unreleased）
+
+- **qteasy-ai（独立项目）**  
+  AI 编排外壳（自然语言 Plan / Ask / Run、SkillRegistry、CLI、Notebook magic 等）已剥离为独立开源项目 [qteasy-ai](https://github.com/shepherdpp/qteasy-ai)（PyPI：`qteasy-ai`，import：`qteasy_ai`）。**qteasy 2.6.0 及后续主线 release 不包含 `qteasy.ai` 模块**；请单独安装 `qteasy-ai`（依赖 `qteasy>=2.6`）。配置请优先使用环境变量 `QTEASY_AI_*`。曾在本地分支 `qt_ai_dev` 试用 AI 功能的用户：**请勿**将 AI 代码 merge 进 `master`；Stage A 源码已迁入 qteasy-ai 仓库。
+
 ## 2.6.0 (2026-06-01)
 
 - **数据通道（AKShare）**  
