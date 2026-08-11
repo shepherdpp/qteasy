@@ -46,6 +46,14 @@
 
 届时应配套 **TDD** 与英文 `ValueError` 契约，与现有 HP 测试风格一致。
 
+### 4.1 路线图衔接（2026-08-11）
+
+顶层任务 **M2.2** 已将上述「独立模块」形态纳入二阶段实施范围（函数 API：`factor_ic` / `quantile_portfolio` / `long_short_return` 等），并与 HP 内核 pandas 级补齐（`shift`/`diff`/`dropna`/`expr` 等）同批规划。
+
+- 执行计划：[m2.2_hp二阶段扩展_da0c19a3.plan.md](../../../.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)
+- 进度真源：顶层展望 §7.1 **M2.2**
+- 本节 §3「短期不引入类库级 FactorResearch」结论仍然有效：M2.2 落地的是 **`qteasy.research` 模块级函数**，不是挂在 HistoryPanel 上的重型研究类。
+
 ## 5. 与教程的关系
 
 实操路径以 [教程 2.5：使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md) 的 §9–§11 为准；本设计文档仅记录 **架构层面的评估结论**，不增加用户必读的 API 面。
