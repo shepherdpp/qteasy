@@ -1822,6 +1822,41 @@ def ffill_3d_data(arr, init_val=0.):
     return arr
 
 
+def bfill_3d_data(arr: np.ndarray, init_val: float = np.nan) -> np.ndarray:
+    """沿时间轴（axis=1）后向填充三维数组中的 NaN。
+
+    用后方最近的有效值填充缺失；若末行仍为 NaN，则使用 ``init_val``。
+    实现为时间轴翻转后调用 :func:`ffill_3d_data` 再翻回。
+    与 ``ffill_3d_data`` 一样会修改并返回传入的 ``arr``。
+    典型调用方：``HistoryPanel.bfill``。
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        形状 ``(levels, rows, columns)`` 的三维数组。
+    init_val : float, default np.nan
+        末行仍缺失时的填充值。
+
+    Returns
+    -------
+    np.ndarray
+        填充后的同一数组对象。
+
+    Examples
+    --------
+    >>> a = np.array([[[np.nan], [np.nan], [3.0]]])
+    >>> bfill_3d_data(a.copy())
+    array([[[3.],
+            [3.],
+            [3.]]])
+    """
+    arr = np.asarray(arr, dtype=float)
+    flipped = np.ascontiguousarray(arr[:, ::-1, :])
+    ffill_3d_data(flipped, init_val)
+    arr[:, :, :] = flipped[:, ::-1, :]
+    return arr
+
+
 @njit()
 def ffill_2d_data(arr, init_val=0.):
     """ 给定一个二维np数组，如果数组中有nan值时，使用axis=0的前一个非Nan值填充Nan

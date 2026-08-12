@@ -24,6 +24,7 @@ from qteasy.utilfuncs import (
     list_or_slice,
     labels_to_dict,
     ffill_3d_data,
+    bfill_3d_data,
     fill_nan_data,
     fill_inf_data,
     shift_ndarray,
@@ -2240,65 +2241,72 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val: Union[int, float]):
-        """ 使用with_value来填充HistoryPanel中的所有nan值
+    def fillna(self, with_val: Union[int, float], *, inplace: bool = True) -> 'HistoryPanel':
+        """使用 ``with_val`` 填充 HistoryPanel 中的所有 NaN 值。
 
         Parameters
         ----------
-        with_val: float or int
-            填充的值
+        with_val : float or int
+            填充值。
+        inplace : bool, default True
+            True 时原地修改并返回 ``self``；False 时返回新面板且不修改原对象。
 
         Returns
         -------
-        out : HistoryPanel, 填充后的HistoryPanel对象
+        HistoryPanel
+            填充后的面板。
         """
-        if not self.is_empty:
+        if self.is_empty:
+            return self if inplace else HistoryPanel()
+        if inplace:
             self._values = fill_nan_data(self._values, with_val)
-        return self
+            return self
+        values = fill_nan_data(np.asarray(self.values, dtype=float).copy(), with_val)
+        return self._new_panel_from_values(values)
 
-    def fillinf(self, with_val: Union[int, float]):
-        """ 使用with_value来填充HistoryPanel中的所有inf值
+    def fillinf(self, with_val: Union[int, float], *, inplace: bool = True) -> 'HistoryPanel':
+        """使用 ``with_val`` 填充 HistoryPanel 中的所有 Inf 值。
 
         Parameters
         ----------
-        with_val: float or int
-            填充的值
+        with_val : float or int
+            填充值。
+        inplace : bool, default True
+            True 时原地修改并返回 ``self``；False 时返回新面板且不修改原对象。
 
         Returns
         -------
-        out : HistoryPanel, 填充后的HistoryPanel对象
+        HistoryPanel
+            填充后的面板。
         """
-        if not self.is_empty:
+        if self.is_empty:
+            return self if inplace else HistoryPanel()
+        if inplace:
             self._values = fill_inf_data(self._values, with_val)
-        return self
+            return self
+        values = fill_inf_data(np.asarray(self.values, dtype=float).copy(), with_val)
+        return self._new_panel_from_values(values)
 
-    def ffill(self, init_val=np.nan):
-        """ 前向填充缺失值，当历史数据中存在缺失值时，使用缺失值以前
-        的最近有效数据填充缺失值
+    def ffill(self, init_val: float = np.nan, *, inplace: bool = True) -> 'HistoryPanel':
+        """前向填充缺失值：用缺失值以前的最近有效数据填充。
 
         Parameters
         ----------
-        init_val: float, 如果Nan值出现在第一行时，没有前序有效数据，则使用这个值来填充，默认为np.nan
+        init_val : float, default np.nan
+            第一行仍为 NaN、无前序有效数据时使用的填充值。
+        inplace : bool, default True
+            True 时原地修改并返回 ``self``；False 时返回新面板且不修改原对象。
 
         Returns
         -------
-        out : HistoryPanel, 填充后的HistoryPanel对象
+        HistoryPanel
+            填充后的面板。
 
         Examples
         --------
         >>> hp = HistoryPanel(np.array([[[1, 2, 3], [4, np.nan, 6]], [[np.nan, 8, 9], [np.nan, np.nan, 12]]]),
         ...                   levels=['000001', '000002'], rows=['2015-01-01', '2015-01-02'],
         ...                   columns=['open', 'high', 'low'])
-        >>> hp
-        share 0, label: 000001
-                    open  high  low
-        2015-01-01   1.0   2.0  3.0
-        2015-01-02   4.0   NaN  6.0
-        share 1, label: 000002
-                    open  high   low
-        2015-01-01   NaN   8.0   9.0
-        2015-01-02   NaN   NaN  12.0
-
         >>> hp.ffill()
         share 0, label: 000001
                     open  high  low
@@ -2308,24 +2316,184 @@ class HistoryPanel():
                     open  high   low
         2015-01-01   NaN   8.0   9.0
         2015-01-02   NaN   8.0  12.0
-
-        >>> hp.ffill(init_val=3)
-        share 0, label: 000001
-                    open  high  low
-        2015-01-01   1.0   2.0  3.0
-        2015-01-02   4.0   2.0  6.0
-        share 1, label: 000002
-                    open  high   low
-        2015-01-01   3.0   8.0   9.0
-        2015-01-02   3.0   8.0  12.0
         """
-
-        if not self.is_empty:
+        if self.is_empty:
+            return self if inplace else HistoryPanel()
+        if inplace:
             val = self.values
             if np.all(~np.isnan(val)):
                 return self
             self._values = ffill_3d_data(val, init_val)
-        return self
+            return self
+        values = np.asarray(self.values, dtype=float).copy()
+        if not np.all(~np.isnan(values)):
+            ffill_3d_data(values, init_val)
+        return self._new_panel_from_values(values)
+
+    def bfill(self, init_val: float = np.nan, *, inplace: bool = False) -> 'HistoryPanel':
+        """沿时间轴后向填充缺失值；末行仍缺时使用 ``init_val``。
+
+        默认 ``inplace=False``（返回新面板），与历史 ``ffill`` 默认原地相对照。
+
+        Parameters
+        ----------
+        init_val : float, default np.nan
+            末行仍为 NaN、无后续有效数据时使用的填充值。
+        inplace : bool, default False
+            True 时原地修改并返回 ``self``；False 时返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            填充后的面板。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(values=np.array([[[np.nan], [2.0], [3.0]]]),
+        ...                   levels=['s1'], rows=['d1', 'd2', 'd3'], columns=['close'])
+        >>> hp.bfill().values[0, :, 0]
+        array([2., 2., 3.])
+        """
+        if self.is_empty:
+            return self if inplace else HistoryPanel()
+        if inplace:
+            val = self.values
+            if np.all(~np.isnan(val)):
+                return self
+            self._values = bfill_3d_data(val, init_val)
+            return self
+        values = np.asarray(self.values, dtype=float).copy()
+        if not np.all(~np.isnan(values)):
+            bfill_3d_data(values, init_val)
+        return self._new_panel_from_values(values)
+
+    def dropna(
+            self,
+            *,
+            axis: str = 'hdates',
+            how: str = 'any',
+            thresh: Optional[int] = None,
+            subset: Optional[Union[str, Sequence[str]]] = None,
+    ) -> 'HistoryPanel':
+        """按轴丢弃含缺失值的切片，返回可能缩短某一维的新面板。
+
+        Parameters
+        ----------
+        axis : {'hdates', 'shares', 'htypes'}, default 'hdates'
+            丢弃所沿的轴。
+        how : {'any', 'all'}, default 'any'
+            ``any``：切片中存在任一 NaN 则丢弃；``all``：切片全为 NaN 才丢弃。
+            若给出 ``thresh`` 则忽略本参数。
+        thresh : int or None, default None
+            切片上非 NaN 个数小于该阈值则丢弃；指定时忽略 ``how``。
+        subset : str or sequence of str or None, default None
+            仅 ``axis='hdates'`` 时可用：限制参与判定的 ``htypes``。
+
+        Returns
+        -------
+        HistoryPanel
+            新面板；若某轴被删空则返回空面板。
+
+        Raises
+        ------
+        ValueError
+            ``axis`` / ``how`` 非法，或在非 ``hdates`` 轴上使用 ``subset``。
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        if axis not in ('hdates', 'shares', 'htypes'):
+            raise ValueError(
+                f'axis must be one of "hdates", "shares", "htypes", got {axis!r}'
+            )
+        if how not in ('any', 'all'):
+            raise ValueError(f'how must be "any" or "all", got {how!r}')
+        if subset is not None and axis != 'hdates':
+            raise ValueError('subset is only supported when axis is "hdates"')
+
+        values = np.asarray(self.values, dtype=float)
+        if axis == 'hdates':
+            if subset is None:
+                data = values
+            else:
+                col_idx = self._resolve_htype_column_indices(subset)
+                data = values[:, :, col_idx]
+            keep_idx = self._dropna_keep_indices(data, axis_pos=1, how=how, thresh=thresh)
+            if not keep_idx:
+                return HistoryPanel()
+            new_values = values[:, keep_idx, :]
+            new_hdates = [self.hdates[i] for i in keep_idx]
+            return HistoryPanel(
+                values=new_values,
+                levels=list(self.shares),
+                rows=new_hdates,
+                columns=list(self.htypes),
+            )
+        if axis == 'shares':
+            keep_idx = self._dropna_keep_indices(values, axis_pos=0, how=how, thresh=thresh)
+            if not keep_idx:
+                return HistoryPanel()
+            new_values = values[keep_idx, :, :]
+            new_shares = [self.shares[i] for i in keep_idx]
+            return HistoryPanel(
+                values=new_values,
+                levels=new_shares,
+                rows=list(self.hdates),
+                columns=list(self.htypes),
+            )
+        # axis == 'htypes'
+        keep_idx = self._dropna_keep_indices(values, axis_pos=2, how=how, thresh=thresh)
+        if not keep_idx:
+            return HistoryPanel()
+        new_values = values[:, :, keep_idx]
+        new_htypes = [self.htypes[i] for i in keep_idx]
+        return HistoryPanel(
+            values=new_values,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=new_htypes,
+        )
+
+    @staticmethod
+    def _dropna_keep_indices(
+            data: np.ndarray,
+            axis_pos: int,
+            how: str,
+            thresh: Optional[int],
+    ) -> List[int]:
+        """按 ``how``/``thresh`` 计算沿 ``axis_pos`` 应保留的下标列表。
+
+        Parameters
+        ----------
+        data : np.ndarray
+            参与缺失判定的数组（可与原面板同形或为 htypes 子集）。
+        axis_pos : int
+            丢弃轴在 ``data`` 中的位置（0=shares，1=hdates，2=htypes）。
+        how : {'any', 'all'}
+            与 :meth:`dropna` 相同。
+        thresh : int or None
+            与 :meth:`dropna` 相同。
+
+        Returns
+        -------
+        list of int
+            保留的下标。
+        """
+        n = data.shape[axis_pos]
+        keep: List[int] = []
+        for i in range(n):
+            slicer = [slice(None)] * data.ndim
+            slicer[axis_pos] = i
+            slice_ = data[tuple(slicer)]
+            if thresh is not None:
+                if int(np.count_nonzero(~np.isnan(slice_))) >= int(thresh):
+                    keep.append(i)
+            elif how == 'any':
+                if not np.any(np.isnan(slice_)):
+                    keep.append(i)
+            else:
+                if not np.all(np.isnan(slice_)):
+                    keep.append(i)
+        return keep
 
     def join(self,
              other,
