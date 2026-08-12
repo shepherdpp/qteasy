@@ -87,3 +87,4 @@ qteasy/qteasy_backup.cfg
 =======
 /sql/
 >>>>>>> 9f22ef9 (Update .gitignore and enhance DataSource column validation)
+/knowledge
