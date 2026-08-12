@@ -1858,6 +1858,62 @@ def ffill_2d_data(arr, init_val=0.):
     return arr
 
 
+def shift_ndarray(
+        arr: np.ndarray,
+        periods: int,
+        *,
+        axis: int = 1,
+        fill_value: float = np.nan,
+) -> np.ndarray:
+    """沿指定轴拷贝位移数组，空出位置填充 ``fill_value``。
+
+    正 ``periods`` 将数据向轴正方向推移（靠前位置留空），与 pandas ``shift`` 一致。
+    典型调用方：``HistoryPanel.shift`` / ``diff`` / ``pct_change``（沿 hdates 轴，默认 ``axis=1``）。
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        输入数组；本函数不修改原数组。
+    periods : int
+        位移步数；可为负。``|periods| >=`` 该轴长度时，结果整轴为 ``fill_value``。
+    axis : int, default 1
+        位移所沿的轴。
+    fill_value : float, default np.nan
+        空位填充值。
+
+    Returns
+    -------
+    np.ndarray
+        与 ``arr`` 同形的新数组（dtype 为 float）。
+
+    Examples
+    --------
+    >>> a = np.arange(6, dtype=float).reshape(2, 3)
+    >>> shift_ndarray(a, 1, axis=1)
+    array([[nan,  0.,  1.],
+           [nan,  3.,  4.]])
+    """
+    arr = np.asarray(arr)
+    n = arr.shape[axis]
+    out = np.full(arr.shape, fill_value, dtype=float)
+    if periods == 0:
+        out[...] = arr
+        return out
+    if abs(periods) >= n:
+        return out
+    src = [slice(None)] * arr.ndim
+    dst = [slice(None)] * arr.ndim
+    if periods > 0:
+        dst[axis] = slice(periods, None)
+        src[axis] = slice(0, n - periods)
+    else:
+        p = -periods
+        dst[axis] = slice(0, n - p)
+        src[axis] = slice(p, None)
+    out[tuple(dst)] = arr[tuple(src)]
+    return out
+
+
 @njit()
 def fill_nan_data(arr, fill_val=0.):
     """ 给定一个ndarray，用fill_val来填充array中的nan值

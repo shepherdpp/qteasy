@@ -26,6 +26,7 @@ from qteasy.utilfuncs import (
     ffill_3d_data,
     fill_nan_data,
     fill_inf_data,
+    shift_ndarray,
     pandas_freq_alias_version_conversion,
     regulate_date_format,
 )
@@ -3125,6 +3126,208 @@ class HistoryPanel():
         if by not in ('share', 'htype'):
             raise ValueError(f'parameter \"by\" must be \"share\" or \"htype\", got {by}')
         return HistoryPanelRolling(self, window, min_periods, center, by)
+
+    @staticmethod
+    def _validate_nonzero_int_periods(periods: Any) -> int:
+        """校验 ``periods`` 为非零整数；非法时抛出英文 ``ValueError``。
+
+        Parameters
+        ----------
+        periods : Any
+            待校验的位移/差分步数。
+
+        Returns
+        -------
+        int
+            规范化后的非零整数。
+        """
+        if isinstance(periods, bool) or not isinstance(periods, (int, np.integer)):
+            raise ValueError(f'periods must be a non-zero int, got {periods!r}')
+        periods_i = int(periods)
+        if periods_i == 0:
+            raise ValueError('periods must be a non-zero int, got 0')
+        return periods_i
+
+    def _resolve_htype_column_indices(
+            self,
+            htypes: Optional[Union[str, Sequence[str]]],
+    ) -> List[int]:
+        """解析 ``htypes`` 为目标列下标；``None`` 表示全部列。
+
+        Parameters
+        ----------
+        htypes : str or sequence of str or None
+            列名（支持逗号分隔字符串）；``None`` 表示全部 ``htypes``。
+
+        Returns
+        -------
+        list of int
+            列轴下标列表。
+
+        Raises
+        ------
+        ValueError
+            列名不在面板中时抛出（英文消息）。
+        """
+        if htypes is None:
+            return list(range(self.htype_count))
+        if isinstance(htypes, str):
+            names = str_to_list(htypes)
+        else:
+            names = list(htypes)
+        indices: List[int] = []
+        for name in names:
+            if name not in self.htypes:
+                raise ValueError(f'htype {name!r} not found in panel htypes {list(self.htypes)}')
+            indices.append(self.htypes.index(name))
+        return indices
+
+    def _new_panel_from_values(self, values: np.ndarray) -> 'HistoryPanel':
+        """用同轴标签与新 ``values`` 构造新面板。
+
+        Parameters
+        ----------
+        values : np.ndarray
+            与当前面板同形的数值数组。
+
+        Returns
+        -------
+        HistoryPanel
+            新面板实例。
+        """
+        return HistoryPanel(
+            values=values,
+            levels=list(self.shares),
+            rows=list(self.hdates),
+            columns=list(self.htypes),
+        )
+
+    def shift(
+            self,
+            periods: int = 1,
+            *,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+            fill_value: float = np.nan,
+    ) -> 'HistoryPanel':
+        """沿时间轴（hdates）位移指定列；正 ``periods`` 为向后看历史（与 pandas 一致）。
+
+        返回新 ``HistoryPanel``，shape/轴标签不变，移位空位为 ``fill_value``。
+        未指定的列保持原值拷贝。
+
+        Parameters
+        ----------
+        periods : int, default 1
+            非零整数位移步数；负值表示向前看未来。
+        htypes : str or sequence of str or None, default None
+            要位移的列；``None`` 表示全部列。
+        fill_value : float, default np.nan
+            空位填充值。
+
+        Returns
+        -------
+        HistoryPanel
+            新面板；空面板返回空 ``HistoryPanel()``。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(values=np.arange(6.).reshape(1, 3, 2),
+        ...                   levels=['s1'], rows=['d1', 'd2', 'd3'],
+        ...                   columns=['a', 'b'])
+        >>> hp.shift(1).values[0, :, 0]
+        array([nan,  0.,  2.])
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        periods_i = self._validate_nonzero_int_periods(periods)
+        col_idx = self._resolve_htype_column_indices(htypes)
+        values = np.asarray(self.values, dtype=float).copy()
+        sub = values[:, :, col_idx]
+        values[:, :, col_idx] = shift_ndarray(
+            sub, periods_i, axis=1, fill_value=fill_value,
+        )
+        return self._new_panel_from_values(values)
+
+    def diff(
+            self,
+            periods: int = 1,
+            *,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+    ) -> 'HistoryPanel':
+        """一阶差分：``x[t] - x[t-periods]``；``htypes=None`` 时对全部列。
+
+        前 ``periods`` 行（正位移）为 NaN；返回新面板，未选中列保持原值。
+
+        Parameters
+        ----------
+        periods : int, default 1
+            非零整数差分步数。
+        htypes : str or sequence of str or None, default None
+            要差分的列；``None`` 表示全部列。
+
+        Returns
+        -------
+        HistoryPanel
+            新面板；空面板返回空 ``HistoryPanel()``。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(values=np.array([[[1.], [3.], [6.]]]),
+        ...                   levels=['s1'], rows=['d1', 'd2', 'd3'],
+        ...                   columns=['close'])
+        >>> hp.diff().values[0, :, 0]
+        array([nan,  2.,  3.])
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        periods_i = self._validate_nonzero_int_periods(periods)
+        col_idx = self._resolve_htype_column_indices(htypes)
+        values = np.asarray(self.values, dtype=float).copy()
+        sub = values[:, :, col_idx].copy()
+        shifted = shift_ndarray(sub, periods_i, axis=1, fill_value=np.nan)
+        values[:, :, col_idx] = sub - shifted
+        return self._new_panel_from_values(values)
+
+    def pct_change(
+            self,
+            periods: int = 1,
+            *,
+            htypes: Optional[Union[str, Sequence[str]]] = None,
+    ) -> 'HistoryPanel':
+        """列级百分比变化：``(x[t] / x[t-periods]) - 1``。
+
+        与 :meth:`returns` 的区别：不绑定价格语义、不调用 ``_resolve_price_htype``；
+        可对任意列做通用百分比变化。除零结果遵循 NumPy（``±inf``）。
+
+        Parameters
+        ----------
+        periods : int, default 1
+            非零整数间隔步数。
+        htypes : str or sequence of str or None, default None
+            要计算的列；``None`` 表示全部列。
+
+        Returns
+        -------
+        HistoryPanel
+            新面板；空面板返回空 ``HistoryPanel()``。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(values=np.array([[[1.], [2.], [4.]]]),
+        ...                   levels=['s1'], rows=['d1', 'd2', 'd3'],
+        ...                   columns=['close'])
+        >>> hp.pct_change().values[0, :, 0]
+        array([nan,  1.,  1.])
+        """
+        if self.is_empty:
+            return HistoryPanel()
+        periods_i = self._validate_nonzero_int_periods(periods)
+        col_idx = self._resolve_htype_column_indices(htypes)
+        values = np.asarray(self.values, dtype=float).copy()
+        sub = values[:, :, col_idx].copy()
+        shifted = shift_ndarray(sub, periods_i, axis=1, fill_value=np.nan)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            values[:, :, col_idx] = sub / shifted - 1.0
+        return self._new_panel_from_values(values)
 
     def returns(
             self,
