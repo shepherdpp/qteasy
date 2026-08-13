@@ -4989,5 +4989,131 @@ class TestHistoryPanelM22Phase4DropRename(unittest.TestCase):
         self.assertTrue(out_r.is_empty)
 
 
+class TestHistoryPanelM22Phase5Stats(unittest.TestCase):
+    """M2.2 Phase 5：HistoryPanel.sum / median / var / quantile。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 3 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]],  # s1 close/open
+                [[2.0, 1.0], [4.0, 3.0], [6.0, 5.0]],  # s2
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+
+    def test_sum_by_share_and_htype(self):
+        """sum(by='share'/'htype') 手算金标准；非法 by。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] sum by share and htype')
+        hp = self._make_panel()
+        sum_share = hp.sum(by='share')
+        print('  sum_share:\n', sum_share)
+        self.assertIsInstance(sum_share, pd.DataFrame)
+        self.assertEqual(list(sum_share.index), ['s1', 's2'])
+        self.assertEqual(list(sum_share.columns), ['close', 'open'])
+        self.assertAlmostEqual(sum_share.loc['s1', 'close'], 6.0)
+        self.assertAlmostEqual(sum_share.loc['s1', 'open'], 15.0)
+        self.assertAlmostEqual(sum_share.loc['s2', 'close'], 12.0)
+        self.assertAlmostEqual(sum_share.loc['s2', 'open'], 9.0)
+
+        sum_htype = hp.sum(by='htype')
+        print('  sum_htype:\n', sum_htype)
+        self.assertEqual(list(sum_htype.index), ['close', 'open'])
+        self.assertEqual(list(sum_htype.columns), ['s1', 's2'])
+        self.assertAlmostEqual(sum_htype.loc['close', 's1'], 6.0)
+        self.assertAlmostEqual(sum_htype.loc['open', 's2'], 9.0)
+
+        with self.assertRaises(ValueError) as cm:
+            hp.sum(by='wrong_axis')
+        print('  bad by msg:', str(cm.exception))
+        self.assertIn('by', str(cm.exception).lower())
+
+    def test_median_and_var(self):
+        """median / var(ddof=1) 金标准；含 NaN 时 skipna。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] median and var')
+        hp = self._make_panel()
+        med = hp.median(by='share')
+        print('  median:\n', med)
+        self.assertAlmostEqual(med.loc['s1', 'close'], 2.0)
+        self.assertAlmostEqual(med.loc['s1', 'open'], 5.0)
+        self.assertAlmostEqual(med.loc['s2', 'close'], 4.0)
+        self.assertAlmostEqual(med.loc['s2', 'open'], 3.0)
+
+        var_df = hp.var(by='share', ddof=1)
+        print('  var:\n', var_df)
+        s1_close = np.array([1.0, 2.0, 3.0])
+        s2_open = np.array([1.0, 3.0, 5.0])
+        self.assertAlmostEqual(var_df.loc['s1', 'close'], float(np.var(s1_close, ddof=1)))
+        self.assertAlmostEqual(var_df.loc['s2', 'open'], float(np.var(s2_open, ddof=1)))
+
+        values_nan = hp.values.copy()
+        values_nan[0, 1, 0] = np.nan  # s1 close @ t1
+        hp_nan = HistoryPanel(
+            values=values_nan,
+            levels=list(hp.shares),
+            rows=list(hp.hdates),
+            columns=list(hp.htypes),
+        )
+        sum_skip = hp_nan.sum(by='share', skipna=True)
+        print('  sum skipna=True s1 close:', sum_skip.loc['s1', 'close'])
+        self.assertAlmostEqual(sum_skip.loc['s1', 'close'], 4.0)  # 1+3
+
+        sum_keep = hp_nan.sum(by='share', skipna=False)
+        print('  sum skipna=False s1 close:', sum_keep.loc['s1', 'close'])
+        self.assertTrue(np.isnan(sum_keep.loc['s1', 'close']))
+
+        med_skip = hp_nan.median(by='share', skipna=True)
+        print('  median skipna s1 close:', med_skip.loc['s1', 'close'])
+        self.assertAlmostEqual(med_skip.loc['s1', 'close'], 2.0)  # nanmedian([1,nan,3])
+
+    def test_quantile(self):
+        """quantile(q=0.5) 金标准；非法 q / by。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] quantile')
+        hp = self._make_panel()
+        q50 = hp.quantile(q=0.5, by='share')
+        print('  q=0.5:\n', q50)
+        self.assertAlmostEqual(
+            q50.loc['s1', 'close'],
+            float(np.nanquantile([1.0, 2.0, 3.0], 0.5)),
+        )
+        self.assertAlmostEqual(
+            q50.loc['s2', 'open'],
+            float(np.nanquantile([1.0, 3.0, 5.0], 0.5)),
+        )
+
+        q_htype = hp.quantile(q=0.5, by='htype')
+        print('  q htype close/s1:', q_htype.loc['close', 's1'])
+        self.assertAlmostEqual(q_htype.loc['close', 's1'], q50.loc['s1', 'close'])
+
+        with self.assertRaises(ValueError) as cm_q:
+            hp.quantile(q=1.5)
+        print('  bad q msg:', str(cm_q.exception))
+        self.assertTrue(len(str(cm_q.exception)) > 0)
+
+        with self.assertRaises(ValueError) as cm_by:
+            hp.quantile(q=0.5, by='bad')
+        print('  bad by msg:', str(cm_by.exception))
+        self.assertIn('by', str(cm_by.exception).lower())
+
+    def test_empty_panel(self):
+        """空面板四方法 → 空 DataFrame。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] empty panel')
+        hp = HistoryPanel()
+        for name, out in [
+            ('sum', hp.sum()),
+            ('median', hp.median()),
+            ('var', hp.var()),
+            ('quantile', hp.quantile()),
+        ]:
+            print(f'  {name} empty shape:', out.shape, 'empty:', out.empty)
+            self.assertIsInstance(out, pd.DataFrame)
+            self.assertTrue(out.empty)
+
+
 if __name__ == '__main__':
     unittest.main()

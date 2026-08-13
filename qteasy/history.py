@@ -3377,6 +3377,198 @@ class HistoryPanel():
             return df_share
         return df_share.T
 
+    def sum(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """按标的或数据类型对 HistoryPanel 进行求和统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``：沿 hdates 聚合；``htype`` 时返回转置表。
+        skipna : bool, default True
+            是否在求和时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的求和结果表。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.]],
+        ...                  [[5., 6.], [7., 8.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['000001.SZ', '000002.SZ'],
+        ...                   rows=pd.date_range('2020-01-01', periods=2),
+        ...                   columns=['open', 'close'])
+        >>> hp.sum()
+                    open  close
+        000001.SZ   4.0    6.0
+        000002.SZ  12.0   14.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nansum(values, axis=1)
+        else:
+            agg_share = values.sum(axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def median(self, by: str = 'share', skipna: bool = True) -> pd.DataFrame:
+        """按标的或数据类型对 HistoryPanel 进行中位数统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算中位数时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的中位数结果表。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.], [5., 6.]],
+        ...                  [[2., 1.], [4., 3.], [6., 5.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['s1', 's2'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close', 'open'])
+        >>> hp.median()
+             close  open
+        s1     3.0   4.0
+        s2     4.0   3.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanmedian(values, axis=1)
+        else:
+            agg_share = np.median(values, axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def var(
+            self,
+            by: str = 'share',
+            skipna: bool = True,
+            ddof: int = 1,
+    ) -> pd.DataFrame:
+        """按标的或数据类型对 HistoryPanel 进行方差统计。
+
+        Parameters
+        ----------
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算方差时忽略 NaN。
+        ddof : int, default 1
+            自由度修正，与 ``std()`` 默认一致。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的方差结果表。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.], [5., 6.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['s1'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close', 'open'])
+        >>> hp.var()
+             close  open
+        s1     4.0   4.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanvar(values, axis=1, ddof=ddof)
+        else:
+            agg_share = values.var(axis=1, ddof=ddof)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
+    def quantile(
+            self,
+            q: float = 0.5,
+            by: str = 'share',
+            skipna: bool = True,
+    ) -> pd.DataFrame:
+        """按标的或数据类型对 HistoryPanel 计算分位数。
+
+        Parameters
+        ----------
+        q : float, default 0.5
+            分位点，须满足 ``0 <= q <= 1``（仅支持标量）。
+        by : {'share', 'htype'}, default 'share'
+            统计维度，语义同 ``mean()``。
+        skipna : bool, default True
+            是否在计算分位数时忽略 NaN。
+
+        Returns
+        -------
+        pandas.DataFrame
+            按指定维度聚合后的分位数结果表。
+
+        Raises
+        ------
+        ValueError
+            ``q`` 越界或 ``by`` 非法。
+
+        Examples
+        --------
+        >>> data = np.array([[[1., 2.], [3., 4.], [5., 6.]]])
+        >>> hp = HistoryPanel(values=data,
+        ...                   levels=['s1'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close', 'open'])
+        >>> hp.quantile(q=0.5)
+             close  open
+        s1     3.0   4.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if not isinstance(q, (int, float, np.floating)) or isinstance(q, bool):
+            raise ValueError(f'parameter "q" must be a float in [0, 1], got {q!r}')
+        q_f = float(q)
+        if not (0.0 <= q_f <= 1.0):
+            raise ValueError(f'parameter "q" must be in [0, 1], got {q_f}')
+        if by not in ('share', 'htype'):
+            raise ValueError(f'parameter "by" must be "share" or "htype", got {by}')
+
+        values = self.values.astype(float)
+        if skipna:
+            agg_share = np.nanquantile(values, q_f, axis=1)
+        else:
+            agg_share = np.quantile(values, q_f, axis=1)
+        df_share = pd.DataFrame(agg_share, index=self.shares, columns=self.htypes)
+        if by == 'share':
+            return df_share
+        return df_share.T
+
     def describe(
             self,
             by: Optional[str] = 'share',
