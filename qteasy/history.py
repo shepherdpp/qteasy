@@ -28,6 +28,7 @@ from qteasy.utilfuncs import (
     fill_nan_data,
     fill_inf_data,
     shift_ndarray,
+    eval_htype_arithmetic_expr,
     pandas_freq_alias_version_conversion,
     regulate_date_format,
 )
@@ -1085,6 +1086,90 @@ class HistoryPanel():
                     f'Cannot broadcast assign() result for column \"{name}\" to shape (M={M}, L={L}): {e}'
                 )
             target[name] = arr_b
+        return target
+
+    def expr(
+            self,
+            new_htype: str,
+            expression: str,
+            *,
+            inplace: bool = False,
+    ) -> 'HistoryPanel':
+        """用受限列名算术表达式派生新列并写入 ``new_htype``。
+
+        仅允许现有 **identifier** 列名与 ``+ - * / **``、一元正负号、括号及数字字面量。
+        含 ``|`` 等非标识符复权列名请使用 :meth:`assign` 或括号赋值。
+
+        Parameters
+        ----------
+        new_htype : str
+            输出列名，必须为非空 Python 标识符；已存在则覆盖。
+        expression : str
+            算术表达式，如 ``'(high + low) / 2'``。
+        inplace : bool, default False
+            True 时原地写入并返回 ``self``；False 时返回新面板。
+
+        Returns
+        -------
+        HistoryPanel
+            含 ``new_htype`` 列的面板。
+
+        Raises
+        ------
+        ValueError
+            空面板、非法列名/表达式、或不支持的语法时抛出（英文消息）。
+
+        Examples
+        --------
+        >>> hp = HistoryPanel(
+        ...     values=np.array([[[4., 2.], [6., 4.]]]),
+        ...     levels=['s1'], rows=['d1', 'd2'], columns=['high', 'low'],
+        ... )
+        >>> hp.expr('hl2', '(high + low) / 2').values[0, :, 2]
+        array([3., 5.])
+        """
+        if self.is_empty:
+            raise ValueError('Cannot apply expr() to an empty HistoryPanel.')
+        if not isinstance(new_htype, str) or not new_htype or not new_htype.isidentifier():
+            raise ValueError(
+                f'new_htype must be a non-empty Python identifier, got {new_htype!r}; '
+                'use assign() for non-identifier column names'
+            )
+        if not isinstance(expression, str):
+            raise ValueError(
+                f'expression must be a str, got {type(expression).__name__}'
+            )
+
+        columns = {}
+        for name in self.htypes:
+            if name.isidentifier():
+                ci = self.htypes.index(name)
+                columns[name] = np.asarray(self.values[:, :, ci], dtype=float)
+
+        result = eval_htype_arithmetic_expr(expression, columns)
+        arr = np.asarray(result, dtype=float)
+        M, L, _ = self.shape
+        try:
+            if arr.ndim == 0:
+                arr_b = np.full((M, L), float(arr), dtype=float)
+            else:
+                arr_b = np.broadcast_to(arr, (M, L)).copy()
+        except ValueError as e:
+            raise ValueError(
+                f'Cannot broadcast expr() result for column "{new_htype}" '
+                f'to shape (M={M}, L={L}): {e}'
+            ) from e
+
+        if inplace:
+            target = self
+        else:
+            target = HistoryPanel(
+                values=np.array(self.values, copy=True),
+                levels=list(self.shares),
+                rows=list(self.hdates),
+                columns=list(self.htypes),
+            )
+        target[new_htype] = arr_b
         return target
 
     def rank(

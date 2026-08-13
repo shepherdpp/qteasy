@@ -4702,5 +4702,149 @@ class TestHistoryPanelM22Phase2Missing(unittest.TestCase):
         self.assertTrue(out_dn.is_empty)
 
 
+class TestHistoryPanelM22Phase3Expr(unittest.TestCase):
+    """M2.2 Phase 3：HistoryPanel.expr 白名单列名算术 DSL。"""
+
+    def _make_ohlc_panel(self) -> HistoryPanel:
+        """构造 (2,3,3) 面板：high/low/close 手算用。"""
+        values = np.array(
+            [
+                # s1: high=[4,6,8], low=[2,4,6], close=[3,5,7]
+                [[4.0, 2.0, 3.0], [6.0, 4.0, 5.0], [8.0, 6.0, 7.0]],
+                # s2: high=[10,20,30], low=[0,10,20], close=[5,15,25]
+                [[10.0, 0.0, 5.0], [20.0, 10.0, 15.0], [30.0, 20.0, 25.0]],
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['high', 'low', 'close'],
+        )
+
+    def test_expr_hl2_basic(self):
+        """expr('hl2', '(high + low) / 2') 金标准；默认新面板。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr hl2 basic')
+        hp = self._make_ohlc_panel()
+        orig_htypes = list(hp.htypes)
+        orig = hp.values.copy()
+        out = hp.expr('hl2', '(high + low) / 2')
+        print('  out.htypes:', out.htypes)
+        print('  hl2 values:\n', out.values[:, :, out.htypes.index('hl2')])
+        self.assertIsNot(out, hp)
+        self.assertEqual(hp.htypes, orig_htypes)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertIn('hl2', out.htypes)
+        hl2 = out.values[:, :, out.htypes.index('hl2')]
+        # s1: (4+2)/2=3, (6+4)/2=5, (8+6)/2=7
+        self.assertAlmostEqual(hl2[0, 0], 3.0)
+        self.assertAlmostEqual(hl2[0, 1], 5.0)
+        self.assertAlmostEqual(hl2[0, 2], 7.0)
+        # s2: (10+0)/2=5, (20+10)/2=15, (30+20)/2=25
+        self.assertAlmostEqual(hl2[1, 0], 5.0)
+        self.assertAlmostEqual(hl2[1, 1], 15.0)
+        self.assertAlmostEqual(hl2[1, 2], 25.0)
+
+    def test_expr_pow_and_unary(self):
+        """** 与一元负号金标准。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr pow and unary')
+        hp = HistoryPanel(
+            values=np.array([[[2.0], [3.0]]]),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        out = hp.expr('neg_sq', '-close ** 2')
+        # Python: -close ** 2 == -(close ** 2)
+        arr = out.values[:, :, out.htypes.index('neg_sq')]
+        print('  neg_sq:', arr)
+        self.assertAlmostEqual(arr[0, 0], -4.0)
+        self.assertAlmostEqual(arr[0, 1], -9.0)
+
+    def test_expr_inplace_true(self):
+        """inplace=True 原地扩列并返回 self。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr inplace=True')
+        hp = self._make_ohlc_panel()
+        ret = hp.expr('hl2', '(high + low) / 2', inplace=True)
+        print('  ret is hp:', ret is hp, 'htypes:', hp.htypes)
+        self.assertIs(ret, hp)
+        self.assertIn('hl2', hp.htypes)
+        self.assertAlmostEqual(hp.values[0, 0, hp.htypes.index('hl2')], 3.0)
+
+    def test_expr_overwrite_existing(self):
+        """new_htype 已存在则覆盖。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr overwrite existing')
+        hp = self._make_ohlc_panel()
+        out = hp.expr('close', '(high + low) / 2')
+        print('  overwritten close:\n', out.values[:, :, out.htypes.index('close')])
+        self.assertEqual(out.htypes.count('close'), 1)
+        self.assertEqual(len(out.htypes), 3)
+        self.assertAlmostEqual(out.values[0, 0, out.htypes.index('close')], 3.0)
+        # 原 high/low 不变
+        self.assertAlmostEqual(out.values[0, 0, out.htypes.index('high')], 4.0)
+
+    def test_expr_rejects_call_attr_subscript(self):
+        """拒绝函数调用 / 属性 / 下标。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects call/attr/subscript')
+        hp = self._make_ohlc_panel()
+        for bad in ('abs(close)', 'close.real', 'close[0]'):
+            with self.assertRaises(ValueError) as cm:
+                hp.expr('x', bad)
+            print(f'  {bad!r} ->', str(cm.exception))
+            self.assertTrue(len(str(cm.exception)) > 0)
+
+    def test_expr_rejects_unknown_and_non_identifier_col(self):
+        """未知列名；仅有非标识符列时无法在 expr 中引用。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects unknown / non-identifier')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm_u:
+            hp.expr('x', 'not_a_col + 1')
+        print('  unknown:', str(cm_u.exception))
+        self.assertIn('not_a_col', str(cm_u.exception))
+
+        adj = HistoryPanel(
+            values=np.array([[[1.0], [2.0]]]),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close|b'],
+        )
+        with self.assertRaises(ValueError) as cm_adj:
+            adj.expr('x', 'close + 1')
+        print('  adj-only panel:', str(cm_adj.exception))
+        msg = str(cm_adj.exception).lower()
+        self.assertTrue('close' in msg or 'assign' in msg or 'column' in msg)
+
+    def test_expr_rejects_bad_new_htype(self):
+        """new_htype 非标识符或空串 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects bad new_htype')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm1:
+            hp.expr('a|b', 'high + low')
+        print('  a|b:', str(cm1.exception))
+        self.assertTrue('assign' in str(cm1.exception).lower() or 'identifier' in str(cm1.exception).lower())
+
+        with self.assertRaises(ValueError) as cm2:
+            hp.expr('', 'high + low')
+        print('  empty name:', str(cm2.exception))
+
+    def test_expr_empty_panel_raises(self):
+        """空面板 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr empty panel raises')
+        hp = HistoryPanel()
+        with self.assertRaises(ValueError) as cm:
+            hp.expr('hl2', 'high + low')
+        print('  empty msg:', str(cm.exception))
+        self.assertIn('empty', str(cm.exception).lower())
+
+    def test_expr_syntax_error(self):
+        """非法语法 → ValueError（包装）。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr syntax error')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm:
+            hp.expr('x', 'high +')
+        print('  syntax msg:', str(cm.exception))
+        self.assertTrue(len(str(cm.exception)) > 0)
+
+
 if __name__ == '__main__':
     unittest.main()

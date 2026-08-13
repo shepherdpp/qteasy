@@ -9,6 +9,7 @@
 # ======================================
 
 import argparse
+import ast
 import re
 import shutil
 import sys, os
@@ -17,7 +18,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from typing import Literal, Optional, Union
+from typing import Literal, Mapping, Optional, Union, Any
 
 from numba import njit
 from functools import wraps, lru_cache
@@ -1855,6 +1856,105 @@ def bfill_3d_data(arr: np.ndarray, init_val: float = np.nan) -> np.ndarray:
     ffill_3d_data(flipped, init_val)
     arr[:, :, :] = flipped[:, ::-1, :]
     return arr
+
+
+def eval_htype_arithmetic_expr(
+        expression: str,
+        columns: Mapping[str, np.ndarray],
+) -> np.ndarray:
+    """安全求值「列名算术」表达式，仅允许白名单 AST 节点。
+
+    允许：列名标识符、``+ - * / **``、一元正负号、括号、int/float 字面量。
+    禁止：函数调用、属性、下标、导入、比较/布尔以及任意 ``eval``/numexpr。
+    典型调用方：``HistoryPanel.expr``。
+
+    Parameters
+    ----------
+    expression : str
+        算术表达式字符串，如 ``'(high + low) / 2'``。
+    columns : mapping of str to ndarray
+        列名到数组的映射（通常为 ``(M, L)`` float 数组）。
+
+    Returns
+    -------
+    np.ndarray
+        表达式结果（dtype float）；形状与参与运算的列数组广播结果一致。
+
+    Raises
+    ------
+    ValueError
+        语法错误、不支持的语法节点、或未知列名时抛出（英文消息）。
+
+    Examples
+    --------
+    >>> cols = {'high': np.array([[4., 6.]]), 'low': np.array([[2., 4.]])}
+    >>> eval_htype_arithmetic_expr('(high + low) / 2', cols)
+    array([[3., 5.]])
+    """
+    if not isinstance(expression, str):
+        raise ValueError(
+            f'expression must be a str, got {type(expression).__name__}'
+        )
+    try:
+        tree = ast.parse(expression, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f'invalid expression syntax: {e.msg}') from e
+
+    def _eval_node(node: ast.AST) -> Any:
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        if isinstance(node, ast.BinOp):
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            op = node.op
+            with np.errstate(divide='ignore', invalid='ignore'):
+                if isinstance(op, ast.Add):
+                    return left + right
+                if isinstance(op, ast.Sub):
+                    return left - right
+                if isinstance(op, ast.Mult):
+                    return left * right
+                if isinstance(op, ast.Div):
+                    return left / right
+                if isinstance(op, ast.Pow):
+                    return left ** right
+            raise ValueError(
+                f'unsupported binary operator: {type(op).__name__}'
+            )
+        if isinstance(node, ast.UnaryOp):
+            operand = _eval_node(node.operand)
+            if isinstance(node.op, ast.UAdd):
+                return +operand
+            if isinstance(node.op, ast.USub):
+                return -operand
+            raise ValueError(
+                f'unsupported unary operator: {type(node.op).__name__}'
+            )
+        if isinstance(node, ast.Name):
+            name = node.id
+            if name not in columns:
+                raise ValueError(
+                    f'unknown column {name!r} in expression; '
+                    'only existing identifier htypes are allowed '
+                    '(use assign() for non-identifier column names)'
+                )
+            return np.asarray(columns[name], dtype=float)
+        if isinstance(node, ast.Constant):
+            val = node.value
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise ValueError(
+                    f'unsupported literal type: {type(val).__name__}'
+                )
+            return float(val)
+        # py3.9 仍可能见到已弃用的 Num（兼容）
+        if hasattr(ast, 'Num') and isinstance(node, ast.Num):  # type: ignore[attr-defined]
+            return float(node.n)  # type: ignore[attr-defined]
+        raise ValueError(
+            f'unsupported syntax: {type(node).__name__}'
+        )
+
+    result = _eval_node(tree)
+    return np.asarray(result, dtype=float)
 
 
 @njit()
