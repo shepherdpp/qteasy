@@ -4846,5 +4846,148 @@ class TestHistoryPanelM22Phase3Expr(unittest.TestCase):
         self.assertTrue(len(str(cm.exception)) > 0)
 
 
+class TestHistoryPanelM22Phase4DropRename(unittest.TestCase):
+    """M2.2 Phase 4：HistoryPanel.drop / rename。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 3 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]],  # s1 close/open
+                [[4.0, 40.0], [5.0, 50.0], [6.0, 60.0]],  # s2
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+
+    def test_drop_htypes(self):
+        """drop(htypes=...) 删列；原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop htypes')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        out = hp.drop(htypes='open')
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+        print('  out.values:\n', out.values)
+        self.assertIsNot(out, hp)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(out.htypes, ['close'])
+        self.assertEqual(out.shape, (2, 3, 1))
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[1, 2, 0], 6.0)
+
+    def test_drop_shares_and_both(self):
+        """drop shares；两侧同时删。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop shares and both')
+        hp = self._make_panel()
+        out_s = hp.drop(shares='s2')
+        print('  drop s2 shares:', out_s.shares, 'shape:', out_s.shape)
+        self.assertEqual(out_s.shares, ['s1'])
+        self.assertEqual(out_s.shape, (1, 3, 2))
+        self.assertAlmostEqual(out_s.values[0, 1, 1], 20.0)
+
+        out_b = hp.drop(htypes=['open'], shares='s1')
+        print('  drop both htypes:', out_b.htypes, 'shares:', out_b.shares)
+        print('  values:\n', out_b.values)
+        self.assertEqual(out_b.shares, ['s2'])
+        self.assertEqual(out_b.htypes, ['close'])
+        self.assertEqual(out_b.shape, (1, 3, 1))
+        self.assertAlmostEqual(out_b.values[0, 0, 0], 4.0)
+
+    def test_drop_errors_raise_and_ignore(self):
+        """未知标签 raise / ignore；非法 errors。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop errors raise/ignore')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm_r:
+            hp.drop(htypes='nope')
+        print('  raise msg:', str(cm_r.exception))
+        self.assertIn('nope', str(cm_r.exception))
+
+        out = hp.drop(htypes='nope,open', errors='ignore')
+        print('  ignore out.htypes:', out.htypes)
+        self.assertEqual(out.htypes, ['close'])
+        self.assertIsNot(out, hp)
+
+        out_noop = hp.drop(htypes='nope', errors='ignore')
+        print('  ignore unknown-only shape:', out_noop.shape)
+        self.assertEqual(out_noop.shape, hp.shape)
+        np.testing.assert_array_equal(out_noop.values, hp.values)
+
+        with self.assertRaises(ValueError) as cm_e:
+            hp.drop(htypes='open', errors='bad')
+        print('  bad errors:', str(cm_e.exception))
+        self.assertIn('errors', str(cm_e.exception).lower())
+
+    def test_drop_requires_side(self):
+        """两侧皆 None → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop requires side')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm:
+            hp.drop()
+        print('  msg:', str(cm.exception))
+        self.assertTrue(
+            'htypes' in str(cm.exception).lower() or 'shares' in str(cm.exception).lower()
+        )
+
+    def test_drop_to_empty(self):
+        """删光所有 htypes 或 shares → 空面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop to empty')
+        hp = self._make_panel()
+        out_h = hp.drop(htypes='close,open')
+        print('  drop all htypes is_empty:', out_h.is_empty)
+        self.assertTrue(out_h.is_empty)
+
+        out_s = hp.drop(shares=['s1', 's2'])
+        print('  drop all shares is_empty:', out_s.is_empty)
+        self.assertTrue(out_s.is_empty)
+
+    def test_rename_htypes_and_shares(self):
+        """rename 映射重命名；未映射保持；新面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] rename htypes and shares')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        out = hp.rename(htypes={'close': 'px'}, shares={'s1': 'A'})
+        print('  out.htypes:', out.htypes, 'shares:', out.shares)
+        print('  out.values:\n', out.values)
+        self.assertIsNot(out, hp)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(hp.htypes, ['close', 'open'])
+        self.assertEqual(hp.shares, ['s1', 's2'])
+        self.assertEqual(out.htypes, ['px', 'open'])
+        self.assertEqual(out.shares, ['A', 's2'])
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[1, 0, 1], 40.0)
+
+    def test_rename_conflict_and_empty_args(self):
+        """目标冲突 / 两侧映射皆空 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] rename conflict and empty args')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm_c:
+            hp.rename(htypes={'close': 'open'})
+        print('  conflict msg:', str(cm_c.exception))
+        self.assertTrue(len(str(cm_c.exception)) > 0)
+
+        with self.assertRaises(ValueError) as cm_d:
+            hp.rename(htypes={'close': 'x', 'open': 'x'})
+        print('  dup target msg:', str(cm_d.exception))
+
+        with self.assertRaises(ValueError) as cm_e:
+            hp.rename()
+        print('  empty args msg:', str(cm_e.exception))
+
+    def test_empty_panel(self):
+        """空面板 drop/rename 返回空面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] empty panel')
+        hp = HistoryPanel()
+        out_d = hp.drop(htypes='close')
+        out_r = hp.rename(htypes={'a': 'b'})
+        print('  drop empty:', out_d.is_empty, 'rename empty:', out_r.is_empty)
+        self.assertTrue(out_d.is_empty)
+        self.assertTrue(out_r.is_empty)
+
+
 if __name__ == '__main__':
     unittest.main()
