@@ -2,10 +2,14 @@
 
 本页记录 qteasy 各版本的**用户可见**变更。升级前可查阅对应版本；2.0 大版本请参阅 [2.0 迁移指南](qteasy_2_migration_guide.md)。
 
-## 未发布（Unreleased）
+## 2.6.1 (2026-08-13)
 
-- **qteasy-ai（独立项目）**  
-  AI 编排外壳（自然语言 Plan / Ask / Run、SkillRegistry、CLI、Notebook magic 等）已剥离为独立开源项目 [qteasy-ai](https://github.com/shepherdpp/qteasy-ai)（PyPI：`qteasy-ai`，import：`qteasy_ai`）。**qteasy 2.6.0 及后续主线 release 不包含 `qteasy.ai` 模块**；请单独安装 `qteasy-ai`（依赖 `qteasy>=2.6`）。配置请优先使用环境变量 `QTEASY_AI_*`。曾在本地分支 `qt_ai_dev` 试用 AI 功能的用户：**请勿**将 AI 代码 merge 进 `master`；Stage A 源码已迁入 qteasy-ai 仓库。
+- **HistoryPanel 数据操作能力扩展，新增下列API**  
+  - **时序变换** `shift` / `diff` / `pct_change`：可对任意列沿时间轴做位移、差分与百分比变化，便于自行构造滞后特征与前瞻收益列，而不必先导出到 pandas。
+  - **缺失值处理** `bfill` / `dropna`：新增后向填充与按轴丢弃缺失切片；既有填充接口支持显式选择是否原地修改，默认行为与以往一致，便于安全地链式整理面板。
+  - **列表达式** `expr`：可用受限算术表达式由现有列名直接派生新列（如高低点均值），语法限定为标识符列名与四则/`**`，复权等非标识符列名请继续用赋值方式生成。
+- **文档更新**  
+  教程与 HistoryPanel API 说明已补充上述能力与可变性约定，便于对照示例上手。
 
 ## 2.6.0 (2026-06-01)
 
