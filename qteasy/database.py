@@ -1139,12 +1139,23 @@ class DataSource:
             sql += "%s, "
         sql += "%s)\n" \
                "ON DUPLICATE KEY UPDATE\n"
+        # basics 表：空下载值不覆盖本地；dtype 取自内置 schema。
+        # 非 basics / 用户自定义临时表：简单 VALUES 赋值，勿强制查内置表名。
         patch_empty = table_is_basics(db_table)
-        col_dtype_map = dict(zip(tbl_columns, get_built_in_table_schema(db_table)[1]))
+        col_dtype_map = {}
+        if patch_empty:
+            built_cols, built_dtypes = get_built_in_table_schema(
+                db_table, with_primary_keys=False,
+            )
+            col_dtype_map = dict(zip(built_cols, built_dtypes))
         for col in update_cols[:-1]:
-            sql += _duplicate_update_assign_sql(col, col_dtype_map[col], patch_empty) + ',\n'
+            sql += _duplicate_update_assign_sql(
+                col, col_dtype_map.get(col, ''), patch_empty,
+            ) + ',\n'
         last_col = update_cols[-1]
-        sql += _duplicate_update_assign_sql(last_col, col_dtype_map[last_col], patch_empty)
+        sql += _duplicate_update_assign_sql(
+            last_col, col_dtype_map.get(last_col, ''), patch_empty,
+        )
 
         rows_affected = self._db_execute_many(sql, df_tuple)
         return rows_affected
