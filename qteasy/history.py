@@ -341,7 +341,7 @@ class HistoryPanel():
 
     @property
     def hdate_count(self):
-        """获取HistoryPanel的历史数据类型数量"""
+        """获取 HistoryPanel 的历史日期（hdates）数量"""
         return self._r_count
 
     @property

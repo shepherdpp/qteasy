@@ -52,6 +52,7 @@
 
 - 执行计划：[m2.2_hp二阶段扩展_da0c19a3.plan.md](../../../.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)
 - 进度真源：顶层展望 §7.1 **M2.2**
+- **截至 CP-A（Phase 1–3）**：HP 内核已落地 `shift` / `diff` / `pct_change`、`bfill` / `dropna`、填充类 `inplace=`、以及 `expr`；用户文档见教程 2.4/2.5 与 [HistoryPanel API](../api/HistoryPanel.rst)。**`qteasy.research` 尚未实现**（Phase 8+）。
 - 本节 §3「短期不引入类库级 FactorResearch」结论仍然有效：M2.2 落地的是 **`qteasy.research` 模块级函数**，不是挂在 HistoryPanel 上的重型研究类。
 
 ## 5. 与教程的关系

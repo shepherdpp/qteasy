@@ -1008,7 +1008,8 @@ def get_history_data(htypes=None,
         已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。
         新代码请在 htype 中显式使用复权列名（如 ``close|b``）。
     as_data_frame : bool, default True
-        ``True`` 时返回 ``HistoryPanel``；``False`` 时返回 ``DataFrame`` 字典。
+        ``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典；
+        ``False`` 时返回 ``HistoryPanel``。
     group_by : str, default 'shares'
         返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或
         ``'htypes'``/``'htype'``/``'h'``。
