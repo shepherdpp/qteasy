@@ -12,6 +12,7 @@ import unittest
 
 import os
 import shutil
+import warnings
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -5113,6 +5114,100 @@ class TestHistoryPanelM22Phase5Stats(unittest.TestCase):
             print(f'  {name} empty shape:', out.shape, 'empty:', out.empty)
             self.assertIsInstance(out, pd.DataFrame)
             self.assertTrue(out.empty)
+
+
+class TestHistoryPanelM22Phase6Deprecation(unittest.TestCase):
+    """M2.2 Phase 6：旧 API DeprecationWarning。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 4 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 10.0], [2.0, 20.0], [3.0, 30.0], [4.0, 40.0]],
+                [[5.0, 50.0], [6.0, 60.0], [7.0, 70.0], [8.0, 80.0]],
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['close', 'open'],
+        )
+
+    def test_slice_warns_and_keeps_result(self):
+        """slice 触发 DeprecationWarning；结果金标准；原面板不变。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] slice warns and keeps result')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        with self.assertWarns(DeprecationWarning) as cm:
+            out = hp.slice(shares='s1', htypes='close')
+        msg = str(cm.warning)
+        print('  warning:', msg)
+        print('  out.shares/htypes/shape:', out.shares, out.htypes, out.shape)
+        print('  out.values:\n', out.values)
+        self.assertIn('subpanel', msg.lower())
+        self.assertIn('instead', msg.lower())
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(out.shares, ['s1'])
+        self.assertEqual(out.htypes, ['close'])
+        self.assertEqual(out.shape, (1, 4, 1))
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 3, 0], 4.0)
+
+    def test_segment_and_isegment_warn(self):
+        """segment / isegment 均 warning；日期范围金标准。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] segment and isegment warn')
+        hp = self._make_panel()
+        with self.assertWarns(DeprecationWarning) as cm_s:
+            seg = hp.segment('2023-01-02', '2023-01-03')
+        print('  segment warning:', cm_s.warning)
+        print('  segment hdates:', seg.hdates)
+        print('  segment values:\n', seg.values)
+        self.assertIn('instead', str(cm_s.warning).lower())
+        self.assertEqual(len(seg.hdates), 2)
+        self.assertAlmostEqual(seg.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(seg.values[1, 1, 1], 70.0)
+
+        with self.assertWarns(DeprecationWarning) as cm_i:
+            iseg = hp.isegment(1, 3)
+        print('  isegment warning:', cm_i.warning)
+        print('  isegment hdates:', iseg.hdates)
+        print('  isegment values:\n', iseg.values)
+        self.assertIn('instead', str(cm_i.warning).lower())
+        self.assertEqual(len(iseg.hdates), 2)
+        self.assertAlmostEqual(iseg.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(iseg.values[0, 1, 0], 3.0)
+
+    def test_candle_warns_and_delegates_plot(self):
+        """candle 警告并委托 plot；不再 NotImplementedError。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] candle warns and delegates plot')
+        hp = self._make_panel()
+        with self.assertWarns(DeprecationWarning) as cm:
+            fig_c = hp.candle(interactive=False)
+        msg = str(cm.warning)
+        print('  warning:', msg)
+        print('  candle return type:', type(fig_c))
+        self.assertIn('plot', msg.lower())
+        self.assertIn('instead', msg.lower())
+        fig_p = hp.plot(interactive=False)
+        print('  plot return type:', type(fig_p))
+        self.assertEqual(type(fig_c), type(fig_p))
+
+    def test_warning_message_english(self):
+        """slice 警告全文为英文。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] warning message english')
+        hp = self._make_panel()
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            hp.slice(shares='s1')
+        self.assertTrue(len(caught) >= 1)
+        deprec = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        self.assertTrue(len(deprec) >= 1)
+        msg = str(deprec[0].message)
+        print('  msg:', msg)
+        self.assertTrue(msg.isascii())
+        self.assertIn('deprecated', msg.lower())
+        self.assertIn('subpanel', msg.lower())
 
 
 if __name__ == '__main__':

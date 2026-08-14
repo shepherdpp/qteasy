@@ -11,6 +11,7 @@
 
 import operator
 from numbers import Number
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -1924,9 +1925,10 @@ class HistoryPanel():
         return NotImplemented
 
     def segment(self, start_date=None, end_date=None):
-        """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
-            这两个日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
-            htypes的数据
+        """获取 HistoryPanel 的一个日期片段（已弃用，请用 ``loc`` 或 ``subpanel(hdates=...)``）。
+
+        start_date 和 end_date 都是日期型数据，返回这两个日期之间的所有数据；
+        返回类型为 HistoryPanel，包含所有 share 和 htypes 的数据。
 
         Parameters
         ----------
@@ -1964,6 +1966,11 @@ class HistoryPanel():
         2015-01-09    10    20   30     40      50
         2015-01-10    10    20   30     40      50
         """
+        warnings.warn(
+            "HistoryPanel.segment is deprecated, use loc or subpanel(hdates=...) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         hdates = np.array(self.hdates)
         if start_date is None:
             start_date = hdates[0]
@@ -1978,9 +1985,10 @@ class HistoryPanel():
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def isegment(self, start_index=None, end_index=None):
-        """ 获取HistoryPanel的一个片段，start_index和end_index都是int数，表示日期序号，返回
-            这两个序号代表的日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
-            htypes的数据
+        """获取 HistoryPanel 的一个整数下标日期片段（已弃用，请用 ``panel[:, :, start:end]`` 或 ``subpanel(hdates=...)``）。
+
+        start_index 和 end_index 都是 int，表示日期序号，返回这两个序号之间的所有数据；
+        返回类型为 HistoryPanel，包含所有 share 和 htypes 的数据。
 
         Parameters
         ----------
@@ -2017,14 +2025,21 @@ class HistoryPanel():
         2015-01-08    10    20   30     40      50
         2015-01-09    10    20   30     40      50
         """
+        warnings.warn(
+            "HistoryPanel.isegment is deprecated, "
+            "use panel[:, :, start:end] or subpanel(hdates=...) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         hdates = np.array(self.hdates)
         new_dates = list(hdates[start_index:end_index])
         new_values = self[:, :, start_index:end_index].values
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
 
     def slice(self, shares=None, htypes=None):
-        """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
-            串，表示需要获取的股票或数据的种类。
+        """获取 HistoryPanel 的股票或数据类型片段（已弃用，请用 ``subpanel(...)``）。
+
+        shares 和 htypes 可以为列表或逗号分隔字符串，表示需要获取的股票或数据类型。
 
         Parameters
         ----------
@@ -2070,6 +2085,11 @@ class HistoryPanel():
         2015-01-13     40    10
         2015-01-14     40    10
         """
+        warnings.warn(
+            "HistoryPanel.slice is deprecated, use subpanel(...) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.is_empty:
             return self
         if shares is None:
@@ -5815,16 +5835,20 @@ class HistoryPanel():
 
     # 以下 legacy 方法仅保留占位，统一通过 HistoryPanel.plot() 实现可视化
     def candle(self, *args, **kwargs):
-        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图 （已由 ``plot()`` 统一处理）
+        """基于当前 ``HistoryPanel`` 数据绘制蜡烛图（已弃用，请用 ``plot()``）。
 
         Notes
         -----
         - 新版可视化推荐直接调用 ``HistoryPanel.plot()``，并通过 htypes / layout
           控制是否输出 K 线、成交量等图表类型。
-        - 本方法在内部会委托给可视化子模块的统一入口实现，行为与 ``plot()`` 保持
-          一致，仅作为语义化别名存在。
+        - 本方法在内部委托给 ``plot()``，行为与 ``plot()`` 保持一致，仅作为语义化别名存在。
         """
-        raise NotImplementedError
+        warnings.warn(
+            "HistoryPanel.candle is deprecated, use plot(...) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.plot(*args, **kwargs)
 
 
 class _HistoryPanelKlineAccessor:
