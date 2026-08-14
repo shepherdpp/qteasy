@@ -26,10 +26,22 @@ HistoryPanel 本质上是一个三维 ``numpy.ndarray``，三个轴分别表示�
                                      # 多标的、数据类型与时间区间联合切片
     hp.loc[0:5]                       # 与 hp[:, :, 0:5] 等价，按时间轴截取
 
+兼容 API（已弃用）
+~~~~~~~~~~~~~~~~~~~~
+
+下列方法仍保留兼容行为，但会发出英文 ``DeprecationWarning`` （含 ``use … instead``）。**新代码请使用右侧推荐 API**：
+
+- ``slice(...)`` → :meth:`~qteasy.HistoryPanel.subpanel`
+- ``segment(...)`` → :attr:`~qteasy.HistoryPanel.loc` 或 ``subpanel(hdates=...)``
+- ``isegment(...)`` → ``panel[:, :, start:end]`` 或 ``subpanel(hdates=...)``
+- ``candle(...)`` → :meth:`~qteasy.HistoryPanel.plot` （``candle`` 现委托 ``plot``，不再抛出 ``NotImplementedError``）
+
+``slice`` / ``segment`` / ``isegment`` 仅增加警告，**未**改写原实现（避免语义漂移）。
+
 
 .. autoclass:: qteasy.HistoryPanel
     :members:
-    :exclude-members: describe, mean, std, min, max, where, assign, expr, shift, diff, pct_change, fillna, ffill, fillinf, bfill, dropna, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline
+    :exclude-members: describe, mean, std, min, max, sum, median, var, quantile, where, assign, expr, shift, diff, pct_change, fillna, ffill, fillinf, bfill, dropna, drop, rename, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline
     :special-members: __getitem__, __setitem__, __getattr__, __lt__, __le__, __gt__, __ge__, __eq__, __ne__
 
 
@@ -38,7 +50,9 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
 基础统计与聚合
 ----------------
 
-以下方法在 HistoryPanel 的三维数据上提供类似 pandas 的统计功能：
+以下方法在 HistoryPanel 的三维数据上提供类似 pandas 的统计功能。``mean`` / ``std`` / ``min`` / ``max`` 以及 ``sum`` / ``median`` / ``var`` / ``quantile`` 均沿 **hdates** （axis=1）聚合，返回 ``DataFrame(index=shares, columns=htypes)``；``by='htype'`` 仅为转置。``var`` 默认 ``ddof=1`` （与 ``std`` 对齐）；``quantile`` 仅接受标量 ``q`` 且 ``0 <= q <= 1``。
+
+注意区分：面板级 :meth:`~qteasy.HistoryPanel.sum` 返回 ``DataFrame``；:class:`~qteasy.history.HistoryPanelRolling` 的 ``sum`` 返回滚动后的 ``HistoryPanel``。
 
 .. automethod:: qteasy.HistoryPanel.describe
 
@@ -49,6 +63,14 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
 .. automethod:: qteasy.HistoryPanel.min
 
 .. automethod:: qteasy.HistoryPanel.max
+
+.. automethod:: qteasy.HistoryPanel.sum
+
+.. automethod:: qteasy.HistoryPanel.median
+
+.. automethod:: qteasy.HistoryPanel.var
+
+.. automethod:: qteasy.HistoryPanel.quantile
 
 
 研究与掩码 （where）
@@ -189,6 +211,20 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
 .. automethod:: qteasy.HistoryPanel.bfill
 
 .. automethod:: qteasy.HistoryPanel.dropna
+
+轴标签：drop / rename
+-----------------------
+
+:meth:`~qteasy.HistoryPanel.drop` 与 :meth:`~qteasy.HistoryPanel.rename` 均返回**新** ``HistoryPanel``，不修改原对象，也不改写 ``hdates``。
+
+- ``drop(*, htypes=, shares=, errors='raise'|'ignore')``：至少指定 ``htypes`` 或 ``shares`` 一侧；标签精确匹配（含 ``close|b``）；某轴删空则返回空面板。
+- ``rename(*, htypes=, shares=)``：映射式重命名，未映射标签保持不变；目标冲突或两源同目标时抛出英文 ``ValueError``。
+
+与 :meth:`~qteasy.HistoryPanel.re_label` 的对照：``re_label`` 为**原地**整轴重赋（保留）；``rename`` 为映射式便捷 API（默认新对象）。
+
+.. automethod:: qteasy.HistoryPanel.drop
+
+.. automethod:: qteasy.HistoryPanel.rename
 
 横截面与标准化：rank / zscore
 --------------------------------------------
