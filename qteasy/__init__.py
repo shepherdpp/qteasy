@@ -439,4 +439,5 @@ __all__ = [
     'logger_core', 'live_trade_accounts', 'delete_account', 'list_live_trade_artifacts', 'risk_log_file_path_name',
     'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
     'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
+    'research',
 ]
