@@ -53,7 +53,8 @@
 - 执行计划：[m2.2_hp二阶段扩展_da0c19a3.plan.md](../../../.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)
 - 进度真源：顶层展望 §7.1 **M2.2**
 - **截至 CP-A（Phase 1–3）**：HP 内核已落地 `shift` / `diff` / `pct_change`、`bfill` / `dropna`、填充类 `inplace=`、以及 `expr`；用户文档见教程 2.4/2.5 与 [HistoryPanel API](../api/HistoryPanel.rst)。
-- **截至 CP-B（Phase 4–6）**：HP 内核已落地 `drop` / `rename`、统计对称（`sum` / `median` / `var` / `quantile`）、以及 `slice`/`segment`/`isegment`/`candle` 的英文弃用警告；文档同上。**`qteasy.research` 尚未实现**（Phase 8+）。
+- **截至 CP-B（Phase 4–6）**：HP 内核已落地 `drop` / `rename`、统计对称（`sum` / `median` / `var` / `quantile`）、以及 `slice`/`segment`/`isegment`/`candle` 的英文弃用警告；文档同上。
+- **截至 CP-D / CP-E（Phase 8–11）**：`qteasy.research` 已落地模块级 `factor_ic` / `factor_ic_summary` / `quantile_portfolio` / `long_short_return`；HP 已落地 `corr` / `cov`；导出推荐名与可跟跑示例见 [research API](../api/research.rst)、教程 2.5 cookbook 与 `examples/historypanel_research_factor_workflow.py`。
 - 本节 §3「短期不引入类库级 FactorResearch」结论仍然有效：M2.2 落地的是 **`qteasy.research` 模块级函数**，不是挂在 HistoryPanel 上的重型研究类。
 
 ## 5. 与教程的关系

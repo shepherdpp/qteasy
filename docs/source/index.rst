@@ -187,6 +187,7 @@
    api/history_data.rst
    api/data_source.rst
    api/HistoryPanel.rst
+   api/research.rst
    api/data_types.rst
    api/built_in_strategies.rst
    api/Operators.rst

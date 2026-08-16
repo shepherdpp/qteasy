@@ -32,16 +32,18 @@
 - `docs/source/api/history_data.rst`
 - `docs/source/references/2-get-history-data.md`
 
-### 1.3 研究容器（history）
+### 1.3 研究容器（history）与因子研究子包
 
 - `HistoryPanel`（`qteasy/history.py`）
 - `dataframe_to_hp` / `stack_dataframes`（`qteasy/history.py`）
+- 顶层 `__all__` 含子包名 `'research'`（便于发现）；**函数不平铺**为 `qt.factor_ic`，请 `from qteasy.research import ...`
 
 对应文档入口：
-- `docs/source/api/HistoryPanel.rst`
-- `docs/source/tutorials/2.5-historypanel-data-analysis.md`（含 §9–§11：研究→回测迁移、多源拼板、导出 statsmodels）
-- `docs/source/design/10-historypanel-factor-research-layer.md`（可选 FactorResearch 层评估）
-- 示例：`examples/historypanel_research_to_strategy.py`、`examples/historypanel_multisource_research.py`、`examples/historypanel_statsmodels_export.py`
+- `docs/source/api/HistoryPanel.rst`（含导出推荐名、`corr`/`cov`）
+- `docs/source/api/research.rst`（`factor_ic` / 分位组合等）
+- `docs/source/tutorials/2.5-historypanel-data-analysis.md`（含 §9–§11：研究→回测迁移、多源拼板、导出 statsmodels；以及 `qteasy.research` cookbook）
+- `docs/source/design/10-historypanel-factor-research-layer.md`（模块级研究层边界）
+- 示例：`examples/historypanel_research_to_strategy.py`、`examples/historypanel_multisource_research.py`、`examples/historypanel_statsmodels_export.py`、`examples/historypanel_research_factor_workflow.py`
 
 ### 1.4 策略与算子（operator / strategy / built_in）
 
