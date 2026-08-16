@@ -3589,6 +3589,139 @@ class HistoryPanel():
             return df_share
         return df_share.T
 
+    def _htype_wide_frame(self, htype: str) -> pd.DataFrame:
+        """将指定 htype 转为 index=hdates、columns=shares 的宽表。
+
+        Parameters
+        ----------
+        htype : str
+            数据类型列名，须已在 ``htypes`` 中。
+
+        Returns
+        -------
+        pandas.DataFrame
+            时序宽表，供 ``corr`` / ``cov`` 使用。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``。
+        """
+        if htype not in self.htypes:
+            raise ValueError(f'Unknown htype {htype!r}')
+        ci = self.htypes.index(htype)
+        mat = np.asarray(self.values[:, :, ci], dtype=float)
+        return pd.DataFrame(mat.T, index=list(self.hdates), columns=list(self.shares))
+
+    def corr(
+            self,
+            htype: str,
+            *,
+            method: str = 'pearson',
+            min_periods: int = 1,
+    ) -> pd.DataFrame:
+        """对指定 htype，在 share 维上计算时序两两相关系数矩阵。
+
+        将每个标的在该 ``htype`` 上的时间序列视为一列，返回 ``shares × shares`` 相关矩阵。
+        与 ``qteasy.research.factor_ic``（逐日截面相关）语义不同。
+
+        Parameters
+        ----------
+        htype : str
+            参与计算的数据类型列名。
+        method : {'pearson', 'spearman'}, default 'pearson'
+            相关系数方法。
+        min_periods : int, default 1
+            计算每对相关所需的最少有效观测数，透传给 pandas。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index/columns 均为 ``shares``；空面板返回空表。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``、非法 ``method`` / ``min_periods``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> data = np.array([[[1.], [2.], [3.]], [[2.], [4.], [6.]]])
+        >>> hp = HistoryPanel(data, levels=['a', 'b'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close'])
+        >>> float(hp.corr('close').loc['a', 'b'])
+        1.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if method not in ('pearson', 'spearman'):
+            raise ValueError(
+                f"method must be 'pearson' or 'spearman', got {method!r}"
+            )
+        if not isinstance(min_periods, (int, np.integer)) or isinstance(min_periods, bool):
+            raise ValueError(f'min_periods must be an int >= 1, got {min_periods!r}')
+        if int(min_periods) < 1:
+            raise ValueError(f'min_periods must be >= 1, got {min_periods}')
+
+        wide = self._htype_wide_frame(htype)
+        return wide.corr(method=method, min_periods=int(min_periods))
+
+    def cov(
+            self,
+            htype: str,
+            *,
+            min_periods: int = 1,
+            ddof: int = 1,
+    ) -> pd.DataFrame:
+        """对指定 htype，在 share 维上计算时序两两协方差矩阵。
+
+        语义同 ``corr``：每个标的一条时间序列，返回 ``shares × shares`` 协方差矩阵。
+
+        Parameters
+        ----------
+        htype : str
+            参与计算的数据类型列名。
+        min_periods : int, default 1
+            计算每对协方差所需的最少有效观测数，透传给 pandas。
+        ddof : int, default 1
+            自由度修正，透传给 ``DataFrame.cov``。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index/columns 均为 ``shares``；空面板返回空表。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``、非法 ``min_periods``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> data = np.array([[[1.], [2.], [3.]], [[2.], [4.], [6.]]])
+        >>> hp = HistoryPanel(data, levels=['a', 'b'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close'])
+        >>> hp.cov('close').shape
+        (2, 2)
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if not isinstance(min_periods, (int, np.integer)) or isinstance(min_periods, bool):
+            raise ValueError(f'min_periods must be an int >= 1, got {min_periods!r}')
+        if int(min_periods) < 1:
+            raise ValueError(f'min_periods must be >= 1, got {min_periods}')
+
+        wide = self._htype_wide_frame(htype)
+        return wide.cov(min_periods=int(min_periods), ddof=ddof)
+
     def describe(
             self,
             by: Optional[str] = 'share',

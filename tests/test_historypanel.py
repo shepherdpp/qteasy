@@ -5210,5 +5210,84 @@ class TestHistoryPanelM22Phase6Deprecation(unittest.TestCase):
         self.assertIn('subpanel', msg.lower())
 
 
+class TestHistoryPanelM22Phase10CorrCov(unittest.TestCase):
+    """M2.2 Phase 10：HistoryPanel.corr / cov。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """2 shares × 4 dates × close；时序相关可对齐 pandas。"""
+        values = np.array(
+            [
+                [[1.0], [2.0], [3.0], [4.0]],  # s1 close
+                [[2.0], [4.0], [6.0], [8.0]],  # s2 close = 2 * s1
+            ],
+            dtype=float,
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['close'],
+        )
+
+    def _wide_df(self, hp: HistoryPanel, htype: str) -> pd.DataFrame:
+        """(hdates × shares) 宽表，与 corr/cov 实现约定一致。"""
+        ci = hp.htypes.index(htype)
+        mat = np.asarray(hp.values[:, :, ci], dtype=float)  # shares × dates
+        return pd.DataFrame(mat.T, index=list(hp.hdates), columns=list(hp.shares))
+
+    def test_corr_pearson_vs_pandas(self):
+        """pearson corr 与 pandas 金标准逐元对齐。"""
+        print('\n[TestHistoryPanelM22Phase10CorrCov] corr pearson vs pandas')
+        hp = self._make_panel()
+        got = hp.corr('close', method='pearson')
+        exp = self._wide_df(hp, 'close').corr(method='pearson', min_periods=1)
+        print('  got:\n', got)
+        print('  exp:\n', exp)
+        self.assertIsInstance(got, pd.DataFrame)
+        self.assertEqual(list(got.index), ['s1', 's2'])
+        self.assertEqual(list(got.columns), ['s1', 's2'])
+        pd.testing.assert_frame_equal(got, exp)
+        self.assertAlmostEqual(float(got.loc['s1', 's2']), 1.0)
+
+    def test_corr_spearman_and_bounds(self):
+        """spearman 对齐 pandas；非法 method/min_periods；未知 htype。"""
+        print('\n[TestHistoryPanelM22Phase10CorrCov] corr spearman and bounds')
+        hp = self._make_panel()
+        got = hp.corr('close', method='spearman')
+        exp = self._wide_df(hp, 'close').corr(method='spearman', min_periods=1)
+        print('  spearman got:\n', got)
+        pd.testing.assert_frame_equal(got, exp)
+
+        with self.assertRaises(ValueError) as cm_m:
+            hp.corr('close', method='kendall')
+        print('  bad method:', cm_m.exception)
+        self.assertIn('method', str(cm_m.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_p:
+            hp.corr('close', min_periods=0)
+        print('  bad min_periods:', cm_p.exception)
+        self.assertIn('min_periods', str(cm_p.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_h:
+            hp.corr('nope')
+        print('  unknown htype:', cm_h.exception)
+        self.assertIn('nope', str(cm_h.exception))
+
+    def test_cov_vs_pandas(self):
+        """cov(ddof=1) 与 pandas 对齐；空面板 → 空 DataFrame。"""
+        print('\n[TestHistoryPanelM22Phase10CorrCov] cov vs pandas')
+        hp = self._make_panel()
+        got = hp.cov('close', ddof=1)
+        exp = self._wide_df(hp, 'close').cov(min_periods=1, ddof=1)
+        print('  got:\n', got)
+        print('  exp:\n', exp)
+        pd.testing.assert_frame_equal(got, exp)
+
+        empty = HistoryPanel().cov('close')
+        print('  empty:', empty.shape, empty.empty)
+        self.assertIsInstance(empty, pd.DataFrame)
+        self.assertTrue(empty.empty)
+
+
 if __name__ == '__main__':
     unittest.main()
