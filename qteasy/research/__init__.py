@@ -8,9 +8,16 @@
 #   qteasy.research：因子研究模块级 API（非 Backtester）。
 # ======================================
 
-from qteasy.research.factor_stats import factor_ic, factor_ic_summary
+from qteasy.research.factor_stats import (
+    factor_ic,
+    factor_ic_summary,
+    quantile_portfolio,
+    long_short_return,
+)
 
 __all__ = [
     'factor_ic',
     'factor_ic_summary',
+    'quantile_portfolio',
+    'long_short_return',
 ]

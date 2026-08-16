@@ -5,7 +5,7 @@
 # Contact:  jackie.pengzhao@gmail.com
 # Created:  2026-08-15
 # Desc:
-# Unittest for qteasy.research factor_ic APIs (M2.2 Phase 8).
+# Unittest for qteasy.research factor_ic / quantile APIs (M2.2 Phase 8–9).
 # ======================================
 
 import unittest
@@ -147,6 +147,120 @@ class TestResearchM22Phase8FactorIc(unittest.TestCase):
         print('  empty summary:\n', empty_sum)
         self.assertTrue(np.isnan(float(empty_sum.loc['mean'])))
         self.assertTrue(np.isnan(float(empty_sum.loc['win_rate'])))
+
+
+class TestResearchM22Phase9Quantile(unittest.TestCase):
+    """M2.2 Phase 9：quantile_portfolio / long_short_return。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """4 shares × 2 dates；n_quantiles=2 可手算等权桶收益。"""
+        # date0: factor 1,2,3,4 / ret 10,20,30,40
+        #   Q1={s1,s2} → 15; Q2={s3,s4} → 35
+        # date1: factor 4,3,2,1 / ret 1,2,3,4
+        #   Q1={s4,s3} → 3.5; Q2={s2,s1} → 1.5
+        values = np.array(
+            [
+                [[1.0, 10.0], [4.0, 1.0]],  # s1
+                [[2.0, 20.0], [3.0, 2.0]],  # s2
+                [[3.0, 30.0], [2.0, 3.0]],  # s3
+                [[4.0, 40.0], [1.0, 4.0]],  # s4
+            ],
+            dtype=float,
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2', 's3', 's4'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['factor', 'ret'],
+        )
+
+    def test_quantile_portfolio_equal_hand_calc(self):
+        """等权二分位桶收益与手算金标准一致。"""
+        print('\n[TestResearchM22Phase9Quantile] quantile equal hand calc')
+        from qteasy.research import quantile_portfolio
+
+        hp = self._make_panel()
+        qret = quantile_portfolio(hp, 'factor', 'ret', n_quantiles=2)
+        print('  qret:\n', qret)
+        self.assertIsInstance(qret, pd.DataFrame)
+        self.assertEqual(list(qret.columns), ['Q1', 'Q2'])
+        self.assertEqual(list(qret.index), list(hp.hdates))
+        self.assertAlmostEqual(float(qret.loc[hp.hdates[0], 'Q1']), 15.0)
+        self.assertAlmostEqual(float(qret.loc[hp.hdates[0], 'Q2']), 35.0)
+        self.assertAlmostEqual(float(qret.loc[hp.hdates[1], 'Q1']), 3.5)
+        self.assertAlmostEqual(float(qret.loc[hp.hdates[1], 'Q2']), 1.5)
+
+    def test_quantile_portfolio_boundaries(self):
+        """样本不足 / 非法参数 / 未知列 / 空面板。"""
+        print('\n[TestResearchM22Phase9Quantile] quantile boundaries')
+        from qteasy.research import quantile_portfolio
+
+        hp = self._make_panel()
+        # only 1 valid asset on date0 → < n_quantiles=2 → all NaN that day
+        values = hp.values.copy()
+        values[1:, 0, :] = np.nan
+        hp_few = HistoryPanel(
+            values=values,
+            levels=list(hp.shares),
+            rows=list(hp.hdates),
+            columns=list(hp.htypes),
+        )
+        q_few = quantile_portfolio(hp_few, 'factor', 'ret', n_quantiles=2)
+        print('  few assets day0:\n', q_few.iloc[0])
+        self.assertTrue(np.isnan(float(q_few.iloc[0]['Q1'])))
+        self.assertTrue(np.isnan(float(q_few.iloc[0]['Q2'])))
+        # day1 still 4 assets
+        print('  day1 Q1/Q2:', q_few.iloc[1]['Q1'], q_few.iloc[1]['Q2'])
+        self.assertAlmostEqual(float(q_few.iloc[1]['Q1']), 3.5)
+        self.assertAlmostEqual(float(q_few.iloc[1]['Q2']), 1.5)
+
+        with self.assertRaises(ValueError) as cm_n:
+            quantile_portfolio(hp, 'factor', 'ret', n_quantiles=1)
+        print('  bad n_quantiles:', cm_n.exception)
+        self.assertIn('n_quantiles', str(cm_n.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_w:
+            quantile_portfolio(hp, 'factor', 'ret', weight='mkt')
+        print('  bad weight:', cm_w.exception)
+        self.assertIn('weight', str(cm_w.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_h:
+            quantile_portfolio(hp, 'nope', 'ret')
+        print('  unknown htype:', cm_h.exception)
+        self.assertIn('nope', str(cm_h.exception))
+
+        empty = quantile_portfolio(HistoryPanel(), 'factor', 'ret', n_quantiles=3)
+        print('  empty shape:', empty.shape, 'cols:', list(empty.columns))
+        self.assertEqual(len(empty), 0)
+        self.assertEqual(list(empty.columns), ['Q1', 'Q2', 'Q3'])
+
+    def test_long_short_return(self):
+        """long - short 金标准；缺列 ValueError。"""
+        print('\n[TestResearchM22Phase9Quantile] long_short_return')
+        from qteasy.research import long_short_return, quantile_portfolio
+
+        hp = self._make_panel()
+        qret = quantile_portfolio(hp, 'factor', 'ret', n_quantiles=2)
+        ls = long_short_return(qret, long='Q2', short='Q1')
+        print('  long_short:\n', ls)
+        self.assertEqual(ls.name, 'long_short')
+        self.assertAlmostEqual(float(ls.iloc[0]), 35.0 - 15.0)
+        self.assertAlmostEqual(float(ls.iloc[1]), 1.5 - 3.5)
+
+        # default long=Q5 short=Q1 on fabricated frame
+        fake = pd.DataFrame(
+            {'Q1': [1.0, 2.0], 'Q5': [3.0, 4.0]},
+            index=pd.to_datetime(['2023-01-01', '2023-01-02']),
+        )
+        ls_def = long_short_return(fake)
+        print('  default Q5-Q1:\n', ls_def)
+        self.assertAlmostEqual(float(ls_def.iloc[0]), 2.0)
+        self.assertAlmostEqual(float(ls_def.iloc[1]), 2.0)
+
+        with self.assertRaises(ValueError) as cm:
+            long_short_return(qret, long='Q9', short='Q1')
+        print('  missing col:', cm.exception)
+        self.assertTrue(len(str(cm.exception)) > 0)
 
 
 if __name__ == '__main__':
