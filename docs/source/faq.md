@@ -267,6 +267,18 @@ qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间
 
 ---
 
+## 如何查有哪些 DataType（历史数据类型）？
+
+`DataType` 是「可从本地表提取并直接使用」的一类历史信息，由 `name` + `freq` + `asset_type` 唯一确定。推荐：
+
+1. 用 `qt.find_history_data('pe')` / 中文关键词 / 通配符检索；
+2. 阅读概念与精选表：[DataType 概念章](manage_data/02.%20datatypes.md)；
+3. 浏览完整内置清单：[references/datatypes](references/datatypes/index.md)。
+
+取数时在 `get_history_data(htype_names=...)` 中写出类型名称即可；OHLCV 可用 `get_kline`。
+
+---
+
 ## 只想做数据分析、暂不写策略怎么走？
 
 按 **数据体验支路** 即可，无需进入 Operator 回测：

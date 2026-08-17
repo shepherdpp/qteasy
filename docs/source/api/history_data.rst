@@ -61,6 +61,7 @@
 
 **取数入口说明**：日常分析、策略与可视化准备应优先使用 ``qt.get_history_data()``。
 ``qteasy.history.get_history_panel()`` 则面向已明确 ``DataType`` 列表与 ``DataSource``、需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以 ``get_history_data`` 为主线，详见 ``manage_data`` 中的 HistoryPanel 章节。
+可用 ``htype_names`` 一览与检索方式见 :doc:`DataType 概念章 <../manage_data/02. datatypes>` 与 :doc:`内置 DataType 完整清单 <../references/datatypes/index>`。
 
 .. autofunction:: qteasy.get_history_data
 

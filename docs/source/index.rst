@@ -230,6 +230,7 @@
    references/1-build-in-results
    references/2-get-history-data
    references/2-historical_data_types
+   references/datatypes/index
    references/3-back-test-strategy
    references/4-build-in-strategy-blender
    references/5-optimize-strategy
