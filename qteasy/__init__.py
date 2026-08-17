@@ -7,7 +7,7 @@
 # Desc:
 # QTEASY:
 #  A fast and easy-to-use quant-investment
-#  strategy research tool kit.
+# strategy research tool kit.
 # ======================================
 
 import os
