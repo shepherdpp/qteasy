@@ -4264,5 +4264,587 @@ class TestHistoryPanelPhase5Portfolio(unittest.TestCase):
         self.assertAlmostEqual(out.values[0, 1, 0], 14.0)
 
 
+class TestHistoryPanelM22Phase1ShiftDiff(unittest.TestCase):
+    """M2.2 Phase 1：HistoryPanel.shift / diff / pct_change。"""
+
+    def _make_panel_2x3x2(self) -> HistoryPanel:
+        """构造手算金标准面板 (2 shares, 3 dates, 2 htypes)。
+
+        close: s1=[1,2,4], s2=[10,20,40]
+        open:  s1=[1,3,5], s2=[2,4,6]
+        """
+        values = np.array(
+            [
+                [[1.0, 1.0], [2.0, 3.0], [4.0, 5.0]],   # s1
+                [[10.0, 2.0], [20.0, 4.0], [40.0, 6.0]],  # s2
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+
+    def test_shift_periods_1_all_htypes(self):
+        """shift(periods=1) 全列位移；首行为 NaN；原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] shift periods=1 all htypes')
+        hp = self._make_panel_2x3x2()
+        orig = hp.values.copy()
+        out = hp.shift(periods=1)
+        print('  out.values:\n', out.values)
+        print('  orig.values:\n', orig)
+        self.assertIsInstance(out, HistoryPanel)
+        self.assertIsNot(out, hp)
+        self.assertEqual(out.shape, hp.shape)
+        self.assertEqual(out.htypes, hp.htypes)
+        np.testing.assert_array_equal(hp.values, orig)
+        # 首行 fill NaN
+        self.assertTrue(np.all(np.isnan(out.values[:, 0, :])))
+        # s1 close: [nan, 1, 2]
+        self.assertAlmostEqual(out.values[0, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 2.0)
+        # s2 open: [nan, 2, 4]
+        self.assertAlmostEqual(out.values[1, 1, 1], 2.0)
+        self.assertAlmostEqual(out.values[1, 2, 1], 4.0)
+
+    def test_shift_htypes_subset_and_fill_value(self):
+        """仅 shift 指定列；另一列不变；自定义 fill_value。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] shift htypes subset + fill_value')
+        hp = self._make_panel_2x3x2()
+        out = hp.shift(periods=1, htypes='close', fill_value=-1.0)
+        print('  out.values:\n', out.values)
+        # close 首行 = -1
+        self.assertAlmostEqual(out.values[0, 0, 0], -1.0)
+        self.assertAlmostEqual(out.values[1, 0, 0], -1.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 2.0)
+        # open 原值不变
+        np.testing.assert_array_equal(out.values[:, :, 1], hp.values[:, :, 1])
+
+    def test_shift_negative_periods(self):
+        """shift(periods=-1) 末行填空，数值向前对齐。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] shift negative periods')
+        hp = self._make_panel_2x3x2()
+        out = hp.shift(periods=-1)
+        print('  out.values:\n', out.values)
+        self.assertTrue(np.all(np.isnan(out.values[:, -1, :])))
+        # s1 close: [2, 4, nan]
+        self.assertAlmostEqual(out.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 4.0)
+        self.assertTrue(np.isnan(out.values[0, 2, 0]))
+
+    def test_shift_periods_ge_len(self):
+        """|periods| >= L 时整轴为 fill_value。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] shift |periods| >= len(hdates)')
+        hp = self._make_panel_2x3x2()
+        out_pos = hp.shift(periods=3, fill_value=0.0)
+        out_neg = hp.shift(periods=-5, fill_value=7.0)
+        print('  out_pos.values:\n', out_pos.values)
+        print('  out_neg.values:\n', out_neg.values)
+        np.testing.assert_array_equal(out_pos.values, np.zeros_like(hp.values))
+        np.testing.assert_array_equal(out_neg.values, np.full_like(hp.values, 7.0))
+
+    def test_diff_periods_1(self):
+        """diff(periods=1) 手算一阶差分；首行 NaN。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] diff periods=1')
+        hp = self._make_panel_2x3x2()
+        orig = hp.values.copy()
+        out = hp.diff(periods=1)
+        print('  out.values:\n', out.values)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertTrue(np.all(np.isnan(out.values[:, 0, :])))
+        # s1 close: nan, 2-1=1, 4-2=2
+        self.assertAlmostEqual(out.values[0, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 2.0)
+        # s2 open: nan, 4-2=2, 6-4=2
+        self.assertAlmostEqual(out.values[1, 1, 1], 2.0)
+        self.assertAlmostEqual(out.values[1, 2, 1], 2.0)
+
+    def test_pct_change_periods_1(self):
+        """pct_change 手算比值-1；与 returns(simple) 在 close 列数值一致。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] pct_change periods=1')
+        hp = self._make_panel_2x3x2()
+        out = hp.pct_change(periods=1, htypes='close')
+        print('  out.values (close only changed):\n', out.values)
+        self.assertTrue(np.all(np.isnan(out.values[:, 0, 0])))
+        # s1 close: nan, 2/1-1=1, 4/2-1=1
+        self.assertAlmostEqual(out.values[0, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 1.0)
+        # s2 close: nan, 20/10-1=1, 40/20-1=1
+        self.assertAlmostEqual(out.values[1, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[1, 2, 0], 1.0)
+        # open 未变
+        np.testing.assert_array_equal(out.values[:, :, 1], hp.values[:, :, 1])
+        # 与 returns(simple) 对照（独立金标准已上；此处再对齐）
+        ret_df = hp.returns(price_htype='close', method='simple', as_panel=False)
+        print('  returns close:\n', ret_df)
+        self.assertAlmostEqual(out.values[0, 1, 0], float(ret_df.iloc[1, 0]))
+        self.assertAlmostEqual(out.values[0, 2, 0], float(ret_df.iloc[2, 0]))
+
+    def test_empty_panel(self):
+        """空面板：shift/diff/pct_change 均返回空 HistoryPanel。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] empty panel')
+        hp = HistoryPanel()
+        for name, fn in (
+            ('shift', lambda p: p.shift()),
+            ('diff', lambda p: p.diff()),
+            ('pct_change', lambda p: p.pct_change()),
+        ):
+            out = fn(hp)
+            print(f'  {name} empty is_empty={out.is_empty}')
+            self.assertTrue(out.is_empty)
+            self.assertIsInstance(out, HistoryPanel)
+
+    def test_invalid_periods_and_unknown_htype(self):
+        """periods=0 / 非 int / 未知列 → 英文 ValueError。"""
+        print('\n[TestHistoryPanelM22Phase1ShiftDiff] invalid periods / unknown htype')
+        hp = self._make_panel_2x3x2()
+        with self.assertRaises(ValueError) as cm0:
+            hp.shift(periods=0)
+        print('  periods=0 msg:', str(cm0.exception))
+        self.assertIn('periods', str(cm0.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_f:
+            hp.diff(periods=1.5)  # type: ignore[arg-type]
+        print('  periods=1.5 msg:', str(cm_f.exception))
+        self.assertIn('periods', str(cm_f.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_u:
+            hp.pct_change(htypes='not_a_column')
+        print('  unknown htype msg:', str(cm_u.exception))
+        self.assertTrue(
+            'not_a_column' in str(cm_u.exception) or 'htype' in str(cm_u.exception).lower()
+        )
+
+
+class TestHistoryPanelM22Phase2Missing(unittest.TestCase):
+    """M2.2 Phase 2：bfill / dropna / fill* inplace=。"""
+
+    def test_fillna_inplace_default_mutates(self):
+        """fillna 默认 inplace=True：原对象被改，返回 self。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] fillna inplace default mutates')
+        values = np.array([[[1.0], [np.nan], [3.0]]])
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out = hp.fillna(0.0)
+        print('  out.values:\n', out.values)
+        self.assertIs(out, hp)
+        self.assertAlmostEqual(hp.values[0, 1, 0], 0.0)
+        self.assertAlmostEqual(hp.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(hp.values[0, 2, 0], 3.0)
+
+    def test_fillna_inplace_false_no_mutate(self):
+        """fillna(inplace=False) 返回新面板，原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] fillna inplace=False no mutate')
+        orig = np.array([[[1.0], [np.nan], [3.0]]])
+        hp = HistoryPanel(
+            values=orig.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out = hp.fillna(9.0, inplace=False)
+        print('  out.values:\n', out.values)
+        print('  hp.values:\n', hp.values)
+        self.assertIsNot(out, hp)
+        self.assertTrue(np.isnan(hp.values[0, 1, 0]))
+        self.assertAlmostEqual(out.values[0, 1, 0], 9.0)
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+
+    def test_ffill_inplace_false_no_mutate(self):
+        """ffill(inplace=False) 前向金标准，原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] ffill inplace=False no mutate')
+        # s1 close: [1, nan, nan] -> [1, 1, 1]
+        orig = np.array([[[1.0], [np.nan], [np.nan]]])
+        hp = HistoryPanel(
+            values=orig.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out = hp.ffill(inplace=False)
+        print('  out.values:\n', out.values)
+        print('  hp.values:\n', hp.values)
+        self.assertIsNot(out, hp)
+        self.assertTrue(np.isnan(hp.values[0, 1, 0]))
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 1.0)
+
+    def test_fillinf_inplace_false_no_mutate(self):
+        """fillinf(inplace=False) 填 Inf，原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] fillinf inplace=False no mutate')
+        orig = np.array([[[1.0], [np.inf], [3.0]]])
+        hp = HistoryPanel(
+            values=orig.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out = hp.fillinf(0.0, inplace=False)
+        print('  out.values:\n', out.values)
+        print('  hp.values:\n', hp.values)
+        self.assertIsNot(out, hp)
+        self.assertTrue(np.isinf(hp.values[0, 1, 0]))
+        self.assertAlmostEqual(out.values[0, 1, 0], 0.0)
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+
+    def test_bfill_default_new_panel(self):
+        """bfill 默认新面板；后向金标准；末部用 init_val。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] bfill default new panel')
+        # close: [nan, nan, 3] -> [3, 3, 3]
+        # open:  [1, nan, nan] with init_val=0 -> [1, 0, 0]
+        values = np.array(
+            [
+                [[np.nan, 1.0], [np.nan, np.nan], [3.0, np.nan]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+        orig = hp.values.copy()
+        out = hp.bfill(init_val=0.0)
+        print('  out.values:\n', out.values)
+        print('  hp.values:\n', hp.values)
+        self.assertIsNot(out, hp)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertAlmostEqual(out.values[0, 0, 0], 3.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 3.0)
+        self.assertAlmostEqual(out.values[0, 2, 0], 3.0)
+        self.assertAlmostEqual(out.values[0, 0, 1], 1.0)
+        self.assertAlmostEqual(out.values[0, 1, 1], 0.0)
+        self.assertAlmostEqual(out.values[0, 2, 1], 0.0)
+
+    def test_bfill_inplace_true(self):
+        """bfill(inplace=True) 原地修改并返回 self。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] bfill inplace=True')
+        values = np.array([[[np.nan], [2.0], [3.0]]])
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out = hp.bfill(inplace=True)
+        print('  out.values:\n', out.values)
+        self.assertIs(out, hp)
+        self.assertAlmostEqual(hp.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(hp.values[0, 1, 0], 2.0)
+        self.assertAlmostEqual(hp.values[0, 2, 0], 3.0)
+
+    def test_dropna_hdates_how_any(self):
+        """dropna(axis=hdates, how=any) 丢弃含 NaN 的日期。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] dropna hdates how=any')
+        # d1 ok, d2 has nan, d3 ok
+        values = np.array(
+            [
+                [[1.0], [np.nan], [3.0]],
+                [[10.0], [20.0], [30.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        orig = hp.values.copy()
+        out = hp.dropna(axis='hdates', how='any')
+        print('  out.hdates:', out.hdates)
+        print('  out.values:\n', out.values)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(out.shape, (2, 2, 1))
+        self.assertEqual(len(out.hdates), 2)
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 1, 0], 3.0)
+        self.assertAlmostEqual(out.values[1, 0, 0], 10.0)
+        self.assertAlmostEqual(out.values[1, 1, 0], 30.0)
+
+    def test_dropna_hdates_how_all_and_thresh(self):
+        """dropna how=all 与 thresh 手算。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] dropna hdates how=all and thresh')
+        # per date 2 values (2 shares x 1 htype)
+        # d1: both ok; d2: all nan; d3: one nan
+        values = np.array(
+            [
+                [[1.0], [np.nan], [3.0]],
+                [[10.0], [np.nan], [np.nan]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close'],
+        )
+        out_all = hp.dropna(axis='hdates', how='all')
+        print('  how=all values:\n', out_all.values)
+        print('  how=all hdates:', out_all.hdates)
+        # d2 dropped only
+        self.assertEqual(out_all.shape, (2, 2, 1))
+        self.assertAlmostEqual(out_all.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out_all.values[0, 1, 0], 3.0)
+
+        # thresh=2: need 2 non-nan → d3 has only 1 non-nan → drop d2 and d3
+        out_th = hp.dropna(axis='hdates', thresh=2)
+        print('  thresh=2 values:\n', out_th.values)
+        print('  thresh=2 hdates:', out_th.hdates)
+        self.assertEqual(out_th.shape, (2, 1, 1))
+        self.assertAlmostEqual(out_th.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out_th.values[1, 0, 0], 10.0)
+
+    def test_dropna_hdates_subset(self):
+        """dropna subset 仅按指定 htype 判定。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] dropna hdates subset')
+        # close has nan on d2; open always valid → subset=open keeps all; subset=close drops d2
+        values = np.array(
+            [
+                [[1.0, 100.0], [np.nan, 200.0], [3.0, 300.0]],
+            ]
+        )
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+        out_open = hp.dropna(axis='hdates', how='any', subset=['open'])
+        out_close = hp.dropna(axis='hdates', how='any', subset='close')
+        print('  subset=open shape:', out_open.shape, 'hdates:', out_open.hdates)
+        print('  subset=close shape:', out_close.shape, 'hdates:', out_close.hdates)
+        self.assertEqual(out_open.shape, (1, 3, 2))
+        self.assertEqual(out_close.shape, (1, 2, 2))
+        self.assertAlmostEqual(out_close.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out_close.values[0, 1, 0], 3.0)
+        self.assertAlmostEqual(out_close.values[0, 0, 1], 100.0)
+        self.assertAlmostEqual(out_close.values[0, 1, 1], 300.0)
+
+    def test_dropna_shares_and_htypes(self):
+        """dropna 沿 shares / htypes 轴。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] dropna shares and htypes')
+        values = np.array(
+            [
+                [[1.0, 2.0], [3.0, 4.0]],          # s1: all ok
+                [[np.nan, 20.0], [30.0, 40.0]],    # s2: has nan in close
+            ]
+        )
+        hp = HistoryPanel(
+            values=values.copy(),
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close', 'open'],
+        )
+        out_s = hp.dropna(axis='shares', how='any')
+        print('  drop shares values:\n', out_s.values)
+        print('  drop shares shares:', out_s.shares)
+        self.assertEqual(out_s.shares, ['s1'])
+        self.assertEqual(out_s.shape, (1, 2, 2))
+        self.assertAlmostEqual(out_s.values[0, 0, 0], 1.0)
+
+        # htypes: close has nan, open ok
+        out_h = hp.dropna(axis='htypes', how='any')
+        print('  drop htypes values:\n', out_h.values)
+        print('  drop htypes htypes:', out_h.htypes)
+        self.assertEqual(out_h.htypes, ['open'])
+        self.assertEqual(out_h.shape, (2, 2, 1))
+        self.assertAlmostEqual(out_h.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(out_h.values[1, 0, 0], 20.0)
+
+    def test_dropna_invalid_args(self):
+        """非法 axis/how/subset → 英文 ValueError。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] dropna invalid args')
+        hp = HistoryPanel(
+            values=np.ones((1, 2, 1)),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        with self.assertRaises(ValueError) as cm_a:
+            hp.dropna(axis='bad')
+        print('  bad axis:', str(cm_a.exception))
+        self.assertIn('axis', str(cm_a.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_h:
+            hp.dropna(how='bad')
+        print('  bad how:', str(cm_h.exception))
+        self.assertIn('how', str(cm_h.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_s:
+            hp.dropna(axis='shares', subset=['close'])
+        print('  subset on shares:', str(cm_s.exception))
+        self.assertIn('subset', str(cm_s.exception).lower())
+
+        with self.assertRaises(ValueError) as cm_u:
+            hp.dropna(axis='hdates', subset=['nope'])
+        print('  unknown subset:', str(cm_u.exception))
+        self.assertTrue('nope' in str(cm_u.exception) or 'htype' in str(cm_u.exception).lower())
+
+    def test_empty_panel(self):
+        """空面板：fill* / bfill / dropna 行为。"""
+        print('\n[TestHistoryPanelM22Phase2Missing] empty panel')
+        hp = HistoryPanel()
+        self.assertIs(hp.fillna(0.0), hp)
+        self.assertIs(hp.ffill(), hp)
+        self.assertIs(hp.fillinf(0.0), hp)
+        out_bf = hp.bfill()
+        print('  bfill empty is_empty=', out_bf.is_empty)
+        self.assertTrue(out_bf.is_empty)
+        out_dn = hp.dropna()
+        print('  dropna empty is_empty=', out_dn.is_empty)
+        self.assertTrue(out_dn.is_empty)
+
+
+class TestHistoryPanelM22Phase3Expr(unittest.TestCase):
+    """M2.2 Phase 3：HistoryPanel.expr 白名单列名算术 DSL。"""
+
+    def _make_ohlc_panel(self) -> HistoryPanel:
+        """构造 (2,3,3) 面板：high/low/close 手算用。"""
+        values = np.array(
+            [
+                # s1: high=[4,6,8], low=[2,4,6], close=[3,5,7]
+                [[4.0, 2.0, 3.0], [6.0, 4.0, 5.0], [8.0, 6.0, 7.0]],
+                # s2: high=[10,20,30], low=[0,10,20], close=[5,15,25]
+                [[10.0, 0.0, 5.0], [20.0, 10.0, 15.0], [30.0, 20.0, 25.0]],
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['high', 'low', 'close'],
+        )
+
+    def test_expr_hl2_basic(self):
+        """expr('hl2', '(high + low) / 2') 金标准；默认新面板。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr hl2 basic')
+        hp = self._make_ohlc_panel()
+        orig_htypes = list(hp.htypes)
+        orig = hp.values.copy()
+        out = hp.expr('hl2', '(high + low) / 2')
+        print('  out.htypes:', out.htypes)
+        print('  hl2 values:\n', out.values[:, :, out.htypes.index('hl2')])
+        self.assertIsNot(out, hp)
+        self.assertEqual(hp.htypes, orig_htypes)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertIn('hl2', out.htypes)
+        hl2 = out.values[:, :, out.htypes.index('hl2')]
+        # s1: (4+2)/2=3, (6+4)/2=5, (8+6)/2=7
+        self.assertAlmostEqual(hl2[0, 0], 3.0)
+        self.assertAlmostEqual(hl2[0, 1], 5.0)
+        self.assertAlmostEqual(hl2[0, 2], 7.0)
+        # s2: (10+0)/2=5, (20+10)/2=15, (30+20)/2=25
+        self.assertAlmostEqual(hl2[1, 0], 5.0)
+        self.assertAlmostEqual(hl2[1, 1], 15.0)
+        self.assertAlmostEqual(hl2[1, 2], 25.0)
+
+    def test_expr_pow_and_unary(self):
+        """** 与一元负号金标准。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr pow and unary')
+        hp = HistoryPanel(
+            values=np.array([[[2.0], [3.0]]]),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close'],
+        )
+        out = hp.expr('neg_sq', '-close ** 2')
+        # Python: -close ** 2 == -(close ** 2)
+        arr = out.values[:, :, out.htypes.index('neg_sq')]
+        print('  neg_sq:', arr)
+        self.assertAlmostEqual(arr[0, 0], -4.0)
+        self.assertAlmostEqual(arr[0, 1], -9.0)
+
+    def test_expr_inplace_true(self):
+        """inplace=True 原地扩列并返回 self。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr inplace=True')
+        hp = self._make_ohlc_panel()
+        ret = hp.expr('hl2', '(high + low) / 2', inplace=True)
+        print('  ret is hp:', ret is hp, 'htypes:', hp.htypes)
+        self.assertIs(ret, hp)
+        self.assertIn('hl2', hp.htypes)
+        self.assertAlmostEqual(hp.values[0, 0, hp.htypes.index('hl2')], 3.0)
+
+    def test_expr_overwrite_existing(self):
+        """new_htype 已存在则覆盖。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr overwrite existing')
+        hp = self._make_ohlc_panel()
+        out = hp.expr('close', '(high + low) / 2')
+        print('  overwritten close:\n', out.values[:, :, out.htypes.index('close')])
+        self.assertEqual(out.htypes.count('close'), 1)
+        self.assertEqual(len(out.htypes), 3)
+        self.assertAlmostEqual(out.values[0, 0, out.htypes.index('close')], 3.0)
+        # 原 high/low 不变
+        self.assertAlmostEqual(out.values[0, 0, out.htypes.index('high')], 4.0)
+
+    def test_expr_rejects_call_attr_subscript(self):
+        """拒绝函数调用 / 属性 / 下标。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects call/attr/subscript')
+        hp = self._make_ohlc_panel()
+        for bad in ('abs(close)', 'close.real', 'close[0]'):
+            with self.assertRaises(ValueError) as cm:
+                hp.expr('x', bad)
+            print(f'  {bad!r} ->', str(cm.exception))
+            self.assertTrue(len(str(cm.exception)) > 0)
+
+    def test_expr_rejects_unknown_and_non_identifier_col(self):
+        """未知列名；仅有非标识符列时无法在 expr 中引用。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects unknown / non-identifier')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm_u:
+            hp.expr('x', 'not_a_col + 1')
+        print('  unknown:', str(cm_u.exception))
+        self.assertIn('not_a_col', str(cm_u.exception))
+
+        adj = HistoryPanel(
+            values=np.array([[[1.0], [2.0]]]),
+            levels=['s1'],
+            rows=['2023-01-01', '2023-01-02'],
+            columns=['close|b'],
+        )
+        with self.assertRaises(ValueError) as cm_adj:
+            adj.expr('x', 'close + 1')
+        print('  adj-only panel:', str(cm_adj.exception))
+        msg = str(cm_adj.exception).lower()
+        self.assertTrue('close' in msg or 'assign' in msg or 'column' in msg)
+
+    def test_expr_rejects_bad_new_htype(self):
+        """new_htype 非标识符或空串 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr rejects bad new_htype')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm1:
+            hp.expr('a|b', 'high + low')
+        print('  a|b:', str(cm1.exception))
+        self.assertTrue('assign' in str(cm1.exception).lower() or 'identifier' in str(cm1.exception).lower())
+
+        with self.assertRaises(ValueError) as cm2:
+            hp.expr('', 'high + low')
+        print('  empty name:', str(cm2.exception))
+
+    def test_expr_empty_panel_raises(self):
+        """空面板 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr empty panel raises')
+        hp = HistoryPanel()
+        with self.assertRaises(ValueError) as cm:
+            hp.expr('hl2', 'high + low')
+        print('  empty msg:', str(cm.exception))
+        self.assertIn('empty', str(cm.exception).lower())
+
+    def test_expr_syntax_error(self):
+        """非法语法 → ValueError（包装）。"""
+        print('\n[TestHistoryPanelM22Phase3Expr] expr syntax error')
+        hp = self._make_ohlc_panel()
+        with self.assertRaises(ValueError) as cm:
+            hp.expr('x', 'high +')
+        print('  syntax msg:', str(cm.exception))
+        self.assertTrue(len(str(cm.exception)) > 0)
+
+
 if __name__ == '__main__':
     unittest.main()

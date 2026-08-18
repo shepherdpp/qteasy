@@ -8,20 +8,20 @@
 
 1. `@.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md` — 方向、任务定义与 **§七 进度**
 2. `@docs/DEV_CONTEXT.md` — 协作背景与文档层级约定
-3. 说明本步任务 ID（如 `S2.1`、`Q-AI.1`）→ 打开展望 **§7.2** 链到的次顶层 plan → 执行
+3. 说明本步任务 ID（如 `S2.1`、`M2.2`、`Q-AI.1`）→ 打开展望 **§7.2** 链到的次顶层 plan → 执行
 
 **qteasy-ai**：代码在 [shepherdpp/qteasy-ai](https://github.com/shepherdpp/qteasy-ai)；Q-AI 计划书仍在 **本仓** `.cursor/plans/`。建议打开 `~/Projects/qteasy-ecosystem.code-workspace`（qteasy + qteasy-ai 双根）。
 
 ---
 
-## 当前聚焦（2026-08-08）
+## 当前聚焦（2026-08-11）
 
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S2.1** xtQuant 协作；**S3.2 P2**（指数分钟/财报等）；**S4.x / M1.1** 文档
+- **数据体验续作（可并行）**：**M2.2** HistoryPanel 二阶段 — 计划已归档，实施按 P0→P2 逐步推进 → [m2.2_hp二阶段扩展](.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)
 - **Jackie 副线（qteasy-ai）**：**Q-AI.1 ✅ 已完成**（0.1.0）；下一可选 **Q-AI.2** skills 扩展
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
-- **待办**：Git push `docs/qteasy-ai-split` + qteasy-ai `main`（网络/PAT 恢复后）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
 
@@ -32,6 +32,8 @@
 | 文档 | 用途 |
 | --- | --- |
 | [量化工具对比与 qteasy 展望](.cursor/plans/量化工具对比与qteasy展望_f384dd4a.plan.md) | 顶层战略计划（master-plan） |
+| [M2.2 HP 二阶段扩展](.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md) | HistoryPanel 内核补齐 + `qteasy.research`（planned） |
+| [S1.1 HistoryPanel 数据体验扩展](.cursor/plans/historypanel-数据体验扩展_4e4a5f97.plan.md) | S1.1 次顶层（已完成） |
 | [qteasy-ai（GitHub）](https://github.com/shepherdpp/qteasy-ai) | AI 外壳独立代码仓 |
 | [S1.4 剥离 qteasy-ai 计划](.cursor/plans/s1.4_剥离_qteasy-ai_10ba0551.plan.md) | Q-AI Session 0～4 拆工与交付记录 |
 | [S1.4A 人工测试金标准](.cursor/plans/s1.4a人工测试金标准_6d66df64.plan.md) | Q-AI.1 三模式 smoke（Jackie） |
@@ -39,4 +41,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-08 — Q-AI.1 已完成（Jackie smoke 2026-08-08）。*
+*最后更新：2026-08-11 — M2.2 二阶段计划已归档；Q-AI.1 已完成。*

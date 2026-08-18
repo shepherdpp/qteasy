@@ -29,7 +29,7 @@ HistoryPanel 本质上是一个三维 ``numpy.ndarray``，三个轴分别表示�
 
 .. autoclass:: qteasy.HistoryPanel
     :members:
-    :exclude-members: describe, mean, std, min, max, where, assign, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline
+    :exclude-members: describe, mean, std, min, max, where, assign, expr, shift, diff, pct_change, fillna, ffill, fillinf, bfill, dropna, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline
     :special-members: __getitem__, __setitem__, __getattr__, __lt__, __le__, __gt__, __ge__, __eq__, __ne__
 
 
@@ -132,6 +132,64 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
    # L = len(hp.hdates)
    # sub2 = hp.loc[[True]*3 + [False]*(L - 3)]   # 一维 bool 长度须等于 L
 
+列表达式：expr
+-----------------
+
+``expr`` 用受限字符串算术表达式派生新列：仅允许现有 **identifier** 列名与 ``+ - * / ** ()`` 及数字字面量（AST 白名单，无任意 ``eval``）。默认 ``inplace=False`` 返回新面板。含 ``|`` 的复权列名请用 :meth:`~qteasy.HistoryPanel.assign` 或 ``hp['close|b']``。
+
+.. automethod:: qteasy.HistoryPanel.expr
+
+示例::
+
+    hp.expr('hl2', '(high + low) / 2')
+
+时序变换：shift / diff / pct_change
+--------------------------------------
+
+沿时间轴 （``hdates``，axis=1）对指定列做位移、一阶差分或百分比变化；均返回**新** ``HistoryPanel``，``shape`` 与轴标签不变。``periods`` 须为非零整数；``htypes=None`` 表示全部列，指定时未选中列保持原值拷贝。
+
+:meth:`~qteasy.HistoryPanel.pct_change` 与 :meth:`~qteasy.HistoryPanel.returns` 的区别：前者对任意列做通用百分比变化，不绑定价格语义、不调用 ``_resolve_price_htype``；后者面向价格列并解析复权根名。
+
+.. automethod:: qteasy.HistoryPanel.shift
+
+.. automethod:: qteasy.HistoryPanel.diff
+
+.. automethod:: qteasy.HistoryPanel.pct_change
+
+缺失值：fillna / ffill / fillinf / bfill / dropna
+---------------------------------------------------
+
+填充与丢弃缺失时请注意**可变性契约**（与 pandas 默认 copy 习惯不同的部分已用 ``inplace=`` 显式化）：
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 20 45
+
+   * - API
+     - 默认 ``inplace``
+     - 说明
+   * - ``fillna`` / ``ffill`` / ``fillinf``
+     - ``True``
+     - 历史默认原地；``inplace=False`` 返回拷贝
+   * - ``bfill``
+     - ``False``
+     - 新 API，默认返回新对象
+   * - ``dropna``
+     - （无该参数）
+     - 始终返回新面板；可能缩短某一维
+
+``dropna`` 支持 ``axis='hdates'|'shares'|'htypes'``，以及 ``how`` / ``thresh`` / ``subset`` （``subset`` 仅在 ``axis='hdates'`` 时限制参与判断的 ``htypes``）；若某轴被删空则返回空面板。
+
+.. automethod:: qteasy.HistoryPanel.fillna
+
+.. automethod:: qteasy.HistoryPanel.ffill
+
+.. automethod:: qteasy.HistoryPanel.fillinf
+
+.. automethod:: qteasy.HistoryPanel.bfill
+
+.. automethod:: qteasy.HistoryPanel.dropna
+
 横截面与标准化：rank / zscore
 --------------------------------------------
 
@@ -161,7 +219,7 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
 滚动窗口
 ----------
 
-使用滚动窗口方法可以在 HistoryPanel 的时间维度上进行滑动计算，支持常见的滚动平均、滚动标准差等操作：
+使用滚动窗口方法可以在 ``HistoryPanel`` 的时间维度上进行滑动计算，支持常见的滚动平均、滚动标准差等操作：
 
 .. automethod:: qteasy.HistoryPanel.rolling
 
@@ -205,7 +263,7 @@ K 线与技术指标
 qteasy级别的历史数据处理函数
 -----------------------------------------------
 
-qteasy 还提供了若干独立于 HistoryPanel 类的函数，支持更灵活的历史数据处理与分析：
+``qteasy`` 还提供了若干独立于 ``HistoryPanel`` 类的函数，支持更灵活的历史数据处理与分析：
 
 .. autofunction:: qteasy.get_history_data
 

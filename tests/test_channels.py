@@ -598,7 +598,10 @@ class TestChannels(unittest.TestCase):
                                      )
         args = list(args)
         print(f'args: {args}')
+        # 仅保留本地 index_basic 中存在的代码；000300.OTHER 被过滤。
+        # 期望含 000011.SH：该指数已写入本地 basics 后应出现在参数序列中。
         self.assertEqual(args, [{'ts_code': '000001.SH', 'start': '20210101', 'end': '20210110'},
+                                {'ts_code': '000011.SH', 'start': '20210101', 'end': '20210110'},
                                 {'ts_code': '000016.SH', 'start': '20210101', 'end': '20210110'}])
 
         # parse the filling args and pick the first filling arg value from the range
