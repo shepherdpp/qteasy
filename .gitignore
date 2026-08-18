@@ -82,9 +82,4 @@ qteasy/qteasy_backup.cfg
 /_build
 /docs/promotion
 /docs/_joinquant_migration_source/
-<<<<<<< HEAD
-/sql
-=======
-/sql/
->>>>>>> 9f22ef9 (Update .gitignore and enhance DataSource column validation)
 /knowledge
