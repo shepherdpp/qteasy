@@ -7,7 +7,7 @@
 # Desc:
 # QTEASY:
 #  A fast and easy-to-use quant-investment
-#  strategy research tool kit.
+# strategy research tool kit.
 # ======================================
 
 import os
@@ -113,15 +113,15 @@ from qteasy._arg_validators import (
 
 
 # qteasy版本信息
-__version__ = '2.6.2'
+__version__ = '2.6.3'
 version_info = Namespace(
         major=2,
         minor=6,
-        patch=2,
+        patch=3,
         short=(2, 6),
-        full=(2, 6, 2),
-        string='2.6.2',
-        tuple=('2', '6', '2'),
+        full=(2, 6, 3),
+        string='2.6.3',
+        tuple=('2', '6', '3'),
         releaselevel='beta',
 )
 
@@ -439,4 +439,5 @@ __all__ = [
     'logger_core', 'live_trade_accounts', 'delete_account', 'list_live_trade_artifacts', 'risk_log_file_path_name',
     'LIVE_TRADE_MODE', 'LIVE_MODE', 'BACKTEST_MODE',
     'OPTIMIZE_MODE', 'OPTI_MODE', 'OPTIMIZATION_MODE', 'PREDICT_MODE', 'PREDICTION_MODE',
+    'research',
 ]

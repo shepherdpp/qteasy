@@ -3059,10 +3059,11 @@ class HistoryPanel():
         return res_df
 
     def flatten_to_dataframe(self, along='row'):
-        """ 将一个HistoryPanel"展平"成为一个DataFrame
+        """将一个 HistoryPanel 展平为 MultiIndex DataFrame（兼容别名）。
 
-        HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex，或者多层数据
-        会被平铺到DataFrame的行，同样变成一个MultiIndex，平铺到行还是列取决于along参数
+        推荐使用 ``to_multi_index_dataframe``；本方法为兼容别名，行为相同。
+        HistoryPanel 的多层数据会被平铺到 DataFrame 的列或行（取决于 ``along``），
+        形成 MultiIndex。
 
         Parameters
         ----------
@@ -3138,12 +3139,14 @@ class HistoryPanel():
         return self.slice_to_dataframe(share=share)
 
     def to_multi_index_dataframe(self, along=None):
-        """ 等同于HistoryPanel.flatten_to_dataframe()
+        """将 HistoryPanel 展平为 MultiIndex ``DataFrame``（推荐导出名）。
+
+        实现委托 ``flatten_to_dataframe``；兼容别名还有 ``flatten``。
 
         Parameters
         ----------
         along: str, {'col', 'row', 'column'} Default: 'row'
-            平铺HistoryPanel的每一层时，沿行方向还是列方向平铺，
+            平铺 HistoryPanel 的每一层时，沿行方向还是列方向平铺，
             'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺
 
         Returns
@@ -3183,12 +3186,14 @@ class HistoryPanel():
         return self.flatten_to_dataframe(along=along)
 
     def flatten(self, along=None):
-        """ 等同于HistoryPanel.flatten_to_dataframe()
+        """将 HistoryPanel 展平为 MultiIndex DataFrame（兼容别名）。
+
+        推荐使用 ``to_multi_index_dataframe``；本方法为兼容别名，行为相同。
 
         Parameters
         ----------
         along: str, {'col', 'row', 'column'} Default: 'row'
-            平铺HistoryPanel的每一层时，沿行方向还是列方向平铺，
+            平铺 HistoryPanel 的每一层时，沿行方向还是列方向平铺，
             'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺
 
         Returns
@@ -3588,6 +3593,139 @@ class HistoryPanel():
         if by == 'share':
             return df_share
         return df_share.T
+
+    def _htype_wide_frame(self, htype: str) -> pd.DataFrame:
+        """将指定 htype 转为 index=hdates、columns=shares 的宽表。
+
+        Parameters
+        ----------
+        htype : str
+            数据类型列名，须已在 ``htypes`` 中。
+
+        Returns
+        -------
+        pandas.DataFrame
+            时序宽表，供 ``corr`` / ``cov`` 使用。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``。
+        """
+        if htype not in self.htypes:
+            raise ValueError(f'Unknown htype {htype!r}')
+        ci = self.htypes.index(htype)
+        mat = np.asarray(self.values[:, :, ci], dtype=float)
+        return pd.DataFrame(mat.T, index=list(self.hdates), columns=list(self.shares))
+
+    def corr(
+            self,
+            htype: str,
+            *,
+            method: str = 'pearson',
+            min_periods: int = 1,
+    ) -> pd.DataFrame:
+        """对指定 htype，在 share 维上计算时序两两相关系数矩阵。
+
+        将每个标的在该 ``htype`` 上的时间序列视为一列，返回 ``shares × shares`` 相关矩阵。
+        与 ``qteasy.research.factor_ic``（逐日截面相关）语义不同。
+
+        Parameters
+        ----------
+        htype : str
+            参与计算的数据类型列名。
+        method : {'pearson', 'spearman'}, default 'pearson'
+            相关系数方法。
+        min_periods : int, default 1
+            计算每对相关所需的最少有效观测数，透传给 pandas。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index/columns 均为 ``shares``；空面板返回空表。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``、非法 ``method`` / ``min_periods``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> data = np.array([[[1.], [2.], [3.]], [[2.], [4.], [6.]]])
+        >>> hp = HistoryPanel(data, levels=['a', 'b'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close'])
+        >>> float(hp.corr('close').loc['a', 'b'])
+        1.0
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if method not in ('pearson', 'spearman'):
+            raise ValueError(
+                f"method must be 'pearson' or 'spearman', got {method!r}"
+            )
+        if not isinstance(min_periods, (int, np.integer)) or isinstance(min_periods, bool):
+            raise ValueError(f'min_periods must be an int >= 1, got {min_periods!r}')
+        if int(min_periods) < 1:
+            raise ValueError(f'min_periods must be >= 1, got {min_periods}')
+
+        wide = self._htype_wide_frame(htype)
+        return wide.corr(method=method, min_periods=int(min_periods))
+
+    def cov(
+            self,
+            htype: str,
+            *,
+            min_periods: int = 1,
+            ddof: int = 1,
+    ) -> pd.DataFrame:
+        """对指定 htype，在 share 维上计算时序两两协方差矩阵。
+
+        语义同 ``corr``：每个标的一条时间序列，返回 ``shares × shares`` 协方差矩阵。
+
+        Parameters
+        ----------
+        htype : str
+            参与计算的数据类型列名。
+        min_periods : int, default 1
+            计算每对协方差所需的最少有效观测数，透传给 pandas。
+        ddof : int, default 1
+            自由度修正，透传给 ``DataFrame.cov``。
+
+        Returns
+        -------
+        pandas.DataFrame
+            index/columns 均为 ``shares``；空面板返回空表。
+
+        Raises
+        ------
+        ValueError
+            未知 ``htype``、非法 ``min_periods``。
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> from qteasy import HistoryPanel
+        >>> data = np.array([[[1.], [2.], [3.]], [[2.], [4.], [6.]]])
+        >>> hp = HistoryPanel(data, levels=['a', 'b'],
+        ...                   rows=pd.date_range('2020-01-01', periods=3),
+        ...                   columns=['close'])
+        >>> hp.cov('close').shape
+        (2, 2)
+        """
+        if self.is_empty:
+            return pd.DataFrame()
+        if not isinstance(min_periods, (int, np.integer)) or isinstance(min_periods, bool):
+            raise ValueError(f'min_periods must be an int >= 1, got {min_periods!r}')
+        if int(min_periods) < 1:
+            raise ValueError(f'min_periods must be >= 1, got {min_periods}')
+
+        wide = self._htype_wide_frame(htype)
+        return wide.cov(min_periods=int(min_periods), ddof=ddof)
 
     def describe(
             self,
@@ -5112,12 +5250,14 @@ class HistoryPanel():
             return df_dict
 
     def unstack(self, by: str = 'share') -> dict:
-        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称
+        """将 HistoryPanel 转为 dict of DataFrame（兼容别名）。
+
+        推荐使用 ``to_df_dict``；本方法为兼容别名，行为相同。
 
         Parameters
         ----------
         by: str, {'share', 'htype'}, default 'share'
-            指定按照share或者htype来unstack, 默认为share
+            指定按照 share 或者 htype 来切分，默认为 share
 
         Returns
         -------

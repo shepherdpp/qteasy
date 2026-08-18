@@ -112,7 +112,7 @@ ebitda           q     E  financial  上市公司财务指标 - 息税折旧摊�
 ```
 `qteasy`中的数据类型需要通过`qteasy.DataType`来创建，`DataType`代表了一种历史数据类型，它代表了`qteasy`可以直接从历史数据中提取出的一类信息，通过数据类型对象，`qteasy`提供了统一的数据接口，使得用户可以非常容易地获取到各种历史数据信息，而不需要关心数据类型的存储方式、存储位置；同时，`qteasy`完全封装了所有数据类型的类型处理、频率转换、股票代码匹配等等非常繁杂的底层数据逻辑，使得用户可以完全不用关心每一种数据的存储方式、直接使用即可。
 
-关于`qteasy`数据类型的更详细介绍，请参见[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/data_types.html)。
+关于`qteasy`数据类型的更详细介绍，请参见 [DataType 概念章](../manage_data/02.%20datatypes.md) 与 [内置 DataType 完整清单](../references/datatypes/index.md)。
 
 `qteasy`的`DataType`包含三个属性：
 

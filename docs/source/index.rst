@@ -22,7 +22,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - 创建日期: 2019, July, 16
-- 最新版本: `2.6.2` — :doc:`发布历史 <RELEASE_HISTORY>`
+- 最新版本: `2.6.3` — :doc:`发布历史 <RELEASE_HISTORY>`
 - License: BSD 3-Clause
 
 简介
@@ -187,6 +187,7 @@
    api/history_data.rst
    api/data_source.rst
    api/HistoryPanel.rst
+   api/research.rst
    api/data_types.rst
    api/built_in_strategies.rst
    api/Operators.rst
@@ -229,6 +230,7 @@
    references/1-build-in-results
    references/2-get-history-data
    references/2-historical_data_types
+   references/datatypes/index
    references/3-back-test-strategy
    references/4-build-in-strategy-blender
    references/5-optimize-strategy

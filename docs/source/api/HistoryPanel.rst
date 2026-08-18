@@ -41,7 +41,7 @@ HistoryPanel 本质上是一个三维 ``numpy.ndarray``，三个轴分别表示�
 
 .. autoclass:: qteasy.HistoryPanel
     :members:
-    :exclude-members: describe, mean, std, min, max, sum, median, var, quantile, where, assign, expr, shift, diff, pct_change, fillna, ffill, fillinf, bfill, dropna, drop, rename, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline
+    :exclude-members: describe, mean, std, min, max, sum, median, var, quantile, corr, cov, where, assign, expr, shift, diff, pct_change, fillna, ffill, fillinf, bfill, dropna, drop, rename, rank, zscore, align_to, resample, rolling, returns, cum_return, normalize, portfolio, volatility, alpha_beta, research_preset, apply_ta, candle_pattern, loc, kline, to_df_dict, to_multi_index_dataframe, to_share_frame, flatten, flatten_to_dataframe, unstack
     :special-members: __getitem__, __setitem__, __getattr__, __lt__, __le__, __gt__, __ge__, __eq__, __ne__
 
 
@@ -71,6 +71,18 @@ HistoryPanel 对象提供了常用的金融数据统计与聚合方法，包括�
 .. automethod:: qteasy.HistoryPanel.var
 
 .. automethod:: qteasy.HistoryPanel.quantile
+
+
+相关与协方差 （corr / cov）
+--------------------------------
+
+对指定 ``htype``，将每个 share 的时间序列视为一列，返回 ``shares × shares`` 相关 / 协方差矩阵 （``DataFrame``，index/columns 均为 ``shares``）。空面板返回空表。
+
+与 :mod:`qteasy.research` 中的 ``factor_ic`` （**逐日截面**相关）语义不同：本方法是**跨时间、标的两两**的时序矩阵。
+
+.. automethod:: qteasy.HistoryPanel.corr
+
+.. automethod:: qteasy.HistoryPanel.cov
 
 
 研究与掩码 （where）
@@ -296,6 +308,28 @@ K 线与技术指标
 .. automethod:: qteasy.HistoryPanel.candle_pattern
 
 
+导出到 pandas （推荐名）
+-----------------------------
+
+与 pandas 生态衔接时，**新代码请优先使用下列推荐名**；兼容别名仍可用，行为不变：
+
++----------------------------------+------------------------------------------+----------------------------------+
+| 推荐名                           | 兼容别名                                 | 典型用途                         |
++==================================+==========================================+==================================+
+| ``to_df_dict(by=...)``           | ``unstack(by=...)``                      | 按 share / htype 切成多张宽表    |
++----------------------------------+------------------------------------------+----------------------------------+
+| ``to_multi_index_dataframe(...)``| ``flatten`` / ``flatten_to_dataframe``   | 展平为 MultiIndex ``DataFrame``  |
++----------------------------------+------------------------------------------+----------------------------------+
+| ``to_share_frame(share)``        | （无）                                   | 单标的 → 时间为索引的宽表        |
++----------------------------------+------------------------------------------+----------------------------------+
+
+.. automethod:: qteasy.HistoryPanel.to_df_dict
+
+.. automethod:: qteasy.HistoryPanel.to_multi_index_dataframe
+
+.. automethod:: qteasy.HistoryPanel.to_share_frame
+
+
 qteasy级别的历史数据处理函数
 -----------------------------------------------
 
@@ -309,7 +343,8 @@ qteasy级别的历史数据处理函数
 研究与正式回测的边界 （扩展阅读）
 ----------------------------------
 
-``HistoryPanel`` 上的 ``cum_return``、``portfolio``、``plot`` 等面向**探索与粗验**；正式回测 （交割、费用、信号类型、防未来函数的数据窗口等）仍由 ``Strategy`` / ``Operator`` / Backtester 负责。推荐读者在阅读本 API 页的同时，结合：
+``HistoryPanel`` 上的 ``cum_return``、``portfolio``、``plot`` 等面向**探索与粗验**；正式回测 （交割、费用、信号类型、防未来函数的数据窗口等）仍由 ``Strategy`` / ``Operator`` / Backtester 负责。截面 IC / 分位组合等模块级 API 见 :doc:`qteasy.research <research>` （**非** Backtester）。推荐读者在阅读本 API 页的同时，结合：
 
-- 教程 :doc:`使用 HistoryPanel 操作和分析历史数据 <../tutorials/2.5-historypanel-data-analysis>` 中的 **§9** （研究 → ``FactorSorter`` / ``Operator``）、**§10** （多源数据拼板）、**§11** （导出 pandas / statsmodels）；
-- 设计说明 :doc:`HistoryPanel 与可选 FactorResearch 层 <../design/10-historypanel-factor-research-layer>` （是否增加独立因子统计模块的评估结论）。
+- 教程 :doc:`使用 HistoryPanel 操作和分析历史数据 <../tutorials/2.5-historypanel-data-analysis>` 中的 **§9** （研究 → ``FactorSorter`` / ``Operator``）、**§10** （多源数据拼板）、**§11** （导出 pandas / statsmodels），以及 ``qteasy.research`` cookbook；
+- 可运行示例 ``examples/historypanel_research_factor_workflow.py``；
+- 设计说明 :doc:`HistoryPanel 与可选 FactorResearch 层 <../design/10-historypanel-factor-research-layer>` （模块级函数边界）。
