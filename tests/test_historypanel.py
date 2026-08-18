@@ -12,6 +12,7 @@ import unittest
 
 import os
 import shutil
+import warnings
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -4844,6 +4845,369 @@ class TestHistoryPanelM22Phase3Expr(unittest.TestCase):
             hp.expr('x', 'high +')
         print('  syntax msg:', str(cm.exception))
         self.assertTrue(len(str(cm.exception)) > 0)
+
+
+class TestHistoryPanelM22Phase4DropRename(unittest.TestCase):
+    """M2.2 Phase 4：HistoryPanel.drop / rename。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 3 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]],  # s1 close/open
+                [[4.0, 40.0], [5.0, 50.0], [6.0, 60.0]],  # s2
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+
+    def test_drop_htypes(self):
+        """drop(htypes=...) 删列；原对象不变。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop htypes')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        out = hp.drop(htypes='open')
+        print('  out.htypes:', out.htypes, 'shape:', out.shape)
+        print('  out.values:\n', out.values)
+        self.assertIsNot(out, hp)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(out.htypes, ['close'])
+        self.assertEqual(out.shape, (2, 3, 1))
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[1, 2, 0], 6.0)
+
+    def test_drop_shares_and_both(self):
+        """drop shares；两侧同时删。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop shares and both')
+        hp = self._make_panel()
+        out_s = hp.drop(shares='s2')
+        print('  drop s2 shares:', out_s.shares, 'shape:', out_s.shape)
+        self.assertEqual(out_s.shares, ['s1'])
+        self.assertEqual(out_s.shape, (1, 3, 2))
+        self.assertAlmostEqual(out_s.values[0, 1, 1], 20.0)
+
+        out_b = hp.drop(htypes=['open'], shares='s1')
+        print('  drop both htypes:', out_b.htypes, 'shares:', out_b.shares)
+        print('  values:\n', out_b.values)
+        self.assertEqual(out_b.shares, ['s2'])
+        self.assertEqual(out_b.htypes, ['close'])
+        self.assertEqual(out_b.shape, (1, 3, 1))
+        self.assertAlmostEqual(out_b.values[0, 0, 0], 4.0)
+
+    def test_drop_errors_raise_and_ignore(self):
+        """未知标签 raise / ignore；非法 errors。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop errors raise/ignore')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm_r:
+            hp.drop(htypes='nope')
+        print('  raise msg:', str(cm_r.exception))
+        self.assertIn('nope', str(cm_r.exception))
+
+        out = hp.drop(htypes='nope,open', errors='ignore')
+        print('  ignore out.htypes:', out.htypes)
+        self.assertEqual(out.htypes, ['close'])
+        self.assertIsNot(out, hp)
+
+        out_noop = hp.drop(htypes='nope', errors='ignore')
+        print('  ignore unknown-only shape:', out_noop.shape)
+        self.assertEqual(out_noop.shape, hp.shape)
+        np.testing.assert_array_equal(out_noop.values, hp.values)
+
+        with self.assertRaises(ValueError) as cm_e:
+            hp.drop(htypes='open', errors='bad')
+        print('  bad errors:', str(cm_e.exception))
+        self.assertIn('errors', str(cm_e.exception).lower())
+
+    def test_drop_requires_side(self):
+        """两侧皆 None → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop requires side')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm:
+            hp.drop()
+        print('  msg:', str(cm.exception))
+        self.assertTrue(
+            'htypes' in str(cm.exception).lower() or 'shares' in str(cm.exception).lower()
+        )
+
+    def test_drop_to_empty(self):
+        """删光所有 htypes 或 shares → 空面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] drop to empty')
+        hp = self._make_panel()
+        out_h = hp.drop(htypes='close,open')
+        print('  drop all htypes is_empty:', out_h.is_empty)
+        self.assertTrue(out_h.is_empty)
+
+        out_s = hp.drop(shares=['s1', 's2'])
+        print('  drop all shares is_empty:', out_s.is_empty)
+        self.assertTrue(out_s.is_empty)
+
+    def test_rename_htypes_and_shares(self):
+        """rename 映射重命名；未映射保持；新面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] rename htypes and shares')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        out = hp.rename(htypes={'close': 'px'}, shares={'s1': 'A'})
+        print('  out.htypes:', out.htypes, 'shares:', out.shares)
+        print('  out.values:\n', out.values)
+        self.assertIsNot(out, hp)
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(hp.htypes, ['close', 'open'])
+        self.assertEqual(hp.shares, ['s1', 's2'])
+        self.assertEqual(out.htypes, ['px', 'open'])
+        self.assertEqual(out.shares, ['A', 's2'])
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[1, 0, 1], 40.0)
+
+    def test_rename_conflict_and_empty_args(self):
+        """目标冲突 / 两侧映射皆空 → ValueError。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] rename conflict and empty args')
+        hp = self._make_panel()
+        with self.assertRaises(ValueError) as cm_c:
+            hp.rename(htypes={'close': 'open'})
+        print('  conflict msg:', str(cm_c.exception))
+        self.assertTrue(len(str(cm_c.exception)) > 0)
+
+        with self.assertRaises(ValueError) as cm_d:
+            hp.rename(htypes={'close': 'x', 'open': 'x'})
+        print('  dup target msg:', str(cm_d.exception))
+
+        with self.assertRaises(ValueError) as cm_e:
+            hp.rename()
+        print('  empty args msg:', str(cm_e.exception))
+
+    def test_empty_panel(self):
+        """空面板 drop/rename 返回空面板。"""
+        print('\n[TestHistoryPanelM22Phase4DropRename] empty panel')
+        hp = HistoryPanel()
+        out_d = hp.drop(htypes='close')
+        out_r = hp.rename(htypes={'a': 'b'})
+        print('  drop empty:', out_d.is_empty, 'rename empty:', out_r.is_empty)
+        self.assertTrue(out_d.is_empty)
+        self.assertTrue(out_r.is_empty)
+
+
+class TestHistoryPanelM22Phase5Stats(unittest.TestCase):
+    """M2.2 Phase 5：HistoryPanel.sum / median / var / quantile。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 3 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]],  # s1 close/open
+                [[2.0, 1.0], [4.0, 3.0], [6.0, 5.0]],  # s2
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03'],
+            columns=['close', 'open'],
+        )
+
+    def test_sum_by_share_and_htype(self):
+        """sum(by='share'/'htype') 手算金标准；非法 by。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] sum by share and htype')
+        hp = self._make_panel()
+        sum_share = hp.sum(by='share')
+        print('  sum_share:\n', sum_share)
+        self.assertIsInstance(sum_share, pd.DataFrame)
+        self.assertEqual(list(sum_share.index), ['s1', 's2'])
+        self.assertEqual(list(sum_share.columns), ['close', 'open'])
+        self.assertAlmostEqual(sum_share.loc['s1', 'close'], 6.0)
+        self.assertAlmostEqual(sum_share.loc['s1', 'open'], 15.0)
+        self.assertAlmostEqual(sum_share.loc['s2', 'close'], 12.0)
+        self.assertAlmostEqual(sum_share.loc['s2', 'open'], 9.0)
+
+        sum_htype = hp.sum(by='htype')
+        print('  sum_htype:\n', sum_htype)
+        self.assertEqual(list(sum_htype.index), ['close', 'open'])
+        self.assertEqual(list(sum_htype.columns), ['s1', 's2'])
+        self.assertAlmostEqual(sum_htype.loc['close', 's1'], 6.0)
+        self.assertAlmostEqual(sum_htype.loc['open', 's2'], 9.0)
+
+        with self.assertRaises(ValueError) as cm:
+            hp.sum(by='wrong_axis')
+        print('  bad by msg:', str(cm.exception))
+        self.assertIn('by', str(cm.exception).lower())
+
+    def test_median_and_var(self):
+        """median / var(ddof=1) 金标准；含 NaN 时 skipna。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] median and var')
+        hp = self._make_panel()
+        med = hp.median(by='share')
+        print('  median:\n', med)
+        self.assertAlmostEqual(med.loc['s1', 'close'], 2.0)
+        self.assertAlmostEqual(med.loc['s1', 'open'], 5.0)
+        self.assertAlmostEqual(med.loc['s2', 'close'], 4.0)
+        self.assertAlmostEqual(med.loc['s2', 'open'], 3.0)
+
+        var_df = hp.var(by='share', ddof=1)
+        print('  var:\n', var_df)
+        s1_close = np.array([1.0, 2.0, 3.0])
+        s2_open = np.array([1.0, 3.0, 5.0])
+        self.assertAlmostEqual(var_df.loc['s1', 'close'], float(np.var(s1_close, ddof=1)))
+        self.assertAlmostEqual(var_df.loc['s2', 'open'], float(np.var(s2_open, ddof=1)))
+
+        values_nan = hp.values.copy()
+        values_nan[0, 1, 0] = np.nan  # s1 close @ t1
+        hp_nan = HistoryPanel(
+            values=values_nan,
+            levels=list(hp.shares),
+            rows=list(hp.hdates),
+            columns=list(hp.htypes),
+        )
+        sum_skip = hp_nan.sum(by='share', skipna=True)
+        print('  sum skipna=True s1 close:', sum_skip.loc['s1', 'close'])
+        self.assertAlmostEqual(sum_skip.loc['s1', 'close'], 4.0)  # 1+3
+
+        sum_keep = hp_nan.sum(by='share', skipna=False)
+        print('  sum skipna=False s1 close:', sum_keep.loc['s1', 'close'])
+        self.assertTrue(np.isnan(sum_keep.loc['s1', 'close']))
+
+        med_skip = hp_nan.median(by='share', skipna=True)
+        print('  median skipna s1 close:', med_skip.loc['s1', 'close'])
+        self.assertAlmostEqual(med_skip.loc['s1', 'close'], 2.0)  # nanmedian([1,nan,3])
+
+    def test_quantile(self):
+        """quantile(q=0.5) 金标准；非法 q / by。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] quantile')
+        hp = self._make_panel()
+        q50 = hp.quantile(q=0.5, by='share')
+        print('  q=0.5:\n', q50)
+        self.assertAlmostEqual(
+            q50.loc['s1', 'close'],
+            float(np.nanquantile([1.0, 2.0, 3.0], 0.5)),
+        )
+        self.assertAlmostEqual(
+            q50.loc['s2', 'open'],
+            float(np.nanquantile([1.0, 3.0, 5.0], 0.5)),
+        )
+
+        q_htype = hp.quantile(q=0.5, by='htype')
+        print('  q htype close/s1:', q_htype.loc['close', 's1'])
+        self.assertAlmostEqual(q_htype.loc['close', 's1'], q50.loc['s1', 'close'])
+
+        with self.assertRaises(ValueError) as cm_q:
+            hp.quantile(q=1.5)
+        print('  bad q msg:', str(cm_q.exception))
+        self.assertTrue(len(str(cm_q.exception)) > 0)
+
+        with self.assertRaises(ValueError) as cm_by:
+            hp.quantile(q=0.5, by='bad')
+        print('  bad by msg:', str(cm_by.exception))
+        self.assertIn('by', str(cm_by.exception).lower())
+
+    def test_empty_panel(self):
+        """空面板四方法 → 空 DataFrame。"""
+        print('\n[TestHistoryPanelM22Phase5Stats] empty panel')
+        hp = HistoryPanel()
+        for name, out in [
+            ('sum', hp.sum()),
+            ('median', hp.median()),
+            ('var', hp.var()),
+            ('quantile', hp.quantile()),
+        ]:
+            print(f'  {name} empty shape:', out.shape, 'empty:', out.empty)
+            self.assertIsInstance(out, pd.DataFrame)
+            self.assertTrue(out.empty)
+
+
+class TestHistoryPanelM22Phase6Deprecation(unittest.TestCase):
+    """M2.2 Phase 6：旧 API DeprecationWarning。"""
+
+    def _make_panel(self) -> HistoryPanel:
+        """(2 shares, 4 dates, 2 htypes) 手算面板。"""
+        values = np.array(
+            [
+                [[1.0, 10.0], [2.0, 20.0], [3.0, 30.0], [4.0, 40.0]],
+                [[5.0, 50.0], [6.0, 60.0], [7.0, 70.0], [8.0, 80.0]],
+            ]
+        )
+        return HistoryPanel(
+            values=values,
+            levels=['s1', 's2'],
+            rows=['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+            columns=['close', 'open'],
+        )
+
+    def test_slice_warns_and_keeps_result(self):
+        """slice 触发 DeprecationWarning；结果金标准；原面板不变。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] slice warns and keeps result')
+        hp = self._make_panel()
+        orig = hp.values.copy()
+        with self.assertWarns(DeprecationWarning) as cm:
+            out = hp.slice(shares='s1', htypes='close')
+        msg = str(cm.warning)
+        print('  warning:', msg)
+        print('  out.shares/htypes/shape:', out.shares, out.htypes, out.shape)
+        print('  out.values:\n', out.values)
+        self.assertIn('subpanel', msg.lower())
+        self.assertIn('instead', msg.lower())
+        np.testing.assert_array_equal(hp.values, orig)
+        self.assertEqual(out.shares, ['s1'])
+        self.assertEqual(out.htypes, ['close'])
+        self.assertEqual(out.shape, (1, 4, 1))
+        self.assertAlmostEqual(out.values[0, 0, 0], 1.0)
+        self.assertAlmostEqual(out.values[0, 3, 0], 4.0)
+
+    def test_segment_and_isegment_warn(self):
+        """segment / isegment 均 warning；日期范围金标准。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] segment and isegment warn')
+        hp = self._make_panel()
+        with self.assertWarns(DeprecationWarning) as cm_s:
+            seg = hp.segment('2023-01-02', '2023-01-03')
+        print('  segment warning:', cm_s.warning)
+        print('  segment hdates:', seg.hdates)
+        print('  segment values:\n', seg.values)
+        self.assertIn('instead', str(cm_s.warning).lower())
+        self.assertEqual(len(seg.hdates), 2)
+        self.assertAlmostEqual(seg.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(seg.values[1, 1, 1], 70.0)
+
+        with self.assertWarns(DeprecationWarning) as cm_i:
+            iseg = hp.isegment(1, 3)
+        print('  isegment warning:', cm_i.warning)
+        print('  isegment hdates:', iseg.hdates)
+        print('  isegment values:\n', iseg.values)
+        self.assertIn('instead', str(cm_i.warning).lower())
+        self.assertEqual(len(iseg.hdates), 2)
+        self.assertAlmostEqual(iseg.values[0, 0, 0], 2.0)
+        self.assertAlmostEqual(iseg.values[0, 1, 0], 3.0)
+
+    def test_candle_warns_and_delegates_plot(self):
+        """candle 警告并委托 plot；不再 NotImplementedError。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] candle warns and delegates plot')
+        hp = self._make_panel()
+        with self.assertWarns(DeprecationWarning) as cm:
+            fig_c = hp.candle(interactive=False)
+        msg = str(cm.warning)
+        print('  warning:', msg)
+        print('  candle return type:', type(fig_c))
+        self.assertIn('plot', msg.lower())
+        self.assertIn('instead', msg.lower())
+        fig_p = hp.plot(interactive=False)
+        print('  plot return type:', type(fig_p))
+        self.assertEqual(type(fig_c), type(fig_p))
+
+    def test_warning_message_english(self):
+        """slice 警告全文为英文。"""
+        print('\n[TestHistoryPanelM22Phase6Deprecation] warning message english')
+        hp = self._make_panel()
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            hp.slice(shares='s1')
+        self.assertTrue(len(caught) >= 1)
+        deprec = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        self.assertTrue(len(deprec) >= 1)
+        msg = str(deprec[0].message)
+        print('  msg:', msg)
+        self.assertTrue(msg.isascii())
+        self.assertIn('deprecated', msg.lower())
+        self.assertIn('subpanel', msg.lower())
 
 
 if __name__ == '__main__':
