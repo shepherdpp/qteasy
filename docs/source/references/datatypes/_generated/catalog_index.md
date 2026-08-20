@@ -1,10 +1,10 @@
 <!-- AUTO-GENERATED: do not edit -->
-<!-- generated_at: 2026-08-17 16:38 UTC -->
+<!-- generated_at: 2026-08-19 17:34 UTC -->
 <!-- total_rows: 1322 -->
 
 # 内置 DataType 分册索引
 
-生成时间：2026-08-17 16:38 UTC；合计 **1322** 条内置数据类型。
+生成时间：2026-08-19 17:34 UTC；合计 **1322** 条内置数据类型。
 
 | acquisition_type | 说明 | 条数 | 分册 |
 | --- | --- | ---: | --- |

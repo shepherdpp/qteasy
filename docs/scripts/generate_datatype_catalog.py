@@ -101,11 +101,13 @@ def generate() -> int:
     for old in OUT_DIR.glob('*.md'):
         old.unlink()
 
-    grouped: Dict[str, List[Tuple[str, str, str, str, str]]] = {}
+    grouped: Dict[str, List[Tuple[str, str, str, str, str, str, str]]] = {}
     for (name, freq, asset_type), row in dtype_map.iterrows():
         acq = str(row.get('acquisition_type', 'unknown'))
         desc = row.get('description', '')
         table = _table_name_from_kwargs(row.get('kwargs'))
+        kind = row.get('kind', '')
+        usable_in = row.get('usable_in', '')
         grouped.setdefault(acq, []).append(
             (
                 _escape_cell(name),
@@ -113,6 +115,8 @@ def generate() -> int:
                 _escape_cell(asset_type),
                 _escape_cell(desc),
                 _escape_cell(table),
+                _escape_cell(kind),
+                _escape_cell(usable_in),
             )
         )
 
@@ -138,11 +142,13 @@ def generate() -> int:
             '',
             '请勿手改；更新内置类型后请重跑生成脚本。',
             '',
-            '| name | freq | asset_type | description | table_name |',
-            '| --- | --- | --- | --- | --- |',
+            '| name | freq | asset_type | description | table_name | kind | usable_in |',
+            '| --- | --- | --- | --- | --- | --- | --- |',
         ]
-        for name, freq, asset_type, desc, table in rows:
-            lines.append(f'| {name} | {freq} | {asset_type} | {desc} | {table} |')
+        for name, freq, asset_type, desc, table, kind, usable_in in rows:
+            lines.append(
+                f'| {name} | {freq} | {asset_type} | {desc} | {table} | {kind} | {usable_in} |'
+            )
         lines.append('')
         path.write_text('\n'.join(lines), encoding='utf-8')
         index_rows.append((acq, title, len(rows), rel_name))

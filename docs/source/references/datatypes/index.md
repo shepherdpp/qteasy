@@ -2,22 +2,24 @@
 
 本目录提供 **qteasy 内置历史数据类型（DataType）** 的可浏览完整清单。清单由脚本从 `get_dtype_map()` 生成并提交进仓，与当前代码中的内置映射表一致。
 
-> **请先读概念**：若您还不熟悉「信息 ≠ 数据」、唯一 ID（`name` + `freq` + `asset_type`）或日常取数路径，请先阅读 [以标准化方式从数据表中提取信息（DataType）](../../manage_data/02.%20datatypes.md)。
+> **请先读概念**：若您还不熟悉「信息 ≠ 数据」、三种形状或四条工作路径，请先阅读 [用稳定的信息 ID 取数（DataType）](../../manage_data/02.%20datatypes.md)。
 
 ## 如何读表
 
-每一行对应一种内置 DataType，由下列三列唯一确定：
+每一行对应一种内置 DataType，由 `name` + `freq` + `asset_type` 唯一确定：
 
 | 列 | 含义 |
 | --- | --- |
-| `name` | 数据类型名称（在 `get_history_data(htype_names=...)` 中使用的 ID） |
+| `name` | 数据类型名称（宽匹配名，如 `close`、`pe`） |
 | `freq` | 原生频率（如 `d` / `w` / `m` / `q` / `1min`；`None` 表示与频率无关） |
 | `asset_type` | 资产类型（`E` 股票、`IDX` 指数、`FD` 基金、`FT` 期货、`OPT` 期权、`None` / `Any` 等） |
 | `description` | 中文用途简述 |
 | `table_name` | 底层数据表（来自映射 kwargs；部分类型可能为空或多表逻辑） |
-| `acquisition_type` | 获取方式分册（直读、复权、事件等） |
+| `kind` | 消费形状：`history`（时间×标的）/ `reference`（仅时间）/ `static`（仅标的） |
+| `usable_in` | 推荐入口标记（可多选）：`history_panel`、`reference_api`、`static_api`、`strategy`、`universe`；`none` 表示暂无一等用法 |
+| `acquisition_type` | 内部获取方式分册（直读、复权、事件等，不是用户主分类） |
 
-日常多数场景只需给出 `name`：`get_history_data` 会按规则推断合适的频率与资产类型。需要精确匹配或排查时，请对照本清单中的三元组。
+日常多数场景只需给出 `name`。请按 `kind` / `usable_in` 选择入口：History 用 `get_history_data` / `get_kline`；不要假定清单里的每一条都能编进 HistoryPanel。需要精确匹配或排查时，请对照本清单中的三元组。
 
 ## 推荐检索方式
 

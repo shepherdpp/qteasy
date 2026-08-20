@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED: do not edit -->
-<!-- generated_at: 2026-08-17 16:38 UTC -->
+<!-- generated_at: 2026-08-19 17:34 UTC -->
 <!-- acquisition_type: event_status -->
 <!-- row_count: 1 -->
 
@@ -9,6 +9,6 @@
 
 请勿手改；更新内置类型后请重跑生成脚本。
 
-| name | freq | asset_type | description | table_name |
-| --- | --- | --- | --- | --- |
-| cur_name | d | E | 股票 - 当前最新证券名称 | stock_names |
+| name | freq | asset_type | description | table_name | kind | usable_in |
+| --- | --- | --- | --- | --- | --- | --- |
+| cur_name | d | E | 股票 - 当前最新证券名称 | stock_names | history | history_panel,strategy |

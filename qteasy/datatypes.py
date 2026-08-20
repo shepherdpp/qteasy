@@ -68,6 +68,10 @@ def get_dtype_map(include_user_defined=False, refresh_cache=False) -> pd.DataFra
     Returns
     -------
     dtype_map: pd.DataFrame
+        索引为 ``(dtype, freq, asset_type)``。列包括映射表原有字段
+        ``description`` / ``acquisition_type`` / ``kwargs``，以及派生列
+        ``kind``（``history`` / ``reference`` / ``static``）与
+        ``usable_in``（逗号分隔的入口标记，见 ``infer_dtype_usable_in``）。
 
     """
     if refresh_cache:
@@ -199,7 +203,7 @@ def _get_built_in_data_type_map() -> pd.DataFrame:
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
 
-    return type_map
+    return _attach_consumption_columns(type_map)
 
 
 @lru_cache(maxsize=1)
@@ -213,7 +217,7 @@ def _get_user_data_type_map() -> pd.DataFrame:
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
 
-    return type_map
+    return _attach_consumption_columns(type_map)
 
 
 def _parse_name_and_params(name: str) -> tuple:
@@ -248,6 +252,201 @@ def _parse_name_and_params(name: str) -> tuple:
         return search_name, params, unsymbolizer
     else:
         return name, None, unsymbolizer
+
+
+# MAP 中表示「无频率 / 无标的维」的字面量（与 Python None「未给出」区分）
+_FREQ_NONE_TOKENS = frozenset({'None', 'none'})
+_NO_SHARE_ASSET_TOKENS = frozenset({'None', 'none', 'Any', 'ANY'})
+_STATIC_ACQUISITION_TYPES = frozenset({'basics', 'selection', 'category'})
+# usable_in 规范串按此顺序拼接，保证目录与测试稳定
+_USABLE_IN_ORDER = (
+    'history_panel',
+    'reference_api',
+    'static_api',
+    'strategy',
+    'universe',
+    'none',
+)
+_ALLOWED_USABLE_IN = frozenset(_USABLE_IN_ORDER)
+# 边界个案：按 acquisition_type 覆盖 usable_in（kind 仍走派生规则）
+_USABLE_IN_BY_ACQUISITION = {
+    'event_multi_stat': frozenset({'none'}),
+}
+
+
+def _is_unsymbolizer_name(name: str) -> bool:
+    """名称是否带 unsymbolizer（``close-000300.SH``）。"""
+    if not isinstance(name, str) or not name:
+        return False
+    _, _, unsymbolizer = _parse_name_and_params(name)
+    return unsymbolizer is not None
+
+
+def format_usable_in(flags: Union[List[str], set, frozenset, tuple]) -> str:
+    """将 usable_in 标记集合格式化为稳定的逗号分隔字符串。
+
+    Parameters
+    ----------
+    flags : list or set of str
+        入口标记。合法值见 ``_USABLE_IN_ORDER``。若含 ``none`` 则独占输出 ``none``。
+
+    Returns
+    -------
+    str
+        按固定顺序拼接的规范串；空集合会报错。
+    """
+    tokens = {str(item).strip() for item in flags if str(item).strip()}
+    unknown = tokens - _ALLOWED_USABLE_IN
+    if unknown:
+        raise ValueError(f'Unknown usable_in token(s): {sorted(unknown)}')
+    if not tokens:
+        raise ValueError('usable_in must contain at least one token')
+    if 'none' in tokens:
+        return 'none'
+    return ','.join(item for item in _USABLE_IN_ORDER if item in tokens)
+
+
+def infer_dtype_kind(
+        name: str,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+        acquisition_type: Optional[str] = None,
+) -> str:
+    """根据名称、频率、资产类型与获取方式派生消费形状 ``kind``。
+
+    判定优先级（与 S1.5 契约一致）：unsymbolizer 或 ``acquisition_type=='reference'``
+    或 MAP 中无标的维（``asset_type`` 为 ``None`` / ``Any``）→ ``reference``；
+    ``freq`` 为字面量 ``None`` 或 ``acquisition_type`` 属于 basics/selection/category
+    → ``static``；其余时间×标的 → ``history``。
+
+    Python ``None`` 表示「调用方未给出该参数」，不得当作 MAP 里的 ``'None'``。
+
+    Parameters
+    ----------
+    name : str
+        宽匹配名或带 unsymbolizer 的名称。
+    freq : str, optional
+        原生频率；MAP 中无频率时为字面量 ``'None'``。
+    asset_type : str, optional
+        资产类型；无标的维时为 ``'None'`` 或 ``'Any'``。
+    acquisition_type : str, optional
+        内部提取方式（``direct`` / ``reference`` / ``basics`` 等）。
+
+    Returns
+    -------
+    str
+        ``'history'``、``'reference'`` 或 ``'static'``。
+    """
+    if not isinstance(name, str):
+        raise TypeError(f'name must be a string, got {type(name)}')
+
+    if _is_unsymbolizer_name(name):
+        return 'reference'
+    if acquisition_type == 'reference':
+        return 'reference'
+    if asset_type is not None and str(asset_type) in _NO_SHARE_ASSET_TOKENS:
+        return 'reference'
+    if (freq is not None and str(freq) in _FREQ_NONE_TOKENS) or (
+            acquisition_type in _STATIC_ACQUISITION_TYPES
+    ):
+        return 'static'
+    return 'history'
+
+
+def infer_dtype_usable_in(
+        name: str,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+        acquisition_type: Optional[str] = None,
+        kind: Optional[str] = None,
+) -> str:
+    """根据形状与边界白名单派生 ``usable_in`` 规范串。
+
+    默认：``history`` → ``history_panel,strategy``；``reference`` →
+    ``reference_api,strategy``；``static`` → ``static_api``，若资产类型属于
+    具体标的则追加 ``universe``。``composition`` 追加 ``universe``。
+    ``event_multi_stat`` 覆盖为 ``none``（一等入口尚未就绪）。
+    unsymbolizer 名称始终为 ``reference_api,strategy``。
+
+    Parameters
+    ----------
+    name : str
+        宽匹配名或带 unsymbolizer 的名称。
+    freq : str, optional
+        原生频率。
+    asset_type : str, optional
+        资产类型。
+    acquisition_type : str, optional
+        内部提取方式。
+    kind : str, optional
+        若已算出 ``kind`` 可传入以避免重复派生。
+
+    Returns
+    -------
+    str
+        逗号分隔的入口标记；``none`` 独占。
+    """
+    if _is_unsymbolizer_name(name):
+        return format_usable_in({'reference_api', 'strategy'})
+
+    if acquisition_type in _USABLE_IN_BY_ACQUISITION:
+        return format_usable_in(_USABLE_IN_BY_ACQUISITION[acquisition_type])
+
+    if kind is None:
+        kind = infer_dtype_kind(name, freq, asset_type, acquisition_type)
+    if kind not in ('history', 'reference', 'static'):
+        raise ValueError(f'Unknown kind: {kind!r}')
+
+    flags = set()
+    if kind == 'history':
+        flags.update({'history_panel', 'strategy'})
+    elif kind == 'reference':
+        flags.update({'reference_api', 'strategy'})
+    else:
+        flags.add('static_api')
+        if asset_type is not None and str(asset_type) in AVAILABLE_ASSET_TYPES:
+            flags.add('universe')
+
+    if acquisition_type == 'composition':
+        flags.add('universe')
+
+    return format_usable_in(flags)
+
+
+def _attach_consumption_columns(type_map: pd.DataFrame) -> pd.DataFrame:
+    """为 dtype map 追加 ``kind`` / ``usable_in`` 列。
+
+    Parameters
+    ----------
+    type_map : pd.DataFrame
+        索引为 ``(name, freq, asset_type)``，含 ``acquisition_type`` 列。
+
+    Returns
+    -------
+    pd.DataFrame
+        原表拷贝并追加两列。
+    """
+    if type_map is None or type_map.empty:
+        return type_map
+
+    names = type_map.index.get_level_values(0)
+    freqs = type_map.index.get_level_values(1)
+    asset_types = type_map.index.get_level_values(2)
+    acqs = type_map['acquisition_type'].tolist()
+    kinds = [
+        infer_dtype_kind(name, freq, asset_type, acq)
+        for name, freq, asset_type, acq in zip(names, freqs, asset_types, acqs)
+    ]
+    usables = [
+        infer_dtype_usable_in(name, freq, asset_type, acq, kind=kind)
+        for name, freq, asset_type, acq, kind in zip(
+            names, freqs, asset_types, acqs, kinds,
+        )
+    ]
+    attached = type_map.copy()
+    attached['kind'] = kinds
+    attached['usable_in'] = usables
+    return attached
 
 
 def _parse_built_in_freqs_and_asset_types(name: str) -> tuple[list[str], list[str]]:
