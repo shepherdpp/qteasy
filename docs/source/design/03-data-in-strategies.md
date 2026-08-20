@@ -8,11 +8,11 @@
 
 在策略类初始化（`__init__`）时，通过以下属性声明对数据的需求：
 
-- **data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 DataType 对应一种“可引用的信息”，并对应唯一的 **dtype_id**（如 `close_E_d`）。
+- **data_types**：字符串信息 ID（推荐）、`DataType` 对象，或二者的列表。可为完整 id（如 `close_E_d`）或无歧义宽名（如 `close`）；歧义时须写完整 id 或显式 `asset_type`。**仅**允许 History 与 Reference；**Static（如 `industry`）不得**写入 `data_types`，应在准备资产池时用 `get_static_data` 过滤。
 - **window_length**：历史数据窗口长度（如 20 表示最近 20 个周期）。可为标量（作用于所有声明的数据类型）或按 dtype 分别指定。
 - **use_latest_data_cycle**：是否只使用“最新一个周期”的数据（如仅用最新截面做选股），可按 dtype 分别设置。
 
-声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。
+声明后，引擎会知道该策略需要哪些完整 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。
 
 ## 3. 运行时数据如何到达策略
 
@@ -41,9 +41,12 @@
 
 详见 [过程数据（proc.*）与动态回测](09-process-data-and-dynamic-backtest.md)。
 
-## 6. 参考数据（若有）
+## 6. Reference 与 Static
 
-除策略声明的 data_types 外，qteasy 支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的 dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。
+- **Reference（仅时间）**：原生宏观/利率/资金（如 `cn_gdp`），以及把单标的 History 抽成基准的造法（如 `close-000300.SH`）。研究入口为 `get_reference_data`；也可进入策略 `data_types`，在 `realize()` 里用 `get_data` 取时间序列（2D），**不是** HistoryPanel 的「第三维标的」。
+- **Static（仅标的）**：行业、上市日等截面属性。研究/选股票池用 `get_static_data`；**本阶段不进** `data_types` / `get_data`（避免把字符串塞进时间窗）。将来若需要，应走股票池过滤、研究 `group_by`，或数值化 context，而不是本任务范围。
+
+过程数据 `proc.*` 见上一节，与 DataType 目录无关。
 
 ## 7. 小结
 

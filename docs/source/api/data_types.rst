@@ -1,22 +1,45 @@
-管理历史数据的类型——DataType
+数据类型与消费入口——DataType
 ===================================================
 
-``DataType`` 以「名称 + 频率 + 资产类型」三元组描述单一历史数据类型，是数据管线与策略声明历史数据需求时的统一语言。qteasy 预置了一千余种内置类型；日常取数通常通过 ``get_history_data(htype_names=...)`` / ``get_kline`` 引用类型 **name**，而不必每次手写 ``DataType(...)``。
+日常请把 DataType 当作**信息 ID**（字符串）：宽匹配名如 ``close``、``pe``，完整 id 如 ``close_E_d``。
+按消费形状选用入口，而不是一律 ``get_history_data``：
 
-概念、精选表与发现方式见 :doc:`manage_data 章节「以标准化方式从数据表中提取信息」 <../manage_data/02. datatypes>`；
-按获取方式浏览的完整内置清单见 :doc:`内置 DataType 完整清单 <../references/datatypes/index>`。
+- **History**（时间 × 标的）：``get_history_data`` / ``get_kline``
+- **Reference**（仅时间）：``get_reference_data``（含 ``cn_gdp``、``close-000300.SH``）
+- **Static**（仅标的）：``get_static_data``（如 ``industry``、``list_date``）
+
+概念、四条工作路径、双 ID 与精选表见
+:doc:`manage_data 章节「用稳定的信息 ID 取数」 <../manage_data/02. datatypes>`；
+按业务浏览的完整内置清单见 :doc:`内置 DataType 完整清单 <../references/datatypes/index>`。
+
+三入口（公开 API）
+------------------
+
+.. autofunction:: qteasy.get_history_data
+
+.. autofunction:: qteasy.get_reference_data
+
+.. autofunction:: qteasy.get_static_data
+
+``get_kline`` 是标准 OHLCV 的语法糖，底层仍走 History 管线；签名见
+:doc:`历史数据获取和管理 <history_data>`。
 
 清单与检索
 ----------
+
+``find_history_data`` 返回的结构化结果含 ``kind``、``usable_in``、``recommended_api``；
+打印路径按行推荐入口，**不要**假定每一行都能 ``get_history_data``。
 
 .. autofunction:: qteasy.datatypes.get_dtype_map
 
 .. autofunction:: qteasy.find_history_data
 
-``find_history_data`` 亦在 :doc:`历史数据获取和管理 <history_data>` 中列出；此处与 DataType 概念并列，便于对照清单使用。
+``find_history_data`` 亦在 :doc:`历史数据获取和管理 <history_data>` 中列出。
 
-DataType 类
------------
+高级：DataType 类
+-----------------
+
+专家层与内置策略可直接构造 ``DataType`` 对象；普通取数与策略声明优先使用字符串 ID。
 
 .. autoclass:: qteasy.DataType
     :members:

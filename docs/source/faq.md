@@ -267,15 +267,20 @@ qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间
 
 ---
 
-## 如何查有哪些 DataType（历史数据类型）？
+## 如何查有哪些 DataType（信息 ID）？
 
-`DataType` 是「可从本地表提取并直接使用」的一类历史信息，由 `name` + `freq` + `asset_type` 唯一确定。推荐：
+`DataType` 是「可从本地表提取并直接使用」的一类信息，由 `name` + `freq` + `asset_type` 唯一确定；用户日常写字符串 ID。推荐：
 
-1. 用 `qt.find_history_data('pe')` / 中文关键词 / 通配符检索；
+1. 用 `qt.find_history_data('pe')` / 中文关键词 / 通配符检索，看结果里的 `kind` 与推荐入口；
 2. 阅读概念与精选表：[DataType 概念章](manage_data/02.%20datatypes.md)；
 3. 浏览完整内置清单：[references/datatypes](references/datatypes/index.md)。
 
-取数时在 `get_history_data(htype_names=...)` 中写出类型名称即可；OHLCV 可用 `get_kline`。
+**按形状取数**：History 用 `get_history_data` / `get_kline`；宏观与基准用 `get_reference_data`；行业/上市日等用 `get_static_data`。不要假定检索到的每一条都能 `get_history_data`；清单里 `usable_in=none` 的类型今天没有一等入口。
+
+## 如何取 GDP / 北向资金 / 行业这类数据？
+
+- **GDP、北向资金、SHIBOR 等**（仅时间维）：`qt.get_reference_data('cn_gdp', start=..., end=...)`（无需 `shares`）。把某指数收盘价当基准可用造法 `close-000300.SH`（或完整 id `close-000300.SH_IDX_d`），同样走 `get_reference_data`。
+- **行业、上市日、证券名称等**（仅标的维）：`qt.get_static_data('industry', shares='000001.SZ, 000002.SZ')`（或完整 id）。不要用 `get_history_data`「顺便」取，也不要在策略 `data_types` 里声明 Static。
 
 ---
 

@@ -25,21 +25,33 @@
 
 ## 4. DataType：从“表里的数据”到“策略可引用的信息”
 
-### 4.1 name、freq、asset_type 与 dtype_id
+用户日常写**字符串信息 ID**；`DataType(...)` 对象多为专家/内置策略层。内部字段 `acquisition_type`（直读、复权、事件等）是提取算法，**不是**用户分类。
 
-- **name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息。
-- **freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。
-- **asset_type**：适用的资产类型（如 E、IDX、ANY），用于区分股票、指数等。
-- **dtype_id**：由上述三者生成，规则为 `name_assettype_freq`，例如 `close_E_d`、`total_mv_E_q`。策略在 `get_data(dtype_id)` 时使用该 id。
+### 4.1 三种消费形状（kind）
 
-### 4.2 内置 DataType 与数据表/列的映射
+| kind | 形状 | 例子 | 公开入口 |
+| --- | --- | --- | --- |
+| `history` | 时间 × 标的 | `close`、`pe`、停牌标记 | `get_history_data` / `get_kline` |
+| `reference` | 仅时间 | `cn_gdp`、`north_money`；以及把单标的行情抽成基准的 `close-000300.SH` | `get_reference_data` |
+| `static` | 仅标的 | `industry`、`list_date` | `get_static_data` |
 
-系统内置大量 DataType，分别映射到不同数据表的列或衍生列。具体表名、列名及获取方式见《下载并管理金融历史数据》与 API 文档中的数据类型与数据表说明；本系列仅强调：**策略只通过 DataType（dtype_id）引用数据，不直接依赖表结构**，这样表结构演进时只需调整映射关系，而不必改策略代码。
+`close-000300.SH` 是 Reference 的**一种造法**（策略里把某标的当市场基准），不是宏观数据的唯一来源。目录用 `usable_in` 标明推荐入口；`usable_in=none` 表示已登记但暂无一等用法（例如无法编入数值 HistoryPanel 的文本列）。
+
+### 4.2 name、freq、asset_type 与 dtype_id
+
+- **name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息；可带参数（如 `close|b`）或 unsymbolizer（如 `close-000300.SH`）。
+- **freq**：数据频率（如 d/w/m/q）；Static 常为 `None`（与频率无关）。
+- **asset_type**：适用的资产类型（如 E、IDX、None、Any）。
+- **完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 `close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。
+
+### 4.3 内置 DataType 与数据表/列的映射
+
+系统内置大量 DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。
 
 ## 5. 小结：为什么策略只接触 DataType 而不直接读表
 
-- **一致性**：回测与实盘都通过同一套“声明 DataType + 引擎按窗口注入”的路径取数，避免两套逻辑。
+- **一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。
 - **防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。
-- **接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。
+- **接口统一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 `get_static_data`，**不**进入 `get_data` 时间窗。
 
-更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。
+更多用法见 manage_data「DataType」概念章与 API 参考。

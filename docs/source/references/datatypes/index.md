@@ -19,7 +19,7 @@
 | `acquisition_type` | 内部获取方式（直读、复权、事件等），**仅供对照 refill，不是用户主分类** |
 | `table_name` | 底层数据表（来自映射 kwargs；部分类型可能为空或多表逻辑） |
 
-日常多数场景只需给出 `name`；需要消歧时改用完整 id（如 `close_E_d`）。请按 `kind` / `usable_in` 选择入口：History 用 `get_history_data` / `get_kline`；不要假定清单里的每一条都能编进 HistoryPanel。需要精确匹配或排查时，请对照本清单中的三元组。
+日常多数场景只需给出 `name`；需要消歧时改用完整 id（如 `close_E_d`）。请按 `kind` / `usable_in` 选择入口：History 用 `get_history_data` / `get_kline`；Reference 用 `get_reference_data`；Static 用 `get_static_data`。不要假定清单里的每一条都能编进 HistoryPanel。需要精确匹配或排查时，请对照本清单中的三元组。
 
 ## 推荐检索方式
 
@@ -60,5 +60,5 @@ print(df.head())
 ## 相关链接
 
 - 概念与精选表：[manage_data · DataType](../../manage_data/02.%20datatypes.md)
-- 取数 API：[get_history_data](../../api/history_data.rst)
+- 三入口 API：[history_data / data_types](../../api/history_data.rst)
 - 数据表（存储层，≠ DataType）：[数据表章节](../../manage_data/04.%20data_tables_10.md)

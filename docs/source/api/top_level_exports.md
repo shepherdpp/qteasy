@@ -24,12 +24,15 @@
 
 - `get_basic_info` / `get_stock_info`（`qteasy/core.py`）
 - `get_data_overview` / `refill_data_source`（`qteasy/core.py`）
-- `get_history_data` / `get_kline`（`qteasy/core.py`）
+- `get_history_data` / `get_kline`（`qteasy/core.py`）——History 形状
+- `get_reference_data`（`qteasy/core.py`）——Reference 形状（宏观 / unsymbolizer）
+- `get_static_data`（`qteasy/core.py`）——Static 形状（截面属性）
 - `filter_stock_codes` / `filter_stocks`（`qteasy/core.py`）
 - `get_table_info` / `get_table_overview`（`qteasy/core.py`）
 
 对应文档入口：
 - `docs/source/api/history_data.rst`
+- `docs/source/api/data_types.rst`
 - `docs/source/references/2-get-history-data.md`
 
 ### 1.3 研究容器（history）与因子研究子包
