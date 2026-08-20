@@ -491,29 +491,20 @@ class TestGetHistoryDataAPI(unittest.TestCase):
         print(' total_mv matches stock_indicator')
 
     def test_c7_composite_unsymbolizer(self):
-        """C7: 复合类型 close-000651.SZ 单标的序列（仅测股票，避免 index/stock 混合 concat 问题）。"""
-        print('\n[TestGetHistoryDataAPI] C7: composite unsymbolizer')
-        try:
-            res_stk = get_history_data(
+        """C7: unsymbolizer 是 reference 形状，get_history_data 须拒绝并指向 get_reference_data。"""
+        print('\n[TestGetHistoryDataAPI] C7: composite unsymbolizer rejected by history gate')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
                 htype_names='close-000651.SZ',
                 data_source=self.data_source,
                 shares='000651.SZ',
                 start=self.start_str,
                 end=self.end_str,
             )
-        except (ValueError, TypeError) as e:
-            if 'concat' in str(e).lower() or 'unaligned' in str(e).lower():
-                self.skipTest(f'unsymbolizer concat limitation: {e}')
-                return
-            raise
-        self.assertIsInstance(res_stk, dict)
-        self.assertIn('000651.SZ', res_stk)
-        df = res_stk['000651.SZ']
-        # 复合类型列名可能为 'close' 或 'close-000651.SZ'
-        close_col = 'close' if 'close' in df.columns else 'close-000651.SZ'
-        self.assertIn(close_col, df.columns)
-        self.assertGreater(df[close_col].notna().sum(), 0)
-        print(' close-000651.SZ returned with close column')
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_reference_data', msg)
+        self.assertIn('reference', msg.lower())
 
     def test_c6_explicit_data_types(self):
         """C6: 显式 data_types 时仅该类型，与 stock_daily 一致。"""

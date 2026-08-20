@@ -11,7 +11,8 @@
 #   qt.get_reference_data (Phase 2),
 #   qt.get_static_data (Phase 3),
 #   find_* consumption columns and strategy string
-#   data_types (Phase 4).
+#   data_types (Phase 4),
+#   get_history_data history-only gate (Phase 5).
 # ======================================
 
 import os
@@ -22,7 +23,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from qteasy.core import get_reference_data, get_static_data
+from qteasy.core import get_history_data, get_reference_data, get_static_data
 from qteasy.database import DataSource
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
@@ -1047,6 +1048,67 @@ class TestStrategyStringDataTypes(unittest.TestCase):
         msg = str(ctx.exception)
         print(f'  {msg}')
         self.assertIn('static', msg.lower())
+
+
+class TestGetHistoryDataShapeGate(unittest.TestCase):
+    """Phase 5：get_history_data 仅接受 history 形状。"""
+
+    def test_rejects_reference_macro(self):
+        print('\n[TestGetHistoryDataShapeGate] cn_gdp 指向 get_reference_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                htype_names='cn_gdp',
+                shares='000001.SZ',
+                start='20200101',
+                end='20201231',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_reference_data', msg)
+        self.assertIn('reference', msg.lower())
+
+    def test_rejects_static_industry(self):
+        print('\n[TestGetHistoryDataShapeGate] industry 指向 get_static_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                htype_names='industry',
+                shares='000001.SZ',
+                start='20200101',
+                end='20201231',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_static_data', msg)
+        self.assertIn('static', msg.lower())
+
+    def test_rejects_unsymbolizer_reference(self):
+        print('\n[TestGetHistoryDataShapeGate] close-000300.SH 指向 get_reference_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                htype_names='close-000300.SH',
+                shares='000001.SZ',
+                start='20230101',
+                end='20230131',
+                freq='d',
+                asset_type='IDX',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_reference_data', msg)
+        self.assertIn('reference', msg.lower())
+
+    def test_rejects_explicit_reference_data_type(self):
+        print('\n[TestGetHistoryDataShapeGate] 显式 DataType(cn_gdp) 亦拒绝')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                data_types=[DataType(name='cn_gdp', freq='q', asset_type='None')],
+                shares='000001.SZ',
+                start='20200101',
+                end='20201231',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_reference_data', msg)
 
 
 if __name__ == '__main__':

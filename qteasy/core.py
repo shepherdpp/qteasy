@@ -971,11 +971,13 @@ def get_history_data(htypes=None,
                      **kwargs):
     """根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。
 
-    可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` /
-    ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by``
-    的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。关于数据类型
-    推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」
-    相关章节。
+    本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用
+    ``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误
+    指向正确入口。可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合
+    ``shares`` / ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与
+    ``group_by`` 的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。
+    关于数据类型推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取
+    get_history_data」相关章节。
 
     Parameters
     ----------
@@ -1351,6 +1353,9 @@ def get_history_data(htypes=None,
                 for dt in dts:
                     dt_map[dt.dtype_id] = dt
                 dts_unique = list(dt_map.values())
+                # Phase 5：频率筛选前先做形状门禁（避免 static freq=None 被误报为未定义）
+                for dt in dts_unique:
+                    _ensure_history_data_type(dt)
                 # 频率唯一化
                 available_freqs = list({dt.freq for dt in dts_unique})
                 try:
@@ -1406,6 +1411,10 @@ def get_history_data(htypes=None,
         else:
             data_types = []
         data_types = list(data_types) + full_id_dtypes
+
+    # Phase 5：三入口形状门禁——仅允许 history；与 reference/static 入口共用 kind 派生
+    for dt in data_types:
+        _ensure_history_data_type(dt)
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
@@ -1508,6 +1517,31 @@ def _lookup_acquisition_type_for_dtype(dtype: DataType) -> Optional[str]:
         if at_key in DATA_TYPE_MAP:
             return DATA_TYPE_MAP[at_key][1]
     return None
+
+
+def _ensure_history_data_type(dtype: DataType) -> None:
+    """确保 dtype 为 history 形状；否则以英文报错并指向正确入口。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_type_for_dtype(dtype),
+    )
+    if kind == 'history':
+        return
+    if kind == 'reference':
+        raise ValueError(
+            f"{dtype.name!r} is a reference DataType; "
+            f"use qt.get_reference_data(...) instead of qt.get_history_data(...)."
+        )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType; "
+            f"use qt.get_static_data(...) instead of qt.get_history_data(...)."
+        )
+    raise ValueError(
+        f"{dtype.name!r} has unsupported kind {kind!r} for qt.get_history_data(...)."
+    )
 
 
 def _ensure_reference_data_type(dtype: DataType) -> None:
