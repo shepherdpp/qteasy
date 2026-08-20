@@ -2,6 +2,19 @@
 
 本页记录 qteasy 各版本的**用户可见**变更。升级前可查阅对应版本；2.0 大版本请参阅 [2.0 迁移指南](qteasy_2_migration_guide.md)。
 
+## 2.6.4 (2026-08-20)
+
+- **DataType 按形状取数，完善数据体验叙事**  
+  - **Reference 入口** `get_reference_data`：宏观、利率、资金流等仅时间序列，以及把单标的行情抽成基准的写法（如 `close-000300.SH`）；无需传入股票池。  
+  - **Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 HistoryPanel。  
+  - **History 入口收紧** `get_history_data` / `get_kline`：只接受时间 × 标的的 History；误传宏观/基准/行业等会提示改用上述入口。  
+  - **字符串信息 ID**：宽匹配名（如 `close`）与完整 id（如 `close_E_d`）均可解析；策略 `data_types` 可直接写字符串；行业等 Static **不能**写进策略声明。  
+  - **检索与可用性**：`find_history_data` 会标出形状与推荐入口；完整清单按业务分册并标注是否可进面板/策略；部分文本型 History 会标为暂无一等用法。  
+- **行为提示（升级时请留意）**  
+  若您曾用 `get_history_data`「顺便」取 GDP、行业或 `close-某代码`，请改为 `get_reference_data` / `get_static_data`。宽名在多种资产类型间歧义时，请改用完整 id 或显式指定资产类型。  
+- **文档更新**  
+  概念章、API、教程与 FAQ 已按「策略 / 研究面板 / 宏观基准 / 证券属性」四条路径改写，并与上述入口对齐。
+
 ## 2.6.3 (2026-08-16)
 
 - **HistoryPanel 与因子研究能力扩展，新增下列API**  
