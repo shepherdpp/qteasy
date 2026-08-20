@@ -6,7 +6,8 @@
 # Created:  2026-08-20
 # Desc:
 #   Unittest for DataType consumption
-#   metadata (kind / usable_in) and dual-ID parse (S1.5 Phase 0–1).
+#   metadata (kind / usable_in), dual-ID parse,
+#   and non-numeric history usable_in=none gate.
 # ======================================
 
 import unittest
@@ -19,16 +20,22 @@ from qteasy.datatypes import (
     infer_dtype_usable_in,
     parse_dtype_user_string,
     format_full_dtype_id,
+    _sql_dtype_is_numeric,
+    _history_payload_is_numeric,
 )
+from qteasy.datatables import get_table_column_dtype
 
 # 金标准：MAP 三元组 → (kind, usable_in 规范串)
 # usable_in 成员按字母序拼接；none 独占
 GOLD_MAP_ROWS = {
     ('close', 'd', 'E'): ('history', 'history_panel,strategy'),
     ('pe', 'd', 'E'): ('history', 'history_panel,strategy'),
-    ('is_suspended', 'd', 'E'): ('history', 'history_panel,strategy'),
+    ('is_suspended', 'd', 'E'): ('history', 'none'),  # suspend_type 为 varchar
     ('up_limit', 'd', 'E'): ('history', 'history_panel,strategy'),
     ('wt_idx|%', 'm', 'E'): ('history', 'history_panel,strategy,universe'),
+    ('block_trade_buyer', 'd', 'E'): ('history', 'none'),  # text
+    ('block_trade_seller', 'd', 'E'): ('history', 'none'),  # text
+    ('block_trade_price', 'd', 'E'): ('history', 'history_panel,strategy'),  # float
     ('cn_gdp', 'q', 'None'): ('reference', 'reference_api,strategy'),
     ('north_money', 'd', 'Any'): ('reference', 'reference_api,strategy'),
     ('trade_cal', 'd', 'None'): ('reference', 'reference_api,strategy'),
@@ -135,14 +142,20 @@ class TestInferDtypeUsableIn(unittest.TestCase):
     def test_gold_usable_in_from_map_keys(self):
         print('\n[TestInferDtypeUsableIn] MAP 抽样 usable_in 金标准')
         for (name, freq, asset_type), (kind, usable) in GOLD_MAP_ROWS.items():
-            acq = DATA_TYPE_MAP[(name, freq, asset_type)][1]
+            row = DATA_TYPE_MAP[(name, freq, asset_type)]
+            acq = row[1]
+            kwargs = row[2]
             got = infer_dtype_usable_in(
                 name=name,
                 freq=freq,
                 asset_type=asset_type,
                 acquisition_type=acq,
+                kwargs=kwargs,
             )
-            print(f'  {name!r} -> usable_in={got!r} (expect {usable!r}), kind={kind!r}')
+            print(
+                f'  {name!r} kwargs_col={kwargs.get("column")!r} '
+                f'-> usable_in={got!r} (expect {usable!r}), kind={kind!r}'
+            )
             self.assertEqual(got, usable)
             self.assertEqual(_usable_in_set(got), _usable_in_set(usable))
 
@@ -169,6 +182,67 @@ class TestInferDtypeUsableIn(unittest.TestCase):
         print(f'  usable_in={got!r}')
         self.assertEqual(got, 'none')
         self.assertEqual(_usable_in_set(got), frozenset({'none'}))
+
+    def test_history_missing_kwargs_is_none(self):
+        print('\n[TestInferDtypeUsableIn] history 缺 kwargs 失败关闭为 none')
+        got = infer_dtype_usable_in(
+            name='close',
+            freq='d',
+            asset_type='E',
+            acquisition_type='direct',
+            kind='history',
+            kwargs=None,
+        )
+        print(f'  usable_in={got!r}')
+        self.assertEqual(got, 'none')
+
+
+class TestHistoryPayloadNumeric(unittest.TestCase):
+    """SQL 列类型与 history payload 数值门禁金标准。"""
+
+    def test_sql_dtype_is_numeric_gold(self):
+        print('\n[TestHistoryPayloadNumeric] _sql_dtype_is_numeric 金标准')
+        cases = [
+            ('float', True),
+            ('double', True),
+            ('int', True),
+            ('int(11)', True),
+            ('decimal', True),
+            ('varchar(14)', False),
+            ('text', False),
+            ('date', False),
+            ('datetime', False),
+            (None, False),
+            ('', False),
+            ('interval', False),
+        ]
+        for sql_dtype, expect in cases:
+            got = _sql_dtype_is_numeric(sql_dtype)
+            print(f'  {sql_dtype!r} -> {got} (expect {expect})')
+            self.assertEqual(got, expect)
+
+    def test_get_table_column_dtype_block_trade(self):
+        print('\n[TestHistoryPayloadNumeric] block_trade 列 dtype')
+        buyer = get_table_column_dtype('block_trade', 'buyer')
+        price = get_table_column_dtype('block_trade', 'price')
+        missing = get_table_column_dtype('block_trade', 'no_such_col')
+        print(f'  buyer={buyer!r}, price={price!r}, missing={missing!r}')
+        self.assertEqual(buyer, 'text')
+        self.assertEqual(price, 'float')
+        self.assertIsNone(missing)
+
+    def test_history_payload_block_trade(self):
+        print('\n[TestHistoryPayloadNumeric] block_trade kwargs payload')
+        buyer_kw = {'table_name': 'block_trade', 'column': 'buyer'}
+        price_kw = {'table_name': 'block_trade', 'column': 'price'}
+        empty_kw = {}
+        print(f'  buyer numeric={_history_payload_is_numeric(buyer_kw)}')
+        print(f'  price numeric={_history_payload_is_numeric(price_kw)}')
+        print(f'  empty numeric={_history_payload_is_numeric(empty_kw)}')
+        self.assertFalse(_history_payload_is_numeric(buyer_kw))
+        self.assertTrue(_history_payload_is_numeric(price_kw))
+        self.assertFalse(_history_payload_is_numeric(empty_kw))
+        self.assertFalse(_history_payload_is_numeric(None))
 
 
 class TestGetDtypeMapConsumptionColumns(unittest.TestCase):

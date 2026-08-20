@@ -14,7 +14,7 @@
 import numpy as np
 import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Dict, Optional, NamedTuple, Literal
+from typing import Union, List, Dict, Optional, NamedTuple, Literal, Mapping
 from warnings import warn
 from math import ceil
 
@@ -27,6 +27,7 @@ from .utilfuncs import (
     _partial_lev_ratio,
     _wildcard_match,
 )
+from .datatables import get_table_column_dtype
 
 
 # TODO: datatype 对象的freq与Strategy的run_freq采用了不同的规则，用户在使用过程中可能会感到疑惑
@@ -292,6 +293,11 @@ _ALLOWED_USABLE_IN = frozenset(_USABLE_IN_ORDER)
 _USABLE_IN_BY_ACQUISITION = {
     'event_multi_stat': frozenset({'none'}),
 }
+# SQL 列类型：可安全编入 HistoryPanel / 策略窗口的数值族（去宽度后精确匹配）
+_NUMERIC_SQL_DTYPE_BASES = frozenset({
+    'int', 'integer', 'bigint', 'smallint', 'tinyint',
+    'float', 'double', 'real', 'decimal', 'numeric',
+})
 
 
 def _is_unsymbolizer_name(name: str) -> bool:
@@ -300,6 +306,52 @@ def _is_unsymbolizer_name(name: str) -> bool:
         return False
     _, _, unsymbolizer = _parse_name_and_params(name)
     return unsymbolizer is not None
+
+
+def _sql_dtype_is_numeric(sql_dtype: Optional[str]) -> bool:
+    """判断 SQL 列类型字符串是否属于可编入 HP 的数值族。
+
+    Parameters
+    ----------
+    sql_dtype : str or None
+        如 ``float``、``varchar(14)``、``date``；``None`` 视为非数值。
+
+    Returns
+    -------
+    bool
+        ``True`` 仅当类型为 int/float/double/decimal/numeric（可带宽度）。
+    """
+    if not isinstance(sql_dtype, str) or not sql_dtype.strip():
+        return False
+    base = sql_dtype.strip().lower().split('(', 1)[0].strip()
+    return base in _NUMERIC_SQL_DTYPE_BASES
+
+
+def _history_payload_is_numeric(kwargs: Optional[Union[Dict, Mapping]]) -> bool:
+    """根据 MAP kwargs 中的 table/column 判断 History 格子是否为数值。
+
+    缺表名、缺列名、或 schema 查不到时按非数值处理（对 history 失败关闭）。
+
+    Parameters
+    ----------
+    kwargs : dict or Mapping, optional
+        DATA_TYPE_MAP 行的 kwargs；列名取 ``column``，若无则取 ``output_col``。
+
+    Returns
+    -------
+    bool
+        ``True`` 表示可安全编入 HistoryPanel / 策略窗口。
+    """
+    if not isinstance(kwargs, Mapping):
+        return False
+    table_name = kwargs.get('table_name')
+    column = kwargs.get('column')
+    if column is None:
+        column = kwargs.get('output_col')
+    if not table_name or not column:
+        return False
+    sql_dtype = get_table_column_dtype(str(table_name), str(column))
+    return _sql_dtype_is_numeric(sql_dtype)
 
 
 def format_usable_in(flags: Union[List[str], set, frozenset, tuple]) -> str:
@@ -379,14 +431,17 @@ def infer_dtype_usable_in(
         asset_type: Optional[str] = None,
         acquisition_type: Optional[str] = None,
         kind: Optional[str] = None,
+        kwargs: Optional[Union[Dict, Mapping]] = None,
 ) -> str:
-    """根据形状与边界白名单派生 ``usable_in`` 规范串。
+    """根据形状、列类型与边界白名单派生 ``usable_in`` 规范串。
 
     默认：``history`` → ``history_panel,strategy``；``reference`` →
     ``reference_api,strategy``；``static`` → ``static_api``，若资产类型属于
     具体标的则追加 ``universe``。``composition`` 追加 ``universe``。
     ``event_multi_stat`` 覆盖为 ``none``（一等入口尚未就绪）。
     unsymbolizer 名称始终为 ``reference_api,strategy``。
+    当 ``kind=='history'`` 且底层列无法安全转为 float 时，覆盖为 ``none``
+    （HistoryPanel / 策略窗口只吃数值）。
 
     Parameters
     ----------
@@ -400,6 +455,8 @@ def infer_dtype_usable_in(
         内部提取方式。
     kind : str, optional
         若已算出 ``kind`` 可传入以避免重复派生。
+    kwargs : dict or Mapping, optional
+        MAP 行的 kwargs（含 ``table_name`` / ``column``）；用于 history 格子类型门禁。
 
     Returns
     -------
@@ -430,6 +487,10 @@ def infer_dtype_usable_in(
     if acquisition_type == 'composition':
         flags.add('universe')
 
+    # history 非数值格子（文本/日期/缺 schema）不得进 HP / 策略窗口
+    if kind == 'history' and not _history_payload_is_numeric(kwargs):
+        return format_usable_in({'none'})
+
     return format_usable_in(flags)
 
 
@@ -453,14 +514,17 @@ def _attach_consumption_columns(type_map: pd.DataFrame) -> pd.DataFrame:
     freqs = type_map.index.get_level_values(1)
     asset_types = type_map.index.get_level_values(2)
     acqs = type_map['acquisition_type'].tolist()
+    row_kwargs = type_map['kwargs'].tolist()
     kinds = [
         infer_dtype_kind(name, freq, asset_type, acq)
         for name, freq, asset_type, acq in zip(names, freqs, asset_types, acqs)
     ]
     usables = [
-        infer_dtype_usable_in(name, freq, asset_type, acq, kind=kind)
-        for name, freq, asset_type, acq, kind in zip(
-            names, freqs, asset_types, acqs, kinds,
+        infer_dtype_usable_in(
+            name, freq, asset_type, acq, kind=kind, kwargs=kw,
+        )
+        for name, freq, asset_type, acq, kind, kw in zip(
+            names, freqs, asset_types, acqs, kinds, row_kwargs,
         )
     ]
     attached = type_map.copy()

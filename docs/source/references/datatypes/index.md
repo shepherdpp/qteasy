@@ -15,7 +15,7 @@
 | `asset_type` | 资产类型（`E` 股票、`IDX` 指数、`FD` 基金、`FT` 期货、`OPT` 期权、`None` / `Any` 等） |
 | `description` | 中文用途简述 |
 | `kind` | 消费形状：`history`（时间×标的）/ `reference`（仅时间）/ `static`（仅标的） |
-| `usable_in` | 推荐入口标记（可多选）：`history_panel`、`reference_api`、`static_api`、`strategy`、`universe`；`none` 表示暂无一等用法 |
+| `usable_in` | 推荐入口标记（可多选）：`history_panel`、`reference_api`、`static_api`、`strategy`、`universe`；`none` 表示暂无一等用法（含无法编入 HistoryPanel 的文本/日期 History，如营业部名称） |
 | `acquisition_type` | 内部获取方式（直读、复权、事件等），**仅供对照 refill，不是用户主分类** |
 | `table_name` | 底层数据表（来自映射 kwargs；部分类型可能为空或多表逻辑） |
 

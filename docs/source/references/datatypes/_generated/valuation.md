@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED: do not edit -->
-<!-- generated_at: 2026-08-20 06:16 UTC -->
+<!-- generated_at: 2026-08-20 10:10 UTC -->
 <!-- business_group: valuation -->
 <!-- row_count: 558 -->
 
@@ -383,7 +383,7 @@
 | pe_2 | d | E | 股票技术指标 - 动态市盈率 | history | history_panel,strategy | direct | stock_indicator2 |
 | pe_ttm | d | E | 股票技术指标 - 市盈率（TTM，亏损的PE为空） | history | history_panel,strategy | direct | stock_indicator |
 | pe_ttm | d | IDX | 指数技术指标 - 市盈率TTM | history | history_panel,strategy | direct | index_indicator |
-| perf_summary | q | E | 上市公司业绩快报 - 业绩简要说明 | history | history_panel,strategy | direct | express |
+| perf_summary | q | E | 上市公司业绩快报 - 业绩简要说明 | history | none | direct | express |
 | ph_invest | q | E | 上市公司资产负债表 - 保户储金及投资款 | history | history_panel,strategy | direct | balance |
 | ph_pledge_loans | q | E | 上市公司资产负债表 - 保户质押贷款 | history | history_panel,strategy | direct | balance |
 | pledge_borr | q | E | 上市公司资产负债表 - 其中:质押借款 | history | history_panel,strategy | direct | balance |
