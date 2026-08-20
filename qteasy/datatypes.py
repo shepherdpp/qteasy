@@ -5208,11 +5208,12 @@ def get_reference_data_from_source(
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
-        # 检查数据类型是否属于参考数据，历史数据和基本信息数据不能通过此方法获取
+        # 检查数据类型是否属于参考数据：无标的维（None/Any）或 unsymbolizer
+        # 与 infer_dtype_kind 的 reference 判定对齐（north_money 等为 Any）
         if htype.freq == 'None':
             err = ValueError(f'Invalid data type {htype.name}, not a reference data type')
             raise err
-        if (htype.asset_type != 'None') and (htype.unsymbolizer is None):
+        if (htype.asset_type not in ('None', 'Any')) and (htype.unsymbolizer is None):
             err = TypeError(f'data type ({htype.__str__()}) is a history data, not a reference data, '
                             f'Thus symbols must be given to specify the data: "shares=\'000651.SZ\'"; '
                             f'or using unsymbolizer to convert it to reference data, such as "close-000651.SZ"')

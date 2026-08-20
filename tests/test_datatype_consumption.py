@@ -7,15 +7,25 @@
 # Desc:
 #   Unittest for DataType consumption
 #   metadata (kind / usable_in), dual-ID parse,
-#   and non-numeric history usable_in=none gate.
+#   non-numeric history usable_in=none gate,
+#   and qt.get_reference_data (Phase 2).
 # ======================================
 
+import os
+import shutil
+import tempfile
 import unittest
 
+import numpy as np
+import pandas as pd
+
+from qteasy.core import get_reference_data
+from qteasy.database import DataSource
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
     DataType,
     get_dtype_map,
+    get_reference_data_from_source,
     infer_dtype_kind,
     infer_dtype_usable_in,
     parse_dtype_user_string,
@@ -24,6 +34,10 @@ from qteasy.datatypes import (
     _history_payload_is_numeric,
 )
 from qteasy.datatables import get_table_column_dtype
+from qteasy.history import get_history_data_packages
+from qteasy.qt_operator import Operator
+from qteasy.strategy import GeneralStg
+from qteasy.parameter import Parameter
 
 # 金标准：MAP 三元组 → (kind, usable_in 规范串)
 # usable_in 成员按字母序拼接；none 独占
@@ -435,6 +449,296 @@ class TestDataTypeDualIdInit(unittest.TestCase):
         msg = str(ctx.exception)
         print(f'  {msg}')
         self.assertIn("colon ':' is no longer a DataType separator", msg)
+
+
+class TestGetReferenceDataAPI(unittest.TestCase):
+    """公开入口 qt.get_reference_data：宏观无 shares、unsymbolizer、错形状报错。"""
+
+    def setUp(self):
+        print('\n[TestGetReferenceDataAPI] setUp: temp DataSource + cn_gdp / north_money / index_daily')
+        self.test_data_path = tempfile.mkdtemp(prefix='temp_test_get_reference_data_')
+        self.data_source = DataSource(source_type='file', file_loc=self.test_data_path)
+        self.dates = pd.date_range('2023-01-03', '2023-01-20', freq='B')
+        self.index_share = '000300.SH'
+        n = len(self.dates)
+
+        # 北向资金（日频宏观，无标的维）
+        self.north_gold = np.array(
+            [101.0, 102.5, 103.0, 104.5, 105.0, 106.5, 107.0, 108.5,
+             109.0, 110.5, 111.0, 112.5, 113.0, 114.5],
+            dtype=float,
+        )
+        north_df = pd.DataFrame({
+            'trade_date': self.dates,
+            'ggt_ss': 1.0,
+            'ggt_sz': 1.0,
+            'hgt': 1.0,
+            'sgt': 1.0,
+            'north_money': self.north_gold,
+            'south_money': 2.0,
+        })
+        self.data_source.update_table_data('hs_money_flow', df=north_df, merge_type='update')
+
+        # GDP（季度宏观）
+        self.gdp_quarters = ['2022Q1', '2022Q2', '2022Q3', '2022Q4']
+        self.gdp_gold = np.array([270000.0, 280000.0, 290000.0, 300000.0], dtype=float)
+        gdp_df = pd.DataFrame({
+            'quarter': self.gdp_quarters,
+            'gdp': self.gdp_gold,
+            'gdp_yoy': 5.0,
+            'pi': 1.0,
+            'pi_yoy': 1.0,
+            'si': 1.0,
+            'si_yoy': 1.0,
+            'ti': 1.0,
+            'ti_yoy': 1.0,
+        })
+        self.data_source.update_table_data('cn_gdp', df=gdp_df, merge_type='update')
+
+        # 指数日线，供 close-000300.SH unsymbolizer
+        rng = np.random.RandomState(50)
+        o = rng.rand(n) * 3000 + 3000
+        self.index_close_gold = (o + 50 + o - 50) / 2
+        idx_data = pd.DataFrame({
+            'ts_code': [self.index_share] * n,
+            'trade_date': self.dates,
+            'open': o,
+            'high': o + 50,
+            'low': o - 50,
+            'close': self.index_close_gold,
+            'pre_close': self.index_close_gold,
+            'change': 0.0,
+            'pct_chg': 0.0,
+            'vol': rng.randint(100000, 500000, n).astype(float),
+            'amount': (rng.rand(n) * 1e9),
+        })
+        self.data_source.update_table_data('index_daily', df=idx_data, merge_type='update')
+        print('  path:', self.test_data_path, 'n_dates:', n)
+
+    def tearDown(self):
+        if os.path.exists(self.test_data_path):
+            shutil.rmtree(self.test_data_path)
+        print('[TestGetReferenceDataAPI] tearDown: removed', self.test_data_path)
+
+    def test_macro_north_money_without_shares(self):
+        print('\n[TestGetReferenceDataAPI] north_money 无需 shares')
+        res = get_reference_data(
+            'north_money',
+            data_source=self.data_source,
+            start='20230103',
+            end='20230120',
+            freq='d',
+        )
+        print('  keys:', list(res.keys()))
+        self.assertIsInstance(res, dict)
+        self.assertIn('north_money_Any_d', res)
+        ser = res['north_money_Any_d']
+        print('  series head:\n', ser.head())
+        print('  gold:', self.north_gold[:5])
+        self.assertIsInstance(ser, pd.Series)
+        self.assertFalse(ser.empty)
+        np.testing.assert_allclose(
+            ser.dropna().values.astype(float),
+            self.north_gold.astype(float),
+            rtol=1e-5,
+        )
+
+    def test_macro_cn_gdp_without_shares(self):
+        print('\n[TestGetReferenceDataAPI] cn_gdp 无需 shares')
+        res = get_reference_data(
+            'cn_gdp',
+            data_source=self.data_source,
+            start='20220101',
+            end='20231231',
+        )
+        print('  keys:', list(res.keys()))
+        self.assertIn('cn_gdp_None_q', res)
+        ser = res['cn_gdp_None_q']
+        print('  series:\n', ser)
+        print('  gold:', self.gdp_gold)
+        self.assertIsInstance(ser, pd.Series)
+        np.testing.assert_allclose(
+            ser.dropna().values.astype(float),
+            self.gdp_gold.astype(float),
+            rtol=1e-5,
+        )
+
+    def test_unsymbolizer_close_index(self):
+        print('\n[TestGetReferenceDataAPI] close-000300.SH_IDX_d unsymbolizer')
+        res = get_reference_data(
+            'close-000300.SH_IDX_d',
+            data_source=self.data_source,
+            start='20230103',
+            end='20230120',
+            freq='d',
+        )
+        key = 'close-000300.SH_IDX_d'
+        print('  keys:', list(res.keys()))
+        self.assertIn(key, res)
+        ser = res[key]
+        print('  series head:\n', ser.head())
+        print('  gold head:', self.index_close_gold[:5])
+        self.assertIsInstance(ser, pd.Series)
+        np.testing.assert_allclose(
+            ser.dropna().values.astype(float),
+            self.index_close_gold.astype(float),
+            rtol=1e-5,
+        )
+
+    def test_unsymbolizer_wide_with_asset_type(self):
+        print('\n[TestGetReferenceDataAPI] 宽名 close-000300.SH + asset_type=IDX')
+        res = get_reference_data(
+            'close-000300.SH',
+            data_source=self.data_source,
+            start='20230103',
+            end='20230120',
+            freq='d',
+            asset_type='IDX',
+        )
+        ser = res['close-000300.SH_IDX_d']
+        print('  first values:', ser.dropna().values[:3])
+        print('  gold first:', self.index_close_gold[:3])
+        np.testing.assert_allclose(
+            ser.dropna().values.astype(float),
+            self.index_close_gold.astype(float),
+            rtol=1e-5,
+        )
+
+    def test_api_matches_from_source_and_packages(self):
+        print('\n[TestGetReferenceDataAPI] API / from_source / packages 数值一致 + 金标准')
+        dtype = DataType(name='close-000300.SH', freq='d', asset_type='IDX')
+        api = get_reference_data(
+            'close-000300.SH_IDX_d',
+            data_source=self.data_source,
+            start='20230103',
+            end='20230120',
+            freq='d',
+        )
+        from_src = get_reference_data_from_source(
+            self.data_source,
+            htypes=[dtype],
+            start='20230103',
+            end='20230120',
+            freq='d',
+        )
+        packages = get_history_data_packages(
+            data_types=dtype,
+            data_source=self.data_source,
+            shares=None,
+            start='20230103',
+            end='20230120',
+        )
+        key = 'close-000300.SH_IDX_d'
+        api_ser = api[key]
+        src_ser = from_src[key]
+        pkg_val = packages[key]
+        if isinstance(pkg_val, pd.DataFrame):
+            pkg_ser = pkg_val.iloc[:, 0]
+        else:
+            pkg_ser = pkg_val
+        print('  api head:', api_ser.dropna().values[:3])
+        print('  from_src head:', src_ser.dropna().values[:3])
+        print('  packages head:', np.asarray(pkg_ser.dropna().values[:3], dtype=float))
+        print('  gold head:', self.index_close_gold[:3])
+        np.testing.assert_allclose(
+            api_ser.dropna().values.astype(float),
+            self.index_close_gold.astype(float),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            api_ser.dropna().values.astype(float),
+            src_ser.dropna().values.astype(float),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            api_ser.dropna().values.astype(float),
+            np.asarray(pkg_ser.dropna().values, dtype=float),
+            rtol=1e-5,
+        )
+
+    def test_rejects_history_shape(self):
+        print('\n[TestGetReferenceDataAPI] 误传 history 指向 get_history_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_reference_data(
+                'close_E_d',
+                data_source=self.data_source,
+                start='20230103',
+                end='20230120',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_history_data', msg)
+        self.assertIn('history', msg.lower())
+
+    def test_rejects_static_shape(self):
+        print('\n[TestGetReferenceDataAPI] 误传 static 指向 get_static_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_reference_data(
+                'industry',
+                data_source=self.data_source,
+                start='20230103',
+                end='20230120',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_static_data', msg)
+        self.assertIn('static', msg.lower())
+
+    def test_operator_buffer_keeps_reference_series(self):
+        print('\n[TestGetReferenceDataAPI] Operator 缓冲保留 Reference Series')
+        ref = get_reference_data(
+            'close-000300.SH_IDX_d',
+            data_source=self.data_source,
+            start='20230103',
+            end='20230120',
+            freq='d',
+        )
+        ref_key = 'close-000300.SH_IDX_d'
+        ref_ser = ref[ref_key]
+        # 历史侧用与参考同 index 的假面板，仅验证 Series 可进缓冲
+        close_df = pd.DataFrame(
+            {'A': np.linspace(1.0, 2.0, len(ref_ser))},
+            index=ref_ser.index,
+        )
+
+        class _RefBufStg(GeneralStg):
+            def __init__(self):
+                super().__init__(
+                    name='ref_buf_stg',
+                    description='reference buffer smoke',
+                    pars=[Parameter((1, 3), name='n', par_type='int', value=1)],
+                    data_types=[
+                        DataType(name='close', freq='d', asset_type='E'),
+                        DataType(name='close-000300.SH', freq='d', asset_type='IDX'),
+                    ],
+                    window_length=[3, 3],
+                    use_latest_data_cycle=[False, False],
+                )
+
+            def realize(self):
+                close_w = self.get_data('close_E_d')
+                ref_w = self.get_data('close-000300.SH_IDX_d')
+                return np.zeros(close_w.shape[-1] if close_w.ndim > 1 else 1)
+
+        op = Operator(strategies=[_RefBufStg], signal_type='PS')
+        op.prepare_data_buffer(
+            start_date=ref_ser.index[3],
+            end_date=ref_ser.index[-1],
+            data_package={
+                'close_E_d': close_df,
+                ref_key: ref_ser,
+            },
+        )
+        buffered = op.data_buffers[ref_key]
+        print('  buffered type:', type(buffered).__name__, 'len:', len(buffered))
+        print('  buffered head:', buffered.head().values)
+        print('  gold head:', self.index_close_gold[:5])
+        self.assertIsInstance(buffered, pd.Series)
+        np.testing.assert_allclose(
+            buffered.dropna().values.astype(float),
+            self.index_close_gold.astype(float),
+            rtol=1e-5,
+        )
 
 
 if __name__ == '__main__':
