@@ -23,7 +23,8 @@
   - 分享批处理代码片段
   - 分享可视化图表
   - 纠正文档中的错误
-- 请按照下面的Fork/Clone/Pull Request工作流程提供您的贡献，我会尽快给予反馈。
+- **短配方（一个周末能跑通的场景）**：请发到 Discussions 的 [Recipes](https://github.com/shepherdpp/qteasy/discussions/categories/recipes) 分类。维护者润色后会收入 [Wiki Cookbook](https://github.com/shepherdpp/qteasy/wiki/Cookbook-Home)。投稿模板见 Wiki 的 [贡献速查](https://github.com/shepherdpp/qteasy/wiki/Contributing-Quick)。
+- **官方长文、教程与 `examples/` 可运行脚本**：请按照下面的 Fork/Clone/Pull Request 工作流程提交，我会尽快给予反馈。
 
 ---
 

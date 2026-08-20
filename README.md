@@ -145,6 +145,8 @@ pip install qteasy-ai
 
 关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/)；各版本用户可见变更见 [发布历史](https://qteasy.readthedocs.io/zh-cn/latest/RELEASE_HISTORY.html)。
 
+GitHub 上的导航门户、社区 Cookbook 与排障速查见 [Wiki](https://github.com/shepherdpp/qteasy/wiki)（教程与 API 仍以 Read the Docs 为准）。
+
 
 ### python 版本
 - *`python` version >= 3.9, < 3.13* 
