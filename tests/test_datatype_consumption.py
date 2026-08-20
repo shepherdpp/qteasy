@@ -6,16 +6,19 @@
 # Created:  2026-08-20
 # Desc:
 #   Unittest for DataType consumption
-#   metadata: kind and usable_in (S1.5 Phase 0).
+#   metadata (kind / usable_in) and dual-ID parse (S1.5 Phase 0–1).
 # ======================================
 
 import unittest
 
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
+    DataType,
     get_dtype_map,
     infer_dtype_kind,
     infer_dtype_usable_in,
+    parse_dtype_user_string,
+    format_full_dtype_id,
 )
 
 # 金标准：MAP 三元组 → (kind, usable_in 规范串)
@@ -225,6 +228,139 @@ class TestGetDtypeMapConsumptionColumns(unittest.TestCase):
         close_desc = dtype_map.loc[('close', 'd', 'E'), 'description']
         print(f'  close description={close_desc!r}')
         self.assertEqual(close_desc, '股票日K线 - 收盘价')
+
+
+class TestParseDtypeUserString(unittest.TestCase):
+    """S1.5 Phase 1：宽名 / 完整 id 解析金标准。"""
+
+    def test_wide_and_full_id_gold(self):
+        print('\n[TestParseDtypeUserString] 宽名与完整 id 解析金标准')
+        cases = [
+            ('close', 'wide', 'close', None, None),
+            ('close_E_d', 'full', 'close', 'E', 'd'),
+            ('close|b', 'wide', 'close|b', None, None),
+            ('close|b_E_d', 'full', 'close|b', 'E', 'd'),
+            ('close-000300.SH', 'wide', 'close-000300.SH', None, None),
+            ('close-000300.SH_IDX_d', 'full', 'close-000300.SH', 'IDX', 'd'),
+            ('wt_idx|000300.SH', 'wide', 'wt_idx|000300.SH', None, None),
+            ('wt_idx|000300.SH_E_m', 'full', 'wt_idx|000300.SH', 'E', 'm'),
+            ('c_cash_equ_end_period', 'wide', 'c_cash_equ_end_period', None, None),
+            ('c_cash_equ_end_period_E_q', 'full', 'c_cash_equ_end_period', 'E', 'q'),
+            ('industry_E_None', 'full', 'industry', 'E', 'None'),
+            ('north_money_Any_d', 'full', 'north_money', 'Any', 'd'),
+        ]
+        for raw, form, wide, asset, freq in cases:
+            parsed = parse_dtype_user_string(raw)
+            print(
+                f'  {raw!r} -> form={parsed.form!r} wide={parsed.wide_name!r} '
+                f'asset={parsed.asset_type!r} freq={parsed.freq!r}'
+            )
+            self.assertEqual(parsed.form, form)
+            self.assertEqual(parsed.wide_name, wide)
+            self.assertEqual(parsed.asset_type, asset)
+            self.assertEqual(parsed.freq, freq)
+
+    def test_colon_separator_rejected(self):
+        print('\n[TestParseDtypeUserString] 冒号分隔符拒绝')
+        for raw in ('close:b', 'wt_id:000300.SH', 'open:b'):
+            with self.assertRaises(ValueError) as ctx:
+                parse_dtype_user_string(raw)
+            msg = str(ctx.exception)
+            print(f'  {raw!r} -> {msg}')
+            self.assertIn("colon ':' is no longer a DataType separator", msg)
+            self.assertIn("'|'", msg)
+            self.assertIn("'-'", msg)
+
+    def test_format_full_dtype_id_gold(self):
+        print('\n[TestParseDtypeUserString] format_full_dtype_id 金标准')
+        got = format_full_dtype_id('close|b', 'E', 'd')
+        print(f'  format_full_dtype_id={got!r}')
+        self.assertEqual(got, 'close|b_E_d')
+        self.assertEqual(format_full_dtype_id('close', 'E,IDX', 'd'), 'close_E,IDX_d')
+
+
+class TestDataTypeDualIdInit(unittest.TestCase):
+    """S1.5 Phase 1：DataType 构造接受完整 id，宽名歧义报错。"""
+
+    def test_full_id_constructs_same_as_explicit_params(self):
+        print('\n[TestDataTypeDualIdInit] 完整 id 与显式参数等价')
+        dt_full = DataType('close_E_d')
+        dt_parts = DataType(name='close', freq='d', asset_type='E')
+        print(
+            f'  full: name={dt_full.name!r} freq={dt_full.freq!r} '
+            f'asset={dt_full.asset_type!r} dtype_id={dt_full.dtype_id!r}'
+        )
+        print(
+            f'  parts: name={dt_parts.name!r} freq={dt_parts.freq!r} '
+            f'asset={dt_parts.asset_type!r} dtype_id={dt_parts.dtype_id!r}'
+        )
+        self.assertEqual(dt_full.name, 'close')
+        self.assertEqual(dt_full.freq, 'd')
+        self.assertEqual(dt_full.asset_type, 'E')
+        self.assertEqual(dt_full.dtype_id, 'close_E_d')
+        self.assertEqual(dt_full.dtype_id, dt_parts.dtype_id)
+        self.assertEqual(dt_full, dt_parts)
+
+        dt_adj = DataType('close|b_E_d')
+        print(f'  close|b_E_d: name={dt_adj.name!r} dtype_id={dt_adj.dtype_id!r}')
+        self.assertEqual(dt_adj.name, 'close|b')
+        self.assertEqual(dt_adj.freq, 'd')
+        self.assertEqual(dt_adj.asset_type, 'E')
+        self.assertEqual(dt_adj.dtype_id, 'close|b_E_d')
+
+    def test_full_id_conflicts_with_kwargs(self):
+        print('\n[TestDataTypeDualIdInit] 完整 id 与显式参数冲突')
+        with self.assertRaises(ValueError) as ctx:
+            DataType('close_E_d', freq='w')
+        msg = str(ctx.exception)
+        print(f'  freq conflict: {msg}')
+        self.assertIn('conflicts with freq=', msg)
+        with self.assertRaises(ValueError) as ctx:
+            DataType('close_E_d', asset_type='IDX')
+        msg = str(ctx.exception)
+        print(f'  asset conflict: {msg}')
+        self.assertIn('conflicts with asset_type=', msg)
+
+    def test_ambiguous_wide_name_lists_full_ids(self):
+        print('\n[TestDataTypeDualIdInit] 宽名歧义列出完整 id')
+        with self.assertRaises(ValueError) as ctx:
+            DataType('close')
+        msg = str(ctx.exception)
+        print(f'  close -> {msg}')
+        self.assertIn('Ambiguous DataType name', msg)
+        self.assertIn('close_E_d', msg)
+        self.assertIn('close_IDX_d', msg)
+
+        with self.assertRaises(ValueError) as ctx:
+            DataType('close|b')
+        msg = str(ctx.exception)
+        print(f'  close|b -> {msg}')
+        self.assertIn('Ambiguous DataType name', msg)
+        self.assertIn('close|b_E_d', msg)
+
+    def test_unique_wide_name_succeeds(self):
+        print('\n[TestDataTypeDualIdInit] 无歧义宽名可构造')
+        dt = DataType('industry')
+        print(f'  industry dtype_id={dt.dtype_id!r} freq={dt.freq!r} asset={dt.asset_type!r}')
+        self.assertEqual(dt.dtype_id, 'industry_E_None')
+        self.assertEqual(dt.freq, 'None')
+        self.assertEqual(dt.asset_type, 'E')
+
+    def test_explicit_multi_asset_still_allowed(self):
+        print('\n[TestDataTypeDualIdInit] 显式多资产仍走第一匹配')
+        dt = DataType(name='pe', freq='d', asset_type='E, IDX')
+        print(f'  pe E,IDX -> asset={dt.asset_type!r} dtype_id={dt.dtype_id!r}')
+        self.assertEqual(dt.name, 'pe')
+        self.assertEqual(dt.freq, 'd')
+        self.assertIn(dt.asset_type, ('E', 'IDX'))
+
+    def test_colon_on_datatype_init(self):
+        print('\n[TestDataTypeDualIdInit] DataType 拒绝冒号')
+        with self.assertRaises(ValueError) as ctx:
+            DataType('close:b')
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn("colon ':' is no longer a DataType separator", msg)
 
 
 if __name__ == '__main__':

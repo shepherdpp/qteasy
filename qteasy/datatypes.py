@@ -14,12 +14,14 @@
 import numpy as np
 import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict, Optional, NamedTuple, Literal
 from warnings import warn
 from math import ceil
 
 from .utilfuncs import (
     AVAILABLE_ASSET_TYPES,
+    TIME_FREQ_STRINGS,
+    get_main_freq_level,
     str_to_list,
     _lev_ratio,
     _partial_lev_ratio,
@@ -165,9 +167,19 @@ def infer_data_types(names, freqs, asset_types, adj=None,
                     else:
                         n_ = n
 
+                    # name-only / name+freq 在 DataType 上会因多资产歧义报错；
+                    # infer 回退路径仍按 MAP 第一匹配，以保持 get_history_data 两阶段行为。
                     if allow_ignore_freq and allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n_))
+                            search_n = _parse_name_and_params(n_)[0]
+                            resolved_freq, resolved_assets = _resolve_dtype_key(
+                                search_n, None, None,
+                            )
+                            data_types.append(DataType(
+                                name=n_,
+                                freq=resolved_freq,
+                                asset_type=resolved_assets[0],
+                            ))
                         except ValueError:
                             pass
                     elif allow_ignore_freq:
@@ -177,7 +189,15 @@ def infer_data_types(names, freqs, asset_types, adj=None,
                             pass
                     elif allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n_, freq=f))
+                            search_n = _parse_name_and_params(n_)[0]
+                            resolved_freq, resolved_assets = _resolve_dtype_key(
+                                search_n, f, None,
+                            )
+                            data_types.append(DataType(
+                                name=n_,
+                                freq=resolved_freq,
+                                asset_type=resolved_assets[0],
+                            ))
                         except ValueError:
                             pass
                     else:
@@ -447,6 +467,284 @@ def _attach_consumption_columns(type_map: pd.DataFrame) -> pd.DataFrame:
     attached['kind'] = kinds
     attached['usable_in'] = usables
     return attached
+
+
+# 完整 id 中合法的资产类型 token（含 MAP 字面量 None / Any，大小写不敏感）
+_FULL_ID_ASSET_TOKENS = frozenset(
+    list(AVAILABLE_ASSET_TYPES)
+    + [item.lower() for item in AVAILABLE_ASSET_TYPES]
+    + ['None', 'none', 'Any', 'any', 'ANY']
+)
+# 完整 id 中合法的频率 token（含 MAP 字面量 None）
+_FULL_ID_FREQ_TOKENS = frozenset(
+    list(TIME_FREQ_STRINGS)
+    + [item.lower() for item in TIME_FREQ_STRINGS]
+    + ['None', 'none']
+)
+
+
+def _normalize_full_id_freq(freq_part: str) -> str:
+    """把完整 id 中的频率规范成 MAP 用的字面量。"""
+    if freq_part in ('None', 'none'):
+        return 'None'
+    return freq_part.lower()
+
+
+def _normalize_full_id_asset(asset_part: str) -> str:
+    """把完整 id 中的资产类型规范成 MAP 用的字面量。"""
+    tokens = []
+    for tok in asset_part.split(','):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if tok in ('None', 'none'):
+            tokens.append('None')
+        elif tok.lower() == 'any':
+            tokens.append('Any')
+        else:
+            tokens.append(tok.upper())
+    return ','.join(tokens)
+
+
+class ParsedDtypeString(NamedTuple):
+    """用户输入的数据类型字符串解析结果。"""
+
+    raw: str
+    form: Literal['wide', 'full']
+    wide_name: str
+    asset_type: Optional[str]
+    freq: Optional[str]
+
+
+def parse_dtype_user_string(raw: str) -> ParsedDtypeString:
+    """解析用户输入的数据类型字符串为宽名或完整 id。
+
+    完整 id 形如 ``{wide_name}_{asset_type}_{freq}``，宽名本身可含下划线、
+    ``|``、``-``。仅当倒数两段分别为合法资产类型与频率时才识别为完整 id。
+    冒号 ``:`` 为已废弃分隔符，一律拒绝。
+
+    Parameters
+    ----------
+    raw : str
+        用户输入，例如 ``close``、``close_E_d``、``close|b_E_d``。
+
+    Returns
+    -------
+    ParsedDtypeString
+        ``form`` 为 ``wide`` 或 ``full``；完整 id 时 ``asset_type`` / ``freq`` 非空。
+
+    Raises
+    ------
+    TypeError
+        ``raw`` 不是字符串。
+    ValueError
+        空串，或含已废弃的冒号分隔符。
+    """
+    if not isinstance(raw, str):
+        raise TypeError(f'dtype name must be a string, got {type(raw).__name__}')
+    text = raw.strip()
+    if not text:
+        raise ValueError('dtype name cannot be empty')
+    if ':' in text:
+        raise ValueError(
+            f"colon ':' is no longer a DataType separator in {text!r}; "
+            f"use '|' for parameters (e.g. close|b, wt_idx|000300.SH) "
+            f"and '-' for unsymbolizer (e.g. close-000300.SH)"
+        )
+    parts = text.rsplit('_', 2)
+    if len(parts) == 3:
+        wide_name, asset_part, freq_part = parts
+        asset_ok = all(
+            tok in _FULL_ID_ASSET_TOKENS
+            for tok in asset_part.split(',')
+            if tok
+        )
+        freq_ok = freq_part in _FULL_ID_FREQ_TOKENS
+        if wide_name and asset_ok and freq_ok:
+            return ParsedDtypeString(
+                raw=text,
+                form='full',
+                wide_name=wide_name,
+                asset_type=_normalize_full_id_asset(asset_part),
+                freq=_normalize_full_id_freq(freq_part),
+            )
+    return ParsedDtypeString(
+        raw=text,
+        form='wide',
+        wide_name=text,
+        asset_type=None,
+        freq=None,
+    )
+
+
+def format_full_dtype_id(wide_name: str, asset_type: str, freq: str) -> str:
+    """把宽名、资产类型、频率格式化为完整数据类型 id。
+
+    Parameters
+    ----------
+    wide_name : str
+        宽名（可含 ``|`` / ``-``）。
+    asset_type : str
+        资产类型，如 ``E`` 或 ``E,IDX``。
+    freq : str
+        频率，如 ``d``。
+
+    Returns
+    -------
+    str
+        ``{wide_name}_{asset_type}_{freq}``。
+    """
+    return f'{wide_name}_{asset_type}_{freq}'
+
+
+def _choose_native_freq(requested_freq: str, built_in_freqs: list) -> Optional[str]:
+    """按 get_history_data 两阶段规则，从内置频率中选出原生 freq。
+
+    优先级：完全一致 > 更粗频率中最接近目标 > 更细频率中最接近目标。
+    MAP 字面量 ``None`` 单独处理。
+
+    Parameters
+    ----------
+    requested_freq : str
+        用户请求的频率。
+    built_in_freqs : list
+        MAP 中该宽名可用的频率列表。
+
+    Returns
+    -------
+    Optional[str]
+        选定的原生频率；无法选定则 None。
+    """
+    if not built_in_freqs:
+        return None
+    unique_freqs = list(dict.fromkeys(built_in_freqs))
+    if requested_freq in ('None', 'none'):
+        return 'None' if 'None' in unique_freqs else None
+
+    req_level = get_main_freq_level(requested_freq)
+    if req_level is None:
+        return 'None' if 'None' in unique_freqs else None
+
+    for freq in unique_freqs:
+        if freq == 'None':
+            continue
+        if str(freq).lower() == str(requested_freq).lower():
+            return freq
+
+    scored = []
+    for freq in unique_freqs:
+        if freq == 'None':
+            continue
+        level = get_main_freq_level(freq)
+        if level is None:
+            continue
+        scored.append((freq, level))
+    if not scored:
+        return 'None' if 'None' in unique_freqs else None
+    coarser = [(freq, level) for freq, level in scored if level < req_level]
+    if coarser:
+        return max(coarser, key=lambda item: item[1])[0]
+    finer = [(freq, level) for freq, level in scored if level > req_level]
+    if finer:
+        return min(finer, key=lambda item: item[1])[0]
+    return scored[0][0]
+
+
+def _iter_map_keys_for_search_name(search_name: str) -> list:
+    """按宽名列出 DATA_TYPE_MAP / USER_DATA_TYPE_MAP 中的匹配键。
+
+    Parameters
+    ----------
+    search_name : str
+        ``_parse_name_and_params`` 得到的查找名（复权名为 ``close|%``）。
+
+    Returns
+    -------
+    list
+        ``(freq, asset_type)`` 列表。
+    """
+    keys = []
+    for data_map in (DATA_TYPE_MAP, USER_DATA_TYPE_MAP):
+        for name, freq, asset_type in data_map.keys():
+            if name == search_name:
+                keys.append((freq, asset_type))
+    return keys
+
+
+def _select_unique_map_key(
+        search_name: str,
+        freq: Optional[str],
+        display_name: Optional[str] = None,
+) -> tuple:
+    """在未给出 asset_type 时为宽名选出唯一 (freq, asset_type)。
+
+    未给频率时按目标 ``d`` 唯一化。多资产并存则报英文错误并列候选完整 id。
+
+    Parameters
+    ----------
+    search_name : str
+        MAP 查找名。
+    freq : Optional[str]
+        频率；None 表示未给出。
+    display_name : Optional[str]
+        报错时展示给用户的名称（如 ``close|b``，而不是 ``close|%``）。
+
+    Returns
+    -------
+    tuple
+        ``(freq, asset_type)``。
+
+    Raises
+    ------
+    ValueError
+        无匹配，或宽名对应多行且无法唯一化。
+    """
+    display = display_name or search_name
+    keys = _iter_map_keys_for_search_name(search_name)
+    if not keys:
+        raise ValueError(
+            f"unrecognised DataType name {display!r}; "
+            f"use a full id like '{{name}}_{{asset_type}}_{{freq}}' "
+            f"or pass freq= and asset_type="
+        )
+
+    if freq is not None:
+        freq_norm = 'None' if str(freq) in ('None', 'none') else str(freq).lower()
+        exact = [
+            key for key in keys
+            if key[0] == freq or str(key[0]).lower() == freq_norm
+        ]
+        if exact:
+            keys = exact
+        else:
+            native = _choose_native_freq(str(freq), [key[0] for key in keys])
+            if native is None:
+                keys = []
+            else:
+                keys = [key for key in keys if key[0] == native]
+    else:
+        native = _choose_native_freq('d', [key[0] for key in keys])
+        if native is not None:
+            keys = [key for key in keys if key[0] == native]
+
+    if not keys:
+        raise ValueError(
+            f'No DataType with name {display!r} and freq {freq!r} found in DATA_TYPE_MAP. '
+            f"Use a full id like '{{name}}_{{asset_type}}_{{freq}}'."
+        )
+
+    assets = {key[1] for key in keys}
+    if len(assets) > 1:
+        full_ids = [
+            format_full_dtype_id(display, key[1], key[0]) for key in keys
+        ]
+        raise ValueError(
+            f"Ambiguous DataType name {display!r}: matches "
+            f"{len(keys)} definitions {full_ids}. "
+            f"Use a full id like {full_ids[0]!r}, or pass freq= and asset_type=."
+        )
+    selected = keys[0]
+    return selected[0], selected[1]
 
 
 def _parse_built_in_freqs_and_asset_types(name: str) -> tuple[list[str], list[str]]:
@@ -1225,39 +1523,57 @@ class DataType:
         """
         根据用户输入的名称或完整参数实例化一个DataType对象。
 
-        如果用户输入完整的三合一参数，将检查该类型是否已经存在，如果存在，则生成该类型的实例，否则抛出异常。
-        如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，如果找到多组匹配，
-        则使用第一个匹配的类型生成DataType对象，如果找不到匹配，则报错。
-
-        用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据
-        类型添加到DATA_TYPE_MAP中。
+        ``name`` 可以是宽匹配名（如 ``close``、``close|b``）或完整 id
+        （如 ``close_E_d``、``close|b_E_d``）。完整 id 从右侧拆出 freq 与
+        asset_type。仅输入宽名且未给出 asset_type 时，按目标频率 ``d`` 唯一化；
+        仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。
+        调用方显式给出 ``asset_type``（含 ``E,IDX`` / ``ANY``）时仍按第一匹配解析。
 
         Parameters
         ----------
         name: str
-            数据类型的名称
+            数据类型的宽匹配名或完整 id
         freq: str, optional
             数据的频率: d(日), w(周), m(月), q(季), y(年), 1/5/15/30min, h
             如果给出此参数，必须匹配某一个内置数据类型的频率
-            如果不给出此参数，将使用内置数据类型中的第一个频率
+            如果不给出此参数，将按目标频率 d 唯一化
         asset_type: str
             数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权)
             也可以输入混合资产类型，如 'E,IDX' 表示股票和指数两种资产类型
             也可以输入 'ANY' 表示所有支持的资产类型
             如果给出此参数，必须匹配某一个内置数据类型的资产类型
-            如果不给出此参数，将使用内置数据类型中的第一个资产类型
+            如果不给出此参数且无法唯一化，将报错并列候选完整 id
 
         Raises
         ------
         ValueError
-            如果用户输入的参数不在DATA_TYPE_MAP中
-            ValueError: DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.
-        ValueError NotImplemented!
-            如果用户输入的参数不完整，在DATA_TYPE_MAP中无法匹配到唯一的数据类型
-            ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
+            参数不在 DATA_TYPE_MAP 中，宽名歧义，或完整 id 与显式 freq/asset_type 冲突。
         """
         if not isinstance(name, str):
             raise TypeError(f'name must be a string, got {type(name)}')
+
+        parsed = parse_dtype_user_string(name)
+        if parsed.form == 'full':
+            if freq is not None:
+                given_freq = 'None' if str(freq) in ('None', 'none') else str(freq).lower()
+                if given_freq != parsed.freq:
+                    raise ValueError(
+                        f"full id {name!r} has freq {parsed.freq!r}, "
+                        f"which conflicts with freq={freq!r}"
+                    )
+            if asset_type is not None:
+                given_assets = [item.strip() for item in str_to_list(asset_type) if item.strip()]
+                parsed_assets = [
+                    item.strip() for item in parsed.asset_type.split(',') if item.strip()
+                ]
+                if sorted(given_assets) != sorted(parsed_assets):
+                    raise ValueError(
+                        f"full id {name!r} has asset_type {parsed.asset_type!r}, "
+                        f"which conflicts with asset_type={asset_type!r}"
+                    )
+            name = parsed.wide_name
+            freq = parsed.freq
+            asset_type = parsed.asset_type
 
         search_name, name_pars, unsymbolizer = _parse_name_and_params(name)
 
@@ -1287,20 +1603,24 @@ class DataType:
             asset_types = resolved_asset_types
             asset_type_str = ','.join(asset_types)
         elif freq is not None and asset_type is None:
-            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, freq, None)
+            resolved_freq, resolved_asset = _select_unique_map_key(
+                search_name, freq, display_name=name,
+            )
             default_freq = resolved_freq
-            asset_types = resolved_asset_types
-            asset_type_str = ','.join(asset_types)
+            asset_types = [resolved_asset]
+            asset_type_str = resolved_asset
         elif freq is None and asset_type is not None:
             resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, asset_type)
             default_freq = resolved_freq
             asset_types = resolved_asset_types
             asset_type_str = ','.join(asset_types)
         else:
-            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, None)
+            resolved_freq, resolved_asset = _select_unique_map_key(
+                search_name, None, display_name=name,
+            )
             default_freq = resolved_freq
-            asset_types = resolved_asset_types
-            asset_type_str = ','.join(asset_types)
+            asset_types = [resolved_asset]
+            asset_type_str = resolved_asset
 
         # 根据 search_name、freq、asset_type 查找 description
         description = _parse_dtype_description(

@@ -20,7 +20,7 @@ from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
 
 from qteasy.datatypes import (
-    DataType, infer_data_types,
+    DataType, infer_data_types, parse_dtype_user_string,
 )
 
 from qteasy.history import (
@@ -1107,7 +1107,7 @@ def get_history_data(htypes=None,
     }
 
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
-    >>> qt.get_history_data(htype_names='open:b, high:b, low:b, close:b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
+    >>> qt.get_history_data(htype_names='open|b, high|b, low|b, close|b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
      {'000001.SZ':
                                open        high         low       close
     2019-12-30 10:00:00  1796.92174  1796.92174  1796.92174  1796.92174
@@ -1147,13 +1147,13 @@ def get_history_data(htypes=None,
      }
 
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
-    >>> qt.get_history_data(htype_names='wt_id:000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='wt_idx|000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
-                wt_idx:000300.SH
+                wt_idx|000300.SH
     2020-01-02        1.1714
     2020-01-03        1.1714,
     '000002.SZ':
-                wt_idx:000300.SH
+                wt_idx|000300.SH
     2020-01-02        1.3595
     2020-01-03        1.3595
     }
@@ -1228,7 +1228,7 @@ def get_history_data(htypes=None,
 
         if adj is not None:
             msg = f'parameter adj is deprecated, please add adj suffixes for htype names instead\n' \
-                  f'for example: use "close:b" for back-adjusted close prices'
+                  f'for example: use "close|b" for back-adjusted close prices'
             warn(msg, DeprecationWarning)
         else:
             adj = 'none'
@@ -1379,9 +1379,27 @@ def get_history_data(htypes=None,
             return effective_dtypes
 
         # 收集候选 DataType 并根据 freq / asset_type 规则筛选
+        # 完整 id（如 close_E_d）先实例化，宽名仍走两阶段 infer
+        wide_names = []
+        full_id_dtypes = []
+        for htype_name in htype_names:
+            parsed = parse_dtype_user_string(htype_name)
+            if parsed.form == 'full':
+                full_id_dtypes.append(DataType(
+                    name=parsed.wide_name,
+                    freq=parsed.freq,
+                    asset_type=parsed.asset_type,
+                ))
+            else:
+                wide_names.append(parsed.wide_name)
+
         asset_types_arg = asset_type
-        candidates_raw = _collect_candidate_dtypes_from_names(htype_names, freq, asset_types_arg)
-        data_types = _select_effective_dtypes(candidates_raw, freq, asset_types_arg, explicit_asset_type)
+        if wide_names:
+            candidates_raw = _collect_candidate_dtypes_from_names(wide_names, freq, asset_types_arg)
+            data_types = _select_effective_dtypes(candidates_raw, freq, asset_types_arg, explicit_asset_type)
+        else:
+            data_types = []
+        data_types = list(data_types) + full_id_dtypes
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE

@@ -278,7 +278,7 @@ class TestGetHistoryDataAPI(unittest.TestCase):
             })
             self.data_source.update_table_data('stock_hourly', df=h_data, merge_type='update')
 
-        # index_weight: index_code, trade_date, con_code, weight 用于 wt_id:000300.SH
+        # index_weight: index_code, trade_date, con_code, weight 用于 wt_idx|000300.SH
         rows = []
         for d in self.dates:
             for con in self.shares[:2]:
@@ -682,6 +682,87 @@ class TestGetHistoryDataAPI(unittest.TestCase):
                 )
         self.assertIn('nonexistent_xyz_123', str(ctx.exception))
         print(' ValueError contains missing name')
+
+    def test_full_id_close_E_d_matches_source(self):
+        """完整 id close_E_d 不得当宽名查找，数值与 stock_daily 一致。"""
+        print('\n[TestGetHistoryDataAPI] full id close_E_d')
+        res = get_history_data(
+            htype_names='close_E_d',
+            data_source=self.data_source,
+            shares='000001.SZ',
+            start=self.start_str,
+            end=self.end_str,
+        )
+        table = self.data_source.read_table_data(
+            'stock_daily', shares='000001.SZ', start=self.start_str, end=self.end_str
+        )
+        src_ser = table['close'].sort_index()
+        got = res['000001.SZ']['close'].dropna()
+        print(' got first values:', got.iloc[:3].tolist())
+        print(' src first values:', src_ser.iloc[:3].tolist())
+        self.assertGreater(len(got), 0)
+        np.testing.assert_allclose(
+            float(got.iloc[0]), float(src_ser.iloc[0]), rtol=1e-5
+        )
+        np.testing.assert_allclose(
+            got.values.astype(float), src_ser.values.astype(float), rtol=1e-5
+        )
+        print(' close_E_d matches stock_daily close')
+
+    def test_full_id_close_pipe_b_E_d(self):
+        """完整 id close|b_E_d 按复权宽名解析；adj_factor=1 时价格按两位小数复权。"""
+        print('\n[TestGetHistoryDataAPI] full id close|b_E_d')
+        res = get_history_data(
+            htype_names='close|b_E_d',
+            data_source=self.data_source,
+            shares='000001.SZ',
+            start=self.start_str,
+            end=self.end_str,
+        )
+        table = self.data_source.read_table_data(
+            'stock_daily', shares='000001.SZ', start=self.start_str, end=self.end_str
+        )
+        src_ser = table['close'].sort_index()
+        df = res['000001.SZ']
+        col = 'close|b' if 'close|b' in df.columns else 'close'
+        got = df[col].dropna()
+        print(' columns:', list(df.columns))
+        print(' got first values:', got.iloc[:3].tolist())
+        print(' src first values:', src_ser.iloc[:3].tolist())
+        self.assertGreater(len(got), 0)
+        expected_first = round(float(src_ser.iloc[0]), 2)
+        print(' expected adj first (rounded to 2 decimals):', expected_first)
+        self.assertAlmostEqual(float(got.iloc[0]), expected_first, places=4)
+        print(' close|b_E_d parsed as adjusted close; first value matches round(close, 2)')
+
+    def test_colon_separator_raises(self):
+        """废弃冒号分隔符应给出指向 | / - 的英文错误。"""
+        print('\n[TestGetHistoryDataAPI] colon separator rejected')
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                htype_names='close:b',
+                data_source=self.data_source,
+                shares='000001.SZ',
+                start=self.start_str,
+                end=self.end_str,
+            )
+        msg = str(ctx.exception)
+        print(' close:b ->', msg)
+        self.assertIn("colon ':' is no longer a DataType separator", msg)
+        self.assertIn("'|'", msg)
+
+        with self.assertRaises(ValueError) as ctx:
+            get_history_data(
+                htype_names='wt_id:000300.SH',
+                data_source=self.data_source,
+                shares='000001.SZ',
+                start=self.start_str,
+                end=self.end_str,
+            )
+        msg = str(ctx.exception)
+        print(' wt_id:000300.SH ->', msg)
+        self.assertIn("colon ':' is no longer a DataType separator", msg)
+        print(' colon rejected')
 
     def test_e5_as_data_frame_false_returns_history_panel(self):
         """E5: as_data_frame=False 返回 HistoryPanel。"""
