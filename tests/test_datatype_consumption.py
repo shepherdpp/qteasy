@@ -8,7 +8,8 @@
 #   Unittest for DataType consumption
 #   metadata (kind / usable_in), dual-ID parse,
 #   non-numeric history usable_in=none gate,
-#   and qt.get_reference_data (Phase 2).
+#   qt.get_reference_data (Phase 2),
+#   and qt.get_static_data (Phase 3).
 # ======================================
 
 import os
@@ -19,7 +20,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from qteasy.core import get_reference_data
+from qteasy.core import get_reference_data, get_static_data
 from qteasy.database import DataSource
 from qteasy.datatypes import (
     DATA_TYPE_MAP,
@@ -739,6 +740,146 @@ class TestGetReferenceDataAPI(unittest.TestCase):
             self.index_close_gold.astype(float),
             rtol=1e-5,
         )
+
+
+class TestGetStaticDataAPI(unittest.TestCase):
+    """公开入口 qt.get_static_data：截面属性、错形状报错。"""
+
+    def setUp(self):
+        print('\n[TestGetStaticDataAPI] setUp: temp DataSource + stock_basic')
+        self.test_data_path = tempfile.mkdtemp(prefix='temp_test_get_static_data_')
+        self.data_source = DataSource(source_type='file', file_loc=self.test_data_path)
+        self.shares = ['000001.SZ', '000002.SZ', '600000.SH']
+        self.industry_gold = {
+            '000001.SZ': '银行',
+            '000002.SZ': '全国地产',
+            '600000.SH': '银行',
+        }
+        self.list_date_gold = {
+            '000001.SZ': pd.Timestamp('1991-04-03'),
+            '000002.SZ': pd.Timestamp('1991-01-29'),
+            '600000.SH': pd.Timestamp('1999-11-10'),
+        }
+        self.name_gold = {
+            '000001.SZ': '平安银行',
+            '000002.SZ': '万科A',
+            '600000.SH': '浦发银行',
+        }
+        basic = pd.DataFrame({
+            'ts_code': self.shares,
+            'symbol': ['000001', '000002', '600000'],
+            'name': [self.name_gold[s] for s in self.shares],
+            'area': ['深圳', '深圳', '上海'],
+            'industry': [self.industry_gold[s] for s in self.shares],
+            'fullname': ['a', 'b', 'c'],
+            'enname': ['a', 'b', 'c'],
+            'cnspell': ['a', 'b', 'c'],
+            'market': ['主板', '主板', '主板'],
+            'exchange': ['SZSE', 'SZSE', 'SSE'],
+            'curr_type': ['CNY', 'CNY', 'CNY'],
+            'list_status': ['L', 'L', 'L'],
+            'list_date': [self.list_date_gold[s] for s in self.shares],
+            'delist_date': [pd.NaT, pd.NaT, pd.NaT],
+            'is_hs': ['S', 'S', 'S'],
+        })
+        self.data_source.update_table_data('stock_basic', df=basic, merge_type='update')
+        print('  path:', self.test_data_path, 'shares:', self.shares)
+
+    def tearDown(self):
+        if os.path.exists(self.test_data_path):
+            shutil.rmtree(self.test_data_path)
+        print('[TestGetStaticDataAPI] tearDown: removed', self.test_data_path)
+
+    def test_industry_and_list_date_for_share_pool(self):
+        print('\n[TestGetStaticDataAPI] industry + list_date 按股票池取截面')
+        res = get_static_data(
+            'industry, list_date',
+            shares=','.join(self.shares),
+            data_source=self.data_source,
+            asset_type='E',
+        )
+        print('  result:\n', res)
+        print('  industry gold:', self.industry_gold)
+        print('  list_date gold:', self.list_date_gold)
+        self.assertIsInstance(res, pd.DataFrame)
+        self.assertEqual(list(res.index), self.shares)
+        self.assertIn('industry', res.columns)
+        self.assertIn('list_date', res.columns)
+        for code in self.shares:
+            self.assertEqual(res.loc[code, 'industry'], self.industry_gold[code])
+            got_date = pd.to_datetime(res.loc[code, 'list_date'])
+            print(f'  {code} industry={res.loc[code, "industry"]!r} list_date={got_date}')
+            self.assertEqual(got_date, self.list_date_gold[code])
+
+    def test_single_name_returns_series(self):
+        print('\n[TestGetStaticDataAPI] 单名字返回 Series')
+        res = get_static_data(
+            'industry',
+            shares='000001.SZ,000002.SZ',
+            data_source=self.data_source,
+        )
+        print('  series:\n', res)
+        self.assertIsInstance(res, pd.Series)
+        self.assertEqual(res.loc['000001.SZ'], '银行')
+        self.assertEqual(res.loc['000002.SZ'], '全国地产')
+
+    def test_matches_datatype_get_data_from_source(self):
+        print('\n[TestGetStaticDataAPI] 与 DataType.get_data_from_source 金标准一致')
+        api = get_static_data(
+            'stock_name',
+            shares=','.join(self.shares),
+            data_source=self.data_source,
+            asset_type='E',
+        )
+        dtype = DataType(name='stock_name', asset_type='E')
+        src = dtype.get_data_from_source(
+            self.data_source, symbols=','.join(self.shares),
+        )
+        print('  api:\n', api)
+        print('  src:\n', src)
+        print('  name gold:', self.name_gold)
+        for code in self.shares:
+            self.assertEqual(api.loc[code], self.name_gold[code])
+            self.assertEqual(src.loc[code], self.name_gold[code])
+            self.assertEqual(api.loc[code], src.loc[code])
+
+    def test_rejects_history_shape(self):
+        print('\n[TestGetStaticDataAPI] 误传 history 指向 get_history_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_static_data(
+                'close',
+                shares='000001.SZ',
+                data_source=self.data_source,
+                asset_type='E',
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_history_data', msg)
+        self.assertIn('history', msg.lower())
+
+    def test_rejects_reference_shape(self):
+        print('\n[TestGetStaticDataAPI] 误传 reference 指向 get_reference_data')
+        with self.assertRaises(ValueError) as ctx:
+            get_static_data(
+                'cn_gdp',
+                shares='000001.SZ',
+                data_source=self.data_source,
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_reference_data', msg)
+        self.assertIn('reference', msg.lower())
+
+    def test_shares_required(self):
+        print('\n[TestGetStaticDataAPI] 缺少 shares 报错')
+        with self.assertRaises(ValueError) as ctx:
+            get_static_data(
+                'industry',
+                data_source=self.data_source,
+            )
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('shares', msg.lower())
 
 
 if __name__ == '__main__':

@@ -1696,6 +1696,190 @@ def get_reference_data(
     )
 
 
+def _ensure_static_data_type(dtype: DataType) -> None:
+    """确保 dtype 为 static 形状；否则以英文报错并指向正确入口。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_type_for_dtype(dtype),
+    )
+    if kind == 'static':
+        return
+    if kind == 'history':
+        raise ValueError(
+            f"{dtype.name!r} is a history DataType; "
+            f"use qt.get_history_data(...) instead of qt.get_static_data(...)."
+        )
+    if kind == 'reference':
+        raise ValueError(
+            f"{dtype.name!r} is a reference DataType; "
+            f"use qt.get_reference_data(...) instead of qt.get_static_data(...)."
+        )
+    raise ValueError(
+        f"{dtype.name!r} has unsupported kind {kind!r} for qt.get_static_data(...)."
+    )
+
+
+def _resolve_static_data_types(
+        names,
+        *,
+        asset_type=None,
+) -> list:
+    """把用户字符串解析为 static DataType 列表。"""
+    if isinstance(names, str):
+        name_list = str_to_list(names)
+    elif isinstance(names, (list, tuple)):
+        name_list = list(names)
+    else:
+        raise TypeError(
+            f'names must be a string or list of strings, got {type(names).__name__}'
+        )
+    if not name_list:
+        raise ValueError('names cannot be empty')
+
+    resolved = []
+    for raw in name_list:
+        if not isinstance(raw, str):
+            raise TypeError(f'each name must be a string, got {type(raw).__name__}')
+        parsed = parse_dtype_user_string(raw)
+        if parsed.form == 'full':
+            dtype = DataType(
+                name=parsed.wide_name,
+                freq=parsed.freq,
+                asset_type=parsed.asset_type,
+            )
+        else:
+            init_kwargs = {}
+            if asset_type is not None:
+                init_kwargs['asset_type'] = asset_type
+            # static 的 freq 字面量为 None；完整 id 已处理，宽名交给 DataType 消歧
+            dtype = DataType(name=parsed.wide_name, **init_kwargs)
+        _ensure_static_data_type(dtype)
+        resolved.append(dtype)
+    return resolved
+
+
+def get_static_data(
+        names=None,
+        *,
+        shares=None,
+        symbols=None,
+        data_types=None,
+        data_source=None,
+        asset_type=None,
+):
+    """从本地数据源获取 Static（仅标的维）截面数据。
+
+    用于行业、上市日、证券名称等与时间无关的属性。返回以 ``qt_code`` 为索引的
+    ``Series``（单个名称）或 ``DataFrame``（多个名称）；不升频、不编入 HistoryPanel。
+    更多使用细节见文档「数据类型 DataType」与 S1.5 消费契约。
+
+    Parameters
+    ----------
+    names : str or list of str, optional
+        静态数据类型名称；逗号分隔字符串或列表。可为宽名或完整 id
+        （如 ``industry``、``list_date_E_None``）。
+    shares : str or list of str, optional
+        证券代码池；逗号分隔字符串或列表。与 ``symbols`` 二选一，至少提供一个。
+    symbols : str or list of str, optional
+        ``shares`` 的别名。
+    data_types : DataType or list of DataType, optional
+        显式 DataType 列表；若给出则忽略 ``names``。
+    data_source : DataSource, optional
+        数据源；默认使用全局 ``QT_DATA_SOURCE``。
+    asset_type : str, optional
+        资产类型消歧（如 ``E``）。宽名在多资产下歧义时必须给出
+        （例如 ``list_date`` 有 E/IDX/FD 等多个版本）。
+
+    Returns
+    -------
+    pandas.Series
+        仅请求一个名称时，index 为 ``qt_code``，值为该属性。
+    pandas.DataFrame
+        请求多个名称时，index 为 ``qt_code``，列为各属性宽名。
+
+    Raises
+    ------
+    ValueError
+        名称为 history/reference，缺少股票池，或无法解析为合法 Static。
+    TypeError
+        参数类型错误。
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> basics = qt.get_static_data(
+    ...     names='industry, list_date',
+    ...     shares='000001.SZ, 000002.SZ, 600000.SH',
+    ...     asset_type='E',
+    ... )
+    >>> bank = basics[basics['industry'] == '银行']
+    """
+    if data_types is not None:
+        if isinstance(data_types, DataType):
+            data_types = [data_types]
+        if not isinstance(data_types, (list, tuple)) or not data_types:
+            raise TypeError('data_types must be a non-empty DataType or list of DataType')
+        if not all(isinstance(dt, DataType) for dt in data_types):
+            raise TypeError('data_types must contain only DataType objects')
+        for dt in data_types:
+            _ensure_static_data_type(dt)
+        resolved = list(data_types)
+    else:
+        if names is None:
+            raise ValueError('either names or data_types must be provided')
+        resolved = _resolve_static_data_types(names, asset_type=asset_type)
+
+    if symbols is not None and shares is None:
+        shares = symbols
+    if shares is None:
+        raise ValueError(
+            'shares (or symbols) must be provided for qt.get_static_data(...); '
+            'Static attributes are indexed by qt_code.'
+        )
+    if isinstance(shares, (list, tuple)):
+        share_str = ','.join(str(item) for item in shares)
+        share_list = [str(item).strip() for item in shares if str(item).strip()]
+    elif isinstance(shares, str):
+        share_str = shares
+        share_list = str_to_list(shares)
+    else:
+        raise TypeError(
+            f'shares must be a string or list of strings, got {type(shares).__name__}'
+        )
+    if not share_list:
+        raise ValueError('shares cannot be empty')
+
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, DataSource):
+            raise TypeError(
+                f'data_source should be a DataSource object, got {type(data_source)} instead'
+            )
+
+    columns = {}
+    for dtype in resolved:
+        ser = dtype.get_data_from_source(data_source, symbols=share_str)
+        if not isinstance(ser, pd.Series):
+            raise TypeError(
+                f'static data for {dtype.name!r} must be a Series, got {type(ser).__name__}'
+            )
+        col_name = dtype.name
+        if col_name in columns:
+            col_name = dtype.dtype_id
+        # 按请求的股票池对齐索引（缺失填 NaN）
+        ser = ser.reindex(share_list)
+        ser.name = col_name
+        columns[col_name] = ser
+
+    if len(columns) == 1:
+        return next(iter(columns.values()))
+    return pd.DataFrame(columns)
+
+
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):
