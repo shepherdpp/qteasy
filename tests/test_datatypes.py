@@ -2482,12 +2482,19 @@ class TestFindHistoryDataAPI(unittest.TestCase):
         base_ids = find_history_data('pe', freq='d', asset_type='E')
         df = find_history_data('pe', freq='d', asset_type='E', as_data_frame=True)
         print(f'  base_ids count: {len(base_ids)}, df shape: {df.shape}, columns: {df.columns.tolist()}')
-        expected_cols = ['name', 'description', 'freq', 'asset_type', 'table_name', 'column']
+        expected_cols = [
+            'name', 'description', 'freq', 'asset_type', 'table_name', 'column',
+            'kind', 'usable_in', 'recommended_api',
+        ]
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(df.index.name, 'data_id')
         for col in expected_cols:
             self.assertIn(col, df.columns)
         self.assertEqual(len(df), len(base_ids))
+        print('  recommended_api values:', df['recommended_api'].unique().tolist())
+        self.assertTrue(set(df['recommended_api']).issubset({
+            'get_history_data', 'get_reference_data', 'get_static_data', 'none',
+        }))
 
     def test_find_history_data_pattern_matches_name_and_description(self):
         print('\n[TestFindHistoryDataAPI] pattern matches name and description')

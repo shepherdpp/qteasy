@@ -22,9 +22,97 @@ from qteasy.utilfuncs import (
 from qteasy.datatypes import (
     DataType,
     StgData,
+    resolve_strategy_data_type_string,
+    infer_dtype_kind,
+    DATA_TYPE_MAP,
+    _parse_name_and_params,
 )
 
 from qteasy.parameter import Parameter
+
+
+def _lookup_acquisition_for_strategy_dtype(dtype: DataType):
+    """查找 DataType 的 acquisition_type，供策略声明的 kind 校验。"""
+    search_name, _, _ = _parse_name_and_params(dtype.name)
+    key = (search_name, dtype.freq, dtype.asset_type)
+    if key in DATA_TYPE_MAP:
+        return DATA_TYPE_MAP[key][1]
+    for at in getattr(dtype, 'asset_types', []) or []:
+        at_key = (search_name, dtype.freq, at)
+        if at_key in DATA_TYPE_MAP:
+            return DATA_TYPE_MAP[at_key][1]
+    return None
+
+
+def _ensure_strategy_allowed_dtype(dtype: DataType) -> None:
+    """拒绝将 Static 写入策略 data_types。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_for_strategy_dtype(dtype),
+    )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType and cannot be used in strategy "
+            f"data_types / get_data; use qt.get_static_data(...) instead."
+        )
+
+
+def _coerce_strategy_data_types(
+        data_types: Union[
+            None, str, DataType, List, Tuple, Dict
+        ],
+) -> Dict[str, DataType]:
+    """把策略 data_types 入参规范化为 ``{dtype_id: DataType}``。
+
+    支持 ``str`` / ``list[str]``（宽名或完整 id）、``DataType`` /
+    ``list[DataType]`` / ``dict``。Static 一律拒绝。
+    """
+    if data_types is None:
+        return {}
+
+    if isinstance(data_types, str):
+        items = str_to_list(data_types)
+        resolved = {}
+        for raw in items:
+            dtype = resolve_strategy_data_type_string(raw)
+            resolved[dtype.dtype_id] = dtype
+        return resolved
+
+    if isinstance(data_types, DataType):
+        _ensure_strategy_allowed_dtype(data_types)
+        return {data_types.dtype_id: data_types}
+
+    if isinstance(data_types, (list, tuple)):
+        resolved = {}
+        for item in data_types:
+            if isinstance(item, str):
+                dtype = resolve_strategy_data_type_string(item)
+            elif isinstance(item, DataType):
+                _ensure_strategy_allowed_dtype(item)
+                dtype = item
+            else:
+                raise TypeError(
+                    f'data_types list items must be str or DataType, got {type(item).__name__}'
+                )
+            resolved[dtype.dtype_id] = dtype
+        return resolved
+
+    if isinstance(data_types, dict):
+        resolved = {}
+        for key, dtype in data_types.items():
+            if not isinstance(dtype, DataType):
+                raise TypeError(
+                    f'data_types should be a dict of DataType objects, got {type(dtype).__name__}'
+                )
+            _ensure_strategy_allowed_dtype(dtype)
+            if key != dtype.dtype_id:
+                dtype._dtype_id = key
+            resolved[key] = dtype
+        return resolved
+
+    raise TypeError(f'data_types is invalid! ({data_types})')
 
 
 def _dict_par_format_is_valid(par_name: str, pars, value_type, key_type):
@@ -92,7 +180,9 @@ class BaseStrategy:
             description: str = '',
             stg_type: str = 'BASE',
             pars: Union[Parameter, List[Parameter], Dict[str, Parameter]] = None,
-            data_types: Union[DataType, List[DataType], Dict[str, DataType]] = None,
+            data_types: Union[
+                str, DataType, List, Dict[str, DataType]
+            ] = None,
             use_latest_data_cycle: Union[bool, List[bool], Dict[str, bool]] = False,
             window_length: Union[int, List[int], Dict[str, int]] = 270,
             opt_tag: int = 0,
@@ -110,8 +200,10 @@ class BaseStrategy:
             策略类型，用户自定义，用于区分不同的策略，例如均线策略、趋势跟随策略等
         pars: Parameter, list of Parameter, dict {str: Parameter}, default None
             策略可调参数，Parameter对象，确定策略的可调参数，参数类型以及取值范围
-        data_types: DataType, list of DataTypes, dict{str: DataType}
-            策略使用的数据类型，每个数据类型一个类型名
+        data_types: str, DataType, list of DataType/str, dict{str: DataType}
+            策略使用的数据类型；可为逗号分隔字符串（宽名或完整 id，如
+            ``'close_E_d, pe_E_d'``）、DataType 对象或其列表/字典。
+            Static 类型不可声明，请改用 ``qt.get_static_data``。
         use_latest_data_cycle: bool, list of bool, dict{str: bool}, default True
             是否使用最新的数据周期生成交易信号，默认True
             如果为True: 默认值
@@ -552,15 +644,18 @@ class BaseStrategy:
             return self.__getattribute__(names[0])
 
     def set_data_types(self,
-                       data_types: Union[DataType, List[DataType], Dict[str, DataType]],
+                       data_types: Union[
+                           str, DataType, List, Tuple, Dict[str, DataType]
+                       ],
                        use_latest_data_cycle,
                        window_length) -> None:
         """ 设置策略参数
 
         Parameters
         ----------
-        data_types: DataType，list of DataType, dict {str: DataType}
-            需要设置的参数字典，key为参数名、value为参数
+        data_types: str, DataType, list of DataType/str, dict {str: DataType}
+            需要设置的数据类型；字符串可为宽名或完整 id（逗号分隔）。
+            Static 不得进入策略声明。
         use_latest_data_cycle: bool, list of bool, dict {str: bool}
             是否使用最新的数据周期生成交易信号，默认仅使用截止到上一周期的数据生成交易信号
         window_length: int, list of int, dict {str: int}
@@ -568,23 +663,9 @@ class BaseStrategy:
 
         Returns
         -------
-        int: 1: 设置成功，0: 设置失败
+        None
         """
-        if data_types is None:
-            data_types = {}
-        elif isinstance(data_types, DataType):
-            data_types = {data_types.dtype_id: data_types}
-        elif isinstance(data_types, (list, tuple)):
-            data_types = {dtype.dtype_id: dtype for dtype in data_types}
-        elif isinstance(data_types, dict):
-            # set up dtype_id for each DataType object
-            for key, dtype in data_types.items():
-                if not isinstance(dtype, DataType):
-                    raise TypeError(f'pars should be a dict of DataType objects, got {type(data_types)} instead')
-                if key != dtype.dtype_id:
-                    dtype._dtype_id = key
-        else:
-            raise TypeError(f'pars is invalid! ({data_types})')
+        data_types = _coerce_strategy_data_types(data_types)
 
         if not _dict_par_format_is_valid('data_types', data_types, DataType, 'dtype_id'):
             raise ValueError(f'pars is invalid! ({data_types})')

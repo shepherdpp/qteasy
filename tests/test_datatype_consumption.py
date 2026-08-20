@@ -9,7 +9,9 @@
 #   metadata (kind / usable_in), dual-ID parse,
 #   non-numeric history usable_in=none gate,
 #   qt.get_reference_data (Phase 2),
-#   and qt.get_static_data (Phase 3).
+#   qt.get_static_data (Phase 3),
+#   find_* consumption columns and strategy string
+#   data_types (Phase 4).
 # ======================================
 
 import os
@@ -29,8 +31,11 @@ from qteasy.datatypes import (
     get_reference_data_from_source,
     infer_dtype_kind,
     infer_dtype_usable_in,
+    infer_recommended_api,
     parse_dtype_user_string,
     format_full_dtype_id,
+    find_history_data,
+    resolve_strategy_data_type_string,
     _sql_dtype_is_numeric,
     _history_payload_is_numeric,
 )
@@ -880,6 +885,168 @@ class TestGetStaticDataAPI(unittest.TestCase):
         msg = str(ctx.exception)
         print(f'  {msg}')
         self.assertIn('shares', msg.lower())
+
+
+class TestFindRecommendedApi(unittest.TestCase):
+    """find_history_data 增加 kind / usable_in / recommended_api。"""
+
+    def test_infer_recommended_api_gold(self):
+        print('\n[TestFindRecommendedApi] infer_recommended_api 金标准')
+        cases = [
+            ('history', 'history_panel,strategy', 'get_history_data'),
+            ('reference', 'reference_api,strategy', 'get_reference_data'),
+            ('static', 'static_api,universe', 'get_static_data'),
+            ('history', 'none', 'none'),
+        ]
+        for kind, usable, expect in cases:
+            got = infer_recommended_api(kind, usable)
+            print(f'  kind={kind!r} usable={usable!r} -> {got!r} (expect {expect!r})')
+            self.assertEqual(got, expect)
+
+    def test_cn_gdp_recommends_reference_api(self):
+        print('\n[TestFindRecommendedApi] cn_gdp 推荐 get_reference_data')
+        df = find_history_data('cn_gdp', as_data_frame=True)
+        print('  df:\n', df)
+        self.assertFalse(df.empty)
+        row = df.iloc[0]
+        print('  kind:', row['kind'], 'usable_in:', row['usable_in'], 'api:', row['recommended_api'])
+        self.assertEqual(row['kind'], 'reference')
+        self.assertEqual(row['recommended_api'], 'get_reference_data')
+        self.assertIn('reference_api', row['usable_in'])
+
+    def test_industry_recommends_static_api(self):
+        print('\n[TestFindRecommendedApi] industry 推荐 get_static_data')
+        df = find_history_data('industry', as_data_frame=True)
+        print('  df:\n', df)
+        self.assertFalse(df.empty)
+        # 可能匹配多行；至少一行 industry / E
+        industry_rows = df[df['name'] == 'industry']
+        print('  industry rows:\n', industry_rows)
+        self.assertFalse(industry_rows.empty)
+        self.assertTrue((industry_rows['recommended_api'] == 'get_static_data').all())
+        self.assertTrue((industry_rows['kind'] == 'static').all())
+
+    def test_close_e_d_recommends_history_api(self):
+        print('\n[TestFindRecommendedApi] close@E@d 推荐 get_history_data')
+        df = find_history_data('close', freq='d', asset_type='E', as_data_frame=True)
+        print('  df:\n', df.head())
+        self.assertFalse(df.empty)
+        self.assertTrue((df['kind'] == 'history').all())
+        self.assertTrue((df['recommended_api'] == 'get_history_data').all())
+
+
+class TestStrategyStringDataTypes(unittest.TestCase):
+    """策略 data_types 接受字符串 ID；Static 拒绝。"""
+
+    def test_full_id_string_declaration(self):
+        print('\n[TestStrategyStringDataTypes] data_types=close_E_d, pe_E_d')
+
+        class _Stg(GeneralStg):
+            def __init__(self):
+                super().__init__(
+                    name='str_dtype_stg',
+                    description='string data_types',
+                    data_types='close_E_d, pe_E_d',
+                    window_length=5,
+                )
+
+            def realize(self):
+                return np.zeros(1)
+
+        stg = _Stg()
+        ids = list(stg.data_types.keys())
+        print('  data_type ids:', ids)
+        self.assertEqual(set(ids), {'close_E_d', 'pe_E_d'})
+        self.assertEqual(stg.data_types['close_E_d'].name, 'close')
+        self.assertEqual(stg.data_types['pe_E_d'].name, 'pe')
+
+    def test_list_of_string_ids(self):
+        print('\n[TestStrategyStringDataTypes] data_types 列表字符串')
+
+        class _Stg(GeneralStg):
+            def __init__(self):
+                super().__init__(
+                    name='str_list_stg',
+                    description='list string data_types',
+                    data_types=['close_E_d', 'pe_E_d'],
+                    window_length=3,
+                )
+
+            def realize(self):
+                return np.zeros(1)
+
+        stg = _Stg()
+        print('  keys:', list(stg.data_types.keys()))
+        self.assertEqual(set(stg.data_types.keys()), {'close_E_d', 'pe_E_d'})
+
+    def test_reference_string_allowed(self):
+        print('\n[TestStrategyStringDataTypes] reference 字符串可进策略')
+
+        class _Stg(GeneralStg):
+            def __init__(self):
+                super().__init__(
+                    name='ref_str_stg',
+                    description='reference string',
+                    data_types='cn_gdp, close_E_d',
+                    window_length=2,
+                )
+
+            def realize(self):
+                return np.zeros(1)
+
+        stg = _Stg()
+        print('  keys:', list(stg.data_types.keys()))
+        self.assertIn('cn_gdp_None_q', stg.data_types)
+        self.assertIn('close_E_d', stg.data_types)
+
+    def test_static_string_rejected(self):
+        print('\n[TestStrategyStringDataTypes] Static 声明进策略失败')
+        with self.assertRaises(ValueError) as ctx:
+            class _Stg(GeneralStg):
+                def __init__(self):
+                    super().__init__(
+                        name='bad_static_stg',
+                        description='static not allowed',
+                        data_types='industry',
+                        window_length=2,
+                    )
+
+                def realize(self):
+                    return np.zeros(1)
+
+            _Stg()
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('static', msg.lower())
+        self.assertIn('get_static_data', msg)
+
+    def test_static_datatype_object_rejected(self):
+        print('\n[TestStrategyStringDataTypes] Static DataType 对象进策略失败')
+        with self.assertRaises(ValueError) as ctx:
+            class _Stg(GeneralStg):
+                def __init__(self):
+                    super().__init__(
+                        name='bad_static_obj',
+                        description='static object not allowed',
+                        data_types=DataType('industry'),
+                        window_length=2,
+                    )
+
+                def realize(self):
+                    return np.zeros(1)
+
+            _Stg()
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('get_static_data', msg)
+
+    def test_resolve_helper_rejects_static(self):
+        print('\n[TestStrategyStringDataTypes] resolve_strategy_data_type_string 拒 static')
+        with self.assertRaises(ValueError) as ctx:
+            resolve_strategy_data_type_string('list_date', asset_type='E')
+        msg = str(ctx.exception)
+        print(f'  {msg}')
+        self.assertIn('static', msg.lower())
 
 
 if __name__ == '__main__':

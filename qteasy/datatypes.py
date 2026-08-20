@@ -533,6 +533,107 @@ def _attach_consumption_columns(type_map: pd.DataFrame) -> pd.DataFrame:
     return attached
 
 
+def infer_recommended_api(kind: str, usable_in: str) -> str:
+    """根据 ``kind`` / ``usable_in`` 推荐用户可见入口函数名。
+
+    Parameters
+    ----------
+    kind : str
+        ``history`` / ``reference`` / ``static``。
+    usable_in : str
+        逗号分隔的入口标记规范串。
+
+    Returns
+    -------
+    str
+        ``get_history_data`` / ``get_reference_data`` / ``get_static_data`` /
+        或 ``none``（不可用入口）。
+    """
+    flags = {part.strip() for part in str(usable_in).split(',') if part.strip()}
+    if 'none' in flags:
+        return 'none'
+    if 'reference_api' in flags or kind == 'reference':
+        return 'get_reference_data'
+    if 'static_api' in flags or kind == 'static':
+        return 'get_static_data'
+    if 'history_panel' in flags or kind == 'history':
+        return 'get_history_data'
+    return 'none'
+
+
+def resolve_strategy_data_type_string(
+        raw: str,
+        *,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+):
+    """把策略声明中的字符串解析为 DataType，并拒绝 Static。
+
+    接受宽名或完整 id；歧义时由 ``DataType`` 构造报错并列候选。
+    Static 不得进入策略 ``data_types``。
+
+    Parameters
+    ----------
+    raw : str
+        如 ``close_E_d``、``pe``、``cn_gdp``。
+    freq : str, optional
+        宽名消歧用频率。
+    asset_type : str, optional
+        宽名消歧用资产类型。
+
+    Returns
+    -------
+    DataType
+        解析后的数据类型（可为 history 或 reference）。
+
+    Raises
+    ------
+    ValueError
+        Static 形状，或解析失败。
+    """
+    if not isinstance(raw, str):
+        raise TypeError(f'strategy data type name must be a string, got {type(raw).__name__}')
+    parsed = parse_dtype_user_string(raw)
+    if parsed.form == 'full':
+        dtype = DataType(
+            name=parsed.wide_name,
+            freq=parsed.freq,
+            asset_type=parsed.asset_type,
+        )
+    else:
+        init_kwargs = {}
+        if freq is not None:
+            init_kwargs['freq'] = freq
+        if asset_type is not None:
+            init_kwargs['asset_type'] = asset_type
+        dtype = DataType(name=parsed.wide_name, **init_kwargs)
+
+    # 查找 acquisition 以派生 kind
+    search_name, _, _ = _parse_name_and_params(dtype.name)
+    acq = None
+    key = (search_name, dtype.freq, dtype.asset_type)
+    if key in DATA_TYPE_MAP:
+        acq = DATA_TYPE_MAP[key][1]
+    else:
+        for at in getattr(dtype, 'asset_types', []) or []:
+            at_key = (search_name, dtype.freq, at)
+            if at_key in DATA_TYPE_MAP:
+                acq = DATA_TYPE_MAP[at_key][1]
+                break
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=acq,
+    )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType and cannot be used in strategy "
+            f"data_types / get_data; use qt.get_static_data(...) instead."
+        )
+    return dtype
+
+
 # 完整 id 中合法的资产类型 token（含 MAP 字面量 None / Any，大小写不敏感）
 _FULL_ID_ASSET_TOKENS = frozenset(
     list(AVAILABLE_ASSET_TYPES)
@@ -5319,6 +5420,10 @@ def find_history_data(
             - asset_type:  资产类型
             - table_name:  底层数据表名称
             - column:      对应的数据字段名
+            - kind:        消费形状（history / reference / static）
+            - usable_in:   可用性标记规范串
+            - recommended_api: 推荐入口（get_history_data / get_reference_data /
+              get_static_data / none）
 
     Examples
     --------
@@ -5445,34 +5550,59 @@ def find_history_data(
 
     data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
     data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
-    data_table_map = data_table_map[['dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description']]
+    data_table_map = data_table_map[[
+        'dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description',
+        'kind', 'usable_in',
+    ]]
+    data_table_map['recommended_api'] = [
+        infer_recommended_api(kind, usable)
+        for kind, usable in zip(data_table_map['kind'], data_table_map['usable_in'])
+    ]
     data_table_map.index = data_table_map.index.get_level_values(level=0)
     data_table_map.index.name = 'data_id'
+
+    result_columns = [
+        'name', 'description', 'freq', 'asset_type', 'table_name', 'column',
+        'kind', 'usable_in', 'recommended_api',
+    ]
 
     # as_data_frame=True 时，直接返回结构化结果 DataFrame
     if as_data_frame:
         result_df = data_table_map.copy()
         result_df = result_df.rename(columns={'dtype_name': 'name'})
-        return result_df[['name', 'description', 'freq', 'asset_type', 'table_name', 'column']]
+        return result_df[result_columns]
 
-    # 兼容旧行为：打印匹配结果并返回 data_id 列表
-    print(f'matched following history data, \n'
-          f'use "qt.get_history_data()" to load these historical data by its data_id:\n'
-          f'------------------------------------------------------------------------')
+    # 兼容旧行为：打印匹配结果并返回 data_id 列表；按 recommended_api 提示入口，不再一律 get_history_data
+    print(
+        'matched following DataType(s),\n'
+        'use recommended_api for each row '
+        '(get_history_data / get_reference_data / get_static_data / none):\n'
+        '------------------------------------------------------------------------'
+    )
     print(
             data_table_map.to_string(
-                    columns=['dtype_name',
-                             'freq',
-                             'asset_type',
-                             'table_name',
-                             'column',
-                             'description'],
-                    header=['name',
-                            'freq',
-                            'asset',
-                            'table',
-                            'column',
-                            'desc'],
+                    columns=[
+                        'dtype_name',
+                        'freq',
+                        'asset_type',
+                        'table_name',
+                        'column',
+                        'description',
+                        'kind',
+                        'usable_in',
+                        'recommended_api',
+                    ],
+                    header=[
+                        'name',
+                        'freq',
+                        'asset',
+                        'table',
+                        'column',
+                        'desc',
+                        'kind',
+                        'usable_in',
+                        'api',
+                    ],
             )
     )
     print(f'========================================================================')
