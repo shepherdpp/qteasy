@@ -14,17 +14,20 @@
 import numpy as np
 import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict, Optional, NamedTuple, Literal, Mapping
 from warnings import warn
 from math import ceil
 
 from .utilfuncs import (
     AVAILABLE_ASSET_TYPES,
+    TIME_FREQ_STRINGS,
+    get_main_freq_level,
     str_to_list,
     _lev_ratio,
     _partial_lev_ratio,
     _wildcard_match,
 )
+from .datatables import get_table_column_dtype
 
 
 # TODO: datatype 对象的freq与Strategy的run_freq采用了不同的规则，用户在使用过程中可能会感到疑惑
@@ -68,6 +71,10 @@ def get_dtype_map(include_user_defined=False, refresh_cache=False) -> pd.DataFra
     Returns
     -------
     dtype_map: pd.DataFrame
+        索引为 ``(dtype, freq, asset_type)``。列包括映射表原有字段
+        ``description`` / ``acquisition_type`` / ``kwargs``，以及派生列
+        ``kind``（``history`` / ``reference`` / ``static``）与
+        ``usable_in``（逗号分隔的入口标记，见 ``infer_dtype_usable_in``）。
 
     """
     if refresh_cache:
@@ -161,9 +168,19 @@ def infer_data_types(names, freqs, asset_types, adj=None,
                     else:
                         n_ = n
 
+                    # name-only / name+freq 在 DataType 上会因多资产歧义报错；
+                    # infer 回退路径仍按 MAP 第一匹配，以保持 get_history_data 两阶段行为。
                     if allow_ignore_freq and allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n_))
+                            search_n = _parse_name_and_params(n_)[0]
+                            resolved_freq, resolved_assets = _resolve_dtype_key(
+                                search_n, None, None,
+                            )
+                            data_types.append(DataType(
+                                name=n_,
+                                freq=resolved_freq,
+                                asset_type=resolved_assets[0],
+                            ))
                         except ValueError:
                             pass
                     elif allow_ignore_freq:
@@ -173,7 +190,15 @@ def infer_data_types(names, freqs, asset_types, adj=None,
                             pass
                     elif allow_ignore_asset_type:
                         try:
-                            data_types.append(DataType(name=n_, freq=f))
+                            search_n = _parse_name_and_params(n_)[0]
+                            resolved_freq, resolved_assets = _resolve_dtype_key(
+                                search_n, f, None,
+                            )
+                            data_types.append(DataType(
+                                name=n_,
+                                freq=resolved_freq,
+                                asset_type=resolved_assets[0],
+                            ))
                         except ValueError:
                             pass
                     else:
@@ -199,7 +224,7 @@ def _get_built_in_data_type_map() -> pd.DataFrame:
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
 
-    return type_map
+    return _attach_consumption_columns(type_map)
 
 
 @lru_cache(maxsize=1)
@@ -213,7 +238,7 @@ def _get_user_data_type_map() -> pd.DataFrame:
     type_map.columns = DATA_TYPE_MAP_COLUMNS
     type_map.index.names = DATA_TYPE_MAP_INDEX_NAMES
 
-    return type_map
+    return _attach_consumption_columns(type_map)
 
 
 def _parse_name_and_params(name: str) -> tuple:
@@ -248,6 +273,643 @@ def _parse_name_and_params(name: str) -> tuple:
         return search_name, params, unsymbolizer
     else:
         return name, None, unsymbolizer
+
+
+# MAP 中表示「无频率 / 无标的维」的字面量（与 Python None「未给出」区分）
+_FREQ_NONE_TOKENS = frozenset({'None', 'none'})
+_NO_SHARE_ASSET_TOKENS = frozenset({'None', 'none', 'Any', 'ANY'})
+_STATIC_ACQUISITION_TYPES = frozenset({'basics', 'selection', 'category'})
+# usable_in 规范串按此顺序拼接，保证目录与测试稳定
+_USABLE_IN_ORDER = (
+    'history_panel',
+    'reference_api',
+    'static_api',
+    'strategy',
+    'universe',
+    'none',
+)
+_ALLOWED_USABLE_IN = frozenset(_USABLE_IN_ORDER)
+# 边界个案：按 acquisition_type 覆盖 usable_in（kind 仍走派生规则）
+_USABLE_IN_BY_ACQUISITION = {
+    'event_multi_stat': frozenset({'none'}),
+}
+# SQL 列类型：可安全编入 HistoryPanel / 策略窗口的数值族（去宽度后精确匹配）
+_NUMERIC_SQL_DTYPE_BASES = frozenset({
+    'int', 'integer', 'bigint', 'smallint', 'tinyint',
+    'float', 'double', 'real', 'decimal', 'numeric',
+})
+
+
+def _is_unsymbolizer_name(name: str) -> bool:
+    """名称是否带 unsymbolizer（``close-000300.SH``）。"""
+    if not isinstance(name, str) or not name:
+        return False
+    _, _, unsymbolizer = _parse_name_and_params(name)
+    return unsymbolizer is not None
+
+
+def _sql_dtype_is_numeric(sql_dtype: Optional[str]) -> bool:
+    """判断 SQL 列类型字符串是否属于可编入 HP 的数值族。
+
+    Parameters
+    ----------
+    sql_dtype : str or None
+        如 ``float``、``varchar(14)``、``date``；``None`` 视为非数值。
+
+    Returns
+    -------
+    bool
+        ``True`` 仅当类型为 int/float/double/decimal/numeric（可带宽度）。
+    """
+    if not isinstance(sql_dtype, str) or not sql_dtype.strip():
+        return False
+    base = sql_dtype.strip().lower().split('(', 1)[0].strip()
+    return base in _NUMERIC_SQL_DTYPE_BASES
+
+
+def _history_payload_is_numeric(kwargs: Optional[Union[Dict, Mapping]]) -> bool:
+    """根据 MAP kwargs 中的 table/column 判断 History 格子是否为数值。
+
+    缺表名、缺列名、或 schema 查不到时按非数值处理（对 history 失败关闭）。
+
+    Parameters
+    ----------
+    kwargs : dict or Mapping, optional
+        DATA_TYPE_MAP 行的 kwargs；列名取 ``column``，若无则取 ``output_col``。
+
+    Returns
+    -------
+    bool
+        ``True`` 表示可安全编入 HistoryPanel / 策略窗口。
+    """
+    if not isinstance(kwargs, Mapping):
+        return False
+    table_name = kwargs.get('table_name')
+    column = kwargs.get('column')
+    if column is None:
+        column = kwargs.get('output_col')
+    if not table_name or not column:
+        return False
+    sql_dtype = get_table_column_dtype(str(table_name), str(column))
+    return _sql_dtype_is_numeric(sql_dtype)
+
+
+def format_usable_in(flags: Union[List[str], set, frozenset, tuple]) -> str:
+    """将 usable_in 标记集合格式化为稳定的逗号分隔字符串。
+
+    Parameters
+    ----------
+    flags : list or set of str
+        入口标记。合法值见 ``_USABLE_IN_ORDER``。若含 ``none`` 则独占输出 ``none``。
+
+    Returns
+    -------
+    str
+        按固定顺序拼接的规范串；空集合会报错。
+    """
+    tokens = {str(item).strip() for item in flags if str(item).strip()}
+    unknown = tokens - _ALLOWED_USABLE_IN
+    if unknown:
+        raise ValueError(f'Unknown usable_in token(s): {sorted(unknown)}')
+    if not tokens:
+        raise ValueError('usable_in must contain at least one token')
+    if 'none' in tokens:
+        return 'none'
+    return ','.join(item for item in _USABLE_IN_ORDER if item in tokens)
+
+
+def infer_dtype_kind(
+        name: str,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+        acquisition_type: Optional[str] = None,
+) -> str:
+    """根据名称、频率、资产类型与获取方式派生消费形状 ``kind``。
+
+    判定优先级（与 S1.5 契约一致）：unsymbolizer 或 ``acquisition_type=='reference'``
+    或 MAP 中无标的维（``asset_type`` 为 ``None`` / ``Any``）→ ``reference``；
+    ``freq`` 为字面量 ``None`` 或 ``acquisition_type`` 属于 basics/selection/category
+    → ``static``；其余时间×标的 → ``history``。
+
+    Python ``None`` 表示「调用方未给出该参数」，不得当作 MAP 里的 ``'None'``。
+
+    Parameters
+    ----------
+    name : str
+        宽匹配名或带 unsymbolizer 的名称。
+    freq : str, optional
+        原生频率；MAP 中无频率时为字面量 ``'None'``。
+    asset_type : str, optional
+        资产类型；无标的维时为 ``'None'`` 或 ``'Any'``。
+    acquisition_type : str, optional
+        内部提取方式（``direct`` / ``reference`` / ``basics`` 等）。
+
+    Returns
+    -------
+    str
+        ``'history'``、``'reference'`` 或 ``'static'``。
+    """
+    if not isinstance(name, str):
+        raise TypeError(f'name must be a string, got {type(name)}')
+
+    if _is_unsymbolizer_name(name):
+        return 'reference'
+    if acquisition_type == 'reference':
+        return 'reference'
+    if asset_type is not None and str(asset_type) in _NO_SHARE_ASSET_TOKENS:
+        return 'reference'
+    if (freq is not None and str(freq) in _FREQ_NONE_TOKENS) or (
+            acquisition_type in _STATIC_ACQUISITION_TYPES
+    ):
+        return 'static'
+    return 'history'
+
+
+def infer_dtype_usable_in(
+        name: str,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+        acquisition_type: Optional[str] = None,
+        kind: Optional[str] = None,
+        kwargs: Optional[Union[Dict, Mapping]] = None,
+) -> str:
+    """根据形状、列类型与边界白名单派生 ``usable_in`` 规范串。
+
+    默认：``history`` → ``history_panel,strategy``；``reference`` →
+    ``reference_api,strategy``；``static`` → ``static_api``，若资产类型属于
+    具体标的则追加 ``universe``。``composition`` 追加 ``universe``。
+    ``event_multi_stat`` 覆盖为 ``none``（一等入口尚未就绪）。
+    unsymbolizer 名称始终为 ``reference_api,strategy``。
+    当 ``kind=='history'`` 且底层列无法安全转为 float 时，覆盖为 ``none``
+    （HistoryPanel / 策略窗口只吃数值）。
+
+    Parameters
+    ----------
+    name : str
+        宽匹配名或带 unsymbolizer 的名称。
+    freq : str, optional
+        原生频率。
+    asset_type : str, optional
+        资产类型。
+    acquisition_type : str, optional
+        内部提取方式。
+    kind : str, optional
+        若已算出 ``kind`` 可传入以避免重复派生。
+    kwargs : dict or Mapping, optional
+        MAP 行的 kwargs（含 ``table_name`` / ``column``）；用于 history 格子类型门禁。
+
+    Returns
+    -------
+    str
+        逗号分隔的入口标记；``none`` 独占。
+    """
+    if _is_unsymbolizer_name(name):
+        return format_usable_in({'reference_api', 'strategy'})
+
+    if acquisition_type in _USABLE_IN_BY_ACQUISITION:
+        return format_usable_in(_USABLE_IN_BY_ACQUISITION[acquisition_type])
+
+    if kind is None:
+        kind = infer_dtype_kind(name, freq, asset_type, acquisition_type)
+    if kind not in ('history', 'reference', 'static'):
+        raise ValueError(f'Unknown kind: {kind!r}')
+
+    flags = set()
+    if kind == 'history':
+        flags.update({'history_panel', 'strategy'})
+    elif kind == 'reference':
+        flags.update({'reference_api', 'strategy'})
+    else:
+        flags.add('static_api')
+        if asset_type is not None and str(asset_type) in AVAILABLE_ASSET_TYPES:
+            flags.add('universe')
+
+    if acquisition_type == 'composition':
+        flags.add('universe')
+
+    # history 非数值格子（文本/日期/缺 schema）不得进 HP / 策略窗口
+    if kind == 'history' and not _history_payload_is_numeric(kwargs):
+        return format_usable_in({'none'})
+
+    return format_usable_in(flags)
+
+
+def _attach_consumption_columns(type_map: pd.DataFrame) -> pd.DataFrame:
+    """为 dtype map 追加 ``kind`` / ``usable_in`` 列。
+
+    Parameters
+    ----------
+    type_map : pd.DataFrame
+        索引为 ``(name, freq, asset_type)``，含 ``acquisition_type`` 列。
+
+    Returns
+    -------
+    pd.DataFrame
+        原表拷贝并追加两列。
+    """
+    if type_map is None or type_map.empty:
+        return type_map
+
+    names = type_map.index.get_level_values(0)
+    freqs = type_map.index.get_level_values(1)
+    asset_types = type_map.index.get_level_values(2)
+    acqs = type_map['acquisition_type'].tolist()
+    row_kwargs = type_map['kwargs'].tolist()
+    kinds = [
+        infer_dtype_kind(name, freq, asset_type, acq)
+        for name, freq, asset_type, acq in zip(names, freqs, asset_types, acqs)
+    ]
+    usables = [
+        infer_dtype_usable_in(
+            name, freq, asset_type, acq, kind=kind, kwargs=kw,
+        )
+        for name, freq, asset_type, acq, kind, kw in zip(
+            names, freqs, asset_types, acqs, kinds, row_kwargs,
+        )
+    ]
+    attached = type_map.copy()
+    attached['kind'] = kinds
+    attached['usable_in'] = usables
+    return attached
+
+
+def infer_recommended_api(kind: str, usable_in: str) -> str:
+    """根据 ``kind`` / ``usable_in`` 推荐用户可见入口函数名。
+
+    Parameters
+    ----------
+    kind : str
+        ``history`` / ``reference`` / ``static``。
+    usable_in : str
+        逗号分隔的入口标记规范串。
+
+    Returns
+    -------
+    str
+        ``get_history_data`` / ``get_reference_data`` / ``get_static_data`` /
+        或 ``none``（不可用入口）。
+    """
+    flags = {part.strip() for part in str(usable_in).split(',') if part.strip()}
+    if 'none' in flags:
+        return 'none'
+    if 'reference_api' in flags or kind == 'reference':
+        return 'get_reference_data'
+    if 'static_api' in flags or kind == 'static':
+        return 'get_static_data'
+    if 'history_panel' in flags or kind == 'history':
+        return 'get_history_data'
+    return 'none'
+
+
+def resolve_strategy_data_type_string(
+        raw: str,
+        *,
+        freq: Optional[str] = None,
+        asset_type: Optional[str] = None,
+):
+    """把策略声明中的字符串解析为 DataType，并拒绝 Static。
+
+    接受宽名或完整 id；歧义时由 ``DataType`` 构造报错并列候选。
+    Static 不得进入策略 ``data_types``。
+
+    Parameters
+    ----------
+    raw : str
+        如 ``close_E_d``、``pe``、``cn_gdp``。
+    freq : str, optional
+        宽名消歧用频率。
+    asset_type : str, optional
+        宽名消歧用资产类型。
+
+    Returns
+    -------
+    DataType
+        解析后的数据类型（可为 history 或 reference）。
+
+    Raises
+    ------
+    ValueError
+        Static 形状，或解析失败。
+    """
+    if not isinstance(raw, str):
+        raise TypeError(f'strategy data type name must be a string, got {type(raw).__name__}')
+    parsed = parse_dtype_user_string(raw)
+    if parsed.form == 'full':
+        dtype = DataType(
+            name=parsed.wide_name,
+            freq=parsed.freq,
+            asset_type=parsed.asset_type,
+        )
+    else:
+        init_kwargs = {}
+        if freq is not None:
+            init_kwargs['freq'] = freq
+        if asset_type is not None:
+            init_kwargs['asset_type'] = asset_type
+        dtype = DataType(name=parsed.wide_name, **init_kwargs)
+
+    # 查找 acquisition 以派生 kind
+    search_name, _, _ = _parse_name_and_params(dtype.name)
+    acq = None
+    key = (search_name, dtype.freq, dtype.asset_type)
+    if key in DATA_TYPE_MAP:
+        acq = DATA_TYPE_MAP[key][1]
+    else:
+        for at in getattr(dtype, 'asset_types', []) or []:
+            at_key = (search_name, dtype.freq, at)
+            if at_key in DATA_TYPE_MAP:
+                acq = DATA_TYPE_MAP[at_key][1]
+                break
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=acq,
+    )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType and cannot be used in strategy "
+            f"data_types / get_data; use qt.get_static_data(...) instead."
+        )
+    return dtype
+
+
+# 完整 id 中合法的资产类型 token（含 MAP 字面量 None / Any，大小写不敏感）
+_FULL_ID_ASSET_TOKENS = frozenset(
+    list(AVAILABLE_ASSET_TYPES)
+    + [item.lower() for item in AVAILABLE_ASSET_TYPES]
+    + ['None', 'none', 'Any', 'any', 'ANY']
+)
+# 完整 id 中合法的频率 token（含 MAP 字面量 None）
+_FULL_ID_FREQ_TOKENS = frozenset(
+    list(TIME_FREQ_STRINGS)
+    + [item.lower() for item in TIME_FREQ_STRINGS]
+    + ['None', 'none']
+)
+
+
+def _normalize_full_id_freq(freq_part: str) -> str:
+    """把完整 id 中的频率规范成 MAP 用的字面量。"""
+    if freq_part in ('None', 'none'):
+        return 'None'
+    return freq_part.lower()
+
+
+def _normalize_full_id_asset(asset_part: str) -> str:
+    """把完整 id 中的资产类型规范成 MAP 用的字面量。"""
+    tokens = []
+    for tok in asset_part.split(','):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if tok in ('None', 'none'):
+            tokens.append('None')
+        elif tok.lower() == 'any':
+            tokens.append('Any')
+        else:
+            tokens.append(tok.upper())
+    return ','.join(tokens)
+
+
+class ParsedDtypeString(NamedTuple):
+    """用户输入的数据类型字符串解析结果。"""
+
+    raw: str
+    form: Literal['wide', 'full']
+    wide_name: str
+    asset_type: Optional[str]
+    freq: Optional[str]
+
+
+def parse_dtype_user_string(raw: str) -> ParsedDtypeString:
+    """解析用户输入的数据类型字符串为宽名或完整 id。
+
+    完整 id 形如 ``{wide_name}_{asset_type}_{freq}``，宽名本身可含下划线、
+    ``|``、``-``。仅当倒数两段分别为合法资产类型与频率时才识别为完整 id。
+    冒号 ``:`` 为已废弃分隔符，一律拒绝。
+
+    Parameters
+    ----------
+    raw : str
+        用户输入，例如 ``close``、``close_E_d``、``close|b_E_d``。
+
+    Returns
+    -------
+    ParsedDtypeString
+        ``form`` 为 ``wide`` 或 ``full``；完整 id 时 ``asset_type`` / ``freq`` 非空。
+
+    Raises
+    ------
+    TypeError
+        ``raw`` 不是字符串。
+    ValueError
+        空串，或含已废弃的冒号分隔符。
+    """
+    if not isinstance(raw, str):
+        raise TypeError(f'dtype name must be a string, got {type(raw).__name__}')
+    text = raw.strip()
+    if not text:
+        raise ValueError('dtype name cannot be empty')
+    if ':' in text:
+        raise ValueError(
+            f"colon ':' is no longer a DataType separator in {text!r}; "
+            f"use '|' for parameters (e.g. close|b, wt_idx|000300.SH) "
+            f"and '-' for unsymbolizer (e.g. close-000300.SH)"
+        )
+    parts = text.rsplit('_', 2)
+    if len(parts) == 3:
+        wide_name, asset_part, freq_part = parts
+        asset_ok = all(
+            tok in _FULL_ID_ASSET_TOKENS
+            for tok in asset_part.split(',')
+            if tok
+        )
+        freq_ok = freq_part in _FULL_ID_FREQ_TOKENS
+        if wide_name and asset_ok and freq_ok:
+            return ParsedDtypeString(
+                raw=text,
+                form='full',
+                wide_name=wide_name,
+                asset_type=_normalize_full_id_asset(asset_part),
+                freq=_normalize_full_id_freq(freq_part),
+            )
+    return ParsedDtypeString(
+        raw=text,
+        form='wide',
+        wide_name=text,
+        asset_type=None,
+        freq=None,
+    )
+
+
+def format_full_dtype_id(wide_name: str, asset_type: str, freq: str) -> str:
+    """把宽名、资产类型、频率格式化为完整数据类型 id。
+
+    Parameters
+    ----------
+    wide_name : str
+        宽名（可含 ``|`` / ``-``）。
+    asset_type : str
+        资产类型，如 ``E`` 或 ``E,IDX``。
+    freq : str
+        频率，如 ``d``。
+
+    Returns
+    -------
+    str
+        ``{wide_name}_{asset_type}_{freq}``。
+    """
+    return f'{wide_name}_{asset_type}_{freq}'
+
+
+def _choose_native_freq(requested_freq: str, built_in_freqs: list) -> Optional[str]:
+    """按 get_history_data 两阶段规则，从内置频率中选出原生 freq。
+
+    优先级：完全一致 > 更粗频率中最接近目标 > 更细频率中最接近目标。
+    MAP 字面量 ``None`` 单独处理。
+
+    Parameters
+    ----------
+    requested_freq : str
+        用户请求的频率。
+    built_in_freqs : list
+        MAP 中该宽名可用的频率列表。
+
+    Returns
+    -------
+    Optional[str]
+        选定的原生频率；无法选定则 None。
+    """
+    if not built_in_freqs:
+        return None
+    unique_freqs = list(dict.fromkeys(built_in_freqs))
+    if requested_freq in ('None', 'none'):
+        return 'None' if 'None' in unique_freqs else None
+
+    req_level = get_main_freq_level(requested_freq)
+    if req_level is None:
+        return 'None' if 'None' in unique_freqs else None
+
+    for freq in unique_freqs:
+        if freq == 'None':
+            continue
+        if str(freq).lower() == str(requested_freq).lower():
+            return freq
+
+    scored = []
+    for freq in unique_freqs:
+        if freq == 'None':
+            continue
+        level = get_main_freq_level(freq)
+        if level is None:
+            continue
+        scored.append((freq, level))
+    if not scored:
+        return 'None' if 'None' in unique_freqs else None
+    coarser = [(freq, level) for freq, level in scored if level < req_level]
+    if coarser:
+        return max(coarser, key=lambda item: item[1])[0]
+    finer = [(freq, level) for freq, level in scored if level > req_level]
+    if finer:
+        return min(finer, key=lambda item: item[1])[0]
+    return scored[0][0]
+
+
+def _iter_map_keys_for_search_name(search_name: str) -> list:
+    """按宽名列出 DATA_TYPE_MAP / USER_DATA_TYPE_MAP 中的匹配键。
+
+    Parameters
+    ----------
+    search_name : str
+        ``_parse_name_and_params`` 得到的查找名（复权名为 ``close|%``）。
+
+    Returns
+    -------
+    list
+        ``(freq, asset_type)`` 列表。
+    """
+    keys = []
+    for data_map in (DATA_TYPE_MAP, USER_DATA_TYPE_MAP):
+        for name, freq, asset_type in data_map.keys():
+            if name == search_name:
+                keys.append((freq, asset_type))
+    return keys
+
+
+def _select_unique_map_key(
+        search_name: str,
+        freq: Optional[str],
+        display_name: Optional[str] = None,
+) -> tuple:
+    """在未给出 asset_type 时为宽名选出唯一 (freq, asset_type)。
+
+    未给频率时按目标 ``d`` 唯一化。多资产并存则报英文错误并列候选完整 id。
+
+    Parameters
+    ----------
+    search_name : str
+        MAP 查找名。
+    freq : Optional[str]
+        频率；None 表示未给出。
+    display_name : Optional[str]
+        报错时展示给用户的名称（如 ``close|b``，而不是 ``close|%``）。
+
+    Returns
+    -------
+    tuple
+        ``(freq, asset_type)``。
+
+    Raises
+    ------
+    ValueError
+        无匹配，或宽名对应多行且无法唯一化。
+    """
+    display = display_name or search_name
+    keys = _iter_map_keys_for_search_name(search_name)
+    if not keys:
+        raise ValueError(
+            f"unrecognised DataType name {display!r}; "
+            f"use a full id like '{{name}}_{{asset_type}}_{{freq}}' "
+            f"or pass freq= and asset_type="
+        )
+
+    if freq is not None:
+        freq_norm = 'None' if str(freq) in ('None', 'none') else str(freq).lower()
+        exact = [
+            key for key in keys
+            if key[0] == freq or str(key[0]).lower() == freq_norm
+        ]
+        if exact:
+            keys = exact
+        else:
+            native = _choose_native_freq(str(freq), [key[0] for key in keys])
+            if native is None:
+                keys = []
+            else:
+                keys = [key for key in keys if key[0] == native]
+    else:
+        native = _choose_native_freq('d', [key[0] for key in keys])
+        if native is not None:
+            keys = [key for key in keys if key[0] == native]
+
+    if not keys:
+        raise ValueError(
+            f'No DataType with name {display!r} and freq {freq!r} found in DATA_TYPE_MAP. '
+            f"Use a full id like '{{name}}_{{asset_type}}_{{freq}}'."
+        )
+
+    assets = {key[1] for key in keys}
+    if len(assets) > 1:
+        full_ids = [
+            format_full_dtype_id(display, key[1], key[0]) for key in keys
+        ]
+        raise ValueError(
+            f"Ambiguous DataType name {display!r}: matches "
+            f"{len(keys)} definitions {full_ids}. "
+            f"Use a full id like {full_ids[0]!r}, or pass freq= and asset_type=."
+        )
+    selected = keys[0]
+    return selected[0], selected[1]
 
 
 def _parse_built_in_freqs_and_asset_types(name: str) -> tuple[list[str], list[str]]:
@@ -1026,39 +1688,57 @@ class DataType:
         """
         根据用户输入的名称或完整参数实例化一个DataType对象。
 
-        如果用户输入完整的三合一参数，将检查该类型是否已经存在，如果存在，则生成该类型的实例，否则抛出异常。
-        如果用户仅输入名称，将尝试从DATA_TYPE_MAP中匹配相应的参数，如果找到唯一匹配，则生成该类型的实例，如果找到多组匹配，
-        则使用第一个匹配的类型生成DataType对象，如果找不到匹配，则报错。
-
-        用户自定义的数据类型也在上述查找匹配范围内。而用户需要通过datatypes.define()方法将自定义的数据
-        类型添加到DATA_TYPE_MAP中。
+        ``name`` 可以是宽匹配名（如 ``close``、``close|b``）或完整 id
+        （如 ``close_E_d``、``close|b_E_d``）。完整 id 从右侧拆出 freq 与
+        asset_type。仅输入宽名且未给出 asset_type 时，按目标频率 ``d`` 唯一化；
+        仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。
+        调用方显式给出 ``asset_type``（含 ``E,IDX`` / ``ANY``）时仍按第一匹配解析。
 
         Parameters
         ----------
         name: str
-            数据类型的名称
+            数据类型的宽匹配名或完整 id
         freq: str, optional
             数据的频率: d(日), w(周), m(月), q(季), y(年), 1/5/15/30min, h
             如果给出此参数，必须匹配某一个内置数据类型的频率
-            如果不给出此参数，将使用内置数据类型中的第一个频率
+            如果不给出此参数，将按目标频率 d 唯一化
         asset_type: str
             数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权)
             也可以输入混合资产类型，如 'E,IDX' 表示股票和指数两种资产类型
             也可以输入 'ANY' 表示所有支持的资产类型
             如果给出此参数，必须匹配某一个内置数据类型的资产类型
-            如果不给出此参数，将使用内置数据类型中的第一个资产类型
+            如果不给出此参数且无法唯一化，将报错并列候选完整 id
 
         Raises
         ------
         ValueError
-            如果用户输入的参数不在DATA_TYPE_MAP中
-            ValueError: DataType {name}({asset_type})@{freq} not found in DATA_TYPE_MAP.
-        ValueError NotImplemented!
-            如果用户输入的参数不完整，在DATA_TYPE_MAP中无法匹配到唯一的数据类型
-            ValueError: Input matches multiple data types in DATA_TYPE_MAP, specify your input: {types}?.
+            参数不在 DATA_TYPE_MAP 中，宽名歧义，或完整 id 与显式 freq/asset_type 冲突。
         """
         if not isinstance(name, str):
             raise TypeError(f'name must be a string, got {type(name)}')
+
+        parsed = parse_dtype_user_string(name)
+        if parsed.form == 'full':
+            if freq is not None:
+                given_freq = 'None' if str(freq) in ('None', 'none') else str(freq).lower()
+                if given_freq != parsed.freq:
+                    raise ValueError(
+                        f"full id {name!r} has freq {parsed.freq!r}, "
+                        f"which conflicts with freq={freq!r}"
+                    )
+            if asset_type is not None:
+                given_assets = [item.strip() for item in str_to_list(asset_type) if item.strip()]
+                parsed_assets = [
+                    item.strip() for item in parsed.asset_type.split(',') if item.strip()
+                ]
+                if sorted(given_assets) != sorted(parsed_assets):
+                    raise ValueError(
+                        f"full id {name!r} has asset_type {parsed.asset_type!r}, "
+                        f"which conflicts with asset_type={asset_type!r}"
+                    )
+            name = parsed.wide_name
+            freq = parsed.freq
+            asset_type = parsed.asset_type
 
         search_name, name_pars, unsymbolizer = _parse_name_and_params(name)
 
@@ -1088,20 +1768,24 @@ class DataType:
             asset_types = resolved_asset_types
             asset_type_str = ','.join(asset_types)
         elif freq is not None and asset_type is None:
-            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, freq, None)
+            resolved_freq, resolved_asset = _select_unique_map_key(
+                search_name, freq, display_name=name,
+            )
             default_freq = resolved_freq
-            asset_types = resolved_asset_types
-            asset_type_str = ','.join(asset_types)
+            asset_types = [resolved_asset]
+            asset_type_str = resolved_asset
         elif freq is None and asset_type is not None:
             resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, asset_type)
             default_freq = resolved_freq
             asset_types = resolved_asset_types
             asset_type_str = ','.join(asset_types)
         else:
-            resolved_freq, resolved_asset_types = _resolve_dtype_key(search_name, None, None)
+            resolved_freq, resolved_asset = _select_unique_map_key(
+                search_name, None, display_name=name,
+            )
             default_freq = resolved_freq
-            asset_types = resolved_asset_types
-            asset_type_str = ','.join(asset_types)
+            asset_types = [resolved_asset]
+            asset_type_str = resolved_asset
 
         # 根据 search_name、freq、asset_type 查找 description
         description = _parse_dtype_description(
@@ -4625,11 +5309,12 @@ def get_reference_data_from_source(
 
     # 逐个获取每一个历史数据类型的数据
     for htype in htypes:
-        # 检查数据类型是否属于参考数据，历史数据和基本信息数据不能通过此方法获取
+        # 检查数据类型是否属于参考数据：无标的维（None/Any）或 unsymbolizer
+        # 与 infer_dtype_kind 的 reference 判定对齐（north_money 等为 Any）
         if htype.freq == 'None':
             err = ValueError(f'Invalid data type {htype.name}, not a reference data type')
             raise err
-        if (htype.asset_type != 'None') and (htype.unsymbolizer is None):
+        if (htype.asset_type not in ('None', 'Any')) and (htype.unsymbolizer is None):
             err = TypeError(f'data type ({htype.__str__()}) is a history data, not a reference data, '
                             f'Thus symbols must be given to specify the data: "shares=\'000651.SZ\'"; '
                             f'or using unsymbolizer to convert it to reference data, such as "close-000651.SZ"')
@@ -4735,6 +5420,10 @@ def find_history_data(
             - asset_type:  资产类型
             - table_name:  底层数据表名称
             - column:      对应的数据字段名
+            - kind:        消费形状（history / reference / static）
+            - usable_in:   可用性标记规范串
+            - recommended_api: 推荐入口（get_history_data / get_reference_data /
+              get_static_data / none）
 
     Examples
     --------
@@ -4861,34 +5550,59 @@ def find_history_data(
 
     data_table_map['matched'] = data_table_map['n_matched'] + data_table_map['d_matched']
     data_table_map = data_table_map.loc[data_table_map['matched'] >= match_threshold]
-    data_table_map = data_table_map[['dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description']]
+    data_table_map = data_table_map[[
+        'dtype_name', 'freq', 'asset_type', 'table_name', 'column', 'description',
+        'kind', 'usable_in',
+    ]]
+    data_table_map['recommended_api'] = [
+        infer_recommended_api(kind, usable)
+        for kind, usable in zip(data_table_map['kind'], data_table_map['usable_in'])
+    ]
     data_table_map.index = data_table_map.index.get_level_values(level=0)
     data_table_map.index.name = 'data_id'
+
+    result_columns = [
+        'name', 'description', 'freq', 'asset_type', 'table_name', 'column',
+        'kind', 'usable_in', 'recommended_api',
+    ]
 
     # as_data_frame=True 时，直接返回结构化结果 DataFrame
     if as_data_frame:
         result_df = data_table_map.copy()
         result_df = result_df.rename(columns={'dtype_name': 'name'})
-        return result_df[['name', 'description', 'freq', 'asset_type', 'table_name', 'column']]
+        return result_df[result_columns]
 
-    # 兼容旧行为：打印匹配结果并返回 data_id 列表
-    print(f'matched following history data, \n'
-          f'use "qt.get_history_data()" to load these historical data by its data_id:\n'
-          f'------------------------------------------------------------------------')
+    # 兼容旧行为：打印匹配结果并返回 data_id 列表；按 recommended_api 提示入口，不再一律 get_history_data
+    print(
+        'matched following DataType(s),\n'
+        'use recommended_api for each row '
+        '(get_history_data / get_reference_data / get_static_data / none):\n'
+        '------------------------------------------------------------------------'
+    )
     print(
             data_table_map.to_string(
-                    columns=['dtype_name',
-                             'freq',
-                             'asset_type',
-                             'table_name',
-                             'column',
-                             'description'],
-                    header=['name',
-                            'freq',
-                            'asset',
-                            'table',
-                            'column',
-                            'desc'],
+                    columns=[
+                        'dtype_name',
+                        'freq',
+                        'asset_type',
+                        'table_name',
+                        'column',
+                        'description',
+                        'kind',
+                        'usable_in',
+                        'recommended_api',
+                    ],
+                    header=[
+                        'name',
+                        'freq',
+                        'asset',
+                        'table',
+                        'column',
+                        'desc',
+                        'kind',
+                        'usable_in',
+                        'api',
+                    ],
             )
     )
     print(f'========================================================================')

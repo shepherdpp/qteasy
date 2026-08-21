@@ -52,7 +52,7 @@
 - 作者: **Jackie PENG**
 - email: *jackie_pengzhao@163.com*
 - Created: 2019, July, 16
-- Latest Version: `2.6.3` — [发布历史](https://qteasy.readthedocs.io/zh-cn/latest/RELEASE_HISTORY.html)
+- Latest Version: `2.6.4` — [发布历史](https://qteasy.readthedocs.io/zh-cn/latest/RELEASE_HISTORY.html)
 - Document: [简体中文](https://qteasy.readthedocs.io/zh-cn/latest/) · [English](https://qteasy.readthedocs.io/en/latest/) · [Deutsch](https://qteasy.readthedocs.io/de/latest/) · [Français](https://qteasy.readthedocs.io/fr/latest/) · [Español](https://qteasy.readthedocs.io/es/latest/) · [繁體中文](https://qteasy.readthedocs.io/zh-tw/latest/) · [日本語](https://qteasy.readthedocs.io/ja/latest/)
 - License: BSD 3-Clause License
 
@@ -144,6 +144,8 @@ pip install qteasy-ai
 ## 文档
 
 关于`QTEASY`系统的更多详细解释和使用方法，请参阅[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/)；各版本用户可见变更见 [发布历史](https://qteasy.readthedocs.io/zh-cn/latest/RELEASE_HISTORY.html)。
+
+GitHub 上的导航门户、社区 Cookbook 与排障速查见 [Wiki](https://github.com/shepherdpp/qteasy/wiki)（教程与 API 仍以 Read the Docs 为准）。
 
 
 ### python 版本

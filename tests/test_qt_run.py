@@ -38,9 +38,9 @@ class DailyStrategy(GeneralStg):
         super().__init__(
                 name='test_strategy',
                 description='A simple test strategy',
-                data_types=[DataType('close|b', freq='d'),  # 复权收盘价
+                data_types=[DataType('close|b', freq='d', asset_type='E'),  # 复权收盘价（宽名需消歧）
                             DataType('close-000300.SH', freq='d', asset_type='IDX'),  # 指数收盘价作为参考数据
-                            DataType('open', freq='d')],  # 不复权开盘价，测试不同的availability time
+                            DataType('open', freq='d', asset_type='E')],  # 不复权开盘价，测试不同的availability time
                 window_length=[5, 7, 8],
         )
 

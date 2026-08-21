@@ -15,6 +15,7 @@ import warnings
 import pandas as pd
 
 from functools import lru_cache
+from typing import Optional
 
 from .utilfuncs import (
     str_to_list,
@@ -1979,6 +1980,40 @@ def get_built_in_table_schema(table, *, with_remark=False, with_primary_keys=Tru
         return columns, dtypes
     if with_remark and with_primary_keys:
         return columns, dtypes, remarks, primary_keys, pk_dtypes
+
+
+def get_table_column_dtype(table: str, column: str) -> Optional[str]:
+    """返回内置表某一列的 SQL 数据类型字符串。
+
+    复用 ``get_built_in_table_schema``，供 DataType 消费元数据判断格子是否为数值。
+
+    Parameters
+    ----------
+    table : str
+        数据表名称（``TABLE_MASTERS`` 键，不是 schema 名）。
+    column : str
+        列名。
+
+    Returns
+    -------
+    Optional[str]
+        列的 dtype（如 ``float``、``varchar(14)``）；表或列不存在时返回 ``None``。
+    """
+    if not isinstance(table, str) or not isinstance(column, str):
+        return None
+    if table not in TABLE_MASTERS:
+        return None
+    try:
+        columns, dtypes = get_built_in_table_schema(
+            table, with_remark=False, with_primary_keys=False,
+        )
+    except (TypeError, KeyError):
+        return None
+    try:
+        idx = columns.index(column)
+    except ValueError:
+        return None
+    return dtypes[idx]
 
 
 class DataConflictWarning(Warning):

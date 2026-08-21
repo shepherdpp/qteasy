@@ -1,16 +1,16 @@
 历史数据获取和管理
 ============================
 
-使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。
+使用 qteasy 可以获取并管理大量金融数据。本地库涵盖股票、基金、指数、期货等，种类包含价格、技术指标、宏观、财报等。
 
-所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。
+数据通常经远端渠道下载到本地 DataSource 后，再按 **DataType 信息 ID** 与消费形状选用入口提取。
 
-查找支持历史数据
+查找支持的数据类型
 ----------------------
 
-使用 ``qt.find_history_data()`` 可以按名称、中文描述或通配符在全部已知历史数据类型中
-进行搜索，并按需要返回兼容 ``get_history_data()`` 的 data_id 列表或结构化的 DataFrame
-结果，便于探索可用的数据字段。
+使用 ``qt.find_history_data()`` 可以按名称、中文描述或通配符搜索内置类型。
+结构化结果（``as_data_frame=True``）含 ``kind``、``usable_in``、``recommended_api``；
+请按推荐入口取数，不要一律调用 ``get_history_data``。
 
 .. autofunction:: qteasy.find_history_data
 
@@ -46,7 +46,7 @@
 
 ``qt.get_basic_info()`` 和 ``qt.get_stock_info()`` 提供按代码或名称查询股票/基金/指数等
 基础信息的入口，可配合 ``filter_stock_codes()`` 与 ``filter_stocks()`` 构建资产池或
-做前置筛选。
+做前置筛选。截面属性（行业、上市日等）的标准化入口见下文 ``get_static_data``。
 
 .. autofunction:: qteasy.get_basic_info
 
@@ -56,12 +56,25 @@
 
 .. autofunction:: qteasy.filter_stocks
 
-使用下载的数据——获取价格或技术指标
+使用下载的数据——按形状取数
 ----------------------------------------------------
 
-**取数入口说明**：日常分析、策略与可视化准备应优先使用 ``qt.get_history_data()``。
-``qteasy.history.get_history_panel()`` 则面向已明确 ``DataType`` 列表与 ``DataSource``、需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以 ``get_history_data`` 为主线，详见 ``manage_data`` 中的 HistoryPanel 章节。
-可用 ``htype_names`` 一览与检索方式见 :doc:`DataType 概念章 <../manage_data/02. datatypes>` 与 :doc:`内置 DataType 完整清单 <../references/datatypes/index>`。
+按 **消费形状** 选择入口（概念见 :doc:`DataType 概念章 <../manage_data/02. datatypes>`）：
+
+- **History**（时间 × 标的）：``get_history_data`` / ``get_kline`` —— 可编入 HistoryPanel / 策略窗口
+- **Reference**（仅时间）：``get_reference_data`` —— 宏观、资金流，或 ``close-000300.SH`` 这类基准造法
+- **Static**（仅标的）：``get_static_data`` —— 行业、上市日等截面属性
+
+错形状会报错并提示正确入口。完整 id 与业务分册清单见
+:doc:`内置 DataType 完整清单 <../references/datatypes/index>`。
+
+``qteasy.history.get_history_panel()`` 面向已明确 ``DataType`` 列表与 ``DataSource``、
+需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以公开三入口为主线。
 
 .. autofunction:: qteasy.get_history_data
 
+.. autofunction:: qteasy.get_reference_data
+
+.. autofunction:: qteasy.get_static_data
+
+.. autofunction:: qteasy.get_kline

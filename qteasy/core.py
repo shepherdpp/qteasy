@@ -20,7 +20,13 @@ from qteasy.qt_operator import Operator
 from qteasy.database import DataSource
 
 from qteasy.datatypes import (
-    DataType, infer_data_types,
+    DATA_TYPE_MAP,
+    DataType,
+    infer_data_types,
+    infer_dtype_kind,
+    parse_dtype_user_string,
+    get_reference_data_from_source,
+    _parse_name_and_params,
 )
 
 from qteasy.history import (
@@ -965,11 +971,13 @@ def get_history_data(htypes=None,
                      **kwargs):
     """根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。
 
-    可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` /
-    ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by``
-    的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。关于数据类型
-    推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」
-    相关章节。
+    本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用
+    ``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误
+    指向正确入口。可以通过 ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合
+    ``shares`` / ``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与
+    ``group_by`` 的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。
+    关于数据类型推断、频率转换和 trade_time_only 等高级用法，详见文档「历史数据获取
+    get_history_data」相关章节。
 
     Parameters
     ----------
@@ -1107,7 +1115,7 @@ def get_history_data(htypes=None,
     }
 
     >>> # 通过设置freq参数，可以获取不同频率的K线数据，如设置freq='H'可以获取1小时频率的数据
-    >>> qt.get_history_data(htype_names='open:b, high:b, low:b, close:b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
+    >>> qt.get_history_data(htype_names='open|b, high|b, low|b, close|b', shares='000001.SZ', start='20191229', end='20200106', freq='H', asset_type='E')
      {'000001.SZ':
                                open        high         low       close
     2019-12-30 10:00:00  1796.92174  1796.92174  1796.92174  1796.92174
@@ -1147,13 +1155,13 @@ def get_history_data(htypes=None,
      }
 
     >>> # 使用特殊的htypes，可以获取特定的数据，如指数权重数据，下面的代码获取000001.SZ在HS300指数重的权重数据，单位为百分比
-    >>> qt.get_history_data(htype_names='wt_id:000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
+    >>> qt.get_history_data(htype_names='wt_idx|000300.SH', shares='000001.SZ, 000002.SZ', start='20191225', end='20200105')
     {'000001.SZ':
-                wt_idx:000300.SH
+                wt_idx|000300.SH
     2020-01-02        1.1714
     2020-01-03        1.1714,
     '000002.SZ':
-                wt_idx:000300.SH
+                wt_idx|000300.SH
     2020-01-02        1.3595
     2020-01-03        1.3595
     }
@@ -1228,7 +1236,7 @@ def get_history_data(htypes=None,
 
         if adj is not None:
             msg = f'parameter adj is deprecated, please add adj suffixes for htype names instead\n' \
-                  f'for example: use "close:b" for back-adjusted close prices'
+                  f'for example: use "close|b" for back-adjusted close prices'
             warn(msg, DeprecationWarning)
         else:
             adj = 'none'
@@ -1345,6 +1353,9 @@ def get_history_data(htypes=None,
                 for dt in dts:
                     dt_map[dt.dtype_id] = dt
                 dts_unique = list(dt_map.values())
+                # Phase 5：频率筛选前先做形状门禁（避免 static freq=None 被误报为未定义）
+                for dt in dts_unique:
+                    _ensure_history_data_type(dt)
                 # 频率唯一化
                 available_freqs = list({dt.freq for dt in dts_unique})
                 try:
@@ -1379,9 +1390,31 @@ def get_history_data(htypes=None,
             return effective_dtypes
 
         # 收集候选 DataType 并根据 freq / asset_type 规则筛选
+        # 完整 id（如 close_E_d）先实例化，宽名仍走两阶段 infer
+        wide_names = []
+        full_id_dtypes = []
+        for htype_name in htype_names:
+            parsed = parse_dtype_user_string(htype_name)
+            if parsed.form == 'full':
+                full_id_dtypes.append(DataType(
+                    name=parsed.wide_name,
+                    freq=parsed.freq,
+                    asset_type=parsed.asset_type,
+                ))
+            else:
+                wide_names.append(parsed.wide_name)
+
         asset_types_arg = asset_type
-        candidates_raw = _collect_candidate_dtypes_from_names(htype_names, freq, asset_types_arg)
-        data_types = _select_effective_dtypes(candidates_raw, freq, asset_types_arg, explicit_asset_type)
+        if wide_names:
+            candidates_raw = _collect_candidate_dtypes_from_names(wide_names, freq, asset_types_arg)
+            data_types = _select_effective_dtypes(candidates_raw, freq, asset_types_arg, explicit_asset_type)
+        else:
+            data_types = []
+        data_types = list(data_types) + full_id_dtypes
+
+    # Phase 5：三入口形状门禁——仅允许 history；与 reference/static 入口共用 kind 派生
+    for dt in data_types:
+        _ensure_history_data_type(dt)
 
     if data_source is None:
         from qteasy import QT_DATA_SOURCE
@@ -1468,6 +1501,417 @@ def get_history_data(htypes=None,
         return hp.unstack(by=group_by)
     else:
         return hp
+
+
+def _lookup_acquisition_type_for_dtype(dtype: DataType) -> Optional[str]:
+    """从 DATA_TYPE_MAP 查找 DataType 对应的 acquisition_type（供 kind 派生）。"""
+    search_name, _, _ = _parse_name_and_params(dtype.name)
+    asset_type = dtype.asset_type
+    freq = dtype.freq
+    key = (search_name, freq, asset_type)
+    if key in DATA_TYPE_MAP:
+        return DATA_TYPE_MAP[key][1]
+    # 多资产或 Any：尝试逐个资产键
+    for at in getattr(dtype, 'asset_types', []) or []:
+        at_key = (search_name, freq, at)
+        if at_key in DATA_TYPE_MAP:
+            return DATA_TYPE_MAP[at_key][1]
+    return None
+
+
+def _ensure_history_data_type(dtype: DataType) -> None:
+    """确保 dtype 为 history 形状；否则以英文报错并指向正确入口。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_type_for_dtype(dtype),
+    )
+    if kind == 'history':
+        return
+    if kind == 'reference':
+        raise ValueError(
+            f"{dtype.name!r} is a reference DataType; "
+            f"use qt.get_reference_data(...) instead of qt.get_history_data(...)."
+        )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType; "
+            f"use qt.get_static_data(...) instead of qt.get_history_data(...)."
+        )
+    raise ValueError(
+        f"{dtype.name!r} has unsupported kind {kind!r} for qt.get_history_data(...)."
+    )
+
+
+def _ensure_reference_data_type(dtype: DataType) -> None:
+    """确保 dtype 为 reference 形状；否则以英文报错并指向正确入口。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_type_for_dtype(dtype),
+    )
+    if kind == 'reference':
+        return
+    if kind == 'history':
+        raise ValueError(
+            f"{dtype.name!r} is a history DataType; "
+            f"use qt.get_history_data(...) instead of qt.get_reference_data(...)."
+        )
+    if kind == 'static':
+        raise ValueError(
+            f"{dtype.name!r} is a static DataType; "
+            f"use qt.get_static_data(...) instead of qt.get_reference_data(...)."
+        )
+    raise ValueError(
+        f"{dtype.name!r} has unsupported kind {kind!r} for qt.get_reference_data(...)."
+    )
+
+
+def _resolve_reference_data_types(
+        names,
+        *,
+        freq=None,
+        asset_type=None,
+) -> list:
+    """把用户字符串解析为 reference DataType 列表。"""
+    if isinstance(names, str):
+        name_list = str_to_list(names)
+    elif isinstance(names, (list, tuple)):
+        name_list = list(names)
+    else:
+        raise TypeError(
+            f'names must be a string or list of strings, got {type(names).__name__}'
+        )
+    if not name_list:
+        raise ValueError('names cannot be empty')
+
+    resolved = []
+    for raw in name_list:
+        if not isinstance(raw, str):
+            raise TypeError(f'each name must be a string, got {type(raw).__name__}')
+        parsed = parse_dtype_user_string(raw)
+        if parsed.form == 'full':
+            dtype = DataType(
+                name=parsed.wide_name,
+                freq=parsed.freq,
+                asset_type=parsed.asset_type,
+            )
+        else:
+            init_kwargs = {}
+            if freq is not None:
+                init_kwargs['freq'] = freq
+            if asset_type is not None:
+                init_kwargs['asset_type'] = asset_type
+            dtype = DataType(name=parsed.wide_name, **init_kwargs)
+        _ensure_reference_data_type(dtype)
+        resolved.append(dtype)
+    return resolved
+
+
+def get_reference_data(
+        names=None,
+        *,
+        data_types=None,
+        data_source=None,
+        start=None,
+        end=None,
+        freq=None,
+        asset_type=None,
+        rows=None,
+):
+    """从本地数据源获取 Reference（仅时间维）数据，返回 ``dict[str, Series]``。
+
+    同时接受原生 Reference（如 ``cn_gdp``、``north_money``）与 unsymbolizer
+    （如 ``close-000300.SH`` / ``close-000300.SH_IDX_d``）。不需要 ``shares``：
+    宏观数据本身无标的维，基准代码已编码在 unsymbolizer ID 中。
+    更多使用细节见文档「数据类型 DataType」与 S1.5 消费契约。
+
+    Parameters
+    ----------
+    names : str or list of str, optional
+        参考数据名称；逗号分隔字符串或列表。可为宽名、完整 id 或 unsymbolizer 名。
+    data_types : list of DataType, optional
+        显式 DataType 列表；若给出则忽略 ``names``。
+    data_source : DataSource, optional
+        数据源；默认使用全局 ``QT_DATA_SOURCE``。
+    start : str, optional
+        开始日期/时间（``YYYYMMDD`` 等可解析格式）。
+    end : str, optional
+        结束日期/时间。
+    freq : str, optional
+        目标频率；宽名消歧或与内置频率不一致时用于升/降频。
+    asset_type : str, optional
+        资产类型过滤；unsymbolizer 宽名歧义时用于消歧（如 ``IDX``）。
+    rows : int, optional
+        最近行数；与 ``start``/``end`` 同时给出时以日期区间为准。
+
+    Returns
+    -------
+    dict of pandas.Series
+        键为完整 ``dtype_id``，值为 index=时间的 Series。
+
+    Raises
+    ------
+    ValueError
+        名称为 history/static，或无法解析为合法 Reference。
+    TypeError
+        参数类型错误。
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> # 宏观序列不需要 shares
+    >>> gdp = qt.get_reference_data('cn_gdp', start='20100101', end='20231231')
+    >>> # 把沪深300收盘价当作参考基准（完整 id 或宽名+asset_type）
+    >>> bench = qt.get_reference_data(
+    ...     'close-000300.SH_IDX_d', start='20230101', end='20230131')
+    """
+    if data_types is not None:
+        if isinstance(data_types, DataType):
+            data_types = [data_types]
+        if not isinstance(data_types, (list, tuple)) or not data_types:
+            raise TypeError('data_types must be a non-empty DataType or list of DataType')
+        if not all(isinstance(dt, DataType) for dt in data_types):
+            raise TypeError('data_types must contain only DataType objects')
+        for dt in data_types:
+            _ensure_reference_data_type(dt)
+        resolved = list(data_types)
+    else:
+        if names is None:
+            raise ValueError('either names or data_types must be provided')
+        resolved = _resolve_reference_data_types(
+            names, freq=freq, asset_type=asset_type,
+        )
+
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, DataSource):
+            raise TypeError(
+                f'data_source should be a DataSource object, got {type(data_source)} instead'
+            )
+
+    one_year = pd.Timedelta(365, 'd')
+    if (start is None) and (end is None) and (rows is None):
+        end = pd.to_datetime('today').date()
+        start = end - one_year
+        rows = None
+    elif (start is None) and (end is None):
+        rows = int(rows)
+    elif start is None:
+        end = pd.to_datetime(end)
+        start = end - one_year
+        rows = None
+    elif end is None:
+        start = pd.to_datetime(start)
+        end = start + one_year
+        rows = None
+    else:
+        start = pd.to_datetime(start)
+        end = pd.to_datetime(end)
+        rows = None
+
+    if start is not None:
+        start = pd.to_datetime(start).strftime('%Y%m%d')
+    if end is not None:
+        end = pd.to_datetime(end).strftime('%Y%m%d')
+
+    return get_reference_data_from_source(
+        data_source,
+        htypes=resolved,
+        start=start,
+        end=end,
+        freq=freq,
+        row_count=rows,
+        group_by_dtype_name=False,
+    )
+
+
+def _ensure_static_data_type(dtype: DataType) -> None:
+    """确保 dtype 为 static 形状；否则以英文报错并指向正确入口。"""
+    kind = infer_dtype_kind(
+        name=dtype.name,
+        freq=dtype.freq,
+        asset_type=dtype.asset_type,
+        acquisition_type=_lookup_acquisition_type_for_dtype(dtype),
+    )
+    if kind == 'static':
+        return
+    if kind == 'history':
+        raise ValueError(
+            f"{dtype.name!r} is a history DataType; "
+            f"use qt.get_history_data(...) instead of qt.get_static_data(...)."
+        )
+    if kind == 'reference':
+        raise ValueError(
+            f"{dtype.name!r} is a reference DataType; "
+            f"use qt.get_reference_data(...) instead of qt.get_static_data(...)."
+        )
+    raise ValueError(
+        f"{dtype.name!r} has unsupported kind {kind!r} for qt.get_static_data(...)."
+    )
+
+
+def _resolve_static_data_types(
+        names,
+        *,
+        asset_type=None,
+) -> list:
+    """把用户字符串解析为 static DataType 列表。"""
+    if isinstance(names, str):
+        name_list = str_to_list(names)
+    elif isinstance(names, (list, tuple)):
+        name_list = list(names)
+    else:
+        raise TypeError(
+            f'names must be a string or list of strings, got {type(names).__name__}'
+        )
+    if not name_list:
+        raise ValueError('names cannot be empty')
+
+    resolved = []
+    for raw in name_list:
+        if not isinstance(raw, str):
+            raise TypeError(f'each name must be a string, got {type(raw).__name__}')
+        parsed = parse_dtype_user_string(raw)
+        if parsed.form == 'full':
+            dtype = DataType(
+                name=parsed.wide_name,
+                freq=parsed.freq,
+                asset_type=parsed.asset_type,
+            )
+        else:
+            init_kwargs = {}
+            if asset_type is not None:
+                init_kwargs['asset_type'] = asset_type
+            # static 的 freq 字面量为 None；完整 id 已处理，宽名交给 DataType 消歧
+            dtype = DataType(name=parsed.wide_name, **init_kwargs)
+        _ensure_static_data_type(dtype)
+        resolved.append(dtype)
+    return resolved
+
+
+def get_static_data(
+        names=None,
+        *,
+        shares=None,
+        symbols=None,
+        data_types=None,
+        data_source=None,
+        asset_type=None,
+):
+    """从本地数据源获取 Static（仅标的维）截面数据。
+
+    用于行业、上市日、证券名称等与时间无关的属性。返回以 ``qt_code`` 为索引的
+    ``Series``（单个名称）或 ``DataFrame``（多个名称）；不升频、不编入 HistoryPanel。
+    更多使用细节见文档「数据类型 DataType」与 S1.5 消费契约。
+
+    Parameters
+    ----------
+    names : str or list of str, optional
+        静态数据类型名称；逗号分隔字符串或列表。可为宽名或完整 id
+        （如 ``industry``、``list_date_E_None``）。
+    shares : str or list of str, optional
+        证券代码池；逗号分隔字符串或列表。与 ``symbols`` 二选一，至少提供一个。
+    symbols : str or list of str, optional
+        ``shares`` 的别名。
+    data_types : DataType or list of DataType, optional
+        显式 DataType 列表；若给出则忽略 ``names``。
+    data_source : DataSource, optional
+        数据源；默认使用全局 ``QT_DATA_SOURCE``。
+    asset_type : str, optional
+        资产类型消歧（如 ``E``）。宽名在多资产下歧义时必须给出
+        （例如 ``list_date`` 有 E/IDX/FD 等多个版本）。
+
+    Returns
+    -------
+    pandas.Series
+        仅请求一个名称时，index 为 ``qt_code``，值为该属性。
+    pandas.DataFrame
+        请求多个名称时，index 为 ``qt_code``，列为各属性宽名。
+
+    Raises
+    ------
+    ValueError
+        名称为 history/reference，缺少股票池，或无法解析为合法 Static。
+    TypeError
+        参数类型错误。
+
+    Examples
+    --------
+    >>> import qteasy as qt
+    >>> basics = qt.get_static_data(
+    ...     names='industry, list_date',
+    ...     shares='000001.SZ, 000002.SZ, 600000.SH',
+    ...     asset_type='E',
+    ... )
+    >>> bank = basics[basics['industry'] == '银行']
+    """
+    if data_types is not None:
+        if isinstance(data_types, DataType):
+            data_types = [data_types]
+        if not isinstance(data_types, (list, tuple)) or not data_types:
+            raise TypeError('data_types must be a non-empty DataType or list of DataType')
+        if not all(isinstance(dt, DataType) for dt in data_types):
+            raise TypeError('data_types must contain only DataType objects')
+        for dt in data_types:
+            _ensure_static_data_type(dt)
+        resolved = list(data_types)
+    else:
+        if names is None:
+            raise ValueError('either names or data_types must be provided')
+        resolved = _resolve_static_data_types(names, asset_type=asset_type)
+
+    if symbols is not None and shares is None:
+        shares = symbols
+    if shares is None:
+        raise ValueError(
+            'shares (or symbols) must be provided for qt.get_static_data(...); '
+            'Static attributes are indexed by qt_code.'
+        )
+    if isinstance(shares, (list, tuple)):
+        share_str = ','.join(str(item) for item in shares)
+        share_list = [str(item).strip() for item in shares if str(item).strip()]
+    elif isinstance(shares, str):
+        share_str = shares
+        share_list = str_to_list(shares)
+    else:
+        raise TypeError(
+            f'shares must be a string or list of strings, got {type(shares).__name__}'
+        )
+    if not share_list:
+        raise ValueError('shares cannot be empty')
+
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        data_source = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, DataSource):
+            raise TypeError(
+                f'data_source should be a DataSource object, got {type(data_source)} instead'
+            )
+
+    columns = {}
+    for dtype in resolved:
+        ser = dtype.get_data_from_source(data_source, symbols=share_str)
+        if not isinstance(ser, pd.Series):
+            raise TypeError(
+                f'static data for {dtype.name!r} must be a Series, got {type(ser).__name__}'
+            )
+        col_name = dtype.name
+        if col_name in columns:
+            col_name = dtype.dtype_id
+        # 按请求的股票池对齐索引（缺失填 NaN）
+        ser = ser.reindex(share_list)
+        ser.name = col_name
+        columns[col_name] = ser
+
+    if len(columns) == 1:
+        return next(iter(columns.values()))
+    return pd.DataFrame(columns)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整

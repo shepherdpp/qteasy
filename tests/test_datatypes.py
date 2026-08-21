@@ -1461,15 +1461,15 @@ ALL_TYPES_TO_TEST_WITH_SOME_ID = [
     'stock_name',
     'area',
     'industry',
-    'close',
-    'close|b',
-    'high|f',
+    ('close', 'd', 'E'),
+    ('close|b', 'd', 'E'),
+    ('high|f', 'd', 'E'),
     ('low|f', None, 'E'),
-    ('open', 'w', None),
+    ('open', 'w', 'E'),
     ('pe', 'd', 'IDX'),
     ('pe', 'd', 'E'),
     ('pe', None, 'E'),
-    ('close|b', 'd', None),
+    ('close|b', 'd', 'E'),
     ('ths_category', 'None', 'E'),
     ('weight_rule', 'None', 'IDX'),
     ('is_trade_day|SSE', 'd', 'None'),
@@ -1553,8 +1553,8 @@ class TestDataTypes(unittest.TestCase):
                 self.assertEqual(dtype.asset_type, asset_type)
 
         # test special case that was found fault:
-        d1 = DataType(name='close|b')
-        d2 = DataType(name='close|f')
+        d1 = DataType(name='close|b', freq='d', asset_type='E')
+        d2 = DataType(name='close|f', freq='d', asset_type='E')
 
         acquisition_type, kwargs = _parse_acquisition_parameters(
                 search_name=d1._search_name,
@@ -2380,27 +2380,43 @@ class TestDataTypes(unittest.TestCase):
 class TestDataTypeInitPartialParams(unittest.TestCase):
     """ 覆盖 DataType 四种构造语义：仅 name；name+freq；name+asset_type；name+freq+asset_type。"""
 
-    def test_name_only_returns_first_defined(self):
-        print('\n[TestDataTypeInitPartialParams] name only')
+    def test_name_only_unique_or_ambiguous(self):
+        print('\n[TestDataTypeInitPartialParams] name only unique vs ambiguous')
+        dt = DataType('industry')
+        print(' industry dtype_id:', dt.dtype_id, 'freq:', dt.freq, 'asset:', dt.asset_type)
+        self.assertEqual(dt.name, 'industry')
+        self.assertEqual(dt.freq, 'None')
+        self.assertEqual(dt.asset_type, 'E')
+        self.assertEqual(dt.dtype_id, 'industry_E_None')
+
         for name in ('close', 'total_share'):
             with self.subTest(name=name):
-                dt = DataType(name)
-                self.assertIsInstance(dt, DataType)
-                self.assertEqual(dt.name, name)
-                self.assertIsNotNone(dt.freq)
-                self.assertIsNotNone(dt.asset_type)
-        print('  name-only OK')
+                with self.assertRaises(ValueError) as ctx:
+                    DataType(name)
+                msg = str(ctx.exception)
+                print(f'  {name!r} ambiguous: {msg}')
+                self.assertIn('Ambiguous DataType name', msg)
+                self.assertIn(f'{name}_', msg)
+        print('  name-only unique/ambiguous OK')
 
-    def test_name_and_freq_returns_first_match(self):
+    def test_name_and_freq_unique_or_ambiguous(self):
         print('\n[TestDataTypeInitPartialParams] name + freq')
-        dt = DataType('total_share', freq='d')
-        self.assertEqual(dt.name, 'total_share')
-        self.assertEqual(dt.freq, 'd')
+        with self.assertRaises(ValueError) as ctx:
+            DataType('total_share', freq='d')
+        msg = str(ctx.exception)
+        print('  total_share@d ambiguous:', msg)
+        self.assertIn('Ambiguous DataType name', msg)
+        self.assertIn('total_share_E_d', msg)
+        self.assertIn('total_share_IDX_d', msg)
+
         dt2 = DataType('total_share', freq='q')
+        print('  total_share@q dtype_id:', dt2.dtype_id, 'asset:', dt2.asset_type)
+        self.assertEqual(dt2.name, 'total_share')
         self.assertEqual(dt2.freq, 'q')
+        self.assertEqual(dt2.asset_type, 'E')
         with self.assertRaises(ValueError):
             DataType('total_share', freq='h')
-        print('  name+freq OK')
+        print('  name+freq unique/ambiguous OK')
 
     def test_name_and_asset_type_returns_first_match(self):
         print('\n[TestDataTypeInitPartialParams] name + asset_type')
@@ -2466,12 +2482,19 @@ class TestFindHistoryDataAPI(unittest.TestCase):
         base_ids = find_history_data('pe', freq='d', asset_type='E')
         df = find_history_data('pe', freq='d', asset_type='E', as_data_frame=True)
         print(f'  base_ids count: {len(base_ids)}, df shape: {df.shape}, columns: {df.columns.tolist()}')
-        expected_cols = ['name', 'description', 'freq', 'asset_type', 'table_name', 'column']
+        expected_cols = [
+            'name', 'description', 'freq', 'asset_type', 'table_name', 'column',
+            'kind', 'usable_in', 'recommended_api',
+        ]
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(df.index.name, 'data_id')
         for col in expected_cols:
             self.assertIn(col, df.columns)
         self.assertEqual(len(df), len(base_ids))
+        print('  recommended_api values:', df['recommended_api'].unique().tolist())
+        self.assertTrue(set(df['recommended_api']).issubset({
+            'get_history_data', 'get_reference_data', 'get_static_data', 'none',
+        }))
 
     def test_find_history_data_pattern_matches_name_and_description(self):
         print('\n[TestFindHistoryDataAPI] pattern matches name and description')
