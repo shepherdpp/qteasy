@@ -7,26 +7,27 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 14:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: es <LL@li.org>\n"
 "Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:1
-msgid "使用 HistoryPanel 操作和分析历史数据"
+#, fuzzy
+msgid "HistoryPanel 操作和分析历史数据"
 msgstr "Utilice HistoryPanel para operar y analizar datos históricos"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:3
-msgid "在完成前两章「入门」和「获取并管理金融数据」之后，我们已经可以："
+msgid ""
+"在完成「入门」「获取并管理金融数据」，以及（建议阅读）[HistoryPanel 数据面板基础操作](2.4-historypanel-"
+"basics.md) 之后，我们已经可以："
 msgstr ""
-"Después de completar los dos primeros capítulos, \"Cómo comenzar\" y "
-"\"Obtener y administrar datos financieros\", ya podemos:"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:5
 msgid "在本地配置好数据源并下载所需的历史数据；"
@@ -35,872 +36,1641 @@ msgstr ""
 "requeridos;"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:6
-msgid "使用 `get_history_data()` 或 `get_history_panel()` 获取价格、成交量等基础行情。"
+msgid "创建 `HistoryPanel`，并完成切片、扩列、对齐与 `DataFrame` 互转等容器级操作。"
 msgstr ""
-"Utilice `get_history_data()` o `get_history_panel()` para obtener datos "
-"básicos del mercado, como precios y volumen de operaciones."
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:8
-msgid "本章将在此基础上，通过一个完整的小例子，演示如何使用 `HistoryPanel`："
+#, fuzzy
+msgid "本章将在此基础上，通过完整小例子演示如何用 `HistoryPanel` **玩数据**（因子、出图、组合粗验）："
 msgstr ""
-"Sobre la base de esto, este capítulo utilizará un pequeño ejemplo completo "
-"para demostrar cómo usar `HistoryPanel`:"
+"Sobre la base de esto, este capítulo utilizará un pequeño ejemplo "
+"completo para demostrar cómo usar `HistoryPanel`:"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:10
+msgid ""
+"**关于`HistoryPanel`**: "
+"`HistoryPanel`类是`qteasy`提供的**因子研究与粗验**容器对象，它提供了一系列量化金融分析常用的数据分析工具，便于用户「玩数据」（进行数据分析、解析以及数据背后的关联挖掘），以及可视化图表，便于用户“目视筛因子”；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:12
+msgid "`HistoryPanel`的功能包括："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:13
 msgid "统一管理多标的、多指标的历史数据；"
 msgstr ""
 "Gestión unificada de datos históricos para múltiples instrumentos y "
 "múltiples indicadores;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:11
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:14
+msgid ""
+"时序变换（``shift`` / ``diff`` / ``pct_change``）与缺失处理（``ffill`` / ``bfill`` / "
+"``dropna``）；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:15
+msgid "列表达式 ``expr`` 与 ``assign`` 派生因子列；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:16
+msgid "统计聚合补齐（``sum`` / ``median`` / ``var`` / ``quantile``，与 ``mean`` 同契约）；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:17
+msgid "面板级时序相关 / 协方差矩阵（``corr`` / ``cov``）；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:18
 msgid "计算收益率、波动率等简单因子；"
 msgstr "Calcule factores simples como rendimientos y volatilidad;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:12
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:19
 msgid "叠加 K 线技术指标；"
 msgstr "Superposición de indicadores técnicos de línea K;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:13
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:20
 msgid "识别部分蜡烛形态；"
 msgstr "Identificar algunos patrones de velas;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:14
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:21
 msgid "使用 ``where`` 生成与数据同形的 **bool 掩码**，为后续带 ``mask=`` 的研究接口做准备；"
 msgstr ""
 "Utilice ``where`` to generate a **bool mask** with the same shape as the "
 "data, in preparation for subsequent research APIs that take ``mask=``;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:15
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:22
 msgid ""
 "使用 **列属性**（如 ``hp.close``）、**比较运算**（返回 ``numpy`` 布尔数组，可与 ``where`` 衔接）以及 "
 "**``hp.loc``**（仅沿时间轴筛选，等价 ``hp[:, :, key]``）。"
 msgstr ""
-"Utilice **atributos de columna** (por ejemplo, ``hp.close``), **comparison "
-"operators** (returning a ``numpy`` boolean array that can be chained with "
-"``where``), and **``hp.loc``** (filters only along the time axis, equivalent"
-" to ``hp[:, :, key]``)."
+"Utilice **atributos de columna** (por ejemplo, ``hp.close``), "
+"**comparison operators** (returning a ``numpy`` boolean array that can be"
+" chained with ``where``), and **``hp.loc``** (filters only along the time"
+" axis, equivalent to ``hp[:, :, key]``)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:17
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:23
+msgid "通过对数据的筛选实现简单的“回测”分析；"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:25
 msgid ""
-"更完整的 API 说明可参考 [HistoryPanel API 参考](../api/HistoryPanel.rst)（含「列属性访问、比较与 "
-"``loc``」与 ``where`` 专节）。"
+"**注**：`HistoryPanel`并不支持**完整回测**功能（包含费用计算、交割、MOQ、信号类型控制以及详细交易报告等元素），完整的回测仍须交给"
+" `qteasy` 提供的 `Operator` 对象和 `Backtester` 来实现，详见 [从 HistoryPanel 研究到 "
+"Strategy / Operator](#从-historypanel-研究到-strategy--"
+"operator迁移路径)。容器结构与基本切片若尚不熟悉，请先阅读 [HistoryPanel 数据面板基础操作](2.4"
+"-historypanel-basics.md)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:27
+msgid ""
+"更完整的 API 说明可参考 [HistoryPanel API 参考](../api/HistoryPanel.rst)（含「列属性访问、比较与"
+" ``loc``」与 ``where`` 专节）。"
 msgstr ""
 "Para obtener una descripción más completa de la API, consulte la "
 "[HistoryPanel Referencia de API](../api/HistoryPanel.rst) (incluidas las "
 "secciones dedicadas a “acceso a atributos de columna, comparaciones y "
 "``loc``” and on ``where``)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:21
-msgid "1. 准备数据：获取一个 HistoryPanel"
-msgstr "1. Preparar datos: obtener un HistoryPanel"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:23
-msgid ""
-"假设我们已经下载了沪深 300 指数（`000300.SH`）近一年的日线数据，可以直接通过 `qt.get_kline()` 或 "
-"`qt.get_history_data()` 获取一个 `HistoryPanel`："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:32
+msgid "数据检查——快速跑通最小闭环"
 msgstr ""
-"Supongamos que ya hemos descargado los datos diarios del año pasado para el "
-"índice CSI 300 (`000300.SH`). Podemos obtener directamente un `HistoryPanel`"
-" mediante `qt.get_kline()` o `qt.get_history_data()`:"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:34
+msgid ""
+"若您已经完成了 [获取并管理金融数据](2.0-get-data.md) 的学习，并下载了**最小数据集**，可按本节 checklist "
+"跑通「取数 → 出图 → 简单因子 → 与基准粗对比」——建议您在深入阅读下文之前，先掌握这些基础用法。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:36
+msgid ""
+"**前置条件**：已配置好 `tushare_token`，且已下载 [最小数据集清单](2.0-get-"
+"data.md#最小数据集清单供-25-使用) 中的表（至少含 `index_daily` 或 `stock_daily`）。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:38
+#, fuzzy
+msgid "**本节目标**："
+msgstr "**Nota**:"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:40
+msgid "**数据获取**：用 `get_kline` 从数据源中拉取多只股票及指数的K线数据，并创建一个 `HistoryPanel` 对象"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:41
+msgid "**技术指标**：用 `research_preset` 一键自动计算K线分析中常用的技术指标，并通过 `plot` 一键出图"
+msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:42
-msgid "此时："
-msgstr "En este punto:"
+msgid "**横向对比**：用 `returns` 自动计算股票的多种收益率指标，并通过横向对比方法 `zscore` / `rank` 进行因子横向对比排名"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:43
+msgid "**投资组合**：使用 `portfolio(..., benchmark=...)` 创建**研究向**的投资组合并粗略计算投资组合收益回报"
+msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:44
-msgid "`hp.shape` 是一个 `(L, R, C)` 的三元组，分别对应 **股票数 × 时间长度 × 数据类型数**；"
+msgid ""
+"**理解边界**：`HistoryPanel` 提供的投资组合 `portfolio` / 收益回报 `cum_return` "
+"等工具不是真正的精确回测，**不含**交易成本、交割、MOQ计算"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:46
+msgid ""
+"`qteasy` 的 `example` "
+"路径下保存了上述基本API的**一键脚本**，您可以直接在Terminal中运行下面的脚本，如果数据源中的数据已经正确下载，这个脚本会分步 "
+"`print` 出相应结果："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:52
+msgid ""
+"上面的脚本与下面代码等价：**Notebook 最小代码**（与脚本逻辑一致），包含了验证最小数据集已经下载的基本函数的运行结果。 "
+"您如果不想运行上面的自动化脚本，也可以在notebook或者ipython中自行运行下面的代码并观察结果。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:88
+msgid ""
+"当上面的最小闭环快速跑通之后，说明您下载的数据已经可以完整地跑完本节所有的内容了，您可以开始有针对性地了解 `HistoryPanel` "
+"的主要基本功能了。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:90
+msgid ""
+"**注**: 若 `get_kline` 返回时间长度很短或报错，请先回到 [获取并管理金融数据](2.0-get-data.md) "
+"补齐数据。容器切片等基础操作见 [HistoryPanel 基础操作](2.4-historypanel-"
+"basics.md)；下文因子与组合节可按需跳读。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:92
+msgid "下面我们可以开始正式地详细介绍 `HistoryPanel` 的基本功能："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:96
+#, fuzzy
+msgid "准备数据：获取一个 HistoryPanel"
+msgstr "1. Preparar datos: obtener un HistoryPanel"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:98
+msgid ""
+"若您已读完 [HistoryPanel 数据面板基础操作](2.4-historypanel-basics.md)，对本节三维结构与 "
+"`get_kline` 创建方式已熟悉，可直接跳到「时序变换与缺失处理」或「计算收益率与波动率因子」。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:100
+msgid ""
+"当我们已经在数据源中下载了股票的价格数据以后，就可以通过 `qt.get_kline()` 或 `qt.get_history_data()` "
+"获取 `HistoryPanel`了。二者都只接受 **History** 形状；若要把沪深 300 "
+"收盘价当作**基准序列**（Reference），请用 `qt.get_reference_data('close-000300.SH', "
+"...)`，不要把它当成面板里多出来的一只「普通标的维」来理解（面板里当然也可以同时放入 `000300.SH` 做对比——那是 History "
+"多标的，与 Reference 入口是两回事）。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:102
+msgid "例如，下面的代码可以获取沪深300指数（`000300.SH`）和平安银行 (`000001.SZ`) 在2023年1月的全部日K线数据："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:116
+msgid ""
+"`HistoryPanel` 的数据结构是一个三维的ndarray，它相当于多个结构相同的 `DataFrame` 堆叠起来，其中每一个 "
+"`DataFrame` 包含一只股票/指数/基金的各种历史数据，而整个 `HistoryPanel` 则包含了所有股票/指数/基金的数据。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:118
+msgid "打印hp可以直观地看到它的数据结构:"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:120
+msgid "它包含沪深300和平安银行两支股票，每支股票又包含一张数据表，每张表包含开盘/最高/最低/收盘/交易量等五列和二十多行数据（每个交易日一行）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:147
+msgid "通过 `HistoryPanel` 的几个基本属性可以查看它包含的数据量和数据类型："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:149
+#, fuzzy
+msgid "**`hp.shape`** 一个 `(M, L, N)` 三元组，分别对应 **股票数 × 时间长度 × 数据类型数**；"
 msgstr ""
 "`hp.shape` es una tupla `(L, R, C)`, correspondiente a **número de "
 "existencias × duración × número de tipos de datos**;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:45
-msgid "`hp.shares` 通常是 `['000300.SH']`；"
-msgstr "`hp.shares` suele ser `['000300.SH']`;"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:150
+msgid ""
+"**`hp.shares`** 一个 `List`，`HistoryPanel` 中所有的股票/指数代码，例如 `['000300.SH', "
+"'000001.SZ']`；"
+msgstr ""
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:46
-msgid "`hp.htypes` 默认包含 `['open', 'high', 'low', 'close', 'vol']` 等。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:151
+#, fuzzy
+msgid ""
+"**`hp.htypes`** 一个 `List`，`HistoryPanel` 中所有的数据类型名称，通常包含 `['open', "
+"'high', 'low', 'close', 'vol']` 等。"
 msgstr ""
 "De forma predeterminada, `hp.htypes` incluye `['open', 'high', 'low', "
 "'close', 'vol']`, etc."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:50
-msgid "2. 计算收益率与波动率因子"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:165
+msgid "时序变换与缺失处理（shift / diff / pct_change / dropna）"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:167
+msgid "了解面板结构之后，研究里常见的下一步是：对任意列做时间位移、差分或百分比变化，并清理缺失——为后续因子列做准备。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:169
+msgid ""
+"**注**：本节只讲 `HistoryPanel` **内核** API。截面 IC、分位组合等见独立模块 "
+"[`qteasy.research`](../api/research.rst)（[下方 cookbook](#截面-ic-"
+"与分位组合qteasyresearch)）；正式回测仍见 [从 HistoryPanel 研究到 Strategy / "
+"Operator](#从-historypanel-研究到-strategy--operator迁移路径)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:171
+#, fuzzy
+msgid "**最小原理**："
+msgstr "**Nota**:"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:173
+msgid ""
+"`shift` / `diff` / `pct_change` 均沿 **hdates**（时间轴）作用，返回**新**面板；正 "
+"`periods` 表示向后看历史（与 pandas 一致）；`periods` 须为非零整数。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:174
+msgid ""
+"`pct_change` 是**任意列**的通用百分比变化，不调用 "
+"`_resolve_price_htype`；价格语义、复权根名解析请用下一节的 `returns`。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:175
+msgid ""
+"填充类（`fillna` / `ffill` / `fillinf`）默认**原地**；`bfill` 默认返回新对象。可变性总表见 "
+"[HistoryPanel 基础操作 §8](2.4-historypanel-basics.md#8-副本语义与-inplace)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:177
+msgid "下面仍使用沪深 300 + 平安银行的日线面板（可用全年区间以便观察位移效果）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:198
+msgid ""
+"若您需要「前瞻收益」列做截面研究，须由**调用方**先造好收益列——API **不会**隐式前瞻。例如用负向 `shift` "
+"把下一期收益对齐到当期（研究向示意，非回测）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:206
+msgid "缺失清洗示例："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:218
+msgid "列表达式 `expr`"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:220
+msgid "简单列名算术可用 `expr`；复杂逻辑或含 `|` 的复权列名请用 `assign`："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:227
+msgid ""
+"**提示**：`expr` 仅接受 Python 标识符列名与 `+ - * / ** ()` 及数字；禁止函数调用与属性访问。更多约定见 "
+"[HistoryPanel API：expr](../api/HistoryPanel.rst)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:231
+msgid "统计聚合补齐（sum / median / var / quantile）"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:233
+msgid ""
+"在时序变换之外，您有时需要把整段历史**压成一张表**：每个标的、每个指标一个标量。`sum` / `median` / `var` / "
+"`quantile` 与已有的 `mean` / `std` / `min` / `max` 同一契约——沿 **hdates** 聚合，返回 "
+"`DataFrame(index=shares, columns=htypes)`。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:250
+msgid ""
+"**提示**：面板级 `hp.sum()` 返回 **DataFrame**；滚动窗口上的 `hp.rolling(w).sum()` 返回 "
+"**HistoryPanel**，二者勿混淆。结构上的 `drop` / `rename` 见 [HistoryPanel 基础操作 "
+"§4.1](2.4-historypanel-basics.md#41-删除与重命名标签drop--rename)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:254
+msgid "截面 IC 与分位组合（`qteasy.research`）"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:256
+msgid "截面因子评价放在 **模块级** API，**不**挂成 `HistoryPanel` 方法："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:267
+msgid ""
+"**定位**：这些函数面向研究粗验，**不是** Backtester（无交割/费用/MOQ）。也不内置 Newey–West / "
+"Fama–MacBeth——发表级推断请导出到 statsmodels（见下文「导出到 pandas / statsmodels」）。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:269
+msgid ""
+"**前瞻收益由您自备**：`factor_ic` **不会**在函数内 `shift`。常见做法是先用 `pct_change` + 负向 "
+"`shift` 把下一期收益对齐到当期："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:285
+msgid ""
+"完整可跟跑合成示例：`examples/historypanel_research_factor_workflow.py`。签名与边界见 "
+"[research API](../api/research.rst)。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:287
+msgid "与 `corr` / `cov` 的区别"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:289
+msgid "**`qteasy.research.factor_ic`**：每个交易日在 **share 维**做截面相关 → 一条时间序列。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:290
+msgid ""
+"**`hp.corr(htype)` / `hp.cov(htype)`**：把每个标的的该列当作一条时间序列，算 **shares × "
+"shares** 时序相关 / 协方差矩阵。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:300
+#, fuzzy
+msgid "计算收益率与波动率因子"
 msgstr "2. Calcular los factores de rentabilidad y volatilidad."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:52
-msgid "`HistoryPanel` 内置了针对价格序列的收益与波动率计算接口："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:302
+msgid "了解 `HistoryPanel` 的基本操作与时序变换以后，接下来我们可以进一步了解如何进行基础的金融数据分析计算。"
 msgstr ""
-"`HistoryPanel` tiene interfaces integradas para calcular los rendimientos y "
-"la volatilidad de las series de precios:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:75
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:304
+#, fuzzy
+msgid "`HistoryPanel` 内置了针对价格序列的收益 `returns` 与波动率 `volatility` 计算接口："
+msgstr ""
+"`HistoryPanel` tiene interfaces integradas para calcular los rendimientos"
+" y la volatilidad de las series de precios:"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:306
+msgid ""
+"**注意**：`returns` `volatility` 这两个方法不会修改原来的 `HistoryPanel`，只会返回一个新的 "
+"`DataFrame` 对象或者 `HistoryPanel`"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:337
 msgid "典型用法是："
 msgstr "Un uso típico es:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:77
-msgid "将 `ret` 或 `vol` 当作因子值矩阵（时间 × 股票）；"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:339
+#, fuzzy
+msgid ""
+"将 `ret` 或 `vol` 当作**因子值矩阵**（时间 × 股票），用于目视筛选、截面打分或与 §5 的 `rank`/`zscore` "
+"联用；"
 msgstr ""
 "Trate `ret` o `vol` como una matriz de valor de factor (tiempo × "
 "existencias);"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:78
-msgid "直接送入回测引擎，或用于选股、打分等。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:340
+msgid "若结论需要严肃评价，请把同一经济含义写进 `Strategy.realize()`，交给 `Operator` 回测（见 **§9**）。"
 msgstr ""
-"Puede introducirse directamente en el motor de backtesting o utilizarse para"
-" selección de valores, puntuación, etc."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:82
-msgid "3. 叠加 K 线技术指标"
-msgstr "3. Indicadores técnicos de velas superpuestas"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:344
+#, fuzzy
+msgid "叠加 K 线技术指标"
+msgstr "Superposición de indicadores técnicos de línea K;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:84
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:346
 msgid "当 `HistoryPanel` 中包含 OHLC 数据时，可以通过 `hp.kline` 访问一批常用技术指标："
 msgstr ""
-"Cuando `HistoryPanel` contiene datos OHLC, puede acceder a un conjunto de "
-"indicadores técnicos de uso común a través de `hp.kline`:"
+"Cuando `HistoryPanel` contiene datos OHLC, puede acceder a un conjunto de"
+" indicadores técnicos de uso común a través de `hp.kline`:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:100
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:348
+msgid ""
+"`HistoryPanel.kline` 是一个K线技术指标访问器，它打包了一系列K线技术指标计算方法，用于快速计算 `hp` "
+"中所有股票的K线技术指标并将计算结果添加到返回的`hp`中:"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:349
+#, fuzzy
+msgid "`hp.kline.sma(...)` 简单移动均线：会在 `htypes` 中追加一列，例如 `sma_20`；"
+msgstr "`hp.kline.sma(...)` agregará una columna a `htypes`, como `sma_20`;"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:350
+#, fuzzy
+msgid ""
+"`hp.kline.macd(...)` MACD指标：会追加 "
+"`macd_xxx`、`macd_signal_xxx`、`macd_hist_xxx` 三列；"
+msgstr ""
+"`hp.kline.macd(...)` agregará tres columnas: `macd_xxx`, "
+"`macd_signal_xxx` y `macd_hist_xxx`;"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:351
+#, fuzzy
+msgid "`hp.kline.ema(...)` 指数移动均线指标，会在原 hp 中追加 `ema_xxx` 列"
+msgstr "`hp.kline.sma(...)` agregará una columna a `htypes`, como `sma_20`;"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:352
+msgid "`hp.kline.bbands(...)` 布林带线指标"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:353
+msgid "`hp.kline.kdj(...)` KDJ指标"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:355
+msgid "例如："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:370
 msgid "这里："
 msgstr "Aquí:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:102
-msgid "`hp.kline.sma(...)` 会在 `htypes` 中追加一列，例如 `sma_20`；"
-msgstr "`hp.kline.sma(...)` agregará una columna a `htypes`, como `sma_20`;"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:103
-msgid ""
-"`hp.kline.macd(...)` 会追加 `macd_xxx`、`macd_signal_xxx`、`macd_hist_xxx` 三列；"
-msgstr ""
-"`hp.kline.macd(...)` agregará tres columnas: `macd_xxx`, `macd_signal_xxx` y"
-" `macd_hist_xxx`;"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:104
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:372
 msgid "最终通过 `to_share_frame(share)` 得到标准的二维 `DataFrame`，可直接与其他数据源联立分析。"
 msgstr ""
 "Finalmente, use `to_share_frame(share)` para obtener un `DataFrame` 2D "
 "estándar, que se puede analizar directamente junto con otras fuentes de "
 "datos."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:106
-msgid "3.1 inplace：原地扩列（减少拷贝）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:374
+#, fuzzy
+msgid "inplace：原地扩列（减少拷贝）"
 msgstr "3.1 in situ: expandir columnas en su lugar (reducir la copia)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:108
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:376
+#, fuzzy
 msgid ""
 "默认情况下，`kline.*` 返回 **新** "
-"`HistoryPanel`（不污染原对象）。当你希望在同一个面板上连续追加多列，并减少中间对象时，可以使用 `inplace=True`："
+"`HistoryPanel`（不污染原对象）。当您希望在同一个面板上连续追加多列、并减少中间对象时，可以使用 `inplace=True`："
 msgstr ""
-"De forma predeterminada, `kline.*` devuelve un **nuevo** `HistoryPanel` (sin"
-" mutar el objeto original). Cuando desee agregar varias columnas "
-"continuamente en el mismo panel y reducir objetos intermedios, puede usar "
-"`inplace=True`:"
+"De forma predeterminada, `kline.*` devuelve un **nuevo** `HistoryPanel` "
+"(sin mutar el objeto original). Cuando desee agregar varias columnas "
+"continuamente en el mismo panel y reducir objetos intermedios, puede usar"
+" `inplace=True`:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:117
-msgid "提示：当新列名与已有列名冲突时，`kline.*` 会抛出英文 `ValueError`，避免静默覆盖。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:385
+#, fuzzy
+msgid "提示：当新列名与已有列名冲突时，`kline.*` 会抛出 `ValueError`，避免静默覆盖。"
 msgstr ""
-"Consejo: Cuando un nombre de columna nuevo entra en conflicto con un nombre "
-"de columna existente, `kline.*` generará un `ValueError` en inglés para "
-"evitar una sobrescritura silenciosa."
+"Consejo: Cuando un nombre de columna nuevo entra en conflicto con un "
+"nombre de columna existente, `kline.*` generará un `ValueError` en inglés"
+" para evitar una sobrescritura silenciosa."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:119
-msgid "3.2 第一入口：research_preset（一行拼列 + 直接出图）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:387
+#, fuzzy
+msgid "第一入口：research_preset（一行拼列 + 直接出图）"
 msgstr ""
-"3.2 Primer punto de entrada: research_preset (encadenamiento de columnas de "
-"una línea + trazado directo)"
+"3.2 Primer punto de entrada: research_preset (encadenamiento de columnas "
+"de una línea + trazado directo)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:121
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:389
 msgid ""
-"如果你希望“拿到数据后立刻得到一张像样的图”，推荐直接使用 `research_preset` 生成官方预设的常用列集合（预设只做显式追加，不在 "
-"`plot()` 内隐藏计算）："
+"在 §0 的最小闭环中，我们已经用过 `research_preset`：它的作用是把 OHLCV、MACD、均线等常用列**一次性**追加到 "
+"`HistoryPanel` 上，再交给 `plot()` 出图。相比手动链式调用 "
+"`kline.sma()`、`kline.macd()`，预设更适合「数据刚下载完、想立刻看到一张完整技术图」的场景。"
 msgstr ""
-"Si desea \"obtener un gráfico de aspecto decente tan pronto como tenga los "
-"datos\", se recomienda usar `research_preset` directamente para generar el "
-"conjunto preestablecido oficial de columnas de uso común (el valor "
-"preestablecido solo agrega anexos explícitos y no oculta cálculos dentro de "
-"`plot()`):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:132
-msgid "当输入面板缺少预设所需的输入列时，会抛出英文 `ValueError`，信息包含缺失列列表与补齐建议。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:391
+msgid "**注意**：预设只在您**显式调用** `research_preset` 时计算新列；`plot()` 本身不会偷偷追加未声明的指标列。"
 msgstr ""
-"Cuando al panel de entrada le faltan las columnas de entrada requeridas por "
-"el ajuste preestablecido, se generará un `ValueError` en inglés; el mensaje "
-"incluye la lista de columnas que faltan y sugerencias sobre cómo "
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:393
+msgid "下面的代码与 §0 中的用法相同，这里单独列出以便查阅参数含义："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:408
+#, fuzzy
+msgid ""
+"当输入面板缺少预设所需的输入列（例如没有完整的 OHLC）时，会抛出 `ValueError`，信息中包含缺失列列表与补齐建议；请回到 "
+"[2.0](2.0-get-data.md) 确认 K 线数据已下载完整。"
+msgstr ""
+"Cuando al panel de entrada le faltan las columnas de entrada requeridas "
+"por el ajuste preestablecido, se generará un `ValueError` en inglés; el "
+"mensaje incluye la lista de columnas que faltan y sugerencias sobre cómo "
 "completarlas."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:136
-msgid "4. 使用 assign 一次派生多列"
-msgstr "4. Utilice asignar para derivar varias columnas a la vez"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:138
-msgid ""
-"在实际研究中，经常需要基于已有列派生出多个新因子，例如价差、比例、缩放后的归一化值等。``HistoryPanel.assign()`` "
-"提供了一次性派生多列的 DSL："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:412
+msgid "在 `HistoryPanel` 中派生新列"
 msgstr ""
-"En la investigación práctica, a menudo es necesario derivar múltiples "
-"factores nuevos de columnas existentes, como diferenciales, proporciones, "
-"valores normalizados escalados, etc. ``HistoryPanel.assign()`` proporciona "
-"un DSL para derivar múltiples columnas de una sola vez:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:149
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:414
 msgid ""
-"`assign` 的关键字参数名称即新列名（htype），值可以是接收当前 `HistoryPanel` 的可调用对象，也可以是可广播到 `(M,L)`"
-" 的数组或标量；"
+"除了 K 线访问器 `kline` "
+"提供的标准技术指标外，研究中经常需要根据已有列**自定义**新因子，例如价差、涨跌幅比例、归一化后的指标等。`HistoryPanel` "
+"支持自定义派生新的列，例如:"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:426
+msgid ""
+"除了上面的用法，`HistoryPanel` 还提供了 `assign` 方法： ``HistoryPanel.assign()`` "
+"允许您在**一次调用**里派生多列，关键字参数名即新列名（htype），非常适合把「中间计算步骤」收拢成可读的配置式写法。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:429
+msgid ""
+"**注意**：默认 `inplace=False`，`assign` 返回**新的** `HistoryPanel`，不会修改原对象；与 §3.1"
+" 的 `kline(inplace=True)` 语义不同，使用时请留意。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:431
+msgid "下面的例子假设 `hp` 已包含 `close` 与 `open` 列（可沿用 §2 中准备的 2023 年数据）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:444
+msgid "说明："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:446
+#, fuzzy
+msgid "关键字参数名称即新列名；值可以是接收当前 `HistoryPanel` 的函数（参数 `p`），也可以是可广播到 `(M, L)` 的数组或标量；"
 msgstr ""
 "Los nombres de los argumentos de las palabras clave de `assign` son los "
-"nuevos nombres de las columnas (htype); los valores pueden ser invocables "
-"que toman el `HistoryPanel` actual, o matrices/escalares que se pueden "
+"nuevos nombres de las columnas (htype); los valores pueden ser invocables"
+" que toman el `HistoryPanel` actual, o matrices/escalares que se pueden "
 "transmitir al `(M,L)`;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:150
-msgid "同一次调用内，后面的列可以依赖前面刚新增的列，例如："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:447
+#, fuzzy
+msgid "**同一次调用内**，后面的列可以引用前面刚新增的列，例如："
 msgstr ""
-"Dentro de la misma llamada, las columnas posteriores pueden depender de las "
-"columnas que se acaban de agregar anteriormente, por ejemplo:"
+"Dentro de la misma llamada, las columnas posteriores pueden depender de "
+"las columnas que se acaban de agregar anteriormente, por ejemplo:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:159
-msgid "默认 `inplace=False`，返回新面板，不修改原对象；当你希望在原面板上原地扩列时，可以使用："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:456
+msgid "若希望在**原面板**上原地扩列（减少中间对象），可以写："
 msgstr ""
-"Por defecto, `inplace=False`, que devuelve un nuevo panel sin modificar el "
-"objeto original; cuando desee expandir las columnas en su lugar en el panel "
-"original, puede usar:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:165
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:462
+#, fuzzy
 msgid ""
-"提示：与 `hp['col'] = ...` 一样，`assign` 对已有列名采用“覆盖”语义；空面板上调用 `assign` 会抛出英文 "
-"`ValueError`。"
+"**提示**：与 `hp['col'] = ...` 一样，`assign` 对已有列名采用「覆盖」语义；在空面板上调用 `assign` 会抛出"
+" `ValueError`。简单列名算术亦可使用 `expr`，见上文 [时序变换与缺失处理](#时序变换与缺失处理shift--diff--"
+"pct_change--dropna) 中的 `expr` 小节。"
 msgstr ""
 "Consejo: Al igual que `hp['col'] = ...`, `assign` utiliza semántica de "
-"\"sobrescritura\" para los nombres de columnas existentes; llamar a `assign`"
-" en un panel vacío generará un `ValueError` en inglés."
+"\"sobrescritura\" para los nombres de columnas existentes; llamar a "
+"`assign` en un panel vacío generará un `ValueError` en inglés."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:169
-msgid "5. 横截面 rank 与 zscore（cs/ts）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:466
+#, fuzzy
+msgid "横截面 rank 与 zscore（cs/ts）"
 msgstr "5. Rango transversal y puntuación z (cs/ts)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:171
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:468
 msgid "多标的研究中常见的两类标准化需求是："
 msgstr ""
-"En la investigación de activos múltiples, dos tipos comunes de necesidades "
-"de estandarización son:"
+"En la investigación de activos múltiples, dos tipos comunes de "
+"necesidades de estandarización son:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:173
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:470
 msgid "**截面（cross-sectional）**：固定某个交易日，对所有股票的因子值做标准化或排名；"
 msgstr ""
-"**Transversal**: fije un día de negociación y estandarice o clasifique los "
-"valores de los factores en todas las acciones;"
+"**Transversal**: fije un día de negociación y estandarice o clasifique "
+"los valores de los factores en todas las acciones;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:174
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:471
 msgid "**时序（time-series rolling）**：固定某只股票，对它自己的历史序列用滚动窗口做标准化。"
 msgstr ""
-"**Series temporales (móviles)**: corrige una acción y utiliza una ventana "
-"móvil para estandarizar su propia serie histórica."
+"**Series temporales (móviles)**: corrige una acción y utiliza una ventana"
+" móvil para estandarizar su propia serie histórica."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:176
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:473
+#, fuzzy
 msgid ""
-"`HistoryPanel.rank()` 与 `HistoryPanel.zscore()` 提供了这两类最基础变换（仅做变换，不做回归推断）："
+"`HistoryPanel.rank()` 与 `HistoryPanel.zscore()` "
+"提供了这两类最基础变换（仅做数值变换，**不做**回归推断或显著性检验）。下面的代码仍基于 §2 中的 `hp`（2023 年沪深 300 + "
+"平安银行）："
 msgstr ""
 "`HistoryPanel.rank()` y `HistoryPanel.zscore()` proporcionan las "
-"transformaciones más básicas de estos dos tipos (solo transformaciones, sin "
-"inferencia de regresión):"
+"transformaciones más básicas de estos dos tipos (solo transformaciones, "
+"sin inferencia de regresión):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:189
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:486
+#, fuzzy
 msgid ""
-"提示：`zscore(method='cs')` 与 `zscore(method='ts')` 语义完全不同，务必显式指定 `method`（并在 "
-"`ts` 场景提供 `window`），避免把“截面标准化”误当成“时序标准化”。"
+"**提示**：`zscore(method='cs')` 与 `zscore(method='ts')` 含义完全不同；使用时务必显式传入 "
+"`method`，并在 `ts` 场景提供 `window`，避免把「截面标准化」误当成「时序标准化」。"
 msgstr ""
 "Nota: `zscore(method='cs')` y `zscore(method='ts')` tienen semánticas "
-"completamente diferentes. Asegúrese de especificar explícitamente `method` "
-"(y proporcionar `window` en el caso `ts`) para evitar confundir "
+"completamente diferentes. Asegúrese de especificar explícitamente "
+"`method` (y proporcionar `window` en el caso `ts`) para evitar confundir "
 "\"estandarización transversal\" con \"estandarización de series "
 "temporales\"."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:191
-msgid "5.5 对齐与重采样（align_to / resample）：避免 silent 错行"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:488
+#, fuzzy
+msgid "对齐与重采样（align_to / resample）：避免 silent 错行"
 msgstr ""
-"5.5 Alineación y remuestreo (align_to / resample): evite la desalineación "
-"silenciosa de las filas"
+"5.5 Alineación y remuestreo (align_to / resample): evite la desalineación"
+" silenciosa de las filas"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:193
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:490
 msgid ""
-"当你手里有两块 `HistoryPanel`，想做逐元素运算（比如 `hp_factor / hp_price`、或两面板相减）时，需要特别注意："
+"当您手里有两块 "
+"`HistoryPanel`（例如价格面板与基本面面板），想做逐元素运算（相除、相减）时，需要特别注意：`HistoryPanel` "
+"**不会**在运算符里自动对齐两块面板的 `shares` 与 `hdates`。若直接对 `.values` 做 NumPy "
+"运算，可能出现「看起来能算、但其实错行」的 silent bug。"
 msgstr ""
-"Entonces, cuando tiene dos `HistoryPanel` y desea realizar operaciones de "
-"elementos (como `hp_factor / hp_price` o restar dos paneles), debe prestar "
-"especial atención:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:195
-msgid "`HistoryPanel` **不会**在运算符里自动对齐两块面板；"
-msgstr ""
-"`HistoryPanel` **no** alineará automáticamente dos paneles dentro de los "
-"operadores;"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:196
-msgid ""
-"若 `shares` / `hdates` 不一致，直接拿 `.values` 做 NumPy 运算很容易出现“看起来能算、但其实错行”的结果。"
-msgstr ""
-"Si `shares` / `hdates` son inconsistentes, realizar operaciones NumPy "
-"directamente en `.values` puede producir fácilmente resultados que \"parecen"
-" calcularse, pero en realidad están desalineados por filas\"."
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:198
-msgid "因此建议遵循固定流程：**先对齐，再计算**。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:492
+#, fuzzy
+msgid "因此建议固定流程：**先对齐，再计算**。"
 msgstr ""
 "Por lo tanto, se recomienda seguir un flujo de trabajo fijo: **alinear "
 "primero, luego calcular**."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:207
-msgid "=当你需要把日线变成周线/月线等更低频数据时，可用 `resample()`，并**显式**指定每一列的聚合规则（避免语义不明）："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:501
+#, fuzzy
+msgid "当您需要把日线变成周线/月线等更低频数据时，可使用 `resample()`，并**显式**指定每一列的聚合规则（避免语义不明）："
 msgstr ""
-"=Cuando necesite convertir datos diarios en datos de menor frecuencia, como "
-"semanales/mensuales, puede usar `resample()` y **explícitamente** "
+"=Cuando necesite convertir datos diarios en datos de menor frecuencia, "
+"como semanales/mensuales, puede usar `resample()` y **explícitamente** "
 "especificar la regla de agregación para cada columna (para evitar una "
 "semántica poco clara):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:221
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:515
+#, fuzzy
 msgid ""
-"提示：`resample()` 要求 `agg` 覆盖全部 `htypes`。对于非 OHLCV 的自定义因子列，你需要自己决定 `'last'` / "
-"`'mean'` 等聚合方式并写进 `agg`。"
+"**提示**：`resample()` 要求 `agg` 覆盖全部 `htypes`。对于非 OHLCV 的自定义因子列，您需要自行决定 "
+"`'last'` / `'mean'` 等聚合方式并写进 `agg`。"
 msgstr ""
 "Nota: `resample()` requiere `agg` para cubrir todo el `htypes`. Para las "
 "columnas de factores personalizados que no son OHLCV, debe decidir usted "
-"mismo el método de agregación (por ejemplo, `'last'` / `'mean'`) e incluirlo"
-" en `agg`."
+"mismo el método de agregación (por ejemplo, `'last'` / `'mean'`) e "
+"incluirlo en `agg`."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:223
-msgid "5.6 用 (M,L) mask 做 plot 高亮（事件日/信号日）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:517
+#, fuzzy
+msgid "用 (M,L) mask 做 plot 高亮（事件日/信号日）"
 msgstr ""
-"5.6 Utilice una máscara (M, L) para resaltar gráficos (día del evento/día de"
-" la señal)"
+"5.6 Utilice una máscara (M, L) para resaltar gráficos (día del evento/día"
+" de la señal)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:225
-msgid "在因子研究里，你经常会得到一个二维布尔矩阵 `mask_ml`，表示“每只股票在哪些日期满足条件”（例如事件日、信号日、可交易池）。"
-msgstr ""
-"En la investigación de factores, a menudo obtendrá una matriz booleana 2D "
-"`mask_ml`, que indica \"en qué fechas cada acción cumple la condición\" (por"
-" ejemplo, fechas de eventos, fechas de señales, universo negociable)."
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:227
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:519
+#, fuzzy
 msgid ""
-"`HistoryPanel.plot()` 的 `highlight={'condition': mask_ml}` 支持直接把它映射到图形中高亮点："
+"在因子研究中，您经常会得到一个二维布尔矩阵，表示「每只股票在哪些日期满足条件」（例如事件日、信号日、可交易池）。`HistoryPanel.plot()`"
+" 的 `highlight={'condition': mask_ml}` 支持把它映射到图形中的高亮点："
 msgstr ""
-"`HistoryPanel.plot()` con `highlight={'condition': mask_ml}` admite mapearlo"
-" directamente en el gráfico para resaltar puntos:"
+"`HistoryPanel.plot()` con `highlight={'condition': mask_ml}` admite "
+"mapearlo directamente en el gráfico para resaltar puntos:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:229
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:521
 msgid ""
 "若 `mask_ml.shape == (M_plot, L)`，其中 `M_plot` 为当前 `plot(shares=...)` "
 "选中的股票数，则按绘图 share 顺序对应；"
 msgstr ""
-"Si `mask_ml.shape == (M_plot, L)`, donde `M_plot` es el número de acciones "
-"actualmente seleccionadas por `plot(shares=...)`, corresponde en el orden de"
-" acciones trazado;"
+"Si `mask_ml.shape == (M_plot, L)`, donde `M_plot` es el número de "
+"acciones actualmente seleccionadas por `plot(shares=...)`, corresponde en"
+" el orden de acciones trazado;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:230
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:522
 msgid ""
 "若 `mask_ml.shape == (M_all, L)`，其中 `M_all == len(hp.shares)`，则按 **share "
 "名**抽取当前绘图子集（避免 silent 错行）；"
 msgstr ""
 "Si es `mask_ml.shape == (M_all, L)`, donde `M_all == len(hp.shares)`, "
-"extraiga el subconjunto de trazado actual por **nombre compartido** (para "
-"evitar una desalineación silenciosa de filas);"
+"extraiga el subconjunto de trazado actual por **nombre compartido** (para"
+" evitar una desalineación silenciosa de filas);"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:231
-msgid ""
-"当 `layout='overlay'` 时默认 **primary-only** 显示高亮（与既有 Plotly highlight 语义一致）。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:523
+#, fuzzy
+msgid "当 `layout='overlay'` 时默认 **primary-only** 显示高亮。"
 msgstr ""
-"Cuando `layout='overlay'`, los resaltados se muestran como **solo primario**"
-" de forma predeterminada (consistente con la semántica de resaltado "
-"existente de Plotly)."
+"Cuando `layout='overlay'`, los resaltados se muestran como **solo "
+"primario** de forma predeterminada (consistente con la semántica de "
+"resaltado existente de Plotly)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:247
-msgid "5.4 Newey–West / Fama–MacBeth（背景：本节不实现）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:539
+#, fuzzy
+msgid "关于 Newey–West / Fama–MacBeth 的说明"
 msgstr ""
 "5.4 Newey–West / Fama–MacBeth (antecedentes: no implementado en esta "
 "sección)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:249
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:541
+#, fuzzy
 msgid ""
-"在计量实证中，你可能会看到 **Newey–West（HAC）稳健标准误** 与 **Fama–MacBeth "
-"两步回归**。它们主要用于**回归推断**（标准误修正、风险溢价显著性检验），不属于 `HistoryPanel.zscore()` 这类“基础变换”。"
-" 若需要发表级实证，建议将 `HistoryPanel` 导出为 `DataFrame` 后使用 `statsmodels` 等工具完成推断流程。"
+"在计量实证论文中，您可能会看到 **Newey–West（HAC）稳健标准误** 与 **Fama–MacBeth "
+"两步回归**。它们主要用于**回归推断**（标准误修正、风险溢价显著性检验），不属于 `HistoryPanel.zscore()` "
+"这类「基础变换」API 的职责范围。"
 msgstr ""
-"En econometría empírica, es posible que vea **errores estándar robustos de "
-"Newey-West (HAC)** y **regresiones de dos pasos de Fama-MacBeth**. Se "
+"En econometría empírica, es posible que vea **errores estándar robustos "
+"de Newey-West (HAC)** y **regresiones de dos pasos de Fama-MacBeth**. Se "
 "utilizan principalmente para **inferencia de regresión** (corrección de "
 "error estándar, pruebas de significancia para primas de riesgo) y no son "
-"“transformaciones básicas” como `HistoryPanel.zscore()`. Si necesita trabajo"
-" empírico de nivel de publicación, se recomienda exportar `HistoryPanel` a "
-"`DataFrame` y luego usar herramientas como `statsmodels` para completar el "
-"flujo de trabajo de inferencia."
+"“transformaciones básicas” como `HistoryPanel.zscore()`. Si necesita "
+"trabajo empírico de nivel de publicación, se recomienda exportar "
+"`HistoryPanel` a `DataFrame` y luego usar herramientas como `statsmodels`"
+" para completar el flujo de trabajo de inferencia."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:254
-msgid "6. 使用 apply_ta 统一调用技术指标"
-msgstr ""
-"6. Utilice apply_ta para llamar a indicadores técnicos de forma unificada."
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:256
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:543
 msgid ""
-"如果你已经熟悉 `qteasy.tafuncs` 或 ta-lib，可以通过 `HistoryPanel.apply_ta()` 做统一封装："
+"若需要发表级实证，需要使用 `qteasy` 的 `Strategy` 类创建交易策略，或者将 `HistoryPanel` 导出为 "
+"`DataFrame` 后，使用 `statsmodels` 等库完成推断流程（见 **§11**）。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:547
+#, fuzzy
+msgid "使用 apply_ta 统一调用技术指标"
+msgstr "6. Utilice apply_ta para llamar a indicadores técnicos de forma unificada."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:549
+#, fuzzy
+msgid ""
+"如果您已经熟悉 `qteasy.tafuncs` 或 ta-lib，`HistoryPanel.apply_ta()` "
+"提供了**统一入口**：指定指标名与参数后，会在 `hp` 中的**全部股票**上广播计算，并把结果追加为新列，避免手写循环。"
 msgstr ""
 "Si ya está familiarizado con `qteasy.tafuncs` o ta-lib, puede usar "
 "`HistoryPanel.apply_ta()` para un contenedor unificado:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:269
-msgid "这样可以避免在循环中手动调用 `tafuncs.sma`，`HistoryPanel` 会自动对所有选定股票广播计算。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:551
+msgid "**注意**：`apply_ta` 返回新的 `HistoryPanel`（当 `as_panel=True` 时），不会修改原面板。"
 msgstr ""
-"Esto evita llamar manualmente a `tafuncs.sma` en un bucle; `HistoryPanel` "
-"transmitirá automáticamente el cálculo a todas las acciones seleccionadas."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:273
-msgid "7. 识别蜡烛形态"
-msgstr "7. Identificar patrones de velas"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:275
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:564
+#, fuzzy
 msgid ""
-"对于 OHLC 数据，还可以通过 `HistoryPanel.candle_pattern()` 封装 ta-lib 的蜡烛形态识别函数，例如："
+"更完整的指标名与参数说明见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 与 "
+"`qteasy.tafuncs` 文档。"
 msgstr ""
-"Para datos OHLC, también puede ajustar las funciones de reconocimiento de "
-"patrones de velas de ta-lib a través de `HistoryPanel.candle_pattern()`, por"
-" ejemplo:"
+"Para obtener una descripción más completa de la API, consulte la "
+"[HistoryPanel Referencia de API](../api/HistoryPanel.rst) (incluidas las "
+"secciones dedicadas a “acceso a atributos de columna, comparaciones y "
+"``loc``” and on ``where``)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:286
-msgid "信号含义通常是："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:568
+#, fuzzy
+msgid "识别蜡烛形态"
+msgstr "Identificar algunos patrones de velas;"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:570
+msgid ""
+"对于包含完整 OHLC 的面板，还可以用 `HistoryPanel.candle_pattern()` 调用 ta-lib "
+"的蜡烛形态识别函数，快速得到「某形态是否出现」的信号矩阵。这在事件型因子研究（见 [教程 2.8](2.8-historypanel-"
+"advanced-event-kline-pattern.md)）中非常常用。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:572
+msgid "下面的例子识别**锤头线**（`CDLHAMMER`）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:583
+#, fuzzy
+msgid "信号含义通常为："
 msgstr "El significado de la señal suele ser:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:288
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:585
 msgid "`0`：未识别到该形态；"
 msgstr "`0`: no se detecta el patrón;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:289
-msgid "正数 / 负数：不同方向或强度的形态信号（取决于具体 ta-lib 函数的定义）。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:586
+#, fuzzy
+msgid "正数 / 负数：不同方向或强度的形态信号（具体含义取决于 ta-lib 对应函数的定义）。"
 msgstr ""
-"Valores positivos/negativos: señales de patrón en diferentes direcciones o "
-"con diferentes intensidades (dependiendo de la definición de la función ta-"
-"lib específica)."
+"Valores positivos/negativos: señales de patrón en diferentes direcciones "
+"o con diferentes intensidades (dependiendo de la definición de la función"
+" ta-lib específica)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:293
-msgid "8. 生成研究用 bool 掩码（`where`）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:590
+#, fuzzy
+msgid "生成研究用 bool 掩码（`where`）"
 msgstr "8. Genere una máscara booleana de investigación (`where`)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:295
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:592
+msgid ""
+"在 §5.2 中我们已经用二维布尔矩阵做 plot 高亮；更一般地，`HistoryPanel.where()` 可以把各种条件统一规整为与面板 "
+"**同形状** 的三维 bool 掩码，供 `cum_return`、`normalize`、`portfolio` 等接口的 `mask=` "
+"参数使用。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:594
+#, fuzzy
 msgid ""
 "面板 ``values`` 的轴顺序为 **(标的数 M, 时间长度 L, 指标列数 N)**，与 ``hp.shape`` "
-"一致。``hp.where(condition)`` 返回 **同形** 的 ``numpy.ndarray``，``dtype=bool``，且不修改"
-" ``hp``。``cum_return``、``normalize``、``portfolio`` 已支持 "
-"``mask=hp.where(...)``（或与 ``where`` 同广播规则的 ``bool`` "
-"数组）。研究向语义与边界（路径断开、基准日无效、组合与基准关系等）以 API docstring 为准。"
+"一致。``hp.where(condition)`` 返回 **同形** 的 "
+"``numpy.ndarray``（``dtype=bool``），且不修改 "
+"``hp``。``cum_return``、``normalize``、``portfolio`` 已支持 "
+"``mask=hp.where(...)``（或与 ``where`` 同广播规则的 ``bool`` 数组）。"
 msgstr ""
 "El orden de los ejes del panel. "
 "`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦C"
 " ODE12⟧`, ``normalize``, and ``portfolio`` already support "
-"``mask=hp.where(...)`` (or a ``bool`` array with the same broadcasting rules"
-" as ``where``). Para conocer la semántica orientada a la investigación y los"
-" casos extremos (rupturas de ruta, fechas base no válidas, relaciones entre "
-"cartera y puntos de referencia, etc.), consulte la cadena de documentación "
-"de API."
+"``mask=hp.where(...)`` (or a ``bool`` array with the same broadcasting "
+"rules as ``where``). Para conocer la semántica orientada a la "
+"investigación y los casos extremos (rupturas de ruta, fechas base no "
+"válidas, relaciones entre cartera y puntos de referencia, etc.), consulte"
+" la cadena de documentación de API."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:297
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:596
+msgid ""
+"**注意**：研究向语义与边界（路径断开、基准日无效、组合与 benchmark 关系等）以 API docstring 为准；``where``"
+" 只负责把条件广播成标准掩码。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:598
 msgid "**与整表数值比较**（与 ``hp.values > 阈值`` 等价）："
 msgstr ""
-"**Compare con la tabla completa de valores** (equivalente a ``hp.values > "
-"threshold``):"
+"**Compare con la tabla completa de valores** (equivalente a ``hp.values >"
+" threshold``):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:307
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:608
 msgid ""
-"**按时间维打标**（例如某一列索引为「事件日」，沿所有 htype 复制；以下为示意，需保证 ``cond_ml`` 形状为 ``(M, L)``）："
+"**按时间维打标**（例如某一列索引为「事件日」，沿所有 htype 复制；以下为示意，需保证 ``cond_ml`` 形状为 ``(M, "
+"L)``）："
 msgstr ""
-"**Etiquete a lo largo de la dimensión de tiempo** (por ejemplo, si el índice"
-" de una determinada columna es un \"día de evento\", repítalo en todos los "
-"tipos h; lo siguiente es ilustrativo; asegúrese de ``cond_ml`` has shape "
-"``(M, L)``):"
+"**Etiquete a lo largo de la dimensión de tiempo** (por ejemplo, si el "
+"índice de una determinada columna es un \"día de evento\", repítalo en "
+"todos los tipos h; lo siguiente es ilustrativo; asegúrese de ``cond_ml`` "
+"has shape ``(M, L)``):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:317
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:618
 msgid "**按收盘价列构造条件**（``callable`` 接收当前 ``HistoryPanel``）："
 msgstr ""
-"**Condiciones de compilación basadas en la columna de precio de cierre** (el"
-" ``callable`` receives the current ``HistoryPanel``):"
+"**Condiciones de compilación basadas en la columna de precio de cierre** "
+"(el ``callable`` receives the current ``HistoryPanel``):"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:324
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:625
 msgid "**复合条件与缺失值**："
 msgstr "**Condiciones compuestas y valores faltantes**:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:331
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:632
 msgid ""
-"**说明**：形状恰好为 ``(M, L)`` 的二维条件表示「每个 (标的, 日) 对所有指标列共用同一布尔值」，库内会先扩展为 ``(M, L, "
-"1)`` 再广播到 ``(M, L, N)``。一维 ``(M,)`` 或 ``(M, 1)`` 表示仅随标的变化，会展开为 ``(M, 1, 1)``"
-" 再广播。更完整的参数与异常说明见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 中 ``where``"
-" 一节。"
+"**说明**：形状恰好为 ``(M, L)`` 的二维条件表示「每个 (标的, 日) 对所有指标列共用同一布尔值」，库内会先扩展为 ``(M, "
+"L, 1)`` 再广播到 ``(M, L, N)``。一维 ``(M,)`` 或 ``(M, 1)`` 表示仅随标的变化，会展开为 ``(M, "
+"1, 1)`` 再广播。更完整的参数与异常说明见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 中"
+" ``where`` 一节。"
 msgstr ""
 "**Nota**: Una condición 2D con forma exacta "
 "`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO "
 "6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧` sección en "
 "[HistoryPanel Referencia de API](../api/HistoryPanel.rst)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:333
-msgid "8.1 累计收益与归一化（`cum_return` / `normalize`）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:634
+#, fuzzy
+msgid "累计收益与归一化（`cum_return` / `normalize`）"
 msgstr "8.1 Retorno acumulado y normalización (`cum_return` / `normalize`)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:335
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:636
 msgid ""
-"返回 **新** ``HistoryPanel``（不修改原面板），默认对解析后的 ``close`` 列计算；输出列名为 "
-"``cumret_<列名>``、``norm_<列名>``（与复权列 ``close|b`` 并存时，仍可传 ``htypes=None``，列名仍为 "
-"``cumret_close``）。可与掩码联用："
+"``cum_return`` 与 ``normalize`` 返回**新的** ``HistoryPanel``（不修改原面板），默认对 "
+"``close`` 列计算；输出列名形如 ``cumret_close``、``norm_close``。可与掩码联用："
 msgstr ""
-"Devuelve un **nuevo** "
-"`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6 "
-"⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧`). Se puede "
-"utilizar junto con una mascarilla:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:343
-msgid "8.2 组合聚合（`portfolio`）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:644
+msgid "**提示**：这是**研究向**收益曲线，不含交易成本；不能替代 ``Operator`` 回测。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:646
+#, fuzzy
+msgid "组合聚合（`portfolio`）"
 msgstr "8.2 Agregación de cartera (`portfolio`)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:345
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:648
 msgid ""
-"研究向：沿 **标的维** 对指定列做等权或加权平均，返回 **新** ``HistoryPanel``（``hdates`` "
-"不变）。``mask=`` 与 ``where`` 同广播规则。无 ``groups`` 且指定 ``benchmark`` "
-"时，**基准标的不参与**组合计算，仅用于 ``benchmark_output='tag_along'``（多一行基准曲线）或 "
-"``'excess_only'``（输出 ``excess_<列名>``）。非账户回测、无交易成本。详见 API docstring。"
+"沿**标的维**对指定列做等权或加权平均，返回新 ``HistoryPanel``。``mask=`` 与 ``where`` "
+"使用相同广播规则。指定 ``benchmark`` 时，基准标的不参与组合行聚合，仅用于附加基准曲线或超额列（与 §0 相同）："
 msgstr ""
-"Orientado a la investigación: tome un promedio ponderado o igual de columnas"
-" específicas a lo largo de la **dimensión de activo** y devuelva un "
-"**nuevo** "
-"`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦"
-" "
-"CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧⟦CÓDIGO13⟧⟦CÓDIGO14⟧⟦CÓDIGO15⟧⟦CÓDIGO16⟧`)."
-" No es una prueba retrospectiva de la cuenta; sin costos de transacción. "
-"Consulte la cadena de documentación API para obtener más detalles."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:355
-msgid "8.3 列属性、比较与 ``loc``（与 pandas 的差异简述）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:657
+#, fuzzy
+msgid "列属性、比较与 ``loc``（与 pandas 的差异）"
 msgstr ""
-"8.3 Atributos de columna, comparaciones y ``loc`` (una breve nota sobre las "
-"diferencias con los pandas)"
+"8.3 Atributos de columna, comparaciones y ``loc`` (una breve nota sobre "
+"las diferencias con los pandas)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:357
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:659
 msgid ""
 "**列属性（只读）**：列名为合法 Python 标识符时可用 ``hp.close``，等价 ``hp['close']``；含 ``|`` "
 "的复权列名等须用方括号。赋值请统一 ``hp['col'] = ...``。"
 msgstr ""
-"**Atributos de columna (solo lectura)**: cuando el nombre de una columna es "
-"un identificador de Python válido, puede usar ``hp.close``, equivalent to "
-"``hp['close']``; adjusted-price column names containing ``|`` and the like "
-"must use brackets. For assignment, consistently use ``hp['col'] = ...``."
+"**Atributos de columna (solo lectura)**: cuando el nombre de una columna "
+"es un identificador de Python válido, puede usar ``hp.close``, equivalent"
+" to ``hp['close']``; adjusted-price column names containing ``|`` and the"
+" like must use brackets. For assignment, consistently use ``hp['col'] = "
+"...``."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:358
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:660
 msgid ""
-"**比较**：``hp.close > hp.open``、``hp > 0`` 等得到 **``numpy.ndarray``（bool）**，不是子"
-" ``HistoryPanel``；全形掩码可写 ``hp.where(hp.close > 15)``。两侧均为面板时须 "
-"``shares``、``hdates`` 一致；两列比较时多为两个 **单列** 子面板。"
+"**比较**：``hp.close > hp.open``、``hp > 0`` 等得到 "
+"**``numpy.ndarray``（bool）**，不是子 ``HistoryPanel``；全形掩码可写 "
+"``hp.where(hp.close > 15)``。两侧均为面板时须 ``shares``、``hdates`` 一致；两列比较时多为两个 "
+"**单列** 子面板。"
 msgstr ""
 "**Comparación**: expresiones como "
 "`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO "
-"6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧` debe coincidir;"
-" al comparar dos columnas, generalmente se trata de dos subpaneles de "
-"**columna única**."
+"6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧` debe "
+"coincidir; al comparar dos columnas, generalmente se trata de dos "
+"subpaneles de **columna única**."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:359
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:661
 msgid ""
-"**``loc``**：``hp.loc[s]`` 等价 ``hp[:, :, s]``，只沿 **时间（hdates）** 轴筛选；**不要**把 "
-"``where`` 得到的 ``(M, L, N)`` 掩码传给 ``loc``，格点条件仍用 ``where`` + 后续 ``mask=``。"
+"**``loc``**：``hp.loc[s]`` 等价 ``hp[:, :, s]``，只沿 **时间（hdates）** "
+"轴筛选；**不要**把 ``where`` 得到的 ``(M, L, N)`` 掩码传给 ``loc``，格点条件仍用 ``where`` + "
+"后续 ``mask=``。"
 msgstr ""
-"**`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6⟧⟦CÓDIGO "
-"7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧⟦CÓDIGO13⟧⟦CÓDIGO14⟧`."
+"**`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6⟧⟦CÓDIGO"
+" 7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧⟦CÓDIGO13⟧⟦CÓDIGO14⟧`."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:361
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:663
 msgid ""
 "细节与边界情况以 [HistoryPanel API 参考](../api/HistoryPanel.rst) 为准（含 "
 "``where``、``cum_return``、``normalize``、``portfolio``）。"
 msgstr ""
-"Para obtener detalles y casos extremos, consulte la [HistoryPanel Referencia"
-" de API](../api/HistoryPanel.rst) (incluido ``where``, ``cum_return``, "
-"``normalize``, ``portfolio``)."
+"Para obtener detalles y casos extremos, consulte la [HistoryPanel "
+"Referencia de API](../api/HistoryPanel.rst) (incluido ``where``, "
+"``cum_return``, ``normalize``, ``portfolio``)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:371
-msgid "9. 从 HistoryPanel 研究到 Strategy / Operator：迁移路径"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:673
+#, fuzzy
+msgid "从 HistoryPanel 研究到 Strategy / Operator：迁移路径"
 msgstr ""
 "9. De la investigación HistoryPanel a la estrategia / Operator: ruta de "
 "migración"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:373
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:675
 msgid ""
-"`HistoryPanel` 上的 `cum_return`、`portfolio`、`plot` "
-"等是**研究向**工具：便于肉眼筛因子、看粗组合线，**不包含**交割周期、手续费、滑点、信号类型（PT/PS/VS）解析等与正式回测一致的账户语义。结论若用于实盘或严肃评价，应把**同一经济含义**的规则写进策略的"
-" `realize()`，交给 `Operator` + Backtester。"
+"读到这里，您已经能在 `HistoryPanel` "
+"上完成取数、算因子、做粗组合与出图。若研究结论需要**严肃评价**或**实盘准备**，下一步应把同一套经济含义写进策略的 "
+"`realize()`，交给 `Operator` + "
+"`Backtester`——它们才包含交割、手续费、滑点、信号类型（PT/PS/VS）等完整账户语义。"
 msgstr ""
-"`cum_return`, `portfolio`, `plot`, etc. en `HistoryPanel` son herramientas "
-"**orientadas a la investigación**: convenientes para observar factores y ver"
-" curvas aproximadas de cartera, y **no incluyen** semántica de cuenta "
-"consistente con pruebas retrospectivas formales, como ciclos de liquidación,"
-" tarifas, deslizamiento y análisis de tipos de señales. (PT/PS/VS). Si las "
-"conclusiones se van a utilizar para operaciones reales o para una evaluación"
-" seria, debe escribir reglas con el **mismo significado económico** en el "
-"`realize()` de la estrategia y entregárselas al `Operator` + Backtester."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:375
-msgid "下面用**同一思想——20 期简单动量**串起两阶段（需本地已配置数据源并下载相应字段；股票代码仅为示意）。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:677
+msgid ""
+"**注**：`HistoryPanel` 上的 `cum_return`、`portfolio` "
+"等仍是**研究向**工具，便于肉眼筛因子；**不能**替代正式回测报告。"
 msgstr ""
-"A continuación, utilizamos la **misma idea: impulso simple de 20 períodos** "
-"para conectar las dos etapas (requiere que se haya configurado una fuente de"
-" datos localmente y se hayan descargado los campos correspondientes; los "
-"códigos de acciones son solo para ilustración)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:377
-msgid "9.1 研究阶段：在多标的 `HistoryPanel` 上算因子并粗看截面"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:679
+#, fuzzy
+msgid ""
+"下面用**同一思想——20 期简单动量**串起两阶段（需本地已配置数据源；股票代码仅为示意）。完整脚本见 "
+"``examples/historypanel_research_to_strategy.py``。"
+msgstr ""
+"Para obtener el script ejecutable completo, consulte "
+"``examples/historypanel_research_to_strategy.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:681
+#, fuzzy
+msgid "研究阶段：在多标的 `HistoryPanel` 上算因子并粗看截面"
 msgstr ""
 "9.1 Etapa de investigación: calcular factores en un multiactivo "
 "`HistoryPanel` y echar un vistazo rápido a las secciones transversales"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:404
-msgid "这里你在 **三维面板** 上完成了因子列生产、截面变换与粗聚合；若结果满意，进入 9.2 把**因子定义**搬到策略里。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:709
+msgid "若动量曲线与排名结果符合预期，即可进入 9.2，把因子定义**固化**到策略类中。"
 msgstr ""
-"Aquí ha completado la generación de columnas de factores, transformaciones "
-"de sección transversal y agregación aproximada en un **panel 3D**; Si los "
-"resultados parecen buenos, continúe con 9.2 y mueva la **definición de "
-"factor** a la estrategia."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:406
-msgid "9.2 正式回测阶段：`FactorSorter` + `Operator`"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:711
+#, fuzzy
+msgid "正式回测阶段：`FactorSorter` + `Operator`"
 msgstr "9.2 Etapa de backtesting formal: `FactorSorter` + `Operator`"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:408
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:713
+#, fuzzy
 msgid ""
 "选股类策略常用 `FactorSorter`：`realize()` 返回**每个标的一个标量因子**（长度 = 股票数），框架再按 "
-"`max_sel_count`、`sort_ascending` 等做排序与权重。下面动量与 9.1 中 `returns(..., "
-"periods=20)` 的经济含义一致，但数据来自策略窗口注入（与回测步对齐、受 `use_latest_data_cycle` 等约束）。"
+"`max_sel_count`、`sort_ascending` 等排序与赋权。下面动量与 9.1 中 `returns(..., "
+"periods=20)` 的经济含义一致，但数据来自策略窗口注入（与回测步对齐，受 `use_latest_data_cycle` "
+"等约束，**防前视**）。"
 msgstr ""
 "Las estrategias de selección de acciones comúnmente usan `FactorSorter`: "
 "`realize()` devuelve **un factor escalar por instrumento** (longitud = "
-"número de acciones), y luego el marco clasifica y asigna ponderaciones según"
-" `max_sel_count`, `sort_ascending`, etc. El siguiente impulso tiene el mismo"
-" significado económico que `returns(..., periods=20)` en 9.1, pero los datos"
-" provienen de la inyección a través de la ventana de estrategia (alineada "
-"con los pasos de backtest y restringida por `use_latest_data_cycle`, etc.)."
+"número de acciones), y luego el marco clasifica y asigna ponderaciones "
+"según `max_sel_count`, `sort_ascending`, etc. El siguiente impulso tiene "
+"el mismo significado económico que `returns(..., periods=20)` en 9.1, "
+"pero los datos provienen de la inyección a través de la ventana de "
+"estrategia (alineada con los pasos de backtest y restringida por "
+"`use_latest_data_cycle`, etc.)."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:444
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:749
 msgid "**注意**："
 msgstr "**Nota**:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:446
-msgid "`Operator` 默认组内可使用 PT 类目标仓位信号；`FactorSorter` 与 PT 的搭配以你项目中的策略文档为准。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:751
+#, fuzzy
+msgid ""
+"`Operator` 默认组内可使用 PT 类目标仓位信号；`FactorSorter` 与 PT 的搭配以 [教程 3](3-start-"
+"first-strategy.md) 及回测文档为准。"
 msgstr ""
 "De forma predeterminada, `Operator` permite usar señales de posición "
-"objetivo de clase PT dentro de grupos; cómo se combina `FactorSorter` con PT"
-" debe seguir la documentación de la estrategia en su proyecto."
+"objetivo de clase PT dentro de grupos; cómo se combina `FactorSorter` con"
+" PT debe seguir la documentación de la estrategia en su proyecto."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:447
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:752
+#, fuzzy
 msgid ""
-"HP 里用全样本算的 rank/zscore，与回测中「每步仅见历史窗口」的因子可能略有数值差异，属预期现象；应以策略内 `get_data` "
-"为准复核防前视。"
+"HP 上用全样本算的 rank/zscore，与回测中「每步仅见历史窗口」的因子可能略有数值差异，属预期现象；应以策略内 `get_data` "
+"为准。"
 msgstr ""
-"Los rangos/puntuaciones z calculados en HP utilizando la muestra completa "
-"pueden diferir ligeramente numéricamente de los factores en las pruebas "
-"retrospectivas donde “cada paso solo ve la ventana histórica”; esto es lo "
-"esperado. Debe volver a verificar usando `get_data` dentro de la estrategia "
-"para protegerse contra el sesgo de anticipación."
+"Los rangos/puntuaciones z calculados en HP utilizando la muestra completa"
+" pueden diferir ligeramente numéricamente de los factores en las pruebas "
+"retrospectivas donde “cada paso solo ve la ventana histórica”; esto es lo"
+" esperado. Debe volver a verificar usando `get_data` dentro de la "
+"estrategia para protegerse contra el sesgo de anticipación."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:449
-msgid "完整可运行脚本见项目根目录 ``examples/historypanel_research_to_strategy.py``。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:756
+#, fuzzy
+msgid "多源数据拼成 `HistoryPanel`（价格 + 基本面示例）"
 msgstr ""
-"Para obtener el script ejecutable completo, consulte "
-"``examples/historypanel_research_to_strategy.py`` en el directorio raíz del "
-"proyecto."
+"10. Unir datos de múltiples fuentes en `HistoryPanel` (ejemplo de precio "
+"+ fundamentos)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:453
-msgid "10. 多源数据拼成 `HistoryPanel`（价格 + 基本面示例）"
-msgstr ""
-"10. Unir datos de múltiples fuentes en `HistoryPanel` (ejemplo de precio + "
-"fundamentos)"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:455
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:758
 msgid ""
-"`HistoryPanel` 可以承载任意 `htypes` 列；**多表/多 DataType** 的常见做法是：(1) 一次 "
-"`get_history_data` 拉多列；(2) 或分别取两块面板再 `align_to`。"
+"研究里常见需求是把**不同表、不同字段**放进同一块面板里一起算因子——例如收盘价 + 市净率（PB）做估值因子。`HistoryPanel` "
+"可以承载任意 `htypes` 列；实践中通常有两种做法："
 msgstr ""
-"`HistoryPanel` puede contener cualquier columna `htypes`; un enfoque común "
-"para **múltiples tablas/múltiples tipos de datos** es: (1) recuperar "
-"múltiples columnas en una llamada `get_history_data`; (2) o busque dos "
-"paneles por separado y luego `align_to`."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:457
-msgid "10.1 单次拉取多列（频率与资产类型需一致）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:760
+msgid "**一次** `get_history_data` 拉多列（频率与资产类型须一致，最简单）；"
 msgstr ""
-"10.1 Obtener varias columnas de una sola vez (la frecuencia y el tipo de "
-"activo deben ser coherentes)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:459
-msgid "若本地已有日线 `close` 与 `pb`（市净率）等字段，可直接："
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:761
+msgid "分别取两块面板，再 `align_to` 对齐后合并。"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:763
+#, fuzzy
+msgid "可运行演示见 ``examples/historypanel_multisource_research.py``。"
+msgstr ""
+"Para ver una demostración ejecutable de datos sintéticos, consulte "
+"``examples/historypanel_multisource_research.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:765
+msgid "单次拉取多列（推荐优先尝试）"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:767
+#, fuzzy
+msgid "若本地已有日线 `close` 与 `pb`（市净率）等字段，可直接一次拉取："
 msgstr ""
 "Si ya tienes los campos diarios `close` y `pb` (precio para reservar) "
 "localmente, puedes directamente:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:480
-msgid "缺列或表未下载时，`get_history_data` 会报错；请先通过数据源教程补齐表数据。"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:789
+#, fuzzy
+msgid ""
+"**注意**：缺列或表未下载时，`get_history_data` 会报错；请先通过 [教程 2.0](2.0-get-data.md) "
+"补齐表数据。"
 msgstr ""
 "Si falta una columna o no se ha descargado una tabla, `get_history_data` "
 "generará un error; Primero complete los datos de la tabla a través del "
 "tutorial de fuente de datos."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:482
-msgid "10.2 两块面板对齐后再派生（不同来源/不同拉取）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:791
+#, fuzzy
+msgid "两块面板对齐后再派生（不同来源 / 分次拉取）"
 msgstr ""
-"10.2 Primero alinee dos paneles y luego derive (fuentes diferentes/tirones "
-"diferentes)"
+"10.2 Primero alinee dos paneles y luego derive (fuentes "
+"diferentes/tirones diferentes)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:484
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:793
+#, fuzzy
 msgid ""
-"``align_to`` 要求两侧 **``htypes`` 名称与顺序完全一致**。若你只分别拉取了 ``close`` 与 ``pb`` "
-"两列，需先扩成同构列（缺失侧用 ``NaN`` 占位），对齐后再用 ``assign`` 把有效数值写回同一套列名："
+"当价格与基本面来自**不同拉取步骤**时，先用 ``align_to`` 对齐 ``shares`` 与 "
+"``hdates``，再运算。``align_to`` 要求两侧 **``htypes`` 名称与顺序完全一致**——若您分别只拉了 "
+"``close`` 与 ``pb``，需先扩成同构列（缺失侧用 ``NaN`` 占位）："
 msgstr ""
-"``align_to`` requires that **the ``htypes`` names and order match exactly** "
-"on both sides. If you only fetched the ``close`` and ``pb`` columns "
-"separately, you need to first expand them into a homogeneous set of columns "
-"(use ``NaN`` as placeholders on the missing side), then after alignment use "
-"``assign`` para escribir los valores válidos nuevamente en el mismo conjunto"
-" de nombres de columnas:"
+"``align_to`` requires that **the ``htypes`` names and order match "
+"exactly** on both sides. If you only fetched the ``close`` and ``pb`` "
+"columns separately, you need to first expand them into a homogeneous set "
+"of columns (use ``NaN`` as placeholders on the missing side), then after "
+"alignment use ``assign`` para escribir los valores válidos nuevamente en "
+"el mismo conjunto de nombres de columnas:"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:518
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:829
+#, fuzzy
 msgid ""
-"更多字段（行业、市值等）同理；若可一次 ``get_history_data(htypes='close, pb', ...)``，优先用 "
-"**§10.1**，少一步手工同构。核心原则仍是 **先对齐再运算**，避免 NumPy 静默错行。"
+"**提示**：若数据源允许，优先用 **§10.1** 一次 ``get_history_data(htypes='close, pb', "
+"...)``，少一步手工同构。核心原则仍是 **先对齐再运算**。"
 msgstr ""
 "Lo mismo se aplica a más campos (industria, capitalización de mercado, "
 "etc.); si puede recuperarlos en una llamada como "
 "``get_history_data(htypes='close, pb', ...)``, prefiera **§10.1** para "
-"evitar un paso de homogeneización manual. El principio básico sigue siendo "
-"**alinear primero y luego calcular**, para evitar que NumPy desalinee filas "
-"silenciosamente."
+"evitar un paso de homogeneización manual. El principio básico sigue "
+"siendo **alinear primero y luego calcular**, para evitar que NumPy "
+"desalinee filas silenciosamente."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:520
-msgid "可运行合成数据演示见项目根目录 ``examples/historypanel_multisource_research.py``。"
-msgstr ""
-"Para ver una demostración ejecutable de datos sintéticos, consulte "
-"``examples/historypanel_multisource_research.py`` en el directorio raíz del "
-"proyecto."
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:524
-msgid "11. 导出到 pandas / statsmodels（宽表、长表与截面回归）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:833
+#, fuzzy
+msgid "导出到 pandas / statsmodels（宽表、长表与截面回归）"
 msgstr ""
 "11. Exportar a pandas/statsmodels (tabla ancha, tabla larga y regresión "
 "transversal)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:526
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:835
+#, fuzzy
 msgid ""
-"`HistoryPanel` 不内置 Newey–West、Fama–MacBeth 等推断流程；需要发表级回归时，应**导出为二维表**后用 "
-"`statsmodels` 等库。"
+"§5.3 提到 Newey–West、Fama–MacBeth 等**回归推断**不在 `HistoryPanel` 核心 API "
+"内。若您需要发表级实证，应把面板**导出为二维表**，再用 `statsmodels` 等库完成推断。"
 msgstr ""
 "`HistoryPanel` no tiene flujos de trabajo de inferencia integrados como "
 "Newey–West o Fama–MacBeth; cuando necesite regresiones de grado de "
-"publicación, debe **exportar a una tabla 2D** y luego usar bibliotecas como "
-"`statsmodels`."
+"publicación, debe **exportar a una tabla 2D** y luego usar bibliotecas "
+"como `statsmodels`."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:528
-msgid "11.1 按标的切成多个 `DataFrame`（宽表）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:837
+#, fuzzy
+msgid "合成数据示例见 ``examples/historypanel_statsmodels_export.py``。"
+msgstr ""
+"Para ver un ejemplo de datos sintéticos, consulte "
+"``examples/historypanel_statsmodels_export.py`` en el directorio raíz del"
+" proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:839
+#, fuzzy
+msgid "按标的切成多个 `DataFrame`（宽表）"
 msgstr "11.1 Dividir por activo en múltiples `DataFrame` (tabla amplia)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:535
-msgid "11.2 手工堆成长表（便于按日截面分组）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:841
+msgid ""
+"推荐使用 ``to_df_dict(by='share')``（兼容别名 ``unstack`` 行为相同），把每只标的拆成一张标准 "
+"``DataFrame``（index 为时间，columns 为 htypes）："
 msgstr ""
-"11.2 Apilar manualmente una tabla de crecimiento (para agrupar fácilmente "
-"las secciones transversales diarias)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:555
-msgid "11.3 单日截面 OLS 示例（需已安装 statsmodels）"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:848
+msgid ""
+"整板展平为 MultiIndex 时，推荐 ``to_multi_index_dataframe``（兼容别名 ``flatten`` / "
+"``flatten_to_dataframe``）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:854
+#, fuzzy
+msgid "手工堆成长表（便于按日截面分组）"
+msgstr ""
+"11.2 Apilar manualmente una tabla de crecimiento (para agrupar fácilmente"
+" las secciones transversales diarias)"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:856
+msgid "若要做「固定某日、对所有股票回归」这类截面分析，常需把三维面板**堆成长表**（每行 = 某日某股）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:876
+#, fuzzy
+msgid "单日截面 OLS 示例（需已安装 statsmodels）"
 msgstr ""
 "11.3 Ejemplo de OLS transversal de un solo día (requiere statsmodels "
 "instalados)"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:568
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:878
+msgid "下面演示**固定一个交易日**、对截面做 OLS；因变量仅为示意，实务中应使用**前瞻收益**并与因子正确对齐："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:891
 msgid ""
-"上述因变量仅为演示；实务中应将 **因子与前瞻收益对齐** 并处理停牌、幸存者偏差等——均在计量层完成，而非 `HistoryPanel` 核心职责。"
+"**注意**：停牌、幸存者偏差、因子与收益对齐等问题，应在**计量层**（pandas / statsmodels）处理，而非 "
+"`HistoryPanel` 的职责。"
 msgstr ""
-"Las variables dependientes anteriores son sólo para demostración; en la "
-"práctica, se deben **alinear los factores con los rendimientos futuros** y "
-"manejar las suspensiones, el sesgo de supervivencia, etc., todo lo cual debe"
-" hacerse en el nivel econométrico, no como responsabilidad principal de "
-"`HistoryPanel`."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:570
-msgid "合成数据示例见项目根目录 ``examples/historypanel_statsmodels_export.py``。"
-msgstr ""
-"Para ver un ejemplo de datos sintéticos, consulte "
-"``examples/historypanel_statsmodels_export.py`` en el directorio raíz del "
-"proyecto."
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:574
-msgid "12. 小结与下一步"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:895
+#, fuzzy
+msgid "小结与下一步"
 msgstr "12. Resumen y próximos pasos"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:576
-msgid "通过本章示例，你可以看到："
-msgstr "A través de los ejemplos de este capítulo, puede ver:"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:578
-msgid "`HistoryPanel` 提供了统一的三维历史数据容器，适合多标的 / 多指标联合研究；"
-msgstr ""
-"`HistoryPanel` proporciona un contenedor unificado de datos históricos en "
-"3D, adecuado para la investigación conjunta entre múltiples "
-"instrumentos/múltiples indicadores;"
-
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:579
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:897
 msgid ""
-"在其之上，可以直接调用统计方法（`describe/mean/std/min/max`）、滚动窗口（`rolling`）、收益/波动率（`returns`/`volatility`）、**横截面排名与标准化（`rank`/`zscore`）**、**累计收益与归一化（`cum_return`/`normalize`）**、**组合聚合（`portfolio`）**、K"
-" "
-"线指标（`kline.*`）、技术指标桥接（`apply_ta`）、蜡烛形态识别（`candle_pattern`）、**研究掩码（`where`）**"
-" 以及 **列属性 / 比较 / `loc`** 等；"
+"读完本章，您应已掌握 `HistoryPanel` 从「取数 → 因子 → 出图 → 粗组合 → 导出」的完整研究链路，并清楚它与 "
+"`Operator` 回测的边界："
 msgstr ""
-"Además, puede llamar directamente a métodos estadísticos "
-"(`describe/mean/std/min/max`), ventanas móviles (`rolling`), "
-"rendimientos/volatilidad (`returns`/`volatility`), **clasificación "
-"transversal y estandarización (`rank`/`zscore`)**, **rendimiento acumulativo"
-" y normalización. (`cum_return`/`normalize`)**, **agregación de cartera "
-"(`portfolio`)**, indicadores de velas (línea K) (`kline.*`), indicador "
-"técnico puente (`apply_ta`), reconocimiento de patrones de velas "
-"(`candle_pattern`), **máscaras de investigación (`where`)**, así como "
-"**columna atributos / comparaciones / `loc`**, etc.;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:580
-msgid "任意一步都可以方便地切回 `DataFrame`，与 pandas / sklearn / statsmodels 等协同工作；"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:899
+msgid "`HistoryPanel` 是**多标的、多指标**的三维容器，适合因子研究与目视筛选；"
 msgstr ""
-"En cualquier paso, puede volver fácilmente a `DataFrame` para trabajar junto"
-" con pandas/sklearn/statsmodels, etc.;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:581
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:900
 msgid ""
-"**正式回测**请通过 `Strategy.realize` + `Operator` 完成；研究向 HP 与回测引擎的边界与迁移路径见 **§9**。"
+"内置接口覆盖统计描述、滚动窗口、收益/波动率、**横截面 rank/zscore**、**累计收益/归一化/组合聚合**、K "
+"线指标、``apply_ta``、蜡烛形态、**``where`` 掩码** 以及列属性 / 比较 / ``loc`` 等；"
 msgstr ""
-"Para **backtesting formal**, utilice `Strategy.realize` + `Operator`; Para "
-"conocer los límites y la ruta de migración entre HP orientado a la "
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:901
+#, fuzzy
+msgid "任意一步都可切回 ``DataFrame``，与 pandas / sklearn / statsmodels 协同；"
+msgstr ""
+"En cualquier paso, puede volver fácilmente a `DataFrame` para trabajar "
+"junto con pandas/sklearn/statsmodels, etc.;"
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:902
+#, fuzzy
+msgid "**正式回测**须通过 ``Strategy.realize`` + ``Operator`` 完成；迁移路径见 **§9**。"
+msgstr ""
+"Para **backtesting formal**, utilice `Strategy.realize` + `Operator`; "
+"Para conocer los límites y la ruta de migración entre HP orientado a la "
 "investigación y el motor de backtest, consulte **§9**."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:583
-msgid "下一步建议："
-msgstr "Próximos pasos recomendados:"
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:904
+msgid "**建议的下一步**："
+msgstr ""
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:585
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:906
+msgid "**进阶因子研究**（择时 / 横截面 / 事件型完整闭环）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:907
+msgid "[纵向择时因子](2.6-historypanel-advanced-vertical-timeaxis.md)"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:908
+msgid "[横截面选股因子](2.7-historypanel-advanced-horizontal-multifactor.md)"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:909
+msgid "[事件型 K 线形态因子](2.8-historypanel-advanced-event-kline-pattern.md)"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:910
 msgid ""
-"在 Notebook 中基于你自己关注的股票池构造 `HistoryPanel`，尝试叠加多个因子（均线、波动率、估值等），并画出与价格对齐的图表；"
+"**进入策略回测**：[教程 3：第一个策略](3-start-first-strategy.md)，或按 **§9** 将 HP 因子迁移到 "
+"`FactorSorter` + `Operator`"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:911
+#, fuzzy
+msgid "在 Notebook 中基于您关注的股票池构造 `HistoryPanel`，叠加多个因子（均线、波动率、估值等）并与价格对齐出图"
 msgstr ""
 "En un cuaderno, cree un `HistoryPanel` basado en su propio universo de "
-"acciones, intente apilar múltiples factores (medias móviles, volatilidad, "
-"valoración, etc.) y trace gráficos alineados con los precios;"
+"acciones, intente apilar múltiples factores (medias móviles, volatilidad,"
+" valoración, etc.) y trace gráficos alineados con los precios;"
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:586
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:912
+#, fuzzy
 msgid ""
-"在阅读 [HistoryPanel API 参考](../api/HistoryPanel.rst) 的基础上，为你的研究题目设计一套「数据 → "
-"因子（HP）→ 规则固化（Strategy）→ 回测（Operator）」的工作流；"
+"需要系统 API 说明时，参阅 [HistoryPanel API 参考](../api/HistoryPanel.rst)，并设计「数据 → "
+"因子（HP）→ 规则固化（Strategy）→ 回测（Operator）」工作流"
 msgstr ""
 "Basándose en la lectura de la [HistoryPanel referencia de API] "
 "(../api/HistoryPanel.rst), diseñe un flujo de trabajo para su tema de "
 "investigación: “datos → factores (HP) → solidificación de reglas "
 "(Estrategia) → backtest (Operator)”."
 
-#: ../../source/tutorials/2.5-historypanel-data-analysis.md:587
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:914
+msgid "**可运行示例索引**（从仓库根目录执行）："
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "脚本"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "对应章节"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "`examples/data_playground_e2e.py`"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "§0 最小闭环"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+#, fuzzy
+msgid "`examples/historypanel_basic_plot.py`"
+msgstr ""
+"Para obtener el script ejecutable completo, consulte "
+"``examples/historypanel_research_to_strategy.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "§1 基础出图"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+#, fuzzy
+msgid "`examples/historypanel_research_to_strategy.py`"
+msgstr ""
+"Para obtener el script ejecutable completo, consulte "
+"``examples/historypanel_research_to_strategy.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "§9 迁移骨架"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+#, fuzzy
+msgid "`examples/historypanel_multisource_research.py`"
+msgstr ""
+"Para ver una demostración ejecutable de datos sintéticos, consulte "
+"``examples/historypanel_multisource_research.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "§10 多源对齐"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+#, fuzzy
+msgid "`examples/historypanel_statsmodels_export.py`"
+msgstr ""
+"Para ver un ejemplo de datos sintéticos, consulte "
+"``examples/historypanel_statsmodels_export.py`` en el directorio raíz del"
+" proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "§11 导出回归"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+#, fuzzy
+msgid "`examples/historypanel_research_factor_workflow.py`"
+msgstr ""
+"Para obtener el script ejecutable completo, consulte "
+"``examples/historypanel_research_to_strategy.py`` en el directorio raíz "
+"del proyecto."
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md
+msgid "`qteasy.research` IC / 分位"
+msgstr ""
+
+#: ../../source/tutorials/2.5-historypanel-data-analysis.md:925
+#, fuzzy
 msgid ""
-"若考虑是否增加独立「因子评价」API 封装，可阅读设计说明 [HistoryPanel 与可选 FactorResearch "
+"若考虑模块级因子评价与 Backtester 的边界，可阅读设计说明 [HistoryPanel 与可选 FactorResearch "
 "层](../design/10-historypanel-factor-research-layer.md)。"
 msgstr ""
 "Si está considerando agregar un contenedor de API de “evaluación de "
-"factores” por separado, puede leer la nota de diseño [HistoryPanel y la capa"
-" opcional FactorResearch](../design/10-historypanel-factor-research-"
+"factores” por separado, puede leer la nota de diseño [HistoryPanel y la "
+"capa opcional FactorResearch](../design/10-historypanel-factor-research-"
 "layer.md)."
+
+#~ msgid "在完成前两章「入门」和「获取并管理金融数据」之后，我们已经可以："
+#~ msgstr ""
+#~ "Después de completar los dos primeros"
+#~ " capítulos, \"Cómo comenzar\" y \"Obtener"
+#~ " y administrar datos financieros\", ya "
+#~ "podemos:"
+
+#~ msgid "使用 `get_history_data()` 或 `get_history_panel()` 获取价格、成交量等基础行情。"
+#~ msgstr ""
+#~ "Utilice `get_history_data()` o `get_history_panel()`"
+#~ " para obtener datos básicos del "
+#~ "mercado, como precios y volumen de "
+#~ "operaciones."
+
+#~ msgid ""
+#~ "假设我们已经下载了沪深 300 指数（`000300.SH`）近一年的日线数据，可以直接通过 "
+#~ "`qt.get_kline()` 或 `qt.get_history_data()` 获取一个 "
+#~ "`HistoryPanel`："
+#~ msgstr ""
+#~ "Supongamos que ya hemos descargado los"
+#~ " datos diarios del año pasado para"
+#~ " el índice CSI 300 (`000300.SH`). "
+#~ "Podemos obtener directamente un `HistoryPanel`"
+#~ " mediante `qt.get_kline()` o "
+#~ "`qt.get_history_data()`:"
+
+#~ msgid "此时："
+#~ msgstr "En este punto:"
+
+#~ msgid "`hp.shares` 通常是 `['000300.SH']`；"
+#~ msgstr "`hp.shares` suele ser `['000300.SH']`;"
+
+#~ msgid "直接送入回测引擎，或用于选股、打分等。"
+#~ msgstr ""
+#~ "Puede introducirse directamente en el "
+#~ "motor de backtesting o utilizarse para"
+#~ " selección de valores, puntuación, etc."
+
+#~ msgid "3. 叠加 K 线技术指标"
+#~ msgstr "3. Indicadores técnicos de velas superpuestas"
+
+#~ msgid ""
+#~ "如果你希望“拿到数据后立刻得到一张像样的图”，推荐直接使用 `research_preset` "
+#~ "生成官方预设的常用列集合（预设只做显式追加，不在 `plot()` 内隐藏计算）："
+#~ msgstr ""
+#~ "Si desea \"obtener un gráfico de "
+#~ "aspecto decente tan pronto como tenga"
+#~ " los datos\", se recomienda usar "
+#~ "`research_preset` directamente para generar el"
+#~ " conjunto preestablecido oficial de "
+#~ "columnas de uso común (el valor "
+#~ "preestablecido solo agrega anexos explícitos"
+#~ " y no oculta cálculos dentro de "
+#~ "`plot()`):"
+
+#~ msgid "4. 使用 assign 一次派生多列"
+#~ msgstr "4. Utilice asignar para derivar varias columnas a la vez"
+
+#~ msgid ""
+#~ "在实际研究中，经常需要基于已有列派生出多个新因子，例如价差、比例、缩放后的归一化值等。``HistoryPanel.assign()``"
+#~ " 提供了一次性派生多列的 DSL："
+#~ msgstr ""
+#~ "En la investigación práctica, a menudo"
+#~ " es necesario derivar múltiples factores"
+#~ " nuevos de columnas existentes, como "
+#~ "diferenciales, proporciones, valores normalizados"
+#~ " escalados, etc. ``HistoryPanel.assign()`` "
+#~ "proporciona un DSL para derivar "
+#~ "múltiples columnas de una sola vez:"
+
+#~ msgid "默认 `inplace=False`，返回新面板，不修改原对象；当你希望在原面板上原地扩列时，可以使用："
+#~ msgstr ""
+#~ "Por defecto, `inplace=False`, que devuelve "
+#~ "un nuevo panel sin modificar el "
+#~ "objeto original; cuando desee expandir "
+#~ "las columnas en su lugar en el "
+#~ "panel original, puede usar:"
+
+#~ msgid ""
+#~ "当你手里有两块 `HistoryPanel`，想做逐元素运算（比如 `hp_factor / "
+#~ "hp_price`、或两面板相减）时，需要特别注意："
+#~ msgstr ""
+#~ "Entonces, cuando tiene dos `HistoryPanel` "
+#~ "y desea realizar operaciones de "
+#~ "elementos (como `hp_factor / hp_price` o"
+#~ " restar dos paneles), debe prestar "
+#~ "especial atención:"
+
+#~ msgid "`HistoryPanel` **不会**在运算符里自动对齐两块面板；"
+#~ msgstr ""
+#~ "`HistoryPanel` **no** alineará automáticamente "
+#~ "dos paneles dentro de los operadores;"
+
+#~ msgid ""
+#~ "若 `shares` / `hdates` 不一致，直接拿 `.values`"
+#~ " 做 NumPy 运算很容易出现“看起来能算、但其实错行”的结果。"
+#~ msgstr ""
+#~ "Si `shares` / `hdates` son "
+#~ "inconsistentes, realizar operaciones NumPy "
+#~ "directamente en `.values` puede producir "
+#~ "fácilmente resultados que \"parecen "
+#~ "calcularse, pero en realidad están "
+#~ "desalineados por filas\"."
+
+#~ msgid "在因子研究里，你经常会得到一个二维布尔矩阵 `mask_ml`，表示“每只股票在哪些日期满足条件”（例如事件日、信号日、可交易池）。"
+#~ msgstr ""
+#~ "En la investigación de factores, a "
+#~ "menudo obtendrá una matriz booleana 2D"
+#~ " `mask_ml`, que indica \"en qué "
+#~ "fechas cada acción cumple la condición\""
+#~ " (por ejemplo, fechas de eventos, "
+#~ "fechas de señales, universo negociable)."
+
+#~ msgid "这样可以避免在循环中手动调用 `tafuncs.sma`，`HistoryPanel` 会自动对所有选定股票广播计算。"
+#~ msgstr ""
+#~ "Esto evita llamar manualmente a "
+#~ "`tafuncs.sma` en un bucle; `HistoryPanel` "
+#~ "transmitirá automáticamente el cálculo a "
+#~ "todas las acciones seleccionadas."
+
+#~ msgid "7. 识别蜡烛形态"
+#~ msgstr "7. Identificar patrones de velas"
+
+#~ msgid ""
+#~ "对于 OHLC 数据，还可以通过 `HistoryPanel.candle_pattern()` "
+#~ "封装 ta-lib 的蜡烛形态识别函数，例如："
+#~ msgstr ""
+#~ "Para datos OHLC, también puede ajustar"
+#~ " las funciones de reconocimiento de "
+#~ "patrones de velas de ta-lib a "
+#~ "través de `HistoryPanel.candle_pattern()`, por "
+#~ "ejemplo:"
+
+#~ msgid ""
+#~ "返回 **新** ``HistoryPanel``（不修改原面板），默认对解析后的 ``close``"
+#~ " 列计算；输出列名为 ``cumret_<列名>``、``norm_<列名>``（与复权列 "
+#~ "``close|b`` 并存时，仍可传 ``htypes=None``，列名仍为 "
+#~ "``cumret_close``）。可与掩码联用："
+#~ msgstr ""
+#~ "Devuelve un **nuevo** "
+#~ "`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6 "
+#~ "⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧`). Se"
+#~ " puede utilizar junto con una "
+#~ "mascarilla:"
+
+#~ msgid ""
+#~ "研究向：沿 **标的维** 对指定列做等权或加权平均，返回 **新** "
+#~ "``HistoryPanel``（``hdates`` 不变）。``mask=`` 与 "
+#~ "``where`` 同广播规则。无 ``groups`` 且指定 ``benchmark``"
+#~ " 时，**基准标的不参与**组合计算，仅用于 "
+#~ "``benchmark_output='tag_along'``（多一行基准曲线）或 ``'excess_only'``（输出"
+#~ " ``excess_<列名>``）。非账户回测、无交易成本。详见 API docstring。"
+#~ msgstr ""
+#~ "Orientado a la investigación: tome un"
+#~ " promedio ponderado o igual de "
+#~ "columnas específicas a lo largo de "
+#~ "la **dimensión de activo** y devuelva"
+#~ " un **nuevo** "
+#~ "`⟦CÓDIGO0⟧⟦CÓDIGO1⟧⟦CÓDIGO2⟧⟦CÓDIGO3⟧⟦CÓDIGO4⟧⟦CÓDIGO5⟧⟦CÓDIGO6⟧⟦CÓDIGO7⟧⟦CÓDIGO8⟧⟦"
+#~ " "
+#~ "CÓDIGO9⟧⟦CÓDIGO10⟧⟦CÓDIGO11⟧⟦CÓDIGO12⟧⟦CÓDIGO13⟧⟦CÓDIGO14⟧⟦CÓDIGO15⟧⟦CÓDIGO16⟧`)."
+#~ " No es una prueba retrospectiva de"
+#~ " la cuenta; sin costos de "
+#~ "transacción. Consulte la cadena de "
+#~ "documentación API para obtener más "
+#~ "detalles."
+
+#~ msgid ""
+#~ "`HistoryPanel` 上的 `cum_return`、`portfolio`、`plot` "
+#~ "等是**研究向**工具：便于肉眼筛因子、看粗组合线，**不包含**交割周期、手续费、滑点、信号类型（PT/PS/VS）解析等与正式回测一致的账户语义。结论若用于实盘或严肃评价，应把**同一经济含义**的规则写进策略的"
+#~ " `realize()`，交给 `Operator` + Backtester。"
+#~ msgstr ""
+#~ "`cum_return`, `portfolio`, `plot`, etc. en "
+#~ "`HistoryPanel` son herramientas **orientadas a"
+#~ " la investigación**: convenientes para "
+#~ "observar factores y ver curvas "
+#~ "aproximadas de cartera, y **no "
+#~ "incluyen** semántica de cuenta consistente "
+#~ "con pruebas retrospectivas formales, como "
+#~ "ciclos de liquidación, tarifas, deslizamiento"
+#~ " y análisis de tipos de señales. "
+#~ "(PT/PS/VS). Si las conclusiones se van"
+#~ " a utilizar para operaciones reales o"
+#~ " para una evaluación seria, debe "
+#~ "escribir reglas con el **mismo "
+#~ "significado económico** en el `realize()` "
+#~ "de la estrategia y entregárselas al "
+#~ "`Operator` + Backtester."
+
+#~ msgid "下面用**同一思想——20 期简单动量**串起两阶段（需本地已配置数据源并下载相应字段；股票代码仅为示意）。"
+#~ msgstr ""
+#~ "A continuación, utilizamos la **misma "
+#~ "idea: impulso simple de 20 períodos**"
+#~ " para conectar las dos etapas "
+#~ "(requiere que se haya configurado una"
+#~ " fuente de datos localmente y se "
+#~ "hayan descargado los campos correspondientes;"
+#~ " los códigos de acciones son solo "
+#~ "para ilustración)."
+
+#~ msgid "这里你在 **三维面板** 上完成了因子列生产、截面变换与粗聚合；若结果满意，进入 9.2 把**因子定义**搬到策略里。"
+#~ msgstr ""
+#~ "Aquí ha completado la generación de "
+#~ "columnas de factores, transformaciones de "
+#~ "sección transversal y agregación aproximada"
+#~ " en un **panel 3D**; Si los "
+#~ "resultados parecen buenos, continúe con "
+#~ "9.2 y mueva la **definición de "
+#~ "factor** a la estrategia."
+
+#~ msgid ""
+#~ "`HistoryPanel` 可以承载任意 `htypes` 列；**多表/多 "
+#~ "DataType** 的常见做法是：(1) 一次 `get_history_data` "
+#~ "拉多列；(2) 或分别取两块面板再 `align_to`。"
+#~ msgstr ""
+#~ "`HistoryPanel` puede contener cualquier "
+#~ "columna `htypes`; un enfoque común para"
+#~ " **múltiples tablas/múltiples tipos de "
+#~ "datos** es: (1) recuperar múltiples "
+#~ "columnas en una llamada `get_history_data`;"
+#~ " (2) o busque dos paneles por "
+#~ "separado y luego `align_to`."
+
+#~ msgid "10.1 单次拉取多列（频率与资产类型需一致）"
+#~ msgstr ""
+#~ "10.1 Obtener varias columnas de una "
+#~ "sola vez (la frecuencia y el tipo"
+#~ " de activo deben ser coherentes)"
+
+#~ msgid ""
+#~ "上述因变量仅为演示；实务中应将 **因子与前瞻收益对齐** 并处理停牌、幸存者偏差等——均在计量层完成，而非 "
+#~ "`HistoryPanel` 核心职责。"
+#~ msgstr ""
+#~ "Las variables dependientes anteriores son "
+#~ "sólo para demostración; en la práctica,"
+#~ " se deben **alinear los factores con"
+#~ " los rendimientos futuros** y manejar "
+#~ "las suspensiones, el sesgo de "
+#~ "supervivencia, etc., todo lo cual debe"
+#~ " hacerse en el nivel econométrico, no"
+#~ " como responsabilidad principal de "
+#~ "`HistoryPanel`."
+
+#~ msgid "通过本章示例，你可以看到："
+#~ msgstr "A través de los ejemplos de este capítulo, puede ver:"
+
+#~ msgid "`HistoryPanel` 提供了统一的三维历史数据容器，适合多标的 / 多指标联合研究；"
+#~ msgstr ""
+#~ "`HistoryPanel` proporciona un contenedor "
+#~ "unificado de datos históricos en 3D, "
+#~ "adecuado para la investigación conjunta "
+#~ "entre múltiples instrumentos/múltiples indicadores;"
+
+#~ msgid ""
+#~ "在其之上，可以直接调用统计方法（`describe/mean/std/min/max`）、滚动窗口（`rolling`）、收益/波动率（`returns`/`volatility`）、**横截面排名与标准化（`rank`/`zscore`）**、**累计收益与归一化（`cum_return`/`normalize`）**、**组合聚合（`portfolio`）**、K"
+#~ " "
+#~ "线指标（`kline.*`）、技术指标桥接（`apply_ta`）、蜡烛形态识别（`candle_pattern`）、**研究掩码（`where`）**"
+#~ " 以及 **列属性 / 比较 / `loc`** 等；"
+#~ msgstr ""
+#~ "Además, puede llamar directamente a "
+#~ "métodos estadísticos (`describe/mean/std/min/max`), "
+#~ "ventanas móviles (`rolling`), "
+#~ "rendimientos/volatilidad (`returns`/`volatility`), "
+#~ "**clasificación transversal y estandarización "
+#~ "(`rank`/`zscore`)**, **rendimiento acumulativo y "
+#~ "normalización. (`cum_return`/`normalize`)**, **agregación"
+#~ " de cartera (`portfolio`)**, indicadores de"
+#~ " velas (línea K) (`kline.*`), indicador "
+#~ "técnico puente (`apply_ta`), reconocimiento de"
+#~ " patrones de velas (`candle_pattern`), "
+#~ "**máscaras de investigación (`where`)**, así"
+#~ " como **columna atributos / comparaciones"
+#~ " / `loc`**, etc.;"
+
+#~ msgid "下一步建议："
+#~ msgstr "Próximos pasos recomendados:"
+

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/03-data-in-strategies.md:1
@@ -29,8 +29,8 @@ msgstr "1. 戦略層がアーキテクチャ全体のどこに位置するか"
 #: ../../source/design/03-data-in-strategies.md:5
 msgid ""
 "策略层负责两件事：**声明**“需要什么数据”（以及多长窗口、是否使用最新周期），以及**在 realize() "
-"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 id "
-"获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
+"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 "
+"id 获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
 msgstr ""
 "戦略層は 2 つのことを担当します。**「どのようなデータが必要か」(およびウィンドウの長さ、最新の期間を使用するかどうか) "
 "を宣言**し、**realize()** "
@@ -48,11 +48,11 @@ msgstr "戦略クラス (`__init__`) を初期化するときに、次の属性�
 
 #: ../../source/design/03-data-in-strategies.md:11
 msgid ""
-"**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 DataType 对应一种“可引用的信息”，并对应唯一的"
-" **dtype_id**（如 `close_E_d`）。"
+"**data_types**：字符串信息 ID（推荐）、`DataType` 对象，或二者的列表。可为完整 id（如 "
+"`close_E_d`）或无歧义宽名（如 `close`）；歧义时须写完整 id 或显式 `asset_type`。**仅**允许 History"
+" 与 Reference；**Static（如 `industry`）不得**写入 `data_types`，应在准备资产池时用 "
+"`get_static_data` 过滤。"
 msgstr ""
-"**data_types**: 1 つ以上の **DataType** オブジェクト (またはリスト/dict)。各 DataType "
-"は一種の「参照可能な情報」に対応し、一意の **dtype_id** (例: `close_E_d`) にマッピングされます。"
 
 #: ../../source/design/03-data-in-strategies.md:12
 msgid ""
@@ -69,7 +69,8 @@ msgstr ""
 "(たとえば、銘柄選択に最新のクロスセクションのみを使用する)。 dtypeごとに個別に設定できます。"
 
 #: ../../source/design/03-data-in-strategies.md:15
-msgid "声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
+#, fuzzy
+msgid "声明后，引擎会知道该策略需要哪些完整 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
 msgstr ""
 "宣言後、エンジンはストラテジに必要な dtype_id とウィンドウの長さを認識するため、実行前に対応するデータ "
 "ウィンドウを準備し、各ステップでそれらを更新/挿入できます。"
@@ -101,13 +102,12 @@ msgid ""
 "**realize() 内**：策略通过 **get_data(dtype_id)** 按 id 取出已注入的窗口数据（numpy "
 "数组），用于计算信号。无需传参，也无需关心数据来自哪张表。"
 msgstr ""
-"**realize()** の内部: この戦略は、**get_data(dtype_id)** を介して ID によって挿入されたウィンドウ データ "
-"(numpy 配列) を取得し、信号を計算します。パラメーターは必要なく、データがどのテーブルからのものかを気にする必要もありません。"
+"**realize()** の内部: この戦略は、**get_data(dtype_id)** を介して ID によって挿入されたウィンドウ "
+"データ (numpy 配列) を取得し、信号を計算します。パラメーターは必要なく、データがどのテーブルからのものかを気にする必要もありません。"
 
 #: ../../source/design/03-data-in-strategies.md:23
 msgid "因此，数据流是“声明 → 引擎按步注入 → get_data 引用”，策略代码不包含任何“读表”或“拉取”逻辑。"
-msgstr ""
-"したがって、データの流れとしては「宣言→エンジンが段階的に注入→get_dataで参照」となります。戦略コードには、「テーブル読み取り」や「プル/フェッチ」ロジックがまったく含まれていません。"
+msgstr "したがって、データの流れとしては「宣言→エンジンが段階的に注入→get_dataで参照」となります。戦略コードには、「テーブル読み取り」や「プル/フェッチ」ロジックがまったく含まれていません。"
 
 #: ../../source/design/03-data-in-strategies.md:25
 msgid "4. 数据窗口的含义"
@@ -118,8 +118,9 @@ msgid ""
 "**时间维度**：window_length 表示“回溯多少个周期”。例如日频、window_length=20 表示最近 20 "
 "个交易日的数据；数组形状通常为 (n_periods,) 或 (n_assets, n_periods)，最后一维为时间，最后一列为最近一期。"
 msgstr ""
-"**時間ディメンション**: window_length は「何期間遡るか」を意味します。たとえば、毎日の頻度では、window_length=20 "
-"は直近 20 取引日のデータを意味します。配列の形状は通常 (n_periods,) または (n_assets, n_periods) "
+"**時間ディメンション**: window_length "
+"は「何期間遡るか」を意味します。たとえば、毎日の頻度では、window_length=20 は直近 20 "
+"取引日のデータを意味します。配列の形状は通常 (n_periods,) または (n_assets, n_periods) "
 "で、最後の次元は時間、最後の列は最新の期間です。"
 
 #: ../../source/design/03-data-in-strategies.md:28
@@ -142,8 +143,8 @@ msgstr "**GeneralStg**: マルチアセット、マルチ dtype ウィンドウ�
 msgid "具体形状以 API 与策略基类文档为准；本系列强调“窗口由引擎按声明准备、策略用 get_data 按 id 取用”。"
 msgstr ""
 "正確な形状は、API "
-"および戦略の基本クラスのドキュメントに従います。このシリーズでは、「ウィンドウは宣言に従ってエンジンによって準備され、ストラテジーは get_data "
-"を介して ID によってウィンドウを取得する」ことを強調しています。"
+"および戦略の基本クラスのドキュメントに従います。このシリーズでは、「ウィンドウは宣言に従ってエンジンによって準備され、ストラテジーは "
+"get_data を介して ID によってウィンドウを取得する」ことを強調しています。"
 
 #: ../../source/design/03-data-in-strategies.md:35
 msgid "5. 过程数据（proc.*）"
@@ -155,9 +156,9 @@ msgid ""
 "支持**过程数据**：依赖回测/实盘执行路径的状态（如当前持仓、现金、历史成交记录等）。过程数据**无需在 data_types 中声明**，由 "
 "Backtester（回测）或 Trader（实盘）在运行时维护并注入。"
 msgstr ""
-"上記の静的な履歴データ (「宣言→エンジン噴射」) に加えて、qteasy は **プロセス データ**: バックテスト/ライブ実行パスに依存する状態 "
-"(現在のポジション、キャッシュ、過去の取引記録など) をサポートします。プロセス データは **data_types** "
-"で宣言する必要はありません。これは、Backtester (バックテスト) または Trader (ライブ取引) "
+"上記の静的な履歴データ (「宣言→エンジン噴射」) に加えて、qteasy は **プロセス データ**: "
+"バックテスト/ライブ実行パスに依存する状態 (現在のポジション、キャッシュ、過去の取引記録など) をサポートします。プロセス データは "
+"**data_types** で宣言する必要はありません。これは、Backtester (バックテスト) または Trader (ライブ取引) "
 "によって実行時に維持され、注入されます。"
 
 #: ../../source/design/03-data-in-strategies.md:39
@@ -187,42 +188,48 @@ msgstr ""
 "backtest.md) を参照してください。"
 
 #: ../../source/design/03-data-in-strategies.md:44
-msgid "6. 参考数据（若有）"
-msgstr "6. 参考データ (ある場合)"
+msgid "6. Reference 与 Static"
+msgstr ""
 
 #: ../../source/design/03-data-in-strategies.md:46
 msgid ""
-"除策略声明的 data_types 外，qteasy "
-"支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的 "
-"dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+"**Reference（仅时间）**：原生宏观/利率/资金（如 `cn_gdp`），以及把单标的 History 抽成基准的造法（如 "
+"`close-000300.SH`）。研究入口为 `get_reference_data`；也可进入策略 `data_types`，在 "
+"`realize()` 里用 `get_data` 取时间序列（2D），**不是** HistoryPanel 的「第三维标的」。"
 msgstr ""
-"ストラテジーによって宣言された data_types に加えて、qteasy は「参照データ」 "
-"(市場リターンの計算などに使用されるインデックスの終値など) をサポートします。参照データとプライマリ データの違いは、通常、アセット プールと 1 対"
-" 1 の対応関係がないこと、および対応する dtype_id "
-"または専用インターフェイスを介して戦略で取得することもできることです。具体的な設定と参照方法については、現在のバージョンのドキュメントと API "
-"を参照してください。"
 
-#: ../../source/design/03-data-in-strategies.md:48
+#: ../../source/design/03-data-in-strategies.md:47
+msgid ""
+"**Static（仅标的）**：行业、上市日等截面属性。研究/选股票池用 `get_static_data`；**本阶段不进** "
+"`data_types` / `get_data`（避免把字符串塞进时间窗）。将来若需要，应走股票池过滤、研究 `group_by`，或数值化 "
+"context，而不是本任务范围。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:49
+msgid "过程数据 `proc.*` 见上一节，与 DataType 目录无关。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:51
 msgid "7. 小结"
 msgstr "7. まとめ"
 
-#: ../../source/design/03-data-in-strategies.md:50
+#: ../../source/design/03-data-in-strategies.md:53
 msgid "“声明 → 引擎注入 → get_data 引用”保证了："
 msgstr "「宣言 → エンジン挿入 → get_data 参照」により、次のことが保証されます。"
 
-#: ../../source/design/03-data-in-strategies.md:52
+#: ../../source/design/03-data-in-strategies.md:55
 msgid "回测与实盘使用同一套数据视图与访问方式；"
 msgstr "バックテストとライブ取引では、同じデータビューとアクセスパターンが使用されます。"
 
-#: ../../source/design/03-data-in-strategies.md:53
+#: ../../source/design/03-data-in-strategies.md:56
 msgid "策略无法越权访问未声明或未来的数据，从机制上避免未来函数；"
 msgstr "この戦略は、未宣言のデータや将来のデータにアクセスできないため、メカニズム レベルでの先読みバイアスが防止されます。"
 
-#: ../../source/design/03-data-in-strategies.md:54
+#: ../../source/design/03-data-in-strategies.md:57
 msgid "接口统一、易于维护与扩展。"
 msgstr "保守と拡張が簡単な統合インターフェイス。"
 
-#: ../../source/design/03-data-in-strategies.md:56
+#: ../../source/design/03-data-in-strategies.md:59
 msgid ""
 "“声明 → 引擎注入 → get_data "
 "引用”同样适用于过程数据，只是过程数据不需声明、由运行层按步注入，且仅在使用时触发动态回测路径。更多用法见《使用教程》与《API 参考》。"
@@ -230,3 +237,28 @@ msgstr ""
 "「宣言 → エンジン注入 → get_data 参照」はプロセス データにも適用されます。ただし、プロセス "
 "データは宣言する必要がなく、ランタイム層によって段階的に注入され、使用時にのみ動的バックテスト "
 "パスをトリガーします。詳しい使い方については「ユーザーガイド」および「APIリファレンス」をご覧ください。"
+
+#~ msgid ""
+#~ "**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 "
+#~ "DataType 对应一种“可引用的信息”，并对应唯一的 **dtype_id**（如 "
+#~ "`close_E_d`）。"
+#~ msgstr ""
+#~ "**data_types**: 1 つ以上の **DataType** オブジェクト "
+#~ "(またはリスト/dict)。各 DataType は一種の「参照可能な情報」に対応し、一意の "
+#~ "**dtype_id** (例: `close_E_d`) にマッピングされます。"
+
+#~ msgid "6. 参考数据（若有）"
+#~ msgstr "6. 参考データ (ある場合)"
+
+#~ msgid ""
+#~ "除策略声明的 data_types 外，qteasy "
+#~ "支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的"
+#~ " dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+#~ msgstr ""
+#~ "ストラテジーによって宣言された data_types に加えて、qteasy は「参照データ」 "
+#~ "(市場リターンの計算などに使用されるインデックスの終値など) をサポートします。参照データとプライマリ "
+#~ "データの違いは、通常、アセット プールと 1 対 1 "
+#~ "の対応関係がないこと、および対応する dtype_id "
+#~ "または専用インターフェイスを介して戦略で取得することもできることです。具体的な設定と参照方法については、現在のバージョンのドキュメントと"
+#~ " API を参照してください。"
+

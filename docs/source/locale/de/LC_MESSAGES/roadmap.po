@@ -7,17 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG\n"
-"Language-Team: de <LL@li.org>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../source/roadmap.rst:2
 msgid "开发路线图"
@@ -35,8 +34,8 @@ msgstr ""
 msgid "以下开发路线图罗列了计划中 ``qteasy`` 拥有的功能，有些功能还在不断地开发完善中，我们将在未来的版本不断更新。"
 msgstr ""
 "Die folgende Entwicklungs-Roadmap listet die geplanten Funktionen von "
-"`qteasy` auf. Einige Funktionen befinden sich noch in der Entwicklung und "
-"Verbesserung und werden in zukünftigen Versionen weiter aktualisiert."
+"`qteasy` auf. Einige Funktionen befinden sich noch in der Entwicklung und"
+" Verbesserung und werden in zukünftigen Versionen weiter aktualisiert."
 
 #: ../../source/roadmap.rst:10
 msgid "金融数据"
@@ -50,8 +49,7 @@ msgstr ""
 
 #: ../../source/roadmap.rst:14
 msgid "✅ 获取上市公司基本面数据、财务报表数据"
-msgstr ""
-"✅ Fundamentale Daten und Finanzdaten börsennotierter Unternehmen abrufen"
+msgstr "✅ Fundamentale Daten und Finanzdaten börsennotierter Unternehmen abrufen"
 
 #: ../../source/roadmap.rst:15
 msgid "✅ 获取股票、指数、基金日线价格数据及复权因子"
@@ -97,8 +95,7 @@ msgstr "⬜ Kryptowährungsdaten abrufen"
 
 #: ../../source/roadmap.rst:26
 msgid "✅ 支持多种数据存储格式，如 ``csv``、``hdf5``、``mysql`` 等"
-msgstr ""
-"✅ Unterstützt mehrere Datenspeicherformate, wie z. B. CSV, HDF5 und MySQL."
+msgstr "✅ Unterstützt mehrere Datenspeicherformate, wie z. B. CSV, HDF5 und MySQL."
 
 #: ../../source/roadmap.rst:28
 msgid "✅ 支持 ``csv`` 格式"
@@ -131,8 +128,10 @@ msgid "✅ 从东方财经  ``eastmoney`` 获取历史数据和实时数据"
 msgstr "✅ Historische und Echtzeitdaten von Eastmoney.com abrufen."
 
 #: ../../source/roadmap.rst:37
-msgid "⬜ 从 ``akshare`` 获取数据"
-msgstr "⬜ Daten von `akshare` abrufen"
+msgid ""
+"✅ 从 ``akshare`` 获取历史与实时数据（25 张表 + 实时，详见数据通道文档与 "
+"``tests/akshare_data_test_checklist.md``）"
+msgstr ""
 
 #: ../../source/roadmap.rst:38
 msgid "⬜ 从 ``baostock`` 获取数据"
@@ -153,14 +152,14 @@ msgid "✅ 基于 HistoryPanel 的多图表类型可视化（K 线、成交量�
 msgstr ""
 "✅ Basierend auf HistoryPanel bietet es die Visualisierung verschiedener "
 "Diagrammtypen (Candlestick-Diagramme, Volumendiagramme, MACD, "
-"Liniendiagramme usw.), unterstützt den Vergleich mehrerer Diagrammtypen und "
-"die statische/interaktive Dual-Modus-Visualisierung."
+"Liniendiagramme usw.), unterstützt den Vergleich mehrerer Diagrammtypen "
+"und die statische/interaktive Dual-Modus-Visualisierung."
 
 #: ../../source/roadmap.rst:43
 msgid "⬜ 本地存储财务数据直接输出为财务报表"
 msgstr ""
-"⬜ Lokal gespeicherte Finanzdaten können direkt als Finanzberichte exportiert"
-" werden."
+"⬜ Lokal gespeicherte Finanzdaten können direkt als Finanzberichte "
+"exportiert werden."
 
 #: ../../source/roadmap.rst:44
 msgid "⬜ 本地存储宏观经济数据直接输出为宏观经济图表"
@@ -171,9 +170,9 @@ msgstr ""
 #: ../../source/roadmap.rst:45
 msgid "⬜ 允许用户自定义数据类型，添加到数据源，按自定义数据获取方式获取数据"
 msgstr ""
-"Ermöglicht es Benutzern, benutzerdefinierte Datentypen zu definieren, diese "
-"der Datenquelle hinzuzufügen und Daten mithilfe ihrer benutzerdefinierten "
-"Datenabrufmethoden abzurufen."
+"Ermöglicht es Benutzern, benutzerdefinierte Datentypen zu definieren, "
+"diese der Datenquelle hinzuzufügen und Daten mithilfe ihrer "
+"benutzerdefinierten Datenabrufmethoden abzurufen."
 
 #: ../../source/roadmap.rst:46
 msgid "⬜ 提供数据统计分析功能，如均值、标准差、相关系数、协方差等，整合到 ``HistoryPanel`` 类中"
@@ -195,61 +194,61 @@ msgstr ""
 #: ../../source/roadmap.rst:53
 msgid "✅ 所有交易策略均实现参数化调用，用户通过参数控制策略的行为；允许用户定义交易策略时定义可调参数，通过可调参数影响策略的运行表现"
 msgstr ""
-"✅ Alle Handelsstrategien sind parametrisiert, sodass Benutzer ihr Verhalten "
-"über Parameter steuern können; Benutzer können außerdem beim Definieren von "
-"Handelsstrategien anpassbare Parameter festlegen und so die Performance der "
-"Strategie beeinflussen."
+"✅ Alle Handelsstrategien sind parametrisiert, sodass Benutzer ihr "
+"Verhalten über Parameter steuern können; Benutzer können außerdem beim "
+"Definieren von Handelsstrategien anpassbare Parameter festlegen und so "
+"die Performance der Strategie beeinflussen."
 
 #: ../../source/roadmap.rst:55
 msgid "✅ 用户可以在一个策略中订阅多种历史数据，但所有数据的频率和时间周期必须相同"
 msgstr ""
 "✅ Benutzer können innerhalb einer einzigen Police mehrere historische "
-"Datensätze abonnieren, jedoch müssen alle Datensätze die gleiche Frequenz "
-"und den gleichen Zeitraum aufweisen."
+"Datensätze abonnieren, jedoch müssen alle Datensätze die gleiche Frequenz"
+" und den gleichen Zeitraum aufweisen."
 
 #: ../../source/roadmap.rst:56
 msgid "✅ 用户可以在一个策略中订阅多种历史数据，且允许历史数据有不同的时间周期和时间频率"
 msgstr ""
 "✅ Benutzer können innerhalb einer einzigen Police mehrere historische "
-"Datensätze abonnieren, und die historischen Daten können unterschiedliche "
-"Zeiträume und Frequenzen aufweisen."
+"Datensätze abonnieren, und die historischen Daten können unterschiedliche"
+" Zeiträume und Frequenzen aufweisen."
 
 #: ../../source/roadmap.rst:58
 msgid "✅ 提供交易策略的基类，用户可以继承基类，实现自己的交易策略，实现的交易策略可以直接用于回测、实盘运行和参数优化"
 msgstr ""
-"✅ Bietet eine Basisklasse für Handelsstrategien. Benutzer können von dieser "
-"Basisklasse erben, um ihre eigenen Handelsstrategien zu implementieren, die "
-"dann direkt für Backtesting, Live-Trading und Parameteroptimierung verwendet"
-" werden können."
+"✅ Bietet eine Basisklasse für Handelsstrategien. Benutzer können von "
+"dieser Basisklasse erben, um ihre eigenen Handelsstrategien zu "
+"implementieren, die dann direkt für Backtesting, Live-Trading und "
+"Parameteroptimierung verwendet werden können."
 
 #: ../../source/roadmap.rst:59
 msgid "✅ 提供交易策略的回测功能，用户可以通过回测功能测试自己的交易策略，获取回测报告，以图表形式查看回测结果"
 msgstr ""
-"✅ Bietet eine Backtesting-Funktion für Handelsstrategien. Nutzer können ihre"
-" eigenen Handelsstrategien testen, Backtesting-Berichte erhalten und die "
-"Ergebnisse in Diagrammform anzeigen lassen."
+"✅ Bietet eine Backtesting-Funktion für Handelsstrategien. Nutzer können "
+"ihre eigenen Handelsstrategien testen, Backtesting-Berichte erhalten und "
+"die Ergebnisse in Diagrammform anzeigen lassen."
 
 #: ../../source/roadmap.rst:60
 msgid "✅ 提供多种回测指标，如年化收益率、最大回撤、夏普比率、信息比率、胜率、盈亏比等"
 msgstr ""
 "✅ Bietet eine Vielzahl von Backtesting-Metriken, wie z. B. annualisierte "
-"Rendite, maximaler Drawdown, Sharpe-Ratio, Informations-Ratio, Gewinnrate "
-"und Gewinn-/Verlust-Verhältnis."
+"Rendite, maximaler Drawdown, Sharpe-Ratio, Informations-Ratio, Gewinnrate"
+" und Gewinn-/Verlust-Verhältnis."
 
 #: ../../source/roadmap.rst:61
 msgid "✅ 提供交易策略优化调参功能，用户可以通过该功能自动寻找最优参数组合，并以图表形式查看优化结果"
 msgstr ""
 "✅ Bietet Funktionen zur Optimierung von Handelsstrategien und zur "
-"Parameteranpassung, die es Benutzern ermöglichen, automatisch die optimale "
-"Parameterkombination zu finden und die Optimierungsergebnisse in "
-"Diagrammform anzuzeigen."
+"Parameteranpassung, die es Benutzern ermöglichen, automatisch die "
+"optimale Parameterkombination zu finden und die Optimierungsergebnisse in"
+" Diagrammform anzuzeigen."
 
 #: ../../source/roadmap.rst:62
 msgid "✅ 提供多种策略优化算法，如网格搜索、遗传算法、模拟退火，以及机器学习算法"
 msgstr ""
 "✅ Bietet eine Vielzahl von Strategieoptimierungsalgorithmen, wie z. B. "
-"Gittersuche, genetischer Algorithmus, simuliertes Ausglühen und Algorithmen "
-"des maschinellen Lernens."
+"Gittersuche, genetischer Algorithmus, simuliertes Ausglühen und "
+"Algorithmen des maschinellen Lernens."
 
 #: ../../source/roadmap.rst:64
 msgid "✅ 网格搜索"
@@ -295,14 +294,13 @@ msgstr ""
 
 #: ../../source/roadmap.rst:75
 msgid "✅ 当前持仓数据，包括持仓量、持仓成本等"
-msgstr ""
-"✅ Aktuelle Positionsdaten, einschließlich Positionsgröße, Kostenbasis usw."
+msgstr "✅ Aktuelle Positionsdaten, einschließlich Positionsgröße, Kostenbasis usw."
 
 #: ../../source/roadmap.rst:77
 msgid "⬜ 允许用户在定义策略时添加自定义数据类型"
 msgstr ""
-"Ermöglicht es Benutzern, beim Definieren von Strategien benutzerdefinierte "
-"Datentypen hinzuzufügen."
+"Ermöglicht es Benutzern, beim Definieren von Strategien "
+"benutzerdefinierte Datentypen hinzuzufügen."
 
 #: ../../source/roadmap.rst:80
 msgid "实盘运行"
@@ -313,19 +311,19 @@ msgid ""
 "✅ "
 "提供模拟实盘运行功能，使用实时数据运行交易策略，模拟交易所处理交易指令,生成模拟交易结果，记录交易结果并模拟跟踪交易策略的运行表现，跟踪交易策略的资金曲线、持股变动和收益情况"
 msgstr ""
-"✅ Bietet eine simulierte Live-Handelsfunktion, die Echtzeitdaten nutzt, um "
-"Handelsstrategien auszuführen, die Verarbeitung von Handelsaufträgen durch "
-"die Börse zu simulieren, simulierte Handelsergebnisse zu generieren, "
-"Handelsergebnisse aufzuzeichnen und die Performance der Handelsstrategie zu "
-"simulieren und zu verfolgen, einschließlich der Equity-Kurve, Veränderungen "
-"der Aktienbestände und Renditen."
+"✅ Bietet eine simulierte Live-Handelsfunktion, die Echtzeitdaten nutzt, "
+"um Handelsstrategien auszuführen, die Verarbeitung von Handelsaufträgen "
+"durch die Börse zu simulieren, simulierte Handelsergebnisse zu "
+"generieren, Handelsergebnisse aufzuzeichnen und die Performance der "
+"Handelsstrategie zu simulieren und zu verfolgen, einschließlich der "
+"Equity-Kurve, Veränderungen der Aktienbestände und Renditen."
 
 #: ../../source/roadmap.rst:83
 msgid "✅ 提供多种模拟交易所的参数选项，允许用户自定义交易所的参数，设置不同的交易费率、滑点、交易时间等参数"
 msgstr ""
-"✅ Bietet zahlreiche Parameteroptionen für die Demo-Börse, mit denen Benutzer"
-" Börsenparameter wie Handelsgebühren, Slippage und Handelszeiten individuell"
-" anpassen können."
+"✅ Bietet zahlreiche Parameteroptionen für die Demo-Börse, mit denen "
+"Benutzer Börsenparameter wie Handelsgebühren, Slippage und Handelszeiten "
+"individuell anpassen können."
 
 #: ../../source/roadmap.rst:84
 msgid "✅ 允许用户自定义创建不同的交易账户，自定义初始资金等参数，随时切换不同的交易账户进行不同的模拟交易"
@@ -345,8 +343,8 @@ msgstr ""
 #: ../../source/roadmap.rst:87
 msgid "✅ 实盘运行过程生成system_log文件，将交易过程记录在system_log中"
 msgstr ""
-"✅ Während des Live-Handels wird eine Systemprotokolldatei erstellt, um den "
-"Handelsvorgang aufzuzeichnen."
+"✅ Während des Live-Handels wird eine Systemprotokolldatei erstellt, um "
+"den Handelsvorgang aufzuzeichnen."
 
 #: ../../source/roadmap.rst:88
 msgid "✅ 实盘运行过程生成trade_log文件，将交易指令、交易结果、资金、持股变动和收益等情况记录在trade_log中"
@@ -358,8 +356,8 @@ msgstr ""
 #: ../../source/roadmap.rst:89
 msgid "✅ 提供交易参数配置文件，将交易参数保存在配置文件中，重新开始交易时可以直接加载配置文件读取交易参数"
 msgstr ""
-"✅ Stellt eine Konfigurationsdatei für die Handelsparameter bereit, in der "
-"diese gespeichert werden. Beim Neustart des Handels kann die "
+"✅ Stellt eine Konfigurationsdatei für die Handelsparameter bereit, in der"
+" diese gespeichert werden. Beim Neustart des Handels kann die "
 "Konfigurationsdatei direkt geladen werden, um die Handelsparameter "
 "auszulesen."
 
@@ -380,8 +378,8 @@ msgstr ""
 #: ../../source/roadmap.rst:94
 msgid "✅ CLI工具提供dashboard模式，显示当前所有交易状态和实时交易结果"
 msgstr ""
-"✅ Das CLI-Tool bietet einen Dashboard-Modus, der den aktuellen Status aller "
-"Transaktionen und die Transaktionsergebnisse in Echtzeit anzeigt."
+"✅ Das CLI-Tool bietet einen Dashboard-Modus, der den aktuellen Status "
+"aller Transaktionen und die Transaktionsergebnisse in Echtzeit anzeigt."
 
 #: ../../source/roadmap.rst:95
 msgid "✅ CLI工具提供交易指令输入模式，允许用户输入交易指令，或者查看和修改关键配置信息"
@@ -394,14 +392,14 @@ msgstr ""
 msgid "✅ 提供命令行图形化工具TUI，方便用户查看交易指令、交易结果、资金曲线、持股变动和收益情况"
 msgstr ""
 "✅ Bietet ein grafisches Kommandozeilen-Tool, TUI, mit dem Benutzer "
-"Handelsaufträge, Handelsergebnisse, Eigenkapitalkurven, Veränderungen der "
-"Aktienbestände und den Gewinnstatus einfach einsehen können."
+"Handelsaufträge, Handelsergebnisse, Eigenkapitalkurven, Veränderungen der"
+" Aktienbestände und den Gewinnstatus einfach einsehen können."
 
 #: ../../source/roadmap.rst:99
 msgid "✅ TUI工具提供可视化的图形界面，显示当前所有交易状态和实时交易结果"
 msgstr ""
-"✅ Das TUI-Tool bietet eine visuelle grafische Benutzeroberfläche, die den "
-"aktuellen Status aller Transaktionen und die Transaktionsergebnisse in "
+"✅ Das TUI-Tool bietet eine visuelle grafische Benutzeroberfläche, die den"
+" aktuellen Status aller Transaktionen und die Transaktionsergebnisse in "
 "Echtzeit anzeigt."
 
 #: ../../source/roadmap.rst:100
@@ -416,11 +414,12 @@ msgid ""
 "⬜ "
 "提供实盘交易接口，实际连接交易所，自动传达交易指令至交易所，获取交易结果，记录交易结果并实盘跟踪交易策略的运行表现，跟踪交易策略的资金曲线、持股变动和收益情况"
 msgstr ""
-"⬜ Bietet eine Live-Handelsschnittstelle, die direkt mit der Börse verbunden "
-"ist, Handelsaufträge automatisch an die Börse übermittelt, Handelsergebnisse"
-" abruft, Handelsergebnisse aufzeichnet und die Performance der "
-"Handelsstrategie in Echtzeit verfolgt, einschließlich der Verfolgung der "
-"Aktienkurve, der Veränderungen der Aktienbestände und der Renditen."
+"⬜ Bietet eine Live-Handelsschnittstelle, die direkt mit der Börse "
+"verbunden ist, Handelsaufträge automatisch an die Börse übermittelt, "
+"Handelsergebnisse abruft, Handelsergebnisse aufzeichnet und die "
+"Performance der Handelsstrategie in Echtzeit verfolgt, einschließlich der"
+" Verfolgung der Aktienkurve, der Veränderungen der Aktienbestände und der"
+" Renditen."
 
 #: ../../source/roadmap.rst:103
 msgid "⬜ 提供多种实盘交易接口，如证券交易所、期货交易所、数字货币交易所等"
@@ -430,11 +429,24 @@ msgstr ""
 
 #: ../../source/roadmap.rst:104
 msgid "✅ 提供模拟交易或实盘交易的图形化用户界面"
-msgstr ""
-"✅ Bietet eine grafische Benutzeroberfläche für den Demo- oder Live-Handel."
+msgstr "✅ Bietet eine grafische Benutzeroberfläche für den Demo- oder Live-Handel."
 
 #: ../../source/roadmap.rst:105
 msgid "⬜ 产生交易信号后通过邮件/微信等方式发送通知"
 msgstr ""
 "⬜ Benachrichtigungen werden per E-Mail/WeChat usw. versendet, sobald ein "
 "Handelssignal generiert wurde."
+
+#: ../../source/roadmap.rst:109
+msgid "可选扩展"
+msgstr ""
+
+#: ../../source/roadmap.rst:111
+msgid ""
+"✅ AI 自然语言编排外壳（**独立项目** `qteasy-ai <https://github.com/shepherdpp/qteasy-"
+"ai>`_，PyPI：``qteasy-ai``；依赖 qteasy 内核 API，不随 qteasy 版本发布）"
+msgstr ""
+
+#~ msgid "⬜ 从 ``akshare`` 获取数据"
+#~ msgstr "⬜ Daten von `akshare` abrufen"
+

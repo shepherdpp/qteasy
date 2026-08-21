@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language-Team: fr <LL@li.org>\n"
 "Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.0-get-data.md:1
@@ -32,8 +32,8 @@ msgstr ""
 #: ../../source/tutorials/2.0-get-data.md:5
 msgid "金融数据的获取、清洗、存储以及处理、可视化、使用"
 msgstr ""
-"Acquisition, nettoyage, stockage, traitement, visualisation et utilisation "
-"des données financières"
+"Acquisition, nettoyage, stockage, traitement, visualisation et "
+"utilisation des données financières"
 
 #: ../../source/tutorials/2.0-get-data.md:6
 msgid "量化交易策略的创建，并提供大量内置基本交易策略"
@@ -63,726 +63,972 @@ msgstr ""
 "utiliser à travers une série d'exemples pratiques."
 
 #: ../../source/tutorials/2.0-get-data.md:13
+msgid ""
+"**本篇在数据体验路径中的位置**：[安装与配置](1-get-started.md) → **获取并管理金融数据（本篇）** → "
+"[HistoryPanel 数据面板基础操作](2.4-historypanel-basics.md) → [玩数据与因子分析](2.5"
+"-historypanel-data-analysis.md) →（可选 [纵向择时](2.6-historypanel-advanced-"
+"vertical-timeaxis.md) / [横截面选股](2.7-historypanel-advanced-horizontal-"
+"multifactor.md) / [事件型因子](2.8-historypanel-advanced-event-kline-"
+"pattern.md)）→ [第一个策略回测](3-start-first-strategy.md)。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:15
 msgid "开始前的准备工作"
 msgstr "Préparatifs avant de commencer"
 
-#: ../../source/tutorials/2.0-get-data.md:15
+#: ../../source/tutorials/2.0-get-data.md:17
 msgid "在开始本教程前，请完成以下工作："
 msgstr "Avant de commencer ce tutoriel, veuillez compléter ce qui suit :"
 
-#: ../../source/tutorials/2.0-get-data.md:17
+#: ../../source/tutorials/2.0-get-data.md:19
 msgid "完成`qteasy`的安装并升级到最新版本"
 msgstr ""
 "Terminez l'installation de `qteasy` et mettez à niveau vers la dernière "
 "version"
 
-#: ../../source/tutorials/2.0-get-data.md:18
-msgid "注册`tushare pro`账户并确保有一定的积分（大多数高级数据需要较多积分才能下载）"
+#: ../../source/tutorials/2.0-get-data.md:20
+msgid "**数据通道（二选一或组合）**："
 msgstr ""
-"Enregistrez un compte `tushare pro` et assurez-vous d'avoir suffisamment de "
-"points (les données les plus avancées nécessitent plus de points à "
+
+#: ../../source/tutorials/2.0-get-data.md:21
+#, fuzzy
+msgid ""
+"使用 **Tushare**：注册`tushare "
+"pro`账户并确保有一定的积分（大多数高级数据需要较多积分才能下载），在`qteasy.cfg`中配置`tushare_token`"
+msgstr ""
+"Enregistrez un compte `tushare pro` et assurez-vous d'avoir suffisamment "
+"de points (les données les plus avancées nécessitent plus de points à "
 "télécharger)"
 
-#: ../../source/tutorials/2.0-get-data.md:19
-msgid "完成`qteasy.cfg`文件的配置，将`tushare_token`写入配置文件"
+#: ../../source/tutorials/2.0-get-data.md:22
+#, python-format
+msgid ""
+"使用 **AKShare 或其他通道**：安装 `pip install akshare`（若选 AKShare），无需 Tushare "
+"token；部分表覆盖范围小于 Tushare，详见[数据通道文档](../manage_data/10.%20data_channels.md)"
 msgstr ""
-"Complétez la configuration du fichier `qteasy.cfg` et écrivez "
-"`tushare_token` dans le fichier de configuration"
 
-#: ../../source/tutorials/2.0-get-data.md:20
-msgid "完成`mysql`数据库的配置，并将数据库配置写入`qteasy.cfg·`(***可选项***)"
+#: ../../source/tutorials/2.0-get-data.md:23
+#, fuzzy
+msgid "完成`mysql`数据库的配置，并将数据库配置写入`qteasy.cfg`（***可选项***）"
 msgstr ""
 "Terminez la configuration de la base de données `mysql` et écrivez la "
 "configuration de la base de données dans `qteasy.cfg·` (***facultatif***)"
 
-#: ../../source/tutorials/2.0-get-data.md:21
+#: ../../source/tutorials/2.0-get-data.md:24
 msgid "完成`ta-lib`的安装 (***可选项***)"
 msgstr "Terminez l'installation de `ta-lib` (***facultatif***)"
 
-#: ../../source/tutorials/2.0-get-data.md:23
+#: ../../source/tutorials/2.0-get-data.md:26
 msgid ""
 "在[上一篇教程](1-get-"
 "started.md)中，我介绍了如何新建一个虚拟环境，并在新的虚拟环境中安装并初始化`qteasy`，如果还没有完成这一步的朋友，请移步前一篇教程完成`qteasy`的安装和基础配置。"
 msgstr ""
-"Dans le [tutoriel précédent](1-get-started.md), j'ai expliqué comment créer "
-"un nouvel environnement virtuel et y installer et initialiser `qteasy`. Si "
-"vous n'avez pas encore terminé cette étape, veuillez vous référer au "
-"tutoriel précédent pour terminer l'installation de `qteasy` et la "
-"configuration de base."
+"Dans le [tutoriel précédent](1-get-started.md), j'ai expliqué comment "
+"créer un nouvel environnement virtuel et y installer et initialiser "
+"`qteasy`. Si vous n'avez pas encore terminé cette étape, veuillez vous "
+"référer au tutoriel précédent pour terminer l'installation de `qteasy` et"
+" la configuration de base."
 
-#: ../../source/tutorials/2.0-get-data.md:25
+#: ../../source/tutorials/2.0-get-data.md:28
 msgid ""
-"另外，为了方便后续图表等功能的使用，建议使用`jupyter notebook`来进行开发，您可以在新建的虚拟环境中运行以下命令安装`jupyter "
-"notebook`："
+"另外，为了方便后续图表等功能的使用，建议使用`jupyter "
+"notebook`来进行开发，您可以在新建的虚拟环境中运行以下命令安装`jupyter notebook`："
 msgstr ""
-"De plus, pour faciliter l'utilisation ultérieure de fonctionnalités telles "
-"que les graphiques, il est recommandé d'utiliser `jupyter notebook` pour le "
-"développement. Vous pouvez exécuter la commande suivante dans "
-"l'environnement virtuel nouvellement créé pour installer `jupyter "
-"notebook` :"
+"De plus, pour faciliter l'utilisation ultérieure de fonctionnalités "
+"telles que les graphiques, il est recommandé d'utiliser `jupyter "
+"notebook` pour le développement. Vous pouvez exécuter la commande "
+"suivante dans l'environnement virtuel nouvellement créé pour installer "
+"`jupyter notebook` :"
 
-#: ../../source/tutorials/2.0-get-data.md:30
+#: ../../source/tutorials/2.0-get-data.md:33
 msgid "安装完成后，可以使用下面命令启动`jupyter notebook`："
 msgstr ""
-"Une fois l'installation terminée, vous pouvez utiliser la commande suivante "
-"pour démarrer `jupyter notebook` :"
+"Une fois l'installation terminée, vous pouvez utiliser la commande "
+"suivante pour démarrer `jupyter notebook` :"
 
-#: ../../source/tutorials/2.0-get-data.md:36
+#: ../../source/tutorials/2.0-get-data.md:39
 msgid "启动后，就可以在浏览器中的一个交互式开发环境中运行代码了，如下图所示："
 msgstr ""
-"Après le démarrage, vous pouvez exécuter du code dans un environnement de "
-"développement interactif dans votre navigateur, comme illustré dans la "
+"Après le démarrage, vous pouvez exécuter du code dans un environnement de"
+" développement interactif dans votre navigateur, comme illustré dans la "
 "figure ci-dessous :"
 
-#: ../../source/tutorials/2.0-get-data.md:38
+#: ../../source/tutorials/2.0-get-data.md:41
 msgid "![在这里插入图片描述](img/jupyter_notebook.png)"
 msgstr "![Insérer la description de l'image ici](img/jupyter_notebook.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:38
-#: ../../source/tutorials/2.0-get-data.md:166
-#: ../../source/tutorials/2.0-get-data.md:258
-#: ../../source/tutorials/2.0-get-data.md:267
+#: ../../source/tutorials/2.0-get-data.md:41
+#: ../../source/tutorials/2.0-get-data.md:173
+#: ../../source/tutorials/2.0-get-data.md:265
+#: ../../source/tutorials/2.0-get-data.md:274
 msgid "在这里插入图片描述"
 msgstr "Insérer la description de l'image ici"
 
-#: ../../source/tutorials/2.0-get-data.md:40
+#: ../../source/tutorials/2.0-get-data.md:43
 msgid "如果不使用`jupyter notebook`，也可以使用`ipython`："
 msgstr ""
-"Si vous n'utilisez pas `jupyter notebook`, vous pouvez également utiliser "
-"`ipython` :"
-
-#: ../../source/tutorials/2.0-get-data.md:44
-msgid "`ipython` 运行在terminal中，但是对图表的支持没有那么好"
-msgstr ""
-"`ipython` s'exécute dans le terminal, mais sa prise en charge des graphiques"
-" n'est pas aussi bonne."
+"Si vous n'utilisez pas `jupyter notebook`, vous pouvez également utiliser"
+" `ipython` :"
 
 #: ../../source/tutorials/2.0-get-data.md:47
+msgid "`ipython` 运行在terminal中，但是对图表的支持没有那么好"
+msgstr ""
+"`ipython` s'exécute dans le terminal, mais sa prise en charge des "
+"graphiques n'est pas aussi bonne."
+
+#: ../../source/tutorials/2.0-get-data.md:50
 msgid "获取基础数据以及价格数据"
 msgstr "Obtenir des données de base et des données sur les prix"
 
-#: ../../source/tutorials/2.0-get-data.md:49
-msgid ""
-"如上一篇教程介绍，刚刚初始化的`qteasy`是无法调用任何历史数据的，所有历史数据都必须首先下载到本地，保存到一个称为`Datasource`的数据仓库之后，才能完成后续所有需要数据的工作，例如调用历史数据，进行策略的回测和优化等等。"
+#: ../../source/tutorials/2.0-get-data.md:52
+msgid "如上一篇教程介绍，刚刚初始化的`qteasy`是无法调用任何历史数据的，所有历史数据都必须首先下载到本地，保存到一个称为`Datasource`的数据仓库之后，才能完成后续所有需要数据的工作，例如调用历史数据，进行策略的回测和优化等等。"
 msgstr ""
 "Comme introduit dans le didacticiel précédent, un `qteasy` nouvellement "
-"initialisé ne peut accéder à aucune donnée historique. Toutes les données "
-"historiques doivent d'abord être téléchargées localement et enregistrées "
-"dans un référentiel de données appelé « CODE1 » avant de pouvoir effectuer "
-"tout travail ultérieur dépendant des données, tel que la récupération de "
-"données historiques, le backtesting et l'optimisation de stratégies, etc."
-
-#: ../../source/tutorials/2.0-get-data.md:51
-msgid ""
-"`qteasy`需要使用的数据种类很多，所有的数据都是保存在一些预定义的数据表中，`Datasource`就是一系列数据表的集合。其中最基础的数据表包括："
-msgstr ""
-"`qteasy` doit utiliser de nombreux types de données. Toutes les données sont"
-" stockées dans des tables de données prédéfinies et `Datasource` est une "
-"collection d'une série de tables de données. Les tableaux de données les "
-"plus élémentaires comprennent :"
-
-#: ../../source/tutorials/2.0-get-data.md:53
-msgid "`trade_calendar` - 交易日历数据，包括不同交易所的开市、闭市日期计划，每年底更新下一年的交易日历"
-msgstr ""
-"`trade_calendar` - Données du calendrier de négociation, y compris les dates"
-" d'ouverture et de fermeture prévues du marché pour les différentes "
-"bourses ; le calendrier des échanges pour l'année suivante est mis à jour à "
-"la fin de chaque année."
+"initialisé ne peut accéder à aucune donnée historique. Toutes les données"
+" historiques doivent d'abord être téléchargées localement et enregistrées"
+" dans un référentiel de données appelé « CODE1 » avant de pouvoir "
+"effectuer tout travail ultérieur dépendant des données, tel que la "
+"récupération de données historiques, le backtesting et l'optimisation de "
+"stratégies, etc."
 
 #: ../../source/tutorials/2.0-get-data.md:54
-msgid "`stock_basics` - 股票基础信息，包括沪深股市所有股票的基本信息，包括代码、名称、全称、上市日期、分类等等基础信息"
+msgid "`qteasy`需要使用的数据种类很多，所有的数据都是保存在一些预定义的数据表中，`Datasource`就是一系列数据表的集合。其中最基础的数据表包括："
 msgstr ""
-"`stock_basics` - Informations boursières de base, y compris des informations"
-" de base sur toutes les actions des marchés boursiers de Shanghai et de "
-"Shenzhen, telles que le code, le nom, le nom complet, la date de cotation, "
-"la catégorie, etc."
+"`qteasy` doit utiliser de nombreux types de données. Toutes les données "
+"sont stockées dans des tables de données prédéfinies et `Datasource` est "
+"une collection d'une série de tables de données. Les tableaux de données "
+"les plus élémentaires comprennent :"
 
-#: ../../source/tutorials/2.0-get-data.md:55
-msgid "`index_basics` - 指数基础信息，包括沪深股市所有指数的基本信息，包括代码、名称、全称等等信息"
+#: ../../source/tutorials/2.0-get-data.md:56
+msgid "`trade_calendar` - 交易日历数据，包括不同交易所的开市、闭市日期计划，每年底更新下一年的交易日历"
 msgstr ""
-"`index_basics` - Informations de base sur l'indice, y compris les "
-"informations de base pour tous les indices des marchés boursiers de Shanghai"
-" et de Shenzhen, telles que le code, le nom, le nom complet, etc."
+"`trade_calendar` - Données du calendrier de négociation, y compris les "
+"dates d'ouverture et de fermeture prévues du marché pour les différentes "
+"bourses ; le calendrier des échanges pour l'année suivante est mis à jour"
+" à la fin de chaque année."
 
 #: ../../source/tutorials/2.0-get-data.md:57
+#, fuzzy
+msgid "`stock_basic` - 股票基础信息（文档中有时统称「basics」），包括沪深股市所有股票的基本信息"
+msgstr ""
+"`stock_basics` - Informations boursières de base, y compris des "
+"informations de base sur toutes les actions des marchés boursiers de "
+"Shanghai et de Shenzhen, telles que le code, le nom, le nom complet, la "
+"date de cotation, la catégorie, etc."
+
+#: ../../source/tutorials/2.0-get-data.md:58
+#, fuzzy
+msgid "`index_basic` - 指数基础信息，包括沪深股市所有指数的基本信息"
+msgstr ""
+"`index_basics` - Informations de base sur l'indice, y compris les "
+"informations de base pour tous les indices des marchés boursiers de "
+"Shanghai et de Shenzhen, telles que le code, le nom, le nom complet, etc."
+
+#: ../../source/tutorials/2.0-get-data.md:60
+msgid "`refill_data_source(tables=...)` 使用**数据表名**（如 `stock_basic`），与上列一致。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:62
 msgid "在配置好`tushare_token`以后，第一次导入`qteasy`时，如果系统未找到交易日历数据，会显示信息提示交易日历无法读取。"
 msgstr ""
-"Après avoir configuré `tushare_token`, lorsque vous importez `qteasy` pour "
-"la première fois, si le système ne trouve pas les données du calendrier de "
-"trading, il affichera un message indiquant que le calendrier de trading ne "
-"peut pas être lu."
+"Après avoir configuré `tushare_token`, lorsque vous importez `qteasy` "
+"pour la première fois, si le système ne trouve pas les données du "
+"calendrier de trading, il affichera un message indiquant que le "
+"calendrier de trading ne peut pas être lu."
 
-#: ../../source/tutorials/2.0-get-data.md:59
+#: ../../source/tutorials/2.0-get-data.md:64
 msgid ""
 "关于`DataSource`数据源对象的更多信息，请参见[DataSource Reference](../references/2-get-"
 "history-data.md)"
 msgstr ""
-"Pour plus d'informations sur l'objet source de données `DataSource`, voir "
-"[Référence DataSource](../references/2-get-history-data.md)."
+"Pour plus d'informations sur l'objet source de données `DataSource`, voir"
+" [Référence DataSource](../references/2-get-history-data.md)."
 
-#: ../../source/tutorials/2.0-get-data.md:64
+#: ../../source/tutorials/2.0-get-data.md:69
 msgid "提示信息："
 msgstr "Conseil:"
 
-#: ../../source/tutorials/2.0-get-data.md:69
-msgid ""
-"`qteasy`提供了一个函数`get_table_overview()`来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。"
+#: ../../source/tutorials/2.0-get-data.md:74
+msgid "`qteasy`提供了一个函数`get_table_overview()`来显示本地存储的数据信息，运行这个函数，可以打印出本地保存的数据表的清单，存储的数据量、占用的磁盘空间大小、以及数据范围等等。"
 msgstr ""
 "`qteasy` fournit une fonction `get_table_overview()` pour afficher des "
 "informations sur les données stockées localement. L'exécution de cette "
-"fonction imprime une liste des tables de données enregistrées localement, la"
-" quantité de données stockées, l'espace disque utilisé, la plage de données,"
-" etc."
+"fonction imprime une liste des tables de données enregistrées localement,"
+" la quantité de données stockées, l'espace disque utilisé, la plage de "
+"données, etc."
 
-#: ../../source/tutorials/2.0-get-data.md:74
+#: ../../source/tutorials/2.0-get-data.md:79
 msgid "数据表分析过程可能会花费几分钟时间，其间会显示进度条显示分析进度。分析完成以后，会显示本地数据源的数据表清单，以及数据表的数据范围等信息。"
 msgstr ""
-"Le processus d'analyse du tableau de données peut prendre quelques minutes. "
-"Pendant ce temps, une barre de progression s'affichera pour montrer la "
-"progression de l'analyse. Une fois l'analyse terminée, une liste des tables "
-"de la source de données locale sera affichée, ainsi que des informations "
-"telles que la plage de données de chaque table."
+"Le processus d'analyse du tableau de données peut prendre quelques "
+"minutes. Pendant ce temps, une barre de progression s'affichera pour "
+"montrer la progression de l'analyse. Une fois l'analyse terminée, une "
+"liste des tables de la source de données locale sera affichée, ainsi que "
+"des informations telles que la plage de données de chaque table."
 
-#: ../../source/tutorials/2.0-get-data.md:76
+#: ../../source/tutorials/2.0-get-data.md:81
 msgid "如果当前数据源中没有任何数据，会输出如下："
 msgstr ""
-"S'il n'y a aucune donnée dans la source de données actuelle, les éléments "
-"suivants seront affichés :"
+"S'il n'y a aucune donnée dans la source de données actuelle, les éléments"
+" suivants seront affichés :"
 
-#: ../../source/tutorials/2.0-get-data.md:92
+#: ../../source/tutorials/2.0-get-data.md:97
 msgid "如果本地数据源中没有数据，将会显示上面的内容。此时需要下载数据到本地数据源。"
 msgstr ""
 "S'il n'y a aucune donnée dans la source de données locale, le contenu ci-"
-"dessus sera affiché. Dans ce cas, vous devez télécharger les données vers la"
-" source de données locale."
+"dessus sera affiché. Dans ce cas, vous devez télécharger les données vers"
+" la source de données locale."
 
-#: ../../source/tutorials/2.0-get-data.md:94
+#: ../../source/tutorials/2.0-get-data.md:99
 msgid "下载交易日历和基础数据"
 msgstr "Téléchargez le calendrier de trading et les données de base"
 
-#: ../../source/tutorials/2.0-get-data.md:96
-msgid ""
-"我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是`tables`，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。目前`qteasy`仅支持通过`tushare`下载金融数据，未来还会增加其他的金融数据接口，丰富用户选择。"
+#: ../../source/tutorials/2.0-get-data.md:101
+#, fuzzy
+msgid "我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是`tables`，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。"
 msgstr ""
-"Nous pouvons appeler la fonction `refill_data_source` pour télécharger le "
-"calendrier de trading et les données de base. Cette fonction est la fonction"
-" d'interface de téléchargement de données standard de qteasy, et tous les "
-"types de données historiques peuvent être téléchargés via cette interface. "
-"Son paramètre de base est `tables` ; transmettez le nom de la table de "
-"données pour télécharger les données correspondantes sur le stockage local. "
-"Lorsque vous utilisez `refill_data_source` pour télécharger des données de "
-"trading, `qteasy` nettoiera automatiquement les données, supprimera les "
-"données en double, éliminera les données erronées, réessayera "
-"automatiquement les erreurs et fusionnera les données téléchargées dans les "
-"tables de données locales. Actuellement, `qteasy` ne prend en charge que le "
-"téléchargement de données financières via `tushare`. À l’avenir, d’autres "
-"interfaces de données financières seront ajoutées pour élargir les choix des"
-" utilisateurs."
-
-#: ../../source/tutorials/2.0-get-data.md:98
-msgid "要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码："
-msgstr ""
-"Pour télécharger le calendrier de trading mentionné précédemment, ainsi que "
-"les informations de base sur les actions et les indices, il vous suffit "
-"d'exécuter le code ci-dessous :"
+"Nous pouvons appeler la fonction `refill_data_source` pour télécharger le"
+" calendrier de trading et les données de base. Cette fonction est la "
+"fonction d'interface de téléchargement de données standard de qteasy, et "
+"tous les types de données historiques peuvent être téléchargés via cette "
+"interface. Son paramètre de base est `tables` ; transmettez le nom de la "
+"table de données pour télécharger les données correspondantes sur le "
+"stockage local. Lorsque vous utilisez `refill_data_source` pour "
+"télécharger des données de trading, `qteasy` nettoiera automatiquement "
+"les données, supprimera les données en double, éliminera les données "
+"erronées, réessayera automatiquement les erreurs et fusionnera les "
+"données téléchargées dans les tables de données locales. Actuellement, "
+"`qteasy` ne prend en charge que le téléchargement de données financières "
+"via `tushare`. À l’avenir, d’autres interfaces de données financières "
+"seront ajoutées pour élargir les choix des utilisateurs."
 
 #: ../../source/tutorials/2.0-get-data.md:103
-msgid "数据下载过程中会显示进度条显示下载进度。"
+#, python-format
+msgid ""
+"`qteasy`支持通过 **`tushare`、`akshare`、`eastmoney`、`sina`** 等多个内置通道下载数据（参数 "
+"`channel`，未指定时默认为 "
+"`tushare`）。不同通道支持的表范围与前置条件不同，切换方式与能力对照见[数据通道文档](../manage_data/10.%20data_channels.md)。"
 msgstr ""
-"Pendant le processus de téléchargement des données, une barre de progression"
-" s'affichera pour afficher la progression du téléchargement."
 
 #: ../../source/tutorials/2.0-get-data.md:105
-#: ../../source/tutorials/2.0-get-data.md:177
+#, fuzzy
+msgid "要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码（默认使用 Tushare，需已配置 `tushare_token`）："
+msgstr ""
+"Pour télécharger le calendrier de trading mentionné précédemment, ainsi "
+"que les informations de base sur les actions et les indices, il vous "
+"suffit d'exécuter le code ci-dessous :"
+
+#: ../../source/tutorials/2.0-get-data.md:110
+msgid "数据下载过程中会显示进度条显示下载进度。"
+msgstr ""
+"Pendant le processus de téléchargement des données, une barre de "
+"progression s'affichera pour afficher la progression du téléchargement."
+
+#: ../../source/tutorials/2.0-get-data.md:112
+#: ../../source/tutorials/2.0-get-data.md:184
 msgid "输出如下："
 msgstr "Le résultat est le suivant :"
 
-#: ../../source/tutorials/2.0-get-data.md:116
+#: ../../source/tutorials/2.0-get-data.md:123
 msgid "下载完成后，再次运行`qt.get_table_overview()`函数"
 msgstr ""
 "Une fois le téléchargement terminé, exécutez à nouveau la fonction "
 "`qt.get_table_overview()`."
 
-#: ../../source/tutorials/2.0-get-data.md:121
+#: ../../source/tutorials/2.0-get-data.md:128
 msgid "可以看到数据已经成功下载到本地："
 msgstr ""
 "Vous pouvez voir que les données ont été téléchargées avec succès "
 "localement :"
 
-#: ../../source/tutorials/2.0-get-data.md:138
-msgid ""
-"可以看到，三张数据表已经被下载到本地数据源，数据源的类型为`\"file://csv@qt_root/data/\"`类型（即数据以`csv`文件形式存储在qt根路径的`/data/`路径下），包含三张数据表，其中交易日历的范围涵盖到2024年年底。"
+#: ../../source/tutorials/2.0-get-data.md:145
+msgid "可以看到，三张数据表已经被下载到本地数据源，数据源的类型为`\"file://csv@qt_root/data/\"`类型（即数据以`csv`文件形式存储在qt根路径的`/data/`路径下），包含三张数据表，其中交易日历的范围涵盖到2024年年底。"
 msgstr ""
-"Comme vous pouvez le constater, les trois tableaux de données ont déjà été "
-"téléchargés vers la source de données locale. Le type de source de données "
-"est `\"file://csv@qt_root/data/\"` (c'est-à-dire que les données sont "
-"stockées sous forme de fichiers `csv` sous le chemin `/data/` dans le "
-"répertoire racine qt). Il contient trois tableaux de données et la plage du "
-"calendrier de négociation s'étend jusqu'à la fin de 2024."
+"Comme vous pouvez le constater, les trois tableaux de données ont déjà "
+"été téléchargés vers la source de données locale. Le type de source de "
+"données est `\"file://csv@qt_root/data/\"` (c'est-à-dire que les données "
+"sont stockées sous forme de fichiers `csv` sous le chemin `/data/` dans "
+"le répertoire racine qt). Il contient trois tableaux de données et la "
+"plage du calendrier de négociation s'étend jusqu'à la fin de 2024."
 
-#: ../../source/tutorials/2.0-get-data.md:140
+#: ../../source/tutorials/2.0-get-data.md:147
 msgid "查看股票和指数的基础数据"
 msgstr "Afficher les données de base pour les actions et les indices"
 
-#: ../../source/tutorials/2.0-get-data.md:142
+#: ../../source/tutorials/2.0-get-data.md:149
 msgid "上面的基础数据下载好之后，建议重新启动IDE，重新导入`qteasy`。这时，我们就可以使用`qteasy`筛选和查找股票/指数了。"
 msgstr ""
-"Après avoir téléchargé les données de base ci-dessus, il est recommandé de "
-"redémarrer l'EDI et de réimporter `qteasy`. À ce stade, nous pouvons "
+"Après avoir téléchargé les données de base ci-dessus, il est recommandé "
+"de redémarrer l'EDI et de réimporter `qteasy`. À ce stade, nous pouvons "
 "utiliser `qteasy` pour filtrer et rechercher des actions/indices."
 
-#: ../../source/tutorials/2.0-get-data.md:144
+#: ../../source/tutorials/2.0-get-data.md:151
 msgid ""
 "查找股票/指数详细信息可以使用`get_stock_info()`或者`get_basic_info()`函数，两个函数功能相同，都可以根据输入的证券代码、名称或者关键字查找证券的信息，支持通配符或者模糊查找；如果同一个代码对应不同的`qt_code`，例如股票`000001`代表平安银行，对应`qt_code:"
 " 000001.SZ`，而指数`000001`代表上证指数，`qt_code: 000001.SZ`，`qteasy`会罗列出所有的证券信息："
 msgstr ""
-"Pour rechercher des informations détaillées sur les actions/indices, vous "
-"pouvez utiliser la fonction `get_stock_info()` ou `get_basic_info()`. Les "
-"deux fonctions ont les mêmes fonctionnalités : toutes deux peuvent "
-"rechercher des informations de sécurité en fonction du code de sécurité, du "
-"nom ou des mots-clés saisis, et prendre en charge les caractères génériques "
-"ou la recherche floue. Si le même code correspond à différents `qt_code`, "
-"par exemple, l'action `000001` représente Ping An Bank, avec `qt_code: "
-"000001.SZ`, tandis que l'index `000001` représente l'indice composite SSE, "
-"avec `qt_code: 000001.SZ`—`qteasy` listera toutes les informations de "
-"sécurité :"
+"Pour rechercher des informations détaillées sur les actions/indices, vous"
+" pouvez utiliser la fonction `get_stock_info()` ou `get_basic_info()`. "
+"Les deux fonctions ont les mêmes fonctionnalités : toutes deux peuvent "
+"rechercher des informations de sécurité en fonction du code de sécurité, "
+"du nom ou des mots-clés saisis, et prendre en charge les caractères "
+"génériques ou la recherche floue. Si le même code correspond à différents"
+" `qt_code`, par exemple, l'action `000001` représente Ping An Bank, avec "
+"`qt_code: 000001.SZ`, tandis que l'index `000001` représente l'indice "
+"composite SSE, avec `qt_code: 000001.SZ`—`qteasy` listera toutes les "
+"informations de sécurité :"
 
-#: ../../source/tutorials/2.0-get-data.md:150
+#: ../../source/tutorials/2.0-get-data.md:157
 msgid "输出如下:"
 msgstr "Le résultat est le suivant :"
 
-#: ../../source/tutorials/2.0-get-data.md:164
+#: ../../source/tutorials/2.0-get-data.md:171
 msgid "更多的输出可以查看下图："
 msgstr "D'autres résultats peuvent être vus dans la figure ci-dessous :"
 
-#: ../../source/tutorials/2.0-get-data.md:166
+#: ../../source/tutorials/2.0-get-data.md:173
 msgid "![在这里插入图片描述](img/get_stock_info.png)"
 msgstr "![Insérer la description de l'image ici](img/get_stock_info.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:168
+#: ../../source/tutorials/2.0-get-data.md:175
 msgid "在上面的例子中，系统只找到了类型为股票和指数的证券，如果还需要查找基金、期货等更多的证券信息，用同样的方法下载更多的基础数据表即可："
 msgstr ""
 "Dans l'exemple ci-dessus, le système n'a trouvé que des titres de type "
-"actions et indices. Si vous avez également besoin de rechercher davantage "
-"d'informations sur les titres tels que les fonds et les contrats à terme, "
-"vous pouvez télécharger des tableaux de données plus basiques de la même "
-"manière :"
+"actions et indices. Si vous avez également besoin de rechercher davantage"
+" d'informations sur les titres tels que les fonds et les contrats à "
+"terme, vous pouvez télécharger des tableaux de données plus basiques de "
+"la même manière :"
 
-#: ../../source/tutorials/2.0-get-data.md:170
+#: ../../source/tutorials/2.0-get-data.md:177
 msgid "**fund_basic**: 基金基础数据"
 msgstr "**fund_basic** : données de base du fonds"
 
-#: ../../source/tutorials/2.0-get-data.md:171
+#: ../../source/tutorials/2.0-get-data.md:178
 msgid "**future_basic**: 期货基础数据"
 msgstr "**future_basic** : données futures de base"
 
-#: ../../source/tutorials/2.0-get-data.md:173
+#: ../../source/tutorials/2.0-get-data.md:180
 msgid "除了查找股票或证券的基本信息以外，我们还能用`qt.filter_stock()`函数来筛选股票："
 msgstr ""
 "En plus de rechercher des informations de base sur des actions ou des "
-"titres, nous pouvons également utiliser la fonction `qt.filter_stock()` pour"
-" filtrer les actions :"
+"titres, nous pouvons également utiliser la fonction `qt.filter_stock()` "
+"pour filtrer les actions :"
 
-#: ../../source/tutorials/2.0-get-data.md:186
+#: ../../source/tutorials/2.0-get-data.md:193
 msgid "下载沪市股票数据"
 msgstr "Téléchargez les données boursières cotées à Shanghai"
 
-#: ../../source/tutorials/2.0-get-data.md:188
+#: ../../source/tutorials/2.0-get-data.md:195
 msgid "金融数据中最重要的数据类型非量价数据莫属。接下来，我们就来下载历史价格数据。"
 msgstr ""
 "Parmi les données financières, le type le plus important est sans aucun "
-"doute les données sur les prix et les volumes. Ensuite, nous téléchargerons "
-"les données historiques sur les prix."
+"doute les données sur les prix et les volumes. Ensuite, nous "
+"téléchargerons les données historiques sur les prix."
 
-#: ../../source/tutorials/2.0-get-data.md:190
+#: ../../source/tutorials/2.0-get-data.md:197
 msgid "`qteasy`的历史数据全都是以K线数据的形式存储在数据表中的，目前支持的K线数据包括："
 msgstr ""
-"Toutes les données historiques dans `qteasy` sont stockées dans des tableaux"
-" de données sous la forme de données en chandelier (ligne K). Les données de"
-" chandelier actuellement prises en charge comprennent :"
+"Toutes les données historiques dans `qteasy` sont stockées dans des "
+"tableaux de données sous la forme de données en chandelier (ligne K). Les"
+" données de chandelier actuellement prises en charge comprennent :"
 
-#: ../../source/tutorials/2.0-get-data.md:192
+#: ../../source/tutorials/2.0-get-data.md:199
 msgid "分钟K线 - 1分钟/5分钟/15分钟/30分钟/60分钟K线"
 msgstr ""
-"Graphiques en chandeliers minutes - Graphiques en chandeliers de 1 minute/5 "
-"minutes/15 minutes/30 minutes/60 minutes"
+"Graphiques en chandeliers minutes - Graphiques en chandeliers de 1 "
+"minute/5 minutes/15 minutes/30 minutes/60 minutes"
 
-#: ../../source/tutorials/2.0-get-data.md:193
+#: ../../source/tutorials/2.0-get-data.md:200
 msgid "日K线"
 msgstr "Graphique en chandeliers quotidien"
 
-#: ../../source/tutorials/2.0-get-data.md:194
+#: ../../source/tutorials/2.0-get-data.md:201
 msgid "周K线"
 msgstr "Graphique en chandeliers hebdomadaire"
 
-#: ../../source/tutorials/2.0-get-data.md:195
+#: ../../source/tutorials/2.0-get-data.md:202
 msgid "月K线"
 msgstr "Graphique en chandeliers mensuel"
 
-#: ../../source/tutorials/2.0-get-data.md:197
-msgid ""
-"我们同样使用`qt.refill_data_source()`函数下载股票数据。最常用的股票日K线数据保存在`stock_daily`表中。不过由于数据量较大，我们最好在下载数据时限定数据的范围，通过`start_date`/`end_date`参数，指定下载数据的起始日期，分批下载历史数据，否则，下载的过程将会非常漫长："
+#: ../../source/tutorials/2.0-get-data.md:204
+msgid "我们同样使用`qt.refill_data_source()`函数下载股票数据。最常用的股票日K线数据保存在`stock_daily`表中。不过由于数据量较大，我们最好在下载数据时限定数据的范围，通过`start_date`/`end_date`参数，指定下载数据的起始日期，分批下载历史数据，否则，下载的过程将会非常漫长："
 msgstr ""
 "Nous utilisons également la fonction `qt.refill_data_source()` pour "
-"télécharger les données boursières. Les données quotidiennes des chandeliers"
-" boursiers (ligne K) les plus couramment utilisées sont stockées dans la "
-"table `stock_daily`. Cependant, comme le volume de données est important, il"
-" est préférable de limiter la plage de données lors du téléchargement. "
-"Utilisez les paramètres `start_date`/`end_date` pour spécifier les dates de "
-"début et de fin et télécharger les données historiques par lots ; sinon, le "
-"processus de téléchargement prendra beaucoup de temps :"
+"télécharger les données boursières. Les données quotidiennes des "
+"chandeliers boursiers (ligne K) les plus couramment utilisées sont "
+"stockées dans la table `stock_daily`. Cependant, comme le volume de "
+"données est important, il est préférable de limiter la plage de données "
+"lors du téléchargement. Utilisez les paramètres `start_date`/`end_date` "
+"pour spécifier les dates de début et de fin et télécharger les données "
+"historiques par lots ; sinon, le processus de téléchargement prendra "
+"beaucoup de temps :"
 
-#: ../../source/tutorials/2.0-get-data.md:202
+#: ../../source/tutorials/2.0-get-data.md:209
 msgid "上面的代码下载了2023年全年所有已上市股票的日K线数据，同样，下面的代码可以用来下载常用指数（上证指数和沪深300指数）的日K线数据："
 msgstr ""
-"Le code ci-dessus télécharge les données quotidiennes en chandelier (ligne "
-"K) pour toutes les actions cotées pour toute l'année 2023. De même, le code "
-"ci-dessous peut être utilisé pour télécharger les données quotidiennes en "
-"chandelier (ligne K) pour les indices couramment utilisés (l'indice "
-"composite SSE et l'indice CSI 300) :"
+"Le code ci-dessus télécharge les données quotidiennes en chandelier "
+"(ligne K) pour toutes les actions cotées pour toute l'année 2023. De "
+"même, le code ci-dessous peut être utilisé pour télécharger les données "
+"quotidiennes en chandelier (ligne K) pour les indices couramment utilisés"
+" (l'indice composite SSE et l'indice CSI 300) :"
 
-#: ../../source/tutorials/2.0-get-data.md:207
+#: ../../source/tutorials/2.0-get-data.md:214
 msgid "从本地获取股价数据"
-msgstr ""
-"Obtenez des données sur le cours des actions à partir du stockage local"
+msgstr "Obtenez des données sur le cours des actions à partir du stockage local"
 
-#: ../../source/tutorials/2.0-get-data.md:208
+#: ../../source/tutorials/2.0-get-data.md:215
 msgid "当股价数据保存在本地之后，就可以随时提取出来使用了。"
 msgstr ""
 "Une fois les données boursières enregistrées localement, vous pouvez les "
 "extraire et les utiliser à tout moment."
 
-#: ../../source/tutorials/2.0-get-data.md:210
+#: ../../source/tutorials/2.0-get-data.md:217
+#, fuzzy
 msgid ""
-"我们可以使用`qt.get_history_data()`函数来获取股票的量价数据。这个函数是`qteasy`的一个通用接口，可以用来获取各种类型的数据。在函数的参数中指定数据的类型（通过数据类型ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`\"open,"
-" high, low, close, vol\"`以获取开盘价、最高价、最低价、收盘价和交易量："
+"我们可以使用`qt.get_history_data()`函数来获取股票的量价等 **History**（时间 × 标的）数据。这是 "
+"History 形状的通用入口；宏观/基准请用 `get_reference_data`，行业等截面属性请用 "
+"`get_static_data`（见下文「按形状取数」）。在函数的参数中指定数据的类型（通过数据类型 "
+"ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`\"open, high, low, "
+"close, vol\"`以获取开盘价、最高价、最低价、收盘价和交易量："
 msgstr ""
-"Nous pouvons utiliser la fonction `qt.get_history_data()` pour obtenir les "
-"données de prix et de volume d'une action. Cette fonction est une interface "
-"à usage général dans `qteasy` et peut être utilisée pour récupérer "
-"différents types de données. En spécifiant le type de données (via l'ID du "
-"type de données), le symbole boursier et d'autres paramètres dans les "
-"arguments de la fonction, vous pouvez obtenir les données correspondantes. "
-"Si vous souhaitez récupérer les prix des chandeliers (ligne K) que vous "
-"venez de télécharger, définissez le type de données sur `\"open, high, low, "
-"close, vol\"` pour obtenir le volume d'ouverture, de haut, de bas, de "
-"clôture et de négociation :"
+"Nous pouvons utiliser la fonction `qt.get_history_data()` pour obtenir "
+"les données de prix et de volume d'une action. Cette fonction est une "
+"interface à usage général dans `qteasy` et peut être utilisée pour "
+"récupérer différents types de données. En spécifiant le type de données "
+"(via l'ID du type de données), le symbole boursier et d'autres paramètres"
+" dans les arguments de la fonction, vous pouvez obtenir les données "
+"correspondantes. Si vous souhaitez récupérer les prix des chandeliers "
+"(ligne K) que vous venez de télécharger, définissez le type de données "
+"sur `\"open, high, low, close, vol\"` pour obtenir le volume d'ouverture,"
+" de haut, de bas, de clôture et de négociation :"
 
-#: ../../source/tutorials/2.0-get-data.md:221
+#: ../../source/tutorials/2.0-get-data.md:228
 msgid "得到结果如下："
 msgstr "Le résultat est le suivant :"
 
-#: ../../source/tutorials/2.0-get-data.md:244
-msgid ""
-"上面函数的输出是一个字典，字典的键为`shares`参数指定的所有股票的代码，而值为一个`DataFrame`，包含该股票在指定期间的历史数据，这里我们指定了数据类型为K线量价数据。当然，我们也可以指定其他的数据类型，只要这些数据已经下载到了本地，就可以直接读取。"
+#: ../../source/tutorials/2.0-get-data.md:251
+msgid "上面函数的输出是一个字典，字典的键为`shares`参数指定的所有股票的代码，而值为一个`DataFrame`，包含该股票在指定期间的历史数据，这里我们指定了数据类型为K线量价数据。当然，我们也可以指定其他的数据类型，只要这些数据已经下载到了本地，就可以直接读取。"
 msgstr ""
-"La sortie de la fonction ci-dessus est un dictionnaire : ses clés sont les "
-"tickers de toutes les actions spécifiées par le paramètre `shares`, et ses "
-"valeurs sont des `DataFrame` contenant les données historiques de chaque "
-"action pour la période spécifiée. Ici, nous avons spécifié le type de "
-"données en tant que données de prix et de volume en chandelier (ligne K). "
-"Bien entendu, nous pouvons également spécifier d’autres types de données : "
-"tant que ces données ont déjà été téléchargées localement, elles peuvent "
-"être lues directement."
+"La sortie de la fonction ci-dessus est un dictionnaire : ses clés sont "
+"les tickers de toutes les actions spécifiées par le paramètre `shares`, "
+"et ses valeurs sont des `DataFrame` contenant les données historiques de "
+"chaque action pour la période spécifiée. Ici, nous avons spécifié le type"
+" de données en tant que données de prix et de volume en chandelier (ligne"
+" K). Bien entendu, nous pouvons également spécifier d’autres types de "
+"données : tant que ces données ont déjà été téléchargées localement, "
+"elles peuvent être lues directement."
 
-#: ../../source/tutorials/2.0-get-data.md:246
+#: ../../source/tutorials/2.0-get-data.md:253
 msgid ""
 "例如，指定数据类型`htypes='pe, pb, "
 "total_mv'`可以获取股票的市盈率、市净率和总市值等三项财务指标。如果某些指标存在缺失值的时候，可以定义填充方式填充缺失值，还可以对数据进行重新采样，将每日的数据变为每周或每小时数据。"
 msgstr ""
 "Par exemple, la spécification des types de données `htypes='pe, pb, "
-"total_mv'` vous permet d'obtenir trois indicateurs financiers tels que le "
-"ratio cours/bénéfice d'une action, le ratio cours/valeur comptable et la "
-"capitalisation boursière totale. Si certains indicateurs ont des valeurs "
-"manquantes, vous pouvez définir une méthode de remplissage pour remplir les "
-"valeurs manquantes. Vous pouvez également rééchantillonner les données, en "
-"convertissant les données quotidiennes en données hebdomadaires ou horaires."
+"total_mv'` vous permet d'obtenir trois indicateurs financiers tels que le"
+" ratio cours/bénéfice d'une action, le ratio cours/valeur comptable et la"
+" capitalisation boursière totale. Si certains indicateurs ont des valeurs"
+" manquantes, vous pouvez définir une méthode de remplissage pour remplir "
+"les valeurs manquantes. Vous pouvez également rééchantillonner les "
+"données, en convertissant les données quotidiennes en données "
+"hebdomadaires ou horaires."
 
-#: ../../source/tutorials/2.0-get-data.md:248
-msgid ""
-"关于`get_history_data`函数参数的详细解释，请参见[qteasy文档](https://qteasy.readthedocs.io)"
+#: ../../source/tutorials/2.0-get-data.md:255
+msgid "关于`get_history_data`函数参数的详细解释，请参见[qteasy文档](https://qteasy.readthedocs.io)"
 msgstr ""
 "Pour une explication détaillée des paramètres de la fonction "
 "`get_history_data`, veuillez vous référer à la [documentation "
 "qteasy](https://qteasy.readthedocs.io)"
 
-#: ../../source/tutorials/2.0-get-data.md:250
+#: ../../source/tutorials/2.0-get-data.md:257
 msgid "生成K线图"
 msgstr "Générer un graphique en chandeliers"
 
-#: ../../source/tutorials/2.0-get-data.md:251
+#: ../../source/tutorials/2.0-get-data.md:258
 msgid "使用量价数据，更加方便易读的方法是将数据显示为K线图。"
 msgstr ""
-"Lorsque vous utilisez des données de volume et de prix, une approche plus "
-"pratique et plus lisible consiste à afficher les données sous forme de "
+"Lorsque vous utilisez des données de volume et de prix, une approche plus"
+" pratique et plus lisible consiste à afficher les données sous forme de "
 "graphique en chandeliers."
 
-#: ../../source/tutorials/2.0-get-data.md:253
+#: ../../source/tutorials/2.0-get-data.md:260
 msgid "`qteasy`提供了`qt.candle()`函数，用于显示专业K线图，只要数据下载到本地后，就可以立即显示K线图："
 msgstr ""
-"`qteasy` fournit la fonction `qt.candle()` pour afficher des graphiques en "
-"chandeliers professionnels. Tant que les données ont été téléchargées "
-"localement, vous pouvez afficher immédiatement un graphique en chandeliers :"
+"`qteasy` fournit la fonction `qt.candle()` pour afficher des graphiques "
+"en chandeliers professionnels. Tant que les données ont été téléchargées "
+"localement, vous pouvez afficher immédiatement un graphique en "
+"chandeliers :"
 
-#: ../../source/tutorials/2.0-get-data.md:258
+#: ../../source/tutorials/2.0-get-data.md:265
 msgid "![在这里插入图片描述](img/candle-600004.png)"
 msgstr "![Insérer la description de l'image ici](img/candle-600004.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:260
+#: ../../source/tutorials/2.0-get-data.md:267
 msgid "下载复权因子数据到本地后，就可以显示复权价格了："
 msgstr ""
-"Après avoir téléchargé les données du facteur d'ajustement sur votre machine"
-" locale, vous pouvez afficher les prix ajustés :"
+"Après avoir téléchargé les données du facteur d'ajustement sur votre "
+"machine locale, vous pouvez afficher les prix ajustés :"
 
-#: ../../source/tutorials/2.0-get-data.md:267
+#: ../../source/tutorials/2.0-get-data.md:274
 msgid "![在这里插入图片描述](img/candle-600004-b.png)"
 msgstr "![Insérer la description de l'image ici](img/candle-600004-b.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:270
-msgid ""
-"`qt.candle()`函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，`qt.candle()`函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。"
+#: ../../source/tutorials/2.0-get-data.md:277
+msgid "`qt.candle()`函数支持传入K线图的开始日期、结束日期、K线频率、复权方式以显示不同区间和频率的K线图，也支持传入移动均线的时长和macd的不同参数显示不同的均线，`qt.candle()`函数还支持通过股票名称显示K线图，如果输入是股票名称，会自动模糊查找，并且支持通配符。"
 msgstr ""
 "La fonction `qt.candle()` prend en charge la transmission de la date de "
-"début, de la date de fin, de la fréquence du chandelier (ligne K) et de la "
-"méthode d'ajustement pour afficher des graphiques en chandeliers pour "
+"début, de la date de fin, de la fréquence du chandelier (ligne K) et de "
+"la méthode d'ajustement pour afficher des graphiques en chandeliers pour "
 "différentes plages et fréquences. Il prend également en charge la "
 "transmission des durées des moyennes mobiles et de différents paramètres "
 "MACD pour afficher différentes moyennes mobiles. De plus, `qt.candle()` "
-"prend en charge l'affichage de graphiques en chandeliers par nom de titre : "
-"si l'entrée est un nom de titre, il effectuera automatiquement une recherche"
-" floue et prendra également en charge les caractères génériques."
+"prend en charge l'affichage de graphiques en chandeliers par nom de titre"
+" : si l'entrée est un nom de titre, il effectuera automatiquement une "
+"recherche floue et prendra également en charge les caractères génériques."
 
-#: ../../source/tutorials/2.0-get-data.md:272
-msgid ""
-"下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等，为了显示下面示例中的K线图，您需要下载相应的数据。"
+#: ../../source/tutorials/2.0-get-data.md:279
+msgid "下面是更多的K线图例子，展示了股票、基金、指数等不同的资产类别，不同的数据频率，不同的均线设定、不同的图表类型等，为了显示下面示例中的K线图，您需要下载相应的数据。"
 msgstr ""
-"Vous trouverez ci-dessous d'autres exemples de graphiques en chandeliers, "
-"montrant différentes classes d'actifs telles que les actions, les fonds et "
-"les indices ; différentes fréquences de données ; différents paramètres de "
-"moyenne mobile ; différents types de graphiques ; et ainsi de suite. Pour "
-"afficher les graphiques en chandeliers dans les exemples ci-dessous, vous "
-"devez télécharger les données correspondantes."
+"Vous trouverez ci-dessous d'autres exemples de graphiques en chandeliers,"
+" montrant différentes classes d'actifs telles que les actions, les fonds "
+"et les indices ; différentes fréquences de données ; différents "
+"paramètres de moyenne mobile ; différents types de graphiques ; et ainsi "
+"de suite. Pour afficher les graphiques en chandeliers dans les exemples "
+"ci-dessous, vous devez télécharger les données correspondantes."
 
-#: ../../source/tutorials/2.0-get-data.md:289
+#: ../../source/tutorials/2.0-get-data.md:296
 msgid "![png](img/output_18_1.png)"
 msgstr "![png](img/output_18_1.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:289
-#: ../../source/tutorials/2.0-get-data.md:292
-#: ../../source/tutorials/2.0-get-data.md:295
-#: ../../source/tutorials/2.0-get-data.md:298
-#: ../../source/tutorials/2.0-get-data.md:301
-#: ../../source/tutorials/2.0-get-data.md:304
-#: ../../source/tutorials/2.0-get-data.md:307
-#: ../../source/tutorials/2.0-get-data.md:310
-#: ../../source/tutorials/2.0-get-data.md:313
-#: ../../source/tutorials/2.0-get-data.md:316
-#: ../../source/tutorials/2.0-get-data.md:319
+#: ../../source/tutorials/2.0-get-data.md:296
+#: ../../source/tutorials/2.0-get-data.md:299
+#: ../../source/tutorials/2.0-get-data.md:302
+#: ../../source/tutorials/2.0-get-data.md:305
+#: ../../source/tutorials/2.0-get-data.md:308
+#: ../../source/tutorials/2.0-get-data.md:311
+#: ../../source/tutorials/2.0-get-data.md:314
+#: ../../source/tutorials/2.0-get-data.md:317
+#: ../../source/tutorials/2.0-get-data.md:320
+#: ../../source/tutorials/2.0-get-data.md:323
+#: ../../source/tutorials/2.0-get-data.md:326
 msgid "png"
 msgstr "png"
 
-#: ../../source/tutorials/2.0-get-data.md:292
+#: ../../source/tutorials/2.0-get-data.md:299
 msgid "![png](img/output_18_2.png)"
 msgstr "![png](img/output_18_2.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:295
+#: ../../source/tutorials/2.0-get-data.md:302
 msgid "![png](img/output_18_3_copy.png)"
 msgstr "![png](img/output_18_3_copy.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:298
+#: ../../source/tutorials/2.0-get-data.md:305
 msgid "![png](img/output_18_4.png)"
 msgstr "![png](img/output_18_4.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:301
+#: ../../source/tutorials/2.0-get-data.md:308
 msgid "![png](img/output_18_5.png)"
 msgstr "![png](img/output_18_5.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:304
+#: ../../source/tutorials/2.0-get-data.md:311
 msgid "![png](img/output_18_6.png)"
 msgstr "![png](img/output_18_6.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:307
+#: ../../source/tutorials/2.0-get-data.md:314
 msgid "![png](img/output_18_7.png)"
 msgstr "![png](img/output_18_7.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:310
+#: ../../source/tutorials/2.0-get-data.md:317
 msgid "![png](img/output_18_8.png)"
 msgstr "![png](img/output_18_8.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:313
+#: ../../source/tutorials/2.0-get-data.md:320
 msgid "![png](img/output_18_9.png)"
 msgstr "![png](img/output_18_9.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:316
+#: ../../source/tutorials/2.0-get-data.md:323
 msgid "![png](img/output_18_10.png)"
 msgstr "![png](img/output_18_10.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:319
+#: ../../source/tutorials/2.0-get-data.md:326
 msgid "![png](img/output_18_11.png)"
 msgstr "![png](img/output_18_11.png)"
 
-#: ../../source/tutorials/2.0-get-data.md:321
-msgid "数据类型`DataType`的查找"
+#: ../../source/tutorials/2.0-get-data.md:328
+msgid "从 DataFrame 到 HistoryPanel（桥接后续教程）"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:330
+msgid ""
+"上文 `get_history_data()` 默认返回按标的分组的 `DataFrame` 字典；做**多标的因子研究**时，更推荐直接拿到三维"
+" `HistoryPanel`（标的 × 时间 × 指标）："
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:356
+msgid ""
+"更系统的容器操作见 [HistoryPanel 数据面板基础操作](2.4-historypanel-basics.md)；「玩数据」与因子分析见"
+" [使用 HistoryPanel 操作和分析历史数据](2.5-historypanel-data-analysis.md)；可运行示例见 "
+"`examples/historypanel_basic_plot.py` 与 "
+"`examples/data_playground_e2e.py`。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:358
+#, fuzzy
+msgid "数据类型`DataType`的查找与按形状取数"
 msgstr "Recherche du type de données `DataType`"
 
-#: ../../source/tutorials/2.0-get-data.md:323
+#: ../../source/tutorials/2.0-get-data.md:360
 msgid ""
-"前面提到过，`qteasy`中的所有数据类型均被封装为`DataType`对象，代表一种可以被直接使用的历史数据，每个`DataType`均有一个唯一的ID，通过这个ID，可以提取数据，在交易策略中引用该数据类型，完成`qteasy`中所需的工作。"
+"前面提到过，`qteasy`把可直接使用的信息封装为稳定的 **DataType 信息 "
+"ID**（用户日常写字符串；不必每次构造对象）。每种类型由名称、频率与资产类型唯一确定。"
 msgstr ""
-"Comme mentionné précédemment, tous les types de données dans `qteasy` sont "
-"encapsulés sous forme d'objets `DataType`, représentant une sorte de données"
-" historiques qui peuvent être utilisées directement. Chaque `DataType` "
-"possède un identifiant unique. Avec cet identifiant, vous pouvez extraire "
-"des données, référencer ce type de données dans des stratégies de trading et"
-" accomplir les tâches requises dans `qteasy`."
 
-#: ../../source/tutorials/2.0-get-data.md:325
-msgid ""
-"为了更加了解`qteasy`中的数据类型，我们可以用`qt.find_history_data()`函数来查询所需的数据类型。`qteasy`中定义的数据类型是与数据频率、资产类型挂钩的，也就是说，不同资产的收盘价是不同的数据类型，不同频率的收盘价也是不同的。"
+#: ../../source/tutorials/2.0-get-data.md:362
+msgid "概念说明、精选常用类型与完整内置清单，见："
 msgstr ""
-"Pour mieux comprendre les types de données dans `qteasy`, nous pouvons "
-"utiliser la fonction `qt.find_history_data()` pour interroger les types de "
-"données dont nous avons besoin. Les types de données définis dans `qteasy` "
-"sont liés à la fréquence des données et au type d'actif. En d'autres termes,"
-" le cours de clôture de différents actifs est un type de données différent, "
-"et le cours de clôture à différentes fréquences est également un type de "
-"données différent."
 
-#: ../../source/tutorials/2.0-get-data.md:327
-msgid ""
-"`qt.find_history_data()`函数可以根据输入查找相关的数据类型，并且显示它们的ID，数据表、说明等相关信息，例如，搜索`‘close’`（收盘价）可以找到所有相关的数据类型："
+#: ../../source/tutorials/2.0-get-data.md:364
+#, python-format
+msgid "[DataType 概念章（manage_data）](../manage_data/02.%20datatypes.md)"
 msgstr ""
-"La fonction `qt.find_history_data()` peut rechercher des types de données "
-"pertinents en fonction de votre saisie et afficher leurs identifiants, "
-"tableaux de données, descriptions et autres informations connexes. Par "
-"exemple, la recherche de `‘close’` (cours de clôture) peut trouver tous les "
-"types de données associés :"
 
-#: ../../source/tutorials/2.0-get-data.md:332
-#: ../../source/tutorials/2.0-get-data.md:353
-msgid "得到下面输出："
-msgstr "Vous obtiendrez le résultat suivant :"
-
-#: ../../source/tutorials/2.0-get-data.md:348
-msgid "再例如，搜索市盈率pe，可以得到："
+#: ../../source/tutorials/2.0-get-data.md:365
+msgid "[内置 DataType 完整清单](../references/datatypes/index.md)"
 msgstr ""
-"Pour un autre exemple, la recherche du ratio cours/bénéfice (pe) donne :"
 
 #: ../../source/tutorials/2.0-get-data.md:366
-msgid ""
-"查找到相应的数据之后，只需要查看该数据所属的数据表，将该数据表下载到本地数据源中(`refill_data_source(tables, "
-"...)`)，即可使用这些数据(`qt.get_history_data(htype, shares, ...)`)了。"
+msgid "[DataType API](../api/data_types.rst)"
 msgstr ""
-"Après avoir trouvé les données correspondantes, il vous suffit de vérifier à"
-" quelle table de données elles appartiennent, de télécharger cette table "
-"dans la source de données locale (`refill_data_source(tables, ...)`), et "
-"vous pourrez ensuite utiliser ces données (`qt.get_history_data(htype, "
-"shares, ...)`)."
 
 #: ../../source/tutorials/2.0-get-data.md:368
-msgid "简单介绍`DataType`对象"
-msgstr "Une brève introduction à l'objet `DataType`"
+msgid "用 `find_history_data` 查找"
+msgstr ""
 
 #: ../../source/tutorials/2.0-get-data.md:370
 msgid ""
-"如上文所示，`qteasy`中的数据类型是以`DataType`对象的形式存在的，每个数据类型都有一个唯一的ID，通过这个ID可以提取数据，在交易策略中引用该数据类型，完成`qteasy`中所需的工作。"
+"`qt.find_history_data()` 可按英文名、中文描述或通配符搜索。结果会标出 `kind` "
+"与推荐入口（`get_history_data` / `get_reference_data` / `get_static_data` / "
+"`none`）——**不要**假定每一行都能用 `get_history_data` 加载。"
 msgstr ""
-"Comme indiqué ci-dessus, les types de données dans `qteasy` existent sous la"
-" forme d'objets `DataType`. Chaque type de données possède un identifiant "
-"unique. Avec cet identifiant, vous pouvez extraire des données, référencer "
-"le type de données dans les stratégies de trading et effectuer le travail "
-"requis dans `qteasy`."
 
 #: ../../source/tutorials/2.0-get-data.md:372
-msgid ""
-"`DataType`代表了可以从数据源中提取出来的一种历史数据，例如，股票日K线的收盘价就是一种历史数据，股票周K线的收盘价又是另一种历史数据，股票月K线的收盘价又是另一种历史数据，虽然它们都是收盘价，但由于频率不同，所以被封装为不同的数据类型。"
+msgid "例如搜索收盘价（节选）："
 msgstr ""
-"`DataType` représente un type de données historiques qui peuvent être "
-"extraites d'une source de données. Par exemple, le cours de clôture d’un "
-"chandelier quotidien d’action (ligne K) est un type de données historiques ;"
-" le cours de clôture d’un chandelier hebdomadaire est un autre type de "
-"données historiques ; et le cours de clôture d’un chandelier mensuel "
-"d’action est encore un autre type de données historiques. Bien qu'il "
-"s'agisse tous de cours de clôture, leurs fréquences étant différentes, ils "
-"sont encapsulés sous différents types de données."
 
-#: ../../source/tutorials/2.0-get-data.md:374
-msgid ""
-"`DataType`类封装了统一的数据获取API和属性，大大方便了历史数据在`qteasy`中的使用。当我们需要使用某种历史数据时，只需要通过该ID使用get_history_data直接获取即可。"
+#: ../../source/tutorials/2.0-get-data.md:390
+msgid "宏观与截面属性同样能搜到，但推荐入口不同："
 msgstr ""
-"La classe `DataType` encapsule une API et des attributs de récupération de "
-"données unifiés, facilitant grandement l'utilisation des données historiques"
-" dans `qteasy`. Lorsque nous avons besoin d'un certain type de données "
-"historiques, il nous suffit d'utiliser son ID et d'appeler get_history_data "
-"pour les récupérer directement."
 
-#: ../../source/tutorials/2.0-get-data.md:376
-msgid ""
-"而需要在交易策略中使用某种数据，只要在交易策略定义过程中注册该数据的ID，就可以直接在策略中直接使用了，而不需要关心该数据是如何存储的，如何下载的，如何清洗的等等细节问题。"
+#: ../../source/tutorials/2.0-get-data.md:397
+msgid "查到 ID 后：看所属数据表，用 `refill_data_source(tables=...)` 下载，再按推荐入口取数。"
 msgstr ""
-"Et si vous devez utiliser un certain type de données dans une stratégie de "
-"trading, il vous suffit d'enregistrer l'identifiant de ces données lors du "
-"processus de définition de la stratégie. Vous pouvez ensuite l’utiliser "
-"directement dans la stratégie sans vous soucier de détails tels que la "
-"manière dont les données sont stockées, comment elles sont téléchargées, "
-"comment elles sont nettoyées, etc."
 
-#: ../../source/tutorials/2.0-get-data.md:378
+#: ../../source/tutorials/2.0-get-data.md:399
+msgid "按形状取数（短例）"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:417
+msgid ""
+"清单里若 `usable_in=none`（例如部分文本型 History），今天没有一等入口，研究时请直接读底层表，不要强行编入 "
+"HistoryPanel。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:419
+#, fuzzy
+msgid "简单介绍`DataType`对象（专家层）"
+msgstr "Une brève introduction à l'objet `DataType`"
+
+#: ../../source/tutorials/2.0-get-data.md:421
+msgid ""
+"日常取数与策略声明优先使用**字符串 ID**。需要精细控制时，也可以构造 `DataType` 对象；完整说明见 API 文档。策略里声明 "
+"History/Reference 字符串后，在 `realize()` 中用 `get_data` 取窗口即可——**不要**把 "
+"Static（如 `industry`）写进策略 `data_types`。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:423
+msgid "最小数据集清单（供后续 HistoryPanel 教程使用）"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:425
+msgid ""
+"若计划接着学习 [HistoryPanel 基础操作](2.4-historypanel-basics.md) 与 [玩数据与因子分析](2.5"
+"-historypanel-data-analysis.md)，建议在本篇至少下载下列表与区间（与 "
+"[快速上手指南](../getting_started.md) 及 `examples/data_playground_e2e.py` 对齐）："
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "数据表"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "用途"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "`trade_calendar`"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "交易日历"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "`stock_basic`, `index_basic`"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "证券检索"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "`index_daily`"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "基准指数 `000300.SH` 日线"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "`stock_daily`"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md
+msgid "示例个股池日线（见下）"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:434
+msgid "**推荐一次性命令**（Tushare 通道；日期可按需调整）："
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:454
+msgid ""
+"下载完成后，可先阅读 [HistoryPanel 基础操作](2.4-historypanel-basics.md)，再运行 `python "
+"examples/data_playground_e2e.py` 验证 [玩数据最小闭环](2.5-historypanel-data-"
+"analysis.md#数据检查快速跑通最小闭环)。"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:456
 msgid "定期下载数据到本地"
 msgstr "Téléchargez régulièrement des données sur le stockage local"
 
-#: ../../source/tutorials/2.0-get-data.md:380
-msgid ""
-"为了保持本地数据源的数据更新，我们可以使用`qt.refill_data_source()`函数定期下载数据到本地。创建一个文件`refill_data.py`，并在其中写入以下代码："
+#: ../../source/tutorials/2.0-get-data.md:458
+msgid "为了保持本地数据源的数据更新，我们可以使用`qt.refill_data_source()`函数定期下载数据到本地。创建一个文件`refill_data.py`，并在其中写入以下代码："
 msgstr ""
-"Pour maintenir la source de données locale à jour, nous pouvons utiliser la "
-"fonction `qt.refill_data_source()` pour télécharger périodiquement des "
-"données localement. Créez un fichier `refill_data.py` et écrivez-y le code "
-"suivant :"
+"Pour maintenir la source de données locale à jour, nous pouvons utiliser "
+"la fonction `qt.refill_data_source()` pour télécharger périodiquement des"
+" données localement. Créez un fichier `refill_data.py` et écrivez-y le "
+"code suivant :"
 
-#: ../../source/tutorials/2.0-get-data.md:426
+#: ../../source/tutorials/2.0-get-data.md:504
 msgid ""
 "上面的脚本文件提供了最基本的数据下载功能，可以根据需要修改`tables`和`start_date`、`end_date`参数，以及`parallel`和`merge_type`参数，来下载不同的数据类型和不同的数据范围。"
 " 您可以自行改进脚本文件以实现更多的功能"
 msgstr ""
-"Le fichier de script ci-dessus fournit la fonctionnalité de téléchargement "
-"de données la plus élémentaire. Vous pouvez modifier les paramètres `tables`"
-" et `start_date`/`end_date`, ainsi que les paramètres `parallel` et "
-"`merge_type`, selon vos besoins pour télécharger différents types de données"
-" et différentes plages de dates. Vous pouvez également améliorer vous-même "
-"le fichier de script pour implémenter davantage de fonctionnalités."
+"Le fichier de script ci-dessus fournit la fonctionnalité de "
+"téléchargement de données la plus élémentaire. Vous pouvez modifier les "
+"paramètres `tables` et `start_date`/`end_date`, ainsi que les paramètres "
+"`parallel` et `merge_type`, selon vos besoins pour télécharger différents"
+" types de données et différentes plages de dates. Vous pouvez également "
+"améliorer vous-même le fichier de script pour implémenter davantage de "
+"fonctionnalités."
 
-#: ../../source/tutorials/2.0-get-data.md:429
+#: ../../source/tutorials/2.0-get-data.md:507
 msgid "要下载2023年全年的`stock_daily`数据，只需要在命令行中运行以下命令："
 msgstr ""
-"Pour télécharger les données `stock_daily` de l'année complète 2023, il vous"
-" suffit d'exécuter la commande suivante dans la ligne de commande :"
+"Pour télécharger les données `stock_daily` de l'année complète 2023, il "
+"vous suffit d'exécuter la commande suivante dans la ligne de commande :"
 
-#: ../../source/tutorials/2.0-get-data.md:437
+#: ../../source/tutorials/2.0-get-data.md:515
 msgid "回顾总结"
 msgstr "Revue et résumé"
 
-#: ../../source/tutorials/2.0-get-data.md:439
+#: ../../source/tutorials/2.0-get-data.md:517
 msgid ""
-"至此，我们已经初步了解了`qteasy`中对数据的管理方式，了解了数据下载的方法。下载了基本数据以及一些量价数据。我们学会了如何提取数据、如何显示K线图。最后，我们还学会了查询数据的方法，如果需要某种数据，知道如何查询，如何下载和调用这些数据。"
+"至此，我们已经初步了解了`qteasy`中对数据的管理方式，了解了数据下载的方法，学会了提取数据、显示 K 线图，以及通过 "
+"`HistoryPanel` 桥接到多标的研究。"
 msgstr ""
-"À ce stade, nous avons acquis une compréhension préliminaire de la façon "
-"dont `qteasy` gère les données et comment télécharger les données. Nous "
-"avons téléchargé des données de base ainsi que des données sur les prix et "
-"les volumes. Nous avons appris à extraire des données et à afficher des "
-"graphiques en chandeliers. Enfin, nous avons également appris à interroger "
-"des données : si vous avez besoin d'un certain type de données, vous saurez "
-"comment les rechercher, comment les télécharger et comment les appeler."
 
-#: ../../source/tutorials/2.0-get-data.md:441
-msgid "在下一篇教程中，我们将进一步加深对`qteasy`的了解，我们将学会如何创建交易策略，如何运行并回测交易策略。"
+#: ../../source/tutorials/2.0-get-data.md:519
+msgid "**建议下一篇**（数据体验主路径）："
 msgstr ""
-"Dans le prochain tutoriel, nous approfondirons notre compréhension de "
-"`qteasy`. Nous apprendrons comment créer des stratégies de trading et "
-"comment les exécuter et les backtester."
 
-#: ../../source/tutorials/2.0-get-data.md:443
-msgid "关于`qteasy`的更多介绍，请参见[qteasy文档](https://qteasy.readthedocs.io)"
+#: ../../source/tutorials/2.0-get-data.md:521
+msgid ""
+"[HistoryPanel 数据面板基础操作](2.4-historypanel-basics.md) — 结构、切片、扩列、对齐与 "
+"DataFrame 互转"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:522
+msgid ""
+"[使用 HistoryPanel 操作和分析历史数据](2.5-historypanel-data-analysis.md) — "
+"从「数据检查」闭环开始，完成「玩数据 → 简单因子」"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:524
+msgid "**若已熟悉数据研究、希望直接进入回测**："
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:526
+msgid "[创建并回测第一个策略](3-start-first-strategy.md)"
+msgstr ""
+
+#: ../../source/tutorials/2.0-get-data.md:528
+#, fuzzy
+msgid "关于`qteasy`的更多介绍，请参见 [qteasy 文档](https://qteasy.readthedocs.io)。"
 msgstr ""
 "Pour plus d'informations sur `qteasy`, veuillez vous référer à la "
 "[documentation qteasy](https://qteasy.readthedocs.io)"
+
+#~ msgid "完成`qteasy.cfg`文件的配置，将`tushare_token`写入配置文件"
+#~ msgstr ""
+#~ "Complétez la configuration du fichier "
+#~ "`qteasy.cfg` et écrivez `tushare_token` dans"
+#~ " le fichier de configuration"
+
+#~ msgid "前面提到过，`qteasy`中的所有数据类型均被封装为`DataType`对象，代表一种可以被直接使用的历史数据，每个`DataType`均有一个唯一的ID，通过这个ID，可以提取数据，在交易策略中引用该数据类型，完成`qteasy`中所需的工作。"
+#~ msgstr ""
+#~ "Comme mentionné précédemment, tous les "
+#~ "types de données dans `qteasy` sont "
+#~ "encapsulés sous forme d'objets `DataType`, "
+#~ "représentant une sorte de données "
+#~ "historiques qui peuvent être utilisées "
+#~ "directement. Chaque `DataType` possède un "
+#~ "identifiant unique. Avec cet identifiant, "
+#~ "vous pouvez extraire des données, "
+#~ "référencer ce type de données dans "
+#~ "des stratégies de trading et accomplir"
+#~ " les tâches requises dans `qteasy`."
+
+#~ msgid "为了更加了解`qteasy`中的数据类型，我们可以用`qt.find_history_data()`函数来查询所需的数据类型。`qteasy`中定义的数据类型是与数据频率、资产类型挂钩的，也就是说，不同资产的收盘价是不同的数据类型，不同频率的收盘价也是不同的。"
+#~ msgstr ""
+#~ "Pour mieux comprendre les types de "
+#~ "données dans `qteasy`, nous pouvons "
+#~ "utiliser la fonction `qt.find_history_data()` "
+#~ "pour interroger les types de données "
+#~ "dont nous avons besoin. Les types "
+#~ "de données définis dans `qteasy` sont"
+#~ " liés à la fréquence des données "
+#~ "et au type d'actif. En d'autres "
+#~ "termes, le cours de clôture de "
+#~ "différents actifs est un type de "
+#~ "données différent, et le cours de "
+#~ "clôture à différentes fréquences est "
+#~ "également un type de données différent."
+
+#~ msgid "`qt.find_history_data()`函数可以根据输入查找相关的数据类型，并且显示它们的ID，数据表、说明等相关信息，例如，搜索`‘close’`（收盘价）可以找到所有相关的数据类型："
+#~ msgstr ""
+#~ "La fonction `qt.find_history_data()` peut "
+#~ "rechercher des types de données "
+#~ "pertinents en fonction de votre saisie"
+#~ " et afficher leurs identifiants, tableaux"
+#~ " de données, descriptions et autres "
+#~ "informations connexes. Par exemple, la "
+#~ "recherche de `‘close’` (cours de "
+#~ "clôture) peut trouver tous les types "
+#~ "de données associés :"
+
+#~ msgid "得到下面输出："
+#~ msgstr "Vous obtiendrez le résultat suivant :"
+
+#~ msgid "再例如，搜索市盈率pe，可以得到："
+#~ msgstr ""
+#~ "Pour un autre exemple, la recherche "
+#~ "du ratio cours/bénéfice (pe) donne :"
+
+#~ msgid ""
+#~ "查找到相应的数据之后，只需要查看该数据所属的数据表，将该数据表下载到本地数据源中(`refill_data_source(tables,"
+#~ " ...)`)，即可使用这些数据(`qt.get_history_data(htype, shares, "
+#~ "...)`)了。"
+#~ msgstr ""
+#~ "Après avoir trouvé les données "
+#~ "correspondantes, il vous suffit de "
+#~ "vérifier à quelle table de données "
+#~ "elles appartiennent, de télécharger cette "
+#~ "table dans la source de données "
+#~ "locale (`refill_data_source(tables, ...)`), et "
+#~ "vous pourrez ensuite utiliser ces "
+#~ "données (`qt.get_history_data(htype, shares, ...)`)."
+
+#~ msgid "如上文所示，`qteasy`中的数据类型是以`DataType`对象的形式存在的，每个数据类型都有一个唯一的ID，通过这个ID可以提取数据，在交易策略中引用该数据类型，完成`qteasy`中所需的工作。"
+#~ msgstr ""
+#~ "Comme indiqué ci-dessus, les types "
+#~ "de données dans `qteasy` existent sous"
+#~ " la forme d'objets `DataType`. Chaque "
+#~ "type de données possède un identifiant"
+#~ " unique. Avec cet identifiant, vous "
+#~ "pouvez extraire des données, référencer "
+#~ "le type de données dans les "
+#~ "stratégies de trading et effectuer le"
+#~ " travail requis dans `qteasy`."
+
+#~ msgid "`DataType`代表了可以从数据源中提取出来的一种历史数据，例如，股票日K线的收盘价就是一种历史数据，股票周K线的收盘价又是另一种历史数据，股票月K线的收盘价又是另一种历史数据，虽然它们都是收盘价，但由于频率不同，所以被封装为不同的数据类型。"
+#~ msgstr ""
+#~ "`DataType` représente un type de données"
+#~ " historiques qui peuvent être extraites "
+#~ "d'une source de données. Par exemple,"
+#~ " le cours de clôture d’un chandelier"
+#~ " quotidien d’action (ligne K) est un"
+#~ " type de données historiques ; le "
+#~ "cours de clôture d’un chandelier "
+#~ "hebdomadaire est un autre type de "
+#~ "données historiques ; et le cours "
+#~ "de clôture d’un chandelier mensuel "
+#~ "d’action est encore un autre type "
+#~ "de données historiques. Bien qu'il "
+#~ "s'agisse tous de cours de clôture, "
+#~ "leurs fréquences étant différentes, ils "
+#~ "sont encapsulés sous différents types de"
+#~ " données."
+
+#~ msgid "`DataType`类封装了统一的数据获取API和属性，大大方便了历史数据在`qteasy`中的使用。当我们需要使用某种历史数据时，只需要通过该ID使用get_history_data直接获取即可。"
+#~ msgstr ""
+#~ "La classe `DataType` encapsule une API"
+#~ " et des attributs de récupération de"
+#~ " données unifiés, facilitant grandement "
+#~ "l'utilisation des données historiques dans "
+#~ "`qteasy`. Lorsque nous avons besoin d'un"
+#~ " certain type de données historiques, "
+#~ "il nous suffit d'utiliser son ID "
+#~ "et d'appeler get_history_data pour les "
+#~ "récupérer directement."
+
+#~ msgid "而需要在交易策略中使用某种数据，只要在交易策略定义过程中注册该数据的ID，就可以直接在策略中直接使用了，而不需要关心该数据是如何存储的，如何下载的，如何清洗的等等细节问题。"
+#~ msgstr ""
+#~ "Et si vous devez utiliser un "
+#~ "certain type de données dans une "
+#~ "stratégie de trading, il vous suffit "
+#~ "d'enregistrer l'identifiant de ces données "
+#~ "lors du processus de définition de "
+#~ "la stratégie. Vous pouvez ensuite "
+#~ "l’utiliser directement dans la stratégie "
+#~ "sans vous soucier de détails tels "
+#~ "que la manière dont les données "
+#~ "sont stockées, comment elles sont "
+#~ "téléchargées, comment elles sont nettoyées,"
+#~ " etc."
+
+#~ msgid "至此，我们已经初步了解了`qteasy`中对数据的管理方式，了解了数据下载的方法。下载了基本数据以及一些量价数据。我们学会了如何提取数据、如何显示K线图。最后，我们还学会了查询数据的方法，如果需要某种数据，知道如何查询，如何下载和调用这些数据。"
+#~ msgstr ""
+#~ "À ce stade, nous avons acquis une"
+#~ " compréhension préliminaire de la façon "
+#~ "dont `qteasy` gère les données et "
+#~ "comment télécharger les données. Nous "
+#~ "avons téléchargé des données de base "
+#~ "ainsi que des données sur les prix"
+#~ " et les volumes. Nous avons appris"
+#~ " à extraire des données et à "
+#~ "afficher des graphiques en chandeliers. "
+#~ "Enfin, nous avons également appris à "
+#~ "interroger des données : si vous "
+#~ "avez besoin d'un certain type de "
+#~ "données, vous saurez comment les "
+#~ "rechercher, comment les télécharger et "
+#~ "comment les appeler."
+
+#~ msgid "在下一篇教程中，我们将进一步加深对`qteasy`的了解，我们将学会如何创建交易策略，如何运行并回测交易策略。"
+#~ msgstr ""
+#~ "Dans le prochain tutoriel, nous "
+#~ "approfondirons notre compréhension de "
+#~ "`qteasy`. Nous apprendrons comment créer "
+#~ "des stratégies de trading et comment "
+#~ "les exécuter et les backtester."
+

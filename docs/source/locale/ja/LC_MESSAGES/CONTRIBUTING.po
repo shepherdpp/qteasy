@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/CONTRIBUTING.md:1
@@ -29,18 +29,19 @@ msgstr "貢献の基本"
 #: ../../source/CONTRIBUTING.md:5
 msgid ""
 "作贡献并不一定意味着添加代码。您可以 "
-"**[提出问题](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---"
-"bug报告.md&title=)**，**[参与讨论](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建议](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-"
-"request---新功能需求.md&title=)** "
+"**[提出问题](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---"
+"bug报告.md&title=)**，**[参与讨论](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建议](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=feature-request---新功能需求.md&title=)** "
 "，这些都是有价值的贡献。我也非常希望你分享使用`qteasy`创建的交易策略，或实现的好想法。当然，为`qteasy`编写代码也是一种很好的贡献方式。对任何贡献，我在此都深表谢意。"
 msgstr ""
-"貢献する方法は、**質問する**、**[問題を報告する](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---"
-"bug报告.md&title=)**、**[ディスカッションに参加する](https://github.com/shepherdpp/qteasy/discussions)**、**[新機能を提案する](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-"
-"request---新功能需求.md&title=)** などと簡単です。 **これらはすべて貴重です!** 貢献する方法はたくさんあります。  "
-"また、qteasy を *使用して行った創造的なこと (コードとプロット イメージの両方) を共有していただければ、とても感謝しています。  "
-"そしてもちろん、qteasy のコードを書くことも貢献する素晴らしい方法です。    ありがとう。"
+"貢献する方法は、**質問する**、**[問題を報告する](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---"
+"bug报告.md&title=)**、**[ディスカッションに参加する](https://github.com/shepherdpp/qteasy/discussions)**、**[新機能を提案する](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=feature-request---新功能需求.md&title=)** などと簡単です。 **これらはすべて貴重です!** "
+"貢献する方法はたくさんあります。  また、qteasy を *使用して行った創造的なこと (コードとプロット イメージの両方) "
+"を共有していただければ、とても感謝しています。  そしてもちろん、qteasy のコードを書くことも貢献する素晴らしい方法です。    "
+"ありがとう。"
 
 #: ../../source/CONTRIBUTING.md:7
 msgid ""
@@ -48,8 +49,8 @@ msgid ""
 "contribute/)**）。因此，我仅提到一些我在**qteasy**中可能特别关注的事项。"
 msgstr ""
 "通常のオープンソース貢献ガイドラインがすべて適用されます "
-"(たとえば、**[オープンソース貢献ガイド](https://opensource.guide/how-to-contribute/)** を参照)。"
-"  そこで、このページでは**qteasy**のこだわりと思われる項目をほんの少しだけ記載させていただきます。"
+"(たとえば、**[オープンソース貢献ガイド](https://opensource.guide/how-to-contribute/)** "
+"を参照)。  そこで、このページでは**qteasy**のこだわりと思われる項目をほんの少しだけ記載させていただきます。"
 
 #: ../../source/CONTRIBUTING.md:10
 msgid "[报告问题](https://github.com/shepherdpp/qteasy/issues/new)"
@@ -57,12 +58,12 @@ msgstr "[問題の報告](https://github.com/shepherdpp/qteasy/issues/new)"
 
 #: ../../source/CONTRIBUTING.md:11
 msgid ""
-"在提交问题报告时，请提供清晰的问题描述和您的工作环境信息。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---bug报告.md&title=)以便在您的描述中包括以下部分："
+"在提交问题报告时，请提供清晰的问题描述和您的工作环境信息。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---bug报告.md&title=)以便在您的描述中包括以下部分："
 msgstr ""
 "問題の明確な説明と、作業している環境の情報を提供してください。できれば、[バグ レポート "
-"テンプレート](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---bug报告.md&title=) を使用し、説明に次のセクションを含めてください。"
+"テンプレート](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---bug报告.md&title=) を使用し、説明に次のセクションを含めてください。"
 
 #: ../../source/CONTRIBUTING.md:12
 msgid "**你期望看到的结果**：描述你在遇到问题时想要实现的目标或期望看到的结果"
@@ -113,27 +114,38 @@ msgid "纠正文档中的错误"
 msgstr "誤りの訂正"
 
 #: ../../source/CONTRIBUTING.md:26
-msgid "请按照下面的Fork/Clone/Pull Request工作流程提供您的贡献，我会尽快给予反馈。"
+msgid ""
+"**短配方（一个周末能跑通的场景）**：请发到 Discussions 的 "
+"[Recipes](https://github.com/shepherdpp/qteasy/discussions/categories/recipes)"
+" 分类。维护者润色后会收入 [Wiki Cookbook](https://github.com/shepherdpp/qteasy/wiki"
+"/Cookbook-Home)。投稿模板见 Wiki 的 "
+"[贡献速查](https://github.com/shepherdpp/qteasy/wiki/Contributing-Quick)。"
+msgstr ""
+
+#: ../../source/CONTRIBUTING.md:27
+#, fuzzy
+msgid ""
+"**官方长文、教程与 `examples/` 可运行脚本**：请按照下面的 Fork/Clone/Pull Request "
+"工作流程提交，我会尽快给予反馈。"
 msgstr ""
 "以下のフォーク / クローン / プル リクエスト ワークフローに従って、qteasy "
 "に貢献してください。できるだけ早くフィードバックするよう努めます。"
 
-#: ../../source/CONTRIBUTING.md:30
+#: ../../source/CONTRIBUTING.md:31
 msgid "分支/克隆/合并请求工作流程"
 msgstr "フォーク/クローン/プル リクエストのワークフロー"
 
-#: ../../source/CONTRIBUTING.md:31
-msgid ""
-"GitHub上的标准贡献工作流程称为**Fork/Clone (分支/克隆)**。对于那些可能不熟悉的人，这里是一个简要的总结和一些参考链接。"
+#: ../../source/CONTRIBUTING.md:32
+msgid "GitHub上的标准贡献工作流程称为**Fork/Clone (分支/克隆)**。对于那些可能不熟悉的人，这里是一个简要的总结和一些参考链接。"
 msgstr ""
 "GitHub に貢献するための標準ワークフローは **フォーク/クローン** と呼ばれます。  "
 "よく知らない人のために、簡単な概要といくつかの参考リンクをここに示します。"
 
-#: ../../source/CONTRIBUTING.md:32
+#: ../../source/CONTRIBUTING.md:33
 msgid "*我们假设您熟悉git的基础知识：`git clone`、`git commit`等*。"
 msgstr "***git** の基本: `git clone`、`git commit` など* に精通していることを前提としています。"
 
-#: ../../source/CONTRIBUTING.md:33
+#: ../../source/CONTRIBUTING.md:34
 msgid ""
 "注意：一个“Fork(分支)”只是一个在GitHub上创建的`git "
 "clone`，它保存在GitHub上您自己的账户中。您可以使用GitHub上的**Fork**按钮创建一个Fork：这样GitHub就可以跟踪原始github存储库和您的Fork之间的关系。"
@@ -142,27 +154,27 @@ msgstr ""
 "**Fork** ボタンを使用してフォークを作成します。これにより、GitHub は元の Github "
 "リポジトリとフォークの間の関係を追跡できるようになります。"
 
-#: ../../source/CONTRIBUTING.md:34
+#: ../../source/CONTRIBUTING.md:35
 msgid "基本工作流程如下："
 msgstr "基本的なワークフローは次のとおりです。"
 
-#: ../../source/CONTRIBUTING.md:35
+#: ../../source/CONTRIBUTING.md:36
 msgid "创建一个**Fork(分支)**，这个分支将存在于*您的*github账户中。"
 msgstr ""
 "qteasy リポジトリの **フォーク** を作成します。  (詳細については、以下の参考資料を参照してください。) フォークは *あなたの* "
 "github アカウントの下に存在します。"
 
-#: ../../source/CONTRIBUTING.md:36
+#: ../../source/CONTRIBUTING.md:37
 msgid "将您的Fork分支**克隆**到本地机器上（`git clone`）。"
 msgstr "**クローン** *あなたの* フォークをローカル マシン (`git clone`) に作成します。"
 
-#: ../../source/CONTRIBUTING.md:37
+#: ../../source/CONTRIBUTING.md:38
 msgid "修改您本地的代码，用`git commit`提交更改，然后将更改**`git push`**到您的GitHub Fork中。"
 msgstr ""
 "リポジトリの複製コピーを操作し、変更を `git commit` して、**`git push`** それらを *GitHub フォーク* "
 "に追加します。"
 
-#: ../../source/CONTRIBUTING.md:38
+#: ../../source/CONTRIBUTING.md:39
 msgid ""
 "当您对Fork中的代码满意时，**在您的Fork的GitHub页面上，*打开一个Pull Request (PR)***。Pull "
 "Request实际上是请求将您Fork中的更改合并到主qteasy存储库中。PR提供了一个地方，可以在GitHub上查看更改，并发布关于它们的评论和讨论。"
@@ -171,17 +183,17 @@ msgstr ""
 "リクエストは、フォーク内の変更をメインの qteasy リポジトリにプルすることを効果的に要求します。  PR は、github "
 "上で変更を確認し、それに関するコメントやディスカッションを投稿できる場所を提供します。"
 
-#: ../../source/CONTRIBUTING.md:39
+#: ../../source/CONTRIBUTING.md:40
 msgid ""
 "经过代码审查后，如果维护者要求您进行额外的更改，您不需要重新提交另一个Pull "
 "Request（只要原始PR仍然是打开状态）。相反，您可以在本地克隆中进行更改，然后再次`git "
 "push`到您的Fork中。更改将自动流入打开的Pull Request中。"
 msgstr ""
-"コードレビュー後、メンテナから追加の変更を求められた場合、(元の PR がまだ開いている限り) 別のプル リクエストを再入力する必要は「ありません」。"
-"  むしろ、ローカル クローンに変更を加え、再度フォークに `git push` するだけです。  変更は、開いているプル "
-"リクエストに自動的に流れ込みます。"
+"コードレビュー後、メンテナから追加の変更を求められた場合、(元の PR がまだ開いている限り) 別のプル "
+"リクエストを再入力する必要は「ありません」。  むしろ、ローカル クローンに変更を加え、再度フォークに `git push` するだけです。  "
+"変更は、開いているプル リクエストに自動的に流れ込みます。"
 
-#: ../../source/CONTRIBUTING.md:40
+#: ../../source/CONTRIBUTING.md:41
 msgid ""
 "完成上述步骤后，`qteasy`的维护者将从您的Fork中合并更改到qteasy存储库中。PR将自动关闭。（但是您的Fork将继续存在，并且可以在将来再次用于其他Pull"
 " Request；请参阅GitHub文档，了解如何保持您的Fork最新）。"
@@ -190,15 +202,15 @@ msgstr ""
 "(ただし、フォークは引き続き存在し、将来追加のプル リクエストに再度使用できます。フォークを最新の状態に保つ方法については、GitHub "
 "ドキュメントを参照してください)。"
 
-#: ../../source/CONTRIBUTING.md:42
+#: ../../source/CONTRIBUTING.md:43
 msgid "一些参考资料："
 msgstr "参考文献:"
 
-#: ../../source/CONTRIBUTING.md:43
+#: ../../source/CONTRIBUTING.md:44
 msgid "GitHub文档:"
 msgstr "GitHub ドキュメント"
 
-#: ../../source/CONTRIBUTING.md:44
+#: ../../source/CONTRIBUTING.md:45
 msgid ""
 "**https://docs.github.com/en/get-started/quickstart/contributing-to-"
 "projects**"
@@ -206,59 +218,57 @@ msgstr ""
 "**https://docs.github.com/en/get-started/quickstart/contributing-to-"
 "projects**"
 
-#: ../../source/CONTRIBUTING.md:45
+#: ../../source/CONTRIBUTING.md:46
 msgid "一些用户的gists:"
 msgstr "そしていくつかのユーザーの要点"
 
-#: ../../source/CONTRIBUTING.md:46
+#: ../../source/CONTRIBUTING.md:47
 msgid "https://gist.github.com/Chaser324/ce0505fbed06b947d962"
 msgstr "https://gist.github.com/Chaser324/ce0505fbed06b947d962"
 
-#: ../../source/CONTRIBUTING.md:47
+#: ../../source/CONTRIBUTING.md:48
 msgid "https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8"
 msgstr "https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8"
 
-#: ../../source/CONTRIBUTING.md:51
+#: ../../source/CONTRIBUTING.md:52
 msgid "编码规范"
 msgstr "コーディング標準"
 
-#: ../../source/CONTRIBUTING.md:52
-msgid ""
-"我并不非常严格地要求遵守PEP-8的每一条规则，*但也不是完全放任不管*。我倾向于走中间道路：只要是大家普遍遵守的规范和常见的编码习惯，我都可以接受。"
+#: ../../source/CONTRIBUTING.md:53
+msgid "我并不非常严格地要求遵守PEP-8的每一条规则，*但也不是完全放任不管*。我倾向于走中间道路：只要是大家普遍遵守的规范和常见的编码习惯，我都可以接受。"
 msgstr ""
 "私は PEP 8 のあらゆる側面を厳守するわけではありませんし、*寛大でもありません*。  "
 "私は道の真ん中を歩く傾向があります。何かが良くて一般的なものであれば、それは遵守されるべきです。"
 
-#: ../../source/CONTRIBUTING.md:53
+#: ../../source/CONTRIBUTING.md:54
 msgid "以下是我可能会特别关心的一些事项："
 msgstr "特に気になる項目をいくつか挙げておきます。"
 
-#: ../../source/CONTRIBUTING.md:54
+#: ../../source/CONTRIBUTING.md:55
 msgid "如果您编写代码，请不要使用制表符进行缩进，使用4个空格。"
 msgstr "コードを記述する場合は、インデントにタブを使用しないでください。  スペースを 4 つ使用します。"
 
-#: ../../source/CONTRIBUTING.md:55
+#: ../../source/CONTRIBUTING.md:56
 msgid "如果您编写代码，请始终提供清晰简洁的注释，解释代码的作用。这对于功能不太明显的代码尤为重要。"
 msgstr ""
 "コードを作成する場合は、コードが何を行っているかを説明する明確かつ簡潔なコメントを常に提供してください。  "
 "これは、すぐには分からないコードの場合に特に重要です。"
 
-#: ../../source/CONTRIBUTING.md:56
-msgid ""
-"如果您添加了一个重要的功能（即，需要解释其用法的功能不仅仅是几句话），请为该功能创建一个“功能教程”。**[有关功能教程的示例，请参见示例文件夹中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
+#: ../../source/CONTRIBUTING.md:57
+msgid "如果您添加了一个重要的功能（即，需要解释其用法的功能不仅仅是几句话），请为该功能创建一个“功能教程”。**[有关功能教程的示例，请参见示例文件夹中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
 msgstr ""
 "重要な機能、つまり、その使用法を説明するのに数文以上かかる機能を追加する場合は、その機能の「チュートリアル ノートブック」も作成してください。  "
 "**[チュートリアル ノートブックの例については、サンプル フォルダー内の jupyter ノートブックを参照してください。]"
 
-#: ../../source/CONTRIBUTING.md:57
-msgid ""
-"如果您添加了一个重要的功能，请在**[tests文件夹](https://github.com/shepherdpp/qteasy/tree/master/tests)**中创建一个回归测试文件，类似于那里的其他回归测试文件。*通常，最简单的方法是从该功能的“功能教程”中选取一些示例*（参见上一点）。"
+#: ../../source/CONTRIBUTING.md:58
+msgid "如果您添加了一个重要的功能，请在**[tests文件夹](https://github.com/shepherdpp/qteasy/tree/master/tests)**中创建一个回归测试文件，类似于那里的其他回归测试文件。*通常，最简单的方法是从该功能的“功能教程”中选取一些示例*（参见上一点）。"
 msgstr ""
 "重要な機能を追加する場合は、他の回帰テストと同様に、回帰テスト ファイル **[テスト "
 "フォルダー内](https://github.com/shepherdpp/qteasy/tree/master/tests)** "
 "も作成してください。  *多くの場合、これを行う最も簡単な方法は、機能の「チュートリアル ノートブック」* からいくつかの例を取り上げることです "
 "(前のポイントを参照)。"
 
-#: ../../source/CONTRIBUTING.md:58
+#: ../../source/CONTRIBUTING.md:59
 msgid "如果您要修改一个已有的代码文件，请尽量模仿该文件中已有的代码风格。"
 msgstr "既存のコード ファイルで作業する場合は、そのファイルにすでに存在するスタイルを多かれ少なかれエミュレートするようにしてください。"
+

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG (de_translate_from_en)\n"
-"Language-Team: de <LL@li.org>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/02-data-layer.md:1
@@ -32,15 +32,15 @@ msgid ""
 "**window_length**；运行前，引擎根据这些声明从 **DataSource** "
 "中取出对应数据、整理成数据窗口并注入策略。这样既保证了回测与实盘使用同一套数据视图，也从机制上避免了策略使用“未来数据”。"
 msgstr ""
-"Die Datenschicht versorgt die Strategieschicht und die Laufzeitschicht mit "
-"historischen Informationen „nach Typ, nach Fenster“. Strategien greifen "
-"nicht direkt auf Rohdatentabellen zu; Stattdessen geben sie an, welche "
-"**DataType** sie benötigen und wie lang die **window_length** sein soll. Vor"
-" der Ausführung ruft die Engine die entsprechenden Daten aus **DataSource** "
-"ab, organisiert sie in Datenfenstern und fügt sie in die Strategie ein. "
-"Dadurch wird sichergestellt, dass Backtesting und Live-Handel dieselbe "
-"Datenansicht verwenden, und es wird außerdem verhindert, dass Strategien "
-"absichtlich „zukünftige Daten“ verwenden."
+"Die Datenschicht versorgt die Strategieschicht und die Laufzeitschicht "
+"mit historischen Informationen „nach Typ, nach Fenster“. Strategien "
+"greifen nicht direkt auf Rohdatentabellen zu; Stattdessen geben sie an, "
+"welche **DataType** sie benötigen und wie lang die **window_length** sein"
+" soll. Vor der Ausführung ruft die Engine die entsprechenden Daten aus "
+"**DataSource** ab, organisiert sie in Datenfenstern und fügt sie in die "
+"Strategie ein. Dadurch wird sichergestellt, dass Backtesting und Live-"
+"Handel dieselbe Datenansicht verwenden, und es wird außerdem verhindert, "
+"dass Strategien absichtlich „zukünftige Daten“ verwenden."
 
 #: ../../source/design/02-data-layer.md:7
 msgid "2. 从原始数据到本地存储"
@@ -57,8 +57,8 @@ msgid ""
 msgstr ""
 "Externe Datenquellen (z. B. Tushare, Eastmoney usw.) → Abrufen und "
 "Bereinigen (Formatvereinheitlichung, Deduplizierung, Ausrichtung) → "
-"**DataSource** (Dateien oder Datenbank) → in mehrere **Datentabellen** in "
-"einer einheitlichen Struktur geschrieben."
+"**DataSource** (Dateien oder Datenbank) → in mehrere **Datentabellen** in"
+" einer einheitlichen Struktur geschrieben."
 
 #: ../../source/design/02-data-layer.md:13
 msgid "2.2 DataSource 的角色"
@@ -67,36 +67,36 @@ msgstr "2.2 Die Rolle von DataSource"
 #: ../../source/design/02-data-layer.md:15
 msgid "**统一存储抽象**：无论底层是 CSV/HDF/Feather 文件还是 MySQL 等数据库，对上层而言都是“按表名、按列”读写。"
 msgstr ""
-"**Einheitliche Speicherabstraktion**: Unabhängig davon, ob es sich bei der "
-"zugrunde liegenden Schicht um CSV-/HDF-/Feather-Dateien oder eine Datenbank "
-"wie MySQL handelt, wird in die obere Schicht immer „nach Tabellenname, nach "
-"Spalte“ gelesen und geschrieben."
+"**Einheitliche Speicherabstraktion**: Unabhängig davon, ob es sich bei "
+"der zugrunde liegenden Schicht um CSV-/HDF-/Feather-Dateien oder eine "
+"Datenbank wie MySQL handelt, wird in die obere Schicht immer „nach "
+"Tabellenname, nach Spalte“ gelesen und geschrieben."
 
 #: ../../source/design/02-data-layer.md:16
 msgid "**多引擎支持**：可配置为 file（csv/hdf/fth）或 db（mysql 等），满足不同部署需求。"
 msgstr ""
-"**Multi-Engine-Unterstützung**: Kann als Datei (csv/hdf/fth) oder db (MySQL "
-"usw.) konfiguriert werden, um unterschiedliche Bereitstellungsanforderungen "
-"zu erfüllen."
+"**Multi-Engine-Unterstützung**: Kann als Datei (csv/hdf/fth) oder db "
+"(MySQL usw.) konfiguriert werden, um unterschiedliche "
+"Bereitstellungsanforderungen zu erfüllen."
 
 #: ../../source/design/02-data-layer.md:17
 msgid ""
-"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 DataSource。"
+"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 "
+"DataSource。"
 msgstr ""
 "**Zieht Daten nicht proaktiv ab**: DataSource ist nur für das Lesen und "
-"Schreiben von Daten verantwortlich, die bereits lokal vorhanden sind; Das "
-"Abrufen und Aktualisieren aus dem Netzwerk erfolgt durch den Benutzer oder "
-"geplante Aufgaben, die die Datenschnittstelle aufrufen und dann in "
+"Schreiben von Daten verantwortlich, die bereits lokal vorhanden sind; Das"
+" Abrufen und Aktualisieren aus dem Netzwerk erfolgt durch den Benutzer "
+"oder geplante Aufgaben, die die Datenschnittstelle aufrufen und dann in "
 "DataSource schreiben."
 
 #: ../../source/design/02-data-layer.md:19
-msgid ""
-"因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
+msgid "因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
 msgstr ""
 "Daher trennt das Datenschichtdesign „Abrufen“ und „Speichern“: Die beim "
 "Abrufen erhaltenen Daten werden nach der Bereinigung in den DataSource "
-"geschrieben, und Strategien und Backtests verbrauchen nur Daten, die bereits"
-" im DataSource vorhanden sind."
+"geschrieben, und Strategien und Backtests verbrauchen nur Daten, die "
+"bereits im DataSource vorhanden sind."
 
 #: ../../source/design/02-data-layer.md:21
 msgid "3. 数据表"
@@ -116,16 +116,16 @@ msgstr ""
 #: ../../source/design/02-data-layer.md:24
 msgid ""
 "**表结构与 DataType 的对应关系**：一种“可被策略引用的信息”往往对应某张表的某列（或若干列经计算得到）。DataType 的 "
-"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id** "
-"声明需求，无需关心具体表名或列名。"
+"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id**"
+" 声明需求，无需关心具体表名或列名。"
 msgstr ""
-"**Zuordnung zwischen Tabellenschema und DataType**: Eine „Information, auf "
-"die eine Strategie verweisen kann“ entspricht häufig einer Spalte in einer "
-"Tabelle (oder einer oder mehreren Spalten nach der Berechnung). Die "
-"Zuordnung vom **Namen** (und der Häufigkeit, dem Asset-Typ) eines DataType "
-"zu Datentabellen/-spalten wird im System verwaltet. Strategien müssen "
-"Anforderungen nur über DataType oder **dtype_id** deklarieren, ohne sich um "
-"bestimmte Tabellennamen oder Spaltennamen zu kümmern."
+"**Zuordnung zwischen Tabellenschema und DataType**: Eine „Information, "
+"auf die eine Strategie verweisen kann“ entspricht häufig einer Spalte in "
+"einer Tabelle (oder einer oder mehreren Spalten nach der Berechnung). Die"
+" Zuordnung vom **Namen** (und der Häufigkeit, dem Asset-Typ) eines "
+"DataType zu Datentabellen/-spalten wird im System verwaltet. Strategien "
+"müssen Anforderungen nur über DataType oder **dtype_id** deklarieren, "
+"ohne sich um bestimmte Tabellennamen oder Spaltennamen zu kümmern."
 
 #: ../../source/design/02-data-layer.md:26
 msgid "4. DataType：从“表里的数据”到“策略可引用的信息”"
@@ -134,89 +134,198 @@ msgstr ""
 "referenzieren“"
 
 #: ../../source/design/02-data-layer.md:28
-msgid "4.1 name、freq、asset_type 与 dtype_id"
-msgstr "4.1-Name, Häufigkeit, Asset-Typ und Dtype-ID"
+msgid ""
+"用户日常写**字符串信息 ID**；`DataType(...)` 对象多为专家/内置策略层。内部字段 "
+"`acquisition_type`（直读、复权、事件等）是提取算法，**不是**用户分类。"
+msgstr ""
 
 #: ../../source/design/02-data-layer.md:30
-msgid "**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息。"
+msgid "4.1 三种消费形状（kind）"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "kind"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "形状"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "例子"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "公开入口"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`history`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "时间 × 标的"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`close`、`pe`、停牌标记"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`get_history_data` / `get_kline`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`reference`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "仅时间"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`cn_gdp`、`north_money`；以及把单标的行情抽成基准的 `close-000300.SH`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`get_reference_data`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`static`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "仅标的"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`industry`、`list_date`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md
+msgid "`get_static_data`"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:38
+msgid ""
+"`close-000300.SH` 是 Reference 的**一种造法**（策略里把某标的当市场基准），不是宏观数据的唯一来源。目录用 "
+"`usable_in` 标明推荐入口；`usable_in=none` 表示已登记但暂无一等用法（例如无法编入数值 HistoryPanel "
+"的文本列）。"
+msgstr ""
+
+#: ../../source/design/02-data-layer.md:40
+#, fuzzy
+msgid "4.2 name、freq、asset_type 与 dtype_id"
+msgstr "4.1-Name, Häufigkeit, Asset-Typ und Dtype-ID"
+
+#: ../../source/design/02-data-layer.md:42
+#, fuzzy
+msgid ""
+"**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息；可带参数（如 `close|b`）或 "
+"unsymbolizer（如 `close-000300.SH`）。"
 msgstr ""
 "**Name**: der Datentypname (z. B. close, open, total_mv, pe), der einer "
 "bestimmten Art verfügbarer Informationen entspricht."
 
-#: ../../source/design/02-data-layer.md:31
-msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
+#: ../../source/design/02-data-layer.md:43
+msgid "**freq**：数据频率（如 d/w/m/q）；Static 常为 `None`（与频率无关）。"
 msgstr ""
-"**Frequenz**: Die Datenfrequenz (z. B. d/w/m/q), bezogen auf die "
-"Zeitgranularität der Datentabelle oder die Resampling-Methode."
 
-#: ../../source/design/02-data-layer.md:32
-msgid "**asset_type**：适用的资产类型（如 E、IDX、ANY），用于区分股票、指数等。"
+#: ../../source/design/02-data-layer.md:44
+#, fuzzy
+msgid "**asset_type**：适用的资产类型（如 E、IDX、None、Any）。"
 msgstr ""
-"**asset_type**: der anwendbare Vermögenswerttyp (z. B. E, IDX, ANY), der zur"
-" Unterscheidung von Aktien, Indizes usw. verwendet wird."
+"**asset_type**: der anwendbare Vermögenswerttyp (z. B. E, IDX, ANY), der "
+"zur Unterscheidung von Aktien, Indizes usw. verwendet wird."
 
-#: ../../source/design/02-data-layer.md:33
+#: ../../source/design/02-data-layer.md:45
+#, fuzzy
 msgid ""
-"**dtype_id**：由上述三者生成，规则为 `name_assettype_freq`，例如 "
-"`close_E_d`、`total_mv_E_q`。策略在 `get_data(dtype_id)` 时使用该 id。"
+"**完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 "
+"`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
 "**dtype_id**: wird aus den drei oben genannten Elementen mit der Regel "
-"„name_assettype_freq“ generiert, zum Beispiel „close_E_d“, „total_mv_E_q“. "
-"Strategien verwenden diese ID, wenn sie „get_data(dtype_id)“ aufrufen."
+"„name_assettype_freq“ generiert, zum Beispiel „close_E_d“, "
+"„total_mv_E_q“. Strategien verwenden diese ID, wenn sie "
+"„get_data(dtype_id)“ aufrufen."
 
-#: ../../source/design/02-data-layer.md:35
-msgid "4.2 内置 DataType 与数据表/列的映射"
-msgstr ""
-"4.2 Zuordnung zwischen integrierten DataTypes und Datentabellen/-spalten"
+#: ../../source/design/02-data-layer.md:47
+#, fuzzy
+msgid "4.3 内置 DataType 与数据表/列的映射"
+msgstr "4.2 Zuordnung zwischen integrierten DataTypes und Datentabellen/-spalten"
 
-#: ../../source/design/02-data-layer.md:37
+#: ../../source/design/02-data-layer.md:49
+#, fuzzy
 msgid ""
-"系统内置大量 DataType，分别映射到不同数据表的列或衍生列。具体表名、列名及获取方式见《下载并管理金融历史数据》与 API "
-"文档中的数据类型与数据表说明；本系列仅强调：**策略只通过 "
-"DataType（dtype_id）引用数据，不直接依赖表结构**，这样表结构演进时只需调整映射关系，而不必改策略代码。"
+"系统内置大量 "
+"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息"
+" ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
 "Das System verfügt über einen großen Satz integrierter DataTypes, die "
 "jeweils Spalten oder abgeleiteten Spalten in verschiedenen Datentabellen "
 "zugeordnet sind. Spezifische Tabellennamen und Spaltennamen und wie Sie "
 "diese erhalten, finden Sie unter *Herunterladen und Verwalten von "
 "historischen Finanzdaten* und in der Dokumentation „Datentypen und "
-"Datentabellen“ in den API-Dokumenten. Diese Serie betont nur: **Strategien "
-"referenzieren Daten nur über DataType (dtype_id) und hängen nicht direkt vom"
-" Tabellenschema ab**. Auf diese Weise müssen Sie bei der Weiterentwicklung "
-"des Schemas nur die Zuordnung anpassen, ohne den Strategiecode zu ändern."
+"Datentabellen“ in den API-Dokumenten. Diese Serie betont nur: "
+"**Strategien referenzieren Daten nur über DataType (dtype_id) und hängen "
+"nicht direkt vom Tabellenschema ab**. Auf diese Weise müssen Sie bei der "
+"Weiterentwicklung des Schemas nur die Zuordnung anpassen, ohne den "
+"Strategiecode zu ändern."
 
-#: ../../source/design/02-data-layer.md:39
+#: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
 msgstr ""
-"5. Zusammenfassung: Warum Strategien nur mit DataType interagieren, anstatt "
-"Tabellen direkt zu lesen"
+"5. Zusammenfassung: Warum Strategien nur mit DataType interagieren, "
+"anstatt Tabellen direkt zu lesen"
 
-#: ../../source/design/02-data-layer.md:41
-msgid "**一致性**：回测与实盘都通过同一套“声明 DataType + 引擎按窗口注入”的路径取数，避免两套逻辑。"
+#: ../../source/design/02-data-layer.md:53
+#, fuzzy
+msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
 msgstr ""
 "**Konsistenz**: Sowohl Backtesting als auch Live-Handel rufen Daten über "
 "denselben Pfad ab – „deklarieren Sie DataType + Engine-Injektionen nach "
 "Fenster“ – und vermeiden so zwei separate Logiksätze."
 
-#: ../../source/design/02-data-layer.md:42
+#: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
 msgstr ""
-"**Kein Look-Ahead-Bias**: Die Engine bereitet das historische Datenfenster "
-"streng auf der Grundlage des aktuellen Zeitschritts und der Fensterlänge "
-"vor, sodass die Strategie nicht auf zukünftige Daten zugreifen kann, die "
-"nicht injiziert wurden."
+"**Kein Look-Ahead-Bias**: Die Engine bereitet das historische "
+"Datenfenster streng auf der Grundlage des aktuellen Zeitschritts und der "
+"Fensterlänge vor, sodass die Strategie nicht auf zukünftige Daten "
+"zugreifen kann, die nicht injiziert wurden."
 
-#: ../../source/design/02-data-layer.md:43
+#: ../../source/design/02-data-layer.md:55
 msgid ""
-"**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。"
+"**接口统一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 "
+"`get_static_data`，**不**进入 `get_data` 时间窗。"
 msgstr ""
-"**Einheitliche Schnittstelle**: Alle Strategien rufen Daten über "
-"„get_data(dtype_id)“ ab. Jede dtype_id entspricht eins zu eins einem "
-"DataType, was die Wartung und Erweiterung erleichtert."
 
-#: ../../source/design/02-data-layer.md:45
-msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
+#: ../../source/design/02-data-layer.md:57
+msgid "更多用法见 manage_data「DataType」概念章与 API 参考。"
 msgstr ""
-"Weitere Informationen zur Datenkonfiguration und API-Nutzung finden Sie "
-"unter *Historische Finanzdaten herunterladen und verwalten* und in der API-"
-"Referenz."
+
+#~ msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
+#~ msgstr ""
+#~ "**Frequenz**: Die Datenfrequenz (z. B. "
+#~ "d/w/m/q), bezogen auf die Zeitgranularität "
+#~ "der Datentabelle oder die Resampling-"
+#~ "Methode."
+
+#~ msgid ""
+#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与"
+#~ " DataType 一一对应，便于维护与扩展。"
+#~ msgstr ""
+#~ "**Einheitliche Schnittstelle**: Alle Strategien "
+#~ "rufen Daten über „get_data(dtype_id)“ ab. "
+#~ "Jede dtype_id entspricht eins zu eins"
+#~ " einem DataType, was die Wartung und"
+#~ " Erweiterung erleichtert."
+
+#~ msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
+#~ msgstr ""
+#~ "Weitere Informationen zur Datenkonfiguration "
+#~ "und API-Nutzung finden Sie unter "
+#~ "*Historische Finanzdaten herunterladen und "
+#~ "verwalten* und in der API-Referenz."
+

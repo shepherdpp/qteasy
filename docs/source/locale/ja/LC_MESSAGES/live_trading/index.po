@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/live_trading/index.rst:2
@@ -81,8 +81,10 @@ msgstr ""
 "章を参照してください。"
 
 #: ../../source/live_trading/index.rst:24
-msgid "**准备对接真实柜台（如 QMT）**：在第 4 章阅读 Broker 适配说明。"
-msgstr "**実際のブローカー (QMT など) とのインターフェースの準備:** 第 4 章のブローカー適応に関する注意事項をお読みください。"
+msgid ""
+"**准备对接真实柜台（如 QMT）**：阅读 :doc:`4a-xtquant-broker-adapter-contract-v1`（英文契约 "
+"v1），再读 :doc:`4-broker-adapter-and-integration`。"
+msgstr ""
 
 #: ../../source/live_trading/index.rst:27
 msgid "建议阅读顺序"
@@ -115,13 +117,23 @@ msgid ":doc:`4-broker-adapter-and-integration` — 券商适配（进阶）"
 msgstr ":doc:`4-broker-adapter-and-integration` — 仲介の適応 (上級)"
 
 #: ../../source/live_trading/index.rst:36
+msgid ""
+":doc:`4a-xtquant-broker-adapter-contract-v1` — XtQuant/MiniQMT 契约 "
+"v1（英文，协作必读）"
+msgstr ""
+
+#: ../../source/live_trading/index.rst:37
 msgid ":doc:`6-trader-snapshot-gate` — 策略快照与启动门禁"
 msgstr ":doc:`6-trader-snapshot-gate` — ポリシーのスナップショットと起動ゲート"
 
-#: ../../source/live_trading/index.rst:37
+#: ../../source/live_trading/index.rst:38
 msgid ":doc:`7-manual-smoke-live-grid-roadmap` — 手工冒烟清单"
 msgstr ":doc:`7-manual-smoke-live-grid-roadmap` — 手動喫煙チェックリスト"
 
-#: ../../source/live_trading/index.rst:38
+#: ../../source/live_trading/index.rst:39
 msgid ":doc:`8-cli-trader-capability-matrix` — CLI 能力对照表"
 msgstr ":doc:`8-cli-trader-capability-matrix` — CLI 機能比較表"
+
+#~ msgid "**准备对接真实柜台（如 QMT）**：在第 4 章阅读 Broker 适配说明。"
+#~ msgstr "**実際のブローカー (QMT など) とのインターフェースの準備:** 第 4 章のブローカー適応に関する注意事項をお読みください。"
+

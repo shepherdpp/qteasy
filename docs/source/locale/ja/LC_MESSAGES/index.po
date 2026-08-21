@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/index.rst:89
@@ -62,15 +62,15 @@ msgstr "QTEASY 取引戦略の例"
 msgid "API参考"
 msgstr "API リファレンス"
 
-#: ../../source/index.rst:199
+#: ../../source/index.rst:200
 msgid "LICENSE"
 msgstr "LICENSE"
 
-#: ../../source/index.rst:205
+#: ../../source/index.rst:206
 msgid "关于 ``qteasy``"
 msgstr "``QTEASY``について"
 
-#: ../../source/index.rst:217
+#: ../../source/index.rst:218
 msgid "常见问题"
 msgstr "よくある質問"
 
@@ -80,16 +80,16 @@ msgstr "``QTEASY`` ドキュメントへようこそ!"
 
 #: ../../source/index.rst:15
 msgid ""
-"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 ``QTEASY`` "
-"仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 "
-"`讨论区`_ 参与讨论。欢迎各位贡献代码！"
+"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 "
+"``QTEASY`` 仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_"
+" 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
 "`qteasy` はバージョン 2.0 "
 "にアップグレードされ、取引戦略で過去のデータをより柔軟かつ効果的に使用できるようになり、取引戦略の定義プロセスが簡素化され、効率が向上しました。 "
 "``QTEASY`` is still in testing, the software inevitably contains some "
-"vulnerabilities and bugs. If you encounter any issues during use, you are "
-"welcome to `問題を報告`_ or submit a `新機能リクエスト`_ to me. You can also enter the "
-"`ディスカッションフォーラム`_ を使用してディスカッションに参加してください。貢献は大歓迎です!"
+"vulnerabilities and bugs. If you encounter any issues during use, you are"
+" welcome to `問題を報告`_ or submit a `新機能リクエスト`_ to me. You can also enter "
+"the `ディスカッションフォーラム`_ を使用してディスカッションに参加してください。貢献は大歓迎です!"
 
 #: ../../source/index.rst:22
 msgid "作者: **Jackie PENG**"
@@ -104,7 +104,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "作成日：2019年7月16日"
 
 #: ../../source/index.rst:25
-msgid "最新版本: `2.5.1` — :doc:`发布历史 <RELEASE_HISTORY>`"
+#, fuzzy
+msgid "最新版本: `2.6.4` — :doc:`发布历史 <RELEASE_HISTORY>`"
 msgstr "最新バージョン: `2.5.1` — :doc:`Release History <RELEASE_HISTORY>`"
 
 #: ../../source/index.rst:26
@@ -125,8 +126,7 @@ msgstr "**エンドツーエンドのカバレッジ** 財務データの取得�
 
 #: ../../source/index.rst:34
 msgid "**完全本地化** 数据、回测与实盘运行均在本地完成，不依赖云端服务，配置清晰、结果可复现"
-msgstr ""
-"**完全にローカル** データ、バックテスト、ライブ取引はすべてクラウド サービスに依存せず、ローカルで実行されます。構成が明確で結果が再現可能"
+msgstr "**完全にローカル** データ、バックテスト、ライブ取引はすべてクラウド サービスに依存せず、ローカルで実行されます。構成が明確で結果が再現可能"
 
 #: ../../source/index.rst:35
 msgid ""
@@ -147,17 +147,18 @@ msgstr ""
 msgid ""
 "**高性能回测与防未来函数**：回测核心采用向量化 + "
 "Numba，时间维顺序、标的维单步向量化，多进程并行优化；每步仅向策略注入当时可见的数据窗口，从机制上防未来函数。详见《架构与设计》中的 "
-":doc:`回测引擎与性能 <design/07-backtest-engine-and-performance>`、:doc:`设计初衷与独特优势 "
-"<design/08-design-rationale-and-advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
+":doc:`回测引擎与性能 <design/07-backtest-engine-and-"
+"performance>`、:doc:`设计初衷与独特优势 <design/08-design-rationale-and-"
+"advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
 msgstr ""
 "**高性能バックテストと先読みバイアスの防止**: バックテスト コアはベクトル化 + Numba "
 "を使用し、時間次元に沿った逐次処理と機器次元に沿ったシングルステップ "
 "ベクトル化を行い、マルチプロセッシング並列処理で最適化されています。各ステップでは、その時点で表示されているデータ "
-"ウィンドウのみが戦略に挿入され、メカニズム レベルで先読みバイアスが防止されます。 「アーキテクチャとデザイン」の:doc:`Backtesting "
-"Engine and Performance <design/07-backtest-engine-and-"
-"performance>`、:doc:`Design Rationale and Unique Advantages "
-"<design/08-design-rationale-and-advantages>`、および「取引戦略のバックテストと評価」の「バックテスト "
-"エンジンとパフォーマンス」の章を参照してください。"
+"ウィンドウのみが戦略に挿入され、メカニズム レベルで先読みバイアスが防止されます。 "
+"「アーキテクチャとデザイン」の:doc:`Backtesting Engine and Performance <design/07"
+"-backtest-engine-and-performance>`、:doc:`Design Rationale and Unique "
+"Advantages <design/08-design-rationale-and-"
+"advantages>`、および「取引戦略のバックテストと評価」の「バックテスト エンジンとパフォーマンス」の章を参照してください。"
 
 #: ../../source/index.rst:42
 msgid "``QTEASY`` 能做什么?"
@@ -202,13 +203,11 @@ msgstr ""
 
 #: ../../source/index.rst:62
 msgid "交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性"
-msgstr ""
-"取引戦略のデータ入力と使用方法は完全にカプセル化され安全であり、将来の機能の不用意な導入やデータ漏洩などの問題を完全に回避し、戦略結果の信頼性と信頼性を保証します。"
+msgstr "取引戦略のデータ入力と使用方法は完全にカプセル化され安全であり、将来の機能の不用意な導入やデータ漏洩などの問題を完全に回避し、戦略結果の信頼性と信頼性を保証します。"
 
 #: ../../source/index.rst:63
 msgid "同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差"
-msgstr ""
-"バックテストとライブ取引の両方に同じ戦略ロジックが使用され、「優れたバックテスト結果」と「圧倒的なライブパフォーマンス」の間のギャップが減少します。"
+msgstr "バックテストとライブ取引の両方に同じ戦略ロジックが使用され、「優れたバックテスト結果」と「圧倒的なライブパフォーマンス」の間のギャップが減少します。"
 
 #: ../../source/index.rst:71
 msgid "交易策略的回测评价、优化和模拟自动化交易"
@@ -228,14 +227,13 @@ msgstr ""
 
 #: ../../source/index.rst:75
 msgid "获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr ""
-"リアルタイムの市場データを取得し、自動取引の戦略シミュレーションを実行し、取引ログ、株式ポジション、口座残高の変化などの情報を追跡および記録します。"
+msgstr "リアルタイムの市場データを取得し、自動取引の戦略シミュレーションを実行し、取引ログ、株式ポジション、口座残高の変化などの情報を追跡および記録します。"
 
 #: ../../source/index.rst:76
 msgid "回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查"
-msgstr ""
-"バックテスト、最適化、ライブ取引では同じ実行メカニズムが使用されます。つまり、戦略を一度作成すれば、再現とトラブルシューティングが容易な明確な構成で、すべてのモードで実行されます。"
+msgstr "バックテスト、最適化、ライブ取引では同じ実行メカニズムが使用されます。つまり、戦略を一度作成すれば、再現とトラブルシューティングが容易な明確な構成で、すべてのモードで実行されます。"
 
 #: ../../source/index.rst:77
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
 msgstr "将来的には、「`qteasy`」はQMTなどのブローカーが提供する取引APIに接続することで、自動ライブ取引を実現できるようになります。"
+

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language-Team: zh_TW <LL@li.org>\n"
 "Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/index.rst:89
@@ -62,15 +62,15 @@ msgstr "QTEASY交易策略示例"
 msgid "API参考"
 msgstr "API參考"
 
-#: ../../source/index.rst:199
+#: ../../source/index.rst:200
 msgid "LICENSE"
 msgstr "LICENSE"
 
-#: ../../source/index.rst:205
+#: ../../source/index.rst:206
 msgid "关于 ``qteasy``"
 msgstr "关于 ``qteasy``"
 
-#: ../../source/index.rst:217
+#: ../../source/index.rst:218
 msgid "常见问题"
 msgstr "常見問題"
 
@@ -80,13 +80,13 @@ msgstr "歡迎使用 ``QTEASY`` 文檔!"
 
 #: ../../source/index.rst:15
 msgid ""
-"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 ``QTEASY`` "
-"仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_ 给我，也可以进入 "
-"`讨论区`_ 参与讨论。欢迎各位贡献代码！"
+"`qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。 由于 "
+"``QTEASY`` 仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎 `报告Issue`_ 或者提交 `新功能需求`_"
+" 给我，也可以进入 `讨论区`_ 参与讨论。欢迎各位贡献代码！"
 msgstr ""
-"`qteasy`已經升級到2.0版本，使得交易策略能更加靈活有效地使用歷史數據、同時簡化了交易策略的定義過程、提高了效率。 由於 ``QTEASY`` "
-"仍處於測試中，軟件中不免存在一些漏洞和bug，如果大家使用中出現問題，歡迎 `報告Issue`_ 或者提交 `新功能需求`_ 給我，也可以進入 "
-"`討論區`_ 參與討論。歡迎各位貢獻代碼！"
+"`qteasy`已經升級到2.0版本，使得交易策略能更加靈活有效地使用歷史數據、同時簡化了交易策略的定義過程、提高了效率。 由於 "
+"``QTEASY`` 仍處於測試中，軟件中不免存在一些漏洞和bug，如果大家使用中出現問題，歡迎 `報告Issue`_ 或者提交 `新功能需求`_"
+" 給我，也可以進入 `討論區`_ 參與討論。歡迎各位貢獻代碼！"
 
 #: ../../source/index.rst:22
 msgid "作者: **Jackie PENG**"
@@ -101,7 +101,8 @@ msgid "创建日期: 2019, July, 16"
 msgstr "創建日期: 2019, July, 16"
 
 #: ../../source/index.rst:25
-msgid "最新版本: `2.5.1` — :doc:`发布历史 <RELEASE_HISTORY>`"
+#, fuzzy
+msgid "最新版本: `2.6.4` — :doc:`发布历史 <RELEASE_HISTORY>`"
 msgstr "最新版本: `2.5.1` — :doc:`發佈歷史 <RELEASE_HISTORY>`"
 
 #: ../../source/index.rst:26
@@ -140,13 +141,15 @@ msgstr "**靈活易用** 多策略可像搭積木一樣組合並自定義信號�
 msgid ""
 "**高性能回测与防未来函数**：回测核心采用向量化 + "
 "Numba，时间维顺序、标的维单步向量化，多进程并行优化；每步仅向策略注入当时可见的数据窗口，从机制上防未来函数。详见《架构与设计》中的 "
-":doc:`回测引擎与性能 <design/07-backtest-engine-and-performance>`、:doc:`设计初衷与独特优势 "
-"<design/08-design-rationale-and-advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
+":doc:`回测引擎与性能 <design/07-backtest-engine-and-"
+"performance>`、:doc:`设计初衷与独特优势 <design/08-design-rationale-and-"
+"advantages>`，以及《回测并评价交易策略》目录下的「回测引擎与性能」章节。"
 msgstr ""
 "**高性能回測與防未來函數**：回測核心採用向量化 + "
 "Numba，時間維順序、標的維單步向量化，多進程並行優化；每步僅向策略注入當時可見的數據窗口，從機制上防未來函數。詳見《架構與設計》中的 "
-":doc:`回測引擎與性能 <design/07-backtest-engine-and-performance>`、:doc:`設計初衷與獨特優勢 "
-"<design/08-design-rationale-and-advantages>`，以及《回測並評價交易策略》目錄下的「回測引擎與性能」章節。"
+":doc:`回測引擎與性能 <design/07-backtest-engine-and-"
+"performance>`、:doc:`設計初衷與獨特優勢 <design/08-design-rationale-and-"
+"advantages>`，以及《回測並評價交易策略》目錄下的「回測引擎與性能」章節。"
 
 #: ../../source/index.rst:42
 msgid "``QTEASY`` 能做什么?"
@@ -215,3 +218,4 @@ msgstr "回測、優化與實盤使用同一套運行機制，寫一次策略即
 #: ../../source/index.rst:77
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
 msgstr "未來將通過QMT接口接入券商提供的實盤交易接口，實現自動化交易"
+

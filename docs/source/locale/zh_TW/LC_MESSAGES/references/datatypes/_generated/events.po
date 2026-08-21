@@ -1,0 +1,1229 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/references/datatypes/_generated/events.md:6
+msgid "交易行为与事件"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md:8
+msgid ""
+"本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
+"`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **132** 条。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md:10
+msgid ""
+"请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
+"`table_name` 仅供对照 refill。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "freq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "asset_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "description"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "kind"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "usable_in"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "acquisition_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "table_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "base_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "d"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "E"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-基准日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "history"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "none"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "selected_events"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "dividend"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "base_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-基准股本（万）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "history_panel,strategy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "大宗交易 - 成交金额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "event_signal"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade_buyer"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "大宗交易 - 买方营业部"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade_price"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "大宗交易 - 成交价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade_seller"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "大宗交易 - 卖方营业部"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "block_trade_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "大宗交易 - 成交量（万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 买入额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_inst"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_elg_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 特大单买入金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "direct"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "money_flow"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_elg_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 特大单买入量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_lg_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 大单买入金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_lg_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 大单买入量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_md_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 中单买入金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_md_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 中单买入量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 买入占总成交比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_sm_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 小单买入金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "buy_sm_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 小单买入量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-每股分红（税后）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div_approved"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东大会批准-每股分红（税后）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div_planned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预案-每股分红（税后）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div_tax"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-每股分红（税前）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div_tax_approved"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东大会批准-每股分红（税前）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cash_div_tax_planned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预案-每股分红（税前）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "change_reason"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "业绩变动原因"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "forecast"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "cur_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股票 - 当前最新证券名称"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "event_status"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_names"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "down_limit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "跌停板 - 跌停价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_limit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "ex_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-除权除息日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "exalter"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 营业部名称"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "first_ann_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "首次公告日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 累计成交额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_stock"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_net_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 净买入金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_p_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 涨跌幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_rank"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 排名"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sh_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 沪市成交额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sh_buy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 深市净买入金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sh_net_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 沪市净买入额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sh_sell"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sz_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 深市成交金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hk_top10_sz_net_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "港股通十大成交 - 深市净买入额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "imp_ann_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-实施公告日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "is_HS_top10"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "hs_top10_stock"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "is_suspended"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "停复牌类型：S-停牌，R-复牌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_suspend"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "is_trade_day|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "None"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "是否交易日-市场代码：%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "reference"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "reference_api,strategy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "selection"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "trade_calendar"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "last_parent_net"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "上年同期归属母公司净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "manager_title"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 岗位"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "event_multi_stat"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_managers"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_birth_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "FD"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理 - 出生年份"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "fund_manager"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_birthday"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 出生年月"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_edu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 学历"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理 - 学历"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_gender"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 性别"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理 - 性别"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_lev"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 岗位类别"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 高管姓名"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理姓名"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_national"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 国籍"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "managers_resume"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "公司高管信息 - 个人简历"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理 - 简历"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rqchl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融券偿还量(股)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rqmcl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融券卖出量(股,份,手)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rqye"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融券余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rqyl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融券余量（股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rzche"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融资偿还额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rzmre"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融资买入额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rzrqye"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融资融券余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "margin_detail_rzye"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "融资融券交易明细 - 融资余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "nationality"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "基金经理 - 国籍"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "net_buy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 净成交额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "net_mf_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 净流入额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "net_mf_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 净流入量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "net_profit_max"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预告净利润上限(万元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "net_profit_min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预告净利润下限(万元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "p_change_max"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预告净利润变动幅度上限(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "p_change_min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预告净利润变动幅度下限(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "pay_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-派息日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "pre_trade_day|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "上一交易日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "reason"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 上榜理由"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "record_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-股权登记日"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 卖出额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_elg_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 特大单卖出金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_elg_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 特大单卖出量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_lg_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 大单卖出金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_lg_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 大单卖出量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_md_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 中单卖出金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_md_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 中单卖出量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 卖出占总成交比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_sm_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 小单卖出金额（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "sell_sm_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "个股资金流向 - 小单卖出量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "side"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜机构明细 - 买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_bo_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-每股送股比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_bo_rate_approved"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东大会批准-每股送股比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_bo_rate_planned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预案-每股送股比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_co_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-每股转增比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_co_rate_approved"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东大会批准-每股转增比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_co_rate_planned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预案-每股转增比例"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_div"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "实施-每股送转"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_div_approved"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东大会批准-每股送转"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stk_div_planned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "预案-每股送转"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_after_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 变动后占流通比例（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_after_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 变动后持股"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_avg_price"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 平均价格"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_begin_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 增减持开始日期"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_change_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 占流通比例（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_change_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 变动数量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_close_date"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 增减持结束日期"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_in_de"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 类型IN增持DE减持"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 股东名称"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_total_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 持股总数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "stock_holder_trade_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "股东交易 - 股东类型G高管P个人C公司"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "summary"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "业绩预告摘要"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "suspend_timing"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "日内停牌时间段"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 成交金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_buy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 买入金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 涨跌额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_net_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 净成交金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_rank"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 资金排名"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top10_sell"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "沪深港通十大成交股上榜 - 卖出金额（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 总成交额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_amount_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 龙虎榜成交额占比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_float_values"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 当日流通市值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_l_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细- 龙虎榜成交额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_l_buy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 龙虎榜买入额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_l_sell"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 龙虎榜卖出额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_net_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 龙虎榜净买入额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_net_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 龙虎榜净买额占比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_pct_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 涨跌幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_reason"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 上榜理由"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "top_list_turnover_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "龙虎榜交易明细 - 换手率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "trade_cal"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "交易日历"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "up_limit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/events.md
+msgid "涨停板 - 涨停价"
+msgstr ""
+

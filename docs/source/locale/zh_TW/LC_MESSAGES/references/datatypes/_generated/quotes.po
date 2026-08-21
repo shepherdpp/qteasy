@@ -1,0 +1,1985 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/references/datatypes/_generated/quotes.md:6
+msgid "行情与复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md:8
+msgid ""
+"本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
+"`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **358** 条。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md:10
+msgid ""
+"请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
+"`table_name` 仅供对照 refill。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "freq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "asset_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "description"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "kind"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "usable_in"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "acquisition_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "table_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "accum_div"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "d"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "FD"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 累计分红"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "history"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "history_panel,strategy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "direct"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_nav"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "accum_nav"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 累计净值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "adj_nav"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 复权净值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "E"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "FT"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "IDX"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "OPT"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_15min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_1min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_30min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_5min"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "h"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_hourly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_hourly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_hourly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_hourly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "options_hourly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "m"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_monthly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_monthly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_monthly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_monthly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "w"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "stock_weekly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "fund_weekly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "future_weekly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 成交额 （千元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "index_weekly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 成交额 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_index_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 涨跌额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_high"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_low"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_open"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_pct_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 涨跌幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_pre_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 昨日收盘点位"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ci_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "中信指数日K线 - 成交量 （万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "close|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "adjustment"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 复权收盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "close_chg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 收盘价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 收盘价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 收盘价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "delf_settle"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 交割结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 交割结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 交割结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 成交额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "global_index_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_high"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_low"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_open"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_pct_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_pre_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 昨日收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_swing"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 振幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "g_index_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "全球指数日K线行情 - 成交量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "high"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "high|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 复权最高价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "low"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "low|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 复权最低价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "net_asset"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 资产净值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "oi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 持仓量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 持仓量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 持仓量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "oi_chg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 持仓量变化"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 持仓量变化"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 持仓量变化"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "open"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "open|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 复权开盘价-b:后复权f:前复权"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "settle"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 结算价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "settle_chg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 结算价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 结算价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 结算价涨跌"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_amount"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 成交额 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_index_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 涨跌额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_float_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 流通市值 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_high"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_low"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_open"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_pb"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 市净率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_pct_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 涨跌幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_pe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 市盈率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_total_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 总市值 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "sw_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "申万指数日K线 - 成交量 （万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_avg_price"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 平均价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_index_daily"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 最低价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_close"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 收盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_float_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 流通市值 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_high"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 最高价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_low"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_open"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 开盘价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_pct_change"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 涨跌幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_total_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 总市值 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_turnover"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 换手率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "ths_vol"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "同花顺指数日K线 - 成交量 （万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "total_netasset"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 累计资产净值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "unit_nav"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金净值 - 单位净值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "volume"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票15分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金15分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货15分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数15分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权15分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票60秒K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金60秒K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货60秒K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数60秒K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权60秒K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票30分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金30分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货30分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数30分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权30分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票5分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金5分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货5分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数5分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权5分钟K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票日K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金日K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货日K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数日K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权日K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票小时K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金小时K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货小时K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数小时K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期权小时K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票月K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金月K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货月K线 - 成交量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数月K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "股票周K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "基金周K线 - 成交量 （手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "期货周K线 - 成交量（手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/quotes.md
+msgid "指数周K线 - 成交量 （手）"
+msgstr ""
+

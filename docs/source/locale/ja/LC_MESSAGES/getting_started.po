@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/getting_started.md:1
@@ -27,9 +27,10 @@ msgid "安装与导入"
 msgstr "インストールとインポート"
 
 #: ../../source/getting_started.md:5
+#, fuzzy
 msgid ""
 "使用 `pip` 安装（要求 `Python >= 3.9, <3.13`）：部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 "
-"[FAQ](https://qteasy.readthedocs.io/ja/latest/faq.html) 与安装说明。"
+"[FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。"
 msgstr ""
 "`pip` でインストールします (`Python >= 3.9, <3.13` が必要): 一部の機能 (すべての組み込み戦略、データベース "
 "ストレージなど) "
@@ -50,16 +51,16 @@ msgid "[qteasy发布历史](RELEASE_HISTORY.md) — 各版本变更说明，升�
 msgstr "[qteasy リリース履歴](RELEASE_HISTORY.md) — 各バージョンの変更メモ。アップグレード前に確認できます。"
 
 #: ../../source/getting_started.md:27
-msgid "一分钟跑通"
-msgstr "1分で実行可能"
+msgid "一分钟跑通 `qteasy`"
+msgstr ""
 
 #: ../../source/getting_started.md:29
 msgid ""
 "本节将带您完成：配置 `tushare Token` → 下载沪深 300 十年指数数据 → 查看数据与 K 线 → 使用内置 DMA 策略对 "
 "000300.SH 做择时回测，并得到一份可用的回测结果。"
 msgstr ""
-"このセクションでは、次の作業を完了します: `tushare Token` を設定 → 10 年間の CSI 300 インデックス データをダウンロード"
-" → データとローソク足チャートを表示 → 組み込み DMA 戦略を使用して 000300.SH でタイミング "
+"このセクションでは、次の作業を完了します: `tushare Token` を設定 → 10 年間の CSI 300 インデックス "
+"データをダウンロード → データとローソク足チャートを表示 → 組み込み DMA 戦略を使用して 000300.SH でタイミング "
 "バックテストを実行し、使用可能なバックテスト結果を取得します。"
 
 #: ../../source/getting_started.md:31
@@ -73,8 +74,8 @@ msgid ""
 msgstr ""
 "デフォルトでは、`qteasy` は`Tushare` "
 "を使用して財務データをダウンロードします。データをダウンロードするには、まずシステム起動設定ファイルで Tushare の API "
-"トークンを設定する必要があります (トークンを取得するには、まず [`tushare` 公式 Web サイト](https://tushare.pro)"
-" に登録してください)。"
+"トークンを設定する必要があります (トークンを取得するには、まず [`tushare` 公式 Web "
+"サイト](https://tushare.pro) に登録してください)。"
 
 #: ../../source/getting_started.md:35
 msgid "有两种方式修改启动配置文件："
@@ -93,8 +94,9 @@ msgid ""
 "**方式二：直接修改启动配置文件**   启动配置文件 `qteasy.cfg` 保存在 qteasy 根目录下（可通过 "
 "`qt.QT_ROOT_PATH` 查看配置文件路径），使用任意文本编辑器打开该文件并在其中增加一行："
 msgstr ""
-"**方法 2: 起動設定ファイルを直接変更する** 起動設定ファイル `qteasy.cfg` は、qteasy ルート ディレクトリに保存されます "
-"(`qt.QT_ROOT_PATH` を介して設定ファイルのパスを表示できます)。任意のテキスト エディタでこのファイルを開き、次の行を追加します。"
+"**方法 2: 起動設定ファイルを直接変更する** 起動設定ファイル `qteasy.cfg` は、qteasy ルート "
+"ディレクトリに保存されます (`qt.QT_ROOT_PATH` を介して設定ファイルのパスを表示できます)。任意のテキスト "
+"エディタでこのファイルを開き、次の行を追加します。"
 
 #: ../../source/getting_started.md:61
 msgid "2. 下载 000300.SH 十年指数数据"
@@ -110,8 +112,7 @@ msgstr ""
 "をダウンロードすることをお勧めします。"
 
 #: ../../source/getting_started.md:65
-msgid ""
-"使用`qteasy.refill_data_source()`函数，`qteasy`会自动从配置好的数据下载渠道下载数据，当数据量太大时，会自动分块下载数据、完成数据检查和清洗并存储到数据库中。"
+msgid "使用`qteasy.refill_data_source()`函数，`qteasy`会自动从配置好的数据下载渠道下载数据，当数据量太大时，会自动分块下载数据、完成数据检查和清洗并存储到数据库中。"
 msgstr ""
 "`qteasy.refill_data_source()` 関数を使用すると、`qteasy` は設定されたデータ "
 "ソースからデータを自動的にダウンロードします。データ量が大きすぎる場合は、自動的に分割してダウンロードされ、データのチェックとクリーニングが実行されてデータベースに保存されます。"
@@ -199,8 +200,8 @@ msgstr "3.5 履歴データの操作 (HistoryPanel)"
 
 #: ../../source/getting_started.md:167
 msgid ""
-"在实际研究中，很多时候我们不仅需要“看 K 线”，还需要**在代码里对历史数据做统计、生成因子**。   `get_history_data()` "
-"除了可以返回 `DataFrame` 外，还可以直接返回一个三维的 `HistoryPanel`，便于对多标的、多指标做统一计算："
+"在实际研究中，很多时候我们不仅需要“看 K 线”，还需要**在代码里对历史数据做统计、生成因子**。   `get_history_data()`"
+" 除了可以返回 `DataFrame` 外，还可以直接返回一个三维的 `HistoryPanel`，便于对多标的、多指标做统一计算："
 msgstr ""
 "実際の研究では、多くの場合、「ローソク足チャートを確認する」だけでなく、**過去のデータの統計を計算し、コードで因子を生成する**ことも必要になります。"
 " `DataFrame` を返すことに加えて、`get_history_data()` は 3D `HistoryPanel` "
@@ -234,8 +235,8 @@ msgid ""
 "20、长均线 60、DMA 周期 10），直接得到回测结果与图表："
 msgstr ""
 "000300.SH を取引商品として、組み込みの **DMA** 移動平均タイミング戦略を使用し、ダウンロードした 10 "
-"年間のデータでバックテストを実行します。以下では、一般的に使用される比較的安定したパラメーターのセット (短い MA 20、長い MA 60、DMA "
-"期間 10) を使用して、バックテストの結果とチャートを直接取得します。"
+"年間のデータでバックテストを実行します。以下では、一般的に使用される比較的安定したパラメーターのセット (短い MA 20、長い MA "
+"60、DMA 期間 10) を使用して、バックテストの結果とチャートを直接取得します。"
 
 #: ../../source/getting_started.md:272
 msgid "![png](img/output_14_1.png)"
@@ -243,8 +244,8 @@ msgstr "![png](img/output_14_1.png)"
 
 #: ../../source/getting_started.md:274
 msgid ""
-"运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「`qteasy` 能做什么」中的参数优化与 "
-"[回测文档](references/3-back-test-strategy.md)。"
+"运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「`qteasy` 能做什么」中的参数优化与"
+" [回测文档](references/3-back-test-strategy.md)。"
 msgstr ""
 "実行後は、資産曲線、最大ドローダウン、シャープレシオなどの評価指標と、視覚化されたチャートが表示されます。他のパラメータを試したり範囲を最適化するには、パラメータの最適化について次のセクション「`qteasy`"
 " でできること」と [バックテスト ドキュメント](references/3-back-test-strategy.md) を参照してください。"
@@ -292,13 +293,11 @@ msgstr ""
 
 #: ../../source/getting_started.md:293
 msgid "交易策略的数据输入和使用方法完全封装且安全，完全避免无意中导致未来函数、数据泄露等问题，保证策略运行结果的真实性和可靠性"
-msgstr ""
-"取引戦略のデータ入力と使用方法は完全にカプセル化され安全であり、将来の機能の不用意な導入やデータ漏洩などの問題を完全に回避し、戦略結果の信頼性と信頼性を保証します。"
+msgstr "取引戦略のデータ入力と使用方法は完全にカプセル化され安全であり、将来の機能の不用意な導入やデータ漏洩などの問題を完全に回避し、戦略結果の信頼性と信頼性を保証します。"
 
 #: ../../source/getting_started.md:294
 msgid "同一套策略逻辑既用于回测也用于实盘，减少「回测漂亮、实盘走样」的落差"
-msgstr ""
-"バックテストとライブ取引の両方に同じ戦略ロジックが使用され、「優れたバックテスト結果」と「圧倒的なライブパフォーマンス」の間のギャップが減少します。"
+msgstr "バックテストとライブ取引の両方に同じ戦略ロジックが使用され、「優れたバックテスト結果」と「圧倒的なライブパフォーマンス」の間のギャップが減少します。"
 
 #: ../../source/getting_started.md:296
 msgid "![png](img/output_14_3.png)"
@@ -322,13 +321,11 @@ msgstr ""
 
 #: ../../source/getting_started.md:302
 msgid "获取实时市场数据，运行策略模拟自动化交易，跟踪记录交易日志、股票持仓、账户资金变化等信息"
-msgstr ""
-"リアルタイムの市場データを取得し、自動取引の戦略シミュレーションを実行し、取引ログ、株式ポジション、口座残高の変化などの情報を追跡および記録します。"
+msgstr "リアルタイムの市場データを取得し、自動取引の戦略シミュレーションを実行し、取引ログ、株式ポジション、口座残高の変化などの情報を追跡および記録します。"
 
 #: ../../source/getting_started.md:303
 msgid "回测、优化与实盘使用同一套运行机制，写一次策略即可全模式运行，配置清晰，便于复现与排查"
-msgstr ""
-"バックテスト、最適化、ライブ取引では同じ実行メカニズムが使用されます。つまり、戦略を一度作成すれば、再現とトラブルシューティングが容易な明確な構成で、すべてのモードで実行されます。"
+msgstr "バックテスト、最適化、ライブ取引では同じ実行メカニズムが使用されます。つまり、戦略を一度作成すれば、再現とトラブルシューティングが容易な明確な構成で、すべてのモードで実行されます。"
 
 #: ../../source/getting_started.md:304
 msgid "未来将通过QMT接口接入券商提供的实盘交易接口，实现自动化交易"
@@ -350,27 +347,31 @@ msgstr "エンドツーエンドのロードマップ/チュートリアル"
 
 #: ../../source/getting_started.md:315
 msgid "若希望按完整流程走通「从配置到回测、优化、模拟/实盘」，可依下列顺序阅读教程与文档，每步均有对应章节与示例："
-msgstr ""
-"「設定からバックテスト、最適化、シミュレーション/ライブ取引」までの完全なワークフローに従いたい場合は、次の順序でチュートリアルとドキュメントを読むことができます。各ステップには、対応するセクションと例があります。"
+msgstr "「設定からバックテスト、最適化、シミュレーション/ライブ取引」までの完全なワークフローに従いたい場合は、次の順序でチュートリアルとドキュメントを読むことができます。各ステップには、対応するセクションと例があります。"
 
 #: ../../source/getting_started.md:317
 msgid ""
 "**配置数据源与 Token** → [教程：入门](tutorials/1-get-"
 "started.md)、[教程：获取数据](tutorials/2.0-get-data.md)"
 msgstr ""
-"**データ ソースとトークンの構成** → [チュートリアル: はじめに](tutorials/1-get-started.md)、[チュートリアル: "
-"データの取得](tutorials/2.0-get-data.md)"
+"**データ ソースとトークンの構成** → [チュートリアル: はじめに](tutorials/1-get-"
+"started.md)、[チュートリアル: データの取得](tutorials/2.0-get-data.md)"
 
 #: ../../source/getting_started.md:318
 #, python-format
 msgid ""
 "**下载数据** → [教程：获取数据](tutorials/2.0-get-"
-"data.md)、[下载并管理金融历史数据](manage_data/1.%20overview.md)"
+"data.md)、[下载并管理金融历史数据](manage_data/1.%20overview.md) 2b. "
+"**玩数据与简单因子（可选，建议策略回测前完成）** → [获取数据 / 最小数据集](tutorials/2.0-get-data.md) → "
+"[HistoryPanel 基础操作](tutorials/2.4-historypanel-basics.md) → "
+"[玩数据与因子分析](tutorials/2.5-historypanel-data-analysis.md) "
+"→（进阶）[纵向择时](tutorials/2.6-historypanel-advanced-vertical-timeaxis.md) / "
+"[横截面选股](tutorials/2.7-historypanel-advanced-horizontal-multifactor.md) / "
+"[事件型因子](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)；可运行 "
+"`examples/data_playground_e2e.py`"
 msgstr ""
-"**データのダウンロード** → [チュートリアル: データの取得](tutorials/2.0-get-"
-"data.md)、[財務履歴データのダウンロードと管理](manage_data/1.%20overview.md)"
 
-#: ../../source/getting_started.md:319
+#: ../../source/getting_started.md:320
 #, python-format
 msgid ""
 "**定义策略并回测** → [教程：第一个策略](tutorials/3-start-first-"
@@ -379,11 +380,11 @@ msgid ""
 "strategy.md)、[如何运行回测](back_testing/2.%20run_backtest.md)"
 msgstr ""
 "**戦略とバックテストの定義** → [チュートリアル: 最初の戦略](tutorials/3-start-first-"
-"strategy.md)、[チュートリアル: 組み込み戦略](tutorials/4-build-in-strategies.md)、[チュートリアル:"
-" カスタム戦略](tutorials/5-first-self-defined-"
+"strategy.md)、[チュートリアル: 組み込み戦略](tutorials/4-build-in-"
+"strategies.md)、[チュートリアル: カスタム戦略](tutorials/5-first-self-defined-"
 "strategy.md)、[バックテスト](back_testing/2.%20run_backtest.md)"
 
-#: ../../source/getting_started.md:320
+#: ../../source/getting_started.md:321
 #, python-format
 msgid ""
 "**参数优化** → "
@@ -392,18 +393,18 @@ msgstr ""
 "**パラメータの最適化** → [チュートリアル: "
 "取引戦略の最適化](tutorials/Tutorial%2006%20-%20取引易策略的优化.md)、[取引戦略の最適化](optimization/1.%20overview.md)"
 
-#: ../../source/getting_started.md:321
+#: ../../source/getting_started.md:322
 #, python-format
 msgid ""
 "**模拟/实盘运行** → "
-"[教程：交易策略的部署及运行](tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)、[模拟实盘运行概览](references/1-simulation-"
-"overview.md)"
+"[教程：交易策略的部署及运行](tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)、[模拟实盘运行概览](references/1"
+"-simulation-overview.md)"
 msgstr ""
 "**シミュレーション/ライブ取引** → [チュートリアル: "
-"取引戦略の展開と実行](tutorials/Tutorial%2007%20-%20交易策略の展開及び运行.md)、[シミュレーション/ライブ取引の概要](references/1-simulation-"
-"overview.md)"
+"取引戦略の展開と実行](tutorials/Tutorial%2007%20-%20交易策略の展開及び运行.md)、[シミュレーション/ライブ取引の概要](references/1"
+"-simulation-overview.md)"
 
-#: ../../source/getting_started.md:323
+#: ../../source/getting_started.md:324
 msgid ""
 "上述教程已覆盖从配置到回测、优化与模拟/实盘的完整链路；遇到问题时可在 [FAQ](faq.md) "
 "中查找「如何跑通」「为何慢」「防未来函数」等常见说明。"
@@ -411,26 +412,45 @@ msgstr ""
 "上記のチュートリアルでは、設定からバックテスト、最適化、シミュレーション/ライブ取引までの完全なチェーンをすでにカバーしています。問題が発生した場合は、[FAQ](faq.md)"
 " で「エンドツーエンドで実行する方法」、「遅い理由」、「先読みバイアスの回避」などの一般的な説明を確認できます。"
 
-#: ../../source/getting_started.md:327
+#: ../../source/getting_started.md:328
 msgid "接下来"
 msgstr "次"
 
-#: ../../source/getting_started.md:329
-msgid "[教程：获取数据](tutorials/2.0-get-data.md) — 配置数据源与下载更多数据"
-msgstr ""
-"[チュートリアル: データの取得](tutorials/2.0-get-data.md) — データ ソースを構成し、さらにデータをダウンロードする"
-
 #: ../../source/getting_started.md:330
+msgid "[教程：获取数据](tutorials/2.0-get-data.md) — 配置数据源与下载更多数据"
+msgstr "[チュートリアル: データの取得](tutorials/2.0-get-data.md) — データ ソースを構成し、さらにデータをダウンロードする"
+
+#: ../../source/getting_started.md:331
+msgid "[教程：HistoryPanel 基础操作](tutorials/2.4-historypanel-basics.md) — 结构、切片、扩列与对齐"
+msgstr ""
+
+#: ../../source/getting_started.md:332
+msgid ""
+"[教程：HistoryPanel 玩数据](tutorials/2.5-historypanel-data-analysis.md) — "
+"因子研究最小闭环"
+msgstr ""
+
+#: ../../source/getting_started.md:333
 msgid "[教程：第一个策略](tutorials/3-start-first-strategy.md) — 使用内置策略与回测"
 msgstr ""
 "[チュートリアル: 最初の戦略](tutorials/3-start-first-strategy.md) — "
 "組み込みの戦略を使用し、バックテストを実行する"
 
-#: ../../source/getting_started.md:331
+#: ../../source/getting_started.md:334
 msgid "[回测与评价](references/3-back-test-strategy.md) — 回测参数与结果解读"
-msgstr ""
-"[バックテストと評価](references/3-back-test-strategy.md) — バックテストのパラメーターと結果の解釈方法"
+msgstr "[バックテストと評価](references/3-back-test-strategy.md) — バックテストのパラメーターと結果の解釈方法"
 
-#: ../../source/getting_started.md:332
+#: ../../source/getting_started.md:335
 msgid "[API 参考](api/use_qteasy.rst) — 完整接口说明"
 msgstr "[API リファレンス](api/use_qteasy.rst) — 完全なインターフェイス ドキュメント"
+
+#~ msgid "一分钟跑通"
+#~ msgstr "1分で実行可能"
+
+#~ msgid ""
+#~ "**下载数据** → [教程：获取数据](tutorials/2.0-get-"
+#~ "data.md)、[下载并管理金融历史数据](manage_data/1.%20overview.md)"
+#~ msgstr ""
+#~ "**データのダウンロード** → [チュートリアル: データの取得](tutorials/2.0"
+#~ "-get-data.md)、[財務履歴データのダウンロードと管理](manage_data/1.%20overview.md)"
+

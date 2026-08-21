@@ -1,0 +1,1405 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/references/datatypes/_generated/macro.md:6
+msgid "宏观、利率与资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md:8
+msgid ""
+"本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
+"`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **157** 条。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md:10
+msgid ""
+"请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
+"`table_name` 仅供对照 refill。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "freq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "asset_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "description"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "kind"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "usable_in"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "acquisition_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "table_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "q"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "None"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "GDP累计值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "reference"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "reference_api,strategy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_pi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第一产业累计值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_pi_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第一产业同比增速（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_si"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第二产业累计值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_si_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第二产业同比增速（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_ti"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第三产业累计值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_ti_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "第三产业同比增速（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_gdp_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "当季同比增速（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m0"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "m"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M0（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_money"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m0_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M0环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m0_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M0同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m1"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M1（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m1_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M1环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m1_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M1同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m2"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M2（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m2_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M2环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_m2_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "M2同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cnt_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "农村累计值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_cpi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cnt_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "农村环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cnt_val"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "农村当月值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cnt_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "农村同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ggt_ss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "d"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "Any"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 港股通（上海）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "hs_money_flow"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ggt_sz"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 港股通（深圳）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_d10"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（十天）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_index"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_long"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（长期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_m1"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（一月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_m12"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（一年期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_m3"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（三月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "gz_m6"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷市场平均利率（六月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "hgt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 沪股通（百万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "hibor|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "香港银行间行业拆放利率(HIBOR) - %"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "hibor"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "inc_cumval"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "社融增量累计值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_sf"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "inc_month"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "社融增量当月值（亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "libor_eur|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "伦敦银行间行业拆放利率(LIBOR) EUR - %"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "selection"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "libor"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "libor_gbp|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "伦敦银行间行业拆放利率(LIBOR) GBP - %"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "libor_usd|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "伦敦银行间行业拆放利率(LIBOR) USD - %"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "north_money"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 北向资金（百万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "nt_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "全国累计值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "nt_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "全国环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "nt_val"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "全国当月值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "nt_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "全国同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010000"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_pmi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010100"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010200"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010300"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010400"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/生产指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010401"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/生产指数:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010402"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/生产指数:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010403"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/生产指数:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010500"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/新订单指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010501"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/新订单指数:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010502"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/新订单指数:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010503"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/新订单指数:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010600"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/供应商配送时间指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010601"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010602"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010603"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/供应商配送时间指数:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010700"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/原材料库存指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010701"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/原材料库存指数:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010702"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/原材料库存指数:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010703"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/原材料库存指数:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010800"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/从业人员指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010801"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/从业人员指数:企业规模/大型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010802"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/从业人员指数:企业规模/中型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010803"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:构成指数/从业人员指数:企业规模/小型企业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi010900"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/新出口订单"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011000"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/进口"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011100"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/采购量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011200"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/主要原材料购进价格"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011300"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/出厂价格"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011400"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/产成品库存"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011500"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/在手订单"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011600"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:其他/生产经营活动预期"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011700"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:分行业/装备制造业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011800"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:分行业/高技术制造业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi011900"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:分行业/基础原材料制造业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi012000"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "制造业PMI:分行业/消费品制造业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020100"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:商务活动"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020101"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:商务活动:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020102"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:商务活动:分行业/服务业业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020200"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:新订单指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020201"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:新订单指数:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020202"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:新订单指数:分行业/服务业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020300"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:投入品价格指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020301"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:投入品价格指数:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020302"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:投入品价格指数:分行业/服务业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020400"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:销售价格指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020401"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:销售价格指数:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020402"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:销售价格指数:分行业/服务业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020500"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:从业人员指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020501"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:从业人员指数:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020502"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:从业人员指数:分行业/服务业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020600"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:业务活动预期指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020601"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:业务活动预期指数:分行业/建筑业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020602"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:业务活动预期指数:分行业/服务业"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020700"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:新出口订单"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020800"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:在手订单"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi020900"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:存货"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi021000"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "非制造业PMI:供应商配送时间"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "pmi030000"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "中国综合PMI:产出指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：全部工业品：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "cn_ppi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_adu_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：一般日用品类：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_adu_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：一般日用品类：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_adu_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：一般日用品类：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_c_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：衣着类：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_c_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：衣着类：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_c_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：衣着类：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_dcg_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：耐用消费品类：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_dcg_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：耐用消费品类：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_dcg_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：耐用消费品类：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_f_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：食品类：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_f_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：食品类：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_f_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：食品类：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_cg_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生活资料：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：全部工业品：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_p_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：加工业：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_p_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：加工业：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_p_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：加工业：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_qm_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：采掘业：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_qm_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：采掘业：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_qm_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：采掘业：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_rm_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：原料业：累计同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_rm_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：原料业：环比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_rm_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：原料业：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_mp_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：生产资料：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "ppi_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "PPI：全部工业品：当月同比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rqmcl|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融券卖出量(股,份,手)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rqye|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融券余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rqyl|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融券余量(股,份,手)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rzche|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融资偿还额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rzmre|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融资买入额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rzrqye|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融资融券余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "rzye|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "融资融券交易汇总 - 融资余额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "sgt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 深股通（百万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "shibor|%"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "上海银行间行业拆放利率(SHIBOR) - %"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "shibor"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "south_money"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "沪深港通资金流向 - 南向资金（百万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "stk_endval"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "社融存量期末值（万亿元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "town_accu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "城市累计值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "town_mom"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "城市环比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "town_val"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "城市当月值"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "town_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "城市同比（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_aa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "农村互助会互助金费率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_index"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_center"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "民间借贷服务中心利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_cm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "民间资本管理公司融资价格"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_comp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州民间融资综合利率指数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_long"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州地区民间借贷分期限利率（长期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_m1"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州地区民间借贷分期限利率（一月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_m12"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州地区民间借贷分期限利率（一年期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_m3"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州地区民间借贷分期限利率（三月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_m6"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "温州地区民间借贷分期限利率（六月期）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_micro"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "小额贷款公司放款利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_om"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "其他市场主体利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "wz_sdb"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/macro.md
+msgid "社会直接借贷利率"
+msgstr ""
+

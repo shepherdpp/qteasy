@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language-Team: zh_TW <LL@li.org>\n"
 "Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/CONTRIBUTING.md:1
@@ -29,17 +29,17 @@ msgstr "如何做出貢獻？"
 #: ../../source/CONTRIBUTING.md:5
 msgid ""
 "作贡献并不一定意味着添加代码。您可以 "
-"**[提出问题](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---"
-"bug报告.md&title=)**，**[参与讨论](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建议](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-"
-"request---新功能需求.md&title=)** "
+"**[提出问题](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---"
+"bug报告.md&title=)**，**[参与讨论](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建议](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=feature-request---新功能需求.md&title=)** "
 "，这些都是有价值的贡献。我也非常希望你分享使用`qteasy`创建的交易策略，或实现的好想法。当然，为`qteasy`编写代码也是一种很好的贡献方式。对任何贡献，我在此都深表谢意。"
 msgstr ""
 "作貢獻並不一定意味着添加代碼。您可以 "
-"**[提出問題](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---"
-"bug報告.md&title=)**，**[參與討論](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建議](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-"
-"request---新功能需求.md&title=)** "
+"**[提出問題](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---"
+"bug報告.md&title=)**，**[參與討論](https://github.com/shepherdpp/qteasy/discussions)**，**[提出功能建議](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=feature-request---新功能需求.md&title=)** "
 "，這些都是有價值的貢獻。我也非常希望你分享使用`qteasy`創建的交易策略，或實現的好想法。當然，爲`qteasy`編寫代碼也是一種很好的貢獻方式。對任何貢獻，我在此都深表謝意。"
 
 #: ../../source/CONTRIBUTING.md:7
@@ -56,11 +56,11 @@ msgstr "[報告問題](https://github.com/shepherdpp/qteasy/issues/new)"
 
 #: ../../source/CONTRIBUTING.md:11
 msgid ""
-"在提交问题报告时，请提供清晰的问题描述和您的工作环境信息。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---bug报告.md&title=)以便在您的描述中包括以下部分："
+"在提交问题报告时，请提供清晰的问题描述和您的工作环境信息。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---bug报告.md&title=)以便在您的描述中包括以下部分："
 msgstr ""
-"在提交問題報告時，請提供清晰的問題描述和您的工作環境資訊。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-"
-"report---bug報告.md&title=)以便在您的描述中包括以下部分："
+"在提交問題報告時，請提供清晰的問題描述和您的工作環境資訊。您可以使用[bug提交模板](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template"
+"=bug-report---bug報告.md&title=)以便在您的描述中包括以下部分："
 
 #: ../../source/CONTRIBUTING.md:12
 msgid "**你期望看到的结果**：描述你在遇到问题时想要实现的目标或期望看到的结果"
@@ -111,24 +111,34 @@ msgid "纠正文档中的错误"
 msgstr "糾正文檔中的錯誤"
 
 #: ../../source/CONTRIBUTING.md:26
-msgid "请按照下面的Fork/Clone/Pull Request工作流程提供您的贡献，我会尽快给予反馈。"
+msgid ""
+"**短配方（一个周末能跑通的场景）**：请发到 Discussions 的 "
+"[Recipes](https://github.com/shepherdpp/qteasy/discussions/categories/recipes)"
+" 分类。维护者润色后会收入 [Wiki Cookbook](https://github.com/shepherdpp/qteasy/wiki"
+"/Cookbook-Home)。投稿模板见 Wiki 的 "
+"[贡献速查](https://github.com/shepherdpp/qteasy/wiki/Contributing-Quick)。"
+msgstr ""
+
+#: ../../source/CONTRIBUTING.md:27
+#, fuzzy
+msgid ""
+"**官方长文、教程与 `examples/` 可运行脚本**：请按照下面的 Fork/Clone/Pull Request "
+"工作流程提交，我会尽快给予反馈。"
 msgstr "請按照下面的Fork/Clone/Pull Request工作流程提供您的貢獻，我會盡快給予反饋。"
 
-#: ../../source/CONTRIBUTING.md:30
+#: ../../source/CONTRIBUTING.md:31
 msgid "分支/克隆/合并请求工作流程"
 msgstr "分支/克隆/合併請求工作流程"
 
-#: ../../source/CONTRIBUTING.md:31
-msgid ""
-"GitHub上的标准贡献工作流程称为**Fork/Clone (分支/克隆)**。对于那些可能不熟悉的人，这里是一个简要的总结和一些参考链接。"
-msgstr ""
-"GitHub上的標準貢獻工作流程稱爲**Fork/Clone (分支/克隆)**。對於那些可能不熟悉的人，這裏是一個簡要的總結和一些參考鏈接。"
-
 #: ../../source/CONTRIBUTING.md:32
+msgid "GitHub上的标准贡献工作流程称为**Fork/Clone (分支/克隆)**。对于那些可能不熟悉的人，这里是一个简要的总结和一些参考链接。"
+msgstr "GitHub上的標準貢獻工作流程稱爲**Fork/Clone (分支/克隆)**。對於那些可能不熟悉的人，這裏是一個簡要的總結和一些參考鏈接。"
+
+#: ../../source/CONTRIBUTING.md:33
 msgid "*我们假设您熟悉git的基础知识：`git clone`、`git commit`等*。"
 msgstr "*我們假設您熟悉git的基礎知識：`git clone`、`git commit`等*。"
 
-#: ../../source/CONTRIBUTING.md:33
+#: ../../source/CONTRIBUTING.md:34
 msgid ""
 "注意：一个“Fork(分支)”只是一个在GitHub上创建的`git "
 "clone`，它保存在GitHub上您自己的账户中。您可以使用GitHub上的**Fork**按钮创建一个Fork：这样GitHub就可以跟踪原始github存储库和您的Fork之间的关系。"
@@ -136,23 +146,23 @@ msgstr ""
 "注意：一個“Fork(分支)”只是一個在GitHub上創建的`git "
 "clone`，它保存在GitHub上您自己的賬戶中。您可以使用GitHub上的**Fork**按鈕創建一個Fork：這樣GitHub就可以跟蹤原始github存儲庫和您的Fork之間的關係。"
 
-#: ../../source/CONTRIBUTING.md:34
+#: ../../source/CONTRIBUTING.md:35
 msgid "基本工作流程如下："
 msgstr "基本工作流程如下："
 
-#: ../../source/CONTRIBUTING.md:35
+#: ../../source/CONTRIBUTING.md:36
 msgid "创建一个**Fork(分支)**，这个分支将存在于*您的*github账户中。"
 msgstr "創建一個**Fork(分支)**，這個分支將存在於*您的*github賬戶中。"
 
-#: ../../source/CONTRIBUTING.md:36
+#: ../../source/CONTRIBUTING.md:37
 msgid "将您的Fork分支**克隆**到本地机器上（`git clone`）。"
 msgstr "將您的Fork分支**克隆**到本地機器上（`git clone`）。"
 
-#: ../../source/CONTRIBUTING.md:37
+#: ../../source/CONTRIBUTING.md:38
 msgid "修改您本地的代码，用`git commit`提交更改，然后将更改**`git push`**到您的GitHub Fork中。"
 msgstr "修改您本地的代碼，用`git commit`提交更改，然後將更改**`git push`**到您的GitHub Fork中。"
 
-#: ../../source/CONTRIBUTING.md:38
+#: ../../source/CONTRIBUTING.md:39
 msgid ""
 "当您对Fork中的代码满意时，**在您的Fork的GitHub页面上，*打开一个Pull Request (PR)***。Pull "
 "Request实际上是请求将您Fork中的更改合并到主qteasy存储库中。PR提供了一个地方，可以在GitHub上查看更改，并发布关于它们的评论和讨论。"
@@ -160,7 +170,7 @@ msgstr ""
 "當您對Fork中的代碼滿意時，**在您的Fork的GitHub頁面上，*打開一個Pull Request (PR)***。Pull "
 "Request實際上是請求將您Fork中的更改合併到主qteasy存儲庫中。PR提供了一個地方，可以在GitHub上查看更改，併發布關於它們的評論和討論。"
 
-#: ../../source/CONTRIBUTING.md:39
+#: ../../source/CONTRIBUTING.md:40
 msgid ""
 "经过代码审查后，如果维护者要求您进行额外的更改，您不需要重新提交另一个Pull "
 "Request（只要原始PR仍然是打开状态）。相反，您可以在本地克隆中进行更改，然后再次`git "
@@ -170,7 +180,7 @@ msgstr ""
 "Request（只要原始PR仍然是打開狀態）。相反，您可以在本地克隆中進行更改，然後再次`git "
 "push`到您的Fork中。更改將自動流入打開的Pull Request中。"
 
-#: ../../source/CONTRIBUTING.md:40
+#: ../../source/CONTRIBUTING.md:41
 msgid ""
 "完成上述步骤后，`qteasy`的维护者将从您的Fork中合并更改到qteasy存储库中。PR将自动关闭。（但是您的Fork将继续存在，并且可以在将来再次用于其他Pull"
 " Request；请参阅GitHub文档，了解如何保持您的Fork最新）。"
@@ -178,15 +188,15 @@ msgstr ""
 "完成上述步驟後，`qteasy`的維護者將從您的Fork中合併更改到qteasy存儲庫中。PR將自動關閉。（但是您的Fork將繼續存在，並且可以在將來再次用於其他Pull"
 " Request；請參閱GitHub文檔，瞭解如何保持您的Fork最新）。"
 
-#: ../../source/CONTRIBUTING.md:42
+#: ../../source/CONTRIBUTING.md:43
 msgid "一些参考资料："
 msgstr "一些參考資料："
 
-#: ../../source/CONTRIBUTING.md:43
+#: ../../source/CONTRIBUTING.md:44
 msgid "GitHub文档:"
 msgstr "GitHub文檔:"
 
-#: ../../source/CONTRIBUTING.md:44
+#: ../../source/CONTRIBUTING.md:45
 msgid ""
 "**https://docs.github.com/en/get-started/quickstart/contributing-to-"
 "projects**"
@@ -194,52 +204,47 @@ msgstr ""
 "**https://docs.github.com/en/get-started/quickstart/contributing-to-"
 "projects**"
 
-#: ../../source/CONTRIBUTING.md:45
+#: ../../source/CONTRIBUTING.md:46
 msgid "一些用户的gists:"
 msgstr "一些用戶的gists:"
 
-#: ../../source/CONTRIBUTING.md:46
+#: ../../source/CONTRIBUTING.md:47
 msgid "https://gist.github.com/Chaser324/ce0505fbed06b947d962"
 msgstr "https://gist.github.com/Chaser324/ce0505fbed06b947d962"
 
-#: ../../source/CONTRIBUTING.md:47
+#: ../../source/CONTRIBUTING.md:48
 msgid "https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8"
 msgstr "https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8"
 
-#: ../../source/CONTRIBUTING.md:51
+#: ../../source/CONTRIBUTING.md:52
 msgid "编码规范"
 msgstr "編碼規範"
 
-#: ../../source/CONTRIBUTING.md:52
-msgid ""
-"我并不非常严格地要求遵守PEP-8的每一条规则，*但也不是完全放任不管*。我倾向于走中间道路：只要是大家普遍遵守的规范和常见的编码习惯，我都可以接受。"
-msgstr ""
-"我並不非常嚴格地要求遵守PEP-8的每一條規則，*但也不是完全放任不管*。我傾向於走中間道路：只要是大家普遍遵守的規範和常見的編碼習慣，我都可以接受。"
-
 #: ../../source/CONTRIBUTING.md:53
+msgid "我并不非常严格地要求遵守PEP-8的每一条规则，*但也不是完全放任不管*。我倾向于走中间道路：只要是大家普遍遵守的规范和常见的编码习惯，我都可以接受。"
+msgstr "我並不非常嚴格地要求遵守PEP-8的每一條規則，*但也不是完全放任不管*。我傾向於走中間道路：只要是大家普遍遵守的規範和常見的編碼習慣，我都可以接受。"
+
+#: ../../source/CONTRIBUTING.md:54
 msgid "以下是我可能会特别关心的一些事项："
 msgstr "以下是我可能會特別關心的一些事項："
 
-#: ../../source/CONTRIBUTING.md:54
+#: ../../source/CONTRIBUTING.md:55
 msgid "如果您编写代码，请不要使用制表符进行缩进，使用4个空格。"
 msgstr "如果您編寫代碼，請不要使用製表符進行縮進，使用4個空格。"
 
-#: ../../source/CONTRIBUTING.md:55
+#: ../../source/CONTRIBUTING.md:56
 msgid "如果您编写代码，请始终提供清晰简洁的注释，解释代码的作用。这对于功能不太明显的代码尤为重要。"
 msgstr "如果您編寫代碼，請始終提供清晰簡潔的註釋，解釋代碼的作用。這對於功能不太明顯的代碼尤爲重要。"
 
-#: ../../source/CONTRIBUTING.md:56
-msgid ""
-"如果您添加了一个重要的功能（即，需要解释其用法的功能不仅仅是几句话），请为该功能创建一个“功能教程”。**[有关功能教程的示例，请参见示例文件夹中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
-msgstr ""
-"如果您添加了一個重要的功能（即，需要解釋其用法的功能不僅僅是幾句話），請爲該功能創建一個“功能教程”。**[有關功能教程的示例，請參見示例文件夾中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
-
 #: ../../source/CONTRIBUTING.md:57
-msgid ""
-"如果您添加了一个重要的功能，请在**[tests文件夹](https://github.com/shepherdpp/qteasy/tree/master/tests)**中创建一个回归测试文件，类似于那里的其他回归测试文件。*通常，最简单的方法是从该功能的“功能教程”中选取一些示例*（参见上一点）。"
-msgstr ""
-"如果您添加了一個重要的功能，請在**[tests文件夾](https://github.com/shepherdpp/qteasy/tree/master/tests)**中創建一個迴歸測試文件，類似於那裏的其他迴歸測試文件。*通常，最簡單的方法是從該功能的“功能教程”中選取一些示例*（參見上一點）。"
+msgid "如果您添加了一个重要的功能（即，需要解释其用法的功能不仅仅是几句话），请为该功能创建一个“功能教程”。**[有关功能教程的示例，请参见示例文件夹中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
+msgstr "如果您添加了一個重要的功能（即，需要解釋其用法的功能不僅僅是幾句話），請爲該功能創建一個“功能教程”。**[有關功能教程的示例，請參見示例文件夾中的文件](https://github.com/shepherdpp/qteasy/tree/master/examples)**"
 
 #: ../../source/CONTRIBUTING.md:58
+msgid "如果您添加了一个重要的功能，请在**[tests文件夹](https://github.com/shepherdpp/qteasy/tree/master/tests)**中创建一个回归测试文件，类似于那里的其他回归测试文件。*通常，最简单的方法是从该功能的“功能教程”中选取一些示例*（参见上一点）。"
+msgstr "如果您添加了一個重要的功能，請在**[tests文件夾](https://github.com/shepherdpp/qteasy/tree/master/tests)**中創建一個迴歸測試文件，類似於那裏的其他迴歸測試文件。*通常，最簡單的方法是從該功能的“功能教程”中選取一些示例*（參見上一點）。"
+
+#: ../../source/CONTRIBUTING.md:59
 msgid "如果您要修改一个已有的代码文件，请尽量模仿该文件中已有的代码风格。"
 msgstr "如果您要修改一個已有的代碼文件，請儘量模仿該文件中已有的代碼風格。"
+

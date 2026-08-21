@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 20:30+0800\n"
-"PO-Revision-Date: 2026-05-20 20:51+0800\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: 2026-08-21 18:00+0800\n"
+"Last-Translator: Jackie PENG (sync_en_from_zh)\n"
 "Language-Team: en <LL@li.org>\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -17,47 +17,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:1
 msgid "券商适配层与集成"
 msgstr "Brokerage Adaptation Layer and Integration"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:3
-msgid ""
-"本章面向准备对接新券商（或未来 QMT）的用户与开发者：模拟券商之上的一层"
-"「统一柜台接口」长什么样、如何扩展。"
+msgid "本章面向准备对接新券商（或未来 QMT）的用户与开发者：模拟券商之上的一层「统一柜台接口」长什么样、如何扩展。"
 msgstr ""
-"This chapter is for users and developers who are preparing to connect to "
-"a new brokerage firm (or QMT in the future): What does the \"Unified "
-"Counter Interface\" layer above the simulated brokerage firm look like "
-"and how can it be expanded?"
+"This chapter is for users and developers who are preparing to connect to a "
+"new brokerage firm (or QMT in the future): What does the \"Unified Counter "
+"Interface\" layer above the simulated brokerage firm look like and how can "
+"it be expanded?"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:5
 msgid ""
-"**读者说明**：若您刚入门模拟实盘，读完 :doc:`2-configuration-and-run` "
-"与 :doc:`3-risk-and-order-lifecycle` 即可；本章可**暂时跳过**。当您需要接"
-"入真实柜台或自定义 Broker 时再回来阅读。"
+"**读者说明**：若您刚入门模拟实盘，读完 :doc:`2-configuration-and-run` 与 :doc:`3-risk-and-"
+"order-lifecycle` 即可；本章可**暂时跳过**。当您需要接入真实柜台或自定义 Broker 时再回来阅读。"
 msgstr ""
 "**Reader's Note:** If you are new to simulated trading, you only need to "
 "read sections :doc:`2-configuration-and-run` and :doc:`3-risk-and-order-"
-"lifecycle`; this chapter can be **skipped for now**. Return to this "
-"chapter when you need to connect to a real trading platform or a custom "
-"broker."
+"lifecycle`; this chapter can be **skipped for now**. Return to this chapter "
+"when you need to connect to a real trading platform or a custom broker."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:7
 msgid ""
-"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 "
-"→ 异步推送成交」。默认的 **simulator** 用 live 价模拟这一切；我们设计了统"
-"一适配层，以便日后换成 QMT 等真实柜台时，Trader 主体逻辑尽量不用改。"
+"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 → 异步推送成交」。默认的 **simulator** "
+"用 live 价模拟这一切；我们设计了统一适配层，以便日后换成 QMT 等真实柜台时，Trader 主体逻辑尽量不用改。"
 msgstr ""
-"Dear users, in qteasy, the **Broker** is responsible for \"accepting "
-"orders → informing you whether to accept them → asynchronously pushing "
-"out the execution.\" The default **simulator** uses live prices to "
-"simulate all of this; we have designed a unified adaptation layer so "
-"that when switching to real trading platforms such as QMT in the future, "
-"the main logic of the Trader will not need to be changed as much as "
-"possible."
+"Dear users, in qteasy, the **Broker** is responsible for \"accepting orders "
+"→ informing you whether to accept them → asynchronously pushing out the "
+"execution.\" The default **simulator** uses live prices to simulate all of "
+"this; we have designed a unified adaptation layer so that when switching to "
+"real trading platforms such as QMT in the future, the main logic of the "
+"Trader will not need to be changed as much as possible."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:9
 msgid "0. 适用场景"
@@ -85,14 +78,13 @@ msgstr "Typical live call chain (from outside to inside):"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:25
 msgid ""
-"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——"
-"Trader 只跟 Facade 说「connect / submit /  poll_fills」，不必关心底层是模"
-"拟还是 QMT。"
+"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——Trader 只跟 Facade 说「connect / "
+"submit /  poll_fills」，不必关心底层是模拟还是 QMT。"
 msgstr ""
-"**BrokerFacade (Adaptive Shell)**: Like a **unified translation layer** "
-"for different brokerage counters—Traders only need to say \"connect / "
-"submit / poll_fills\" to the Facade, without needing to care whether the "
-"underlying layer is analog or QMT."
+"**BrokerFacade (Adaptive Shell)**: Like a **unified translation layer** for "
+"different brokerage counters—Traders only need to say \"connect / submit / "
+"poll_fills\" to the Facade, without needing to care whether the underlying "
+"layer is analog or QMT."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:27
 msgid "要点："
@@ -100,27 +92,26 @@ msgstr "Key points:"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:29
 msgid ""
-"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / "
-"`poll_fills` / `get_remote_*` 等"
+"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` / "
+"`get_remote_*` 等"
 msgstr ""
 "Facade provides external connections such as connect, disconnect, submit "
 "with ack, poll fills, and get remotely."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:30
 msgid ""
-"CLI 中 `broker status|connect|disconnect` 反映 **`is_connected`**"
-"（simulator 上表示「适配层已准备好」，**不是**真实券商登录）"
+"CLI 中 `broker status|connect|disconnect` 反映 **`is_connected`**（simulator "
+"上表示「适配层已准备好」，**不是**真实券商登录）"
 msgstr ""
-"In the CLI, `broker status|connect|disconnect` reflects "
-"**`is_connected`** (in the simulator, this means \"the adapter layer is "
-"ready\", **not** a real brokerage login)."
+"In the CLI, `broker status|connect|disconnect` reflects **`is_connected`** "
+"(in the simulator, this means \"the adapter layer is ready\", **not** a real"
+" brokerage login)."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:31
-msgid ""
-"Trader 主循环通过 **`poll_fills`** 消费成交回报，而不是直接掏内部队列"
+msgid "Trader 主循环通过 **`poll_fills`** 消费成交回报，而不是直接掏内部队列"
 msgstr ""
-"The Trader main loop consumes trade rewards via **`poll_fills`**, "
-"instead of directly accessing the internal queue."
+"The Trader main loop consumes trade rewards via **`poll_fills`**, instead of"
+" directly accessing the internal queue."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:33
 msgid "2. 核心接口（用户/开发者向）"
@@ -128,37 +119,33 @@ msgstr "2. Core Interfaces (User/Developer-Oriented)"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:35
 msgid ""
-"**Broker 适配层**是 Trader 与具体券商（simulator、未来的 QMT 等）之间的统"
-"一接口。无论底层是谁，Trader 都用同一套「连接 → 递单 → 听受理 → 轮询成交 "
-"→ 必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对"
-"照表与接入清单。"
+"**Broker 适配层**是 Trader 与具体券商（simulator、未来的 QMT 等）之间的统一接口。无论底层是谁，Trader "
+"都用同一套「连接 → 递单 → 听受理 → 轮询成交 → 必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对照表与接入清单。"
 msgstr ""
 "The **Broker Adaptation Layer** serves as the unified interface between "
 "Trader and specific brokerages (simulators, and future QMT, etc.). "
-"Regardless of the underlying layer, Trader uses the same process: "
-"\"Connect → Submit Order → Listen for Acceptance → Poll for Execution → "
-"Check Remote Ledger if necessary.\" The table below provides a "
-"**comparison of interface names and daily usage** for easy reference "
-"when reading the comparison table and integration list below."
+"Regardless of the underlying layer, Trader uses the same process: \"Connect "
+"→ Submit Order → Listen for Acceptance → Poll for Execution → Check Remote "
+"Ledger if necessary.\" The table below provides a **comparison of interface "
+"names and daily usage** for easy reference when reading the comparison table"
+" and integration list below."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:37
-msgid ""
-"**各列含义**：**接口**为适配层方法名；**做什么**为在 live 链路中的职责；"
-"**您可以理解为**为帮助记忆的比喻。"
+msgid "**各列含义**：**接口**为适配层方法名；**做什么**为在 live 链路中的职责；**您可以理解为**为帮助记忆的比喻。"
 msgstr ""
 "**Meaning of each column:** **Interface** is the name of the adaptation "
-"layer method; **What to do** is the responsibility in the live link; "
-"**You can think of it as** a metaphor to help you remember."
+"layer method; **What to do** is the responsibility in the live link; **You "
+"can think of it as** a metaphor to help you remember."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:39
 msgid ""
 "**如何使用**：接入新券商时，按 §6 清单逐项实现；日常运维只需关心 "
 "`connect`、`submit_with_ack`、`poll_fills` 与 CLI `broker status`。"
 msgstr ""
-"**How to use:** When integrating a new brokerage, implement each item in "
-"the checklist in §6; for daily operations and maintenance, you only need "
-"to focus on `connect`, `submit_with_ack`, `poll_fills`, and the CLI "
-"`broker status`."
+"**How to use:** When integrating a new brokerage, implement each item in the"
+" checklist in §6; for daily operations and maintenance, you only need to "
+"focus on `connect`, `submit_with_ack`, `poll_fills`, and the CLI `broker "
+"status`."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "接口"
@@ -203,13 +190,12 @@ msgstr "`submit_with_ack`"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "递单并**同步**得到受理与否"
 msgstr ""
-"Submit the order and **simultaneously** receive confirmation of "
-"acceptance or rejection."
+"Submit the order and **simultaneously** receive confirmation of acceptance "
+"or rejection."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "递单后立即听「收/不收」"
-msgstr ""
-"Listen for \"Accept/Reject\" immediately after submitting the order."
+msgstr "Listen for \"Accept/Reject\" immediately after submitting the order."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "`cancel`"
@@ -255,35 +241,32 @@ msgstr "2.1 Interface Responsibilities Comparison"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:52
 msgid ""
-"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live 价模"
-"拟，后者对接柜台。下表帮助您建立预期——避免把 simulator 上的 `connect` 当"
-"成真实登录，也便于规划 QMT 接入时要补的能力。"
+"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live 价模拟，后者对接柜台。下表帮助您建立预期——避免把 "
+"simulator 上的 `connect` 当成真实登录，也便于规划 QMT 接入时要补的能力。"
 msgstr ""
-"The same interface behaves differently in the **simulator** and the "
-"**real QMT**: the former uses live pricing for simulation, while the "
-"latter connects to the front-end. The table below helps you establish "
-"expectations—avoiding mistaking the `connect` on the simulator for a "
-"real login, and also facilitating the planning of additional "
-"capabilities when integrating with QMT."
+"The same interface behaves differently in the **simulator** and the **real "
+"QMT**: the former uses live pricing for simulation, while the latter "
+"connects to the front-end. The table below helps you establish "
+"expectations—avoiding mistaking the `connect` on the simulator for a real "
+"login, and also facilitating the planning of additional capabilities when "
+"integrating with QMT."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:54
 msgid ""
-"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**"
-"为当前默认模拟行为；**真实 QMT（规划中）** 为后续目标（非当前版本承诺）。"
+"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**为当前默认模拟行为；**真实 QMT（规划中）**"
+" 为后续目标（非当前版本承诺）。"
 msgstr ""
 "**The meaning of each column:** **Interface** is the same as §2; "
-"**Semantics** is the abstract responsibility; **On the simulator you "
-"will see** is the current default simulation behavior; **Real QMT "
-"(planned)** is a future goal (not a commitment in the current version)."
+"**Semantics** is the abstract responsibility; **On the simulator you will "
+"see** is the current default simulation behavior; **Real QMT (planned)** is "
+"a future goal (not a commitment in the current version)."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:56
-msgid ""
-"**如何使用**：排错时先看 simulator 列是否已满足「受理 + 回报」；规划 QMT "
-"时以最后一列为目标能力勾选。"
+msgid "**如何使用**：排错时先看 simulator 列是否已满足「受理 + 回报」；规划 QMT 时以最后一列为目标能力勾选。"
 msgstr ""
-"**How to use:** When troubleshooting, first check if the simulator "
-"column meets the \"acceptance + report\" criteria; when planning QMT, "
-"select the target capabilities in the last column."
+"**How to use:** When troubleshooting, first check if the simulator column "
+"meets the \"acceptance + report\" criteria; when planning QMT, select the "
+"target capabilities in the last column."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "语义"
@@ -318,8 +301,10 @@ msgid "返回 accepted、模拟 broker_order_id 等"
 msgstr "Returns accepted, simulates broker_order_id, etc."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
-msgid "柜台真实受理结果"
-msgstr "Actual processing results at the counter"
+msgid "柜台真实受理结果（见 :doc:`4a-xtquant-broker-adapter-contract-v1`）"
+msgstr ""
+"Actual acceptance results at the counter (see :doc:`4a-xtquant-broker-"
+"adapter-contract-v1`)"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "异步回报"
@@ -343,8 +328,7 @@ msgstr "Usually empty or None"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "对账、门禁、sync 的数据源"
-msgstr ""
-"Data source for reconciliation, access control, and synchronization"
+msgstr "Data source for reconciliation, access control, and synchronization"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "模拟实现"
@@ -357,8 +341,8 @@ msgstr "Real cancellation number mapping"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:66
 msgid "建议按「最小闭环」理解优先级："
 msgstr ""
-"It is recommended to understand the priority based on the \"smallest "
-"closed loop\":"
+"It is recommended to understand the priority based on the \"smallest closed "
+"loop\":"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:68
 msgid "连接：`connect` / `is_connected`"
@@ -383,9 +367,7 @@ msgid "3. submit_with_ack 与本地订单"
 msgstr "3. `submit_with_ack` and local orders"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:75
-msgid ""
-"**与风控拒单不同**：风控在更前面，**不入订单表**（见 :doc:`3-risk-and-"
-"order-lifecycle`）。"
+msgid "**与风控拒单不同**：风控在更前面，**不入订单表**（见 :doc:`3-risk-and-order-lifecycle`）。"
 msgstr ""
 "**Unlike risk control order rejection**: Risk control is prioritized and "
 "**is not included in the order list** (see :doc:`3-risk-and-order-"
@@ -393,35 +375,34 @@ msgstr ""
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:77
 msgid ""
-"`submit_with_ack` 同步返回券商是否**受理**委托。下表仅描述**受理阶段**本"
-"地订单与 `broker_order_id` 的对应关系；成交进度见 :doc:`3-risk-and-order-"
-"lifecycle` 状态表。"
+"`submit_with_ack` 同步返回券商是否**受理**委托。下表仅描述**受理阶段**本地订单与 `broker_order_id` "
+"的对应关系；成交进度见 :doc:`3-risk-and-order-lifecycle` 状态表。"
 msgstr ""
 "`submit_with_ack` synchronously returns whether the brokerage firm has "
-"**accepted** the order. The table below only describes the "
-"correspondence between local orders and `broker_order_id` during the "
-"**acceptance stage**; for transaction progress, see the status table "
-"in :doc:`3-risk-and-order-lifecycle`."
+"**accepted** the order. The table below only describes the correspondence "
+"between local orders and `broker_order_id` during the **acceptance stage**; "
+"for transaction progress, see the status table in :doc:`3-risk-and-order-"
+"lifecycle`."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:79
 msgid ""
-"**各列含义**：**受理结果**为 ACK 中的 accepted 语义；**本地订单**为订单表"
-"状态走向；**broker_order_id** 为是否回写券商委托号。"
+"**各列含义**：**受理结果**为 ACK 中的 accepted 语义；**本地订单**为订单表状态走向；**broker_order_id** "
+"为是否回写券商委托号。"
 msgstr ""
 "**Meaning of each column:** **Accepted result:** This corresponds to the "
-"accepted semantics in ACK; **Local order:** This indicates the status of "
-"the order table; **broker_order_id:** This indicates whether the "
-"brokerage order number has been written back."
+"accepted semantics in ACK; **Local order:** This indicates the status of the"
+" order table; **broker_order_id:** This indicates whether the brokerage "
+"order number has been written back."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:81
 msgid ""
-"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；"
-"有 broker 号但长期不成交 → 查状态表与 `poll_fills`。"
+"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；有 broker 号但长期不成交 → "
+"查状态表与 `poll_fills`。"
 msgstr ""
 "**How to use:**: If an order is rejected and the broker number is empty, "
-"check the row with \"accepted=False\"; if there is a broker number but "
-"the transaction has not been completed for a long time, check the status "
-"table and `poll_fills`."
+"check the row with \"accepted=False\"; if there is a broker number but the "
+"transaction has not been completed for a long time, check the status table "
+"and `poll_fills`."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "受理结果"
@@ -464,146 +445,158 @@ msgid "详细对照见 :doc:`6-trader-snapshot-gate`。"
 msgstr "For detailed comparison, see :doc:`6-trader-snapshot-gate`."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:90
-msgid ""
-"提交前订单结构与回报字段均经契约校验，格式不对时会尽早报错，避免「脏数据"
-"进账本」。"
+msgid "提交前订单结构与回报字段均经契约校验，格式不对时会尽早报错，避免「脏数据进账本」。"
 msgstr ""
-"Before submission, the order structure and reward fields are validated "
-"under contract. If the format is incorrect, an error will be reported as "
-"soon as possible to avoid \"dirty data entering the ledger\"."
+"Before submission, the order structure and reward fields are validated under"
+" contract. If the format is incorrect, an error will be reported as soon as "
+"possible to avoid \"dirty data entering the ledger\"."
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:92
 msgid "4. 扩展新 Broker 类型"
 msgstr "4. Expand the Broker type"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:94
+msgid ""
+"**XtQuant / MiniQMT**：配置项 ``live_trade_broker_type='xtquant'`` 已在 2.5.2 "
+"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1`（协作方 PR"
+" 评审基准）。"
+msgstr ""
+"**XtQuant/MiniQMT**: Configuration item ``live_trade_broker_type='xtquant'``"
+" 已在 2.5.2 白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-"
+"contract-v1` (collaborator PR review baseline)."
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:96
 msgid "注册工厂（示例）："
 msgstr "Register a factory (example):"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:103
-msgid ""
-"**CLI `sync`（别名 `pull-state`）**：当前为**预留**，执行会打印 "
-"`[NOT_IMPLEMENTED] ...`，表示真实「从券商拉状态」尚未实现；对接 QMT 后将"
-"替换为可用实现。"
-msgstr ""
-"**CLI `sync` (alias `pull-state`):** Currently **reserved**, execution "
-"will print `[NOT_IMPLEMENTED] ...`, indicating that the actual \"pull "
-"state from brokerage\" has not yet been implemented; it will be replaced "
-"with an available implementation after integration with QMT."
-
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:105
+msgid "独立扩展包（推荐用于 QMT）："
+msgstr "Standalone expansion pack (recommended for QMT):"
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:114
+msgid ""
+"**CLI `sync`（别名 `pull-state`）**：当前为**预留**，执行会打印 `[NOT_IMPLEMENTED] "
+"...`，表示真实「从券商拉状态」尚未实现；对接 QMT 后将替换为可用实现。"
+msgstr ""
+"**CLI `sync` (alias `pull-state`):** Currently **reserved**, execution will "
+"print `[NOT_IMPLEMENTED] ...`, indicating that the actual \"pull state from "
+"brokerage\" has not yet been implemented; it will be replaced with an "
+"available implementation after integration with QMT."
+
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:116
 msgid "5. 边界行为（接入时请注意）"
 msgstr "5. Boundary behavior (please pay attention during access)"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:107
-msgid ""
-"未 `connect` 就 `submit` / `poll_fills`：应得到明确错误，而非静默失败"
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:118
+msgid "未 `connect` 就 `submit` / `poll_fills`：应得到明确错误，而非静默失败"
 msgstr ""
-"Submitting or polling without connecting should result in an explicit "
-"error, not a silent failure."
+"Submitting or polling without connecting should result in an explicit error,"
+" not a silent failure."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:108
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:119
 msgid "`cancel` 未知委托号：应稳定返回「未撤成」"
 msgstr ""
 "`cancel` Unknown delegation number: Should consistently return "
 "\"Cancelled\"."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:109
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:120
 msgid "`poll_fills` 超时：应返回空列表，而非脏数据"
 msgstr ""
 "`poll_fills` timeout: An empty list should be returned, not dirty data."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:110
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:121
 msgid "simulator 上 **`connect` 不代表真实券商会话**，仅表示适配层可受理"
 msgstr ""
-"On the simulator, **`connect` does not represent a real brokerage "
-"session; it only indicates that the adaptation layer can handle it."
+"On the simulator, **`connect` does not represent a real brokerage session; "
+"it only indicates that the adaptation layer can handle it."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:112
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:123
 msgid "6. 最小接入清单"
 msgstr "6. Minimum Access List"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:114
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:125
 msgid "实现 `connect` / `disconnect` / `is_connected`"
 msgstr "Implement `connect` / `disconnect` / `is_connected`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:115
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:126
 msgid "打通 `submit_with_ack` → `poll_fills`"
 msgstr "Connect `submit_with_ack` to `poll_fills`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:116
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:127
 msgid "回报字段满足契约校验"
 msgstr "The return field satisfies the contract validation."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:117
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:128
 msgid "实现 `cancel` 与异常路径"
 msgstr "Implement `cancel` and exception paths"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:118
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:129
 msgid "（若需门禁/对账/sync）实现 `get_remote_*`"
 msgstr ""
-"(If access control/reconciliation/sync is required) Implement "
-"`get_remote_*`"
+"(If access control/reconciliation/sync is required) Implement `get_remote_*`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:119
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:130
 msgid "在 CLI 下验证：`broker status`、`reconcile`、订单映射"
 msgstr ""
 "Verify the following in the CLI: `broker status`, `reconcile`, and order "
 "mapping."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:121
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:132
 msgid "7. 最小验收标准"
 msgstr "7. Minimum Acceptance Criteria"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:123
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:134
 msgid "`connect` 后 `is_connected=True`，可 `submit_with_ack`"
 msgstr "`is_connected=True` after `connect`, can be `submit_with_ack`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:124
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:135
 msgid "受理成功：本地订单含 `broker_order_id`"
 msgstr "Successfully processed: Local order contains `broker_order_id`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:125
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:136
 msgid "受理拒单：`rejected` 且 broker 字段空"
 msgstr "Order rejection: `rejected` and the broker field is empty."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:126
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:137
 msgid "`poll_fills` 回报可校验"
 msgstr "`poll_fills` returns are verifiable."
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:127
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:138
 msgid "未连接 / 未知单 / 超时行为稳定"
 msgstr "Not connected / Unknown order / Timeout behavior is stable"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:128
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:139
 msgid "CLI `broker` / `reconcile` 可观测"
 msgstr "CLI `broker` / `reconcile` observable"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:130
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:141
 msgid "8. 相关跳转"
 msgstr "8. Related redirects"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:132
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:143
 msgid "生命周期与风控：:doc:`3-risk-and-order-lifecycle`"
 msgstr "Lifecycle and Risk Control: 3-risk-and-order-lifecycle"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:133
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:144
 msgid "产物与排错：:doc:`5-artifacts-and-troubleshooting`"
-msgstr ""
-"Products and Troubleshooting: :doc:`5-artifacts-and-troubleshooting`"
+msgstr "Products and Troubleshooting: :doc:`5-artifacts-and-troubleshooting`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:134
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:145
 msgid "快照/门禁：:doc:`6-trader-snapshot-gate`"
 msgstr "Snapshot/Access Control: :doc:`6-trader-snapshot-gate`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:135
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:146
 msgid "CLI 对照：:doc:`8-cli-trader-capability-matrix`"
 msgstr "CLI Reference: :doc:`8-cli-trader-capability-matrix`"
 
-#: ../../source/live_trading/4-broker-adapter-and-integration.md:136
+#: ../../source/live_trading/4-broker-adapter-and-integration.md:147
 msgid ""
-"设计说明：[design/10-live-trading-s1.3-architecture.md](../design/10-"
-"live-trading-s1.3-architecture.md)"
+"设计说明：[design/10-live-trading-s1.3-architecture.md](../design/10-live-"
+"trading-s1.3-architecture.md)"
 msgstr ""
-"Design Description: [design/10-live-trading-s1.3-architecture.md](../"
-"design/10-live-trading-s1.3-architecture.md)"
+"Design Description: [design/10-live-"
+"trading-s1.3-architecture.md](../design/10-live-"
+"trading-s1.3-architecture.md)"
+
+#~ msgid "柜台真实受理结果"
+#~ msgstr "Actual processing results at the counter"

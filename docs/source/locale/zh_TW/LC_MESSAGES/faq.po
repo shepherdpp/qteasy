@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language-Team: zh_TW <LL@li.org>\n"
 "Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/faq.md:1
@@ -39,16 +39,12 @@ msgid "使用Anaconda创建不同python版本的环境："
 msgstr "使用Anaconda創建不同python版本的環境："
 
 #: ../../source/faq.md:9
-msgid ""
-"Anaconda是一个科学计算的Python发行版，它包含了conda、Python等180多个科学包及其依赖项。因此，我们可以使用Anaconda创建不同python版本的环境，然后在不同的环境下安装qteasy。"
-msgstr ""
-"Anaconda是一個科學計算的Python發行版，它包含了conda、Python等180多個科學包及其依賴項。因此，我們可以使用Anaconda創建不同python版本的環境，然後在不同的環境下安裝qteasy。"
+msgid "Anaconda是一个科学计算的Python发行版，它包含了conda、Python等180多个科学包及其依赖项。因此，我们可以使用Anaconda创建不同python版本的环境，然后在不同的环境下安装qteasy。"
+msgstr "Anaconda是一個科學計算的Python發行版，它包含了conda、Python等180多個科學包及其依賴項。因此，我們可以使用Anaconda創建不同python版本的環境，然後在不同的環境下安裝qteasy。"
 
 #: ../../source/faq.md:11
-msgid ""
-"Anaconda可以在其官网下载，下载地址为：[Anaconda](https://www.anaconda.com/products/distribution)。针对不同操作系统，下载对应的版本，然后安装。"
-msgstr ""
-"Anaconda可以在其官網下載，下載地址爲：[Anaconda](https://www.anaconda.com/products/distribution)。針對不同操作系統，下載對應的版本，然後安裝。"
+msgid "Anaconda可以在其官网下载，下载地址为：[Anaconda](https://www.anaconda.com/products/distribution)。针对不同操作系统，下载对应的版本，然后安装。"
+msgstr "Anaconda可以在其官網下載，下載地址爲：[Anaconda](https://www.anaconda.com/products/distribution)。針對不同操作系統，下載對應的版本，然後安裝。"
 
 #: ../../source/faq.md:13
 msgid "安装Anaconda后，我们可以使用conda命令创建不同的python版本的环境，并在其中安装python包。例如："
@@ -67,10 +63,8 @@ msgid "使用国内的pip镜像源"
 msgstr "使用國內的pip鏡像源"
 
 #: ../../source/faq.md:36
-msgid ""
-"在国内，由于网络环境的原因，有时候使用pip安装python包会很慢，甚至失败。这时候，我们可以使用国内的pip镜像源，例如清华大学的pip镜像源。"
-msgstr ""
-"在國內，由於網絡環境的原因，有時候使用pip安裝python包會很慢，甚至失敗。這時候，我們可以使用國內的pip鏡像源，例如清華大學的pip鏡像源。"
+msgid "在国内，由于网络环境的原因，有时候使用pip安装python包会很慢，甚至失败。这时候，我们可以使用国内的pip镜像源，例如清华大学的pip镜像源。"
+msgstr "在國內，由於網絡環境的原因，有時候使用pip安裝python包會很慢，甚至失敗。這時候，我們可以使用國內的pip鏡像源，例如清華大學的pip鏡像源。"
 
 #: ../../source/faq.md:38
 msgid "在使用pip安装python包时，可以使用`-i`参数指定pip镜像源，例如："
@@ -82,11 +76,11 @@ msgstr "如何升級qteasy到最新版本"
 
 #: ../../source/faq.md:47
 msgid ""
-"在使用qteasy时，我们可能需要升级到最新版本。升级前建议查阅 [发布历史](RELEASE_HISTORY.md) 了解各版本的用户可见变更。升级 "
-"qteasy 到最新版本的方法如下："
+"在使用qteasy时，我们可能需要升级到最新版本。升级前建议查阅 [发布历史](RELEASE_HISTORY.md) "
+"了解各版本的用户可见变更。升级 qteasy 到最新版本的方法如下："
 msgstr ""
-"在使用qteasy時，我們可能需要升級到最新版本。升級前建議查閱 [發佈歷史](RELEASE_HISTORY.md) 瞭解各版本的用戶可見變更。升級 "
-"qteasy 到最新版本的方法如下："
+"在使用qteasy時，我們可能需要升級到最新版本。升級前建議查閱 [發佈歷史](RELEASE_HISTORY.md) "
+"瞭解各版本的用戶可見變更。升級 qteasy 到最新版本的方法如下："
 
 #: ../../source/faq.md:52
 msgid "或者使用下面的命令："
@@ -102,11 +96,11 @@ msgstr "如何安裝TA-Lib"
 
 #: ../../source/faq.md:67
 msgid ""
-"完整的TA-Lib包无法通过pip安装，因为通过`pip install ta-lib`安装的只是TA-Lib包的一个`python wrapper`,"
-" 用户必须首先安装C语言的TA-Lib才能在python中使用它。"
+"完整的TA-Lib包无法通过pip安装，因为通过`pip install ta-lib`安装的只是TA-Lib包的一个`python "
+"wrapper`, 用户必须首先安装C语言的TA-Lib才能在python中使用它。"
 msgstr ""
-"完整的TA-Lib包無法通過pip安裝，因爲通過`pip install ta-lib`安裝的只是TA-Lib包的一個`python wrapper`,"
-" 用戶必須首先安裝C語言的TA-Lib才能在python中使用它。"
+"完整的TA-Lib包無法通過pip安裝，因爲通過`pip install ta-lib`安裝的只是TA-Lib包的一個`python "
+"wrapper`, 用戶必須首先安裝C語言的TA-Lib才能在python中使用它。"
 
 #: ../../source/faq.md:69
 msgid "有些用户可以用下面的方法安装C语言的TA-Lib包： `conda install -c conda-forge libta-lib`"
@@ -162,11 +156,11 @@ msgstr "Linux"
 
 #: ../../source/faq.md:100
 msgid ""
-"下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-"
-"lib-0.4.0-src.tar.gz) ，然后:"
+"下载 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib"
+"/ta-lib-0.4.0-src.tar.gz) ，然后:"
 msgstr ""
-"下載 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-"
-"lib-0.4.0-src.tar.gz) ，然後:"
+"下載 [ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib"
+"/ta-lib-0.4.0-src.tar.gz) ，然後:"
 
 #: ../../source/faq.md:109
 msgid "C语言TA-LIB包安装完成后，即可以通过pip安装python的TA-Lib包："
@@ -197,16 +191,12 @@ msgstr ""
 "3.12環境中進行了測試，可以在這些環境中正常運行。"
 
 #: ../../source/faq.md:132
-msgid ""
-"较早版本的`qteasy`没有在高版本的`python`环境中进行充分测试，因此存在一些兼容性问题。这样的问题主要存在于v1.1.4及以前的`qteasy`分发版中。"
-msgstr ""
-"較早版本的`qteasy`沒有在高版本的`python`環境中進行充分測試，因此存在一些兼容性問題。這樣的問題主要存在於v1.1.4及以前的`qteasy`分發版中。"
+msgid "较早版本的`qteasy`没有在高版本的`python`环境中进行充分测试，因此存在一些兼容性问题。这样的问题主要存在于v1.1.4及以前的`qteasy`分发版中。"
+msgstr "較早版本的`qteasy`沒有在高版本的`python`環境中進行充分測試，因此存在一些兼容性問題。這樣的問題主要存在於v1.1.4及以前的`qteasy`分發版中。"
 
 #: ../../source/faq.md:134
-msgid ""
-"同时，较早版本的`qteasy`在也使用了一些在高版本的`pandas`、`numpy`中即将被弃用的API，这也可能导致对高版本`pandas`、`numpy`的兼容性问题，在v1.1.7及以后版本的`qteasy`中，已经对这些问题进行了修复。"
-msgstr ""
-"同時，較早版本的`qteasy`在也使用了一些在高版本的`pandas`、`numpy`中即將被棄用的API，這也可能導致對高版本`pandas`、`numpy`的兼容性問題，在v1.1.7及以後版本的`qteasy`中，已經對這些問題進行了修復。"
+msgid "同时，较早版本的`qteasy`在也使用了一些在高版本的`pandas`、`numpy`中即将被弃用的API，这也可能导致对高版本`pandas`、`numpy`的兼容性问题，在v1.1.7及以后版本的`qteasy`中，已经对这些问题进行了修复。"
+msgstr "同時，較早版本的`qteasy`在也使用了一些在高版本的`pandas`、`numpy`中即將被棄用的API，這也可能導致對高版本`pandas`、`numpy`的兼容性問題，在v1.1.7及以後版本的`qteasy`中，已經對這些問題進行了修復。"
 
 #: ../../source/faq.md:138
 msgid "在qteasy.cfg中添加配置信息后，提示数据库连接失败"
@@ -222,11 +212,11 @@ msgstr "如果您第一次遇到這樣的問題，可能應該首先檢查您的
 
 #: ../../source/faq.md:149
 msgid ""
-"配置的key是否错误，`qteasy`稳定版本使用的数据库连接信息配置key是`local_db_host` / `local_db_port` ..."
-" 等等，而不是`database_host`，以前在官方文档中曾经存在一些错误，这些错误已经在最新的文档中修正了。"
+"配置的key是否错误，`qteasy`稳定版本使用的数据库连接信息配置key是`local_db_host` / `local_db_port` "
+"... 等等，而不是`database_host`，以前在官方文档中曾经存在一些错误，这些错误已经在最新的文档中修正了。"
 msgstr ""
-"配置的key是否錯誤，`qteasy`穩定版本使用的數據庫連接資訊配置key是`local_db_host` / `local_db_port` ..."
-" 等等，而不是`database_host`，以前在官方文檔中曾經存在一些錯誤，這些錯誤已經在最新的文檔中修正了。"
+"配置的key是否錯誤，`qteasy`穩定版本使用的數據庫連接資訊配置key是`local_db_host` / `local_db_port` "
+"... 等等，而不是`database_host`，以前在官方文檔中曾經存在一些錯誤，這些錯誤已經在最新的文檔中修正了。"
 
 #: ../../source/faq.md:150
 msgid ""
@@ -305,10 +295,8 @@ msgid "为此，qteasy设计了专门的重试机制来规避或缓解这个问�
 msgstr "爲此，qteasy設計了專門的重試機制來規避或緩解這個問題。"
 
 #: ../../source/faq.md:226
-msgid ""
-"您可以尝试修改qteasy的下面几个配置，调整下载数据时的重试次数和延时设置，这几个配置参数是专门为了应对tushare的读取频率限制设置的："
-msgstr ""
-"您可以嘗試修改qteasy的下面幾個配置，調整下載數據時的重試次數和延時設置，這幾個配置參數是專門爲了應對tushare的讀取頻率限制設置的："
+msgid "您可以尝试修改qteasy的下面几个配置，调整下载数据时的重试次数和延时设置，这几个配置参数是专门为了应对tushare的读取频率限制设置的："
+msgstr "您可以嘗試修改qteasy的下面幾個配置，調整下載數據時的重試次數和延時設置，這幾個配置參數是專門爲了應對tushare的讀取頻率限制設置的："
 
 #: ../../source/faq.md:228
 msgid ""
@@ -321,16 +309,12 @@ msgstr ""
 "QT_CONFIG.hist_dnld_backoff - 等待後仍然失敗時等待時間的倍增乘數，默認爲2倍"
 
 #: ../../source/faq.md:232
-msgid ""
-"qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间会逐渐延长间隔。比如，第一次下载不成功时，会暂停一秒重试，如果重试仍然有问题，会等待2秒重试，下一次等待4秒、再等待8秒。。。依此类推，一直到重试次数用光，这时才会raise。"
-msgstr ""
-"qteasy在調用所有的tushare函數時，會自動retry，每兩次retry之間會逐漸延長間隔。比如，第一次下載不成功時，會暫停一秒重試，如果重試仍然有問題，會等待2秒重試，下一次等待4秒、再等待8秒。。。依此類推，一直到重試次數用光，這時纔會raise。"
+msgid "qteasy在调用所有的tushare函数时，会自动retry，每两次retry之间会逐渐延长间隔。比如，第一次下载不成功时，会暂停一秒重试，如果重试仍然有问题，会等待2秒重试，下一次等待4秒、再等待8秒。。。依此类推，一直到重试次数用光，这时才会raise。"
+msgstr "qteasy在調用所有的tushare函數時，會自動retry，每兩次retry之間會逐漸延長間隔。比如，第一次下載不成功時，會暫停一秒重試，如果重試仍然有問題，會等待2秒重試，下一次等待4秒、再等待8秒。。。依此類推，一直到重試次數用光，這時纔會raise。"
 
 #: ../../source/faq.md:234
-msgid ""
-"正常来讲，重试7次后的延时会倍增到32秒，加上前面延时的长度，已经超过1分钟了，正常是不会触发频率错误的，但如果网速过快，或者同时启用的线程太多，可能会有上面的问题。"
-msgstr ""
-"正常來講，重試7次後的延時會倍增到32秒，加上前面延時的長度，已經超過1分鐘了，正常是不會觸發頻率錯誤的，但如果網速過快，或者同時啓用的線程太多，可能會有上面的問題。"
+msgid "正常来讲，重试7次后的延时会倍增到32秒，加上前面延时的长度，已经超过1分钟了，正常是不会触发频率错误的，但如果网速过快，或者同时启用的线程太多，可能会有上面的问题。"
+msgstr "正常來講，重試7次後的延時會倍增到32秒，加上前面延時的長度，已經超過1分鐘了，正常是不會觸發頻率錯誤的，但如果網速過快，或者同時啓用的線程太多，可能會有上面的問題。"
 
 #: ../../source/faq.md:236
 msgid "这时可以尝试将重试次数改成10次或更多（这样会显著延长下载时间），或者增加等待初始时长："
@@ -354,17 +338,15 @@ msgstr "**`QT_CONFIG.hist_dnld_delay`**: 默認值爲0，如果設置爲一個�
 
 #: ../../source/faq.md:251
 msgid ""
-"**`QT_CONFIG.hist_dnld_delay_evy`**': 默认值为0，如果设置为一个大于0的整数，表示两个下载批次之间等待的秒数 "
-"以下配置可以使得每下载600组数据就等待一分钟："
+"**`QT_CONFIG.hist_dnld_delay_evy`**': 默认值为0，如果设置为一个大于0的整数，表示两个下载批次之间等待的秒数"
+" 以下配置可以使得每下载600组数据就等待一分钟："
 msgstr ""
-"**`QT_CONFIG.hist_dnld_delay_evy`**': 默認值爲0，如果設置爲一個大於0的整數，表示兩個下載批次之間等待的秒數 "
-"以下配置可以使得每下載600組數據就等待一分鐘："
+"**`QT_CONFIG.hist_dnld_delay_evy`**': 默認值爲0，如果設置爲一個大於0的整數，表示兩個下載批次之間等待的秒數"
+" 以下配置可以使得每下載600組數據就等待一分鐘："
 
 #: ../../source/faq.md:258
-msgid ""
-"按照上述方法设置后，每次下载数据时，即使使用并行下载的方式，`qteasy`也不会将所有任务同时提交给进程池，而是分批提交，等待一段时间后，再次提交下一批。"
-msgstr ""
-"按照上述方法設置後，每次下載數據時，即使使用並行下載的方式，`qteasy`也不會將所有任務同時提交給進程池，而是分批提交，等待一段時間後，再次提交下一批。"
+msgid "按照上述方法设置后，每次下载数据时，即使使用并行下载的方式，`qteasy`也不会将所有任务同时提交给进程池，而是分批提交，等待一段时间后，再次提交下一批。"
+msgstr "按照上述方法設置後，每次下載數據時，即使使用並行下載的方式，`qteasy`也不會將所有任務同時提交給進程池，而是分批提交，等待一段時間後，再次提交下一批。"
 
 #: ../../source/faq.md:260
 msgid "上述功能是在`qteasy`的`v1.1.11`版本中新增的，如果您的`qteasy`版本较低，请升级至最新版本。"
@@ -376,33 +358,125 @@ msgstr "如何跑通從數據到回測/優化的最小流程？"
 
 #: ../../source/faq.md:266
 msgid ""
-"建议按《快速上手指南》中的「一分钟跑通」完成：配置 tushare Token → 下载数据 → 使用内置策略做一次回测。完整链路（配置数据源 → "
-"下载数据 → 定义策略并回测 → 参数优化 → 模拟/实盘运行）及对应教程跳转见 [快速上手指南 - 端到端路线图 / "
+"建议按《快速上手指南》中的「一分钟跑通」完成：配置 tushare Token → 下载数据 → 使用内置策略做一次回测。完整链路（配置数据源 →"
+" 下载数据 → 定义策略并回测 → 参数优化 → 模拟/实盘运行）及对应教程跳转见 [快速上手指南 - 端到端路线图 / "
 "教程](getting_started.md#端到端路线图--教程)。按该路线图中的顺序阅读各教程即可从零走通全流程。"
 msgstr ""
-"建議按《快速上手指南》中的「一分鐘跑通」完成：配置 tushare Token → 下載數據 → 使用內置策略做一次回測。完整鏈路（配置數據源 → "
-"下載數據 → 定義策略並回測 → 參數優化 → 模擬/實盤運行）及對應教程跳轉見 [快速上手指南 - 端到端路線圖 / "
+"建議按《快速上手指南》中的「一分鐘跑通」完成：配置 tushare Token → 下載數據 → 使用內置策略做一次回測。完整鏈路（配置數據源 →"
+" 下載數據 → 定義策略並回測 → 參數優化 → 模擬/實盤運行）及對應教程跳轉見 [快速上手指南 - 端到端路線圖 / "
 "教程](getting_started.md#端到端路線圖--教程)。按該路線圖中的順序閱讀各教程即可從零走通全流程。"
 
 #: ../../source/faq.md:270
+msgid "如何查有哪些 DataType（信息 ID）？"
+msgstr ""
+
+#: ../../source/faq.md:272
+msgid ""
+"`DataType` 是「可从本地表提取并直接使用」的一类信息，由 `name` + `freq` + `asset_type` "
+"唯一确定；用户日常写字符串 ID。推荐："
+msgstr ""
+
+#: ../../source/faq.md:274
+msgid "用 `qt.find_history_data('pe')` / 中文关键词 / 通配符检索，看结果里的 `kind` 与推荐入口；"
+msgstr ""
+
+#: ../../source/faq.md:275
+#, python-format
+msgid "阅读概念与精选表：[DataType 概念章](manage_data/02.%20datatypes.md)；"
+msgstr ""
+
+#: ../../source/faq.md:276
+msgid "浏览完整内置清单：[references/datatypes](references/datatypes/index.md)。"
+msgstr ""
+
+#: ../../source/faq.md:278
+msgid ""
+"**按形状取数**：History 用 `get_history_data` / `get_kline`；宏观与基准用 "
+"`get_reference_data`；行业/上市日等用 `get_static_data`。不要假定检索到的每一条都能 "
+"`get_history_data`；清单里 `usable_in=none` 的类型今天没有一等入口。"
+msgstr ""
+
+#: ../../source/faq.md:280
+msgid "如何取 GDP / 北向资金 / 行业这类数据？"
+msgstr ""
+
+#: ../../source/faq.md:282
+msgid ""
+"**GDP、北向资金、SHIBOR 等**（仅时间维）：`qt.get_reference_data('cn_gdp', start=..., "
+"end=...)`（无需 `shares`）。把某指数收盘价当基准可用造法 `close-000300.SH`（或完整 id "
+"`close-000300.SH_IDX_d`），同样走 `get_reference_data`。"
+msgstr ""
+
+#: ../../source/faq.md:283
+msgid ""
+"**行业、上市日、证券名称等**（仅标的维）：`qt.get_static_data('industry', shares='000001.SZ,"
+" 000002.SZ')`（或完整 id）。不要用 `get_history_data`「顺便」取，也不要在策略 `data_types` 里声明"
+" Static。"
+msgstr ""
+
+#: ../../source/faq.md:287
+msgid "只想做数据分析、暂不写策略怎么走？"
+msgstr ""
+
+#: ../../source/faq.md:289
+msgid "按 **数据体验支路** 即可，无需进入 Operator 回测："
+msgstr ""
+
+#: ../../source/faq.md:291
+msgid ""
+"[获取并管理金融数据](tutorials/2.0-get-data.md) — 配置 Token、下载 "
+"[最小数据集清单](tutorials/2.0-get-data.md#最小数据集清单供-25-使用)"
+msgstr ""
+
+#: ../../source/faq.md:292
+msgid ""
+"[HistoryPanel 数据面板基础操作](tutorials/2.4-historypanel-basics.md) — "
+"结构、切片、扩列、对齐与 DataFrame 互转"
+msgstr ""
+
+#: ../../source/faq.md:293
+msgid ""
+"[玩数据与因子分析](tutorials/2.5-historypanel-data-analysis.md) — 取数、出图、简单因子与 "
+"benchmark 粗对比"
+msgstr ""
+
+#: ../../source/faq.md:294
+msgid "运行 `python examples/data_playground_e2e.py` 验证本地数据与 API"
+msgstr ""
+
+#: ../../source/faq.md:296
+msgid ""
+"进阶可选：[纵向择时](tutorials/2.6-historypanel-advanced-vertical-"
+"timeaxis.md)、[横截面选股](tutorials/2.7-historypanel-advanced-horizontal-"
+"multifactor.md)、[事件型形态](tutorials/2.8-historypanel-advanced-event-kline-"
+"pattern.md)。"
+msgstr ""
+
+#: ../../source/faq.md:298
+msgid ""
+"注意：`HistoryPanel.portfolio` / `cum_return` "
+"等为**研究向**工具，不含交易成本与交割语义；若要严肃评价策略，仍须回到 [第一个策略](tutorials/3-start-first-"
+"strategy.md) 或 [研究到回测迁移路径](tutorials/2.5-historypanel-data-"
+"analysis.md#从-historypanel-研究到-strategy--operator迁移路径)。"
+msgstr ""
+
+#: ../../source/faq.md:302
 msgid "回测/优化为什么慢？"
 msgstr "回測/優化爲什麼慢？"
 
-#: ../../source/faq.md:272
+#: ../../source/faq.md:304
 msgid "可能原因包括："
 msgstr "可能原因包括："
 
-#: ../../source/faq.md:274
+#: ../../source/faq.md:306
 msgid "**数据量与窗口长度**：回测区间越长、资产池越大、策略的 `window_length` 越大，单次回测需要准备与计算的数据越多。"
 msgstr "**數據量與窗口長度**：回測區間越長、資產池越大、策略的 `window_length` 越大，單次回測需要準備與計算的數據越多。"
 
-#: ../../source/faq.md:275
-msgid ""
-"**参数组数**：优化模式（mode=2）下，参数组合越多，需要执行的单次回测次数越多；已通过多进程并行缓解，但仍与机器核心数及任务规模相关。"
-msgstr ""
-"**參數組數**：優化模式（mode=2）下，參數組合越多，需要執行的單次回測次數越多；已通過多進程並行緩解，但仍與機器核心數及任務規模相關。"
+#: ../../source/faq.md:307
+msgid "**参数组数**：优化模式（mode=2）下，参数组合越多，需要执行的单次回测次数越多；已通过多进程并行缓解，但仍与机器核心数及任务规模相关。"
+msgstr "**參數組數**：優化模式（mode=2）下，參數組合越多，需要執行的單次回測次數越多；已通過多進程並行緩解，但仍與機器核心數及任務規模相關。"
 
-#: ../../source/faq.md:276
+#: ../../source/faq.md:308
 msgid ""
 "**首次 Numba 编译**：核心回测函数（如 `backtest_step`、`backtest_batch_steps`）使用 Numba "
 "JIT，首次运行或参数类型变化时会触发编译，产生一次性延迟；后续同类型回测会复用缓存，速度会明显提升。"
@@ -410,25 +484,25 @@ msgstr ""
 "**首次 Numba 編譯**：核心回測函數（如 `backtest_step`、`backtest_batch_steps`）使用 Numba "
 "JIT，首次運行或參數類型變化時會觸發編譯，產生一次性延遲；後續同類型回測會複用緩存，速度會明顯提升。"
 
-#: ../../source/faq.md:277
+#: ../../source/faq.md:309
 msgid "**数据准备**：若 DataSource 中数据未提前准备好，回测前会触发数据拉取与窗口装配，也会增加首次运行时间。"
 msgstr "**數據準備**：若 DataSource 中數據未提前準備好，回測前會觸發數據拉取與窗口裝配，也會增加首次運行時間。"
 
-#: ../../source/faq.md:279
+#: ../../source/faq.md:311
 msgid ""
 "若需进一步了解回测引擎与性能设计，可参阅 "
-"[回测引擎与性能](back_testing/6.%20backtest_engine_and_performance.md) 与《架构与设计》中的 "
-"[回测引擎与性能（设计视角）](design/07-backtest-engine-and-performance.md)。"
+"[回测引擎与性能](back_testing/6.%20backtest_engine_and_performance.md) "
+"与《架构与设计》中的 [回测引擎与性能（设计视角）](design/07-backtest-engine-and-performance.md)。"
 msgstr ""
 "若需進一步瞭解回測引擎與性能設計，可參閱 "
-"[回測引擎與性能](back_testing/6.%20backtest_engine_and_performance.md) 與《架構與設計》中的 "
-"[回測引擎與性能（設計視角）](design/07-backtest-engine-and-performance.md)。"
+"[回測引擎與性能](back_testing/6.%20backtest_engine_and_performance.md) "
+"與《架構與設計》中的 [回測引擎與性能（設計視角）](design/07-backtest-engine-and-performance.md)。"
 
-#: ../../source/faq.md:283
+#: ../../source/faq.md:315
 msgid "如何理解「防未来函数」？"
 msgstr "如何理解「防未來函數」？"
 
-#: ../../source/faq.md:285
+#: ../../source/faq.md:317
 msgid ""
 "qteasy 从机制上避免策略在回测中“看到”未来数据：每个时间步运行时，引擎仅向策略注入**该步当时可见**的历史数据窗口，策略在 "
 "`realize()` 中通过 `get_data(dtype_id)` 取到的只是该窗口内的数据；在此窗口上计算指标（如 "
@@ -440,22 +514,23 @@ msgstr ""
 "EMA）與實盤“當時僅能看到的歷史”一致，因此不會無意中使用未來數據。詳細設計理由（爲何不做全時間軸向量化、數據窗口如何按步注入等）見《架構與設計》中的"
 " [設計初衷與獨特優勢](design/08-design-rationale-and-advantages.md)。"
 
-#: ../../source/faq.md:289
+#: ../../source/faq.md:321
 msgid "use_latest_data_cycle 是什么，如何设置？"
 msgstr "use_latest_data_cycle 是什麼，如何設置？"
 
-#: ../../source/faq.md:291
+#: ../../source/faq.md:323
 msgid ""
-"**use_latest_data_cycle**（常简写为 ulc）控制策略所用数据窗口是否包含**当根 K 线**（当前时刻的最新数据）：设为 "
-"`True` 时，窗口可含当前 bar（如收盘价），对应“交易时是否允许用当时最新价”；设为 `False` "
-"时，窗口严格为“过去已收盘”的数据。该选择在长期回测中会对收益产生显著影响，qteasy 将其作为可配置项在策略声明与运行配置中暴露。含义与影响见 "
-"[设计初衷与独特优势 - use_latest_data_cycle](design/08-design-rationale-and-"
+"**use_latest_data_cycle**（常简写为 ulc）控制策略所用数据窗口是否包含**当根 K 线**（当前时刻的最新数据）：设为"
+" `True` 时，窗口可含当前 bar（如收盘价），对应“交易时是否允许用当时最新价”；设为 `False` "
+"时，窗口严格为“过去已收盘”的数据。该选择在长期回测中会对收益产生显著影响，qteasy 将其作为可配置项在策略声明与运行配置中暴露。含义与影响见"
+" [设计初衷与独特优势 - use_latest_data_cycle](design/08-design-rationale-and-"
 "advantages.md)；具体设置方式见策略类的 `data_types` / `window_length` 声明及 "
 "[策略如何声明与使用数据](design/03-data-in-strategies.md)，以及当前版本文档与 API 中的配置说明。"
 msgstr ""
-"**use_latest_data_cycle**（常簡寫爲 ulc）控制策略所用數據窗口是否包含**當根 K 線**（當前時刻的最新數據）：設爲 "
-"`True` 時，窗口可含當前 bar（如收盤價），對應“交易時是否允許用當時最新價”；設爲 `False` "
-"時，窗口嚴格爲“過去已收盤”的數據。該選擇在長期回測中會對收益產生顯著影響，qteasy 將其作爲可配置項在策略聲明與運行配置中暴露。含義與影響見 "
-"[設計初衷與獨特優勢 - use_latest_data_cycle](design/08-design-rationale-and-"
+"**use_latest_data_cycle**（常簡寫爲 ulc）控制策略所用數據窗口是否包含**當根 K 線**（當前時刻的最新數據）：設爲"
+" `True` 時，窗口可含當前 bar（如收盤價），對應“交易時是否允許用當時最新價”；設爲 `False` "
+"時，窗口嚴格爲“過去已收盤”的數據。該選擇在長期回測中會對收益產生顯著影響，qteasy 將其作爲可配置項在策略聲明與運行配置中暴露。含義與影響見"
+" [設計初衷與獨特優勢 - use_latest_data_cycle](design/08-design-rationale-and-"
 "advantages.md)；具體設置方式見策略類的 `data_types` / `window_length` 聲明及 "
 "[策略如何聲明與使用數據](design/03-data-in-strategies.md)，以及當前版本文檔與 API 中的配置說明。"
+

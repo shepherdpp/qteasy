@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 20:30+0800\n"
-"PO-Revision-Date: 2026-05-20 20:55+0800\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: 2026-08-21 18:00+0800\n"
+"Last-Translator: Jackie PENG (sync_en_from_zh)\n"
 "Language-Team: en <LL@li.org>\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../source/live_trading/index.rst:2
 msgid "模拟实盘交易（Live Trading）"
@@ -26,39 +25,33 @@ msgstr "Simulated live trading"
 #: ../../source/live_trading/index.rst:4
 msgid "亲爱的用户，欢迎阅读 qteasy 的**模拟实盘**文档。"
 msgstr ""
-"Dear user, welcome to read the qteasy **simulated live trading** "
-"document."
+"Dear user, welcome to read the qteasy **simulated live trading** document."
 
 #: ../../source/live_trading/index.rst:6
 msgid ""
-"> **模拟实盘是什么？** > 回测是在历史数据上「快进」验证策略；模拟实盘（配"
-"置 ``mode=0``）则让策略在**真实时间**里运行——像真的在盯盘一样按日程算信"
-"号、下单、记日志，但成交通常由本地**模拟券商**完成，不涉及真实资金。 > 这"
-"样您可以在投入真钱之前，先体验「回测之外、实盘之前」的那一段路，并尽量与"
-"回测使用**同一套**策略逻辑，减少「回测很好、实盘走样」的落差。"
+"> **模拟实盘是什么？** > 回测是在历史数据上「快进」验证策略；模拟实盘（配置 "
+"``mode=0``）则让策略在**真实时间**里运行——像真的在盯盘一样按日程算信号、下单、记日志，但成交通常由本地**模拟券商**完成，不涉及真实资金。"
+" > 这样您可以在投入真钱之前，先体验「回测之外、实盘之前」的那一段路，并尽量与回测使用**同一套**策略逻辑，减少「回测很好、实盘走样」的落差。"
 msgstr ""
-"**What is simulated live trading?** Backtesting is using historical data "
-"to \"fast-forward\" and validate a strategy; simulated live trading "
-"(configured with `mode=0`) allows the strategy to run in **real time**—"
-"calculating signals, placing orders, and logging according to a "
-"schedule, just like actually monitoring the market. However, the "
-"execution is usually completed by a local **simulated brokerage**, "
-"without involving real funds. This allows you to experience the path "
-"\"before backtesting and before live trading\" before investing real "
-"money, and to use the **same set of** strategy logic as backtesting, "
-"reducing the discrepancy between \"great backtesting, distorted live "
-"trading.\""
+"**What is simulated live trading?** Backtesting is using historical data to "
+"\"fast-forward\" and validate a strategy; simulated live trading (configured"
+" with `mode=0`) allows the strategy to run in **real time**—calculating "
+"signals, placing orders, and logging according to a schedule, just like "
+"actually monitoring the market. However, the execution is usually completed "
+"by a local **simulated brokerage**, without involving real funds. This "
+"allows you to experience the path \"before backtesting and before live "
+"trading\" before investing real money, and to use the **same set of** "
+"strategy logic as backtesting, reducing the discrepancy between \"great "
+"backtesting, distorted live trading.\""
 
 #: ../../source/live_trading/index.rst:10
 msgid ""
-"**若您尚未完成回测或第一次使用 qteasy**，建议先阅读 :doc:`../"
-"getting_started` 与 :doc:`../tutorials/3-start-first-strategy`，再回到本"
-"模块。"
+"**若您尚未完成回测或第一次使用 qteasy**，建议先阅读 :doc:`../getting_started` 与 "
+":doc:`../tutorials/3-start-first-strategy`，再回到本模块。"
 msgstr ""
 "**If you have not yet completed backtesting or are using qteasy for the "
-"first time, it is recommended that you read :doc:`../getting_started` "
-"and :doc:`../tutorials/3-start-first-strategy` before returning to this "
-"module."
+"first time, it is recommended that you read :doc:`../getting_started` and "
+":doc:`../tutorials/3-start-first-strategy` before returning to this module."
 
 #: ../../source/live_trading/index.rst:12
 msgid "本模块帮您回答："
@@ -76,8 +69,8 @@ msgstr ""
 #: ../../source/live_trading/index.rst:16
 msgid "日志与产物在哪里、出问题先查什么"
 msgstr ""
-"Where are the logs and artifacts located? What should be checked first "
-"when a problem occurs?"
+"Where are the logs and artifacts located? What should be checked first when "
+"a problem occurs?"
 
 #: ../../source/live_trading/index.rst:17
 msgid "（进阶）如何扩展券商适配、如何做运维冒烟"
@@ -90,23 +83,25 @@ msgid "读者分层"
 msgstr "Reader segmentation"
 
 #: ../../source/live_trading/index.rst:22
-msgid ""
-"**初学者**：按下方「建议阅读顺序」读 1 → 2 → 3 → 5 即可跑通并会排错。"
+msgid "**初学者**：按下方「建议阅读顺序」读 1 → 2 → 3 → 5 即可跑通并会排错。"
 msgstr ""
-"**For beginners:** Follow the suggested reading order below and read 1 → "
-"2 → 3 → 5 to get the program running and be able to debug."
+"**For beginners:** Follow the suggested reading order below and read 1 → 2 →"
+" 3 → 5 to get the program running and be able to debug."
 
 #: ../../source/live_trading/index.rst:23
 msgid "**已跑通 live**：可查阅第 6、8 章做快照/门禁与 CLI 运维。"
 msgstr ""
-"**Live is now running successfully:** Please refer to Chapters 6 and 8 "
-"for snapshots/access control and CLI maintenance."
+"**Live is now running successfully:** Please refer to Chapters 6 and 8 for "
+"snapshots/access control and CLI maintenance."
 
 #: ../../source/live_trading/index.rst:24
-msgid "**准备对接真实柜台（如 QMT）**：在第 4 章阅读 Broker 适配说明。"
+msgid ""
+"**准备对接真实柜台（如 QMT）**：阅读 :doc:`4a-xtquant-broker-adapter-contract-v1`（英文契约 "
+"v1），再读 :doc:`4-broker-adapter-and-integration`。"
 msgstr ""
-"**Preparing to interface with a real broker (such as QMT):** Read the "
-"Broker adaptation notes in Chapter 4."
+"**Prepare to connect to real counters (such as QMT)**: Read "
+":doc:`4a-xtquant-broker-adapter-contract-v1` (English contract v1), and then"
+" read :doc:`4-broker-adapter-and-integration`."
 
 #: ../../source/live_trading/index.rst:27
 msgid "建议阅读顺序"
@@ -129,9 +124,7 @@ msgid ":doc:`3-risk-and-order-lifecycle` — 风控与订单状态"
 msgstr ":doc:`3-risk-and-order-lifecycle` — Risk Control and Order Status"
 
 #: ../../source/live_trading/index.rst:34
-msgid ""
-":doc:`5-artifacts-and-troubleshooting` — 产物与排错（建议先于 Broker 集成"
-"阅读）"
+msgid ":doc:`5-artifacts-and-troubleshooting` — 产物与排错（建议先于 Broker 集成阅读）"
 msgstr ""
 ":doc:`5-artifacts-and-troubleshooting` — Artifacts and Troubleshooting "
 "(Recommended to read before Broker integration)"
@@ -142,14 +135,27 @@ msgstr ""
 ":doc:`4-broker-adapter-and-integration` — Brokerage Adaptation (Advanced)"
 
 #: ../../source/live_trading/index.rst:36
+msgid ""
+":doc:`4a-xtquant-broker-adapter-contract-v1` — XtQuant/MiniQMT 契约 "
+"v1（英文，协作必读）"
+msgstr ""
+":doc:`4a-xtquant-broker-adapter-contract-v1` — XtQuant/MiniQMT Contract v1 "
+"(English, required reading for collaboration)"
+
+#: ../../source/live_trading/index.rst:37
 msgid ":doc:`6-trader-snapshot-gate` — 策略快照与启动门禁"
 msgstr ":doc:`6-trader-snapshot-gate` — Policy snapshots and startup gates"
 
-#: ../../source/live_trading/index.rst:37
+#: ../../source/live_trading/index.rst:38
 msgid ":doc:`7-manual-smoke-live-grid-roadmap` — 手工冒烟清单"
 msgstr ":doc:`7-manual-smoke-live-grid-roadmap` — Manual Smoke Checklist"
 
-#: ../../source/live_trading/index.rst:38
+#: ../../source/live_trading/index.rst:39
 msgid ":doc:`8-cli-trader-capability-matrix` — CLI 能力对照表"
 msgstr ""
 ":doc:`8-cli-trader-capability-matrix` — CLI Capability Comparison Table"
+
+#~ msgid "**准备对接真实柜台（如 QMT）**：在第 4 章阅读 Broker 适配说明。"
+#~ msgstr ""
+#~ "**Preparing to interface with a real broker (such as QMT):** Read the Broker"
+#~ " adaptation notes in Chapter 4."

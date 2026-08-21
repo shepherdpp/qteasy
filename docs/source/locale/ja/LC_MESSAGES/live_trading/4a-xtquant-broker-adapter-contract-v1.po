@@ -1,0 +1,766 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:1
+msgid "XtQuant / MiniQMT Broker Adapter Contract (v1)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:3
+msgid ""
+"**Audience**: Contributors implementing `qteasy-xtquant` or reviewing "
+"MiniQMT integration against qteasy **2.5.2+**.   **Language**: English "
+"(normative for collaboration).   **Related**: :doc:`4-broker-adapter-and-"
+"integration`, `qteasy.trade_io`, `qteasy.broker`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:7
+msgid ""
+"This document is the **v1 contract** for wiring **XtQuant / MiniQMT** "
+"into qteasy’s live-trading stack. It does **not** replace the general "
+"Broker adapter guide; it adds QMT-specific rules on top of it."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:11
+msgid "0. Scope and non-goals"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:13
+msgid "**In scope (v1)**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:15
+msgid ""
+"`live_trade_broker_type='xtquant'` (configuration whitelist; factory "
+"registration via extension package)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:16
+msgid "Real **broker order IDs** from QMT at accept time and in fill reports"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:17
+msgid "`submit_with_ack` + `poll_fills` as the **primary** Trader path"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:18
+msgid ""
+"`transaction()` as an internal generator yielding **4- or 5-tuples** (QMT"
+" adapters must yield **5-tuples** with real IDs)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:20
+msgid "**Out of scope (v1)**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:22
+msgid ""
+"Merging fork `trader.py` blocks (pre-check locks, DIAG spam, manual "
+"`result_queue` drain, MySQL-only data policy)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:23
+msgid "Hard `import brokers` or `from qteasy_xtquant` inside `qteasy/broker.py`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:24
+msgid ""
+"Price channel `live_price_acquire_channel='xtquant'` (see separate PR for"
+" `xtfuncs` / `data_channels`)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:28
+msgid "1. Configuration and registration"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:30
+msgid "1.1 Configuration"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:32
+msgid ""
+"`build_live_trade_config(..., live_trade_broker_type='xtquant')` and "
+"`qt.configure(live_trade_broker_type='xtquant')` are **allowed** as of "
+"qteasy 2.5.2 (PR-0b)."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:34
+msgid ""
+"This only validates the **string**; it does **not** install XtQuant or "
+"register the broker class."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:36
+msgid "1.2 Extension package registration (required for real QMT)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:44
+msgid ""
+"**Do not** patch `qteasy.broker.get_broker()` to `from brokers import "
+"...`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:46
+msgid ""
+"Until `register()` runs, `get_broker('xtquant')` may fall back to "
+"`SimulatorBroker` (misleading for production). Live runs must call "
+"`register()` before `Operator.run(..., mode=0)`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:50
+msgid "2. Data contracts (`qteasy.trade_io`)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:52
+msgid "All orders and raw fills must pass:"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:54
+msgid "`validate_trade_order()` — shape of orders entering the Broker layer"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:55
+msgid "`validate_raw_trade_result()` — shape of fills leaving the Broker layer"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:57
+msgid "TypedDict references (informative; **validators are authoritative**):"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Name"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Module"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Purpose"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`TradeOrderDict`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`qteasy.trade_io`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Order dict before / during Broker handling"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`RawTradeResultDict`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "One fill/cancel slice before `process_trade_result`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:64
+msgid "2.1 `TradeOrderDict` (required keys)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Key"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Type"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Notes"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`order_id`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "int"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Local DB order id"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`pos_id`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Position id"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`direction`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "str"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`'buy'` / `'sell'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`order_type`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`'market'` / `'limit'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`qty`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "float"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "> 0"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`price`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`status`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Must be `'submitted'` when passed to Broker"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`submitted_time`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "str or None"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "ISO-like timestamp string"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:77
+msgid "Optional: `symbol`, `position` (validated if present)."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:79
+msgid "2.2 `RawTradeResultDict` (required keys)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Matches local order"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`filled_qty`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "≥ 0"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "≥ 0; 0 when canceled-only slice"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`transaction_fee`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`execution_time`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Parseable datetime string"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`canceled_qty`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`delivery_amount`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Often 0 at Broker layer"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`delivery_status`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "e.g. `'ND'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:92
+msgid "Optional (recommended for QMT):"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`broker_order_id`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "**Real QMT order id** when known"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`'filled'` / `'partial-filled'` / `'canceled'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`raw_status`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Broker-native status text/code"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:102
+msgid "3. `submit_with_ack` — accept phase"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:104
+msgid ""
+"`XtQuantBroker` **must override** the base implementation that only "
+"enqueues and returns a **synthetic** id (`SimulatorBroker:order_id:seq`)."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:106
+msgid "3.1 Call flow"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:117
+msgid "3.2 Return dict (normative)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Field"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "When `accepted=True`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "When `accepted=False`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`accepted`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "bool"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`True`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`False`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "int or None"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Local `order_id` if parseable"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "Same"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "**Real QMT order id** (non-empty)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`''`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`reason`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "English explanation"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "`reason_code`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md
+msgid "e.g. exception class name or broker code"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:127
+msgid ""
+"**DB rule**: On success, Trader persists `broker_order_id` to "
+"`sys_op_trade_orders` **before** async fills are processed. "
+"Reconciliation and cancel must use this id."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:129
+msgid "3.3 QMT-specific accept rules"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:131
+msgid ""
+"Perform **one** QMT submit per local `order_id` intent in "
+"`submit_with_ack`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:132
+msgid "Do **not** submit again in `transaction()` for the same intent (see §5)."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:133
+msgid ""
+"On QMT reject, return `accepted=False` with clear `reason` / "
+"`reason_code`; do not leave the local row `submitted`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:137
+msgid "4. Fill delivery: `poll_fills`, `result_queue`, and `broker.run`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:139
+msgid ""
+"qteasy 2.5.2 uses **two** fill paths. XtQuant adapters must support the "
+"**Trader main loop** path."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:141
+msgid "4.1 Primary path (Trader live loop)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:151
+msgid ""
+"Implement `poll_fills` to return fills produced by QMT callbacks (deque /"
+" internal buffer), each dict satisfying `RawTradeResultDict`."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:153
+msgid "4.2 Legacy path (`broker.run` thread)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:162
+msgid ""
+"`poll_fills` **also** drains `result_queue` when connected (compat). For "
+"QMT:"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:164
+msgid ""
+"Callback thread should push normalized fills into the structure "
+"`poll_fills` reads (preferred), **or**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:165
+msgid "Bridge callback → `result_queue` without blocking Trader."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:167
+msgid "4.3 Relationship diagram"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:190
+msgid ""
+"**Invariant**: Accept phase owns **placement**; fill phase owns "
+"**execution reports**. Same local `order_id` + same QMT `broker_order_id`"
+" tie the two phases together."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:194
+msgid "5. `transaction()` — 4/5-tuple generator"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:196
+msgid "Base class `Broker.transaction()` may yield:"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:198
+msgid "**4-tuple**: `(result_type, qty, price, fee)` — built-in simulators"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:199
+msgid ""
+"**5-tuple**: `(result_type, qty, price, fee, broker_order_id)` — "
+"**required for XtQuant**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "Component"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "Meaning"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`result_type`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`'filled'`, `'partial-filled'`, or `'canceled'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "**This slice** quantity; must be `0 < qty <= order_qty` (order total)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "Fill price; `0` if `result_type=='canceled'`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "`fee`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "Fee for this slice; ≥ 0"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:169
+msgid "str or None; if str, copied to `raw_trade_result['broker_order_id']`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:209
+msgid ""
+"`_get_result` validates each yield against the **order total** "
+"`order_qty` (not the previous slice qty). Partial fills must not reuse "
+"the loop variable name `qty` for order size (fixed in qteasy PR-0a)."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:211
+msgid "5.1 Forbidden: double submit to QMT"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Pattern"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Verdict"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid ""
+"`submit_with_ack` → QMT order API; `transaction()` only maps callbacks → "
+"5-tuple"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "**Correct**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "`submit_with_ack` only enqueues; `transaction()` calls QMT order API"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "**Wrong** (double submit risk)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Both `submit_with_ack` and `transaction()` call QMT order API"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "**Forbidden**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:236
+msgid "6. `submit()` vs `submit_with_ack` (extension testing)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:238
+msgid ""
+"`Broker.submit()` runs `transaction()` **synchronously** and appends to "
+"`_pending_fills`. Useful for unit tests; **Trader production path uses "
+"`submit_with_ack` + `poll_fills`.**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:240
+msgid ""
+"If `submit()` is used in tests with 5-tuples, `broker_order_id` in each "
+"fill should still be the **real** QMT id when simulating production."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:244
+msgid "7. Differences from helloeveroneday fork (ext-dev)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Topic"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Fork tendency"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "qteasy 2.5.2 + this contract"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Trader changes"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Large pre-check / DIAG / queue drain"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "**No** merge; use `RiskManager` + Broker adapter"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Tuple contract"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "5-tuple only"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "4-tuple allowed for simulators; **XtQuant uses 5-tuple**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Broker registration"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "`from brokers import ...` in `get_broker`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "`register_broker_factory('xtquant', ...)` only"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Accept API"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Often queue-only"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "**`submit_with_ack` with real boid**"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Data layer"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "MySQL-only assumptions"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:213
+msgid "Not required for upstream PR"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:254
+msgid ""
+"Problem definitions from fork production incidents (ghost orders, "
+"rebalance race) remain valuable; implementations belong in **Broker / "
+"extension package / docs**, not fork-style `trader.py` patches."
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:258
+msgid "8. Minimal acceptance (Spike / S0)"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:260
+msgid ""
+"`submit_with_ack` returns `accepted=True` and **non-synthetic** "
+"`broker_order_id` on Windows + miniQMT"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:261
+msgid "DB row `sys_op_trade_orders.broker_order_id` matches QMT UI order id"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:262
+msgid "`poll_fills` → `process_result` processes at least one fill"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:263
+msgid "No duplicate QMT order for one local `order_id`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:264
+msgid "Mac/Linux CI: mock `xtquant` module tests without real QMT"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:268
+msgid "9. References"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:270
+msgid "General adapter guide: :doc:`4-broker-adapter-and-integration`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:271
+msgid "Order lifecycle: :doc:`3-risk-and-order-lifecycle`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:272
+msgid "Code: `qteasy/broker.py`, `qteasy/trader.py`, `qteasy/trade_io.py`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:273
+msgid ""
+"Upstream tests: `tests/test_broker_order_id_persistence_20260429.py`, "
+"`tests/test_trade_io_contracts.py`"
+msgstr ""
+
+#: ../../source/live_trading/4a-xtquant-broker-adapter-contract-v1.md:275
+msgid ""
+"**Contract version**: v1 (2026-05; qteasy 2.5.2, PR-0a/0b). Changes "
+"should be discussed via GitHub issue before implementation drift."
+msgstr ""
+

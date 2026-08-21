@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:30+0800\n"
 "Last-Translator: Jackie PENG (de_translate_from_en)\n"
-"Language-Team: de <LL@li.org>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/manage_data/02.5. historypanel.md:1
@@ -23,9 +23,9 @@ msgid "HistoryPanel（历史数据面板）"
 msgstr "HistoryPanel (historisches Datenpanel)"
 
 #: ../../source/manage_data/02.5. historypanel.md:3
-#, python-format
+#, fuzzy, python-format
 msgid ""
-"本章介绍 **HistoryPanel**：在已理解 [DataType](2.%20datatypes.md) "
+"本章介绍 **HistoryPanel**：在已理解 [DataType](02.%20datatypes.md) "
 "的前提下，如何把多标的、多指标、同一时间轴上的历史数据收拢为一块「面板」，并在策略研究、回测准备与可视化之间复用。阅读本章无需先读 [本地数据源 "
 "DataSource](3.%20datasource.md)，但若尚未向本地数据源填充数据，请先完成下载与配置后再使用 "
 "`get_history_data` 取数。"
@@ -37,43 +37,44 @@ msgstr ""
 "Vorbereitung und Visualisierung wiederverwendet werden können. Zum Lesen "
 "dieses Kapitels ist keine vorherige Lektüre von [Lokale "
 "Datenquelle](3.%20datasource.md) erforderlich. Wenn Sie Ihre lokale "
-"Datenquelle jedoch noch nicht mit Daten gefüllt haben, schließen Sie bitte "
-"den Download und die Konfiguration ab, bevor Sie „get_history_data“ zum "
-"Abrufen von Daten verwenden."
+"Datenquelle jedoch noch nicht mit Daten gefüllt haben, schließen Sie "
+"bitte den Download und die Konfiguration ab, bevor Sie „get_history_data“"
+" zum Abrufen von Daten verwenden."
 
 #: ../../source/manage_data/02.5. historypanel.md:7
 msgid ""
 "在上一章中，我们已经看到，`qteasy` 用 **DataType** "
-"把「数据表里的原始列」抽象成策略与回测可以直接消费的**信息**。当这些信息需要在时间上与多只标的、多种数据类型（例如 OHLC、成交量、MACD "
-"等）**对齐到同一套时间轴**上时，如果仍靠手工拼接多个 `DataFrame`，既容易出错，也不利于策略代码与可视化代码复用同一套数据结构。"
+"把「数据表里的原始列」抽象成策略与回测可以直接消费的**信息**。当这些信息需要在时间上与多只标的、多种数据类型（例如 OHLC、成交量、MACD"
+" 等）**对齐到同一套时间轴**上时，如果仍靠手工拼接多个 `DataFrame`，既容易出错，也不利于策略代码与可视化代码复用同一套数据结构。"
 msgstr ""
 "Im vorherigen Kapitel haben wir gesehen, dass „qteasy“ **DataType** "
-"verwendet, um die „Rohspalten in der Datentabelle“ in **Informationen** zu "
-"abstrahieren, die direkt von der Strategie und dem Backtesting verwendet "
-"werden können. Wenn diese Informationen mit mehreren Zielen und "
-"verschiedenen Datentypen (wie OHLC, Volumen, MACD usw.) auf dieselbe "
+"verwendet, um die „Rohspalten in der Datentabelle“ in **Informationen** "
+"zu abstrahieren, die direkt von der Strategie und dem Backtesting "
+"verwendet werden können. Wenn diese Informationen mit mehreren Zielen und"
+" verschiedenen Datentypen (wie OHLC, Volumen, MACD usw.) auf dieselbe "
 "Zeitachse **ausgerichtet** werden müssen, ist die manuelle Verkettung "
-"mehrerer „DataFrames“ nicht nur fehleranfällig, sondern behindert auch die "
-"Wiederverwendung derselben Datenstruktur zwischen dem Strategiecode und dem "
-"Visualisierungscode."
+"mehrerer „DataFrames“ nicht nur fehleranfällig, sondern behindert auch "
+"die Wiederverwendung derselben Datenstruktur zwischen dem Strategiecode "
+"und dem Visualisierungscode."
 
 #: ../../source/manage_data/02.5. historypanel.md:9
 msgid ""
-"**HistoryPanel（历史数据面板）** 正是为这一场景准备的容器：它在内部把数据组织为 **标的（shares）× 时间（index）× "
-"数据类型（htypes）** 三维结构，让你可以用统一的接口做切片、筛选标的或指标，并在后续 **回测、策略逻辑或绘图** "
-"中沿用同一份对象。对大多数用户来说，你并不需要关心面板在内部如何与本地数据源交互；通过熟悉的 **`get_history_data`** 等工作流拿到"
-" `HistoryPanel` 之后，就可以把它当作「时间上对齐好的、可多标的、多指标的一块数据整体」来使用。"
+"**HistoryPanel（历史数据面板）** 正是为这一场景准备的容器：它在内部把数据组织为 **标的（shares）× 时间（index）×"
+" 数据类型（htypes）** 三维结构，让你可以用统一的接口做切片、筛选标的或指标，并在后续 **回测、策略逻辑或绘图** "
+"中沿用同一份对象。对大多数用户来说，你并不需要关心面板在内部如何与本地数据源交互；通过熟悉的 **`get_history_data`** "
+"等工作流拿到 `HistoryPanel` 之后，就可以把它当作「时间上对齐好的、可多标的、多指标的一块数据整体」来使用。"
 msgstr ""
 "**HistoryPanel** ist ein Container, der für dieses Szenario entwickelt "
-"wurde: Intern organisiert er Daten in einer dreidimensionalen Struktur aus "
-"**Aktien** × **Index** × **htypes**, sodass Sie Aktien oder Metriken "
+"wurde: Intern organisiert er Daten in einer dreidimensionalen Struktur "
+"aus **Aktien** × **Index** × **htypes**, sodass Sie Aktien oder Metriken "
 "mithilfe einer einheitlichen Schnittstelle aufteilen und filtern und "
 "dasselbe Objekt für nachfolgende Backtests, Strategielogiken oder Plots "
 "wiederverwenden können. Für die meisten Benutzer müssen Sie sich keine "
-"Gedanken darüber machen, wie das Panel intern mit der lokalen Datenquelle "
-"interagiert. Nachdem Sie den **HistoryPanel** über bekannte Arbeitsabläufe "
-"wie **`get_history_data`** erhalten haben, können Sie ihn als „zeitlich "
-"ausgerichteten, mehrfach geteilten, multimetrischen Datensatz“ verwenden."
+"Gedanken darüber machen, wie das Panel intern mit der lokalen Datenquelle"
+" interagiert. Nachdem Sie den **HistoryPanel** über bekannte "
+"Arbeitsabläufe wie **`get_history_data`** erhalten haben, können Sie ihn "
+"als „zeitlich ausgerichteten, mehrfach geteilten, multimetrischen "
+"Datensatz“ verwenden."
 
 #: ../../source/manage_data/02.5. historypanel.md:11
 #, python-format
@@ -83,14 +84,14 @@ msgid ""
 "将同一块面板直接画成静态图或交互图。更底层的取数 API 分工，仅在 **[API 参考](../api/history_data.rst)** "
 "中择要列出，以免与日常路径混淆。"
 msgstr ""
-"In diesem Kapitel werden die Kernkonzepte und allgemeinen Verwendungszwecke "
-"von HistoryPanel erläutert. **Das nächste Kapitel, [HistoryPanel "
-"Visualization](2.6.%20historypanel_visual.md)**, baut darauf auf und stellt "
-"vor, wie man **`hp.plot()`** verwendet, um dasselbe Panel direkt als "
-"statisches oder interaktives Diagramm darzustellen. Die Datenabruf-API-"
-"Funktionen auf niedrigerer Ebene werden in **[API-"
-"Referenz](../api/history_data.rst)** nur kurz aufgeführt, um Verwechslungen "
-"mit gängigen Pfaden zu vermeiden."
+"In diesem Kapitel werden die Kernkonzepte und allgemeinen "
+"Verwendungszwecke von HistoryPanel erläutert. **Das nächste Kapitel, "
+"[HistoryPanel Visualization](2.6.%20historypanel_visual.md)**, baut "
+"darauf auf und stellt vor, wie man **`hp.plot()`** verwendet, um dasselbe"
+" Panel direkt als statisches oder interaktives Diagramm darzustellen. Die"
+" Datenabruf-API-Funktionen auf niedrigerer Ebene werden in **[API-"
+"Referenz](../api/history_data.rst)** nur kurz aufgeführt, um "
+"Verwechslungen mit gängigen Pfaden zu vermeiden."
 
 #: ../../source/manage_data/02.5. historypanel.md:15
 msgid "核心概念：三维结构与 `shape`"
@@ -156,10 +157,11 @@ msgid ""
 "指标」的二维表，在**标的**方向上再叠一层；同一面板内，各标的、各指标在时间上是对齐的。"
 msgstr ""
 "„Shape“ gibt **(Anzahl der Ziele, Zeitdauer, Anzahl der Datentypen)** "
-"zurück, in der gleichen Reihenfolge wie oben. Es kann wie folgt verstanden "
-"werden: Viele zweidimensionale Tabellen von „Zeit × Metrik“ werden in der "
-"**Zielrichtung** übereinander gestapelt; Innerhalb desselben Panels werden "
-"die Ziele und Kennzahlen zeitlich aufeinander abgestimmt."
+"zurück, in der gleichen Reihenfolge wie oben. Es kann wie folgt "
+"verstanden werden: Viele zweidimensionale Tabellen von „Zeit × Metrik“ "
+"werden in der **Zielrichtung** übereinander gestapelt; Innerhalb "
+"desselben Panels werden die Ziele und Kennzahlen zeitlich aufeinander "
+"abgestimmt."
 
 #: ../../source/manage_data/02.5. historypanel.md:27
 msgid ""
@@ -167,16 +169,17 @@ msgid ""
 "维，便于批量运算与按标的切片，而不必维护多层 `MultiIndex` 列。"
 msgstr ""
 "Im Vergleich zu einer Single-Index-Breittabelle „DataFrame“ (Zeilen sind "
-"Zeit, Spalten sind Indizes) platziert HistoryPanel **Multi-Index** explizit "
-"in der 0. Dimension, was Stapeloperationen und indexbasiertes Slicing "
-"erleichtert, ohne dass mehrere „MultiIndex“-Spalten verwaltet werden müssen."
+"Zeit, Spalten sind Indizes) platziert HistoryPanel **Multi-Index** "
+"explizit in der 0. Dimension, was Stapeloperationen und indexbasiertes "
+"Slicing erleichtert, ohne dass mehrere „MultiIndex“-Spalten verwaltet "
+"werden müssen."
 
 #: ../../source/manage_data/02.5. historypanel.md:29
 msgid "*（示意图：可将「三维块」理解为 L 层标的 × R 行时间 × C 列指标；需要插图时可在后续版本补一张示意图。）*"
 msgstr ""
 "*(Anschauliches Diagramm: Der „3D-Block“ kann als L-Ebenenindex × "
-"R-Zeilenzeit × C-Spaltenindex verstanden werden; eine Illustration kann bei "
-"Bedarf in einer späteren Version hinzugefügt werden.)*"
+"R-Zeilenzeit × C-Spaltenindex verstanden werden; eine Illustration kann "
+"bei Bedarf in einer späteren Version hinzugefügt werden.)*"
 
 #: ../../source/manage_data/02.5. historypanel.md:31
 msgid "如何获得 HistoryPanel"
@@ -189,24 +192,26 @@ msgid ""
 "命名一致，参见上一章）与 `shares`、时间范围或 `rows`，即可得到对齐后的 `HistoryPanel`。"
 msgstr ""
 "Der empfohlene Ansatz ist die Verwendung von **`qt.get_history_data(..., "
-"as_data_frame=False)`: Vorausgesetzt, die erforderlichen Daten sind bereits "
-"in der lokalen Datenquelle verfügbar, können Sie das ausgerichtete "
-"`HistoryPanel` erhalten, indem Sie `htype_names` (im Einklang mit der "
-"DataType-Benennung, siehe vorheriges Kapitel) zusammen mit `shares`, dem "
-"Zeitbereich oder `rows` angeben."
+"as_data_frame=False)`: Vorausgesetzt, die erforderlichen Daten sind "
+"bereits in der lokalen Datenquelle verfügbar, können Sie das "
+"ausgerichtete `HistoryPanel` erhalten, indem Sie `htype_names` (im "
+"Einklang mit der DataType-Benennung, siehe vorheriges Kapitel) zusammen "
+"mit `shares`, dem Zeitbereich oder `rows` angeben."
 
 #: ../../source/manage_data/02.5. historypanel.md:35
 msgid ""
-"默认情况下 `get_history_data` 的 `as_data_frame` 为 `True`，返回的是按标的分组的 **`dict[str, "
-"DataFrame]`**，适合快速查看单标的；**需要三维面板时，务必传入 "
-"`as_data_frame=False`**。完整参数、频率与复权等说明见 [历史数据 API](../api/history_data.rst)。"
+"默认情况下 `get_history_data` 的 `as_data_frame` 为 `True`，返回的是按标的分组的 "
+"**`dict[str, DataFrame]`**，适合快速查看单标的；**需要三维面板时，务必传入 "
+"`as_data_frame=False`**。完整参数、频率与复权等说明见 [历史数据 "
+"API](../api/history_data.rst)。"
 msgstr ""
-"Standardmäßig setzt „get_history_data“ „as_data_frame“ auf „True“ und gibt "
-"ein nach Index gruppiertes **dict[str, DataFrame]** zurück, das für die "
-"schnelle Anzeige von Einzelindexdaten geeignet ist. **Wenn ein 3D-Panel "
-"erforderlich ist, müssen Sie unbedingt „as_data_frame=False“ übergeben.** "
-"Vollständige Informationen zu Parametern, Häufigkeit und Gewichtung finden "
-"Sie unter [Historische Daten-API](../api/history_data.rst)."
+"Standardmäßig setzt „get_history_data“ „as_data_frame“ auf „True“ und "
+"gibt ein nach Index gruppiertes **dict[str, DataFrame]** zurück, das für "
+"die schnelle Anzeige von Einzelindexdaten geeignet ist. **Wenn ein 3D-"
+"Panel erforderlich ist, müssen Sie unbedingt „as_data_frame=False“ "
+"übergeben.** Vollständige Informationen zu Parametern, Häufigkeit und "
+"Gewichtung finden Sie unter [Historische Daten-"
+"API](../api/history_data.rst)."
 
 #: ../../source/manage_data/02.5. historypanel.md:37
 msgid ""
@@ -214,10 +219,10 @@ msgid ""
 "从本地数据源填充。"
 msgstr ""
 "Das folgende Beispiel ist **nicht auf das Netzwerk angewiesen** und "
-"verwendet ein kleines Array zum Aufbau des Panels, was das Verständnis der "
-"„Form“ und Beschriftungen erleichtert; In der tatsächlichen Arbeit kann "
-"„get_history_data“ stattdessen verwendet werden, um es aus einer lokalen "
-"Datenquelle zu füllen."
+"verwendet ein kleines Array zum Aufbau des Panels, was das Verständnis "
+"der „Form“ und Beschriftungen erleichtert; In der tatsächlichen Arbeit "
+"kann „get_history_data“ stattdessen verwendet werden, um es aus einer "
+"lokalen Datenquelle zu füllen."
 
 #: ../../source/manage_data/02.5. historypanel.md:63
 msgid "若本地已有行情，可改为："
@@ -233,136 +238,221 @@ msgstr "Grundoperationen: Zeitbereich, Ziel und Indikatorteilmenge"
 msgid "下列方法在**不改变取数语义**的前提下，缩小你当前关心的范围；返回值仍是 `HistoryPanel`（空面板除外）。"
 msgstr ""
 "Die folgenden Methoden grenzen Ihren aktuellen Fokus ein, ohne die "
-"Datenabrufsemantik zu ändern; Der Rückgabewert ist immer noch „HistoryPanel“"
-" (außer bei leeren Panels)."
+"Datenabrufsemantik zu ändern; Der Rückgabewert ist immer noch "
+"„HistoryPanel“ (außer bei leeren Panels)."
 
 #: ../../source/manage_data/02.5. historypanel.md:81
 msgid ""
-"**按日期区间**：`segment(start_date, end_date)`，闭区间内的所有时间行；日期可与 `hdates` "
-"中的粒度一致（日频、日内等）。"
+"**推荐切片**：`subpanel(shares=..., htypes=..., hdates=...)`；时间轴亦可用 **`loc`** "
+"或方括号索引 `hp[:, :, start:end]`。"
 msgstr ""
-"**Nach Datumsbereich**: `segment(start_date, end_date)`, alle Zeitzeilen "
-"innerhalb des geschlossenen Bereichs; Die Daten können mit der Granularität "
-"in „hdates“ übereinstimmen (tägliche Häufigkeit, Intraday usw.)."
 
 #: ../../source/manage_data/02.5. historypanel.md:82
-msgid "**按行号区间**：`isegment(start_index, end_index)`，与 Python 切片类似，适用于按位置截取。"
-msgstr ""
-"**Nach Zeilennummernbereich**: „isegment(start_index, end_index)“ eignet "
-"sich ähnlich wie das Python-Slicing zum Extrahieren von Segmenten nach "
-"Position."
-
-#: ../../source/manage_data/02.5. historypanel.md:83
 msgid "**最近若干行**：`head(n)` / `tail(n)`。"
 msgstr "**Zuletzt aktuelle Zeilen: `head(n)` / `tail(n)`."
 
-#: ../../source/manage_data/02.5. historypanel.md:84
-msgid "**按标的与/或指标名筛选**：`slice(shares='A, B', htypes='close, vol')`，字符串或列表均可。"
+#: ../../source/manage_data/02.5. historypanel.md:83
+msgid ""
+"**兼容别名（已弃用）**：`segment` / `isegment` / `slice` 仍可用，但会发出英文 "
+"`DeprecationWarning`；新代码请改用上列推荐 API（详见教程 [HistoryPanel 基础操作 "
+"§4](../tutorials/2.4-historypanel-basics.md#4-切片与筛选缩小标的时间与指标范围)）。"
 msgstr ""
-"**Filtern nach Ziel- und/oder Indikatorname**: `slice(shares='A, B', "
-"htypes='close, vol')`, entweder eine Zeichenfolge oder eine Liste ist "
-"akzeptabel."
 
-#: ../../source/manage_data/02.5. historypanel.md:86
+#: ../../source/manage_data/02.5. historypanel.md:85
 msgid ""
 "单标的、多指标继续用 pandas 分析时，可用 **`to_share_frame(share)`** 得到该标的的 "
-"`DataFrame`（时间为索引，列为 `htypes`）。多标的导出还可参见 API 文档中的 **`to_df_dict`** 等说明。"
+"`DataFrame`（时间为索引，列为 `htypes`）。多标的请优先 **`to_df_dict`**；整板 MultiIndex 请用 "
+"**`to_multi_index_dataframe`**（兼容别名 `unstack` / `flatten` / "
+"`flatten_to_dataframe` 仍可用）。详见 [HistoryPanel "
+"API：导出](../api/HistoryPanel.rst) 与教程 [2.4 §7](../tutorials/2.4"
+"-historypanel-basics.md#7-与-pandas-互转)。"
 msgstr ""
-"Wenn Sie eine pandas-Analyse für Einzelindex- oder Multi-Index-Daten "
-"durchführen, können Sie „to_share_frame(share)“ verwenden, um einen "
-"„DataFrame“ für diesen Index zu erhalten (mit time als Index und „htypes“ "
-"als Spalten). Weitere Informationen zum Exportieren von Multi-Index-Daten "
-"finden Sie in der API-Dokumentation für „to_df_dict“ und anderen zugehörigen"
-" Dokumentationen."
 
-#: ../../source/manage_data/02.5. historypanel.md:88
+#: ../../source/manage_data/02.5. historypanel.md:87
 msgid ""
 "`Operator` 与回测流程中，历史数据往往在策略运行调度阶段按组注入；具体参数与时间表配置见 **「创建并操作交易策略」** "
-"相关章节。此处只需建立印象：**策略与可视化都可以围绕同一块 HistoryPanel（或其切片）展开**，从而减少「一份数据、多种形状」的重复整理。"
+"相关章节。此处只需建立印象：**策略与可视化都可以围绕同一块 "
+"HistoryPanel（或其切片）展开**，从而减少「一份数据、多种形状」的重复整理。"
 msgstr ""
-"Im „Operator“- und Backtesting-Prozess werden historische Daten häufig in "
-"Gruppen während der Planungsphase der Strategieausführung eingefügt; "
+"Im „Operator“- und Backtesting-Prozess werden historische Daten häufig in"
+" Gruppen während der Planungsphase der Strategieausführung eingefügt; "
 "Spezifische Parameter und Zeitplankonfigurationen finden Sie im "
 "entsprechenden Kapitel von **„Erstellung und Betrieb von "
 "Handelsstrategien“**. Hier reicht es aus, Folgendes festzulegen: "
 "**Strategien und Visualisierungen können sich beide um denselben "
-"HistoryPanel (oder seine Slices) drehen**, wodurch die sich wiederholende "
-"Organisation „eines Datensatzes in mehreren Formaten“ reduziert wird."
+"HistoryPanel (oder seine Slices) drehen**, wodurch die sich wiederholende"
+" Organisation „eines Datensatzes in mehreren Formaten“ reduziert wird."
 
-#: ../../source/manage_data/02.5. historypanel.md:90
+#: ../../source/manage_data/02.5. historypanel.md:89
+msgid "时序变换、缺失与列表达式（M2.2 CP-A）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:91
+msgid "在切片与导出之外，HistoryPanel 还提供与 pandas 习惯接近的内核能力（CP-A 已交付）："
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:93
+msgid "**时序变换**：`shift` / `diff` / `pct_change`（沿 `hdates`；返回新面板）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:94
+msgid ""
+"**缺失处理**：`bfill` / `dropna`；既有 `fillna` / `ffill` / `fillinf` 支持显式 "
+"`inplace=`（默认 `True`，保持历史原地语义）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:95
+msgid "**列表达式**：`expr('hl2', '(high + low) / 2')`（仅 identifier 列名算术；默认新面板）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:97
+msgid ""
+"可变性约定摘要：**旧填充方法默认原地**；本阶段新增 API（含 `bfill`、`shift` "
+"族、`dropna`、`expr`）默认返回**新**对象。手把手示例见教程 [HistoryPanel "
+"基础操作](../tutorials/2.4-historypanel-basics.md)（可变性表）与 "
+"[时序变换与缺失处理](../tutorials/2.5-historypanel-data-analysis.md#时序变换与缺失处理shift"
+"--diff--pct_change--dropna)；方法签名见 [HistoryPanel "
+"API](../api/HistoryPanel.rst)。"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:99
+msgid "结构与统计（M2.2 CP-B）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:101
+msgid "在 CP-A 之外，CP-B 补齐结构操作与统计对称（均已交付）："
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:103
+msgid "**结构**：`drop` / `rename`（恒返回新面板；与原地整轴 `re_label` 并存）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:104
+msgid ""
+"**统计**：`sum` / `median` / `var` / `quantile`（沿 `hdates` 聚合 → "
+"`DataFrame`，契约对齐 `mean`）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:105
+msgid ""
+"**弃用**：`slice` / `segment` / `isegment` / `candle` 发出英文警告；推荐 `subpanel` /"
+" `loc` / 索引切片 / `plot`"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:107
+msgid ""
+"示例见教程 [drop / rename](../tutorials/2.4-historypanel-"
+"basics.md#41-删除与重命名标签drop--rename) 与 [统计聚合补齐](../tutorials/2.5"
+"-historypanel-data-analysis.md#统计聚合补齐sum--median--var--quantile)；签名见 "
+"[HistoryPanel API](../api/HistoryPanel.rst)。"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:109
+msgid "因子研究与相关矩阵（M2.2 CP-D / CP-E）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:111
+msgid ""
+"**模块级研究**：`from qteasy.research import factor_ic, …`（截面 IC / 分位组合；**非** "
+"Backtester；前瞻收益须自备）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:112
+msgid "**面板时序矩阵**：`hp.corr(htype)` / `hp.cov(htype)`（shares×shares）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:113
+msgid ""
+"**导出推荐名**：`to_df_dict`、`to_multi_index_dataframe`（别名 `unstack` / "
+"`flatten*` 仍可用）"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:115
+msgid ""
+"手把手示例见教程 [截面 IC 与分位组合](../tutorials/2.5-historypanel-data-analysis.md#截面"
+"-ic-与分位组合qteasyresearch) 与 "
+"`examples/historypanel_research_factor_workflow.py`；API 见 "
+"[research](../api/research.rst)。"
+msgstr ""
+
+#: ../../source/manage_data/02.5. historypanel.md:117
 msgid "指标与列扩展（`kline` 等）"
 msgstr "Metriken und Spaltenerweiterungen (`kline` usw.)"
 
-#: ../../source/manage_data/02.5. historypanel.md:92
+#: ../../source/manage_data/02.5. historypanel.md:119
 msgid ""
 "在已有价格类 `htypes` 的基础上，可以通过 **`hp.kline`** "
 "访问器调用均线、MACD、布林带等常见派生列。这类方法通常返回**新的** "
-"`HistoryPanel`：在第三维上**追加**指标列，**不原地修改**原对象，`shares` 与 `hdates` 与原面板一致。复权列名（如"
-" `close|b`）在较新版本中会与 `kline`、`returns` 等解析逻辑对齐；若面板中同时存在裸名与复权列，建议阅读 "
-"[HistoryPanel API](../api/HistoryPanel.rst) 中的行为说明。"
+"`HistoryPanel`：在第三维上**追加**指标列，**不原地修改**原对象，`shares` 与 `hdates` "
+"与原面板一致。复权列名（如 `close|b`）在较新版本中会与 `kline`、`returns` "
+"等解析逻辑对齐；若面板中同时存在裸名与复权列，建议阅读 [HistoryPanel API](../api/HistoryPanel.rst) "
+"中的行为说明。"
 msgstr ""
 "Aufbauend auf der bestehenden Preisklasse „htypes“ können Sie über den "
 "Accessor **`hp.kline`** auf gängige abgeleitete Spalten wie gleitende "
 "Durchschnitte, MACD und Bollinger-Bänder zugreifen. Diese Methoden geben "
 "normalerweise ein **neues** „HistoryPanel“ zurück: Anhängen von "
-"Indikatorspalten an die dritte Dimension, **ohne das ursprüngliche Objekt zu"
-" ändern** und wobei „Shares“ und „hdates“ mit dem ursprünglichen Panel "
-"konsistent bleiben. Angepasste Spaltennamen (z. B. „close|b“) werden in "
+"Indikatorspalten an die dritte Dimension, **ohne das ursprüngliche Objekt"
+" zu ändern** und wobei „Shares“ und „hdates“ mit dem ursprünglichen Panel"
+" konsistent bleiben. Angepasste Spaltennamen (z. B. „close|b“) werden in "
 "neueren Versionen an die Parsing-Logik von „kline“, „returns“ usw. "
 "angepasst; Wenn im Panel sowohl rohe als auch angepasste Spaltennamen "
 "vorhanden sind, wird empfohlen, die Verhaltensbeschreibung in der "
 "[HistoryPanel API](../api/HistoryPanel.rst) zu lesen."
 
-#: ../../source/manage_data/02.5. historypanel.md:94
+#: ../../source/manage_data/02.5. historypanel.md:121
+#, fuzzy
 msgid ""
-"更完整的因子式示例（收益、波动率、`apply_ta` 等）可与教程 **[使用 HistoryPanel "
+"更完整的因子式示例（收益、波动率、`apply_ta`、时序变换、统计聚合等）可与教程 **[使用 HistoryPanel "
 "操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md)** 对照阅读。"
 msgstr ""
-"Ausführlichere Beispiele für faktorbasierte Methoden (Renditen, Volatilität,"
-" „apply_ta“ usw.) finden Sie im Tutorial **[Verwenden von HistoryPanel zum "
-"Bearbeiten und Analysieren historischer "
+"Ausführlichere Beispiele für faktorbasierte Methoden (Renditen, "
+"Volatilität, „apply_ta“ usw.) finden Sie im Tutorial **[Verwenden von "
+"HistoryPanel zum Bearbeiten und Analysieren historischer "
 "Daten](../tutorials/2.5-historypanel-data-analysis.md)**."
 
-#: ../../source/manage_data/02.5. historypanel.md:96
+#: ../../source/manage_data/02.5. historypanel.md:123
 msgid "小结与下一步"
 msgstr "Zusammenfassung und nächste Schritte"
 
-#: ../../source/manage_data/02.5. historypanel.md:98
+#: ../../source/manage_data/02.5. historypanel.md:125
 msgid "HistoryPanel 提供 **`(标的 × 时间 × 数据类型)`** 统一容器，适合多标的、多指标且时间对齐的研究与回测准备。"
 msgstr ""
 "HistoryPanel bietet einen einheitlichen Container von **(Ziel × Zeit × "
-"Datentyp)**, der für die Recherche und Backtesting-Vorbereitung mit mehreren"
-" Zielen, mehreren Metriken und Zeitausrichtung geeignet ist."
+"Datentyp)**, der für die Recherche und Backtesting-Vorbereitung mit "
+"mehreren Zielen, mehreren Metriken und Zeitausrichtung geeignet ist."
 
-#: ../../source/manage_data/02.5. historypanel.md:99
+#: ../../source/manage_data/02.5. historypanel.md:126
 msgid ""
-"日常用 **`get_history_data(..., as_data_frame=False)`** 获取面板；默认可先读上一章的 DataType"
-" 命名与 `get_dtype_map()`。"
+"日常用 **`get_history_data(..., as_data_frame=False)`** 获取面板；默认可先读上一章的 "
+"DataType 命名与 `get_dtype_map()`。"
 msgstr ""
-"Die Funktion „get_history_data(..., as_data_frame=False)“ wird üblicherweise"
-" zum Abrufen des Datenrahmens verwendet. Standardmäßig können Sie zuerst das"
-" vorherige Kapitel über die Benennung von DataType und „get_dtype_map()“ "
-"lesen."
+"Die Funktion „get_history_data(..., as_data_frame=False)“ wird "
+"üblicherweise zum Abrufen des Datenrahmens verwendet. Standardmäßig "
+"können Sie zuerst das vorherige Kapitel über die Benennung von DataType "
+"und „get_dtype_map()“ lesen."
 
-#: ../../source/manage_data/02.5. historypanel.md:100
+#: ../../source/manage_data/02.5. historypanel.md:127
+#, fuzzy
 msgid ""
-"切片与子集：**`segment` / `isegment` / `head` / `tail` / "
-"`slice`**；导出单标的：**`to_share_frame`**。"
+"切片与子集：推荐 **`subpanel` / `loc` / `head` / `tail`**（旧名 "
+"`slice`/`segment`/`isegment` 已弃用）；导出单标的：**`to_share_frame`**；时序/缺失/表达式见 "
+"CP-A 小节，结构/统计见 CP-B 小节。"
 msgstr ""
-"Slices und Teilmengen: **segment** / **isegment** / **head** / **tail** / "
-"**slice**; Exportieren eines einzelnen Frames: **to_share_frame**."
+"Slices und Teilmengen: **segment** / **isegment** / **head** / **tail** /"
+" **slice**; Exportieren eines einzelnen Frames: **to_share_frame**."
 
-#: ../../source/manage_data/02.5. historypanel.md:101
-#, python-format
+#: ../../source/manage_data/02.5. historypanel.md:128
+#, fuzzy, python-format
 msgid ""
-"**下一章 [HistoryPanel 可视化](2.6.%20historypanel_visual.md)**：使用 **`hp.plot()`**"
-" 做静态或交互制图。"
+"**下一章 [HistoryPanel 可视化](2.6.%20historypanel_visual.md)**：使用 "
+"**`hp.plot()`** 做静态或交互制图（请用 `plot`，勿依赖已弃用的 `candle`）。"
 msgstr ""
 "**Nächstes Kapitel [HistoryPanel "
 "Visualization](2.6.%20historypanel_visual.md)**: Verwenden von "
 "**`hp.plot()`** zum Erstellen statischer oder interaktiver Diagramme."
 
-#: ../../source/manage_data/02.5. historypanel.md:102
+#: ../../source/manage_data/02.5. historypanel.md:129
 #, python-format
 msgid ""
 "本地数据未就绪时，请先阅读 **[本地数据源 DataSource](3.%20datasource.md)** 与 "
@@ -371,3 +461,45 @@ msgstr ""
 "Wenn lokale Daten nicht bereit sind, lesen Sie bitte zuerst **[Lokale "
 "Datenquelle](3.%20datasource.md)** und **[Datenabruf und "
 "Kanäle](10.%20data_channels.md)**."
+
+#~ msgid ""
+#~ "**按日期区间**：`segment(start_date, end_date)`，闭区间内的所有时间行；日期可与 "
+#~ "`hdates` 中的粒度一致（日频、日内等）。"
+#~ msgstr ""
+#~ "**Nach Datumsbereich**: `segment(start_date, "
+#~ "end_date)`, alle Zeitzeilen innerhalb des "
+#~ "geschlossenen Bereichs; Die Daten können "
+#~ "mit der Granularität in „hdates“ "
+#~ "übereinstimmen (tägliche Häufigkeit, Intraday "
+#~ "usw.)."
+
+#~ msgid "**按行号区间**：`isegment(start_index, end_index)`，与 Python 切片类似，适用于按位置截取。"
+#~ msgstr ""
+#~ "**Nach Zeilennummernbereich**: „isegment(start_index, "
+#~ "end_index)“ eignet sich ähnlich wie das"
+#~ " Python-Slicing zum Extrahieren von "
+#~ "Segmenten nach Position."
+
+#~ msgid "**按标的与/或指标名筛选**：`slice(shares='A, B', htypes='close, vol')`，字符串或列表均可。"
+#~ msgstr ""
+#~ "**Filtern nach Ziel- und/oder Indikatorname**:"
+#~ " `slice(shares='A, B', htypes='close, vol')`, "
+#~ "entweder eine Zeichenfolge oder eine "
+#~ "Liste ist akzeptabel."
+
+#~ msgid ""
+#~ "单标的、多指标继续用 pandas 分析时，可用 **`to_share_frame(share)`**"
+#~ " 得到该标的的 `DataFrame`（时间为索引，列为 `htypes`）。多标的导出还可参见 "
+#~ "API 文档中的 **`to_df_dict`** 等说明。"
+#~ msgstr ""
+#~ "Wenn Sie eine pandas-Analyse für "
+#~ "Einzelindex- oder Multi-Index-Daten "
+#~ "durchführen, können Sie „to_share_frame(share)“ "
+#~ "verwenden, um einen „DataFrame“ für "
+#~ "diesen Index zu erhalten (mit time "
+#~ "als Index und „htypes“ als Spalten). "
+#~ "Weitere Informationen zum Exportieren von "
+#~ "Multi-Index-Daten finden Sie in "
+#~ "der API-Dokumentation für „to_df_dict“ "
+#~ "und anderen zugehörigen Dokumentationen."
+

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language-Team: zh_TW <LL@li.org>\n"
 "Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/03-data-in-strategies.md:1
@@ -29,12 +29,12 @@ msgstr "1. 策略層在整體中的位置"
 #: ../../source/design/03-data-in-strategies.md:5
 msgid ""
 "策略层负责两件事：**声明**“需要什么数据”（以及多长窗口、是否使用最新周期），以及**在 realize() "
-"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 id "
-"获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
+"中**“用数据算信号”。数据不由策略主动拉取，而是由运行层根据声明在每一步准备好并注入，策略仅通过 `get_data(dtype_id)` 按 "
+"id 获取。这样回测与实盘使用完全相同的数据视图与调用方式。"
 msgstr ""
 "策略層負責兩件事：**聲明**“需要什麼數據”（以及多長窗口、是否使用最新週期），以及**在 realize() "
-"中**“用數據算信號”。數據不由策略主動拉取，而是由運行層根據聲明在每一步準備好並注入，策略僅通過 `get_data(dtype_id)` 按 id "
-"獲取。這樣回測與實盤使用完全相同的數據視圖與調用方式。"
+"中**“用數據算信號”。數據不由策略主動拉取，而是由運行層根據聲明在每一步準備好並注入，策略僅通過 `get_data(dtype_id)` 按 "
+"id 獲取。這樣回測與實盤使用完全相同的數據視圖與調用方式。"
 
 #: ../../source/design/03-data-in-strategies.md:7
 msgid "2. 策略如何声明需要的数据"
@@ -46,11 +46,11 @@ msgstr "在策略類初始化（`__init__`）時，通過以下屬性聲明對�
 
 #: ../../source/design/03-data-in-strategies.md:11
 msgid ""
-"**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 DataType 对应一种“可引用的信息”，并对应唯一的"
-" **dtype_id**（如 `close_E_d`）。"
+"**data_types**：字符串信息 ID（推荐）、`DataType` 对象，或二者的列表。可为完整 id（如 "
+"`close_E_d`）或无歧义宽名（如 `close`）；歧义时须写完整 id 或显式 `asset_type`。**仅**允许 History"
+" 与 Reference；**Static（如 `industry`）不得**写入 `data_types`，应在准备资产池时用 "
+"`get_static_data` 过滤。"
 msgstr ""
-"**data_types**：一個或多個 **DataType** 對象（或列表/字典）。每個 DataType 對應一種“可引用的資訊”，並對應唯一的"
-" **dtype_id**（如 `close_E_d`）。"
 
 #: ../../source/design/03-data-in-strategies.md:12
 msgid ""
@@ -65,7 +65,8 @@ msgid "**use_latest_data_cycle**：是否只使用“最新一个周期”的数
 msgstr "**use_latest_data_cycle**：是否只使用“最新一個週期”的數據（如僅用最新截面做選股），可按 dtype 分別設置。"
 
 #: ../../source/design/03-data-in-strategies.md:15
-msgid "声明后，引擎会知道该策略需要哪些 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
+#, fuzzy
+msgid "声明后，引擎会知道该策略需要哪些完整 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
 msgstr "聲明後，引擎會知道該策略需要哪些 dtype_id、多長窗口，從而在運行前準備相應的數據窗口並在每一步更新注入。"
 
 #: ../../source/design/03-data-in-strategies.md:17
@@ -169,43 +170,73 @@ msgid "详见 [过程数据（proc.*）与动态回测](09-process-data-and-dyna
 msgstr "詳見 [過程數據（proc.*）與動態回測](09-process-data-and-dynamic-backtest.md)。"
 
 #: ../../source/design/03-data-in-strategies.md:44
-msgid "6. 参考数据（若有）"
-msgstr "6. 參考數據（若有）"
+msgid "6. Reference 与 Static"
+msgstr ""
 
 #: ../../source/design/03-data-in-strategies.md:46
 msgid ""
-"除策略声明的 data_types 外，qteasy "
-"支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的 "
-"dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+"**Reference（仅时间）**：原生宏观/利率/资金（如 `cn_gdp`），以及把单标的 History 抽成基准的造法（如 "
+"`close-000300.SH`）。研究入口为 `get_reference_data`；也可进入策略 `data_types`，在 "
+"`realize()` 里用 `get_data` 取时间序列（2D），**不是** HistoryPanel 的「第三维标的」。"
 msgstr ""
-"除策略聲明的 data_types 外，qteasy "
-"支持“參考數據”（如某隻指數的收盤價，用於計算市場收益等）。參考數據與主數據的區別在於：通常與資產池無一一對應關係，在策略中也可通過相應的 "
-"dtype_id 或專用接口獲取。具體配置與引用方式見當前版本文檔與 API。"
 
-#: ../../source/design/03-data-in-strategies.md:48
+#: ../../source/design/03-data-in-strategies.md:47
+msgid ""
+"**Static（仅标的）**：行业、上市日等截面属性。研究/选股票池用 `get_static_data`；**本阶段不进** "
+"`data_types` / `get_data`（避免把字符串塞进时间窗）。将来若需要，应走股票池过滤、研究 `group_by`，或数值化 "
+"context，而不是本任务范围。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:49
+msgid "过程数据 `proc.*` 见上一节，与 DataType 目录无关。"
+msgstr ""
+
+#: ../../source/design/03-data-in-strategies.md:51
 msgid "7. 小结"
 msgstr "7. 小結"
 
-#: ../../source/design/03-data-in-strategies.md:50
+#: ../../source/design/03-data-in-strategies.md:53
 msgid "“声明 → 引擎注入 → get_data 引用”保证了："
 msgstr "“聲明 → 引擎注入 → get_data 引用”保證了："
 
-#: ../../source/design/03-data-in-strategies.md:52
+#: ../../source/design/03-data-in-strategies.md:55
 msgid "回测与实盘使用同一套数据视图与访问方式；"
 msgstr "回測與實盤使用同一套數據視圖與訪問方式；"
 
-#: ../../source/design/03-data-in-strategies.md:53
+#: ../../source/design/03-data-in-strategies.md:56
 msgid "策略无法越权访问未声明或未来的数据，从机制上避免未来函数；"
 msgstr "策略無法越權訪問未聲明或未來的數據，從機制上避免未來函數；"
 
-#: ../../source/design/03-data-in-strategies.md:54
+#: ../../source/design/03-data-in-strategies.md:57
 msgid "接口统一、易于维护与扩展。"
 msgstr "接口統一、易於維護與擴展。"
 
-#: ../../source/design/03-data-in-strategies.md:56
+#: ../../source/design/03-data-in-strategies.md:59
 msgid ""
 "“声明 → 引擎注入 → get_data "
 "引用”同样适用于过程数据，只是过程数据不需声明、由运行层按步注入，且仅在使用时触发动态回测路径。更多用法见《使用教程》与《API 参考》。"
 msgstr ""
 "“聲明 → 引擎注入 → get_data "
 "引用”同樣適用於過程數據，只是過程數據不需聲明、由運行層按步注入，且僅在使用時觸發動態回測路徑。更多用法見《使用教程》與《API 參考》。"
+
+#~ msgid ""
+#~ "**data_types**：一个或多个 **DataType** 对象（或列表/字典）。每个 "
+#~ "DataType 对应一种“可引用的信息”，并对应唯一的 **dtype_id**（如 "
+#~ "`close_E_d`）。"
+#~ msgstr ""
+#~ "**data_types**：一個或多個 **DataType** 對象（或列表/字典）。每個 "
+#~ "DataType 對應一種“可引用的資訊”，並對應唯一的 **dtype_id**（如 "
+#~ "`close_E_d`）。"
+
+#~ msgid "6. 参考数据（若有）"
+#~ msgstr "6. 參考數據（若有）"
+
+#~ msgid ""
+#~ "除策略声明的 data_types 外，qteasy "
+#~ "支持“参考数据”（如某只指数的收盘价，用于计算市场收益等）。参考数据与主数据的区别在于：通常与资产池无一一对应关系，在策略中也可通过相应的"
+#~ " dtype_id 或专用接口获取。具体配置与引用方式见当前版本文档与 API。"
+#~ msgstr ""
+#~ "除策略聲明的 data_types 外，qteasy "
+#~ "支持“參考數據”（如某隻指數的收盤價，用於計算市場收益等）。參考數據與主數據的區別在於：通常與資產池無一一對應關係，在策略中也可通過相應的"
+#~ " dtype_id 或專用接口獲取。具體配置與引用方式見當前版本文檔與 API。"
+

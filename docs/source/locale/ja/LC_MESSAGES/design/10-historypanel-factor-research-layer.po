@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: ja <LL@li.org>\n"
 "Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:1
@@ -91,8 +91,8 @@ msgstr "**ロング/ショート ポートフォリオ**の時系列 (上部か�
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:26
 msgid ""
-"这些均可用现有 `rank` / `portfolio` / `values` + pandas **在用户侧或独立模块中**几十行实现；封装的价值在于"
-" **API 稳定、参数约定统一、减少复制粘贴错误**。"
+"这些均可用现有 `rank` / `portfolio` / `values` + pandas "
+"**在用户侧或独立模块中**几十行实现；封装的价值在于 **API 稳定、参数约定统一、减少复制粘贴错误**。"
 msgstr ""
 "これらはすべて、ユーザー側の数十行で、または既存の `rank` / `portfolio` / `values` + pandas "
 "を使用する独立したモジュールで実装できます。ラッピングの価値は、**安定した "
@@ -118,8 +118,9 @@ msgid ""
 "已定位为三维研究容器与显式对齐/重采样；IC/IR、分位组合等属于**研究工作流约定**更强的「分析配方」，放在独立教程、示例或未来可选包中更合适，避免"
 " HP API 膨胀。"
 msgstr ""
-"**明確な責任**: `HistoryPanel` は、明示的な位置合わせ/リサンプリングを備えた 3D 研究コンテナとしてすでに位置づけられています。"
-" IC/IR、クォンタイルポートフォリオなどは、より強力な**リサーチワークフロー規約**を備えた「分析レシピ」です。これらは、HP API "
+"**明確な責任**: `HistoryPanel` は、明示的な位置合わせ/リサンプリングを備えた 3D "
+"研究コンテナとしてすでに位置づけられています。 "
+"IC/IR、クォンタイルポートフォリオなどは、より強力な**リサーチワークフロー規約**を備えた「分析レシピ」です。これらは、HP API "
 "の肥大化を避けるために、スタンドアロンのチュートリアル、サンプル、または将来のオプション パッケージに適しています。"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:35
@@ -177,19 +178,66 @@ msgstr ""
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:47
 msgid "届时应配套 **TDD** 与英文 `ValueError` 契约，与现有 HP 测试风格一致。"
-msgstr ""
-"その時点で、既存の HP テスト スタイルと一致する **TDD** と英語の `ValueError` コントラクトが付属している必要があります。"
+msgstr "その時点で、既存の HP テスト スタイルと一致する **TDD** と英語の `ValueError` コントラクトが付属している必要があります。"
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:49
-msgid "5. 与教程的关系"
-msgstr "5. チュートリアルとの関係"
+msgid "4.1 路线图衔接（2026-08-11）"
+msgstr ""
 
 #: ../../source/design/10-historypanel-factor-research-layer.md:51
 msgid ""
-"实操路径以 [教程 2.5：使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-data-"
-"analysis.md) 的 §9–§11 为准；本设计文档仅记录 **架构层面的评估结论**，不增加用户必读的 API 面。"
+"顶层任务 **M2.2** 已将上述「独立模块」形态纳入二阶段实施范围（函数 API：`factor_ic` / "
+"`quantile_portfolio` / `long_short_return` 等），并与 HP 内核 pandas "
+"级补齐（`shift`/`diff`/`dropna`/`expr` 等）同批规划。"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:53
+msgid "执行计划：[m2.2_hp二阶段扩展_da0c19a3.plan.md](../../../.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:54
+msgid "进度真源：顶层展望 §7.1 **M2.2**"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:55
+msgid ""
+"**截至 CP-A（Phase 1–3）**：HP 内核已落地 `shift` / `diff` / `pct_change`、`bfill` /"
+" `dropna`、填充类 `inplace=`、以及 `expr`；用户文档见教程 2.4/2.5 与 [HistoryPanel "
+"API](../api/HistoryPanel.rst)。"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:56
+msgid ""
+"**截至 CP-B（Phase 4–6）**：HP 内核已落地 `drop` / `rename`、统计对称（`sum` / `median` /"
+" `var` / `quantile`）、以及 `slice`/`segment`/`isegment`/`candle` "
+"的英文弃用警告；文档同上。"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:57
+msgid ""
+"**截至 CP-D / CP-E（Phase 8–11）**：`qteasy.research` 已落地模块级 `factor_ic` / "
+"`factor_ic_summary` / `quantile_portfolio` / `long_short_return`；HP 已落地 "
+"`corr` / `cov`；导出推荐名与可跟跑示例见 [research API](../api/research.rst)、教程 2.5 "
+"cookbook 与 `examples/historypanel_research_factor_workflow.py`。"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:58
+msgid ""
+"本节 §3「短期不引入类库级 FactorResearch」结论仍然有效：M2.2 落地的是 **`qteasy.research` "
+"模块级函数**，不是挂在 HistoryPanel 上的重型研究类。"
+msgstr ""
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:60
+msgid "5. 与教程的关系"
+msgstr "5. チュートリアルとの関係"
+
+#: ../../source/design/10-historypanel-factor-research-layer.md:62
+msgid ""
+"实操路径以 [教程 2.5：使用 HistoryPanel 操作和分析历史数据](../tutorials/2.5-historypanel-"
+"data-analysis.md) 的 §9–§11 为准；本设计文档仅记录 **架构层面的评估结论**，不增加用户必读的 API 面。"
 msgstr ""
 "実際のワークフローについては、[チュートリアル 2.5: HistoryPanel "
-"を使用した履歴データの操作と分析](../tutorials/2.5-historypanel-data-analysis.md) の §9 ～ §11"
-" に従ってください。この設計ドキュメントは **アーキテクチャ レベルの評価結果**を記録するだけであり、ユーザーに必読の API "
+"を使用した履歴データの操作と分析](../tutorials/2.5-historypanel-data-analysis.md) の §9 ～ "
+"§11 に従ってください。この設計ドキュメントは **アーキテクチャ レベルの評価結果**を記録するだけであり、ユーザーに必読の API "
 "サーフェスは追加されていません。"
+

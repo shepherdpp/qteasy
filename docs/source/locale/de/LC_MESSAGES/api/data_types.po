@@ -7,819 +7,1387 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-26 09:45+0800\n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG\n"
-"Language-Team: de <LL@li.org>\n"
 "Language: de\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
-#: ../../source/api/history_data_types.rst:2
-msgid "QTEASY管理的历史数据种类"
-msgstr "Arten von historischen Daten, die von QTEASY verwaltet werden"
+#: ../../source/api/data_types.rst:2
+msgid "数据类型与消费入口——DataType"
+msgstr ""
 
-#: ../../source/api/history_data_types.rst:4
+#: ../../source/api/data_types.rst:4
 msgid ""
-"使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"
+"日常请把 DataType 当作**信息 ID**（字符串）：宽匹配名如 ``close``、``pe``，完整 id 如 "
+"``close_E_d``。 按消费形状选用入口，而不是一律 ``get_history_data``："
 msgstr ""
-"Verwenden Sie qteasy, um große Mengen historischer Daten abzurufen und zu "
-"verwalten. Die historischen Daten, die von qteasy verwaltet werden können, "
-"umfassen Aktien, Fonds, Indizes, Futures usw. Zu den Typen gehören "
-"Preisdaten, technische Indikatoren, Makroökonomie, "
-"Unternehmensfinanzberichte, Makrofinanzen usw."
 
-#: ../../source/api/history_data_types.rst:6
-msgid "所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。"
+#: ../../source/api/data_types.rst:7
+msgid "**History**（时间 × 标的）：``get_history_data`` / ``get_kline``"
 msgstr ""
-"Alle Daten können über die tushare-Schnittstelle abgerufen werden. Nach dem "
-"Herunterladen auf die lokale Ebene kann es über die qteasy-Schnittstelle "
-"verwaltet und aufgerufen werden."
 
-#: ../../source/api/history_data_types.rst:8
-msgid "查找支持历史数据:"
-msgstr "Finden Sie unterstützende historische Daten:"
+#: ../../source/api/data_types.rst:8
+msgid ""
+"**Reference**（仅时间）：``get_reference_data``（含 "
+"``cn_gdp``、``close-000300.SH``）"
+msgstr ""
+
+#: ../../source/api/data_types.rst:9
+msgid "**Static**（仅标的）：``get_static_data``（如 ``industry``、``list_date``）"
+msgstr ""
+
+#: ../../source/api/data_types.rst:11
+msgid ""
+"概念、四条工作路径、双 ID 与精选表见 :doc:`manage_data 章节「用稳定的信息 ID 取数」 "
+"<../manage_data/02. datatypes>`； 按业务浏览的完整内置清单见 :doc:`内置 DataType 完整清单 "
+"<../references/datatypes/index>`。"
+msgstr ""
+
+#: ../../source/api/data_types.rst:16
+msgid "三入口（公开 API）"
+msgstr ""
+
+#: of qteasy.core.get_history_data:1
+msgid "根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:3
+msgid ""
+"本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
+"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过"
+" ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` / "
+"``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` "
+"的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。 关于数据类型推断、频率转换和 "
+"trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」相关章节。"
+msgstr ""
+
+#: ../../source/api/data_types.rst of qteasy.core.get_history_data
+#: qteasy.core.get_reference_data qteasy.core.get_static_data
+msgid "参数"
+msgstr ""
+
+#: of qteasy.core.get_history_data:11
+msgid ""
+"需要获取的历史数据名称集合；可为逗号分隔字符串（如 ``'open, high, low, close'``） 或列表（如 ``['open', "
+"'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` / ``asset_type`` 等参数推断可用的 "
+"htypes。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:15
+msgid ""
+"历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` / ``data_types`` "
+"新接口。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:18
+msgid ""
+"需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
+"如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
+msgstr ""
+
+#: of qteasy.core.get_history_data:21
+msgid "需要获取历史数据的数据源"
+msgstr ""
+
+#: of qteasy.core.get_history_data:23
+msgid ""
+"证券代码集合；可为逗号分隔字符串（如 ``'000001.SZ, 000002.SZ'``）或列表 （如 ``['000001.SZ', "
+"'000002.SZ']``）。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:26
+msgid "证券代码集合；可为逗号分隔字符串（如 ``'000001, 000002'``）或列表 （如 ``['000001', '000002']``）。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:29
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:31
+msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
+msgstr ""
+
+#: of qteasy.core.get_history_data:33
+msgid ""
+"获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
+"如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
+msgstr ""
+
+#: of qteasy.core.get_history_data:36
+msgid ""
+"频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 "
+"``H``/``D``/``W``/``M`` 等小时/日/周/月周期（如 K 线）。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:39
+msgid ""
+"资产类型过滤；可用逗号分隔字符串（如 ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。 常见取值包括 "
+"``any``、``E``、``IDX``、``FT``、``FD`` 等。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:42
+msgid ""
+"已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。 新代码请在 "
+"htype 中显式使用复权列名（如 ``close|b``）。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:45
+msgid ""
+"``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典； ``False`` 时返回 "
+"``HistoryPanel``。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:48
+msgid ""
+"返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或 "
+"``'htypes'``/``'htype'``/``'h'``。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:51
+msgid ""
+"透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。 "
+"详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` 说明。"
+msgstr ""
+
+#: ../../source/api/data_types.rst of qteasy.core.get_history_data
+#: qteasy.core.get_reference_data qteasy.core.get_static_data
+msgid "返回"
+msgstr "zurückkehren"
+
+#: of qteasy.core.get_history_data:54
+msgid ""
+"* *HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 "
+"HistoryPanel 对象。 * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 "
+"True 时，返回按 ``group_by`` 分组的 DataFrame 字典。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:54
+msgid ""
+"*HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel "
+"对象。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:55
+msgid ""
+"*dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 "
+"``group_by`` 分组的 DataFrame 字典。"
+msgstr ""
+
+#: of qteasy.core.get_history_data:58 qteasy.core.get_reference_data:32
+#: qteasy.core.get_static_data:29 qteasy.datatypes.DataType:9
+#: qteasy.datatypes.find_history_data:44
+msgid "示例"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:1
+msgid "从本地数据源获取 Reference（仅时间维）数据，返回 ``dict[str, Series]``。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:3
+msgid ""
+"同时接受原生 Reference（如 ``cn_gdp``、``north_money``）与 unsymbolizer （如 "
+"``close-000300.SH`` / ``close-000300.SH_IDX_d``）。不需要 ``shares``： "
+"宏观数据本身无标的维，基准代码已编码在 unsymbolizer ID 中。 更多使用细节见文档「数据类型 DataType」与 S1.5 "
+"消费契约。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:8
+msgid "参考数据名称；逗号分隔字符串或列表。可为宽名、完整 id 或 unsymbolizer 名。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:10 qteasy.core.get_static_data:14
+msgid "显式 DataType 列表；若给出则忽略 ``names``。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:12 qteasy.core.get_static_data:16
+msgid "数据源；默认使用全局 ``QT_DATA_SOURCE``。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:14
+msgid "开始日期/时间（``YYYYMMDD`` 等可解析格式）。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:16
+msgid "结束日期/时间。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:18
+msgid "目标频率；宽名消歧或与内置频率不一致时用于升/降频。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:20
+msgid "资产类型过滤；unsymbolizer 宽名歧义时用于消歧（如 ``IDX``）。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:22
+msgid "最近行数；与 ``start``/``end`` 同时给出时以日期区间为准。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:25
+msgid "键为完整 ``dtype_id``，值为 index=时间的 Series。"
+msgstr ""
+
+#: ../../source/api/data_types.rst of qteasy.core.get_reference_data
+msgid "返回类型"
+msgstr "Rückgabetyp"
+
+#: ../../source/api/data_types.rst of qteasy.core.get_reference_data
+#: qteasy.core.get_static_data
+msgid "抛出"
+msgstr "Werfen"
+
+#: of qteasy.core.get_reference_data:28
+msgid "名称为 history/static，或无法解析为合法 Reference。"
+msgstr ""
+
+#: of qteasy.core.get_reference_data:29 qteasy.core.get_static_data:26
+msgid "参数类型错误。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:1
+msgid "从本地数据源获取 Static（仅标的维）截面数据。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:3
+msgid ""
+"用于行业、上市日、证券名称等与时间无关的属性。返回以 ``qt_code`` 为索引的 ``Series``（单个名称）或 "
+"``DataFrame``（多个名称）；不升频、不编入 HistoryPanel。 更多使用细节见文档「数据类型 DataType」与 S1.5 "
+"消费契约。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:7
+msgid "静态数据类型名称；逗号分隔字符串或列表。可为宽名或完整 id （如 ``industry``、``list_date_E_None``）。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:10
+msgid "证券代码池；逗号分隔字符串或列表。与 ``symbols`` 二选一，至少提供一个。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:12
+msgid "``shares`` 的别名。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:18
+msgid "资产类型消歧（如 ``E``）。宽名在多资产下歧义时必须给出 （例如 ``list_date`` 有 E/IDX/FD 等多个版本）。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:22
+msgid ""
+"* *pandas.Series* -- 仅请求一个名称时，index 为 ``qt_code``，值为该属性。 * "
+"*pandas.DataFrame* -- 请求多个名称时，index 为 ``qt_code``，列为各属性宽名。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:22
+msgid "*pandas.Series* -- 仅请求一个名称时，index 为 ``qt_code``，值为该属性。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:23
+msgid "*pandas.DataFrame* -- 请求多个名称时，index 为 ``qt_code``，列为各属性宽名。"
+msgstr ""
+
+#: of qteasy.core.get_static_data:25
+msgid "名称为 history/reference，缺少股票池，或无法解析为合法 Static。"
+msgstr ""
+
+#: ../../source/api/data_types.rst:24
+msgid ""
+"``get_kline`` 是标准 OHLCV 的语法糖，底层仍走 History 管线；签名见 :doc:`历史数据获取和管理 "
+"<history_data>`。"
+msgstr ""
+
+#: ../../source/api/data_types.rst:28
+msgid "清单与检索"
+msgstr ""
+
+#: ../../source/api/data_types.rst:30
+msgid ""
+"``find_history_data`` 返回的结构化结果含 "
+"``kind``、``usable_in``、``recommended_api``； 打印路径按行推荐入口，**不要**假定每一行都能 "
+"``get_history_data``。"
+msgstr ""
+
+#: of qteasy.datatypes.get_dtype_map:1
+msgid "获取所有内置以及用户定义数据类型的清单"
+msgstr ""
+
+#: of qteasy.datatypes.get_dtype_map:3
+msgid "是否包含用户定义的数据类型, 如果为True, 则返回所有数据类型，包括内置和用户定义的"
+msgstr ""
+
+#: of qteasy.datatypes.get_dtype_map:5
+msgid "是否刷新用户定义的数据类型缓存，如果为True，清除缓存并重新获取用户定义的数据类型"
+msgstr ""
+
+#: of qteasy.datatypes.get_dtype_map:8
+msgid ""
+"**dtype_map** -- 索引为 ``(dtype, freq, asset_type)``。列包括映射表原有字段 "
+"``description`` / ``acquisition_type`` / ``kwargs``，以及派生列 "
+"``kind``（``history`` / ``reference`` / ``static``）与 "
+"``usable_in``（逗号分隔的入口标记，见 ``infer_dtype_usable_in``）。"
+msgstr ""
 
 #: of qteasy.datatypes.find_history_data:1
+#, fuzzy
 msgid ""
-"根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型。"
+"根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 "
+"查找匹配的历史数据类型，支持以 DataFrame 形式返回更结构化的结果。"
 msgstr ""
 "Suchen Sie den historischen Datentyp anhand der Eingabezeichenfolge oder "
 "gleichen Sie ihn ab und zeigen Sie die detaillierten Informationen der "
-"historischen Daten an. Unterstützt die Fuzzy-Suche, unterstützt Platzhalter "
-"und unterstützt die Suche nach passenden historischen Datentypen mithilfe "
-"englischer oder chinesischer Zeichen."
-
-#: ../../source/api/history_data_types.rst of qteasy.core.filter_stocks
-#: qteasy.core.get_basic_info qteasy.core.get_data_overview
-#: qteasy.core.get_stock_info qteasy.core.get_table_overview
-#: qteasy.core.refill_data_source
-msgid "Parameters"
-msgstr "Parameters"
+"historischen Daten an. Unterstützt die Fuzzy-Suche, unterstützt "
+"Platzhalter und unterstützt die Suche nach passenden historischen "
+"Datentypen mithilfe englischer oder chinesischer Zeichen."
 
 #: of qteasy.datatypes.find_history_data:4
 msgid "一个字符串，用于查找或匹配历史数据类型"
 msgstr ""
-"Eine Zeichenfolge, die zum Suchen oder Abgleichen historischer Datentypen "
-"verwendet wird"
+"Eine Zeichenfolge, die zum Suchen oder Abgleichen historischer Datentypen"
+" verwendet wird"
 
 #: of qteasy.datatypes.find_history_data:6
+#, fuzzy
 msgid ""
-"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True  - False: 仅匹配数据名称  - True:  "
+"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True - False: 仅匹配数据名称 - True:  "
 "同时匹配数据描述"
 msgstr ""
-"Ob eine Fuzzy-Übereinstimmung mit der Datenbeschreibung erfolgen soll. Wenn "
-"die angegebene Zeichenfolge Nicht-ASCII-Zeichen enthält, wird sie "
+"Ob eine Fuzzy-Übereinstimmung mit der Datenbeschreibung erfolgen soll. "
+"Wenn die angegebene Zeichenfolge Nicht-ASCII-Zeichen enthält, wird sie "
 "automatisch zu „True“ – „False“: stimmt nur mit dem Datennamen überein – "
 "„True“: stimmt auch mit der Datenbeschreibung überein"
 
-#: of qteasy.datatypes.find_history_data:7
-msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True"
-msgstr ""
-"Ob eine Fuzzy-Übereinstimmung mit der Datenbeschreibung erfolgen soll. Wenn "
-"die angegebene Zeichenfolge Nicht-ASCII-Zeichen enthält, wird sie "
-"automatisch auf „True“ gesetzt."
-
-#: of qteasy.datatypes.find_history_data:8
-msgid "False: 仅匹配数据名称"
-msgstr "Falsch: stimmt nur mit Datennamen überein"
-
-#: of qteasy.datatypes.find_history_data:9
-msgid "True:  同时匹配数据描述"
-msgstr "True: stimmt gleichzeitig mit der Datenbeschreibung überein"
-
-#: of qteasy.datatypes.find_history_data:11
+#: of qteasy.datatypes.find_history_data:10
+#, fuzzy
 msgid ""
-"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True  - False: 精确匹配数据名称  - True:"
+"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True - False: 精确匹配数据名称 - True:"
 "  模糊匹配数据名称或数据描述"
 msgstr ""
-"Ob ein Fuzzy-Abgleich mit dem Datennamen erfolgen soll. Wenn die angegebene "
-"Zeichenfolge Nicht-ASCII-Zeichen oder Platzhalterzeichen */? enthält, wird "
-"sie automatisch zu „True“ – „False“: Genaue Übereinstimmung mit dem "
-"Datennamen – „True“: Fuzzy-Übereinstimmung mit dem Datennamen oder der "
-"Datenbeschreibung"
-
-#: of qteasy.datatypes.find_history_data:12
-msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"
-msgstr ""
-"Ob ein Fuzzy-Matching von Datennamen durchgeführt werden soll. Wenn die "
+"Ob ein Fuzzy-Abgleich mit dem Datennamen erfolgen soll. Wenn die "
 "angegebene Zeichenfolge Nicht-ASCII-Zeichen oder Platzhalterzeichen */? "
-"enthält, wird sie automatisch auf „True“ gesetzt."
-
-#: of qteasy.datatypes.find_history_data:13
-msgid "False: 精确匹配数据名称"
-msgstr "Falsch: Entspricht genau dem Datennamen"
+"enthält, wird sie automatisch zu „True“ – „False“: Genaue Übereinstimmung"
+" mit dem Datennamen – „True“: Fuzzy-Übereinstimmung mit dem Datennamen "
+"oder der Datenbeschreibung"
 
 #: of qteasy.datatypes.find_history_data:14
-msgid "True:  模糊匹配数据名称或数据描述"
-msgstr "True: Fuzzy-Matching-Datenname oder Datenbeschreibung"
-
-#: of qteasy.datatypes.find_history_data:16
 msgid "数据频率，如果提供，则只匹配该频率的数据 可以输入单个频率，也可以输入逗号分隔的多个频率"
 msgstr ""
 "Datenhäufigkeit, falls angegeben, werden nur Daten für diese Häufigkeit "
 "abgeglichen. Sie können eine einzelne Frequenz oder mehrere durch Kommas "
 "getrennte Frequenzen eingeben."
 
-#: of qteasy.datatypes.find_history_data:19
+#: of qteasy.datatypes.find_history_data:17
 msgid "证券类型，如果提供，则只匹配该证券类型的数据 可以输入单个证券类型，也可以输入逗号分隔的多个证券类型"
 msgstr ""
-"Sicherheitstyp: Falls angegeben, werden nur Daten für diesen Sicherheitstyp "
-"abgeglichen. Sie können einen einzelnen Sicherheitstyp oder mehrere durch "
-"Kommas getrennte Sicherheitstypen eingeben."
+"Sicherheitstyp: Falls angegeben, werden nur Daten für diesen "
+"Sicherheitstyp abgeglichen. Sie können einen einzelnen Sicherheitstyp "
+"oder mehrere durch Kommas getrennte Sicherheitstypen eingeben."
 
-#: of qteasy.datatypes.find_history_data:22
+#: of qteasy.datatypes.find_history_data:20
 msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
 msgstr ""
 "Passender Schwellenwert. Projekte, deren Übereinstimmungsgrad diesen "
 "Schwellenwert überschreitet, werden als übereinstimmend beurteilt."
 
-#: ../../source/api/history_data_types.rst of qteasy.core.filter_stocks
-#: qteasy.core.get_basic_info qteasy.core.get_data_overview
-#: qteasy.core.get_stock_info
-msgid "Returns"
-msgstr "Returns"
+#: of qteasy.datatypes.find_history_data:22
+msgid "数据表名称过滤条件，如果提供，则只匹配来自这些表的数据类型，可以是单个表名或逗号分隔字符串"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:24
+msgid ""
+"- False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息 - True:  返回包含匹配结果详细信息的 "
+"DataFrame，不强制依赖打印输出"
+msgstr ""
 
 #: of qteasy.datatypes.find_history_data:25
-msgid "**data_id** -- 匹配到的数据类型的data_id，可以用于qt.get_history_data()下载数据"
+msgid "False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:26
+msgid "True:  返回包含匹配结果详细信息的 DataFrame，不强制依赖打印输出"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:29
+msgid ""
+"* **data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 "
+"data_id 列表，可以用于 qt.get_history_data() 下载数据 * *pandas.DataFrame* -- 当 "
+"as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，   至少包含下列列：       -"
+" name:        数据类型名称       - description: 数据类型中文描述       - freq:        "
+"频率       - asset_type:  资产类型       - table_name:  底层数据表名称       - column:"
+"      对应的数据字段名       - kind:        消费形状（history / reference / static）"
+"       - usable_in:   可用性标记规范串       - recommended_api: "
+"推荐入口（get_history_data / get_reference_data /         get_static_data / "
+"none）"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:29
+#, fuzzy
+msgid ""
+"**data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id "
+"列表，可以用于 qt.get_history_data() 下载数据"
 msgstr ""
 "**data_id** – Die data_id des übereinstimmenden Datentyps, die zum "
 "Herunterladen von Daten mit qt.get_history_data() verwendet werden kann"
 
-#: ../../source/api/history_data_types.rst of qteasy.core.filter_stocks
-#: qteasy.core.get_basic_info qteasy.core.get_stock_info
-#: qteasy.core.get_table_overview qteasy.core.refill_data_source
-msgid "Return type"
-msgstr "Return type"
+#: of qteasy.datatypes.find_history_data:30
+msgid ""
+"*pandas.DataFrame* -- 当 as_data_frame 为 True 时，返回一个 "
+"DataFrame，每一行对应一个匹配到的数据类型， 至少包含下列列："
+msgstr ""
 
-#: of qteasy.core.filter_stocks:17 qteasy.core.get_basic_info:37
-#: qteasy.core.get_data_overview:16 qteasy.core.get_table_info:32
-#: qteasy.core.refill_data_source:74 qteasy.datatypes.find_history_data:29
-msgid "Examples"
-msgstr "Examples"
+#: of qteasy.datatypes.find_history_data:32
+msgid "name:        数据类型名称"
+msgstr ""
 
-#: ../../source/api/history_data_types.rst
-msgid "Raises"
-msgstr "Raises"
+#: of qteasy.datatypes.find_history_data:33
+msgid "description: 数据类型中文描述"
+msgstr ""
 
-#: of qteasy.datatypes.find_history_data:72
-msgid "输入的s不是字符串，或者freq/asset_type不是字符串或列表:"
+#: of qteasy.datatypes.find_history_data:34
+msgid "freq:        频率"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:35
+msgid "asset_type:  资产类型"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:36
+#, fuzzy
+msgid "table_name:  底层数据表名称"
+msgstr "table_name: str"
+
+#: of qteasy.datatypes.find_history_data:37
+msgid "column:      对应的数据字段名"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:38
+msgid "kind:        消费形状（history / reference / static）"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:39
+msgid "usable_in:   可用性标记规范串"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:40
+msgid ""
+"recommended_api: 推荐入口（get_history_data / get_reference_data / "
+"get_static_data / none）"
+msgstr ""
+
+#: of qteasy.datatypes.find_history_data:87
+#, fuzzy
+msgid "输入的 s 不是字符串，或者 freq/asset_type/table 不是字符串或列表"
 msgstr ""
 "Die Eingabe s ist keine Zeichenfolge oder freq/asset_type ist keine "
 "Zeichenfolge oder Liste:"
 
-#: ../../source/api/history_data_types.rst:12
-msgid "下载历史数据"
-msgstr "Laden Sie historische Daten herunter"
-
-#: of qteasy.core.refill_data_source:1
-msgid "从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中"
+#: ../../source/api/data_types.rst:37
+msgid "``find_history_data`` 亦在 :doc:`历史数据获取和管理 <history_data>` 中列出。"
 msgstr ""
-"Laden Sie Daten stapelweise vom API-Kanal des Netzwerkdatenanbieters "
-"herunter und füllen Sie die Daten nach der Bereinigung in die lokale "
-"Datenquelle ein."
 
-#: of qteasy.core.refill_data_source:3
+#: ../../source/api/data_types.rst:40
+msgid "高级：DataType 类"
+msgstr ""
+
+#: ../../source/api/data_types.rst:42
+msgid "专家层与内置策略可直接构造 ``DataType`` 对象；普通取数与策略声明优先使用字符串 ID。"
+msgstr ""
+
+#: of qteasy.datatypes.DataType:1
+msgid "qteasy 中用于描述单一历史数据类型（名称、频率与资产类型）的核心对象。"
+msgstr ""
+
+#: of qteasy.datatypes.DataType:3
 msgid ""
-"数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 'stock_daily, stock_weekly'"
-" 也可以给出数据表的用途，如 'data, basic'"
+"每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于 "
+"统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程， "
+"并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档 「DataType 与历史数据类型管理」章节。"
 msgstr ""
-"Der Datentabellenname muss eine in der Datenbank definierte Datentabelle "
-"sein. Es wird verwendet, um die Datentabelle anzugeben, die heruntergeladen "
-"werden muss. Der Name der Datentabelle kann angegeben werden, beispielsweise"
-" „stock_daily, stock_weekly“. Der Zweck der Datentabelle kann ebenfalls "
-"angegeben werden, z. B. „Daten, Basis“."
 
-#: of qteasy.core.refill_data_source:7
-msgid "需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE"
+#: of qteasy.datatypes.DataType:10
+msgid "下面示例展示 DataType 类名（稳定输出）。实际创建 DataType 时，需要提供 name/freq/asset_type："
 msgstr ""
-"DataSource, das mit Daten gefüllt werden muss. Wenn es keine ist, füllen Sie"
-" die Datenquelle mit QT_DATA_SOURCE"
 
-#: of qteasy.core.refill_data_source:9
+#: of qteasy.datatypes.DataType.__init__:1
+msgid "根据用户输入的名称或完整参数实例化一个DataType对象。"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.__init__:3
 msgid ""
-"数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分 - "
-"'akshare'     : 从AKshare API获取金融数据 - 'eastmoney'   : 从东方财富网获取金融数据"
+"``name`` 可以是宽匹配名（如 ``close``、``close|b``）或完整 id （如 "
+"``close_E_d``、``close|b_E_d``）。完整 id 从右侧拆出 freq 与 asset_type。仅输入宽名且未给出 "
+"asset_type 时，按目标频率 ``d`` 唯一化； 仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。 "
+"调用方显式给出 ``asset_type``（含 ``E,IDX`` / ``ANY``）时仍按第一匹配解析。"
 msgstr ""
-"Datenerfassungskanal, Finanzdaten-API, unterstützt die folgenden Optionen: –"
-" „tushare“: Finanzdaten von der Tushare-API abrufen, entsprechende "
-"Berechtigungen und Punkte bitte selbst beantragen – „akshare“: Finanzdaten "
-"von der AKshare-API abrufen – „eastmoney“: Finanzdaten von Oriental Fortune "
-"Network abrufen"
 
-#: of qteasy.core.refill_data_source:9
-msgid "数据获取渠道，金融数据API，支持以下选项:"
+#: of qteasy.datatypes.DataType.__init__:9
+msgid "数据类型的宽匹配名或完整 id"
 msgstr ""
-"Der Datenerfassungskanal, Finanzdaten-API, unterstützt die folgenden "
-"Optionen:"
 
-#: of qteasy.core.refill_data_source:11
-msgid "'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
-msgstr ""
-"'tushare': Erhalten Sie Finanzdaten von der Tushare-API. Bitte beantragen "
-"Sie die entsprechenden Berechtigungen und Punkte selbst"
-
-#: of qteasy.core.refill_data_source:12
-msgid "'akshare'     : 从AKshare API获取金融数据"
-msgstr "'akshare': Finanzdaten von der AKshare-API abrufen"
-
-#: of qteasy.core.refill_data_source:13
-msgid "'eastmoney'   : 从东方财富网获取金融数据"
-msgstr "'eastmoney': Erhalten Sie Finanzdaten vom East Money Network"
-
-#: of qteasy.core.refill_data_source:15
-msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表"
-msgstr ""
-"Der Datentabellenname muss eine in der Datenbank definierte Datentabelle "
-"sein und wird verwendet, um die Datentabelle anzugeben, die heruntergeladen "
-"werden muss."
-
-#: of qteasy.core.refill_data_source:17
-msgid "需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型"
-msgstr ""
-"Der Datentyp, der heruntergeladen werden muss, wird zum weiteren Filtern der"
-" Datentabelle verwendet. Es muss sich um den in der Datenbank definierten "
-"Datentyp handeln."
-
-#: of qteasy.core.refill_data_source:19
-msgid "需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率"
-msgstr ""
-"Die Datenfrequenz, die heruntergeladen werden muss, wird zum weiteren "
-"Filtern der Datentabelle verwendet. Es muss die in der Datenbank definierte "
-"Datenfrequenz sein."
-
-#: of qteasy.core.refill_data_source:21
-msgid "需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型"
-msgstr ""
-"Der Datenassettyp, der heruntergeladen werden muss, wird zum weiteren "
-"Filtern der Datentabelle verwendet. Es muss sich um den in der Datenbank "
-"definierten Asset-Typ handeln."
-
-#: of qteasy.core.refill_data_source:23
-msgid "是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据"
-msgstr ""
-"Ob die Tabelle „trade_calendar“ aktualisiert werden soll. Wenn es „True“ "
-"ist, werden die Daten der Tabelle „trade_calendar“ heruntergeladen."
-
-#: of qteasy.core.refill_data_source:25
-msgid "是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功"
-msgstr ""
-"Ob die Daten der abhängigen Tabelle aktualisiert werden sollen. Der "
-"Standardwert ist True. Wenn der Wert auf „Falsch“ gesetzt ist, wird die "
-"abhängige Tabelle ignoriert, was dazu führen kann, dass der Datendownload "
-"fehlschlägt."
-
-#: of qteasy.core.refill_data_source:27 qteasy.core.refill_data_source:29
-msgid "限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载"
-msgstr ""
-"Begrenzen Sie den Zeitraum für den Datendownload. Wenn Startdatum/Enddatum "
-"angegeben ist, werden nur Daten innerhalb dieses Zeitraums heruntergeladen."
-
-#: of qteasy.core.refill_data_source:31
+#: of qteasy.datatypes.DataType.__init__:11
 msgid ""
-"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含 "
-"'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
-"例如，下载stock_basic表数据时，下载以下输入均为合法输入：  - 'SZSE'     仅下载深圳交易所的股票数据 - ['SSE', "
-"'SZSE'] - 'SSE, SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
+"数据的频率: d(日), w(周), m(月), q(季), y(年), 1/5/15/30min, h "
+"如果给出此参数，必须匹配某一个内置数据类型的频率 如果不给出此参数，将按目标频率 d 唯一化"
 msgstr ""
-"Beschränken Sie die Filterparameter beim Herunterladen von Daten. Einige "
-"Datentabellen stellen filterbare Parameter in Form einer Liste bereit. "
-"Beispielsweise verfügt die Tabelle „stock_basic“ über den filterbaren "
-"Parameter „exchange“. Zu den Optionen gehören „SSE“, „SZSE“ und „BSE“. Mit "
-"diesem Parameter können Sie den Umfang der heruntergeladenen Daten "
-"einschränken. Wenn filter_arg „None“ ist, werden alle Daten heruntergeladen."
-" Beim Herunterladen der Tabellendaten „stock_basic“ sind beispielsweise die "
-"folgenden Eingaben zulässige Eingaben: – „SZSE“ lädt nur die Aktiendaten der"
-" Börse von Shenzhen herunter – [‘SSE‘, ‚SZSE‘] – ‚SSE, SZSE‘ Die beiden oben"
-" genannten Schreibmethoden sind gleichwertig und laden die Aktiendaten der "
-"Börsen von Shanghai und Shenzhen herunter"
 
-#: of qteasy.core.refill_data_source:31
+#: of qteasy.datatypes.DataType.__init__:15
 msgid ""
-"限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 参数\"exchange\"，选项包含 "
-"'SSE', 'SZSE', 'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
-"例如，下载stock_basic表数据时，下载以下输入均为合法输入："
+"数据的资产类型: E(股票), IDX(指数), FD(基金), FT(期货), OPT(期权) 也可以输入混合资产类型，如 'E,IDX' "
+"表示股票和指数两种资产类型 也可以输入 'ANY' 表示所有支持的资产类型 如果给出此参数，必须匹配某一个内置数据类型的资产类型 "
+"如果不给出此参数且无法唯一化，将报错并列候选完整 id"
 msgstr ""
-"Beschränken Sie die Filterparameter beim Herunterladen von Daten. Einige "
-"Datentabellen stellen filterbare Parameter in Form einer Liste bereit. "
-"Beispielsweise verfügt die Tabelle „stock_basic“ über den filterbaren "
-"Parameter „exchange“. Zu den Optionen gehören „SSE“, „SZSE“ und „BSE“. Mit "
-"diesem Parameter können Sie den Umfang der heruntergeladenen Daten "
-"einschränken. Wenn filter_arg „None“ ist, werden alle Daten heruntergeladen."
-" Wenn Sie beispielsweise die Daten der Tabelle „stock_basic“ herunterladen, "
-"sind die folgenden Eingaben zulässige Eingaben:"
 
-#: of qteasy.core.refill_data_source:35
-msgid "'SZSE'"
-msgstr "'SZSE'"
-
-#: of qteasy.core.refill_data_source:36
-msgid "仅下载深圳交易所的股票数据"
-msgstr "Laden Sie nur Aktiendaten von Shenzhen Exchange herunter"
-
-#: of qteasy.core.refill_data_source:37
-msgid "['SSE', 'SZSE']"
-msgstr "['SSE', 'SZSE']"
-
-#: of qteasy.core.refill_data_source:38
-msgid "'SSE, SZSE'"
-msgstr "'SSE, SZSE'"
-
-#: of qteasy.core.refill_data_source:39
-msgid "上面两种写法等效，下载上海和深圳交易所的股票数据"
+#: of qteasy.datatypes.DataType.__init__:22
+msgid "参数不在 DATA_TYPE_MAP 中，宽名歧义，或完整 id 与显式 freq/asset_type 冲突。"
 msgstr ""
-"Die beiden oben genannten Schreibmethoden sind gleichwertig. Laden Sie die "
-"Aktiendaten der Börsen Shanghai und Shenzhen herunter."
 
-#: of qteasy.core.refill_data_source:41
-msgid "用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载"
+#: of qteasy.DataType.asset_type:1 qteasy.DataType.asset_type_str:1
+msgid "资产类型的字符串表示形式，如'E'或'E,IDX'"
 msgstr ""
-"Aktiensymbole, die zum Herunterladen von Daten verwendet werden. Wenn "
-"Symbole angegeben sind, werden nur Daten für diese Bestandscodes "
-"heruntergeladen."
 
-#: of qteasy.core.refill_data_source:43
-msgid "是否逆序参数下载数据， 默认False - True:  逆序参数下载数据 - False: 顺序参数下载数据"
+#: of qteasy.DataType.asset_types:1
+msgid "所用用户定义的资产类型列表"
 msgstr ""
-"Ob Daten in umgekehrter Reihenfolge der Parameter heruntergeladen werden "
-"sollen, Standardeinstellung: Falsch – Wahr: Daten in umgekehrter Reihenfolge"
-" der Parameter herunterladen – Falsch: Daten in sequentieller Reihenfolge "
-"herunterladen"
 
-#: of qteasy.core.refill_data_source:47
-msgid "是否启用多线程下载数据 - True:  启用多线程下载数据 - False: 禁用多线程下载"
+#: of qteasy.DataType.data_table_names:1
+msgid "获取数据表名称，优先使用用户定义的数据表名称，如果没有用户定义的数据表名称，则使用内置数据表名称"
 msgstr ""
-"Ob das Herunterladen von Daten mit mehreren Threads aktiviert werden soll – "
-"True: Herunterladen von Daten mit mehreren Threads aktivieren – Falsch: "
-"Herunterladen mit mehreren Threads deaktivieren"
 
-#: of qteasy.core.refill_data_source:51
-msgid "启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数"
+#: of qteasy.DataType.dtype_id:1
+msgid "形如：close_E_d"
 msgstr ""
-"Wenn das Herunterladen mit mehreren Threads aktiviert ist, wird die Anzahl "
-"der gleichzeitig aktivierten Threads angezeigt. Der Standardwert ist die "
-"Anzahl der CPU-Kerne des Geräts."
 
-#: of qteasy.core.refill_data_source:53
-msgid "保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后 再批量保存到本地，chunk_size即批量，默认值100"
+#: of qteasy.datatypes.DataType.get_available_time:1
+msgid "数据类型在一天之内开始可用的时间，如收盘价在15:00可用，开盘价在9:30可用，高频数据没有可用时间"
 msgstr ""
-"Beim Speichern von Daten auf dem lokalen Gerät wird eine bestimmte Menge "
-"heruntergeladener Daten gesammelt und dann stapelweise auf dem lokalen Gerät"
-" gespeichert, um die Anzahl der Datei-/Datenbanklesevorgänge zu reduzieren. "
-"chunk_size ist der Stapel und der Standardwert ist 100."
 
-#: of qteasy.core.refill_data_source:56
+#: of qteasy.datatypes.DataType.get_available_time:4
+msgid "Properties"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:5
+msgid "asset_type: str"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_available_time:6
+msgid "资产类型，如'E'、'IDX'、'FD'等，因为现在支持多资产类型，所以需要指定资产类型以获取对应的可用时间"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:1
+msgid "Datatype类从DataSource类获取数据的方法，根据数据类型的获取方式，调用相应的方法获取数据并输出"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:3
+msgid "如果symbols为None，则输出为un-symbolised数据，否则输出为symbolised数据"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:5
+msgid "数据类型对象"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:7
+msgid "股票代码列表，一个逗号分隔的字符串，如'000001.SZ,000002.SZ'"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:9
+msgid "开始日期, YYYYMMDD格式"
+msgstr ""
+
+#: of qteasy.datatypes.DataType.get_data_from_source:11
+msgid "结束日期, YYYYMMDD格式"
+msgstr ""
+
+#: of qteasy.DataType.id:1
+msgid "忽略数据频率的ID形如：close(E)，用于标记不同资产类型的数据"
+msgstr ""
+
+#: of qteasy.DataType.unsymbolized:1
 msgid ""
-"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
-"该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 如果为0，则不暂停，一次性下载所有数据"
+"return True if this data type is unsymbolized data type (i.e. reference "
+"data type)"
 msgstr ""
-"Um die Häufigkeit von Netzwerkanfragen beim Herunterladen von Daten zu "
-"verringern, können Sie nach Abschluss eines Stapels von Datendownloads eine "
-"gewisse Zeit pausieren, bevor Sie mit dem Download fortfahren. Dieser "
-"Parameter gibt die maximale Anzahl an Downloads vor jeder Pause an. Dieser "
-"Parameter ist nur gültig, wenn parallel=False. Wenn es 0 ist, gibt es keine "
-"Pause und alle Daten werden auf einmal heruntergeladen."
-
-#: of qteasy.core.refill_data_source:60
-msgid ""
-"为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
-"该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 如果<=0，则不暂停，立即开始下一批数据下载"
-msgstr ""
-"Um die Häufigkeit von Netzwerkanfragen beim Herunterladen von Daten zu "
-"verringern, können Sie nach Abschluss eines Stapels von Datendownloads eine "
-"gewisse Zeit pausieren, bevor Sie mit dem Download fortfahren. Dieser "
-"Parameter gibt die Zeit jeder Pause in Sekunden an. Dieser Parameter ist nur"
-" gültig, wenn parallel=False. Wenn <=0, gibt es keine Pause und der nächste "
-"Stapel von Datendownloads beginnt sofort."
-
-#: of qteasy.core.refill_data_source:64
-msgid ""
-"数据写入数据源时的合并方式，支持以下选项： - 'update'  : 更新数据，如果数据已存在，则更新数据 - 'ignore'  : "
-"忽略数据，如果数据已存在，则丢弃下载的数据"
-msgstr ""
-"Die Zusammenführungsmethode beim Schreiben von Daten in die Datenquelle "
-"unterstützt die folgenden Optionen: – „Aktualisieren“: Aktualisieren Sie die"
-" Daten. Wenn die Daten bereits vorhanden sind, aktualisieren Sie die Daten. "
-"– „Ignorieren“: Ignorieren Sie die Daten. Wenn die Daten bereits vorhanden "
-"sind, verwerfen Sie die heruntergeladenen Daten"
-
-#: of qteasy.core.refill_data_source:68
-msgid "是否记录数据下载日志"
-msgstr "Ob Daten-Download-Protokolle aufgezeichnet werden sollen"
-
-#: ../../source/api/history_data_types.rst:16
-msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
-msgstr ""
-"Nachdem die historischen Daten lokal heruntergeladen wurden, können die "
-"Daten überprüft, verwaltet und abgerufen werden."
-
-#: ../../source/api/history_data_types.rst:18
-msgid "检查本地数据:"
-msgstr "Lokale Daten prüfen:"
-
-#: of qteasy.core.get_table_info:1
-msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容"
-msgstr ""
-"Rufen Sie Informationen zu einer Datentabelle in der Datenquelle ab und "
-"drucken Sie sie aus, einschließlich Datenvolumen, belegtem Speicherplatz, "
-"Primärschlüsselname und Inhalt"
-
-#: of qteasy.core.get_table_info:2
-msgid "以及数据列的名称、数据类型及说明"
-msgstr "Und der Name, der Datentyp und die Beschreibung der Datenspalte"
-
-#: of qteasy.core.get_table_info:5
-msgid "Parameters:"
-msgstr "Parameters:"
-
-#: of qteasy.core.get_table_info:6
-msgid "table_name: str"
-msgstr "table_name: str"
-
-#: of qteasy.core.get_table_info:7
-msgid "需要查询的数据表名称"
-msgstr "Der Name der abzufragenden Datentabelle"
-
-#: of qteasy.core.get_table_info:8
-msgid "data_source: DataSource"
-msgstr "data_source: DataSource"
-
-#: of qteasy.core.get_table_info:9
-msgid "需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息"
-msgstr ""
-"Die Datenquelle, die die Datentabelleninformationen abrufen muss. Der "
-"Standardwert ist „Keine“. Zu diesem Zeitpunkt werden die Informationen von "
-"QT_DATA_SOURCE abgerufen."
-
-#: of qteasy.core.get_table_info:10
-msgid "verbose: bool, Default: True，"
-msgstr "verbose: bool, Default: True，"
-
-#: of qteasy.core.get_table_info:11
-msgid "是否打印完整数据列名称及类型清单"
-msgstr ""
-"Ob die vollständige Liste der Datenspaltennamen und -typen gedruckt werden "
-"soll"
-
-#: of qteasy.core.get_table_info
-msgid "returns"
-msgstr "returns"
-
-#: of qteasy.core.get_table_info:15
-msgid "{"
-msgstr "{"
-
-#: of qteasy.core.get_table_info:16
-msgid ""
-"table name:    数据表名称 table_exists:  bool，数据表是否存在 table_size:    "
-"int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    int/str，数据表的行数，human"
-" 为True时返回容易阅读的字符串 primary_key1:  str，数据表第一个主键名称 pk_count1:     "
-"int，数据表第一个主键记录数量 pk_min1:       obj，数据表主键1起始记录 pk_max1:       obj，数据表主键2最终记录"
-" primary_key2:  str，数据表第二个主键名称 pk_count2:     int，数据表第二个主键记录 pk_min2:       "
-"obj，数据表主键2起始记录 pk_max2:       obj，数据表主键2最终记录"
-msgstr ""
-"Tabellenname: Name der Datentabelle table_exists: bool, ob die Datentabelle "
-"vorhanden ist table_size: int/str, die Datentabelle belegt Speicherplatz, "
-"eine leicht lesbare Zeichenfolge wird zurückgegeben, wenn der Mensch True "
-"ist. table_rows: int/str, die Anzahl der Zeilen in der Datentabelle, eine "
-"leicht lesbare Zeichenfolge wird zurückgegeben, wenn der Mensch True ist. "
-"primärer_schlüssel1: str, der Name des ersten Primärschlüssels der "
-"Datentabelle pk_count1: int, die Anzahl der Datensätze der erster "
-"Primärschlüssel der Datentabelle pk_min1: obj, der Startdatensatz von "
-"Primärschlüssel 1 der Datentabelle pk_max1: obj, der letzte Datensatz von "
-"Primärschlüssel 2 der Datentabelle Primary_key2: str, der Name des zweiten "
-"Primärschlüssels der Datentabelle pk_count2: int, der zweite "
-"Primärschlüsseldatensatz der Datentabelle pk_min2: obj, der Startdatensatz "
-"von Primärschlüssel 2 der Datentabelle pk_max2: obj, der letzte Datensatz "
-"des Primärschlüssels 2 der Datentabelle"
-
-#: of qteasy.core.get_table_info:28
-msgid "}"
-msgstr "}"
-
-#: of qteasy.core.get_table_info
-msgid "rtype"
-msgstr "rtype"
-
-#: of qteasy.core.get_table_info:29
-msgid "一个dict，包含数据表的结构化信息："
-msgstr "Ein Diktat, das strukturierte Informationen der Datentabelle enthält:"
-
-#: ../../source/api/history_data_types.rst:22
-msgid "获取已经下载的本地数据总览:"
-msgstr ""
-"Verschaffen Sie sich einen Überblick über heruntergeladene lokale Daten:"
-
-#: of qteasy.core.get_table_overview:1
-msgid "显示默认数据源或指定数据源的数据总览"
-msgstr ""
-"Zeigt eine Übersicht der Daten aus der Standarddatenquelle oder einer "
-"angegebenen Datenquelle an"
-
-#: of qteasy.core.get_data_overview:5 qteasy.core.get_table_overview:3
-msgid "一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview"
-msgstr ""
-"Ein data_source-Objekt, der Standardwert ist „None“. Wenn es „None“ ist, "
-"wird die Übersicht der Standarddatenquelle angezeigt."
-
-#: of qteasy.core.get_data_overview:7 qteasy.core.get_table_overview:5
-msgid "需要显示overview的数据表名称，如果为None，则显示所有数据表的overview"
-msgstr ""
-"Der Name der Datentabelle, die die Übersicht anzeigen soll. Wenn es „Keine“ "
-"ist, wird die Übersicht aller Datentabellen angezeigt."
-
-#: of qteasy.core.get_data_overview:9 qteasy.core.get_table_overview:7
-msgid "是否显示系统数据表的overview"
-msgstr "Ob eine Übersicht der Systemdatentabelle angezeigt werden soll"
-
-#: of qteasy.core.get_stock_info:35 qteasy.core.get_table_overview:13
-msgid "Notes"
-msgstr "Notes"
-
-#: of qteasy.core.get_table_overview:14
-msgid "用法示例参见get_data_overview()"
-msgstr "Anwendungsbeispiele finden Sie unter get_data_overview()"
-
-#: of qteasy.core.get_data_overview:1
-msgid "显示数据源的数据总览，等同于get_table_overview()"
-msgstr ""
-"Zeigt die Datenübersicht der Datenquelle an, äquivalent zu "
-"get_table_overview()"
-
-#: of qteasy.core.get_data_overview:3
-msgid "获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等"
-msgstr ""
-"Die erhaltenen Informationen umfassen das Datenvolumen, den belegten "
-"Speicherplatz, den Primärschlüsselnamen, den Inhalt usw. aller "
-"Datentabellen."
-
-#: of qteasy.core.get_data_overview:12
-msgid "* *pd.DataFrame* * *返回一个包含数据表的overview信息的DataFrame*"
-msgstr ""
-"* *pd.DataFrame* * *Gibt einen DataFrame zurück*, der "
-"Übersichtsinformationen der Datentabelle enthält"
-
-#: of qteasy.core.get_data_overview:12
-msgid "*pd.DataFrame*"
-msgstr "*pd.DataFrame*"
-
-#: of qteasy.core.get_data_overview:13
-msgid "*返回一个包含数据表的overview信息的DataFrame*"
-msgstr ""
-"*Gibt einen DataFrame zurück, der Übersichtsinformationen der Datentabelle "
-"enthält*"
-
-#: ../../source/api/history_data_types.rst:28
-msgid "下载数据基础数据:"
-msgstr "Basisdaten herunterladen:"
-
-#: of qteasy.core.get_basic_info:1
-msgid "等同于get_stock_info()"
-msgstr "Entspricht get_stock_info()"
-
-#: of qteasy.core.get_basic_info:2 qteasy.core.get_stock_info:2
-msgid "根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
-msgstr ""
-"Finden Sie anhand der eingegebenen Informationen grundlegende Informationen "
-"zu Aktien, Fonds, Indizes oder Futures und Optionen"
-
-#: of qteasy.core.get_basic_info:4
-msgid ""
-"证券代码或名称：  - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 - "
-"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 - 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
-msgstr ""
-"Wertpapiercode oder -name: – Wenn es sich um einen Wertpapiercode handelt, "
-"kann er ein Suffix enthalten oder nicht. Wenn es ein Suffix enthält, wird es"
-" genau durchsucht, und wenn es kein Suffix enthält, wird es global "
-"durchsucht. – Wenn es sich um einen Sicherheitsnamen handelt, kann er eine "
-"Fuzzy-Suche mit Platzhaltern oder eine Fuzzy-Suche nach Namen enthalten. – "
-"Wenn es genau mit einem Sicherheitscode übereinstimmt, wird ein Wörterbuch "
-"mit Informationen zum Sicherheitscode zurückgegeben."
-
-#: of qteasy.core.get_basic_info:4
-msgid "证券代码或名称："
-msgstr "Wertpapiercode oder Name:"
-
-#: of qteasy.core.get_basic_info:6
-msgid "如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配"
-msgstr ""
-"Wenn es sich um einen Wertpapiercode handelt, kann er ein Suffix enthalten "
-"oder nicht. Wenn es ein Suffix enthält, wird es genau durchsucht, und wenn "
-"es kein Suffix enthält, wird es global durchsucht."
-
-#: of qteasy.core.get_basic_info:7
-msgid "如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找"
-msgstr ""
-"Wenn es sich um einen Sicherheitsnamen handelt, kann er eine Wildcard-Fuzzy-"
-"Suche oder eine Fuzzy-Suche nach Namen umfassen."
-
-#: of qteasy.core.get_basic_info:8
-msgid "如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
-msgstr ""
-"Wenn ein exakter Sicherheitscode übereinstimmt, wird ein Wörterbuch "
-"zurückgegeben, das relevante Informationen zum Sicherheitscode enthält."
-
-#: of qteasy.core.get_basic_info:9 qteasy.core.get_stock_info:8
-msgid ""
-"证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：  - E     股票 - IDX   指数 - FD    基金 - FT    期货 - "
-"OPT   期权"
-msgstr ""
-"Wertpapiertyp, akzeptiert eine Liste oder eine durch Kommas getrennte "
-"Zeichenfolge mit erkannten Vermögenswerttypen: - E-Aktie - IDX-Index - FD-"
-"Fonds - FT-Futures - OPT-Optionen"
-
-#: of qteasy.core.get_basic_info:9 qteasy.core.get_stock_info:8
-msgid "证券类型，接受列表或逗号分隔字符串，包含认可的资产类型："
-msgstr ""
-"Sicherheitstyp, akzeptiert eine Liste oder eine durch Kommas getrennte "
-"Zeichenfolge mit erkannten Asset-Typen:"
-
-#: of qteasy.core.get_basic_info:11 qteasy.core.get_stock_info:10
-msgid "E     股票"
-msgstr "E-Aktien"
-
-#: of qteasy.core.get_basic_info:12 qteasy.core.get_stock_info:11
-msgid "IDX   指数"
-msgstr "IDX-Index"
-
-#: of qteasy.core.get_basic_info:13 qteasy.core.get_stock_info:12
-msgid "FD    基金"
-msgstr "FD-Fonds"
-
-#: of qteasy.core.get_basic_info:14 qteasy.core.get_stock_info:13
-msgid "FT    期货"
-msgstr "FT-Futures"
-
-#: of qteasy.core.get_basic_info:15 qteasy.core.get_stock_info:14
-msgid "OPT   期权"
-msgstr "OPT-Optionen"
-
-#: of qteasy.core.get_basic_info:17 qteasy.core.get_stock_info:15
-msgid "是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长"
-msgstr ""
-"Ob der vollständige Name der Aktie oder des Fonds abgeglichen werden soll. "
-"Der Standardwert ist Nein. Wenn der vollständige Name übereinstimmt, dauert "
-"es länger."
-
-#: of qteasy.core.get_basic_info:19 qteasy.core.get_stock_info:17
-msgid "如果为True，打印匹配到的结果"
-msgstr "Wenn True, werden die übereinstimmenden Ergebnisse gedruckt"
-
-#: of qteasy.core.get_basic_info:21 qteasy.core.get_stock_info:19
-msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息  - False 默认值，只显示匹配度最高的内容 - True  显示所有匹配到的内容"
-msgstr ""
-"Wenn zu viele übereinstimmende Wertpapiere vorhanden sind (mehr als fünf), "
-"ob vollständige Informationen angezeigt werden sollen – Falsch. "
-"Standardwert, nur den Inhalt mit der höchsten Übereinstimmung anzeigen – "
-"True, um alle übereinstimmenden Inhalte anzuzeigen"
-
-#: of qteasy.core.get_basic_info:21 qteasy.core.get_stock_info:19
-msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息"
-msgstr ""
-"Wenn zu viele übereinstimmende Wertpapiere vorhanden sind (mehr als fünf), "
-"ob vollständige Informationen angezeigt werden sollen"
-
-#: of qteasy.core.get_basic_info:23 qteasy.core.get_stock_info:21
-msgid "False 默认值，只显示匹配度最高的内容"
-msgstr ""
-"Falscher Standardwert, es wird nur der Inhalt mit dem höchsten "
-"Übereinstimmungsgrad angezeigt"
-
-#: of qteasy.core.get_basic_info:24 qteasy.core.get_stock_info:22
-msgid "True  显示所有匹配到的内容"
-msgstr "True zeigt alle passenden Inhalte an"
-
-#: of qteasy.core.get_basic_info:27 qteasy.core.get_stock_info:25
-msgid ""
-"当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：  - "
-"股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 - 基金：   "
-"基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - 期货：   期货名称 - 期权：   期权名称"
-msgstr ""
-"Wenn nur eine Übereinstimmung gefunden wird, wird ein Diktat zurückgegeben, "
-"das die gefundenen Basisinformationen enthält. Die gefundenen Informationen "
-"sind je nach Wertpapiertyp unterschiedlich: - Aktieninformationen: "
-"Firmenname, Region, Branche, vollständiger Name, Notierungsstatus, "
-"Notierungsdatum - Indexinformationen: Indexname, vollständiger Name, "
-"Emittent, Typ, Ausgabedatum - Fonds: Fondsname, Manager, Depotbank, "
-"Fondstyp, Ausgabedatum, Ausgabemenge, Anlagetyp, Typ - Futures: Futures-Name"
-" - Option: Optionsname"
-
-#: of qteasy.core.get_basic_info:27 qteasy.core.get_stock_info:25
-msgid "当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同："
-msgstr ""
-"Wenn nur eine Übereinstimmung gefunden wird, wird ein Diktat zurückgegeben, "
-"das die gefundenen Basisinformationen enthält, die je nach Sicherheitstyp "
-"unterschiedlich sind:"
-
-#: of qteasy.core.get_basic_info:29 qteasy.core.get_stock_info:27
-msgid "股票信息：公司名、地区、行业、全名、上市状态、上市日期"
-msgstr ""
-"Aktieninformationen: Firmenname, Region, Branche, vollständiger Name, "
-"Listungsstatus, Listungsdatum"
-
-#: of qteasy.core.get_basic_info:30 qteasy.core.get_stock_info:28
-msgid "指数信息：指数名、全名、发行人、种类、发行日期"
-msgstr ""
-"Indexinformationen: Indexname, vollständiger Name, Emittent, Typ, "
-"Ausgabedatum"
-
-#: of qteasy.core.get_basic_info:31 qteasy.core.get_stock_info:29
-msgid "基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型"
-msgstr ""
-"Fonds: Fondsname, Manager, Depotbank, Fondstyp, Ausgabedatum, Ausgabemenge, "
-"Anlagetyp, Typ"
-
-#: of qteasy.core.get_basic_info:32 qteasy.core.get_stock_info:30
-msgid "期货：   期货名称"
-msgstr "Futures: Futures-Name"
-
-#: of qteasy.core.get_basic_info:33 qteasy.core.get_stock_info:31
-msgid "期权：   期权名称"
-msgstr "Option: Optionsname"
-
-#: of qteasy.core.get_stock_info:1
-msgid "等同于get_basic_info()"
-msgstr "Entspricht get_basic_info()"
-
-#: of qteasy.core.get_stock_info:4
-msgid ""
-"证券代码或名称， 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 "
-"如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
-msgstr ""
-"Wertpapiercode oder -name. Wenn es sich um einen Sicherheitscode handelt, "
-"kann er ein Suffix enthalten oder nicht. Wenn es ein Suffix enthält, wird es"
-" genau durchsucht, und wenn es kein Suffix enthält, wird es global "
-"durchsucht. Wenn es sich um einen Sicherheitsnamen handelt, kann er eine "
-"Fuzzy-Suche mit Platzhaltern oder eine Fuzzy-Suche nach Namen enthalten. "
-"Wenn ein Sicherheitscode genau übereinstimmt, wird ein Wörterbuch "
-"zurückgegeben, das relevante Informationen zum Sicherheitscode enthält."
-
-#: of qteasy.core.get_stock_info:36
-msgid "用法示例参见：get_basic_info()"
-msgstr "Anwendungsbeispiele finden Sie unter: get_basic_info()"
-
-#: of qteasy.core.filter_stock_codes:1
-msgid "根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单"
-msgstr ""
-"Rufen Sie filter_stocks auf, um Aktien basierend auf den Eingabeparametern "
-"zu filtern und eine Liste von Aktiencodes zurückzugeben"
-
-#: of qteasy.core.filter_stock_codes:3 qteasy.core.filter_stocks:3
-msgid "筛选股票的上市日期，在该日期以后上市的股票将会被剔除："
-msgstr ""
-"Überprüfen Sie das Listungsdatum von Aktien. Aktien, die nach diesem Datum "
-"notiert sind, werden eliminiert:"
-
-#: of qteasy.core.filter_stock_codes:5
-msgid "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来"
-msgstr ""
-"Sie können Aktien anhand der folgenden Parameter filtern. Sie können mehrere"
-" Filterbedingungen gleichzeitig eingeben. Es werden nur Bestände "
-"herausgefiltert, die die Anforderungen erfüllen."
-
-#: of qteasy.core.filter_stock_codes:10
-msgid ":obj:`filter_stocks`"
-msgstr ":obj:`filter_stocks`"
-
-#: of qteasy.core.filter_stocks:1
-msgid "根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame"
-msgstr ""
-"Filtern Sie Aktien basierend auf den Eingabeparametern und geben Sie einen "
-"DataFrame zurück, der Aktiencodes und zugehörige Informationen enthält"
-
-#: of qteasy.core.filter_stocks:5
-msgid ""
-"可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来 - index:      "
-"根据指数筛选，不含在指定的指数内的股票将会被剔除 - industry:   公司所处行业，只有列举出来的行业会被选中 - area:       "
-"公司所处省份，只有列举出来的省份的股票才会被选中 - market:     市场，分为主板、创业板等 - exchange:   "
-"交易所，包括上海证券交易所和深圳股票交易所"
-msgstr ""
-"Sie können Aktien anhand der folgenden Parameter überprüfen. Sie können "
-"mehrere Prüfbedingungen gleichzeitig eingeben. Es werden nur Aktien "
-"herausgefiltert, die die Anforderungen erfüllen. - Index: Filter basierend "
-"auf dem Index. Aktien, die nicht im angegebenen Index enthalten sind, werden"
-" eliminiert. - Branche: die Branche, in der das Unternehmen ansässig ist. Es"
-" werden nur die aufgelisteten Branchen ausgewählt. - Gebiet: die Provinz, in"
-" der das Unternehmen ansässig ist. Es werden nur Aktien aus den "
-"aufgelisteten Provinzen ausgewählt. - Markt: Markt, unterteilt in "
-"Hauptplatine, GEM usw. - Börse: Börse, einschließlich Shanghai Stock "
-"Exchange und Shenzhen Stock Exchange"
-
-#: of qteasy.core.filter_stocks:13
-msgid "**DataFrame**"
-msgstr "**DataFrame**"
-
-msgid "返回"
-msgstr "zurückkehren"
-
-msgid "返回类型"
-msgstr "Rückgabetyp"
-
-msgid "抛出"
-msgstr "Werfen"
-
-msgid "备注"
-msgstr "Bemerkung"
+
+#~ msgid "QTEASY管理的历史数据种类"
+#~ msgstr "Arten von historischen Daten, die von QTEASY verwaltet werden"
+
+#~ msgid "使用qteasy可以获取并管理大量的历史数据。qteasy可以管理的历史数据涵盖股票、基金、指数、期货等等，种类包含价格数据、技术指标、宏观经济、公司财报、宏观金融等等。"
+#~ msgstr ""
+#~ "Verwenden Sie qteasy, um große Mengen"
+#~ " historischer Daten abzurufen und zu "
+#~ "verwalten. Die historischen Daten, die "
+#~ "von qteasy verwaltet werden können, "
+#~ "umfassen Aktien, Fonds, Indizes, Futures "
+#~ "usw. Zu den Typen gehören Preisdaten,"
+#~ " technische Indikatoren, Makroökonomie, "
+#~ "Unternehmensfinanzberichte, Makrofinanzen usw."
+
+#~ msgid "所有数据都可以通过tushare的接口获取，下载到本地之后，就可以通过qteasy的接口进行管理和调用了。"
+#~ msgstr ""
+#~ "Alle Daten können über die tushare-"
+#~ "Schnittstelle abgerufen werden. Nach dem "
+#~ "Herunterladen auf die lokale Ebene kann"
+#~ " es über die qteasy-Schnittstelle "
+#~ "verwaltet und aufgerufen werden."
+
+#~ msgid "查找支持历史数据:"
+#~ msgstr "Finden Sie unterstützende historische Daten:"
+
+#~ msgid "Parameters"
+#~ msgstr "Parameters"
+
+#~ msgid "是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True"
+#~ msgstr ""
+#~ "Ob eine Fuzzy-Übereinstimmung mit der"
+#~ " Datenbeschreibung erfolgen soll. Wenn die"
+#~ " angegebene Zeichenfolge Nicht-ASCII-"
+#~ "Zeichen enthält, wird sie automatisch "
+#~ "auf „True“ gesetzt."
+
+#~ msgid "False: 仅匹配数据名称"
+#~ msgstr "Falsch: stimmt nur mit Datennamen überein"
+
+#~ msgid "True:  同时匹配数据描述"
+#~ msgstr "True: stimmt gleichzeitig mit der Datenbeschreibung überein"
+
+#~ msgid "是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True"
+#~ msgstr ""
+#~ "Ob ein Fuzzy-Matching von Datennamen "
+#~ "durchgeführt werden soll. Wenn die "
+#~ "angegebene Zeichenfolge Nicht-ASCII-Zeichen"
+#~ " oder Platzhalterzeichen */? enthält, wird"
+#~ " sie automatisch auf „True“ gesetzt."
+
+#~ msgid "False: 精确匹配数据名称"
+#~ msgstr "Falsch: Entspricht genau dem Datennamen"
+
+#~ msgid "True:  模糊匹配数据名称或数据描述"
+#~ msgstr "True: Fuzzy-Matching-Datenname oder Datenbeschreibung"
+
+#~ msgid "Returns"
+#~ msgstr "Returns"
+
+#~ msgid "Return type"
+#~ msgstr "Return type"
+
+#~ msgid "Examples"
+#~ msgstr "Examples"
+
+#~ msgid "Raises"
+#~ msgstr "Raises"
+
+#~ msgid "下载历史数据"
+#~ msgstr "Laden Sie historische Daten herunter"
+
+#~ msgid "从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中"
+#~ msgstr ""
+#~ "Laden Sie Daten stapelweise vom API-"
+#~ "Kanal des Netzwerkdatenanbieters herunter und"
+#~ " füllen Sie die Daten nach der "
+#~ "Bereinigung in die lokale Datenquelle "
+#~ "ein."
+
+#~ msgid ""
+#~ "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表 可以给出数据表名称，如 "
+#~ "'stock_daily, stock_weekly' 也可以给出数据表的用途，如 'data, "
+#~ "basic'"
+#~ msgstr ""
+#~ "Der Datentabellenname muss eine in der"
+#~ " Datenbank definierte Datentabelle sein. Es"
+#~ " wird verwendet, um die Datentabelle "
+#~ "anzugeben, die heruntergeladen werden muss."
+#~ " Der Name der Datentabelle kann "
+#~ "angegeben werden, beispielsweise „stock_daily, "
+#~ "stock_weekly“. Der Zweck der Datentabelle "
+#~ "kann ebenfalls angegeben werden, z. B."
+#~ " „Daten, Basis“."
+
+#~ msgid "需要填充数据的DataSource, 如果为None，则填充数据源到QT_DATA_SOURCE"
+#~ msgstr ""
+#~ "DataSource, das mit Daten gefüllt werden"
+#~ " muss. Wenn es keine ist, füllen "
+#~ "Sie die Datenquelle mit QT_DATA_SOURCE"
+
+#~ msgid ""
+#~ "数据获取渠道，金融数据API，支持以下选项:  - 'tushare'     : "
+#~ "从Tushare API获取金融数据，请自行申请相应权限和积分 - 'akshare'     "
+#~ ": 从AKshare API获取金融数据 - 'eastmoney'   :"
+#~ " 从东方财富网获取金融数据"
+#~ msgstr ""
+#~ "Datenerfassungskanal, Finanzdaten-API, unterstützt"
+#~ " die folgenden Optionen: – „tushare“: "
+#~ "Finanzdaten von der Tushare-API abrufen,"
+#~ " entsprechende Berechtigungen und Punkte "
+#~ "bitte selbst beantragen – „akshare“: "
+#~ "Finanzdaten von der AKshare-API abrufen"
+#~ " – „eastmoney“: Finanzdaten von Oriental"
+#~ " Fortune Network abrufen"
+
+#~ msgid "数据获取渠道，金融数据API，支持以下选项:"
+#~ msgstr ""
+#~ "Der Datenerfassungskanal, Finanzdaten-API, "
+#~ "unterstützt die folgenden Optionen:"
+
+#~ msgid "'tushare'     : 从Tushare API获取金融数据，请自行申请相应权限和积分"
+#~ msgstr ""
+#~ "'tushare': Erhalten Sie Finanzdaten von "
+#~ "der Tushare-API. Bitte beantragen Sie"
+#~ " die entsprechenden Berechtigungen und "
+#~ "Punkte selbst"
+
+#~ msgid "'akshare'     : 从AKshare API获取金融数据"
+#~ msgstr "'akshare': Finanzdaten von der AKshare-API abrufen"
+
+#~ msgid "'eastmoney'   : 从东方财富网获取金融数据"
+#~ msgstr "'eastmoney': Erhalten Sie Finanzdaten vom East Money Network"
+
+#~ msgid "数据表名，必须是database中定义的数据表，用于指定需要下载的数据表"
+#~ msgstr ""
+#~ "Der Datentabellenname muss eine in der"
+#~ " Datenbank definierte Datentabelle sein und"
+#~ " wird verwendet, um die Datentabelle "
+#~ "anzugeben, die heruntergeladen werden muss."
+
+#~ msgid "需要下载的数据类型，用于进一步筛选数据表，必须是database中定义的数据类型"
+#~ msgstr ""
+#~ "Der Datentyp, der heruntergeladen werden "
+#~ "muss, wird zum weiteren Filtern der "
+#~ "Datentabelle verwendet. Es muss sich um"
+#~ " den in der Datenbank definierten "
+#~ "Datentyp handeln."
+
+#~ msgid "需要下载的数据频率，用于进一步筛选数据表，必须是database中定义的数据频率"
+#~ msgstr ""
+#~ "Die Datenfrequenz, die heruntergeladen werden"
+#~ " muss, wird zum weiteren Filtern der"
+#~ " Datentabelle verwendet. Es muss die "
+#~ "in der Datenbank definierte Datenfrequenz "
+#~ "sein."
+
+#~ msgid "需要下载的数据资产类型，用于进一步筛选数据表，必须是database中定义的资产类型"
+#~ msgstr ""
+#~ "Der Datenassettyp, der heruntergeladen werden"
+#~ " muss, wird zum weiteren Filtern der"
+#~ " Datentabelle verwendet. Es muss sich "
+#~ "um den in der Datenbank definierten "
+#~ "Asset-Typ handeln."
+
+#~ msgid "是否更新trade_calendar表，如果为True，则会下载trade_calendar表的数据"
+#~ msgstr ""
+#~ "Ob die Tabelle „trade_calendar“ aktualisiert"
+#~ " werden soll. Wenn es „True“ ist, "
+#~ "werden die Daten der Tabelle "
+#~ "„trade_calendar“ heruntergeladen."
+
+#~ msgid "是否更新依赖表的数据，默认True，如果设置为False，则忽略依赖表，这样可能导致数据下载不成功"
+#~ msgstr ""
+#~ "Ob die Daten der abhängigen Tabelle "
+#~ "aktualisiert werden sollen. Der Standardwert"
+#~ " ist True. Wenn der Wert auf "
+#~ "„Falsch“ gesetzt ist, wird die abhängige"
+#~ " Tabelle ignoriert, was dazu führen "
+#~ "kann, dass der Datendownload fehlschlägt."
+
+#~ msgid "限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载"
+#~ msgstr ""
+#~ "Begrenzen Sie den Zeitraum für den "
+#~ "Datendownload. Wenn Startdatum/Enddatum angegeben"
+#~ " ist, werden nur Daten innerhalb "
+#~ "dieses Zeitraums heruntergeladen."
+
+#~ msgid ""
+#~ "限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 "
+#~ "参数\"exchange\"，选项包含 'SSE', 'SZSE', "
+#~ "'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
+#~ "例如，下载stock_basic表数据时，下载以下输入均为合法输入：  - 'SZSE'     "
+#~ "仅下载深圳交易所的股票数据 - ['SSE', 'SZSE'] - 'SSE,"
+#~ " SZSE'     上面两种写法等效，下载上海和深圳交易所的股票数据"
+#~ msgstr ""
+#~ "Beschränken Sie die Filterparameter beim "
+#~ "Herunterladen von Daten. Einige Datentabellen"
+#~ " stellen filterbare Parameter in Form "
+#~ "einer Liste bereit. Beispielsweise verfügt "
+#~ "die Tabelle „stock_basic“ über den "
+#~ "filterbaren Parameter „exchange“. Zu den "
+#~ "Optionen gehören „SSE“, „SZSE“ und "
+#~ "„BSE“. Mit diesem Parameter können Sie"
+#~ " den Umfang der heruntergeladenen Daten "
+#~ "einschränken. Wenn filter_arg „None“ ist, "
+#~ "werden alle Daten heruntergeladen. Beim "
+#~ "Herunterladen der Tabellendaten „stock_basic“ "
+#~ "sind beispielsweise die folgenden Eingaben "
+#~ "zulässige Eingaben: – „SZSE“ lädt nur"
+#~ " die Aktiendaten der Börse von "
+#~ "Shenzhen herunter – [‘SSE‘, ‚SZSE‘] –"
+#~ " ‚SSE, SZSE‘ Die beiden oben "
+#~ "genannten Schreibmethoden sind gleichwertig "
+#~ "und laden die Aktiendaten der Börsen "
+#~ "von Shanghai und Shenzhen herunter"
+
+#~ msgid ""
+#~ "限定下载数据时的筛选参数，某些数据表以列表的形式给出可筛选参数，如stock_basic表，它有一个可筛选 "
+#~ "参数\"exchange\"，选项包含 'SSE', 'SZSE', "
+#~ "'BSE'，可以通过此参数限定下载数据的范围。 如果filter_arg为None，则下载所有数据。 "
+#~ "例如，下载stock_basic表数据时，下载以下输入均为合法输入："
+#~ msgstr ""
+#~ "Beschränken Sie die Filterparameter beim "
+#~ "Herunterladen von Daten. Einige Datentabellen"
+#~ " stellen filterbare Parameter in Form "
+#~ "einer Liste bereit. Beispielsweise verfügt "
+#~ "die Tabelle „stock_basic“ über den "
+#~ "filterbaren Parameter „exchange“. Zu den "
+#~ "Optionen gehören „SSE“, „SZSE“ und "
+#~ "„BSE“. Mit diesem Parameter können Sie"
+#~ " den Umfang der heruntergeladenen Daten "
+#~ "einschränken. Wenn filter_arg „None“ ist, "
+#~ "werden alle Daten heruntergeladen. Wenn "
+#~ "Sie beispielsweise die Daten der Tabelle"
+#~ " „stock_basic“ herunterladen, sind die "
+#~ "folgenden Eingaben zulässige Eingaben:"
+
+#~ msgid "'SZSE'"
+#~ msgstr "'SZSE'"
+
+#~ msgid "仅下载深圳交易所的股票数据"
+#~ msgstr "Laden Sie nur Aktiendaten von Shenzhen Exchange herunter"
+
+#~ msgid "['SSE', 'SZSE']"
+#~ msgstr "['SSE', 'SZSE']"
+
+#~ msgid "'SSE, SZSE'"
+#~ msgstr "'SSE, SZSE'"
+
+#~ msgid "上面两种写法等效，下载上海和深圳交易所的股票数据"
+#~ msgstr ""
+#~ "Die beiden oben genannten Schreibmethoden "
+#~ "sind gleichwertig. Laden Sie die "
+#~ "Aktiendaten der Börsen Shanghai und "
+#~ "Shenzhen herunter."
+
+#~ msgid "用于下载数据的股票代码，如果给出了symbols，只有这些股票代码的数据会被下载"
+#~ msgstr ""
+#~ "Aktiensymbole, die zum Herunterladen von "
+#~ "Daten verwendet werden. Wenn Symbole "
+#~ "angegeben sind, werden nur Daten für "
+#~ "diese Bestandscodes heruntergeladen."
+
+#~ msgid "是否逆序参数下载数据， 默认False - True:  逆序参数下载数据 - False: 顺序参数下载数据"
+#~ msgstr ""
+#~ "Ob Daten in umgekehrter Reihenfolge der"
+#~ " Parameter heruntergeladen werden sollen, "
+#~ "Standardeinstellung: Falsch – Wahr: Daten "
+#~ "in umgekehrter Reihenfolge der Parameter "
+#~ "herunterladen – Falsch: Daten in "
+#~ "sequentieller Reihenfolge herunterladen"
+
+#~ msgid "是否启用多线程下载数据 - True:  启用多线程下载数据 - False: 禁用多线程下载"
+#~ msgstr ""
+#~ "Ob das Herunterladen von Daten mit "
+#~ "mehreren Threads aktiviert werden soll –"
+#~ " True: Herunterladen von Daten mit "
+#~ "mehreren Threads aktivieren – Falsch: "
+#~ "Herunterladen mit mehreren Threads "
+#~ "deaktivieren"
+
+#~ msgid "启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数"
+#~ msgstr ""
+#~ "Wenn das Herunterladen mit mehreren "
+#~ "Threads aktiviert ist, wird die Anzahl"
+#~ " der gleichzeitig aktivierten Threads "
+#~ "angezeigt. Der Standardwert ist die "
+#~ "Anzahl der CPU-Kerne des Geräts."
+
+#~ msgid "保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后 再批量保存到本地，chunk_size即批量，默认值100"
+#~ msgstr ""
+#~ "Beim Speichern von Daten auf dem "
+#~ "lokalen Gerät wird eine bestimmte Menge"
+#~ " heruntergeladener Daten gesammelt und dann"
+#~ " stapelweise auf dem lokalen Gerät "
+#~ "gespeichert, um die Anzahl der "
+#~ "Datei-/Datenbanklesevorgänge zu reduzieren. "
+#~ "chunk_size ist der Stapel und der "
+#~ "Standardwert ist 100."
+
+#~ msgid ""
+#~ "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
+#~ "该参数指定了每次暂停之前最多可以下载的次数，该参数只有在parallel=False时有效 "
+#~ "如果为0，则不暂停，一次性下载所有数据"
+#~ msgstr ""
+#~ "Um die Häufigkeit von Netzwerkanfragen "
+#~ "beim Herunterladen von Daten zu "
+#~ "verringern, können Sie nach Abschluss "
+#~ "eines Stapels von Datendownloads eine "
+#~ "gewisse Zeit pausieren, bevor Sie mit"
+#~ " dem Download fortfahren. Dieser Parameter"
+#~ " gibt die maximale Anzahl an "
+#~ "Downloads vor jeder Pause an. Dieser "
+#~ "Parameter ist nur gültig, wenn "
+#~ "parallel=False. Wenn es 0 ist, gibt "
+#~ "es keine Pause und alle Daten "
+#~ "werden auf einmal heruntergeladen."
+
+#~ msgid ""
+#~ "为了降低下载数据时的网络请求频率，可以在完成一批数据下载后，暂停一段时间再继续下载 "
+#~ "该参数指定了每次暂停的时间，单位为秒，该参数只有在parallel=False时有效 "
+#~ "如果<=0，则不暂停，立即开始下一批数据下载"
+#~ msgstr ""
+#~ "Um die Häufigkeit von Netzwerkanfragen "
+#~ "beim Herunterladen von Daten zu "
+#~ "verringern, können Sie nach Abschluss "
+#~ "eines Stapels von Datendownloads eine "
+#~ "gewisse Zeit pausieren, bevor Sie mit"
+#~ " dem Download fortfahren. Dieser Parameter"
+#~ " gibt die Zeit jeder Pause in "
+#~ "Sekunden an. Dieser Parameter ist nur"
+#~ " gültig, wenn parallel=False. Wenn <=0, "
+#~ "gibt es keine Pause und der "
+#~ "nächste Stapel von Datendownloads beginnt "
+#~ "sofort."
+
+#~ msgid ""
+#~ "数据写入数据源时的合并方式，支持以下选项： - 'update'  : "
+#~ "更新数据，如果数据已存在，则更新数据 - 'ignore'  : "
+#~ "忽略数据，如果数据已存在，则丢弃下载的数据"
+#~ msgstr ""
+#~ "Die Zusammenführungsmethode beim Schreiben von"
+#~ " Daten in die Datenquelle unterstützt "
+#~ "die folgenden Optionen: – „Aktualisieren“: "
+#~ "Aktualisieren Sie die Daten. Wenn die"
+#~ " Daten bereits vorhanden sind, "
+#~ "aktualisieren Sie die Daten. – "
+#~ "„Ignorieren“: Ignorieren Sie die Daten. "
+#~ "Wenn die Daten bereits vorhanden sind,"
+#~ " verwerfen Sie die heruntergeladenen Daten"
+
+#~ msgid "是否记录数据下载日志"
+#~ msgstr "Ob Daten-Download-Protokolle aufgezeichnet werden sollen"
+
+#~ msgid "历史数据下载到本地之后，可以检查、管理、调用这些数据。"
+#~ msgstr ""
+#~ "Nachdem die historischen Daten lokal "
+#~ "heruntergeladen wurden, können die Daten "
+#~ "überprüft, verwaltet und abgerufen werden."
+
+#~ msgid "检查本地数据:"
+#~ msgstr "Lokale Daten prüfen:"
+
+#~ msgid "获取并打印数据源中一张数据表的信息，包括数据量、占用磁盘空间、主键名称、内容"
+#~ msgstr ""
+#~ "Rufen Sie Informationen zu einer "
+#~ "Datentabelle in der Datenquelle ab und"
+#~ " drucken Sie sie aus, einschließlich "
+#~ "Datenvolumen, belegtem Speicherplatz, "
+#~ "Primärschlüsselname und Inhalt"
+
+#~ msgid "以及数据列的名称、数据类型及说明"
+#~ msgstr "Und der Name, der Datentyp und die Beschreibung der Datenspalte"
+
+#~ msgid "Parameters:"
+#~ msgstr "Parameters:"
+
+#~ msgid "需要查询的数据表名称"
+#~ msgstr "Der Name der abzufragenden Datentabelle"
+
+#~ msgid "data_source: DataSource"
+#~ msgstr "data_source: DataSource"
+
+#~ msgid "需要获取数据表信息的数据源，默认None，此时获取QT_DATA_SOURCE的信息"
+#~ msgstr ""
+#~ "Die Datenquelle, die die "
+#~ "Datentabelleninformationen abrufen muss. Der "
+#~ "Standardwert ist „Keine“. Zu diesem "
+#~ "Zeitpunkt werden die Informationen von "
+#~ "QT_DATA_SOURCE abgerufen."
+
+#~ msgid "verbose: bool, Default: True，"
+#~ msgstr "verbose: bool, Default: True，"
+
+#~ msgid "是否打印完整数据列名称及类型清单"
+#~ msgstr ""
+#~ "Ob die vollständige Liste der "
+#~ "Datenspaltennamen und -typen gedruckt werden"
+#~ " soll"
+
+#~ msgid "returns"
+#~ msgstr "returns"
+
+#~ msgid "{"
+#~ msgstr "{"
+
+#~ msgid ""
+#~ "table name:    数据表名称 table_exists:  "
+#~ "bool，数据表是否存在 table_size:    int/str，数据表占用磁盘空间，human "
+#~ "为True时返回容易阅读的字符串 table_rows:    int/str，数据表的行数，human "
+#~ "为True时返回容易阅读的字符串 primary_key1:  str，数据表第一个主键名称 "
+#~ "pk_count1:     int，数据表第一个主键记录数量 pk_min1:       "
+#~ "obj，数据表主键1起始记录 pk_max1:       obj，数据表主键2最终记录 "
+#~ "primary_key2:  str，数据表第二个主键名称 pk_count2:     "
+#~ "int，数据表第二个主键记录 pk_min2:       obj，数据表主键2起始记录 "
+#~ "pk_max2:       obj，数据表主键2最终记录"
+#~ msgstr ""
+#~ "Tabellenname: Name der Datentabelle "
+#~ "table_exists: bool, ob die Datentabelle "
+#~ "vorhanden ist table_size: int/str, die "
+#~ "Datentabelle belegt Speicherplatz, eine leicht"
+#~ " lesbare Zeichenfolge wird zurückgegeben, "
+#~ "wenn der Mensch True ist. table_rows:"
+#~ " int/str, die Anzahl der Zeilen in"
+#~ " der Datentabelle, eine leicht lesbare "
+#~ "Zeichenfolge wird zurückgegeben, wenn der "
+#~ "Mensch True ist. primärer_schlüssel1: str, "
+#~ "der Name des ersten Primärschlüssels der"
+#~ " Datentabelle pk_count1: int, die Anzahl"
+#~ " der Datensätze der erster Primärschlüssel"
+#~ " der Datentabelle pk_min1: obj, der "
+#~ "Startdatensatz von Primärschlüssel 1 der "
+#~ "Datentabelle pk_max1: obj, der letzte "
+#~ "Datensatz von Primärschlüssel 2 der "
+#~ "Datentabelle Primary_key2: str, der Name "
+#~ "des zweiten Primärschlüssels der Datentabelle"
+#~ " pk_count2: int, der zweite "
+#~ "Primärschlüsseldatensatz der Datentabelle pk_min2:"
+#~ " obj, der Startdatensatz von "
+#~ "Primärschlüssel 2 der Datentabelle pk_max2:"
+#~ " obj, der letzte Datensatz des "
+#~ "Primärschlüssels 2 der Datentabelle"
+
+#~ msgid "}"
+#~ msgstr "}"
+
+#~ msgid "rtype"
+#~ msgstr "rtype"
+
+#~ msgid "一个dict，包含数据表的结构化信息："
+#~ msgstr "Ein Diktat, das strukturierte Informationen der Datentabelle enthält:"
+
+#~ msgid "获取已经下载的本地数据总览:"
+#~ msgstr ""
+#~ "Verschaffen Sie sich einen Überblick "
+#~ "über heruntergeladene lokale Daten:"
+
+#~ msgid "显示默认数据源或指定数据源的数据总览"
+#~ msgstr ""
+#~ "Zeigt eine Übersicht der Daten aus "
+#~ "der Standarddatenquelle oder einer angegebenen"
+#~ " Datenquelle an"
+
+#~ msgid "一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview"
+#~ msgstr ""
+#~ "Ein data_source-Objekt, der Standardwert "
+#~ "ist „None“. Wenn es „None“ ist, "
+#~ "wird die Übersicht der Standarddatenquelle "
+#~ "angezeigt."
+
+#~ msgid "需要显示overview的数据表名称，如果为None，则显示所有数据表的overview"
+#~ msgstr ""
+#~ "Der Name der Datentabelle, die die "
+#~ "Übersicht anzeigen soll. Wenn es „Keine“"
+#~ " ist, wird die Übersicht aller "
+#~ "Datentabellen angezeigt."
+
+#~ msgid "是否显示系统数据表的overview"
+#~ msgstr "Ob eine Übersicht der Systemdatentabelle angezeigt werden soll"
+
+#~ msgid "Notes"
+#~ msgstr "Notes"
+
+#~ msgid "用法示例参见get_data_overview()"
+#~ msgstr "Anwendungsbeispiele finden Sie unter get_data_overview()"
+
+#~ msgid "显示数据源的数据总览，等同于get_table_overview()"
+#~ msgstr ""
+#~ "Zeigt die Datenübersicht der Datenquelle "
+#~ "an, äquivalent zu get_table_overview()"
+
+#~ msgid "获取的信息包括所有数据表的数据量、占用磁盘空间、主键名称、内容等"
+#~ msgstr ""
+#~ "Die erhaltenen Informationen umfassen das "
+#~ "Datenvolumen, den belegten Speicherplatz, den"
+#~ " Primärschlüsselnamen, den Inhalt usw. "
+#~ "aller Datentabellen."
+
+#~ msgid "* *pd.DataFrame* * *返回一个包含数据表的overview信息的DataFrame*"
+#~ msgstr ""
+#~ "* *pd.DataFrame* * *Gibt einen DataFrame"
+#~ " zurück*, der Übersichtsinformationen der "
+#~ "Datentabelle enthält"
+
+#~ msgid "*pd.DataFrame*"
+#~ msgstr "*pd.DataFrame*"
+
+#~ msgid "*返回一个包含数据表的overview信息的DataFrame*"
+#~ msgstr ""
+#~ "*Gibt einen DataFrame zurück, der "
+#~ "Übersichtsinformationen der Datentabelle enthält*"
+
+#~ msgid "下载数据基础数据:"
+#~ msgstr "Basisdaten herunterladen:"
+
+#~ msgid "等同于get_stock_info()"
+#~ msgstr "Entspricht get_stock_info()"
+
+#~ msgid "根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
+#~ msgstr ""
+#~ "Finden Sie anhand der eingegebenen "
+#~ "Informationen grundlegende Informationen zu "
+#~ "Aktien, Fonds, Indizes oder Futures und"
+#~ " Optionen"
+
+#~ msgid ""
+#~ "证券代码或名称：  - 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 "
+#~ "- 如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 - "
+#~ "如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+#~ msgstr ""
+#~ "Wertpapiercode oder -name: – Wenn es "
+#~ "sich um einen Wertpapiercode handelt, "
+#~ "kann er ein Suffix enthalten oder "
+#~ "nicht. Wenn es ein Suffix enthält, "
+#~ "wird es genau durchsucht, und wenn "
+#~ "es kein Suffix enthält, wird es "
+#~ "global durchsucht. – Wenn es sich "
+#~ "um einen Sicherheitsnamen handelt, kann "
+#~ "er eine Fuzzy-Suche mit Platzhaltern "
+#~ "oder eine Fuzzy-Suche nach Namen "
+#~ "enthalten. – Wenn es genau mit "
+#~ "einem Sicherheitscode übereinstimmt, wird ein"
+#~ " Wörterbuch mit Informationen zum "
+#~ "Sicherheitscode zurückgegeben."
+
+#~ msgid "证券代码或名称："
+#~ msgstr "Wertpapiercode oder Name:"
+
+#~ msgid "如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配"
+#~ msgstr ""
+#~ "Wenn es sich um einen Wertpapiercode "
+#~ "handelt, kann er ein Suffix enthalten"
+#~ " oder nicht. Wenn es ein Suffix "
+#~ "enthält, wird es genau durchsucht, und"
+#~ " wenn es kein Suffix enthält, wird"
+#~ " es global durchsucht."
+
+#~ msgid "如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找"
+#~ msgstr ""
+#~ "Wenn es sich um einen Sicherheitsnamen"
+#~ " handelt, kann er eine Wildcard-"
+#~ "Fuzzy-Suche oder eine Fuzzy-Suche "
+#~ "nach Namen umfassen."
+
+#~ msgid "如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+#~ msgstr ""
+#~ "Wenn ein exakter Sicherheitscode "
+#~ "übereinstimmt, wird ein Wörterbuch "
+#~ "zurückgegeben, das relevante Informationen zum"
+#~ " Sicherheitscode enthält."
+
+#~ msgid ""
+#~ "证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：  - E     股票 - "
+#~ "IDX   指数 - FD    基金 - FT    "
+#~ "期货 - OPT   期权"
+#~ msgstr ""
+#~ "Wertpapiertyp, akzeptiert eine Liste oder "
+#~ "eine durch Kommas getrennte Zeichenfolge "
+#~ "mit erkannten Vermögenswerttypen: - E-Aktie"
+#~ " - IDX-Index - FD-Fonds - "
+#~ "FT-Futures - OPT-Optionen"
+
+#~ msgid "证券类型，接受列表或逗号分隔字符串，包含认可的资产类型："
+#~ msgstr ""
+#~ "Sicherheitstyp, akzeptiert eine Liste oder "
+#~ "eine durch Kommas getrennte Zeichenfolge "
+#~ "mit erkannten Asset-Typen:"
+
+#~ msgid "E     股票"
+#~ msgstr "E-Aktien"
+
+#~ msgid "IDX   指数"
+#~ msgstr "IDX-Index"
+
+#~ msgid "FD    基金"
+#~ msgstr "FD-Fonds"
+
+#~ msgid "FT    期货"
+#~ msgstr "FT-Futures"
+
+#~ msgid "OPT   期权"
+#~ msgstr "OPT-Optionen"
+
+#~ msgid "是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长"
+#~ msgstr ""
+#~ "Ob der vollständige Name der Aktie "
+#~ "oder des Fonds abgeglichen werden soll."
+#~ " Der Standardwert ist Nein. Wenn der"
+#~ " vollständige Name übereinstimmt, dauert es"
+#~ " länger."
+
+#~ msgid "如果为True，打印匹配到的结果"
+#~ msgstr "Wenn True, werden die übereinstimmenden Ergebnisse gedruckt"
+
+#~ msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息  - False 默认值，只显示匹配度最高的内容 - True  显示所有匹配到的内容"
+#~ msgstr ""
+#~ "Wenn zu viele übereinstimmende Wertpapiere "
+#~ "vorhanden sind (mehr als fünf), ob "
+#~ "vollständige Informationen angezeigt werden "
+#~ "sollen – Falsch. Standardwert, nur den"
+#~ " Inhalt mit der höchsten Übereinstimmung"
+#~ " anzeigen – True, um alle "
+#~ "übereinstimmenden Inhalte anzuzeigen"
+
+#~ msgid "当匹配到的证券太多时（多于五个），是否显示完整的信息"
+#~ msgstr ""
+#~ "Wenn zu viele übereinstimmende Wertpapiere "
+#~ "vorhanden sind (mehr als fünf), ob "
+#~ "vollständige Informationen angezeigt werden "
+#~ "sollen"
+
+#~ msgid "False 默认值，只显示匹配度最高的内容"
+#~ msgstr ""
+#~ "Falscher Standardwert, es wird nur der"
+#~ " Inhalt mit dem höchsten "
+#~ "Übereinstimmungsgrad angezeigt"
+
+#~ msgid "True  显示所有匹配到的内容"
+#~ msgstr "True zeigt alle passenden Inhalte an"
+
+#~ msgid ""
+#~ "当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：  - "
+#~ "股票信息：公司名、地区、行业、全名、上市状态、上市日期 - 指数信息：指数名、全名、发行人、种类、发行日期 "
+#~ "- 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型 - "
+#~ "期货：   期货名称 - 期权：   期权名称"
+#~ msgstr ""
+#~ "Wenn nur eine Übereinstimmung gefunden "
+#~ "wird, wird ein Diktat zurückgegeben, das"
+#~ " die gefundenen Basisinformationen enthält. "
+#~ "Die gefundenen Informationen sind je "
+#~ "nach Wertpapiertyp unterschiedlich: - "
+#~ "Aktieninformationen: Firmenname, Region, Branche,"
+#~ " vollständiger Name, Notierungsstatus, "
+#~ "Notierungsdatum - Indexinformationen: Indexname, "
+#~ "vollständiger Name, Emittent, Typ, "
+#~ "Ausgabedatum - Fonds: Fondsname, Manager, "
+#~ "Depotbank, Fondstyp, Ausgabedatum, Ausgabemenge, "
+#~ "Anlagetyp, Typ - Futures: Futures-Name"
+#~ " - Option: Optionsname"
+
+#~ msgid "当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同："
+#~ msgstr ""
+#~ "Wenn nur eine Übereinstimmung gefunden "
+#~ "wird, wird ein Diktat zurückgegeben, das"
+#~ " die gefundenen Basisinformationen enthält, "
+#~ "die je nach Sicherheitstyp unterschiedlich "
+#~ "sind:"
+
+#~ msgid "股票信息：公司名、地区、行业、全名、上市状态、上市日期"
+#~ msgstr ""
+#~ "Aktieninformationen: Firmenname, Region, Branche,"
+#~ " vollständiger Name, Listungsstatus, "
+#~ "Listungsdatum"
+
+#~ msgid "指数信息：指数名、全名、发行人、种类、发行日期"
+#~ msgstr ""
+#~ "Indexinformationen: Indexname, vollständiger Name,"
+#~ " Emittent, Typ, Ausgabedatum"
+
+#~ msgid "基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型"
+#~ msgstr ""
+#~ "Fonds: Fondsname, Manager, Depotbank, "
+#~ "Fondstyp, Ausgabedatum, Ausgabemenge, Anlagetyp, "
+#~ "Typ"
+
+#~ msgid "期货：   期货名称"
+#~ msgstr "Futures: Futures-Name"
+
+#~ msgid "期权：   期权名称"
+#~ msgstr "Option: Optionsname"
+
+#~ msgid "等同于get_basic_info()"
+#~ msgstr "Entspricht get_basic_info()"
+
+#~ msgid ""
+#~ "证券代码或名称， 如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配 "
+#~ "如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找 "
+#~ "如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息"
+#~ msgstr ""
+#~ "Wertpapiercode oder -name. Wenn es sich"
+#~ " um einen Sicherheitscode handelt, kann "
+#~ "er ein Suffix enthalten oder nicht. "
+#~ "Wenn es ein Suffix enthält, wird "
+#~ "es genau durchsucht, und wenn es "
+#~ "kein Suffix enthält, wird es global "
+#~ "durchsucht. Wenn es sich um einen "
+#~ "Sicherheitsnamen handelt, kann er eine "
+#~ "Fuzzy-Suche mit Platzhaltern oder eine "
+#~ "Fuzzy-Suche nach Namen enthalten. Wenn"
+#~ " ein Sicherheitscode genau übereinstimmt, "
+#~ "wird ein Wörterbuch zurückgegeben, das "
+#~ "relevante Informationen zum Sicherheitscode "
+#~ "enthält."
+
+#~ msgid "用法示例参见：get_basic_info()"
+#~ msgstr "Anwendungsbeispiele finden Sie unter: get_basic_info()"
+
+#~ msgid "根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单"
+#~ msgstr ""
+#~ "Rufen Sie filter_stocks auf, um Aktien"
+#~ " basierend auf den Eingabeparametern zu "
+#~ "filtern und eine Liste von Aktiencodes"
+#~ " zurückzugeben"
+
+#~ msgid "筛选股票的上市日期，在该日期以后上市的股票将会被剔除："
+#~ msgstr ""
+#~ "Überprüfen Sie das Listungsdatum von "
+#~ "Aktien. Aktien, die nach diesem Datum"
+#~ " notiert sind, werden eliminiert:"
+
+#~ msgid "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来"
+#~ msgstr ""
+#~ "Sie können Aktien anhand der folgenden"
+#~ " Parameter filtern. Sie können mehrere "
+#~ "Filterbedingungen gleichzeitig eingeben. Es "
+#~ "werden nur Bestände herausgefiltert, die "
+#~ "die Anforderungen erfüllen."
+
+#~ msgid ":obj:`filter_stocks`"
+#~ msgstr ":obj:`filter_stocks`"
+
+#~ msgid "根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame"
+#~ msgstr ""
+#~ "Filtern Sie Aktien basierend auf den "
+#~ "Eingabeparametern und geben Sie einen "
+#~ "DataFrame zurück, der Aktiencodes und "
+#~ "zugehörige Informationen enthält"
+
+#~ msgid ""
+#~ "可以通过以下参数筛选股票, 可以同时输入多个筛选条件，只有符合要求的股票才会被筛选出来 - index:"
+#~ "      根据指数筛选，不含在指定的指数内的股票将会被剔除 - industry:   "
+#~ "公司所处行业，只有列举出来的行业会被选中 - area:       "
+#~ "公司所处省份，只有列举出来的省份的股票才会被选中 - market:     市场，分为主板、创业板等"
+#~ " - exchange:   交易所，包括上海证券交易所和深圳股票交易所"
+#~ msgstr ""
+#~ "Sie können Aktien anhand der folgenden"
+#~ " Parameter überprüfen. Sie können mehrere"
+#~ " Prüfbedingungen gleichzeitig eingeben. Es "
+#~ "werden nur Aktien herausgefiltert, die "
+#~ "die Anforderungen erfüllen. - Index: "
+#~ "Filter basierend auf dem Index. Aktien,"
+#~ " die nicht im angegebenen Index "
+#~ "enthalten sind, werden eliminiert. - "
+#~ "Branche: die Branche, in der das "
+#~ "Unternehmen ansässig ist. Es werden nur"
+#~ " die aufgelisteten Branchen ausgewählt. -"
+#~ " Gebiet: die Provinz, in der das "
+#~ "Unternehmen ansässig ist. Es werden nur"
+#~ " Aktien aus den aufgelisteten Provinzen "
+#~ "ausgewählt. - Markt: Markt, unterteilt "
+#~ "in Hauptplatine, GEM usw. - Börse: "
+#~ "Börse, einschließlich Shanghai Stock Exchange"
+#~ " und Shenzhen Stock Exchange"
+
+#~ msgid "**DataFrame**"
+#~ msgstr "**DataFrame**"
+
+#~ msgid "备注"
+#~ msgstr "Bemerkung"
+

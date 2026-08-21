@@ -1,0 +1,4557 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/references/datatypes/_generated/valuation.md:6
+msgid "估值与财务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md:8
+msgid ""
+"本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
+"`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **558** 条。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md:10
+msgid ""
+"请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
+"`table_name` 仅供对照 refill。"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "freq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "asset_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "description"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "kind"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "usable_in"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acquisition_type"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "table_name"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acc_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "E"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 预提费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "history"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "history_panel,strategy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "direct"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "balance"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acc_receivable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "accounts_pay"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付票据及应付账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "accounts_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "accounts_receiv_bill"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收票据及应收账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acct_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acting_trading_sec"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 代理买卖证券款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "acting_uw_sec"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 代理承销证券款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "activity"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "d"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 活跃度(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stock_indicator2"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "adj_lossgain"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 调整以前年度损益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "admin_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:管理费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "adminexp_of_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 管理费用/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "financial"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "adv_receipts"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 预收款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "agency_bus_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 代理业务负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "amodcost_fin_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 以摊余成本计量的金融资产终止确认收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "amor_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期待摊费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "amort_intang_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 无形资产摊销"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cashflow"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ar_turn"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 应收账款周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "arturn_days"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 应收账款周转天数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ass_invest_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其中:对联营企业和合营企业的投资收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "asset_disp_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 资产处置收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "assets_impair_loss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:资产减值损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "assets_to_eqt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 权益乘数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "assets_turn"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 总资产周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "assets_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 资产总计相对年初增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "attack"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 攻击波(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "avg_price"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 平均价"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "avg_turnover"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 笔换手"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "basic_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 基本每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "basic_eps_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 基本每股收益同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "beg_bal_cash"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 减:现金的期初余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "beg_bal_cash_equ"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 减:现金等价物的期初余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "biz_tax_surchg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:营业税金及附加"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "bond_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付债券"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "bps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 每股净资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "bps_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股净资产相对年初增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "buying"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 外盘（主动买， 手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_cash_equ_beg_period"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 期初现金及现金等价物余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_cash_equ_end_period"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 期末现金及现金等价物余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_disp_withdrwl_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收回投资收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_fr_oth_operate_a"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到其他与经营活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_fr_sale_sg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 销售商品、提供劳务收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_inf_fr_operate_a"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营活动现金流入小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_paid_for_taxes"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付的各项税费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_paid_goods_s"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 购买商品、接受劳务支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_paid_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 投资支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_paid_to_for_empl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付给职工以及为职工支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_pay_acq_const_fiolta"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 购建固定资产、无形资产和其他长期资产支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_pay_claims_orig_inco"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付原保险合同赔付款项的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_pay_dist_dpcp_int_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 分配股利、利润或偿付利息支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_prepay_amt_borr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 偿还债务支付的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_recp_borrow"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 取得借款收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_recp_cap_contrib"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 吸收投资收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "c_recp_return_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 取得投资收益收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ca_to_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 流动资产/总资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ca_turn"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 流动资产周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cap_rese"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 资本公积金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "capit_comstock_div"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 转作股本的普通股股利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "capital_rese_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股资本公积"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "capitalized_to_da"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 资本支出/折旧和摊销"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cash_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 保守速动比率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cash_reser_cb"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 现金及存放中央银行款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cash_to_liqdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 货币资金／流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cash_to_liqdebt_withinterest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 货币资金／带息流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cashflow_credit_impa_loss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 信用减值损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cb_borr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 向中央银行借款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cfps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股现金流量净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cfps_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股经营活动产生的现金流量净额同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cip"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 在建工程"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cip_total"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 在建工程(合计)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "circ_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 流通市值（万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stock_indicator"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "client_depos"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其中：客户资金存款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "client_prov"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其中：客户备付金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cogs_of_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售成本率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "comm_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:手续费及佣金支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "comm_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 手续费及佣金收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "comm_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付手续费及佣金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "compens_payout"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 赔付总支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "compens_payout_refu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:摊回赔付支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "compr_inc_attr_m_s"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 归属于少数股东的综合收益总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "compr_inc_attr_p"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 归属于母公司(或股东)的综合收益总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "comshare_payable_dvd"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 应付普通股股利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "const_materials"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 工程物资"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "continued_net_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 持续经营净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "contract_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 合同资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "contract_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 合同负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "conv_copbonds_due_within_1y"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 一年内到期的可转换公司债券"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "conv_debt_into_cap"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 债务转为资本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "cost_fin_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 以摊余成本计量的金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "current_exint"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 无息流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "current_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 流动比率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "currentdebt_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 流动负债/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "daa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 折旧与摊销"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "debt_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 债权投资(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "debt_to_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 资产负债率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "debt_to_eqt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 产权比率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "decr_def_inc_tax_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 递延所得税资产减少"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "decr_deferred_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 待摊费用减少"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "decr_in_disbur"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 发放贷款及垫款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "decr_inventories"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 存货的减少"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "decr_oper_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营性应收项目的减少"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "defer_inc_non_cur_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 递延收益-非流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "defer_tax_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 递延所得税资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "defer_tax_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 递延所得税负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "deferred_inc"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 递延收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depos"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 吸收存款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depos_ib_deposits"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 吸收存款及同业存放"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depos_in_oth_bfi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 存放同业和其它金融机构款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depos_oth_bfi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 同业和其它金融机构存放款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depos_received"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 存入保证金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "depr_fa_coga_dpba"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 固定资产折旧、油气资产折耗、生产性生物资产折旧"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "deriv_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 衍生金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "deriv_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 衍生金融负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "diluted2_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 期末摊薄每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "diluted_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 稀释每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "diluted_roe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 净资产收益率(摊薄)(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "distable_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 可分配利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "distr_profit_shrhder"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 可供股东分配的利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "div_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付股利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "div_payt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 保户红利支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "div_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收股利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dp_assets_to_eqt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 权益乘数(杜邦分析)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dt_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 稀释每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dt_eps_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 稀释每股收益同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dt_netprofit_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属母公司股东的净利润-扣除非经常损益同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dtprofit_to_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 扣除非经常损益后的净利润/净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dv_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 股息率 （%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "dv_ttm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 股息率（TTM）（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 息税前利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebit_of_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 息税前利润/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebit_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股息税前利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebit_to_interest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 已获利息倍数(EBIT/利息费用)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebitda"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 息税折旧摊销前利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebitda_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 息税折旧摊销前利润/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ebt_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 利润总额同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eff_fx_flu_cash"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 汇率变动对现金的影响"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "end_bal_cash"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 现金的期末余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "end_bal_cash_equ"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 加:现金等价物的期末余额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "end_net_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 终止经营净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 基本每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eps_last_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eqt_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属于母公司的股东权益/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eqt_to_interestdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属于母公司的股东权益/带息债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eqt_to_talcapital"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属于母公司的股东权益/全部投入资本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "eqt_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属母公司的股东权益相对年初增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "equity_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产同比增长率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "estimated_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 预计负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "expense_of_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售期间费用率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_bps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股净资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_diluted_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 每股收益(摊薄)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_n_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 净利润(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_operate_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 营业利润(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_revenue"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 营业收入(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_total_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 总资产(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_total_hldr_eqy_exc_min_int"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 股东权益合计(不含少数股东权益)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "express_total_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 利润总额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "extra_item"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 非经常性损益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fa_avail_for_sale"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 可供出售金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fa_fnc_leases"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 融资租入固定资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fa_turn"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 固定资产周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fair_value_fin_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 以公允价值计量且其变动计入其他综合收益的金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fcfe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 股权自由现金流量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fcfe_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股股东自由现金流量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fcff"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 企业自由现金流量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fcff_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股企业自由现金流量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fd_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "FD"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "基金份额（万）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fund_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fin_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:财务费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fin_exp_int_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 财务费用:利息费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fin_exp_int_inc"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 财务费用:利息收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "finaexp_of_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 财务费用/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "finan_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 财务费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fix_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 固定资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fix_assets_total"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 固定资产(合计)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fixed_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 固定资产合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fixed_assets_disp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 固定资产清理"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "float_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "IDX"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 当日流通市值（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "index_indicator"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "float_mv_2"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 流通市值(亿元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "float_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 流通股本 （万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 当日流通股本（股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "float_share_b"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 流通股本(亿)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "forex_differ"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 外币报表折算差额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "forex_gain"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 加:汇兑净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "free_cashflow"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 企业自由现金流量"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "free_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 自由流通股本（万）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 当日自由流通股本（股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "fv_value_chg_gain"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 加:公允价值变动净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "gc_of_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业总成本/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "goodwill"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 商誉"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "gross_margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 毛利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "grossprofit_margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售毛利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "growth_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 比年初增长率:总资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "growth_bps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 比年初增长率:归属于母公司股东的每股净资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "hfs_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 持有待售的资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "hfs_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 持有待售的负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "htm_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 持有至到期投资"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ifc_cash_incr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收取利息和手续费净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "im_n_incr_cash_equ"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 现金及现金等价物净增加额(间接法)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "im_net_cashflow_oper_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营活动产生的现金流量净额(间接法)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "impai_ttm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 资产减值损失/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "incl_cash_rec_saims"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 其中:子公司吸收少数股东投资收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "incl_dvd_profit_paid_sc_ms"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 其中:子公司支付给少数股东的股利、利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income_credit_impa_loss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 信用减值损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income_ebit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 息税前利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income_ebitda"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 息税折旧摊销前利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income_rd_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 研发费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "income_tax"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 所得税费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "incr_acc_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 预提费用增加"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "incr_def_inc_tax_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 递延所得税负债增加"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "incr_oper_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营性应付项目的增加"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "indem_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付赔付款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "indep_acct_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 独立账户资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "indept_acc_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 独立账户负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "insur_reser_refu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:摊回保险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "insurance_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 保险业务支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "int_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:利息支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "int_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 利息收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "int_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付利息"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "int_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收利息"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "int_to_talcap"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 带息债务/全部投入资本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "intan_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 无形资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "interestdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 带息债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "interst_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 利息费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "interval_3"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 近3月涨幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "interval_6"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 近6月涨幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "inv_turn"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 存货周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "inventories"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 存货"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_as_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收款项类投资"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_capital"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 全部投入资本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 加:投资净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_loss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 投资损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_loss_unconf"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 未确认的投资损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invest_real_estate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 投资性房地产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "investincome_of_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 价值变动净收益/利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "invturn_days"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 存货周转天数"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lease_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 租赁负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lending_funds"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 融出资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "loan_oth_bank"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 拆入资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "loanto_oth_bank_fi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 拆出资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "long_pay_total"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期应付款(合计)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "longdeb_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 非流动负债/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "longdebt_to_workingcapital"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 长期债务与营运资金比率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "loss_disp_fiolta"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 处置固定、无形资产和其他长期资产的损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "loss_fv_chg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 公允价值变动损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "loss_scr_fa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 固定资产报废损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_amor_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_amort_deferred_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 长期待摊费用摊销"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_borr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期借款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_eqt_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期股权投资"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期应付款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_payroll_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期应付职工薪酬"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "lt_rec"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期应收款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "minority_gain"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 少数股东损益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "minority_int"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 少数股东权益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "money_cap"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 货币资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_asset_mg_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 受托客户资产管理业务净收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_cap_incr_repur"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 回购业务资金净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_cash_flows_fnc_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 筹资活动产生的现金流量净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_cashflow_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营活动产生的现金流量净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_cashflow_inv_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 投资活动产生的现金流量净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_commis_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 手续费及佣金净收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_depos_incr_fi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 客户存款和同业存放款项净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_disp_subs_oth_biz"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 取得子公司及其他营业单位支付的现金净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_inc_borr_oth_fi"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 向其他金融机构拆入资金净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_income_attr_p"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 净利润(不含少数股东损益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_cash_cash_equ"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 现金及现金等价物净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_clt_loan_adv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 客户贷款及垫款净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_dep_cbob"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 存放央行和同业款项净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_disp_faas"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 处置可供出售金融资产净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_disp_tfa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 处置交易性金融资产净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_insured_dep"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 保户储金净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_loans_cb"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 向中央银行借款净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_loans_oth_bank"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 拆入资金净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_incr_pledge_loan"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 质押贷款净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_op_profit_of_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业外收支净额/利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_oth_b_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 加:其他业务净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_oth_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他经营净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_recp_disp_fiolta"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 处置固定资产、无形资产和其他长期资产收回的现金净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_recp_disp_sobu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 处置子公司及其他营业单位收到的现金净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_reinsur_prem"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到再保业务现金净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_sec_tb_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 代理买卖证券业务净收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "n_sec_uw_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 证券承销业务净收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "nca_disploss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其中:减:非流动资产处置净损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "nca_to_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 非流动资产/总资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "nca_within_1y"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 一年内到期的非流动资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_after_nr_lp_correct"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 扣除非经常性损益后的净利润（更正前）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_cash_rece_sec"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 代理买卖证券收到的现金净额(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_dism_capital_add"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 拆出资金净增加额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_expo_hedging_benefits"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 净敞口套期收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 净利润(含少数股东损益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "net_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "netdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "netprofit_margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售净利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "netprofit_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "networking_capital"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营运流动资本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "non_cur_liab_due_1y"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 一年内到期的非流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "non_op_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 非营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "non_oper_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:营业外支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "non_oper_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 加:营业外收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "noncurrent_exint"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 无息非流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "nop_to_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 非营业利润／利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "notes_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付票据"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "notes_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收票据"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "np_last_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "npta"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 总资产净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_interestdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/带息债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_netdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/净债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_opincome"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/经营活动净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_or"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额／营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_to_shortdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额/流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocf_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ocfps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股经营活动产生的现金流量净额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oil_and_gas_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 油气资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_last_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_of_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润／负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_to_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润／利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_to_liqdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润／流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "op_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "open_bps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 期初每股净资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "open_net_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 期初净资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oper_cost"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:营业成本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oper_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "operate_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "opincome_of_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动净收益/利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "or_last_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "or_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业收入同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ordin_risk_reser"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 一般风险准备"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_b_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他业务收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_cash_pay_oper_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付其他与经营活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_cash_recp_ral_fnc_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到其他与筹资活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_cashpay_ral_fnc_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付其他与筹资活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_comp_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他综合收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_compr_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他综合收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_cur_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他流动资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_cur_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_debt_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他债权投资(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_eq_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他权益工具投资(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_eq_ppbond"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他权益工具:永续债(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_eqt_tools"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他权益工具"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_eqt_tools_p_shr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他权益工具(优先股)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_illiq_fin_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他非流动金融资产(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_impair_loss_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他资产减值损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_loss_asset"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 其他资产减值损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_nca"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他非流动资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_ncl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他非流动负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_pay_ral_inv_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付其他与投资活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_pay_total"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他应付款(合计)(元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他应付款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_rcv_total"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他应收款(合计)（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其他应收款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "oth_recp_ral_inv_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到其他与投资活动有关的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "other_bus_cost"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他业务成本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "others"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 其他"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "out_prem"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:分出保费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pay_comm_insur_plcy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付保单红利的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pay_handling_chrg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 支付手续费的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "payable_to_reinsurer"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付分保账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "payables"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "payroll_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付职工薪酬"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pb"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 市净率（总市值/净资产）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 市净率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 市盈率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pe_2"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 动态市盈率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pe_ttm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 市盈率（TTM，亏损的PE为空）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 市盈率TTM"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "perf_summary"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 业绩简要说明"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "none"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ph_invest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 保户储金及投资款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ph_pledge_loans"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 保户质押贷款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pledge_borr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其中:质押借款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "policy_div_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付保单红利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prec_metals"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 贵金属"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prem_earned"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 已赚保费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prem_fr_orig_contr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到原保险合同保费取得的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prem_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 保险业务收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prem_receiv_adva"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 预收保费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prem_refund"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 退保金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "premium_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收保费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prepayment"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 预付款项"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prfshare_payable_dvd"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 应付优先股股利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "proc_issue_bonds"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 发行债券收到的现金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "produc_bio_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 生产性生物资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "profit_dedt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 扣除非经常性损益后的净利润（扣非净利润）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "profit_prefin_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 扣除财务费用前营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "profit_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净利润/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "profit_to_op"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 利润总额／营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "prov_depr_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 加:资产减值准备"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 市销率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "ps_ttm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 市销率（TTM）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "pur_resale_fa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 买入返售金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_adminexp_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 管理费用／营业总收入 (单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_dt_roe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_dtprofit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 扣除非经常损益后的单季度净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_dtprofit_to_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 扣除非经常损益后的净利润／净利润(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股收益(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_exp_to_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售期间费用率(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_finaexp_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 财务费用／营业总收入 (单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_gc_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业总成本／营业总收入 (单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_gr_qoq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业总收入环比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_gr_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业总收入同比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_gsprofit_margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售毛利率(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_impair_to_gr_ttm"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 资产减值损失／营业总收入(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_investincome"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 价值变动单季度净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_investincome_to_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 价值变动净收益／利润总额(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_netprofit_margin"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售净利率(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_netprofit_qoq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属母公司股东的净利润环比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_netprofit_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_npta"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 总资产净利润(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_ocf_to_or"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额／经营活动净收益(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_ocf_to_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动产生的现金流量净额／营业收入(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_op_qoq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润环比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_op_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润／营业总收入(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_op_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业利润同比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_opincome"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动单季度净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_opincome_to_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 经营活动净收益／利润总额(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_profit_qoq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净利润环比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_profit_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净利润／营业总收入(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_profit_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净利润同比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_roe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产收益率(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_saleexp_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售费用／营业总收入 (单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_sales_qoq"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业收入环比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_sales_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业收入同比增长率(%)(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "q_salescash_to_or"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售商品提供劳务收到的现金／营业收入(单季度)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "quick_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 速动比率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "r_and_d"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 研发支出"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rd_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 研发费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "receiv_financing"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收款项融资"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "recp_tax_rends"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 收到的税费返还"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "refund_cap_depos"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 存出资本保证金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "refund_depos"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 存出保证金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reins_cost_refund"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:摊回分保费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reins_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 分保费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reins_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其中:分保费收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reinsur_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保账款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reinsur_res_receiv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保合同准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reser_insur_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取保险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reser_lins_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 寿险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reser_lthins_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 长期健康险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reser_outstd_claims"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 未决赔款准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "reser_une_prem"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 未到期责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "retained_earnings"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 留存收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "retainedps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股留存收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "revenue"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "revenue_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 总资产报酬率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roa2_yearly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 年化总资产报酬率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roa_dp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 总资产净利率(杜邦分析)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roa_yearly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 年化总资产净利率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产收益率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe_avg"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 平均净资产收益率(增发条件)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe_dt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产收益率(扣除非经常损益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe_waa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 加权平均净资产收益率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe_yearly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 年化净资产收益率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roe_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 净资产收益率(摊薄)同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roic"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 投入资本回报率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "roic_yearly"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 年化投入资本回报率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rr_reins_lins_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保寿险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rr_reins_lthins_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保长期健康险责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rr_reins_outstd_cla"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保未决赔款准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rr_reins_une_prem"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应收分保未到期责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "rsrv_insur_cont"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 保险合同准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "saleexp_to_gr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售费用/营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "salescash_to_or"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "sell_exp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 减:销售费用"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "selling"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 内盘（主动卖，手）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "sett_rsrv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 结算备付金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "sold_for_repur_fa"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 卖出回购金融资产款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "special_rese"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 专项储备"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "specific_payables"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 专项应付款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "st_bonds_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付短期债券"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "st_borr"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 短期借款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "st_cash_out_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 经营活动现金流出小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "st_fin_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应付短期融资款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stot_cash_in_fnc_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 筹资活动现金流入小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stot_cashout_fnc_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 筹资活动现金流出小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stot_inflows_inv_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 投资活动现金流入小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "stot_out_inv_act"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 投资活动现金流出小计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "strength"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 强弱度(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "surplus_rese"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 盈余公积金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "surplus_rese_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股盈余公积"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "swing"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 振幅"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "t_compr_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 综合收益总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tangasset_to_intdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 有形资产/带息债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tangible_asset"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 有形资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tangibleasset_to_debt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 有形资产/负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tangibleasset_to_netdebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 有形资产/净债务"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tax_to_ebt"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 所得税/利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "taxes_payable"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 应交税费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tbassets_to_totalassets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 有形资产/总资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "time_deposits"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 定期存款"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 资产总计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_cogs"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业总成本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_cur_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 流动资产合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_cur_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 流动负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_fa_trun"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 固定资产合计周转率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_hldr_eqy_exc_min_int"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 股东权益合计(不含少数股东权益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_hldr_eqy_inc_min_int"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 股东权益合计(含少数股东权益)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_liab"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_liab_hldr_eqy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 负债及股东权益总计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_mv"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 总市值 （万元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 当日总市值（元）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_mv_2"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 总市值(亿元)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_nca"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 非流动资产合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_ncl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 非流动负债合计"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_opcost"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业总成本（二）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_revenue"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_revenue_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股营业总收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 总股本 （万股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 当日总股本（股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 期末总股本"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "total_share_b"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 总股本(亿)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tp_last_year"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期利润总额"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "tr_yoy"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业总收入同比增长率(%)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "trad_asset"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 交易性金融资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "trading_fl"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 交易性金融负债"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "transac_seat_fee"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 其中:交易席位费"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "transfer_housing_imprest"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 住房周转金转入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "transfer_oth"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 其他转入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "transfer_surplus_rese"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 盈余公积转入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "treasury_share"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 减:库存股"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "turn_days"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营业周期"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "turn_over"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 换手率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "turnover_rate"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 换手率（%）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 换手率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "turnover_rate_f"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 换手率（自由流通股）"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "指数技术指标 - 换手率(基于自由流通股本)"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "uncon_invest_loss"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 未确认投资损失"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "undist_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 年初未分配利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "undist_profit_ps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 每股未分配利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "undistr_porfit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 未分配利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "une_prem_reser"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取未到期责任准备金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "use_right_asset_dep"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司现金流量表 - 使用权资产折旧"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "use_right_assets"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司资产负债表 - 使用权资产"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "valuechange_income"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 价值变动净收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "vol_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "股票技术指标 - 量比"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "volume_ratio"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "withdra_biz_devfund"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取企业发展基金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "withdra_legal_pubfund"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取法定公益金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "withdra_legal_surplus"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取法定盈余公积"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "withdra_oth_ersu"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取任意盈余公积金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "withdra_rese_fund"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 提取储备基金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "workers_welfare"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司利润表 - 职工奖金福利"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "working_capital"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司财务指标 - 营运资金"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_dedu_np"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增长率:归属母公司股东的净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_eps"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增长率:基本每股收益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_equity"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 比年初增长率:归属母公司的股东权益"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_net_profit"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 去年同期修正后净利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_op"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增长率:营业利润"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_roe"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增减:加权平均净资产收益率"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_sales"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增长率:营业收入"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "yoy_tp"
+msgstr ""
+
+#: ../../source/references/datatypes/_generated/valuation.md
+msgid "上市公司业绩快报 - 同比增长率:利润总额"
+msgstr ""
+
